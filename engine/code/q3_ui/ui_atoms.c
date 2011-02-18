@@ -1537,10 +1537,10 @@ void UI_Refresh( int realtime )
 		{
 			// draw the background
 			if( uis.activemenu->showlogo ) {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+				UI_DrawHandlePic( -uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, uis.menuBackShader );
 			}
 			else {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
+				UI_DrawHandlePic( -uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
 			}
 		}
 
@@ -1548,10 +1548,11 @@ void UI_Refresh( int realtime )
 			if (uis.menusp > 1){
 				// draw the background pic
 				if (uis.stack[uis.menusp-2]->fullscreen){
-					if( uis.stack[uis.menusp-2]->showlogo )
-						UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
-					else
-						UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
+					if( uis.stack[uis.menusp-2]->showlogo ) {
+						UI_DrawHandlePic( -uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, uis.menuBackShader );
+					} else {
+						UI_DrawHandlePic( -uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
+					}
 				}
 
 				// draw the background menu
@@ -1561,7 +1562,7 @@ void UI_Refresh( int realtime )
 					Menu_Draw( uis.stack[uis.menusp-2] );
 
 				// dim the background menu
-				UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu_back_color );
+				UI_FillRect( -uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, menu_back_color );
 			}
 		}
 

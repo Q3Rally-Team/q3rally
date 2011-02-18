@@ -224,11 +224,11 @@ static void ScrollingCredits_Draw(void)
   // first, fill the background with the specified colour/shader
   // we are drawing a shader
 #ifdef BACKGROUND_SHADER
-  UI_DrawHandlePic(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BackgroundShader);
+  UI_DrawHandlePic(-uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, BackgroundShader);
 
 #else
   // we are just filling a color
-  UI_FillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color_background);
+  UI_FillRect(-uis.bias, 0, SCREEN_WIDTH+uis.bias*2, SCREEN_HEIGHT, color_background);
 #endif
 
 
