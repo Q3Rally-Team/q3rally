@@ -1,0 +1,6 @@
+tag_wheelfr,
+tag_wheelfl,
+tag_wheelrr,
+tag_wheelrl,
+w_tread,models/players/wheels/tread.tga
+w_rim,models/players/wheels/rim_svt_lightning.tga

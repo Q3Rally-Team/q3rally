@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Q3Rally
+Exec=q3rally
+Icon=q3rally
+Type=Application
+Terminal=false
+Encoding=UTF-8
+Categories=Game;ActionGame;
+X-SuSE-translate=false

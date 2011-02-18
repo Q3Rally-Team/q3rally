@@ -1,0 +1,11 @@
+rally_scripted_object
+{
+	model "models/mapobjects/cactus/cactus.md3"
+	moveable 1
+	mass 40
+	elasticity 0.1
+	health -1
+	mins -4 -4 -8
+	maxs 4 4 8
+	hitsound "sound/misc/menu1.wav" //change this
+}

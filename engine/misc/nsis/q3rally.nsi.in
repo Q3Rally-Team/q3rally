@@ -1,0 +1,197 @@
+; NSIS description file for Q3Rally installer
+;
+; EDIT WITH CARE!
+;
+; This file is used to automatically build the installers in the
+; openSUSE build service, don't break this!
+;
+; you have to copy SDL.dll, OpenAL32.dll, libcurl-4.dll, and zlib1.dll here manually
+
+!define VERSION "XXXVERSIONXXX"
+!define RELEASE "XXXRELEASEXXX"
+
+!define MODDIR "baseq3r"
+!define PUBLISHER "The Q3Rally Team"
+!define URL "http://q3rally.com/"
+
+!define GAMENAME "Q3Rally"
+!define CLIENT "q3rally.x86.exe"
+!define SERVER "q3rally-server.x86.exe"
+!define GAMEDIR "Q3Rally"
+!define GAME_FSNAME "q3rally"
+
+!define MULTIUSER_MUI
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_KEY "Software\${GAME_FSNAME}"
+!define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME "Install_Mode"
+!define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY "Software\${GAME_FSNAME}"
+!define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME "Install_Dir"
+!define MULTIUSER_INSTALLMODE_INSTDIR "${GAMEDIR}"
+!include MultiUser.nsh
+
+!include "MUI2.nsh"
+!define MUI_ICON "../quake3.ico"
+
+; The name of the installer
+Name "${GAMENAME} ${VERSION}"
+
+; The file to write
+OutFile "${GAME_FSNAME}-${VERSION}-${RELEASE}.x86.exe"
+
+; The default installation directory
+; set by Multiuser.nsh
+;InstallDir "$PROGRAMFILES\${GAMEDIR}"
+
+; Registry key to check for directory (so if you install again, it will
+; overwrite the old one automatically)
+; handled by Multiuser.nsh
+;InstallDirRegKey HKLM "Software\${GAME_FSNAME}" "Install_Dir"
+
+;--------------------------------
+;Interface Settings
+
+!define MUI_ABORTWARNING
+
+;--------------------------------
+;Pages
+
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
+;!insertmacro MUI_PAGE_LICENSE "../../COPYING.txt"
+!define MUI_COMPONENTSPAGE_NODESC
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+;--------------------------------
+;Languages
+
+!insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+
+;--------------------------------
+;Multiuser stuff
+Function .onInit
+  !insertmacro MULTIUSER_INIT
+FunctionEnd
+
+Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
+FunctionEnd
+
+; The stuff to install
+Section "${GAMENAME} ${VERSION}-${RELEASE} (required)"
+
+  SectionIn RO
+
+  ; Set output path to the installation directory.
+  SetOutPath $INSTDIR
+
+  File "zlib1.dll"
+
+  ; Put file there
+  File "../../build/release-mingw32-x86/${SERVER}"
+  File "../../build/release-mingw32-x86/${CLIENT}"
+  File "../../COPYING.txt"
+  File "/oname=README.txt" "../../README"
+
+  SetOutPath "$INSTDIR\${MODDIR}"
+  File "assets0.pk3"
+  File "../../build/release-mingw32-x86/${MODDIR}/cgamex86.dll"
+  File "../../build/release-mingw32-x86/${MODDIR}/qagamex86.dll"
+  File "../../build/release-mingw32-x86/${MODDIR}/uix86.dll"
+
+  ; Write the installation path into the registry
+  WriteRegStr SHCTX "Software\${GAME_FSNAME}" ${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME} "$INSTDIR"
+  WriteRegStr SHCTX "Software\${GAME_FSNAME}" ${MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME} "$MultiUser.InstallMode"
+
+  ; Write the uninstall keys for Windows
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "DisplayName" "${GAMENAME}"
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "DisplayVersion" "${VERSION}-${RELEASE}"
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "Publisher" "${PUBLISHER}"
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "URLInfoAbout" "${URL}"
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "NoModify" 1
+  WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}" "NoRepair" 1
+  WriteUninstaller "uninstall.exe"
+
+SectionEnd
+
+; Optional section (can be disabled by the user)
+Section "Start Menu Shortcuts"
+
+  CreateDirectory "$SMPROGRAMS\${GAMENAME}"
+  CreateShortCut "$SMPROGRAMS\${GAMENAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  CreateShortCut "$SMPROGRAMS\${GAMENAME}\${GAMENAME}.lnk" "$INSTDIR\${CLIENT}" "" "$INSTDIR\${SERVER}" 0
+
+SectionEnd
+
+Section "SDL.dll"
+
+  SetOutPath $INSTDIR
+
+  File "SDL.dll"
+
+SectionEnd
+
+Section "libcurl"
+
+  SetOutPath $INSTDIR
+
+  File "libcurl-4.dll"
+
+SectionEnd
+
+Section "OpenAL-Soft library"
+
+  SetOutPath $INSTDIR
+
+  File "OpenAL32.dll"
+
+SectionEnd
+
+;--------------------------------
+
+; Uninstaller
+
+Section "Uninstall"
+
+  ; Remove registry keys
+  DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}"
+  DeleteRegKey SHCTX "Software\${GAME_FSNAME}"
+
+  ; Remove files and uninstaller
+  Delete $INSTDIR\${MODDIR}\pak0.pk3
+  Delete $INSTDIR\${MODDIR}\cgamex86.dll
+  Delete $INSTDIR\${MODDIR}\qagamex86.dll
+  Delete $INSTDIR\${MODDIR}\uix86.dll
+  Delete $INSTDIR\${CLIENT}
+  Delete $INSTDIR\${SERVER}
+
+  Delete $INSTDIR\COPYING.txt
+  Delete $INSTDIR\README.txt
+
+  Delete $INSTDIR\zlib1.dll
+
+  Delete $INSTDIR\SDL.dll
+
+  Delete $INSTDIR\libcurl-4.dll
+
+  Delete $INSTDIR\OpenAL32.dll
+
+  Delete $INSTDIR\uninstall.exe
+
+  ; Remove shortcuts, if any
+  Delete "$SMPROGRAMS\${GAMENAME}\Uninstall.lnk"
+  Delete "$SMPROGRAMS\${GAMENAME}\${GAMENAME}.lnk"
+
+  ; Remove directories used
+  RMDir "$SMPROGRAMS\${GAMENAME}"
+  RMDir "$INSTDIR\${MODDIR}"
+  RMDir "$INSTDIR"
+
+SectionEnd

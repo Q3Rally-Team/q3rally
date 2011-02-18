@@ -1,0 +1,14 @@
+{
+map "q3r_country01"
+longname "Roll On Down The Line"
+fraglimit 5
+type "q3r_racing q3r_team_racing"
+starts "9"
+laps "4"
+length "0.658 miles"
+checkpoints "20"
+observerspots "12"
+weapons "0"
+powerups "0"
+author "Stecki"
+}

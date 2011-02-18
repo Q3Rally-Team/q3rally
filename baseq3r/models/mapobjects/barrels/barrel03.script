@@ -1,0 +1,11 @@
+rally_scripted_object
+{
+	model "models/mapobjects/barrels/barrel03.md3"
+	moveable 1
+	mass 20
+	elasticity 0.6
+	health -1
+	mins -6 -6 -16
+	maxs 6 6 16
+	hitsound "sound/plastic/plastichit.wav"
+}

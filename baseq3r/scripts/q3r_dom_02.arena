@@ -1,0 +1,15 @@
+{
+map "q3r_dom_02"
+longname "Q3R DOM 2"
+timelimit "30"
+capturelimit "300"
+type "q3r_dom"
+starts "12"
+laps "-"
+length "-"
+checkpoints "-"
+observerspots "3"
+weapons "FT GL RL"
+powerups "4"
+author "TheBigBuu"
+}

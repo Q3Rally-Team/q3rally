@@ -1,0 +1,11 @@
+rally_scripted_object
+{
+	model "models/mapobjects/woodpole/pole.md3"
+	moveable 0
+	mass 200
+	elasticity 0.6
+	health 10
+	mins -6 -6 -16
+	maxs 6 6 16
+	hitsound "sound/plastic/plastichit.wav"
+}

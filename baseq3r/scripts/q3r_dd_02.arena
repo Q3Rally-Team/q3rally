@@ -1,0 +1,11 @@
+{
+map "q3r_dd_02"
+longname "Figure of 8"
+fraglimit 20
+type "q3r_dm q3r_team_dm q3r_derby"
+starts "12"
+observerspots "0"
+weapons "8"
+powerups "4"
+author "Perle"
+}

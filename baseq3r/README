@@ -1,0 +1,53 @@
+// Q3Rally Readme File - 02/13/2011 \\
+
+http://www.q3rally.com
+
+Thank you for downloading Q3Rally!
+
+
+/// SYSTEM REQUIREMENTS \\\
+
+* Pentium III 450MHz / AMD K6-2 450MHz or equal
+* 128MB of system memory
+* OpenGL supported video card with 32MB of video memory
+* 700MB of hard drive space
+
+We recommend a 700MHz Pentium III / Athlon with a Geforce2 64mb. 
+
+/// User Data \\\
+
+Screenshots, configurations, and demos that are produced are in a local data directory rather than the game's own directory, if it is supported by the OS.
+
+Where you'll probably find it :
+
+Windows 98/ME: 		C:\Windows\AppData\OpenArena\
+Windows NT/2000/XP: 	C:\Documents and Settings\Username						\Application Data\q3rally\
+Linux: 			/home/username/.openarena/
+Mac OS X:			--- fill out here ---
+
+/// Description \\\
+
+This is a pre-alpha version of Q3Rally. This represents not the complete release of Q3Rally. It is for you to see what we have and what you will expect when the whole game comes out.
+
+/// Source \\\
+
+The Source for content and code is available at http://code.google.com/p/q3rally/source/browse/
+The engine source is also there as well as the VMs source.
+
+/// CREDITS \\\
+
+For credits, read the CREDITS file.
+
+/// FAQ \\\
+
+There's a Frequently asked question thing in work. Will be ready when the game is coming out.
+
+/// Will it cost some money? \\\
+
+$0 budget, spare time, and less than 3 active contributors kinda make things hard :) But if you like you can spend some money through the website DONATE paypal thing.
+
+
+I wish you much fun trying out this pre-alpha and if i have some time for it i will setup a test server for the pre-alpha.
+
+Thanks.
+

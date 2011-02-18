@@ -1,0 +1,12 @@
+rally_scripted_object
+{
+	type 3
+	model "models/mapobjects/barrels/b_bio.md3"
+	moveable 1
+	mass 200
+	elasticity 0.4
+	health 1000
+	mins -8 -8 -13
+	maxs 8 8 13
+	hitsound "sound/metal/fullmetalbang.wav"
+}

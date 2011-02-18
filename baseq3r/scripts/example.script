@@ -1,0 +1,45 @@
+hydrant
+{
+	model "models/mapobjects/hydrant/hydrant"			// md3
+	damageframes "0 4"						// no damage, full damage
+//	frames "0 4 0 10"							// actual frames are frames * damageframes so:
+										// first 5 frames are object animated with no damage
+										// next 5 frames are object animated with 1/5 damage
+										// next 5 frames are object animated with 2/5 damage, etc.
+										// So the animation should have 25 frames all together
+}
+
+waterspray
+{
+	model "models/mapobjects/hydrant/waterspray"		// md3
+	frames "0 10 0 20"						// start frame, end frame, looping frames, fps
+}
+
+// Should all mapobject scripts go into one file per level or should it be one per mapobject?
+// I was thinking it would probably be best if it was one per map object cause then it would be easier to 
+// use a mapobject in more than one map.
+rally_scripted_object
+{
+	type 0
+	model "hydrant"							// model
+	deadmodel "waterspray"						// model after destroyed (water spraying up from ground)
+	moveable 0								// 0 = false, 1 = true
+	mass 50								// not needed for non-moveable, just here as an example
+	health 1000								// -1 is never destroyed, 0 is destroyed on first impact
+	mins "-8 -8 -8"
+	maxs "8 8 8"
+	presound "sound/hydrant/metalcreak"				// looped sound, plays until destroyed
+	hitsound "sound/hydrant/solidmetalbang"			// sound when object is hit
+	destroysound "sound/hydrant/solidmetalbreak"		// sound when object is destroyed
+	postsound "sound/hydrant/waterspray"			// looped sound, plays after destroyed
+	gibs									// list of gib models (5 max)
+	{
+		"models/mapobjects/hydrant/piece1"	-3		// model name, number of these gibs to spawn (-ve number means random up to this amount)
+		"models/mapobjects/hydrant/piece2"	2
+		"models/mapobjects/hydrant/piece3"	1
+		"models/mapobjects/hydrant/piece4"	4
+	}
+	// other things to have possibly:
+	//	mass of each gib type
+	//	more sound options?
+}

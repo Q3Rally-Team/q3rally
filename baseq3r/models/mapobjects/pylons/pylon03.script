@@ -1,0 +1,12 @@
+rally_scripted_object
+{
+	type 6
+	model "models/mapobjects/pylons/pylon03.md3"
+	moveable 0
+	mass 20
+	elasticity 0.6
+	health -1
+	mins -2 -2 0
+	maxs 2 2 30
+	hitsound "sound/plastic/plastichit.wav"
+}

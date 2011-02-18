@@ -1,0 +1,78 @@
+{
+map	            "blitzkrieg3"
+longname	    "Blitzkrieg Base"
+bots	        "assassin skelebot"
+fraglimit	    20
+timelimit		10
+type	        "tourney ffa elimination lms"
+}
+
+{
+map		        "oa_reptctf11"
+longname	    "Colliding in the Factory"
+type		    "ctf oneflag harvester obelisk ctfelim dd"
+}
+
+
+{
+map	            "am_underworks"
+longname	    "Under Working"
+fraglimit	    20
+bots            "kyonshi"
+type	        "tourney ffa lms"
+}
+
+{
+map	            "am_underworks2"
+longname	    "Under Working 2.0"
+bots	        "assassin skelebot"
+fraglimit	    20
+timelimit		10
+type	        "tourney ffa lms elimination dom"
+}
+
+
+
+{
+map             "ps9ctf"
+longname        "ps9ctf"
+type            "ctf ctfelimination overload"
+}
+
+{
+map             "ps37ctf2"
+longname        "ps37ctf2"
+type            "ctf ctfelimination overload"
+}
+
+{
+map	            "ctf_inyard"
+longname	    "Inner Yard"
+bots	        "tony penguin sarge grism grunt"
+capturelimit    8
+type	        "ctf, dom, oneflag, harvester, obelisk"
+}
+
+{
+map	            "oa_koth2"
+longname	    "Floating Tower"
+bots	        "grunt major s_marine beret"
+fraglimit       20
+type	        "ffa, single, tdm, dom, elimination, lms"
+}
+
+{
+map	            "ctf_compromise"
+longname	    "Foul Compromise"
+bots	        "grunt major s_marine beret"
+capturelimit     8
+type	        "ctf, dom, dd, oneflag"
+}
+
+{
+map	            "ctf_gate1"
+longname	    ""
+bots	        "tony penguin sarge grism grunt"
+capturelimit    8
+type	        "ctf, dom, dd, oneflag, harvester, obelisk"
+}

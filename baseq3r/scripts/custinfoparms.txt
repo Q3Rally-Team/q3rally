@@ -1,0 +1,25 @@
+// Names are limited to 16 characters
+// Max of 64 infoParms
+//q3rally custom surface parms
+//CONTENTS_ flags
+{
+
+}
+
+//SURF_ flags checkout surfaceflags.h
+//Coefficients of friction are defined in bg_phsics.h;
+//they just need to be applied properly to 'surfaceparm'.
+//When using surfaceparm, use the definitions used below(case sensitive, i think).
+//Loading arenas with custom surface parameters 'surfaceparm' that 
+//aren't defined properly will crash openarena.exe.
+//Finally found out that gravel and asphault have been causing crashes(do not use, for now) --tbb
+{
+SURF_METAL	0x1000
+SURF_GRASS	0x80000
+SURF_ASPHALT	0x100000
+SURF_WET	0x200000
+SURF_SNOW	0x400000
+SURF_GRAVEL	0x800000
+SURF_ICE        0x1000000
+SURF_DIRT       0x2000000
+}

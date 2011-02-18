@@ -1,0 +1,140 @@
+{
+name		Anarki
+model		roadster/blue
+aifile		bots/angelyss_c.c
+}
+
+{
+name		Bones
+model		reaper/yellow
+aifile		bots/arachna_c.c
+}
+
+{
+name		Doom
+model		mini/blue
+aifile		bots/ayumi_c.c
+}
+
+{
+name		Grunt
+model		alpine/stomped
+aifile		bots/beret_c.c
+}
+
+{
+name		Hunter
+model		raptor/jp
+aifile		bots/dark_c.c
+}
+
+{
+name		Klesk
+model		slingshot/yellow
+aifile		bots/gargoyle_c.c
+}
+
+{
+name		Major
+model		sidepipe/green
+aifile		bots/grism_c.c
+}
+
+{
+name		Mynx
+model		alpine/green
+aifile		bots/grunt_c.c
+}
+
+{
+name		Orbb
+model		reaper/green
+aifile		bots/jenna_c.c
+}
+
+{
+name		Sarge
+model		raptor/black
+aifile		bots/kyonshi_c.c
+}
+
+{
+name		Tankjr
+model		mini/green
+aifile		bots/liz_c.c
+}
+
+{
+name		Bob
+model		speed12/blue
+aifile		bots/major_c.c
+}
+
+{
+name		Jack
+model		Audi_A8/black
+aifile		bots/merman_c.c
+}
+
+
+{
+name		Julie
+model		Audi_A8/white
+aifile		bots/neko_c.c
+}
+
+{
+name		Jasper
+model		Audi_A8/brown
+aifile		bots/penguin_c.c
+}
+
+{
+name		Officer
+model		police/police
+aifile		bots/rai_c.c
+}
+
+
+{
+name		Jackson
+model		police/skodablue
+aifile		bots/sarge_c.c
+}
+
+{
+name		Paul
+model		Audi_TT/red
+aifile		bots/merman_c.c
+}
+
+{
+name		Perry
+model		Audi_TT/blue
+aifile		bots/merman_c.c
+}
+
+{
+name		Michael
+model		Ferrari_enzo/red
+aifile		bots/neko_c.c
+}
+
+
+{
+name		Darkman
+model		Ferrari_enzo/darkship
+aifile		bots/penguin_c.c
+}
+
+{
+name		Rubens
+model		Ferrari_enzo/default
+aifile		bots/rai_c.c
+}
+
+{
+name		Chevrolet Nova
+model		chevrolet_nova/default
+aifile		bots/rai_c.c
+}

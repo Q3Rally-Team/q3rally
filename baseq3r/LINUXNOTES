@@ -1,0 +1,5 @@
+If it doesn't start up at all, you may need libopenal installed.
+
+If It still doesn't start up at all, you may need libvorbis installed. 
+
+If it STILL doesn't start up at all, you may not have hardware OpenGL accelleration. *This is absolutely required*.  Install appropriate video drivers for your video hardware.  You can still attempt to play the game in software mode by adding +r_allowSoftwareGL 1, but that's stupid and for 1fps-loving insane peoples. Don't try this at all.

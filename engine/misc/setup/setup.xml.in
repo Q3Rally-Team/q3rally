@@ -1,0 +1,77 @@
+<?xml version="1.0" standalone="yes"?>
+<install product="q3rally"
+	desc="Q3Rally"
+	version="VERSION"
+	update_url="http://www.q3rally.org/updates.txt"
+	promptbinaries="yes"
+	reinstall="yes"
+	nopromptoverwrite="yes"
+	nomenuitems="yes"
+	postinstall="install-desktop-files.sh"
+	preuninstall="preuninstall.sh">
+  <readme>
+    README
+  </readme>
+
+  <component name="Default" version="VERSION" default="yes">
+ifelse(HAVE_X86_64,yes,dnl
+    <option install="true" arch="x86_64">
+     Q3Rally x86_64 binaries
+     <binary libc="any" symlink="q3rally" icon="q3rally.png" name="q3rally">q3rally</binary>
+     <files>
+       q3rally.x86_64.tar
+     </files>
+     <help>you need the binaries to play the game</help>
+    </option>
+)dnl
+ifelse(HAVE_I386,yes,dnl
+    <option install="true" if="|(x86,x86_64)">
+     Q3Rally x86 (32 bit) binaries
+     <binary libc="any" symlink="q3rally" icon="q3rally.png" name="q3rally">q3rally</binary>
+     <files>
+       q3rally.i386.tar
+     </files>
+     <help>you need the binaries to play the game</help>
+    </option>
+)dnl
+ifelse(HAVE_PPC,yes,dnl
+    <option install="true" if="|(ppc,ppc64)">
+     <binary libc="any" symlink="q3rally" icon="q3rally.png" name="q3rally">q3rally</binary>
+     Q3Rally ppc binaries
+     <files>
+       q3rally.ppc.tar
+     </files>
+     <help>you need the binaries to play the game</help>
+    </option>
+)dnl
+ifelse(HAVE_PPC64,yes,dnl
+    <option install="true" arch="ppc64">
+     <binary libc="any" symlink="q3rally" icon="q3rally.png" name="q3rally">q3rally</binary>
+     Q3Rally ppc64 binaries
+     <files>
+       q3rally.ppc64.tar
+     </files>
+     <help>you need the binaries to play the game</help>
+    </option>
+)dnl
+    <option install="true">
+     Desktop menu entries
+     <files mode="0755">
+       xdg-desktop-menu
+     </files>
+     <files>
+       q3rally.desktop.in
+     </files>
+    </option>
+
+    <option install="true" show="false">
+      shared data
+      <files>
+	baseq3r/assets0.pk3
+	q3rally.png
+	COPYING
+      </files>
+    </option>
+  </component>
+
+</install>
