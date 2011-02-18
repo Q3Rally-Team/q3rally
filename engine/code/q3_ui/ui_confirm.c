@@ -49,6 +49,9 @@ typedef struct {
 	const char *	question;
 	void			(*draw)( void );
 	void			(*action)( qboolean result );
+	
+	int style;
+	const char **lines;
 } confirmMenu_t;
 
 
@@ -113,6 +116,30 @@ static sfxHandle_t ConfirmMenu_Key( int key ) {
 
 /*
 =================
+MessaheMenu_Draw
+=================
+*/
+static void MessageMenu_Draw( void ) {
+	int i,y;
+	
+	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
+	
+	y = 188;
+	for(i=0; s_confirm.lines[i]; i++)
+	{
+		UI_DrawProportionalString( 320, y, s_confirm.lines[i], s_confirm.style, color_red );
+		y += 18;
+	}
+
+	Menu_Draw( &s_confirm.menu );
+
+	if( s_confirm.draw ) {
+		s_confirm.draw();
+	}
+}
+
+/*
+=================
 ConfirmMenu_Draw
 =================
 */
@@ -120,9 +147,9 @@ static void ConfirmMenu_Draw( void ) {
 	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
 
 	// BAGPUSS CHANGED TO TEXT_COLOR_NORMAL
-//	UI_DrawProportionalString( 320, 204, s_confirm.question, UI_CENTER|UI_INVERSE, color_red );
+//	UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, color_red );
 //	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, color_red );
-	UI_DrawProportionalString( 320, 204, s_confirm.question, UI_CENTER|UI_INVERSE, text_color_normal );
+	UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, text_color_normal );
 	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, text_color_normal );
 	// END
 
@@ -146,10 +173,10 @@ void ConfirmMenu_Cache( void ) {
 
 /*
 =================
-UI_ConfirmMenu
+UI_ConfirmMenu_Stlye
 =================
 */
-void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) ) {
+void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) ) {
 	uiClientState_t	cstate;
 	int	n1, n2, n3;
 	int	l1, l2, l3;
@@ -170,6 +197,7 @@ void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)(
 	s_confirm.question = question;
 	s_confirm.draw = draw;
 	s_confirm.action = action;
+	s_confirm.style = style;
 
 	s_confirm.menu.draw       = ConfirmMenu_Draw;
 	s_confirm.menu.key        = ConfirmMenu_Key;
@@ -218,4 +246,63 @@ void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)(
 	UI_PushMenu( &s_confirm.menu );
 
 	Menu_SetCursorToItem( &s_confirm.menu, &s_confirm.no );
+}
+
+/*
+=================
+UI_ConfirmMenu
+=================
+*/
+void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) ) {
+	UI_ConfirmMenu_Style(question, UI_CENTER|UI_INVERSE, draw, action);
+}
+
+/*
+=================
+UI_Message
+hacked over from Confirm stuff
+=================
+*/
+void UI_Message( const char **lines ) {
+	uiClientState_t	cstate;
+	int n1, l1;
+	
+	// zero set all our globals
+	memset( &s_confirm, 0, sizeof(s_confirm) );
+
+	ConfirmMenu_Cache();
+
+	n1 = UI_ProportionalStringWidth( "OK" );
+	l1 = 320 - ( n1 / 2 );
+	
+	s_confirm.lines = lines;
+	s_confirm.style = UI_CENTER|UI_INVERSE|UI_SMALLFONT;
+
+	s_confirm.menu.draw       = MessageMenu_Draw;
+	s_confirm.menu.key        = ConfirmMenu_Key;
+	s_confirm.menu.wrapAround = qtrue;
+	
+	trap_GetClientState( &cstate );
+	if ( cstate.connState >= CA_CONNECTED ) {
+		s_confirm.menu.fullscreen = qfalse;
+	}
+	else {
+		s_confirm.menu.fullscreen = qtrue;
+	}
+
+	s_confirm.yes.generic.type		= MTYPE_PTEXT;      
+	s_confirm.yes.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
+	s_confirm.yes.generic.callback	= ConfirmMenu_Event;
+	s_confirm.yes.generic.id		= ID_CONFIRM_YES;
+	s_confirm.yes.generic.x			= l1;
+	s_confirm.yes.generic.y			= 280;
+	s_confirm.yes.string			= "OK";
+	s_confirm.yes.color				= color_red;
+	s_confirm.yes.style				= UI_LEFT;
+
+	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );
+	
+	UI_PushMenu( &s_confirm.menu );
+
+	Menu_SetCursorToItem( &s_confirm.menu, &s_confirm.yes );
 }

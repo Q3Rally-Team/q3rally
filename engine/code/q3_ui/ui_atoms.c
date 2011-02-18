@@ -492,7 +492,7 @@ UI_DrawBannerString
 static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 {
 	const char* s;
-	char	ch;
+	unsigned char	ch;
 	float	ax;
 	float	ay;
 	float	aw;
@@ -504,23 +504,16 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 
 	// draw the colored text
 	trap_R_SetColor( color );
-
-// STONELANCE
-//	ax = x * uis.scale + uis.bias;
-//	ay = y * uis.scale;
-	ax = x * uis.screenXScale + uis.bias;
-	ay = y * uis.screenYScale;
-// END
+	
+	ax = x * uis.xscale + uis.bias;
+	ay = y * uis.yscale;
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-// STONELANCE
-//			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.scale;
-			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.screenXScale;
-// END
+			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.xscale;
 		}
 // STONELANCE
 //		else if ( ch >= 'A' && ch <= 'Z' ) {
@@ -528,8 +521,7 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 		else if ( ch >= 'A' && ch <= 'Z' || ch == '3') {
 			if ( ch == '3' ) {
 				ch = 26;
-			}
-			else {
+			} else {
 				ch -= 'A';
 			}
 // END
@@ -537,17 +529,10 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 			frow = (float)propMapB[ch][1] / 256.0f;
 			fwidth = (float)propMapB[ch][2] / 256.0f;
 			fheight = (float)PROPB_HEIGHT / 256.0f;
-// STONELANCE
-//			aw = (float)propMapB[ch][2] * uis.scale;
-//			ah = (float)PROPB_HEIGHT * uis.scale;
-			aw = (float)propMapB[ch][2] * uis.screenXScale;
-			ah = (float)PROPB_HEIGHT * uis.screenYScale;
-// END
+			aw = (float)propMapB[ch][2] * uis.xscale;
+			ah = (float)PROPB_HEIGHT * uis.yscale;
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, uis.charsetPropB );
-// STONELANCE
-//			ax += (aw + (float)PROPB_GAP_WIDTH * uis.scale);
-			ax += (aw + (float)PROPB_GAP_WIDTH * uis.screenXScale);
-// END
+			ax += (aw + (float)PROPB_GAP_WIDTH * uis.xscale);
 		}
 		s++;
 	}
@@ -625,10 +610,10 @@ int UI_ProportionalStringWidth( const char* str ) {
 static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t color, float sizeScale, qhandle_t charset )
 {
 	const char* s;
-	char	ch;
+	unsigned char	ch;
 	float	ax;
 	float	ay;
-	float	aw;
+	float	aw = 0;
 	float	ah;
 	float	frow;
 	float	fcol;
@@ -637,42 +622,28 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 
 	// draw the colored text
 	trap_R_SetColor( color );
-
-// STONELANCE
-//	ax = x * uis.scale + uis.bias;
-//	ay = y * uis.scale;
-	ax = x * uis.screenXScale + uis.bias;
-	ay = y * uis.screenYScale;
-// END
+	
+	ax = x * uis.xscale + uis.bias;
+	ay = y * uis.yscale;
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-// STONELANCE
-//			aw = (float)PROP_SPACE_WIDTH * uis.scale * sizeScale;
-			aw = (float)PROP_SPACE_WIDTH * uis.screenXScale * sizeScale;
-// END
+			aw = (float)PROP_SPACE_WIDTH * uis.xscale * sizeScale;
 		}
 		else if ( propMap[ch][2] != -1 ) {
 			fcol = (float)propMap[ch][0] / 256.0f;
 			frow = (float)propMap[ch][1] / 256.0f;
 			fwidth = (float)propMap[ch][2] / 256.0f;
 			fheight = (float)PROP_HEIGHT / 256.0f;
-// STONELANCE
-//			aw = (float)propMap[ch][2] * uis.scale * sizeScale;
-//			ah = (float)PROP_HEIGHT * uis.scale * sizeScale;
-			aw = (float)propMap[ch][2] * uis.screenXScale * sizeScale;
-			ah = (float)PROP_HEIGHT * uis.screenYScale * sizeScale;
-// END
+			aw = (float)propMap[ch][2] * uis.xscale * sizeScale;
+			ah = (float)PROP_HEIGHT * uis.yscale * sizeScale;
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, charset );
 		}
 
-// STONELANCE
-//		ax += (aw + (float)PROP_GAP_WIDTH * uis.scale * sizeScale);
-		ax += (aw + (float)PROP_GAP_WIDTH * uis.screenXScale * sizeScale);
-// END
+		ax += (aw + (float)PROP_GAP_WIDTH * uis.xscale * sizeScale);
 		s++;
 	}
 
@@ -766,6 +737,70 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 
 /*
 =================
+UI_DrawProportionalString_Wrapped
+=================
+*/
+void UI_DrawProportionalString_AutoWrapped( int x, int y, int xmax, int ystep, const char* str, int style, vec4_t color ) {
+	int width;
+	char *s1,*s2,*s3;
+	char c_bcp;
+	char buf[1024];
+	float   sizeScale;
+
+	if (!str || str[0]=='\0')
+		return;
+	
+	sizeScale = UI_ProportionalSizeScale( style );
+	
+	Q_strncpyz(buf, str, sizeof(buf));
+	s1 = s2 = s3 = buf;
+
+	while (1) {
+		do {
+			s3++;
+		} while (*s3!=' ' && *s3!='\0');
+		c_bcp = *s3;
+		*s3 = '\0';
+		width = UI_ProportionalStringWidth(s1) * sizeScale;
+		*s3 = c_bcp;
+		if (width > xmax) {
+			if (s1==s2)
+			{
+				// fuck, don't have a clean cut, we'll overflow
+				s2 = s3;
+			}
+			*s2 = '\0';
+			UI_DrawProportionalString(x, y, s1, style, color);
+			y += ystep;
+			if (c_bcp == '\0')
+      {
+        // that was the last word
+        // we could start a new loop, but that wouldn't be much use
+        // even if the word is too long, we would overflow it (see above)
+        // so just print it now if needed
+        s2++;
+        if (*s2 != '\0') // if we are printing an overflowing line we have s2 == s3
+          UI_DrawProportionalString(x, y, s2, style, color);
+				break; 
+      }
+			s2++;
+			s1 = s2;
+			s3 = s2;
+		}
+		else
+		{
+			s2 = s3;
+			if (c_bcp == '\0') // we reached the end
+			{
+				UI_DrawProportionalString(x, y, s1, style, color);
+				break;
+			}
+		}
+	}
+}
+
+/*
+=================
 UI_DrawString2
 =================
 */
@@ -792,18 +827,10 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 // STONELANCE - move font closer together
 	x -= 1;
 // END
-// STONELANCE
-/*
-	ax = x * uis.scale + uis.bias;
-	ay = y * uis.scale;
-	aw = charw * uis.scale;
-	ah = charh * uis.scale;
-*/
-	ax = x * uis.screenXScale + uis.bias;
-	ay = y * uis.screenYScale;
-	aw = charw * uis.screenXScale;
-	ah = charh * uis.screenYScale;
-// END
+	ax = x * uis.xscale + uis.bias;
+	ay = y * uis.yscale;
+	aw = charw * uis.xscale;
+	ah = charh * uis.yscale;
 
 	s = str;
 	while ( *s )
@@ -830,7 +857,7 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 
 // STONELANCE - move font closer together
 //		ax += aw;
-		ax += aw - 2 * uis.screenXScale;
+		ax += aw - 2 * uis.xscale;
 // END
 		s++;
 	}
@@ -963,7 +990,6 @@ static void NeedCDKeyAction( qboolean result ) {
 	}
 }
 
-
 void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 	// this should be the ONLY way the menu system is brought up
 	// enusure minumum menu data is cached
@@ -980,10 +1006,10 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 // END
 		return;
 	case UIMENU_NEED_CD:
-		UI_ConfirmMenu( "Insert the CD", NULL, NeedCDAction );
+		UI_ConfirmMenu( "Insert the CD", 0, NeedCDAction );
 		return;
 	case UIMENU_BAD_CD_KEY:
-		UI_ConfirmMenu( "Bad CD Key", NULL, NeedCDKeyAction );
+		UI_ConfirmMenu( "Bad CD Key", 0, NeedCDKeyAction );
 		return;
 	case UIMENU_INGAME:
 		/*
@@ -994,6 +1020,14 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		trap_Cvar_Set( "cl_paused", "1" );
 		UI_InGameMenu();
 		return;
+		
+	case UIMENU_TEAM:
+	case UIMENU_POSTGAME:
+	default:
+#ifndef NDEBUG
+	  Com_Printf("UI_SetActiveMenu: bad enum %d\n", menu );
+#endif
+	  break;
 	}
 }
 
@@ -1047,10 +1081,16 @@ void UI_MouseEvent( int dx, int dy )
 // END
 
 	uis.cursorx += dx;
-	if (uis.cursorx < 0)
-		uis.cursorx = 0;
-	else if (uis.cursorx > SCREEN_WIDTH)
-		uis.cursorx = SCREEN_WIDTH;
+	// ZTM: Allow cursor to move to edge of screen in wide screen
+	if (uis.cursorx < -uis.bias)
+		uis.cursorx = -uis.bias;
+	else if (uis.cursorx > SCREEN_WIDTH+uis.bias)
+		uis.cursorx = SCREEN_WIDTH+uis.bias;
+//	if (uis.cursorx < 0)
+//		uis.cursorx = 0;
+//	else if (uis.cursorx > SCREEN_WIDTH)
+//		uis.cursorx = SCREEN_WIDTH;
+	// END
 
 	uis.cursory += dy;
 	if (uis.cursory < 0)
@@ -1155,6 +1195,7 @@ void UI_Cache_f( void ) {
 	UI_BotSelectMenu_Cache();
 	UI_CDKeyMenu_Cache();
 	UI_ModsMenu_Cache();
+
 }
 
 
@@ -1240,19 +1281,16 @@ void UI_Init( void ) {
 
 	UI_InitGameinfo();
 
-
 	// cache redundant calulations
 	trap_GetGlconfig( &uis.glconfig );
 
 	// for 640x480 virtualized screen
-// STONELANCE
-//	uis.scale = uis.glconfig.vidHeight * (1.0/480.0);
-	uis.screenXScale = uis.glconfig.vidWidth * (1.0/640.0);
-	uis.screenYScale = uis.glconfig.vidHeight * (1.0/480.0);
-// END
+	uis.xscale = uis.glconfig.vidWidth * (1.0/640.0);
+	uis.yscale = uis.glconfig.vidHeight * (1.0/480.0);
 	if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
 		// wide screen
 		uis.bias = 0.5 * ( uis.glconfig.vidWidth - ( uis.glconfig.vidHeight * (640.0/480.0) ) );
+		uis.xscale = uis.yscale;
 	}
 	else {
 		// no wide screen
@@ -1303,7 +1341,6 @@ void UI_Init( void ) {
 	// initialize the menu system
 	Menu_Cache();
 
-
 	uis.activemenu = NULL;
 	uis.menusp     = 0;
 }
@@ -1317,18 +1354,10 @@ Adjusted for resolution and screen aspect ratio
 */
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	// expect valid pointers
-// STONELANCE
-/*
-	*x = *x * uis.scale + uis.bias;
-	*y *= uis.scale;
-	*w *= uis.scale;
-	*h *= uis.scale;
-*/
-	*x = *x * uis.screenXScale + uis.bias;
-	*y *= uis.screenYScale;
-	*w *= uis.screenXScale;
-	*h *= uis.screenYScale;
-// END
+	*x = *x * uis.xscale + uis.bias;
+	*y *= uis.yscale;
+	*w *= uis.xscale;
+	*h *= uis.yscale;
 }
 
 void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
@@ -1546,22 +1575,19 @@ void UI_Refresh( int realtime )
 			uis.firstdraw = qfalse;
 		}
 	}
-//=================
-//  draw cursor
-//=================
+
+	// draw cursor
 
 //  UI_SetColor( NULL );
 //  UI_DrawCursor( uis.cursorx-24, uis.cursory-24, 48, 48, uis.cursorModel );
 
-UI_SetColor( NULL );
-UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
+	UI_SetColor( NULL );
+	UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
 
 //	if (!UI_DrawCursor( uis.cursorx-24, uis.cursory-24, 48, 48, uis.cursorModel )){
 //  UI_SetColor( NULL );
 //  UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
 //	}
-
-
 
 #ifndef NDEBUG
 	if (uis.debug)

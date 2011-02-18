@@ -126,6 +126,7 @@ extern vmCvar_t	ui_server16;
 
 extern vmCvar_t	ui_cdkey;
 extern vmCvar_t	ui_cdkeychecked;
+extern vmCvar_t	ui_ioq3;
 
 // STONELANCE
 extern vmCvar_t	ui_favoritecar1;
@@ -190,29 +191,29 @@ extern vmCvar_t	ui_mainViewRenderLevel;
 #define SB_HIDE					16
 // END
 
-#define QMF_BLINK				0x00000001
-#define QMF_SMALLFONT			0x00000002
-#define QMF_LEFT_JUSTIFY		0x00000004
-#define QMF_CENTER_JUSTIFY		0x00000008
-#define QMF_RIGHT_JUSTIFY		0x00000010
-#define QMF_NUMBERSONLY			0x00000020	// edit field is only numbers
-#define QMF_HIGHLIGHT			0x00000040
-#define QMF_HIGHLIGHT_IF_FOCUS	0x00000080	// steady focus
-#define QMF_PULSEIFFOCUS		0x00000100	// pulse if focus
-#define QMF_HASMOUSEFOCUS		0x00000200
-#define QMF_NOONOFFTEXT			0x00000400
-#define QMF_MOUSEONLY			0x00000800	// only mouse input allowed
-#define QMF_HIDDEN				0x00001000	// skips drawing
-#define QMF_GRAYED				0x00002000	// grays and disables
-#define QMF_INACTIVE			0x00004000	// disables any input
-#define QMF_NODEFAULTINIT		0x00008000	// skip default initialization
-#define QMF_OWNERDRAW			0x00010000
-#define QMF_PULSE				0x00020000
-#define QMF_LOWERCASE			0x00040000	// edit field is all lower case
-#define QMF_UPPERCASE			0x00080000	// edit field is all upper case
-#define QMF_SILENT				0x00100000
+#define QMF_BLINK				((unsigned int) 0x00000001)
+#define QMF_SMALLFONT			((unsigned int) 0x00000002)
+#define QMF_LEFT_JUSTIFY		((unsigned int) 0x00000004)
+#define QMF_CENTER_JUSTIFY		((unsigned int) 0x00000008)
+#define QMF_RIGHT_JUSTIFY		((unsigned int) 0x00000010)
+#define QMF_NUMBERSONLY			((unsigned int) 0x00000020)	// edit field is only numbers
+#define QMF_HIGHLIGHT			((unsigned int) 0x00000040)
+#define QMF_HIGHLIGHT_IF_FOCUS	((unsigned int) 0x00000080)	// steady focus
+#define QMF_PULSEIFFOCUS		((unsigned int) 0x00000100)	// pulse if focus
+#define QMF_HASMOUSEFOCUS		((unsigned int) 0x00000200)
+#define QMF_NOONOFFTEXT			((unsigned int) 0x00000400)
+#define QMF_MOUSEONLY			((unsigned int) 0x00000800)	// only mouse input allowed
+#define QMF_HIDDEN				((unsigned int) 0x00001000)	// skips drawing
+#define QMF_GRAYED				((unsigned int) 0x00002000)	// grays and disables
+#define QMF_INACTIVE			((unsigned int) 0x00004000)	// disables any input
+#define QMF_NODEFAULTINIT		((unsigned int) 0x00008000)	// skip default initialization
+#define QMF_OWNERDRAW			((unsigned int) 0x00010000)
+#define QMF_PULSE				((unsigned int) 0x00020000)
+#define QMF_LOWERCASE			((unsigned int) 0x00040000)	// edit field is all lower case
+#define QMF_UPPERCASE			((unsigned int) 0x00080000)	// edit field is all upper case
+#define QMF_SILENT				((unsigned int) 0x00100000)
 // STONELANCE
-#define QMF_SCROLL_ONLY			0x00200000
+#define QMF_SCROLL_ONLY			((unsigned int) 0x00200000)
 // END
 
 // callback notifications
@@ -256,7 +257,7 @@ typedef struct
 	int	bottom;
 	menuframework_s *parent;
 	int menuPosition;
-	unsigned flags;
+	unsigned int flags;
 
 	void (*callback)( void *self, int event );
 	void (*statusbar)( void *self );
@@ -460,6 +461,8 @@ extern void UI_InGameMenu(void);
 //
 extern void ConfirmMenu_Cache( void );
 extern void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) );
+extern void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) );
+extern void UI_Message( const char **lines );
 
 //
 // ui_setup.c
@@ -725,17 +728,16 @@ typedef struct {
 	qhandle_t			sb_u1;
 	qhandle_t			sb_d0;
 	qhandle_t			sb_d1;
-//	float				scale;
-	float				screenXScale;
-	float				screenYScale;
 // END
+	float				xscale;
+	float				yscale;
 	float				bias;
 	qboolean			demoversion;
 	qboolean			firstdraw;
 
 // STONELANCE
 	qhandle_t			cursorModel;
-	qhandle_t     cursorShader;
+	qhandle_t			cursorShader;
 	int					transitionIn;
 	int					transitionOut;
 	qboolean			mainMenu;
@@ -780,6 +782,7 @@ extern void			UI_LerpColor(vec4_t a, vec4_t b, vec4_t c, float t);
 extern void			UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color );
 extern float		UI_ProportionalSizeScale( int style );
 extern void			UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
+extern void			UI_DrawProportionalString_AutoWrapped( int x, int ystart, int xmax, int ystep, const char* str, int style, vec4_t color );
 extern int			UI_ProportionalStringWidth( const char* str );
 extern void			UI_DrawString( int x, int y, const char* str, int style, vec4_t color );
 extern void			UI_DrawChar( int x, int y, int ch, int style, vec4_t color );
@@ -846,6 +849,7 @@ void			trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void			trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void			trap_FS_FCloseFile( fileHandle_t f );
 int				trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
+int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 qhandle_t		trap_R_RegisterModel( const char *name );
 qhandle_t		trap_R_RegisterSkin( const char *name );
 qhandle_t		trap_R_RegisterShaderNoMip( const char *name );
@@ -877,7 +881,7 @@ int				trap_LAN_GetServerCount( int source );
 void			trap_LAN_GetServerAddressString( int source, int n, char *buf, int buflen );
 void			trap_LAN_GetServerInfo( int source, int n, char *buf, int buflen );
 int				trap_LAN_GetPingQueueCount( void );
-int				trap_LAN_ServerStatus( char *serverAddress, char *serverStatus, int maxLen );
+int				trap_LAN_ServerStatus( const char *serverAddress, char *serverStatus, int maxLen );
 void			trap_LAN_ClearPing( int n );
 void			trap_LAN_GetPing( int n, char *buf, int buflen, int *pingtime );
 void			trap_LAN_GetPingInfo( int n, char *buf, int buflen );
@@ -1031,4 +1035,3 @@ void RankStatus_Cache( void );
 void UI_RankStatusMenu( void );
 
 #endif
-
