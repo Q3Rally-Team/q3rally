@@ -340,14 +340,6 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 		return qfalse;
 	}
 
-// Q3Rally Code Start	
-	if (g_gametype.integer == GT_DOMINATION)
-	{
-      RegisterItem(BG_FindItemForPowerup(PW_SIGILWHITE));
-      RegisterItem(BG_FindItemForPowerup(PW_SIGILRED));
-      RegisterItem(BG_FindItemForPowerup(PW_SIGILBLUE));
-  }
-// Q3Rally Code END
 
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
@@ -362,11 +354,6 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 				}
 			}
 
-      if ( item->giType == IT_TEAM && g_gametype.integer == GT_DOMINATION ) {
-          item = BG_FindItemForPowerup(PW_SIGILWHITE);
-          ent->classname = item->classname;
-          ent->r.svFlags = SVF_BROADCAST;
-          }
           
 			G_SpawnItem( ent, item );
 			return qtrue;

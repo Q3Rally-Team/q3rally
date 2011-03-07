@@ -467,7 +467,6 @@ qboolean CG_DrawHUD( void ) {
 	case GT_DEATHMATCH:
 	case GT_TEAM:
 	case GT_CTF:
-	case GT_DOMINATION:
 		CG_DrawHUD_Scores(264, 130);
 
 		break;

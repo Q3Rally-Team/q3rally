@@ -149,8 +149,8 @@ static const char *gametype_items[] = {
 
 // STONELANCE
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
-static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_DERBY, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_DOMINATION};
-static int gametype_remap2[] = {0, 1, 0, 2, 3, 4, 5, 6, 7, 8};
+static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_DERBY, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF};
+static int gametype_remap2[] = {0, 1, 0, 2, 3, 4, 5, 6, 7};
 
 int		allowLength[3];
 int		reversable;
@@ -422,11 +422,7 @@ static int GametypeBits( char *string ) {
 			bits |= 1 << GT_CTF;
 			continue;
 		}
-		
-		if( Q_stricmp( token, "q3r_dom" ) == 0 ) {
-			bits |= 1 << GT_DOMINATION;
-			continue;
-		}
+
 	}
 
 	return bits;
@@ -1456,13 +1452,6 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_ctf_friendlt", friendlyfire );
 		break;
 		
-	case GT_DOMINATION:
-	  trap_Cvar_SetValue ("g_dominationSpawnStyle", Com_Clamp( 0, dominationSpawnStyle, dominationSpawnStyle ) );
-    trap_Cvar_SetValue ("cg_sigilLocator", Com_Clamp( 1, sigillocator, sigillocator) );
-    trap_Cvar_SetValue( "fraglimit", fraglimit );
-		trap_Cvar_SetValue( "timelimit", timelimit );
-		trap_Cvar_SetValue( "friendlt", friendlyfire );
-		break;
 	}
 
 	trap_Cvar_SetValue( "sv_maxclients", Com_Clamp( 0, 12, maxclients ) );
@@ -2243,9 +2232,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.fraglimit.field.widthInChars = 3;
 		s_serveroptions.fraglimit.field.maxchars     = 3;
 	}
-	else if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_DOMINATION ) {
-//	if( s_serveroptions.gametype != GT_CTF ) {
-// END
+	if( s_serveroptions.gametype != GT_CTF ) {
 		s_serveroptions.fraglimit.generic.type       = MTYPE_FIELD;
 		s_serveroptions.fraglimit.generic.name       = "Frag Limit:";
 		s_serveroptions.fraglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -2355,23 +2342,6 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.hostname.field.widthInChars = 18;
 		s_serveroptions.hostname.field.maxchars     = 64;
 	}
-
-  if (s_serveroptions.gametype == GT_DOMINATION) {
-    y += BIGCHAR_HEIGHT+2;
-    s_serveroptions.dominationSpawnStyle.generic.type  = MTYPE_SPINCONTROL;
-    s_serveroptions.dominationSpawnStyle.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-    s_serveroptions.dominationSpawnStyle.generic.x     = OPTIONS_X;
-    s_serveroptions.dominationSpawnStyle.generic.y     = y;
-    s_serveroptions.dominationSpawnStyle.generic.name  = "Spawn Style:";
-    s_serveroptions.dominationSpawnStyle.itemnames     = dtfspawn_list;
-
-    y += BIGCHAR_HEIGHT+2;
-    s_serveroptions.sigillocator.generic.type   = MTYPE_RADIOBUTTON;
-    s_serveroptions.sigillocator.generic.flags  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-    s_serveroptions.sigillocator.generic.x      = OPTIONS_X;
-    s_serveroptions.sigillocator.generic.y      = y;
-    s_serveroptions.sigillocator.generic.name   = "Flag Locator:";
-  }
 
 	y = 80;
 	s_serveroptions.botSkill.generic.type			= MTYPE_SPINCONTROL;
@@ -2502,7 +2472,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 // STONELANCE
 	if( s_serveroptions.gametype != GT_DERBY ) {
 // END
-		if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_DOMINATION ) {
+		if( s_serveroptions.gametype != GT_CTF ) {
 			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
 		}
 		else {
@@ -2578,11 +2548,6 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	if( s_serveroptions.multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
 	}
-
-  if (s_serveroptions.gametype == GT_DOMINATION) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationSpawnStyle );
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.sigillocator );
-  }
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );

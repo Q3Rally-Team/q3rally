@@ -693,11 +693,6 @@ static void ArenaServers_UpdateMenu( void ) {
                         }
                         break;
                 
-                case GAMES_DOMINATION:
-                        if( servernodeptr->gametype != GT_DOMINATION ) {
-                                continue;
-                        }
-                        break;
                 }
 
 

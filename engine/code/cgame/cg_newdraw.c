@@ -1222,7 +1222,6 @@ const char *CG_GameTypeString() {
 		return "Team Deathmatch";
 	} else if ( cgs.gametype == GT_CTF ) {
 		return "Capture the Flag";
-	} else if ( cgs.gametype == GT_DOMINATION ) {
 	} else if ( cgs.gametype == GT_1FCTF ) {
 		return "One Flag CTF";
 	} else if ( cgs.gametype == GT_OBELISK ) {

@@ -738,10 +738,6 @@ static void CG_DrawRallyStatusBar( void ) {
 		return;
 	}
 
-// draw the dtf sigils
-
-// if ( cgs.gametype == GT_DOMINATION )
-// CG_DrawSigilHUD();
 
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
@@ -3154,93 +3150,6 @@ static void CG_DrawWarmup( void ) {
 // Q3Rally Code END
 
 
-//=======================================
-//CG_DrawSigilLocationInfo
-//=======================================
-void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, vec4_t color )
-          {
-          int x = 320, y = 240;
-          int w = 320, h = 240;
-          float angle, distance;
-          vec3_t temp, angles;
-          VectorSubtract(origin, target, temp);
-          distance=VectorLength(temp);
-          VectorNormalize(temp);
-          vectoangles(temp,angles);
-          
-          angles[YAW]=AngleSubtract(cg.snap->ps.viewangles[YAW],angles[YAW]);
-          angle=(angles[YAW] + 180.0f)/360.0f;
-          angle -=0.25;
-          angle *= (2*M_PI);
-          w=sqrt((w*w)+(h*h));
-          x +=cos(angle)*w;
-          y +=sin(angle)*w;
-          
-          if (x<15)
-                  x=15;
-          else {
-        
-          if (x>605)
-                  x=605;
-        }
-        if (y<20)
-                y=20;
-        else 
-          {
-            if (y>440)
-                    y=440;
-        }
-        CG_DrawPic( x, y, 20, 20, shader );
-        CG_DrawStringExt( x-50, y+20, va("%10.2f",distance/100.0), color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
-    }
-
-//=======================================
-//CG_DrawSigilLocations
-//=======================================
-static void CG_DrawSigilLocations( void ) {
-          snapshot_t *snap;
-          int i;
-          vec3_t origin, end;
-          int redSigil, blueSigil, whiteSigil;
-
-          if ( cgs.gametype != GT_DOMINATION)
-            return;
-          if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR )
-            return; 
-      
-          if ( cg.nextSnap && (!cg.nextFrameTeleport && !cg.thisFrameTeleport))
-            
-            snap = cg.nextSnap;
-          else
-            snap = cg.snap;
-      
-      VectorCopy(cg.snap->ps.origin,origin);
-      redSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILRED ) );
-      blueSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILBLUE ) );
-      whiteSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILWHITE ) );
-      
-      for ( i = 0; i < snap->numEntities; i++ )
-    {
-    
-    centity_t *target = &cg_entities[snap->entities[i].number];
-    if (target->currentState.eType != ET_ITEM)
-    continue;
-
-    if ( target->currentState.modelindex != redSigil && target->currentState.modelindex != blueSigil && target->currentState.modelindex != whiteSigil )
-    continue;
-    
-    VectorCopy(target->lerpOrigin,end);
-    
-    if (target->currentState.modelindex == redSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.redFlagShader[0], colorRed);
-    
-    else if (target->currentState.modelindex == blueSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.blueFlagShader[0], colorBlue);
-    
-    else if (target->currentState.modelindex == whiteSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.sigilShader, colorWhite);
-    }
-  }
 
 
 //==================================================================================

@@ -344,8 +344,6 @@ starts "10"
 		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_derby\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
 	else if ( g_gametype.integer == GT_CTF )
 		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_ctf\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
-	else if ( g_gametype.integer == GT_DOMINATION )
-		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_dom\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
 	else if ( g_gametype.integer == GT_DEATHMATCH || g_gametype.integer == GT_TEAM )
 		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_dm q3r_team\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
 	else
