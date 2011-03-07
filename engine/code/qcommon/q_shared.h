@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifdef _MSC_VER
-  #define PRODUCT_VERSION "0.1 build 13"
+  #define PRODUCT_VERSION "0.1 build 14"
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION

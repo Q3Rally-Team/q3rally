@@ -15,8 +15,8 @@
 !define URL "http://q3rally.com/"
 
 !define GAMENAME "Q3Rally"
-!define CLIENT "q3rally.x86.exe"
-!define SERVER "q3rally-server.x86.exe"
+!define CLIENT "q3rally.exe"
+!define SERVER "q3rally_ded.exe"
 !define GAMEDIR "Q3Rally"
 !define GAME_FSNAME "q3rally"
 
@@ -37,7 +37,7 @@
 Name "${GAMENAME} ${VERSION}"
 
 ; The file to write
-OutFile "${GAME_FSNAME}-${VERSION}-${RELEASE}.x86.exe"
+OutFile "${GAME_FSNAME}-${VERSION}-${RELEASE}.exe"
 
 ; The default installation directory
 ; set by Multiuser.nsh
