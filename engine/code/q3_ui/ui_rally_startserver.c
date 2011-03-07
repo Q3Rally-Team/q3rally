@@ -144,7 +144,6 @@ static const char *gametype_items[] = {
 	"Team Racing Deathmatch",
 // END
 	"Capture the Flag",
-	"Domination",
 	0
 };
 

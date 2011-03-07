@@ -264,13 +264,6 @@ void CG_SetConfigValues( void ) {
 		cgs.blueflag = s[1] - '0';
 	}
 	
-  else if ( cgs.gametype == GT_DOMINATION ) {
-      s = CG_ConfigString( CS_SIGILSTATUS );
-      cgs.sigil[0] = s[0] - '0';
-      cgs.sigil[1] = s[1] - '0';
-      cgs.sigil[2] = s[2] - '0';
-    }
-	
 #ifdef MISSIONPACK
 	else if( cgs.gametype == GT_1FCTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
@@ -412,13 +405,6 @@ static void CG_ConfigStringModified( void ) {
 #endif
 	}
 
-	else if ( num == CS_SIGILSTATUS ) {
-		if ( cgs.gametype == GT_DOMINATION ) {
-			cgs.sigil[0] = str[0] - '0';
-			cgs.sigil[1] = str[1] - '1';
-			cgs.sigil[2] = str[2] - '2';
-		}
-	}
 
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();

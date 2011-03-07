@@ -493,7 +493,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// UPDATE : change these
 // STONELANCE
 //	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester", "teamtournament"};
-	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "dm", "team", "team_racing", "team_racing_dm", "ctf", "domination"};
+	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "dm", "team", "team_racing", "team_racing_dm", "ctf"};
 // END
 
 	// get the next free entity
@@ -819,10 +819,6 @@ void G_SpawnEntitiesFromString( void ) {
 	while( G_ParseSpawnVars() ) {
 		G_SpawnGEntityFromSpawnVars();
 	}	
-
-// make sure Domination maps have a 3rd sigil
-if (g_gametype.integer == GT_DOMINATION)
-    G_ValidateSigils();
     
     
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors

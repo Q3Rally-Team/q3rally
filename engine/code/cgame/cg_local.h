@@ -1275,7 +1275,6 @@ typedef struct {
 // Q3Rally Code END
 	int				redflag, blueflag;		// flag status from configstrings
 	int				flagStatus;
-	int       sigil[MAX_SIGILS];
 
 	qboolean  newHud;
 

@@ -536,34 +536,6 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 }
 
 /*
-=======================
-CG_DrawSigilHUD
-=======================
-*/
-void CG_DrawSigilHUD( void ) {
-                      int i, x=480, y=0;
-                      for (i=0; i<MAX_SIGILS; i++) {
-                      switch ( cgs.sigil[i] )
-                {
-
-                case SIGIL_ISWHITE:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
-                  break;
-
-                case SIGIL_ISRED:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.redFlagShader[0] );
-                  break;
-        
-                case SIGIL_ISBLUE:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.blueFlagShader[0] );
-                  break;
-                }
-              x+= 19;
-            }
-        }
-
-
-/*
 ================
 CG_DrawStatusBar
 

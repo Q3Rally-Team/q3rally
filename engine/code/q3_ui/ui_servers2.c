@@ -142,7 +142,6 @@ static const char *servertype_items[] = {
 	"Team Racing Deathmatch",
 	"Team Deathmatch",
 	"Capture the Flag",
-	"Domination",
 // END
 	0
 };
@@ -180,7 +179,6 @@ static char* gamenames[] = {
 	"TRace DM",
 	"Team DM",	// team deathmatch
 	"CTF",	// capture the flag
-	"Domination", // domination
 // END
 	"???",			// unknown
 	0
@@ -1203,9 +1201,6 @@ static void ArenaServers_StartRefresh( void )
 			strcpy( myargs, " ctf" );
 			break;
 			
-	  case GAMES_DOMINATION:
-			strcpy( myargs, " domination" );
-			break;
 		}
 
 

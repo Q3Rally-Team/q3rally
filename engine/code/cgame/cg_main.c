@@ -2141,9 +2141,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
 	cgs.flagStatus = -1;
-// Q3Rally Code Start
-	cgs.sigil[0] = cgs.sigil[1] = cgs.sigil[2] = -1; // Sigil Reset
-// Q3Rally Code END
 	// old servers
 
 	// get the rendering configuration from the client system
