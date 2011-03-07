@@ -508,11 +508,6 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	case IT_TEAM:
 		respawn = Pickup_Team(ent, other);
 		break;
-// Q3Rally Code Start
-  case IT_SIGIL:
-    respawn = Sigil_Touch(ent, other);
-    break;
-// Q3Rally Code END
 	case IT_HOLDABLE:
 		respawn = Pickup_Holdable(ent, other);
 		break;
@@ -532,7 +527,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	}
 
 	// powerup pickups are global broadcasts
-	if ( ent->item->giType == IT_POWERUP || ent->item->giType == IT_TEAM || ent->item->giType == IT_SIGIL ) {
+	if ( ent->item->giType == IT_POWERUP || ent->item->giType == IT_TEAM ) {
 		// if we want the global sound to play
 		if (!ent->speed) {
 			gentity_t	*te;

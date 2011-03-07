@@ -3262,8 +3262,6 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 	CG_DrawLagometer();
 	
-	if (cg_sigilLocator.integer == 1)
-      CG_DrawSigilLocations();
 
 #ifdef MISSIONPACK
 	if (!cg_paused.integer) {

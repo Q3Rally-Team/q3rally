@@ -829,9 +829,6 @@ typedef struct {
 	qhandle_t	redFlagShader[3];
 	qhandle_t	blueFlagShader[3];
 	qhandle_t	flagShader[4];
-// Q3Rally Code Start
-	qhandle_t sigilShader;
-// Q3Rally Code END
 
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;
@@ -1425,7 +1422,6 @@ extern	vmCvar_t		cg_oldRail;
 extern	vmCvar_t		cg_oldRocket;
 extern	vmCvar_t		cg_oldPlasma;
 extern	vmCvar_t		cg_trueLightning;
-extern  vmCvar_t		cg_sigilLocator;
 #ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;

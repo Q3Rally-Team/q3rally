@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifdef _MSC_VER
-  #define PRODUCT_VERSION "0.1 build r37"
+  #define PRODUCT_VERSION "0.1 build 13"
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
@@ -1658,17 +1658,6 @@ typedef enum _flag_status {
 	FLAG_DROPPED
 } flagStatus_t;
 
-// Q3Rally Code Start
-
-#define MAX_SIGILS  3
-
-typedef enum _sigil_status {
-  SIGIL_ISWHITE = 0,
-  SIGIL_ISRED,
-  SIGIL_ISBLUE
-} sigilStatus_t;
-
-// Q3Rally Code END
 
 #define	MAX_GLOBAL_SERVERS				4096
 #define	MAX_OTHER_SERVERS					128

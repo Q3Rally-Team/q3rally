@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // second version that must match between game and cgame
 
 // STONELANCE
-#define GAME_VERSION            "Q3Rally v0.1 Pre-Alpha build r37"
+#define GAME_VERSION            "Q3Rally v0.1 Pre-Alpha build 13"
 // END
 
 #define	DEFAULT_GRAVITY		800
@@ -108,7 +108,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //#define       CS_MODELS                               32
 #define CS_MODELS                               30
-#define CS_SIGILSTATUS                  31
 // Q3Rally Code END
 #define CS_SOUNDS                               (CS_MODELS+MAX_MODELS)
 // STONELANCE
@@ -427,10 +426,6 @@ typedef enum {
         PW_DOUBLER,
         PW_AMMOREGEN,
         PW_INVULNERABILITY,
-        
-        PW_SIGILWHITE,
-        PW_SIGILRED,
-        PW_SIGILBLUE,
 
 
         PW_NUM_POWERUPS
@@ -818,7 +813,6 @@ typedef enum {
         IT_TEAM,
 // Q3Rally Code Start
         IT_RFWEAPON,
-        IT_SIGIL
 // Q3Rally Code END
 } itemType_t;
 

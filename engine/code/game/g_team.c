@@ -24,15 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-// Q3Rally Code Start
-
-typedef struct domination_sigil_s
-{
-  gentity_t       *entity;
-  sigilStatus_t   status;
-} domination_sigil_t;
-
-// Q3Rally Code END
 
 typedef struct teamgame_s {
 	float			last_flag_capture;
@@ -52,10 +43,7 @@ teamgame_t teamgame;
 gentity_t	*neutralObelisk;
 
 void Team_SetFlagStatus( int team, flagStatus_t status );
-// Q3Rally Code Start
-void Team_SetSigilStatus( int sigilNum, sigilStatus_t status );
-void Init_Sigils( void );
-// Q3Rally Code END
+
 
 void Team_InitGame( void ) {
 	memset(&teamgame, 0, sizeof teamgame);

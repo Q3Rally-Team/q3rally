@@ -124,7 +124,6 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TEAM_RACING_DM    6
 #define GAMES_TEAMPLAY                  7
 #define GAMES_CTF                               8
-#define GAMES_DOMINATION          9
 // END
 
 static const char *master_items[] = {

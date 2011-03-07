@@ -1244,8 +1244,6 @@ typedef struct {
 	menufield_s			flaglimit;
 	menuradiobutton_s	friendlyfire;
 	menufield_s			hostname;
-	menulist_s      dominationSpawnStyle;
-	menuradiobutton_s  sigillocator;
 // STONLANCE
 	menulist_s			trackLength;
 	menulist_s			reversed;
@@ -1335,13 +1333,6 @@ static const char *botSkill_list[] = {
 	0
 };
 
-// for dominationSpawnStyle
-static const char *dtfspawn_list[] = {
-  "DM Spawns",
-  "CTF Team Spawns",
-  0
-};
-
 /*
 =================
 BotAlreadySelected
@@ -1375,8 +1366,6 @@ ServerOptions_Start
 static void ServerOptions_Start( void ) {
 	int		timelimit;
 	int		fraglimit;
-	int   dominationSpawnStyle;
-	int   sigillocator;
 	int		maxclients;
 	int		dedicated;
 	int		friendlyfire;
@@ -1398,8 +1387,6 @@ static void ServerOptions_Start( void ) {
 	pure		 = s_serveroptions.pure.curvalue;
 // STONELANCE
 	skill		 = s_serveroptions.botSkill.curvalue + 1;
-	dominationSpawnStyle = s_serveroptions.dominationSpawnStyle.curvalue; // dtf
-  sigillocator = s_serveroptions.sigillocator.curvalue; // dtf
 	trackLength  = s_serveroptions.trackLength.curvalue;
 	reversed     = s_serveroptions.reversed.curvalue;
 // END

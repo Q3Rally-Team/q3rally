@@ -838,7 +838,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 			// powerups and team items will have a separate global sound, this one
 			// will be played at prediction time
-			if ( item->giType == IT_POWERUP || item->giType == IT_TEAM || item->giType == IT_SIGIL ) {
+			if ( item->giType == IT_POWERUP || item->giType == IT_TEAM ) {
 				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_healthSound );
 			} else if (item->giType == IT_PERSISTANT_POWERUP) {
 #ifdef MISSIONPACK

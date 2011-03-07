@@ -768,19 +768,7 @@ void SP_worldspawn( void ) {
 }
 
 
-/*
-============================
-G_ValidateSigils
-============================
-*/
-void G_ValidateSigils()
-  {
-      gentity_t       *it_ent;
-      
-      it_ent = G_Spawn();
-      it_ent->think = ValidateSigilsInMap;
-      it_ent->nextthink = level.time + 500;
-  }
+
 
 /*
 ==============

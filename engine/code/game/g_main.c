@@ -99,7 +99,6 @@ vmCvar_t	g_enableBreath;
 vmCvar_t	g_proxMineTimeout;
 #endif
 // STONELANCE
-vmCvar_t  g_dominationSpawnStyle;
 vmCvar_t	g_forceEngineStart;
 vmCvar_t	g_finishRaceDelay;
 vmCvar_t	g_trackReversed;
@@ -219,7 +218,6 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
 	{ &g_proxMineTimeout, "g_proxMineTimeout", "20000", 0, 0, qfalse },
 #endif
-  { &g_dominationSpawnStyle, "g_dominationSpawnStyle", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse},
 // STONELANCE
 //	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse},
