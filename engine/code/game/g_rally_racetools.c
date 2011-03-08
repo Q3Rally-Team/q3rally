@@ -265,8 +265,7 @@ void CalculatePlayerPositions( void )
 	}
 
 	positionChanged = qfalse;
-	leader = NULL;
-	ent = NULL;
+	leader = ent = last = NULL;
 	while ( (ent = G_Find (ent, FOFS(classname), "player")) != NULL )
 	{
 		if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
@@ -307,7 +306,9 @@ void CalculatePlayerPositions( void )
 		{
 //			cur->carBehind = NULL;
 			ent->carBehind = cur;
-			last->carBehind = ent;
+			if (last) {
+				last->carBehind = ent;
+			}
 		}
 		else {
 			cur->carBehind = ent;
@@ -481,7 +482,7 @@ SelectLastMarkerForSpawn
 
 ============
 */
-gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles ) {
+gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot ) {
 	gentity_t	*spot;
 	int			lastMarker;
 
@@ -498,7 +499,7 @@ gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angle
 	}
 
 	if ( !spot ) {
-		return SelectSpawnPoint( vec3_origin, origin, angles );
+		return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
 	}
 
 	// spawn at last checkpoint
@@ -516,7 +517,7 @@ SelectGridPositionSpawn
 
 ============
 */
-gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles ) {
+gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot ) {
 	gentity_t	*spot;
 	int			gridPosition;
 
@@ -535,7 +536,7 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 	if ( !spot || SpotWouldTelefrag( spot ) ) {
 		// FIXME: put into spectator mode instead?
 		G_Printf("Warning: No info_player_start found for race spawn, trying info_player_deathmatch\n");
-		return SelectSpawnPoint( vec3_origin, origin, angles );
+		return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
 	}
 
 	VectorCopy (spot->s.origin, origin);

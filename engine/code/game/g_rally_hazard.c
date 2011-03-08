@@ -155,7 +155,6 @@ void CreateBioHazard (gentity_t *owner, vec3_t origin){
 	gentity_t		*ent;
 	gentity_t		*other;
 	vec3_t			dist;
-	vec3_t			snapped;
 	int				highest;
 
 	other = NULL;
@@ -355,7 +354,7 @@ CreatePoisonCloudHazard
 ============
 */
 
-void CreatePoisonCloudHazard (gentity_t *owner, vec3_t origin){
+void CreatePoisonCloudHazard (gentity_t *owner, vec3_t origin) {
 	gentity_t		*ent;
 
 	ent = G_TempEntity( origin, EV_HAZARD );
@@ -374,7 +373,7 @@ CreateSmokeHazard
 ============
 */
 
-void CreateSmokeHazard (gentity_t *owner, vec3_t origin){
+void CreateSmokeHazard (gentity_t *owner, vec3_t origin) {
 	gentity_t		*ent;
 
 	ent = G_TempEntity( origin, EV_HAZARD );

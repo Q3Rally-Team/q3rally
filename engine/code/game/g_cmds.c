@@ -1811,7 +1811,7 @@ void Cmd_Stats_f( gentity_t *ent ) {
 // STONELANCE
 void Cmd_SaveBPoints_f( gentity_t *other )
 {
-	int				i, j;
+	int				i;
 	fileHandle_t	f;
 	char			buffer[256];
 	char			serverinfo[MAX_INFO_STRING];

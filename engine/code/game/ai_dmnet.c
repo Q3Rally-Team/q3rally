@@ -3014,7 +3014,8 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	gentity_t	*next = NULL, *prev = NULL, *ent = NULL;
 	int			nextCheckpoint;
 	int			lastCheckpoint;
-	float		f, dist, speed, accel, actualSpeed, dot, a_normal, curvature;
+	float		f, dist, speed, actualSpeed, dot, curvature;
+	//float		accel, a_normal;
 	int			throttleChange;
 
 	if (BotIsObserver(bs)) {

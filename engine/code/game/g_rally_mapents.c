@@ -91,6 +91,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 					place = "eighth";
 					break;
 				default:
+					place = NULL;
 					Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
 					break;
 				}
@@ -181,7 +182,7 @@ void SP_rally_startfinish( gentity_t *ent ) {
 
 	if (!g_laplimit.integer){
 		level.numberOfLaps = ent->laps;
-		trap_Cvar_Set( "laplimit", va("%s", level.numberOfLaps) );
+		trap_Cvar_Set( "laplimit", va("%d", level.numberOfLaps) );
 	}
 	else
 		level.numberOfLaps = g_laplimit.integer;

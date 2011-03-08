@@ -75,8 +75,8 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 	char		*token;
 	char		text[MAX_SCRIPT_TEXT];
 	char		filename[MAX_QPATH];
-	char		model[MAX_QPATH];
-	char		deadmodel[MAX_QPATH];
+//	char		model[MAX_QPATH];
+//	char		deadmodel[MAX_QPATH];
 	fileHandle_t	f;
 
 	// setup defaults
@@ -298,9 +298,8 @@ qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t nor
 	vec3_t	arm;
 	vec3_t	vP1;
 	vec3_t	impulse, impulseMoment;
-	vec3_t	delta, cross, cross2;
+	vec3_t	cross, cross2;
 	float	impulseNum, oppositeImpulseNum, impulseDen, dot;
-	int		i;
 
 	// temp for inverseWorldInertiaTensor
 	vec3_t	axis[3];

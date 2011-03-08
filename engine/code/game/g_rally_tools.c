@@ -101,7 +101,7 @@ G_ResetCar
 =================
 */
 void G_ResetCar( gentity_t *ent ) {
-	int			i;
+//	int			i;
 	vec3_t		origin, end, angles;
 	vec3_t		mins, maxs;
 	trace_t		tr;

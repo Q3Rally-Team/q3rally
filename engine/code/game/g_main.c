@@ -1158,7 +1158,7 @@ void FindIntermissionPoint( void ) {
 	// find the intermission spot
 	ent = G_Find (NULL, FOFS(classname), "info_player_intermission");
 	if ( !ent ) {	// the map creator forgot to put in an intermission point...
-		SelectSpawnPoint ( vec3_origin, level.intermission_origin, level.intermission_angle );
+		SelectSpawnPoint ( vec3_origin, level.intermission_origin, level.intermission_angle, qfalse );
 	} else {
 		VectorCopy (ent->s.origin, level.intermission_origin);
 // STONELANCE
@@ -1229,6 +1229,7 @@ void BeginIntermission( void ) {
 
 	// send the current scoring to all clients
 	SendScoreboardMessageToAllClients();
+
 }
 
 
@@ -1244,6 +1245,8 @@ or moved to a new level based on the "nextmap" cvar
 void ExitLevel (void) {
 	int		i;
 	gclient_t *cl;
+	char nextmap[MAX_STRING_CHARS];
+	char d1[MAX_STRING_CHARS];
 
 	//bot interbreeding
 	BotInterbreedEndMatch();
@@ -1265,7 +1268,16 @@ void ExitLevel (void) {
 */
 // END
 
-	trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
+	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
+	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
+
+	if( !Q_stricmp( nextmap, "map_restart 0" ) && Q_stricmp( d1, "" ) ) {
+		trap_Cvar_Set( "nextmap", "vstr d2" );
+		trap_SendConsoleCommand( EXEC_APPEND, "vstr d1\n" );
+	} else {
+		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
+	}
+
 	level.changemap = NULL;
 	level.intermissiontime = 0;
 
@@ -1319,7 +1331,7 @@ void QDECL G_LogPrintf( const char *fmt, ... ) {
 	Com_sprintf( string, sizeof(string), "%3i:%i%i ", min, tens, sec );
 
 	va_start( argptr, fmt );
-	Q_vsnprintf (string+7, sizeof(string)-7, fmt, argptr);
+	Q_vsnprintf(string + 7, sizeof(string) - 7, fmt, argptr);
 	va_end( argptr );
 
 	if ( g_dedicated.integer ) {
@@ -1378,10 +1390,9 @@ Append information about this game to the log file
 void LogExit( const char *string ) {
 	int				i, numSorted;
 	gclient_t		*cl;
-#ifdef MISSIONPACK // bk001205
+#ifdef MISSIONPACK
 	qboolean won = qtrue;
 #endif
-
 	G_LogPrintf( "Exit: %s\n", string );
 
 	level.intermissionQueued = level.time;
@@ -1623,7 +1634,6 @@ void CheckExitRules( void ) {
 	}
 
 	// check for sudden death
-
 	if ( ScoreIsTied() ) {
 		// always wait for sudden death
 		return;
@@ -1638,8 +1648,8 @@ void CheckExitRules( void ) {
 	}
 
 // STONELANCE
-	if (g_gametype.integer == GT_DERBY && level.startRaceTime && !level.finishRaceTime){
-		gclient_t	*winner;
+	if (g_gametype.integer == GT_DERBY && level.startRaceTime && !level.finishRaceTime) {
+		gclient_t	*winner = NULL;
 
 		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
 			cl = level.clients + i;
@@ -1652,7 +1662,7 @@ void CheckExitRules( void ) {
 			winner = cl;
 		}
 
-		if (count == 1){
+		if (winner && count == 1) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 

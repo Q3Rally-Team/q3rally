@@ -1414,12 +1414,12 @@ qboolean G_RadiusDamage_NoKnockBack ( vec3_t origin, gentity_t *attacker, float 
 	int			entityList[MAX_GENTITIES];
 	int			numListedEntities;
 	vec3_t		mins, maxs;
-	vec3_t		v;
+//	vec3_t		v;
 //	vec3_t		dir;
 	int			i, e;
 	qboolean	hitClient = qfalse;
-	vec3_t		o;
-	float		minDist;
+//	vec3_t		o;
+//	float		minDist;
 
 	if ( radius < 1 ) {
 		radius = 1;

@@ -560,7 +560,8 @@ plasma circles around player similar to AltFire Mod
 */
 
 void Weapon_Plasmagun_Circular_Fire (gentity_t *ent) {
-	gentity_t	*m, *n;
+	gentity_t	*m;
+//	gentity_t	*n;
 	vec3_t		temp, temp2;
 	
 	//forward[0] += (float)sin( m->s.pos.trTime / m->s.pos.trDuration );

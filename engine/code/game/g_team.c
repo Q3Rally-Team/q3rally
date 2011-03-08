@@ -35,7 +35,6 @@ typedef struct teamgame_s {
 	int				blueTakenTime;
 	int				redObeliskAttackedTime;
 	int				blueObeliskAttackedTime;
-
 } teamgame_t;
 
 teamgame_t teamgame;
@@ -44,18 +43,16 @@ gentity_t	*neutralObelisk;
 
 void Team_SetFlagStatus( int team, flagStatus_t status );
 
-
 void Team_InitGame( void ) {
 	memset(&teamgame, 0, sizeof teamgame);
 
 	switch( g_gametype.integer ) {
 	case GT_CTF:
-		teamgame.redStatus = teamgame.blueStatus = -1; // Invalid to force update
+		teamgame.redStatus = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
+		 teamgame.blueStatus = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_BLUE, FLAG_ATBASE );
 		break;
-		
-
 #ifdef MISSIONPACK
 	case GT_1FCTF:
 		teamgame.flagStatus = -1; // Invalid to force update
@@ -208,8 +205,6 @@ qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 ) {
 
 static char ctfFlagStatusRemap[] = { '0', '1', '*', '*', '2' };
 static char oneFlagStatusRemap[] = { '0', '1', '2', '3', '4' };
-
-
 
 void Team_SetFlagStatus( int team, flagStatus_t status ) {
 	qboolean modified = qfalse;
@@ -1053,13 +1048,13 @@ SelectCTFSpawnPoint
 
 ============
 */
-gentity_t *SelectCTFSpawnPoint ( team_t team, int teamstate, vec3_t origin, vec3_t angles ) {
+gentity_t *SelectCTFSpawnPoint ( team_t team, int teamstate, vec3_t origin, vec3_t angles, qboolean isbot ) {
 	gentity_t	*spot;
 
 	spot = SelectRandomTeamSpawnPoint ( teamstate, team );
 
 	if (!spot) {
-		return SelectSpawnPoint( vec3_origin, origin, angles );
+		return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
 	}
 
 	VectorCopy (spot->s.origin, origin);
@@ -1132,7 +1127,7 @@ void TeamplayInfoMessage( gentity_t *ent ) {
 				i, player->client->pers.teamState.location, h, a, 
 				player->client->ps.weapon, player->s.powerups);
 			j = strlen(entry);
-			if (stringlength + j > sizeof(string))
+			if (stringlength + j >= sizeof(string))
 				break;
 			strcpy (string + stringlength, entry);
 			stringlength += j;
@@ -1516,4 +1511,3 @@ qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker ) {
 	return qfalse;
 }
 #endif
-

@@ -764,6 +764,5 @@ void G_BREAKWOOD(gentity_t *ent, vec3_t point, int mod) {
 				tent->s.eventParm = 0;
 				break;
 		}
-     }
- }
-  
+	}
+}

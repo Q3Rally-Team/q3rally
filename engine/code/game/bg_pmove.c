@@ -2059,6 +2059,9 @@ static void PM_Alt_Weapon( void ) {
 	case WP_FLAME_THROWER:
 		ammo_use = 3;
 		break;
+	default:
+		ammo_use = 1;
+		break;
 	}
 	
 	if ( pm->ps->ammo[ pm->ps->weapon ] > ammo_use ) {

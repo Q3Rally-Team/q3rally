@@ -606,7 +606,7 @@ void G_AddPredictableEvent( gentity_t *ent, int event, int eventParm );
 void G_AddEvent( gentity_t *ent, int event, int eventParm );
 void G_SetOrigin( gentity_t *ent, vec3_t origin );
 void AddRemap(const char *oldShader, const char *newShader, float timeOffset);
-const char *BuildShaderStateConfig();
+const char *BuildShaderStateConfig( void );
 
 //
 // g_combat.c
@@ -614,6 +614,10 @@ const char *BuildShaderStateConfig();
 qboolean CanDamage (gentity_t *targ, vec3_t origin);
 void G_Damage (gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir, vec3_t point, int damage, int dflags, int mod);
 qboolean G_RadiusDamage (vec3_t origin, gentity_t *attacker, float damage, float radius, gentity_t *ignore, int mod);
+// STONELANCE
+qboolean G_RadiusDamage_NoKnockBack ( vec3_t origin, gentity_t *attacker, float damage, float radius,
+			gentity_t *ignore, int mod);
+// END
 int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir );
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
 void TossClientItems( gentity_t *self );
@@ -709,7 +713,7 @@ team_t TeamCount( int ignoreClientNum, int team );
 int TeamLeader( int team );
 team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
-gentity_t *SelectSpawnPoint ( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
+gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles, qboolean isbot);
 void CopyToBodyQue( gentity_t *ent );
 void respawn (gentity_t *ent);
 void BeginIntermission (void);
@@ -749,7 +753,7 @@ void G_StartKamikaze( gentity_t *ent );
 #define		OBSERVERCAM_ZOOM	1
 #define		OBSERVERCAM_FIXED	2
 
-qboolean FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, vec3_t angles);
+gentity_t *FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, vec3_t angles);
 void UpdateObserverSpot( gentity_t *ent, qboolean forceUpdate );
 
 //
@@ -782,8 +786,8 @@ void CreateRallyStarter( void );
 void CalculatePlayerPositions( void );
 void Cmd_RacePositions_f( void );
 void Cmd_Times_f( gentity_t *ent );
-gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles );
-gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles );
+gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
+gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
 
 //
 // g_rally_rearweapon.c
@@ -798,6 +802,8 @@ void CreateBioHazard (gentity_t *owner, vec3_t origin);
 void CheckForOil(vec3_t origin, float radius);
 void CreateOilHazard (gentity_t *owner, vec3_t origin);
 void CreatePoisonHazard (gentity_t *owner, vec3_t origin);
+void CreatePoisonCloudHazard (gentity_t *owner, vec3_t origin);
+void CreateSmokeHazard (gentity_t *owner, vec3_t origin);
 // END
 
 
@@ -840,6 +846,9 @@ void ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
 void ClientCommand( int clientNum );
+// STONELANCE
+gentity_t *SelectSpectatorSpawnPoint( vec3_t origin, vec3_t angles );
+// END
 
 //
 // g_active.c

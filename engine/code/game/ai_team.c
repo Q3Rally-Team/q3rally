@@ -130,7 +130,7 @@ int BotSortTeamMatesByBaseTravelTime(bot_state_t *bs, int *teammates, int maxtea
 	char buf[MAX_INFO_STRING];
 	static int maxclients;
 	int traveltimes[MAX_CLIENTS];
-	bot_goal_t *goal;
+	bot_goal_t *goal = NULL;
 
 // STONELANCE
 	if (gametype == GT_CTF /*|| gametype == GT_1FCTF*/) {
@@ -148,7 +148,6 @@ int BotSortTeamMatesByBaseTravelTime(bot_state_t *bs, int *teammates, int maxtea
 			goal = &blueobelisk;
 	}
 #endif
-
 	if (!maxclients)
 		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
 

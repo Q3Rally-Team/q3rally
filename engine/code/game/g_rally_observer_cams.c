@@ -34,16 +34,16 @@ void SP_info_observer_spot( gentity_t *ent ){
 }
 
 
-qboolean FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, vec3_t angles){
+gentity_t *FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, vec3_t angles){
 	gentity_t		*ent;
 	trace_t			tr;
 	vec3_t			delta;
 	static vec3_t	mins = { -4, -4, -4 };
 	static vec3_t	maxs = { 4, 4, 4 };
 	float			dist, bestDist;
-	qboolean		foundSpot;
+	gentity_t		*foundSpot;
 
-	foundSpot = qfalse;
+	foundSpot = NULL;
 	dist = 0;
 	bestDist = 0;
 	ent = NULL;
@@ -53,7 +53,7 @@ qboolean FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, 
 
 //		Com_Printf("Found an observer spot in PVS\n");
 //		VectorCopy(ent->s.origin, spot);
-//		foundSpot = qtrue;
+//		foundSpot = ent;
 //		return foundSpot;
 		
 		trap_Trace(&tr, ent->r.currentOrigin, mins, maxs, target->client->ps.origin, target->s.number, CONTENTS_SOLID);
@@ -77,7 +77,7 @@ qboolean FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, 
 				self->spotflags = ent->spawnflags;
 
 				// use this one
-				return qtrue;
+				return ent;
 			}
 		}
 
@@ -89,7 +89,7 @@ qboolean FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, 
 
 //			Com_Printf("Found a valid observer spot\n");
 			self->spotflags = ent->spawnflags;
-			foundSpot = qtrue;
+			foundSpot = ent;
 		}
 	}
 

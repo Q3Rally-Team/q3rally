@@ -4251,7 +4251,7 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 		return 0;
 	}
 	trap_AAS_ValueForBSPEpairKey(ent, "classname", classname, sizeof(classname));
-	if (!classname) {
+	if (!*classname) {
 		BotAI_Print(PRT_ERROR, "BotGetActivateGoal: entity with model %s has no classname\n", model);
 		return 0;
 	}
@@ -4516,7 +4516,7 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 #ifdef OBSTACLEDEBUG
 	ClientName(bs->client, netname, sizeof(netname));
 	BotAI_Print(PRT_MESSAGE, "%s: I'm blocked by model %d\n", netname, entinfo.modelindex);
-#endif OBSTACLEDEBUG
+#endif // OBSTACLEDEBUG
 	// if blocked by a bsp model and the bot wants to activate it
 	if (activate && entinfo.modelindex > 0 && entinfo.modelindex <= max_bspmodelindex) {
 		// find the bsp entity which should be activated in order to get the blocking entity out of the way
@@ -5535,5 +5535,3 @@ BotShutdownDeathmatchAI
 void BotShutdownDeathmatchAI(void) {
 	altroutegoals_setup = qfalse;
 }
-
-

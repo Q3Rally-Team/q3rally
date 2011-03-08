@@ -20,6 +20,7 @@ along with q3rally; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+//
 
 #include "g_local.h"
 
@@ -375,7 +376,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 	gentity_t	*hit;
 	trace_t		trace;
 	vec3_t		mins, maxs;
-	vec3_t		range = { 40, 40, 52 };
+	static vec3_t	range = { 40, 40, 52 };
 
 	if ( !ent->client ) {
 		return;
@@ -788,13 +789,13 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
 			break;
-			
+
 		case EV_FIRE_WEAPON:
 			FireWeapon( ent );
 			break;
-    case EV_ALTFIRE_WEAPON:
-      FireAltWeapon( ent );
-      break;
+		case EV_ALTFIRE_WEAPON:
+			FireAltWeapon( ent );
+			break;
 // STONELANCE
 		case EV_FIRE_REARWEAPON:
 			FireRearWeapon( ent );
@@ -850,7 +851,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				}
 			}
 #endif
-			SelectSpawnPoint( ent->client->ps.origin, origin, angles );
+			SelectSpawnPoint( ent->client->ps.origin, origin, angles, qfalse );
 			TeleportPlayer( ent, origin, angles );
 			break;
 
