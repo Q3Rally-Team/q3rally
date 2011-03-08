@@ -863,7 +863,7 @@ q3rallycode
 7=engine\code\qcommon\files.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\game\bg_public.h
 [engine\misc\nsis\q3rally.nsi.in]
 TopLine=89
 Caret=1,103
