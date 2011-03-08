@@ -2732,14 +2732,14 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 			trap_EA_MoveForward( bs->entitynum );
 			return moveresult;
 // END
-			if (trap_BotMoveInDirection(bs->ms, forward, 400, movetype)) return moveresult;
+//			if (trap_BotMoveInDirection(bs->ms, forward, 400, movetype)) return moveresult;
 		}
 		if (dist < attack_dist - attack_range) {
 // STONELANCE
 			trap_EA_MoveBack( bs->entitynum );
 			return moveresult;
 // END
-			if (trap_BotMoveInDirection(bs->ms, backward, 400, movetype)) return moveresult;
+//			if (trap_BotMoveInDirection(bs->ms, backward, 400, movetype)) return moveresult;
 		}
 		return moveresult;
 	}
@@ -2785,11 +2785,11 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 		trap_EA_MoveForward( bs->entitynum );
 		return moveresult;
 // END
-		if (trap_BotMoveInDirection(bs->ms, sideward, 400, movetype))
-			return moveresult;
+//		if (trap_BotMoveInDirection(bs->ms, sideward, 400, movetype))
+//			return moveresult;
 		//movement failed, flip the strafe direction
-		bs->flags ^= BFL_STRAFERIGHT;
-		bs->attackstrafe_time = 0;
+//		bs->flags ^= BFL_STRAFERIGHT;
+//		bs->attackstrafe_time = 0;
 	}
 	//bot couldn't do any usefull movement
 //	bs->attackchase_time = AAS_Time() + 6;

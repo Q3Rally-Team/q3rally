@@ -1893,7 +1893,6 @@ Q3GOBJ_ = \
   $(B)/baseq3r/game/g_rally_hazard.o \
   $(B)/baseq3r/game/g_rally_mapents.o \
   $(B)/baseq3r/game/g_rally_mapobjects.o \
-  $(B)/baseq3r/game/g_rally_object_physics.o \
   $(B)/baseq3r/game/g_rally_observer_cams.o \
   $(B)/baseq3r/game/g_rally_racetools.o \
   $(B)/baseq3r/game/g_rally_rearweapon.o \
