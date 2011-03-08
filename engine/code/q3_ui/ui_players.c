@@ -1043,7 +1043,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	int				renderfx;
 	vec3_t			mins = {-16, -16, -24};
 	vec3_t			maxs = {16, 16, 32};
-	float			len;
+//	float			len;
 	float			xx;
 
 // STONELANCE
@@ -1545,6 +1545,7 @@ static qboolean	UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, 
 UI_ParseAnimationFile
 ======================
 */
+#if 0
 // STONELANCE
 // static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations ) {
 static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) {
@@ -1713,6 +1714,7 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 
 	return qtrue;
 }
+#endif
 
 
 /*
@@ -1852,7 +1854,6 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi,  const char *modelSkinNam
 	pi->plateModel = trap_R_RegisterModel( filename );
 	if ( !pi->plateModel ) {
 		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load license plate model: %s\n", filename );
-		return qfalse;
 
 		// use plate_eu model
 		Com_sprintf( filename, sizeof(filename), "models/players/plates/%s.md3", DEFAULT_PLATE );

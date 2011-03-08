@@ -272,7 +272,7 @@ void Main_MenuEvent (void* ptr, int event) {
 // END
 
         case ID_EXIT:
-                UI_ConfirmMenu( "EXIT GAME?", NULL, MainMenu_ExitAction );
+                UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
                 break;
         }
 }
@@ -443,31 +443,33 @@ static void Main_MenuDraw( void ) {
 
 
 
+#if 0
 /*
 ===============
 UI_TeamArenaExists
 ===============
 */
 static qboolean UI_TeamArenaExists( void ) {
-        int             numdirs;
-        char    dirlist[2048];
-        char    *dirptr;
+	int		numdirs;
+	char	dirlist[2048];
+	char	*dirptr;
   char  *descptr;
-        int             i;
-        int             dirlen;
+	int		i;
+	int		dirlen;
 
-        numdirs = trap_FS_GetFileList( "$modlist", "", dirlist, sizeof(dirlist) );
-        dirptr  = dirlist;
-        for( i = 0; i < numdirs; i++ ) {
-                dirlen = strlen( dirptr ) + 1;
+	numdirs = trap_FS_GetFileList( "$modlist", "", dirlist, sizeof(dirlist) );
+	dirptr  = dirlist;
+	for( i = 0; i < numdirs; i++ ) {
+		dirlen = strlen( dirptr ) + 1;
     descptr = dirptr + dirlen;
-                if (Q_stricmp(dirptr, "missionpack") == 0) {
-                        return qtrue;
-                }
+		if (Q_stricmp(dirptr, "missionpack") == 0) {
+			return qtrue;
+		}
     dirptr += dirlen + strlen(descptr) + 1;
-        }
-        return qfalse;
+	}
+	return qfalse;
 }
+#endif
 
 
 /*
@@ -480,31 +482,31 @@ and that local cinematics are killed
 ===============
 */
 void UI_MainMenu( void ) {
-        int             y;
-        qboolean teamArena = qfalse;
+	int		y;
+//	qboolean teamArena = qfalse;
 // STONELANCE
-        int             x;
-//      int             style = UI_CENTER | UI_DROPSHADOW;
-        int             style = UI_RIGHT | UI_DROPSHADOW;
+	int	x;
+//	int	style = UI_CENTER | UI_DROPSHADOW;
+	int	style = UI_RIGHT | UI_DROPSHADOW;
 
-        trap_Cmd_ExecuteText( EXEC_APPEND, "music music/q3r_menumusic\n" );
+	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/q3r_menumusic\n" );
 // END
 
-        trap_Cvar_Set( "sv_killserver", "1" );
+	trap_Cvar_Set( "sv_killserver", "1" );
 
-        if( !uis.demoversion && !ui_cdkeychecked.integer ) {
-                char    key[17];
+	if( !uis.demoversion && !ui_cdkeychecked.integer ) {
+		char	key[17];
 
-                trap_GetCDKey( key, sizeof(key) );
-                if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
-                        UI_CDKeyMenu();
-                        return;
-                }
-        }
+		trap_GetCDKey( key, sizeof(key) );
+		if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
+			UI_CDKeyMenu();
+			return;
+		}
+	}
 
-        memset( &s_main, 0 ,sizeof(mainmenu_t) );
+	memset( &s_main, 0 ,sizeof(mainmenu_t) );
 
-        MainMenu_Cache();
+	MainMenu_Cache();
 
         s_main.menu.draw = Main_MenuDraw;
         s_main.menu.fullscreen = qtrue;

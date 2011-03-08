@@ -889,6 +889,10 @@ int				trap_MemoryRemaining( void );
 void			trap_GetCDKey( char *buf, int buflen );
 void			trap_SetCDKey( char *buf );
 
+qboolean               trap_VerifyCDKey( const char *key, const char *chksum);
+
+void			trap_SetPbClStatus( int status );
+
 //
 // ui_addbots.c
 //

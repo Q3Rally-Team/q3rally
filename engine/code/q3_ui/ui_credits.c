@@ -190,8 +190,7 @@ Most of the code is self-explanatory.
 */
 static void ScrollingCredits_Draw(void)
 {
-  int x = 320, y, n, ysize = 0, fadetime = 0;
-  vec4_t fadecolour = { 0.00, 0.00, 0.00, 0.00 };
+  int x = 320, y, n, ysize = 0;
 
   // ysize is used to determine the entire length 
   // of the credits in pixels. 

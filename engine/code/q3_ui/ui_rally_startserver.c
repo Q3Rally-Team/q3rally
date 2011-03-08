@@ -783,9 +783,9 @@ static void StartServer_LevelshotDraw2( void *self ) {
 	menubitmap_s	*b;
 
 // STONELANCE
-	char			*s;
-	char			*info;
-	char			author[MAX_QPATH];
+//	char			*s;
+//	char			*info;
+//	char			author[MAX_QPATH];
 // END
 	int				x;
 	int				y;
@@ -1747,9 +1747,9 @@ ServerOptions_LevelshotDraw2
 */
 static void ServerOptions_LevelshotDraw2( void *self ) {
 	menubitmap_s	*b;
-	char			*s;
-	char			*info;
-	char			author[MAX_QPATH];
+//	char			*s;
+//	char			*info;
+//	char			author[MAX_QPATH];
 	int				x;
 	int				y;
 	int				w;
@@ -2142,7 +2142,7 @@ ServerOptions_MenuInit
 static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	int		y;
 	int		n;
-	static char cirname[64];
+//	static char cirname[64];
 	
 
 	memset( &s_serveroptions, 0 ,sizeof(serveroptions_t) );

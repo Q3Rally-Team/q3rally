@@ -518,7 +518,7 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 // STONELANCE
 //		else if ( ch >= 'A' && ch <= 'Z' ) {
 //			ch -= 'A';
-		else if ( ch >= 'A' && ch <= 'Z' || ch == '3') {
+		else if ( (ch >= 'A' && ch <= 'Z') || ch == '3') {
 			if ( ch == '3' ) {
 				ch = 26;
 			} else {

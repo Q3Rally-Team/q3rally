@@ -1235,8 +1235,8 @@ static void PlayerModel_MenuInit( void )
 // END
 	int			x;
 	int			y;
-	static char	playername[32];
-	static char	modelname[32];
+//	static char	playername[32];
+//	static char	modelname[32];
 	static char	skinname[32];
 
 	// zero set all our globals
@@ -1700,7 +1700,7 @@ static void PlayerModel_MenuInit( void )
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.modelname );
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.skinname );
 
-  	for (i=0; i<MAX_MODELSPERPAGE; i++)
+	for (i=0; i<MAX_MODELSPERPAGE; i++)
 	{
 		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.pics[i] );
 		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.picbuttons[i] );

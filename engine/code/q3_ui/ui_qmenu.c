@@ -356,7 +356,9 @@ void Bitmap_Draw( menubitmap_s *b )
 		if (b->shader)
 			UI_DrawHandlePic( x, y, w, h, b->shader );
 
-		if ((b->generic.flags & QMF_PULSE) || (b->generic.flags & QMF_PULSEIFFOCUS) && (Menu_ItemAtCursor( b->generic.parent ) == b))
+		if (  ( (b->generic.flags & QMF_PULSE) 
+			|| (b->generic.flags & QMF_PULSEIFFOCUS) )
+		      && (Menu_ItemAtCursor( b->generic.parent ) == b))
 		{	
 			if (b->focuscolor)			
 			{
@@ -2062,11 +2064,11 @@ void *Menu_ItemAtCursor( menuframework_s *m )
 {
 // STONELANCE
 	if ( uis.transitionIn || uis.transitionOut )
-		return 0;
+		return NULL;
 // END
 
 	if ( m->cursor < 0 || m->cursor >= m->nitems )
-		return 0;
+		return NULL;
 
 	return m->items[m->cursor];
 }

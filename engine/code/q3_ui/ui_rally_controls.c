@@ -300,7 +300,7 @@ typedef struct
 
 static controls_t s_controls;
 
-static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
+//static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
 
 static bind_t g_bindings[] = 
 {
@@ -698,7 +698,7 @@ static void Controls_Update( void ) {
 	// disable all controls in all groups
 	for( i = 0; i < C_MAX; i++ ) {
 		controls = g_controls[i];
-		for( j = 0;	control = controls[j]; j++ ) {
+		for( j = 0;	(control = controls[j]); j++ ) {
 			control->flags |= (QMF_HIDDEN|QMF_INACTIVE);
 		}
 	}
@@ -706,13 +706,13 @@ static void Controls_Update( void ) {
 	controls = g_controls[s_controls.section];
 
 	// enable controls in active group (and count number of items for vertical centering)
-	for( j = 0;	control = controls[j]; j++ ) {
+	for( j = 0;	(control = controls[j]); j++ ) {
 		control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
 	}
 
 	// position controls
 	y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
-	for( j = 0;	control = controls[j]; j++, y += SMALLCHAR_HEIGHT ) {
+	for( j = 0;	(control = controls[j]); j++, y += SMALLCHAR_HEIGHT ) {
 // STONELANCE
 /*
 		control->x      = 320;

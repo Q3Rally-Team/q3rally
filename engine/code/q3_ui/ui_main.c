@@ -212,7 +212,7 @@ vmCvar_t	ui_rim;
 vmCvar_t	ui_cdkeychecked;
 vmCvar_t	ui_ioq3;
 
-cvarTable_t		cvarTable[] = {
+static cvarTable_t		cvarTable[] = {
 // STONELANCE
 /*
 	{ &ui_ffa_fraglimit, "ui_ffa_fraglimit", "20", CVAR_ARCHIVE },
@@ -350,4 +350,3 @@ void UI_UpdateCvars( void ) {
 		trap_Cvar_Update( cv->vmCvar );
 	}
 }
-

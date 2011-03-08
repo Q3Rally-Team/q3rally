@@ -23,7 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ui_local.h"
 
-qboolean isRaceObserver( int clientNum ){}
+qboolean isRaceObserver( int clientNum )
+{
+	return qfalse;
+}
 
 #define ID_UNITS			10
 #define ID_SKID_LENGTH		11

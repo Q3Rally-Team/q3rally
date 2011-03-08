@@ -75,7 +75,7 @@ qboolean GetValuesFromFavorite( const char *favorite, char *modelName, char *ski
 		return qtrue;
 	}
 
-	if (buf2){
+	if (*buf2){
 		if (headName){
 			strcpy(headName, buf2);
 		}

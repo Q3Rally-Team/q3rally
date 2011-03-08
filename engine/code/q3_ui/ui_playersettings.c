@@ -1309,7 +1309,6 @@ static void PlateSelection_DrawMenu( void ) {
 	refEntity_t		ent;
 	vec3_t			origin;
 	vec3_t			angles;
-	float			adjust;
 	float			x, y, w, h;
 
 	// setup the refdef
