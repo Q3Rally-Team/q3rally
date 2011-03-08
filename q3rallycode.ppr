@@ -860,18 +860,19 @@ q3rallycode
 4=engine\code\qcommon\q_shared.h
 5=engine\code\q3_ui\ui_menu.c
 6=engine\code\q3_ui\ui_credits.c
+7=engine\code\qcommon\files.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_credits.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\misc\nsis\q3rally.nsi.in]
-TopLine=1
-Caret=1,18
+TopLine=89
+Caret=1,103
 [engine\misc\nsis\q3rally-q3ctc.nsi]
 TopLine=1
 Caret=24,29
 [engine\misc\setup\setup.xml.in]
-TopLine=8
-Caret=1,22
+TopLine=56
+Caret=1,70
 [engine\code\game\bg_public.h]
 TopLine=20
 Caret=65,34
@@ -884,3 +885,6 @@ Caret=74,490
 [engine\code\q3_ui\ui_credits.c]
 TopLine=289
 Caret=62,298
+[engine\code\qcommon\files.c]
+TopLine=187
+Caret=34,201
