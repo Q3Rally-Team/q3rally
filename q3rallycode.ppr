@@ -881,10 +881,10 @@ TopLine=33
 Caret=40,47
 [engine\code\q3_ui\ui_menu.c]
 TopLine=476
-Caret=74,490
+Caret=72,490
 [engine\code\q3_ui\ui_credits.c]
 TopLine=289
-Caret=62,298
+Caret=60,298
 [engine\code\qcommon\files.c]
 TopLine=187
 Caret=34,201
