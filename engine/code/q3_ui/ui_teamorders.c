@@ -296,7 +296,7 @@ static void UI_TeamOrdersMenu_BuildBotList( void ) {
 	int		numPlayers;
 	int		isBot;
 	int		n;
-	char	playerTeam;
+	char	playerTeam = '3';
 	char	botTeam;
 	char	info[MAX_INFO_STRING];
 

@@ -316,8 +316,6 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
 
 	memset( &trace, 0, sizeof( trace ) );
 	for (i=0 ; i<pm->numtouch ; i++) {
-// STONELANCE - this should never happen, UPDATE: re-enabled
-// /*
 		for (j=0 ; j<i ; j++) {
 			if (pm->touchents[j] == pm->touchents[i] ) {
 				break;
@@ -326,12 +324,13 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
 		if (j != i) {
 			continue;	// duplicated
 		}
-// */
+		other = &g_entities[ pm->touchents[i] ];
+
+// STONELANCE
 		VectorSubtract( other->s.origin, pm->touchPos[i], trace.plane.normal );
 		VectorNormalize( trace.plane.normal );
 		VectorCopy(pm->touchPos[i], trace.endpos);
 // END
-		other = &g_entities[ pm->touchents[i] ];
 
 		if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
 			ent->touch( ent, other, &trace );
