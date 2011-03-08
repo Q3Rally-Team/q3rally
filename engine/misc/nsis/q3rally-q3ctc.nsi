@@ -26,7 +26,7 @@
 ; no need to edit below in theory
 
 !define GAMENAME "Q3Rally"
-!define CLIENT "q3rally.x86.exe"
+!define CLIENT "q3rally.exe"
 !define GAMEDIR "Q3Rally"
 !define GAME_FSNAME "q3rally"
 

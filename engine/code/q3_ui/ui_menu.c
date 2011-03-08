@@ -487,7 +487,7 @@ void UI_MainMenu( void ) {
 //      int             style = UI_CENTER | UI_DROPSHADOW;
         int             style = UI_RIGHT | UI_DROPSHADOW;
 
-        trap_Cmd_ExecuteText( EXEC_APPEND, "music music/q3r_menumusic\n" );
+        trap_Cmd_ExecuteText( EXEC_APPEND, "music music/q3r_menumusic.ogg" );
 // END
 
         trap_Cvar_Set( "sv_killserver", "1" );

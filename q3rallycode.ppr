@@ -13,7 +13,7 @@ ProjectFilesOnly=0
 [Project tree]
 q3rallycode
 	+engine
-		-code
+		+code
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -424,7 +424,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			-q3_ui
+			+q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -751,12 +751,12 @@ q3rallycode
 				engine\misc\msvc\quake3.vcproj
 				engine\misc\msvc\ui.def
 				engine\misc\msvc\ui.vcproj
-			-nsis
+			+nsis
 				engine\misc\nsis\Makefile
 				engine\misc\nsis\q3rally.nsi.in
 				engine\misc\nsis\q3rally-q3ctc.nsi
-			-osxfe
-				-ioquake3fe
+			+osxfe
+				+ioquake3fe
 					-English.lproj
 						engine\misc\osxfe\ioquake3fe\English.lproj\ErrorWindow.xib
 						engine\misc\osxfe\ioquake3fe\English.lproj\InfoPlist.strings
@@ -777,11 +777,11 @@ q3rallycode
 					engine\misc\osxfe\ioquake3fe\ioquake3.icns
 					engine\misc\osxfe\ioquake3fe\ioquake3fe_Prefix.pch
 					engine\misc\osxfe\ioquake3fe\main.m
-			-setup
+			+setup
 				+MacOSX
 					engine\misc\setup\MacOSX\SLA-dmg.sh
 				+pkg
-					-ioquake3
+					+ioquake3
 						engine\misc\setup\pkg\ioquake3\depend
 						engine\misc\setup\pkg\ioquake3\pkginfo.template
 						engine\misc\setup\pkg\ioquake3\postinstall
@@ -858,15 +858,17 @@ q3rallycode
 2=engine\misc\setup\setup.xml.in
 3=engine\code\game\bg_public.h
 4=engine\code\qcommon\q_shared.h
+5=engine\code\q3_ui\ui_menu.c
+6=engine\code\q3_ui\ui_credits.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_credits.c
 [engine\misc\nsis\q3rally.nsi.in]
-TopLine=40
-Caret=46,40
+TopLine=1
+Caret=1,18
 [engine\misc\nsis\q3rally-q3ctc.nsi]
-TopLine=29
-Caret=1,29
+TopLine=1
+Caret=24,29
 [engine\misc\setup\setup.xml.in]
 TopLine=8
 Caret=1,22
@@ -876,3 +878,9 @@ Caret=65,34
 [engine\code\qcommon\q_shared.h]
 TopLine=33
 Caret=40,47
+[engine\code\q3_ui\ui_menu.c]
+TopLine=476
+Caret=74,490
+[engine\code\q3_ui\ui_credits.c]
+TopLine=289
+Caret=62,298

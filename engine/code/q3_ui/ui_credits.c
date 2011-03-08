@@ -295,7 +295,7 @@ void UI_CreditMenu( void ) {
 	mvolume = trap_Cvar_VariableValue( "s_musicvolume" );
 	if(mvolume < 0.5)
 		trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );
-	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/amp6_22k\n" );
+	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/amp6_22k.ogg" );
 
 	// load the background shader
 #ifdef BACKGROUND_SHADER
