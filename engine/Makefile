@@ -833,7 +833,12 @@ endif #SunOS
 TARGETS =
 
 ifndef FULLBINEXT
+# Leave .x86 off win32 binaries
+ifeq ($(ARCH),x86)
+  FULLBINEXT=$(BINEXT)
+else
   FULLBINEXT=.$(ARCH)$(BINEXT)
+endif
 endif
 
 ifndef SHLIBNAME
