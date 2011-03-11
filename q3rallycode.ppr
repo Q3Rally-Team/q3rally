@@ -424,7 +424,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			+q3_ui
+			-q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -483,7 +483,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			-qcommon
+			+qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -861,6 +861,9 @@ q3rallycode
 5=engine\code\q3_ui\ui_menu.c
 6=engine\code\q3_ui\ui_credits.c
 7=engine\code\qcommon\files.c
+8=engine\code\qcommon\cm_load.c
+9=engine\code\qcommon\qcommon.h
+10=engine\code\qcommon\surfaceflags.h
 [Selected Project Files]
 Main=
 Selected=engine\code\game\bg_public.h
@@ -877,7 +880,7 @@ Caret=1,70
 TopLine=20
 Caret=65,34
 [engine\code\qcommon\q_shared.h]
-TopLine=33
+TopLine=31
 Caret=40,47
 [engine\code\q3_ui\ui_menu.c]
 TopLine=476
@@ -888,3 +891,12 @@ Caret=60,298
 [engine\code\qcommon\files.c]
 TopLine=187
 Caret=34,201
+[engine\code\qcommon\cm_load.c]
+TopLine=1
+Caret=1,1
+[engine\code\qcommon\qcommon.h]
+TopLine=35
+Caret=1,1
+[engine\code\qcommon\surfaceflags.h]
+TopLine=59
+Caret=1,1
