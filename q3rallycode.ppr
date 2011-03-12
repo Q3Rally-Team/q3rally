@@ -854,9 +854,13 @@ q3rallycode
 		engine\voip-readme.txt
 [Open project files]
 0=engine\code\qcommon\files.c
+1=engine\code\game\bg_public.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\game\bg_public.h
 [engine\code\qcommon\files.c]
 TopLine=187
-Caret=34,201
+Caret=33,201
+[engine\code\game\bg_public.h]
+TopLine=20
+Caret=30,37
