@@ -857,7 +857,7 @@ q3rallycode
 1=engine\code\game\bg_public.h
 [Selected Project Files]
 Main=
-Selected=engine\code\game\bg_public.h
+Selected=engine\code\qcommon\files.c
 [engine\code\qcommon\files.c]
 TopLine=187
 Caret=33,201
