@@ -1,0 +1,15 @@
+b_glass,models/players/slingshot/glass_conv.tga
+b_hlites,models/players/slingshot/hlites.tga
+b_main,models/players/slingshot/blue_main.tga
+b_int,models/players/slingshot/int.tga
+b_tlites,models/players/slingshot/tlites.tga
+b_under,models/players/slingshot/under.tga
+b_steer,models/gibs/steer.tga
+tag_weapon,
+tag_wheelfr,
+tag_wheelfl,
+tag_wheelrr,
+tag_wheelrl,
+tag_turbo,
+tag_smoke,
+tag_head,
