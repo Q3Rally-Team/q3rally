@@ -1030,9 +1030,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb2aSound );
 		}
 		break;
-	case EV_LIGHTNINGARC:
-	  CG_LightningArc( position, es->origin2 );
-	  break;
+
 
 #ifdef MISSIONPACK
 	case EV_PROXIMITY_MINE_STICK:
