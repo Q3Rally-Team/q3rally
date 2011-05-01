@@ -956,11 +956,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
        return;
     }
 
-	// shootable doors / buttons don't actually have any health // Rotating Doors
+// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
-		if ( targ->use && (targ->moverState == MOVER_POS1
-			|| targ->moverState == ROTATOR_POS1) ) {
+		if ( targ->use && targ->moverState == MOVER_POS1 ) {
 			targ->use( targ, inflictor, attacker );
+		} else if ( targ->use == NULL ) {	// entity is a func_breakable
+			targ->health -= damage;
+			if (targ->health <= 0)
+				Break_Breakable(targ, attacker);
 		}
 		return;
 	}

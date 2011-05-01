@@ -1029,7 +1029,10 @@ void CG_LightningArc( vec3_t start, vec3_t end ) {
         break;
     case 3:
        CG_LaunchWood( origin, velocity, cgs.media.wood03 );
-    break;
+        break;
+    case 4:
+       CG_LaunchWood( origin, velocity, cgs.media.wood04 );
+        break;
       }
    }
 }
