@@ -327,6 +327,7 @@ typedef enum {
 	LEBS_BLOOD,
 // Q3Rally Code Start
 	LEBS_OIL,
+	LEBS_DEBRIS,
 // Q3Rally Code END
 	LEBS_BRASS
 } leBounceSoundType_t;	// fragment local entities can make sounds on impacts
@@ -869,18 +870,26 @@ typedef struct {
 	qhandle_t	gibPiston;
 	qhandle_t	gibShock;
 	qhandle_t	gibSteer;
-/*
-	qhandle_t	gibAbdomen;
-	qhandle_t	gibArm;
-	qhandle_t	gibChest;
-	qhandle_t	gibFist;
-	qhandle_t	gibFoot;
-	qhandle_t	gibForearm;
-	qhandle_t	gibIntestine;
-	qhandle_t	gibLeg;
-	qhandle_t	gibSkull;
-	qhandle_t	gibBrain;
-*/
+
+// debris explosions
+	qhandle_t	debris1;
+	qhandle_t	debris2;
+	qhandle_t	debris3;
+	qhandle_t	debris4;
+	qhandle_t	debris5;
+	qhandle_t	debris6;
+	qhandle_t	debris7;
+	qhandle_t	debris8;
+
+	qhandle_t	debrisdark1;
+	qhandle_t	debrisdark2;
+	qhandle_t	debrisdark3;
+	qhandle_t	debrisdark4;
+	qhandle_t	debrisdark5;
+	qhandle_t	debrisdark6;
+	qhandle_t	debrisdark7;
+	qhandle_t	debrisdark8;
+  
 // Q3Rally Code END
 
 	qhandle_t	smoke2;

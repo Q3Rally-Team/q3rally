@@ -466,3 +466,30 @@ void SP_target_location( gentity_t *self ){
 	G_SetOrigin( self, self->s.origin );
 }
 
+//==========================================================
+
+/*QUAKED target_debrisemitter (.5 .5 .5) (-8 -8 -8) (8 8 8) DARK_DEBRIS
+Emits chunks of debris.
+If no spawnflag is set, the entity will emit light chunks of concrete
+If the DARK_DEBRIS spawnflag is set, the entity will emit darker chunks of concrete
+*/
+
+void target_debrisemitter_use (gentity_t *self, gentity_t *other, gentity_t *activator) {
+	gentity_t *ent;
+	//G_AddEvent( self, EV_EMIT_DEBRIS, 0 ); //client doesn't respond to this for some reason....
+	
+	if ( !self->count )
+		self->count = 10;
+
+
+	if ( self->spawnflags & 1 )
+		ent = G_TempEntity(self->s.origin, EV_EMIT_DEBRIS_DARK);
+	else
+		ent = G_TempEntity(self->s.origin, EV_EMIT_DEBRIS_NORMAL);
+
+	ent->s.eventParm = self->count;
+}
+
+void SP_target_debrisemitter (gentity_t *self) {
+	self->use = target_debrisemitter_use;
+}

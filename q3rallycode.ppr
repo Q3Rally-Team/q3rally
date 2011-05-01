@@ -162,7 +162,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -854,13 +854,49 @@ q3rallycode
 		engine\voip-readme.txt
 [Open project files]
 0=engine\code\qcommon\files.c
-1=engine\code\game\bg_public.h
+1=engine\code\cgame\cg_effects.c
+2=engine\code\cgame\cg_event.c
+3=engine\code\cgame\cg_local.h
+4=engine\code\cgame\cg_localents.c
+5=engine\code\cgame\cg_main.c
+6=engine\code\cgame\cg_marks.c
+7=engine\code\cgame\cg_particles.c
+8=engine\code\game\bg_public.h
+9=engine\code\game\g_spawn.c
+10=engine\code\game\g_target.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\game\g_target.c
 [engine\code\qcommon\files.c]
 TopLine=187
 Caret=33,201
+[engine\code\cgame\cg_effects.c]
+TopLine=1165
+Caret=2,1205
+[engine\code\cgame\cg_event.c]
+TopLine=1360
+Caret=9,1389
+[engine\code\cgame\cg_local.h]
+TopLine=2086
+Caret=69,2107
+[engine\code\cgame\cg_localents.c]
+TopLine=164
+Caret=2,190
+[engine\code\cgame\cg_main.c]
+TopLine=1163
+Caret=1,1181
+[engine\code\cgame\cg_marks.c]
+TopLine=1665
+Caret=1,1679
+[engine\code\cgame\cg_particles.c]
+TopLine=1184
+Caret=1,1198
 [engine\code\game\bg_public.h]
-TopLine=20
-Caret=30,37
+TopLine=601
+Caret=49,625
+[engine\code\game\g_spawn.c]
+TopLine=264
+Caret=56,283
+[engine\code\game\g_target.c]
+TopLine=467
+Caret=1,496

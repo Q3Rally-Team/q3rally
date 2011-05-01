@@ -1115,3 +1115,91 @@ void CG_LightningArc( vec3_t start, vec3_t end ) {
    }
 }
 
+               /*
+==================
+CG_LaunchDebris
+==================
+*/
+void CG_LaunchDebris( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+
+	le = CG_AllocLocalEntity();
+	re = &le->refEntity;
+
+	le->leType = LE_FRAGMENT;
+	le->startTime = cg.time;
+	le->endTime = le->startTime + 5000 + random() * 3000;
+
+	VectorCopy( origin, re->origin );
+	AxisCopy( axisDefault, re->axis );
+	re->hModel = hModel;
+
+	le->pos.trType = TR_GRAVITY;
+	VectorCopy( origin, le->pos.trBase );
+	VectorCopy( velocity, le->pos.trDelta );
+	le->pos.trTime = cg.time;
+
+	le->bounceFactor = 0.6f;
+
+	le->leBounceSoundType = LEBS_DEBRIS;
+	//le->leMarkType = LEMT_BLOOD;
+}
+
+/*
+===================
+CG_ShowDebris
+
+Generated a bunch of debris launching out from an entity's location
+===================
+*/
+void CG_ShowDebris( vec3_t srcOrigin, int count, int type ) {
+	vec3_t	origin, velocity;
+	int i, r;
+
+	for (i = 0; i < count; i++) {
+		VectorCopy( srcOrigin, origin );
+		velocity[0] = crandom()*GIB_VELOCITY;
+		velocity[1] = crandom()*GIB_VELOCITY;
+		velocity[2] = GIB_JUMP + crandom()*GIB_VELOCITY;
+		r = rand() % 8;
+		
+		if ( type == EV_EMIT_DEBRIS_NORMAL ) {
+			if (r == 0)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris1 );
+			else if (r == 1)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris2 );
+			else if (r == 2)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris3 );
+			else if (r == 3)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris4 );
+			else if (r == 4)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris5 );
+			else if (r == 5)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris6 );
+			else if (r == 6)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris7 );
+			else if (r == 7)
+				CG_LaunchDebris( origin, velocity, cgs.media.debris8 );
+		}
+
+		if ( type == EV_EMIT_DEBRIS_DARK ) {
+			if (r == 0)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark1 );
+			else if (r == 1)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark2 );
+			else if (r == 2)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark3 );
+			else if (r == 3)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark4 );
+			else if (r == 4)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark5 );
+			else if (r == 5)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark6 );
+			else if (r == 6)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark7 );
+			else if (r == 7)
+				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark8 );
+		}
+	}
+}

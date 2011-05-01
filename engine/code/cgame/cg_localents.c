@@ -152,6 +152,42 @@ void CG_BloodTrail( localEntity_t *le ) {
 	}
 }
 
+/*
+================
+CG_DebrisTrail
+
+Leave expanding smoke puffs behind debris
+================
+*/
+void CG_DebrisTrail( localEntity_t *le ) {
+	int		t;
+	int		t2;
+	int		step;
+	vec3_t	newOrigin;
+	localEntity_t	*puff;
+
+	//step = 150;
+	step = 25;
+	t = step * ( (cg.time - cg.frametime + step ) / step );
+	t2 = step * ( cg.time / step );
+
+	for ( ; t <= t2; t += step ) {
+		BG_EvaluateTrajectory( &le->pos, t, newOrigin );
+
+		puff = CG_SmokePuff( newOrigin, vec3_origin, 
+					  20,		// radius
+					  1, 1, 1, .2,	// color
+					  2000,		// trailTime
+					  t,		// startTime
+					  0,		// fadeInTime
+					  0,		// flags
+					  cgs.media.smokePuffShader );
+		// use the optimized version
+		puff->leType = LE_FALL_SCALE_FADE;
+		// rise a total of 40 units over its lifetime
+		puff->pos.trDelta[2] = -40;
+	}
+}
 
 /*
 ================
