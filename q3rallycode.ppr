@@ -866,7 +866,7 @@ q3rallycode
 10=engine\code\game\g_target.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_target.c
+Selected=engine\code\cgame\cg_main.c
 [engine\code\qcommon\files.c]
 TopLine=187
 Caret=33,201
@@ -883,7 +883,7 @@ Caret=69,2107
 TopLine=164
 Caret=2,190
 [engine\code\cgame\cg_main.c]
-TopLine=1163
+TopLine=1167
 Caret=1,1181
 [engine\code\cgame\cg_marks.c]
 TopLine=1665
