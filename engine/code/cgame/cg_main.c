@@ -1204,6 +1204,20 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.reverseLightGlow = trap_R_RegisterModel( "gfx/flares/r_lite.md3" );
 // Q3Rally Code END
 
+// Q3Rally Code Start - Glass Shards
+	cgs.media.glass01 = trap_R_RegisterModel( "models/breakables/glass01.md3" );
+	cgs.media.glass02 = trap_R_RegisterModel( "models/breakables/glass02.md3" );
+  cgs.media.glass03 = trap_R_RegisterModel( "models/breakables/glass03.md3" );
+
+	cgs.media.wood01 = trap_R_RegisterModel( "models/breakables/wood01.md3" );
+	cgs.media.wood02 = trap_R_RegisterModel( "models/breakables/wood02.md3" );
+	cgs.media.wood03 = trap_R_RegisterModel( "models/breakables/wood03.md3" );
+
+	cgs.media.wood01 = trap_R_RegisterModel( "models/breakables/metal01.md3" );
+	cgs.media.wood02 = trap_R_RegisterModel( "models/breakables/metal02.md3" );
+	cgs.media.wood03 = trap_R_RegisterModel( "models/breakables/metal03.md3" );
+
+// Q3Rally Code END
 	cgs.media.smoke2 = trap_R_RegisterModel( "models/weapons2/shells/s_shell.md3" );
 
 	cgs.media.balloonShader = trap_R_RegisterShader( "sprites/balloon3" );

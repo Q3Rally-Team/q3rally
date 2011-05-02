@@ -1344,6 +1344,27 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 // Q3Rally Code END
 		break;
 
+// Q3Rally Code Start
+      case EV_BREAK_GLASS:
+       DEBUGNAME("EV_BREAK_GLASS");
+       trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.glassSound );
+       CG_BreakGlass( cent->lerpOrigin );
+       break;
+
+	    case EV_BREAKWOOD:
+       DEBUGNAME("EV_BREAKWOOD");
+       trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.woodSound );
+       CG_BREAKWOOD( cent->lerpOrigin );
+       break;
+       
+      case EV_BREAKMETAL:
+        DEBUGNAME("EV_BREAKMETAL");
+        trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.metalSound );
+        CG_BREAKMETAL( cent->lerpOrigin );
+        break;
+        
+// Q3Rally Code END
+
 	case EV_STOPLOOPINGSOUND:
 		DEBUGNAME("EV_STOPLOOPINGSOUND");
 		trap_S_StopLoopingSound( es->number );

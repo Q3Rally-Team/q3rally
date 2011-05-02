@@ -868,8 +868,254 @@ void CG_LightningArc( vec3_t start, vec3_t end ) {
       trap_R_AddRefEntityToScene( &arc );
 }
 
+/*
+ ==================
+ CG_LaunchShard
+ ==================
+ */
+ void CG_LaunchShard( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
+    int             bounce;
+   localEntity_t   *le;
+    refEntity_t      *re;
+ 
+    le = CG_AllocLocalEntity();
+    re = &le->refEntity;
+ 
+    le->leType = LE_FRAGMENT;
+    le->startTime = cg.time;
+    le->endTime = le->startTime + 30000 + random() * 3000;
+ 
+    VectorCopy( origin, re->origin );
+    AxisCopy( axisDefault, re->axis );
+    re->hModel = hModel;
+ 
+    le->pos.trType = TR_GRAVITY;
+    VectorCopy( origin, le->pos.trBase );
+    VectorCopy( velocity, le->pos.trDelta );
+    le->pos.trTime = cg.time;
+ 
+    bounce = le->bounceFactor;
+   bounce = 0.3;
+ 
+    le->leFlags = LEF_TUMBLE;
+    le->leBounceSoundType = LEBS_BRASS;
+    le->leMarkType = LEMT_NONE;
+ }
+ 
+ 
+
+
+ /*
+ ===================
+ CG_BreakGlass
+ 
+ Breaks our brush and generates a few models on launches them all over the map :)
+ ===================
+ */
+
+ #define   GLASS_VELOCITY   175 //175
+ #define   GLASS_JUMP      125 //125
+
+ void CG_BreakGlass( vec3_t playerOrigin ) {
+    vec3_t    origin, velocity;
+        int     value;
+     int     count = 20; //20
+    int     states[] = {1,2,3};
+        int     numstates = sizeof(states)/sizeof(states[0]);
+ 
+    while ( count-- ) {
+    
+    value = states[rand()%numstates];
+    VectorCopy( playerOrigin, origin );
+    velocity[0] = crandom() *  165; //165
+    velocity[1] = crandom() *  125; //125
+	//velocity[2] = 0; //GLASS_JUMP + crandom() * 1; //165
+    velocity[2] = GLASS_JUMP + crandom() * 165; //165
+    
+   switch (value) {
+    case 1:
+      CG_LaunchShard( origin, velocity, cgs.media.glass01 );
+        break;
+    case 2:
+       CG_LaunchShard( origin, velocity, cgs.media.glass02 );
+        break;
+    case 3:
+       CG_LaunchShard( origin, velocity, cgs.media.glass03 );
+    break;
+      }
+   }
+}
+
+  /*
+ ==================
+ CG_LaunchWood
+ ==================
+ */
+ void CG_LaunchWood( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
+    int             bounce;
+   localEntity_t   *le;
+    refEntity_t      *re;
+ 
+    le = CG_AllocLocalEntity();
+    re = &le->refEntity;
+ 
+    le->leType = LE_FRAGMENT;
+    le->startTime = cg.time;
+    le->endTime = le->startTime + 30000 + random() * 3000;
+ 
+    VectorCopy( origin, re->origin );
+    AxisCopy( axisDefault, re->axis );
+    re->hModel = hModel;
+ 
+    le->pos.trType = TR_GRAVITY;
+    VectorCopy( origin, le->pos.trBase );
+    VectorCopy( velocity, le->pos.trDelta );
+    le->pos.trTime = cg.time;
+ 
+   bounce = le->bounceFactor;
+   bounce = 0.9; //0.3
+   //newq3ball	
+  /* pm->ps->velocity[2] = -vel * 0.5; //2
+	if (pm->ps->velocity[2] <= 0.001) {
+    pm->ps->velocity[2] = 0;
+ */
+ //endnew
+    le->leFlags = LEF_TUMBLE;
+    le->leBounceSoundType = LEBS_BRASS;
+    le->leMarkType = LEMT_NONE;
+ }
+ 
+ 
+
+
+ /*
+ ===================
+ CG_BREAKWOOD
+ 
+ Breaks our brush and generates a few (here 1 model) on launches them all over the map :)
+ ===================
+ */
+
+ #define   BOX_VELOCITY   60 //175
+ #define   BOX_JUMP      85 //125
+
+ void CG_BREAKWOOD( vec3_t playerOrigin ) {
+    vec3_t    origin, velocity;
+     int     value;
+     int     count = 8; //20
+     int     states[] = {1,2,3};
+        int     numstates = sizeof(states)/sizeof(states[0]);
+ 
+    while ( count-- ) {
+    
+    value = states[rand()%numstates];
+    VectorCopy( playerOrigin, origin );
+    velocity[0] = crandom() *  80; //165
+    velocity[1] = crandom() *  125; //125
+    velocity[2] = BOX_JUMP + crandom() * 165;  //165
+    //velocity[2] = 165;  //165
+	   //newq3ball	
+//  velocity[2] = -velocity[0] * 0.5; //2
+// if (velocity[2] <= 0.001) {
+ // velocity[2] = 0;
+// }
+ //endnew
+   switch (value) {
+    case 1:
+      CG_LaunchWood( origin, velocity, cgs.media.wood01 );
+        break;
+    case 2:
+       CG_LaunchWood( origin, velocity, cgs.media.wood02 );
+        break;
+    case 3:
+       CG_LaunchWood( origin, velocity, cgs.media.wood03 );
+    break;
+      }
+   }
+}
+
+  /*
+ ==================
+ CG_LaunchMetal
+ ==================
+ */
+ void CG_LaunchMetal( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
+    int             bounce;
+   localEntity_t   *le;
+    refEntity_t      *re;
+ 
+    le = CG_AllocLocalEntity();
+    re = &le->refEntity;
+ 
+    le->leType = LE_FRAGMENT;
+    le->startTime = cg.time;
+    le->endTime = le->startTime + 30000 + random() * 3000;
+ 
+    VectorCopy( origin, re->origin );
+    AxisCopy( axisDefault, re->axis );
+    re->hModel = hModel;
+ 
+    le->pos.trType = TR_GRAVITY;
+    VectorCopy( origin, le->pos.trBase );
+    VectorCopy( velocity, le->pos.trDelta );
+    le->pos.trTime = cg.time;
+ 
+   bounce = le->bounceFactor;
+   bounce = 0.9; //0.3
+
+    le->leFlags = LEF_TUMBLE;
+    le->leBounceSoundType = LEBS_BRASS;
+    le->leMarkType = LEMT_NONE;
+ }
+
 
 /*
+ ===================
+ CG_BREAKMETAL
+ 
+ Breaks our brush and generates a few (here 1 model) on launches them all over the map :)
+ ===================
+ */
+
+#define   METAL_VELOCITY   60 //175
+ #define   METAL_JUMP      85 //125
+
+ void CG_BREAKMETAL( vec3_t playerOrigin ) {
+    vec3_t    origin, velocity;
+     int     value;
+     int     count = 8; //20
+     int     states[] = {1,2,3};
+        int     numstates = sizeof(states)/sizeof(states[0]);
+ 
+    while ( count-- ) {
+    
+    value = states[rand()%numstates];
+    VectorCopy( playerOrigin, origin );
+    velocity[0] = crandom() *  80; //165
+    velocity[1] = crandom() *  125; //125
+    velocity[2] = METAL_JUMP + crandom() * 165;  //165
+    //velocity[2] = 165;  //165
+	   //newq3ball	
+//  velocity[2] = -velocity[0] * 0.5; //2
+// if (velocity[2] <= 0.001) {
+ // velocity[2] = 0;
+// }
+ //endnew
+   switch (value) {
+    case 1:
+      CG_LaunchMetal( origin, velocity, cgs.media.metal01 );
+        break;
+    case 2:
+       CG_LaunchMetal( origin, velocity, cgs.media.metal02 );
+        break;
+    case 3:
+       CG_LaunchMetal( origin, velocity, cgs.media.metal03 );
+    break;
+      }
+   }
+}
+
+               /*
 ==================
 CG_LaunchDebris
 ==================

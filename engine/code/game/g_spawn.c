@@ -153,7 +153,9 @@ void SP_func_door (gentity_t *ent);
 void SP_func_train (gentity_t *ent);
 void SP_func_timer (gentity_t *self);
 // Q3Rally Code Start
-void SP_func_breakable (gentity_t *ent);
+void SP_func_breakglass (gentity_t *ent);
+void SP_func_breakwood (gentity_t *ent);
+void SP_func_breakmetal (gentity_t *ent);
 // Q3Rally Code END
 
 void SP_trigger_always (gentity_t *ent);
@@ -247,7 +249,9 @@ spawn_t	spawns[] = {
 	{"func_train", SP_func_train},
 	{"func_group", SP_info_null},
 	{"func_timer", SP_func_timer},			// rename trigger_timer?
-	{"func_breakable", SP_func_breakable},
+	{"func_breakglass", SP_func_breakglass},
+	{"func_breakwood", SP_func_breakwood},
+	{"func_breakmetal", SP_func_breakmetal},
 
 
 	// Triggers are brush objects that cause an effect when contacted
