@@ -1178,14 +1178,25 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.gibShock = trap_R_RegisterModel( "models/gibs/shock.md3" );
 	cgs.media.gibSteer = trap_R_RegisterModel( "models/gibs/steer.md3" );
 
-	cgs.media.debris1 = trap_R_RegisterModel( "models/debris/concrete_b1.md3" );
-	cgs.media.debris2 = trap_R_RegisterModel( "models/debris/concrete_b2.md3" );
-	cgs.media.debris3 = trap_R_RegisterModel( "models/debris/concrete_b3.md3" );
-	cgs.media.debris4 = trap_R_RegisterModel( "models/debris/concrete_b4.md3" );
-	cgs.media.debris5 = trap_R_RegisterModel( "models/debris/concrete_b5.md3" );
-	cgs.media.debris6 = trap_R_RegisterModel( "models/debris/concrete_b6.md3" );
-	cgs.media.debris7 = trap_R_RegisterModel( "models/debris/concrete_b7.md3" );
-	cgs.media.debris8 = trap_R_RegisterModel( "models/debris/concrete_b8.md3" );
+	cgs.media.gibAbdomen = trap_R_RegisterModel( "models/gibs/abdomen.md3" );
+	cgs.media.gibArm = trap_R_RegisterModel( "models/gibs/arm.md3" );
+	cgs.media.gibChest = trap_R_RegisterModel( "models/gibs/chest.md3" );
+	cgs.media.gibFist = trap_R_RegisterModel( "models/gibs/fist.md3" );
+	cgs.media.gibFoot = trap_R_RegisterModel( "models/gibs/foot.md3" );
+	cgs.media.gibForearm = trap_R_RegisterModel( "models/gibs/forearm.md3" );
+	cgs.media.gibIntestine = trap_R_RegisterModel( "models/gibs/intestine.md3" );
+	cgs.media.gibLeg = trap_R_RegisterModel( "models/gibs/leg.md3" );
+	cgs.media.gibSkull = trap_R_RegisterModel( "models/gibs/skull.md3" );
+	cgs.media.gibBrain = trap_R_RegisterModel( "models/gibs/brain.md3" );
+
+	cgs.media.debrislight1 = trap_R_RegisterModel( "models/debris/concrete_b1.md3" );
+	cgs.media.debrislight2 = trap_R_RegisterModel( "models/debris/concrete_b2.md3" );
+	cgs.media.debrislight3 = trap_R_RegisterModel( "models/debris/concrete_b3.md3" );
+	cgs.media.debrislight4 = trap_R_RegisterModel( "models/debris/concrete_b4.md3" );
+	cgs.media.debrislight5 = trap_R_RegisterModel( "models/debris/concrete_b5.md3" );
+	cgs.media.debrislight6 = trap_R_RegisterModel( "models/debris/concrete_b6.md3" );
+	cgs.media.debrislight7 = trap_R_RegisterModel( "models/debris/concrete_b7.md3" );
+	cgs.media.debrislight8 = trap_R_RegisterModel( "models/debris/concrete_b8.md3" );
 
 	cgs.media.debrisdark1 = trap_R_RegisterModel( "models/debris/concrete_d1.md3" );
 	cgs.media.debrisdark2 = trap_R_RegisterModel( "models/debris/concrete_d2.md3" );
@@ -1196,6 +1207,32 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.debrisdark7 = trap_R_RegisterModel( "models/debris/concrete_d7.md3" );
 	cgs.media.debrisdark8 = trap_R_RegisterModel( "models/debris/concrete_d8.md3" );
 
+	cgs.media.debrislightlarge1 = trap_R_RegisterModel( "models/debris/concrete_b1_large.md3" );
+	cgs.media.debrislightlarge2 = trap_R_RegisterModel( "models/debris/concrete_b2_large.md3" );
+	cgs.media.debrislightlarge3 = trap_R_RegisterModel( "models/debris/concrete_b3_large.md3" );
+
+	cgs.media.debrisdarklarge1 = trap_R_RegisterModel( "models/debris/wood_b1.md3" );
+	cgs.media.debrisdarklarge2 = trap_R_RegisterModel( "models/debris/wood_b1.md3" );
+	cgs.media.debrisdarklarge3 = trap_R_RegisterModel( "models/debris/wood_b1.md3" );
+
+	cgs.media.debriswood1 = trap_R_RegisterModel( "models/debris/wood_b1.md3" );
+	cgs.media.debriswood2 = trap_R_RegisterModel( "models/debris/wood_b2.md3" );
+	cgs.media.debriswood3 = trap_R_RegisterModel( "models/debris/wood_b3.md3" );
+	cgs.media.debriswood4 = trap_R_RegisterModel( "models/debris/wood_b4.md3" );
+	cgs.media.debriswood5 = trap_R_RegisterModel( "models/debris/wood_b5.md3" );
+
+	cgs.media.debrisglass1 = trap_R_RegisterModel( "models/debris/glass_1.md3" );
+	cgs.media.debrisglass2 = trap_R_RegisterModel( "models/debris/glass_2.md3" );
+	cgs.media.debrisglass3 = trap_R_RegisterModel( "models/debris/glass_3.md3" );
+	cgs.media.debrisglass4 = trap_R_RegisterModel( "models/debris/glass_4.md3" );
+	cgs.media.debrisglass5 = trap_R_RegisterModel( "models/debris/glass_5.md3" );
+
+	cgs.media.debrisglasslarge1 = trap_R_RegisterModel( "models/debris/glass_1_large.md3" );
+	cgs.media.debrisglasslarge2 = trap_R_RegisterModel( "models/debris/glass_2_large.md3" );
+	cgs.media.debrisglasslarge3 = trap_R_RegisterModel( "models/debris/glass_3_large.md3" );
+	cgs.media.debrisglasslarge4 = trap_R_RegisterModel( "models/debris/glass_4_large.md3" );
+	cgs.media.debrisglasslarge5 = trap_R_RegisterModel( "models/debris/glass_5_large.md3" );
+
 	cgs.media.fireModel = trap_R_RegisterModel( "models/rearfire/flametrail.md3" );
 	cgs.media.turboModel = trap_R_RegisterModel( "models/powerups/turbo/turbocar.md3" );
 
@@ -1204,20 +1241,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.reverseLightGlow = trap_R_RegisterModel( "gfx/flares/r_lite.md3" );
 // Q3Rally Code END
 
-// Q3Rally Code Start - Glass Shards
-	cgs.media.glass01 = trap_R_RegisterModel( "models/breakables/glass01.md3" );
-	cgs.media.glass02 = trap_R_RegisterModel( "models/breakables/glass02.md3" );
-  cgs.media.glass03 = trap_R_RegisterModel( "models/breakables/glass03.md3" );
 
-	cgs.media.wood01 = trap_R_RegisterModel( "models/breakables/wood01.md3" );
-	cgs.media.wood02 = trap_R_RegisterModel( "models/breakables/wood02.md3" );
-	cgs.media.wood03 = trap_R_RegisterModel( "models/breakables/wood03.md3" );
-
-	cgs.media.wood01 = trap_R_RegisterModel( "models/breakables/metal01.md3" );
-	cgs.media.wood02 = trap_R_RegisterModel( "models/breakables/metal02.md3" );
-	cgs.media.wood03 = trap_R_RegisterModel( "models/breakables/metal03.md3" );
-
-// Q3Rally Code END
 	cgs.media.smoke2 = trap_R_RegisterModel( "models/weapons2/shells/s_shell.md3" );
 
 	cgs.media.balloonShader = trap_R_RegisterShader( "sprites/balloon3" );
