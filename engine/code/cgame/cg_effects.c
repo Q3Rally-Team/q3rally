@@ -1027,56 +1027,6 @@ void CG_ShowDebris( vec3_t srcOrigin, int count, int evType ) {
 }
 
 
-/*
-===================
-CG_StartEarthquake
-
-Starts an earthquake effect
-===================
-*/
-int flagEarthquake = qfalse;
-int earthquakeIntensity = 0;
-int earthquakeStoptime = 0;
-
-void CG_StartEarthquake(int intensity, int duration)
-{
-	flagEarthquake = qtrue;
-	if ( intensity < earthquakeIntensity )
-		return;
-	
-	earthquakeIntensity = intensity;
-	earthquakeStoptime = cg.time + duration;
-}
-
-void CG_Earthquake()
-{
-	static float terremotoX, terremotoY, terremotoZ;
-	static terremotoTime = 0;
-	float realInt;
-
-	if ( !flagEarthquake )
-		return;
-
-	if ( earthquakeStoptime < cg.time )
-	{
-		flagEarthquake = qfalse;
-		earthquakeIntensity = 0;
-		return;
-	}
-
-	if ( terremotoTime < cg.time )
-	{
-		terremotoTime = cg.time += 50;
-		realInt = ((float)earthquakeIntensity + 1.0) / 2.0;
-		terremotoX = random() * realInt - realInt / 2;
-		terremotoY = random() * realInt - realInt / 2;
-		terremotoZ = random() * realInt - realInt / 2;
-	}
-	cg.refdefViewAngles[0] += terremotoX;
-	cg.refdefViewAngles[1] += terremotoY;
-	cg.refdefViewAngles[2] += terremotoZ;
-	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
-}
 
 /*
 ===================

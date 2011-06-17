@@ -929,10 +929,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.regenSound = trap_S_RegisterSound("sound/items/regen.wav", qfalse);
 	cgs.media.protectSound = trap_S_RegisterSound("sound/items/protect3.wav", qfalse);
 // Q3Rally Code Start: use proper sound
-	cgs.media.shieldSound = trap_S_RegisterSound("sound/weapons/machinegun/ric3.wav", qfalse);
-	cgs.media.glassSound = trap_S_RegisterSound("sound/breakable/glass.wav", qfalse);
-	cgs.media.woodSound = trap_S_RegisterSound("sound/breakable/wood.wav", qfalse);
-	cgs.media.metalSound = trap_S_RegisterSound("sound/breakable/metal.wav", qfalse);	
+	cgs.media.shieldSound = trap_S_RegisterSound("sound/weapons/machinegun/ric3.wav", qfalse);	
 // Q3Rally Code END
 	cgs.media.n_healthSound = trap_S_RegisterSound("sound/items/n_health.wav", qfalse );
 	cgs.media.hgrenb1aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb1a.wav", qfalse);

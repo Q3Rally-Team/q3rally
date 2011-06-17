@@ -338,6 +338,14 @@ typedef enum {
 	LETT_DEBRIS_CONCRETE,	// emits a (gray) smoke trail
 	LETT_DEBRIS_WOOD		// emits a (brown) dust trail
 } leTrailType_t;		// defines bounce behavior and trail on fragment local entities
+
+typedef enum {
+	PT_GRAVITY,
+	PT_LINEAR_UP,
+	PT_LINEAR_DOWN,
+	PT_LINEAR_BOTH
+} particleType_t;
+
 typedef struct localEntity_s {
 	struct localEntity_s	*prev, *next;
 	leType_t		leType;
@@ -361,8 +369,9 @@ typedef struct localEntity_s {
 	float			light;
 	vec3_t			lightColor;
 
-	leMarkType_t		leMarkType;		// mark to leave on fragment impact
-	leBounceSoundType_t	leBounceSoundType;
+	leMarkType_t		leMarkType;			// mark to leave on fragment impact
+	leBounceSoundType_t	leBounceSoundType;	// sound to play on fragment impact
+	leTrailType_t		leTrailType;		// trail to show behind fragment
 
 	refEntity_t		refEntity;		
 } localEntity_t;
