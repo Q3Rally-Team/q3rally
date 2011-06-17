@@ -394,7 +394,7 @@ void CG_AddFragment( localEntity_t *le ) {
 
 		// add a blood trail
 		if ( le->leBounceSoundType == LEBS_BLOOD ) {
-			CG_BloodTrail( le );
+			CG_PuffTrail( le );
 		}
 
 		return;
