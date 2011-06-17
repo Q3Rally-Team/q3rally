@@ -847,280 +847,11 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 }
 
 /*
-===================================================
-CG_LightningArc
-
-Generates an arc of lightning between
-two abitary vectors
-===================================================
-*/
-
-void CG_LightningArc( vec3_t start, vec3_t end ) {
-      refEntity_t           arc;
-      
-      memset( &arc, 0, sizeof( arc ) );
-      arc.reType = RT_LIGHTNING;
-      arc.customShader = cgs.media.lightningShader;
-      
-      VectorCopy( start, arc.origin );
-      VectorCopy( end, arc.oldorigin );
-      
-      trap_R_AddRefEntityToScene( &arc );
-}
-
-/*
- ==================
- CG_LaunchShard
- ==================
- */
- void CG_LaunchShard( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
-    int             bounce;
-   localEntity_t   *le;
-    refEntity_t      *re;
- 
-    le = CG_AllocLocalEntity();
-    re = &le->refEntity;
- 
-    le->leType = LE_FRAGMENT;
-    le->startTime = cg.time;
-    le->endTime = le->startTime + 30000 + random() * 3000;
- 
-    VectorCopy( origin, re->origin );
-    AxisCopy( axisDefault, re->axis );
-    re->hModel = hModel;
- 
-    le->pos.trType = TR_GRAVITY;
-    VectorCopy( origin, le->pos.trBase );
-    VectorCopy( velocity, le->pos.trDelta );
-    le->pos.trTime = cg.time;
- 
-    bounce = le->bounceFactor;
-   bounce = 0.3;
- 
-    le->leFlags = LEF_TUMBLE;
-    le->leBounceSoundType = LEBS_BRASS;
-    le->leMarkType = LEMT_NONE;
- }
- 
- 
-
-
- /*
- ===================
- CG_BreakGlass
- 
- Breaks our brush and generates a few models on launches them all over the map :)
- ===================
- */
-
- #define   GLASS_VELOCITY   175 //175
- #define   GLASS_JUMP      125 //125
-
- void CG_BreakGlass( vec3_t playerOrigin ) {
-    vec3_t    origin, velocity;
-        int     value;
-     int     count = 20; //20
-    int     states[] = {1,2,3};
-        int     numstates = sizeof(states)/sizeof(states[0]);
- 
-    while ( count-- ) {
-    
-    value = states[rand()%numstates];
-    VectorCopy( playerOrigin, origin );
-    velocity[0] = crandom() *  165; //165
-    velocity[1] = crandom() *  125; //125
-	//velocity[2] = 0; //GLASS_JUMP + crandom() * 1; //165
-    velocity[2] = GLASS_JUMP + crandom() * 165; //165
-    
-   switch (value) {
-    case 1:
-      CG_LaunchShard( origin, velocity, cgs.media.glass01 );
-        break;
-    case 2:
-       CG_LaunchShard( origin, velocity, cgs.media.glass02 );
-        break;
-    case 3:
-       CG_LaunchShard( origin, velocity, cgs.media.glass03 );
-    break;
-      }
-   }
-}
-
-  /*
- ==================
- CG_LaunchWood
- ==================
- */
- void CG_LaunchWood( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
-    int             bounce;
-   localEntity_t   *le;
-    refEntity_t      *re;
- 
-    le = CG_AllocLocalEntity();
-    re = &le->refEntity;
- 
-    le->leType = LE_FRAGMENT;
-    le->startTime = cg.time;
-    le->endTime = le->startTime + 30000 + random() * 3000;
- 
-    VectorCopy( origin, re->origin );
-    AxisCopy( axisDefault, re->axis );
-    re->hModel = hModel;
- 
-    le->pos.trType = TR_GRAVITY;
-    VectorCopy( origin, le->pos.trBase );
-    VectorCopy( velocity, le->pos.trDelta );
-    le->pos.trTime = cg.time;
- 
-   bounce = le->bounceFactor;
-   bounce = 0.9; //0.3
-   //newq3ball	
-  /* pm->ps->velocity[2] = -vel * 0.5; //2
-	if (pm->ps->velocity[2] <= 0.001) {
-    pm->ps->velocity[2] = 0;
- */
- //endnew
-    le->leFlags = LEF_TUMBLE;
-    le->leBounceSoundType = LEBS_BRASS;
-    le->leMarkType = LEMT_NONE;
- }
- 
- 
-
-
- /*
- ===================
- CG_BREAKWOOD
- 
- Breaks our brush and generates a few (here 1 model) on launches them all over the map :)
- ===================
- */
-
- #define   BOX_VELOCITY   60 //175
- #define   BOX_JUMP      85 //125
-
- void CG_BREAKWOOD( vec3_t playerOrigin ) {
-    vec3_t    origin, velocity;
-     int     value;
-     int     count = 8; //20
-     int     states[] = {1,2,3};
-        int     numstates = sizeof(states)/sizeof(states[0]);
- 
-    while ( count-- ) {
-    
-    value = states[rand()%numstates];
-    VectorCopy( playerOrigin, origin );
-    velocity[0] = crandom() *  80; //165
-    velocity[1] = crandom() *  125; //125
-    velocity[2] = BOX_JUMP + crandom() * 165;  //165
-    //velocity[2] = 165;  //165
-	   //newq3ball	
-//  velocity[2] = -velocity[0] * 0.5; //2
-// if (velocity[2] <= 0.001) {
- // velocity[2] = 0;
-// }
- //endnew
-   switch (value) {
-    case 1:
-      CG_LaunchWood( origin, velocity, cgs.media.wood01 );
-        break;
-    case 2:
-       CG_LaunchWood( origin, velocity, cgs.media.wood02 );
-        break;
-    case 3:
-       CG_LaunchWood( origin, velocity, cgs.media.wood03 );
-    break;
-      }
-   }
-}
-
-  /*
- ==================
- CG_LaunchMetal
- ==================
- */
- void CG_LaunchMetal( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
-    int             bounce;
-   localEntity_t   *le;
-    refEntity_t      *re;
- 
-    le = CG_AllocLocalEntity();
-    re = &le->refEntity;
- 
-    le->leType = LE_FRAGMENT;
-    le->startTime = cg.time;
-    le->endTime = le->startTime + 30000 + random() * 3000;
- 
-    VectorCopy( origin, re->origin );
-    AxisCopy( axisDefault, re->axis );
-    re->hModel = hModel;
- 
-    le->pos.trType = TR_GRAVITY;
-    VectorCopy( origin, le->pos.trBase );
-    VectorCopy( velocity, le->pos.trDelta );
-    le->pos.trTime = cg.time;
- 
-   bounce = le->bounceFactor;
-   bounce = 0.9; //0.3
-
-    le->leFlags = LEF_TUMBLE;
-    le->leBounceSoundType = LEBS_BRASS;
-    le->leMarkType = LEMT_NONE;
- }
-
-
-/*
- ===================
- CG_BREAKMETAL
- 
- Breaks our brush and generates a few (here 1 model) on launches them all over the map :)
- ===================
- */
-
-#define   METAL_VELOCITY   60 //175
- #define   METAL_JUMP      85 //125
-
- void CG_BREAKMETAL( vec3_t playerOrigin ) {
-    vec3_t    origin, velocity;
-     int     value;
-     int     count = 8; //20
-     int     states[] = {1,2,3};
-        int     numstates = sizeof(states)/sizeof(states[0]);
- 
-    while ( count-- ) {
-    
-    value = states[rand()%numstates];
-    VectorCopy( playerOrigin, origin );
-    velocity[0] = crandom() *  80; //165
-    velocity[1] = crandom() *  125; //125
-    velocity[2] = METAL_JUMP + crandom() * 165;  //165
-    //velocity[2] = 165;  //165
-	   //newq3ball	
-//  velocity[2] = -velocity[0] * 0.5; //2
-// if (velocity[2] <= 0.001) {
- // velocity[2] = 0;
-// }
- //endnew
-   switch (value) {
-    case 1:
-      CG_LaunchMetal( origin, velocity, cgs.media.metal01 );
-        break;
-    case 2:
-       CG_LaunchMetal( origin, velocity, cgs.media.metal02 );
-        break;
-    case 3:
-       CG_LaunchMetal( origin, velocity, cgs.media.metal03 );
-    break;
-      }
-   }
-}
-
-               /*
 ==================
-CG_LaunchDebris
+CG_LaunchFragment
 ==================
 */
-void CG_LaunchDebris( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
+void CG_LaunchFragment( vec3_t origin, vec3_t velocity, leTrailType_t trailType, qhandle_t hModel ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 
@@ -1142,8 +873,16 @@ void CG_LaunchDebris( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
 
 	le->bounceFactor = 0.6f;
 
-	le->leBounceSoundType = LEBS_DEBRIS;
-	//le->leMarkType = LEMT_BLOOD;
+	if ( trailType == LETT_BLOOD ) {
+		le->leBounceSoundType = LEBS_BLOOD;
+		le->leMarkType = LEMT_BLOOD;
+	} else {
+		le->leBounceSoundType = LEBS_NONE;
+		le->leMarkType = LEMT_NONE;
+	}
+
+	
+	le->leTrailType = trailType;
 }
 
 /*
@@ -1153,7 +892,7 @@ CG_ShowDebris
 Generated a bunch of debris launching out from an entity's location
 ===================
 */
-void CG_ShowDebris( vec3_t srcOrigin, int count, int type ) {
+void CG_ShowDebris( vec3_t srcOrigin, int count, int evType ) {
 	vec3_t	origin, velocity;
 	int i, r;
 
@@ -1162,44 +901,275 @@ void CG_ShowDebris( vec3_t srcOrigin, int count, int type ) {
 		velocity[0] = crandom()*GIB_VELOCITY;
 		velocity[1] = crandom()*GIB_VELOCITY;
 		velocity[2] = GIB_JUMP + crandom()*GIB_VELOCITY;
-		r = rand() % 8;
 		
-		if ( type == EV_EMIT_DEBRIS_NORMAL ) {
+		if ( evType == EV_EMIT_DEBRIS_LIGHT ) {
+			r = rand() % 8;
 			if (r == 0)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris1 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight1 );
 			else if (r == 1)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris2 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight2 );
 			else if (r == 2)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris3 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight3 );
 			else if (r == 3)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris4 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight4 );
 			else if (r == 4)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris5 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight5 );
 			else if (r == 5)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris6 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight6 );
 			else if (r == 6)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris7 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight7 );
 			else if (r == 7)
-				CG_LaunchDebris( origin, velocity, cgs.media.debris8 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislight8 );
 		}
 
-		if ( type == EV_EMIT_DEBRIS_DARK ) {
+		if ( evType == EV_EMIT_DEBRIS_DARK ) {
+			r = rand() % 8;
 			if (r == 0)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark1 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark1 );
 			else if (r == 1)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark2 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark2 );
 			else if (r == 2)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark3 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark3 );
 			else if (r == 3)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark4 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark4 );
 			else if (r == 4)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark5 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark5 );
 			else if (r == 5)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark6 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark6 );
 			else if (r == 6)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark7 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark7 );
 			else if (r == 7)
-				CG_LaunchDebris( origin, velocity, cgs.media.debrisdark8 );
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdark8 );
+		}
+
+		if ( evType == EV_EMIT_DEBRIS_LIGHT_LARGE ) {
+			r = rand() % 3;
+			if (r == 0)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislightlarge1 );
+			else if (r == 1)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislightlarge2 );
+			else if (r == 2)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrislightlarge3 );
+		}
+
+		if ( evType == EV_EMIT_DEBRIS_DARK_LARGE ) {
+			r = rand() % 3;
+			if (r == 0)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdarklarge1 );
+			else if (r == 1)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdarklarge2 );
+			else if (r == 2)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_CONCRETE, cgs.media.debrisdarklarge3 );
+		}
+
+		if ( evType == EV_EMIT_DEBRIS_WOOD ) {
+			r = rand() % 5;
+			if (r == 0)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_WOOD, cgs.media.debriswood1 );
+			else if (r == 1)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_WOOD, cgs.media.debriswood2 );
+			else if (r == 2)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_WOOD, cgs.media.debriswood3 );
+			else if (r == 3)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_WOOD, cgs.media.debriswood4 );
+			else if (r == 4)
+				CG_LaunchFragment( origin, velocity, LETT_DEBRIS_WOOD, cgs.media.debriswood5 );
+		}
+
+		if ( evType == EV_EMIT_DEBRIS_FLESH ) {
+			r = rand() % 10;
+			if (r == 0)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibSkull );
+			else if (r == 1)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibBrain );
+			else if (r == 2)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibAbdomen );
+			else if (r == 3)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibArm );
+			else if (r == 4)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibChest );
+			else if (r == 5)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibFist );
+			else if (r == 6)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibFoot );
+			else if (r == 7)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibForearm );
+			else if (r == 8)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibIntestine );
+			else if (r == 9)
+				CG_LaunchFragment( origin, velocity, LETT_BLOOD, cgs.media.gibLeg );
+		}
+
+		if ( evType == EV_EMIT_DEBRIS_GLASS ) {
+			r = rand() % 15;	//we're getting twice the number of small shards as big shards this way
+			if (r == 0 || r == 1)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglass1 );
+			else if (r == 2 || r == 3)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglass2 );
+			else if (r == 4 || r == 5)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglass3 );
+			else if (r == 6 || r == 7)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglass4 );
+			else if (r == 8 || r == 9)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglass5 );
+			else if (r == 10)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge1 );
+			else if (r == 11)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge2 );
+			else if (r == 12)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge3 );
+			else if (r == 13)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge4 );
+			else if (r == 14)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge5 );
 		}
 	}
+}
+
+
+/*
+===================
+CG_StartEarthquake
+
+Starts an earthquake effect
+===================
+*/
+int flagEarthquake = qfalse;
+int earthquakeIntensity = 0;
+int earthquakeStoptime = 0;
+
+void CG_StartEarthquake(int intensity, int duration)
+{
+	flagEarthquake = qtrue;
+	if ( intensity < earthquakeIntensity )
+		return;
+	
+	earthquakeIntensity = intensity;
+	earthquakeStoptime = cg.time + duration;
+}
+
+void CG_Earthquake()
+{
+	static float terremotoX, terremotoY, terremotoZ;
+	static terremotoTime = 0;
+	float realInt;
+
+	if ( !flagEarthquake )
+		return;
+
+	if ( earthquakeStoptime < cg.time )
+	{
+		flagEarthquake = qfalse;
+		earthquakeIntensity = 0;
+		return;
+	}
+
+	if ( terremotoTime < cg.time )
+	{
+		terremotoTime = cg.time += 50;
+		realInt = ((float)earthquakeIntensity + 1.0) / 2.0;
+		terremotoX = random() * realInt - realInt / 2;
+		terremotoY = random() * realInt - realInt / 2;
+		terremotoZ = random() * realInt - realInt / 2;
+	}
+	cg.refdefViewAngles[0] += terremotoX;
+	cg.refdefViewAngles[1] += terremotoY;
+	cg.refdefViewAngles[2] += terremotoZ;
+	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+}
+
+/*
+===================
+CG_ExplosionParticles
+
+Shows particles
+===================
+*/
+void CG_Particles( vec3_t origin, int count, int speed, int lifetime, int radius, int type, byte r, byte g, byte b ) {
+	int jump; // amount to nudge the particles trajectory vector up by
+	qhandle_t shader; // shader to use for the particles
+	int index;
+	vec3_t randVec, tempVec;
+	qboolean moveUp;
+
+	//jump = 70;
+	jump = speed;
+	shader = cgs.media.sparkShader;
+
+	for ( index = 0; index < count; index++ ) {
+		localEntity_t *le;
+		refEntity_t *re;
+
+		le = CG_AllocLocalEntity(); //allocate a local entity
+		re = &le->refEntity;
+		le->leFlags = LEF_PUFF_DONT_SCALE; //don't change the particle size
+		le->leType = LE_MOVE_SCALE_FADE; // particle should fade over time
+		le->startTime = cg.time; // set the start time of the particle to the current time
+		le->endTime = cg.time + lifetime + (random() * (lifetime / 2));	//life time will be anywhere between [lifetime] and [lifetime * 1.5]
+		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+		re = &le->refEntity;
+		re->shaderTime = cg.time / 1000.0f;
+		re->reType = RT_SPRITE;
+		re->rotation = 0;
+		re->radius = radius;
+		re->customShader = shader;
+		re->shaderRGBA[0] = r;
+		re->shaderRGBA[1] = g;
+		re->shaderRGBA[2] = b;
+		re->shaderRGBA[3] = 0xFF;
+		le->color[3] = 1.0;
+		if ( type == PT_GRAVITY )
+			le->pos.trType = TR_GRAVITY; // moves in a gravity affected arc
+		else
+			le->pos.trType = TR_LINEAR; // moves in straight line, outward from the origin
+		le->pos.trTime = cg.time;
+		VectorCopy( origin, le->pos.trBase );
+		VectorCopy( origin, re->origin );
+
+		tempVec[0] = crandom(); //between 1 and -1
+		tempVec[1] = crandom();
+		tempVec[2] = crandom();
+		VectorNormalize(tempVec);
+		VectorScale(tempVec, speed, randVec);
+
+		if ( type == PT_GRAVITY || type == PT_LINEAR_UP )
+			moveUp = qtrue;
+		else if ( type == PT_LINEAR_DOWN )
+			moveUp = qfalse;
+		else if (crandom() < 0)
+			moveUp = qtrue;
+		else
+			moveUp = qfalse;
+		
+
+		if (moveUp)
+			randVec[2] += jump; //nudge the particles up a bit
+		else
+			randVec[2] -= jump; //nudge the particles down a bit
+
+		VectorCopy( randVec, le->pos.trDelta );	
+	}
+}
+
+/*
+===================
+CG_ParticlesFromEntityState
+
+Takes entitystate and extracts data inside to use for CG_Particles.
+es->constantLight is used for the color of the particles.
+es->eventParm is used for the number of particles.
+es->generic1 is used for the speed of the particles.
+===================
+*/
+void CG_ParticlesFromEntityState( vec3_t origin, int type, entityState_t *es) {
+	byte r, g, b;
+	int lifetime = 3000;
+	int radius = 3;
+	int speed = es->generic1;
+	
+	r = es->constantLight & 255;
+	g = ( es->constantLight >> 8 ) & 255;
+	b = ( es->constantLight >> 16 ) & 255;
+
+	CG_Particles( origin, es->eventParm, speed, lifetime, radius, type, r, g, b );
 }

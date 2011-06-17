@@ -935,32 +935,16 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-// If we found a BreakGlass brush check and break it
-    if ( targ->s.eType == ET_BREAKGLASS ) {
-                targ->health -= damage;
-       G_BreakGlass( targ, point, mod );
-       return;
-    }
 
-	   // If we found breakable wood brush check and break it
-    if ( targ->s.eType == ET_BREAKWOOD ) {
-                targ->health -= damage;
-       G_BREAKWOOD( targ, point, mod );
-       return;
-    }
-
-// If we found breakable metal brush check and break it
-    if ( targ->s.eType == ET_BREAKMETAL ) {
-                targ->health -= damage;
-       G_BREAKMETAL( targ, point, mod );
-       return;
-    }
-
-	// shootable doors / buttons don't actually have any health // Rotating Doors
+	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( targ->use && (targ->moverState == MOVER_POS1
 			|| targ->moverState == ROTATOR_POS1) ) {
 			targ->use( targ, inflictor, attacker );
+		} else if ( targ->use == NULL ) {	// entity is a func_breakable
+			targ->health -= damage;
+			if (targ->health <= 0)
+				Break_Breakable(targ, attacker);
 		}
 		return;
 	}

@@ -712,6 +712,39 @@ gentity_t *findradius (gentity_t *from, vec3_t org, float rad)
 	return NULL;
 }
 
+/*
+==================
+PickDebrisType
+returns a type of debris based on the passed spawnflags value
+==================
+*/
+int PickDebrisType( int spawnflags ) {
+
+	if ( spawnflags & 1 )
+		return EV_EMIT_DEBRIS_LIGHT;
+	
+	if ( spawnflags & 2 )
+		return EV_EMIT_DEBRIS_DARK;
+	
+	if ( spawnflags & 4 )
+		return EV_EMIT_DEBRIS_LIGHT_LARGE;
+
+	if ( spawnflags & 8 )
+		return EV_EMIT_DEBRIS_DARK_LARGE;
+	
+	if ( spawnflags & 16 )
+		return EV_EMIT_DEBRIS_WOOD;
+
+	if ( spawnflags & 32 )
+		return EV_EMIT_DEBRIS_FLESH;
+	
+	if ( spawnflags & 64 )
+		return EV_EMIT_DEBRIS_GLASS;
+
+	//if no compatible spawnflags supplied, return EV_EMIT_DEBRIS_LIGHT
+	return EV_EMIT_DEBRIS_LIGHT;
+}
+
 // Perle - Code helper function
 //
 qboolean visible( gentity_t *ent1, gentity_t *ent2 ) {

@@ -1815,6 +1815,66 @@ void SP_func_static( gentity_t *ent ) {
 	VectorCopy( ent->s.origin, ent->r.currentOrigin );
 }
 
+/*
+===============================================================================
+
+BREAKABLE
+
+===============================================================================
+*/
+
+//other is the player that broke the func_breakable
+void Break_Breakable(gentity_t *ent, gentity_t *other) {
+        vec3_t size;
+        vec3_t center;
+        int count = 0;
+        int spawnflags = 0;
+        gentity_t *tmp;
+        int type = EV_EMIT_DEBRIS_LIGHT;
+
+        // Get the center of the glass (code donated by Perle)
+        VectorSubtract(ent->r.maxs, ent->r.mins, size);
+    VectorScale(size, 0.5, size);
+    VectorAdd(ent->r.mins, size, center);
+
+
+        ent->takedamage = qfalse;
+        ent->s.eType = ET_INVISIBLE;
+        G_UseTargets( ent, other );
+
+        //need to store properties of the entity in seperate variables because we're going to free the entity
+        if ( ent->count > 0) {
+                count = ent->count;
+                spawnflags = ent->spawnflags;
+        }
+
+        G_FreeEntity( ent );
+
+        //spray out debris
+        if ( count > 0 ) {
+                tmp = G_TempEntity( center, PickDebrisType( spawnflags ) );
+                tmp->s.eventParm = count;
+        }
+}
+
+
+/*QUAKED func_breakable (0 .5 .8) ? see PickDebrisType in g_util.c for spawnflags
+A bmodel that just sits there, doing nothing. It is removed when it received a set amount of damage.
+"model2"        .md3 model to also draw
+"color"         constantLight color
+"light"         constantLight radius
+"health"        the amount of damage required before this entity is removed
+*/
+void SP_func_breakable( gentity_t *ent ) {
+        trap_SetBrushModel( ent, ent->model );
+        InitMover( ent );
+        VectorCopy( ent->s.origin, ent->s.pos.trBase );
+        VectorCopy( ent->s.origin, ent->r.currentOrigin );
+        ent->takedamage = qtrue;
+        ent->use = NULL;
+        ent->r.contents = CONTENTS_SOLID; 
+        ent->clipmask = MASK_SOLID;
+}
 
 /*
 ===============================================================================

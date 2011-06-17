@@ -29,7 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef MISSIONPACK // bk001205
 #include "../../ui/menudef.h"
 #endif
-
 //==========================================================================
 
 /*
@@ -1344,26 +1343,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 // Q3Rally Code END
 		break;
 
-// Q3Rally Code Start
-      case EV_BREAK_GLASS:
-       DEBUGNAME("EV_BREAK_GLASS");
-       trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.glassSound );
-       CG_BreakGlass( cent->lerpOrigin );
-       break;
 
-	    case EV_BREAKWOOD:
-       DEBUGNAME("EV_BREAKWOOD");
-       trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.woodSound );
-       CG_BREAKWOOD( cent->lerpOrigin );
-       break;
-       
-      case EV_BREAKMETAL:
-        DEBUGNAME("EV_BREAKMETAL");
-        trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.metalSound );
-        CG_BREAKMETAL( cent->lerpOrigin );
-        break;
-        
-// Q3Rally Code END
 
 	case EV_STOPLOOPINGSOUND:
 		DEBUGNAME("EV_STOPLOOPINGSOUND");
@@ -1375,15 +1355,83 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_DEBUG_LINE");
 		CG_Beam( cent );
 		break;
-		
-	case EV_EMIT_DEBRIS_NORMAL:
-		DEBUGNAME("EV_EMIT_DEBRIS_NORMAL");
-		CG_ShowDebris( cent->lerpOrigin, cent->currentState.eventParm, EV_EMIT_DEBRIS_NORMAL );
+
+	case EV_EMIT_DEBRIS_LIGHT:
+		DEBUGNAME("EV_EMIT_DEBRIS_LIGHT");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_LIGHT );
 		break;
 
 	case EV_EMIT_DEBRIS_DARK:
 		DEBUGNAME("EV_EMIT_DEBRIS_DARK");
-		CG_ShowDebris( cent->lerpOrigin, cent->currentState.eventParm, EV_EMIT_DEBRIS_DARK );
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_DARK );
+		break;
+
+	case EV_EMIT_DEBRIS_LIGHT_LARGE:
+		DEBUGNAME("EV_EMIT_DEBRIS_LIGHT_LARGE");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_LIGHT_LARGE );
+		break;
+
+	case EV_EMIT_DEBRIS_DARK_LARGE:
+		DEBUGNAME("EV_EMIT_DEBRIS_DARK_LARGE");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_DARK_LARGE );
+		break;
+
+	case EV_EMIT_DEBRIS_WOOD:
+		DEBUGNAME("EV_EMIT_DEBRIS_WOOD");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_WOOD );
+		break;
+
+	case EV_EMIT_DEBRIS_FLESH:
+		DEBUGNAME("EV_EMIT_DEBRIS_FLESH");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_FLESH );
+		break;
+
+	case EV_EMIT_DEBRIS_GLASS:
+		DEBUGNAME("EV_EMIT_DEBRIS_GLASS");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_GLASS );
+		break;
+
+	case EV_EARTHQUAKE:
+		DEBUGNAME("EV_EARTHQUAKE");
+		CG_StartEarthquake((es->eventParm & 0x0F) + 1, ((1 + ((es->eventParm & 0xF0) >> 4)) * 2000) + 1000);
+		break;
+
+	case EV_EXPLOSION:
+		DEBUGNAME("EV_EXPLOSION");
+		
+		// show plume (if enabled)
+		if ( cg_oldRocket.integer == 0 ) {
+			dir[0] = 0;
+			dir[1] = 0;
+			dir[2] = 25;
+			CG_ParticleExplosion( "explode1", cent->lerpOrigin, dir, 1400, 20, 30 );
+		}
+		
+		// show explosion
+		dir[0] = 0;
+		dir[1] = 0;
+		dir[2] = 0;
+		CG_MakeExplosion( cent->lerpOrigin, dir, cgs.media.dishFlashModel, cgs.media.rocketExplosionShader, 1000, qtrue );
+		break;
+	
+	case EV_PARTICLES_GRAVITY:
+		DEBUGNAME("EV_PARTICLES_GRAVITY");
+		CG_ParticlesFromEntityState( cent->lerpOrigin, PT_GRAVITY, es );
+		break;
+
+	case EV_PARTICLES_LINEAR:
+		DEBUGNAME("EV_PARTICLES_LINEAR");
+		CG_ParticlesFromEntityState( cent->lerpOrigin, PT_LINEAR_BOTH, es );
+		break;
+
+	case EV_PARTICLES_LINEAR_UP:
+		DEBUGNAME("EV_PARTICLES_LINEAR_UP");
+		CG_ParticlesFromEntityState( cent->lerpOrigin, PT_LINEAR_UP, es );
+		break;
+
+	case EV_PARTICLES_LINEAR_DOWN:
+		DEBUGNAME("EV_PARTICLES_LINEAR_DOWN");
+		CG_ParticlesFromEntityState( cent->lerpOrigin, PT_LINEAR_DOWN, es );
 		break;
 
 	default:

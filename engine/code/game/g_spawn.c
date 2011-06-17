@@ -145,6 +145,7 @@ void SP_info_podium(gentity_t *ent);
 
 void SP_func_plat (gentity_t *ent);
 void SP_func_static (gentity_t *ent);
+void SP_func_breakable (gentity_t *ent);
 void SP_func_rotating (gentity_t *ent);
 void SP_func_bobbing (gentity_t *ent);
 void SP_func_pendulum( gentity_t *ent );
@@ -152,11 +153,7 @@ void SP_func_button (gentity_t *ent);
 void SP_func_door (gentity_t *ent);
 void SP_func_train (gentity_t *ent);
 void SP_func_timer (gentity_t *self);
-// Q3Rally Code Start
-void SP_func_breakglass (gentity_t *ent);
-void SP_func_breakwood (gentity_t *ent);
-void SP_func_breakmetal (gentity_t *ent);
-// Q3Rally Code END
+
 
 void SP_trigger_always (gentity_t *ent);
 void SP_trigger_multiple (gentity_t *ent);
@@ -179,6 +176,7 @@ void SP_target_position (gentity_t *ent);
 void SP_target_location (gentity_t *ent);
 void SP_target_push (gentity_t *ent);
 void SP_target_debrisemitter (gentity_t *ent);
+void SP_target_earthquake (gentity_t *ent);
 
 void SP_light (gentity_t *self);
 void SP_info_null (gentity_t *self);
@@ -249,10 +247,7 @@ spawn_t	spawns[] = {
 	{"func_train", SP_func_train},
 	{"func_group", SP_info_null},
 	{"func_timer", SP_func_timer},			// rename trigger_timer?
-	{"func_breakglass", SP_func_breakglass},
-	{"func_breakwood", SP_func_breakwood},
-	{"func_breakmetal", SP_func_breakmetal},
-
+	{"func_breakable", SP_func_breakable},
 
 	// Triggers are brush objects that cause an effect when contacted
 	// by a living player, usually involving firing targets.
@@ -281,6 +276,7 @@ spawn_t	spawns[] = {
 	{"target_location", SP_target_location},
 	{"target_push", SP_target_push},
 	{"target_debrisemitter", SP_target_debrisemitter},
+	{"target_earthquake", SP_target_earthquake},
 
 	{"light", SP_light},
 	{"path_corner", SP_path_corner},
