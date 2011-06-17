@@ -92,7 +92,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -877,10 +877,10 @@ q3rallycode
 21=engine\code\qcommon\files.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\game\g_mover.c
 [engine\code\game\g_mover.c]
-TopLine=1825
-Caret=2,1855
+TopLine=1659
+Caret=33,1676
 [engine\code\game\g_combat.c]
 TopLine=931
 Caret=1,941
@@ -888,7 +888,7 @@ Caret=1,941
 TopLine=235
 Caret=40,250
 [engine\code\cgame\cg_main.c]
-TopLine=1166
+TopLine=1178
 Caret=1,1206
 [engine\code\cgame\cg_effects.c]
 TopLine=905
@@ -909,7 +909,7 @@ Caret=54,1743
 TopLine=3236
 Caret=1,3250
 [engine\code\server\sv_main.c]
-TopLine=69
+TopLine=49
 Caret=1,49
 [engine\code\renderer\tr_public.h]
 TopLine=135

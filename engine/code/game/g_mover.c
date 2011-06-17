@@ -1673,9 +1673,10 @@ void Reached_Train( gentity_t *ent ) {
 
 	// if there is a "wait" value on the target, don't start moving yet
 	if ( next->wait ) {
-		ent->nextthink = level.time + next->wait * 1000;
-		ent->think = Think_BeginMoving;
-		ent->s.pos.trType = TR_STATIONARY;
+		 if ( next->wait > 0 )
+        ent->nextthink = level.time + next->wait * 1000;
+		    ent->think = Think_BeginMoving;
+		    ent->s.pos.trType = TR_STATIONARY;
 	}
 }
 
