@@ -332,6 +332,12 @@ typedef enum {
 	LEBS_BRASS
 } leBounceSoundType_t;	// fragment local entities can make sounds on impacts
 
+typedef enum {
+	LETT_NONE,				// does not emit a puff trail
+	LETT_BLOOD,				// emits a blood trail
+	LETT_DEBRIS_CONCRETE,	// emits a (gray) smoke trail
+	LETT_DEBRIS_WOOD		// emits a (brown) dust trail
+} leTrailType_t;		// defines bounce behavior and trail on fragment local entities
 typedef struct localEntity_s {
 	struct localEntity_s	*prev, *next;
 	leType_t		leType;

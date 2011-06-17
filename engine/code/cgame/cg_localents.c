@@ -118,56 +118,52 @@ or generates more localentities along a trail.
 
 /*
 ================
-CG_BloodTrail
+CG_PuffTrail
 
-Leave expanding blood puffs behind gibs
+Leave expanding puffs behind fragments
 ================
 */
-void CG_BloodTrail( localEntity_t *le ) {
-	int		t;
-	int		t2;
-	int		step;
-	vec3_t	newOrigin;
-	localEntity_t	*blood;
-
-	step = 150;
-	t = step * ( (cg.time - cg.frametime + step ) / step );
-	t2 = step * ( cg.time / step );
-
-	for ( ; t <= t2; t += step ) {
-		BG_EvaluateTrajectory( &le->pos, t, newOrigin );
-
-		blood = CG_SmokePuff( newOrigin, vec3_origin, 
-					  20,		// radius
-					  1, 1, 1, 1,	// color
-					  2000,		// trailTime
-					  t,		// startTime
-					  0,		// fadeInTime
-					  0,		// flags
-					  cgs.media.bloodTrailShader );
-		// use the optimized version
-		blood->leType = LE_FALL_SCALE_FADE;
-		// drop a total of 40 units over its lifetime
-		blood->pos.trDelta[2] = 40;
-	}
-}
-
-/*
-================
-CG_DebrisTrail
-
-Leave expanding smoke puffs behind debris
-================
-*/
-void CG_DebrisTrail( localEntity_t *le ) {
+void CG_PuffTrail( localEntity_t *le ) {
 	int		t;
 	int		t2;
 	int		step;
 	vec3_t	newOrigin;
 	localEntity_t	*puff;
+	float r, g, b, a;
+	qhandle_t mediaShader;
+	int verticalMovement;
 
-	//step = 150;
-	step = 25;
+	if ( le->leTrailType == LETT_NONE )
+		return;
+
+	if ( le->leTrailType == LETT_BLOOD ) {
+		step = 150;
+		r = 1;
+		g = 1;
+		b = 1;
+		a = 1;
+		mediaShader = cgs.media.bloodTrailShader;
+		verticalMovement = 40;
+	}
+	else if ( le->leTrailType == LETT_DEBRIS_CONCRETE ) {
+		step = 25;
+		r = 1;
+		g = 1;
+		b = 1;
+		a = 0.2;
+		mediaShader = cgs.media.smokePuffShader;
+		verticalMovement = -40;
+	}
+	else if ( le->leTrailType == LETT_DEBRIS_WOOD ) {
+		step = 25;
+		r = 0.5;
+		g = 0.42;
+		b = 0.36;
+		a = 0.2;
+		mediaShader = cgs.media.smokePuffShader;
+		verticalMovement = -40;
+	}
+
 	t = step * ( (cg.time - cg.frametime + step ) / step );
 	t2 = step * ( cg.time / step );
 
@@ -176,18 +172,19 @@ void CG_DebrisTrail( localEntity_t *le ) {
 
 		puff = CG_SmokePuff( newOrigin, vec3_origin, 
 					  20,		// radius
-					  1, 1, 1, .2,	// color
+					  r, g, b, a,	// color
 					  2000,		// trailTime
 					  t,		// startTime
 					  0,		// fadeInTime
 					  0,		// flags
-					  cgs.media.smokePuffShader );
+					  mediaShader );
 		// use the optimized version
 		puff->leType = LE_FALL_SCALE_FADE;
-		// rise a total of 40 units over its lifetime
-		puff->pos.trDelta[2] = -40;
+		// drop or rise a total of n units over its lifetime
+		puff->pos.trDelta[2] = verticalMovement;
 	}
 }
+
 
 /*
 ================
