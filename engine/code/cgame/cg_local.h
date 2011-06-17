@@ -819,9 +819,6 @@ typedef struct {
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
 // Q3Rally Code Start
-	qhandle_t 	glassSound;
-	qhandle_t 	woodSound;
-	qhandle_t   metalSound;
 	qhandle_t   flameBallShader;
 	qhandle_t   flameExplosionShader;
 // Q3Rally Code END
@@ -877,15 +874,26 @@ typedef struct {
 	qhandle_t	gibShock;
 	qhandle_t	gibSteer;
 
-// debris explosions
-	qhandle_t	debris1;
-	qhandle_t	debris2;
-	qhandle_t	debris3;
-	qhandle_t	debris4;
-	qhandle_t	debris5;
-	qhandle_t	debris6;
-	qhandle_t	debris7;
-	qhandle_t	debris8;
+	qhandle_t	gibAbdomen;
+	qhandle_t	gibArm;
+	qhandle_t	gibChest;
+	qhandle_t	gibFist;
+	qhandle_t	gibFoot;
+	qhandle_t	gibForearm;
+	qhandle_t	gibIntestine;
+	qhandle_t	gibLeg;
+	qhandle_t	gibSkull;
+	qhandle_t	gibBrain;
+
+	// debris explosions
+	qhandle_t	debrislight1;
+	qhandle_t	debrislight2;
+	qhandle_t	debrislight3;
+	qhandle_t	debrislight4;
+	qhandle_t	debrislight5;
+	qhandle_t	debrislight6;
+	qhandle_t	debrislight7;
+	qhandle_t	debrislight8;
 
 	qhandle_t	debrisdark1;
 	qhandle_t	debrisdark2;
@@ -895,6 +903,32 @@ typedef struct {
 	qhandle_t	debrisdark6;
 	qhandle_t	debrisdark7;
 	qhandle_t	debrisdark8;
+
+	qhandle_t	debrislightlarge1;
+	qhandle_t	debrislightlarge2;
+	qhandle_t	debrislightlarge3;
+
+	qhandle_t	debrisdarklarge1;
+	qhandle_t	debrisdarklarge2;
+	qhandle_t	debrisdarklarge3;
+
+	qhandle_t	debriswood1;
+	qhandle_t	debriswood2;
+	qhandle_t	debriswood3;
+	qhandle_t	debriswood4;
+	qhandle_t	debriswood5;
+
+	qhandle_t	debrisglass1;
+	qhandle_t	debrisglass2;
+	qhandle_t	debrisglass3;
+	qhandle_t	debrisglass4;
+	qhandle_t	debrisglass5;
+
+	qhandle_t	debrisglasslarge1;
+	qhandle_t	debrisglasslarge2;
+	qhandle_t	debrisglasslarge3;
+	qhandle_t	debrisglasslarge4;
+	qhandle_t	debrisglasslarge5;
   
 // Q3Rally Code END
 
