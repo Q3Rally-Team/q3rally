@@ -1391,11 +1391,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_GLASS );
 		break;
 
-	case EV_EARTHQUAKE:
-		DEBUGNAME("EV_EARTHQUAKE");
-		CG_StartEarthquake((es->eventParm & 0x0F) + 1, ((1 + ((es->eventParm & 0xF0) >> 4)) * 2000) + 1000);
-		break;
-
 	case EV_EXPLOSION:
 		DEBUGNAME("EV_EXPLOSION");
 		
