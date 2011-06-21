@@ -1390,6 +1390,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_EMIT_DEBRIS_GLASS");
 		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_GLASS );
 		break;
+		
+	case EV_EMIT_DEBRIS_STONE:
+		DEBUGNAME("EV_EMIT_DEBRIS_STONE");
+		CG_ShowDebris( cent->lerpOrigin, es->eventParm, EV_EMIT_DEBRIS_STONE );
+		break;
 
 	case EV_EXPLOSION:
 		DEBUGNAME("EV_EXPLOSION");

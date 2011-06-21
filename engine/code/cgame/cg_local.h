@@ -938,6 +938,12 @@ typedef struct {
 	qhandle_t	debrisglasslarge3;
 	qhandle_t	debrisglasslarge4;
 	qhandle_t	debrisglasslarge5;
+	
+	qhandle_t debrisstone1;
+	qhandle_t debrisstone2;
+	qhandle_t debrisstone3;
+	qhandle_t debrisstone4;
+	qhandle_t debrisstone5;
   
 // Q3Rally Code END
 

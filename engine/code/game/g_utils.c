@@ -740,6 +740,9 @@ int PickDebrisType( int spawnflags ) {
 	
 	if ( spawnflags & 64 )
 		return EV_EMIT_DEBRIS_GLASS;
+		
+	if ( spawnflags & 128 )
+	  return EV_EMIT_DEBRIS_STONE;
 
 	//if no compatible spawnflags supplied, return EV_EMIT_DEBRIS_LIGHT
 	return EV_EMIT_DEBRIS_LIGHT;

@@ -625,7 +625,8 @@ typedef enum {
 		EV_EMIT_DEBRIS_WOOD,		// emit wooden chunks
 		EV_EMIT_DEBRIS_FLESH,		// emit gibs
 		EV_EMIT_DEBRIS_GLASS,		// emite shards of glass
-	
+    EV_EMIT_DEBRIS_STONE,
+    
 		EV_EXPLOSION,
 		EV_PARTICLES_GRAVITY,
 		EV_PARTICLES_LINEAR,

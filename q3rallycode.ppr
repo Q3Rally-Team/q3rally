@@ -861,9 +861,11 @@ q3rallycode
 5=engine\code\cgame\cg_localents.c
 6=engine\code\cgame\cg_effects.c
 7=engine\code\cgame\cg_local.h
+8=engine\code\cgame\cg_main.c
+9=engine\code\game\g_utils.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_localents.c
+Selected=engine\code\game\g_utils.c
 [engine\code\game\g_mover.c]
 TopLine=1817
 Caret=21,1827
@@ -871,11 +873,11 @@ Caret=21,1827
 TopLine=959
 Caret=14,959
 [engine\code\cgame\cg_event.c]
-TopLine=738
-Caret=1,752
+TopLine=1372
+Caret=3,1397
 [engine\code\game\bg_public.h]
 TopLine=615
-Caret=2,628
+Caret=5,629
 [engine\code\game\g_spawn.c]
 TopLine=164
 Caret=38,177
@@ -883,8 +885,14 @@ Caret=38,177
 TopLine=115
 Caret=11,121
 [engine\code\cgame\cg_effects.c]
-TopLine=95
-Caret=1,95
+TopLine=1011
+Caret=54,1027
 [engine\code\cgame\cg_local.h]
-TopLine=1763
-Caret=1,1763
+TopLine=926
+Caret=24,943
+[engine\code\cgame\cg_main.c]
+TopLine=1217
+Caret=84,1237
+[engine\code\game\g_utils.c]
+TopLine=729
+Caret=32,745

@@ -1023,6 +1023,21 @@ void CG_ShowDebris( vec3_t srcOrigin, int count, int evType ) {
 			else if (r == 14)
 				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisglasslarge5 );
 		}
+		
+		if ( evType == EV_EMIT_DEBRIS_STONE ) {
+				r = rand() % 5;
+				if (r == 0)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisstone1 );
+				else if (r == 1)
+					CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisstone2 );
+				else if (r == 2)
+					CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisstone3 );
+				else if (r == 3)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisstone4 );
+			else if (r == 4)
+				CG_LaunchFragment( origin, velocity, LETT_NONE, cgs.media.debrisstone5 );
+			}
+		
 	}
 }
 

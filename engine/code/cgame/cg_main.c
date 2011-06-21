@@ -1229,6 +1229,12 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.debrisglasslarge3 = trap_R_RegisterModel( "models/debris/glass_3_large.md3" );
 	cgs.media.debrisglasslarge4 = trap_R_RegisterModel( "models/debris/glass_4_large.md3" );
 	cgs.media.debrisglasslarge5 = trap_R_RegisterModel( "models/debris/glass_5_large.md3" );
+	
+	cgs.media.debrisstone1 = trap_R_RegisterModel( "models/debris/stone_1.md3" );
+	cgs.media.debrisstone2 = trap_R_RegisterModel( "models/debris/stone_2.md3" );
+	cgs.media.debrisstone3 = trap_R_RegisterModel( "models/debris/stone_3.md3" );
+	cgs.media.debrisstone4 = trap_R_RegisterModel( "models/debris/stone_4.md3" );
+	cgs.media.debrisstone5 = trap_R_RegisterModel( "models/debris/stone_5.md3" );
 
 	cgs.media.fireModel = trap_R_RegisterModel( "models/rearfire/flametrail.md3" );
 	cgs.media.turboModel = trap_R_RegisterModel( "models/powerups/turbo/turbocar.md3" );
