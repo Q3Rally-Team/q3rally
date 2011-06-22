@@ -863,9 +863,10 @@ q3rallycode
 7=engine\code\cgame\cg_local.h
 8=engine\code\cgame\cg_main.c
 9=engine\code\game\g_utils.c
+10=engine\code\q3_ui\ui_menu.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_utils.c
+Selected=engine\code\q3_ui\ui_menu.c
 [engine\code\game\g_mover.c]
 TopLine=1817
 Caret=21,1827
@@ -896,3 +897,6 @@ Caret=84,1237
 [engine\code\game\g_utils.c]
 TopLine=729
 Caret=32,745
+[engine\code\q3_ui\ui_menu.c]
+TopLine=507
+Caret=1,612
