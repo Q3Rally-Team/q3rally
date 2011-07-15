@@ -1196,15 +1196,23 @@ NOMONSTER	monsters will not trigger this door
 "color"		constantLight color
 "light"		constantLight radius
 "health"	if set, the door must be shot open
+"startsound"  if set, overrides the sound to play when the door starts moving
+"endsound"  if set, overrides the sound to play when the door has stopped moving
 */
 void SP_func_door (gentity_t *ent) {
+	char  *startsound;
+	char  *endsound;
 	vec3_t	abs_movedir;
 	float	distance;
 	vec3_t	size;
 	float	lip;
 
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.wav");
+	startsound = endsound = NULL;
+	G_SpawnString("startsound", "sound/movers/doors/dr1_strt.wav", &startsound);
+	G_SpawnString("endsound", "sound/movers/doors/dr1_end.wav", &endsound);
+
+	ent->sound1to2 = ent->sound2to1 = G_SoundIndex(startsound);
+	ent->soundPos1 = ent->soundPos2 = G_SoundIndex(endsound);
 
 	ent->blocked = Blocked_Door;
 
@@ -1549,16 +1557,20 @@ When a button is touched, it moves some distance in the direction of it's angle,
 "wait"		override the default 1 second wait (-1 = never return)
 "lip"		override the default 4 pixel lip remaining at end of move
 "health"	if set, the button must be killed instead of touched
+"sound"		if set, overrides the sound played when the button is pressed
 "color"		constantLight color
 "light"		constantLight radius
 */
 void SP_func_button( gentity_t *ent ) {
+	char		*sound;
 	vec3_t		abs_movedir;
 	float		distance;
 	vec3_t		size;
 	float		lip;
 
-	ent->sound1to2 = G_SoundIndex("sound/movers/switches/butn2.wav");
+	sound = NULL;
+	G_SpawnString("sound", "sound/movers/switches/butn2.wav", &sound);
+	ent->sound1to2 = G_SoundIndex(sound);
 	
 	if ( !ent->speed ) {
 		ent->speed = 40;
@@ -1693,8 +1705,10 @@ void Think_SetupTrainTargets( gentity_t *ent ) {
 
 	ent->nextTrain = G_Find( NULL, FOFS(targetname), ent->target );
 	if ( !ent->nextTrain ) {
-		G_Printf( "func_train at %s with an unfound target\n",
-			vtos(ent->r.absmin) );
+		if ( !strcmp( ent->classname, "func_train" ) )
+			G_Printf( "func_train at %s with an unfound target\n", vtos(ent->r.absmin) );
+		else //path_corner
+			G_Printf( "Train corner at %s without a target\n", ent->s.origin );
 		return;
 	}
 
@@ -1723,11 +1737,13 @@ void Think_SetupTrainTargets( gentity_t *ent ) {
 			}
 		} while ( strcmp( next->classname, "path_corner" ) );
 
+		//G_Printf("%s -> %s\n", path->targetname, next->targetname);
 		path->nextTrain = next;
 	}
 
 	// start the train moving from the first corner
-	Reached_Train( ent );
+	if ( !strcmp( ent->classname, "func_train" ) )
+		Reached_Train( ent );
 }
 
 
@@ -1761,6 +1777,17 @@ The train spawns at the first target it is pointing at.
 "color"		constantLight color
 "light"		constantLight radius
 */
+void Use_Train (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+	if (ent->s.pos.trType == TR_STATIONARY) {
+		ent->s.pos.trType = TR_LINEAR_STOP;
+		Think_BeginMoving( ent );
+	}
+	//else {
+	//	ent->nextthink = 0;
+	//	ent->s.pos.trType = TR_STATIONARY;
+	//}
+}
+
 void SP_func_train (gentity_t *self) {
 	VectorClear (self->s.angles);
 
@@ -1791,6 +1818,7 @@ void SP_func_train (gentity_t *self) {
 	// a chance to spawn
 	self->nextthink = level.time + FRAMETIME;
 	self->think = Think_SetupTrainTargets;
+	self->use = Use_Train;
 }
 
 /*
@@ -1885,10 +1913,12 @@ ROTATING
 */
 
 
-/*QUAKED func_rotating (0 .5 .8) ? START_ON - X_AXIS Y_AXIS
+/*QUAKED func_rotating (0 .5 .8) ? - - X_AXIS Y_AXIS Z_AXIS START_OFF
 You need to have an origin brush as part of this entity.  The center of that brush will be
-the point around which it is rotated. It will rotate around the Z axis by default.  You can
-check either the X_AXIS or Y_AXIS box to change that.
+the point around which it is rotated. You can check the X_AXIS, Y_AXIS or Z_AXIS boxes to 
+determine around which axes the brush will be rotated. If no boxes are checked the brush will
+rotate around the Z axis by default. If the START_OFF spawnflag is set, the func_rotating
+will initially not rotate.
 
 "model2"	.md3 model to also draw
 "speed"		determines how fast it moves; default value is 100.
@@ -1896,18 +1926,39 @@ check either the X_AXIS or Y_AXIS box to change that.
 "color"		constantLight color
 "light"		constantLight radius
 */
+void Use_Rotating (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+
+	if ( ent->s.apos.trTime > 0 ) 
+		ent->s.apos.trTime = ent->s.apos.trTime - level.time;	//makes it go
+	else {
+		if ( level.time == 0 )
+			ent->s.apos.trTime = 1;
+		else
+			ent->s.apos.trTime = level.time + ent->s.apos.trTime;	//makes it stop
+	}
+}
+
 void SP_func_rotating (gentity_t *ent) {
+	qboolean axisset = qfalse;
+
 	if ( !ent->speed ) {
 		ent->speed = 100;
 	}
 
 	// set the axis of rotation
-	ent->s.apos.trType = TR_LINEAR;
+	//ent->s.apos.trType = TR_LINEAR;
+	ent->s.apos.trType = TR_ROTATING;
 	if ( ent->spawnflags & 4 ) {
 		ent->s.apos.trDelta[2] = ent->speed;
-	} else if ( ent->spawnflags & 8 ) {
+		axisset = qtrue;
+	}
+	
+	if ( ent->spawnflags & 8 ) {
 		ent->s.apos.trDelta[0] = ent->speed;
-	} else {
+		axisset = qtrue;
+	} 
+	
+	if ( ent->spawnflags & 16 || !axisset ) {
 		ent->s.apos.trDelta[1] = ent->speed;
 	}
 
@@ -1923,6 +1974,12 @@ void SP_func_rotating (gentity_t *ent) {
 	VectorCopy( ent->s.apos.trBase, ent->r.currentAngles );
 
 	trap_LinkEntity( ent );
+
+	ent->use = Use_Rotating;
+
+	// if START_OFF is set, disable the func_rotating from the start
+	if ( ent->spawnflags & 32 )
+		Use_Rotating( ent, NULL, NULL );
 }
 
 
@@ -1935,8 +1992,8 @@ BOBBING
 */
 
 
-/*QUAKED func_bobbing (0 .5 .8) ? X_AXIS Y_AXIS
-Normally bobs on the Z axis
+/*QUAKED func_bobbing (0 .5 .8) ? X_AXIS Y_AXIS Z_AXIS
+Normally bobs on only the Z axis
 "model2"	.md3 model to also draw
 "height"	amplitude of bob (32 default)
 "speed"		seconds to complete a bob cycle (4 default)
@@ -1948,6 +2005,7 @@ Normally bobs on the Z axis
 void SP_func_bobbing (gentity_t *ent) {
 	float		height;
 	float		phase;
+	qboolean	axisset = qfalse;
 
 	G_SpawnFloat( "speed", "4", &ent->speed );
 	G_SpawnFloat( "height", "32", &height );
@@ -1967,9 +2025,15 @@ void SP_func_bobbing (gentity_t *ent) {
 	// set the axis of bobbing
 	if ( ent->spawnflags & 1 ) {
 		ent->s.pos.trDelta[0] = height;
-	} else if ( ent->spawnflags & 2 ) {
+		axisset = qtrue;
+	} 
+
+	if ( ent->spawnflags & 2 ) {
 		ent->s.pos.trDelta[1] = height;
-	} else {
+		axisset = qtrue;
+	} 
+	
+	if ( ( ent->spawnflags & 4 ) || !axisset ) {
 		ent->s.pos.trDelta[2] = height;
 	}
 }

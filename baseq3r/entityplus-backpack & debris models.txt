@@ -1,0 +1,70 @@
+======================================================================
+
+	Entity Plus Mod for Quake 3 Arena
+
+		Backpack & Debris Models
+		By Victor "DaEngineer" Karp
+
+		June 5, 2011
+		http://www.victorkarp.wordpress.com
+
+======================================================================
+
+
+A backpack model and various debris models for Eraser's Entity Plus mod for
+Quake 3 Arena with accompanying textures. Backpack texture based on photos
+made by Obsidian.
+
+concrete_b1.md3
+concrete_b1_large.md3
+concrete_b2.md3
+concrete_b2_large.md3
+concrete_b3.md3
+concrete_b3_large.md3
+concrete_b4.md3
+concrete_b5.md3
+concrete_b6.md3
+concrete_b7.md3
+concrete_b8.md3
+concrete_d1.md3
+concrete_d1_large.md3
+concrete_d2.md3
+concrete_d2_large.md3
+concrete_d3.md3
+concrete_d3_large.md3
+concrete_d4.md3
+concrete_d5.md3
+concrete_d6.md3
+concrete_d7.md3
+concrete_d8.md3
+
+glass_1.md3
+glass_1_large.md3
+glass_2.md3
+glass_2_large.md3
+glass_3.md3
+glass_3_large.md3
+glass_4.md3
+glass_4_large.md3
+glass_5.md3
+glass_5_large.md3
+
+wood_b1.md3
+wood_b2.md3
+wood_b3.md3
+wood_b4.md3
+wood_b5.md3     
+
+
+======================================================================
+This work is licensed under a Creative Commons Attribution-
+NonCommercial-ShareAlike 3.0 Unported License.
+
+http://creativecommons.org/licenses/by-nc-sa/3.0/
+
+Additionally, this work may only be distributed electronically and
+must include this .txt file.
+
+Don't steal and claim as your own, is all I'm saying. Please contact
+me if creating derivative works or if you have questions.
+======================================================================

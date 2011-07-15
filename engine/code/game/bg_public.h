@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // second version that must match between game and cgame
 
 // STONELANCE
-#define GAME_VERSION            "Q3Rally v0.1 Pre-Alpha"
+#define GAME_VERSION            "Q3Rally v0.1.1 Pre-Alpha"
 // END
 
 #define	DEFAULT_GRAVITY		800
@@ -625,7 +625,8 @@ typedef enum {
 		EV_EMIT_DEBRIS_WOOD,		// emit wooden chunks
 		EV_EMIT_DEBRIS_FLESH,		// emit gibs
 		EV_EMIT_DEBRIS_GLASS,		// emite shards of glass
-    EV_EMIT_DEBRIS_STONE,
+        EV_EMIT_DEBRIS_STONE,
+        EV_EARTHQUAKE,
     
 		EV_EXPLOSION,
 		EV_PARTICLES_GRAVITY,

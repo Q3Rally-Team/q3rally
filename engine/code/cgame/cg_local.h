@@ -65,7 +65,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	MAX_VERTS_ON_POLY	10
 // Q3Rally Code Start
 //#define	MAX_MARK_POLYS		256
-#define	MAX_MARK_POLYS		1024
+#define	MAX_MARK_POLYS		2048
 // Q3Rally Code END
 
 #define STAT_MINUS			10	// num frame for '-' stats digit
@@ -114,8 +114,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 extern	vec4_t				bgColor; // Q3Rally Code - UPDATE change variable name?
 // Q3Rally Code END
 
-#define DEFAULT_REDTEAM_NAME		"Red Drivers"
-#define DEFAULT_BLUETEAM_NAME		"Blues Brothers"
+#define DEFAULT_REDTEAM_NAME		"Red Devils"
+#define DEFAULT_BLUETEAM_NAME		"Blue Angels"
 
 typedef enum {
 	FOOTSTEP_NORMAL,

@@ -1502,6 +1502,15 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
 		result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;		// FIXME: local gravity...
 		break;
+	case TR_ROTATING:
+		if ( tr->trTime > 0 )
+			deltaTime = tr->trTime * 0.001;	// milliseconds to seconds
+		else if ( tr->trTime < 0 )
+			deltaTime = ( atTime + tr->trTime ) * 0.001;
+		else
+			deltaTime = ( atTime - tr->trTime ) * 0.001;
+		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
+		break;
 	default:
 		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trTime );
 		break;
@@ -1524,6 +1533,7 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 	case TR_INTERPOLATE:
 		VectorClear( result );
 		break;
+	case TR_ROTATING:
 	case TR_LINEAR:
 		VectorCopy( tr->trDelta, result );
 		break;

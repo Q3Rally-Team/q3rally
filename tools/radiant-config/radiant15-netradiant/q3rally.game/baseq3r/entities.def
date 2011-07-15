@@ -496,6 +496,8 @@ Solid entity that rotates continuously. Rotates on one or multiple axes and requ
 -------- KEYS --------
 speed : determines how fast entity rotates (default 100).
 noise : path/name of .wav file to play. Use looping sounds only (eg. sound/world/drone6.wav).
+targetname : activating trigger points to this.
+targetname2 : activating trigger points to this.
 model2 : path/name of model to include (eg: models/mapobjects/bitch/fembotbig.md3).
 origin : alternate method of setting XYZ origin of entity's rotation axis and .md3 model included with entity (default "0 0 0" - See Notes).
 light : constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).
@@ -517,8 +519,11 @@ _shader OR shader : Path to the metashader used to assign textures to the terrai
 X_AXIS : entity will rotate along the X axis.
 Y_AXIS : entity will rotate along the Y axis.
 Z_AXIS : entity will rotate along the Z axis.
+START_OFF : The entity will initially not rotate.
 -------- NOTES --------
 You need to have an origin brush as part of this entity. The center of that brush will be the point through which the rotation axis passes. Setting the origin key is simply an alternate method to using an origin brush. You can check the X_AXIS, Y_AXIS or Z_AXIS boxes to determine along which axes rotation should occur. If no boxes are checked the entity will rotate along the Z axis. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+The entity's rotation can be stopped and resumed by targetting the func_rotating with a trigger.
 
 Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").*/
 
@@ -1565,6 +1570,16 @@ By default bots spawn with only the gauntlet as weapon. Use spawnflags to custom
 Setting the skill key works like a modifier on top of the current skill level. So a skill value of 1 means the bot is one skill level tougher than the current skill setting. A skill value of -2 means the bot is two skill levels lower than the current setting. A bot's relative skill level never drops below 1 but may rise above 5. Floating point values (like 1.3) are allowed.
 
 Note that the Radiant level editor will not display targetting paths for the deathtarget key.*/
+
+//=============================================================================
+
+/*QUAKED target_earthquake (0 .7 .7) (-8 -8 -8) (8 8 8) 
+Starts an earthquake that shakes the screen
+-------- KEYS --------
+targetname : activating trigger points to this.
+targetname2 : activating trigger points to this.
+length : duration of the earthquake in seconds (2 - 32).
+intensity : intensity of the earthquake (1 - 16).*/
 
 //=============================================================================
 

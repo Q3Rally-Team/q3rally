@@ -3346,6 +3346,8 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 
 	if(stereoView != STEREO_CENTER)
 		CG_DrawCrosshair3D();
+	// apply earthquake effect
+	CG_Earthquake();
 
 	// draw 3D view
 	trap_R_RenderScene( &cg.refdef );

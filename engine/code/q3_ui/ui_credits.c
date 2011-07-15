@@ -82,6 +82,7 @@ cr_line credits[] = { // edit this as necessary for your credits
 { "Per 'Perle' Thormann", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "Eddy Valdez aka. 'TheBigBuu'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "ZTurtleMan from TurtleArena", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
+{ "Eraser from EntityPlus", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },
 { "Mapping:", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW|UI_PULSE, &color_headertext },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },

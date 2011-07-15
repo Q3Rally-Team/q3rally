@@ -466,3 +466,40 @@ void SP_target_location( gentity_t *self ){
 	G_SetOrigin( self, self->s.origin );
 }
 
+//==========================================================
+
+/*QUAKED target_earthquake (.5 .5 .5) (-8 -8 -8) (8 8 8)
+starts earthquake
+"length" - length in  seconds (2-32, in steps of 2)
+"intensity" - strength of earthquake (1-16)
+*/
+
+void target_earthquake_use (gentity_t *self, gentity_t *other, gentity_t *activator) {
+	G_AddEvent(activator, EV_EARTHQUAKE, self->s.generic1);
+}
+
+void SP_target_earthquake (gentity_t *self) {
+	int param;
+	float length;		// length in seconds (2 to 32)
+	float intensity;	// intensity (1 to 16)
+	int length_;
+	int intensity_;
+	
+	// read parameters
+	G_SpawnFloat( "length", "1000", &length );
+	G_SpawnFloat( "intensity", "50", &intensity );
+	if ( length < 2 ) length = 2;
+	if ( length > 32 ) length = 32;
+	if ( intensity < 1 ) intensity = 1;
+	if ( intensity > 16 ) intensity = 16;
+	
+	// adjust parameters
+	length_ = ((int)(length) - 2) / 2;
+	intensity_ = (int)intensity - 1;
+	param = ( intensity_ | (length_ << 4) );
+	self->s.generic1 = param;
+	self->use = target_earthquake_use;
+	self->s.eType = ET_EVENTS;
+	trap_LinkEntity (self);
+}
+
