@@ -836,7 +836,7 @@ static float CG_DrawSDKMessage( float y ) {
 	}
 
 	x = 4;
-	w = (CG_DrawStrlen("This represents not the finished Mod") * TINYCHAR_WIDTH);
+	w = (CG_DrawStrlen("This represents not the finished Game") * TINYCHAR_WIDTH);
 
 	y -= 3*TINYCHAR_HEIGHT+2;
 
@@ -846,7 +846,7 @@ static float CG_DrawSDKMessage( float y ) {
 	y += TINYCHAR_HEIGHT;
 	CG_DrawTinyStringColor( x, y, "For Development Purposes Only", colorWhite);
 	y += TINYCHAR_HEIGHT;
-	CG_DrawTinyStringColor( x, y, "This represents not the finished Mod", colorWhite);
+	CG_DrawTinyStringColor( x, y, "This represents not the finished Game", colorWhite);
 	y += TINYCHAR_HEIGHT;
 
 	y -= 3*TINYCHAR_HEIGHT+2;

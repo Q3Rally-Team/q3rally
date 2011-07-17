@@ -162,7 +162,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -856,11 +856,13 @@ q3rallycode
 0=engine\code\game\g_local.h
 1=engine\code\game\g_weapon.c
 2=engine\code\game\g_misc.c
+3=engine\code\game\bg_public.h
+4=engine\code\cgame\cg_rally_hud.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_weapon.c
+Selected=engine\code\cgame\cg_rally_hud.c
 [engine\code\game\g_local.h]
-TopLine=690
+TopLine=17
 Caret=1,704
 [engine\code\game\g_weapon.c]
 TopLine=770
@@ -868,3 +870,9 @@ Caret=3,785
 [engine\code\game\g_misc.c]
 TopLine=124
 Caret=1,138
+[engine\code\game\bg_public.h]
+TopLine=23
+Caret=50,34
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=831
+Caret=59,839
