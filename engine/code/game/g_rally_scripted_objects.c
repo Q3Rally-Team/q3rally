@@ -372,8 +372,8 @@ qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t nor
 	return qtrue;
 }
 
+// enabled for testing
 
-/*
 qboolean G_TraceIntersect( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, vec3_t intersect )
 {
 	vec3_t	dir;
@@ -622,8 +622,8 @@ void G_ScriptedObject_TracePhysics( gentity_t *self, float time )
 		VectorMA( self->netForce, -dot, tr.plane.normal, self->netForce );
 	}
 }
-*/
 
+// End Enabled
 
 // Traces a cone at the current position and angles.
 int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t maxs, int passEntityNum, int contentmask )
