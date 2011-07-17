@@ -944,7 +944,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		} else if ( targ->use == NULL ) {	// entity is a func_breakable
 			targ->health -= damage;
 			if (targ->health <= 0)
-				Break_Breakable(targ, attacker);
+				Break_Breakable (targ, attacker);
 		}
 		return;
 	}

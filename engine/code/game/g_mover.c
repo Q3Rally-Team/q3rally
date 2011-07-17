@@ -1880,7 +1880,7 @@ void Break_Breakable(gentity_t *ent, gentity_t *other) {
 
         //spray out debris
         if ( count > 0 ) {
-                tmp = G_TempEntity( center, PickDebrisType( spawnflags ) );
+                tmp = G_TempEntity( center, PickDebrisType ( spawnflags ) );
                 tmp->s.eventParm = count;
         }
 }

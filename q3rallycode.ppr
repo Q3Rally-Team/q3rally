@@ -27,7 +27,7 @@ q3rallycode
 				engine\code\asm\qasm.h
 				engine\code\asm\snapvectora.s
 				engine\code\asm\snd_mixa.s
-			+botlib
+			-botlib
 				engine\code\botlib\aasfile.h
 				engine\code\botlib\be_aas.h
 				engine\code\botlib\be_aas_bsp.h
@@ -853,14 +853,18 @@ q3rallycode
 		engine\TODO
 		engine\voip-readme.txt
 [Open project files]
-0=engine\code\game\g_rally_scripted_objects.c
-1=engine\code\botlib\be_ai_move.c
+0=engine\code\game\g_local.h
+1=engine\code\game\g_weapon.c
+2=engine\code\game\g_misc.c
 [Selected Project Files]
 Main=
-Selected=engine\code\botlib\be_ai_move.c
-[engine\code\game\g_rally_scripted_objects.c]
-TopLine=799
-Caret=5,815
-[engine\code\botlib\be_ai_move.c]
-TopLine=85
-Caret=1,1
+Selected=engine\code\game\g_weapon.c
+[engine\code\game\g_local.h]
+TopLine=690
+Caret=1,704
+[engine\code\game\g_weapon.c]
+TopLine=770
+Caret=3,785
+[engine\code\game\g_misc.c]
+TopLine=124
+Caret=1,138

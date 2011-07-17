@@ -27,10 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 static	float	s_quadFactor;
-// STONELANCE
+
 vec3_t	forward, right, up;
-// static	vec3_t	forward, right, up;
-// END
+
 static	vec3_t	muzzle;
 
 #define NUM_NAILSHOTS 15
@@ -82,23 +81,21 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 
 	CalcMuzzlePoint ( ent, forward, right, up, muzzle );
 
-// STONELANCE
-//	VectorMA (muzzle, 32, forward, end);
+
 	VectorMA (muzzle, CAR_LENGTH/2, forward, end);
-// END
+
 
 	trap_Trace (&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
 	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 		return qfalse;
 	}
 
-// STONELANCE
-//	traceEnt = &g_entities[ tr.entityNum ];
+
 	if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX)
 		traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
 	else
 		traceEnt = &g_entities[ tr.entityNum ];
-// END
+
 
 	// send blood impact
 	if ( traceEnt->takedamage && traceEnt->client ) {
@@ -126,10 +123,9 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 
 	damage = 50 * s_quadFactor;
 	G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-// STONELANCE
-//		damage, 0, MOD_GAUNTLET );
+
 		damage, DAMAGE_WEAPON, MOD_GAUNTLET );
-// END
+
 
 	return qtrue;
 }
@@ -153,11 +149,11 @@ void Weapon_fire_flame (gentity_t *ent ) {
 /*
 =======================================================================
 
-FLAME THROWER SPREAD
+FLAME THROWER SPREAD - Altfire
 
 =======================================================================
 */
-//flame ammo uses 3 ammo
+
 void Weapon_cluster_fire_flame (gentity_t *ent ) {
 	gentity_t	*m, *n, *o;
 	vec3_t		temp;
@@ -178,8 +174,7 @@ void Weapon_cluster_fire_flame (gentity_t *ent ) {
 	o->splashDamage *= s_quadFactor;
 
 }
-//TBB FIN
-// Q3Rally Code END
+
 
 /*
 ======================================================================
@@ -246,13 +241,12 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage ) {
 			return;
 		}
 
-// STONELANCE
-//		traceEnt = &g_entities[ tr.entityNum ];
+
 		if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX){
 			traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
 		} else
 			traceEnt = &g_entities[ tr.entityNum ];
-// END
+
 
 		// snap the endpos to integers, but nudged towards the line
 		SnapVectorTowards( tr.endpos, muzzle );
@@ -288,10 +282,9 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage ) {
 			else {
 #endif
 				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-// STONELANCE
-//					damage, 0, MOD_MACHINEGUN);
+
 					damage, DAMAGE_WEAPON, MOD_MACHINEGUN);
-// END
+
 #ifdef MISSIONPACK
 			}
 #endif
@@ -346,13 +339,12 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 	VectorCopy( end, tr_end );
 	for (i = 0; i < 10; i++) {
 		trap_Trace (&tr, tr_start, NULL, NULL, tr_end, passent, MASK_SHOT);
-// STONELANCE
-//		traceEnt = &g_entities[ tr.entityNum ];
+
 		if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX)
 			traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
 		else
 			traceEnt = &g_entities[ tr.entityNum ];
-// END
+
 
 
 		// send bullet impact
@@ -378,19 +370,17 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 			}
 			else {
 				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-// STONELANCE
-//					damage, 0, MOD_SHOTGUN);
+
 					damage, DAMAGE_WEAPON, MOD_SHOTGUN);
-// END
+
 				if( LogAccuracyHit( traceEnt, ent ) ) {
 					return qtrue;
 				}
 			}
 #else
-// STONELANCE
-//			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD_SHOTGUN);
+
 			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, DAMAGE_WEAPON, MOD_SHOTGUN);
-// END
+
 				if( LogAccuracyHit( traceEnt, ent ) ) {
 					return qtrue;
 				}
@@ -450,7 +440,7 @@ void weapon_supershotgun_fire (gentity_t *ent) {
 /*
 ======================================================================
 
-GRENADE LAUNrCHER
+GRENADE LAUNCHER
 
 ======================================================================
 */
@@ -472,7 +462,7 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 /*
 ======================================================================
 
-CLUSTER GRENADE LAUNCHER
+CLUSTER GRENADE LAUNCHER - Altfire
 
 ======================================================================
 */
@@ -514,7 +504,7 @@ void Weapon_RocketLauncher_Fire (gentity_t *ent) {
 /*
 ======================================================================
 
-HOMING ROCKET
+HOMING ROCKET - Altfire
 
 ======================================================================
 */
@@ -550,12 +540,9 @@ void Weapon_Plasmagun_Fire (gentity_t *ent) {
 
 /*
 ======================================================================
-TBB - circular secondary fire
-PLASMA GUN - secondary
-plasma circles around player similar to AltFire Mod
-(done)long addtime, 
-(todo)needs 3 ammo to activate, 
-(done)damage amount: 40(double of prime plasma)	&& splashdamage
+
+PLASMA GUN - Altfire
+
 ======================================================================
 */
 
@@ -606,7 +593,7 @@ void Weapon_Plasmagun_Circular_Fire (gentity_t *ent) {
 /*
 ======================================================================
 
-RAILGUN - MEGARAILGUN
+RAILGUN
 
 ======================================================================
 */
@@ -633,10 +620,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-// STONELANCE
-//	damage = 100 * s_quadFactor;
 	damage = 75 * s_quadFactor;
-// END
 
 	VectorMA (muzzle, 8192, forward, end);
 
@@ -649,13 +633,12 @@ void weapon_railgun_fire (gentity_t *ent) {
 		if ( trace.entityNum >= ENTITYNUM_MAX_NORMAL ) {
 			break;
 		}
-// STONELANCE
-//		traceEnt = &g_entities[ trace.entityNum ];
+
 		if (g_entities[ trace.entityNum ].flags & FL_EXTRA_BBOX)
 			traceEnt = &g_entities[ g_entities[ trace.entityNum ].r.ownerNum ];
 		else
 			traceEnt = &g_entities[ trace.entityNum ];
-// END
+
 		if ( traceEnt->takedamage ) {
 #ifdef MISSIONPACK
 			if ( traceEnt->client && traceEnt->client->invulnerabilityTime > level.time ) {
@@ -682,19 +665,17 @@ void weapon_railgun_fire (gentity_t *ent) {
 				if( LogAccuracyHit( traceEnt, ent ) ) {
 					hits++;
 				}
-// STONELANCE
-//				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
+
 				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, DAMAGE_WEAPON, MOD_RAILGUN);
-// END
+
 			}
 #else
 				if( LogAccuracyHit( traceEnt, ent ) ) {
 					hits++;
 				}
-// STONELANCE
-//				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
+
 				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, DAMAGE_WEAPON, MOD_RAILGUN);
-// END
+
 #endif
 		}
 		if ( trace.contents & CONTENTS_SOLID ) {
@@ -756,72 +737,106 @@ void weapon_railgun_fire (gentity_t *ent) {
 }
 
 /*
-=================
-weapon_megarailgun_fire
-=================
+======================================================================
+
+TELEFRAG GUN - Altfire to Railgun
+
+======================================================================
 */
-#define	MAX_RAIL_HITS	4
-void weapon_megarailgun_fire (gentity_t *ent) {
-	vec3_t		end;
+
+/*
+void TelefragPlayer( gentity_t *player, vec3_t origin ) {
+	gentity_t	*tent;
+
+	// use temp events at source and destination to prevent the effect
+	// from getting dropped by a second player event
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		tent = G_TempEntity( player->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
+		tent->s.clientNum = player->s.clientNum;
+
+		tent = G_TempEntity( origin, EV_PLAYER_TELEPORT_IN );
+		tent->s.clientNum = player->s.clientNum;
+	}
+
+	// unlink to make sure it can't possibly interfere with G_KillBox
+	trap_UnlinkEntity (player);
+
+	VectorCopy ( origin, player->client->ps.origin );
+	player->client->ps.origin[2] += 1;
+
+	// toggle the teleport bit so the client knows to not lerp
+	player->client->ps.eFlags ^= EF_TELEPORT_BIT;
+
+	// kill anything at the destination
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		G_KillBox (player);
+	}
+
+	// save results of pmove
+	BG_PlayerStateToEntityState( &player->client->ps, &player->s, qtrue );
+
+	// use the precise origin for linking
+	VectorCopy( player->client->ps.origin, player->r.currentOrigin );
+
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		trap_LinkEntity (player);
+	}
+}
+*/
+
+void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t right,vec3_t up) {
+	
+  vec3_t		end;
 	trace_t		trace;
 	gentity_t	*tent;
 	gentity_t	*traceEnt;
-	int			damage;
-	int			radiusDamage;
-	int			i;
-	int			hits;
-	int			unlinked;
-	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
-	vec3_t   tracefrom;
-
-	damage = 1000 * s_quadFactor;
-	radiusDamage = 30 * s_quadFactor;
+	int			damage = 1000;
+	int			hits = 0;
+	int			passent = ent->s.number;
 
 	VectorMA (muzzle, 8192, forward, end);
-  VectorCopy (muzzle, tracefrom);
-  
-	// trace only against the solids, so the railgun will go through people
-	unlinked = 0;
-	hits = 0;
-	do {
-		trap_Trace (&trace, tracefrom, NULL, NULL, end, ent->s.number, MASK_SHOT );
-		if ( trace.entityNum >= ENTITYNUM_MAX_NORMAL ) {
-			// break if we hit the sky
-			if (trace.surfaceFlags & SURF_SKY)
-				break;
 
-			// break if we traversed length of vector tracefrom
-			if (trace.fraction == 1.0)
-				break;
+	// Trace the projectile
+	trap_Trace (&trace, muzzle, NULL, NULL, end, passent, MASK_SHOT );
 
-			// otherwise continue tracing thru walls
-			VectorMA (trace.endpos,1,forward,tracefrom);
-			continue;
+	// The entity is a valid entity
+	if ( trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
 
-		}
+		// Who exactly is this entity (a reference to the entity structure)
 		traceEnt = &g_entities[ trace.entityNum ];
-		if ( traceEnt->takedamage ) {
-			if( LogAccuracyHit( traceEnt, ent ) ) {
+
+		// Can this entity be damaged?
+		if ( traceEnt->takedamage )
+		{
+			if(LogAccuracyHit(traceEnt,ent))
+			{
 				hits++;
 			}
-			G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0,
-			MOD_RAILGUN);
-		}
-		if ( trace.contents & CONTENTS_SOLID ) {
-			break;		// we hit something solid enough to stop the beam
-		}
-		// unlink this entity, so the next trace will go past it
-		trap_UnlinkEntity( traceEnt );
-		unlinkedEntities[unlinked] = traceEnt;
-		unlinked++;
-	} while ( unlinked < MAX_RAIL_HITS );
 
-	// link back in any entities we unlinked
-	for ( i = 0 ; i < unlinked ; i++ ) {
-		trap_LinkEntity( unlinkedEntities[i] );
+			// It is important that all this checking is done. If you try and 
+			// telefrag a door or a spectator, the game *will* crash.
+
+			// is the entity a client, alive and not a spectator
+			if((traceEnt->client) && (traceEnt->client->ps.pm_type != PM_DEAD) && (traceEnt->client->sess.sessionTeam != TEAM_SPECTATOR))
+			{
+				// if the attacker was on the same team and TF_NO_FRIENDLY_FIRE is set
+				// do not telefrag, just do a normal damage
+				if (OnSameTeam(traceEnt,ent) && (!g_friendlyFire.integer))
+				{
+					G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
+
+				// Not on same team, or on same team and can friendly fire
+				// Damage, then telefrag
+				}else{
+					G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
+					TelefragPlayer(ent, traceEnt->r.currentOrigin);
+				}
+			}else{
+				// Damage 
+				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
+			}
+		}
 	}
-
-	// the final trace endpos will be the terminal point of the rail trail
 
 	// snap the endpos to integers to save net bandwidth, but nudged towards the line
 	SnapVectorTowards( trace.endpos, muzzle );
@@ -838,24 +853,24 @@ void weapon_megarailgun_fire (gentity_t *ent) {
 	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
 	// no explosion at end if SURF_NOIMPACT, but still make the trail
-	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
+	if ( trace.surfaceFlags & SURF_NOIMPACT )
+	{
 		tent->s.eventParm = 255;	// don't make the explosion at the end
 	} else {
 		tent->s.eventParm = DirToByte( trace.plane.normal );
 	}
 	tent->s.clientNum = ent->s.clientNum;
 
-  //send the effect to everyone since it tunnels through walls
-	tent->r.svFlags |= SVF_BROADCAST;
-
 	// give the shooter a reward sound if they have made two railgun hits in a row
-	if ( hits == 0 ) {
+	if ( hits == 0 )
+	{
 		// complete miss
 		ent->client->accurateCount = 0;
 	} else {
 		// check for "impressive" reward sound
 		ent->client->accurateCount += hits;
-		if ( ent->client->accurateCount >= 2 ) {
+		if ( ent->client->accurateCount >= 2 )
+		{
 			ent->client->accurateCount -= 2;
 			ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
 			// add the sprite over the player's head
@@ -865,54 +880,7 @@ void weapon_megarailgun_fire (gentity_t *ent) {
 		}
 		ent->client->accuracy_hits++;
 	}
-
 }
-
-
-/*
-======================================================================
-
-GRAPPLING HOOK
-
-======================================================================
-*/
-
-// STONELANCE - no more hook
-/*
-void Weapon_GrapplingHook_Fire (gentity_t *ent)
-{
-	if (!ent->client->fireHeld && !ent->client->hook)
-		fire_grapple (ent, muzzle, forward);
-
-	ent->client->fireHeld = qtrue;
-}
-
-void Weapon_HookFree (gentity_t *ent)
-{
-	ent->parent->client->hook = NULL;
-	ent->parent->client->ps.pm_flags &= ~PMF_GRAPPLE_PULL;
-	G_FreeEntity( ent );
-}
-
-void Weapon_HookThink (gentity_t *ent)
-{
-	if (ent->enemy) {
-		vec3_t v, oldorigin;
-
-		VectorCopy(ent->r.currentOrigin, oldorigin);
-		v[0] = ent->enemy->r.currentOrigin[0] + (ent->enemy->r.mins[0] + ent->enemy->r.maxs[0]) * 0.5;
-		v[1] = ent->enemy->r.currentOrigin[1] + (ent->enemy->r.mins[1] + ent->enemy->r.maxs[1]) * 0.5;
-		v[2] = ent->enemy->r.currentOrigin[2] + (ent->enemy->r.mins[2] + ent->enemy->r.maxs[2]) * 0.5;
-		SnapVectorTowards( v, oldorigin );	// save net bandwidth
-
-		G_SetOrigin( ent, v );
-	}
-
-	VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
-}
-*/
-// END
-
 
 
 /*
@@ -1262,16 +1230,11 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_BFG:
 		BFG_Fire( ent );
 		break;
-// Q3Rally Code Start
-/*
-	case WP_GRAPPLING_HOOK:
-		Weapon_GrapplingHook_Fire( ent );
-		break;
-*/
+
   case WP_FLAME_THROWER:
     Weapon_fire_flame( ent );
     break;
-// END
+
 #ifdef MISSIONPACK
 	case WP_NAILGUN:
 		Weapon_Nailgun_Fire( ent );
@@ -1404,27 +1367,18 @@ void FireAltWeapon( gentity_t *ent ) {
 		Weapon_Homing_RocketLauncher_Fire( ent );
 		break;
 	case WP_PLASMAGUN:
-		//Weapon_Plasmagun_Fire( ent );
 		Weapon_Plasmagun_Circular_Fire( ent ); 
 		break;
 	case WP_RAILGUN:
-		weapon_megarailgun_fire( ent );
+		weapon_telefrag_fire( ent,muzzle,forward,right,up );
 		break;
 	case WP_BFG:
 		BFG_Fire( ent );
 		break;
-// Q3Rally Code Start
-/*
-	case WP_GRAPPLING_HOOK:
-		Weapon_GrapplingHook_Fire( ent );
-		break;
-*/
   case WP_FLAME_THROWER:
-    //Weapon_fire_flame( ent ); 
-	//TBB - widespread of fire
 	Weapon_cluster_fire_flame( ent );
     break;
-// END
+
 #ifdef MISSIONPACK
 	case WP_NAILGUN:
 		Weapon_Nailgun_Fire( ent );

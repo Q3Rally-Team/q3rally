@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define INFINITE			1000000
 
 #define	FRAMETIME			100					// msec
+#define	EVENT_VALID_MSEC	300
 #define	CARNAGE_REWARD_TIME	3000
 #define REWARD_SPRITE_TIME	2000
 
@@ -683,14 +684,14 @@ void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace
 // g_misc.c
 //
 void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
-void TelefragPlayer( gentity_t *player, vec3_t origin ); // same as above without the angles
 #ifdef MISSIONPACK
 void DropPortalSource( gentity_t *ent );
 void DropPortalDestination( gentity_t *ent );
 #endif
-void G_BreakGlass( gentity_t *ent, vec3_t point, int mod );
-void G_BREAKWOOD( gentity_t *ent, vec3_t point, int mod );
-void G_BREAKMETAL( gentity_t *ent, vec3_t point, int mod );
+
+
+
+
 
 
 //
@@ -700,10 +701,9 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker );
 void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint );
 void SnapVectorTowards( vec3_t v, vec3_t to );
 qboolean CheckGauntletAttack( gentity_t *ent );
-// STONELANCE - removed
-// void Weapon_HookFree (gentity_t *ent);
-// void Weapon_HookThink (gentity_t *ent);
-// END
+void TelefragPlayer( gentity_t *player, vec3_t origin );
+void weapon_telefrag_fire (gentity_t *ent, vec3_t muzzle, vec3_t forward, vec3_t right, vec3_t up);
+
 
 
 //
