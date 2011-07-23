@@ -13,7 +13,7 @@ ProjectFilesOnly=0
 [Project tree]
 q3rallycode
 	+engine
-		+code
+		-code
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -162,7 +162,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -853,26 +853,58 @@ q3rallycode
 		engine\TODO
 		engine\voip-readme.txt
 [Open project files]
-0=engine\code\game\g_local.h
-1=engine\code\game\g_weapon.c
-2=engine\code\game\g_misc.c
+0=engine\code\cgame\cg_players.c
+1=engine\code\cgame\cg_atmospheric.c
+2=engine\code\qcommon\files.c
 3=engine\code\game\bg_public.h
-4=engine\code\cgame\cg_rally_hud.c
+4=engine\code\cgame\cg_main.c
+5=engine\code\game\g_main.c
+6=engine\code\game\g_spawn.c
+7=engine\code\q3_ui\ui_menu.c
+8=engine\code\q3_ui\ui_servers2.c
+9=engine\code\botlib\linux-i386.mak
+10=engine\code\botlib\be_aas.h
+11=engine\code\cgame\cg_draw.c
+12=engine\code\qcommon\q_shared.h
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_rally_hud.c
-[engine\code\game\g_local.h]
-TopLine=17
-Caret=1,704
-[engine\code\game\g_weapon.c]
-TopLine=770
-Caret=3,785
-[engine\code\game\g_misc.c]
-TopLine=124
-Caret=1,138
+Selected=engine\code\qcommon\files.c
+[engine\code\cgame\cg_players.c]
+TopLine=664
+Caret=76,680
+[engine\code\cgame\cg_atmospheric.c]
+TopLine=69
+Caret=1,1
+[engine\code\qcommon\files.c]
+TopLine=187
+Caret=34,201
 [engine\code\game\bg_public.h]
-TopLine=23
-Caret=50,34
-[engine\code\cgame\cg_rally_hud.c]
-TopLine=831
-Caret=59,839
+TopLine=20
+Caret=1,34
+[engine\code\cgame\cg_main.c]
+TopLine=2171
+Caret=1,2185
+[engine\code\game\g_main.c]
+TopLine=122
+Caret=1,136
+[engine\code\game\g_spawn.c]
+TopLine=668
+Caret=1,682
+[engine\code\q3_ui\ui_menu.c]
+TopLine=416
+Caret=7,430
+[engine\code\q3_ui\ui_servers2.c]
+TopLine=700
+Caret=1,740
+[engine\code\botlib\linux-i386.mak]
+TopLine=7
+Caret=1,25
+[engine\code\botlib\be_aas.h]
+TopLine=1
+Caret=1,4
+[engine\code\cgame\cg_draw.c]
+TopLine=346
+Caret=1,360
+[engine\code\qcommon\q_shared.h]
+TopLine=31
+Caret=1,31

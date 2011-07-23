@@ -676,7 +676,8 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, 
 	}
 
 	if (ci->plateSkinName[0] != 0){
-		Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
+	//	Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
+		Com_sprintf( filename, sizeof( filename ), "models/players/plates/default.tga", ci->clientNum );
 		ci->plateShader = trap_R_RegisterShader(filename);
 		if( !ci->plateShader ) {
 			Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load plate shader: %s\n", filename );
