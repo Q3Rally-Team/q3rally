@@ -92,7 +92,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -483,7 +483,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			-qcommon
+			+qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -854,9 +854,13 @@ q3rallycode
 		engine\voip-readme.txt
 [Open project files]
 0=engine\code\cgame\cg_ents.c
+1=engine\code\qcommon\files.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_ents.c
+Selected=engine\code\qcommon\files.c
 [engine\code\cgame\cg_ents.c]
 TopLine=121
 Caret=1,1
+[engine\code\qcommon\files.c]
+TopLine=177
+Caret=34,201
