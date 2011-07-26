@@ -619,7 +619,8 @@ static void StartServer_GametypeEvent( void* ptr, int event ) {
 		Q_strncpyz(s_startserver.mapinfo[s_startserver.nummaps], info, sizeof(s_startserver.mapinfo[i]));
 // END
 		Q_strncpyz( s_startserver.maplist[s_startserver.nummaps], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
-		Q_strupr( s_startserver.maplist[s_startserver.nummaps] );
+		// ZTM: Disabled so linux without pk3s works
+		//Q_strupr( s_startserver.maplist[s_startserver.nummaps] );
 // STONELANCE
 		Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
 		if (s_startserver.maplistname[s_startserver.nummaps][0] == 0)
@@ -1162,7 +1163,8 @@ void StartServer_Cache( void )
 		info = UI_GetArenaInfoByNumber( i );
 
 		Q_strncpyz( s_startserver.maplist[i], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
-		Q_strupr( s_startserver.maplist[i] );
+		// ZTM: Disabled so linux without pk3s works
+		//Q_strupr( s_startserver.maplist[i] );
 
 // STONELANCE
 		Q_strncpyz( s_startserver.maplistname[i], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
