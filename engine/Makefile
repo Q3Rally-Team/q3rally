@@ -49,6 +49,9 @@ ifneq ($(PLATFORM),darwin)
   BUILD_CLIENT_SMP = 0
 endif
 
+# ioquake3 svn version that this is based on
+IOQ3_REVISION = 1834
+
 #############################################################################
 #
 # If you require a different configuration from the defaults below, create a
@@ -227,7 +230,9 @@ ifeq ($(wildcard .git/svn/.metadata),.git/svn/.metadata)
   endif
 endif
 endif
-
+ifdef IOQ3_REVISION
+  VERSION:=$(VERSION)_IOQ3r$(IOQ3_REVISION)
+endif
 
 #############################################################################
 # SETUP AND BUILD -- LINUX
@@ -1044,6 +1049,9 @@ release:
 targets: makedirs
 	@echo ""
 	@echo "Building Q3Rally in $(B):"
+ifdef IOQ3_REVISION
+	@echo "  IOQ3_REVISION: $(IOQ3_REVISION)"
+endif
 	@echo "  PLATFORM: $(PLATFORM)"
 	@echo "  ARCH: $(ARCH)"
 	@echo "  VERSION: $(VERSION)"
