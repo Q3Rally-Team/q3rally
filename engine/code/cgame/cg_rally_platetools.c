@@ -23,29 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
-static int		allocPoint = 0;
-
-#ifdef Q3_VM
-
 #define POOLSIZE	(512 * 1024)
 
 static char		memoryPool[POOLSIZE];
+static int		allocPoint = 0;
 
-void *malloc( size_t count ){
-	char	*p;
-
-	if ( allocPoint + count > POOLSIZE ) {
-		CG_Error( "CG_Alloc: failed on allocation of %i bytes\n", count );
-		return NULL;
-	}
-
-	p = &memoryPool[allocPoint];
-
-	allocPoint += ( count + 31 ) & ~31;
-
-	return p;
-}
-/*
 static void *CG_Alloc( int size ) {
 	char	*p;
 
@@ -60,15 +42,15 @@ static void *CG_Alloc( int size ) {
 
 	return p;
 }
-*/
 
 /*
-static void CG_Free( int size ){
+static void CG_Free( int size ) {
 	allocPoint -= ( size + 31 ) & ~31;
 }
 */
 
-int memcmp( const unsigned char *dest, const unsigned char *src, size_t count ){
+#ifdef Q3_VM
+int memcmp( const unsigned char *dest, const unsigned char *src, size_t count ) {
 	int		i;
 
 	for (i = 0; i < count; i++){
@@ -81,8 +63,10 @@ int memcmp( const unsigned char *dest, const unsigned char *src, size_t count ){
 
 	return qtrue;
 }
+#endif
+
 /*
-static qboolean CG_Memcmp(byte *s1, byte *s2, int size){
+static qboolean CG_Memcmp(byte *s1, byte *s2, int size) {
 	int		i;
 
 	for (i = 0; i < size; i++){
@@ -96,8 +80,6 @@ static qboolean CG_Memcmp(byte *s1, byte *s2, int size){
 	return qtrue;
 }
 */
-
-#endif
 
 typedef	struct
 {
@@ -159,7 +141,7 @@ qboolean LoadTGA(TextureImage *texture, const char *filename){
 	bytesPerPixel = texture->bpp / 8;						// Divide By 8 To Get The Bytes Per Pixel
 	imageSize = texture->width * texture->height * bytesPerPixel;			// Calculate The Memory Required For The TGA Data
 
-	texture->imageData = (unsigned char*)malloc(imageSize);				// Reserve Memory To Hold The TGA Data
+	texture->imageData = (unsigned char*)CG_Alloc(imageSize);				// Reserve Memory To Hold The TGA Data
 
 	trap_FS_Read(texture->imageData, imageSize, imageFile);
 

@@ -698,7 +698,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 						StripDoubleQuotes(token.string);
 						if (strlen(token.string) <= 0)
 						{
-							SourceError(source, "empty string", token.string);
+							SourceError(source, "empty string");
 							FreeSource(source);
 							return NULL;
 						} //end if
@@ -2198,7 +2198,7 @@ bot_chat_t *BotLoadInitialChat(char *chatfile, char *chatname)
 #ifdef DEBUG
 	botimport.Print(PRT_MESSAGE, "initial chats loaded in %d msec\n", Sys_MilliSeconds() - starttime);
 #endif //DEBUG
-	//character was read succesfully
+	//character was read successfully
 	return chat;
 } //end of the function BotLoadInitialChat
 //===========================================================================

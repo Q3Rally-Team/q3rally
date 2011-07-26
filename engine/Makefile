@@ -4,7 +4,7 @@
 # GNU Make required
 #
 
-COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]')
+COMPILE_PLATFORM=$(shell uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]'|sed -e 's/\//_/g')
 
 COMPILE_ARCH=$(shell uname -m | sed -e s/i.86/i386/)
 
@@ -50,7 +50,7 @@ ifneq ($(PLATFORM),darwin)
 endif
 
 # ioquake3 svn version that this is based on
-IOQ3_REVISION = 1834
+IOQ3_REVISION = 2098
 
 #############################################################################
 #
@@ -106,6 +106,10 @@ ifndef BUILD_DIR
 BUILD_DIR=build
 endif
 
+ifndef TEMPDIR
+TEMPDIR=/tmp
+endif
+
 ifndef GENERATE_DEPENDENCIES
 GENERATE_DEPENDENCIES=1
 endif
@@ -150,12 +154,20 @@ ifndef USE_INTERNAL_ZLIB
 USE_INTERNAL_ZLIB=1
 endif
 
+ifndef USE_INTERNAL_JPEG
+USE_INTERNAL_JPEG=1
+endif
+
 ifndef USE_LOCAL_HEADERS
 USE_LOCAL_HEADERS=1
 endif
 
 ifndef DEBUG_CFLAGS
 DEBUG_CFLAGS=-g -O0
+endif
+
+ifndef USE_OLD_VM64
+USE_OLD_VM64=0
 endif
 
 #############################################################################
@@ -175,7 +187,7 @@ BLIBDIR=$(MOUNT_DIR)/botlib
 NDIR=$(MOUNT_DIR)/null
 UIDIR=$(MOUNT_DIR)/ui
 Q3UIDIR=$(MOUNT_DIR)/q3_ui
-JPDIR=$(MOUNT_DIR)/jpeg-6b
+JPDIR=$(MOUNT_DIR)/jpeg-8c
 SPEEXDIR=$(MOUNT_DIR)/libspeex
 ZDIR=$(MOUNT_DIR)/zlib
 Q3ASMDIR=$(MOUNT_DIR)/tools/asm
@@ -187,7 +199,6 @@ LOKISETUPDIR=misc/setup
 NSISDIR=misc/nsis
 SDLHDIR=$(MOUNT_DIR)/SDL12
 LIBSDIR=$(MOUNT_DIR)/libs
-TEMPDIR=/tmp
 
 bin_path=$(shell which $(1) 2> /dev/null)
 
@@ -244,10 +255,10 @@ LIB=lib
 INSTALL=install
 MKDIR=mkdir
 
-ifeq ($(PLATFORM),linux)
+ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
 
-  ifeq ($(ARCH),alpha)
-    ARCH=axp
+  ifeq ($(ARCH),axp)
+    ARCH=alpha
   else
   ifeq ($(ARCH),x86_64)
     LIB=lib64
@@ -314,6 +325,11 @@ ifeq ($(PLATFORM),linux)
     OPTIMIZE += -mtune=ultrasparc3 -mv8plus
     OPTIMIZEVM += -mtune=ultrasparc3 -mv8plus
     HAVE_VM_COMPILED=true
+  endif
+  ifeq ($(ARCH),alpha)
+    # According to http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=410555
+    # -ffast-math will cause the client to die with SIGFPE on Alpha
+    OPTIMIZE = $(OPTIMIZEVM)
   endif
   endif
   endif
@@ -551,8 +567,7 @@ ifeq ($(PLATFORM),mingw32)
                       $(LIBSDIR)/win32/libSDL.dll.a
     else
     CLIENT_LIBS += $(LIBSDIR)/win64/libSDLmain.a \
-                      $(LIBSDIR)/win64/libSDL.dll.a \
-                      $(LIBSDIR)/win64/libSDL.a
+                      $(LIBSDIR)/win64/libSDL64.dll.a
     endif
   else
     CLIENT_CFLAGS += $(SDL_CFLAGS)
@@ -611,9 +626,6 @@ ifeq ($(PLATFORM),freebsd)
 
   ifeq ($(USE_CODEC_VORBIS),1)
     CLIENT_CFLAGS += -DUSE_CODEC_VORBIS
-  endif
-
-  ifeq ($(USE_CODEC_VORBIS),1)
     CLIENT_LIBS += -lvorbisfile -lvorbis -logg
   endif
 
@@ -637,11 +649,10 @@ else # ifeq freebsd
 
 ifeq ($(PLATFORM),openbsd)
 
-  #default to i386, no tests done on anything else
-  ARCH=i386
+  ARCH=$(shell uname -m)
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -DUSE_ICON
+    -DUSE_ICON -DMAP_ANONYMOUS=MAP_ANON
   CLIENT_CFLAGS = $(SDL_CFLAGS)
   SERVER_CFLAGS = 
 
@@ -729,7 +740,7 @@ else # ifeq netbsd
 
 ifeq ($(PLATFORM),irix64)
 
-  ARCH=mips  #default to MIPS
+  ARCH=mips
 
   CC = c99
   MKDIR = mkdir -p
@@ -910,6 +921,13 @@ else
   LIBS += -lz
 endif
 
+ifeq ($(USE_INTERNAL_JPEG),1)
+  BASE_CFLAGS += -DUSE_INTERNAL_JPEG
+  BASE_CFLAGS += -I$(JPDIR)
+else
+  CLIENT_LIBS += -ljpeg
+endif
+
 ifdef DEFAULT_BASEDIR
   BASE_CFLAGS += -DDEFAULT_BASEDIR=\\\"$(DEFAULT_BASEDIR)\\\"
 endif
@@ -935,6 +953,10 @@ else
 endif
 
 BASE_CFLAGS += -DPRODUCT_VERSION=\\\"$(VERSION)\\\"
+BASE_CFLAGS += -Wformat=2 -Wno-format-zero-length -Wformat-security -Wno-format-nonliteral
+BASE_CFLAGS += -Wstrict-aliasing=2 -Wmissing-format-attribute
+BASE_CFLAGS += -Wdisabled-optimization
+BASE_CFLAGS += -Werror-implicit-function-declaration
 
 ifeq ($(V),1)
 echo_cmd=@:
@@ -1403,43 +1425,6 @@ Q3OBJ = \
   $(B)/client/l_precomp.o \
   $(B)/client/l_script.o \
   $(B)/client/l_struct.o \
-  \
-  $(B)/client/jcapimin.o \
-  $(B)/client/jcapistd.o \
-  $(B)/client/jccoefct.o  \
-  $(B)/client/jccolor.o \
-  $(B)/client/jcdctmgr.o \
-  $(B)/client/jchuff.o   \
-  $(B)/client/jcinit.o \
-  $(B)/client/jcmainct.o \
-  $(B)/client/jcmarker.o \
-  $(B)/client/jcmaster.o \
-  $(B)/client/jcomapi.o \
-  $(B)/client/jcparam.o \
-  $(B)/client/jcphuff.o \
-  $(B)/client/jcprepct.o \
-  $(B)/client/jcsample.o \
-  $(B)/client/jdapimin.o \
-  $(B)/client/jdapistd.o \
-  $(B)/client/jdatasrc.o \
-  $(B)/client/jdcoefct.o \
-  $(B)/client/jdcolor.o \
-  $(B)/client/jddctmgr.o \
-  $(B)/client/jdhuff.o \
-  $(B)/client/jdinput.o \
-  $(B)/client/jdmainct.o \
-  $(B)/client/jdmarker.o \
-  $(B)/client/jdmaster.o \
-  $(B)/client/jdpostct.o \
-  $(B)/client/jdsample.o \
-  $(B)/client/jdtrans.o \
-  $(B)/client/jerror.o \
-  $(B)/client/jfdctflt.o \
-  $(B)/client/jidctflt.o \
-  $(B)/client/jmemmgr.o \
-  $(B)/client/jmemnobs.o \
-  $(B)/client/jutils.o \
-  \
   $(B)/client/tr_animation.o \
   $(B)/client/tr_backend.o \
   $(B)/client/tr_bsp.o \
@@ -1459,6 +1444,7 @@ Q3OBJ = \
   $(B)/client/tr_marks.o \
   $(B)/client/tr_mesh.o \
   $(B)/client/tr_model.o \
+  $(B)/client/tr_model_iqm.o \
   $(B)/client/tr_noise.o \
   $(B)/client/tr_scene.o \
   $(B)/client/tr_shade.o \
@@ -1477,19 +1463,84 @@ Q3OBJ = \
   $(B)/client/con_log.o \
   $(B)/client/sys_main.o
 
+ifneq ($(USE_INTERNAL_JPEG),0)
+  Q3OBJ += \
+    $(B)/client/jaricom.o \
+    $(B)/client/jcapimin.o \
+    $(B)/client/jcapistd.o \
+    $(B)/client/jcarith.o \
+    $(B)/client/jccoefct.o  \
+    $(B)/client/jccolor.o \
+    $(B)/client/jcdctmgr.o \
+    $(B)/client/jchuff.o   \
+    $(B)/client/jcinit.o \
+    $(B)/client/jcmainct.o \
+    $(B)/client/jcmarker.o \
+    $(B)/client/jcmaster.o \
+    $(B)/client/jcomapi.o \
+    $(B)/client/jcparam.o \
+    $(B)/client/jcprepct.o \
+    $(B)/client/jcsample.o \
+    $(B)/client/jctrans.o \
+    $(B)/client/jdapimin.o \
+    $(B)/client/jdapistd.o \
+    $(B)/client/jdarith.o \
+    $(B)/client/jdatadst.o \
+    $(B)/client/jdatasrc.o \
+    $(B)/client/jdcoefct.o \
+    $(B)/client/jdcolor.o \
+    $(B)/client/jddctmgr.o \
+    $(B)/client/jdhuff.o \
+    $(B)/client/jdinput.o \
+    $(B)/client/jdmainct.o \
+    $(B)/client/jdmarker.o \
+    $(B)/client/jdmaster.o \
+    $(B)/client/jdmerge.o \
+    $(B)/client/jdpostct.o \
+    $(B)/client/jdsample.o \
+    $(B)/client/jdtrans.o \
+    $(B)/client/jerror.o \
+    $(B)/client/jfdctflt.o \
+    $(B)/client/jfdctfst.o \
+    $(B)/client/jfdctint.o \
+    $(B)/client/jidctflt.o \
+    $(B)/client/jidctfst.o \
+    $(B)/client/jidctint.o \
+    $(B)/client/jmemmgr.o \
+    $(B)/client/jmemnobs.o \
+    $(B)/client/jquant1.o \
+    $(B)/client/jquant2.o \
+    $(B)/client/jutils.o
+endif
+
 ifeq ($(ARCH),i386)
   Q3OBJ += \
     $(B)/client/snd_mixa.o \
     $(B)/client/matha.o \
-    $(B)/client/ftola.o \
-    $(B)/client/snapvectora.o
+    $(B)/client/snapvector.o \
+    $(B)/client/ftola.o
 endif
 ifeq ($(ARCH),x86)
   Q3OBJ += \
     $(B)/client/snd_mixa.o \
     $(B)/client/matha.o \
-    $(B)/client/ftola.o \
-    $(B)/client/snapvectora.o
+    $(B)/client/snapvector.o \
+    $(B)/client/ftola.o
+endif
+ifeq ($(ARCH),x86_64)
+  Q3OBJ += \
+    $(B)/client/snapvector.o \
+    $(B)/client/ftola.o
+endif
+ifeq ($(ARCH),amd64)
+  Q3OBJ += \
+    $(B)/client/snapvector.o \
+    $(B)/client/ftola.o
+endif
+ifeq ($(ARCH),x64)
+  Q3OBJ += \
+    $(B)/client/snapvector.o \
+    $(B)/client/ftola.o
 endif
 
 ifeq ($(USE_VOIP),1)
@@ -1550,19 +1601,42 @@ endif
 
 ifeq ($(HAVE_VM_COMPILED),true)
   ifeq ($(ARCH),i386)
-    Q3OBJ += $(B)/client/vm_x86.o
+    Q3OBJ += \
+      $(B)/client/vm_x86.o
   endif
   ifeq ($(ARCH),x86)
-    Q3OBJ += $(B)/client/vm_x86.o
+    Q3OBJ += \
+      $(B)/client/vm_x86.o
   endif
   ifeq ($(ARCH),x86_64)
-    Q3OBJ += $(B)/client/vm_x86_64.o $(B)/client/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3OBJ += \
+        $(B)/client/vm_x86_64.o \
+        $(B)/client/vm_x86_64_assembler.o
+    else
+      Q3OBJ += \
+        $(B)/client/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),amd64)
-    Q3OBJ += $(B)/client/vm_x86_64.o $(B)/client/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3OBJ += \
+        $(B)/client/vm_x86_64.o \
+        $(B)/client/vm_x86_64_assembler.o
+    else
+      Q3OBJ += \
+        $(B)/client/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),x64)
-    Q3OBJ += $(B)/client/vm_x86_64.o $(B)/client/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3OBJ += \
+        $(B)/client/vm_x86_64.o \
+        $(B)/client/vm_x86_64_assembler.o
+    else
+      Q3OBJ += \
+        $(B)/client/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),ppc)
     Q3OBJ += $(B)/client/vm_powerpc.o $(B)/client/vm_powerpc_asm.o
@@ -1698,15 +1772,30 @@ Q3DOBJ = \
 
 ifeq ($(ARCH),i386)
   Q3DOBJ += \
-      $(B)/ded/ftola.o \
-      $(B)/ded/snapvectora.o \
-      $(B)/ded/matha.o
+      $(B)/ded/matha.o \
+      $(B)/ded/snapvector.o \
+      $(B)/ded/ftola.o
 endif
 ifeq ($(ARCH),x86)
   Q3DOBJ += \
-      $(B)/ded/ftola.o \
-      $(B)/ded/snapvectora.o \
-      $(B)/ded/matha.o
+      $(B)/ded/matha.o \
+      $(B)/ded/snapvector.o \
+      $(B)/ded/ftola.o 
+endif
+ifeq ($(ARCH),x86_64)
+  Q3DOBJ += \
+      $(B)/ded/snapvector.o \
+      $(B)/ded/ftola.o 
+endif
+ifeq ($(ARCH),amd64)
+  Q3DOBJ += \
+      $(B)/ded/snapvector.o \
+      $(B)/ded/ftola.o 
+endif
+ifeq ($(ARCH),x64)
+  Q3DOBJ += \
+      $(B)/ded/snapvector.o \
+      $(B)/ded/ftola.o 
 endif
 
 ifeq ($(USE_INTERNAL_ZLIB),1)
@@ -1721,19 +1810,42 @@ endif
 
 ifeq ($(HAVE_VM_COMPILED),true)
   ifeq ($(ARCH),i386)
-    Q3DOBJ += $(B)/ded/vm_x86.o
+    Q3DOBJ += \
+      $(B)/ded/vm_x86.o
   endif
   ifeq ($(ARCH),x86)
-    Q3DOBJ += $(B)/ded/vm_x86.o
+    Q3DOBJ += \
+      $(B)/ded/vm_x86.o
   endif
   ifeq ($(ARCH),x86_64)
-    Q3DOBJ += $(B)/ded/vm_x86_64.o $(B)/ded/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3DOBJ += \
+        $(B)/ded/vm_x86_64.o \
+        $(B)/ded/vm_x86_64_assembler.o
+    else
+      Q3DOBJ += \
+        $(B)/ded/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),amd64)
-    Q3DOBJ += $(B)/ded/vm_x86_64.o $(B)/ded/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3DOBJ += \
+        $(B)/ded/vm_x86_64.o \
+        $(B)/ded/vm_x86_64_assembler.o
+    else
+      Q3DOBJ += \
+        $(B)/ded/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),x64)
-    Q3DOBJ += $(B)/ded/vm_x86_64.o $(B)/ded/vm_x86_64_assembler.o
+    ifeq ($(USE_OLD_VM64),1)
+      Q3DOBJ += \
+        $(B)/ded/vm_x86_64.o \
+        $(B)/ded/vm_x86_64_assembler.o
+    else
+      Q3DOBJ += \
+        $(B)/ded/vm_x86.o
+    endif
   endif
   ifeq ($(ARCH),ppc)
     Q3DOBJ += $(B)/ded/vm_powerpc.o $(B)/ded/vm_powerpc_asm.o
@@ -1790,6 +1902,7 @@ Q3CGOBJ_ = \
   $(B)/baseq3r/cgame/cg_info.o \
   $(B)/baseq3r/cgame/cg_localents.o \
   $(B)/baseq3r/cgame/cg_marks.o \
+  $(B)/baseq3r/cgame/cg_particles.o \
   $(B)/baseq3r/cgame/cg_players.o \
   $(B)/baseq3r/cgame/cg_playerstate.o \
   $(B)/baseq3r/cgame/cg_predict.o \
@@ -1842,6 +1955,7 @@ MPCGOBJ_ = \
   $(B)/missionpack/cgame/cg_info.o \
   $(B)/missionpack/cgame/cg_localents.o \
   $(B)/missionpack/cgame/cg_marks.o \
+  $(B)/missionpack/cgame/cg_particles.o \
   $(B)/missionpack/cgame/cg_players.o \
   $(B)/missionpack/cgame/cg_playerstate.o \
   $(B)/missionpack/cgame/cg_predict.o \
@@ -2089,6 +2203,10 @@ $(B)/missionpack/vm/ui.qvm: $(MPUIVMOBJ) $(UIDIR)/ui_syscalls.asm $(Q3ASM)
 $(B)/client/%.o: $(ASMDIR)/%.s
 	$(DO_AS)
 
+# k8 so inline assembler knows about SSE
+$(B)/client/%.o: $(ASMDIR)/%.c
+	$(DO_CC) -march=k8
+
 $(B)/client/%.o: $(CDIR)/%.c
 	$(DO_CC)
 
@@ -2131,6 +2249,10 @@ $(B)/client/%.o: $(SYSDIR)/%.rc
 
 $(B)/ded/%.o: $(ASMDIR)/%.s
 	$(DO_AS)
+
+# k8 so inline assembler knows about SSE
+$(B)/ded/%.o: $(ASMDIR)/%.c
+	$(DO_CC) -march=k8
 
 $(B)/ded/%.o: $(SDIR)/%.c
 	$(DO_DED_CC)

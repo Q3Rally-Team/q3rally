@@ -154,7 +154,7 @@ void CG_PuffTrail( localEntity_t *le ) {
 		mediaShader = cgs.media.smokePuffShader;
 		verticalMovement = -40;
 	}
-	else if ( le->leTrailType == LETT_DEBRIS_WOOD ) {
+	else /*if ( le->leTrailType == LETT_DEBRIS_WOOD )*/ {
 		step = 25;
 		r = 0.5;
 		g = 0.42;
@@ -403,7 +403,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	// if it is in a nodrop zone, remove it
 	// this keeps gibs from waiting at the bottom of pits of death
 	// and floating levels
-	if ( trap_CM_PointContents( trace.endpos, 0 ) & CONTENTS_NODROP ) {
+	if ( CG_PointContents( trace.endpos, 0 ) & CONTENTS_NODROP ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}

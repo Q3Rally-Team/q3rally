@@ -1470,7 +1470,7 @@ void BotClearPath(bot_state_t *bs, bot_moveresult_t *moveresult) {
 				moveresult->flags |= MOVERESULT_MOVEMENTWEAPON | MOVERESULT_MOVEMENTVIEW;
 				// if holding the right weapon
 				if (bs->cur_ps.weapon == moveresult->weapon) {
-					// if the bot is pretty close with it's aim
+					// if the bot is pretty close with its aim
 // Q3Rally Code Start
 //					if (InFieldOfVision(bs->viewangles, 20, moveresult->ideal_viewangles)) {
 					if (InFieldOfVision(bs->cur_ps.viewangles, 20, moveresult->ideal_viewangles)) {
@@ -1530,7 +1530,7 @@ void BotClearPath(bot_state_t *bs, bot_moveresult_t *moveresult) {
 				moveresult->flags |= MOVERESULT_MOVEMENTWEAPON | MOVERESULT_MOVEMENTVIEW;
 				// if holding the right weapon
 				if (bs->cur_ps.weapon == moveresult->weapon) {
-					// if the bot is pretty close with it's aim
+					// if the bot is pretty close with its aim
 // Q3Rally Code Start
 //					if (InFieldOfVision(bs->viewangles, 20, moveresult->ideal_viewangles)) {
 					if (InFieldOfVision(bs->cur_ps.viewangles, 20, moveresult->ideal_viewangles)) {
@@ -1623,7 +1623,7 @@ int AINode_Seek_ActivateEntity(bot_state_t *bs) {
 			if (bs->cur_ps.weapon == bs->activatestack->weapon) {
 				VectorSubtract(bs->activatestack->target, bs->eye, dir);
 				vectoangles(dir, ideal_viewangles);
-				// if the bot is pretty close with it's aim
+				// if the bot is pretty close with its aim
 // Q3Rally Code Start
 //				if (InFieldOfVision(bs->viewangles, 20, ideal_viewangles)) {
 				if (InFieldOfVision(bs->cur_ps.viewangles, 20, ideal_viewangles)) {

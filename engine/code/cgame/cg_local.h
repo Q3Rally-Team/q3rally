@@ -179,6 +179,8 @@ typedef struct {
 	vec3_t			railgunImpact;
 	qboolean		railgunFlash;
 
+	int				railFireTime;
+
 	// machinegun spinning
 	float			barrelAngle;
 	int				barrelTime;
@@ -419,6 +421,9 @@ typedef struct {
 
 	vec3_t			color1;
 	vec3_t			color2;
+	
+	byte c1RGBA[4];
+	byte c2RGBA[4];
 
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
@@ -699,8 +704,10 @@ typedef struct {
 	int				spectatorOffset;										// current offset from start
 	int				spectatorPaintLen; 									// current offset from start
 
+#ifdef MISSIONPACK
 	// skull trails
 	skulltrail_t	skulltrails[MAX_CLIENTS];
+#endif
 
 	// centerprinting
 	int			centerPrintTime;
@@ -716,9 +723,6 @@ typedef struct {
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
-
-	// kill timers for carnage reward
-	int			lastKillTime;
 
 	// crosshair client ID
 	int			crosshairClientNum;
@@ -782,9 +786,6 @@ typedef struct {
 	float		v_dmg_pitch;
 	float		v_dmg_roll;
 
-	vec3_t		kick_angles;	// weapon kicks
-	vec3_t		kick_origin;
-
 	// temp working variables for player view
 	float		bobfracsin;
 	int			bobcycle;
@@ -832,10 +833,12 @@ typedef struct {
 	qhandle_t   flameExplosionShader;
 // Q3Rally Code END
 
+#ifdef MISSIONPACK
 	qhandle_t	redCubeModel;
 	qhandle_t	blueCubeModel;
 	qhandle_t	redCubeIcon;
 	qhandle_t	blueCubeIcon;
+#endif
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
 	qhandle_t	neutralFlagModel;
@@ -1532,10 +1535,10 @@ extern	vmCvar_t		cg_drawBotPaths;
 const char *CG_ConfigString( int index );
 const char *CG_Argv( int arg );
 
-void QDECL CG_Printf( const char *msg, ... );
-void QDECL CG_Error( const char *msg, ... );
+void QDECL CG_Printf( const char *msg, ... ) __attribute__ ((format (printf, 1, 2)));
+void QDECL CG_Error( const char *msg, ... ) __attribute__ ((noreturn, format (printf, 1, 2)));
 // Q3Rally Code Start
-void QDECL CG_DebugLogPrintf( const char *fmt, ... );
+void QDECL CG_DebugLogPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 // Q3Rally Code END
 
 void CG_StartMusic( void );
@@ -1661,7 +1664,7 @@ sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
 // cg_predict.c
 //
 // Q3Rally Code Start
-void QDECL Com_LogPrintf( const char *fmt, ... );
+void QDECL Com_LogPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void CG_UpdateCarFromPS ( playerState_t *ps );
 // Q3Rally Code END
 void CG_BuildSolidList( void );
@@ -1786,6 +1789,11 @@ void CG_InvulnerabilityJuiced( vec3_t org );
 void CG_LightningBoltBeam( vec3_t start, vec3_t end );
 #endif
 void CG_ScorePlum( int client, vec3_t org, int score );
+void CG_ShowDebris( vec3_t srcOrigin, int count, int evType );
+void CG_StartEarthquake(int intensity, int duration);
+void CG_Earthquake(void);
+void CG_ParticlesFromEntityState( vec3_t origin, int type, entityState_t *es);
+
 
 // Q3Rally Code Start
 // void CG_GibPlayer( vec3_t playerOrigin );
@@ -1969,7 +1977,7 @@ void CG_DropBio( centity_t *cent );
 void		trap_Print( const char *fmt );
 
 // abort the game
-void		trap_Error( const char *fmt );
+void		trap_Error(const char *fmt) __attribute__((noreturn));
 
 // milliseconds should only be used for performance tuning, never
 // for anything game related.  Get time from the CG_DrawActiveFrame parameter

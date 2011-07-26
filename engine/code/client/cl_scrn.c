@@ -360,9 +360,9 @@ void SCR_DrawVoipMeter( void ) {
 		return;  // player doesn't want to show meter at all.
 	else if (!cl_voipSend->integer)
 		return;  // not recording at the moment.
-	else if (cls.state != CA_ACTIVE)
+	else if (clc.state != CA_ACTIVE)
 		return;  // not connected to a server.
-	else if (!cl_connectedToVoipServer)
+	else if (!clc.voipEnabled)
 		return;  // server doesn't support VoIP.
 	else if (clc.demoplaying)
 		return;  // playing back a demo.
@@ -480,11 +480,15 @@ This will be called twice if rendering in stereo mode
 ==================
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
+	qboolean uiFullscreen;
+
 	re.BeginFrame( stereoFrame );
+
+	uiFullscreen = (uivm && VM_Call( uivm, UI_IS_FULLSCREEN ));
 
 	// wide aspect ratio screens need to have the sides cleared
 	// unless they are displaying game renderings
-	if ( cls.state != CA_ACTIVE && cls.state != CA_CINEMATIC ) {
+	if ( uiFullscreen || (clc.state != CA_ACTIVE && clc.state != CA_CINEMATIC) ) {
 		if ( cls.glconfig.vidWidth * 480 > cls.glconfig.vidHeight * 640 ) {
 			re.SetColor( g_color_table[0] );
 			re.DrawStretchPic( 0, 0, cls.glconfig.vidWidth, cls.glconfig.vidHeight, 0, 0, 0, 0, cls.whiteShader );
@@ -494,10 +498,10 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 
 	// if the menu is going to cover the entire screen, we
 	// don't need to render anything under it
-	if ( uivm && !VM_Call( uivm, UI_IS_FULLSCREEN )) {
-		switch( cls.state ) {
+	if ( uivm && !uiFullscreen ) {
+		switch( clc.state ) {
 		default:
-			Com_Error( ERR_FATAL, "SCR_DrawScreenField: bad cls.state" );
+			Com_Error( ERR_FATAL, "SCR_DrawScreenField: bad clc.state" );
 			break;
 		case CA_CINEMATIC:
 			SCR_DrawCinematic();

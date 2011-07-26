@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define __Q_PLATFORM_H
 
 // this is for determining if we have an asm version of a C function
+#define idx64 0
+
 #ifdef Q3_VM
 
 #define id386 0
@@ -76,6 +78,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if defined(_WIN64) || defined(__WIN64__)
 
+#undef idx64
+#define idx64 1
+
 #undef QDECL
 #define QDECL __cdecl
 
@@ -85,7 +90,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OS_STRING "win_mingw64"
 #endif
 
-#define ID_INLINE inline
+#define ID_INLINE __inline
 #define PATH_SEP '\\'
 
 #if defined( __WIN64__ ) 
@@ -144,6 +149,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ARCH_STRING "i386"
 #define Q3_LITTLE_ENDIAN
 #elif defined __x86_64__
+#undef idx64
+#define idx64 1
 #define ARCH_STRING "x86_64"
 #define Q3_LITTLE_ENDIAN
 #endif
@@ -154,17 +161,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //================================================================= LINUX ===
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD_kernel__)
 
 #include <endian.h>
 
+#if defined(__linux__)
 #define OS_STRING "linux"
+#else
+#define OS_STRING "kFreeBSD"
+#endif
+
 #define ID_INLINE inline
 #define PATH_SEP '/'
 
 #if defined __i386__
 #define ARCH_STRING "i386"
 #elif defined __x86_64__
+#undef idx64
+#define idx64 1
 #define ARCH_STRING "x86_64"
 #elif defined __powerpc64__
 #define ARCH_STRING "ppc64"
@@ -227,6 +241,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef __i386__
 #define ARCH_STRING "i386"
 #elif defined __amd64__
+#undef idx64
+#define idx64 1
 #define ARCH_STRING "amd64"
 #elif defined __axp__
 #define ARCH_STRING "alpha"
@@ -332,6 +348,8 @@ float FloatSwap (const float *f);
 #error "Endianness defined as both big and little"
 #elif defined( Q3_BIG_ENDIAN )
 
+#define CopyLittleShort(dest, src) CopyShortSwap(dest, src)
+#define CopyLittleLong(dest, src) CopyLongSwap(dest, src)
 #define LittleShort(x) ShortSwap(x)
 #define LittleLong(x) LongSwap(x)
 #define LittleFloat(x) FloatSwap(&x)
@@ -341,6 +359,8 @@ float FloatSwap (const float *f);
 
 #elif defined( Q3_LITTLE_ENDIAN )
 
+#define CopyLittleShort(dest, src) Com_Memcpy(dest, src, 2)
+#define CopyLittleLong(dest, src) Com_Memcpy(dest, src, 4)
 #define LittleShort
 #define LittleLong
 #define LittleFloat

@@ -176,6 +176,11 @@ void Cbuf_Execute (void)
 	char	line[MAX_CMD_LINE];
 	int		quotes;
 
+	// This will keep // style comments all on one line by not breaking on
+	// a semicolon.  It will keep /* ... */ style comments all on one line by not
+	// breaking it for semicolon or newline.
+	qboolean in_star_comment = qfalse;
+	qboolean in_slash_comment = qfalse;
 	while (cmd_text.cursize)
 	{
 		if ( cmd_wait > 0 ) {
@@ -185,7 +190,7 @@ void Cbuf_Execute (void)
 			break;
 		}
 
-		// find a \n or ; line break
+		// find a \n or ; line break or comment: // or /* */
 		text = (char *)cmd_text.data;
 
 		quotes = 0;
@@ -193,10 +198,29 @@ void Cbuf_Execute (void)
 		{
 			if (text[i] == '"')
 				quotes++;
-			if ( !(quotes&1) &&  text[i] == ';')
-				break;	// don't break if inside a quoted string
-			if (text[i] == '\n' || text[i] == '\r' )
+
+			if ( !(quotes&1)) {
+				if (i < cmd_text.cursize - 1) {
+					if (! in_star_comment && text[i] == '/' && text[i+1] == '/')
+						in_slash_comment = qtrue;
+					else if (! in_slash_comment && text[i] == '/' && text[i+1] == '*')
+						in_star_comment = qtrue;
+					else if (in_star_comment && text[i] == '*' && text[i+1] == '/') {
+						in_star_comment = qfalse;
+						// If we are in a star comment, then the part after it is valid
+						// Note: This will cause it to NUL out the terminating '/'
+						// but ExecuteString doesn't require it anyway.
+						i++;
+						break;
+					}
+				}
+				if (! in_slash_comment && ! in_star_comment && text[i] == ';')
+					break;
+			}
+			if (! in_star_comment && (text[i] == '\n' || text[i] == '\r')) {
+				in_slash_comment = qfalse;
 				break;
+			}
 		}
 
 		if( i >= (MAX_CMD_LINE - 1)) {
@@ -435,11 +459,20 @@ char *Cmd_Cmd(void)
    Replace command separators with space to prevent interpretation
    This is a hack to protect buggy qvms
    https://bugzilla.icculus.org/show_bug.cgi?id=3593
+   https://bugzilla.icculus.org/show_bug.cgi?id=4769
 */
-void Cmd_Args_Sanitize( void ) {
+
+void Cmd_Args_Sanitize(void)
+{
 	int i;
-	for ( i = 1 ; i < cmd_argc ; i++ ) {
-		char* c = cmd_argv[i];
+
+	for(i = 1; i < cmd_argc; i++)
+	{
+		char *c = cmd_argv[i];
+		
+		if(strlen(c) > MAX_CVAR_VALUE_STRING - 1)
+			c[MAX_CVAR_VALUE_STRING - 1] = '\0';
+		
 		while ((c = strpbrk(c, "\n\r;"))) {
 			*c = ' ';
 			++c;
@@ -581,6 +614,20 @@ void Cmd_TokenizeStringIgnoreQuotes( const char *text_in ) {
 
 /*
 ============
+Cmd_FindCommand
+============
+*/
+cmd_function_t *Cmd_FindCommand( const char *cmd_name )
+{
+	cmd_function_t *cmd;
+	for( cmd = cmd_functions; cmd; cmd = cmd->next )
+		if( !Q_stricmp( cmd_name, cmd->name ) )
+			return cmd;
+	return NULL;
+}
+
+/*
+============
 Cmd_AddCommand
 ============
 */
@@ -588,14 +635,12 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function ) {
 	cmd_function_t	*cmd;
 	
 	// fail if the command already exists
-	for ( cmd = cmd_functions ; cmd ; cmd=cmd->next ) {
-		if ( !strcmp( cmd_name, cmd->name ) ) {
-			// allow completion-only commands to be silently doubled
-			if ( function != NULL ) {
-				Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
-			}
-			return;
-		}
+	if( Cmd_FindCommand( cmd_name ) )
+	{
+		// allow completion-only commands to be silently doubled
+		if( function != NULL )
+			Com_Printf( "Cmd_AddCommand: %s already defined\n", cmd_name );
+		return;
 	}
 
 	// use a small malloc to avoid zone fragmentation
@@ -649,6 +694,28 @@ void	Cmd_RemoveCommand( const char *cmd_name ) {
 	}
 }
 
+/*
+============
+Cmd_RemoveCommandSafe
+
+Only remove commands with no associated function
+============
+*/
+void Cmd_RemoveCommandSafe( const char *cmd_name )
+{
+	cmd_function_t *cmd = Cmd_FindCommand( cmd_name );
+
+	if( !cmd )
+		return;
+	if( cmd->function )
+	{
+		Com_Error( ERR_DROP, "Restricted source tried to remove "
+			"system command \"%s\"", cmd_name );
+		return;
+	}
+
+	Cmd_RemoveCommand( cmd_name );
+}
 
 /*
 ============
@@ -775,7 +842,7 @@ Cmd_CompleteCfgName
 */
 void Cmd_CompleteCfgName( char *args, int argNum ) {
 	if( argNum == 2 ) {
-		Field_CompleteFilename( "", "cfg", qfalse );
+		Field_CompleteFilename( "", "cfg", qfalse, qtrue );
 	}
 }
 

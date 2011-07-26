@@ -390,7 +390,8 @@ static InitialVideoOptions_s s_ivo_templates[] =
 	}
 };
 
-#define NUM_IVO_TEMPLATES ( sizeof( s_ivo_templates ) / sizeof( s_ivo_templates[0] ) )
+#define NUM_IVO_TEMPLATES ( ARRAY_LEN( s_ivo_templates ) )
+
 static const char *builtinResolutions[ ] =
 {
 	"320x240",
@@ -489,21 +490,29 @@ GraphicsOptions_GetAspectRatios
 static void GraphicsOptions_GetAspectRatios( void )
 {
 	int i, r;
-	
+
 	// build ratio list from resolutions
 	for( r = 0; resolutions[r]; r++ )
 	{
 		int w, h;
 		char *x;
 		char str[ sizeof(ratioBuf[0]) ];
-		
+
 		// calculate resolution's aspect ratio
 		x = strchr( resolutions[r], 'x' ) + 1;
 		Q_strncpyz( str, resolutions[r], x-resolutions[r] );
 		w = atoi( str );
 		h = atoi( x );
 		Com_sprintf( str, sizeof(str), "%.2f:1", (float)w / (float)h );
-		
+
+		// rename common ratios ("1.33:1" -> "4:3")
+		for( i = 0; knownRatios[i][0]; i++ ) {
+			if( !Q_stricmp( str, knownRatios[i][0] ) ) {
+				Q_strncpyz( str, knownRatios[i][1], sizeof( str ) );
+				break;
+			}
+		}
+
 		// add ratio to list if it is new
 		// establish res/ratio relationship
 		for( i = 0; ratioBuf[i][0]; i++ )
@@ -516,23 +525,11 @@ static void GraphicsOptions_GetAspectRatios( void )
 			Q_strncpyz( ratioBuf[i], str, sizeof(ratioBuf[i]) );
 			ratioToRes[i] = r;
 		}
-		resToRatio[r] = i;
+
+		ratios[r] = ratioBuf[r]; 
+		resToRatio[r] = i; 
 	}
-	
-	// prepare itemlist pointer array
-	// rename common ratios ("1.33:1" -> "4:3")
-	for( r = 0; ratioBuf[r][0]; r++ )
-	{
-		for( i = 0; knownRatios[i][0]; i++ )
-		{
-			if( !Q_stricmp( ratioBuf[r], knownRatios[i][0] ) )
-			{
-				Q_strncpyz( ratioBuf[r], knownRatios[i][1], sizeof(ratioBuf[r]) );
-				break;
-			}
-		}
-		ratios[r] = ratioBuf[r];
-	}
+
 	ratios[r] = NULL;
 }
 
@@ -567,7 +564,7 @@ static void GraphicsOptions_GetResolutions( void )
 	{
 		char* s = resbuf;
 		unsigned int i = 0;
-		while( s && i < sizeof(detectedResolutions)/sizeof(detectedResolutions[0])-1)
+		while( s && i < ARRAY_LEN(detectedResolutions)-1 )
 		{
 			detectedResolutions[i++] = s;
 			s = strchr(s, ' ');
@@ -733,7 +730,7 @@ static void GraphicsOptions_ApplyChanges( void *unused, int notification )
 		// search for builtin mode that matches the detected mode
 		int mode;
 		if ( s_graphicsoptions.mode.curvalue == -1
-			|| s_graphicsoptions.mode.curvalue >= sizeof(detectedResolutions)/sizeof(detectedResolutions[0]) )
+			|| s_graphicsoptions.mode.curvalue >= ARRAY_LEN( detectedResolutions ) )
 			s_graphicsoptions.mode.curvalue = 0;
 
 		mode = GraphicsOptions_FindBuiltinResolution( s_graphicsoptions.mode.curvalue );
@@ -754,9 +751,11 @@ static void GraphicsOptions_ApplyChanges( void *unused, int notification )
 		trap_Cvar_SetValue( "r_mode", s_graphicsoptions.mode.curvalue );
 
 	trap_Cvar_SetValue( "r_fullscreen", s_graphicsoptions.fs.curvalue );
-	trap_Cvar_SetValue( "r_colorbits", 0 );
-	trap_Cvar_SetValue( "r_depthbits", 0 );
-	trap_Cvar_SetValue( "r_stencilbits", 0 );
+
+	trap_Cvar_Reset("r_colorbits");
+	trap_Cvar_Reset("r_depthbits");
+	trap_Cvar_Reset("r_stencilbits");
+
 	trap_Cvar_SetValue( "r_vertexLight", s_graphicsoptions.lighting.curvalue );
 
 	if ( s_graphicsoptions.geometry.curvalue == 2 )

@@ -233,7 +233,7 @@ static void R_BindAnimatedImage( textureBundle_t *bundle ) {
 
 	// it is necessary to do this messy calc to make sure animations line up
 	// exactly with waveforms of the same frequency
-	index = myftol( tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE );
+	index = Q_ftol(tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE);
 	index >>= FUNCTABLE_SIZE2;
 
 	if ( index < 0 ) {
@@ -459,8 +459,17 @@ static void ProjectDlightTexture_altivec( void ) {
 		{
 			float luminance;
 			
-			luminance = (dl->color[0] * 255.0f + dl->color[1] * 255.0f + dl->color[2] * 255.0f) / 3;
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
 			floatColor[0] = floatColor[1] = floatColor[2] = luminance;
+		}
+		else if(r_greyscale->value)
+		{
+			float luminance;
+			
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
+			floatColor[0] = LERP(dl->color[0] * 255.0f, luminance, r_greyscale->value);
+			floatColor[1] = LERP(dl->color[1] * 255.0f, luminance, r_greyscale->value);
+			floatColor[2] = LERP(dl->color[2] * 255.0f, luminance, r_greyscale->value);
 		}
 		else
 		{
@@ -612,9 +621,18 @@ static void ProjectDlightTexture_scalar( void ) {
 		if(r_greyscale->integer)
 		{
 			float luminance;
-			
-			luminance = (dl->color[0] * 255.0f + dl->color[1] * 255.0f + dl->color[2] * 255.0f) / 3;
+
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
 			floatColor[0] = floatColor[1] = floatColor[2] = luminance;
+		}
+		else if(r_greyscale->value)
+		{
+			float luminance;
+			
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
+			floatColor[0] = LERP(dl->color[0] * 255.0f, luminance, r_greyscale->value);
+			floatColor[1] = LERP(dl->color[1] * 255.0f, luminance, r_greyscale->value);
+			floatColor[2] = LERP(dl->color[2] * 255.0f, luminance, r_greyscale->value);
 		}
 		else
 		{
@@ -671,9 +689,9 @@ static void ProjectDlightTexture_scalar( void ) {
 				}
 			}
 			clipBits[i] = clip;
-			colors[0] = myftol(floatColor[0] * modulate);
-			colors[1] = myftol(floatColor[1] * modulate);
-			colors[2] = myftol(floatColor[2] * modulate);
+			colors[0] = Q_ftol(floatColor[0] * modulate);
+			colors[1] = Q_ftol(floatColor[1] * modulate);
+			colors[2] = Q_ftol(floatColor[2] * modulate);
 			colors[3] = 255;
 		}
 
@@ -964,11 +982,22 @@ static void ComputeColors( shaderStage_t *pStage )
 	if(r_greyscale->integer)
 	{
 		int scale;
+		for(i = 0; i < tess.numVertexes; i++)
+		{
+			scale = LUMA(tess.svars.colors[i][0], tess.svars.colors[i][1], tess.svars.colors[i][2]);
+ 			tess.svars.colors[i][0] = tess.svars.colors[i][1] = tess.svars.colors[i][2] = scale;
+		}
+	}
+	else if(r_greyscale->value)
+	{
+		float scale;
 		
 		for(i = 0; i < tess.numVertexes; i++)
 		{
-			scale = (tess.svars.colors[i][0] + tess.svars.colors[i][1] + tess.svars.colors[i][2]) / 3;
-			tess.svars.colors[i][0] = tess.svars.colors[i][1] = tess.svars.colors[i][2] = scale;
+			scale = LUMA(tess.svars.colors[i][0], tess.svars.colors[i][1], tess.svars.colors[i][2]);
+			tess.svars.colors[i][0] = LERP(tess.svars.colors[i][0], scale, r_greyscale->value);
+			tess.svars.colors[i][1] = LERP(tess.svars.colors[i][1], scale, r_greyscale->value);
+			tess.svars.colors[i][2] = LERP(tess.svars.colors[i][2], scale, r_greyscale->value);
 		}
 	}
 }
@@ -1067,7 +1096,7 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 				break;
 
 			default:
-				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'\n", pStage->bundle[b].texMods[tm].type, tess.shader->name );
+				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'", pStage->bundle[b].texMods[tm].type, tess.shader->name );
 				break;
 			}
 		}

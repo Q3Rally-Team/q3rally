@@ -1063,10 +1063,10 @@ void CG_StartEarthquake(int intensity, int duration)
 	earthquakeStoptime = cg.time + duration;
 }
 
-void CG_Earthquake()
+void CG_Earthquake(void)
 {
 	static float terremotoX, terremotoY, terremotoZ;
-	static terremotoTime = 0;
+	static int terremotoTime = 0;
 	float realInt;
 
 	if ( !flagEarthquake )

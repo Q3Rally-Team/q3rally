@@ -1081,16 +1081,10 @@ void UI_MouseEvent( int dx, int dy )
 // END
 
 	uis.cursorx += dx;
-	// ZTM: Allow cursor to move to edge of screen in wide screen
 	if (uis.cursorx < -uis.bias)
 		uis.cursorx = -uis.bias;
 	else if (uis.cursorx > SCREEN_WIDTH+uis.bias)
 		uis.cursorx = SCREEN_WIDTH+uis.bias;
-//	if (uis.cursorx < 0)
-//		uis.cursorx = 0;
-//	else if (uis.cursorx > SCREEN_WIDTH)
-//		uis.cursorx = SCREEN_WIDTH;
-	// END
 
 	uis.cursory += dy;
 	if (uis.cursory < 0)
@@ -1206,6 +1200,9 @@ UI_ConsoleCommand
 */
 qboolean UI_ConsoleCommand( int realTime ) {
 	char	*cmd;
+
+	uis.frametime = realTime - uis.realtime;
+	uis.realtime = realTime;
 
 	cmd = UI_Argv( 0 );
 

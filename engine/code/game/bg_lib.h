@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define NULL ((void *)0)
 #endif
 
-typedef int size_t;
+typedef unsigned int size_t;
 
 typedef char *  va_list;
 #define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(int) - 1) & ~(sizeof(int) - 1) )
@@ -89,6 +89,7 @@ char *strcat( char *strDestination, const char *strSource );
 char *strcpy( char *strDestination, const char *strSource );
 int strcmp( const char *string1, const char *string2 );
 char *strchr( const char *string, int c );
+char *strrchr(const char *string, int c);
 char *strstr( const char *string, const char *strCharSet );
 char *strncpy( char *strDest, const char *strSource, size_t count );
 int tolower( int c );
@@ -96,13 +97,12 @@ int toupper( int c );
 
 double atof( const char *string );
 double _atof( const char **stringPtr );
-double strtod( const char *nptr, const char **endptr );
+double strtod( const char *nptr, char **endptr );
 int atoi( const char *string );
 int _atoi( const char **stringPtr );
-long strtol( const char *nptr, const char **endptr, int base );
+long strtol( const char *nptr, char **endptr, int base );
 
 int Q_vsnprintf( char *buffer, size_t length, const char *fmt, va_list argptr );
-int Q_snprintf( char *buffer, size_t length, const char *fmt, ... ) __attribute__ ((format (printf, 3, 4)));
 
 int sscanf( const char *buffer, const char *fmt, ... ) __attribute__ ((format (scanf, 2, 3)));
 

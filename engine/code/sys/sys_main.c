@@ -193,7 +193,7 @@ Sys_Exit
 Single exit point (regular exit or in case of error)
 =================
 */
-static void Sys_Exit( int exitCode )
+static __attribute__ ((noreturn)) void Sys_Exit( int exitCode )
 {
 	CON_Shutdown( );
 
@@ -206,6 +206,8 @@ static void Sys_Exit( int exitCode )
 		// Normal exit
 		remove( Sys_PIDFileName( ) );
 	}
+
+	Sys_PlatformExit( );
 
 	exit( exitCode );
 }
@@ -349,18 +351,18 @@ void Sys_Error( const char *error, ... )
 	Q_vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
-	CL_Shutdown( string );
 	Sys_ErrorDialog( string );
 
 	Sys_Exit( 3 );
 }
 
+#if 0
 /*
 =================
 Sys_Warn
 =================
 */
-void Sys_Warn( char *warning, ... )
+static __attribute__ ((format (printf, 1, 2))) void Sys_Warn( char *warning, ... )
 {
 	va_list argptr;
 	char    string[1024];
@@ -371,6 +373,7 @@ void Sys_Warn( char *warning, ... )
 
 	CON_Print( va( "Warning: %s", string ) );
 }
+#endif
 
 /*
 ============
@@ -407,68 +410,26 @@ void Sys_UnloadDll( void *dllHandle )
 
 /*
 =================
-Sys_TryLibraryLoad
-=================
-*/
-static void* Sys_TryLibraryLoad(const char* base, const char* gamedir, const char* fname, char* fqpath )
-{
-	void* libHandle;
-	char* fn;
-
-	*fqpath = 0;
-
-	fn = FS_BuildOSPath( base, gamedir, fname );
-	Com_Printf( "Sys_LoadDll(%s)... \n", fn );
-
-	libHandle = Sys_LoadLibrary(fn);
-
-	if(!libHandle) {
-		Com_Printf( "Sys_LoadDll(%s) failed:\n\"%s\"\n", fn, Sys_LibraryError() );
-		return NULL;
-	}
-
-	Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
-	Q_strncpyz ( fqpath , fn , MAX_QPATH ) ;
-
-	return libHandle;
-}
-
-/*
-=================
 Sys_LoadDll
 
 Used to load a development dll instead of a virtual machine
-#1 look in fs_homepath
-#2 look in fs_basepath
 =================
 */
-void *Sys_LoadDll( const char *name, char *fqpath ,
-	intptr_t (**entryPoint)(int, ...),
-	intptr_t (*systemcalls)(intptr_t, ...) )
+void *Sys_LoadDll(const char *name,
+	intptr_t (QDECL **entryPoint)(int, ...),
+	intptr_t (*systemcalls)(intptr_t, ...))
 {
-	void  *libHandle;
-	void  (*dllEntry)( intptr_t (*syscallptr)(intptr_t, ...) );
-	char  fname[MAX_OSPATH];
-	char  *basepath;
-	char  *homepath;
-	char  *gamedir;
+	void *libHandle;
+	void (*dllEntry)(intptr_t (*syscallptr)(intptr_t, ...));
 
-	assert( name );
+	assert(name);
 
-	Q_snprintf (fname, sizeof(fname), "%s" ARCH_STRING DLL_EXT, name);
+	Com_Printf( "Loading DLL file: %s\n", name);
+	libHandle = Sys_LoadLibrary(name);
 
-	// TODO: use fs_searchpaths from files.c
-	basepath = Cvar_VariableString( "fs_basepath" );
-	homepath = Cvar_VariableString( "fs_homepath" );
-	gamedir = Cvar_VariableString( "fs_game" );
-
-	libHandle = Sys_TryLibraryLoad(homepath, gamedir, fname, fqpath);
-
-	if(!libHandle && basepath)
-		libHandle = Sys_TryLibraryLoad(basepath, gamedir, fname, fqpath);
-
-	if(!libHandle) {
-		Com_Printf ( "Sys_LoadDll(%s) failed to load library\n", name );
+	if(!libHandle)
+	{
+		Com_Printf("Sys_LoadDll(%s) failed:\n\"%s\"\n", name, Sys_LibraryError());
 		return NULL;
 	}
 
@@ -538,9 +499,9 @@ void Sys_SigHandler( int signal )
 	{
 		signalcaught = qtrue;
 #ifndef DEDICATED
-		CL_Shutdown( va( "Received signal %d", signal ) );
+		CL_Shutdown(va("Received signal %d", signal), qtrue);
 #endif
-		SV_Shutdown( va( "Received signal %d", signal ) );
+		SV_Shutdown(va("Received signal %d", signal) );
 	}
 
 	if( signal == SIGTERM || signal == SIGINT )

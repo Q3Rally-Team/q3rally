@@ -41,7 +41,15 @@ cvar_t *s_alRolloff;
 cvar_t *s_alGraceDistance;
 cvar_t *s_alDriver;
 cvar_t *s_alDevice;
+cvar_t *s_alInputDevice;
 cvar_t *s_alAvailableDevices;
+cvar_t *s_alAvailableInputDevices;
+
+static qboolean enumeration_ext = qfalse;
+static qboolean enumeration_all_ext = qfalse;
+#ifdef USE_VOIP
+static qboolean capture_ext = qfalse;
+#endif
 
 /*
 =================
@@ -142,7 +150,7 @@ static qboolean alBuffersInitialised = qfalse;
 // Sound effect storage, data structures
 #define MAX_SFX 4096
 static alSfx_t knownSfx[MAX_SFX];
-static int numSfx = 0;
+static sfxHandle_t numSfx = 0;
 
 static sfxHandle_t default_sfx;
 
@@ -221,7 +229,7 @@ S_AL_BufferUseDefault
 static void S_AL_BufferUseDefault(sfxHandle_t sfx)
 {
 	if(sfx == default_sfx)
-		Com_Error(ERR_FATAL, "Can't load default sound effect %s\n", knownSfx[sfx].filename);
+		Com_Error(ERR_FATAL, "Can't load default sound effect %s", knownSfx[sfx].filename);
 
 	Com_Printf( S_COLOR_YELLOW "WARNING: Using default sound for %s\n", knownSfx[sfx].filename);
 	knownSfx[sfx].isDefault = qtrue;
@@ -326,7 +334,7 @@ static void S_AL_BufferLoad(sfxHandle_t sfx, qboolean cache)
 	if (!cache)
 	{
 		// Don't create AL cache
-		Z_Free(data);
+		Hunk_FreeTempMemory(data);
 		return;
 	}
 
@@ -338,7 +346,7 @@ static void S_AL_BufferLoad(sfxHandle_t sfx, qboolean cache)
 	if((error = qalGetError()) != AL_NO_ERROR)
 	{
 		S_AL_BufferUseDefault(sfx);
-		Z_Free(data);
+		Hunk_FreeTempMemory(data);
 		Com_Printf( S_COLOR_RED "ERROR: Can't create a sound buffer for %s - %s\n",
 				curSfx->filename, S_AL_ErrorMsg(error));
 		return;
@@ -363,7 +371,7 @@ static void S_AL_BufferLoad(sfxHandle_t sfx, qboolean cache)
 		if( !S_AL_BufferEvict( ) )
 		{
 			S_AL_BufferUseDefault(sfx);
-			Z_Free(data);
+			Hunk_FreeTempMemory(data);
 			Com_Printf( S_COLOR_RED "ERROR: Out of memory loading %s\n", curSfx->filename);
 			return;
 		}
@@ -377,7 +385,7 @@ static void S_AL_BufferLoad(sfxHandle_t sfx, qboolean cache)
 	if(error != AL_NO_ERROR)
 	{
 		S_AL_BufferUseDefault(sfx);
-		Z_Free(data);
+		Hunk_FreeTempMemory(data);
 		Com_Printf( S_COLOR_RED "ERROR: Can't fill sound buffer for %s - %s\n",
 				curSfx->filename, S_AL_ErrorMsg(error));
 		return;
@@ -386,7 +394,7 @@ static void S_AL_BufferLoad(sfxHandle_t sfx, qboolean cache)
 	curSfx->info = info;
 	
 	// Free the memory
-	Z_Free(data);
+	Hunk_FreeTempMemory(data);
 
 	// Woo!
 	curSfx->inMemory = qtrue;
@@ -454,7 +462,7 @@ void S_AL_BufferShutdown( void )
 		S_AL_BufferUnload(i);
 
 	// Clear the tables
-	memset(knownSfx, 0, sizeof(knownSfx));
+	numSfx = 0;
 
 	// All undone
 	alBuffersInitialised = qfalse;
@@ -2199,6 +2207,8 @@ S_AL_BeginRegistration
 static
 void S_AL_BeginRegistration( void )
 {
+	if(!numSfx)
+		S_AL_BufferInit();
 }
 
 /*
@@ -2267,21 +2277,33 @@ void S_AL_MasterGain( float gain )
 S_AL_SoundInfo
 =================
 */
-static
-void S_AL_SoundInfo( void )
+static void S_AL_SoundInfo(void)
 {
 	Com_Printf( "OpenAL info:\n" );
-	Com_Printf( "  Vendor:     %s\n", qalGetString( AL_VENDOR ) );
-	Com_Printf( "  Version:    %s\n", qalGetString( AL_VERSION ) );
-	Com_Printf( "  Renderer:   %s\n", qalGetString( AL_RENDERER ) );
-	Com_Printf( "  AL Extensions: %s\n", qalGetString( AL_EXTENSIONS ) );
+	Com_Printf( "  Vendor:         %s\n", qalGetString( AL_VENDOR ) );
+	Com_Printf( "  Version:        %s\n", qalGetString( AL_VERSION ) );
+	Com_Printf( "  Renderer:       %s\n", qalGetString( AL_RENDERER ) );
+	Com_Printf( "  AL Extensions:  %s\n", qalGetString( AL_EXTENSIONS ) );
 	Com_Printf( "  ALC Extensions: %s\n", qalcGetString( alDevice, ALC_EXTENSIONS ) );
-	if(qalcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+
+	if(enumeration_all_ext)
+		Com_Printf("  Device:         %s\n", qalcGetString(alDevice, ALC_ALL_DEVICES_SPECIFIER));
+	else if(enumeration_ext)
+		Com_Printf("  Device:         %s\n", qalcGetString(alDevice, ALC_DEVICE_SPECIFIER));
+
+	if(enumeration_all_ext || enumeration_ext)
+		Com_Printf("  Available Devices:\n%s", s_alAvailableDevices->string);
+
+#ifdef USE_VOIP
+	if(capture_ext)
 	{
-		Com_Printf("  Device:     %s\n", qalcGetString(alDevice, ALC_DEVICE_SPECIFIER));
-		Com_Printf("Available Devices:\n%s", s_alAvailableDevices->string);
+		Com_Printf("  Input Device:   %s\n", qalcGetString(alCaptureDevice, ALC_CAPTURE_DEVICE_SPECIFIER));
+		Com_Printf("  Available Input Devices:\n%s", s_alAvailableInputDevices->string);
 	}
+#endif
 }
+
+
 
 /*
 =================
@@ -2331,6 +2353,7 @@ qboolean S_AL_Init( soundInterface_t *si )
 {
 #ifdef USE_OPENAL
 	const char* device = NULL;
+	const char* inputdevice = NULL;
 	int i;
 
 	if( !si ) {
@@ -2356,6 +2379,7 @@ qboolean S_AL_Init( soundInterface_t *si )
 
 	s_alDriver = Cvar_Get( "s_alDriver", ALDRIVER_DEFAULT, CVAR_ARCHIVE | CVAR_LATCH );
 
+	s_alInputDevice = Cvar_Get( "s_alInputDevice", "", CVAR_ARCHIVE | CVAR_LATCH );
 	s_alDevice = Cvar_Get("s_alDevice", "", CVAR_ARCHIVE | CVAR_LATCH);
 
 	// Load QAL
@@ -2369,35 +2393,59 @@ qboolean S_AL_Init( soundInterface_t *si )
 	if(device && !*device)
 		device = NULL;
 
-	// Device enumeration support (extension is implemented reasonably only on Windows right now).
-	if(qalcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+	inputdevice = s_alInputDevice->string;
+	if(inputdevice && !*inputdevice)
+		inputdevice = NULL;
+
+
+	// Device enumeration support
+	enumeration_all_ext = qalcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
+	enumeration_ext = qalcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT");
+
+	if(enumeration_ext || enumeration_all_ext)
 	{
-		char devicenames[1024] = "";
+		char devicenames[16384] = "";
 		const char *devicelist;
 		const char *defaultdevice;
 		int curlen;
-		
+
 		// get all available devices + the default device name.
-		devicelist = qalcGetString(NULL, ALC_DEVICE_SPECIFIER);
-		defaultdevice = qalcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+		if(enumeration_all_ext)
+		{
+			devicelist = qalcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+			defaultdevice = qalcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+		}
+		else
+		{
+			// We don't have ALC_ENUMERATE_ALL_EXT but normal enumeration.
+			devicelist = qalcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			defaultdevice = qalcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+			enumeration_ext = qtrue;
+		}
 
 #ifdef _WIN32
 		// check whether the default device is generic hardware. If it is, change to
 		// Generic Software as that one works more reliably with various sound systems.
 		// If it's not, use OpenAL's default selection as we don't want to ignore
 		// native hardware acceleration.
-		if(!device && !strcmp(defaultdevice, "Generic Hardware"))
+		if(!device && defaultdevice && !strcmp(defaultdevice, "Generic Hardware"))
 			device = "Generic Software";
 #endif
 
 		// dump a list of available devices to a cvar for the user to see.
-		while((curlen = strlen(devicelist)))
-		{
-			Q_strcat(devicenames, sizeof(devicenames), devicelist);
-			Q_strcat(devicenames, sizeof(devicenames), "\n");
 
-			devicelist += curlen + 1;
+		if(devicelist)
+		{
+			while((curlen = strlen(devicelist)))
+			{
+				Q_strcat(devicenames, sizeof(devicenames), devicelist);
+				Q_strcat(devicenames, sizeof(devicenames), "\n");
+
+				devicelist += curlen + 1;
+			}
 		}
+		else
+			devicelist = "";
 
 		s_alAvailableDevices = Cvar_Get("s_alAvailableDevices", devicenames, CVAR_ROM | CVAR_NORESTART);
 	}
@@ -2468,15 +2516,40 @@ qboolean S_AL_Init( soundInterface_t *si )
 		}
 		else
 		{
+			char inputdevicenames[16384] = "";
+			const char *inputdevicelist;
+			const char *defaultinputdevice;
+			int curlen;
+
+			capture_ext = qtrue;
+
+			// get all available input devices + the default input device name.
+			inputdevicelist = qalcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
+			defaultinputdevice = qalcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
+
+			// dump a list of available devices to a cvar for the user to see.
+			while((curlen = strlen(inputdevicelist)))
+			{
+				Q_strcat(inputdevicenames, sizeof(inputdevicenames), inputdevicelist);
+				Q_strcat(inputdevicenames, sizeof(inputdevicenames), "\n");
+				inputdevicelist += curlen + 1;
+			}
+
+			s_alAvailableInputDevices = Cvar_Get("s_alAvailableInputDevices", inputdevicenames, CVAR_ROM | CVAR_NORESTART);
+
 			// !!! FIXME: 8000Hz is what Speex narrowband mode needs, but we
 			// !!! FIXME:  should probably open the capture device after
 			// !!! FIXME:  initializing Speex so we can change to wideband
 			// !!! FIXME:  if we like.
-			Com_Printf("OpenAL default capture device is '%s'\n",
-			           qalcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER));
-			alCaptureDevice = qalcCaptureOpenDevice(NULL, 8000, AL_FORMAT_MONO16, 4096);
+			Com_Printf("OpenAL default capture device is '%s'\n", defaultinputdevice);
+			alCaptureDevice = qalcCaptureOpenDevice(inputdevice, 8000, AL_FORMAT_MONO16, 4096);
+			if( !alCaptureDevice && inputdevice )
+			{
+				Com_Printf( "Failed to open OpenAL Input device '%s', trying default.\n", inputdevice );
+				alCaptureDevice = qalcCaptureOpenDevice(NULL, 8000, AL_FORMAT_MONO16, 4096);
+			}
 			Com_Printf( "OpenAL capture device %s.\n",
-			            (alCaptureDevice == NULL) ? "failed to open" : "opened");
+				    (alCaptureDevice == NULL) ? "failed to open" : "opened");
 		}
 	}
 #endif
