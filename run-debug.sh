@@ -1,19 +1,15 @@
 #!/bin/sh
-# Q3Rally Unix Launcher
+# Q3Rally (debug) Unix Launcher
 
 PLATFORM=`uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]'|sed -e 's/\//_/g'`
 ARCH=`uname -m | sed -e s/i.86/i386/`
-BUILD=release
+BUILD=debug
 
-BIN=q3rally.$ARCH
-
-if [ ! -f $BIN ]; then
 BIN=engine/build/$BUILD-$PLATFORM-$ARCH/q3rally.$ARCH
-fi
 
 if [ ! -f $BIN ]; then
 	echo "Game binary '$BIN' not found!"
-	echo "Run 'make -C engine' to build it."
+	echo "Run 'make -C engine $BUILD' to build it."
 	exit 1
 fi
 
