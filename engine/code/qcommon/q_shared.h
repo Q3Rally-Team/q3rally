@@ -32,36 +32,29 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   #define BASEGAME					"baseq3r"
   #define CLIENT_WINDOW_TITLE     	"Q3Rally"
   #define CLIENT_WINDOW_MIN_TITLE 	"Q3R"
-#if 1 // use standard quake3 master protocol
-  #define GAMENAME_FOR_MASTER		"Quake3Arena"
-  #define HEARTBEAT_FOR_MASTER		"QuakeArena-1"
-  #define FLATLINE_FOR_MASTER		HEARTBEAT_FOR_MASTER
-#else
-  #define GAMENAME_FOR_MASTER		"Q3Rally"		// must NOT contain whitespaces
-  #define HEARTBEAT_FOR_MASTER		GAMENAME_FOR_MASTER
-  #define FLATLINE_FOR_MASTER		GAMENAME_FOR_MASTER "dead"
-#endif
   #define HOMEPATH_NAME_UNIX		".q3rally"
   #define HOMEPATH_NAME_WIN			"Q3Rally"
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+  #define GAMENAME_FOR_MASTER		"Q3Rally"	// must NOT contain whitespace
 //  #define LEGACY_PROTOCOL	// You probably don't need this for your standalone game
 #else
   #define PRODUCT_NAME			"ioq3"
   #define BASEGAME			"baseq3"
   #define CLIENT_WINDOW_TITLE     	"ioquake3"
   #define CLIENT_WINDOW_MIN_TITLE 	"ioq3"
-  #define GAMENAME_FOR_MASTER		"Quake3Arena"
-  #define HEARTBEAT_FOR_MASTER		"QuakeArena-1"
-  #define FLATLINE_FOR_MASTER		HEARTBEAT_FOR_MASTER
   #define HOMEPATH_NAME_UNIX		".q3a"
   #define HOMEPATH_NAME_WIN		"Quake3"
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+  #define GAMENAME_FOR_MASTER		"Quake3Arena"
   #define LEGACY_PROTOCOL
 #endif
 
+// Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing
+#define HEARTBEAT_FOR_MASTER		"DarkPlaces"
+
 #define BASETA				"missionpack"
 
-#ifdef _MSC_VER
+#ifndef PRODUCT_VERSION
   #define PRODUCT_VERSION "1.36"
 #endif
 
@@ -1022,6 +1015,23 @@ typedef struct {
 	int			integer;
 	char		string[MAX_CVAR_VALUE_STRING];
 } vmCvar_t;
+
+
+/*
+==============================================================
+
+VoIP
+
+==============================================================
+*/
+
+// if you change the count of flags be sure to also change VOIP_FLAGNUM
+#define VOIP_SPATIAL		0x01		// spatialized voip message
+#define VOIP_DIRECT		0x02		// non-spatialized voip message
+
+// number of flags voip knows. You will have to bump protocol version number if you
+// change this.
+#define VOIP_FLAGCNT		2
 
 /*
 ==============================================================

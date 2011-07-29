@@ -86,6 +86,7 @@ cvar_t	*com_minimized;
 cvar_t	*com_maxfpsMinimized;
 cvar_t	*com_abnormalExit;
 cvar_t	*com_standalone;
+cvar_t	*com_gamename;
 cvar_t	*com_protocol;
 #ifdef LEGACY_PROTOCOL
 cvar_t	*com_legacyprotocol;
@@ -931,10 +932,11 @@ Z_TagMalloc
 */
 #ifdef ZONE_DEBUG
 void *Z_TagMallocDebug( int size, int tag, char *label, char *file, int line ) {
+	int		allocSize;
 #else
 void *Z_TagMalloc( int size, int tag ) {
 #endif
-	int		extra, allocSize;
+	int		extra;
 	memblock_t	*start, *rover, *new, *base;
 	memzone_t *zone;
 
@@ -949,7 +951,9 @@ void *Z_TagMalloc( int size, int tag ) {
 		zone = mainzone;
 	}
 
+#ifdef ZONE_DEBUG
 	allocSize = size;
+#endif
 	//
 	// scan through the block list looking for the first free block
 	// of sufficient size
@@ -1088,7 +1092,10 @@ void Z_LogZoneHeap( memzone_t *zone, char *name ) {
 
 	if (!logfile || !FS_Initialized())
 		return;
-	size = allocSize = numBlocks = 0;
+	size = numBlocks = 0;
+#ifdef ZONE_DEBUG
+	allocSize = 0;
+#endif
 	Com_sprintf(buf, sizeof(buf), "\r\n================\r\n%s log\r\n================\r\n", name);
 	FS_Write(buf, strlen(buf), logfile);
 	for (block = zone->blocklist.next ; block->next != &zone->blocklist; block = block->next) {
@@ -2790,6 +2797,7 @@ void Com_Init( char *commandLine ) {
 
 	s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
+	com_gamename = Cvar_Get("com_gamename", GAMENAME_FOR_MASTER, CVAR_SERVERINFO | CVAR_INIT);
 	com_protocol = Cvar_Get("com_protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_INIT);
 #ifdef LEGACY_PROTOCOL
 	com_legacyprotocol = Cvar_Get("com_legacyprotocol", va("%i", PROTOCOL_LEGACY_VERSION), CVAR_INIT);
@@ -3108,7 +3116,6 @@ void Com_Frame( void ) {
 	else
 		minMsec = 1;
 
-	timeVal = 0;
 	do
 	{
 		if(com_sv_running->integer)
@@ -3588,3 +3595,33 @@ void Com_RandomBytes( byte *string, int len )
 		string[i] = (unsigned char)( rand() % 255 );
 }
 
+
+/*
+==================
+Com_IsVoipTarget
+
+Returns non-zero if given clientNum is enabled in voipTargets, zero otherwise.
+If clientNum is negative return if any bit is set.
+==================
+*/
+qboolean Com_IsVoipTarget(uint8_t *voipTargets, int voipTargetsSize, int clientNum)
+{
+	int index;
+	if(clientNum < 0)
+	{
+		for(index = 0; index < voipTargetsSize; index++)
+		{
+			if(voipTargets[index])
+				return qtrue;
+		}
+		
+		return qfalse;
+	}
+
+	index = clientNum >> 3;
+	
+	if(index < voipTargetsSize)
+		return (voipTargets[index] & (1 << (clientNum & 0x07)));
+
+	return qfalse;
+}

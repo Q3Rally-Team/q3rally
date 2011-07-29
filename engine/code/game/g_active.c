@@ -756,7 +756,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int		event;
 	gclient_t *client;
 	int		damage;
-	vec3_t	dir;
 	vec3_t	origin, angles;
 //	qboolean	fired;
 	gitem_t *item;
@@ -784,7 +783,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			} else {
 				damage = 5;
 			}
-			VectorSet (dir, 0, 0, 1);
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
 			break;
@@ -1842,7 +1840,6 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 */
 void ClientEndFrame( gentity_t *ent ) {
 	int			i;
-	clientPersistant_t	*pers;
 
 // STONELANCE
 //	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
@@ -1851,8 +1848,6 @@ void ClientEndFrame( gentity_t *ent ) {
 		SpectatorClientEndFrame( ent );
 		return;
 	}
-
-	pers = &ent->client->pers;
 
 	// turn off any expired powerups
 	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {

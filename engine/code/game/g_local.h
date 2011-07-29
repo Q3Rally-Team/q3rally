@@ -840,7 +840,7 @@ void QDECL G_DebugLogPrintf( const char *fmt, ... ) __attribute__ ((format (prin
 // END
 void SendScoreboardMessageToAllClients( void );
 void QDECL G_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-void QDECL G_Error( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+void QDECL G_Error( const char *fmt, ... ) __attribute__ ((noreturn, format (printf, 1, 2)));
 
 //
 // g_client.c
@@ -1013,7 +1013,7 @@ extern	vmCvar_t	car_friction_scale;
 // END
 
 void	trap_Printf( const char *fmt );
-void	trap_Error( const char *fmt );
+void trap_Error(const char *fmt) __attribute__((noreturn));
 int		trap_Milliseconds( void );
 int		trap_Argc( void );
 void	trap_Argv( int n, char *buffer, int bufferLength );

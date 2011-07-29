@@ -252,7 +252,7 @@ PROTOCOL
 ==============================================================
 */
 
-#define	PROTOCOL_VERSION	70
+#define	PROTOCOL_VERSION	71
 #define PROTOCOL_LEGACY_VERSION	68
 // 1.31 - 67
 
@@ -835,6 +835,8 @@ int			Com_RealTime(qtime_t *qtime);
 qboolean	Com_SafeMode( void );
 void		Com_RunAndTimeServerPacket(netadr_t *evFrom, msg_t *buf);
 
+qboolean	Com_IsVoipTarget(uint8_t *voipTargets, int voipTargetsSize, int clientNum);
+
 void		Com_StartupVariable( const char *match );
 // checks for and removes command line "+set var arg" constructs
 // if match is NULL, all set commands will be executed, otherwise
@@ -870,6 +872,7 @@ extern	cvar_t	*sv_paused;
 extern	cvar_t	*cl_packetdelay;
 extern	cvar_t	*sv_packetdelay;
 
+extern	cvar_t	*com_gamename;
 extern	cvar_t	*com_protocol;
 #ifdef LEGACY_PROTOCOL
 extern	cvar_t	*com_legacyprotocol;
@@ -1027,7 +1030,7 @@ void Key_WriteBindings( fileHandle_t f );
 void S_ClearSoundBuffer( void );
 // call before filesystem access
 
-void SCR_DebugGraph (float value, int color);	// FIXME: move logging to common?
+void SCR_DebugGraph (float value);	// FIXME: move logging to common?
 
 // AVI files have the start of pixel lines 4 byte-aligned
 #define AVI_LINE_PADDING 4
@@ -1089,7 +1092,7 @@ void	*Sys_GetBotLibAPI( void *parms );
 
 char	*Sys_GetCurrentUser( void );
 
-void	QDECL Sys_Error( const char *error, ...) __attribute__ ((noreturn)) __attribute__ ((format (printf, 1, 2)));
+void	QDECL Sys_Error( const char *error, ...) __attribute__ ((noreturn, format (printf, 1, 2)));
 void	Sys_Quit (void) __attribute__ ((noreturn));
 char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 

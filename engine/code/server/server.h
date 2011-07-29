@@ -43,6 +43,7 @@ typedef struct voipServerPacket_s
 	int frames;
 	int len;
 	int sender;
+	int flags;
 	byte data[1024];
 } voipServerPacket_t;
 #endif
@@ -293,8 +294,6 @@ extern	cvar_t	*sv_lanForceRate;
 extern	cvar_t	*sv_strictAuth;
 #endif
 extern	cvar_t	*sv_banFile;
-extern	cvar_t	*sv_heartbeat;
-extern	cvar_t	*sv_flatline;
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];
 extern	int serverBansCount;
@@ -361,10 +360,6 @@ void SV_ClientThink (client_t *cl, usercmd_t *cmd);
 int SV_WriteDownloadToClient(client_t *cl , msg_t *msg);
 int SV_SendDownloadMessages(void);
 int SV_SendQueuedMessages(void);
-
-#ifdef USE_VOIP
-void SV_WriteVoipToClient( client_t *cl, msg_t *msg );
-#endif
 
 
 //

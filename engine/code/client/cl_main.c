@@ -109,8 +109,6 @@ cvar_t	*cl_guidServerUniq;
 
 cvar_t	*cl_consoleKeys;
 
-cvar_t  *cl_gamename;
-
 clientActive_t		cl;
 clientConnection_t	clc;
 clientStatic_t		cls;
@@ -293,6 +291,88 @@ void CL_VoipNewGeneration(void)
 
 /*
 ===============
+CL_VoipParseTargets
+
+sets clc.voipTargets according to cl_voipSendTarget
+Generally we don't want who's listening to change during a transmission,
+so this is only called when the key is first pressed
+===============
+*/
+void CL_VoipParseTargets(void)
+{
+	const char *target = cl_voipSendTarget->string;
+	char *end;
+	int val;
+
+	Com_Memset(clc.voipTargets, 0, sizeof(clc.voipTargets));
+	clc.voipFlags &= ~VOIP_SPATIAL;
+
+	while(target)
+	{
+		while(*target == ',' || *target == ' ')
+			target++;
+
+		if(!*target)
+			break;
+		
+		if(isdigit(*target))
+		{
+			val = strtol(target, &end, 10);
+			target = end;
+		}
+		else
+		{
+			if(!Q_stricmpn(target, "all", 3))
+			{
+				Com_Memset(clc.voipTargets, ~0, sizeof(clc.voipTargets));
+				return;
+			}
+			if(!Q_stricmpn(target, "spatial", 7))
+			{
+				clc.voipFlags |= VOIP_SPATIAL;
+				target += 7;
+				continue;
+			}
+			else
+			{
+				if(!Q_stricmpn(target, "attacker", 8))
+				{
+					val = VM_Call(cgvm, CG_LAST_ATTACKER);
+					target += 8;
+				}
+				else if(!Q_stricmpn(target, "crosshair", 9))
+				{
+					val = VM_Call(cgvm, CG_CROSSHAIR_PLAYER);
+					target += 9;
+				}
+				else
+				{
+					while(*target && *target != ',' && *target != ' ')
+						target++;
+
+					continue;
+				}
+
+				if(val < 0)
+					continue;
+			}
+		}
+
+		if(val < 0 || val >= MAX_CLIENTS)
+		{
+			Com_Printf(S_COLOR_YELLOW "WARNING: VoIP "
+				   "target %d is not a valid client "
+				   "number\n", val);
+
+			continue;
+		}
+
+		clc.voipTargets[val / 8] |= 1 << (val % 8);
+	}
+}
+
+/*
+===============
 CL_CaptureVoip
 
 Record more audio from the hardware if required and encode it into Speex
@@ -342,8 +422,9 @@ void CL_CaptureVoip(void)
 
 		cl_voipSend->modified = qfalse;
 
-		if (dontCapture) {
-			cl_voipSend->integer = 0;
+		if(dontCapture)
+		{
+			Cvar_Set("cl_voipSend", "0");
 			return;
 		}
 
@@ -357,16 +438,15 @@ void CL_CaptureVoip(void)
 	// try to get more audio data from the sound card...
 
 	if (initialFrame) {
-		float gain = cl_voipGainDuringCapture->value;
-		if (gain < 0.0f) gain = 0.0f; else if (gain >= 1.0f) gain = 1.0f;
-		S_MasterGain(cl_voipGainDuringCapture->value);
+		S_MasterGain(Com_Clamp(0.0f, 1.0f, cl_voipGainDuringCapture->value));
 		S_StartCapture();
 		CL_VoipNewGeneration();
+		CL_VoipParseTargets();
 	}
 
 	if ((cl_voipSend->integer) || (finalFrame)) { // user wants to capture audio?
 		int samples = S_AvailableCaptureSamples();
-		const int mult = (finalFrame) ? 1 : 12; // 12 == 240ms of audio.
+		const int mult = (finalFrame) ? 1 : 4; // 4 == 80ms of audio.
 
 		// enough data buffered in audio hardware to process yet?
 		if (samples >= (clc.speexFrameSize * mult)) {
@@ -378,8 +458,8 @@ void CL_CaptureVoip(void)
 			int wpos = 0;
 			int pos = 0;
 
-			if (samples > (clc.speexFrameSize * 12))
-				samples = (clc.speexFrameSize * 12);
+			if (samples > (clc.speexFrameSize * 4))
+				samples = (clc.speexFrameSize * 4);
 
 			// !!! FIXME: maybe separate recording from encoding, so voipPower
 			// !!! FIXME:  updates faster than 4Hz?
@@ -498,9 +578,8 @@ CL_ChangeReliableCommand
 ======================
 */
 void CL_ChangeReliableCommand( void ) {
-	int r, index, l;
+	int index, l;
 
-	r = clc.reliableSequence - (random() * 5);
 	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
 	l = strlen(clc.reliableCommands[ index ]);
 	if ( l >= MAX_STRING_CHARS - 1 ) {
@@ -2225,9 +2304,9 @@ void CL_CheckForResend( void ) {
 #endif
 
 		// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
-		// Add the heartbeat gamename so the server knows we're running the correct game and can reject the client
+		// Add the gamename so the server knows we're running the correct game or can reject the client
 		// with a meaningful message
-		Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, Cvar_VariableString("sv_heartbeat"));
+		Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, com_gamename->string);
 
 		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
 		break;
@@ -2917,7 +2996,7 @@ void CL_Frame ( int msec ) {
 	cls.realtime += cls.frametime;
 
 	if ( cl_timegraph->integer ) {
-		SCR_DebugGraph ( cls.realFrametime * 0.25, 0 );
+		SCR_DebugGraph ( cls.realFrametime * 0.25 );
 	}
 
 	// see if we need to update any userinfo
@@ -3391,8 +3470,6 @@ void CL_Init( void ) {
 	// ~ and `, as keys and characters
 	cl_consoleKeys = Cvar_Get( "cl_consoleKeys", "~ ` 0x7e 0x60", CVAR_ARCHIVE);
 
-	cl_gamename = Cvar_Get("cl_gamename", GAMENAME_FOR_MASTER, CVAR_TEMP);
-
 	// userinfo
 	Cvar_Get ("name", "UnnamedPlayer", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("rate", "25000", CVAR_USERINFO | CVAR_ARCHIVE );
@@ -3420,7 +3497,7 @@ void CL_Init( void ) {
 
 #ifdef USE_VOIP
 	cl_voipSend = Cvar_Get ("cl_voipSend", "0", 0);
-	cl_voipSendTarget = Cvar_Get ("cl_voipSendTarget", "all", 0);
+	cl_voipSendTarget = Cvar_Get ("cl_voipSendTarget", "spatial", 0);
 	cl_voipGainDuringCapture = Cvar_Get ("cl_voipGainDuringCapture", "0.2", CVAR_ARCHIVE);
 	cl_voipCaptureMult = Cvar_Get ("cl_voipCaptureMult", "2.0", CVAR_ARCHIVE);
 	cl_voipUseVAD = Cvar_Get ("cl_voipUseVAD", "0", CVAR_ARCHIVE);
@@ -3615,8 +3692,18 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	char	info[MAX_INFO_STRING];
 	char	*infoString;
 	int		prot;
+	char	*gamename;
 
 	infoString = MSG_ReadString( msg );
+
+	// if this isn't the correct gamename, ignore it
+	gamename = Info_ValueForKey( infoString, "gamename" );
+
+	if (gamename && *gamename && strcmp(gamename, com_gamename->string))
+	{
+		Com_DPrintf( "Game mismatch in info packet: %s\n", infoString );
+		return;
+	}
 
 	// if this isn't the correct protocol version, ignore it
 	prot = atoi( Info_ValueForKey( infoString, "protocol" ) );
@@ -3719,10 +3806,8 @@ CL_GetServerStatus
 ===================
 */
 serverStatus_t *CL_GetServerStatus( netadr_t from ) {
-	serverStatus_t *serverStatus;
 	int i, oldest, oldestTime;
 
-	serverStatus = NULL;
 	for (i = 0; i < MAX_SERVERSTATUSREQUESTS; i++) {
 		if ( NET_CompareAdr( from, cl_serverStatusList[i].address ) ) {
 			return &cl_serverStatusList[i];
@@ -3999,16 +4084,17 @@ void CL_GlobalServers_f( void ) {
 		if(v4enabled)
 		{
 			Com_sprintf(command, sizeof(command), "getserversExt %s %s",
-				cl_gamename->string, Cmd_Argv(2));
+				com_gamename->string, Cmd_Argv(2));
 		}
 		else
 		{
 			Com_sprintf(command, sizeof(command), "getserversExt %s %s ipv6",
-				cl_gamename->string, Cmd_Argv(2));
+				com_gamename->string, Cmd_Argv(2));
 		}
 	}
 	else
-		Com_sprintf(command, sizeof(command), "getservers %s", Cmd_Argv(2));
+		Com_sprintf(command, sizeof(command), "getservers %s %s",
+			com_gamename->string, Cmd_Argv(2));
 
 	for (i=3; i < count; i++)
 	{
@@ -4246,7 +4332,6 @@ qboolean CL_UpdateVisiblePings_f(int source) {
 	if (slots < MAX_PINGREQUESTS) {
 		serverInfo_t *server = NULL;
 
-		max = (source == AS_GLOBAL) ? MAX_GLOBAL_SERVERS : MAX_OTHER_SERVERS;
 		switch (source) {
 			case AS_LOCAL :
 				server = &cls.localServers[0];

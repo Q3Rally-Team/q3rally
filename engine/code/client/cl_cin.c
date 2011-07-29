@@ -937,10 +937,6 @@ static void setupQuad( long xOff, long yOff )
 	cin.oldysize = cinTable[currentHandle].ysize;
 	cin.oldxsize = cinTable[currentHandle].xsize;
 
-	numQuadCels  = (cinTable[currentHandle].CIN_WIDTH*cinTable[currentHandle].CIN_HEIGHT) / (16);
-	numQuadCels += numQuadCels/4 + numQuadCels/16;
-	numQuadCels += 64;							  // for overflow
-
 	numQuadCels  = (cinTable[currentHandle].xsize*cinTable[currentHandle].ysize) / (16);
 	numQuadCels += numQuadCels/4;
 	numQuadCels += 64;							  // for overflow
@@ -1147,7 +1143,7 @@ redump:
 		case	ZA_SOUND_MONO:
 			if (!cinTable[currentHandle].silent) {
 				ssize = RllDecodeMonoToStereo( framedata, sbuf, cinTable[currentHandle].RoQFrameSize, 0, (unsigned short)cinTable[currentHandle].roq_flags);
-                                S_RawSamples( 0, ssize, 22050, 2, 1, (byte *)sbuf, 1.0f );
+                                S_RawSamples(0, ssize, 22050, 2, 1, (byte *)sbuf, 1.0f, -1);
 			}
 			break;
 		case	ZA_SOUND_STEREO:
@@ -1157,7 +1153,7 @@ redump:
 					s_rawend[0] = s_soundtime;
 				}
 				ssize = RllDecodeStereoToStereo( framedata, sbuf, cinTable[currentHandle].RoQFrameSize, 0, (unsigned short)cinTable[currentHandle].roq_flags);
-                                S_RawSamples( 0, ssize, 22050, 2, 2, (byte *)sbuf, 1.0f );
+                                S_RawSamples(0, ssize, 22050, 2, 2, (byte *)sbuf, 1.0f, -1);
 			}
 			break;
 		case	ROQ_QUAD_INFO:
@@ -1610,7 +1606,6 @@ void CIN_DrawCinematic (int handle) {
 
 void CL_PlayCinematic_f(void) {
 	char	*arg, *s;
-	qboolean	holdatend;
 	int bits = CIN_system;
 
 	Com_DPrintf("CL_PlayCinematic_f\n");
@@ -1621,7 +1616,6 @@ void CL_PlayCinematic_f(void) {
 	arg = Cmd_Argv( 1 );
 	s = Cmd_Argv(2);
 
-	holdatend = qfalse;
 	if ((s && s[0] == '1') || Q_stricmp(arg,"demoend.roq")==0 || Q_stricmp(arg,"end.roq")==0) {
 		bits |= CIN_hold;
 	}
