@@ -200,9 +200,9 @@ static char* gamenames[] = {
 };
 
 static char* netnames[] = {
-        "???",
-        "UDP",
-        "IPX",
+        "??? ",
+        "UDP ",
+        "UDP6",
         NULL
 };
 
@@ -463,7 +463,7 @@ static void ArenaServers_UpdatePicture( void ) {
         }
         else {
                 servernodeptr = g_arenaservers.table[g_arenaservers.list.curvalue].servernode;
-                Com_sprintf( picname, sizeof(picname), "levelshots/%s.tga", servernodeptr->mapname );
+                Com_sprintf( picname, sizeof(picname), "levelshots/%s", servernodeptr->mapname );
                 g_arenaservers.mappic.generic.name = picname;
        
         }
@@ -701,12 +701,12 @@ static void ArenaServers_UpdateMenu( void ) {
 
 // STONELANCE
 /*
-                Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-20.20s %-12.12s %2d/%2d %-8.8s %3s %s%3d",
+                Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-20.20s %-12.12s %2d/%2d %-8.8s %4s%s%3d",
                         servernodeptr->hostname, servernodeptr->mapname, servernodeptr->numclients,
                         servernodeptr->maxclients, servernodeptr->gamename,
                         netnames[servernodeptr->nettype], pingColor, servernodeptr->pingtime );
 */
-                Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-42.42s  %-12.12s  %2d/%2d  %-10.10s  %3s  %s%5d",
+                Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-42.42s  %-12.12s  %2d/%2d  %-10.10s  %4s %s%5d",
                         servernodeptr->hostname, servernodeptr->mapname, servernodeptr->numclients,
                         servernodeptr->maxclients, servernodeptr->gamename,
                         netnames[servernodeptr->nettype], pingColor, servernodeptr->pingtime );
@@ -832,7 +832,8 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
 
         Q_strncpyz( servernodeptr->mapname, Info_ValueForKey( info, "mapname"), MAX_MAPNAMELENGTH );
         Q_CleanStr( servernodeptr->mapname );
-        Q_strupr( servernodeptr->mapname );
+        // ZTM: Fix using linux without pk3s
+        //Q_strupr( servernodeptr->mapname );
 
         servernodeptr->numclients = atoi( Info_ValueForKey( info, "clients") );
         servernodeptr->humanclients = atoi( Info_ValueForKey( info, "g_humanplayers") );
@@ -858,6 +859,9 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
         }
         */
         servernodeptr->nettype = atoi(Info_ValueForKey(info, "nettype"));
+        if (servernodeptr->nettype < 0 || servernodeptr->nettype >= ARRAY_LEN(netnames) - 1) {
+                servernodeptr->nettype = 0;
+        }
 
         s = Info_ValueForKey( info, "game");
         i = atoi( Info_ValueForKey( info, "gametype") );
