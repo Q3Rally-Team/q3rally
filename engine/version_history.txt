@@ -15,7 +15,9 @@ Q3Rally v0.0.0.3
 
 Q3Rally v0.0.0.2	(26.07.2011)
 
-- Added
+- Updated func_rotating to EntityPlus Style
+- Updated func_train to EntityPlus style
+- Updates Func_door-rotating to EntityPlus Style
 
 Q3Rally v0.0.0.1	(02.04.2011)
 
