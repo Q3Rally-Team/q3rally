@@ -63,14 +63,14 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         UI_DrawProportionalString( 320, y, "Programming until V1.2:", UI_CENTER|UI_SMALLFONT, color_white );
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Steve \"Stone Lance\" Heijster", UI_CENTER|UI_SMALLFONT, color_white );
-  y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
+        y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Per \"Perle\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Art and Models:", UI_CENTER|UI_SMALLFONT, color_white );
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Jeff \"Stecki\" Garstecki", UI_CENTER|UI_SMALLFONT, color_white );
-  y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
+        y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "\"Steel Painter\"", UI_CENTER|UI_SMALLFONT, color_white );
         
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
@@ -99,7 +99,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         UI_DrawProportionalString( 320, y, "Cyberdemon, Killaz and skw|d", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-        UI_DrawString( 320, y, GAME_VERSION " (c) 2002 - 2009 Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
+        UI_DrawString( 320, y, Q3_VERSION " (c) 2002 - 2011 Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 }
 
 

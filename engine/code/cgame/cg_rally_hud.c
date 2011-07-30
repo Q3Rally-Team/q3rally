@@ -836,17 +836,17 @@ static float CG_DrawSDKMessage( float y ) {
 	}
 
 	x = 4;
-	w = (CG_DrawStrlen("This represents not the finished Game") * TINYCHAR_WIDTH);
+	w = (CG_DrawStrlen("does not represent the finished game.") * TINYCHAR_WIDTH);
 
 	y -= 3*TINYCHAR_HEIGHT+2;
 
 	CG_FillRect( x, y, w, 3*TINYCHAR_HEIGHT+2, bg_color );
 
-	CG_DrawTinyStringColor( x, y, GAME_VERSION, colorWhite);
+	CG_DrawTinyStringColor( x, y, Q3_VERSION, colorWhite);
 	y += TINYCHAR_HEIGHT;
-	CG_DrawTinyStringColor( x, y, "For Development Purposes Only", colorWhite);
+	CG_DrawTinyStringColor( x, y, "For development purposes only, this", colorWhite);
 	y += TINYCHAR_HEIGHT;
-	CG_DrawTinyStringColor( x, y, "This represents not the finished Game", colorWhite);
+	CG_DrawTinyStringColor( x, y, "does not represent the finished game.", colorWhite);
 	y += TINYCHAR_HEIGHT;
 
 	y -= 3*TINYCHAR_HEIGHT+2;

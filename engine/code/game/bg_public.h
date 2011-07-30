@@ -30,9 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
 
-// STONELANCE
-#define GAME_VERSION            "Q3Rally v0.0.0.3"
-// END
+#define GAME_VERSION		Q3_VERSION // BASEGAME "-1"
 
 #define	DEFAULT_GRAVITY		800
 #define	GIB_HEALTH			-40

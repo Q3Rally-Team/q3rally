@@ -801,15 +801,6 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
         //remove
         //trap_Cmd_ExecuteText( EXEC_NOW, va( "echo infostring: %s\n", info )  );
 
-// STONELANCE
-        s = Info_ValueForKey( info, "game");
-
-        // only list q3rally servers
-//      if( Q_stricmp( s, GAME_VERSION ) ) {
-//              return;
-//      }
-// END
-
         if (*g_arenaservers.numservers >= g_arenaservers.maxservers) {
                 // list full;
                 servernodeptr = g_arenaservers.serverlist+(*g_arenaservers.numservers)-1;

@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	BASEGAME
+#define	GAMEVERSION	Q3_VERSION // BASEGAME
 
 #define BODY_QUEUE_SIZE		8
 
