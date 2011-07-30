@@ -468,6 +468,31 @@ void SP_target_location( gentity_t *self ){
 
 //==========================================================
 
+/*QUAKED target_gravity (.5 .5 .5) (-8 -8 -8) (8 8 8) GLOBAL
+Sets the gravity of the activator. The gravity is set through the "count" key.
+If GLOBAL is checked, all players in the game will have their gravity changed.
+*/
+void target_gravity_use (gentity_t *self, gentity_t *other, gentity_t *activator) {
+	int i;
+
+	if ( !self->count )
+		self->count = g_gravity.integer;
+	
+	if ( (self->spawnflags & 1) )
+	{
+		for (i = 0; i < level.maxclients; i++)
+		{
+			level.clients[i].ps.gravity = self->count;
+		}
+	}
+	else
+		activator->client->ps.gravity = self->count;
+}
+
+void SP_target_gravity (gentity_t *self) {
+	self->use = target_gravity_use;
+}
+
 /*QUAKED target_earthquake (.5 .5 .5) (-8 -8 -8) (8 8 8)
 starts earthquake
 "length" - length in  seconds (2-32, in steps of 2)

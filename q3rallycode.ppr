@@ -13,7 +13,7 @@ ProjectFilesOnly=0
 [Project tree]
 q3rallycode
 	+engine
-		+code
+		-code
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -483,7 +483,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			+qcommon
+			-qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -852,15 +852,24 @@ q3rallycode
 		engine\README
 		engine\TODO
 		engine\voip-readme.txt
+		engine\resync_svn.sh
 [Open project files]
 0=engine\code\cgame\cg_ents.c
 1=engine\code\qcommon\files.c
+2=engine\code\game\bg_public.h
+3=engine\resync_svn.sh
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\cgame\cg_ents.c
 [engine\code\cgame\cg_ents.c]
 TopLine=121
 Caret=1,1
 [engine\code\qcommon\files.c]
 TopLine=177
 Caret=34,201
+[engine\code\game\bg_public.h]
+TopLine=1
+Caret=50,34
+[engine\resync_svn.sh]
+TopLine=386
+Caret=1,1
