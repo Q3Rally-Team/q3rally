@@ -433,6 +433,66 @@ static int QDECL ArenaServers_Compare( const void *arg1, const void *arg2 ) {
         return 0;
 }
 
+/*
+=================
+ArenaServers_GametypeForGames
+=================
+*/
+int ArenaServers_GametypeForGames(int games) {
+        int gametype;
+
+        switch( games ) {
+        default:
+        case GAMES_ALL:
+                gametype = -1;
+                break;
+// STONELANCE
+/*
+        case GAMES_FFA:
+                gametype = GT_FFA;
+                break;
+*/
+        case GAMES_RACING:
+                gametype = GT_RACING;
+                break;
+
+        case GAMES_RACING_DM:
+                gametype = GT_RACING_DM;
+                break;
+
+        case GAMES_DERBY:
+                gametype = GT_DERBY;
+                break;
+
+        case GAMES_TEAM_RACING:
+                gametype = GT_TEAM_RACING;
+                break;
+
+        case GAMES_TEAM_RACING_DM:
+                gametype = GT_TEAM_RACING_DM;
+                break;
+
+        case GAMES_DEATHMATCH:
+                gametype = GT_DEATHMATCH;
+                break;
+// END
+        case GAMES_TEAMPLAY:
+                gametype = GT_TEAM;
+                break;
+// STONELANCE - removed gametype
+/*
+        case GAMES_TOURNEY:
+                gametype = GT_TOURNAMENT;
+                break;
+*/
+// END
+        case GAMES_CTF:
+                gametype = GT_CTF;
+                break;
+	}
+
+	return gametype;
+}
 
 /*
 =================
@@ -487,6 +547,7 @@ static void ArenaServers_UpdateMenu( void ) {
         servernode_t*   servernodeptr;
         table_t*                tableptr;
         char                    *pingColor;
+        int                     gametype;
 
         if( g_arenaservers.numqueriedservers > 0 ) {
                 // servers found
@@ -612,76 +673,10 @@ static void ArenaServers_UpdateMenu( void ) {
                         continue;
                 }
 
-                switch( g_gametype ) {
-                case GAMES_ALL:
-                        break;
-
-// STONELANCE
-/*
-                case GAMES_FFA:
-                        if( servernodeptr->gametype != GT_FFA ) {
-                                continue;
-                        }
-                        break;
-*/
-                case GAMES_RACING:
-                        if( servernodeptr->gametype != GT_RACING ) {
-                                continue;
-                        }
-                        break;
-
-                case GAMES_RACING_DM:
-                        if( servernodeptr->gametype != GT_RACING_DM ) {
-                                continue;
-                        }
-                        break;
-
-                case GAMES_DERBY:
-                        if( servernodeptr->gametype != GT_DERBY ) {
-                                continue;
-                        }
-                        break;
-
-                case GAMES_TEAM_RACING:
-                        if( servernodeptr->gametype != GT_TEAM_RACING ) {
-                                continue;
-                        }
-                        break;
-
-                case GAMES_TEAM_RACING_DM:
-                        if( servernodeptr->gametype != GT_TEAM_RACING_DM ) {
-                                continue;
-                        }
-                        break;
-
-                case GAMES_DEATHMATCH:
-                        if( servernodeptr->gametype != GT_DEATHMATCH ) {
-                                continue;
-                        }
-                        break;
-// END
-                case GAMES_TEAMPLAY:
-                        if( servernodeptr->gametype != GT_TEAM ) {
-                                continue;
-                        }
-                        break;
-// STONELANCE - removed gametype
-/*
-                case GAMES_TOURNEY:
-                        if( servernodeptr->gametype != GT_TOURNAMENT ) {
-                                continue;
-                        }
-                        break;
-*/
-// END
-                case GAMES_CTF:
-                        if( servernodeptr->gametype != GT_CTF ) {
-                                continue;
-                        }
-                        break;
-                
+                gametype = ArenaServers_GametypeForGames(g_gametype);
+                if( gametype != -1 && servernodeptr->gametype != gametype ) {
+                        continue;
                 }
-
 
                 if( servernodeptr->pingtime < servernodeptr->minPing ) {
                         pingColor = S_COLOR_BLUE;
@@ -1217,61 +1212,14 @@ static void ArenaServers_StartRefresh( void )
         }
 
         if( g_servertype >= UIAS_GLOBAL1 && g_servertype <= UIAS_GLOBAL5 ) {
-                switch( g_arenaservers.gametype.curvalue ) {
-                default:
-                case GAMES_ALL:
-                        gametype = -1;
-                        break;
-// STONELANCE
-/*
-                case GAMES_FFA:
-                        gametype = GT_FFA;
-                        break;
-*/
-                case GAMES_RACING:
-                        gametype = GT_RACING;
-                        break;
-
-                case GAMES_RACING_DM:
-                        gametype = GT_RACING_DM;
-                        break;
-
-                case GAMES_DERBY:
-                        gametype = GT_DERBY;
-                        break;
-
-                case GAMES_TEAM_RACING:
-                        gametype = GT_TEAM_RACING;
-                        break;
-
-                case GAMES_TEAM_RACING_DM:
-                        gametype = GT_TEAM_RACING_DM;
-                        break;
-
-                case GAMES_DEATHMATCH:
-                        gametype = GT_DEATHMATCH;
-                        break;
-// END
-                case GAMES_TEAMPLAY:
-                        gametype = GT_TEAM;
-                        break;
-// STONELANCE - removed gametype
-/*
-                case GAMES_TOURNEY:
-                        gametype = GT_TOURNAMENT;
-                        break;
-*/
-// END
-                case GAMES_CTF:
-                        gametype = GT_CTF;
-                        break;
-                }
+                gametype = ArenaServers_GametypeForGames(g_arenaservers.gametype.curvalue);
 
                 // Add requested gametype to args for dpmaster
-                if (gametype != -1)
+                if (gametype != -1) {
                         Com_sprintf( myargs, sizeof (myargs), " gametype=%i", gametype );
-                else
+                } else {
                         myargs[0] = '\0';
+                }
 
                 if (g_emptyservers) {
                         strcat(myargs, " empty");
