@@ -52,12 +52,10 @@ typedef struct
 {
 	menuframework_s	menu;
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 	menufield_s		domain;
 	menufield_s		port;
-	menubitmap_s	go;
-	menubitmap_s	back;
+	menutext_s	go;
+	menutext_s	back;
 } specifyserver_t;
 
 static specifyserver_t	s_specifyserver;
@@ -155,8 +153,6 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.back.style				    = UI_LEFT | UI_SMALLFONT;
 
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.banner );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framel );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framer );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.domain );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.port );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.go );
