@@ -1,0 +1,16 @@
+b_main,models/players/reaper/shack.tga
+b_parts,models/players/reaper/shack_parts.tga
+b_taillites,models/players/reaper/shack_tlites.tga
+b_net01,models/players/reaper/shack_net.tga
+b_bumper01,models/players/reaper/shack_parts.tga
+tag_weapon,
+tag_wheelfr,
+tag_wheelfl,
+tag_wheelrr,
+tag_wheelrl,
+tag_turbo,
+tag_smoke,
+tag_hlite1,
+tag_hlite2,
+tag_blite1,
+tag_rlite1,

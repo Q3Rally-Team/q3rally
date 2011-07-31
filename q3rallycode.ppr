@@ -13,7 +13,7 @@ ProjectFilesOnly=0
 [Project tree]
 q3rallycode
 	+engine
-		+code
+		-code
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -424,7 +424,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			+q3_ui
+			-q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -854,38 +854,5 @@ q3rallycode
 		engine\voip-readme.txt
 		engine\resync_svn.sh
 [Open project files]
-0=engine\code\cgame\cg_ents.c
-1=engine\code\qcommon\files.c
-2=engine\code\game\bg_public.h
-3=engine\resync_svn.sh
-4=engine\code\qcommon\qfiles.h
-5=engine\code\cgame\cg_main.c
-6=engine\code\q3_ui\ui_specifyserver.c
-7=engine\code\q3_ui\ui_setup.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_specifyserver.c
-[engine\code\cgame\cg_ents.c]
-TopLine=121
-Caret=1,1
-[engine\code\qcommon\files.c]
-TopLine=1
-Caret=1,1
-[engine\code\game\bg_public.h]
-TopLine=1
-Caret=59,6
-[engine\resync_svn.sh]
-TopLine=386
-Caret=1,1
-[engine\code\qcommon\qfiles.h]
-TopLine=291
-Caret=1,1
-[engine\code\cgame\cg_main.c]
-TopLine=406
-Caret=53,418
-[engine\code\q3_ui\ui_specifyserver.c]
-TopLine=101
-Caret=70,153
-[engine\code\q3_ui\ui_setup.c]
-TopLine=331
-Caret=1,341
