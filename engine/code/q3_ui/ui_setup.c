@@ -35,14 +35,7 @@ SETUP MENU
 
 #define SETUP_MENU_VERTICAL_SPACING		34
 
-// BAGPUSS
-/*
-#define ART_BACK0		"menu/art/back_0"
-#define ART_BACK1		"menu/art/back_1"	
-#define ART_FRAMEL		"menu/art/frame2_l"
-#define ART_FRAMER		"menu/art/frame1_r"
-*/
-// END
+
 
 #define ID_CUSTOMIZEPLAYER		10
 #define ID_CUSTOMIZECONTROLS	11
@@ -62,27 +55,15 @@ typedef struct {
 	menuframework_s	menu;
 
 	menutext_s		banner;
-// BAGPUSS
-/*
-	menubitmap_s	framel;
-	menubitmap_s	framer;
-*/
-// END
 	menutext_s		setupplayer;
 	menutext_s		setupcontrols;
 	menutext_s		setupsystem;
 	menutext_s		game;
 	menutext_s		cdkey;
-//	menutext_s		load;
-//	menutext_s		save;
-// STONELANCE
 	menutext_s		q3rOptions;
-// END
 	menutext_s		defaults;
-// BAGPUSS
-//	menubitmap_s	back;
 	menutext_s		back;
-// END
+
 } setupMenuInfo_t;
 
 static setupMenuInfo_t	setupMenuInfo;
@@ -199,14 +180,6 @@ void UI_SetupMenu_ChangeMenu( int menuID ){
 	case ID_CDKEY:
 		UI_CDKeyMenu();
 		break;
-
-//	case ID_LOAD:
-//		UI_LoadConfigMenu();
-//		break;
-
-//	case ID_SAVE:
-//		UI_SaveConfigMenu();
-//		break;
 
 	case ID_Q3ROPTIONS:
 		UI_Q3ROptionsMenu();

@@ -1,7 +1,7 @@
 Q3Rally Version History
 
 
-Q3Rally v0.0.0.3
+Q3Rally v0.0.0.3	(xx.xx.xxxx)
 
 - Removed "Show Q3Rally Only" option, after last revision we only get q3rally servers.
 - Fixed requesting servers for a specific gametype (uses a dpmaster feature)
@@ -12,6 +12,10 @@ Q3Rally v0.0.0.3
 - Removed out of date game binaries (they probably shouldn't be in svn at all).
 - Removed cvar ui_browserShowRallyOnly (no longer used after r77)
 - Added target_gravity from EntityPlus
+- Created function for GAMES_* to GT_*, it's only done in one place now. (ported from Turtle Arena r1517)
+- Unified version (mostly), update VERSION in Makefile and PRODUCT_VERSION in q_shared.h. Sets version everywhere instead of just qvms.
+- Modified 'not finished game' message in cg_rally_hud.c to be better English
+- Added CVAR_SYSTEMINFO to cvars that need it.
 
 Q3Rally v0.0.0.2	(26.07.2011)
 
