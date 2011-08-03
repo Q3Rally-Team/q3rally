@@ -13,6 +13,12 @@ if [ ! -f $BIN ]; then
 	exit 1
 fi
 
+if [ ! -f baseq3r/vm/ui.qvm ]; then
+	echo "QVMs not found!"
+	echo "Run 'cp engine/build/$BUILD-$PLATFORM-$ARCH/baseq3r/vm/*.qvm baseq3r/vm/'"
+	exit 1
+fi
+
 # Run the game
 ./$BIN +set fs_basepath "." +set vm_game 0 +set vm_cgame 0 +set vm_ui 0 $@
 
