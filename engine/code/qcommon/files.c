@@ -200,6 +200,7 @@ const purePak_t com_purePaks[] =
 {
 	{BASEGAME, "assets0", 1440211393u},
   {BASEGAME, "qvm", 879652862u},
+  {BASEGAME, "textures", 11111111111u},
   
 
 #if 0
