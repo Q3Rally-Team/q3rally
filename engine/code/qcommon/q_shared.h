@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.0.0.3"
+  #define PRODUCT_VERSION "v0.0.0.3"
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
@@ -493,7 +493,9 @@ int Q_isnan(float x);
   extern int (QDECL *Q_VMftol)(void);
   extern void (QDECL *Q_SnapVector)(vec3_t vec);
 #else
-  #define Q_ftol(f) lrintf((f))
+  // Q_ftol must expand to a function name so the pluggable renderer can take
+  // its address
+  #define Q_ftol lrintf
   #define Q_SnapVector(vec)\
 	do\
 	{\

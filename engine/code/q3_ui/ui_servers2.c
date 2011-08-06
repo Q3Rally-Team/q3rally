@@ -378,6 +378,28 @@ static int QDECL ArenaServers_Compare( const void *arg1, const void *arg2 ) {
 	return 0;
 }
 
+/*
+=================
+ArenaServers_SourceForLAN
+
+Convert ui's g_servertype to AS_* used by trap calls.
+=================
+*/
+int ArenaServers_SourceForLAN(void) {
+	switch( g_servertype ) {
+	default:
+	case UIAS_LOCAL:
+		return AS_LOCAL;
+	case UIAS_GLOBAL1:
+	case UIAS_GLOBAL2:
+	case UIAS_GLOBAL3:
+	case UIAS_GLOBAL4:
+	case UIAS_GLOBAL5:
+		return AS_GLOBAL;
+	case UIAS_FAVORITES:
+		return AS_FAVORITES;
+	}
+}
 
 /*
 =================
@@ -957,11 +979,11 @@ static void ArenaServers_DoRefresh( void )
 	{
 	  if (g_servertype != AS_FAVORITES) {
 			if (g_servertype == AS_LOCAL) {
-				if (!trap_LAN_GetServerCount(g_servertype)) {
+				if (!trap_LAN_GetServerCount(AS_LOCAL)) {
 					return;
 				}
 			}
-			if (trap_LAN_GetServerCount(g_servertype) < 0) {
+			if (trap_LAN_GetServerCount(ArenaServers_SourceForLAN()) < 0) {
 			  // still waiting for response
 			  return;
 			}
@@ -1033,7 +1055,7 @@ static void ArenaServers_DoRefresh( void )
 	if (g_servertype == AS_FAVORITES) {
 	  g_arenaservers.numqueriedservers = g_arenaservers.numfavoriteaddresses;
 	} else {
-	  g_arenaservers.numqueriedservers = trap_LAN_GetServerCount(g_servertype);
+	  g_arenaservers.numqueriedservers = trap_LAN_GetServerCount(ArenaServers_SourceForLAN());
 	}
 
 //	if (g_arenaservers.numqueriedservers > g_arenaservers.maxservers)
@@ -1063,7 +1085,7 @@ static void ArenaServers_DoRefresh( void )
 		if (g_servertype == AS_FAVORITES) {
 		  strcpy( adrstr, g_arenaservers.favoriteaddresses[g_arenaservers.currentping] ); 		
 		} else {
-		  trap_LAN_GetServerAddressString(g_servertype, g_arenaservers.currentping, adrstr, MAX_ADDRESSLENGTH );
+		  trap_LAN_GetServerAddressString(ArenaServers_SourceForLAN(), g_arenaservers.currentping, adrstr, MAX_ADDRESSLENGTH );
 		}
 
 		strcpy( g_arenaservers.pinglist[j].adrstr, adrstr );
@@ -1286,8 +1308,9 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.currentping       = *g_arenaservers.numservers;
 		g_arenaservers.numqueriedservers = *g_arenaservers.numservers; 
 		ArenaServers_UpdateMenu();
+		strcpy(g_arenaservers.status.string,"hit refresh to update");
 	}
-	strcpy(g_arenaservers.status.string,"hit refresh to update");
+	
 }
 
 

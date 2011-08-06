@@ -647,7 +647,6 @@ void TossClientCubes( gentity_t *self );
 //
 void G_RunMissile( gentity_t *ent );
 
-gentity_t *fire_blaster (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_cluster_grenade (gentity_t *self, vec3_t start, vec3_t aimdir);
@@ -718,7 +717,7 @@ team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
 gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles, qboolean isbot);
 void CopyToBodyQue( gentity_t *ent );
-void respawn (gentity_t *ent);
+void ClientRespawn(gentity_t *ent);
 void BeginIntermission (void);
 void InitClientPersistant (gclient_t *client);
 void InitClientResp (gclient_t *client);

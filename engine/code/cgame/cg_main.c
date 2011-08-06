@@ -1120,6 +1120,7 @@ static void CG_RegisterGraphics( void ) {
 	}
 
 	if ( cgs.gametype == GT_OBELISK || cg_buildScript.integer ) {
+		cgs.media.rocketExplosionShader = trap_R_RegisterShader("rocketExplosion");
 		cgs.media.overloadBaseModel = trap_R_RegisterModel( "models/powerups/overload_base.md3" );
 		cgs.media.overloadTargetModel = trap_R_RegisterModel( "models/powerups/overload_target.md3" );
 		cgs.media.overloadLightsModel = trap_R_RegisterModel( "models/powerups/overload_lights.md3" );
@@ -1475,7 +1476,7 @@ char *CG_GetMenuBuffer(const char *filename) {
 		return NULL;
 	}
 	if ( len >= MAX_MENUFILE ) {
-		trap_Print( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i", filename, len, MAX_MENUFILE ) );
+		trap_Print( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i\n", filename, len, MAX_MENUFILE ) );
 		trap_FS_FCloseFile( f );
 		return NULL;
 	}
@@ -1732,7 +1733,7 @@ void CG_LoadMenus(const char *menuFile) {
 	}
 
 	if ( len >= MAX_MENUDEFFILE ) {
-		trap_Error( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i", menuFile, len, MAX_MENUDEFFILE ) );
+		trap_Error( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i\n", menuFile, len, MAX_MENUDEFFILE ) );
 		trap_FS_FCloseFile( f );
 		return;
 	}

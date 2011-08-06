@@ -483,7 +483,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			+qcommon
+			-qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -864,7 +864,7 @@ q3rallycode
 7=engine\code\qcommon\files.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\Makefile
 [engine\code\qcommon\q_shared.h]
 TopLine=40
 Caret=1,58
@@ -872,8 +872,8 @@ Caret=1,58
 TopLine=37
 Caret=1,1
 [engine\Makefile]
-TopLine=213
-Caret=1,227
+TopLine=43
+Caret=21,57
 [engine\code\game\bg_public.h]
 TopLine=13
 Caret=33,33
@@ -888,4 +888,4 @@ TopLine=19
 Caret=1,33
 [engine\code\qcommon\files.c]
 TopLine=185
-Caret=40,203
+Caret=37,203

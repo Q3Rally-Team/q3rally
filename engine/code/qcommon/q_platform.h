@@ -73,6 +73,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // for windows fastcall option
 #define QDECL
+#define QCALL
 
 //================================================================= WIN64/32 ===
 
@@ -84,6 +85,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #undef QDECL
 #define QDECL __cdecl
 
+#undef QCALL
+#define QCALL __stdcall
+
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc64"
 #elif defined __MINGW64__
@@ -94,7 +98,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PATH_SEP '\\'
 
 #if defined( __WIN64__ ) 
-#define ARCH_STRING "x86_64"
+#define ARCH_STRING "x64"
 #elif defined _M_ALPHA
 #define ARCH_STRING "AXP"
 #endif
@@ -107,6 +111,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #undef QDECL
 #define QDECL __cdecl
+
+#undef QCALL
+#define QCALL __stdcall
 
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc"
@@ -128,6 +135,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DLL_EXT ".dll"
 
 #endif
+
 
 //============================================================== MAC OS X ===
 
@@ -340,6 +348,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 //endianness
+void CopyShortSwap (void *dest, void *src);
+void CopyLongSwap (void *dest, void *src);
 short ShortSwap (short l);
 int LongSwap (int l);
 float FloatSwap (const float *f);
