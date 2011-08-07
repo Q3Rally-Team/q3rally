@@ -890,37 +890,37 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	//bot input speed is in the range [0, 400]
 	bi->speed = bi->speed * 127 / 400;
 	//set the view independent movement
-+	f = DotProduct(forward, bi->dir);
-+	r = DotProduct(right, bi->dir);
-+	u = abs(forward[2]) * bi->dir[2];
-+	m = fabs(f);
-+
-+	if (fabs(r) > m) {
-+		m = fabs(r);
-+	}
-+
-+	if (fabs(u) > m) {
-+		m = fabs(u);
-+	}
-+
-+	if (m > 0) {
-+		f *= bi->speed / m;
-+		r *= bi->speed / m;
-+		u *= bi->speed / m;
-+	}
-+
-+	ucmd->forwardmove = f;
-+	ucmd->rightmove = r;
-+	ucmd->upmove = u;
-+
-+	if (bi->actionflags & ACTION_MOVEFORWARD) ucmd->forwardmove = 127;
-+	if (bi->actionflags & ACTION_MOVEBACK) ucmd->forwardmove = -127;
-+	if (bi->actionflags & ACTION_MOVELEFT) ucmd->rightmove = -127;
-+	if (bi->actionflags & ACTION_MOVERIGHT) ucmd->rightmove = 127;
- 	//jump/moveup
- 	+	if (bi->actionflags & ACTION_JUMP) ucmd->upmove = 127;
- 	//crouch/movedown
- 	+	if (bi->actionflags & ACTION_CROUCH) ucmd->upmove = -127;
+	f = DotProduct(forward, bi->dir);
+	r = DotProduct(right, bi->dir);
+	u = abs(forward[2]) * bi->dir[2];
+	m = fabs(f);
+
+	if (fabs(r) > m) {
+		m = fabs(r);
+	}
+
+	if (fabs(u) > m) {
+		m = fabs(u);
+	}
+
+	if (m > 0) {
+		f *= bi->speed / m;
+		r *= bi->speed / m;
+		u *= bi->speed / m;
+	}
+
+	ucmd->forwardmove = f;
+	ucmd->rightmove = r;
+	ucmd->upmove = u;
+
+	if (bi->actionflags & ACTION_MOVEFORWARD) ucmd->forwardmove = 127;
+	if (bi->actionflags & ACTION_MOVEBACK) ucmd->forwardmove = -127;
+	if (bi->actionflags & ACTION_MOVELEFT) ucmd->rightmove = -127;
+	if (bi->actionflags & ACTION_MOVERIGHT) ucmd->rightmove = 127;
+	//jump/moveup
+	if (bi->actionflags & ACTION_JUMP) ucmd->upmove = 127;
+	//crouch/movedown
+	if (bi->actionflags & ACTION_CROUCH) ucmd->upmove = -127;
  }
 
 /*

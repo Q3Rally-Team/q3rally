@@ -228,7 +228,7 @@ void P_WorldEffects( gentity_t *ent ) {
 					ent->damage = 15;
 
 				// play a gurp sound instead of a normal pain sound
-				if (ent->health <= ent->damage) {
+//				if (ent->health <= ent->damage) {
 // STONELANCE
 //					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.wav"));
 //					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/rally/car/drown.wav"));

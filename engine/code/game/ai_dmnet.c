@@ -2284,12 +2284,12 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	}
 	//if the enemy is not visible
 	if (!BotEntityVisible(bs->entitynum, bs->eye, bs->cur_ps.viewangles, 360, bs->enemy)) {
-+#ifdef MISSIONPACK
-+		if (bs->enemy == redobelisk.entitynum || bs->enemy == blueobelisk.entitynum) {
-+			AIEnter_Battle_Chase(bs, "battle fight: obelisk out of sight");
-+			return qfalse;
-+		}
-+#endif	
+#ifdef MISSIONPACK
+		if (bs->enemy == redobelisk.entitynum || bs->enemy == blueobelisk.entitynum) {
+			AIEnter_Battle_Chase(bs, "battle fight: obelisk out of sight");
+			return qfalse;
+		}
+#endif	
 		if (BotWantsToChase(bs)) {
 			AIEnter_Battle_Chase(bs);
 			return qfalse;
