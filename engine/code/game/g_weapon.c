@@ -90,9 +90,6 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 		return qfalse;
 	}
 
-	if ( ent->client->noclip ) {
-		return qfalse;
-	}
 
 	if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX)
 		traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
@@ -202,9 +199,9 @@ void SnapVectorTowards( vec3_t v, vec3_t to ) {
 
 	for ( i = 0 ; i < 3 ; i++ ) {
 		if ( to[i] <= v[i] ) {
-			v[i] = floor(v[i]);
+			v[i] = (int)v[i];
 		} else {
-			v[i] = ceil(v[i]);
+			v[i] = (int)v[i] + 1;
 		}
 	}
 }

@@ -228,16 +228,16 @@ void P_WorldEffects( gentity_t *ent ) {
 					ent->damage = 15;
 
 				// play a gurp sound instead of a normal pain sound
-//				if (ent->health <= ent->damage) {
+				if (ent->health <= ent->damage) {
 // STONELANCE
 //					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.wav"));
-//					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/rally/car/drown.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/rally/car/drown.wav"));
 // END
-//				} else if (rand()&1) {
-//					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.wav"));
-//				} else {
-//					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.wav"));
-//				}
+				} else if (rand()&1) {
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.wav"));
+				} else {
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.wav"));
+				}
 
 				// don't play a normal pain sound
 				ent->pain_debounce_time = level.time + 200;
@@ -1582,7 +1582,7 @@ void ClientThink_real( gentity_t *ent ) {
 // STONELANCE
 				if (g_gametype.integer != GT_DERBY || !ent->client->finishRaceTime)
 // END
-				ClientRespawn( ent );
+				respawn( ent );
 				return;
 			}
 		
@@ -1591,7 +1591,7 @@ void ClientThink_real( gentity_t *ent ) {
 // STONELANCE
 				if (g_gametype.integer != GT_DERBY || !ent->client->finishRaceTime)
 // END
-				ClientRespawn( ent );
+				respawn( ent );
 			}
 		}
 		return;

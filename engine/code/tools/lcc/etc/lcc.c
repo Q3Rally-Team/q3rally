@@ -813,9 +813,10 @@ char *strsave(const char *str) {
 char *stringf(const char *fmt, ...) {
 	char buf[1024];
 	va_list ap;
+	int n;
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	n = vsprintf(buf, fmt, ap);
 	va_end(ap);
 	return strsave(buf);
 }

@@ -200,7 +200,8 @@ const purePak_t com_purePaks[] =
 {
 	{BASEGAME, "assets0", 1440211393u},
   {BASEGAME, "qvm", 879652862u},
-  {BASEGAME, "textures", 12212111u},
+  {BASEGAME, "textures", 11111111111u},
+  
 
 #if 0
 	{"baseq3", "pak0", 1566731103u},
@@ -3170,11 +3171,11 @@ static void FS_ReorderPurePaks( void )
 	searchpath_t **p_insert_index, // for linked list reordering
 		**p_previous; // when doing the scan
 
-	fs_reordered = qfalse;
-
 	// only relevant when connected to pure server
 	if ( !fs_numServerPaks )
 		return;
+
+	fs_reordered = qfalse;
 
 	p_insert_index = &fs_searchpaths; // we insert in order at the beginning of the list
 	for ( i = 0 ; i < fs_numServerPaks ; i++ ) {
@@ -4053,30 +4054,14 @@ restart if necessary
 */
 qboolean FS_ConditionalRestart(int checksumFeed, qboolean disconnect)
 {
-	int retval;
-	
 	if(fs_gamedirvar->modified)
 	{
-		if(FS_FilenameCompare(lastValidGame, fs_gamedirvar->string) &&
-		   (*lastValidGame || FS_FilenameCompare(fs_gamedirvar->string, com_basegame->string)) &&
-		   (*fs_gamedirvar->string || FS_FilenameCompare(lastValidGame, com_basegame->string)))
-		{
-			Com_GameRestart(checksumFeed, disconnect);
-			return qtrue;
-		}
-		else
-		{
-			fs_gamedirvar->modified = qfalse;
-			retval = qtrue;
-		}
+		Com_GameRestart(checksumFeed, disconnect);
+		return qtrue;
 	}
-	else
-		retval = qfalse;
-	
-	if(checksumFeed != fs_checksumFeed)
+
+	else if(checksumFeed != fs_checksumFeed)
 		FS_Restart(checksumFeed);
-	else if(fs_numServerPaks && !fs_reordered)
-		FS_ReorderPurePaks();
 	
 	return qfalse;
 }

@@ -458,6 +458,8 @@ void CopyToBodyQue( gentity_t *ent ) {
 	body = level.bodyQue[ level.bodyQueIndex ];
 	level.bodyQueIndex = (level.bodyQueIndex + 1) % BODY_QUEUE_SIZE;
 
+	trap_UnlinkEntity (body);
+
 	body->s = ent->s;
 	body->s.eFlags = EF_DEAD;		// clear EF_TALK, etc
 #ifdef MISSIONPACK
@@ -598,13 +600,18 @@ void SetClientViewAngle( gentity_t *ent, vec3_t angle ) {
 
 /*
 ================
-ClientRespawn
+respawn
 ================
 */
-void ClientRespawn( gentity_t *ent ) {
+void respawn( gentity_t *ent ) {
+	gentity_t	*tent;
 
 	CopyToBodyQue (ent);
 	ClientSpawn(ent);
+
+	// add a teleportation effect
+	tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
+	tent->s.clientNum = ent->s.clientNum;
 }
 
 /*
@@ -1249,6 +1256,7 @@ and on transition between teams, but doesn't happen on respawns
 void ClientBegin( int clientNum ) {
 	gentity_t	*ent;
 	gclient_t	*client;
+	gentity_t	*tent;
 	int			flags;
 
 	ent = g_entities + clientNum;
@@ -1313,8 +1321,8 @@ void ClientBegin( int clientNum ) {
 
 	if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		// send event
-//		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
-//		tent->s.clientNum = ent->s.clientNum;
+		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
+		tent->s.clientNum = ent->s.clientNum;
 
 // STONELANCE
 /*
@@ -1348,7 +1356,6 @@ void ClientSpawn(gentity_t *ent) {
 	clientSession_t		savedSess;
 	int		persistant[MAX_PERSISTANT];
 	gentity_t	*spawnPoint;
-	gentity_t *tent;
 	int		flags;
 	int		savedPing;
 //	char	*savedAreaBits;
@@ -1698,40 +1705,36 @@ void ClientSpawn(gentity_t *ent) {
 */
 // END
 
-	if (!level.intermissiontime) {
-		if (ent->client->sess.sessionTeam != TEAM_SPECTATOR) {
-			G_KillBox(ent);
-			// force the base weapon up
-			client->ps.weapon = WP_MACHINEGUN;
-			client->ps.weaponstate = WEAPON_READY;
-			// fire the targets of the spawn point
-			G_UseTargets(spawnPoint, ent);
-			// select the highest weapon number available, after any spawn given items have fired
-			client->ps.weapon = 1;
-
-			for (i = WP_NUM_WEAPONS - 1 ; i > 0 ; i--) {
-				if (client->ps.stats[STAT_WEAPONS] & (1 << i)) {
-					client->ps.weapon = i;
-					break;
-				}
-			}
-			// positively link the client, even if the command times are weird
-			VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
-
-			tent = G_TempEntity(ent->client->ps.origin, EV_PLAYER_TELEPORT_IN);
-			tent->s.clientNum = ent->s.clientNum;
-
-			trap_LinkEntity (ent);
-		}
+	if ( level.intermissiontime ) {
+		MoveClientToIntermission( ent );
 	} else {
-		// move players to intermission
-		MoveClientToIntermission(ent);
+		// fire the targets of the spawn point
+		G_UseTargets( spawnPoint, ent );
+
+		// select the highest weapon number available, after any
+		// spawn given items have fired
+		client->ps.weapon = 1;
+		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
+			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+				client->ps.weapon = i;
+				break;
+			}
+		}
 	}
+
 	// run a client frame to drop exactly to the floor,
 	// initialize animations and other things
 	client->ps.commandTime = level.time - 100;
 	ent->client->pers.cmd.serverTime = level.time;
 	ClientThink( ent-g_entities );
+
+	// positively link the client, even if the command times are weird
+	if ( ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+		VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
+		trap_LinkEntity( ent );
+	}
+
 	// run the presend to set anything else
 	ClientEndFrame( ent );
 

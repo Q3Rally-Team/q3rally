@@ -343,7 +343,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	}
 
 	if ( i != MAX_ANIMATIONS ) {
-		CG_Printf( "Error parsing animation file: %s\n", filename );
+		CG_Printf( "Error parsing animation file: %s", filename );
 		return qfalse;
 	}
 
@@ -1450,7 +1450,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 			// if we are low on memory, leave them with this model
 			if ( forceDefer ) {
-				CG_Printf( "Memory is low. Using deferred model.\n" );
+				CG_Printf( "Memory is low.  Using deferred model.\n" );
 				newInfo.deferred = qfalse;
 			}
 		} else {
@@ -1483,7 +1483,7 @@ void CG_LoadDeferredPlayers( void ) {
 		if ( ci->infoValid && ci->deferred ) {
 			// if we are low on memory, leave it deferred
 			if ( trap_MemoryRemaining() < 4000000 ) {
-				CG_Printf( "Memory is low. Using deferred model.\n" );
+				CG_Printf( "Memory is low.  Using deferred model.\n" );
 				ci->deferred = qfalse;
 				continue;
 			}
@@ -1820,8 +1820,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// allow yaw to drift a bit
 	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE 
-		|| ((cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT) != TORSO_STAND 
-		&& (cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT) != TORSO_STAND2)) {
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND  ) {
 		// if not standing still, always point all in the same direction
 		cent->pe.torso.yawing = qtrue;	// always center
 		cent->pe.torso.pitching = qtrue;	// always center

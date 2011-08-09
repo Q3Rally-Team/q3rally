@@ -278,7 +278,7 @@ qhandle_t RE_RegisterModel( const char *name ) {
 	}
 
 	if ( strlen( name ) >= MAX_QPATH ) {
-		ri.Printf( PRINT_ALL, "Model name exceeds MAX_QPATH\n" );
+		Com_Printf( "Model name exceeds MAX_QPATH\n" );
 		return 0;
 	}
 
