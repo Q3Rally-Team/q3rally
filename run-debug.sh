@@ -8,15 +8,16 @@ BUILD=debug
 BIN=engine/build/$BUILD-$PLATFORM-$ARCH/q3rally.$ARCH
 
 if [ ! -f $BIN ]; then
-	echo "Game binary '$BIN' not found!"
-	echo "Run 'make -C engine $BUILD' to build it."
-	exit 1
+	echo "Game binary '$BIN' not found, building it..."
+	make -C engine $BUILD BUILD_GAME_QVM=0 BUILD_SERVER=0
 fi
 
-if [ ! -f baseq3r/vm/ui.qvm ]; then
-	echo "QVMs not found!"
-	echo "Run 'cp engine/build/$BUILD-$PLATFORM-$ARCH/baseq3r/vm/*.qvm baseq3r/vm/'"
-	exit 1
+# Create links to game logic natives
+if [ ! -f baseq3r/ui$ARCH.so ]; then
+	DIR=`pwd`
+	ln -st "$DIR/baseq3r/" "$DIR/engine/build/$BUILD-$PLATFORM-$ARCH/baseq3r/cgame$ARCH.so"
+	ln -st "$DIR/baseq3r/" "$DIR/engine/build/$BUILD-$PLATFORM-$ARCH/baseq3r/qagame$ARCH.so"
+	ln -st "$DIR/baseq3r/" "$DIR/engine/build/$BUILD-$PLATFORM-$ARCH/baseq3r/ui$ARCH.so"
 fi
 
 # Run the game
