@@ -1,6 +1,6 @@
 /*
 ===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2010 James Canete (use.less01@gmail.com)
 
 This file is part of Quake III Arena source code.
 
@@ -19,33 +19,30 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+// tr_subs.c - common function replacements for modular renderer
 
-#ifdef DEDICATED
-#	ifdef _WIN32
-#		include <windows.h>
-#		define Sys_LoadLibrary(f) (void*)LoadLibrary(f)
-#		define Sys_UnloadLibrary(h) FreeLibrary((HMODULE)h)
-#		define Sys_LoadFunction(h,fn) (void*)GetProcAddress((HMODULE)h,fn)
-#		define Sys_LibraryError() "unknown"
-#	else
-#	include <dlfcn.h>
-#		define Sys_LoadLibrary(f) dlopen(f,RTLD_NOW)
-#		define Sys_UnloadLibrary(h) dlclose(h)
-#		define Sys_LoadFunction(h,fn) dlsym(h,fn)
-#		define Sys_LibraryError() dlerror()
-#	endif
-#else
-#	ifdef USE_LOCAL_HEADERS
-#		include "SDL.h"
-#		include "SDL_loadso.h"
-#	else
-#		include <SDL.h>
-#		include <SDL_loadso.h>
-#	endif
-#	define Sys_LoadLibrary(f) SDL_LoadObject(f)
-#	define Sys_UnloadLibrary(h) SDL_UnloadObject(h)
-#	define Sys_LoadFunction(h,fn) SDL_LoadFunction(h,fn)
-#	define Sys_LibraryError() SDL_GetError()
-#endif
+#include "tr_local.h"
 
-void * QDECL Sys_LoadDll(const char *name, qboolean useSystemLib);
+void QDECL Com_Printf( const char *msg, ... )
+{
+	va_list         argptr;
+	char            text[1024];
+
+	va_start(argptr, msg);
+	Q_vsnprintf(text, sizeof(text), msg, argptr);
+	va_end(argptr);
+
+	ri.Printf(PRINT_ALL, "%s", text);
+}
+
+void QDECL Com_Error( int level, const char *error, ... )
+{
+	va_list         argptr;
+	char            text[1024];
+
+	va_start(argptr, error);
+	Q_vsnprintf(text, sizeof(text), error, argptr);
+	va_end(argptr);
+
+	ri.Error(level, "%s", text);
+}

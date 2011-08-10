@@ -334,8 +334,8 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 		longjmp (abortframe, -1);
 	} else {
 		VM_Forced_Unload_Start();
-		CL_Shutdown (va("Client fatal crashed: %s", com_errorMessage), qtrue);
-		SV_Shutdown (va("Server fatal crashed: %s", com_errorMessage));
+		CL_Shutdown(va("Client fatal crashed: %s", com_errorMessage), qtrue, qtrue);
+		SV_Shutdown(va("Server fatal crashed: %s", com_errorMessage));
 		VM_Forced_Unload_Done();
 	}
 
@@ -362,8 +362,8 @@ void Com_Quit_f( void ) {
 		// Sys_Quit will kill this process anyways, so
 		// a corrupt call stack makes no difference
 		VM_Forced_Unload_Start();
-		SV_Shutdown (p[0] ? p : "Server quit");
-		CL_Shutdown (p[0] ? p : "Client quit", qtrue);
+		SV_Shutdown(p[0] ? p : "Server quit");
+		CL_Shutdown(p[0] ? p : "Client quit", qtrue, qtrue);
 		VM_Forced_Unload_Done();
 		Com_Shutdown ();
 		FS_Shutdown(qtrue);
@@ -2412,7 +2412,7 @@ void Com_GameRestart(int checksumFeed, qboolean disconnect)
 			if(disconnect)
 				CL_Disconnect(qfalse);
 				
-			CL_Shutdown("Game directory changed", disconnect);
+			CL_Shutdown("Game directory changed", disconnect, qfalse);
 		}
 
 		FS_Restart(checksumFeed);
@@ -3272,37 +3272,6 @@ void Com_Shutdown (void) {
 		FS_HomeRemove( com_pipefile->string );
 	}
 
-}
-
-//------------------------------------------------------------------------
-
-
-/*
-=====================
-Q_acos
-
-the msvc acos doesn't always return a value between -PI and PI:
-
-int i;
-i = 1065353246;
-acos(*(float*) &i) == -1.#IND0
-
-	This should go in q_math but it is too late to add new traps
-	to game and ui
-=====================
-*/
-float Q_acos(float c) {
-	float angle;
-
-	angle = acos(c);
-
-	if (angle > M_PI) {
-		return (float)M_PI;
-	}
-	if (angle < -M_PI) {
-		return (float)M_PI;
-	}
-	return angle;
 }
 
 /*
