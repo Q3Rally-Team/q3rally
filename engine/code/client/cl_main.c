@@ -47,7 +47,9 @@ cvar_t	*cl_voipShowMeter;
 cvar_t	*cl_voip;
 #endif
 
+#ifdef USE_RENDERER_DLOPEN
 cvar_t	*cl_renderer;
+#endif
 
 cvar_t	*cl_nodelta;
 cvar_t	*cl_debugMove;
@@ -144,7 +146,7 @@ int serverStatusCount;
 	void hA3Dg_ExportRenderGeom (refexport_t *incoming_re);
 #endif
 
-static int isQuitting = qfalse;
+static int noGameRestart = qfalse;
 
 extern void SV_BotFrame( int time );
 void CL_CheckForResend( void );
@@ -1360,8 +1362,8 @@ static void CL_OldGame(void)
 	{
 		// change back to previous fs_game
 		cls.oldGameSet = qfalse;
-		Cvar_Set("fs_game", cls.oldGame);
-		Com_GameRestart(0, qtrue);
+		Cvar_Set2("fs_game", cls.oldGame, qtrue);
+		FS_ConditionalRestart(clc.checksumFeed, qfalse);
 	}
 }
 
@@ -1475,8 +1477,10 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	CL_UpdateGUID( NULL, 0 );
 
-	if(!isQuitting)
+	if(!noGameRestart)
 		CL_OldGame();
+	else
+		noGameRestart = qfalse;
 }
 
 
@@ -1730,6 +1734,7 @@ void CL_Connect_f( void ) {
 	Cvar_Set( "sv_killserver", "1" );
 	SV_Frame( 0 );
 
+	noGameRestart = qtrue;
 	CL_Disconnect( qtrue );
 	Con_Close();
 
@@ -3650,7 +3655,7 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 	}
 	recursive = qtrue;
 
-	isQuitting = quit;
+	noGameRestart = quit;
 
 	if(disconnect)
 		CL_Disconnect(qtrue);
