@@ -525,6 +525,51 @@ static void CG_ItemPickup( int itemNum ) {
 
 }
 
+/*
+================
+CG_WaterLevel
+
+Returns waterlevel for entity origin
+================
+*/
+int CG_WaterLevel(centity_t *cent) {
+	vec3_t point;
+	int contents, sample1, sample2, anim, waterlevel;
+
+	// get waterlevel, accounting for ducking
+	waterlevel = 0;
+	VectorCopy(cent->lerpOrigin, point);
+	point[2] += MINS_Z + 1;
+	anim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
+
+	if (anim == LEGS_WALKCR || anim == LEGS_IDLECR) {
+		point[2] += CROUCH_VIEWHEIGHT;
+	} else {
+		point[2] += DEFAULT_VIEWHEIGHT;
+	}
+
+	contents = CG_PointContents(point, -1);
+
+	if (contents & MASK_WATER) {
+		sample2 = point[2] - MINS_Z;
+		sample1 = sample2 / 2;
+		waterlevel = 1;
+		point[2] = cent->lerpOrigin[2] + MINS_Z + sample1;
+		contents = CG_PointContents(point, -1);
+
+		if (contents & MASK_WATER) {
+			waterlevel = 2;
+			point[2] = cent->lerpOrigin[2] + MINS_Z + sample2;
+			contents = CG_PointContents(point, -1);
+
+			if (contents & MASK_WATER) {
+				waterlevel = 3;
+			}
+		}
+	}
+
+	return waterlevel;
+}
 
 /*
 ================
@@ -555,8 +600,16 @@ void CG_PainEvent( centity_t *cent, int health ) {
 	} else {
 		snd = "*pain100_1.wav";
 	}
-	trap_S_StartSound( NULL, cent->currentState.number, CHAN_VOICE, 
-		CG_CustomSound( cent->currentState.number, snd ) );
+	// play a gurp sound instead of a normal pain sound
+	if (CG_WaterLevel(cent) >= 1) {
+		if (rand()&1) {
+			trap_S_StartSound(NULL, cent->currentState.number, CHAN_VOICE, CG_CustomSound(cent->currentState.number, "sound/player/gurp1.wav"));
+		} else {
+			trap_S_StartSound(NULL, cent->currentState.number, CHAN_VOICE, CG_CustomSound(cent->currentState.number, "sound/player/gurp2.wav"));
+		}
+	} else {
+		trap_S_StartSound(NULL, cent->currentState.number, CHAN_VOICE, CG_CustomSound(cent->currentState.number, snd));
+	}
 */
 	if ( health < 25 ) {
 		snd = cgs.media.damage25[(int)(random() * 2)];
@@ -1274,11 +1327,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_DEATH2:
 	case EV_DEATH3:
 		DEBUGNAME("EV_DEATHx");
+
 // Q3Rally Code Start
-//		trap_S_StartSound( NULL, es->number, CHAN_VOICE, 
-//				CG_CustomSound( es->number, va("*death%i.wav", event - EV_DEATH1 + 1) ) );
-		trap_S_StartSound( NULL, es->number, CHAN_VOICE, cgs.media.death[(int)(random()*2)] );
+/*
+		if (CG_WaterLevel(cent) >= 1) {
+			trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, "*drown.wav"));
+		} else {
+			trap_S_StartSound(NULL, es->number, CHAN_VOICE, CG_CustomSound(es->number, va("*death%i.wav", event - EV_DEATH1 + 1)));
+		}
+*/
+		if (CG_WaterLevel(cent) >= 1) {
+			trap_S_StartSound(NULL, es->number, CHAN_VOICE, cgs.media.drown);
+		} else {
+			trap_S_StartSound( NULL, es->number, CHAN_VOICE, cgs.media.death[(int)(random()*2)] );
+		}
 // Q3Rally Code END
+
 		break;
 
 
