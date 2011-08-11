@@ -892,3 +892,12 @@ Caret=1,33
 [engine\code\qcommon\files.c]
 TopLine=185
 Caret=40,203
+[engine\code\q3_ui\ui_rally_servers.c]
+TopLine=1
+Caret=1,1
+[engine\code\server\sv_init.c]
+TopLine=1
+Caret=1,1
+[engine\code\ui\ui_main.c]
+TopLine=1
+Caret=1,1

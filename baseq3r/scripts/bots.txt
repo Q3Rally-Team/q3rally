@@ -1,65 +1,65 @@
 {
 name		Anarki
 model		roadster/blue
-aifile		bots/angelyss_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Bones
 model		reaper/yellow
-aifile		bots/arachna_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Doom
 model		mini/blue
-aifile		bots/ayumi_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Grunt
 model		alpine/stomped
-aifile		bots/beret_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Hunter
 model		raptor/jp
-aifile		bots/dark_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Klesk
 model		slingshot/yellow
-aifile		bots/gargoyle_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Major
 model		sidepipe/green
-aifile		bots/grism_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Mynx
 model		alpine/green
-aifile		bots/grunt_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Orbb
 model		reaper/green
-aifile		bots/jenna_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Sarge
 model		raptor/black
-aifile		bots/kyonshi_c.c
+aifile		bots/default_c.c
 }
 
 {
 name		Tankjr
 model		mini/green
-aifile		bots/liz_c.c
+aifile		bots/default_c.c
 }
