@@ -865,9 +865,13 @@ q3rallycode
 8=engine\code\q3_ui\ui_rally_servers.c
 9=engine\code\server\sv_init.c
 10=engine\code\ui\ui_main.c
+11=engine\README
+12=engine\code\botlib\be_interface.c
+13=engine\ChangeLog
+14=engine\code\qcommon\qcommon.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\qcommon\qcommon.h
 [engine\code\qcommon\q_shared.h]
 TopLine=38
 Caret=1,52
@@ -901,3 +905,15 @@ Caret=1,1
 [engine\code\ui\ui_main.c]
 TopLine=1
 Caret=1,1
+[engine\README]
+TopLine=513
+Caret=1,527
+[engine\code\botlib\be_interface.c]
+TopLine=147
+Caret=1,147
+[engine\ChangeLog]
+TopLine=438
+Caret=1,452
+[engine\code\qcommon\qcommon.h]
+TopLine=252
+Caret=39,263

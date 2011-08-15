@@ -1,0 +1,14 @@
+{
+map "q3r_lavafalls"
+longname "Lava Falls"
+author "Cyberdemon (updated by gout)"
+fraglimit 5
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+starts "14"
+laps "4"
+length "0.610 miles"
+checkpoints "22"
+observerspots "0"
+weapons "3"
+powerups "1"
+}

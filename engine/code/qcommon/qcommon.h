@@ -260,10 +260,10 @@ PROTOCOL
 // NOTE: that stuff only works with two digits protocols
 extern int demo_protocols[];
 
-#define	UPDATE_SERVER_NAME	"update.quake3arena.com"
+#define	UPDATE_SERVER_NAME	"dl.q3rally.com"
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
-#define MASTER_SERVER_NAME	"master.quake3arena.com"
+#define MASTER_SERVER_NAME	"master.q3rally.com"
 #endif
 
 #ifndef STANDALONE
