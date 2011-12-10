@@ -765,7 +765,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
-		if(args[1] == 0
+		if(args[1] == EXEC_NOW
 		&& (!strncmp(VMA(2), "snd_restart", 11)
 		|| !strncmp(VMA(2), "vid_restart", 11)
 		|| !strncmp(VMA(2), "quit", 5)))
@@ -1098,13 +1098,14 @@ void CL_InitUI( void ) {
 	vmInterpret_t		interpret;
 
 	// load the dll or bytecode
-	if ( cl_connectedToPureServer != 0 ) {
+	interpret = Cvar_VariableValue("vm_ui");
+	if(cl_connectedToPureServer)
+	{
 		// if sv_pure is set we only allow qvms to be loaded
-		interpret = VMI_COMPILED;
+		if(interpret != VMI_COMPILED && interpret != VMI_BYTECODE)
+			interpret = VMI_COMPILED;
 	}
-	else {
-		interpret = Cvar_VariableValue( "vm_ui" );
-	}
+
 	uivm = VM_Create( "ui", CL_UISystemCalls, interpret );
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
@@ -1118,6 +1119,10 @@ void CL_InitUI( void ) {
 		VM_Call( uivm, UI_INIT, (clc.state >= CA_AUTHORIZING && clc.state < CA_ACTIVE));
 	}
 	else if (v != UI_API_VERSION) {
+		// Free uivm now, so UI_SHUTDOWN doesn't get called later.
+		VM_Free( uivm );
+		uivm = NULL;
+
 		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
 		cls.uiStarted = qfalse;
 	}

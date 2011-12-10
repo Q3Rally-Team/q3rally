@@ -98,6 +98,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#ifdef __GNUC__
+#define UNUSED_VAR __attribute__((unused))
+#else
+#define UNUSED_VAR
+#endif
+
 #if (defined _MSC_VER)
 #define Q_EXPORT __declspec(dllexport)
 #elif (defined __SUNPRO_C)
@@ -320,7 +326,7 @@ typedef enum {
 #define UI_INVERSE		0x00002000
 #define UI_PULSE		0x00004000
 
-#if defined(_DEBUG) && !defined(BSPC)
+#if !defined(NDEBUG) && !defined(BSPC)
 	#define HUNK_DEBUG
 #endif
 
@@ -977,7 +983,9 @@ default values.
 #define CVAR_SERVER_CREATED	0x0800	// cvar was created by a server the client connected to.
 #define CVAR_VM_CREATED		0x1000	// cvar was created exclusively in one of the VMs.
 #define CVAR_PROTECTED		0x2000	// prevent modifying this var from VMs or the server
-#define CVAR_NONEXISTENT	0xFFFFFFFF	// Cvar doesn't exist.
+// These flags are only returned by the Cvar_Flags() function
+#define CVAR_MODIFIED		0x40000000	// Cvar was modified
+#define CVAR_NONEXISTENT	0x80000000	// Cvar doesn't exist.
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s cvar_t;

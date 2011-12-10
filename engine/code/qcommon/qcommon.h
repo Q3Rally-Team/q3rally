@@ -260,7 +260,9 @@ PROTOCOL
 // NOTE: that stuff only works with two digits protocols
 extern int demo_protocols[];
 
-#define	UPDATE_SERVER_NAME	"dl.q3rally.com"
+#if !defined UPDATE_SERVER_NAME && !defined STANDALONE
+#define	UPDATE_SERVER_NAME	"update.quake3arena.com"
+#endif
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
 #define MASTER_SERVER_NAME	"master.q3rally.com"
@@ -361,7 +363,7 @@ void	VM_Free( vm_t *vm );
 void	VM_Clear(void);
 void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);
-vm_t	*VM_Restart( vm_t *vm );
+vm_t	*VM_Restart(vm_t *vm, qboolean unpure);
 
 intptr_t		QDECL VM_Call( vm_t *vm, int callNum, ... );
 
@@ -661,7 +663,7 @@ int		FS_Read( void *buffer, int len, fileHandle_t f );
 void	FS_FCloseFile( fileHandle_t f );
 // note: you can't just fclose from another DLL, due to MS libc issues
 
-long	FS_ReadFileDir(const char *qpath, void *searchPath, void **buffer);
+long	FS_ReadFileDir(const char *qpath, void *searchPath, qboolean unpure, void **buffer);
 long	FS_ReadFile(const char *qpath, void **buffer);
 // returns the length of the file
 // a null buffer will just return the file length without loading
@@ -919,7 +921,7 @@ temp file loading
 
 */
 
-#if defined(_DEBUG) && !defined(BSPC)
+#if !defined(NDEBUG) && !defined(BSPC)
 	#define ZONE_DEBUG
 #endif
 
@@ -949,7 +951,6 @@ void *Hunk_AllocateTempMemory( int size );
 void Hunk_FreeTempMemory( void *buf );
 int	Hunk_MemoryRemaining( void );
 void Hunk_Log( void);
-void Hunk_Trash( void );
 
 void Com_TouchMemory( void );
 

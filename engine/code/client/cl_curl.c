@@ -22,10 +22,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef USE_CURL
 #include "client.h"
-cvar_t *cl_cURLLib;
 
 #ifdef USE_CURL_DLOPEN
 #include "../sys/sys_loadlib.h"
+
+cvar_t *cl_cURLLib;
 
 char* (*qcurl_version)(void);
 
@@ -243,7 +244,7 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 			"%s for writing", clc.downloadTempName);
 		return;
 	}
-	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_WRITEDATA, clc.download);
+
 	if(com_developer->integer)
 		qcurl_easy_setopt(clc.downloadCURL, CURLOPT_VERBOSE, 1);
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_URL, clc.downloadURL);

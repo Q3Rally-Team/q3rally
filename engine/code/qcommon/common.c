@@ -967,12 +967,16 @@ void *Z_TagMalloc( int size, int tag ) {
 	
 	do {
 		if (rover == start)	{
+			// scaned all the way around the list
 #ifdef ZONE_DEBUG
 			Z_LogHeap();
-#endif
-			// scaned all the way around the list
-			Com_Error( ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes from the %s zone",
+
+			Com_Error(ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes from the %s zone: %s, line: %d (%s)",
+								size, zone == smallzone ? "small" : "main", file, line, label);
+#else
+			Com_Error(ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes from the %s zone",
 								size, zone == smallzone ? "small" : "main");
+#endif
 			return NULL;
 		}
 		if (rover->tag) {
@@ -1725,8 +1729,11 @@ void *Hunk_Alloc( int size, ha_pref preference ) {
 #ifdef HUNK_DEBUG
 		Hunk_Log();
 		Hunk_SmallLog();
+
+		Com_Error(ERR_DROP, "Hunk_Alloc failed on %i: %s, line: %d (%s)", size, file, line, label);
+#else
+		Com_Error(ERR_DROP, "Hunk_Alloc failed on %i", size);
 #endif
-		Com_Error( ERR_DROP, "Hunk_Alloc failed on %i", size );
 	}
 
 	if ( hunk_permanent == &hunk_low ) {
@@ -1867,46 +1874,6 @@ permanent allocs use this side.
 void Hunk_ClearTempMemory( void ) {
 	if ( s_hunkData != NULL ) {
 		hunk_temp->temp = hunk_temp->permanent;
-	}
-}
-
-/*
-=================
-Hunk_Trash
-=================
-*/
-void Hunk_Trash( void ) {
-	int length, i, rnd;
-	char *buf, value;
-
-	return;
-
-	if ( s_hunkData == NULL )
-		return;
-
-#ifdef _DEBUG
-	Com_Error(ERR_DROP, "hunk trashed");
-	return;
-#endif
-
-	Cvar_Set("com_jp", "1");
-	Hunk_SwapBanks();
-
-	if ( hunk_permanent == &hunk_low ) {
-		buf = (void *)(s_hunkData + hunk_permanent->permanent);
-	} else {
-		buf = (void *)(s_hunkData + s_hunkTotal - hunk_permanent->permanent );
-	}
-	length = hunk_permanent->permanent;
-
-	if (length > 0x7FFFF) {
-		//randomly trash data within buf
-		rnd = random() * (length - 0x7FFFF);
-		value = 31;
-		for (i = 0; i < 0x7FFFF; i++) {
-			value *= 109;
-			buf[rnd+i] ^= value;
-		}
 	}
 }
 
@@ -2330,7 +2297,7 @@ A way to force a bus error for development reasons
 =================
 */
 static void Com_Crash_f( void ) {
-	* ( int * ) 0 = 0x12345678;
+	* ( volatile int * ) 0 = 0x12345678;
 }
 
 /*

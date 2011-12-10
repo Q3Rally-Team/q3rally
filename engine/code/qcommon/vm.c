@@ -363,7 +363,8 @@ VM_LoadQVM
 Load a .qvm file
 =================
 */
-vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
+vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc, qboolean unpure)
+{
 	int					dataLength;
 	int					i;
 	char				filename[MAX_QPATH];
@@ -376,7 +377,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
 	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", vm->name );
 	Com_Printf( "Loading vm file %s...\n", filename );
 
-	FS_ReadFileDir(filename, vm->searchPath, &header.v);
+	FS_ReadFileDir(filename, vm->searchPath, unpure, &header.v);
 
 	if ( !header.h ) {
 		Com_Printf( "Failed.\n" );
@@ -447,13 +448,26 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
 	}
 	dataLength = 1 << i;
 
-	if( alloc ) {
+	if(alloc)
+	{
 		// allocate zero filled space for initialized and uninitialized data
-		vm->dataBase = Hunk_Alloc( dataLength, h_high );
+		vm->dataBase = Hunk_Alloc(dataLength, h_high);
 		vm->dataMask = dataLength - 1;
-	} else {
-		// clear the data
-		Com_Memset( vm->dataBase, 0, dataLength );
+	}
+	else
+	{
+		// clear the data, but make sure we're not clearing more than allocated
+		if(vm->dataMask + 1 != dataLength)
+		{
+			VM_Free(vm);
+			FS_FreeFile(header.v);
+
+			Com_Printf(S_COLOR_YELLOW "Warning: Data region size of %s not matching after "
+					"VM_Restart()\n", filename);
+			return NULL;
+		}
+		
+		Com_Memset(vm->dataBase, 0, dataLength);
 	}
 
 	// copy the intialized data
@@ -465,18 +479,36 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc ) {
 		*(int *)(vm->dataBase + i) = LittleLong( *(int *)(vm->dataBase + i ) );
 	}
 
-	if( header.h->vmMagic == VM_MAGIC_VER2 ) {
-		vm->numJumpTableTargets = header.h->jtrgLength >> 2;
-		Com_Printf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
+	if(header.h->vmMagic == VM_MAGIC_VER2)
+	{
+		int previousNumJumpTableTargets = vm->numJumpTableTargets;
 
-		if( alloc ) {
-			vm->jumpTableTargets = Hunk_Alloc( header.h->jtrgLength, h_high );
-		} else {
-			Com_Memset( vm->jumpTableTargets, 0, header.h->jtrgLength );
+		header.h->jtrgLength &= ~0x03;
+
+		vm->numJumpTableTargets = header.h->jtrgLength >> 2;
+		Com_Printf("Loading %d jump table targets\n", vm->numJumpTableTargets);
+
+		if(alloc)
+		{
+			vm->jumpTableTargets = Hunk_Alloc(header.h->jtrgLength, h_high);
+		}
+		else
+		{
+			if(vm->numJumpTableTargets != previousNumJumpTableTargets)
+			{
+				VM_Free(vm);
+				FS_FreeFile(header.v);
+
+				Com_Printf(S_COLOR_YELLOW "Warning: Jump table size of %s not matching after "
+						"VM_Restart()\n", filename);
+				return NULL;
+			}
+
+			Com_Memset(vm->jumpTableTargets, 0, header.h->jtrgLength);
 		}
 
-		Com_Memcpy( vm->jumpTableTargets, (byte *)header.h + header.h->dataOffset +
-				header.h->dataLength + header.h->litLength, header.h->jtrgLength );
+		Com_Memcpy(vm->jumpTableTargets, (byte *) header.h + header.h->dataOffset +
+				header.h->dataLength + header.h->litLength, header.h->jtrgLength);
 
 		// byte swap the longs
 		for ( i = 0 ; i < header.h->jtrgLength ; i += 4 ) {
@@ -493,9 +525,13 @@ VM_Restart
 
 Reload the data, but leave everything else in place
 This allows a server to do a map_restart without changing memory allocation
+
+We need to make sure that servers can access unpure QVMs (not contained in any pak)
+even if the client is pure, so take "unpure" as argument.
 =================
 */
-vm_t *VM_Restart( vm_t *vm ) {
+vm_t *VM_Restart(vm_t *vm, qboolean unpure)
+{
 	vmHeader_t	*header;
 
 	// DLL's can't be restarted in place
@@ -513,15 +549,16 @@ vm_t *VM_Restart( vm_t *vm ) {
 	}
 
 	// load the image
-	Com_Printf( "VM_Restart()\n" );
+	Com_Printf("VM_Restart()\n");
 
-	if( !( header = VM_LoadQVM( vm, qfalse ) ) ) {
-		Com_Error( ERR_DROP, "VM_Restart failed" );
+	if(!(header = VM_LoadQVM(vm, qfalse, unpure)))
+	{
+		Com_Error(ERR_DROP, "VM_Restart failed");
 		return NULL;
 	}
 
 	// free the original file
-	FS_FreeFile( header );
+	FS_FreeFile(header);
 
 	return vm;
 }
@@ -592,7 +629,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 		else if(retval == VMI_COMPILED)
 		{
 			vm->searchPath = startSearch;
-			if((header = VM_LoadQVM(vm, qtrue)))
+			if((header = VM_LoadQVM(vm, qtrue, qfalse)))
 				break;
 
 			// VM_Free overwrites the name on failed load
@@ -765,14 +802,14 @@ locals from sp
 ==============
 */
 
-intptr_t	QDECL VM_Call( vm_t *vm, int callnum, ... ) {
+intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
+{
 	vm_t	*oldVM;
 	intptr_t r;
 	int i;
 
-	if ( !vm ) {
-		Com_Error( ERR_FATAL, "VM_Call with NULL vm" );
-	}
+	if(!vm || !vm->name[0])
+		Com_Error(ERR_FATAL, "VM_Call with NULL vm");
 
 	oldVM = currentVM;
 	currentVM = vm;

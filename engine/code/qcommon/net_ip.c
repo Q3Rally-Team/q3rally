@@ -520,20 +520,12 @@ NET_GetPacket
 Receive one packet
 ==================
 */
-#ifdef _DEBUG
-int	recvfromCount;
-#endif
-
 qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, fd_set *fdr)
 {
 	int 	ret;
 	struct sockaddr_storage from;
 	socklen_t	fromlen;
 	int		err;
-
-#ifdef _DEBUG
-	recvfromCount++;		// performance check
-#endif
 	
 	if(ip_socket != INVALID_SOCKET && FD_ISSET(ip_socket, fdr))
 	{
@@ -1709,6 +1701,7 @@ void NET_Sleep(int msec)
 NET_Restart_f
 ====================
 */
-void NET_Restart_f( void ) {
-	NET_Config( networkingEnabled );
+void NET_Restart_f(void)
+{
+	NET_Config(qtrue);
 }

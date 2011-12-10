@@ -1180,7 +1180,7 @@ static void G_VoiceTo( gentity_t *ent, gentity_t *other, int mode, const char *i
 	// no chatting to players in tournements
 // STONELANCE - removed gametype
 /*
-	if ( (g_gametype.integer == GT_TOURNAMENT )) {
+	if ( g_gametype.integer == GT_TOURNAMENT ) {
 		return;
 	}
 */

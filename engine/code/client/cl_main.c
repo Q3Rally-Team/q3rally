@@ -55,7 +55,9 @@ cvar_t	*cl_nodelta;
 cvar_t	*cl_debugMove;
 
 cvar_t	*cl_noprint;
+#ifdef UPDATE_SERVER_NAME
 cvar_t	*cl_motd;
+#endif
 
 cvar_t	*rcon_client_password;
 cvar_t	*rconAddress;
@@ -1522,6 +1524,7 @@ CL_RequestMotd
 ===================
 */
 void CL_RequestMotd( void ) {
+#ifdef UPDATE_SERVER_NAME
 	char		info[MAX_INFO_STRING];
 
 	if ( !cl_motd->integer ) {
@@ -1547,6 +1550,7 @@ void CL_RequestMotd( void ) {
 	Info_SetValueForKey( info, "version", com_version->string );
 
 	NET_OutOfBandPrint( NS_CLIENT, cls.updateServer, "getmotd \"%s\"\n", info );
+#endif
 }
 
 /*
@@ -2408,6 +2412,7 @@ CL_MotdPacket
 ===================
 */
 void CL_MotdPacket( netadr_t from ) {
+#ifdef UPDATE_SERVER_NAME
 	char	*challenge;
 	char	*info;
 
@@ -2428,6 +2433,7 @@ void CL_MotdPacket( netadr_t from ) {
 
 	Q_strncpyz( cls.updateInfoString, info, sizeof( cls.updateInfoString ) );
 	Cvar_Set( "cl_motdString", challenge );
+#endif
 }
 
 /*
@@ -3439,7 +3445,9 @@ void CL_Init( void ) {
 	// register our variables
 	//
 	cl_noprint = Cvar_Get( "cl_noprint", "0", 0 );
+#ifdef UPDATE_SERVER_NAME
 	cl_motd = Cvar_Get ("cl_motd", "1", 0);
+#endif
 
 	cl_timeout = Cvar_Get ("cl_timeout", "200", 0);
 
@@ -3483,7 +3491,7 @@ void CL_Init( void ) {
 	cl_showMouseRate = Cvar_Get ("cl_showmouserate", "0", 0);
 
 	cl_allowDownload = Cvar_Get ("cl_allowDownload", "0", CVAR_ARCHIVE);
-#ifdef USE_CURL
+#ifdef USE_CURL_DLOPEN
 	cl_cURLLib = Cvar_Get("cl_cURLLib", DEFAULT_CURL_LIB, CVAR_ARCHIVE);
 #endif
 
@@ -3755,13 +3763,22 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	char	*infoString;
 	int		prot;
 	char	*gamename;
+	qboolean gameMismatch;
 
 	infoString = MSG_ReadString( msg );
 
 	// if this isn't the correct gamename, ignore it
 	gamename = Info_ValueForKey( infoString, "gamename" );
 
-	if (gamename && *gamename && strcmp(gamename, com_gamename->string))
+#ifdef LEGACY_PROTOCOL
+	// gamename is optional for legacy protocol
+	if (com_legacyprotocol->integer && !*gamename)
+		gameMismatch = qfalse;
+	else
+#endif
+		gameMismatch = !*gamename || strcmp(gamename, com_gamename->string) != 0;
+
+	if (gameMismatch)
 	{
 		Com_DPrintf( "Game mismatch in info packet: %s\n", infoString );
 		return;
