@@ -31,7 +31,8 @@ CG_DrawHUD_Times
 */
 void CG_DrawHUD_Times(float x, float y){
 	centity_t	*cent;
-	int			lapTime, lastTime, totalTime, bestTime, teamTime;
+	int			lapTime, lastTime, totalTime, teamTime;
+	//int		bestTime;
 	char		*time;
 	int			i, count = 0;
 
@@ -55,7 +56,7 @@ void CG_DrawHUD_Times(float x, float y){
 	else
 		lastTime = 0;
 
-	bestTime = cent->bestLapTime;
+	//bestTime = cent->bestLapTime;
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);

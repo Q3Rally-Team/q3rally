@@ -974,7 +974,7 @@ void ClientThink_real( gentity_t *ent ) {
 // STONELANCE
 	vec3_t		origin, forward;
 	int			i;
-	int			start, frametime;
+	int			start;
 	vec3_t		oldAngles;
 	int			oldTime;
 // END
@@ -1300,8 +1300,6 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	start = trap_Milliseconds();
-
-	frametime = pm.cmd.serverTime - pm.ps->commandTime;
 
 	oldTime = client->ps.commandTime;
 	VectorCopy( client->ps.viewangles, oldAngles );

@@ -577,7 +577,7 @@ PlayerSettings_SetMenuItems
 =================
 */
 static void PlayerSettings_SetMenuItems( void ) {
-	vec3_t	viewangles;
+//	vec3_t	viewangles;
 	int		c;
 	int		h;
 
@@ -604,11 +604,11 @@ static void PlayerSettings_SetMenuItems( void ) {
 
 	// model/skin
 	memset( &s_playersettings.playerinfo, 0, sizeof(playerInfo_t) );
-	
+/*
 	viewangles[YAW]   = 180 - 30;
 	viewangles[PITCH] = 0;
 	viewangles[ROLL]  = 0;
-
+*/
 // STONELANCE
 	Q_strncpyz( modelName, s_playersettings.modelskin, sizeof( modelName ) );
 	slash = strchr( modelName, '/' );

@@ -1699,6 +1699,7 @@ PLAYER ANGLES
 =============================================================================
 */
 
+#if 0 // ZTM: Not used by Q3Rally
 /*
 ==================
 CG_SwingAngles
@@ -1760,7 +1761,6 @@ static void CG_SwingAngles( float destination, float swingTolerance, float clamp
 	}
 }
 
-#if 0 // ZTM: Not used by Q3Rally
 /*
 =================
 CG_AddPainTwitch
@@ -2085,6 +2085,7 @@ CG_PlayerFlag
 ===============
 */
 static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso ) {
+#if 0 // Not supported by Q3Rally
 	clientInfo_t	*ci;
 	refEntity_t	pole;
 	refEntity_t	flag;
@@ -2195,6 +2196,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso 
 	CG_PositionRotatedEntityOnTag( &flag, &pole, pole.hModel, "tag_flag" );
 
 	trap_R_AddRefEntityToScene( &flag );
+#endif
 }
 
 

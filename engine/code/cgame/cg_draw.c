@@ -983,7 +983,9 @@ CG_DrawAttacker
 static float CG_DrawAttacker( float y ) {
 	int			t;
 	float		size;
-	vec3_t		angles;
+// Q3Rally Code
+	//vec3_t		angles;
+// Q3Rally Code END
 	const char	*info;
 	const char	*name;
 	int			clientNum;
@@ -1009,10 +1011,10 @@ static float CG_DrawAttacker( float y ) {
 
 	size = ICON_SIZE * 1.25;
 
-	angles[PITCH] = 0;
-	angles[YAW] = 180;
-	angles[ROLL] = 0;
 // Q3Rally Code ( removed function )
+//	angles[PITCH] = 0;
+//	angles[YAW] = 180;
+//	angles[ROLL] = 0;
 //	CG_DrawHead( 640 - size, y, size, size, clientNum, angles );
 // Q3Rally Code END
 

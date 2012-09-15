@@ -210,6 +210,8 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 
 
 static void CelebrateStop( gentity_t *player ) {
+// STONELANCE
+/*
 	int		anim;
 
 	if( player->s.weapon == WP_GAUNTLET) {
@@ -219,8 +221,9 @@ static void CelebrateStop( gentity_t *player ) {
 		anim = TORSO_STAND;
 	}
 
-// STONELANCE
-//	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+
+	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+*/
 // END
 }
 

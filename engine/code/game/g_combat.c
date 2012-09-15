@@ -487,7 +487,9 @@ player_die
 */
 void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
 	gentity_t	*ent;
-	int			anim;
+// STONELANCE
+//	int			anim;
+// END
 	int			contents;
 	int			killer;
 	int			i;
@@ -693,6 +695,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		// gib death
 		GibEntity( self, killer );
 	} else {
+// STONELANCE
+/*
 		// normal death
 		static int i;
 
@@ -708,6 +712,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			anim = BOTH_DEATH3;
 			break;
 		}
+*/
+// END
 
 		// for the no-blood option, we need to prevent the health
 		// from going to gib level
@@ -729,8 +735,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		// the body can still be gibbed
 		self->die = body_die;
 
+// STONELANCE
+/*
 		// globally cycle through the different death animations
 		i = ( i + 1 ) % 3;
+*/
+// END
 
 #ifdef MISSIONPACK
 		if (self->s.eFlags & EF_KAMIKAZE) {
@@ -999,17 +1009,18 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 			targ->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 		}
 */
-		vec3_t	force, delta;
+		vec3_t	force;
+//		vec3_t	delta;
 
 		VectorScale (dir, g_knockback.value * (float)knockback * 160, force);
 
 		if (!point || !VectorLength(point)){
-			VectorSubtract(inflictor->r.currentOrigin, targ->client->car.sBody.r, delta);
+//			VectorSubtract(inflictor->r.currentOrigin, targ->client->car.sBody.r, delta);
 			PM_ApplyForce(&targ->client->car.sBody, force, inflictor->r.currentOrigin);
 //			Com_Printf("No Point, Applying %s of force to the car at %s\n", vtos(force), vtos(delta));
 		}
 		else {
-			VectorSubtract(point, targ->client->car.sBody.r, delta);
+//			VectorSubtract(point, targ->client->car.sBody.r, delta);
 			PM_ApplyForce(&targ->client->car.sBody, force, point);
 //			Com_Printf("Point, Applying %s of force to the car at %s\n", vtos(force), vtos(delta));
 		}

@@ -1232,7 +1232,7 @@ static void PM_CalculateForces( car_t *car, carBody_t *body, carPoint_t *points,
 	float	length, k, b, springVel, dot;
 	int		count;
 	int		i, hitType, n;
-	float	impulseDamage = 0;
+	//float	impulseDamage;
 
 	VectorClear(force);
 
@@ -1305,7 +1305,7 @@ static void PM_CalculateForces( car_t *car, carBody_t *body, carPoint_t *points,
 			Com_Printf("PM_CalculateForces: Frame-Wheel Collision with %i wheels\n", count);
 
 		VectorScale(hitOrigin, 1.0 / (float)count, hitOrigin);
-		impulseDamage = PM_ApplyCollision(body, points, hitOrigin, car->sBody.up, body->elasticity);
+		/*impulseDamage = */PM_ApplyCollision(body, points, hitOrigin, car->sBody.up, body->elasticity);
 
 		// add normal force
 		// FIXME - change this so i can do it only once right before acceleration
@@ -1361,7 +1361,7 @@ static void PM_CalculateForces( car_t *car, carBody_t *body, carPoint_t *points,
 		if (pm->pDebug)
 			Com_Printf("PM_CalculateForces: Frame hit a surface at %i spots\n", count);
 
-		impulseDamage = PM_ApplyCollision( body, points, hitOrigin, normal, 0.0f );
+		/*impulseDamage = */PM_ApplyCollision( body, points, hitOrigin, normal, 0.0f );
 
 		// add normal force
 		// FIXME - change this so i can do it only once right before acceleration
@@ -1783,7 +1783,6 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 
 	//int		count = 0;
 	vec3_t	hitOrigin;
-	qboolean	insideOtherCar;
 
 // new stuff
 	int			bumpcount, numbumps;
@@ -1802,7 +1801,6 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 	VectorClear(hitOrigin);
 
 	// should actually do all points
-	insideOtherCar = qfalse;
 	for( i = 0 ; i < NUM_CAR_POINTS ; i++ ) {
 		// skip collision detection of suspension points
 		if( i >= FIRST_FRAME_POINT && i < LAST_FRAME_POINT ) continue;
@@ -2044,8 +2042,8 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 					}
 					else
 					{
+						// inside another car
 //						Com_Printf("fraction == 0 and hit CONTENTS_BODY\n");
-						insideOtherCar = qtrue;
 					}
 
 					// trace the frame to target position but skip other cars
@@ -2254,7 +2252,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 PM_DriveMove
 
   The mother functioner of Q3Rally car movement.  Calculates the forces and torques
-  on the car, integrates to get hte next state and traces to handle collisions with
+  on the car, integrates to get the next state and traces to handle collisions with
   the world and other objects.
 
 ================================================================================

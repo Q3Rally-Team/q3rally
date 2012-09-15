@@ -349,7 +349,6 @@ static void CG_RainParticleRender( int type, cg_atmosphericParticle_t *particle 
 	{
 		// Stop rain going through surfaces.
 		len = particle->height - particle->minz + start[2];
-		frac = start[2];
 		VectorMA( start, len - particle->height, particle->deltaNormalized, start );
 
 // Q3Rally Code Start - replaced with a single cvar
@@ -357,7 +356,7 @@ static void CG_RainParticleRender( int type, cg_atmosphericParticle_t *particle 
 		if( cg_atmosphericLevel.integer == 2 )
 // END
 		{
-			frac = (ATMOSPHERIC_CUTHEIGHT - particle->minz + frac) / (float) ATMOSPHERIC_CUTHEIGHT;
+			frac = (ATMOSPHERIC_CUTHEIGHT - particle->minz + start[2]) / (float) ATMOSPHERIC_CUTHEIGHT;
 			// Splash effects on different surfaces
 			if( particle->contents & (CONTENTS_WATER|CONTENTS_SLIME) )
 			{
@@ -547,11 +546,8 @@ static void CG_SnowParticleRender( int type, cg_atmosphericParticle_t *particle 
 	vec3_t			forward, right;
 	polyVert_t		verts[4];
 	vec2_t			line;
-	float			len, frac, sinTumbling, cosTumbling, particleWidth;
+	float			len, sinTumbling, cosTumbling, particleWidth;
 	vec3_t			start, finish;
-	cg_atmosphericEffect_t	*cg_atmFx;
-
-	cg_atmFx = &cg_atmFxList[type];
 
 	if( !particle->active )
 		return;
@@ -569,7 +565,6 @@ static void CG_SnowParticleRender( int type, cg_atmosphericParticle_t *particle 
 	{
 		// Stop snow going through surfaces.
 		len = particle->height - particle->minz + start[2];
-		frac = start[2];
 		VectorMA( start, len - particle->height, particle->deltaNormalized, start );
 	}
 	if( len <= 0 )

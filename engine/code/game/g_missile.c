@@ -84,15 +84,8 @@ Missile_Smooth_H
 */
 void Missile_Smooth_H( gentity_t *ent, vec3_t origin, trace_t *tr )
 {
-    int     touch[MAX_GENTITIES];
-    vec3_t  mins, maxs;
-    int     num;
-    
-    num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
-    VectorAdd( origin, ent->r.mins, mins );
-    VectorAdd( origin, ent->r.maxs, maxs );
-    VectorCopy( origin,ent->s.pos.trBase );
-    ent->s.pos.trTime = level.time;
+	VectorCopy( origin,ent->s.pos.trBase );
+	ent->s.pos.trTime = level.time;
 }
 
 /*

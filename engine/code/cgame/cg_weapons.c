@@ -1427,8 +1427,10 @@ Add the weapon, and flash for the player's view
 */
 void CG_AddViewWeapon( playerState_t *ps ) {
 	refEntity_t	hand;
-	centity_t	*cent;
-	clientInfo_t	*ci;
+// SKWID( removed animations )
+//	centity_t	*cent;
+//	clientInfo_t	*ci;
+// END
 	float		fovOffset;
 	vec3_t		angles;
 	weaponInfo_t	*weapon;
@@ -1472,7 +1474,9 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		fovOffset = 0;
 	}
 
-	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
+// SKWID( removed animations )
+//	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
+// END
 	CG_RegisterWeapon( ps->weapon );
 	weapon = &cg_weapons[ ps->weapon ];
 
@@ -1496,10 +1500,10 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		hand.backlerp = 0;
 	} else {
 		// get clientinfo for animation map
-		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 // SKWID( removed animations )
 		hand.frame = hand.oldframe = hand.backlerp = 0;
 /*
+		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 		hand.frame = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.frame );
 		hand.oldframe = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.oldFrame );
 		hand.backlerp = cent->pe.torso.backlerp;

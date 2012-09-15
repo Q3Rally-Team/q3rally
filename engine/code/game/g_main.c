@@ -863,12 +863,6 @@ SortRanks
 */
 int QDECL SortRanks( const void *a, const void *b ) {
 	gclient_t	*ca, *cb;
-// STONELANCE
-	gentity_t	*ea, *eb;
-
-	ea = &g_entities[*(int *)a];
-	eb = &g_entities[*(int *)b];
-// END
 
 	ca = &level.clients[*(int *)a];
 	cb = &level.clients[*(int *)b];

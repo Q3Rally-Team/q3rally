@@ -299,7 +299,8 @@ qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t nor
 	vec3_t	vP1;
 	vec3_t	impulse, impulseMoment;
 	vec3_t	cross, cross2;
-	float	impulseNum, oppositeImpulseNum, impulseDen, dot;
+	float	impulseNum, impulseDen, dot;
+//	float	oppositeImpulseNum;
 
 	// temp for inverseWorldInertiaTensor
 	vec3_t	axis[3];
@@ -345,7 +346,7 @@ qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t nor
 	dot = DotProduct(normal, vP1);
 	if ( dot < -8 ){
 		impulseNum = -(1.0f + elasticity) * DotProduct(normal, vP1);
-		oppositeImpulseNum = -(1.0f - elasticity) * DotProduct(normal, vP1);
+//		oppositeImpulseNum = -(1.0f - elasticity) * DotProduct(normal, vP1);
 
 		CrossProduct( arm, normal, cross );
 		VectorRotate( cross, inverseWorldInertiaTensor, cross2 );
@@ -892,9 +893,9 @@ void G_ScriptedObject_IntegratePhysics( gentity_t *self, float time )
 	// angular
 	if( doAngular )
 	{
-		vec3_t	oldAngles;
+//		vec3_t	oldAngles;
 
-		VectorCopy( self->s.apos.trBase, oldAngles );
+//		VectorCopy( self->s.apos.trBase, oldAngles );
 
 		VectorMA( self->angularMomentum, time, self->netMoment, self->angularMomentum );
 		VectorRotate( self->angularMomentum, inverseWorldInertiaTensor, self->s.apos.trDelta );

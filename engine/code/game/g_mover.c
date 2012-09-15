@@ -1897,7 +1897,7 @@ void SP_func_breakable( gentity_t *ent ) {
         VectorCopy( ent->s.origin, ent->s.pos.trBase );
         VectorCopy( ent->s.origin, ent->r.currentOrigin );
         ent->takedamage = qtrue;
-        ent->use = NULL;
+        ent->use = 0;
         ent->r.contents = CONTENTS_SOLID; 
         ent->clipmask = MASK_SOLID;
 }
