@@ -1256,7 +1256,7 @@ typedef struct playerState_s {
 	// STONELANCE - 4 bits over the net
 	int			observerMode;
 #define movementDir observerMode // ZTM: Remove this later
-//	int			movementDir;	// a number 0 to 7 that represents the reletive angle
+//	int			movementDir;	// a number 0 to 7 that represents the relative angle
 								// of movement to the view angle (axial and diagonals)
 								// when at rest, the value will remain unchanged
 								// used to twist the legs during strafing
@@ -1425,7 +1425,7 @@ typedef struct entityState_s {
 	// STONELANCE - 10 bits over the net
 	int		otherEntityNum2;
 
-	int		groundEntityNum;	// -1 = in air
+	int		groundEntityNum;	// ENTITYNUM_NONE = in air
 
 	int		constantLight;	// r + (g<<8) + (b<<16) + (intensity<<24)
 	int		loopSound;		// constantly loop this sound

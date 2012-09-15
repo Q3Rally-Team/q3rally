@@ -103,6 +103,9 @@ Called on a first-time connect
 void G_InitSessionData( gclient_t *client, char *userinfo ) {
 	clientSession_t	*sess;
 	const char		*value;
+	qboolean		isBot;
+
+	isBot = (g_entities[ client - level.clients ].r.svFlags & SVF_BOT);
 
 	sess = &client->sess;
 
@@ -116,7 +119,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 				// can only spawn as spectator after race starts
 				sess->sessionTeam = TEAM_SPECTATOR;
 			}
-			else if ( g_teamAutoJoin.integer || value[0] == 'r' ){
+			else if ( (g_teamAutoJoin.integer && !isBot) || value[0] == 'r' ) {
 				// force them to join
 				sess->sessionTeam = PickTeam( -1 );
 				BroadcastTeamChange( client, -1 );
@@ -127,7 +130,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 		}
 		else
 // END
-		if ( g_teamAutoJoin.integer ) {
+		if ( g_teamAutoJoin.integer && !isBot ) {
 			sess->sessionTeam = PickTeam( -1 );
 			BroadcastTeamChange( client, -1 );
 		} else {

@@ -139,7 +139,6 @@ struct gentity_s {
 
 	int			timestamp;		// body queue sinking, etc
 
-	float		angle;			// set in editor, -1 = up, -2 = down
 	char		*target;
 	char		*targetname;
 	char		*team;
@@ -284,11 +283,6 @@ typedef struct {
 	float		flagsince;
 	float		lastfraggedcarrier;
 } playerTeamState_t;
-
-// the auto following clients don't follow a specific client
-// number, but instead follow the first two active players
-#define	FOLLOW_ACTIVE1	-1
-#define	FOLLOW_ACTIVE2	-2
 
 // client data that stays across multiple levels or tournament restarts
 // this is achieved by writing all the data to cvar strings at game shutdown
@@ -595,7 +589,6 @@ void	G_FreeEntity( gentity_t *e );
 qboolean	G_EntitiesFree( void );
 
 void	G_TouchTriggers (gentity_t *ent);
-void	G_TouchSolids (gentity_t *ent);
 
 float	*tv (float x, float y, float z);
 // STONELANCE - moved to q_shared
@@ -719,8 +712,6 @@ gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles, qb
 void CopyToBodyQue( gentity_t *ent );
 void ClientRespawn(gentity_t *ent);
 void BeginIntermission (void);
-void InitClientPersistant (gclient_t *client);
-void InitClientResp (gclient_t *client);
 void InitBodyQue (void);
 void ClientSpawn( gentity_t *ent );
 void player_die (gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);
@@ -810,24 +801,14 @@ void CreateSmokeHazard (gentity_t *owner, vec3_t origin);
 
 
 //
-// p_hud.c
-//
-void MoveClientToIntermission (gentity_t *client);
-void G_SetStats (gentity_t *ent);
-void DeathmatchScoreboardMessage (gentity_t *client);
-
-//
 // g_cmds.c
 //
-
-//
-// g_pweapon.c
-//
-
+void DeathmatchScoreboardMessage( gentity_t *ent );
 
 //
 // g_main.c
 //
+void MoveClientToIntermission( gentity_t *ent );
 void FindIntermissionPoint( void );
 void SetLeader(int team, int client);
 void CheckTeamLeader( int team );
@@ -1011,8 +992,8 @@ extern	vmCvar_t	car_air_frac_to_df;
 extern	vmCvar_t	car_friction_scale;
 // END
 
-void	trap_Printf( const char *fmt );
-void trap_Error(const char *fmt) __attribute__((noreturn));
+void	trap_Print( const char *text );
+void	trap_Error( const char *text ) __attribute__((noreturn));
 int		trap_Milliseconds( void );
 int		trap_Argc( void );
 void	trap_Argv( int n, char *buffer, int bufferLength );

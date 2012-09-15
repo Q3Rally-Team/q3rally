@@ -42,7 +42,7 @@ void *G_Alloc( int size ) {
 	}
 
 	if ( allocPoint + size > POOLSIZE ) {
-		G_Error( "G_Alloc: failed on allocation of %i bytes\n", size ); // bk010103 - was %u, but is signed
+	  G_Error( "G_Alloc: failed on allocation of %i bytes", size );
 		return NULL;
 	}
 

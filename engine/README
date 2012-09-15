@@ -103,6 +103,7 @@ Makefile.local:
   USE_VOIP           - enable built-in VoIP support
   USE_INTERNAL_SPEEX - build internal speex library instead of dynamically
                        linking against system libspeex
+  USE_FREETYPE       - enable FreeType support for rendering fonts
   USE_OLD_VM64       - use Ludwig Nussel's old JIT compiler implementation
                        for x86_64
   USE_INTERNAL_ZLIB  - build and link against internal zlib
@@ -136,6 +137,7 @@ New cvars
                                       for forward movement speed/direction.
   j_side                            - Joystick analogue to m_side,
                                       for side movement speed/direction.
+  j_up                              - Joystick up movement speed/direction.
   j_pitch                           - Joystick analogue to m_pitch,
                                       for pitch rotation speed/direction.
   j_yaw                             - Joystick analogue to m_yaw,
@@ -144,6 +146,8 @@ New cvars
                                       controls forward/back.
   j_side_axis                       - Selects which joystick axis
                                       controls left/right.
+  j_up_axis                         - Selects which joystick axis
+                                      controls up/down.
   j_pitch_axis                      - Selects which joystick axis
                                       controls pitch.
   j_yaw_axis                        - Selects which joystick axis
@@ -269,6 +273,8 @@ New cvars
                                       captured using screenshotJPEG
   r_aviMotionJpegQuality            - Controls quality of video capture when
                                       cl_aviMotionJpeg is enabled
+  r_mode -2                         - This new video mode automatically uses the
+                                      desktop resolution.
 
 New commands
   video [filename]        - start video capture (use with demo command)
@@ -293,6 +299,16 @@ New commands
   game_restart <fs_game>  - Switch to another mod
 
   which <filename/path>   - print out the path on disk to a loaded item
+
+  execq <filename>        - quiet exec command, doesn't print "execing file.cfg"
+
+  kicknum <client number> - kick a client by number, same as clientkick command
+  kickall                 - kick all clients, similar to "kick all" (but kicks
+                            everyone even if someone is named "all")
+  kickbots                - kick all bots, similar to "kick allbots" (but kicks
+                            all bots even if someone is named "allbots")
+
+  tell <client num> <msg> - send message to a single client (new to server)
 
 
 --------------------------------------------------------- README for Users -----
@@ -657,9 +673,9 @@ Building with MinGW for pre Windows XP
 ------------------------------------------------------------- Contributing -----
 
 Please send all patches to bugzilla (https://bugzilla.icculus.org), or join the
-mailing list (quake3-subscribe@icculus.org) and submit your patch there.  The
-best case scenario is that you submit your patch to bugzilla, and then post the
-URL to the mailing list.
+mailing list (http://lists.ioquake.org/listinfo.cgi/ioquake3-ioquake.org) and 
+submit your patch there.  The best case scenario is that you submit your patch 
+to bugzilla, and then post the URL to the mailing list.
 
 The focus for ioq3 is to develop a stable base suitable for further development
 and provide players with the same Quake 3 experience they've had for years. As

@@ -250,7 +250,25 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 
 	ri.Printf (PRINT_ALL, "...setting mode %d:", mode );
 
-	if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
+	if (mode == -2)
+	{
+		// use desktop video resolution
+		if( videoInfo->current_h > 0 )
+		{
+			glConfig.vidWidth = videoInfo->current_w;
+			glConfig.vidHeight = videoInfo->current_h;
+		}
+		else
+		{
+			glConfig.vidWidth = 640;
+			glConfig.vidHeight = 480;
+			ri.Printf( PRINT_ALL,
+					"Cannot determine display resolution, assuming 640x480\n" );
+		}
+
+		glConfig.windowAspect = (float)glConfig.vidWidth / (float)glConfig.vidHeight;
+	}
+	else if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
 	{
 		ri.Printf( PRINT_ALL, " invalid mode\n" );
 		return RSERR_INVALID_MODE;
@@ -732,6 +750,12 @@ success:
 	// again and you get the correct answer. This is a suspected driver bug, see
 	// http://bugzilla.icculus.org/show_bug.cgi?id=4316
 	glConfig.deviceSupportsGamma = SDL_SetGamma( 1.0f, 1.0f, 1.0f ) >= 0;
+
+	if ( -1 == r_ignorehwgamma->integer)
+		glConfig.deviceSupportsGamma = 1;
+
+	if ( 1 == r_ignorehwgamma->integer)
+		glConfig.deviceSupportsGamma = 0;
 
 	// get our config strings
 	Q_strncpyz( glConfig.vendor_string, (char *) qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );

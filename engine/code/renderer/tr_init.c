@@ -32,6 +32,10 @@ glstate_t	glState;
 
 static void GfxInfo_f( void );
 
+#ifdef USE_RENDERER_DLOPEN
+cvar_t  *com_altivec;
+#endif
+
 cvar_t	*r_flareSize;
 cvar_t	*r_flareFade;
 cvar_t	*r_flareCoeff;
@@ -209,9 +213,6 @@ static void InitOpenGL( void )
 
 	// init command buffers and SMP
 	R_InitCommandBuffers();
-
-	// print info
-	GfxInfo_f();
 
 	// set default state
 	GL_SetDefaultState();
@@ -981,6 +982,10 @@ R_Register
 */
 void R_Register( void ) 
 {
+	#ifdef USE_RENDERER_DLOPEN
+	com_altivec = ri.Cvar_Get("com_altivec", "1", CVAR_ARCHIVE);
+	#endif	
+
 	//
 	// latched and archived variables
 	//
@@ -1231,6 +1236,8 @@ void R_Init( void ) {
 	if ( err != GL_NO_ERROR )
 		ri.Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
 
+	// print info
+	GfxInfo_f();
 	ri.Printf( PRINT_ALL, "----- finished R_Init -----\n" );
 }
 
