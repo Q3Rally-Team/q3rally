@@ -963,7 +963,6 @@ void BotUpdateInput(bot_state_t *bs, int time, int elapsed_time) {
 	}
 	//convert the bot input to a usercmd
 	BotInputToUserCommand(&bi, &bs->lastucmd, bs->cur_ps.delta_angles, time);
-
 	//subtract the delta angles
 	for (j = 0; j < 3; j++) {
 		bs->viewangles[j] = AngleMod(bs->viewangles[j] - SHORT2ANGLE(bs->cur_ps.delta_angles[j]));
@@ -1481,7 +1480,6 @@ int BotAIStartFrame(int time) {
 	}
 	//check if bot interbreeding is activated
 	BotInterbreeding();
-
 	//cap the bot think time
 	if (bot_thinktime.integer > 200) {
 		trap_Cvar_Set("bot_thinktime", "200");
@@ -1596,6 +1594,7 @@ int BotAIStartFrame(int time) {
 		}
 	}
 
+
 	// execute bot user commands every frame
 	for( i = 0; i < MAX_CLIENTS; i++ ) {
 		if( !botstates[i] || !botstates[i]->inuse ) {
@@ -1641,10 +1640,11 @@ int BotInitLibrary(void) {
 	trap_BotLibVarSet("g_gametype", buf);
 	//bot developer mode and log file
 	trap_BotLibVarSet("bot_developer", bot_developer.string);
+	trap_Cvar_VariableStringBuffer("logfile", buf, sizeof(buf));
 	trap_BotLibVarSet("log", buf);
 	//no chatting
 	trap_Cvar_VariableStringBuffer("bot_nochat", buf, sizeof(buf));
-	if (strlen(buf)) trap_BotLibVarSet("nochat", "0");
+	if (strlen(buf)) trap_BotLibVarSet("nochat", buf);
 	//visualize jump pads
 	trap_Cvar_VariableStringBuffer("bot_visualizejumppads", buf, sizeof(buf));
 	if (strlen(buf)) trap_BotLibVarSet("bot_visualizejumppads", buf);
@@ -1673,9 +1673,9 @@ int BotInitLibrary(void) {
 	//game directory
 	trap_Cvar_VariableStringBuffer("fs_game", buf, sizeof(buf));
 	if (strlen(buf)) trap_BotLibVarSet("gamedir", buf);
-	//cd directory
-	trap_Cvar_VariableStringBuffer("fs_cdpath", buf, sizeof(buf));
-	if (strlen(buf)) trap_BotLibVarSet("cddir", buf);
+	//home directory
+	trap_Cvar_VariableStringBuffer("fs_homepath", buf, sizeof(buf));
+	if (strlen(buf)) trap_BotLibVarSet("homedir", buf);
 	//
 #ifdef MISSIONPACK
 	trap_BotLibDefine("MISSIONPACK");
@@ -1747,5 +1747,4 @@ int BotAIShutdown( int restart ) {
 	}
 	return qtrue;
 }
-
 

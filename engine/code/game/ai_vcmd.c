@@ -550,4 +550,3 @@ int BotVoiceChatCommand(bot_state_t *bs, int mode, char *voiceChat) {
 	}
 	return qfalse;
 }
-

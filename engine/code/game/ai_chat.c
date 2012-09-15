@@ -1261,4 +1261,3 @@ void BotChatTest(bot_state_t *bs) {
 		trap_BotEnterChat(bs->cs, 0, CHAT_ALL);
 	}
 }
-
