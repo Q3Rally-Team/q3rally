@@ -199,11 +199,11 @@ vmCvar_t	ui_engineSounds;
 vmCvar_t	ui_tightCamTracking;
 vmCvar_t	ui_rearViewRenderLevel;
 vmCvar_t	ui_mainViewRenderLevel;
-/*
+
 vmCvar_t	ui_model;
 vmCvar_t	ui_head;
 vmCvar_t	ui_rim;
-*/
+vmCvar_t	ui_plate;
 // END
 
 vmCvar_t	ui_cdkeychecked;
@@ -305,11 +305,11 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_tightCamTracking, "cg_tightCamTracking", "1", CVAR_ARCHIVE },
 	{ &ui_rearViewRenderLevel, "cg_rearViewRenderLevel", "3", CVAR_ARCHIVE },
 	{ &ui_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },
-/*
-	{ &ui_model, "model", "sidepipe/red", CVAR_ARCHIVE },
-	{ &ui_head, "head", "doom", CVAR_ARCHIVE },
-	{ &ui_rim, "rim", "svt_cobra", CVAR_ARCHIVE },
-*/
+
+	{ &ui_model, "model", "sidepipe/red", CVAR_USERINFO|CVAR_ARCHIVE },
+	{ &ui_head, "head", "doom", CVAR_USERINFO|CVAR_ARCHIVE },
+	{ &ui_rim, "rim", "svt_cobra", CVAR_USERINFO|CVAR_ARCHIVE },
+	{ &ui_plate, "plate", "usa_california", CVAR_USERINFO|CVAR_ARCHIVE },
 // END
 
 	{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM },

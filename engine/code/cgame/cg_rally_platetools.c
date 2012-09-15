@@ -87,7 +87,11 @@ qboolean LoadTGA(TextureImage *texture, const char *filename){
 
 	if ( memcmp(TGAheader, TGAcompare, sizeof(TGAheader)) != 0){		// Does The Header Match What We Want?
 		trap_FS_FCloseFile( imageFile );
-		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Header of %s does not match known header format.\n", filename);
+		if (TGAcompare[2] == 10) {
+			Com_Printf( S_COLOR_YELLOW "Q3R Warning: Cannot load %s, Run-Length Encoded TGAs are unsupported.\n", filename);
+		} else {
+			Com_Printf( S_COLOR_YELLOW "Q3R Warning: Header of %s does not match known header format.\n", filename);
+		}
 		return qfalse;
 	}
 
