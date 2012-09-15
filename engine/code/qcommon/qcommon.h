@@ -351,7 +351,11 @@ typedef enum {
 	TRAP_CEIL,
 
 	TRAP_TESTPRINTINT,
-	TRAP_TESTPRINTFLOAT
+	TRAP_TESTPRINTFLOAT,
+
+	// ZTM: New to Q3Rally
+	TRAP_ACOS,
+	TRAP_ASIN,
 } sharedTraps_t;
 
 void	VM_Init( void );

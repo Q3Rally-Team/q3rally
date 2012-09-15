@@ -183,7 +183,10 @@ typedef enum {
 	CG_CEIL,
 	CG_TESTPRINTINT,
 	CG_TESTPRINTFLOAT,
-	CG_ACOS
+	CG_ACOS,
+
+	// ZTM: New to Q3Rally
+	CG_ASIN,
 } cgameImport_t;
 
 

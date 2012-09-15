@@ -49,38 +49,6 @@ static void CG_Free( int size ) {
 }
 */
 
-#ifdef Q3_VM
-int memcmp( const unsigned char *dest, const unsigned char *src, size_t count ) {
-	int		i;
-
-	for (i = 0; i < count; i++){
-		if (dest != src)
-			return qfalse;
-
-		dest++;
-		src++;
-	}
-
-	return qtrue;
-}
-#endif
-
-/*
-static qboolean CG_Memcmp(byte *s1, byte *s2, int size) {
-	int		i;
-
-	for (i = 0; i < size; i++){
-		if (s1 != s2)
-			return qfalse;
-
-		s1++;
-		s2++;
-	}
-
-	return qtrue;
-}
-*/
-
 typedef	struct
 {
 	byte	*imageData;			// Image Data (Up To 32 Bits)

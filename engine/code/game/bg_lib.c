@@ -316,6 +316,18 @@ void *memmove(void *dest, const void *src, size_t count)
 	return dest;
 }
 
+// STONELANCE - used in cg_rally_platetools
+int memcmp( const void *lhs, const void *rhs, size_t count ) {
+	int		i;
+
+	for (i = 0; i < count; i++){
+		if (((char *) lhs)[i] != ((char *) rhs)[i])
+			return ((char *) lhs)[i] - ((char *) rhs)[i];
+	}
+
+	return 0;
+}
+// END
 
 #if 0
 
@@ -374,7 +386,6 @@ double sqrt( double x ) {
 	return y;
 }
 
-#endif
 
 float sintable[1024] = {
 0.000000,0.001534,0.003068,0.004602,0.006136,0.007670,0.009204,0.010738,
@@ -507,8 +518,6 @@ float sintable[1024] = {
 0.999925,0.999942,0.999958,0.999971,0.999981,0.999989,0.999995,0.999999
 };
 
-#if 0
-
 double sin( double x ) {
 	int	index;
 	int	quad;
@@ -550,9 +559,7 @@ double cos( double x ) {
 	return 0;
 }
 
-#endif
 
-#ifndef CGAME
 /*
 void create_acostable( void ) {
 	int i;
@@ -703,7 +710,7 @@ float acostable[] = {
 0.17700769,0.16554844,0.15324301,0.13986823,0.12508152,0.10830610,0.08841715,0.06251018,
 };
 
-double acos( double x ) {
+float Q_acos( float x ) {
 	int index;
 
 	if (x < -1)
@@ -714,9 +721,26 @@ double acos( double x ) {
 	return acostable[index];
 }
 
-#endif
+float Q_asin( float x ) {
+	float	dir;
+	int		i;
 
-#if 0
+	float x2 = (float)x;
+
+	dir = 1.0f;
+	if (x2 < 0.0f){
+		dir = -1.0f;
+		x2 *= -1.0f;
+	}
+
+	for ( i = 0 ; i < 1024 ; i++ ) {
+		if ( sintable[i] >= (x2 - 0.000001f) ) {
+			break;
+		}
+	}
+
+	return (dir * i * (M_PI/2048));
+}
 
 double atan2( double y, double x ) {
 	float	base;
@@ -816,35 +840,6 @@ static double powN( double base, int exp )
 
 double tan( double x ) {
 	return sin(x) / cos(x);
-}
-
-double asin( double x ) {
-
-	float	dir;
-	int		i;
-
-	float x2 = (float)x;
-
-	dir = 1.0f;
-	if (x2 < 0.0f){
-		dir = -1.0f;
-		x2 *= -1.0f;
-	}
-
-	for ( i = 0 ; i < 1024 ; i++ ) {
-		if ( sintable[i] >= (x2 - 0.000001f) ) {
-			break;
-		}
-	}
-
-	return (dir * i * (M_PI/2048));
-
-/*
-	Com_Printf( "x: %f\n", x );
-	Com_Printf( "acos(x): %f\n", acos( x ) );
-
-	return ( M_PI_2 - acos( x ) );
-*/
 }
 
 float exptable[] = {

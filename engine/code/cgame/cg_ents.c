@@ -1064,7 +1064,7 @@ static void CG_TeamBase( centity_t *cent ) {
 					cent->muzzleFlashTime = 1;
 				}
 				VectorCopy(cent->currentState.angles, angles);
-				angles[YAW] += (float) 16 * acos(1-c) * 180 / M_PI;
+				angles[YAW] += (float) 16 * Q_acos(1-c) * 180 / M_PI;
 				AnglesToAxis( angles, model.axis );
 
 				VectorScale( model.axis[0], c, model.axis[0]);

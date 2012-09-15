@@ -1125,7 +1125,7 @@ void AnglesToDeltaAngles( vec3_t angles, const vec3_t w, vec3_t deltaAngles ) {
 	s2 = sin( angles[1] * M_PI_180 );
 	s3 = sin( angles[2] * M_PI_180 );
 
-	p = 2.0f * acos( c1*c2*c3 - s1*s2*s3 );
+	p = 2.0f * Q_acos( c1*c2*c3 - s1*s2*s3 );
 	sp = p / sin( p / 2.0f ) ;
 
 	deltaAngles[0] = (c1*s2*c3 + s1*c2*c3) * sp * M_180_PI;
@@ -1154,7 +1154,7 @@ void OrientationToDeltaAngles( float t[3][3], const vec3_t w, vec3_t delta_angle
 	up[2] = -w[1] * t[2][0] + w[0] * t[2][1];
 	right[2] = -w[1] * t[0][0] + w[0] * t[0][1];
 
-	delta_angles[PITCH] = asin( -forward[2] ) * M_180_PI;
+	delta_angles[PITCH] = Q_asin( -forward[2] ) * M_180_PI;
 	if (up[2] < 0.0f)
 		delta_angles[PITCH] = 180 - delta_angles[PITCH];
 
@@ -1165,7 +1165,7 @@ void OrientationToDeltaAngles( float t[3][3], const vec3_t w, vec3_t delta_angle
 		as = forward[1] / cp > 1.00f ? 1.00f : forward[1] / cp;
 		as = as < -1.00f ? -1.00f : as;
 
-		delta_angles[YAW] = asin(as) * M_180_PI;
+		delta_angles[YAW] = Q_asin(as) * M_180_PI;
 		if (forward[0] < 0.0f)
 			delta_angles[YAW] = 180 - delta_angles[YAW];
 		if (up[2] < 0.0f)
@@ -1173,7 +1173,7 @@ void OrientationToDeltaAngles( float t[3][3], const vec3_t w, vec3_t delta_angle
 
 		as = -right[2] / cp > 1.00f ? 1.00f : -right[2] / cp;
 		as = as < -1.00f ? -1.00f : as;
-		delta_angles[ROLL] = asin(as) * M_180_PI;
+		delta_angles[ROLL] = Q_asin(as) * M_180_PI;
 	}
 	else {
 		delta_angles[YAW]=0;
@@ -1204,7 +1204,7 @@ void OrientationToAngles( float t[3][3], vec3_t angles ) {
 
 	OrientationToVectors(t, forward, right, up);
 
-	angles[PITCH] = asin(-forward[2]) * M_180_PI;
+	angles[PITCH] = Q_asin(-forward[2]) * M_180_PI;
 	if (up[2] < 0.0f)
 		angles[PITCH] = 180 - angles[PITCH];
 
@@ -1215,7 +1215,7 @@ void OrientationToAngles( float t[3][3], vec3_t angles ) {
 		as = forward[1] / cp > 1.00f ? 1.00f : forward[1] / cp;
 		as = as < -1.00f ? -1.00f : as;
 
-		angles[YAW] = asin(as) * M_180_PI;
+		angles[YAW] = Q_asin(as) * M_180_PI;
 		if (forward[0] < 0.0f)
 			angles[YAW] = 180 - angles[YAW];
 		if (up[2] < 0.0f)
@@ -1223,7 +1223,7 @@ void OrientationToAngles( float t[3][3], vec3_t angles ) {
 
 		as = -right[2] / cp > 1.00f ? 1.00f : -right[2] / cp;
 		as = as < -1.00f ? -1.00f : as;
-		angles[ROLL] = asin(as) * M_180_PI;
+		angles[ROLL] = Q_asin(as) * M_180_PI;
 	}
 	else {
 		angles[YAW]=0;
@@ -1450,7 +1450,7 @@ void QuaternionSLERP(const vec4_t from, const vec4_t to, float t, vec4_t res){
 	
 	// OPTIMIZE: If costheta was squared then i could use the sin(t)^2 = 1-cos(t)^s
 	//			 Is sintheta ever negative? If not then sin(t)^2 > 0 == sin(t) > 0
-	theta = acos( costheta );
+	theta = Q_acos( costheta );
 	sintheta = sin( theta );
 	if( sintheta > 0.0f )
 	{
@@ -1495,7 +1495,7 @@ void QuaternionSLERP(const vec4_t from, const vec4_t to, float t, vec4_t res){
 	// calculate coefficients
 	if ( (1.0 - cosom) > 0.1f ) {
 		// standard case (slerp)
-		omega = acos(cosom);
+		omega = Q_acos(cosom);
 		sinom = sin(omega);
 		scale0 = sin((1.0 - t) * omega) / sinom;
 		scale1 = sin(t * omega) / sinom;
@@ -1655,7 +1655,7 @@ void QuaternionToAngles( const vec4_t quat, vec3_t angles ){
 //	u[0] =     s * (xz - wy);	u[1] =     s * (yz + wx);
 	u[2] = 1 - s * (xx + yy);
 
-	angles[PITCH] = asin(-f[2]) * 180.0f / M_PI;
+	angles[PITCH] = Q_asin(-f[2]) * 180.0f / M_PI;
 	if (u[2] < 0.0f)
 		angles[PITCH] = 180 - angles[PITCH];
 
@@ -1666,7 +1666,7 @@ void QuaternionToAngles( const vec4_t quat, vec3_t angles ){
 		as = f[1] / cp > 1.00f ? 1.00f : f[1] / cp;
 		as = as < -1.00f ? -1.00f : as;
 
-		angles[YAW] = asin(as) * 180.0f / M_PI;
+		angles[YAW] = Q_asin(as) * 180.0f / M_PI;
 		if (f[0] < 0.0f)
 			angles[YAW] = 180 - angles[YAW];
 		if (u[2] < 0.0f)
@@ -1674,7 +1674,7 @@ void QuaternionToAngles( const vec4_t quat, vec3_t angles ){
 
 		as = -r[2] / cp > 1.00f ? 1.00f : -r[2] / cp;
 		as = as < -1.00f ? -1.00f : as;
-		angles[ROLL] = asin(as) * 180 / M_PI;
+		angles[ROLL] = Q_asin(as) * 180 / M_PI;
 	}
 	else {
 		angles[YAW]=0;
@@ -2057,7 +2057,7 @@ int Q_isnan( float x )
 =====================
 Q_acos
 
-the msvc acos doesn't always return a value between -PI and PI:
+the msvc acos doesn't always return a value between 0 and PI:
 
 int i;
 i = 1065353246;
@@ -2071,10 +2071,32 @@ float Q_acos(float c) {
 	angle = acos(c);
 
 	if (angle > M_PI) {
-		return (float)M_PI;
+		return M_PI;
 	}
-	if (angle < -M_PI) {
-		return (float)M_PI;
+	if (angle < 0.0f) {
+		return 0.0f;
+	}
+	return angle;
+}
+
+/*
+=====================
+Q_asin
+
+the msvc asin probably has same type of behavior as acos
+
+=====================
+*/
+float Q_asin(float c) {
+	float angle;
+
+	angle = asin(c);
+
+	if (angle > M_PI_2) {
+		return M_PI_2;
+	}
+	if (angle < -M_PI_2) {
+		return -M_PI_2;
 	}
 	return angle;
 }

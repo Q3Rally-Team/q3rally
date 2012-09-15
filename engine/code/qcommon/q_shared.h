@@ -705,6 +705,7 @@ void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out );
 int Q_log2(int val);
 
 float Q_acos(float c);
+float Q_asin(float c);
 
 int		Q_rand( int *seed );
 float	Q_random( int *seed );

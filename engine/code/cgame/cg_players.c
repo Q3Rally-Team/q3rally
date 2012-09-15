@@ -2141,7 +2141,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso 
 			else if (d < -1.0f) {
 				d = -1.0f;
 			}
-			angle = acos(d);
+			angle = Q_acos(d);
 
 			d = DotProduct(pole.axis[1], dir);
 			if (d < 0) {

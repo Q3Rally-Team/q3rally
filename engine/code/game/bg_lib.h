@@ -112,8 +112,7 @@ void *memset( void *dest, int c, size_t count );
 void *memcpy( void *dest, const void *src, size_t count );
 
 // STONELANCE - used in cg_rally_platetools
-int memcmp( const unsigned char *dest, const unsigned char *src, size_t count );
-void *malloc( size_t count );
+int memcmp( const void *dest, const void *src, size_t count );
 // END
 
 // Math functions
@@ -122,15 +121,15 @@ double floor( double x );
 double sqrt( double x );
 double sin( double x );
 double cos( double x );
+float Q_acos( float c );
+float Q_asin( float c );
 double atan2( double y, double x );
-// STONELANCE
-double asin( double x );
-double exp( double x );
-// END
 double tan( double x );
 int abs( int n );
 double fabs( double x );
-double acos( double x );
+
+// STONELANCE
+double exp( double x );
+// END
 
 #endif // BG_LIB_H
-
