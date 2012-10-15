@@ -758,8 +758,6 @@ static int CG_CalcViewValues( void ) {
 	}
 	
 	/* TBB - minimap view setup 
-	for now just make it copy the rear view cvar,
-	eventually change this to the minimap cvar
 	todo: make the viewpoint as high as possible,
 		and not following player movement
 		may have to set new standard in level design
@@ -767,41 +765,36 @@ static int CG_CalcViewValues( void ) {
 	*/
 	if( cg_drawMMap.integer )
 	{
+		vec3_t		angles;
 		vec3_t		temp[3];	//temporary viewaxis 3x3 matrix
 		//vec3_t		tempvec;	//temporary vector
 
-		AnglesToAxis( ps->viewangles, cg.mmapRefdef.viewaxis );
-		/*
-		//this should render the 3person mouse view (not car viewpoint)
-		cg.mmapRefdef.viewaxis[PITCH][0] = SHORT2ANGLE(ps->damagePitch);
-		cg.mmapRefdef.viewaxis[YAW][1] = SHORT2ANGLE(ps->damageYaw);
-		cg.mmapRefdef.viewaxis[ROLL][2] = 0;
-		VectorNormalize( cg.mmapRefdef.viewaxis );*/
-		
-		//AxisClear( temp );
+#if 1
+		// Use car yaw to rotate map.
+		angles[ROLL] = 0;
+		angles[PITCH] = 0;
+		angles[YAW] = ps->viewangles[YAW];
+#else
+		// Use third-person mouse view (not car viewpoint)
+		angles[ROLL] = 0;
+		angles[PITCH] = 0; // SHORT2ANGLE(ps->damagePitch);
+		angles[YAW] = SHORT2ANGLE(ps->damageYaw);
+#endif
+
+		AnglesToAxis( angles, cg.mmapRefdef.viewaxis );
+
+		// Make top face screen.
 		AxisCopy( cg.mmapRefdef.viewaxis, temp );
-		//this will render the car's viewpoint (not 3person mouseview)
-		
 		temp[2][0] = cg.mmapRefdef.viewaxis[0][0];
 		temp[2][1] = cg.mmapRefdef.viewaxis[0][1];
 		temp[2][2] = cg.mmapRefdef.viewaxis[0][2];
-		
+
 		temp[0][0] = -cg.mmapRefdef.viewaxis[2][0];
 		temp[0][1] = -cg.mmapRefdef.viewaxis[2][1];
 		temp[0][2] = -cg.mmapRefdef.viewaxis[2][2];
-		
-		//temp[1][0] = 0;
-		//temp[1][1] = 1;
-		//temp[1][2] = 0;
 
-		//temp[PITCH][0] = (ps->damagePitch);
-		//temp[YAW][1] = (ps->damageYaw);
-		//temp[ROLL][2] = 0;
-		//VectorNormalize(temp);
-		//	OR
-		//VectorSet( temp, SHORT2ANGLE(ps->damagePitch), SHORT2ANGLE(ps->damageYaw), 0);
 		AxisCopy( temp, cg.mmapRefdef.viewaxis );
-		
+
 		//VectorInverse( cg.mirrorRefdef.viewaxis[0] );
 		//VectorInverse( cg.mirrorRefdef.viewaxis[1] );
 		//VectorInverse( cg.mirrorRefdef.viewaxis[2] );		
@@ -820,7 +813,7 @@ static int CG_CalcViewValues( void ) {
 		//VectorClear( temp );
 		//temp[3] = 0, 0, 0;
 		//temp[3][3] = { {1, 1, 0}, {0, 0, 0}, {0, 0, 1} } ;
-		
+
 		/* official
 		cg.mmapRefdef.vieworg[0] = 0; // + : forward
 		cg.mmapRefdef.vieworg[1] = 0; // + : left
