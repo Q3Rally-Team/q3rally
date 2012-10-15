@@ -31,6 +31,7 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 	int		i;
 	//int		fps;
 	float	mx, my, mw, mh;
+	int		tmp;
 
 	if ( !cg_drawRearView.integer )
 		return;
@@ -74,7 +75,9 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 	cg.mirrorRefdef.height = h;
 
 	cg.mirrorRefdef.fov_x = 70;
-	cg.mirrorRefdef.fov_y = 20;
+	tmp = cg.mirrorRefdef.width / tan( cg.mirrorRefdef.fov_x / 360 * M_PI );
+	cg.mirrorRefdef.fov_y = atan2( cg.mirrorRefdef.height, tmp );
+	cg.mirrorRefdef.fov_y = cg.mirrorRefdef.fov_y * 360 / M_PI;
 
 	cg.mirrorRefdef.time = cg.time;
 	cg.mirrorRefdef.rdflags = 0;
@@ -133,6 +136,7 @@ from scratch. must try to make it 2d bitmap
 void CG_DrawMMap( float x, float y, float w, float h ) {
 	int		i;
 	float	mx, my, mw, mh;
+	int tmp;
 
 	if ( !cg_drawMMap.integer )
 		return;
@@ -163,7 +167,9 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	cg.mmapRefdef.height = h;
 
 	cg.mmapRefdef.fov_x = 70;
-	cg.mmapRefdef.fov_y = 70;
+	tmp = cg.mmapRefdef.width / tan( cg.mmapRefdef.fov_x / 360 * M_PI );
+	cg.mmapRefdef.fov_y = atan2( cg.mmapRefdef.height, tmp );
+	cg.mmapRefdef.fov_y = cg.mmapRefdef.fov_y * 360 / M_PI;
 
 	cg.mmapRefdef.time = cg.time;
 	cg.mmapRefdef.rdflags = 0;
