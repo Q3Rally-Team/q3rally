@@ -400,22 +400,26 @@ S_Play_f
 */
 void S_Play_f( void ) {
 	int 		i;
+	int			c;
 	sfxHandle_t	h;
-	char		name[256];
 
 	if( !si.RegisterSound || !si.StartLocalSound ) {
 		return;
 	}
 
-	i = 1;
-	while ( i<Cmd_Argc() ) {
-		Q_strncpyz( name, Cmd_Argv(i), sizeof(name) );
-		h = si.RegisterSound( name, qfalse );
+	c = Cmd_Argc();
+
+	if( c < 2 ) {
+		Com_Printf ("Usage: play <sound filename> [sound filename] [sound filename] ...\n");
+		return;
+	}
+
+	for( i = 1; i < c; i++ ) {
+		h = si.RegisterSound( Cmd_Argv(i), qfalse );
 
 		if( h ) {
 			si.StartLocalSound( h, CHAN_LOCAL_SOUND );
 		}
-		i++;
 	}
 }
 
@@ -438,7 +442,7 @@ void S_Music_f( void ) {
 	} else if ( c == 3 ) {
 		si.StartBackgroundTrack( Cmd_Argv(1), Cmd_Argv(2) );
 	} else {
-		Com_Printf ("music <musicfile> [loopfile]\n");
+		Com_Printf ("Usage: music <musicfile> [loopfile]\n");
 		return;
 	}
 

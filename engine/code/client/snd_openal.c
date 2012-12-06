@@ -194,6 +194,20 @@ static sfxHandle_t S_AL_BufferFind(const char *filename)
 	sfxHandle_t sfx = -1;
 	int i;
 
+	if ( !filename ) {
+		Com_Error( ERR_FATAL, "Sound name is NULL" );
+	}
+
+	if ( !filename[0] ) {
+		Com_Printf( S_COLOR_YELLOW "WARNING: Sound name is empty\n" );
+		return 0;
+	}
+
+	if ( strlen( filename ) >= MAX_QPATH ) {
+		Com_Printf( S_COLOR_YELLOW "WARNING: Sound name is too long: %s\n", filename );
+		return 0;
+	}
+
 	for(i = 0; i < numSfx; i++)
 	{
 		if(!Q_stricmp(knownSfx[i].filename, filename))
@@ -540,6 +554,7 @@ static src_t srcList[MAX_SRC];
 static int srcCount = 0;
 static int srcActiveCnt = 0;
 static qboolean alSourcesInitialised = qfalse;
+static int lastListenerNumber = -1;
 static vec3_t lastListenerOrigin = { 0.0f, 0.0f, 0.0f };
 
 typedef struct sentity_s
@@ -572,9 +587,6 @@ static void _S_AL_SanitiseVector( vec3_t v, int line )
 		VectorClear( v );
 	}
 }
-
-
-#define AL_THIRD_PERSON_THRESHOLD_SQ (48.0f*48.0f)
 
 /*
 =================
@@ -634,13 +646,15 @@ static void S_AL_ScaleGain(src_t *chksrc, vec3_t origin)
 /*
 =================
 S_AL_HearingThroughEntity
+
+Also see S_Base_HearingThroughEntity
 =================
 */
 static qboolean S_AL_HearingThroughEntity( int entityNum )
 {
 	float	distanceSq;
 
-	if( clc.clientNum == entityNum )
+	if( lastListenerNumber == entityNum )
 	{
 		// FIXME: <tim@ngus.net> 28/02/06 This is an outrageous hack to detect
 		// whether or not the player is rendering in third person or not. We can't
@@ -652,7 +666,7 @@ static qboolean S_AL_HearingThroughEntity( int entityNum )
 				entityList[ entityNum ].origin,
 				lastListenerOrigin );
 
-		if( distanceSq > AL_THIRD_PERSON_THRESHOLD_SQ )
+		if( distanceSq > THIRD_PERSON_THRESHOLD_SQ )
 			return qfalse; //we're the player, but third person
 		else
 			return qtrue;  //we're the player
@@ -1121,7 +1135,7 @@ void S_AL_UpdateEntityPosition( int entityNum, const vec3_t origin )
 
 	VectorCopy( origin, sanOrigin );
 	S_AL_SanitiseVector( sanOrigin );
-	if ( entityNum < 0 || entityNum > MAX_GENTITIES )
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES )
 		Com_Error( ERR_DROP, "S_UpdateEntityPosition: bad entitynum %i", entityNum );
 	VectorCopy( sanOrigin, entityList[entityNum].origin );
 }
@@ -1135,7 +1149,7 @@ Necessary for i.g. Western Quake3 mod which is buggy.
 */
 static qboolean S_AL_CheckInput(int entityNum, sfxHandle_t sfx)
 {
-	if (entityNum < 0 || entityNum > MAX_GENTITIES)
+	if (entityNum < 0 || entityNum >= MAX_GENTITIES)
 		Com_Error(ERR_DROP, "ERROR: S_AL_CheckInput: bad entitynum %i", entityNum);
 
 	if (sfx < 0 || sfx >= numSfx)
@@ -2151,6 +2165,7 @@ void S_AL_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int 
 	orientation[0] = axis[0][0]; orientation[1] = axis[0][1]; orientation[2] = axis[0][2];
 	orientation[3] = axis[2][0]; orientation[4] = axis[2][1]; orientation[5] = axis[2][2];
 
+	lastListenerNumber = entityNum;
 	VectorCopy( sorigin, lastListenerOrigin );
 
 	// Set OpenAL listener paramaters

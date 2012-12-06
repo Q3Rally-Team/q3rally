@@ -1126,19 +1126,19 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 
 // STONELANCE
 	refdef.fov_x = 90;
-//	refdef.fov_x = (int)((float)refdef.width / 640.0f * 90.0f);
+//	refdef.fov_x = (int)((float)refdef.width / uis.xscale / 640.0f * 90.0f);
 // END
-	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
+	xx = refdef.width / uis.xscale / tan( refdef.fov_x / 360 * M_PI );
 
 	refdef.fov_y = atan2( refdef.height, xx );
 	refdef.fov_y *= ( 360 / M_PI );
 
 // STONELANCE
 /*
-	refdef.fov_x = (int)((float)refdef.width / 640.0f * 90.0f);
-	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
-	refdef.fov_y = atan2( refdef.height, xx );
-	refdef.fov_y *= ( 360 / M_PI );
+	refdef.fov_x = (int)((float)refdef.width / uis.xscale / 640.0f * 90.0f);
+	xx = refdef.width / uis.xscale / tan( refdef.fov_x / 360 * M_PI );
+	refdef.fov_y = atan2( refdef.height / uis.yscale, xx );
+ 	refdef.fov_y *= ( 360 / M_PI );
 
 	// calculate distance so the player nearly fills the box
 	len = 0.7 * ( maxs[2] - mins[2] );		

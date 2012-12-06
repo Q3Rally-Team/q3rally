@@ -3944,7 +3944,7 @@ void CG_Player( centity_t *cent ) {
 
 	// floating arrow to checkpoint
 	if (cg_checkpointArrowMode.integer == 2 && cent->currentState.clientNum == cg.snap->ps.clientNum){
-		for (i = 0; i < MAX_ENTITIES; i++){
+		for (i = 0; i < MAX_GENTITIES; i++) {
 			other = &cg_entities[i];
 			if (other->currentState.eType != ET_CHECKPOINT) continue;
 			if (other->currentState.weapon != cg.snap->ps.stats[STAT_NEXT_CHECKPOINT]) continue;
@@ -3952,7 +3952,7 @@ void CG_Player( centity_t *cent ) {
 			break;
 		}
 
-		if (i != MAX_ENTITIES){
+		if (i != MAX_GENTITIES){
 			turbo.hModel = cgs.media.checkpointArrow;
 			if (!turbo.hModel) {
 				return;

@@ -36,7 +36,7 @@ void CG_DrawCheckpointLinks(void)
 	for (i = 0; i < 40; i++)
 	{
 		checkpointFound = qfalse;
-		for (j = 0; j < MAX_ENTITIES; j++)
+		for (j = 0; j < MAX_GENTITIES; j++)
 		{
 			cents[i] = &cg_entities[j];
 			if (cents[i]->currentState.eType != ET_CHECKPOINT) continue;

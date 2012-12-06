@@ -239,7 +239,7 @@ static float CG_DrawArrowToCheckpoint( float y ) {
 	if (cg_entities[cg.snap->ps.clientNum].finishRaceTime)
 		return y;
 
-	for (i = 0; i < MAX_ENTITIES; i++){
+	for (i = 0; i < MAX_GENTITIES; i++){
 		cent = &cg_entities[i];
 		if (cent->currentState.eType != ET_CHECKPOINT) continue;
 		if (cent->currentState.weapon != cg.snap->ps.stats[STAT_NEXT_CHECKPOINT]) continue;
@@ -247,7 +247,7 @@ static float CG_DrawArrowToCheckpoint( float y ) {
 		break;
 	}
 
-	if (i == MAX_ENTITIES)
+	if (i == MAX_GENTITIES)
 		return y; // no checkpoints found
 
 //	VectorSubtract(cent->currentState.origin, cg.predictedPlayerState.origin, dir);

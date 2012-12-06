@@ -125,6 +125,9 @@ clientConnection_t	clc;
 clientStatic_t		cls;
 vm_t				*cgvm;
 
+char				cl_oldGame[MAX_QPATH];
+qboolean			cl_oldGameSet;
+
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
 #ifdef USE_RENDERER_DLOPEN
@@ -585,23 +588,6 @@ void CL_AddReliableCommand(const char *cmd, qboolean isDisconnectCmd)
 
 	Q_strncpyz(clc.reliableCommands[++clc.reliableSequence & (MAX_RELIABLE_COMMANDS - 1)],
 		   cmd, sizeof(*clc.reliableCommands));
-}
-
-/*
-======================
-CL_ChangeReliableCommand
-======================
-*/
-void CL_ChangeReliableCommand( void ) {
-	int index, l;
-
-	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
-	l = strlen(clc.reliableCommands[ index ]);
-	if ( l >= MAX_STRING_CHARS - 1 ) {
-		l = MAX_STRING_CHARS - 2;
-	}
-	clc.reliableCommands[ index ][ l ] = '\n';
-	clc.reliableCommands[ index ][ l+1 ] = '\0';
 }
 
 /*
@@ -1362,11 +1348,11 @@ static void CL_UpdateGUID( const char *prefix, int prefix_len )
 
 static void CL_OldGame(void)
 {
-	if(cls.oldGameSet)
+	if(cl_oldGameSet)
 	{
 		// change back to previous fs_game
-		cls.oldGameSet = qfalse;
-		Cvar_Set2("fs_game", cls.oldGame, qtrue);
+		cl_oldGameSet = qfalse;
+		Cvar_Set2("fs_game", cl_oldGame, qtrue);
 		FS_ConditionalRestart(clc.checksumFeed, qfalse);
 	}
 }
@@ -2374,38 +2360,6 @@ void CL_CheckForResend( void ) {
 	}
 }
 
-/*
-===================
-CL_DisconnectPacket
-
-Sometimes the server can drop the client and the netchan based
-disconnect can be lost.  If the client continues to send packets
-to the server, the server will send out of band disconnect packets
-to the client so it doesn't have to wait for the full timeout period.
-===================
-*/
-void CL_DisconnectPacket( netadr_t from ) {
-	if ( clc.state < CA_AUTHORIZING ) {
-		return;
-	}
-
-	// if not from our server, ignore it
-	if ( !NET_CompareAdr( from, clc.netchan.remoteAddress ) ) {
-		return;
-	}
-
-	// if we have received packets within three seconds, ignore it
-	// (it might be a malicious spoof)
-	if ( cls.realtime - clc.lastPacketTime < 3000 ) {
-		return;
-	}
-
-	// drop the connection
-	Com_Printf( "Server disconnected for unknown reason\n" );
-	Cvar_Set("com_errorMessage", "Server disconnected for unknown reason\n" );
-	CL_Disconnect( qtrue );
-}
-
 
 /*
 ===================
@@ -3201,6 +3155,7 @@ void CL_InitRef( void ) {
 
 	if(!(rendererLib = Sys_LoadDll(dllName, qfalse)) && strcmp(cl_renderer->string, cl_renderer->resetString))
 	{
+		Com_Printf("failed:\n\"%s\"\n", Sys_LibraryError());
 		Cvar_ForceReset("cl_renderer");
 
 		Com_sprintf(dllName, sizeof(dllName), "renderer_opengl1_" ARCH_STRING DLL_EXT);
@@ -3436,7 +3391,7 @@ void CL_Init( void ) {
 	{
 		CL_ClearState();
 		clc.state = CA_DISCONNECTED;	// no longer CA_UNINITIALIZED
-		cls.oldGameSet = qfalse;
+		cl_oldGameSet = qfalse;
 	}
 
 	cls.realtime = 0;
