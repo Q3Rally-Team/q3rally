@@ -923,7 +923,7 @@ TopLine=252
 Caret=39,263
 [engine\code\q3_ui\ui_menu.c]
 TopLine=417
-Caret=58,438
+Caret=76,438
 [engine\code\q3_ui\ui_rally_credits.c]
-TopLine=88
-Caret=60,102
+TopLine=87
+Caret=78,102
