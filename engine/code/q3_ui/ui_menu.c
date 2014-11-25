@@ -435,7 +435,7 @@ static void Main_MenuDraw( void ) {
         } else {
 // STONELANCE
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2012 Team Q3Rally | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2014 Team Q3Rally | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         }

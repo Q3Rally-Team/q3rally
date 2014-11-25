@@ -2,6 +2,8 @@
 Compilator.SaveAll=0
 Compilator.Capture=0
 Compilator.HideOutput=0
+Compilator.ProgSaveAll=0
+Compilator.ProgRunSelection=0
 Compilator.LogType=0
 DefaultDir=D:\q3rallysa\engine
 DefaultCPIndex=0
@@ -873,7 +875,7 @@ q3rallycode
 16=engine\code\q3_ui\ui_rally_credits.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_menu.c
+Selected=engine\code\q3_ui\ui_rally_credits.c
 [engine\code\qcommon\q_shared.h]
 TopLine=47
 Caret=34,58
@@ -884,7 +886,7 @@ Caret=1,1
 TopLine=224
 Caret=17,238
 [engine\code\game\bg_public.h]
-TopLine=91
+TopLine=33
 Caret=33,33
 [engine\code\cgame\cg_rally_hud.c]
 TopLine=831
@@ -893,7 +895,7 @@ Caret=1,845
 TopLine=630
 Caret=1,644
 [engine\code\game\g_local.h]
-TopLine=41
+TopLine=33
 Caret=1,33
 [engine\code\qcommon\files.c]
 TopLine=185
