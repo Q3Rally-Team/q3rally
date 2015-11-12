@@ -664,7 +664,7 @@ typedef struct {
 	refdef_t	refdef;
 // Q3Rally Code Start
 	refdef_t	mirrorRefdef;
-	refdef_t	mmapRefdef;	//TBB minimap rendering
+//	refdef_t	mmapRefdef;	//TBB minimap rendering
 // Q3Rally Code END
 	vec3_t		refdefViewAngles;		// will be converted to refdef.viewaxis
 
@@ -1107,7 +1107,7 @@ typedef struct {
 
 	qhandle_t	rearviewMirrorShader;
 	//TBB - minimap handling
-	qhandle_t	MMapShader;
+//	qhandle_t	MMapShader;
 	//TBB FIN
 	qhandle_t	turboModel;
 // Q3Rally Code END
@@ -1516,7 +1516,7 @@ extern	vmCvar_t		cg_minSkidLength;
 extern	vmCvar_t		cg_controlMode;
 extern	vmCvar_t		cg_manualShift;
 extern	vmCvar_t		cg_drawRearView;
-extern	vmCvar_t		cg_drawMMap; //TBB - minimap
+// extern	vmCvar_t		cg_drawMMap; //TBB - minimap
 extern	vmCvar_t		cg_checkpointArrowMode;
 
 extern	vmCvar_t		cg_atmosphericLevel;
@@ -1950,7 +1950,7 @@ might have to make a cvar for displaying it plus opacity
 trying to get this to work like the minimap from UrT
 from scratch. must try to make it 2d bitmap
 */
-void CG_DrawMMap( float x, float y, float w, float h );
+// void CG_DrawMMap( float x, float y, float w, float h );
 //TBB FIN
 
 //

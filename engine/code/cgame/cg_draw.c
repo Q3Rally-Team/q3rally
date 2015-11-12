@@ -3355,7 +3355,7 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	if ( !cg.scoreBoardShowing )
 		CG_DrawRearviewMirror( 170, 10, 300, 75);
 	
-	CG_DrawMMap( 0, 50, 160, 120); //TBB draw minimap function
+// 	CG_DrawMMap( 0, 50, 160, 120); //TBB draw minimap function
 		
 // Q3Rally Code END
 

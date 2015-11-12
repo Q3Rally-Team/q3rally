@@ -242,7 +242,7 @@ vmCvar_t	cg_manualShift;
 vmCvar_t	cg_minSkidLength;
 vmCvar_t	cg_drawRearView;
 vmCvar_t	cg_checkpointArrowMode;
-vmCvar_t	cg_drawMMap;	//TBB - minimap cvar
+// vmCvar_t	cg_drawMMap;	//TBB - minimap cvar
 
 vmCvar_t	cg_developer;
 
@@ -344,7 +344,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
 	{ &cg_minSkidLength, "cg_minSkidLength", "12", CVAR_ARCHIVE },
 	{ &cg_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
-	{ &cg_drawMMap, "cg_drawMMap", "1", CVAR_ARCHIVE }, //TBB minimap - default on
+//	{ &cg_drawMMap, "cg_drawMMap", "1", CVAR_ARCHIVE }, //TBB minimap - default on
 	{ &cg_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
@@ -1053,7 +1053,7 @@ static void CG_RegisterGraphics( void ) {
 
 // Q3Rally Code Start
 	cgs.media.rearviewMirrorShader = trap_R_RegisterShaderNoMip("gfx/rearview/frame" );
-	cgs.media.MMapShader = trap_R_RegisterShaderNoMip("gfx/hud/minimap" ); //TBB mmap
+//	cgs.media.MMapShader = trap_R_RegisterShaderNoMip("gfx/hud/minimap" ); //TBB mmap
 
 	// skid shaders
 	cgs.media.SMAsphaltShader = trap_R_RegisterShader("gfx/skidmarks/asphalt" );

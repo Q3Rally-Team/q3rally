@@ -762,7 +762,7 @@ static int CG_CalcViewValues( void ) {
 		and not following player movement
 		may have to set new standard in level design
 		(center the entire map to origin)
-	*/
+	
 	if( cg_drawMMap.integer )
 	{
 		vec3_t		angles;
@@ -818,7 +818,7 @@ static int CG_CalcViewValues( void ) {
 		cg.mmapRefdef.vieworg[0] = 0; // + : forward
 		cg.mmapRefdef.vieworg[1] = 0; // + : left
 		cg.mmapRefdef.vieworg[2] = 512; // + : up
-		*/
+		
 
 		VectorCopy( ps->origin, cg.mmapRefdef.vieworg );
 

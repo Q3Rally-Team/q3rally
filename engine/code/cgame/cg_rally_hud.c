@@ -131,7 +131,7 @@ might have to make a cvar for displaying it plus opacity
 trying to get this to work like the minimap from UrT
 from scratch. must try to make it 2d bitmap
 ================
-*/
+
 
 void CG_DrawMMap( float x, float y, float w, float h ) {
 	int		i;
@@ -152,7 +152,7 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 		return;
 	
 	if ( (cgs.gametype != GT_RACING) || (cgs.gametype != GT_TEAM_RACING) )
-		return; */
+		return; 
 
 	mx = x ;
 	my = y ;
@@ -183,7 +183,7 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 
 	//TBB
 	/*only add players to minimap scene
-	add ctf flag entities later*/
+	add ctf flag entities later
 	if (cg_rearViewRenderLevel.integer & RL_MARKS){
 		CG_AddMarks();
 	}
