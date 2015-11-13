@@ -164,7 +164,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -856,10 +856,10 @@ q3rallycode
 		engine\voip-readme.txt
 		engine\resync_svn.sh
 [Open project files]
-0=engine\code\game\g_missile.c
+0=engine\code\qcommon\q_shared.h
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_missile.c
-[engine\code\game\g_missile.c]
-TopLine=1
-Caret=24,4
+Selected=engine\code\qcommon\q_shared.h
+[engine\code\qcommon\q_shared.h]
+TopLine=42
+Caret=39,58
