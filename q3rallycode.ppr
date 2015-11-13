@@ -164,7 +164,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -485,7 +485,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			+qcommon
+			-qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -856,26 +856,10 @@ q3rallycode
 		engine\voip-readme.txt
 		engine\resync_svn.sh
 [Open project files]
-0=engine\code\cgame\cg_draw.c
-1=engine\code\cgame\cg_local.h
-2=engine\code\cgame\cg_main.c
-3=engine\code\cgame\cg_rally_hud.c
-4=engine\code\cgame\cg_view.c
+0=engine\code\game\g_missile.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_view.c
-[engine\code\cgame\cg_draw.c]
-TopLine=3340
-Caret=4,3358
-[engine\code\cgame\cg_local.h]
-TopLine=1931
-Caret=4,1953
-[engine\code\cgame\cg_main.c]
-TopLine=1038
-Caret=3,1056
-[engine\code\cgame\cg_rally_hud.c]
-TopLine=201
-Caret=1,185
-[engine\code\cgame\cg_view.c]
-TopLine=832
-Caret=3,821
+Selected=engine\code\game\g_missile.c
+[engine\code\game\g_missile.c]
+TopLine=171
+Caret=1,177

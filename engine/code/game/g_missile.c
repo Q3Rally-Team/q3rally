@@ -223,6 +223,23 @@ void G_ExplodeMissile( gentity_t *ent ) {
 //Q3Rally Code Start
 
 /*
+================
+G_MissileDie
+
+Destroy a missile
+================
+*/
+void G_MissileDie( gentity_t *self, gentity_t *inflictor,
+
+        gentity_t *attacker, int damage, int mod ) {
+        if (inflictor == self)
+                return;
+        self->takedamage = qfalse;
+        self->think = G_ExplodeMissile;
+        self->nextthink = level.time + 10;
+}
+
+/*
 =================
 fire_flame
 =================
@@ -500,7 +517,8 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
 		return;
 	}
-
+    ent->takedamage = qfalse;
+    
 #ifdef MISSIONPACK
 	if ( other->takedamage ) {
 		if ( ent->s.weapon != WP_PROX_LAUNCHER ) {
@@ -1028,6 +1046,14 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->classname = "rocket";
 	bolt->nextthink = level.time + 15000;
 	bolt->think = G_ExplodeMissile;
+  bolt->health = 5;
+  bolt->takedamage = qtrue;
+  bolt->die = G_MissileDie;
+  bolt->r.contents = CONTENTS_BODY;
+    VectorSet(bolt->r.mins, -10, -3, 0);
+    VectorCopy(bolt->r.mins, bolt->r.absmin);
+    VectorSet(bolt->r.maxs, 10, 3, 6);
+    VectorCopy(bolt->r.maxs, bolt->r.absmax);
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
