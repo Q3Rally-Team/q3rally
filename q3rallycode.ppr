@@ -861,5 +861,5 @@ q3rallycode
 Main=
 Selected=engine\code\game\g_missile.c
 [engine\code\game\g_missile.c]
-TopLine=171
-Caret=1,177
+TopLine=1
+Caret=24,4
