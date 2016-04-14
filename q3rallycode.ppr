@@ -94,7 +94,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -857,9 +857,13 @@ q3rallycode
 		engine\resync_svn.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
+1=engine\code\cgame\cg_draw.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=42
 Caret=39,58
+[engine\code\cgame\cg_draw.c]
+TopLine=1
+Caret=1,1

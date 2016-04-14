@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2015 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2009 Q3Rally Team (Per Thormann - perle@q3rally.com)
 
 This file is part of q3rally source code.
 
@@ -762,7 +762,7 @@ static int CG_CalcViewValues( void ) {
 		and not following player movement
 		may have to set new standard in level design
 		(center the entire map to origin)
-	
+	*/
 	if( cg_drawMMap.integer )
 	{
 		vec3_t		angles;
@@ -818,7 +818,7 @@ static int CG_CalcViewValues( void ) {
 		cg.mmapRefdef.vieworg[0] = 0; // + : forward
 		cg.mmapRefdef.vieworg[1] = 0; // + : left
 		cg.mmapRefdef.vieworg[2] = 512; // + : up
-		
+		*/
 
 		VectorCopy( ps->origin, cg.mmapRefdef.vieworg );
 
