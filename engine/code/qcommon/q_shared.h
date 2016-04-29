@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   #define GAMENAME_FOR_MASTER		"Q3Rally"	// must NOT contain whitespace
 //  #define LEGACY_PROTOCOL	// You probably don't need this for your standalone game
 #else
-  #define PRODUCT_NAME			"ioq3"
+  #define PRODUCT_NAME			"Q3Rally"
   #define BASEGAME			"baseq3"
   #define CLIENT_WINDOW_TITLE     	"ioquake3"
   #define CLIENT_WINDOW_MIN_TITLE 	"ioq3"
@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.0.0.4 r132"
+#define PRODUCT_VERSION "v0.0.0.4 r134"
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION

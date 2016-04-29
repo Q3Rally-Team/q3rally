@@ -99,7 +99,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         UI_DrawProportionalString( 320, y, "Cyberdemon, Killaz and skw|d", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-        UI_DrawString( 320, y, Q3_VERSION " (c) 2002 - 2014 | 12 Years now... | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
+        UI_DrawString( 320, y, Q3_VERSION " (c) 2002 - 2016 | 14 Years now... | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 }
 
 
