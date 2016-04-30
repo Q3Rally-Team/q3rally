@@ -1,0 +1,14 @@
+{
+map "q3rdavid5"
+longname "Underground Battle Arena"
+type "q3r_dm q3r_team_dm"
+starts "4"
+laps "-"
+length "-"
+checkpoints "-"
+observerspots "0"
+weapons "4"
+powerups "0"
+reversable "0"
+author "|CE"
+}
