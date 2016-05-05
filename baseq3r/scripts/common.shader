@@ -453,3 +453,16 @@ textures/common/q3r_checkpoint_a
 		AnimMap 2 textures/common/q3r_checkpoint_a.tga textures/common/q3r_checkpoint_ainv.tga
 	}
 }
+
+textures/common/energypad
+{
+	qer_editorimage textures/sfx/bluegoal.jpg
+	surfaceparm nolightmap
+	cull twosided
+	{
+		map textures/sfx/bluegoal.jpg
+		blendFunc GL_ONE GL_SRC_ALPHA
+		tcGen environment
+		tcMod turb 0 0.25 0 0.05
+	}
+}

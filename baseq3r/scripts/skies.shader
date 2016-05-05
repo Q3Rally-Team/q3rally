@@ -1,3 +1,79 @@
+textures/skies/hellsky
+{
+	qer_editorimage textures/skies/dimclouds.tga
+	surfaceparm noimpact
+	surfaceparm nomarks
+	surfaceparm nolightmap
+
+	q3map_sun 4 3 3 65 290 75
+	q3map_surfacelight 50
+	skyparms - 512 -
+
+	{
+		map textures/skies/dimclouds.tga
+		tcMod scroll 0.05 0
+		tcMod scale 2 2
+		depthWrite
+	}
+}
+
+textures/skies/nightsky_xian_dm1
+{
+	surfaceparm noimpact
+	surfaceparm nolightmap
+
+	q3map_surfacelight 300
+	q3map_sun 1 1 1 100 -41 58
+
+	qer_editorimage textures/skies/xnight2_up.tga
+
+
+	skyparms env/xnight2 - -
+}
+
+textures/skies/nightsky_xian_dm15
+{
+	qer_editorimage textures/skies/xnight2_up.tga
+	surfaceparm nolightmap
+	surfaceparm noimpact
+
+	q3map_surfacelight 900
+	q3map_sun 1 1 1 100 -58 58
+	skyparms env/xnight2 - -
+
+
+}
+
+textures/skies/kc_dm10sky
+{
+	q3map_lightimage textures/skies/pjbasesky.tga
+	q3map_lightsubdivide 512 
+	q3map_globaltexture
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	
+	q3map_sun	.5 .6 .8 90 225 55
+	q3map_surfacelight 150
+
+	qer_editorimage textures/skies/bluetopclouds.tga
+
+	skyparms - 512 -
+
+	{
+		map textures/skies/bluedimclouds.tga
+		tcMod scale 3 2
+		tcMod scroll 0.15 0.15
+	}
+	{
+		map textures/skies/topclouds.tga
+		blendFunc GL_ONE GL_ONE
+		tcMod scale 3 3
+		tcMod scroll 0.05 0.05
+	}
+
+
+}
+
 textures/q3r_skies/env/trainyard/trainyard
 {
 	qer_editorimage textures/q3r_skies/env/trainyard/trainyard_lf.tga
@@ -29,6 +105,33 @@ textures/q3r_skies/clouds
 		depthWrite
 	}
 }
+
+textures/skies/pjbasesky_arena1_sky
+{
+	qer_editorimage textures/skies/pjbasesky.tga
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	q3map_globaltexture
+	q3map_lightsubdivide 256 
+	q3map_sun	0.266383 0.274632 0.358662 150 60 85
+	q3map_surfacelight 100
+
+	skyparms - 512 -
+	
+	{
+		map textures/skies/dimclouds.tga
+		tcMod scroll 0.01 0.01
+		tcMod scale 3 3
+		depthWrite
+	}
+	{
+		map textures/skies/pjbasesky.tga
+		blendfunc GL_ONE GL_ONE
+		tcMod scroll -0.01 -0.01
+		tcMod scale 5 5
+	}
+}
+
 
 textures/q3r_skies/env/mp_us/mp_us
 {

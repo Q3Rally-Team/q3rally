@@ -1,65 +1,72 @@
 {
-name		Anarki
+name		Chloe
 model		roadster/blue
-aifile		bots/default_c.c
+aifile		bots/angelyss_c.c
 }
 
 {
-name		Bones
+name		Janine
 model		reaper/yellow
-aifile		bots/default_c.c
+aifile		bots/arachna_c.c
 }
 
 {
-name		Doom
+name		Jennifer
 model		mini/blue
-aifile		bots/default_c.c
+aifile		bots/ayumi_c.c
 }
 
 {
-name		Grunt
+name		Samuel
 model		alpine/stomped
-aifile		bots/default_c.c
+aifile		bots/beret_c.c
 }
 
 {
-name		Hunter
+name		Jim
 model		raptor/jp
-aifile		bots/default_c.c
+aifile		bots/dark_c.c
 }
 
 {
-name		Klesk
+name		Bobby
 model		slingshot/yellow
-aifile		bots/default_c.c
+aifile		bots/gargoyle_c.c
 }
 
 {
-name		Major
+name		Sam
 model		sidepipe/green
-aifile		bots/default_c.c
+aifile		bots/grism_c.c
 }
 
 {
-name		Mynx
+name		Dean
 model		alpine/green
-aifile		bots/default_c.c
+aifile		bots/grunt_c.c
 }
 
 {
-name		Orbb
+name		Carla
 model		reaper/green
-aifile		bots/default_c.c
+aifile		bots/jenna_c.c
 }
 
 {
-name		Sarge
+name		Tobias
 model		raptor/black
-aifile		bots/default_c.c
+aifile		bots/kyonshi_c.c
 }
 
 {
-name		Tankjr
+name		Alexandra
 model		mini/green
-aifile		bots/default_c.c
+aifile		bots/liz_c.c
 }
+
+{
+name		Paul
+model		sidepipe/blue
+aifile		bots/grism_c.c
+}
+
