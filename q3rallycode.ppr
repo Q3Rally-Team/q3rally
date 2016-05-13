@@ -857,21 +857,21 @@ q3rallycode
 		engine\resync_svn.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\AL\al.h
-2=engine\code\q3_ui\ui_rally_servers.c
-3=engine\code\q3_ui\ui_removebots.c
+1=engine\code\q3_ui\ui_rally_controls.c
+2=engine\code\ui\ui_main.c
+3=engine\code\q3_ui\ui_controls2.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_removebots.c
+Selected=engine\code\q3_ui\ui_rally_controls.c
 [engine\code\qcommon\q_shared.h]
-TopLine=15
+TopLine=31
 Caret=39,58
-[engine\code\AL\al.h]
-TopLine=273
-Caret=1,289
-[engine\code\q3_ui\ui_rally_servers.c]
-TopLine=1780
-Caret=1,1796
-[engine\code\q3_ui\ui_removebots.c]
-TopLine=210
-Caret=54,306
+[engine\code\q3_ui\ui_rally_controls.c]
+TopLine=829
+Caret=1,845
+[engine\code\ui\ui_main.c]
+TopLine=1719
+Caret=1,1735
+[engine\code\q3_ui\ui_controls2.c]
+TopLine=688
+Caret=59,705

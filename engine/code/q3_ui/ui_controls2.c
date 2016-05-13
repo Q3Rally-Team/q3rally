@@ -701,8 +701,8 @@ static void Controls_DrawKeyBinding( void *self )
 		else
 		{
 			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.78, "Press ENTER or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "Press BACKSPACE to clear", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "Press ENTER or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.86, "Press BACKSPACE to clear", UI_SMALLFONT|UI_CENTER, colorWhite );
 		}
 	}
 	else
