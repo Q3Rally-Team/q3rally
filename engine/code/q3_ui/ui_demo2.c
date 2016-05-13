@@ -131,8 +131,7 @@ static void Demos_MenuInit( void ) {
 	s_demos.banner.color			= color_white;
 	s_demos.banner.style			= UI_CENTER;
 
-	s_demos.left.generic.type		= MTYPE_BITMAP;
-	s_demos.left.generic.name    =ART_LEFT0;
+	s_demos.left.generic.type		= MTYPE_PTEXT;
 	s_demos.left.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_demos.left.generic.x			= 260;
 	s_demos.left.generic.y			= 480-70;
@@ -140,10 +139,8 @@ static void Demos_MenuInit( void ) {
 	s_demos.left.generic.callback	= Demos_MenuEvent;
 	s_demos.left.width				= 20;
 	s_demos.left.height				= 20;
-	s_demos.left.focuspic			= ART_LEFT1;
 
-	s_demos.right.generic.type		= MTYPE_BITMAP;
-	s_demos.right.generic.name    = ART_RIGHT0;
+	s_demos.right.generic.type		= MTYPE_PTEXT;
 	s_demos.right.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_demos.right.generic.x			= 400;
 	s_demos.right.generic.y			= 480-70;
@@ -151,7 +148,6 @@ static void Demos_MenuInit( void ) {
 	s_demos.right.generic.callback	= Demos_MenuEvent;
 	s_demos.right.width				= 20;
 	s_demos.right.height			= 20;
-	s_demos.right.focuspic			= ART_RIGHT1;
 
 	s_demos.back.generic.type		= MTYPE_PTEXT;
 	s_demos.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;

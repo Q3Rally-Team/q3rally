@@ -290,8 +290,7 @@ static void UI_CinematicsMenu_Init( void ) {
 		cinematicsMenuInfo.cin_end.generic.flags |= QMF_GRAYED;
 	}
 
-	cinematicsMenuInfo.back.generic.type		= MTYPE_BITMAP;
-	cinematicsMenuInfo.back.generic.name		= ART_BACK0;
+	cinematicsMenuInfo.back.generic.type		= MTYPE_PTEXT;
 	cinematicsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	cinematicsMenuInfo.back.generic.id			= ID_BACK;
 	cinematicsMenuInfo.back.generic.callback	= UI_CinematicsMenu_BackEvent;
@@ -299,7 +298,6 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.back.generic.y			= 480-64;
 	cinematicsMenuInfo.back.width				= 128;
 	cinematicsMenuInfo.back.height				= 64;
-	cinematicsMenuInfo.back.focuspic			= ART_BACK1;
 
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.banner );
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.framel );

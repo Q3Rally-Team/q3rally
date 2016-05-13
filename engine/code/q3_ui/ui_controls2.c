@@ -1263,8 +1263,7 @@ static void Controls_MenuInit( void )
 	s_controls.misc.style			= UI_RIGHT;
 	s_controls.misc.color			= color_red;
 
-	s_controls.back.generic.type	 = MTYPE_BITMAP;
-	s_controls.back.generic.name     = ART_BACK0;
+	s_controls.back.generic.type	 = MTYPE_PTEXT;
 	s_controls.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_controls.back.generic.x		 = 0;
 	s_controls.back.generic.y		 = 480-64;

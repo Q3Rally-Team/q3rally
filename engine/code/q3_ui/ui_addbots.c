@@ -360,8 +360,7 @@ static void UI_AddBotsMenu_Init( void ) {
 		addBotsMenuInfo.team.generic.flags	= QMF_GRAYED;
 	}
 
-	addBotsMenuInfo.go.generic.type			= MTYPE_BITMAP;
-	addBotsMenuInfo.go.generic.name			= ART_FIGHT0;
+	addBotsMenuInfo.go.generic.type			= MTYPE_PTEXT;
 	addBotsMenuInfo.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	addBotsMenuInfo.go.generic.id			= ID_GO;
 	addBotsMenuInfo.go.generic.callback		= UI_AddBotsMenu_FightEvent;
@@ -371,8 +370,7 @@ static void UI_AddBotsMenu_Init( void ) {
 	addBotsMenuInfo.go.height  				= 64;
 	addBotsMenuInfo.go.focuspic				= ART_FIGHT1;
 
-	addBotsMenuInfo.back.generic.type		= MTYPE_BITMAP;
-	addBotsMenuInfo.back.generic.name		= ART_BACK0;
+	addBotsMenuInfo.back.generic.type		= MTYPE_PTEXT;
 	addBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	addBotsMenuInfo.back.generic.id			= ID_BACK;
 	addBotsMenuInfo.back.generic.callback	= UI_AddBotsMenu_BackEvent;
