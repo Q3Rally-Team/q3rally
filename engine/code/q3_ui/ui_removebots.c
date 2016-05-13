@@ -293,8 +293,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 		removeBotsMenuInfo.bots[n].style			= UI_LEFT|UI_SMALLFONT;
 	}
 
-	removeBotsMenuInfo.delete.generic.type		= MTYPE_BITMAP;
-	removeBotsMenuInfo.delete.generic.name		= ART_DELETE0;
+	removeBotsMenuInfo.delete.generic.type		= MTYPE_PTEXT;
 	removeBotsMenuInfo.delete.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.delete.generic.id		= ID_DELETE;
 	removeBotsMenuInfo.delete.generic.callback	= UI_RemoveBotsMenu_DeleteEvent;
@@ -304,8 +303,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.delete.height  			= 64;
 	removeBotsMenuInfo.delete.focuspic			= ART_DELETE1;
 
-	removeBotsMenuInfo.back.generic.type		= MTYPE_BITMAP;
-	removeBotsMenuInfo.back.generic.name		= ART_BACK0;
+	removeBotsMenuInfo.back.generic.type		= MTYPE_PTEXT;
 	removeBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.back.generic.id			= ID_BACK;
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
