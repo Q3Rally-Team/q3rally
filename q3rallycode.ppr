@@ -867,15 +867,16 @@ q3rallycode
 8=engine\code\q3_ui\ui_mods.c
 9=engine\code\q3_ui\ui_network.c
 10=engine\code\q3_ui\ui_playersettings.c
+11=engine\code\q3_ui\ui_ingame.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_addbots.c
 [engine\code\qcommon\q_shared.h]
-TopLine=42
+TopLine=40
 Caret=39,58
 [engine\code\q3_ui\ui_addbots.c]
-TopLine=355
-Caret=41,371
+TopLine=357
+Caret=10,70
 [engine\code\q3_ui\ui_cdkey.c]
 TopLine=259
 Caret=1,277
@@ -889,8 +890,8 @@ Caret=1,1652
 TopLine=233
 Caret=1,249
 [engine\code\q3_ui\ui_display.c]
-TopLine=282
-Caret=1,298
+TopLine=40
+Caret=1,56
 [engine\code\q3_ui\ui_loadconfig.c]
 TopLine=238
 Caret=1,254
@@ -903,3 +904,6 @@ Caret=1,261
 [engine\code\q3_ui\ui_playersettings.c]
 TopLine=1459
 Caret=1,1475
+[engine\code\q3_ui\ui_ingame.c]
+TopLine=45
+Caret=1,61

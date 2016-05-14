@@ -66,8 +66,8 @@ typedef struct {
 	menutext_s		bots[7];
 	menulist_s		skill;
 	menulist_s		team;
-	menubitmap_s	go;
-	menubitmap_s	back;
+	menutext_s	go;
+	menutext_s	back;
 
 	int				numBots;
 	int				delay;
