@@ -175,8 +175,7 @@ static void LoadConfig_MenuInit( void ) {
 	s_configs.right.height			= ARROWS_HEIGHT;
 	s_configs.right.focuspic		= ART_ARROWRIGHT;
 
-	s_configs.back.generic.type		= MTYPE_BITMAP;
-	s_configs.back.generic.name		= ART_BACK0;
+	s_configs.back.generic.type		= MTYPE_PTEXT;
 	s_configs.back.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_configs.back.generic.id		= ID_BACK;
 	s_configs.back.generic.callback	= LoadConfig_MenuEvent;
@@ -184,7 +183,6 @@ static void LoadConfig_MenuInit( void ) {
 	s_configs.back.generic.y		= 480-64;
 	s_configs.back.width			= 128;
 	s_configs.back.height			= 64;
-	s_configs.back.focuspic			= ART_BACK1;
 
 	s_configs.go.generic.type		= MTYPE_BITMAP;
 	s_configs.go.generic.name		= ART_FIGHT0;

@@ -180,8 +180,7 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.framer.width				= 256;
 	s_mods.framer.height			= 334;
 
-	s_mods.back.generic.type		= MTYPE_BITMAP;
-	s_mods.back.generic.name		= ART_BACK0;
+	s_mods.back.generic.type		= MTYPE_PTEXT;
 	s_mods.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_mods.back.generic.id			= ID_BACK;
 	s_mods.back.generic.callback	= UI_Mods_MenuEvent;
@@ -189,7 +188,6 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.back.generic.y			= 480-64;
 	s_mods.back.width				= 128;
 	s_mods.back.height				= 64;
-	s_mods.back.focuspic			= ART_BACK1;
 
 	s_mods.go.generic.type			= MTYPE_BITMAP;
 	s_mods.go.generic.name			= ART_FIGHT0;
