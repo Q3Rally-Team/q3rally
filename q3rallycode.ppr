@@ -869,16 +869,16 @@ q3rallycode
 10=engine\code\q3_ui\ui_playersettings.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_addbots.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=42
-Caret=1,58
+Caret=39,58
 [engine\code\q3_ui\ui_addbots.c]
-TopLine=359
-Caret=38,369
+TopLine=355
+Caret=41,371
 [engine\code\q3_ui\ui_cdkey.c]
-TopLine=249
-Caret=1,265
+TopLine=259
+Caret=1,277
 [engine\code\q3_ui\ui_cinematics.c]
 TopLine=309
 Caret=1,325
