@@ -296,8 +296,6 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.delete.generic.callback	= UI_RemoveBotsMenu_DeleteEvent;
 	removeBotsMenuInfo.delete.generic.x			= 320+128;
 	removeBotsMenuInfo.delete.generic.y			= 256+128-64;
-	removeBotsMenuInfo.delete.width  			= 128;
-	removeBotsMenuInfo.delete.height  			= 64;
   removeBotsMenuInfo.delete.string			= "DELETE";
 	removeBotsMenuInfo.delete.color			= color_orange;
 	removeBotsMenuInfo.delete.style			= UI_LEFT|UI_SMALLFONT;
@@ -308,8 +306,6 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
 	removeBotsMenuInfo.back.generic.x			= 320-128;
 	removeBotsMenuInfo.back.generic.y			= 256+128-64;
-	removeBotsMenuInfo.back.width				= 128;
-	removeBotsMenuInfo.back.height				= 64;
   removeBotsMenuInfo.back.string			= "< BACK";
 	removeBotsMenuInfo.back.color			= color_orange;
 	removeBotsMenuInfo.back.style			= UI_RIGHT|UI_SMALLFONT;
