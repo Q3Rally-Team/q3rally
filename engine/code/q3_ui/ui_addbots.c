@@ -360,15 +360,30 @@ static void UI_AddBotsMenu_Init( void ) {
 		addBotsMenuInfo.team.generic.flags	= QMF_GRAYED;
 	}
 
-	addBotsMenuInfo.go.generic.type			= MTYPE_PTEXT;
+	addBotsMenuInfo.go.generic.type			   = MTYPE_PTEXT;
+	addBotsMenuInfo.go.generic.flags		   = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	addBotsMenuInfo.go.generic.id			     = ID_GO;
+	addBotsMenuInfo.go.generic.callback		 = UI_AddBotsMenu_FightEvent;
+	addBotsMenuInfo.go.generic.x			     = 320+128;
+	addBotsMenuInfo.go.generic.y			     = 256+128-64;
+  addBotsMenuInfo.go.string					     = "GO";
+	addBotsMenuInfo.go.color					     = text_color_normal;
+	addBotsMenuInfo.go.style				       = UI_RIGHT | UI_SMALLFONT;
+
+/*         to remove
+
+  addBotsMenuInfo.go.generic.type			= MTYPE_BITMAP;
+	addBotsMenuInfo.go.generic.name			= ART_FIGHT0;
 	addBotsMenuInfo.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	addBotsMenuInfo.go.generic.id			= ID_GO;
 	addBotsMenuInfo.go.generic.callback		= UI_AddBotsMenu_FightEvent;
-	addBotsMenuInfo.go.generic.x			= 320+128;
+	addBotsMenuInfo.go.generic.x			= 320+128-128;
 	addBotsMenuInfo.go.generic.y			= 256+128-64;
-  addBotsMenuInfo.go.string					= "GO";
-	addBotsMenuInfo.go.color					= text_color_normal;
-	addBotsMenuInfo.go.style					= UI_RIGHT | UI_SMALLFONT;
+	addBotsMenuInfo.go.width  				= 128;
+	addBotsMenuInfo.go.height  				= 64;
+	addBotsMenuInfo.go.focuspic				= ART_FIGHT1;
+
+*/
 
 	addBotsMenuInfo.back.generic.type		= MTYPE_PTEXT;
 	addBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
