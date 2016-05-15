@@ -426,7 +426,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			-q3_ui
+			+q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -868,6 +868,7 @@ q3rallycode
 9=engine\code\q3_ui\ui_network.c
 10=engine\code\q3_ui\ui_playersettings.c
 11=engine\code\q3_ui\ui_ingame.c
+12=engine\code\q3_ui\ui_removebots.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -875,7 +876,7 @@ Selected=engine\code\qcommon\q_shared.h
 TopLine=40
 Caret=40,58
 [engine\code\q3_ui\ui_addbots.c]
-TopLine=361
+TopLine=353
 Caret=21,373
 [engine\code\q3_ui\ui_cdkey.c]
 TopLine=246
@@ -907,3 +908,6 @@ Caret=1,1475
 [engine\code\q3_ui\ui_ingame.c]
 TopLine=45
 Caret=1,61
+[engine\code\q3_ui\ui_removebots.c]
+TopLine=263
+Caret=49,297

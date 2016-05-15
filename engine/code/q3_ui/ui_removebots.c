@@ -60,15 +60,12 @@ typedef struct {
 
 	menutext_s		banner;
 	menubitmap_s	background;
-
-	menubitmap_s	arrows;
+  menubitmap_s	arrows;
 	menubitmap_s	up;
 	menubitmap_s	down;
-
-	menutext_s		bots[7];
-
-	menubitmap_s	delete;
-	menubitmap_s	back;
+  menutext_s		bots[7];
+  menutext_s	delete;
+	menutext_s	back;
 
 	int				numBots;
 	int				baseBotNum;
@@ -297,21 +294,25 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.delete.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.delete.generic.id		= ID_DELETE;
 	removeBotsMenuInfo.delete.generic.callback	= UI_RemoveBotsMenu_DeleteEvent;
-	removeBotsMenuInfo.delete.generic.x			= 320+128-128;
+	removeBotsMenuInfo.delete.generic.x			= 320+128;
 	removeBotsMenuInfo.delete.generic.y			= 256+128-64;
 	removeBotsMenuInfo.delete.width  			= 128;
 	removeBotsMenuInfo.delete.height  			= 64;
-	removeBotsMenuInfo.delete.focuspic			= ART_DELETE1;
+  removeBotsMenuInfo.delete.string			= "DELETE";
+	removeBotsMenuInfo.delete.color			= color_orange;
+	removeBotsMenuInfo.delete.style			= UI_LEFT|UI_SMALLFONT;
 
 	removeBotsMenuInfo.back.generic.type		= MTYPE_PTEXT;
-	removeBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	removeBotsMenuInfo.back.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.back.generic.id			= ID_BACK;
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
 	removeBotsMenuInfo.back.generic.x			= 320-128;
 	removeBotsMenuInfo.back.generic.y			= 256+128-64;
 	removeBotsMenuInfo.back.width				= 128;
 	removeBotsMenuInfo.back.height				= 64;
-	removeBotsMenuInfo.back.focuspic			= ART_BACK1;
+  removeBotsMenuInfo.back.string			= "< BACK";
+	removeBotsMenuInfo.back.color			= color_orange;
+	removeBotsMenuInfo.back.style			= UI_RIGHT|UI_SMALLFONT;
 
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.background );
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.banner );
