@@ -364,7 +364,7 @@ static void UI_AddBotsMenu_Init( void ) {
 	addBotsMenuInfo.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	addBotsMenuInfo.go.generic.id			= ID_GO;
 	addBotsMenuInfo.go.generic.callback		= UI_AddBotsMenu_FightEvent;
-	addBotsMenuInfo.go.generic.x			= 320+128-128;
+	addBotsMenuInfo.go.generic.x			= 320+128;
 	addBotsMenuInfo.go.generic.y			= 256+128-64;
   addBotsMenuInfo.go.string					= "GO";
 	addBotsMenuInfo.go.color					= text_color_normal;

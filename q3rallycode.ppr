@@ -875,8 +875,8 @@ Selected=engine\code\q3_ui\ui_addbots.c
 TopLine=40
 Caret=39,58
 [engine\code\q3_ui\ui_addbots.c]
-TopLine=357
-Caret=10,70
+TopLine=356
+Caret=42,367
 [engine\code\q3_ui\ui_cdkey.c]
 TopLine=259
 Caret=1,277
