@@ -870,10 +870,10 @@ q3rallycode
 11=engine\code\q3_ui\ui_ingame.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_addbots.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=40
-Caret=39,58
+Caret=40,58
 [engine\code\q3_ui\ui_addbots.c]
 TopLine=361
 Caret=21,373
