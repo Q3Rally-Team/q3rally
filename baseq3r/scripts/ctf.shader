@@ -792,7 +792,8 @@ textures/q3r_ctf/q3r_bluelong_01
 }
 
 textures/q3r_ctf/q3r_redlong_01
-{}
+{
+}
 
 
 ///////////////////////////
