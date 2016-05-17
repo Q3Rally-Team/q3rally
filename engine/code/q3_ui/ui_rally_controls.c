@@ -794,12 +794,12 @@ static void Controls_DrawKeyBinding( void *self )
 {
 	menuaction_s*	a;
 	int				x;
-/	int				y;
+	int				y;
 	int				b1;
-//	int				b2;
+	int				b2;
 	qboolean		c;
 	char			name[32];
-//	char			name2[32];
+	char			name2[32];
 
 	a = (menuaction_s*) self;
 
@@ -816,16 +816,16 @@ static void Controls_DrawKeyBinding( void *self )
 		trap_Key_KeynumToStringBuf( b1, name, 32 );
 		Q_strupr(name);
 
-//		b2 = g_bindings[a->generic.id].bind2;
-//		if (b2 != -1)
-//		{
-//			trap_Key_KeynumToStringBuf( b2, name2, 32 );
-//			Q_strupr(name2);
+		b2 = g_bindings[a->generic.id].bind2;
+		if (b2 != -1)
+		{
+			trap_Key_KeynumToStringBuf( b2, name2, 32 );
+			Q_strupr(name2);
 
-//			strcat( name, " or " );
+			strcat( name, " or " );
         strcat( name, 0 );
-//			strcat( name, name2 );
-//		}
+			strcat( name, name2 );
+		}
 	}
 
 	if (c)

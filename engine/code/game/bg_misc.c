@@ -364,25 +364,6 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
-//Q3Rally Code Start
-
-/*QUAKED weapon_flamethrower (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-{
-	"weapon_flamethrower",
-	"sound/misc/w_pkup.wav",
-	{ "models/weapons2/flamethrower/flamethrower.md3",
-	0, 0, 0},
-/* icon */	"icons/iconw_flame",
-/* pickup */	"Flame Thrower",
-	20,
-	IT_WEAPON,
-	WP_FLAME_THROWER,
-/* precache */ "",
-/* sounds */ ""
-},
-
-//Q3Rally Code END
 
 /*QUAKED weapon_grapplinghook (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
@@ -403,6 +384,26 @@ gitem_t	bg_itemlist[] =
 	},
 */
 // END
+
+//Q3Rally Code Start
+
+/*QUAKED weapon_flamethrower (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+{
+	"weapon_flamethrower",
+	"sound/misc/w_pkup.wav",
+	{ "models/weapons2/flamethrower/flamethrower.md3",
+	0, 0, 0},
+/* icon */	"icons/iconw_flame",
+/* pickup */	"Flame Thrower",
+	20,
+	IT_WEAPON,
+	WP_FLAME_THROWER,
+/* precache */ "",
+/* sounds */ ""
+},
+
+//Q3Rally Code END
 
 // STONELANCE
 	// rally_weapon_smoke
