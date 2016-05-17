@@ -753,12 +753,12 @@ q3rallycode
 				engine\misc\msvc\quake3.vcproj
 				engine\misc\msvc\ui.def
 				engine\misc\msvc\ui.vcproj
-			+nsis
+			-nsis
 				engine\misc\nsis\Makefile
 				engine\misc\nsis\q3rally.nsi.in
 				engine\misc\nsis\q3rally-q3ctc.nsi
-			+osxfe
-				+ioquake3fe
+			-osxfe
+				-ioquake3fe
 					-English.lproj
 						engine\misc\osxfe\ioquake3fe\English.lproj\ErrorWindow.xib
 						engine\misc\osxfe\ioquake3fe\English.lproj\InfoPlist.strings
@@ -779,11 +779,11 @@ q3rallycode
 					engine\misc\osxfe\ioquake3fe\ioquake3.icns
 					engine\misc\osxfe\ioquake3fe\ioquake3fe_Prefix.pch
 					engine\misc\osxfe\ioquake3fe\main.m
-			+setup
-				+MacOSX
+			-setup
+				-MacOSX
 					engine\misc\setup\MacOSX\SLA-dmg.sh
 				+pkg
-					+ioquake3
+					-ioquake3
 						engine\misc\setup\pkg\ioquake3\depend
 						engine\misc\setup\pkg\ioquake3\pkginfo.template
 						engine\misc\setup\pkg\ioquake3\postinstall
@@ -858,37 +858,13 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\q3_ui\ui_addbots.c
-2=engine\code\q3_ui\ui_removebots.c
-3=engine\ui\hud.txt
-4=engine\ui\hud2.txt
-5=engine\ui\ingame.txt
-6=engine\code\q3_ui\ui_rally_credits.c
-7=engine\code\q3_ui\ui_rally_tools.c
+1=engine\code\q3_ui\ui_rally_controls.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_rally_tools.c
+Selected=engine\code\q3_ui\ui_rally_controls.c
 [engine\code\qcommon\q_shared.h]
 TopLine=40
 Caret=39,58
-[engine\code\q3_ui\ui_addbots.c]
-TopLine=353
-Caret=21,373
-[engine\code\q3_ui\ui_removebots.c]
-TopLine=277
-Caret=51,308
-[engine\ui\hud.txt]
-TopLine=1
-Caret=1,1
-[engine\ui\hud2.txt]
-TopLine=1
-Caret=1,1
-[engine\ui\ingame.txt]
-TopLine=1
-Caret=1,1
-[engine\code\q3_ui\ui_rally_credits.c]
-TopLine=3
-Caret=1,1
-[engine\code\q3_ui\ui_rally_tools.c]
-TopLine=87
-Caret=1,1
+[engine\code\q3_ui\ui_rally_controls.c]
+TopLine=316
+Caret=81,335

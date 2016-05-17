@@ -294,7 +294,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.delete.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.delete.generic.id		= ID_DELETE;
 	removeBotsMenuInfo.delete.generic.callback	= UI_RemoveBotsMenu_DeleteEvent;
-	removeBotsMenuInfo.delete.generic.x			= 320+128;
+	removeBotsMenuInfo.delete.generic.x			= 320+64;
 	removeBotsMenuInfo.delete.generic.y			= 256+128-64;
   removeBotsMenuInfo.delete.string			= "DELETE";
 	removeBotsMenuInfo.delete.color			= color_orange;
@@ -304,7 +304,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.back.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.back.generic.id			= ID_BACK;
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
-	removeBotsMenuInfo.back.generic.x			= 320-128;
+	removeBotsMenuInfo.back.generic.x			= 320-64;
 	removeBotsMenuInfo.back.generic.y			= 256+128-64;
   removeBotsMenuInfo.back.string			= "< BACK";
 	removeBotsMenuInfo.back.color			= color_orange;
