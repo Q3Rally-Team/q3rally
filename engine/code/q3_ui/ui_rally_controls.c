@@ -796,7 +796,7 @@ static void Controls_DrawKeyBinding( void *self )
 	int				x;
 	int				y;
 	int				b1;
-	int				b2;
+//	int				b2;
 	qboolean		c;
 	char			name[32];
 //	char			name2[32];
@@ -825,7 +825,7 @@ static void Controls_DrawKeyBinding( void *self )
 //			strcat( name, " or " );
         strcat( name );
 //			strcat( name, name2 );
-		}
+//		}
 	}
 
 	if (c)
