@@ -1,0 +1,33 @@
+Q3Rally Version History
+
+
+Q3Rally v0.0.0.3	(xx.xx.xxxx)
+
+- Removed "Show Q3Rally Only" option, after last revision we only get q3rally servers.
+- Fixed requesting servers for a specific gametype (uses a dpmaster feature)
+- Fixed gamename shown in server browser (only race and race DM were correct)
+- Added support for five master servers in q3_ui (ported from ioq3)
+- Removed Mplayer stuff from q3_ui (was removed from ioq3)
+- Updated server browser to say UDP6 instead of IPX for ipv6 servers (ported from ioq3)
+- Removed out of date game binaries (they probably shouldn't be in svn at all).
+- Removed cvar ui_browserShowRallyOnly (no longer used after r77)
+- Added target_gravity from EntityPlus
+- Created function for GAMES_* to GT_*, it's only done in one place now. (ported from Turtle Arena r1517)
+- Unified version (mostly), update VERSION in Makefile and PRODUCT_VERSION in q_shared.h. Sets version everywhere instead of just qvms.
+- Modified 'not finished game' message in cg_rally_hud.c to be better English
+- Added CVAR_SYSTEMINFO to cvars that need it.
+- Changed SpecifyServer Menu to Q3Rally style, removed OpenArena graphics
+- Run scripts now run build command for you.
+- Run scripts now create links to game logic instead of telling user to copy them.
+- Use quake3-like gameversion. Fixes mismatch when server/client aren't both using qvm or dll/so.
+- prepared for own bots with custom skills.
+
+Q3Rally v0.0.0.2	(26.07.2011)
+
+- Updated func_rotating to EntityPlus Style
+- Updated func_train to EntityPlus style
+- Updates Func_door-rotating to EntityPlus Style
+
+Q3Rally v0.0.0.1	(02.04.2011)
+
+- First stable standalone version
