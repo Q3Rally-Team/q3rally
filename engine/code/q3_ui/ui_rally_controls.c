@@ -319,24 +319,15 @@ static bind_t g_bindings[] =
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
 */
-
-/*
 	{"+forward", 		"accelerate",		ID_ACCEL,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"brake",			ID_BRAKE,		ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
-*/
-	{"+forward", 		"accelerate",		ID_ACCEL,		ANIM_WALK,		K_UPARROW,		-1,		-1},
-	{"+back", 			"brake",			ID_BRAKE,		ANIM_BACK,		K_DOWNARROW,	-1,		-1},
 	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
 	{"+speed", 			"turbo",			ID_TURBO,		ANIM_TURBO,		K_SHIFT,		-1,		-1,	-1},
 	{"+moveup",			"up",				ID_MOVEUP,		ANIM_JUMP,		'x',			-1,		-1, -1},
 	{"+movedown",		"down",				ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
 	{"+hud", 			"show HUD",			ID_SHOWHUD2,	0,				'q',			-1,		-1, -1},
-  {"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1},
-/*
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
-*/
 	{"+button12", 		"rear attack",		ID_REARATTACK,	ANIM_REARATTACK, K_KP_INS,		-1,		-1, -1},
 // END
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
@@ -808,7 +799,7 @@ static void Controls_DrawKeyBinding( void *self )
 	int				b2;
 	qboolean		c;
 	char			name[32];
-	char			name2[32];
+//	char			name2[32];
 
 	a = (menuaction_s*) self;
 
@@ -825,14 +816,15 @@ static void Controls_DrawKeyBinding( void *self )
 		trap_Key_KeynumToStringBuf( b1, name, 32 );
 		Q_strupr(name);
 
-		b2 = g_bindings[a->generic.id].bind2;
-		if (b2 != -1)
-		{
-			trap_Key_KeynumToStringBuf( b2, name2, 32 );
-			Q_strupr(name2);
+//		b2 = g_bindings[a->generic.id].bind2;
+//		if (b2 != -1)
+//		{
+//			trap_Key_KeynumToStringBuf( b2, name2, 32 );
+//			Q_strupr(name2);
 
-			strcat( name, " or " );
-			strcat( name, name2 );
+//			strcat( name, " or " );
+        strcat( name );
+//			strcat( name, name2 );
 		}
 	}
 
