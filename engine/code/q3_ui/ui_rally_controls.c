@@ -794,7 +794,7 @@ static void Controls_DrawKeyBinding( void *self )
 {
 	menuaction_s*	a;
 	int				x;
-	int				y;
+//	int				y;
 	int				b1;
 //	int				b2;
 	qboolean		c;
@@ -804,7 +804,7 @@ static void Controls_DrawKeyBinding( void *self )
 	a = (menuaction_s*) self;
 
 	x =	a->generic.x;
-	y = a->generic.y;
+//	y = a->generic.y;
 
 	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
 
