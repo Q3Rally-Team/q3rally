@@ -823,7 +823,6 @@ static void Controls_DrawKeyBinding( void *self )
 			Q_strupr(name2);
 
 			strcat( name, " or " );
-        strcat( name, 0 );
 			strcat( name, name2 );
 		}
 	}
