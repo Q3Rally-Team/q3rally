@@ -874,8 +874,8 @@ q3rallycode
 Main=
 Selected=engine\code\qcommon\files.c
 [engine\code\qcommon\q_shared.h]
-TopLine=16
-Caret=1,32
+TopLine=32
+Caret=39,58
 [engine\code\q3_ui\ui_rally_controls.c]
 TopLine=780
 Caret=1,819
@@ -895,7 +895,7 @@ Caret=1,1254
 TopLine=563
 Caret=1,579
 [engine\code\zlib\zlib.h]
-TopLine=1171
+TopLine=1236
 Caret=1,1279
 [engine\misc\nsis\q3rally.nsi.in]
 TopLine=1
@@ -910,5 +910,5 @@ Caret=1,2528
 TopLine=1
 Caret=1,8
 [engine\code\qcommon\files.c]
-TopLine=185
-Caret=34,201
+TopLine=175
+Caret=31,202
