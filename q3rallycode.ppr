@@ -873,7 +873,7 @@ q3rallycode
 13=engine\code\game\g_missile.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\inv.h
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=40
 Caret=39,58
@@ -882,18 +882,18 @@ TopLine=778
 Caret=1,819
 [engine\code\game\inv.h]
 TopLine=1
-Caret=34,178
+Caret=34,174
 [baseq3r\botfiles\inv.h]
-TopLine=1
-Caret=34,178
+TopLine=131
+Caret=34,173
 [engine\code\game\bg_misc.c]
-TopLine=456
+TopLine=401
 Caret=18,401
 [engine\code\cgame\cg_rally_rearweapons.c]
 TopLine=69
 Caret=1,83
 [engine\code\cgame\cg_weapons.c]
-TopLine=823
+TopLine=711
 Caret=1,711
 [engine\code\game\bg_pmove.c]
 TopLine=1824

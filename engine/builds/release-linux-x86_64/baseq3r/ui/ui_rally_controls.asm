@@ -24,7 +24,7 @@ byte 4 1
 byte 4 132
 byte 4 -1
 byte 4 -1
-skip 4
+byte 4 -1
 address $89
 address $90
 byte 4 3
@@ -32,7 +32,7 @@ byte 4 2
 byte 4 133
 byte 4 -1
 byte 4 -1
-skip 4
+byte 4 -1
 address $91
 address $92
 byte 4 4
@@ -80,7 +80,7 @@ byte 4 7
 byte 4 134
 byte 4 -1
 byte 4 -1
-skip 4
+byte 4 -1
 address $103
 address $104
 byte 4 10
@@ -88,7 +88,7 @@ byte 4 8
 byte 4 135
 byte 4 -1
 byte 4 -1
-skip 4
+byte 4 -1
 address $105
 address $106
 byte 4 11
@@ -1625,6 +1625,13 @@ pop
 ADDRLP4 12
 ARGP4
 ADDRGP4 $417
+ARGP4
+ADDRGP4 strcat
+CALLP4
+pop
+ADDRLP4 12
+ARGP4
+CNSTP4 0
 ARGP4
 ADDRGP4 strcat
 CALLP4
