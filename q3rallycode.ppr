@@ -94,7 +94,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -164,7 +164,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -858,57 +858,25 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\q3_ui\ui_rally_controls.c
-2=engine\code\game\inv.h
-3=engine\code\client\cl_main.c
-4=engine\code\qcommon\qcommon.h
-5=engine\code\server\sv_client.c
-6=engine\code\server\sv_init.c
-7=engine\code\zlib\zlib.h
-8=engine\misc\nsis\q3rally.nsi.in
-9=engine\misc\setup\setup.xml.in
-10=engine\Makefile
-11=engine\make-macosx-ub.sh
-12=engine\code\qcommon\files.c
+1=engine\code\qcommon\files.c
+2=engine\code\game\g_combat.c
+3=engine\code\game\g_mover.c
+4=engine\code\game\g_spawn.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=32
 Caret=39,58
-[engine\code\q3_ui\ui_rally_controls.c]
-TopLine=780
-Caret=1,819
-[engine\code\game\inv.h]
-TopLine=1
-Caret=1,1
-[engine\code\client\cl_main.c]
-TopLine=1919
-Caret=1,1935
-[engine\code\qcommon\qcommon.h]
-TopLine=693
-Caret=1,709
-[engine\code\server\sv_client.c]
-TopLine=1240
-Caret=1,1254
-[engine\code\server\sv_init.c]
-TopLine=563
-Caret=1,579
-[engine\code\zlib\zlib.h]
-TopLine=1236
-Caret=1,1279
-[engine\misc\nsis\q3rally.nsi.in]
-TopLine=1
-Caret=1,13
-[engine\misc\setup\setup.xml.in]
-TopLine=51
-Caret=1,70
-[engine\Makefile]
-TopLine=2512
-Caret=1,2528
-[engine\make-macosx-ub.sh]
-TopLine=1
-Caret=1,8
 [engine\code\qcommon\files.c]
 TopLine=175
 Caret=31,202
+[engine\code\game\g_combat.c]
+TopLine=919
+Caret=1,935
+[engine\code\game\g_mover.c]
+TopLine=1878
+Caret=1,1894
+[engine\code\game\g_spawn.c]
+TopLine=231
+Caret=1,239
