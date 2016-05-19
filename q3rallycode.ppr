@@ -870,7 +870,7 @@ TopLine=32
 Caret=39,58
 [engine\code\qcommon\files.c]
 TopLine=175
-Caret=31,202
+Caret=3,202
 [engine\code\game\g_combat.c]
 TopLine=919
 Caret=1,935
