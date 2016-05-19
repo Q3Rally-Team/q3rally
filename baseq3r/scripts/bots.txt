@@ -67,6 +67,11 @@ aifile		bots/liz_c.c
 {
 name		Paul
 model		sidepipe/blue
-aifile		bots/major_c.c
+aifile		bots/grism_c.c
 }
 
+{
+name		Josh
+model		camaro/green
+aifile		bots/angelyss_c.c
+}
