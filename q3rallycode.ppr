@@ -864,13 +864,13 @@ q3rallycode
 4=engine\code\game\g_spawn.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\qcommon\files.c
 [engine\code\qcommon\q_shared.h]
 TopLine=32
 Caret=39,58
 [engine\code\qcommon\files.c]
-TopLine=175
-Caret=3,202
+TopLine=139
+Caret=34,201
 [engine\code\game\g_combat.c]
 TopLine=919
 Caret=1,935
