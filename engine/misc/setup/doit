@@ -71,6 +71,8 @@ for arch in "${archs[@]}"; do
 	mkdir $dst/q3rally
 	install -m 755 $topdir/build/release-linux-$arch/q3rally.$arch $dst/q3rally.$arch
 	install -m 755 $topdir/build/release-linux-$arch/q3rally-server.$arch $dst/q3rally-server.$arch
+	install -m 755 $topdir/build/release-linux-$arch/renderer_opengl1_$arch.so $dst/renderer_opengl1_$arch.so
+	install -m 755 $topdir/build/release-linux-$arch/renderer_rend2_$arch.so $dst/renderer_rend2_$arch.so
 	install -m 644 $topdir/build/release-linux-$arch/q3rally/*.so $dst/q3rally
 
 	tar --owner=root --group=root -C $dst -cf ./image/q3rally.$arch.tar .

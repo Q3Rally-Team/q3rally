@@ -63,7 +63,7 @@ ifndef BUILD_DEFINES
 endif
 
 # ioquake3 svn version that this is based on
-IOQ3_REVISION = 2369
+IOQ3_REVISION = 2398
 
 #############################################################################
 #
@@ -414,7 +414,7 @@ else # ifeq Linux
 
 ifeq ($(PLATFORM),darwin)
   HAVE_VM_COMPILED=true
-  LIBS = -framework Cocoa -framework SDL
+  LIBS = -framework Cocoa
   CLIENT_LIBS=
   RENDERER_LIBS=
   OPTIMIZEVM=
@@ -471,8 +471,8 @@ ifeq ($(PLATFORM),darwin)
   LIBSDLMAIN=$(B)/libSDLmain.a
   LIBSDLMAINSRC=$(LIBSDIR)/macosx/libSDLmain.a
   CLIENT_LIBS += -framework IOKit \
-    -framework SDL
-  RENDERER_LIBS += -framework OpenGL -framework SDL
+    $(LIBSDIR)/macosx/libSDL-1.2.0.dylib
+  RENDERER_LIBS += -framework OpenGL $(LIBSDIR)/macosx/libSDL-1.2.0.dylib
 
   OPTIMIZEVM += -falign-loops=16
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
@@ -683,8 +683,10 @@ ifeq ($(PLATFORM),openbsd)
     USE_CURL_DLOPEN=0
   endif
 
+  # no shm_open on OpenBSD
+  USE_MUMBLE=0
+
   SHLIBEXT=so
-  SHLIBNAME=.$(SHLIBEXT)
   SHLIBCFLAGS=-fPIC
   SHLIBLDFLAGS=-shared $(LDFLAGS)
 
@@ -1043,6 +1045,14 @@ $(echo_cmd) "REF_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -o $@ -c $<
 endef
 
+define DO_REF_STR
+$(echo_cmd) "REF_STR $<"
+$(Q)rm -f $@
+$(Q)echo "const char *fallbackShader_$(notdir $(basename $<)) =" >> $@
+$(Q)cat $< | sed 's/^/\"/;s/$$/\\n\"/' >> $@
+$(Q)echo ";" >> $@
+endef
+
 define DO_SMP_CC
 $(echo_cmd) "SMP_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -DSMP -o $@ -c $<
@@ -1209,6 +1219,7 @@ makedirs:
 	@if [ ! -d $(B)/client ];then $(MKDIR) $(B)/client;fi
 	@if [ ! -d $(B)/renderer ];then $(MKDIR) $(B)/renderer;fi
 	@if [ ! -d $(B)/rend2 ];then $(MKDIR) $(B)/rend2;fi
+	@if [ ! -d $(B)/rend2/glsl ];then $(MKDIR) $(B)/rend2/glsl;fi
 	@if [ ! -d $(B)/renderersmp ];then $(MKDIR) $(B)/renderersmp;fi
 	@if [ ! -d $(B)/ded ];then $(MKDIR) $(B)/ded;fi
 	@if [ ! -d $(B)/$(BASEGAME) ];then $(MKDIR) $(B)/$(BASEGAME);fi
@@ -1552,6 +1563,36 @@ Q3R2OBJ = \
   $(B)/rend2/tr_world.o \
   \
   $(B)/renderer/sdl_gamma.o
+  
+Q3R2STRINGOBJ = \
+  $(B)/rend2/glsl/bokeh_fp.o \
+  $(B)/rend2/glsl/bokeh_vp.o \
+  $(B)/rend2/glsl/calclevels4x_fp.o \
+  $(B)/rend2/glsl/calclevels4x_vp.o \
+  $(B)/rend2/glsl/depthblur_fp.o \
+  $(B)/rend2/glsl/depthblur_vp.o \
+  $(B)/rend2/glsl/dlight_fp.o \
+  $(B)/rend2/glsl/dlight_vp.o \
+  $(B)/rend2/glsl/down4x_fp.o \
+  $(B)/rend2/glsl/down4x_vp.o \
+  $(B)/rend2/glsl/fogpass_fp.o \
+  $(B)/rend2/glsl/fogpass_vp.o \
+  $(B)/rend2/glsl/generic_fp.o \
+  $(B)/rend2/glsl/generic_vp.o \
+  $(B)/rend2/glsl/lightall_fp.o \
+  $(B)/rend2/glsl/lightall_vp.o \
+  $(B)/rend2/glsl/pshadow_fp.o \
+  $(B)/rend2/glsl/pshadow_vp.o \
+  $(B)/rend2/glsl/shadowfill_fp.o \
+  $(B)/rend2/glsl/shadowfill_vp.o \
+  $(B)/rend2/glsl/shadowmask_fp.o \
+  $(B)/rend2/glsl/shadowmask_vp.o \
+  $(B)/rend2/glsl/ssao_fp.o \
+  $(B)/rend2/glsl/ssao_vp.o \
+  $(B)/rend2/glsl/texturecolor_fp.o \
+  $(B)/rend2/glsl/texturecolor_vp.o \
+  $(B)/rend2/glsl/tonemap_fp.o \
+  $(B)/rend2/glsl/tonemap_vp.o
 
 Q3ROBJ = \
   $(B)/renderer/tr_animation.o \
@@ -1828,14 +1869,14 @@ $(B)/renderer_opengl1_smp_$(SHLIBNAME): $(Q3ROBJ) $(Q3RPOBJ_SMP) $(JPGOBJ)
 	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3ROBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
-$(B)/renderer_rend2_$(SHLIBNAME): $(Q3R2OBJ) $(Q3RPOBJ_UP) $(JPGOBJ)
+$(B)/renderer_rend2_$(SHLIBNAME): $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_UP) $(JPGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3R2OBJ) $(Q3RPOBJ_UP) $(JPGOBJ) \
+	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_UP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
-$(B)/renderer_rend2_smp_$(SHLIBNAME): $(Q3R2OBJ) $(Q3RPOBJ_SMP) $(JPGOBJ)
+$(B)/renderer_rend2_smp_$(SHLIBNAME): $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_SMP) $(JPGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3R2OBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
+	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(RENDERER_LIBS) $(LIBS)
 
 else
@@ -1851,16 +1892,16 @@ $(B)/$(CLIENTBIN)-smp$(FULLBINEXT): $(Q3OBJ) $(Q3ROBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) 
 		-o $@ $(Q3OBJ) $(Q3ROBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
 
-$(B)/$(CLIENTBIN)_rend2$(FULLBINEXT): $(Q3OBJ) $(Q3R2OBJ) $(Q3RPOBJ_UP) $(JPGOBJ) $(LIBSDLMAIN)
+$(B)/$(CLIENTBIN)_rend2$(FULLBINEXT): $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_UP) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) \
-		-o $@ $(Q3OBJ) $(Q3R2OBJ) $(Q3RPOBJ_UP) $(JPGOBJ) \
+		-o $@ $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_UP) $(JPGOBJ) \
 		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
 
-$(B)/$(CLIENTBIN)_rend2-smp$(FULLBINEXT): $(Q3OBJ) $(Q3R2OBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) $(LIBSDLMAIN)
+$(B)/$(CLIENTBIN)_rend2-smp$(FULLBINEXT): $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(THREAD_LDFLAGS) \
-		-o $@ $(Q3OBJ) $(Q3R2OBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
+		-o $@ $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(Q3RPOBJ_SMP) $(JPGOBJ) \
 		$(THREAD_LIBS) $(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
 endif
 
@@ -2430,7 +2471,13 @@ $(B)/renderer/%.o: $(JPDIR)/%.c
 
 $(B)/renderer/%.o: $(RDIR)/%.c
 	$(DO_REF_CC)
-	
+
+$(B)/rend2/glsl/%.c: $(R2DIR)/glsl/%.glsl
+	$(DO_REF_STR)
+
+$(B)/rend2/glsl/%.o: $(B)/rend2/glsl/%.c
+	$(DO_REF_CC)
+
 $(B)/rend2/%.o: $(R2DIR)/%.c
 	$(DO_REF_CC)
 
@@ -2562,6 +2609,7 @@ OBJ = $(Q3OBJ) $(Q3ROBJ) $(Q3R2OBJ) $(Q3RPOBJ_UP) $(Q3RPOBJ_SMP) $(Q3DOBJ) $(JPG
   $(MPGOBJ) $(Q3GOBJ) $(Q3CGOBJ) $(MPCGOBJ) $(Q3UIOBJ) $(MPUIOBJ) \
   $(MPGVMOBJ) $(Q3GVMOBJ) $(Q3CGVMOBJ) $(MPCGVMOBJ) $(Q3UIVMOBJ) $(MPUIVMOBJ)
 TOOLSOBJ = $(LBURGOBJ) $(Q3CPPOBJ) $(Q3RCCOBJ) $(Q3LCCOBJ) $(Q3ASMOBJ)
+STRINGOBJ = $(Q3R2STRINGOBJ)
 
 
 copyfiles: release
@@ -2636,6 +2684,7 @@ clean2:
 	@echo "CLEAN $(B)"
 	@rm -f $(OBJ)
 	@rm -f $(OBJ_D_FILES)
+	@rm -f $(STRINGOBJ)
 	@rm -f $(TARGETS)
 
 toolsclean: toolsclean-debug toolsclean-release
