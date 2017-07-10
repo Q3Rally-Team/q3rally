@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef USE_VOIP
 cvar_t *sv_voip;
+cvar_t *sv_voipProtocol;
 #endif
 
 serverStatic_t	svs;				// persistant server info
@@ -235,6 +236,7 @@ but not on every player enter or exit.
 ================
 */
 #define	HEARTBEAT_MSEC	300*1000
+#define	MASTERDNS_MSEC	24*60*60*1000
 void SV_MasterHeartbeat(const char *message)
 {
 	static netadr_t	adr[MAX_MASTER_SERVERS][2]; // [2] for v4 and v6 address for the same address string.
@@ -252,6 +254,9 @@ void SV_MasterHeartbeat(const char *message)
 	if ( svs.time < svs.nextHeartbeatTime )
 		return;
 
+	if ( !Q_stricmp( com_gamename->string, LEGACY_MASTER_GAMENAME ) )
+		message = LEGACY_HEARTBEAT_FOR_MASTER;
+
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
 	// send to group masters
@@ -260,12 +265,12 @@ void SV_MasterHeartbeat(const char *message)
 		if(!sv_master[i]->string[0])
 			continue;
 
-		// see if we haven't already resolved the name
-		// resolving usually causes hitches on win95, so only
-		// do it when needed
-		if(sv_master[i]->modified || (adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD))
+		// see if we haven't already resolved the name or if it's been over 24 hours
+		// resolving usually causes hitches on win95, so only do it when needed
+		if (sv_master[i]->modified || svs.time > svs.masterResolveTime[i])
 		{
 			sv_master[i]->modified = qfalse;
+			svs.masterResolveTime[i] = svs.time + MASTERDNS_MSEC;
 			
 			if(netenabled & NET_ENABLEV4)
 			{
@@ -300,16 +305,11 @@ void SV_MasterHeartbeat(const char *message)
 				else
 					Com_Printf( "%s has no IPv6 address.\n", sv_master[i]->string);
 			}
+		}
 
-			if(adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD)
-			{
-				// if the address failed to resolve, clear it
-				// so we don't take repeated dns hits
-				Com_Printf("Couldn't resolve address: %s\n", sv_master[i]->string);
-				Cvar_Set(sv_master[i]->name, "");
-				sv_master[i]->modified = qfalse;
-				continue;
-			}
+		if(adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD)
+		{
+			continue;
 		}
 
 
@@ -354,30 +354,13 @@ CONNECTIONLESS COMMANDS
 ==============================================================================
 */
 
-typedef struct leakyBucket_s leakyBucket_t;
-struct leakyBucket_s {
-	netadrtype_t	type;
-
-	union {
-		byte	_4[4];
-		byte	_6[16];
-	} ipv;
-
-	int						lastTime;
-	signed char		burst;
-
-	long					hash;
-
-	leakyBucket_t *prev, *next;
-};
-
 // This is deliberately quite large to make it more of an effort to DoS
 #define MAX_BUCKETS			16384
 #define MAX_HASHES			1024
 
 static leakyBucket_t buckets[ MAX_BUCKETS ];
 static leakyBucket_t *bucketHashes[ MAX_HASHES ];
-static leakyBucket_t outboundLeakyBucket;
+leakyBucket_t outboundLeakyBucket;
 
 /*
 ================
@@ -494,14 +477,14 @@ static leakyBucket_t *SVC_BucketForAddress( netadr_t address, int burst, int per
 SVC_RateLimit
 ================
 */
-static qboolean SVC_RateLimit( leakyBucket_t *bucket, int burst, int period ) {
+qboolean SVC_RateLimit( leakyBucket_t *bucket, int burst, int period ) {
 	if ( bucket != NULL ) {
 		int now = Sys_Milliseconds();
 		int interval = now - bucket->lastTime;
 		int expired = interval / period;
 		int expiredRemainder = interval % period;
 
-		if ( expired > bucket->burst ) {
+		if ( expired > bucket->burst || interval < 0 ) {
 			bucket->burst = 0;
 			bucket->lastTime = now;
 		} else {
@@ -526,7 +509,7 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-static qboolean SVC_RateLimitAddress( netadr_t from, int burst, int period ) {
+qboolean SVC_RateLimitAddress( netadr_t from, int burst, int period ) {
 	leakyBucket_t *bucket = SVC_BucketForAddress( from, burst, period );
 
 	return SVC_RateLimit( bucket, burst, period );
@@ -679,8 +662,8 @@ void SVC_Info( netadr_t from ) {
 	Info_SetValueForKey(infostring, "g_needpass", va("%d", Cvar_VariableIntegerValue("g_needpass")));
 
 #ifdef USE_VOIP
-	if (sv_voip->integer) {
-		Info_SetValueForKey( infostring, "voip", va("%i", sv_voip->integer ) );
+	if (sv_voipProtocol->string && *sv_voipProtocol->string) {
+		Info_SetValueForKey( infostring, "voip", sv_voipProtocol->string );
 	}
 #endif
 

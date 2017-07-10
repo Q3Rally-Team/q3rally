@@ -250,7 +250,6 @@ static void hashtable_init (hashtable_t *H, int buckets)
 {
   H->buckets = buckets;
   H->table = calloc(H->buckets, sizeof(*(H->table)));
-  return;
 }
 
 static hashtable_t *hashtable_new (int buckets)
@@ -285,7 +284,6 @@ static void hashtable_add (hashtable_t *H, int hashvalue, void *datum)
     }
   hc->data = datum;
   hc->next = 0;
-  return;
 }
 
 static hashchain_t *hashtable_get (hashtable_t *H, int hashvalue)
@@ -479,7 +477,7 @@ static unsigned int HashString (const char *key)
     acc = (acc << 2) | (acc >> 30);
     acc &= 0xffffffffU;
     }
-    return abs(acc);
+    return acc;
 }
 
 

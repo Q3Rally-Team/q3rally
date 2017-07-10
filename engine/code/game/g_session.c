@@ -109,36 +109,31 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 
 	sess = &client->sess;
 
+	// check for team preference, mainly for bots
+	value = Info_ValueForKey( userinfo, "teampref" );
+
+	// check for human's team preference set by start server menu
+	if ( !value[0] && g_localTeamPref.string[0] && client->pers.localClient ) {
+		value = g_localTeamPref.string;
+
+		// clear team so it's only used once
+		trap_Cvar_Set( "g_localTeamPref", "" );
+	}
+
 	// initial team determination
 	if ( g_gametype.integer >= GT_TEAM ) {
-// STONELANCE
-		if (isRallyRace()){
-			value = Info_ValueForKey( userinfo, "team" );
+		// always spawn as spectator in team games
+		sess->sessionTeam = TEAM_SPECTATOR;
+		sess->spectatorState = SPECTATOR_FREE;
 
-			if (level.startRaceTime){
-				// can only spawn as spectator after race starts
-				sess->sessionTeam = TEAM_SPECTATOR;
-			}
-			else if ( (g_teamAutoJoin.integer && !isBot) || value[0] == 'r' ) {
-				// force them to join
-				sess->sessionTeam = PickTeam( -1 );
-				BroadcastTeamChange( client, -1 );
-			} else {
-				// always spawn as spectator in team games
-				sess->sessionTeam = TEAM_SPECTATOR;	
-			}
-		}
-		else
+// STONELANCE
+		// can only spawn as spectator after race starts
+//		if ( value[0] || g_teamAutoJoin.integer ) {
+		if ( ( value[0] || g_teamAutoJoin.integer ) && !( isRallyRace() && level.startRaceTime ) ) {
 // END
-		if ( g_teamAutoJoin.integer && !isBot ) {
-			sess->sessionTeam = PickTeam( -1 );
-			BroadcastTeamChange( client, -1 );
-		} else {
-			// always spawn as spectator in team games
-			sess->sessionTeam = TEAM_SPECTATOR;	
+			SetTeam( &g_entities[client - level.clients], value );
 		}
 	} else {
-		value = Info_ValueForKey( userinfo, "team" );
 // STONELANCE
 		if ( value[0] == 's' ) {
 //		if ( value[0] == 's' && (!isRallyRace() && !g_gametype.integer == GT_DERBY)) {
@@ -188,9 +183,10 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 // END
 			}
 		}
+
+		sess->spectatorState = SPECTATOR_FREE;
 	}
 
-	sess->spectatorState = SPECTATOR_FREE;
 	AddTournamentQueue(client);
 
 	G_WriteClientSessionData( client );

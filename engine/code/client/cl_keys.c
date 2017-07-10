@@ -289,6 +289,33 @@ keyname_t keynames[] =
 	{"EURO", K_EURO},
 	{"UNDO", K_UNDO},
 
+	{"PAD0_A", K_PAD0_A },
+	{"PAD0_B", K_PAD0_B },
+	{"PAD0_X", K_PAD0_X },
+	{"PAD0_Y", K_PAD0_Y },
+	{"PAD0_BACK", K_PAD0_BACK },
+	{"PAD0_GUIDE", K_PAD0_GUIDE },
+	{"PAD0_START", K_PAD0_START },
+	{"PAD0_LEFTSTICK_CLICK", K_PAD0_LEFTSTICK_CLICK },
+	{"PAD0_RIGHTSTICK_CLICK", K_PAD0_RIGHTSTICK_CLICK },
+	{"PAD0_LEFTSHOULDER", K_PAD0_LEFTSHOULDER },
+	{"PAD0_RIGHTSHOULDER", K_PAD0_RIGHTSHOULDER },
+	{"PAD0_DPAD_UP", K_PAD0_DPAD_UP },
+	{"PAD0_DPAD_DOWN", K_PAD0_DPAD_DOWN },
+	{"PAD0_DPAD_LEFT", K_PAD0_DPAD_LEFT },
+	{"PAD0_DPAD_RIGHT", K_PAD0_DPAD_RIGHT },
+
+	{"PAD0_LEFTSTICK_LEFT", K_PAD0_LEFTSTICK_LEFT },
+	{"PAD0_LEFTSTICK_RIGHT", K_PAD0_LEFTSTICK_RIGHT },
+	{"PAD0_LEFTSTICK_UP", K_PAD0_LEFTSTICK_UP },
+	{"PAD0_LEFTSTICK_DOWN", K_PAD0_LEFTSTICK_DOWN },
+	{"PAD0_RIGHTSTICK_LEFT", K_PAD0_RIGHTSTICK_LEFT },
+	{"PAD0_RIGHTSTICK_RIGHT", K_PAD0_RIGHTSTICK_RIGHT },
+	{"PAD0_RIGHTSTICK_UP", K_PAD0_RIGHTSTICK_UP },
+	{"PAD0_RIGHTSTICK_DOWN", K_PAD0_RIGHTSTICK_DOWN },
+	{"PAD0_LEFTTRIGGER", K_PAD0_LEFTTRIGGER },
+	{"PAD0_RIGHTTRIGGER", K_PAD0_RIGHTTRIGGER },
+
 	{NULL,0}
 };
 
@@ -586,7 +613,7 @@ void Console_Key (int key) {
 	// enter finishes the line
 	if ( key == K_ENTER || key == K_KP_ENTER ) {
 		// if not in the game explicitly prepend a slash if needed
-		if ( clc.state != CA_ACTIVE &&
+		if ( clc.state != CA_ACTIVE && con_autochat->integer &&
 				g_consoleField.buffer[0] &&
 				g_consoleField.buffer[0] != '\\' &&
 				g_consoleField.buffer[0] != '/' ) {
@@ -608,7 +635,10 @@ void Console_Key (int key) {
 			if ( !g_consoleField.buffer[0] ) {
 				return;	// empty lines just scroll the console without adding to history
 			} else {
-				Cbuf_AddText ("cmd say ");
+				if ( con_autochat->integer ) {
+					Cbuf_AddText ("cmd say ");
+				}
+
 				Cbuf_AddText( g_consoleField.buffer );
 				Cbuf_AddText ("\n");
 			}
@@ -800,7 +830,7 @@ int Key_StringToKeynum( char *str ) {
 		return -1;
 	}
 	if ( !str[1] ) {
-		return str[0];
+		return tolower( str[0] );
 	}
 
 	// check for hex code
@@ -992,10 +1022,10 @@ void Key_Bind_f (void)
 
 	if (c == 2)
 	{
-		if (keys[b].binding)
-			Com_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keys[b].binding );
+		if (keys[b].binding && keys[b].binding[0])
+			Com_Printf ("\"%s\" = \"%s\"\n", Key_KeynumToString(b), keys[b].binding );
 		else
-			Com_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
+			Com_Printf ("\"%s\" is not bound\n", Key_KeynumToString(b) );
 		return;
 	}
 	
@@ -1122,6 +1152,25 @@ void CL_InitKeyCommands( void ) {
 
 /*
 ===================
+CL_BindUICommand
+
+Returns qtrue if bind command should be executed while user interface is shown
+===================
+*/
+static qboolean CL_BindUICommand( const char *cmd ) {
+	if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE )
+		return qfalse;
+
+	if ( !Q_stricmp( cmd, "toggleconsole" ) )
+		return qtrue;
+	if ( !Q_stricmp( cmd, "togglemenu" ) )
+		return qtrue;
+
+	return qfalse;
+}
+
+/*
+===================
 CL_ParseBinding
 
 Execute the commands in the bind string
@@ -1130,10 +1179,19 @@ Execute the commands in the bind string
 void CL_ParseBinding( int key, qboolean down, unsigned time )
 {
 	char buf[ MAX_STRING_CHARS ], *p = buf, *end;
+	qboolean allCommands, allowUpCmds;
 
+	if( clc.state == CA_DISCONNECTED && Key_GetCatcher( ) == 0 )
+		return;
 	if( !keys[key].binding || !keys[key].binding[0] )
 		return;
 	Q_strncpyz( buf, keys[key].binding, sizeof( buf ) );
+
+	// run all bind commands if console, ui, etc aren't reading keys
+	allCommands = ( Key_GetCatcher( ) == 0 );
+
+	// allow button up commands if in game even if key catcher is set
+	allowUpCmds = ( clc.state != CA_DISCONNECTED );
 
 	while( 1 )
 	{
@@ -1147,16 +1205,20 @@ void CL_ParseBinding( int key, qboolean down, unsigned time )
 			// button commands add keynum and time as parameters
 			// so that multiple sources can be discriminated and
 			// subframe corrected
-			char cmd[1024];
-			Com_sprintf( cmd, sizeof( cmd ), "%c%s %d %d\n",
-				( down ) ? '+' : '-', p + 1, key, time );
-			Cbuf_AddText( cmd );
+			if ( allCommands || ( allowUpCmds && !down ) ) {
+				char cmd[1024];
+				Com_sprintf( cmd, sizeof( cmd ), "%c%s %d %d\n",
+					( down ) ? '+' : '-', p + 1, key, time );
+				Cbuf_AddText( cmd );
+			}
 		}
 		else if( down )
 		{
 			// normal commands only execute on key press
-			Cbuf_AddText( p );
-			Cbuf_AddText( "\n" );
+			if ( allCommands || CL_BindUICommand( p ) ) {
+				Cbuf_AddText( p );
+				Cbuf_AddText( "\n" );
+			}
 		}
 		if( !end )
 			break;
@@ -1175,11 +1237,16 @@ void CL_KeyDownEvent( int key, unsigned time )
 {
 	keys[key].down = qtrue;
 	keys[key].repeats++;
-	if( keys[key].repeats == 1 && key != K_SCROLLOCK && key != K_KP_NUMLOCK && key != K_CAPSLOCK )
+	if( keys[key].repeats == 1 )
 		anykeydown++;
 
 	if( keys[K_ALT].down && key == K_ENTER )
 	{
+		// don't repeat fullscreen toggle when keys are held down
+		if ( keys[K_ENTER].repeats > 1 ) {
+			return;
+		}
+
 		Cvar_SetValue( "r_fullscreen",
 			!Cvar_VariableIntegerValue( "r_fullscreen" ) );
 		return;
@@ -1235,6 +1302,9 @@ void CL_KeyDownEvent( int key, unsigned time )
 		return;
 	}
 
+	// send the bound action
+	CL_ParseBinding( key, qtrue, time );
+
 	// distribute the key down event to the apropriate handler
 	if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
 		Console_Key( key );
@@ -1250,11 +1320,7 @@ void CL_KeyDownEvent( int key, unsigned time )
 		Message_Key( key );
 	} else if ( clc.state == CA_DISCONNECTED ) {
 		Console_Key( key );
-	} else {
-		// send the bound action
-		CL_ParseBinding( key, qtrue, time );
 	}
-	return;
 }
 
 /*
@@ -1268,8 +1334,7 @@ void CL_KeyUpEvent( int key, unsigned time )
 {
 	keys[key].repeats = 0;
 	keys[key].down = qfalse;
-	if (key != K_SCROLLOCK && key != K_KP_NUMLOCK && key != K_CAPSLOCK)
-		anykeydown--;
+	anykeydown--;
 
 	if (anykeydown < 0) {
 		anykeydown = 0;
@@ -1285,8 +1350,7 @@ void CL_KeyUpEvent( int key, unsigned time )
 	// console mode and menu mode, to keep the character from continuing
 	// an action started before a mode switch.
 	//
-	if( clc.state != CA_DISCONNECTED )
-		CL_ParseBinding( key, qfalse, time );
+	CL_ParseBinding( key, qfalse, time );
 
 	if ( Key_GetCatcher( ) & KEYCATCH_UI && uivm ) {
 		VM_Call( uivm, UI_KEY_EVENT, key, qfalse );
@@ -1355,9 +1419,6 @@ void Key_ClearStates (void)
 	anykeydown = 0;
 
 	for ( i=0 ; i < MAX_KEYS ; i++ ) {
-		if (i == K_SCROLLOCK || i == K_KP_NUMLOCK || i == K_CAPSLOCK)
-			continue;
-
 		if ( keys[i].down ) {
 			CL_KeyEvent( i, qfalse, 0 );
 

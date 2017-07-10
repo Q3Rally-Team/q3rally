@@ -84,13 +84,9 @@ BotNumTeamMates
 int BotNumTeamMates(bot_state_t *bs) {
 	int i, numplayers;
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
-
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
 
 	numplayers = 0;
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
 		//if no config string or no name
 		if (!strlen(buf) || !strlen(Info_ValueForKey(buf, "n"))) continue;
@@ -113,8 +109,12 @@ int BotClientTravelTimeToGoal(int client, bot_goal_t *goal) {
 	playerState_t ps;
 	int areanum;
 
-	BotAI_GetClientState(client, &ps);
-	areanum = BotPointAreaNum(ps.origin);
+	if (BotAI_GetClientState(client, &ps)) {
+		areanum = BotPointAreaNum(ps.origin);
+	} else {
+		areanum = 0;
+	}
+
 	if (!areanum) return 1;
 	return trap_AAS_AreaTravelTimeToGoalArea(areanum, ps.origin, goal->areanum, TFL_DEFAULT);
 }
@@ -128,7 +128,6 @@ int BotSortTeamMatesByBaseTravelTime(bot_state_t *bs, int *teammates, int maxtea
 
 	int i, j, k, numteammates, traveltime;
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
 	int traveltimes[MAX_CLIENTS];
 	bot_goal_t *goal = NULL;
 
@@ -151,18 +150,15 @@ int BotSortTeamMatesByBaseTravelTime(bot_state_t *bs, int *teammates, int maxtea
 			goal = &blueobelisk;
 	}
 #endif
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
-
 	numteammates = 0;
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
 		//if no config string or no name
 		if (!strlen(buf) || !strlen(Info_ValueForKey(buf, "n"))) continue;
 		//skip spectators
 		if (atoi(Info_ValueForKey(buf, "t")) == TEAM_SPECTATOR) continue;
 		//
-		if (BotSameTeam(bs, i)) {
+		if (BotSameTeam(bs, i) && goal) {
 			//
 			traveltime = BotClientTravelTimeToGoal(i, goal);
 			//
@@ -338,7 +334,7 @@ BotCTFOrders
 */
 void BotCTFOrders_BothFlagsNotAtBase(bot_state_t *bs) {
 	int numteammates, defenders, attackers, i, other;
-	int teammates[MAX_CLIENTS];
+	int teammates[MAX_CLIENTS] = {0};
 	char name[MAX_NETNAME], carriername[MAX_NETNAME];
 
 	numteammates = BotSortTeamMatesByBaseTravelTime(bs, teammates, sizeof(teammates));
@@ -696,7 +692,7 @@ BotCTFOrders
 */
 void BotCTFOrders_BothFlagsAtBase(bot_state_t *bs) {
 	int numteammates, defenders, attackers, i;
-	int teammates[MAX_CLIENTS];
+	int teammates[MAX_CLIENTS] = {0};
 	char name[MAX_NETNAME];
 
 	//sort team mates by travel time to base
@@ -886,13 +882,9 @@ void BotTeamOrders(bot_state_t *bs) {
 	int teammates[MAX_CLIENTS];
 	int numteammates, i;
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
-
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
 
 	numteammates = 0;
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
 		//if no config string or no name
 		if (!strlen(buf) || !strlen(Info_ValueForKey(buf, "n"))) continue;
@@ -1758,7 +1750,7 @@ BotHarvesterOrders
 */
 void BotHarvesterOrders(bot_state_t *bs) {
 	int numteammates, defenders, attackers, i;
-	int teammates[MAX_CLIENTS];
+	int teammates[MAX_CLIENTS] = {0};
 	char name[MAX_NETNAME];
 
 	//sort team mates by travel time to base

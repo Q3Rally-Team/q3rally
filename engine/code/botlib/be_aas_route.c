@@ -168,12 +168,11 @@ void AAS_InitTravelFlagFromType(void)
 //===========================================================================
 static ID_INLINE int AAS_TravelFlagForType_inline(int traveltype)
 {
-	int tfl;
+	int tfl = 0;
 
-	tfl = 0;
-	if (tfl & TRAVELFLAG_NOTTEAM1)
+	if (traveltype & TRAVELFLAG_NOTTEAM1)
 		tfl |= TFL_NOTTEAM1;
-	if (tfl & TRAVELFLAG_NOTTEAM2)
+	if (traveltype & TRAVELFLAG_NOTTEAM2)
 		tfl |= TFL_NOTTEAM2;
 	traveltype &= TRAVELTYPE_MASK;
 	if (traveltype < 0 || traveltype >= MAX_TRAVELTYPES)
@@ -1771,7 +1770,7 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 //===========================================================================
 int AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags)
 {
-	int traveltime, reachnum;
+	int traveltime, reachnum = 0;
 
 	if (AAS_AreaRouteToGoalArea(areanum, origin, goalareanum, travelflags, &traveltime, &reachnum))
 	{
@@ -1787,7 +1786,7 @@ int AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, in
 //===========================================================================
 int AAS_AreaReachabilityToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags)
 {
-	int traveltime, reachnum;
+	int traveltime, reachnum = 0;
 
 	if (AAS_AreaRouteToGoalArea(areanum, origin, goalareanum, travelflags, &traveltime, &reachnum))
 	{

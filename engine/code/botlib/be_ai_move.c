@@ -2054,7 +2054,7 @@ bot_moveresult_t BotTravel_Elevator(bot_movestate_t *ms, aas_reachability_t *rea
 		botimport.Print(PRT_MESSAGE, "bot on elevator\n");
 #endif //DEBUG_ELEVATOR
 		//if vertically not too far from the end point
-		if (abs(ms->origin[2] - reach->end[2]) < sv_maxbarrier->value)
+		if (fabsf(ms->origin[2] - reach->end[2]) < sv_maxbarrier->value)
 		{
 #ifdef DEBUG_ELEVATOR
 			botimport.Print(PRT_MESSAGE, "bot moving to end\n");
@@ -3455,8 +3455,6 @@ void BotMoveToGoal(bot_moveresult_t *result, int movestate, bot_goal_t *goal, in
 	if (result->blocked) ms->reachability_time -= 10 * ms->thinktime;
 	//copy the last origin
 	VectorCopy(ms->origin, ms->lastorigin);
-	//return the movement result
-	return;
 } //end of the function BotMoveToGoal
 //===========================================================================
 //

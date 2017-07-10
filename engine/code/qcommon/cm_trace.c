@@ -650,8 +650,12 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush ) {
 				enterFrac = 0;
 			}
 			tw->trace.fraction = enterFrac;
-			tw->trace.plane = *clipplane;
-			tw->trace.surfaceFlags = leadside->surfaceFlags;
+			if (clipplane != NULL) {
+				tw->trace.plane = *clipplane;
+			}
+			if (leadside != NULL) {
+				tw->trace.surfaceFlags = leadside->surfaceFlags;
+			}
 			tw->trace.contents = brush->contents;
 		}
 	}
@@ -1049,7 +1053,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, float p1f, float p2f, vec3_t
 	}
 
 	//
-	// find the point distances to the seperating plane
+	// find the point distances to the separating plane
 	// and the offset for the size of the box
 	//
 	node = cm.nodes + num;

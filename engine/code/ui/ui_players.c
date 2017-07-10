@@ -89,15 +89,13 @@ tryagain:
 	}
 
 	if ( weaponNum == WP_MACHINEGUN || weaponNum == WP_GAUNTLET || weaponNum == WP_BFG ) {
-		strcpy( path, item->world_model[0] );
-		COM_StripExtension(path, path, sizeof(path));
-		strcat( path, "_barrel.md3" );
+		COM_StripExtension( item->world_model[0], path, sizeof(path) );
+		Q_strcat( path, sizeof(path), "_barrel.md3" );
 		pi->barrelModel = trap_R_RegisterModel( path );
 	}
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension(path, path, sizeof(path));
-	strcat( path, "_flash.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_flash.md3" );
 	pi->flashModel = trap_R_RegisterModel( path );
 
 	switch( weaponNum ) {
@@ -333,8 +331,8 @@ static void UI_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_
 	}
 
 	// cast away const because of compiler problems
-	MatrixMultiply( entity->axis, ((refEntity_t *)parent)->axis, tempAxis );
-	MatrixMultiply( lerped.axis, tempAxis, entity->axis );
+	MatrixMultiply( entity->axis, lerped.axis, tempAxis );
+	MatrixMultiply( tempAxis, ((refEntity_t *)parent)->axis, entity->axis );
 }
 
 
@@ -690,12 +688,12 @@ UI_DrawPlayer
 */
 void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int time ) {
 	refdef_t		refdef;
-	refEntity_t		legs;
-	refEntity_t		torso;
-	refEntity_t		head;
-	refEntity_t		gun;
-	refEntity_t		barrel;
-	refEntity_t		flash;
+	refEntity_t		legs = {0};
+	refEntity_t		torso = {0};
+	refEntity_t		head = {0};
+	refEntity_t		gun = {0};
+	refEntity_t		barrel = {0};
+	refEntity_t		flash = {0};
 	vec3_t			origin;
 	int				renderfx;
 	vec3_t			mins = {-16, -16, -24};
@@ -714,10 +712,10 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 
 	dp_realtime = time;
 
-	if ( pi->pendingWeapon != -1 && dp_realtime > pi->weaponTimer ) {
+	if ( pi->pendingWeapon != WP_NUM_WEAPONS && dp_realtime > pi->weaponTimer ) {
 		pi->weapon = pi->pendingWeapon;
 		pi->lastWeapon = pi->pendingWeapon;
-		pi->pendingWeapon = -1;
+		pi->pendingWeapon = WP_NUM_WEAPONS;
 		pi->weaponTimer = 0;
 		if( pi->currentWeapon != pi->weapon ) {
 			trap_S_StartLocalSound( weaponChangeSound, CHAN_LOCAL );
@@ -845,10 +843,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		angles[YAW] = 0;
 		angles[PITCH] = 0;
 		angles[ROLL] = UI_MachinegunSpinAngle( pi );
-		if( pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
-			angles[PITCH] = angles[ROLL];
-			angles[ROLL] = 0;
-		}
 		AnglesToAxis( angles, barrel.axis );
 
 		UI_PositionRotatedEntityOnTag( &barrel, &gun, pi->weaponModel, "tag_barrel");
@@ -1057,26 +1051,26 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		if ( !Q_stricmp( token, "footsteps" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			continue;
 		} else if ( !Q_stricmp( token, "headoffset" ) ) {
 			for ( i = 0 ; i < 3 ; i++ ) {
 				token = COM_Parse( &text_p );
-				if ( !token ) {
+				if ( !token[0] ) {
 					break;
 				}
 			}
 			continue;
 		} else if ( !Q_stricmp( token, "sex" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			continue;
@@ -1088,14 +1082,14 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 			break;
 		}
 
-		Com_Printf( "unknown token '%s' is %s\n", token, filename );
+		Com_Printf( "unknown token '%s' in %s\n", token, filename );
 	}
 
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].firstFrame = atoi( token );
@@ -1108,19 +1102,19 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].numFrames = atoi( token );
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].loopFrames = atoi( token );
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		fps = atof( token );
@@ -1254,7 +1248,7 @@ void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model, const char *he
 	pi->weapon = WP_MACHINEGUN;
 	pi->currentWeapon = pi->weapon;
 	pi->lastWeapon = pi->weapon;
-	pi->pendingWeapon = -1;
+	pi->pendingWeapon = WP_NUM_WEAPONS;
 	pi->weaponTimer = 0;
 	pi->chat = qfalse;
 	pi->newModel = qtrue;
@@ -1293,11 +1287,11 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->torso.yawAngle = viewAngles[YAW];
 		pi->torso.yawing = qfalse;
 
-		if ( weaponNumber != -1 ) {
+		if ( weaponNumber != WP_NUM_WEAPONS ) {
 			pi->weapon = weaponNumber;
 			pi->currentWeapon = weaponNumber;
 			pi->lastWeapon = weaponNumber;
-			pi->pendingWeapon = -1;
+			pi->pendingWeapon = WP_NUM_WEAPONS;
 			pi->weaponTimer = 0;
 			UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 		}
@@ -1306,8 +1300,8 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// weapon
-	if ( weaponNumber == -1 ) {
-		pi->pendingWeapon = -1;
+	if ( weaponNumber == WP_NUM_WEAPONS ) {
+		pi->pendingWeapon = WP_NUM_WEAPONS;
 		pi->weaponTimer = 0;
 	}
 	else if ( weaponNumber != WP_NONE ) {

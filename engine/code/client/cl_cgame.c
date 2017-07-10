@@ -186,15 +186,6 @@ void CL_AddCgameCommand( const char *cmdName ) {
 	Cmd_AddCommand( cmdName, NULL );
 }
 
-/*
-=====================
-CL_CgameError
-=====================
-*/
-void CL_CgameError( const char *string ) {
-	Com_Error( ERR_DROP, "%s", string );
-}
-
 
 /*
 =====================
@@ -449,7 +440,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_FS_FOPENFILE:
 		return FS_FOpenFileByMode( VMA(1), VMA(2), args[3] );
 	case CG_FS_READ:
-		FS_Read2( VMA(1), args[2], args[3] );
+		FS_Read( VMA(1), args[2], args[3] );
 		return 0;
 	case CG_FS_WRITE:
 		FS_Write( VMA(1), args[2], args[3] );
@@ -916,37 +907,27 @@ void CL_FirstSnapshot( void ) {
 #endif
 
 #ifdef USE_VOIP
-	if (!clc.speexInitialized) {
+	if (!clc.voipCodecInitialized) {
 		int i;
-		speex_bits_init(&clc.speexEncoderBits);
-		speex_bits_reset(&clc.speexEncoderBits);
+		int error;
 
-		clc.speexEncoder = speex_encoder_init(&speex_nb_mode);
+		clc.opusEncoder = opus_encoder_create(48000, 1, OPUS_APPLICATION_VOIP, &error);
 
-		speex_encoder_ctl(clc.speexEncoder, SPEEX_GET_FRAME_SIZE,
-		                  &clc.speexFrameSize);
-		speex_encoder_ctl(clc.speexEncoder, SPEEX_GET_SAMPLING_RATE,
-		                  &clc.speexSampleRate);
-
-		clc.speexPreprocessor = speex_preprocess_state_init(clc.speexFrameSize,
-		                                                  clc.speexSampleRate);
-
-		i = 1;
-		speex_preprocess_ctl(clc.speexPreprocessor,
-		                     SPEEX_PREPROCESS_SET_DENOISE, &i);
-
-		i = 1;
-		speex_preprocess_ctl(clc.speexPreprocessor,
-		                     SPEEX_PREPROCESS_SET_AGC, &i);
+		if ( error ) {
+			Com_DPrintf("VoIP: Error opus_encoder_create %d\n", error);
+			return;
+		}
 
 		for (i = 0; i < MAX_CLIENTS; i++) {
-			speex_bits_init(&clc.speexDecoderBits[i]);
-			speex_bits_reset(&clc.speexDecoderBits[i]);
-			clc.speexDecoder[i] = speex_decoder_init(&speex_nb_mode);
+			clc.opusDecoder[i] = opus_decoder_create(48000, 1, &error);
+			if ( error ) {
+				Com_DPrintf("VoIP: Error opus_decoder_create(%d) %d\n", i, error);
+				return;
+			}
 			clc.voipIgnore[i] = qfalse;
 			clc.voipGain[i] = 1.0f;
 		}
-		clc.speexInitialized = qtrue;
+		clc.voipCodecInitialized = qtrue;
 		clc.voipMuteAll = qfalse;
 		Cmd_AddCommand ("voip", CL_Voip_f);
 		Cvar_Set("cl_voipSendTarget", "spatial");

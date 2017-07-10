@@ -271,6 +271,11 @@ static sfx_t *S_FindName( const char *name ) {
 		return NULL;
 	}
 
+	if (name[0] == '*') {
+		Com_Printf( S_COLOR_YELLOW "WARNING: Tried to load player sound directly: %s\n", name );
+		return NULL;
+	}
+
 	hash = S_HashSFXName(name);
 
 	sfx = sfxHash[hash];
@@ -492,7 +497,7 @@ static qboolean S_Base_HearingThroughEntity( int entityNum, vec3_t origin )
 
 	if( listener_number == entityNum )
 	{
-		// FIXME: <tim@ngus.net> 28/02/06 This is an outrageous hack to detect
+		// This is an outrageous hack to detect
 		// whether or not the player is rendering in third person or not. We can't
 		// ask the renderer because the renderer has no notion of entities and we
 		// can't ask cgame since that would involve changing the API and hence mod
@@ -977,29 +982,34 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 	int		i;
 	int		src, dst;
 	float	scale;
-	int		intVolume;
+	int		intVolumeLeft, intVolumeRight;
 	portable_samplepair_t *rawsamples;
 
 	if ( !s_soundStarted || s_soundMuted ) {
 		return;
 	}
 
-	if(entityNum >= 0)
-	{
-		// FIXME: support spatialized raw streams, e.g. for VoIP
-		return;
-	}
-
 	if ( (stream < 0) || (stream >= MAX_RAW_STREAMS) ) {
 		return;
 	}
-	
+
 	rawsamples = s_rawsamples[stream];
 
-	if(s_muted->integer)
-		intVolume = 0;
-	else
-		intVolume = 256 * volume * s_volume->value;
+	if ( s_muted->integer ) {
+		intVolumeLeft = intVolumeRight = 0;
+	} else {
+		int leftvol, rightvol;
+
+		if ( entityNum >= 0 && entityNum < MAX_GENTITIES ) {
+			// support spatialized raw streams, e.g. for VoIP
+			S_SpatializeOrigin( loopSounds[ entityNum ].origin, 256, &leftvol, &rightvol );
+		} else {
+			leftvol = rightvol = 256;
+		}
+
+		intVolumeLeft = leftvol * volume * s_volume->value;
+		intVolumeRight = rightvol * volume * s_volume->value;
+	}
 
 	if ( s_rawend[stream] < s_soundtime ) {
 		Com_DPrintf( "S_Base_RawSamples: resetting minimum: %i < %i\n", s_rawend[stream], s_soundtime );
@@ -1017,8 +1027,8 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 			{
 				dst = s_rawend[stream]&(MAX_RAW_SAMPLES-1);
 				s_rawend[stream]++;
-				rawsamples[dst].left = ((short *)data)[i*2] * intVolume;
-				rawsamples[dst].right = ((short *)data)[i*2+1] * intVolume;
+				rawsamples[dst].left = ((short *)data)[i*2] * intVolumeLeft;
+				rawsamples[dst].right = ((short *)data)[i*2+1] * intVolumeRight;
 			}
 		}
 		else
@@ -1030,8 +1040,8 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 					break;
 				dst = s_rawend[stream]&(MAX_RAW_SAMPLES-1);
 				s_rawend[stream]++;
-				rawsamples[dst].left = ((short *)data)[src*2] * intVolume;
-				rawsamples[dst].right = ((short *)data)[src*2+1] * intVolume;
+				rawsamples[dst].left = ((short *)data)[src*2] * intVolumeLeft;
+				rawsamples[dst].right = ((short *)data)[src*2+1] * intVolumeRight;
 			}
 		}
 	}
@@ -1044,13 +1054,14 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 				break;
 			dst = s_rawend[stream]&(MAX_RAW_SAMPLES-1);
 			s_rawend[stream]++;
-			rawsamples[dst].left = ((short *)data)[src] * intVolume;
-			rawsamples[dst].right = ((short *)data)[src] * intVolume;
+			rawsamples[dst].left = ((short *)data)[src] * intVolumeLeft;
+			rawsamples[dst].right = ((short *)data)[src] * intVolumeRight;
 		}
 	}
 	else if (s_channels == 2 && width == 1)
 	{
-		intVolume *= 256;
+		intVolumeLeft *= 256;
+		intVolumeRight *= 256;
 
 		for (i=0 ; ; i++)
 		{
@@ -1059,13 +1070,14 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 				break;
 			dst = s_rawend[stream]&(MAX_RAW_SAMPLES-1);
 			s_rawend[stream]++;
-			rawsamples[dst].left = ((char *)data)[src*2] * intVolume;
-			rawsamples[dst].right = ((char *)data)[src*2+1] * intVolume;
+			rawsamples[dst].left = ((char *)data)[src*2] * intVolumeLeft;
+			rawsamples[dst].right = ((char *)data)[src*2+1] * intVolumeRight;
 		}
 	}
 	else if (s_channels == 1 && width == 1)
 	{
-		intVolume *= 256;
+		intVolumeLeft *= 256;
+		intVolumeRight *= 256;
 
 		for (i=0 ; ; i++)
 		{
@@ -1074,8 +1086,8 @@ void S_Base_RawSamples( int stream, int samples, int rate, int width, int s_chan
 				break;
 			dst = s_rawend[stream]&(MAX_RAW_SAMPLES-1);
 			s_rawend[stream]++;
-			rawsamples[dst].left = (((byte *)data)[src]-128) * intVolume;
-			rawsamples[dst].right = (((byte *)data)[src]-128) * intVolume;
+			rawsamples[dst].left = (((byte *)data)[src]-128) * intVolumeLeft;
+			rawsamples[dst].right = (((byte *)data)[src]-128) * intVolumeRight;
 		}
 	}
 
@@ -1237,7 +1249,13 @@ void S_GetSoundtime(void)
 
 	if( CL_VideoRecording( ) )
 	{
-		s_soundtime += (int)ceil( dma.speed / cl_aviFrameRate->value );
+		float fps = MIN(cl_aviFrameRate->value, 1000.0f);
+		float frameDuration = MAX(dma.speed / fps, 1.0f) + clc.aviSoundFrameRemainder;
+
+		int msec = (int)frameDuration;
+		s_soundtime += msec;
+		clc.aviSoundFrameRemainder = frameDuration - msec;
+
 		return;
 	}
 
@@ -1362,6 +1380,32 @@ void S_Base_StopBackgroundTrack( void ) {
 
 /*
 ======================
+S_OpenBackgroundStream
+======================
+*/
+static void S_OpenBackgroundStream( const char *filename ) {
+	// close the background track, but DON'T reset s_rawend
+	// if restarting the same back ground track
+	if(s_backgroundStream)
+	{
+		S_CodecCloseStream(s_backgroundStream);
+		s_backgroundStream = NULL;
+	}
+
+	// Open stream
+	s_backgroundStream = S_CodecOpenStream(filename);
+	if(!s_backgroundStream) {
+		Com_Printf( S_COLOR_YELLOW "WARNING: couldn't open music file %s\n", filename );
+		return;
+	}
+
+	if(s_backgroundStream->info.channels != 2 || s_backgroundStream->info.rate != 22050) {
+		Com_Printf(S_COLOR_YELLOW "WARNING: music file %s is not 22k stereo\n", filename );
+	}
+}
+
+/*
+======================
 S_StartBackgroundTrack
 ======================
 */
@@ -1380,30 +1424,9 @@ void S_Base_StartBackgroundTrack( const char *intro, const char *loop ){
 		return;
 	}
 
-	if( !loop ) {
-		s_backgroundLoop[0] = 0;
-	} else {
-		Q_strncpyz( s_backgroundLoop, loop, sizeof( s_backgroundLoop ) );
-	}
+	Q_strncpyz( s_backgroundLoop, loop, sizeof( s_backgroundLoop ) );
 
-	// close the background track, but DON'T reset s_rawend
-	// if restarting the same back ground track
-	if(s_backgroundStream)
-	{
-		S_CodecCloseStream(s_backgroundStream);
-		s_backgroundStream = NULL;
-	}
-
-	// Open stream
-	s_backgroundStream = S_CodecOpenStream(intro);
-	if(!s_backgroundStream) {
-		Com_Printf( S_COLOR_YELLOW "WARNING: couldn't open music file %s\n", intro );
-		return;
-	}
-
-	if(s_backgroundStream->info.channels != 2 || s_backgroundStream->info.rate != 22050) {
-		Com_Printf(S_COLOR_YELLOW "WARNING: music file %s is not 22k stereo\n", intro );
-	}
+	S_OpenBackgroundStream( intro );
 }
 
 /*
@@ -1452,7 +1475,6 @@ void S_UpdateBackgroundTrack( void ) {
 		r = S_CodecReadStream(s_backgroundStream, fileBytes, raw);
 		if(r < fileBytes)
 		{
-			fileBytes = r;
 			fileSamples = r / (s_backgroundStream->info.width * s_backgroundStream->info.channels);
 		}
 
@@ -1467,9 +1489,7 @@ void S_UpdateBackgroundTrack( void ) {
 			// loop
 			if(s_backgroundLoop[0])
 			{
-				S_CodecCloseStream(s_backgroundStream);
-				s_backgroundStream = NULL;
-				S_Base_StartBackgroundTrack( s_backgroundLoop, s_backgroundLoop );
+				S_OpenBackgroundStream( s_backgroundLoop );
 				if(!s_backgroundStream)
 					return;
 			}

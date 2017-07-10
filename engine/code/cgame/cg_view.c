@@ -285,7 +285,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			VectorCopy( trace.endpos, view );
 			view[2] += (1.0 - trace.fraction) * 32;
 			// try another trace to this position, because a tunnel may have the ceiling
-			// close enogh that this is poking out
+			// close enough that this is poking out
 
 			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 			VectorCopy( trace.endpos, view );
@@ -1036,7 +1036,8 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 // END
 
 	// decide on third person view
-	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
+	cg.renderingThirdPerson = cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR
+							&& (cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0));
 
 	// build cg.refdef
 	inwater = CG_CalcViewValues();

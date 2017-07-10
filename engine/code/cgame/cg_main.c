@@ -1703,7 +1703,7 @@ qboolean CG_Load_Menu(char **p) {
 			return qtrue;
 		}
 
-		if ( !token || token[0] == 0 ) {
+		if (!token[0]) {
 			return qfalse;
 		}
 
@@ -1750,7 +1750,7 @@ void CG_LoadMenus(const char *menuFile) {
 
 	while ( 1 ) {
 		token = COM_ParseExt( &p, qtrue );
-		if( !token || token[0] == 0 || token[0] == '}') {
+		if (!token[0]) {
 			break;
 		}
 
@@ -1968,18 +1968,14 @@ static void CG_FeederSelection(float feederID, int index) {
 		cg.selectedScore = index;
 	}
 }
-#endif
 
-#ifdef MISSIONPACK
 static float CG_Cvar_Get(const char *cvar) {
 	char buff[128];
 	memset(buff, 0, sizeof(buff));
 	trap_Cvar_VariableStringBuffer(cvar, buff, sizeof(buff));
 	return atof(buff);
 }
-#endif
 
-#ifdef MISSIONPACK
 void CG_Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style) {
 	CG_Text_Paint(x, y, scale, color, text, 0, limit, style);
 }

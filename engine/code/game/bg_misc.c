@@ -1348,7 +1348,6 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		// don't pick up if already at max
 #ifdef MISSIONPACK
 		if( bg_itemlist[ps->stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-			upperBound = ps->stats[STAT_MAX_HEALTH];
 		}
 		else
 #endif
@@ -1513,7 +1512,7 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
 		break;
 	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trTime );
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trType );
 		break;
 	}
 }
@@ -1557,7 +1556,7 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 		result[2] -= DEFAULT_GRAVITY * deltaTime;		// FIXME: local gravity...
 		break;
 	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trTime );
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trType );
 		break;
 	}
 }

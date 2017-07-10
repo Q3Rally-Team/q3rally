@@ -410,9 +410,9 @@ typedef struct botlib_export_s
 	//shutdown the bot library, returns BLERR_
 	int (*BotLibShutdown)(void);
 	//sets a library variable returns BLERR_
-	int (*BotLibVarSet)(char *var_name, char *value);
+	int (*BotLibVarSet)(const char *var_name, const char *value);
 	//gets a library variable returns BLERR_
-	int (*BotLibVarGet)(char *var_name, char *value, int size);
+	int (*BotLibVarGet)(const char *var_name, char *value, int size);
 
 	//sets a C-like define returns BLERR_
 	int (*PC_AddGlobalDefine)(char *string);
@@ -438,14 +438,15 @@ botlib_export_t *GetBotLibAPI( int apiVersion, botlib_import_t *import );
 
 name:						default:			module(s):			description:
 
-"basedir"					""					l_utils.c			base directory
-"gamedir"					""					l_utils.c			game directory
-"cddir"						""					l_utils.c			CD directory
+"basedir"					""					-					base directory
+"homedir"					""					be_interface.c		home directory
+"gamedir"					""					be_interface.c		mod game directory
+"basegame"					""					be_interface.c		base game directory
 
 "log"						"0"					l_log.c				enable/disable creating a log file
 "maxclients"				"4"					be_interface.c		maximum number of clients
 "maxentities"				"1024"				be_interface.c		maximum number of entities
-"bot_developer"				"0"					be_interface.c		bot developer mode
+"bot_developer"				"0"					be_interface.c		bot developer mode (it's "botDeveloper" in C to prevent symbol clash).
 
 "phys_friction"				"6"					be_aas_move.c		ground friction
 "phys_stopspeed"			"100"				be_aas_move.c		stop speed

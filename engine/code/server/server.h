@@ -44,7 +44,7 @@ typedef struct voipServerPacket_s
 	int len;
 	int sender;
 	int flags;
-	byte data[1024];
+	byte data[4000];
 } voipServerPacket_t;
 #endif
 
@@ -78,7 +78,6 @@ typedef struct {
 	int				snapshotCounter;	// incremented for each snapshot built
 	int				timeResidual;		// <= 1000 / sv_frame->value
 	int				nextFrameTime;		// when time > nextFrameTime, process world
-	struct cmodel_s	*models[MAX_MODELS];
 	char			*configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t		svEntities[MAX_GENTITIES];
 
@@ -195,7 +194,7 @@ typedef struct client_s {
 #endif
 
 	int				oldServerTime;
-	qboolean		csUpdated[MAX_CONFIGSTRINGS+1];	
+	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 	
 #ifdef LEGACY_PROTOCOL
 	qboolean		compat;
@@ -236,14 +235,16 @@ typedef struct {
 	int			snapFlagServerBit;			// ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
 
 	client_t	*clients;					// [sv_maxclients->integer];
-	int			numSnapshotEntities;		// sv_maxclients->integer*PACKET_BACKUP*MAX_PACKET_ENTITIES
+	int			numSnapshotEntities;		// sv_maxclients->integer*PACKET_BACKUP*MAX_SNAPSHOT_ENTITIES
 	int			nextSnapshotEntities;		// next snapshotEntities to use
 	entityState_t	*snapshotEntities;		// [numSnapshotEntities]
 	int			nextHeartbeatTime;
 	challenge_t	challenges[MAX_CHALLENGES];	// to prevent invalid IPs from connecting
 	netadr_t	redirectAddress;			// for rcon return messages
-
-	netadr_t	authorizeAddress;			// for rcon return messages
+#ifndef STANDALONE
+	netadr_t	authorizeAddress;			// authorize server address
+#endif
+	int			masterResolveTime[MAX_MASTER_SERVERS]; // next svs.time that server should do dns lookup for master server
 } serverStatic_t;
 
 #define SERVER_MAXBANS	1024
@@ -300,6 +301,7 @@ extern	int serverBansCount;
 
 #ifdef USE_VOIP
 extern	cvar_t	*sv_voip;
+extern	cvar_t	*sv_voipProtocol;
 #endif
 
 
@@ -308,6 +310,28 @@ extern	cvar_t	*sv_voip;
 //
 // sv_main.c
 //
+typedef struct leakyBucket_s leakyBucket_t;
+struct leakyBucket_s {
+	netadrtype_t	type;
+
+	union {
+		byte	_4[4];
+		byte	_6[16];
+	} ipv;
+
+	int						lastTime;
+	signed char		burst;
+
+	long					hash;
+
+	leakyBucket_t *prev, *next;
+};
+
+extern leakyBucket_t outboundLeakyBucket;
+
+qboolean SVC_RateLimit( leakyBucket_t *bucket, int burst, int period );
+qboolean SVC_RateLimitAddress( netadr_t from, int burst, int period );
+
 void SV_FinalMessage (char *message);
 void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 

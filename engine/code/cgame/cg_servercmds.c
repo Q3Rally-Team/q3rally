@@ -377,7 +377,7 @@ static void CG_ConfigStringModified( void ) {
 		cgs.teamVoteNo[num-CS_TEAMVOTE_NO] = atoi( str );
 		cgs.teamVoteModified[num-CS_TEAMVOTE_NO] = qtrue;
 	} else if ( num >= CS_TEAMVOTE_STRING && num <= CS_TEAMVOTE_STRING + 1) {
-		Q_strncpyz( cgs.teamVoteString[num-CS_TEAMVOTE_STRING], str, sizeof( cgs.teamVoteString ) );
+		Q_strncpyz( cgs.teamVoteString[num-CS_TEAMVOTE_STRING], str, sizeof( cgs.teamVoteString[0] ) );
 #ifdef MISSIONPACK
 		trap_S_StartLocalSound( cgs.media.voteNow, CHAN_ANNOUNCER );
 #endif
@@ -557,7 +557,7 @@ static void CG_MapRestart( void ) {
 #ifdef MISSIONPACK
 	if (cg_singlePlayerActive.integer) {
 		trap_Cvar_Set("ui_matchStartTime", va("%i", cg.time));
-		if (cg_recordSPDemo.integer && cg_recordSPDemoName.string && *cg_recordSPDemoName.string) {
+		if (cg_recordSPDemo.integer && *cg_recordSPDemoName.string) {
 			trap_SendConsoleCommand(va("set g_synchronousclients 1 ; record %s \n", cg_recordSPDemoName.string));
 		}
 	}
@@ -645,7 +645,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 		voiceChats[i].id[0] = 0;
 	}
 	token = COM_ParseExt(p, qtrue);
-	if (!token || token[0] == 0) {
+	if (!token[0]) {
 		return qtrue;
 	}
 	if (!Q_stricmp(token, "female")) {
@@ -665,7 +665,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	voiceChatList->numVoiceChats = 0;
 	while ( 1 ) {
 		token = COM_ParseExt(p, qtrue);
-		if (!token || token[0] == 0) {
+		if (!token[0]) {
 			return qtrue;
 		}
 		Com_sprintf(voiceChats[voiceChatList->numVoiceChats].id, sizeof( voiceChats[voiceChatList->numVoiceChats].id ), "%s", token);
@@ -677,7 +677,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 		voiceChats[voiceChatList->numVoiceChats].numSounds = 0;
 		while(1) {
 			token = COM_ParseExt(p, qtrue);
-			if (!token || token[0] == 0) {
+			if (!token[0]) {
 				return qtrue;
 			}
 			if (!Q_stricmp(token, "}"))
@@ -685,7 +685,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 			sound = trap_S_RegisterSound( token, compress );
 			voiceChats[voiceChatList->numVoiceChats].sounds[voiceChats[voiceChatList->numVoiceChats].numSounds] = sound;
 			token = COM_ParseExt(p, qtrue);
-			if (!token || token[0] == 0) {
+			if (!token[0]) {
 				return qtrue;
 			}
 			Com_sprintf(voiceChats[voiceChatList->numVoiceChats].chats[
@@ -753,7 +753,7 @@ int CG_HeadModelVoiceChats( char *filename ) {
 	p = &ptr;
 
 	token = COM_ParseExt(p, qtrue);
-	if (!token || token[0] == 0) {
+	if ( !token[0] ) {
 		return -1;
 	}
 
@@ -905,7 +905,6 @@ CG_PlayVoiceChat
 =================
 */
 void CG_PlayVoiceChat( bufferedVoiceChat_t *vchat ) {
-#ifdef MISSIONPACK
 	// if we are going into the intermission, don't start any voices
 	if ( cg.intermissionStarted ) {
 		return;
@@ -930,7 +929,6 @@ void CG_PlayVoiceChat( bufferedVoiceChat_t *vchat ) {
 		CG_Printf( "%s\n", vchat->message );
 	}
 	voiceChatBuffer[cg.voiceChatBufferOut].snd = 0;
-#endif
 }
 
 /*
@@ -939,7 +937,6 @@ CG_PlayBufferedVoieChats
 =====================
 */
 void CG_PlayBufferedVoiceChats( void ) {
-#ifdef MISSIONPACK
 	if ( cg.voiceChatTime < cg.time ) {
 		if (cg.voiceChatBufferOut != cg.voiceChatBufferIn && voiceChatBuffer[cg.voiceChatBufferOut].snd) {
 			//
@@ -949,7 +946,6 @@ void CG_PlayBufferedVoiceChats( void ) {
 			cg.voiceChatTime = cg.time + 1000;
 		}
 	}
-#endif
 }
 
 /*
@@ -958,7 +954,6 @@ CG_AddBufferedVoiceChat
 =====================
 */
 void CG_AddBufferedVoiceChat( bufferedVoiceChat_t *vchat ) {
-#ifdef MISSIONPACK
 	// if we are going into the intermission, don't start any voices
 	if ( cg.intermissionStarted ) {
 		return;
@@ -970,7 +965,6 @@ void CG_AddBufferedVoiceChat( bufferedVoiceChat_t *vchat ) {
 		CG_PlayVoiceChat( &voiceChatBuffer[cg.voiceChatBufferOut] );
 		cg.voiceChatBufferOut++;
 	}
-#endif
 }
 
 /*
@@ -979,7 +973,6 @@ CG_VoiceChatLocal
 =================
 */
 void CG_VoiceChatLocal( int mode, qboolean voiceOnly, int clientNum, int color, const char *cmd ) {
-#ifdef MISSIONPACK
 	char *chat;
 	voiceChatList_t *voiceChatList;
 	clientInfo_t *ci;
@@ -988,6 +981,10 @@ void CG_VoiceChatLocal( int mode, qboolean voiceOnly, int clientNum, int color, 
 
 	// if we are going into the intermission, don't start any voices
 	if ( cg.intermissionStarted ) {
+		return;
+	}
+
+	if ( mode == SAY_ALL && cgs.gametype >= GT_TEAM && cg_teamChatsOnly.integer ) {
 		return;
 	}
 
@@ -1001,25 +998,21 @@ void CG_VoiceChatLocal( int mode, qboolean voiceOnly, int clientNum, int color, 
 	voiceChatList = CG_VoiceChatListForClient( clientNum );
 
 	if ( CG_GetVoiceChat( voiceChatList, cmd, &snd, &chat ) ) {
-		//
-		if ( mode == SAY_TEAM || !cg_teamChatsOnly.integer ) {
-			vchat.clientNum = clientNum;
-			vchat.snd = snd;
-			vchat.voiceOnly = voiceOnly;
-			Q_strncpyz(vchat.cmd, cmd, sizeof(vchat.cmd));
-			if ( mode == SAY_TELL ) {
-				Com_sprintf(vchat.message, sizeof(vchat.message), "[%s]: %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
-			}
-			else if ( mode == SAY_TEAM ) {
-				Com_sprintf(vchat.message, sizeof(vchat.message), "(%s): %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
-			}
-			else {
-				Com_sprintf(vchat.message, sizeof(vchat.message), "%s: %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
-			}
-			CG_AddBufferedVoiceChat(&vchat);
+		vchat.clientNum = clientNum;
+		vchat.snd = snd;
+		vchat.voiceOnly = voiceOnly;
+		Q_strncpyz(vchat.cmd, cmd, sizeof(vchat.cmd));
+		if ( mode == SAY_TELL ) {
+			Com_sprintf(vchat.message, sizeof(vchat.message), "[%s]: %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
 		}
+		else if ( mode == SAY_TEAM ) {
+			Com_sprintf(vchat.message, sizeof(vchat.message), "(%s): %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
+		}
+		else {
+			Com_sprintf(vchat.message, sizeof(vchat.message), "%s: %c%c%s", ci->name, Q_COLOR_ESCAPE, color, chat);
+		}
+		CG_AddBufferedVoiceChat(&vchat);
 	}
-#endif
 }
 
 /*
@@ -1047,7 +1040,7 @@ void CG_VoiceChat( int mode ) {
 
 	CG_VoiceChatLocal( mode, voiceOnly, clientNum, color, cmd );
 }
-#endif
+#endif // MISSIONPACK
 
 /*
 =================
@@ -1163,12 +1156,14 @@ static void CG_ServerCommand( void ) {
 	}
 
 	if ( !strcmp( cmd, "chat" ) ) {
-		if ( !cg_teamChatsOnly.integer ) {
-			trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
-			Q_strncpyz( text, CG_Argv(1), MAX_SAY_TEXT );
-			CG_RemoveChatEscapeChar( text );
-			CG_Printf( "%s\n", text );
+		if ( cgs.gametype >= GT_TEAM && cg_teamChatsOnly.integer ) {
+			return;
 		}
+
+		trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
+		Q_strncpyz( text, CG_Argv(1), MAX_SAY_TEXT );
+		CG_RemoveChatEscapeChar( text );
+		CG_Printf( "%s\n", text );
 		return;
 	}
 

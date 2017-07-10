@@ -342,7 +342,7 @@ void BotQueueConsoleMessage(int chatstate, int type, char *message)
 	m->handle = cs->handle;
 	m->time = AAS_Time();
 	m->type = type;
-	strncpy(m->message, message, MAX_MESSAGE_SIZE);
+	Q_strncpyz(m->message, message, MAX_MESSAGE_SIZE);
 	m->next = NULL;
 	if (cs->lastmessage)
 	{
@@ -673,7 +673,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 				else if (!strcmp(token.string, "["))
 				{
 					size += sizeof(bot_synonymlist_t);
-					if (pass)
+					if (pass && ptr)
 					{
 						syn = (bot_synonymlist_t *) ptr;
 						ptr += sizeof(bot_synonymlist_t);
@@ -705,7 +705,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 						len = strlen(token.string) + 1;
 						len = PAD(len, sizeof(long));
 						size += sizeof(bot_synonym_t) + len;
-						if (pass)
+						if (pass && ptr)
 						{
 							synonym = (bot_synonym_t *) ptr;
 							ptr += sizeof(bot_synonym_t);
@@ -725,7 +725,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 							FreeSource(source);
 							return NULL;
 						} //end if
-						if (pass)
+						if (pass && ptr)
 						{
 							synonym->weight = token.floatvalue;
 							syn->totalweight += synonym->weight;
@@ -1003,7 +1003,7 @@ bot_randomlist_t *BotLoadRandomStrings(char *filename)
 			len = strlen(token.string) + 1;
 			len = PAD(len, sizeof(long));
 			size += sizeof(bot_randomlist_t) + len;
-			if (pass)
+			if (pass && ptr)
 			{
 				random = (bot_randomlist_t *) ptr;
 				ptr += sizeof(bot_randomlist_t);
@@ -1025,7 +1025,6 @@ bot_randomlist_t *BotLoadRandomStrings(char *filename)
 			} //end if
 			while(!PC_CheckTokenString(source, "}"))
 			{
-				size_t len;
 				if (!BotLoadChatMessage(source, chatmessagestring))
 				{
 					FreeSource(source);
@@ -1034,7 +1033,7 @@ bot_randomlist_t *BotLoadRandomStrings(char *filename)
 				len = strlen(chatmessagestring) + 1;
 				len = PAD(len, sizeof(long));
 				size += sizeof(bot_randomstring_t) + len;
-				if (pass)
+				if (pass && ptr)
 				{
 					randomstring = (bot_randomstring_t *) ptr;
 					ptr += sizeof(bot_randomstring_t);
@@ -1457,7 +1456,7 @@ int BotFindMatch(char *str, bot_match_t *match, unsigned long int context)
 	int i;
 	bot_matchtemplate_t *ms;
 
-	strncpy(match->string, str, MAX_MESSAGE_SIZE);
+	Q_strncpyz(match->string, str, MAX_MESSAGE_SIZE);
 	//remove any trailing enters
 	while(strlen(match->string) &&
 			match->string[strlen(match->string)-1] == '\n')
@@ -1507,7 +1506,6 @@ void BotMatchVariable(bot_match_t *match, int variable, char *buf, int size)
 	{
 		strcpy(buf, "");
 	} //end else
-	return;
 } //end of the function BotMatchVariable
 //===========================================================================
 //
@@ -2113,10 +2111,10 @@ bot_chat_t *BotLoadInitialChat(char *chatfile, char *chatname)
 							return NULL;
 						} //end if
 						StripDoubleQuotes(token.string);
-						if (pass)
+						if (pass && ptr)
 						{
 							chattype = (bot_chattype_t *) ptr;
-							strncpy(chattype->name, token.string, MAX_CHATTYPE_NAME);
+							Q_strncpyz(chattype->name, token.string, MAX_CHATTYPE_NAME);
 							chattype->firstchatmessage = NULL;
 							//add the chat type to the chat
 							chattype->next = chat->types;
@@ -2136,7 +2134,7 @@ bot_chat_t *BotLoadInitialChat(char *chatfile, char *chatname)
 							} //end if
 							len = strlen(chatmessagestring) + 1;
 							len = PAD(len, sizeof(long));
-							if (pass)
+							if (pass && ptr)
 							{
 								chatmessage = (bot_chatmessage_t *) ptr;
 								chatmessage->time = -2*CHATMESSAGE_RECENTTIME;
@@ -2583,7 +2581,6 @@ void BotInitialChat(int chatstate, char *type, int mcontext, char *var0, char *v
 		strcat(match.string, var7);
 		match.variables[7].offset = index;
 		match.variables[7].length = strlen(var7);
-		index += strlen(var7);
 	}
  	//
 	BotConstructChatMessage(cs, message, mcontext, &match, 0, qfalse);
@@ -2766,7 +2763,6 @@ int BotReplyChat(int chatstate, char *message, int mcontext, int vcontext, char 
 			strcat(bestmatch.string, var7);
 			bestmatch.variables[7].offset = index;
 			bestmatch.variables[7].length = strlen(var7);
-			index += strlen(var7);
 		}
 		if (LibVarGetValue("bot_testrchat"))
 		{
@@ -2888,7 +2884,7 @@ void BotSetChatName(int chatstate, char *name, int client)
 	if (!cs) return;
 	cs->client = client;
 	Com_Memset(cs->name, 0, sizeof(cs->name));
-	strncpy(cs->name, name, sizeof(cs->name));
+	strncpy(cs->name, name, sizeof(cs->name)-1);
 	cs->name[sizeof(cs->name)-1] = '\0';
 } //end of the function BotSetChatName
 //===========================================================================

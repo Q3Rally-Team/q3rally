@@ -281,7 +281,7 @@ itemconfig_t *LoadItemConfig(char *filename)
 		LibVarSet( "max_iteminfo", "256" );
 	}
 
-	strncpy( path, filename, MAX_PATH );
+	Q_strncpyz(path, filename, sizeof(path));
 	PC_SetBaseFolder(BOTFILESBASEFOLDER);
 	source = LoadSourceFile( path );
 	if( !source ) {
@@ -310,11 +310,11 @@ itemconfig_t *LoadItemConfig(char *filename)
 			if (!PC_ExpectTokenType(source, TT_STRING, 0, &token))
 			{
 				FreeMemory(ic);
-				FreeMemory(source);
+				FreeSource(source);
 				return NULL;
 			} //end if
 			StripDoubleQuotes(token.string);
-			strncpy(ii->classname, token.string, sizeof(ii->classname)-1);
+			Q_strncpyz(ii->classname, token.string, sizeof(ii->classname));
 			if (!ReadStructure(source, &iteminfo_struct, (char *) ii))
 			{
 				FreeMemory(ic);
@@ -558,10 +558,9 @@ void BotInitLevelItems(void)
 	//if there's no AAS file loaded
 	if (!AAS_Loaded()) return;
 
-	//update the modelindexes of the item info
+	//validate the modelindexes of the item info
 	for (i = 0; i < ic->numiteminfo; i++)
 	{
-		//ic->iteminfo[i].modelindex = AAS_IndexFromModel(ic->iteminfo[i].model);
 		if (!ic->iteminfo[i].modelindex)
 		{
 			Log_Write("item %s has modelindex 0", ic->iteminfo[i].classname);
@@ -686,13 +685,11 @@ void BotGoalName(int number, char *name, int size)
 	{
 		if (li->number == number)
 		{
-			strncpy(name, itemconfig->iteminfo[li->iteminfo].name, size-1);
-			name[size-1] = '\0';
+			Q_strncpyz(name, itemconfig->iteminfo[li->iteminfo].name, size);
 			return;
 		} //end for
 	} //end for
 	strcpy(name, "");
-	return;
 } //end of the function BotGoalName
 //===========================================================================
 //

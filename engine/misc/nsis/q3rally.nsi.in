@@ -5,7 +5,7 @@
 ; This file is used to automatically build the installers in the
 ; openSUSE build service, don't break this!
 ;
-; you have to copy SDL.dll and OpenAL32.dll here manually
+; you have to copy SDL2.dll and OpenAL32.dll here manually
 
 !define VERSION "XXXVERSIONXXX"
 !define RELEASE "XXXRELEASEXXX"
@@ -106,7 +106,7 @@ Section "${GAMENAME} ${VERSION}-${RELEASE} (required)"
   File "../../build/release-mingw32-x86/${CLIENT}"
 !ifdef USE_RENDERER_DLOPEN
   File "../../build/release-mingw32-x86/renderer_opengl1_x86.dll"
-  File "../../build/release-mingw32-x86/renderer_rend2_x86.dll"
+  File "../../build/release-mingw32-x86/renderer_opengl2_x86.dll"
 !endif
 
   File "../../COPYING.txt"
@@ -143,11 +143,11 @@ Section "Start Menu Shortcuts"
 
 SectionEnd
 
-Section "SDL.dll"
+Section "SDL2.dll"
 
   SetOutPath $INSTDIR
 
-  File "SDL.dll"
+  File "../../build/release-mingw32-x86/SDL2.dll"
 
 SectionEnd
 
@@ -191,7 +191,7 @@ Section "Uninstall"
 
 !ifdef USE_RENDERER_DLOPEN
   Delete $INSTDIR\renderer_opengl1_x86.dll
-  Delete $INSTDIR\renderer_rend2_x86.dll
+  Delete $INSTDIR\renderer_opengl2_x86.dll
 !endif
 
   Delete $INSTDIR\COPYING.txt
@@ -207,7 +207,7 @@ Section "Uninstall"
   Delete $INSTDIR\jpeg8c.dll
 !endif
 
-  Delete $INSTDIR\SDL.dll
+  Delete $INSTDIR\SDL2.dll
 !ifdef USE_OPENAL_DLOPEN
   Delete $INSTDIR\OpenAL32.dll
 !endif

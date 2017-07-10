@@ -810,7 +810,7 @@ void Sys_ShowIP(void) {
 NET_IPSocket
 ====================
 */
-int NET_IPSocket( char *net_interface, int port, int *err ) {
+SOCKET NET_IPSocket( char *net_interface, int port, int *err ) {
 	SOCKET				newsocket;
 	struct sockaddr_in	address;
 	ioctlarg_t			_true = 1;
@@ -878,7 +878,7 @@ int NET_IPSocket( char *net_interface, int port, int *err ) {
 NET_IP6Socket
 ====================
 */
-int NET_IP6Socket( char *net_interface, int port, struct sockaddr_in6 *bindto, int *err ) {
+SOCKET NET_IP6Socket( char *net_interface, int port, struct sockaddr_in6 *bindto, int *err ) {
 	SOCKET				newsocket;
 	struct sockaddr_in6	address;
 	ioctlarg_t			_true = 1;
@@ -1268,7 +1268,7 @@ static void NET_AddLocalAddress(char *ifname, struct sockaddr *addr, struct sock
 	}
 }
 
-#if defined(__linux__) || defined(MACOSX) || defined(__BSD__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__BSD__)
 static void NET_GetLocalAddress(void)
 {
 	struct ifaddrs *ifap, *search;
@@ -1619,7 +1619,7 @@ Called from NET_Sleep which uses select() to determine which sockets have seen a
 void NET_Event(fd_set *fdr)
 {
 	byte bufData[MAX_MSGLEN + 1];
-	netadr_t from;
+	netadr_t from = {0};
 	msg_t netmsg;
 	
 	while(1)

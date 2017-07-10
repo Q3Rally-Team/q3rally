@@ -150,7 +150,8 @@ void BotAI_Trace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec3_t maxs, 
 	VectorCopy(trace.plane.normal, bsptrace->plane.normal);
 	bsptrace->plane.signbits = trace.plane.signbits;
 	bsptrace->plane.type = trace.plane.type;
-	bsptrace->surface.value = trace.surfaceFlags;
+	bsptrace->surface.value = 0;
+	bsptrace->surface.flags = trace.surfaceFlags;
 	bsptrace->ent = trace.entityNum;
 	bsptrace->exp_dist = 0;
 	bsptrace->sidenum = 0;
@@ -256,7 +257,7 @@ void BotTestAAS(vec3_t origin) {
 	if (bot_testsolid.integer) {
 		if (!trap_AAS_Initialized()) return;
 		areanum = BotPointAreaNum(origin);
-		if (areanum) BotAI_Print(PRT_MESSAGE, "\remtpy area");
+		if (areanum) BotAI_Print(PRT_MESSAGE, "\rempty area");
 		else BotAI_Print(PRT_MESSAGE, "\r^1SOLID area");
 	}
 	else if (bot_testclusters.integer) {
@@ -392,7 +393,7 @@ void BotTeamplayReport(void) {
 	char buf[MAX_INFO_STRING];
 
 	BotAI_Print(PRT_MESSAGE, S_COLOR_RED"RED\n");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		//
 		if ( !botstates[i] || !botstates[i]->inuse ) continue;
 		//
@@ -405,7 +406,7 @@ void BotTeamplayReport(void) {
 		}
 	}
 	BotAI_Print(PRT_MESSAGE, S_COLOR_BLUE"BLUE\n");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		//
 		if ( !botstates[i] || !botstates[i]->inuse ) continue;
 		//
@@ -546,7 +547,7 @@ void BotUpdateInfoConfigStrings(void) {
 	int i;
 	char buf[MAX_INFO_STRING];
 
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		//
 		if ( !botstates[i] || !botstates[i]->inuse )
 			continue;
@@ -791,7 +792,7 @@ void BotChangeViewAngles(bot_state_t *bs, float thinktime) {
 		//
 		if (bot_challenge.integer) {
 			//smooth slowdown view model
-			diff = abs(AngleDifference(bs->viewangles[i], bs->ideal_viewangles[i]));
+			diff = fabs(AngleDifference(bs->viewangles[i], bs->ideal_viewangles[i]));
 			anglespeed = diff * factor;
 			if (anglespeed > maxchange) anglespeed = maxchange;
 			bs->viewangles[i] = BotChangeViewAngle(bs->viewangles[i],
@@ -896,7 +897,7 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	f = DotProduct(forward, bi->dir);
 	r = DotProduct(right, bi->dir);
 // STONELANCE
-//	u = abs(forward[2]) * bi->dir[2];
+//	u = fabs(forward[2]) * bi->dir[2];
 // END
 	m = fabs(f);
 
@@ -1021,8 +1022,10 @@ int BotAI(int client, float thinktime) {
 	}
 
 	//retrieve the current client state
-	BotAI_GetClientState( client, &bs->cur_ps );
-
+	if (!BotAI_GetClientState(client, &bs->cur_ps)) {
+		BotAI_Print(PRT_FATAL, "BotAI: failed to get player state for player %d\n", client);
+		return qfalse;
+	}
 	//retrieve any waiting server commands
 	while( trap_BotGetServerCommand(client, buf, sizeof(buf)) ) {
 		//have buf point to the command and args to the command arguments
@@ -1131,7 +1134,8 @@ void BotWriteSessionData(bot_state_t *bs) {
 			"%i %i %i %i %i %i %i %i"
 			" %f %f %f"
 			" %f %f %f"
-			" %f %f %f",
+			" %f %f %f"
+			" %f",
 		bs->lastgoal_decisionmaker,
 		bs->lastgoal_ltgtype,
 		bs->lastgoal_teammate,
@@ -1148,7 +1152,8 @@ void BotWriteSessionData(bot_state_t *bs) {
 		bs->lastgoal_teamgoal.mins[2],
 		bs->lastgoal_teamgoal.maxs[0],
 		bs->lastgoal_teamgoal.maxs[1],
-		bs->lastgoal_teamgoal.maxs[2]
+		bs->lastgoal_teamgoal.maxs[2],
+		bs->formation_dist
 		);
 
 	var = va( "botsession%i", bs->client );
@@ -1172,7 +1177,8 @@ void BotReadSessionData(bot_state_t *bs) {
 			"%i %i %i %i %i %i %i %i"
 			" %f %f %f"
 			" %f %f %f"
-			" %f %f %f",
+			" %f %f %f"
+			" %f",
 		&bs->lastgoal_decisionmaker,
 		&bs->lastgoal_ltgtype,
 		&bs->lastgoal_teammate,
@@ -1189,7 +1195,8 @@ void BotReadSessionData(bot_state_t *bs) {
 		&bs->lastgoal_teamgoal.mins[2],
 		&bs->lastgoal_teamgoal.maxs[0],
 		&bs->lastgoal_teamgoal.maxs[1],
-		&bs->lastgoal_teamgoal.maxs[2]
+		&bs->lastgoal_teamgoal.maxs[2],
+		&bs->formation_dist
 		);
 }
 
@@ -1205,6 +1212,10 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 
 	if (!botstates[client]) botstates[client] = G_Alloc(sizeof(bot_state_t));
 	bs = botstates[client];
+
+	if (!bs) {
+		return qfalse;
+	}
 
 	if (bs && bs->inuse) {
 		BotAI_Print(PRT_FATAL, "BotAISetupClient: client %d already setup\n", client);
@@ -1312,7 +1323,7 @@ int BotAIShutdownClient(int client, qboolean restart) {
 	}
 
 	trap_BotFreeMoveState(bs->ms);
-	//free the goal state`			
+	//free the goal state
 	trap_BotFreeGoalState(bs->gs);
 	//free the chat file
 	trap_BotFreeChatState(bs->cs);
@@ -1620,8 +1631,7 @@ int BotInitLibrary(void) {
 	char buf[144];
 
 	//set the maxclients and maxentities library variables before calling BotSetupLibrary
-	trap_Cvar_VariableStringBuffer("sv_maxclients", buf, sizeof(buf));
-	if (!strlen(buf)) strcpy(buf, "8");
+	Com_sprintf(buf, sizeof(buf), "%d", level.maxclients);
 	trap_BotLibVarSet("maxclients", buf);
 	Com_sprintf(buf, sizeof(buf), "%d", MAX_GENTITIES);
 	trap_BotLibVarSet("maxentities", buf);

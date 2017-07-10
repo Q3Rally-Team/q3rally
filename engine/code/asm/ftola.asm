@@ -22,6 +22,8 @@
 ; assume __cdecl calling convention is being used for x86, __fastcall for x64
 
 IFNDEF idx64
+.686p
+.xmm
 .model flat, c
 ENDIF
 

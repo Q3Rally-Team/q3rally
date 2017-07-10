@@ -55,7 +55,7 @@ SAVE_LOG=1
 DEFAULT_MAINNAME="ioquake3"
 
 # Default SVN path
-DEFAULT_SVN_PATH="svn://svn.icculus.org/quake3/trunk/"
+DEFAULT_SVN_PATH="https://github.com/ioquake/ioq3/trunk/"
 
 # Magic tokens
 DEFAULT_MAINREVISION="IOQ3_REVISION"
@@ -320,7 +320,9 @@ fi
 PATCH="$OUTPREFIX${CURRENT_REV}to$RESYNC_REV.patch"
 
 # Get patch from CURRENT_REV to RESYNC_REV in $SVN_PATH
-svn diff $SVN_PATH@$CURRENT_REV $SVN_PATH@$RESYNC_REV > $PATCH
+if [ ! -f "$PATCH" ] ; then
+	svn diff $SVN_PATH@$CURRENT_REV $SVN_PATH@$RESYNC_REV > $PATCH
+fi
 
 
 #
@@ -331,13 +333,15 @@ if [ "$SAVE_LOG" -eq 1 ]
 then
 	LOG="$OUTPREFIX${CURRENT_REV}to$RESYNC_REV.log"
 
-	echo "$MAINNAME resync to revision $RESYNC_REV from $CURRENT_REV.\n" > $LOG
-	svn log $SVN_PATH -r "`expr $CURRENT_REV + 1`:$RESYNC_REV" | grep -v "^$" \
-		| grep -v "^------*$" | grep -v "| [0-9]* lines$" \
-		| grep -v "| 1 line$" >> $LOG
+	if [ ! -f "$LOG" ] ; then
+		echo "$MAINNAME resync to revision $RESYNC_REV from $CURRENT_REV.\n" > $LOG
+		svn log $SVN_PATH -r "`expr $CURRENT_REV + 1`:$RESYNC_REV" | grep -v "^$" \
+			| grep -v "^------*$" | grep -v "| [0-9]* lines$" \
+			| grep -v "| 1 line$" >> $LOG
 
-	echo "\n\nLog Messages: (Full)\n" >> $LOG
-	svn log $SVN_PATH -r "`expr $CURRENT_REV + 1`:$RESYNC_REV" >> $LOG
+		echo "\n\nLog Messages: (Full)\n" >> $LOG
+		svn log $SVN_PATH -r "`expr $CURRENT_REV + 1`:$RESYNC_REV" >> $LOG
+	fi
 fi
 
 

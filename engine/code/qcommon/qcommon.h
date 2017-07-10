@@ -95,9 +95,6 @@ float	MSG_ReadAngle16 (msg_t *sb);
 void	MSG_ReadData (msg_t *sb, void *buffer, int size);
 int		MSG_LookaheadByte (msg_t *msg);
 
-void MSG_WriteDeltaUsercmd( msg_t *msg, struct usercmd_s *from, struct usercmd_s *to );
-void MSG_ReadDeltaUsercmd( msg_t *msg, struct usercmd_s *from, struct usercmd_s *to );
-
 void MSG_WriteDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *to );
 void MSG_ReadDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *to );
 
@@ -135,6 +132,8 @@ NET
 #define	PACKET_MASK		(PACKET_BACKUP-1)
 
 #define	MAX_PACKET_USERCMDS		32		// max number of usercmd_t in a packet
+
+#define	MAX_SNAPSHOT_ENTITIES	256
 
 #define	PORT_ANY			-1
 
@@ -301,7 +300,8 @@ enum svc_ops_e {
 	svc_EOF,
 
 // new commands, supported only by ioquake3 protocol but not legacy
-	svc_voip,     // not wrapped in USE_VOIP, so this value is reserved.
+	svc_voipSpeex,     // not wrapped in USE_VOIP, so this value is reserved.
+	svc_voipOpus,      //
 };
 
 
@@ -317,7 +317,8 @@ enum clc_ops_e {
 	clc_EOF,
 
 // new commands, supported only by ioquake3 protocol but not legacy
-	clc_voip,   // not wrapped in USE_VOIP, so this value is reserved.
+	clc_voipSpeex,   // not wrapped in USE_VOIP, so this value is reserved.
+	clc_voipOpus,    //
 };
 
 /*
@@ -567,6 +568,7 @@ char	*Cvar_InfoString_Big( int bit );
 // in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
 void	Cvar_InfoStringBuffer( int bit, char *buff, int buffsize );
 void Cvar_CheckRange( cvar_t *cv, float minVal, float maxVal, qboolean shouldBeIntegral );
+void Cvar_SetDescription( cvar_t *var, const char *var_description );
 
 void	Cvar_Restart(qboolean unsetVM);
 void	Cvar_Restart_f( void );
@@ -629,7 +631,7 @@ qboolean FS_FileExists( const char *file );
 
 qboolean FS_CreatePath (char *OSPath);
 
-vmInterpret_t FS_FindVM(void **startSearch, char *found, int foundlen, const char *name, int enableDll);
+int FS_FindVM(void **startSearch, char *found, int foundlen, const char *name, int enableDll);
 
 char   *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
 qboolean FS_CompareZipChecksum(const char *zipfile);
@@ -639,6 +641,8 @@ int		FS_LoadStack( void );
 int		FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 int		FS_GetModList(  char *listbuf, int bufsize );
 
+void	FS_GetModDescription( const char *modDir, char *description, int descriptionLen );
+
 fileHandle_t	FS_FOpenFileWrite( const char *qpath );
 fileHandle_t	FS_FOpenFileAppend( const char *filename );
 fileHandle_t	FS_FCreateOpenPipeFile( const char *filename );
@@ -646,7 +650,7 @@ fileHandle_t	FS_FCreateOpenPipeFile( const char *filename );
 
 fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
 long		FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
-void	FS_SV_Rename( const char *from, const char *to );
+void	FS_SV_Rename( const char *from, const char *to, qboolean safe );
 long		FS_FOpenFileRead( const char *qpath, fileHandle_t *file, qboolean uniqueFILE );
 // if uniqueFILE is true, then a new FILE will be fopened even if the file
 // is found in an already open pak file.  If uniqueFILE is false, you must call
@@ -659,7 +663,6 @@ int		FS_FileIsInPAK(const char *filename, int *pChecksum );
 
 int		FS_Write( const void *buffer, int len, fileHandle_t f );
 
-int		FS_Read2( void *buffer, int len, fileHandle_t f );
 int		FS_Read( void *buffer, int len, fileHandle_t f );
 // properly handles partial reads and reads from other dlls
 
@@ -699,7 +702,7 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
 // opens a file for reading, writing, or appending depending on the value of mode
 
 int		FS_Seek( fileHandle_t f, long offset, int origin );
-// seek on a file (doesn't work for zip files!!!!!!!!)
+// seek on a file
 
 qboolean FS_FilenameCompare( const char *s1, const char *s2 );
 
@@ -765,6 +768,7 @@ void Field_CompleteFilename( const char *dir,
 		const char *ext, qboolean stripExt, qboolean allowNonPureFilesOnDisk );
 void Field_CompleteCommand( char *cmd,
 		qboolean doCommands, qboolean doCvars );
+void Field_CompletePlayerName( const char **names, int count );
 
 /*
 ==============================================================
@@ -844,6 +848,10 @@ void		Com_StartupVariable( const char *match );
 // if match is NULL, all set commands will be executed, otherwise
 // only a set with the exact name.  Only used during startup.
 
+qboolean		Com_PlayerNameToFieldString( char *str, int length, const char *name );
+qboolean		Com_FieldStringToPlayerName( char *name, int length, const char *rawname );
+int QDECL	Com_strCompare( const void *a, const void *b );
+
 
 extern	cvar_t	*com_fs_pure;
 extern	cvar_t	*com_developer;
@@ -878,6 +886,9 @@ extern	cvar_t	*com_gamename;
 extern	cvar_t	*com_protocol;
 #ifdef LEGACY_PROTOCOL
 extern	cvar_t	*com_legacyprotocol;
+#endif
+#ifndef DEDICATED
+extern  cvar_t  *con_autochat;
 #endif
 
 // com_speeds times
@@ -1070,18 +1081,7 @@ void	* QDECL Sys_LoadGameDll( const char *name, intptr_t (QDECL **entryPoint)(in
 				  intptr_t (QDECL *systemcalls)(intptr_t, ...) );
 void	Sys_UnloadDll( void *dllHandle );
 
-void	Sys_UnloadGame( void );
-void	*Sys_GetGameAPI( void *parms );
-
-void	Sys_UnloadCGame( void );
-void	*Sys_GetCGameAPI( void );
-
-void	Sys_UnloadUI( void );
-void	*Sys_GetUIAPI( void );
-
-//bot libraries
-void	Sys_UnloadBotLib( void );
-void	*Sys_GetBotLibAPI( void *parms );
+qboolean Sys_DllExtension( const char *name );
 
 char	*Sys_GetCurrentUser( void );
 
@@ -1094,8 +1094,6 @@ void	Sys_Print( const char *msg );
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps
 int		Sys_Milliseconds (void);
-
-void	Sys_SnapVector( float *v );
 
 qboolean Sys_RandomBytes( byte *string, int len );
 
@@ -1114,13 +1112,16 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 qboolean	Sys_IsLANAddress (netadr_t adr);
 void		Sys_ShowIP(void);
 
+FILE	*Sys_FOpen( const char *ospath, const char *mode );
 qboolean Sys_Mkdir( const char *path );
 FILE	*Sys_Mkfifo( const char *ospath );
 char	*Sys_Cwd( void );
 void	Sys_SetDefaultInstallPath(const char *path);
 char	*Sys_DefaultInstallPath(void);
+char	*Sys_SteamPath(void);
+char	*Sys_GogPath(void);
 
-#ifdef MACOS_X
+#ifdef __APPLE__
 char    *Sys_DefaultAppPath(void);
 #endif
 
@@ -1157,7 +1158,8 @@ typedef enum
 
 dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *title );
 
-qboolean Sys_WritePIDFile( void );
+void Sys_RemovePIDFile( const char *gamedir );
+void Sys_InitPIDFile( const char *gamedir );
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data
  * Compression book.  The ranks are not actually stored, but implicitly defined

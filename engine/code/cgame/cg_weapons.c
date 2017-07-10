@@ -654,19 +654,16 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->ammoModel = trap_R_RegisterModel( ammo->world_model[0] );
 	}
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension(path, path, sizeof(path));
-	strcat( path, "_flash.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_flash.md3" );
 	weaponInfo->flashModel = trap_R_RegisterModel( path );
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension(path, path, sizeof(path));
-	strcat( path, "_barrel.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_barrel.md3" );
 	weaponInfo->barrelModel = trap_R_RegisterModel( path );
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension(path, path, sizeof(path));
-	strcat( path, "_hand.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_hand.md3" );
 	weaponInfo->handsModel = trap_R_RegisterModel( path );
 
 	if ( !weaponInfo->handsModel ) {
@@ -1909,9 +1906,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	vec3_t			sprOrg;
 	vec3_t			sprVel;
 
-	mark = 0;
-	radius = 32;
-	sfx = 0;
 	mod = 0;
 	shader = 0;
 	light = 0;

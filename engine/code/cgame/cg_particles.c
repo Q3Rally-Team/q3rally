@@ -636,7 +636,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	}
 	else if (p->type == P_FLAT_SCALEUP)
 	{
-		float width, height;
 		float sinR, cosR;
 
 		if (p->color == BLOODRED)
@@ -1028,10 +1027,6 @@ void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 	
 	VectorCopy(cent->currentState.origin, p->org);
 
-	p->org[0] = p->org[0];
-	p->org[1] = p->org[1];
-	p->org[2] = p->org[2];
-
 	p->vel[0] = p->vel[1] = 0;
 	
 	p->accel[0] = p->accel[1] = p->accel[2] = 0;
@@ -1321,7 +1316,6 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 // Rafael Shrapnel
 void CG_AddParticleShrapnel (localEntity_t *le)
 {
-	return;
 }
 // done.
 

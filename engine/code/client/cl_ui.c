@@ -146,7 +146,7 @@ static int LAN_AddServer(int source, const char *name, const char *address) {
 			break;
 	}
 	if (servers && *count < max) {
-		NET_StringToAdr( address, &adr, NA_IP );
+		NET_StringToAdr( address, &adr, NA_UNSPEC );
 		for ( i = 0; i < *count; i++ ) {
 			if (NET_CompareAdr(servers[i].adr, adr)) {
 				break;
@@ -190,7 +190,7 @@ static void LAN_RemoveServer(int source, const char *addr) {
 	}
 	if (servers) {
 		netadr_t comp;
-		NET_StringToAdr( addr, &comp, NA_IP );
+		NET_StringToAdr( addr, &comp, NA_UNSPEC );
 		for (i = 0; i < *count; i++) {
 			if (NET_CompareAdr( comp, servers[i].adr)) {
 				int j = i;
@@ -374,6 +374,7 @@ LAN_CompareServers
 static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int s2 ) {
 	int res;
 	serverInfo_t *server1, *server2;
+	int clients1, clients2;
 
 	server1 = LAN_GetServerPtr(source, s1);
 	server2 = LAN_GetServerPtr(source, s2);
@@ -391,10 +392,19 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 			res = Q_stricmp( server1->mapName, server2->mapName );
 			break;
 		case SORT_CLIENTS:
-			if (server1->clients < server2->clients) {
+			// sub sort by max clients
+			if ( server1->clients == server2->clients ) {
+				clients1 = server1->maxClients;
+				clients2 = server2->maxClients;
+			} else {
+				clients1 = server1->clients;
+				clients2 = server2->clients;
+			}
+
+			if (clients1 < clients2) {
 				res = -1;
 			}
-			else if (server1->clients > server2->clients) {
+			else if (clients1 > clients2) {
 				res = 1;
 			}
 			else {
@@ -750,7 +760,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_CREATE:
-		Cvar_Get( VMA(1), VMA(2), args[3] );
+		Cvar_Register( NULL, VMA(1), VMA(2), args[3] );
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
@@ -780,7 +790,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FS_FOpenFileByMode( VMA(1), VMA(2), args[3] );
 
 	case UI_FS_READ:
-		FS_Read2( VMA(1), args[2], args[3] );
+		FS_Read( VMA(1), args[2], args[3] );
 		return 0;
 
 	case UI_FS_WRITE:

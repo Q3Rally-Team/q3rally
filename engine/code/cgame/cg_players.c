@@ -101,7 +101,7 @@ CLIENT INFO
 ======================
 CG_ParseAnimationFile
 
-Read a configuration file containing animation coutns and rates
+Read a configuration file containing animation counts and rates
 models/players/visor/animation.cfg, etc
 ======================
 */
@@ -224,12 +224,12 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		if ( !Q_stricmp( token, "footsteps" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			if ( !Q_stricmp( token, "default" ) || !Q_stricmp( token, "normal" ) ) {
@@ -249,7 +249,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		} else if ( !Q_stricmp( token, "headoffset" ) ) {
 			for ( i = 0 ; i < 3 ; i++ ) {
 				token = COM_Parse( &text_p );
-				if ( !token ) {
+				if ( !token[0] ) {
 					break;
 				}
 				ci->headOffset[i] = atof( token );
@@ -257,7 +257,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 			continue;
 		} else if ( !Q_stricmp( token, "sex" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			if ( token[0] == 'f' || token[0] == 'F' ) {
@@ -281,14 +281,14 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 			text_p = prev;	// unget the token
 			break;
 		}
-		Com_Printf( "unknown token '%s' is %s\n", token, filename );
+		Com_Printf( "unknown token '%s' in %s\n", token, filename );
 	}
 
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			if( i >= TORSO_GETFLAG && i <= TORSO_NEGATIVE ) {
 				animations[i].firstFrame = animations[TORSO_GESTURE].firstFrame;
 				animations[i].frameLerp = animations[TORSO_GESTURE].frameLerp;
@@ -311,7 +311,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].numFrames = atoi( token );
@@ -325,13 +325,13 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].loopFrames = atoi( token );
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		fps = atof( token );
@@ -2214,6 +2214,9 @@ static void CG_PlayerTokens( centity_t *cent, int renderfx ) {
 	refEntity_t	ent;
 	vec3_t		dir, origin;
 	skulltrail_t *trail;
+	if ( cent->currentState.number >= MAX_CLIENTS ) {
+		return;
+	}
 	trail = &cg.skulltrails[cent->currentState.number];
 	tokens = cent->currentState.generic1;
 	if ( !tokens ) {

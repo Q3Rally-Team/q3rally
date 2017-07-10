@@ -67,6 +67,20 @@ void SV_GetChallenge(netadr_t from)
 		return;
 	}
 
+	// Prevent using getchallenge as an amplifier
+	if ( SVC_RateLimitAddress( from, 10, 1000 ) ) {
+		Com_DPrintf( "SV_GetChallenge: rate limit from %s exceeded, dropping request\n",
+			NET_AdrToString( from ) );
+		return;
+	}
+
+	// Allow getchallenge to be DoSed relatively easily, but prevent
+	// excess outbound bandwidth usage when being flooded inbound
+	if ( SVC_RateLimit( &outboundLeakyBucket, 10, 100 ) ) {
+		Com_DPrintf( "SV_GetChallenge: rate limit exceeded, dropping request\n" );
+		return;
+	}
+
 	gameName = Cmd_Argv(2);
 
 #ifdef LEGACY_PROTOCOL
@@ -474,7 +488,7 @@ void SV_DirectConnect( netadr_t from ) {
 
 	// check for privateClient password
 	password = Info_ValueForKey( userinfo, "password" );
-	if ( !strcmp( password, sv_privatePassword->string ) ) {
+	if ( *password && !strcmp( password, sv_privatePassword->string ) ) {
 		startIndex = 0;
 	} else {
 		// skip past the reserved slots
@@ -1029,7 +1043,7 @@ int SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 			if(cl->download)
 				FS_FCloseFile(cl->download);
 			
-			return 0;
+			return 1;
 		}
  
 		Com_Printf( "clientDownload: %d : beginning \"%s\"\n", (int) (cl - svs.clients), cl->downloadName );
@@ -1445,8 +1459,8 @@ void SV_UserinfoChanged( client_t *cl ) {
 	else
 #endif
 	{
-		val = Info_ValueForKey(cl->userinfo, "cl_voip");
-		cl->hasVoip = atoi(val);
+		val = Info_ValueForKey(cl->userinfo, "cl_voipProtocol");
+		cl->hasVoip = !Q_stricmp( val, "opus" );
 	}
 #endif
 
@@ -1780,7 +1794,7 @@ static qboolean SV_ShouldIgnoreVoipSender(const client_t *cl)
 }
 
 static
-void SV_UserVoip(client_t *cl, msg_t *msg)
+void SV_UserVoip(client_t *cl, msg_t *msg, qboolean ignoreData)
 {
 	int sender, generation, sequence, frames, packetsize;
 	uint8_t recips[(MAX_CLIENTS + 7) / 8];
@@ -1815,12 +1829,12 @@ void SV_UserVoip(client_t *cl, msg_t *msg)
 
 	MSG_ReadData(msg, encoded, packetsize);
 
-	if (SV_ShouldIgnoreVoipSender(cl))
+	if (ignoreData || SV_ShouldIgnoreVoipSender(cl))
 		return;   // Blacklisted, disabled, etc.
 
 	// !!! FIXME: see if we read past end of msg...
 
-	// !!! FIXME: reject if not speex narrowband codec.
+	// !!! FIXME: reject if not opus data.
 	// !!! FIXME: decide if this is bogus data?
 
 	// decide who needs this VoIP packet sent to them...
@@ -1969,10 +1983,18 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 		}
 	} while ( 1 );
 
-	// read optional voip data
-	if ( c == clc_voip ) {
+	// skip legacy speex voip data
+	if ( c == clc_voipSpeex ) {
 #ifdef USE_VOIP
-		SV_UserVoip( cl, msg );
+		SV_UserVoip( cl, msg, qtrue );
+		c = MSG_ReadByte( msg );
+#endif
+	}
+
+	// read optional voip data
+	if ( c == clc_voipOpus ) {
+#ifdef USE_VOIP
+		SV_UserVoip( cl, msg, qfalse );
 		c = MSG_ReadByte( msg );
 #endif
 	}

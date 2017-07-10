@@ -465,7 +465,7 @@ void CopyToBodyQue( gentity_t *ent ) {
 		body->s.eFlags |= EF_KAMIKAZE;
 
 		// check if there is a kamikaze timer around for this owner
-		for (i = 0; i < MAX_GENTITIES; i++) {
+		for (i = 0; i < level.num_entities; i++) {
 			e = &g_entities[i];
 			if (!e->inuse)
 				continue;
@@ -614,7 +614,7 @@ TeamCount
 Returns number of players on a team
 ================
 */
-team_t TeamCount( int ignoreClientNum, int team ) {
+int TeamCount( int ignoreClientNum, team_t team ) {
 	int		i;
 	int		count = 0;
 
@@ -792,7 +792,7 @@ static void ForceClientSkin( gclient_t *client, char *model, const char *skin ) 
 
 /*
 ===========
-ClientCheckName
+ClientCleanName
 ============
 */
 static void ClientCleanName(const char *in, char *out, int outSize)
@@ -868,7 +868,7 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, health;
+	int		teamTask, teamLeader, health;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
@@ -894,12 +894,6 @@ void ClientUserinfoChanged( int clientNum ) {
 		strcpy (userinfo, "\\name\\badinfo");
 		// don't keep those clients and userinfo
 		trap_DropClient(clientNum, "Invalid userinfo");
-	}
-
-	// check for local client
-	s = Info_ValueForKey( userinfo, "ip" );
-	if ( !strcmp( s, "localhost" ) ) {
-		client->pers.localClient = qtrue;
 	}
 
 	// check the item prediction
@@ -962,31 +956,6 @@ void ClientUserinfoChanged( int clientNum ) {
 //		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
 		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "head"), sizeof( headModel ) );
 //	}
-// END
-
-	// bots set their team a few frames later
-	if (g_gametype.integer >= GT_TEAM && g_entities[clientNum].r.svFlags & SVF_BOT) {
-		s = Info_ValueForKey( userinfo, "team" );
-		if ( !Q_stricmp( s, "red" ) || !Q_stricmp( s, "r" ) ) {
-			team = TEAM_RED;
-		} else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) ) {
-			team = TEAM_BLUE;
-		}
-// STONELANCE
-		else if ( !Q_stricmp( s, "green" ) || !Q_stricmp( s, "g" ) ) {
-			team = TEAM_GREEN;
-		} else if ( !Q_stricmp( s, "yellow" ) || !Q_stricmp( s, "y" ) ) {
-			team = TEAM_YELLOW;
-		}
-// END
-		else {
-			// pick the team with the least number of players
-			team = PickTeam( clientNum );
-		}
-	}
-	else {
-		team = client->sess.sessionTeam;
-	}
 // END
 
 /*	NOTE: all client side now
@@ -1090,7 +1059,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	{
 // STONELANCE - UPDATE: change the userinfo string for bots?
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
-			client->pers.netname, team, model, headModel, c1, c2, 
+			client->pers.netname, client->sess.sessionTeam, model, headModel, c1, c2,
 			client->pers.maxHealth, client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
 	}
@@ -1183,11 +1152,11 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	client->pers.connected = CON_CONNECTING;
 
-	// read or initialize the session data
-	if ( firstTime || level.newSession ) {
-		G_InitSessionData( client, userinfo );
+	// check for local client
+	value = Info_ValueForKey( userinfo, "ip" );
+	if ( !strcmp( value, "localhost" ) ) {
+		client->pers.localClient = qtrue;
 	}
-	G_ReadSessionData( client );
 
 // STONELANCE
 	// FIXME: dont need this anymore?
@@ -1218,6 +1187,12 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 			return "BotConnectfailed";
 		}
 	}
+
+	// read or initialize the session data
+	if ( firstTime || level.newSession ) {
+		G_InitSessionData( client, userinfo );
+	}
+	G_ReadSessionData( client );
 
 	// get and distribute relevent paramters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );

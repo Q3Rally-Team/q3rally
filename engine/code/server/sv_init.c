@@ -82,7 +82,7 @@ void SV_UpdateConfigstrings(client_t *client)
 {
 	int index;
 
-	for( index = 0; index <= MAX_CONFIGSTRINGS; index++ ) {
+	for( index = 0; index < MAX_CONFIGSTRINGS; index++ ) {
 		// if the CS hasn't changed since we went to CS_PRIMED, ignore
 		if(!client->csUpdated[index])
 			continue;
@@ -271,10 +271,10 @@ static void SV_Startup( void ) {
 
 	svs.clients = Z_Malloc (sizeof(client_t) * sv_maxclients->integer );
 	if ( com_dedicated->integer ) {
-		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * 64;
+		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES;
 	} else {
 		// we don't need nearly as many when playing locally
-		svs.numSnapshotEntities = sv_maxclients->integer * 4 * 64;
+		svs.numSnapshotEntities = sv_maxclients->integer * 4 * MAX_SNAPSHOT_ENTITIES;
 	}
 	svs.initialized = qtrue;
 
@@ -349,10 +349,10 @@ void SV_ChangeMaxClients( void ) {
 	
 	// allocate new snapshot entities
 	if ( com_dedicated->integer ) {
-		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * 64;
+		svs.numSnapshotEntities = sv_maxclients->integer * PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES;
 	} else {
 		// we don't need nearly as many when playing locally
-		svs.numSnapshotEntities = sv_maxclients->integer * 4 * 64;
+		svs.numSnapshotEntities = sv_maxclients->integer * 4 * MAX_SNAPSHOT_ENTITIES;
 	}
 }
 
@@ -421,11 +421,6 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 
 	// clear the whole hunk because we're (re)loading the server
 	Hunk_Clear();
-
-#ifndef DEDICATED
-	// Restart renderer
-	CL_StartHunkUsers( qtrue );
-#endif
 
 	// clear collision map data
 	CM_ClearMap();
@@ -619,6 +614,14 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 
 	Hunk_SetMark();
 
+#ifndef DEDICATED
+	if ( com_dedicated->integer ) {
+		// restart renderer in order to show console for dedicated servers
+		// launched through the regular binary
+		CL_StartHunkUsers( qtrue );
+	}
+#endif
+
 	Com_Printf ("-----------------------------------\n");
 }
 
@@ -662,8 +665,9 @@ void SV_Init (void)
 		sv_pure = Cvar_Get ("sv_pure", "1", CVAR_SYSTEMINFO );
 	}
 #ifdef USE_VOIP
-	sv_voip = Cvar_Get("sv_voip", "1", CVAR_SYSTEMINFO | CVAR_LATCH);
+	sv_voip = Cvar_Get("sv_voip", "1", CVAR_LATCH);
 	Cvar_CheckRange(sv_voip, 0, 1, qtrue);
+	sv_voipProtocol = Cvar_Get("sv_voipProtocol", sv_voip->integer ? "opus" : "", CVAR_SYSTEMINFO | CVAR_ROM );
 #endif
 	Cvar_Get ("sv_paks", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	Cvar_Get ("sv_pakNames", "", CVAR_SYSTEMINFO | CVAR_ROM );

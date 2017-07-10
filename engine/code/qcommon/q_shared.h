@@ -36,26 +36,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   #define HOMEPATH_NAME_WIN			"Q3Rally"
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
   #define GAMENAME_FOR_MASTER		"Q3Rally"	// must NOT contain whitespace
+  #define CINEMATICS_LOGO		"idlogo.roq"
+  #define CINEMATICS_INTRO		"intro.roq"
 //  #define LEGACY_PROTOCOL	// You probably don't need this for your standalone game
 #else
-  #define PRODUCT_NAME			"Q3Rally"
-  #define BASEGAME			"baseq3"
-  #define CLIENT_WINDOW_TITLE     	"ioquake3"
-  #define CLIENT_WINDOW_MIN_TITLE 	"ioq3"
+  #define PRODUCT_NAME				"ioq3"
+  #define BASEGAME					"baseq3"
+  #define CLIENT_WINDOW_TITLE		"ioquake3"
+  #define CLIENT_WINDOW_MIN_TITLE	"ioq3"
   #define HOMEPATH_NAME_UNIX		".q3a"
-  #define HOMEPATH_NAME_WIN		"Quake3"
+  #define HOMEPATH_NAME_WIN			"Quake3"
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+  #define STEAMPATH_NAME			"Quake 3 Arena"
+  #define STEAMPATH_APPID			"2200"
+  #define GOGPATH_ID				"1441704920"
   #define GAMENAME_FOR_MASTER		"Quake3Arena"
+  #define CINEMATICS_LOGO		"idlogo.RoQ"
+  #define CINEMATICS_INTRO		"intro.RoQ"
   #define LEGACY_PROTOCOL
 #endif
 
 // Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing
 #define HEARTBEAT_FOR_MASTER		"DarkPlaces"
 
+// When com_gamename is LEGACY_MASTER_GAMENAME, use quake3 master protocol.
+// You shouldn't change this unless you know what you're doing
+#define LEGACY_MASTER_GAMENAME		"Quake3Arena"
+#define LEGACY_HEARTBEAT_FOR_MASTER	"QuakeArena-1"
+
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
 #define PRODUCT_VERSION "v0.0.0.4 r169"
+#endif
+
+#ifndef PRODUCT_DATE
+#  define PRODUCT_DATE __DATE__
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
@@ -444,7 +460,8 @@ extern	vec4_t		colorDkGrey;
 #define COLOR_CYAN	'5'
 #define COLOR_MAGENTA	'6'
 #define COLOR_WHITE	'7'
-#define ColorIndex(c)	(((c) - '0') & 0x07)
+#define ColorIndexForNumber(c) ((c) & 0x07)
+#define ColorIndex(c) (ColorIndexForNumber((c) - '0'))
 
 #define S_COLOR_BLACK	"^0"
 #define S_COLOR_RED	"^1"
@@ -607,7 +624,7 @@ typedef struct {
 #define Byte4Copy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
 
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
-// just in case you do't want to use the macros
+// just in case you don't want to use the macros
 vec_t _DotProduct( const vec3_t v1, const vec3_t v2 );
 void _VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out );
 void _VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out );
@@ -830,7 +847,7 @@ typedef struct pc_token_s
 
 void	COM_MatchToken( char**buf_p, char *match );
 
-void SkipBracedSection (char **program);
+qboolean SkipBracedSection (char **program, int depth);
 void SkipRestOfLine ( char **data );
 
 void Parse1DMatrix (char **buf_p, int x, float *m);
@@ -1005,6 +1022,7 @@ struct cvar_s {
 	qboolean	integral;
 	float			min;
 	float			max;
+	char			*description;
 
 	cvar_t *next;
 	cvar_t *prev;
@@ -1316,7 +1334,7 @@ typedef struct playerState_s {
 
 	// not communicated over the net at all
 	int			ping;			// server to game info for scoreboard
-	int			pmove_framecount;	// FIXME: don't transmit over the network
+	int			pmove_framecount;
 	int			jumppad_frame;
 	int			entityEventSequence;
 } playerState_t;
@@ -1759,6 +1777,7 @@ typedef enum _flag_status {
 	FLAG_TAKEN_BLUE,	// One Flag CTF
 	FLAG_DROPPED
 } flagStatus_t;
+
 
 
 #define	MAX_GLOBAL_SERVERS				4096
