@@ -103,9 +103,6 @@ Called on a first-time connect
 void G_InitSessionData( gclient_t *client, char *userinfo ) {
 	clientSession_t	*sess;
 	const char		*value;
-	qboolean		isBot;
-
-	isBot = (g_entities[ client - level.clients ].r.svFlags & SVF_BOT);
 
 	sess = &client->sess;
 

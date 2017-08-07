@@ -199,7 +199,7 @@ static void ScrollingCredits_Draw(void)
   if(!ysize) // ysize not calculated, so calculate it dammit!
   {
     // loop through entire credits array
-    for(n = 0; n <= sizeof(credits) - 1; n++) 
+    for(n = 0; n < ARRAY_LEN(credits); n++) 
     {
       // it is a small character
       if(credits[n].style & UI_SMALLFONT) 
@@ -238,7 +238,7 @@ static void ScrollingCredits_Draw(void)
   y = 480 - SCROLLSPEED * (float)(uis.realtime - starttime) / 100;
   
   // loop through the entire credits sequence
-  for(n = 0; n <= sizeof(credits) - 1; n++)
+  for(n = 0; n < ARRAY_LEN(credits); n++)
   {
     // this NULL string marks the end of the credits struct
     if(credits[n].string == NULL) 
