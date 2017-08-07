@@ -318,10 +318,24 @@ fi
 #
 
 PATCH="$OUTPREFIX${CURRENT_REV}to$RESYNC_REV.patch"
+PATCH_NOBINARY="$OUTPREFIX${CURRENT_REV}to$RESYNC_REV-nobinary.patch"
 
 # Get patch from CURRENT_REV to RESYNC_REV in $SVN_PATH
 if [ ! -f "$PATCH" ] ; then
 	svn diff $SVN_PATH@$CURRENT_REV $SVN_PATH@$RESYNC_REV > $PATCH
+fi
+
+if [ ! -f "$PATCH_NOBINARY" ] ; then
+	binaryChanges=`grep -e "Index: .*\.a" -e "Index: .*\.dll" -e "Index: .*\.dylib" $PATCH`
+	if [ "x$binaryChanges" != "x" ]
+	then
+		binaryChanges=`echo "$binaryChanges" | sed 's/Index: //g'`
+		echo "Patch has binary files which need to be updated manually."
+		echo
+		echo "$binaryChanges"
+		echo
+		filterdiff -x "*.a" -x "*.dll" -x "*.dylib" $PATCH > $PATCH_NOBINARY
+	fi
 fi
 
 
@@ -352,14 +366,20 @@ fi
 if [ "$APPLY_PATCH" -eq 1 ]
 then
 
+	if [ -f "$PATCH_NOBINARY" ]
+	then
+		APPLY_PATCH_FILE=$PATCH_NOBINARY
+	else
+		APPLY_PATCH_FILE=$PATCH
+	fi
+
 	#
 	# Apply patch
 	#
 	# TODO: Can I check the return value to see if patching failed? (So I can tell user to fix it manually)
 	#
 	# Only shows warnings/errors about failed patching [a existing file].
-	patch -p0 -i $PATCH | grep -v "patching file" | grep -v "Hunk #"
-
+	patch -p0 -i $APPLY_PATCH_FILE | grep -v "patching file" | grep -v "Hunk #"
 
 	#
 	# Remove patch?
@@ -367,6 +387,7 @@ then
 	#   unless there is no source to patch.
 	#
 	#rm $PATCH
+	#rm $PATCH_NOBINARY
 
 
 	if [ "$USED_CFGFILE" -eq 1 ]
