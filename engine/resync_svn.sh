@@ -325,17 +325,20 @@ if [ ! -f "$PATCH" ] ; then
 	svn diff $SVN_PATH@$CURRENT_REV $SVN_PATH@$RESYNC_REV > $PATCH
 fi
 
-if [ ! -f "$PATCH_NOBINARY" ] ; then
-	binaryChanges=`grep -e "Index: .*\.a" -e "Index: .*\.dll" -e "Index: .*\.dylib" $PATCH`
-	if [ "x$binaryChanges" != "x" ]
-	then
-		binaryChanges=`echo "$binaryChanges" | sed 's/Index: //g'`
-		echo "Patch has binary files which need to be updated manually."
-		echo
-		echo "$binaryChanges"
-		echo
-		filterdiff -x "*.a" -x "*.dll" -x "*.dylib" $PATCH > $PATCH_NOBINARY
-	fi
+
+binaryChanges=`grep -e "Index: .*\.a" -e "Index: .*\.dll" -e "Index: .*\.dylib" $PATCH`
+if [ "x$binaryChanges" != "x" ]
+then
+	binaryChanges=`echo "$binaryChanges" | sed 's/Index: //g'`
+	echo "Patch has binary files which need to be manually updated."
+	echo "You need to manually remove their diff sections from patch too."
+	echo
+	echo "$binaryChanges"
+	echo
+	# filter diff creates a broken patch
+	#if [ ! -f "$PATCH_NOBINARY" ] ; then
+	#	filterdiff -x "*.a" -x "*.dll" -x "*.dylib" $PATCH > $PATCH_NOBINARY
+	#fi
 fi
 
 
