@@ -24,12 +24,12 @@ ifelse(HAVE_X86_64,yes,dnl
      <help>you need the binaries to play the game</help>
     </option>
 )dnl
-ifelse(HAVE_I386,yes,dnl
+ifelse(HAVE_X86,yes,dnl
     <option install="true" if="|(x86,x86_64)">
      Q3Rally x86 (32 bit) binaries
      <binary libc="any" symlink="q3rally" icon="q3rally.png" name="q3rally">q3rally</binary>
      <files>
-       q3rally.i386.tar
+       q3rally.x86.tar
      </files>
      <help>you need the binaries to play the game</help>
     </option>
