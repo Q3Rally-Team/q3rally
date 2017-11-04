@@ -1777,10 +1777,10 @@ static void UI_DrawRedBlue(rectDef_t *rect, float scale, vec4_t color, int textS
 }
 
 static void UI_DrawCrosshair(rectDef_t *rect, float scale, vec4_t color) {
- 	trap_R_SetColor( color );
-	if (uiInfo.currentCrosshair < 0 || uiInfo.currentCrosshair >= NUM_CROSSHAIRS) {
-		uiInfo.currentCrosshair = 0;
+	if (!uiInfo.currentCrosshair) {
+		return;
 	}
+	trap_R_SetColor( color );
 	UI_DrawHandlePic( rect->x, rect->y - rect->h, rect->w, rect->h, uiInfo.uiDC.Assets.crosshairShader[uiInfo.currentCrosshair]);
  	trap_R_SetColor( NULL );
 }
@@ -3263,7 +3263,6 @@ static void UI_RunMenuScript(char **args) {
 				trap_Cvar_Set("ui_cdkeyvalid", "CD Key does not appear to be valid.");
 			}
 		} else if (Q_stricmp(name, "loadArenas") == 0) {
-			UI_LoadArenas();
 			UI_MapCountByGameType(qfalse);
 			Menu_SetFeederSelection(NULL, FEEDER_ALLMAPS, 0, "createserver");
 		} else if (Q_stricmp(name, "saveControls") == 0) {
@@ -5165,6 +5164,7 @@ void _UI_Init( qboolean inGameLoad ) {
 	UI_ParseTeamInfo("teaminfo.txt");
 	UI_LoadTeams();
 	UI_ParseGameInfo("gameinfo.txt");
+	UI_LoadArenas();
 #endif
 
 	menuSet = UI_Cvar_VariableString("ui_menuFiles");
@@ -5192,7 +5192,10 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	// sets defaults for ui temp cvars
 	uiInfo.effectsColor = gamecodetoui[(int)trap_Cvar_VariableValue("color1")-1];
-	uiInfo.currentCrosshair = (int)trap_Cvar_VariableValue("cg_drawCrosshair");
+	uiInfo.currentCrosshair = (int)trap_Cvar_VariableValue("cg_drawCrosshair") % NUM_CROSSHAIRS;
+	if (uiInfo.currentCrosshair < 0) {
+		uiInfo.currentCrosshair = 0;
+	}
 	trap_Cvar_Set("ui_mousePitch", (trap_Cvar_VariableValue("m_pitch") >= 0) ? "0" : "1");
 
 	uiInfo.serverStatus.currentServerCinematic = -1;

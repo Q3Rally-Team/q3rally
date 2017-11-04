@@ -336,6 +336,7 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 	vec3_t		impactpoint, bouncedir;
 #endif
 	vec3_t		tr_start, tr_end;
+	qboolean	hitClient = qfalse;
 
 	passent = ent->s.number;
 	VectorCopy( start, tr_start );
@@ -371,23 +372,12 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 				}
 				continue;
 			}
-			else {
-				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-
-					damage, DAMAGE_WEAPON, MOD_SHOTGUN);
-
-				if( LogAccuracyHit( traceEnt, ent ) ) {
-					return qtrue;
-				}
-			}
-#else
-
-			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, DAMAGE_WEAPON, MOD_SHOTGUN);
-
-				if( LogAccuracyHit( traceEnt, ent ) ) {
-					return qtrue;
-				}
 #endif
+			if( LogAccuracyHit( traceEnt, ent ) ) {
+				hitClient = qtrue;
+			}
+			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, DAMAGE_WEAPON, MOD_SHOTGUN);
+			return hitClient;
 		}
 		return qfalse;
 	}
@@ -950,20 +940,15 @@ void Weapon_LightningFire( gentity_t *ent ) {
 				}
 				continue;
 			}
-			else {
-				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-// STONELANCE
-//					damage, 0, MOD_LIGHTNING);
-					damage, DAMAGE_WEAPON, MOD_LIGHTNING);
-// END
-			}
-#else
-				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-// STONELANCE
-//					damage, 0, MOD_LIGHTNING);
-					damage, DAMAGE_WEAPON, MOD_LIGHTNING);
-// END
 #endif
+			if( LogAccuracyHit( traceEnt, ent ) ) {
+				ent->client->accuracy_hits++;
+			}
+			G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+// STONELANCE
+//					damage, 0, MOD_LIGHTNING);
+					damage, DAMAGE_WEAPON, MOD_LIGHTNING);
+// END
 		}
 
 		if ( traceEnt->takedamage && traceEnt->client ) {
@@ -971,9 +956,6 @@ void Weapon_LightningFire( gentity_t *ent ) {
 			tent->s.otherEntityNum = traceEnt->s.number;
 			tent->s.eventParm = DirToByte( tr.plane.normal );
 			tent->s.weapon = ent->s.weapon;
-			if( LogAccuracyHit( traceEnt, ent ) ) {
-				ent->client->accuracy_hits++;
-			}
 		} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
 			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
 			tent->s.eventParm = DirToByte( tr.plane.normal );

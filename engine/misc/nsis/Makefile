@@ -38,6 +38,13 @@ ifndef SDLDLL
 		SDLDLL=SDL2.dll
 	endif
 endif
+ifndef OPENALDLL
+	ifeq ($(ARCH),x86_64)
+		OPENALDLL=OpenAL64.dll
+	else
+		OPENALDLL=OpenAL32.dll
+	endif
+endif
 
 DEFINES=
 ifeq ($(USE_RENDERER_DLOPEN),1)
@@ -63,7 +70,7 @@ endif
 all: q3rally-$(VERSION)-$(RELEASE).$(ARCH).exe
 
 q3rally.$(ARCH).nsi: q3rally.nsi.in
-	sed 's/XXXVERSIONXXX/$(VERSION)/;s/XXXRELEASEXXX/$(RELEASE)/;s/mingw32/$(PLATFORM)/g;s/x86/$(ARCH)/g;s/SDL.dll/$(SDLDLL)/' < $< > $@
+	sed 's/XXXVERSIONXXX/$(VERSION)/;s/XXXRELEASEXXX/$(RELEASE)/;s/mingw32/$(PLATFORM)/g;s/x86/$(ARCH)/g;s/SDL2.dll/$(SDLDLL)/g;s/OpenAL32.dll/$(OPENALDLL)/g' < $< > $@
 
 q3rally-$(VERSION)-$(RELEASE).$(ARCH).exe: q3rally.$(ARCH).nsi
 	makensis $(DEFINES) q3rally.$(ARCH).nsi

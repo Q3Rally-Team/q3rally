@@ -474,7 +474,7 @@ UI_RunLerpFrame
 // STONELANCE - removed
 /*
 static void UI_RunLerpFrame( playerInfo_t *ci, lerpFrame_t *lf, int newAnimation ) {
-	int			f;
+	int			f, numFrames;
 	animation_t	*anim;
 
 	// see if the animation sequence is switching
@@ -490,25 +490,41 @@ static void UI_RunLerpFrame( playerInfo_t *ci, lerpFrame_t *lf, int newAnimation
 
 		// get the next frame based on the animation
 		anim = lf->animation;
+		if ( !anim->frameLerp ) {
+			return;		// shouldn't happen
+		}
 		if ( dp_realtime < lf->animationTime ) {
 			lf->frameTime = lf->animationTime;		// initial lerp
 		} else {
 			lf->frameTime = lf->oldFrameTime + anim->frameLerp;
 		}
 		f = ( lf->frameTime - lf->animationTime ) / anim->frameLerp;
-		if ( f >= anim->numFrames ) {
-			f -= anim->numFrames;
+
+		numFrames = anim->numFrames;
+		if (anim->flipflop) {
+			numFrames *= 2;
+		}
+		if ( f >= numFrames ) {
+			f -= numFrames;
 			if ( anim->loopFrames ) {
 				f %= anim->loopFrames;
 				f += anim->numFrames - anim->loopFrames;
 			} else {
-				f = anim->numFrames - 1;
+				f = numFrames - 1;
 				// the animation is stuck at the end, so it
 				// can immediately transition to another sequence
 				lf->frameTime = dp_realtime;
 			}
 		}
-		lf->frame = anim->firstFrame + f;
+		if ( anim->reversed ) {
+			lf->frame = anim->firstFrame + anim->numFrames - 1 - f;
+		}
+		else if (anim->flipflop && f>=anim->numFrames) {
+			lf->frame = anim->firstFrame + anim->numFrames - 1 - (f%anim->numFrames);
+		}
+		else {
+			lf->frame = anim->firstFrame + f;
+		}
 		if ( dp_realtime > lf->frameTime ) {
 			lf->frameTime = dp_realtime;
 		}
@@ -741,6 +757,16 @@ static void UI_PlayerAngles( playerInfo_t *pi, vec3_t legs[3], vec3_t torso[3], 
 	}
 	UI_SwingAngles( dest, 15, 30, 0.1f, &pi->torso.pitchAngle, &pi->torso.pitching );
 	torsoAngles[PITCH] = pi->torso.pitchAngle;
+
+	if ( pi->fixedtorso ) {
+		torsoAngles[PITCH] = 0.0f;
+	}
+
+	if ( pi->fixedlegs ) {
+		legsAngles[YAW] = torsoAngles[YAW];
+		legsAngles[PITCH] = 0.0f;
+		legsAngles[ROLL] = 0.0f;
+	}
 
 	// pull the angles back out of the hierarchial chain
 	AnglesSubtract( headAngles, torsoAngles, headAngles );
@@ -1560,7 +1586,7 @@ UI_ParseAnimationFile
 */
 #if 0
 // STONELANCE
-// static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations ) {
+// static qboolean UI_ParseAnimationFile( const char *filename, playerInfo_t *pi ) {
 static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) {
 // END
 	char		*text_p, *prev;
@@ -1571,6 +1597,7 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 	int			skip;
 	char		text[20000];
 	fileHandle_t	f;
+//	animation_t *animations;
 // STONELANCE
 //	char		texturename[MAX_QPATH];
 
@@ -1580,7 +1607,12 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 	// FIXME: fix the plate loading
 	return qfalse;
 
+//	animations = pi->animations;
+
 //	memset( animations, 0, sizeof( animation_t ) * MAX_ANIMATIONS );
+
+//	pi->fixedlegs = qfalse;
+//	pi->fixedtorso = qfalse;
 // END
 
 	// load the file
@@ -1630,6 +1662,12 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 				break;
 			}
 			continue;
+		} else if ( !Q_stricmp( token, "fixedlegs" ) ) {
+			pi->fixedlegs = qtrue;
+			continue;
+		} else if ( !Q_stricmp( token, "fixedtorso" ) ) {
+			pi->fixedtorso = qtrue;
+			continue;
 		}
 
 		// if it is a number, start parsing animations
@@ -1642,7 +1680,7 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 /*
 		if ( !Q_stricmp( token, "plate" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 
@@ -1664,7 +1702,7 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 			continue;
 /*
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				pi->oppositeRoll = qfalse;
 				break;
 			}
@@ -1682,7 +1720,17 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
+			if( i >= TORSO_GETFLAG && i <= TORSO_NEGATIVE ) {
+				animations[i].firstFrame = animations[TORSO_GESTURE].firstFrame;
+				animations[i].frameLerp = animations[TORSO_GESTURE].frameLerp;
+				animations[i].initialLerp = animations[TORSO_GESTURE].initialLerp;
+				animations[i].loopFrames = animations[TORSO_GESTURE].loopFrames;
+				animations[i].numFrames = animations[TORSO_GESTURE].numFrames;
+				animations[i].reversed = qfalse;
+				animations[i].flipflop = qfalse;
+				continue;
+			}
 			break;
 		}
 		animations[i].firstFrame = atoi( token );
@@ -1690,24 +1738,32 @@ static qboolean UI_ParseAnimationFile( playerInfo_t *pi, const char *filename ) 
 		if ( i == LEGS_WALKCR ) {
 			skip = animations[LEGS_WALKCR].firstFrame - animations[TORSO_GESTURE].firstFrame;
 		}
-		if ( i >= LEGS_WALKCR ) {
+		if ( i >= LEGS_WALKCR && i<TORSO_GETFLAG) {
 			animations[i].firstFrame -= skip;
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].numFrames = atoi( token );
 
+		animations[i].reversed = qfalse;
+		animations[i].flipflop = qfalse;
+		// if numFrames is negative the animation is reversed
+		if (animations[i].numFrames < 0) {
+			animations[i].numFrames = -animations[i].numFrames;
+			animations[i].reversed = qtrue;
+		}
+
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].loopFrames = atoi( token );
 
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		fps = atof( token );
@@ -1804,7 +1860,7 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi,  const char *modelSkinNam
 	// load the animations
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/animation.cfg", modelName );
 // STONELANCE
-//	if ( !UI_ParseAnimationFile( filename, pi->animations ) ) {
+//	if ( !UI_ParseAnimationFile( filename, pi ) ) {
 	if ( !UI_ParseAnimationFile( pi, filename ) ) {
 // END
 		Com_Printf( "Failed to load animation file %s\n", filename );
