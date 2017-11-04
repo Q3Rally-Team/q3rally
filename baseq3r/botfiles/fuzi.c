@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define WS(x)	balance($evalfloat(FP(x)), $evalfloat(FP(x/WEAPON)), $evalfloat(FP(x*WEAPON)))
 
 
-weight "item_armor_shard"
+weight "item_armor_green"
 {
 switch(INVENTORY_SCOUT)
 	{
@@ -72,7 +72,7 @@ switch(INVENTORY_SCOUT)
 	} 
 }
 
-weight "item_armor_combat"
+weight "item_armor_yellow"
 {
 	switch(INVENTORY_SCOUT) 
 	{
@@ -107,7 +107,7 @@ weight "item_armor_combat"
 	} 
 }
 
-weight "item_armor_body"
+weight "item_armor_red"
 {
 	switch(INVENTORY_SCOUT) 
 	{
@@ -286,6 +286,15 @@ weight "weapon_bfg"
 	default: return 1;
 	} 
 }
+
+weight "weapon_flamethrower"
+{
+	switch(INVENTORY_FLAMETHROWER)
+	{
+	case 1: return WS(BFW);
+	default: return 1;
+	} 
+}
  
 weight "weapon_nailgun"
 {
@@ -459,6 +468,24 @@ weight "ammo_bfg"
 	}
 } 
 
+weight "ammo_flame"
+{
+	switch(INVENTORY_FLAMETHROWERAMMO)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	case 120: return AS(11);
+	case 140: return AS(11);
+	case 160: return AS(11);
+	case 180: return AS(11);
+	case 200: return AS(11);
+	default: return 0;
+	}
+} 
+
 
 weight "ammo_nails"
 {
@@ -535,6 +562,15 @@ weight "holdable_medkit"
 	} 
 } 
 
+weight "rally_item_turbo"
+{
+	switch(INVENTORY_TURBO)
+	{
+	case 1: return PS(TELW);
+	default: return 0; 
+	} 
+} 
+
 weight "holdable_kamikaze"
 {
 	switch(INVENTORY_TELEPORTER)
@@ -587,7 +623,14 @@ weight "item_regen"
 	return PS(REGW);
 } 
 
+/*
 weight "item_flight"
+{
+	return PS(FLW);
+} 
+*/
+
+weight "rally_item_shield"
 {
 	return PS(FLW);
 } 
@@ -676,17 +719,67 @@ weight "item_botroam"
 	return 1;
 } 
 
-weight "team_dom_pointWhite"
+weight "rally_weapon_smoke"
 {
-	return 1000;
+	switch(INVENTORY_RWP_SMOKE)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	default: return 0;
+	}
 }
 
-weight "team_dom_pointRed"
+weight "rally_weapon_oil"
 {
-	return 700;
+	switch(INVENTORY_RWP_OIL)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	default: return 0;
+	}
 }
 
-weight "team_dom_pointBlue"
+weight "rally_weapon_mine"
 {
-	return 700;
+	switch(INVENTORY_RWP_MINE)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	default: return 0;
+	}
+}
+
+weight "rally_weapon_flame"
+{
+	switch(INVENTORY_RWP_FLAME)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	default: return 0;
+	}
+}
+
+weight "rally_weapon_bio"
+{
+	switch(INVENTORY_RWP_BIO)
+	{
+	case 20: return AS(30);
+	case 40: return AS(30);
+	case 60: return AS(11);
+	case 80: return AS(11);
+	case 100: return AS(11);
+	default: return 0;
+	}
 }

@@ -280,3 +280,26 @@ weight "Shotgun"
 		}
 	} 
 }
+
+weight "Flame Thrower"
+{
+	switch(INVENTORY_FLAMETHROWER)
+	{
+		case 1: return 0;
+		default: 
+		{
+		switch(INVENTORY_FLAMETHROWERAMMO)
+			{
+			case 1: return 0;
+			default: 
+				{
+				switch(ENEMY_HORIZONTAL_DIST)
+					{
+					case 600: return SGW;
+					default: return $evalint(SGW*0.1);
+					}
+				}
+			}
+		}
+	} 
+}

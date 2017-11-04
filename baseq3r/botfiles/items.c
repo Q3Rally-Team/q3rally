@@ -168,6 +168,18 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
+iteminfo "ammo_flame"
+{
+name		"Flame Ammo"
+model		"models/powerups/ammo/bfgam.md3"
+modelindex	MODELINDEX_FLAMETHROWERAMMO
+type		AMMOI
+index		INVENTORY_FLAMETHROWERAMMO
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+} 
+
 iteminfo "holdable_invulnerability"
 {
 name		"Invulnerability"
@@ -228,9 +240,21 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_armor_body"
+iteminfo "rally_item_turbo"
 {
-name		"Heavy Armor"
+name		"Turbo"
+model		"models/powerups/turbo/turbo.md3"
+modelindex	MODELINDEX_TURBO
+type		POWERI
+index		INVENTORY_TURBO
+respawntime	60
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+} 
+
+iteminfo "item_armor_red"
+{
+name		"Red Armor"
 model		"models/powerups/armor/armor_red.md3"
 modelindex	MODELINDEX_ARMORBODY
 type		ARMORI
@@ -241,9 +265,9 @@ maxs		{13,13,13}
 } 
 
 
-iteminfo "item_armor_combat"
+iteminfo "item_armor_yellow"
 {
-name		"Armor"
+name		"Yellow Armor"
 model		"models/powerups/armor/armor_yel.md3"
 modelindex	MODELINDEX_ARMORCOMBAT
 type		ARMORI
@@ -253,10 +277,10 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_armor_shard"
+iteminfo "item_armor_green"
 {
-name		"Armor Shard"
-model		"models/powerups/armor/shard.md3"
+name		"Green Armor"
+model		"models/powerups/armor/greenshard.md3"
 modelindex	MODELINDEX_ARMORSHARD
 type		ARMORI
 index		INVENTORY_ARMOR
@@ -352,13 +376,27 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
+/*
 iteminfo "weapon_grapplinghook"
 {
 name		"Grappling Hook"
-model		""
+model		"models/weapons2/grapple/grapple.md3"
 modelindex	MODELINDEX_GRAPPLINGHOOK
 type		WEAPONI
 index		INVENTORY_GRAPPLINGHOOK
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+} 
+*/
+
+iteminfo "weapon_flamethrower"
+{
+name		"Flame Thrower"
+model		"models/weapons2/flamethrower/flamethrower.md3"
+modelindex	MODELINDEX_FLAMETHROWER
+type		WEAPONI
+index		INVENTORY_FLAMETHROWER
 respawntime	30
 mins		{-13,-13,-13}
 maxs		{13,13,13}
@@ -480,10 +518,69 @@ maxs		{13,13,13}
 } 
 
 
+iteminfo "rally_weapon_smoke"
+{
+name		"Rearfire Smoke Screen"
+model		"models/rearfire/rf_smoke.md3"
+modelindex	MODELINDEX_RWP_SMOKE
+type		WEAPONI
+index		INVENTORY_RWP_SMOKE
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
+
+iteminfo "rally_weapon_oil"
+{
+name		"Rearfire Oil Slick"
+model		"models/rearfire/rf_oil.md3"
+modelindex	MODELINDEX_RWP_OIL
+type		WEAPONI
+index		INVENTORY_RWP_OIL
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
+
+iteminfo "rally_weapon_mine"
+{
+name		"Rearfire Mine"
+model		"models/rearfire/rf_mines.md3"
+modelindex	MODELINDEX_RWP_MINE
+type		WEAPONI
+index		INVENTORY_RWP_MINE
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
+
+iteminfo "rally_weapon_flame"
+{
+name		"Rearfire Flame Trail"
+model		"models/rearfire/rf_flame.md3"
+modelindex	MODELINDEX_RWP_FLAME
+type		WEAPONI
+index		INVENTORY_RWP_FLAME
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
+
+iteminfo "rally_weapon_bio"
+{
+name		"Rearfire Bio Sludge"
+model		"models/rearfire/rf_bio.md3"
+modelindex	MODELINDEX_RWP_BIO
+type		WEAPONI
+index		INVENTORY_RWP_BIO
+respawntime	30
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
 
  
 
-iteminfo "item_quad"
+iteminfo "rally_item_quad"
 {
 name		"Quad Damage"
 model		"models/powerups/instant/quad.md3"
@@ -495,7 +592,7 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_enviro"
+iteminfo "rally_item_env"
 {
 name		"Battle Suit"
 model		"models/powerups/instant/enviro.md3"
@@ -507,7 +604,7 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_haste"
+iteminfo "rally_item_haste"
 {
 name		"Speed"
 model		"models/powerups/instant/haste_ring.md3"
@@ -519,7 +616,7 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_invisibility"
+iteminfo "rally_item_invis"
 {
 name		"Invisibility"
 model		"models/powerups/instant/invis.md3"
@@ -531,7 +628,7 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
-iteminfo "item_regen"
+iteminfo "rally_item_regen"
 {
 name		"Regeneration"
 model		"models/powerups/instant/regen_ring.md3"
@@ -543,6 +640,7 @@ mins		{-13,-13,-13}
 maxs		{13,13,13}
 } 
 
+/*
 iteminfo "item_flight"
 {
 name		"Flight"
@@ -550,6 +648,19 @@ model		"models/powerups/instant/flight_ring.md3"
 modelindex	MODELINDEX_FLIGHT
 type		POWERI
 index		INVENTORY_FLIGHT
+respawntime	60
+mins		{-13,-13,-13}
+maxs		{13,13,13}
+}
+*/
+
+iteminfo "rally_item_shield"
+{
+name		"Shielding"
+model		"models/powerups/shield/shield.md3"
+modelindex	MODELINDEX_SHIELD
+type		POWERI
+index		INVENTORY_SHIELD
 respawntime	60
 mins		{-13,-13,-13}
 maxs		{13,13,13}
@@ -698,40 +809,6 @@ model		""
 modelindex	0
 type		ROAMI
 index		0
-mins		{-13,-13,-13}
-maxs		{13,13,13}
-}
-
-//Domination points:
-iteminfo "team_dom_pointWhite"
-{
-name		"Neutral domination point"
-model		"models/dpoints/a_white.md3"
-modelindex	MODELINDEX_POINTWHITE
-type		FLAGI
-index		INVENTORY_POINTWHITE
-mins		{-13,-13,-13}
-maxs		{13,13,13}
-}
-
-iteminfo "team_dom_pointBlue"
-{
-name		"Blue domination point"
-model		"models/dpoints/a_blue.md3"
-modelindex	MODELINDEX_POINTBLUE
-type		FLAGI
-index		INVENTORY_POINTBLUE
-mins		{-13,-13,-13}
-maxs		{13,13,13}
-}
-
-iteminfo "team_dom_pointRed"
-{
-name		"Red domination point"
-model		"models/dpoints/a_red.md3"
-modelindex	MODELINDEX_POINTRED
-type		FLAGI
-index		INVENTORY_POINTRED
 mins		{-13,-13,-13}
 maxs		{13,13,13}
 }

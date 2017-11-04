@@ -1766,6 +1766,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_ROCKETS] = bs->cur_ps.ammo[WP_ROCKET_LAUNCHER];
 	bs->inventory[INVENTORY_SLUGS] = bs->cur_ps.ammo[WP_RAILGUN];
 	bs->inventory[INVENTORY_BFGAMMO] = bs->cur_ps.ammo[WP_BFG];
+	bs->inventory[INVENTORY_FLAMETHROWERAMMO] = bs->cur_ps.ammo[WP_FLAME_THROWER];
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_NAILS] = bs->cur_ps.ammo[WP_NAILGUN];
 	bs->inventory[INVENTORY_MINES] = bs->cur_ps.ammo[WP_PROX_LAUNCHER];
@@ -1775,6 +1776,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[STAT_HEALTH];
 	bs->inventory[INVENTORY_TELEPORTER] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
 	bs->inventory[INVENTORY_MEDKIT] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
+	bs->inventory[INVENTORY_TURBO] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TURBO;
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_KAMIKAZE] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_KAMIKAZE;
 	bs->inventory[INVENTORY_PORTAL] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_PORTAL;
@@ -1788,6 +1790,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 // STONELANCE
 //	bs->inventory[INVENTORY_FLIGHT] = bs->cur_ps.powerups[PW_FLIGHT] != 0;
 // END
+	bs->inventory[INVENTORY_SHIELD] = bs->cur_ps.powerups[PW_SHIELD] != 0;
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_SCOUT] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_SCOUT;
 	bs->inventory[INVENTORY_GUARD] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_GUARD;
@@ -1807,6 +1810,12 @@ void BotUpdateInventory(bot_state_t *bs) {
 		bs->inventory[INVENTORY_BLUECUBE] = bs->cur_ps.generic1;
 	}
 #endif
+	//rally rearfire weapons
+	bs->inventory[INVENTORY_RWP_SMOKE] = bs->cur_ps.ammo[RWP_SMOKE];
+	bs->inventory[INVENTORY_RWP_OIL] = bs->cur_ps.ammo[RWP_OIL];
+	bs->inventory[INVENTORY_RWP_MINE] = bs->cur_ps.ammo[RWP_MINE];
+	bs->inventory[INVENTORY_RWP_FLAME] = bs->cur_ps.ammo[RWP_FLAME];
+	bs->inventory[INVENTORY_RWP_BIO] = bs->cur_ps.ammo[RWP_BIO];
 	BotCheckItemPickup(bs, oldinventory);
 }
 

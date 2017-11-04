@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 projectileinfo 
 {
 name				"bfgexploision"
-damage				40
-radius				100
+damage				100
+radius				120
 damagetype			$evalint(IMPACT_DAMAGE|SPLASH_DAMAGE)
 }
 
@@ -40,7 +40,7 @@ name				"BFG10K"
 number				WEAPONINDEX_BFG
 projectile			"bfgexploision"
 numprojectiles			1
-speed				0
+speed				4000
 } 
 
 projectileinfo 
@@ -62,8 +62,8 @@ speed				0
 projectileinfo 
 {
 name				"grenade"
-damage				120
-radius				160
+damage				40
+radius				150
 damagetype			$evalint(IMPACT_DAMAGE|SPLASH_DAMAGE)
 }
 
@@ -73,7 +73,7 @@ name				"Grenade Launcher"
 number				WEAPONINDEX_GRENADE_LAUNCHER
 projectile			"grenade"
 numprojectiles			1
-speed				700
+speed				800
 }
 
 
@@ -97,7 +97,7 @@ speed				0
 projectileinfo 
 {
 name				"machinegunbullet"
-damage				8
+damage				7
 damagetype			IMPACT_DAMAGE
 }
 
@@ -124,13 +124,13 @@ name				"Plasma Gun"
 number				WEAPONINDEX_PLASMAGUN
 projectile			"plasma"
 numprojectiles			1
-speed				2000
+speed				4000
 } 
 
 projectileinfo 
 {
 name				"rail"
-damage				100
+damage				75
 damagetype			IMPACT_DAMAGE
 }
 
@@ -146,7 +146,7 @@ speed				0
 projectileinfo
 {
 name				"rocket"
-damage				100
+damage				80
 radius				120
 damagetype			$evalint(IMPACT_DAMAGE|SPLASH_DAMAGE)
 }
@@ -157,7 +157,7 @@ name				"Rocket Launcher"
 number				WEAPONINDEX_ROCKET_LAUNCHER
 projectile			"rocket"
 numprojectiles			1
-speed				900
+speed				1800
 }
 
 
@@ -175,6 +175,23 @@ number				WEAPONINDEX_SHOTGUN
 projectile			"shotgunbullet"
 numprojectiles			11
 speed				0
+}
+
+projectileinfo
+{
+name				"flamethrowerexpolision"
+damage				30
+radius				45
+damagetype			$evalint(IMPACT_DAMAGE|SPLASH_DAMAGE)
+}
+
+weaponinfo
+{
+name				"Flame Thrower"
+number				WEAPONINDEX_BFG
+projectile			"flamethrowerexpolision"
+numprojectiles			1
+speed				300
 }
 
 projectileinfo 
