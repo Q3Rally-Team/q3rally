@@ -598,27 +598,27 @@ weight "holdable_invulnerability"
 	} 
 } 
 
-weight "item_quad"
+weight "rally_item_quad"
 {
 	return PS(QW);
 } 
 
-weight "item_enviro"
+weight "rally_item_env"
 {
 	return PS(ENVW);
 } 
 
-weight "item_haste"
+weight "rally_item_haste"
 {
 	return PS(HAW);
 } 
 
-weight "item_invisibility"
+weight "rally_item_invis"
 {
 	return PS(INW);
 } 
 
-weight "item_regen"
+weight "rally_item_regen"
 {
 	return PS(REGW);
 } 
