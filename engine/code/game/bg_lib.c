@@ -385,6 +385,7 @@ double sqrt( double x ) {
 
 	return y;
 }
+#endif
 
 
 float sintable[1024] = {
@@ -518,6 +519,7 @@ float sintable[1024] = {
 0.999925,0.999942,0.999958,0.999971,0.999981,0.999989,0.999995,0.999999
 };
 
+#if 0
 double sin( double x ) {
 	int	index;
 	int	quad;
@@ -558,8 +560,10 @@ double cos( double x ) {
 	}
 	return 0;
 }
+#endif
 
 
+#ifndef CGAME
 /*
 void create_acostable( void ) {
 	int i;
@@ -720,6 +724,7 @@ float Q_acos( float x ) {
 	index = (float) (1.0 + x) * 511.9;
 	return acostable[index];
 }
+#endif
 
 float Q_asin( float x ) {
 	float	dir;
@@ -741,6 +746,8 @@ float Q_asin( float x ) {
 
 	return (dir * i * (M_PI/2048));
 }
+
+#if 0
 
 double atan2( double y, double x ) {
 	float	base;

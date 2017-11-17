@@ -1026,12 +1026,6 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_CEIL:
 		return FloatAsInt( ceil( VMF(1) ) );
 
-	case UI_ACOS:
-		return FloatAsInt( Q_acos( VMF(1) ) );
-
-	case UI_ASIN:
-		return FloatAsInt( Q_asin( VMF(1) ) );
-
 	case UI_PC_ADD_GLOBAL_DEFINE:
 		return botlib_export->PC_AddGlobalDefine( VMA(1) );
 	case UI_PC_LOAD_SOURCE:

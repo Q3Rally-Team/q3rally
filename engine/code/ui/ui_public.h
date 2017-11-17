@@ -133,12 +133,7 @@ typedef enum {
 	UI_ATAN2,
 	UI_SQRT,
 	UI_FLOOR,
-	UI_CEIL,
-
-	// ZTM: New to Q3Rally
-	UI_ACOS,
-	UI_ASIN,
-
+	UI_CEIL
 } uiImport_t;
 
 typedef enum {

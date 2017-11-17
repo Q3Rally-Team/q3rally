@@ -634,8 +634,6 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return FloatAsInt( ceil( VMF(1) ) );
 	case CG_ACOS:
 		return FloatAsInt( Q_acos( VMF(1) ) );
-	case CG_ASIN:
-		return FloatAsInt( Q_asin( VMF(1) ) );
 
 	case CG_PC_ADD_GLOBAL_DEFINE:
 		return botlib_export->PC_AddGlobalDefine( VMA(1) );
