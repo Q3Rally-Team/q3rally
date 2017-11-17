@@ -789,7 +789,6 @@ static void ForceClientSkin( gclient_t *client, char *model, const char *skin ) 
 }
 */
 
-
 /*
 ===========
 ClientCleanName
@@ -1772,6 +1771,16 @@ void ClientDisconnect( int clientNum ) {
 		&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
 		level.clients[ level.sortedClients[0] ].sess.wins++;
 		ClientUserinfoChanged( level.sortedClients[0] );
+	}
+
+	if( g_gametype.integer == GT_TOURNAMENT &&
+		ent->client->sess.sessionTeam == TEAM_FREE &&
+		level.intermissiontime ) {
+
+		trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
+		level.restarted = qtrue;
+		level.changemap = NULL;
+		level.intermissiontime = 0;
 	}
 */
 

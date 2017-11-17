@@ -88,7 +88,6 @@ typedef struct
 	char	*name;
 	size_t	ofs;
 	fieldtype_t	type;
-	int		flags;
 } field_t;
 
 field_t fields[] = {
@@ -143,7 +142,6 @@ void SP_func_button (gentity_t *ent);
 void SP_func_door (gentity_t *ent);
 void SP_func_train (gentity_t *ent);
 void SP_func_timer (gentity_t *self);
-
 
 void SP_trigger_always (gentity_t *ent);
 void SP_trigger_multiple (gentity_t *ent);
@@ -327,7 +325,6 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 		return qfalse;
 	}
 
-
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {
@@ -341,7 +338,6 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 				}
 			}
 
-          
 			G_SpawnItem( ent, item );
 			return qtrue;
 		}
@@ -765,8 +761,6 @@ void SP_worldspawn( void ) {
 }
 
 
-
-
 /*
 ==============
 G_SpawnEntitiesFromString
@@ -791,8 +785,7 @@ void G_SpawnEntitiesFromString( void ) {
 	while( G_ParseSpawnVars() ) {
 		G_SpawnGEntityFromSpawnVars();
 	}	
-    
-    
+
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 }
 

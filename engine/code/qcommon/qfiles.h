@@ -82,12 +82,12 @@ typedef struct {
 
 // limits
 #define MD3_MAX_LODS		3
-#define	MD3_MAX_TRIANGLES	16384	// per surface
-#define MD3_MAX_VERTS		8192	// per surface
-#define MD3_MAX_SHADERS		512		// per surface
-#define MD3_MAX_FRAMES		2048	// per model
-#define	MD3_MAX_SURFACES	64		// per model
-#define MD3_MAX_TAGS		32		// per frame
+#define	MD3_MAX_TRIANGLES	8192	// per surface
+#define MD3_MAX_VERTS		4096	// per surface
+#define MD3_MAX_SHADERS		256		// per surface
+#define MD3_MAX_FRAMES		1024	// per model
+#define	MD3_MAX_SURFACES	32		// per model
+#define MD3_MAX_TAGS		16		// per frame
 
 // vertex scales
 #define	MD3_XYZ_SCALE		(1.0/64)

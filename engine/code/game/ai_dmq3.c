@@ -4319,8 +4319,8 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 				}
 				// store any remaining areas
 				for (i = 0; i < numareas; i++) {
-						if (activategoal->numareas >= MAX_ACTIVATEAREAS)
-							break;
+					if (activategoal->numareas >= MAX_ACTIVATEAREAS)
+						break;
 					if ( trap_AAS_AreaReachability(areas[i]) ) {
 						continue;
 					}

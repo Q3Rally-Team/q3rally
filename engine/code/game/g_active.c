@@ -958,7 +958,6 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 	}
 }
 
-
 /*
 ==============
 ClientThink
@@ -985,7 +984,7 @@ void ClientThink_real( gentity_t *ent ) {
 // END
 
 	client = ent->client;
-	
+
 	// don't think if the client is not yet connected (and thus not yet spawned in)
 	if (client->pers.connected != CON_CONNECTED) {
 		return;
@@ -1001,7 +1000,7 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( ucmd->serverTime < level.time - 1000 ) {
 		ucmd->serverTime = level.time - 1000;
 //		G_Printf("serverTime >>>>>\n" );
-	}
+	} 
 
 	msec = ucmd->serverTime - client->ps.commandTime;
 	// following others may result in bad times, but we still want
@@ -1037,7 +1036,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	// spectators don't do much
-	if ( client->sess.sessionTeam == TEAM_SPECTATOR ){
+	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			return;
 		}
@@ -1332,21 +1331,21 @@ void ClientThink_real( gentity_t *ent ) {
 	VectorCopy( client->ps.origin, client->oldOrigin );
 
 #ifdef MISSIONPACK
-	if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
-		if ( level.time - level.intermissionQueued >= 1000  ) {
-			pm.cmd.buttons = 0;
-			pm.cmd.forwardmove = 0;
-			pm.cmd.rightmove = 0;
-			pm.cmd.upmove = 0;
-			if ( level.time - level.intermissionQueued >= 2000 && level.time - level.intermissionQueued <= 2500 ) {
-				trap_SendConsoleCommand( EXEC_APPEND, "centerview\n");
+		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
+			if ( level.time - level.intermissionQueued >= 1000  ) {
+				pm.cmd.buttons = 0;
+				pm.cmd.forwardmove = 0;
+				pm.cmd.rightmove = 0;
+				pm.cmd.upmove = 0;
+				if ( level.time - level.intermissionQueued >= 2000 && level.time - level.intermissionQueued <= 2500 ) {
+					trap_SendConsoleCommand( EXEC_APPEND, "centerview\n");
+				}
+				ent->client->ps.pm_type = PM_SPINTERMISSION;
 			}
-			ent->client->ps.pm_type = PM_SPINTERMISSION;
 		}
-	}
-	Pmove (&pm);
+		Pmove (&pm);
 #else
-	Pmove (&pm);
+		Pmove (&pm);
 #endif
 
 // STONELANCE

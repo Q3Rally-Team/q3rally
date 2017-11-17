@@ -239,15 +239,16 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage, int mod ) {
 
 	passent = ent->s.number;
 	for (i = 0; i < 10; i++) {
+
 		trap_Trace (&tr, muzzle, NULL, NULL, end, passent, MASK_SHOT);
 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 			return;
 		}
 
 
-		if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX){
+		if (g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX)
 			traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
-		} else
+		else
 			traceEnt = &g_entities[ tr.entityNum ];
 
 
@@ -350,7 +351,6 @@ qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 			traceEnt = &g_entities[ tr.entityNum ];
 
 
-
 		// send bullet impact
 		if (  tr.surfaceFlags & SURF_NOIMPACT ) {
 			return qfalse;
@@ -439,14 +439,14 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 	gentity_t	*m;
 
 	// extra vertical velocity
-  forward[2] += 0.2f;
+	forward[2] += 0.2f;
 	VectorNormalize( forward );
 
 	m = fire_grenade (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
-	
-  VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
+
+	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
 
 /*
@@ -469,8 +469,7 @@ void weapon_cluster_grenadelauncher_fire (gentity_t *ent) {
 	m->splashDamage *= s_quadFactor;
 	VectorScale(forward, 2000, m->s.pos.trDelta) ;
 
-
-  //VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
+//	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
 
 /*
