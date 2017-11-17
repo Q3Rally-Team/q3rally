@@ -424,12 +424,18 @@ extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 #define TINYCHAR_HEIGHT		10
 // END
 
+// ZTM: Only change size for Q3Rally VMs, not client console text
+#if defined CGAME || defined UI
 // STONELANCE - drawn pic is actually bigger because this
 // is the value after the letters are moved closer together
 //#define SMALLCHAR_WIDTH	8
 #define SMALLCHAR_WIDTH		6
 // END
 #define SMALLCHAR_HEIGHT	16
+#else
+#define SMALLCHAR_WIDTH	8
+#define SMALLCHAR_HEIGHT	16
+#endif
 
 #define BIGCHAR_WIDTH		16
 #define BIGCHAR_HEIGHT		16
