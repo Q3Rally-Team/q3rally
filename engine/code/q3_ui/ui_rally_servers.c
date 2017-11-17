@@ -657,7 +657,7 @@ static void ArenaServers_UpdateMenu( void ) {
                         g_arenaservers.gametype.generic.flags   &= ~QMF_GRAYED;
                         g_arenaservers.sortkey.generic.flags    &= ~QMF_GRAYED;
                         g_arenaservers.showempty.generic.flags  &= ~QMF_GRAYED;
-                        g_arenaservers.onlyhumans.generic.flags &= QMF_GRAYED;
+                        g_arenaservers.onlyhumans.generic.flags &= ~QMF_GRAYED;
                         g_arenaservers.showfull.generic.flags   &= ~QMF_GRAYED;
 // STONELANCE
 //                      g_arenaservers.list.generic.flags               |= QMF_GRAYED;
@@ -1648,7 +1648,7 @@ static void ArenaServers_MenuInit( void ) {
         g_arenaservers.onlyhumans.generic.flags         = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
         g_arenaservers.onlyhumans.generic.callback      = ArenaServers_Event;
         g_arenaservers.onlyhumans.generic.id                    = ID_ONLY_HUMANS;
-        g_arenaservers.onlyhumans.generic.x                     = 320;
+        g_arenaservers.onlyhumans.generic.x                     = 330;
         g_arenaservers.onlyhumans.generic.y                     = y;
 
 // STONELANCE

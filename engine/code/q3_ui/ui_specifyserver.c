@@ -136,18 +136,18 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.go.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_specifyserver.go.generic.callback = SpecifyServer_Event;
 	s_specifyserver.go.generic.id	      = ID_SPECIFYSERVERGO;
-	s_specifyserver.go.generic.x		    = 640;
-	s_specifyserver.go.generic.y		    = 480-64;
-	s_specifyserver.go.string				    = "FIGHT >";
+	s_specifyserver.go.generic.x		    = 640 - 20;
+	s_specifyserver.go.generic.y		    = 480 - 50;
+	s_specifyserver.go.string				    = "CONNECT >";
 	s_specifyserver.go.color				    = text_color_normal;
-	s_specifyserver.go.style				  = UI_LEFT | UI_SMALLFONT;
+	s_specifyserver.go.style				  = UI_RIGHT | UI_SMALLFONT;
 	
 	s_specifyserver.back.generic.type			= MTYPE_PTEXT;
 	s_specifyserver.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_specifyserver.back.generic.callback = SpecifyServer_Event;
 	s_specifyserver.back.generic.id	      = ID_SPECIFYSERVERBACK; 
-	s_specifyserver.back.generic.x			  = 0;
-	s_specifyserver.back.generic.y			  = 480 - 64;
+	s_specifyserver.back.generic.x			  = 20;
+	s_specifyserver.back.generic.y			  = 480 - 50;
 	s_specifyserver.back.string				    = "< BACK";
 	s_specifyserver.back.color				    = text_color_normal;
 	s_specifyserver.back.style				    = UI_LEFT | UI_SMALLFONT;
