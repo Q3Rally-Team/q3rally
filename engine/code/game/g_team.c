@@ -764,7 +764,9 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 	// Ok, let's do the player loop, hand out the bonuses
 	for (i = 0; i < g_maxclients.integer; i++) {
 		player = &g_entities[i];
-		if (!player->inuse)
+
+		// also make sure we don't award assist bonuses to the flag carrier himself.
+		if (!player->inuse || player == other)
 			continue;
 
 		if (player->client->sess.sessionTeam !=
@@ -786,6 +788,7 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 				player->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
 				player->client->ps.eFlags |= EF_AWARD_ASSIST;
 				player->client->rewardTime = level.time + REWARD_SPRITE_TIME;
+
 			} 
 			if (player->client->pers.teamState.lastfraggedcarrier + 
 				CTF_FRAG_CARRIER_ASSIST_TIMEOUT > level.time) {

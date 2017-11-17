@@ -675,21 +675,21 @@ void SetTeam( gentity_t *ent, const char *s ) {
 		if ( g_teamForceBalance.integer && !client->pers.localClient && !( ent->r.svFlags & SVF_BOT ) ) {
 			int		counts[TEAM_NUM_TEAMS];
 
-			counts[TEAM_BLUE] = TeamCount( ent->client->ps.clientNum, TEAM_BLUE );
-			counts[TEAM_RED] = TeamCount( ent->client->ps.clientNum, TEAM_RED );
+			counts[TEAM_BLUE] = TeamCount( clientNum, TEAM_BLUE );
+			counts[TEAM_RED] = TeamCount( clientNum, TEAM_RED );
 // STONELANCE
-			counts[TEAM_GREEN] = TeamCount( ent->client->ps.clientNum, TEAM_GREEN );
-			counts[TEAM_YELLOW] = TeamCount( ent->client->ps.clientNum, TEAM_YELLOW );
+			counts[TEAM_GREEN] = TeamCount( clientNum, TEAM_GREEN );
+			counts[TEAM_YELLOW] = TeamCount( clientNum, TEAM_YELLOW );
 
 			// We allow a spread of two
 /*
 			if ( team == TEAM_RED && counts[TEAM_RED] - counts[TEAM_BLUE] > 1 ) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Red team has too many players.\n\"" );
 				return; // ignore the request
 			}
 			if ( team == TEAM_BLUE && counts[TEAM_BLUE] - counts[TEAM_RED] > 1 ) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Blue team has too many players.\n\"" );
 				return; // ignore the request
 			}
@@ -697,14 +697,14 @@ void SetTeam( gentity_t *ent, const char *s ) {
 			if ( team == TEAM_RED && counts[TEAM_RED] - counts[TEAM_BLUE] > 1
 				&& counts[TEAM_RED] - counts[TEAM_GREEN] > 1
 				&& counts[TEAM_RED] - counts[TEAM_YELLOW] > 1) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Red team has too many players.\n\"" );
 				return; // ignore the request
 			}
 			if ( team == TEAM_BLUE && counts[TEAM_BLUE] - counts[TEAM_RED] > 1
 				&& counts[TEAM_BLUE] - counts[TEAM_GREEN] > 1
 				&& counts[TEAM_YELLOW] - counts[TEAM_YELLOW] > 1) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Blue team has too many players.\n\"" );
 				return; // ignore the request
 			}
@@ -712,14 +712,14 @@ void SetTeam( gentity_t *ent, const char *s ) {
 			if ( team == TEAM_GREEN && counts[TEAM_GREEN] - counts[TEAM_RED] > 1
 				&& counts[TEAM_GREEN] - counts[TEAM_BLUE] > 1
 				&& counts[TEAM_GREEN] - counts[TEAM_YELLOW] > 1) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Green team has too many players.\n\"" );
 				return; // ignore the request
 			}
 			if ( team == TEAM_YELLOW && counts[TEAM_YELLOW] - counts[TEAM_RED] > 1
 				&& counts[TEAM_YELLOW] - counts[TEAM_BLUE] > 1
 				&& counts[TEAM_YELLOW] - counts[TEAM_GREEN] > 1) {
-				trap_SendServerCommand( ent->client->ps.clientNum, 
+				trap_SendServerCommand( clientNum, 
 					"cp \"Yellow team has too many players.\n\"" );
 				return; // ignore the request
 			}
@@ -1516,6 +1516,7 @@ Cmd_CallVote_f
 ==================
 */
 void Cmd_CallVote_f( gentity_t *ent ) {
+	char*	c;
 	int		i;
 	char	arg1[MAX_STRING_TOKENS];
 	char	arg2[MAX_STRING_TOKENS];
@@ -1546,9 +1547,16 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	trap_Argv( 1, arg1, sizeof( arg1 ) );
 	trap_Argv( 2, arg2, sizeof( arg2 ) );
 
-	if( strchr( arg1, ';' ) || strchr( arg2, ';' ) ) {
-		trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
-		return;
+	// check for command separators in arg2
+	for( c = arg2; *c; ++c) {
+		switch(*c) {
+			case '\n':
+			case '\r':
+			case ';':
+				trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
+				return;
+			break;
+		}
 	}
 
 // STONELANCE
@@ -1913,6 +1921,7 @@ void Cmd_SetViewpos_f( gentity_t *ent ) {
 }
 
 
+
 /*
 =================
 Cmd_Stats_f
@@ -2208,8 +2217,6 @@ void ClientCommand( int clientNum ) {
 		Cmd_MoveBHandle_f (ent);
 		return;
 	}
-	
-	
 // END
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );

@@ -331,6 +331,9 @@ char	*modNames[] = {
 	"MOD_ROCKET_SPLASH",
 	"MOD_PLASMA",
 	"MOD_PLASMA_SPLASH",
+// Q3Rally Code Start
+	"MOD_FLAME_THROWER",
+// // Q3Rally Code End
 	"MOD_RAILGUN",
 	"MOD_LIGHTNING",
 	"MOD_BFG",
@@ -348,6 +351,8 @@ char	*modNames[] = {
 	"MOD_NAIL",
 	"MOD_CHAINGUN",
 	"MOD_PROXIMITY_MINE",
+	"MOD_KAMIKAZE",
+	"MOD_JUICED",
 #endif
 // Q3Rally Code Start
 	"MOD_UPSIDEDOWN",
@@ -551,7 +556,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if ( meansOfDeath < 0 || meansOfDeath >= ARRAY_LEN( modNames ) ) {
 		obit = "<bad obituary>";
 	} else {
-		obit = modNames[ meansOfDeath ];
+		obit = modNames[meansOfDeath];
 	}
 
 	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
@@ -750,6 +755,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	}
 
 	trap_LinkEntity (self);
+
 }
 
 
@@ -926,7 +932,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-
 	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( targ->use && (targ->moverState == MOVER_POS1
@@ -1083,7 +1088,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 // END
 
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
-	if ( attacker->client && targ != attacker && targ->health > 0
+	if ( attacker->client && client
+			&& targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE
 			&& targ->s.eType != ET_GENERAL) {
 		if ( OnSameTeam( targ, attacker ) ) {

@@ -70,8 +70,8 @@ vmCvar_t	g_synchronousClients;
 vmCvar_t	g_warmup;
 vmCvar_t	g_doWarmup;
 vmCvar_t	g_restarted;
-vmCvar_t	g_log;
-vmCvar_t	g_logSync;
+vmCvar_t	g_logfile;
+vmCvar_t	g_logfileSync;
 vmCvar_t	g_blood;
 vmCvar_t	g_podiumDist;
 vmCvar_t	g_podiumDrop;
@@ -165,8 +165,8 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
 	{ &g_doWarmup, "g_doWarmup", "0", CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_log, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_logSync, "g_logSync", "0", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_logfile, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_logfileSync, "g_logsync", "0", CVAR_ARCHIVE, 0, qfalse  },
 
 	{ &g_password, "g_password", "", CVAR_USERINFO, 0, qfalse  },
 
@@ -543,14 +543,14 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
 
-	if ( g_gametype.integer != GT_SINGLE_PLAYER && g_log.string[0] ) {
-		if ( g_logSync.integer ) {
-			trap_FS_FOpenFile( g_log.string, &level.logFile, FS_APPEND_SYNC );
+	if ( g_gametype.integer != GT_SINGLE_PLAYER && g_logfile.string[0] ) {
+		if ( g_logfileSync.integer ) {
+			trap_FS_FOpenFile( g_logfile.string, &level.logFile, FS_APPEND_SYNC );
 		} else {
-			trap_FS_FOpenFile( g_log.string, &level.logFile, FS_APPEND );
+			trap_FS_FOpenFile( g_logfile.string, &level.logFile, FS_APPEND );
 		}
 		if ( !level.logFile ) {
-			G_Printf( "WARNING: Couldn't open logfile: %s\n", g_log.string );
+			G_Printf( "WARNING: Couldn't open logfile: %s\n", g_logfile.string );
 		} else {
 			char	serverinfo[MAX_INFO_STRING];
 
@@ -624,6 +624,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_RemapTeamShaders();
 
+	trap_SetConfigstring( CS_INTERMISSION, "" );
+
 // STONELANCE
 /*
 	{
@@ -675,9 +677,6 @@ void G_ShutdownGame( int restart ) {
 
 //===================================================================
 
-#ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c and bg_*.c can link
-
 void QDECL Com_Error ( int level, const char *error, ... ) {
 	va_list		argptr;
 	char		text[1024];
@@ -699,8 +698,6 @@ void QDECL Com_Printf( const char *msg, ... ) {
 
 	trap_Print( text );
 }
-
-#endif
 
 /*
 ========================================================================
@@ -855,7 +852,6 @@ void AdjustTournamentScores( void ) {
 		ClientUserinfoChanged( clientNum );
 	}
 
-	trap_SetConfigstring( CS_INTERMISSION, "" );
 }
 
 /*
@@ -981,7 +977,6 @@ void CalculateRanks( void ) {
 	int		rank;
 	int		score;
 	int		newScore;
-	int   humanplayers;
 	gclient_t	*cl;
 
 	level.follow1 = -1;
@@ -989,7 +984,7 @@ void CalculateRanks( void ) {
 	level.numConnectedClients = 0;
 	level.numNonSpectatorClients = 0;
 	level.numPlayingClients = 0;
-	humanplayers = 0; //level.numVotingClients = 0;		// don't count bots
+	level.numVotingClients = 0;		// don't count bots
 
 	for (i = 0; i < ARRAY_LEN(level.numteamVotingClients); i++)
 		level.numteamVotingClients[i] = 0;
@@ -1089,10 +1084,10 @@ void CalculateRanks( void ) {
 	if ( level.intermissiontime ) {
 		SendScoreboardMessageToAllClients();
 	}
-	
-	 if(g_humanplayers.integer != humanplayers) //Presume all spectators are humans!
-            trap_Cvar_Set( "g_humanplayers", va("%i", humanplayers) );
 
+	 if ( g_humanplayers.integer != level.numVotingClients ) {
+            trap_Cvar_Set( "g_humanplayers", va( "%i", level.numVotingClients ) );
+	}
 }
 
 
@@ -1490,7 +1485,7 @@ wait 10 seconds before going on.
 =================
 */
 void CheckIntermissionExit( void ) {
-	int			ready, notReady;
+	int			ready, notReady, playerCount;
 	int			i;
 	gclient_t	*cl;
 	int			readyMask;
@@ -1503,6 +1498,7 @@ void CheckIntermissionExit( void ) {
 	ready = 0;
 	notReady = 0;
 	readyMask = 0;
+	playerCount = 0;
 	for (i=0 ; i< g_maxclients.integer ; i++) {
 		cl = level.clients + i;
 		if ( cl->pers.connected != CON_CONNECTED ) {
@@ -1512,6 +1508,7 @@ void CheckIntermissionExit( void ) {
 			continue;
 		}
 
+		playerCount++;
 		if ( cl->readyToExit ) {
 			ready++;
 			if ( i < 16 ) {
@@ -1537,16 +1534,19 @@ void CheckIntermissionExit( void ) {
 		return;
 	}
 
-	// if nobody wants to go, clear timer
-	if ( !ready ) {
-		level.readyToExit = qfalse;
-		return;
-	}
+	// only test ready status when there are real players present
+	if ( playerCount > 0 ) {
+		// if nobody wants to go, clear timer
+		if ( !ready ) {
+			level.readyToExit = qfalse;
+			return;
+		}
 
-	// if everyone wants to go, go now
-	if ( !notReady ) {
-		ExitLevel();
-		return;
+		// if everyone wants to go, go now
+		if ( !notReady ) {
+			ExitLevel();
+			return;
+		}
 	}
 
 	// the first person to ready starts the ten second timeout
@@ -1799,7 +1799,7 @@ void CheckExitRules( void ) {
 			LogExit( "Capturelimit hit." );
 			return;
 		}
-	}	
+	}
 }
 
 
@@ -1860,7 +1860,12 @@ void CheckTournament( void ) {
 		if ( level.warmupTime < 0 ) {
 			if ( level.numPlayingClients == 2 ) {
 				// fudge by -1 to account for extra delays
-				level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+				if ( g_warmup.integer > 1 ) {
+					level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+				} else {
+					level.warmupTime = 0;
+				}
+
 				trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
 			}
 			return;
@@ -1952,6 +1957,7 @@ void CheckVote( void ) {
 	if ( level.time - level.voteTime >= VOTE_TIME ) {
 		trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
 	} else {
+		// ATVI Q3 1.32 Patch #9, WNF
 		if ( level.voteYes > level.numVotingClients/2 ) {
 			// execute the command, then remove the vote
 			trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
@@ -2270,4 +2276,3 @@ void G_RunFrame( int levelTime ) {
 		trap_Cvar_Set("g_listEntity", "0");
 	}
 }
-
