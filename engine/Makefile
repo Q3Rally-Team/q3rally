@@ -44,7 +44,7 @@ ifndef BUILD_DEFINES
 endif
 
 # ioquake3 svn version that this is based on
-IOQ3_REVISION = 3385
+IOQ3_REVISION = 3393
 
 #############################################################################
 #

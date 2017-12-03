@@ -158,7 +158,7 @@ void P_DamageFeedback( gentity_t *player ) {
 */
 // END
 
-	// play an apropriate pain sound
+	// play an appropriate pain sound
 	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
 		player->pain_debounce_time = level.time + 700;
 		G_AddEvent( player, EV_PAIN, player->health );
@@ -411,7 +411,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 			}
 		}
 
-		// use seperate code for determining if an item is picked up
+		// use separate code for determining if an item is picked up
 		// so you don't have to actually contact its bounding box
 		if ( hit->s.eType == ET_ITEM ) {
 			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {

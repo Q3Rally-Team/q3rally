@@ -302,7 +302,7 @@ typedef struct
 	int width;
 	int height;
 	int	columns;
-	int	seperation;
+	int	separation;
 // STONELANCE
 	int scrollbarAlignment;
 	int	dragY;
