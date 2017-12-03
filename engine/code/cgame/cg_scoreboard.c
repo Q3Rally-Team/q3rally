@@ -91,6 +91,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static qboolean localClient; // true if local client has been displayed
 
+
 							 /*
 =================
 CG_DrawScoreboard
@@ -692,6 +693,8 @@ void CG_DrawTourneyScoreboard( void ) {
 			y += 64;
 		}
 	}
+
+
 }
 #endif
 // END

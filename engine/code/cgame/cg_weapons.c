@@ -226,13 +226,6 @@ void CG_RailTrail (clientInfo_t *ci, vec3_t start, vec3_t end) {
 #define SPACING  5
  
 	start[2] -= 4;
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-	PerpendicularVector(temp, vec);
-	for (i = 0 ; i < 36; i++) {
-		RotatePointAroundVector(axis[i], vec, temp, i * 10);//banshee 2.4 was 10
-	}
  
 	le = CG_AllocLocalEntity();
 	re = &le->refEntity;
@@ -250,9 +243,9 @@ void CG_RailTrail (clientInfo_t *ci, vec3_t start, vec3_t end) {
 	VectorCopy(end, re->oldorigin);
  
 	re->shaderRGBA[0] = ci->color1[0] * 255;
-    re->shaderRGBA[1] = ci->color1[1] * 255;
-    re->shaderRGBA[2] = ci->color1[2] * 255;
-    re->shaderRGBA[3] = 255;
+	re->shaderRGBA[1] = ci->color1[1] * 255;
+	re->shaderRGBA[2] = ci->color1[2] * 255;
+	re->shaderRGBA[3] = 255;
 
 	le->color[0] = ci->color1[0] * 0.75;
 	le->color[1] = ci->color1[1] * 0.75;
@@ -261,59 +254,72 @@ void CG_RailTrail (clientInfo_t *ci, vec3_t start, vec3_t end) {
 
 	AxisClear( re->axis );
  
-	VectorMA(move, 20, vec, move);
-	VectorScale (vec, SPACING, vec);
-
-	if (cg_oldRail.integer != 0) {
+	if (cg_oldRail.integer)
+	{
 		// nudge down a bit so it isn't exactly in center
 		re->origin[2] -= 8;
 		re->oldorigin[2] -= 8;
 		return;
 	}
+
+	VectorCopy (start, move);
+	VectorSubtract (end, start, vec);
+	len = VectorNormalize (vec);
+	PerpendicularVector(temp, vec);
+	for (i = 0 ; i < 36; i++)
+	{
+		RotatePointAroundVector(axis[i], vec, temp, i * 10);//banshee 2.4 was 10
+	}
+
+	VectorMA(move, 20, vec, move);
+	VectorScale (vec, SPACING, vec);
+
 	skip = -1;
  
 	j = 18;
-    for (i = 0; i < len; i += SPACING) {
-		if (i != skip) {
+	for (i = 0; i < len; i += SPACING)
+	{
+		if (i != skip)
+		{
 			skip = i + SPACING;
 			le = CG_AllocLocalEntity();
-            re = &le->refEntity;
-            le->leFlags = LEF_PUFF_DONT_SCALE;
+			re = &le->refEntity;
+			le->leFlags = LEF_PUFF_DONT_SCALE;
 			le->leType = LE_MOVE_SCALE_FADE;
-            le->startTime = cg.time;
-            le->endTime = cg.time + (i>>1) + 600;
-            le->lifeRate = 1.0 / (le->endTime - le->startTime);
+			le->startTime = cg.time;
+			le->endTime = cg.time + (i>>1) + 600;
+			le->lifeRate = 1.0 / (le->endTime - le->startTime);
 
-            re->shaderTime = cg.time / 1000.0f;
-            re->reType = RT_SPRITE;
-            re->radius = 1.1f;
+			re->shaderTime = cg.time / 1000.0f;
+			re->reType = RT_SPRITE;
+			re->radius = 1.1f;
 			re->customShader = cgs.media.railRingsShader;
 
-            re->shaderRGBA[0] = ci->color2[0] * 255;
-            re->shaderRGBA[1] = ci->color2[1] * 255;
-            re->shaderRGBA[2] = ci->color2[2] * 255;
-            re->shaderRGBA[3] = 255;
+			re->shaderRGBA[0] = ci->color2[0] * 255;
+			re->shaderRGBA[1] = ci->color2[1] * 255;
+			re->shaderRGBA[2] = ci->color2[2] * 255;
+			re->shaderRGBA[3] = 255;
 
-            le->color[0] = ci->color2[0] * 0.75;
-            le->color[1] = ci->color2[1] * 0.75;
-            le->color[2] = ci->color2[2] * 0.75;
-            le->color[3] = 1.0f;
+			le->color[0] = ci->color2[0] * 0.75;
+			le->color[1] = ci->color2[1] * 0.75;
+			le->color[2] = ci->color2[2] * 0.75;
+			le->color[3] = 1.0f;
 
-            le->pos.trType = TR_LINEAR;
-            le->pos.trTime = cg.time;
+			le->pos.trType = TR_LINEAR;
+			le->pos.trTime = cg.time;
 
 			VectorCopy( move, move2);
-            VectorMA(move2, RADIUS , axis[j], move2);
-            VectorCopy(move2, le->pos.trBase);
+			VectorMA(move2, RADIUS , axis[j], move2);
+			VectorCopy(move2, le->pos.trBase);
 
-            le->pos.trDelta[0] = axis[j][0]*6;
-            le->pos.trDelta[1] = axis[j][1]*6;
-            le->pos.trDelta[2] = axis[j][2]*6;
+			le->pos.trDelta[0] = axis[j][0]*6;
+			le->pos.trDelta[1] = axis[j][1]*6;
+			le->pos.trDelta[2] = axis[j][2]*6;
 		}
 
-        VectorAdd (move, vec, move);
+		VectorAdd (move, vec, move);
 
-        j = j + ROTATION < 36 ? j + ROTATION : (j + ROTATION) % 36;
+		j = (j + ROTATION) % 36;
 	}
 }
 
@@ -453,7 +459,6 @@ static void CG_NailTrail( centity_t *ent, const weaponInfo_t *wi ) {
 }
 #endif
 
-
 /*
 ==========================
 CG_PlasmaTrail
@@ -542,8 +547,8 @@ static void CG_PlasmaTrail( centity_t *cent, const weaponInfo_t *wi ) {
 	le->angles.trDelta[0] = 1;
 	le->angles.trDelta[1] = 0.5;
 	le->angles.trDelta[2] = 0;
-}
 
+}
 /*
 ==========================
 CG_GrappleTrail
@@ -705,13 +710,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 		break;
 */
 
-  case WP_FLAME_THROWER:
-	 weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly.wav", qfalse );
-	 MAKERGB( weaponInfo->flashDlightColor, 0.6, 0.6, 1 );
-	 weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
-	 cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
-
-  break;
+	case WP_FLAME_THROWER:
+		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly.wav", qfalse );
+		MAKERGB( weaponInfo->flashDlightColor, 0.6, 0.6, 1 );
+		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
+		cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
+	break;
 // Q3Rally Code END
 
 #ifdef MISSIONPACK
@@ -997,6 +1001,7 @@ static void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles ) {
 */
 // END
 
+
 /*
 ===============
 CG_LightningBolt
@@ -1009,10 +1014,10 @@ angle)
 ===============
 */
 static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
-	trace_t		trace;
-	refEntity_t		beam;
-	vec3_t			forward;
-	vec3_t			muzzlePoint, endPoint;
+	trace_t  trace;
+	refEntity_t  beam;
+	vec3_t   forward;
+	vec3_t   muzzlePoint, endPoint;
 	//int      anim;
 
 // Q3Rally Code Start
@@ -1023,7 +1028,7 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 	//centity_t	*traceEnt;
 // END
 
-	if ( cent->currentState.weapon != WP_LIGHTNING ) {
+	if (cent->currentState.weapon != WP_LIGHTNING) {
 		return;
 	}
 
@@ -1190,7 +1195,6 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 */
 
 
-
 /*
 ======================
 CG_MachinegunSpinAngle
@@ -1272,7 +1276,6 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	weapon_t	weaponNum;
 	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
-//	int	col;
 
 	weaponNum = cent->currentState.weapon;
 
@@ -1446,6 +1449,7 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		return;
 	}
 
+
 	// allow the gun to be completely removed
 	if ( !cg_drawGun.integer ) {
 		vec3_t		origin;
@@ -1554,7 +1558,7 @@ void CG_DrawWeaponSelect( void ) {
 	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
 	count = 0;
 // Q3Rally Code Start
-//	for ( i = 1 ; i < 16 ; i++ ) {
+//	for ( i = 1 ; i < MAX_WEAPONS ; i++ ) {
 	for ( i = 1 ; i < RWP_SMOKE ; i++ ) {
 // END
 		if ( bits & ( 1 << i ) ) {
@@ -1566,7 +1570,7 @@ void CG_DrawWeaponSelect( void ) {
 	y = 380;
 
 // Q3Rally Code Start
-//	for ( i = 1 ; i < 16 ; i++ ) {
+//	for ( i = 1 ; i < MAX_WEAPONS ; i++ ) {
 	for ( i = 1 ; i < RWP_SMOKE ; i++ ) {
 // END
 		if ( !( bits & ( 1 << i ) ) ) {
@@ -1645,9 +1649,9 @@ void CG_NextWeapon_f( void ) {
 	cg.weaponSelectTime = cg.time;
 	original = cg.weaponSelect;
 
-	for ( i = 0 ; i < 16 ; i++ ) {
+	for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
 		cg.weaponSelect++;
-		if ( cg.weaponSelect == 16 ) {
+		if ( cg.weaponSelect == MAX_WEAPONS ) {
 			cg.weaponSelect = 0;
 		}
 		if ( cg.weaponSelect == WP_GAUNTLET ) {
@@ -1657,7 +1661,7 @@ void CG_NextWeapon_f( void ) {
 			break;
 		}
 	}
-	if ( i == 16 ) {
+	if ( i == MAX_WEAPONS ) {
 		cg.weaponSelect = original;
 	}
 }
@@ -1681,10 +1685,10 @@ void CG_PrevWeapon_f( void ) {
 	cg.weaponSelectTime = cg.time;
 	original = cg.weaponSelect;
 
-	for ( i = 0 ; i < 16 ; i++ ) {
+	for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
 		cg.weaponSelect--;
 		if ( cg.weaponSelect == -1 ) {
-			cg.weaponSelect = 15;
+			cg.weaponSelect = MAX_WEAPONS - 1;
 		}
 		if ( cg.weaponSelect == WP_GAUNTLET ) {
 			continue;		// never cycle to gauntlet
@@ -1693,7 +1697,7 @@ void CG_PrevWeapon_f( void ) {
 			break;
 		}
 	}
-	if ( i == 16 ) {
+	if ( i == MAX_WEAPONS ) {
 		cg.weaponSelect = original;
 	}
 }
@@ -1716,7 +1720,7 @@ void CG_Weapon_f( void ) {
 	num = atoi( CG_Argv( 1 ) );
 
 // Q3Rally Code Start
-//	if ( num < 1 || num > 15 ) {
+//	if ( num < 1 || num > MAX_WEAPONS-1 ) {
 	if ( num < 1 || num >= RWP_SMOKE ) {
 // END
 		return;
@@ -1743,7 +1747,7 @@ void CG_OutOfAmmoChange( void ) {
 
 	cg.weaponSelectTime = cg.time;
 
-	for ( i = 15 ; i > 0 ; i-- ) {
+	for ( i = MAX_WEAPONS-1 ; i > 0 ; i-- ) {
 		if ( CG_WeaponSelectable( i ) ) {
 			cg.weaponSelect = i;
 			break;
@@ -2020,13 +2024,14 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		break;
 // Q3Rally Code Start
 	case WP_FLAME_THROWER:
-	  mod = cgs.media.dishFlashModel;
-	  shader = cgs.media.flameExplosionShader;
-	  sfx = cgs.media.sfx_plasmaexp;
-	  mark = cgs.media.burnMarkShader;
-	  radius = 16;
-    break;
+		mod = cgs.media.dishFlashModel;
+		shader = cgs.media.flameExplosionShader;
+		sfx = cgs.media.sfx_plasmaexp;
+		mark = cgs.media.burnMarkShader;
+		radius = 16;
+		break;
 // Q3Rally Code END
+
 #ifdef MISSIONPACK
 	case WP_CHAINGUN:
 		mod = cgs.media.bulletFlashModel;
@@ -2153,28 +2158,23 @@ static void CG_ShotgunPellet( vec3_t start, vec3_t end, int skipNum ) {
 
 	sourceContentType = CG_PointContents( start, 0 );
 	destContentType = CG_PointContents( tr.endpos, 0 );
-	
 
 	// FIXME: should probably move this cruft into CG_BubbleTrail
 	if ( sourceContentType == destContentType ) {
 		if ( sourceContentType & CONTENTS_WATER ) {
-	
 			CG_BubbleTrail( start, tr.endpos, 32 );
-	
 		}
 	} else if ( sourceContentType & CONTENTS_WATER ) {
 		trace_t trace;
 
 		trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
 		CG_BubbleTrail( start, trace.endpos, 32 );
-		}
-    else if ( destContentType & CONTENTS_WATER ) {
+	} else if ( destContentType & CONTENTS_WATER ) {
 		trace_t trace;
 
 		trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
 		CG_BubbleTrail( tr.endpos, trace.endpos, 32 );
 	}
- 
 
 	if (  tr.surfaceFlags & SURF_NOIMPACT ) {
 		return;
@@ -2445,5 +2445,3 @@ void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, 
 	}
 
 }
-
-

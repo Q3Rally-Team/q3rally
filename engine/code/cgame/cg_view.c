@@ -292,6 +292,7 @@ static void CG_OffsetThirdPersonView( void ) {
 		}
 	}
 
+
 	VectorCopy( view, cg.refdef.vieworg );
 
 	// select pitch to look at focus point from vieword
@@ -630,7 +631,7 @@ static vec3_t oldAngles; // used for joystick and keyboard control modes
 // END
 static int CG_CalcViewValues( void ) {
 	playerState_t	*ps;
-	
+
 	memset( &cg.refdef, 0, sizeof( cg.refdef ) );
 
 	// strings for in game rendering
@@ -641,7 +642,6 @@ static int CG_CalcViewValues( void ) {
 	CG_CalcVrect();
 
 	ps = &cg.predictedPlayerState;
-
 /*
 	if (cg.cameraMode) {
 		vec3_t origin, angles;

@@ -132,7 +132,7 @@ static void CG_EntityEffects( centity_t *cent ) {
 	CG_SetEntitySoundPosition( cent );
 
 	// add loop sound
-	if ( cent->currentState.loopSound) {
+	if ( cent->currentState.loopSound ) {
 		if (cent->currentState.eType != ET_SPEAKER) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
 				cgs.gameSounds[ cent->currentState.loopSound ] );
@@ -144,7 +144,7 @@ static void CG_EntityEffects( centity_t *cent ) {
 	else {
 		trap_S_StopLoopingSound(cent->currentState.number);
 	}
-	
+
 
 	// constant light glow
 	if(cent->currentState.constantLight)
@@ -529,15 +529,14 @@ static void CG_Missile( centity_t *cent ) {
 		return;
 	}
 
-  if ( cent->currentState.weapon == WP_FLAME_THROWER ) {
-	 ent.reType = RT_SPRITE;
-	 ent.radius = 32;
-	 ent.rotation = 0;
-	 ent.customShader = cgs.media.flameBallShader;
-	 trap_R_AddRefEntityToScene( &ent );
-   return;
-  }
-
+	if ( cent->currentState.weapon == WP_FLAME_THROWER ) {
+		ent.reType = RT_SPRITE;
+		ent.radius = 32;
+		ent.rotation = 0;
+		ent.customShader = cgs.media.flameBallShader;
+		trap_R_AddRefEntityToScene( &ent );
+		return;
+	}
 
 // Q3Rally Code Start
 	if (cent->currentState.weapon == RWP_MINE){
@@ -1179,16 +1178,16 @@ void CG_AddCEntity( centity_t *cent ) {
 		break;
 //  Q3Rally Code Start
 	case ET_BREAKGLASS:
-       CG_Mover( cent );
-       break;
-  case ET_BREAKWOOD:
-       CG_Mover( cent );
-       break;
-  case ET_BREAKMETAL:
-       CG_Mover( cent );
-       break;
+		CG_Mover( cent );
+		break;
+	case ET_BREAKWOOD:
+		CG_Mover( cent );
+		break;
+	case ET_BREAKMETAL:
+		CG_Mover( cent );
+		break;
 //  Q3Rally Code END
-  case ET_BEAM:
+	case ET_BEAM:
 		CG_Beam( cent );
 		break;
 	case ET_PORTAL:

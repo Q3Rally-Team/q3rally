@@ -263,7 +263,6 @@ void CG_SetConfigValues( void ) {
 		cgs.redflag = s[0] - '0';
 		cgs.blueflag = s[1] - '0';
 	}
-	
 #ifdef MISSIONPACK
 	else if( cgs.gametype == GT_1FCTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
@@ -343,15 +342,13 @@ static void CG_ConfigStringModified( void ) {
 		cgs.scores1 = atoi( str );
 	} else if ( num == CS_SCORES2 ) {
 		cgs.scores2 = atoi( str );
-	}
 // Q3Rally Code Start
-	else if ( num == CS_SCORES3 ) {
+	} else if ( num == CS_SCORES3 ) {
 		cgs.scores3 = atoi( str );
 	} else if ( num == CS_SCORES4 ) {
 		cgs.scores4 = atoi( str );
-	}
 // END
-	else if ( num == CS_LEVEL_START_TIME ) {
+	} else if ( num == CS_LEVEL_START_TIME ) {
 		cgs.levelStartTime = atoi( str );
 	} else if ( num == CS_VOTE_TIME ) {
 		cgs.voteTime = atoi( str );
@@ -404,8 +401,6 @@ static void CG_ConfigStringModified( void ) {
 		}
 #endif
 	}
-
-
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();
 	}
@@ -1293,4 +1288,3 @@ void CG_ExecuteNewServerCommands( int latestSequence ) {
 		}
 	}
 }
-

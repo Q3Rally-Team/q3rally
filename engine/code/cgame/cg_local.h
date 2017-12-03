@@ -822,8 +822,8 @@ typedef struct {
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
 // Q3Rally Code Start
-	qhandle_t   flameBallShader;
-	qhandle_t   flameExplosionShader;
+	qhandle_t	flameBallShader;
+	qhandle_t	flameExplosionShader;
 // Q3Rally Code END
 
 #ifdef MISSIONPACK
@@ -973,17 +973,17 @@ typedef struct {
 	qhandle_t	waterBubbleShader;
 	qhandle_t	bloodTrailShader;
 // Q3Rally Code Start
-  	qhandle_t   glass01;
-  	qhandle_t   glass02;
-  	qhandle_t   glass03;
+  	qhandle_t	glass01;
+  	qhandle_t	glass02;
+  	qhandle_t	glass03;
 
-  	qhandle_t   wood01;
-  	qhandle_t   wood02;
-  	qhandle_t   wood03;
+  	qhandle_t	wood01;
+  	qhandle_t	wood02;
+  	qhandle_t	wood03;
   	
-  	qhandle_t   metal01;
-  	qhandle_t   metal02;
-  	qhandle_t   metal03;
+  	qhandle_t	metal01;
+  	qhandle_t	metal02;
+  	qhandle_t	metal03;
 // Q3Rally Code END
 
 #ifdef MISSIONPACK

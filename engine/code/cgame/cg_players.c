@@ -48,6 +48,7 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*pain50_1.wav",
 	"*pain75_1.wav",
 	"*pain100_1.wav",
+	"*falling1.wav",
 	"*gasp.wav",
 	"*drown.wav",
 	"*fall1.wav",
@@ -126,6 +127,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	}
 	if ( len >= sizeof( text ) - 1 ) {
 		CG_Printf( "File %s too long\n", filename );
+		trap_FS_FCloseFile( f );
 		return qfalse;
 	}
 	trap_FS_Read( text, len, f );
@@ -204,6 +206,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	}
 	if ( len >= sizeof( text ) - 1 ) {
 		CG_Printf( "File %s too long\n", filename );
+		trap_FS_FCloseFile( f );
 		return qfalse;
 	}
 	trap_FS_Read( text, len, f );
@@ -399,7 +402,7 @@ CG_FileExists
 static qboolean	CG_FileExists(const char *filename) {
 	int len;
 
-	len = trap_FS_FOpenFile( filename, 0, FS_READ );
+	len = trap_FS_FOpenFile( filename, NULL, FS_READ );
 	if (len>0) {
 		return qtrue;
 	}
@@ -934,11 +937,10 @@ Load it now, taking the disk hits.
 This will usually be deferred to a safe time
 ===================
 */
-static void CG_LoadClientInfo( clientInfo_t *ci ) {
+static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 	const char	*dir, *fallback;
 	int			i, modelloaded;
 	const char	*s;
-	int			clientNum;
 	char		teamname[MAX_QPATH];
 
 	teamname[0] = 0;
@@ -1047,7 +1049,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 
 	// reset any existing players and bodies, because they might be in bad
 	// frames for this new model
-	clientNum = ci - cgs.clientinfo;
 	for ( i = 0 ; i < MAX_GENTITIES ; i++ ) {
 		if ( cg_entities[i].currentState.clientNum == clientNum
 			&& cg_entities[i].currentState.eType == ET_PLAYER ) {
@@ -1148,7 +1149,7 @@ We aren't going to load it now, so grab some other
 client's info to use until we have some spare time.
 ======================
 */
-static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
+static void CG_SetDeferredClientInfo( int clientNum, clientInfo_t *ci ) {
 	int		i;
 	clientInfo_t	*match;
 
@@ -1172,7 +1173,7 @@ static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
 		}
 
 		// just load the real info cause it uses the same models and skins
-		CG_LoadClientInfo( ci );
+		CG_LoadClientInfo( clientNum, ci );
 		return;
 	}
 
@@ -1195,7 +1196,7 @@ static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
 		// an improper team skin.  This will cause a hitch for the first
 		// player, when the second enters.  Combat shouldn't be going on
 		// yet, so it shouldn't matter
-		CG_LoadClientInfo( ci );
+		CG_LoadClientInfo( clientNum, ci );
 		return;
 	}
 
@@ -1214,7 +1215,7 @@ static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
 	// we should never get here...
 	CG_Printf( "CG_SetDeferredClientInfo: no valid clients!\n" );
 
-	CG_LoadClientInfo( ci );
+	CG_LoadClientInfo( clientNum, ci );
 }
 
 
@@ -1446,17 +1447,16 @@ void CG_NewClientInfo( int clientNum ) {
 		forceDefer = trap_MemoryRemaining() < 4000000;
 
 		// if we are defering loads, just have it pick the first valid
-		if ( forceDefer || ( cg_deferPlayers.integer && !cg_buildScript.integer && !cg.loading ) ) {
+		if ( forceDefer || (cg_deferPlayers.integer && !cg_buildScript.integer && !cg.loading ) ) {
 			// keep whatever they had if it won't violate team skins
-			CG_SetDeferredClientInfo( &newInfo );
-
+			CG_SetDeferredClientInfo( clientNum, &newInfo );
 			// if we are low on memory, leave them with this model
 			if ( forceDefer ) {
 				CG_Printf( "Memory is low. Using deferred model.\n" );
 				newInfo.deferred = qfalse;
 			}
 		} else {
-			CG_LoadClientInfo( &newInfo );
+			CG_LoadClientInfo( clientNum, &newInfo );
 		}
 	}
 
@@ -1489,7 +1489,7 @@ void CG_LoadDeferredPlayers( void ) {
 				ci->deferred = qfalse;
 				continue;
 			}
-			CG_LoadClientInfo( ci );
+			CG_LoadClientInfo( i, ci );
 //			break;
 		}
 	}
@@ -1850,6 +1850,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	torsoAngles[YAW] = cent->pe.torso.yawAngle;
 	legsAngles[YAW] = cent->pe.legs.yawAngle;
 
+
 	// --------- pitch -------------
 
 	// only show a fraction of the pitch angle in the torso
@@ -1913,6 +1914,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 }
 */
 // END
+
 
 //==========================================================================
 
@@ -2202,7 +2204,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso 
 }
 
 
-#ifdef MISSIONPACK // bk001204
+#ifdef MISSIONPACK
 /*
 ===============
 CG_PlayerTokens
@@ -2588,7 +2590,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// fade the shadow out with height
 	alpha = 1.0 - trace.fraction;
 
-	// bk0101022 - hack / FPE - bogus planes?
+	// hack / FPE - bogus planes?
 	//assert( DotProduct( trace.plane.normal, trace.plane.normal ) != 0.0f ) 
 
 	// add the mark as a temporary, so it goes directly to the renderer
@@ -3486,7 +3488,8 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerEngineSmoke(cent, &body);
 // END
 
-/* Q3Rally Code Start
+// Q3Rally Code Start
+#if 0
 	//
 	// add the legs
 	//
@@ -3572,12 +3575,14 @@ void CG_Player( centity_t *cent ) {
 			angles[2] = 0;
 			AnglesToAxis( angles, skull.axis );
 
-//			dir[2] = 0;
-//			VectorInverse(dir);
-//			VectorCopy(dir, skull.axis[1]);
-//			VectorNormalize(skull.axis[1]);
-//			VectorSet(skull.axis[2], 0, 0, 1);
-//			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
+			/*
+			dir[2] = 0;
+			VectorInverse(dir);
+			VectorCopy(dir, skull.axis[1]);
+			VectorNormalize(skull.axis[1]);
+			VectorSet(skull.axis[2], 0, 0, 1);
+			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
+			*/
 
 			skull.hModel = cgs.media.kamikazeHeadModel;
 			trap_R_AddRefEntityToScene( &skull );
@@ -3601,11 +3606,13 @@ void CG_Player( centity_t *cent ) {
 			angles[2] = 0;
 			AnglesToAxis( angles, skull.axis );
 
-//			dir[2] = 0;
-//			VectorCopy(dir, skull.axis[1]);
-//			VectorNormalize(skull.axis[1]);
-//			VectorSet(skull.axis[2], 0, 0, 1);
-//			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
+			/*
+			dir[2] = 0;
+			VectorCopy(dir, skull.axis[1]);
+			VectorNormalize(skull.axis[1]);
+			VectorSet(skull.axis[2], 0, 0, 1);
+			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
+			*/
 
 			skull.hModel = cgs.media.kamikazeHeadModel;
 			trap_R_AddRefEntityToScene( &skull );
@@ -3729,10 +3736,13 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &powerup );
 	}
 #endif // MISSIONPACK
-*/
+#endif // Q3Rally
 
 // STONELANCE( add head support )
 /*
+	//
+	// add the head
+	//
 	head.hModel = ci->headModel;
 	if (!head.hModel) {
 		return;
@@ -3997,6 +4007,7 @@ void CG_Player( centity_t *cent ) {
 	// add the gun / barrel / flash
 	//
 // Q3Rally Code Start
+//	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
 	CG_AddPlayerWeapon( &body, NULL, cent, ci->team );
 // END
 

@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 // for the voice chats
-#ifdef MISSIONPACK // bk001205
+#ifdef MISSIONPACK
 #include "../../ui/menudef.h"
 #endif
 //==========================================================================
@@ -247,8 +247,8 @@ static void CG_Obituary( entityState_t *ent ) {
 			message = "should have used a smaller gun";
 			break;
 		case MOD_FLAME_THROWER:
-	    message = "was flame grilled by";
-      break;
+			message = "was flame grilled by";
+			break;
 #ifdef MISSIONPACK
 		case MOD_PROXIMITY_MINE:
 			if( gender == GENDER_FEMALE ) {
@@ -1091,7 +1091,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		break;
 
-
 #ifdef MISSIONPACK
 	case EV_PROXIMITY_MINE_STICK:
 		DEBUGNAME("EV_PROXIMITY_MINE_STICK");
@@ -1325,7 +1324,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 
 	case EV_PAIN:
-
 		// local player sounds are triggered in CG_CheckLocalSounds,
 		// so ignore events on the player
 		DEBUGNAME("EV_PAIN");
@@ -1416,8 +1414,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_GibPlayer( cent->lerpOrigin, cent->currentState.pos.trDelta, cent->currentState.clientNum );
 // Q3Rally Code END
 		break;
-
-
 
 	case EV_STOPLOOPINGSOUND:
 		DEBUGNAME("EV_STOPLOOPINGSOUND");
@@ -1518,6 +1514,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_Error( "Unknown event: %i", event );
 		break;
 	}
+
 }
 
 

@@ -738,4 +738,3 @@ void CG_InitConsoleCommands( void ) {
 	trap_AddCommand ("teamtask");
 	trap_AddCommand ("loaddefered");	// spelled wrong, but not changing for demo
 }
-

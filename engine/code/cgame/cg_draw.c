@@ -545,20 +545,17 @@ static void CG_DrawStatusBar( void ) {
 	vec4_t		hcolor;
 	vec3_t		angles;
 	vec3_t		origin;
-#ifdef MISSIONPACK
-	qhandle_t	handle;
-#endif
+
 	static float colors[4][4] = { 
 //		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
-		{ 1.0f, 0.69f, 0.0f, 1.0f } ,		// normal
-		{ 1.0f, 0.2f, 0.2f, 1.0f },		// low health
-		{0.5f, 0.5f, 0.5f, 1.0f},			// weapon firing
-		{ 1.0f, 1.0f, 1.0f, 1.0f } };			// health > 100
+		{ 1.0f, 0.69f, 0.0f, 1.0f },    // normal
+		{ 1.0f, 0.2f, 0.2f, 1.0f },     // low health
+		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
+		{ 1.0f, 1.0f, 1.0f, 1.0f } };   // health > 100
 
 	if ( cg_drawStatus.integer == 0 ) {
 		return;
 	}
-
 
 	// draw the team background
 	CG_DrawTeamBackground( 0, 420, 640, 60, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
@@ -596,20 +593,6 @@ static void CG_DrawStatusBar( void ) {
 		CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
-#ifdef MISSIONPACK
-	if( cgs.gametype == GT_HARVESTER ) {
-		origin[0] = 90;
-		origin[1] = 0;
-		origin[2] = -10;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-		if( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-			handle = cgs.media.redCubeModel;
-		} else {
-			handle = cgs.media.blueCubeModel;
-		}
-		CG_Draw3DModel( 640 - (TEXT_ICON_SPACE + ICON_SIZE), 416, ICON_SIZE, ICON_SIZE, handle, 0, origin, angles );
-	}
-#endif
 	//
 	// ammo
 	//
@@ -682,31 +665,7 @@ static void CG_DrawStatusBar( void ) {
 		}
 
 	}
-#ifdef MISSIONPACK
-	//
-	// cubes
-	//
-	if( cgs.gametype == GT_HARVESTER ) {
-		value = ps->generic1;
-		if( value > 99 ) {
-			value = 99;
-		}
-		trap_R_SetColor( colors[0] );
-		CG_DrawField (640 - (CHAR_WIDTH*2 + TEXT_ICON_SPACE + ICON_SIZE), 432, 2, value);
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			if( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-				handle = cgs.media.redCubeIcon;
-			} else {
-				handle = cgs.media.blueCubeIcon;
-			}
-			CG_DrawPic( 640 - (TEXT_ICON_SPACE + ICON_SIZE), 432, ICON_SIZE, ICON_SIZE, handle );
-		}
-	}
-#endif
 }
-
 #endif
 
 
@@ -1650,9 +1609,9 @@ static float CG_DrawPowerups( float y ) {
 	float	size;
 	float	f;
 	static float colors[2][4] = { 
-		{ 0.2f, 1.0f, 0.2f, 1.0f } ,
-		{ 1.0f, 0.2f, 0.2f, 1.0f }
-	};
+    { 0.2f, 1.0f, 0.2f, 1.0f } , 
+    { 1.0f, 0.2f, 0.2f, 1.0f } 
+  };
 
 	ps = &cg.snap->ps;
 
@@ -1872,7 +1831,7 @@ static float CG_DrawRallyPowerups( float y ) {
 
 	return y;
 }
-#endif
+#endif // MISSIONPACK
 // Q3Rally Code END
 
 
@@ -3153,9 +3112,6 @@ static void CG_DrawWarmup( void ) {
 */
 // Q3Rally Code END
 
-
-
-
 //==================================================================================
 #ifdef MISSIONPACK
 /* 
@@ -3265,7 +3221,6 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 	CG_DrawTeamVote();
 
 	CG_DrawLagometer();
-	
 
 #ifdef MISSIONPACK
 	if (!cg_paused.integer) {
@@ -3355,7 +3310,6 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	// draw status bar and other floating elements
  	CG_Draw2D(stereoView);
 }
-
 
 
 

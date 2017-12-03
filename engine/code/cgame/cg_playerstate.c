@@ -226,7 +226,6 @@ void CG_CheckPlayerstateEvents( playerState_t *ps, playerState_t *ops ) {
 		cent = &cg_entities[ ps->clientNum ];
 		cent->currentState.event = ps->externalEvent;
 		cent->currentState.eventParm = ps->externalEventParm;
-
 		CG_EntityEvent( cent, cent->lerpOrigin );
 	}
 
@@ -515,7 +514,7 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 // STONELANCE using damagePitch and Yaw for view
 /*
 	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
-		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
+//		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
 		CG_DamageFeedback( 0, 0, ps->damageCount );
 	}
 */
