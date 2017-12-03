@@ -55,7 +55,7 @@ static fileHandle_t logfile;
 fileHandle_t	com_journalFile;			// events are written here
 fileHandle_t	com_journalDataFile;		// config files are written here
 
-cvar_t	*com_fs_pure;
+cvar_t	*com_fs_unpure;
 cvar_t	*com_speeds;
 cvar_t	*com_developer;
 cvar_t	*com_dedicated;
@@ -2715,7 +2715,7 @@ void Com_Init( char *commandLine ) {
 	if(!com_basegame->string[0])
 		Cvar_ForceReset("com_basegame");
 
-	com_fs_pure = Cvar_Get ("fs_pure", "1", CVAR_ROM);
+	com_fs_unpure = Cvar_Get ("fs_unpure", "0", CVAR_ROM);
 
 	FS_InitFilesystem ();
 

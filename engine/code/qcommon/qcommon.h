@@ -849,7 +849,7 @@ qboolean		Com_FieldStringToPlayerName( char *name, int length, const char *rawna
 int QDECL	Com_strCompare( const void *a, const void *b );
 
 
-extern	cvar_t	*com_fs_pure;
+extern	cvar_t	*com_fs_unpure;
 extern	cvar_t	*com_developer;
 extern	cvar_t	*com_dedicated;
 extern	cvar_t	*com_speeds;

@@ -2266,7 +2266,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.pure.generic.y				= y;
 	s_serveroptions.pure.generic.name			= "Pure Server:";
 
-	if (!trap_Cvar_VariableValue( "fs_pure" )) {
+	if ( trap_Cvar_VariableValue( "fs_unpure" ) ) {
 		// ZTM: Don't let users think they can modify sv_pure, it won't work.
 		s_serveroptions.pure.generic.flags |= QMF_GRAYED;
 	}

@@ -564,7 +564,7 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 	svs.time += 100;
 
 	// Force sv_pure to off.
-	if (sv_pure->integer && !com_fs_pure->integer) {
+	if (sv_pure->integer && com_fs_unpure->integer) {
 		Cvar_Set( "sv_pure", "0" );
 	}
 
@@ -659,7 +659,7 @@ void SV_Init (void)
 	// systeminfo
 	Cvar_Get ("sv_cheats", "1", CVAR_SYSTEMINFO | CVAR_ROM );
 	sv_serverid = Cvar_Get ("sv_serverid", "0", CVAR_SYSTEMINFO | CVAR_ROM );
-	if (com_fs_pure && !com_fs_pure->integer) {
+	if (com_fs_unpure && com_fs_unpure->integer) {
 		sv_pure = Cvar_Get ("sv_pure", "0", CVAR_SYSTEMINFO | CVAR_ROM );
 	} else {
 		sv_pure = Cvar_Get ("sv_pure", "1", CVAR_SYSTEMINFO );

@@ -3702,7 +3702,7 @@ static void FS_CheckPaks( void )
 	int pak, total = 0;
 
 	// If we're not pure don't check
-	if (com_fs_pure && !com_fs_pure->integer)
+	if (com_fs_unpure && com_fs_unpure->integer)
 		return;
 
 	// Add up total value of foundPak
@@ -3759,7 +3759,7 @@ static void FS_CheckPaks( void )
 		const char *line2 = "You need to reinstall " PRODUCT_NAME " in order to play on pure servers.";
 
 		// server can't ever be pure (sv_pure), as we're missing the pure files.
-		Cvar_Set("fs_pure", "0");
+		Cvar_Set("fs_unpure", "1");
 
 		if (invalidPak)
 			line1 = "Default Pk3 file(s) are missing, corrupt, or modified.";
