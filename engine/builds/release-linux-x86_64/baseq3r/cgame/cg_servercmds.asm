@@ -2145,7 +2145,7 @@ ARGP4
 ADDRLP4 4
 INDIRP4
 ARGP4
-CNSTI4 2048
+CNSTI4 1024
 ARGI4
 ADDRGP4 Q_strncpyz
 CALLV
@@ -3288,10 +3288,17 @@ ADDRLP4 180
 INDIRI4
 CNSTI4 0
 NEI4 $478
+ADDRGP4 cgs+31456
+INDIRI4
+CNSTI4 5
+LTI4 $481
 ADDRGP4 cg_teamChatsOnly+12
 INDIRI4
 CNSTI4 0
-NEI4 $465
+EQI4 $481
+ADDRGP4 $465
+JUMPV
+LABELV $481
 ADDRGP4 cgs+162592+904
 INDIRI4
 ARGI4
@@ -3321,7 +3328,7 @@ ARGP4
 ADDRGP4 CG_RemoveChatEscapeChar
 CALLV
 pop
-ADDRGP4 $486
+ADDRGP4 $487
 ARGP4
 ADDRLP4 4
 ARGP4
@@ -3334,7 +3341,7 @@ LABELV $478
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $489
+ADDRGP4 $490
 ARGP4
 ADDRLP4 184
 ADDRGP4 strcmp
@@ -3343,7 +3350,7 @@ ASGNI4
 ADDRLP4 184
 INDIRI4
 CNSTI4 0
-NEI4 $487
+NEI4 $488
 ADDRGP4 cgs+162592+904
 INDIRI4
 ARGI4
@@ -3378,7 +3385,7 @@ ARGP4
 ADDRGP4 CG_AddToTeamChat
 CALLV
 pop
-ADDRGP4 $486
+ADDRGP4 $487
 ARGP4
 ADDRLP4 4
 ARGP4
@@ -3387,11 +3394,11 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $487
+LABELV $488
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $494
+ADDRGP4 $495
 ARGP4
 ADDRLP4 188
 ADDRGP4 strcmp
@@ -3400,17 +3407,17 @@ ASGNI4
 ADDRLP4 188
 INDIRI4
 CNSTI4 0
-NEI4 $492
+NEI4 $493
 ADDRGP4 CG_ParseScores
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $492
+LABELV $493
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $497
+ADDRGP4 $498
 ARGP4
 ADDRLP4 192
 ADDRGP4 strcmp
@@ -3419,17 +3426,17 @@ ASGNI4
 ADDRLP4 192
 INDIRI4
 CNSTI4 0
-NEI4 $495
+NEI4 $496
 ADDRGP4 CG_ParseTeamInfo
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $495
+LABELV $496
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $500
+ADDRGP4 $501
 ARGP4
 ADDRLP4 196
 ADDRGP4 strcmp
@@ -3438,17 +3445,17 @@ ASGNI4
 ADDRLP4 196
 INDIRI4
 CNSTI4 0
-NEI4 $498
+NEI4 $499
 ADDRGP4 CG_MapRestart
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $498
+LABELV $499
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $503
+ADDRGP4 $504
 ARGP4
 ADDRLP4 200
 ADDRGP4 Q_stricmp
@@ -3457,7 +3464,7 @@ ASGNI4
 ADDRLP4 200
 INDIRI4
 CNSTI4 0
-NEI4 $501
+NEI4 $502
 ADDRLP4 204
 ADDRGP4 trap_Argc
 CALLI4
@@ -3525,11 +3532,11 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $501
+LABELV $502
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $508
+ADDRGP4 $509
 ARGP4
 ADDRLP4 204
 ADDRGP4 strcmp
@@ -3538,17 +3545,17 @@ ASGNI4
 ADDRLP4 204
 INDIRI4
 CNSTI4 0
-NEI4 $506
+NEI4 $507
 ADDRGP4 CG_LoadDeferredPlayers
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $506
+LABELV $507
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $511
+ADDRGP4 $512
 ARGP4
 ADDRLP4 208
 ADDRGP4 strcmp
@@ -3557,17 +3564,17 @@ ASGNI4
 ADDRLP4 208
 INDIRI4
 CNSTI4 0
-NEI4 $509
+NEI4 $510
 ADDRGP4 cg+12
 CNSTI4 1
 ASGNI4
 ADDRGP4 $465
 JUMPV
-LABELV $509
+LABELV $510
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $515
+ADDRGP4 $516
 ARGP4
 ADDRLP4 212
 ADDRGP4 strcmp
@@ -3576,17 +3583,17 @@ ASGNI4
 ADDRLP4 212
 INDIRI4
 CNSTI4 0
-NEI4 $513
+NEI4 $514
 ADDRGP4 CG_ParseTimes
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $513
+LABELV $514
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $518
+ADDRGP4 $519
 ARGP4
 ADDRLP4 216
 ADDRGP4 strcmp
@@ -3595,7 +3602,7 @@ ASGNI4
 ADDRLP4 216
 INDIRI4
 CNSTI4 0
-NEI4 $516
+NEI4 $517
 CNSTI4 2
 ARGI4
 ADDRLP4 220
@@ -3630,11 +3637,11 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $516
+LABELV $517
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $521
+ADDRGP4 $522
 ARGP4
 ADDRLP4 220
 ADDRGP4 strcmp
@@ -3643,7 +3650,7 @@ ASGNI4
 ADDRLP4 220
 INDIRI4
 CNSTI4 0
-NEI4 $519
+NEI4 $520
 CNSTI4 1
 ARGI4
 ADDRLP4 224
@@ -3681,11 +3688,11 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $519
+LABELV $520
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $524
+ADDRGP4 $525
 ARGP4
 ADDRLP4 224
 ADDRGP4 strcmp
@@ -3694,17 +3701,17 @@ ASGNI4
 ADDRLP4 224
 INDIRI4
 CNSTI4 0
-NEI4 $522
+NEI4 $523
 ADDRGP4 CG_ParsePositions
 CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $522
+LABELV $523
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $527
+ADDRGP4 $528
 ARGP4
 ADDRLP4 228
 ADDRGP4 strcmp
@@ -3713,7 +3720,7 @@ ASGNI4
 ADDRLP4 228
 INDIRI4
 CNSTI4 0
-NEI4 $525
+NEI4 $526
 CNSTI4 1
 ARGI4
 ADDRLP4 232
@@ -3735,11 +3742,11 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $525
+LABELV $526
 ADDRLP4 0
 INDIRP4
 ARGP4
-ADDRGP4 $530
+ADDRGP4 $531
 ARGP4
 ADDRLP4 232
 ADDRGP4 strcmp
@@ -3748,7 +3755,7 @@ ASGNI4
 ADDRLP4 232
 INDIRI4
 CNSTI4 0
-NEI4 $528
+NEI4 $529
 CNSTI4 1
 ARGI4
 ADDRLP4 236
@@ -3794,8 +3801,8 @@ CALLV
 pop
 ADDRGP4 $465
 JUMPV
-LABELV $528
-ADDRGP4 $531
+LABELV $529
+ADDRGP4 $532
 ARGP4
 ADDRLP4 0
 INDIRP4
@@ -3811,9 +3818,9 @@ ADDRFP4 0
 ADDRFP4 0
 INDIRI4
 ASGNI4
-ADDRGP4 $534
+ADDRGP4 $535
 JUMPV
-LABELV $533
+LABELV $534
 ADDRLP4 0
 ADDRGP4 cgs+31444
 ASGNP4
@@ -3839,18 +3846,18 @@ ASGNI4
 ADDRLP4 8
 INDIRI4
 CNSTI4 0
-EQI4 $537
+EQI4 $538
 ADDRGP4 CG_ServerCommand
 CALLV
 pop
-LABELV $537
-LABELV $534
+LABELV $538
+LABELV $535
 ADDRGP4 cgs+31444
 INDIRI4
 ADDRFP4 0
 INDIRI4
-LTI4 $533
-LABELV $532
+LTI4 $534
+LABELV $533
 endproc CG_ExecuteNewServerCommands 12 4
 import CG_NewParticleArea
 import initparticles
@@ -3870,6 +3877,7 @@ import trap_getCameraInfo
 import trap_startCamera
 import trap_loadCamera
 import trap_SnapVector
+import trap_RealTime
 import trap_CIN_SetExtents
 import trap_CIN_DrawCinematic
 import trap_CIN_RunCinematic
@@ -3891,6 +3899,7 @@ import trap_GetSnapshot
 import trap_GetCurrentSnapshotNumber
 import trap_GetGameState
 import trap_GetGlconfig
+import trap_R_inPVS
 import trap_R_RemapShader
 import trap_R_LerpTag
 import trap_R_ModelBounds
@@ -3921,7 +3930,9 @@ import trap_S_StartLocalSound
 import trap_S_StopLoopingSound
 import trap_S_StartSound
 import trap_CM_MarkFragments
+import trap_CM_TransformedCapsuleTrace
 import trap_CM_TransformedBoxTrace
+import trap_CM_CapsuleTrace
 import trap_CM_BoxTrace
 import trap_CM_TransformedPointContents
 import trap_CM_PointContents
@@ -3931,6 +3942,7 @@ import trap_CM_NumInlineModels
 import trap_CM_LoadMap
 import trap_UpdateScreen
 import trap_SendClientCommand
+import trap_RemoveCommand
 import trap_AddCommand
 import trap_SendConsoleCommand
 import trap_FS_Seek
@@ -4178,9 +4190,6 @@ import cg_oldPlasma
 import cg_oldRocket
 import cg_oldRail
 import cg_noProjectileTrail
-import cg_noTaunt
-import cg_bigFont
-import cg_smallFont
 import cg_cameraMode
 import cg_timescale
 import cg_timescaleFadeSpeed
@@ -4494,7 +4503,7 @@ import srand
 import qsort
 lit
 align 1
-LABELV $531
+LABELV $532
 byte 1 85
 byte 1 110
 byte 1 107
@@ -4529,7 +4538,7 @@ byte 1 115
 byte 1 10
 byte 1 0
 align 1
-LABELV $530
+LABELV $531
 byte 1 114
 byte 1 97
 byte 1 99
@@ -4546,7 +4555,7 @@ byte 1 109
 byte 1 101
 byte 1 0
 align 1
-LABELV $527
+LABELV $528
 byte 1 114
 byte 1 97
 byte 1 99
@@ -4557,7 +4566,7 @@ byte 1 109
 byte 1 101
 byte 1 0
 align 1
-LABELV $524
+LABELV $525
 byte 1 112
 byte 1 111
 byte 1 115
@@ -4569,7 +4578,7 @@ byte 1 110
 byte 1 115
 byte 1 0
 align 1
-LABELV $521
+LABELV $522
 byte 1 110
 byte 1 101
 byte 1 119
@@ -4582,12 +4591,12 @@ byte 1 109
 byte 1 101
 byte 1 0
 align 1
-LABELV $518
+LABELV $519
 byte 1 114
 byte 1 99
 byte 1 0
 align 1
-LABELV $515
+LABELV $516
 byte 1 116
 byte 1 105
 byte 1 109
@@ -4595,7 +4604,7 @@ byte 1 101
 byte 1 115
 byte 1 0
 align 1
-LABELV $511
+LABELV $512
 byte 1 99
 byte 1 108
 byte 1 105
@@ -4613,7 +4622,7 @@ byte 1 111
 byte 1 116
 byte 1 0
 align 1
-LABELV $508
+LABELV $509
 byte 1 108
 byte 1 111
 byte 1 97
@@ -4627,7 +4636,7 @@ byte 1 101
 byte 1 100
 byte 1 0
 align 1
-LABELV $503
+LABELV $504
 byte 1 114
 byte 1 101
 byte 1 109
@@ -4641,7 +4650,7 @@ byte 1 101
 byte 1 114
 byte 1 0
 align 1
-LABELV $500
+LABELV $501
 byte 1 109
 byte 1 97
 byte 1 112
@@ -4655,7 +4664,7 @@ byte 1 114
 byte 1 116
 byte 1 0
 align 1
-LABELV $497
+LABELV $498
 byte 1 116
 byte 1 105
 byte 1 110
@@ -4663,7 +4672,7 @@ byte 1 102
 byte 1 111
 byte 1 0
 align 1
-LABELV $494
+LABELV $495
 byte 1 115
 byte 1 99
 byte 1 111
@@ -4672,7 +4681,7 @@ byte 1 101
 byte 1 115
 byte 1 0
 align 1
-LABELV $489
+LABELV $490
 byte 1 116
 byte 1 99
 byte 1 104
@@ -4680,7 +4689,7 @@ byte 1 97
 byte 1 116
 byte 1 0
 align 1
-LABELV $486
+LABELV $487
 byte 1 37
 byte 1 115
 byte 1 10

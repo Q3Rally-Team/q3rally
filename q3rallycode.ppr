@@ -12,6 +12,7 @@ DontOpen=0
 AbsolutePath=0
 FileFormat=0
 ProjectFilesOnly=0
+HTServer=localhost
 [Project tree]
 q3rallycode
 	+engine
@@ -862,14 +863,16 @@ q3rallycode
 2=engine\code\game\g_combat.c
 3=engine\code\game\g_mover.c
 4=engine\code\game\g_spawn.c
+5=engine\misc\nsis\Makefile
+6=engine\Makefile
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\Makefile
 [engine\code\qcommon\q_shared.h]
-TopLine=32
-Caret=39,58
+TopLine=1
+Caret=39,70
 [engine\code\qcommon\files.c]
-TopLine=139
+TopLine=1
 Caret=34,201
 [engine\code\game\g_combat.c]
 TopLine=919
@@ -880,3 +883,9 @@ Caret=1,1894
 [engine\code\game\g_spawn.c]
 TopLine=231
 Caret=1,239
+[engine\misc\nsis\Makefile]
+TopLine=1
+Caret=17,2
+[engine\Makefile]
+TopLine=100
+Caret=17,114

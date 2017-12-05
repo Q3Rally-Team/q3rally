@@ -2099,7 +2099,7 @@ CNSTI4 3
 LTI4 $216
 LABELV $191
 endproc CG_InterpolatePlayerState 92 12
-proc CG_TouchItem 20 12
+proc CG_TouchItem 24 12
 ADDRFP4 0
 ADDRFP4 0
 INDIRP4
@@ -2179,12 +2179,24 @@ ADDRGP4 cg+107636+248+12
 INDIRI4
 CNSTI4 1
 NEI4 $238
+ADDRLP4 16
+CNSTI4 8
+ASGNI4
+ADDRLP4 0
+INDIRP4
+CNSTI4 36
+ADDP4
+INDIRI4
+ADDRLP4 16
+INDIRI4
+NEI4 $238
 ADDRLP4 0
 INDIRP4
 CNSTI4 40
 ADDP4
 INDIRI4
-CNSTI4 8
+ADDRLP4 16
+INDIRI4
 NEI4 $238
 ADDRGP4 $220
 JUMPV
@@ -2192,6 +2204,13 @@ LABELV $238
 ADDRGP4 cg+107636+248+12
 INDIRI4
 CNSTI4 2
+NEI4 $243
+ADDRLP4 0
+INDIRP4
+CNSTI4 36
+ADDP4
+INDIRI4
+CNSTI4 8
 NEI4 $243
 ADDRLP4 0
 INDIRP4
@@ -2288,7 +2307,7 @@ ASGNI4
 LABELV $255
 LABELV $250
 LABELV $220
-endproc CG_TouchItem 20 12
+endproc CG_TouchItem 24 12
 proc CG_TouchTriggerPrediction 88 28
 ADDRGP4 cg+107636+184
 INDIRI4
@@ -3171,6 +3190,11 @@ ARGP4
 ADDRGP4 trap_Cvar_Set
 CALLV
 pop
+ADDRGP4 pmove_msec
+ARGP4
+ADDRGP4 trap_Cvar_Update
+CALLV
+pop
 ADDRGP4 $501
 JUMPV
 LABELV $500
@@ -3183,6 +3207,11 @@ ARGP4
 ADDRGP4 $508
 ARGP4
 ADDRGP4 trap_Cvar_Set
+CALLV
+pop
+ADDRGP4 pmove_msec
+ARGP4
+ADDRGP4 trap_Cvar_Update
 CALLV
 pop
 LABELV $505
@@ -4026,6 +4055,7 @@ import trap_getCameraInfo
 import trap_startCamera
 import trap_loadCamera
 import trap_SnapVector
+import trap_RealTime
 import trap_CIN_SetExtents
 import trap_CIN_DrawCinematic
 import trap_CIN_RunCinematic
@@ -4047,6 +4077,7 @@ import trap_GetSnapshot
 import trap_GetCurrentSnapshotNumber
 import trap_GetGameState
 import trap_GetGlconfig
+import trap_R_inPVS
 import trap_R_RemapShader
 import trap_R_LerpTag
 import trap_R_ModelBounds
@@ -4077,7 +4108,9 @@ import trap_S_StartLocalSound
 import trap_S_StopLoopingSound
 import trap_S_StartSound
 import trap_CM_MarkFragments
+import trap_CM_TransformedCapsuleTrace
 import trap_CM_TransformedBoxTrace
+import trap_CM_CapsuleTrace
 import trap_CM_BoxTrace
 import trap_CM_TransformedPointContents
 import trap_CM_PointContents
@@ -4087,6 +4120,7 @@ import trap_CM_NumInlineModels
 import trap_CM_LoadMap
 import trap_UpdateScreen
 import trap_SendClientCommand
+import trap_RemoveCommand
 import trap_AddCommand
 import trap_SendConsoleCommand
 import trap_FS_Seek
@@ -4332,9 +4366,6 @@ import cg_oldPlasma
 import cg_oldRocket
 import cg_oldRail
 import cg_noProjectileTrail
-import cg_noTaunt
-import cg_bigFont
-import cg_smallFont
 import cg_cameraMode
 import cg_timescale
 import cg_timescaleFadeSpeed

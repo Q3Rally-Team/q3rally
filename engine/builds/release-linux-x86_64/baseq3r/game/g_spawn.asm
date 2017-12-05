@@ -206,105 +206,80 @@ LABELV fields
 address $84
 byte 4 524
 byte 4 2
-skip 4
 address $85
 byte 4 92
 byte 4 3
-skip 4
 address $86
 byte 4 540
 byte 4 2
-skip 4
 address $87
 byte 4 544
 byte 4 2
-skip 4
 address $88
 byte 4 528
 byte 4 0
-skip 4
 address $89
 byte 4 668
 byte 4 1
-skip 4
 address $90
 byte 4 644
 byte 4 2
-skip 4
 address $91
 byte 4 648
 byte 4 2
-skip 4
 address $92
 byte 4 636
 byte 4 2
-skip 4
 address $93
 byte 4 652
 byte 4 2
-skip 4
 address $94
 byte 4 792
 byte 4 1
-skip 4
 address $95
 byte 4 796
 byte 4 1
-skip 4
 address $96
 byte 4 756
 byte 4 0
-skip 4
 address $97
 byte 4 728
 byte 4 0
-skip 4
 address $98
 byte 4 736
 byte 4 0
-skip 4
 address $99
 byte 4 116
 byte 4 3
-skip 4
 address $100
 byte 4 116
 byte 4 4
-skip 4
 address $101
 byte 4 656
 byte 4 2
-skip 4
 address $102
 byte 4 660
 byte 4 2
-skip 4
 address $103
 byte 4 808
 byte 4 0
-skip 4
 address $104
 byte 4 812
 byte 4 0
-skip 4
 address $105
 byte 4 908
 byte 4 2
-skip 4
 address $106
 byte 4 104
 byte 4 3
-skip 4
 address $107
 byte 4 128
 byte 4 3
-skip 4
 address $108
 byte 4 800
 byte 4 1
-skip 4
 byte 4 0
-skip 12
+skip 8
 export SP_item_botroam
 code
 proc SP_item_botroam 0 0
@@ -1034,7 +1009,7 @@ LABELV $210
 ADDRLP4 0
 ADDRLP4 0
 INDIRP4
-CNSTI4 16
+CNSTI4 12
 ADDP4
 ASGNP4
 LABELV $212
@@ -2480,6 +2455,7 @@ import trap_Cvar_Set
 import trap_Cvar_Update
 import trap_Cvar_Register
 import trap_SendConsoleCommand
+import trap_FS_Seek
 import trap_FS_GetFileList
 import trap_FS_FCloseFile
 import trap_FS_Write
@@ -2488,6 +2464,7 @@ import trap_FS_FOpenFile
 import trap_Args
 import trap_Argv
 import trap_Argc
+import trap_RealTime
 import trap_Milliseconds
 import trap_Error
 import trap_Print
@@ -2512,6 +2489,7 @@ import g_trackReversed
 import g_finishRaceDelay
 import g_forceEngineStart
 import g_humanplayers
+import g_localTeamPref
 import g_proxMineTimeout
 import g_singlePlayer
 import g_enableBreath

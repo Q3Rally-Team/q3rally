@@ -273,11 +273,10 @@ ARGI4
 ADDRGP4 CG_ExecuteNewServerCommands
 CALLV
 pop
-ADDRGP4 cg+36
-INDIRP4
-CVPU4 4
-CNSTU4 0
-NEU4 $113
+ADDRGP4 cg+107624
+INDIRI4
+CNSTI4 0
+EQI4 $113
 LABELV $113
 ADDRLP4 0
 CNSTI4 0
@@ -1070,6 +1069,7 @@ import trap_getCameraInfo
 import trap_startCamera
 import trap_loadCamera
 import trap_SnapVector
+import trap_RealTime
 import trap_CIN_SetExtents
 import trap_CIN_DrawCinematic
 import trap_CIN_RunCinematic
@@ -1091,6 +1091,7 @@ import trap_GetSnapshot
 import trap_GetCurrentSnapshotNumber
 import trap_GetGameState
 import trap_GetGlconfig
+import trap_R_inPVS
 import trap_R_RemapShader
 import trap_R_LerpTag
 import trap_R_ModelBounds
@@ -1121,7 +1122,9 @@ import trap_S_StartLocalSound
 import trap_S_StopLoopingSound
 import trap_S_StartSound
 import trap_CM_MarkFragments
+import trap_CM_TransformedCapsuleTrace
 import trap_CM_TransformedBoxTrace
+import trap_CM_CapsuleTrace
 import trap_CM_BoxTrace
 import trap_CM_TransformedPointContents
 import trap_CM_PointContents
@@ -1131,6 +1134,7 @@ import trap_CM_NumInlineModels
 import trap_CM_LoadMap
 import trap_UpdateScreen
 import trap_SendClientCommand
+import trap_RemoveCommand
 import trap_AddCommand
 import trap_SendConsoleCommand
 import trap_FS_Seek
@@ -1381,9 +1385,6 @@ import cg_oldPlasma
 import cg_oldRocket
 import cg_oldRail
 import cg_noProjectileTrail
-import cg_noTaunt
-import cg_bigFont
-import cg_smallFont
 import cg_cameraMode
 import cg_timescale
 import cg_timescaleFadeSpeed
@@ -1948,6 +1949,7 @@ byte 1 62
 byte 1 32
 byte 1 37
 byte 1 105
+byte 1 10
 byte 1 0
 align 1
 LABELV $111

@@ -311,7 +311,11 @@ pop
 LABELV $98
 endproc CG_DrawTopBottom 12 36
 export CG_DrawRect
-proc CG_DrawRect 0 20
+proc CG_DrawRect 4 20
+ADDRFP4 16
+ADDRFP4 16
+INDIRF4
+ASGNF4
 ADDRFP4 20
 INDIRP4
 ARGP4
@@ -341,12 +345,20 @@ INDIRF4
 ARGF4
 ADDRFP4 4
 INDIRF4
+ADDRFP4 16
+INDIRF4
+ADDF4
 ARGF4
 ADDRFP4 8
 INDIRF4
 ARGF4
 ADDRFP4 12
 INDIRF4
+CNSTF4 1073741824
+ADDRFP4 16
+INDIRF4
+MULF4
+SUBF4
 ARGF4
 ADDRFP4 16
 INDIRF4
@@ -360,7 +372,7 @@ ADDRGP4 trap_R_SetColor
 CALLV
 pop
 LABELV $104
-endproc CG_DrawRect 0 20
+endproc CG_DrawRect 4 20
 export CG_DrawPic
 proc CG_DrawPic 8 36
 ADDRFP4 0
@@ -2856,7 +2868,7 @@ ADDRLP4 36
 ADDRFP4 4
 INDIRI4
 CVIF4 4
-ADDRGP4 cgs+31432
+ADDRGP4 cgs+31436
 INDIRF4
 MULF4
 ASGNF4
@@ -3464,6 +3476,7 @@ import trap_getCameraInfo
 import trap_startCamera
 import trap_loadCamera
 import trap_SnapVector
+import trap_RealTime
 import trap_CIN_SetExtents
 import trap_CIN_DrawCinematic
 import trap_CIN_RunCinematic
@@ -3485,6 +3498,7 @@ import trap_GetSnapshot
 import trap_GetCurrentSnapshotNumber
 import trap_GetGameState
 import trap_GetGlconfig
+import trap_R_inPVS
 import trap_R_RemapShader
 import trap_R_LerpTag
 import trap_R_ModelBounds
@@ -3515,7 +3529,9 @@ import trap_S_StartLocalSound
 import trap_S_StopLoopingSound
 import trap_S_StartSound
 import trap_CM_MarkFragments
+import trap_CM_TransformedCapsuleTrace
 import trap_CM_TransformedBoxTrace
+import trap_CM_CapsuleTrace
 import trap_CM_BoxTrace
 import trap_CM_TransformedPointContents
 import trap_CM_PointContents
@@ -3525,6 +3541,7 @@ import trap_CM_NumInlineModels
 import trap_CM_LoadMap
 import trap_UpdateScreen
 import trap_SendClientCommand
+import trap_RemoveCommand
 import trap_AddCommand
 import trap_SendConsoleCommand
 import trap_FS_Seek
@@ -3757,9 +3774,6 @@ import cg_oldPlasma
 import cg_oldRocket
 import cg_oldRail
 import cg_noProjectileTrail
-import cg_noTaunt
-import cg_bigFont
-import cg_smallFont
 import cg_cameraMode
 import cg_timescale
 import cg_timescaleFadeSpeed

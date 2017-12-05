@@ -861,7 +861,7 @@ ADDRGP4 s_playersettings+19732
 ARGP4
 CNSTI4 0
 ARGI4
-CNSTU4 256
+CNSTU4 264
 ARGU4
 ADDRGP4 memset
 CALLP4
@@ -1529,7 +1529,7 @@ ADDRGP4 s_playersettings+19732
 ARGP4
 CNSTI4 0
 ARGI4
-CNSTU4 256
+CNSTU4 264
 ARGU4
 ADDRGP4 memset
 CALLP4
@@ -2191,7 +2191,7 @@ ADDRGP4 s_playersettings
 ARGP4
 CNSTI4 0
 ARGI4
-CNSTU4 20056
+CNSTU4 20064
 ARGU4
 ADDRGP4 memset
 CALLP4
@@ -3743,7 +3743,7 @@ LABELV s_plateSelection
 skip 18284
 align 4
 LABELV s_playersettings
-skip 20056
+skip 20064
 import UI_RankStatusMenu
 import RankStatus_Cache
 import UI_SignupMenu

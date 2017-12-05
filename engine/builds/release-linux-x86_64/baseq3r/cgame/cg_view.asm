@@ -3122,6 +3122,13 @@ ADDRGP4 trap_Cvar_Set
 CALLV
 pop
 LABELV $980
+ADDRGP4 cg+36
+INDIRP4
+CNSTI4 304
+ADDP4
+INDIRI4
+CNSTI4 5
+EQI4 $990
 ADDRLP4 12
 CNSTI4 0
 ASGNI4
@@ -3129,7 +3136,7 @@ ADDRGP4 cg_thirdPerson+12
 INDIRI4
 ADDRLP4 12
 INDIRI4
-NEI4 $991
+NEI4 $992
 ADDRGP4 cg+36
 INDIRP4
 CNSTI4 228
@@ -3137,18 +3144,18 @@ ADDP4
 INDIRI4
 ADDRLP4 12
 INDIRI4
-GTI4 $989
-LABELV $991
+GTI4 $990
+LABELV $992
 ADDRLP4 8
 CNSTI4 1
 ASGNI4
-ADDRGP4 $990
+ADDRGP4 $991
 JUMPV
-LABELV $989
+LABELV $990
 ADDRLP4 8
 CNSTI4 0
 ASGNI4
-LABELV $990
+LABELV $991
 ADDRGP4 cg+107628
 ADDRLP4 8
 INDIRI4
@@ -3164,15 +3171,15 @@ ASGNI4
 ADDRGP4 cg+107628
 INDIRI4
 CNSTI4 0
-NEI4 $992
+NEI4 $993
 ADDRGP4 CG_DamageBlendBlob
 CALLV
 pop
-LABELV $992
+LABELV $993
 ADDRGP4 cg+107632
 INDIRI4
 CNSTI4 0
-NEI4 $995
+NEI4 $996
 ADDRGP4 CG_AddPacketEntities
 CALLV
 pop
@@ -3188,7 +3195,7 @@ pop
 ADDRGP4 CG_AddAtmosphericEffects
 CALLV
 pop
-LABELV $995
+LABELV $996
 ADDRGP4 cg+107636
 ARGP4
 ADDRGP4 CG_AddViewWeapon
@@ -3200,11 +3207,11 @@ pop
 ADDRGP4 cg+118512+8
 INDIRI4
 CNSTI4 0
-EQI4 $999
+EQI4 $1000
 ADDRGP4 CG_AddTestModel
 CALLV
 pop
-LABELV $999
+LABELV $1000
 ADDRGP4 cg+109200+72
 ADDRGP4 cg+107604
 INDIRI4
@@ -3243,7 +3250,7 @@ pop
 ADDRFP4 4
 INDIRI4
 CNSTI4 2
-EQI4 $1016
+EQI4 $1017
 ADDRGP4 cg+107600
 ADDRGP4 cg+107604
 INDIRI4
@@ -3254,11 +3261,11 @@ ASGNI4
 ADDRGP4 cg+107600
 INDIRI4
 CNSTI4 0
-GEI4 $1021
+GEI4 $1022
 ADDRGP4 cg+107600
 CNSTI4 0
 ASGNI4
-LABELV $1021
+LABELV $1022
 ADDRGP4 cg+107608
 ADDRGP4 cg+107604
 INDIRI4
@@ -3266,17 +3273,17 @@ ASGNI4
 ADDRGP4 CG_AddLagometerFrameInfo
 CALLV
 pop
-LABELV $1016
+LABELV $1017
 ADDRGP4 cg_timescale+8
 INDIRF4
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
-EQF4 $1027
+EQF4 $1028
 ADDRGP4 cg_timescale+8
 INDIRF4
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
-GEF4 $1031
+GEF4 $1032
 ADDRLP4 20
 ADDRGP4 cg_timescale+8
 ASGNP4
@@ -3299,14 +3306,14 @@ ADDRGP4 cg_timescale+8
 INDIRF4
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
-LEF4 $1032
+LEF4 $1033
 ADDRGP4 cg_timescale+8
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
 ASGNF4
-ADDRGP4 $1032
+ADDRGP4 $1033
 JUMPV
-LABELV $1031
+LABELV $1032
 ADDRLP4 20
 ADDRGP4 cg_timescale+8
 ASGNP4
@@ -3329,18 +3336,18 @@ ADDRGP4 cg_timescale+8
 INDIRF4
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
-GEF4 $1047
+GEF4 $1048
 ADDRGP4 cg_timescale+8
 ADDRGP4 cg_timescaleFadeEnd+8
 INDIRF4
 ASGNF4
-LABELV $1047
-LABELV $1032
+LABELV $1048
+LABELV $1033
 ADDRGP4 cg_timescaleFadeSpeed+8
 INDIRF4
 CNSTF4 0
-EQF4 $1053
-ADDRGP4 $1057
+EQF4 $1054
+ADDRGP4 $1058
 ARGP4
 ADDRGP4 cg_timescale+8
 INDIRF4
@@ -3349,7 +3356,7 @@ ADDRLP4 20
 ADDRGP4 va
 CALLP4
 ASGNP4
-ADDRGP4 $1056
+ADDRGP4 $1057
 ARGP4
 ADDRLP4 20
 INDIRP4
@@ -3357,8 +3364,8 @@ ARGP4
 ADDRGP4 trap_Cvar_Set
 CALLV
 pop
-LABELV $1053
-LABELV $1027
+LABELV $1054
+LABELV $1028
 ADDRFP4 4
 INDIRI4
 ARGI4
@@ -3368,8 +3375,8 @@ pop
 ADDRGP4 cg_stats+12
 INDIRI4
 CNSTI4 0
-EQI4 $1059
-ADDRGP4 $1062
+EQI4 $1060
+ADDRGP4 $1063
 ARGP4
 ADDRGP4 cg
 INDIRI4
@@ -3377,7 +3384,7 @@ ARGI4
 ADDRGP4 CG_Printf
 CALLV
 pop
-LABELV $1059
+LABELV $1060
 LABELV $967
 endproc CG_DrawActiveFrame 24 16
 bss
@@ -3402,6 +3409,7 @@ import trap_getCameraInfo
 import trap_startCamera
 import trap_loadCamera
 import trap_SnapVector
+import trap_RealTime
 import trap_CIN_SetExtents
 import trap_CIN_DrawCinematic
 import trap_CIN_RunCinematic
@@ -3423,6 +3431,7 @@ import trap_GetSnapshot
 import trap_GetCurrentSnapshotNumber
 import trap_GetGameState
 import trap_GetGlconfig
+import trap_R_inPVS
 import trap_R_RemapShader
 import trap_R_LerpTag
 import trap_R_ModelBounds
@@ -3453,7 +3462,9 @@ import trap_S_StartLocalSound
 import trap_S_StopLoopingSound
 import trap_S_StartSound
 import trap_CM_MarkFragments
+import trap_CM_TransformedCapsuleTrace
 import trap_CM_TransformedBoxTrace
+import trap_CM_CapsuleTrace
 import trap_CM_BoxTrace
 import trap_CM_TransformedPointContents
 import trap_CM_PointContents
@@ -3463,6 +3474,7 @@ import trap_CM_NumInlineModels
 import trap_CM_LoadMap
 import trap_UpdateScreen
 import trap_SendClientCommand
+import trap_RemoveCommand
 import trap_AddCommand
 import trap_SendConsoleCommand
 import trap_FS_Seek
@@ -3704,9 +3716,6 @@ import cg_oldPlasma
 import cg_oldRocket
 import cg_oldRail
 import cg_noProjectileTrail
-import cg_noTaunt
-import cg_bigFont
-import cg_smallFont
 import cg_cameraMode
 import cg_timescale
 import cg_timescaleFadeSpeed
@@ -4020,7 +4029,7 @@ import srand
 import qsort
 lit
 align 1
-LABELV $1062
+LABELV $1063
 byte 1 99
 byte 1 103
 byte 1 46
@@ -4041,12 +4050,12 @@ byte 1 105
 byte 1 10
 byte 1 0
 align 1
-LABELV $1057
+LABELV $1058
 byte 1 37
 byte 1 102
 byte 1 0
 align 1
-LABELV $1056
+LABELV $1057
 byte 1 116
 byte 1 105
 byte 1 109

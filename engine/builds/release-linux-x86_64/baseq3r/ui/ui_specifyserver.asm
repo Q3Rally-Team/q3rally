@@ -199,10 +199,10 @@ ADDRGP4 s_specifyserver+1296+8
 CNSTI4 103
 ASGNI4
 ADDRGP4 s_specifyserver+1296+12
-CNSTI4 640
+CNSTI4 620
 ASGNI4
 ADDRGP4 s_specifyserver+1296+16
-CNSTI4 416
+CNSTI4 430
 ASGNI4
 ADDRGP4 s_specifyserver+1296+60
 ADDRGP4 $175
@@ -211,7 +211,7 @@ ADDRGP4 s_specifyserver+1296+68
 ADDRGP4 text_color_normal
 ASGNP4
 ADDRGP4 s_specifyserver+1296+64
-CNSTI4 16
+CNSTI4 18
 ASGNI4
 ADDRGP4 s_specifyserver+1368
 CNSTI4 9
@@ -226,10 +226,10 @@ ADDRGP4 s_specifyserver+1368+8
 CNSTI4 102
 ASGNI4
 ADDRGP4 s_specifyserver+1368+12
-CNSTI4 0
+CNSTI4 20
 ASGNI4
 ADDRGP4 s_specifyserver+1368+16
-CNSTI4 416
+CNSTI4 430
 ASGNI4
 ADDRGP4 s_specifyserver+1368+60
 ADDRGP4 $193
@@ -926,10 +926,12 @@ byte 1 75
 byte 1 0
 align 1
 LABELV $175
-byte 1 70
-byte 1 73
-byte 1 71
-byte 1 72
+byte 1 67
+byte 1 79
+byte 1 78
+byte 1 78
+byte 1 69
+byte 1 67
 byte 1 84
 byte 1 32
 byte 1 62

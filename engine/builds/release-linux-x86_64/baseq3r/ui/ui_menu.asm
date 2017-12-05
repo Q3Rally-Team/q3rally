@@ -41,11 +41,11 @@ CALLV
 pop
 ADDRGP4 s_main+1224
 ARGP4
-ADDRGP4 s_main+1480
+ADDRGP4 s_main+1488
 ARGP4
-ADDRGP4 s_main+1544
+ADDRGP4 s_main+1552
 ARGP4
-ADDRGP4 s_main+1608
+ADDRGP4 s_main+1616
 ARGP4
 ADDRLP4 24
 ARGP4
@@ -284,7 +284,7 @@ ADDRGP4 strncpy
 CALLP4
 pop
 LABELV $107
-ADDRGP4 s_main+1480
+ADDRGP4 s_main+1488
 ARGP4
 CNSTI4 64
 ARGI4
@@ -306,7 +306,7 @@ CALLV
 pop
 ADDRGP4 $113
 ARGP4
-ADDRGP4 s_main+1544
+ADDRGP4 s_main+1552
 ARGP4
 CNSTI4 64
 ARGI4
@@ -315,7 +315,7 @@ CALLV
 pop
 ADDRGP4 $116
 ARGP4
-ADDRGP4 s_main+1608
+ADDRGP4 s_main+1616
 ARGP4
 CNSTI4 64
 ARGI4
@@ -674,7 +674,7 @@ ADDRGP4 s_main
 ARGP4
 CNSTI4 0
 ARGI4
-CNSTU4 1672
+CNSTU4 1680
 ARGU4
 ADDRGP4 memset
 CALLP4
@@ -1013,7 +1013,7 @@ endproc UI_MainMenu 40 12
 bss
 align 4
 LABELV s_main
-skip 1672
+skip 1680
 import UI_RankStatusMenu
 import RankStatus_Cache
 import UI_SignupMenu
@@ -1703,12 +1703,12 @@ byte 1 48
 byte 1 46
 byte 1 48
 byte 1 46
-byte 1 52
+byte 1 56
 byte 1 32
 byte 1 114
 byte 1 49
-byte 1 54
 byte 1 57
+byte 1 54
 byte 1 32
 byte 1 40
 byte 1 99
@@ -1802,12 +1802,12 @@ byte 1 48
 byte 1 46
 byte 1 48
 byte 1 46
-byte 1 52
+byte 1 56
 byte 1 32
 byte 1 114
 byte 1 49
-byte 1 54
 byte 1 57
+byte 1 54
 byte 1 32
 byte 1 40
 byte 1 99

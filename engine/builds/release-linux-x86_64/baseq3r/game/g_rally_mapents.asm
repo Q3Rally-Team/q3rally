@@ -1642,6 +1642,7 @@ import trap_Cvar_Set
 import trap_Cvar_Update
 import trap_Cvar_Register
 import trap_SendConsoleCommand
+import trap_FS_Seek
 import trap_FS_GetFileList
 import trap_FS_FCloseFile
 import trap_FS_Write
@@ -1650,6 +1651,7 @@ import trap_FS_FOpenFile
 import trap_Args
 import trap_Argv
 import trap_Argc
+import trap_RealTime
 import trap_Milliseconds
 import trap_Error
 import trap_Print
@@ -1674,6 +1676,7 @@ import g_trackReversed
 import g_finishRaceDelay
 import g_forceEngineStart
 import g_humanplayers
+import g_localTeamPref
 import g_proxMineTimeout
 import g_singlePlayer
 import g_enableBreath
