@@ -264,7 +264,7 @@ extern int demo_protocols[];
 #endif
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
-#define MASTER_SERVER_NAME	"master.q3rally.com"
+#define MASTER_SERVER_NAME	"master.ioquake3.org"
 #endif
 
 #ifndef STANDALONE
