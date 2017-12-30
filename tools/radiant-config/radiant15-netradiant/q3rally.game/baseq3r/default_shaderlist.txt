@@ -1,3 +1,11 @@
+//*********************************************************//
+//	shaderlist.txt modified for GTKRadiant/Netradiant	    //
+//	by Perle for use with Q3Rally - 30/12/2017		    //
+//                                                        //             //										   //
+//      Rev history:  						   //                                                  //										   //
+//********************************************************//
+
+// this file lists all the separate shader files
 //shaderlist
 common
 glass
@@ -15,6 +23,3 @@ skies
 liquids
 q3r_lights
 break
-
-
-

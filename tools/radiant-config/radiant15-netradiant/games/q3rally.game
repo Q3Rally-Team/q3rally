@@ -1,22 +1,21 @@
-<?xml version="1.0" encoding="iso-8859-1" standalone="yes"?>
-<!-- modify at your own risks -->
+<?xml version="1.0"?>
 <game
-  type="q3rally"
+  type="q3"
   index="1"
   name="Q3Rally"
   enginepath_win32="C:/Program Files/Q3Rally/"
   enginepath_linux="/usr/local/games/q3rally/"
-  enginepath_macos="/Applications/Q3Rally
   engine_win32="q3rally.exe"
-  engine_linux="q3rally.sh"
-  engine_macos="q3rally.app"
-  prefix=".q3rally"
+  engine_linux="q3rally.x86_64"
+  prefix=".q3r"
   basegame="baseq3r"
   basegamename="Q3Rally"
+  knowngame="missionpack"
+  knowngamename="Q3Rally"
   unknowngamename="Custom Q3Rally modification"
   shaderpath="scripts"
   archivetypes="pk3"
-  texturetypes="tga jpg png"
+  texturetypes="tga jpg"
   modeltypes="md3 ase lwo obj 3ds picoterrain"
   maptypes="mapq3"
   shaders="quake3"
