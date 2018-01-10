@@ -2,10 +2,16 @@
 # Q3Rally (debug) Unix Launcher
 
 PLATFORM=`uname|sed -e s/_.*//|tr '[:upper:]' '[:lower:]'|sed -e 's/\//_/g'`
-ARCH=`uname -m | sed -e s/i.86/i386/`
+ARCH=`uname -m | sed -e s/i.86/x86/`
 BUILD=debug
 
-BIN=engine/build/$BUILD-$PLATFORM-$ARCH/q3rally.$ARCH
+if [ $ARCH = "x86" ]; then
+	FULLBINEXT=
+else
+	FULLBINEXT=.$ARCH
+fi
+
+BIN=engine/build/$BUILD-$PLATFORM-$ARCH/q3rally$FULLBINEXT
 
 if [ ! -f $BIN ]; then
 	echo "Game binary '$BIN' not found, building it..."
