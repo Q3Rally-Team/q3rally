@@ -1,0 +1,18 @@
+//custom surfaceParms file (for 'q3map2 -meta -custinfoparms name.map')
+
+//custom CONTENTS_ flags
+{
+
+}
+
+//custom SURF_ flags
+{
+  grass   0x80000
+  asphalt 0x100000
+  wet     0x200000
+  snow    0x400000
+  gravel  0x800000
+  ice     0x1000000
+  dirt    0x2000000
+}
+
