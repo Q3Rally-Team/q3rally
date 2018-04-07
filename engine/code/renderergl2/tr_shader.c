@@ -2232,7 +2232,7 @@ static void CollapseStagesToLightall(shaderStage_t *diffuse,
 		defs |= LIGHTDEF_USE_LIGHT_VERTEX;
 	}
 
-	if (r_deluxeMapping->integer && tr.worldDeluxeMapping && lightmap)
+	if (r_deluxeMapping->integer && tr.worldDeluxeMapping && lightmap && shader.lightmapIndex >= 0)
 	{
 		//ri.Printf(PRINT_ALL, ", deluxemap");
 		diffuse->bundle[TB_DELUXEMAP] = lightmap->bundle[0];
@@ -2421,6 +2421,8 @@ static int CollapseStagesToGLSL(void)
 
 	if (!skip)
 	{
+		qboolean usedLightmap = qfalse;
+
 		for (i = 0; i < MAX_SHADER_STAGES; i++)
 		{
 			shaderStage_t *pStage = &stages[i];
@@ -2479,7 +2481,16 @@ static int CollapseStagesToGLSL(void)
 					case ST_COLORMAP:
 						if (pStage2->bundle[0].tcGen == TCGEN_LIGHTMAP)
 						{
-							lightmap = pStage2;
+							int blendBits = pStage->stateBits & ( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
+
+							// Only add lightmap to blendfunc filter stage if it's the first time lightmap is used
+							// otherwise it will cause the shader to be darkened by the lightmap multiple times.
+							if (!usedLightmap || (blendBits != (GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO)
+								&& blendBits != (GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR)))
+							{
+								lightmap = pStage2;
+								usedLightmap = qtrue;
+							}
 						}
 						break;
 
