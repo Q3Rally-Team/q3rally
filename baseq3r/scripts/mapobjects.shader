@@ -188,7 +188,7 @@ models/mapobjects/q3rtitle/q3rtitle_w
 models/mapobjects/q3rtitle/q3rtitle
 {
 	{
-		map models/mapobjects/q3rtitle/q3rtitle_b.jpg
+		models/mapobjects/q3rtitle/q3rtitle_b.jpg
 		
 	}
 }

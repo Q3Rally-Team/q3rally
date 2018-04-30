@@ -1,0 +1,1951 @@
+<?xml version="1.0"?>
+<!--
+ Quake3 Arena entity definition file for Q3Radiant
+ Based on draft by Suicide 20 7.30.99 and inolen 9-3-99
+ Upgraded by Eutectic: eutectic@ritualistic.com
+ (visible models added by raYGunn - paths provided by Suicide 20)
+ (terrain information added to func_group entity by Paul Jaquays)
+ Q3Map2 entitys/keys added by ydnar
+ Version: 1.6
+ Last updated: 2003-11-28
+-->
+<classes>
+<!--
+=============================================================================
+
+ Q3Map2 entities
+
+=============================================================================
+-->
+
+<group name="_decal" color="0 1.0 0">
+-------- KEYS --------
+<target key="target" name="Target">the name of the entity targetted at for projection</target>
+-------- SPAWNFLAGS --------
+(none)
+-------- NOTES --------
+Compiler-only entity that specifies a decal to be projected. Should contain 1 or more patch meshes (curves) and target an info_null entity. The distance between the center of the _decal entity and the target is the axis and distance of projection.
+</group>
+
+<point name="_skybox" color="0.77 0.88 1.0" box="-4 -4 -4 4 4 4">
+-------- KEYS --------
+<angle key="angle" name="Yaw Angle">rotation angle of the sky surfaces.</angle>
+<angles key="angles" name="Pitch Yaw Roll">Individual control of PITCH, YAW, and ROLL (default 0 0 0).</angles>
+<real key="_scale" name="Scale">scaling factor (default 64), good values are between 50 and 300, depending on the map.</real>
+-------- SPAWNFLAGS --------
+(none)
+-------- NOTES --------
+Compiler-only entity that specifies a the origin of a skybox (a wholly contained, seperate area of the map), similar to some games' portal skies. When compiled with Q3Map2, the skybox surfaces will be visible from any place where sky is normally visible. It will cast shadows on the normal parts of the map, and can be used with cloud layers and other effects.
+</point>
+
+<!--
+=============================================================================
+
+AMMO_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="ammo_bfg" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/bfgam.md3">
+BFG ammo. Gives the player 15 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 15).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean> 
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_bullets" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/machinegunam.md3">
+Machine Gun ammo. Gives the player 50 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 50).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_cells" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/plasmaam.md3">
+Plasma Gun ammo. Gives the player 30 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 30).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_grenades" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/grenadeam.md3">
+Grenade Launcher ammo. Gives the player 5 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 5).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_lightning" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/lightningam.md3">
+Lightning Gun ammo. Gives the player 60 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 60).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_rockets" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/rocketam.md3">
+Rocket Launcher ammo. Gives the player 5 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 5).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_shells" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/shotgunam.md3">
+Shotgun ammo. Gives the player 10 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="ammo_slugs" color=".3 .3 1" box="-16 -16 -16 16 16 16" model="models/powerups/ammo/railgunam.md3">
+Railgun ammo. Gives the player 10 by default.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+
+FUNC_* ENTITIES
+
+=============================================================================
+-->
+
+<group name="func_bobbing" color="0 .5 .8">
+Solid entity that oscillates back and forth in a linear motion. By default, it will have an amount of displacement in either direction equal to the dimension of the brush in the axis in which it's bobbing. Entity bobs on the Z axis (up-down) by default. It can also emit sound if the "noise" key is set. Will crush the player when blocked.
+-------- KEYS --------
+<real key="speed" name="Bob Cycle Time">amount of time in seconds for one complete oscillation cycle (default 4).</real>
+<real key="height" name="Vertical Travel">sets the amount of travel of the oscillation movement (default 32).</real>
+<real key="phase" name="Bob Cycle Phase">sets the start offset of the oscillation cycle. Values must be 0 &lt; phase &lt; 1. Any integer phase value is the same as no offset (default 0).</real>
+<sound key="noise" name="Sound File">path/name of .wav file to play. Use looping sounds only (eg. sound/world/drone6.wav - See Notes).</sound>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/jets/jets01.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of sound and .md3 model included with entity (See Notes).</real3>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- SPAWNFLAGS --------
+<flag key="X_AXIS" name="X Axis" bit="0">entity will bob along the X axis.</flag>
+<flag key="Y_AXIS" name="Y Axis" bit="1">entity will bob along the Y axis.</flag>
+-------- NOTES --------
+In order for the sound to be emitted from the entity, it is recommended to include a brush with an origin shader at its center, otherwise the sound will not follow the entity as it moves. Setting the origin key is simply an alternate method to using an origin brush. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_button" color="0 .5 .8">
+When a button is touched by a player, it moves in the direction set by the "angle" key, triggers all its targets, stays pressed by an amount of time set by the "wait" key, then returns to it's original position where it can be operated again.
+-------- KEYS --------
+<direction key="angle" name="Direction">determines the direction in which the button will move (up = -1, down = -2).</direction>
+<target key="target" name="Target">all entities with a matching targetname will be triggered.</target>
+<real key="speed" name="Move Speed">speed of button's displacement (default 40).</real>
+<real key="wait" name="Return Delay">number of seconds button stays pressed (default 1, -1 = return immediately).</real>
+<real key="lip" name="Lip">lip remaining at end of move (default 4 units).</real>
+<real key="health" name="Activate On Damage">(default 0) if set to any non-zero value, the button must take damage (any amount) to activate.</real>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/pipe/pipe02.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of .md3 model included with entity (See Notes).</real3>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+Setting the origin key is simply an alternate method to using an origin brush. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_door" color="0 .5 .8">
+Normal sliding door entity. By default, the door will activate when player walks close to it or when damage is inflicted to it.
+-------- KEYS --------
+<direction key="angle" name="Direction">determines the opening direction of door (up = -1, down = -2).</direction>
+<real key="speed" name="Move Speed">determines how fast the door moves (default 100).</real>
+<real key="wait" name="Return Delay">number of seconds before door returns (default 2, -1 = return immediately)</real>
+<real key="lip" name="Lip">lip remaining at end of move (default 8)</real>
+<targetname key="targetname" name="Target Name">if set, a func_button or trigger is required to activate the door.</targetname>
+<real key="health" name="Activate On Damage">(default 0) if set to any non-zero value, the button must take damage (any amount) to activate.</real>
+<integer key="dmg" name="Damage Inflicted">damage to inflict on player when he blocks operation of door (default 4). Door will reverse direction when blocked unless CRUSHER spawnflag is set.</integer>
+<string key="team" name="Team Name">assign the same team name to multiple doors that should operate together (see Notes).</string>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/pipe/pipe02.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of .md3 model included with entity (See Notes).</real3>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- SPAWNFLAGS --------
+<flag key="START_OPEN" name="Start Open" bit="0">the door will spawn in the open state and operate in reverse.</flag>
+<flag key="CRUSHER" name="Crusher" bit="2">door will not reverse direction when blocked and will keep damaging player until he dies or gets out of the way.</flag>
+-------- NOTES --------
+Unlike in Quake 2, doors that touch are NOT automatically teamed. If you want doors to operate together, you have to team them manually by assigning the same team name to all of them. Setting the origin key is simply an alternate method to using an origin brush. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_group" color="0 .5 .8">
+This is not an entity as such. It is strictly an editor utility to group world brushes and patches together for convenience (selecting, moving, copying, etc). You cannot group entities with this.
+-------- OLD TERRAIN KEYS (note: obsolete with Q3Map2) --------
+<boolean key="terrain" name="Is Terrain">this is an on/off flag. When set to 1, the entity becomes a terrain entity. Note: unecessary when compiling with Q3Map2. See Q3Map2 keys.</boolean>
+-------- Q3MAP2 KEYS --------
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+The TAB key can be used to flip through the component pieces of a selected func_group entity, isolating individual components. To make a func_group into a terrain entity, refer to the Terrain Construction documentation.
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_pendulum" color="0 .5 .8">
+Solid entity that describes a pendulum back and forth rotation movement. Rotates on the X axis by default. Pendulum frequency is a physical constant based on the length of the beam and gravity. Blocking the pendulum instantly kills a player.
+-------- KEYS --------
+<real key="angle" name="Yaw Angle">angle offset of axis of rotation from default X axis (default 0).</real>
+<real key="speed" name="Max Swing Angle">angle of swing arc in either direction from initial position (default 30).</real>
+<real key="phase" name="Swing Phase">sets the start offset of the swinging cycle. Values must be 0 &lt; phase &lt; 1. Any integer phase value is the same as no offset (default 0).</real>
+<sound key="noise" name="Sound File">path/name of .wav file to play. Use looping sounds only (eg. sound/world/drone6.wav).</sound>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/jets/jets01.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of entity's rotation axis and .md3 model included with entity (default "0 0 0" - See Notes).</real3>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+You need to have an origin brush as part of this entity. The center of that brush will be the point through which the rotation axis passes. Setting the origin key is simply an alternate method to using an origin brush. Pendulum will rotate along the X axis by default. Very crude operation: pendulum cannot rotate along Z axis, the speed of swing (frequency) is not adjustable. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_plat" color="0 .5 .8">
+Rising platform the player can ride to reach higher places. Plats must always be drawn in the raised position, so they will operate and be lighted correctly but they spawn in the lowered position. The plat will stay in the raised position until the player steps off. There are no proper sounds for this entity, only beep noises. It will spawn in the game and work properly but it sounds silly (see Notes).
+-------- KEYS --------
+<real key="speed" name="Move Speed">determines how fast the plat moves (default 150).</real>
+<real key="lip" name="Lip">lip remaining at end of move (default 16). Has no effect if "height" is set.</real>
+<real key="height" name="Vertical Travel">if set, this will determine the total amount of vertical travel of the plat.</real>
+<integer key="dmg" name="Damage Inflicted">damage to inflict on player when he blocks operation of plat (default 4). Plat will reverse direction when blocked.</integer>
+<targetname key="targetname" name="Target Name">if set, the trigger that points to this will raise the plat each time it fires. The plat raises and comes back down a second later if no player is on it.</targetname>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/pipe/pipe02.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of .md3 model included with entity (See Notes).</real3>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+By default, the total amount of vertical travel of a platform is implicitly determined by the overall vertical size of the brushes of which it's made minus the lip value. But if the "height" key is used, then the total amount of vertical travel of the plat will be exactly that value regardless of the shape and size of the plat and regardless of the value of the "lip" key. Using the "height" key is the best method for any kind of platforms and the only possible one for thin plats which need to travel vertical distances many times their own thickness. Setting the origin key is simply an alternate method to using an origin brush. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+There is a way to make plats play proper sounds. Just create a sound\movers\plats folder under baseq3 and put 2 sounds named pt1_strt.wav and pt1_end.wav in it. Those can be the renamed sounds from the Q2 plats or renamed copies of the sound\movers\doors sounds you can extract from your pak0.pk3 file or new custom sounds if you're up to it. Thanks to Fragzilla for the tip.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_rotating" color="0 .5 .8">
+Solid entity that rotates continuously. Rotates on the Z axis by default and requires an origin brush. It will always start on in the game and is not targetable.
+-------- KEYS --------
+<real key="speed" name="Rotation Speed">determines how fast entity rotates (default 100).</real>
+<sound key="noise" name="Sound File">path/name of .wav file to play. Use looping sounds only (eg. sound/world/drone6.wav).</sound>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/bitch/fembotbig.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of entity's rotation axis and .md3 model included with entity (default "0 0 0" - See Notes).</real3>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- SPAWNFLAGS --------
+<flag key="X_AXIS" name="X Axis" bit="2">entity will rotate along the X axis.</flag>
+<flag key="Y_AXIS" name="Y Axis" bit="3">entity will rotate along the Y axis.</flag>
+-------- NOTES --------
+You need to have an origin brush as part of this entity. The center of that brush will be the point through which the rotation axis passes. Setting the origin key is simply an alternate method to using an origin brush. It will rotate along the Z axis by default. You can check either the X_AXIS or Y_AXIS box to change that. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_static" color="0 .5 .8">
+Static non-solid bspmodel. Can be used for conditional walls and models.
+-------- KEYS --------
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/bitch/fembotbig.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of .md3 model included with entity (See Notes).</real3>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<targetname key="targetname" name="Target Name">NOT SUPPORTED BY RENDERER - if set, a func_button or trigger can make entity disappear from the game (See Notes).</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value. If a model is included with a targeted func_static, the brush(es) of the entity will be removed from the game but the .md3 model won't: it will automatically be moved to the (0 0 0) world origin so you should NOT include an .md3 model to a targeted func_static.
+
+Because the map has only a single bot navigation file, func_static's cannot be used to make significant changes in game play flow between differing game types.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+-->
+
+<point name="func_timer" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+Time delay trigger that will continuously fire its targets after a preset time delay. The time delay can also be randomized. When triggered, the timer will toggle on/off.
+-------- KEYS --------
+<real key="wait" name="Time Period">delay in seconds between each triggering of its targets (default 1).</real>
+<real key="random" name="Time Period Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<target key="target" name="Target">this points to the entities to trigger.</target>
+<targetname key="targetname" name="Target Name">a func_button or trigger that points to this will toggle the timer on/off when activated.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="START_ON" name="Start On" bit="0">timer will start on in the game and continuously fire its targets.</flag>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<group name="func_train" color="0 .5 .8">
+Trains are moving solids that follow a string of path_corner entities. Trains in Q3A are very basic, they also require an origin brush (see Notes).
+-------- KEYS --------
+<real key="speed" name="Move Speed">speed of displacement of train (default 100 or overridden by speed value of path).</real>
+<target key="target" name="Target">this points to the first path_corner of the path which is also the spawn location of the train's origin.</target>
+<model key="model2" name="Model File">path/name of model to include (eg: models/mapobjects/pipe/pipe02.md3).</model>
+<real3 key="origin" name="World Origin">alternate method of setting XYZ origin of the train's brush(es) and .md3 model included with entity (See Notes).</real3>
+<real key="light" name="Model Light Intensity">constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).</real>
+<color key="color" name="Model Light Color">constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).</color>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- Q3MAP2 KEYS --------
+<targetname key="_targetname" name="Target Name">Used to attach a misc_model entity to this entity.</targetname>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+-------- NOTES --------
+1. Trains always start on in the game.
+2. Trains do not damage the played when blocked.
+3. Trains cannot emit sound.
+4. Trains are not triggerable or toggle-able.
+5. Trains cannot be block-stopped just by getting in their way, the player must be wedged between the train and another obstacle to block it.
+
+Setting the origin key is simply an alternate method to using an origin brush. When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value.
+
+Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
+</group>
+
+<!--
+=============================================================================
+
+HOLDABLE_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="holdable_medkit" color=".7 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/holdable/medkit.md3">
+Medkit that can be picked up and used later. Brings the player's health back to 100 when used. Player can only carry one holdable item at a time.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 60, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="holdable_teleporter" color=".7 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/holdable/teleporter.md3">
+Teleporter item that can be picked up and used later. Teleports the player to a random player spawn point when used. Player can only carry one holdable item at a time.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 60, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+
+INFO_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="info_camp" color="0 .5 0" box="-8 -8 -8 8 8 8">
+This atttracts bots which have a camping preference in their AI characteristics. It should be placed at least 32 units away from any brush surface.
+-------- KEYS --------
+<real key="range" name="Range">number of units that the bot can move away from camp entity while camping on it.</real>
+<real key="weight" name="Weight">number that is compared against the weight assigned to all the other camp spots in the map to determine if a bot chooses to camp there. The value is normalized against all other weight values.</real>
+-------- NOTES --------
+Examples of bots which have a high camping preference are: Razor, Tank Jr., Grunt, Patriot and Doom. Examples of bots which have a low camping preference are: Klesk, Mynx, Sarge, Keel and Xaero.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="info_notnull" color="0 .5 0" box="-8 -8 -8 8 8 8">
+Used as a positional target for entities that can use directional pointing. A target_position can be used instead of this but was kept in Q3A for legacy purposes.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">must match the target key of entity that uses this for pointing.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="info_null" color="0 .5 0" box="-8 -8 -8 8 8 8">
+Used as a positional target for light entities to create a spotlight effect. A target_position can be used instead of this but was kept in Q3A for legacy purposes.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">must match the target key of entity that uses this for pointing.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="info_player_deathmatch" color="1 0 1" box="-16 -16 -24 16 16 32">
+Normal player spawning location for Q3A levels.
+-------- KEYS --------
+<angle key="angle" name="Yaw Angle">direction in which player will look when spawning in the game. Does not apply to bots.</angle>
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+<boolean key="nobots" name="No Bots">when set to 1, bots will never use this spawn point to respawn in the game.</boolean>
+<boolean key="nohumans" name="No Humans">when set to 1, human players will never use this spawn point to respawn in the game.</boolean>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="INITIAL" name="Initial Spawn Point" bit="0">makes the spawnpoint the initial place for the player to spawn at the beginning of the game.</flag>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="info_player_intermission" color="1 0 1" box="-16 -16 -16 16 16 16">
+Camera for intermission screen between matches. This also automatically generates the podium for bot arena matches (see Notes). Can be aimed by setting the "angles" key or targeting an pointing to an aiming entity. Use only one per level.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">alternate "pitch, yaw, roll" angles method of aiming intermission camera (default 0 0 0).</angles>
+<target key="target" name="Target">point this to an info_notnull or target_position entity to set the camera's pointing angles.</target>
+-------- NOTES --------
+In genuine bot arena matches, the podium for the 1st, 2nd and 3rd place players at the end of the match is generated by this entity. The podium's origin will automatically be located 128 units in the direction of the camera's view and 84 units down from the y height of the view line at that point. It will also always be generated on a level plane regardless of the pointing angle of the camera so if that angle is too steep, part of the podium model might not be visible. Make sure you leave at least 106 units of free space in front of where the camera points to otherwise the podium model won't be visible at all.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="info_player_start" color="1 0 0" box="-16 -16 -24 16 16 32">
+Player spawn location. It works in Quake III Arena, but it is not used in the Id maps. Use info_player_deathmatch instead.
+-------- KEYS --------
+<angle key="angle" name="Yaw Angle">direction in which player will look when spawning in the game.</angle>
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<!--
+<point name="info_spectator_start" color="1 0 0" box="-16 -16 -24 16 16 32">
+Spectator spawn location. Doesn't appear to work in game. Commented out.
+======== KEYS ========
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean></boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean></boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean></boolean>
+</point>
+-->
+
+<!--
+=============================================================================
+
+ITEM_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="item_armor_body" color=".6 0 0" box="-16 -16 -16 16 16 16" model="models/powerups/armor/armor_red.md3">
+Red Armor - 100 points. All armor can be cumulated up to a maximum of 200 points and slowly wears out to 100 points.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 25, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_armor_combat" color="1 .75 .3" box="-16 -16 -16 16 16 16" model="models/powerups/armor/armor_yel.md3">
+Yellow Armor - 50 points. All armor can be cumulated up to a maximum of 200 points and slowly wears out to 100 points.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 25, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_armor_shard" color="0 .7 0" box="-16 -16 -16 16 16 16" model="models/powerups/armor/shard.md3">
+Green Armor Shard - 5 points. All armor can be cumulated up to a maximum of 200 points and slowly wears out to 100 points.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 25, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_botroam" color="1 0.5 0" box="-8 -8 -8 8 8 8">
+Game Function: An invisible entity which attracts a bot to it. Use to move bots to parts of a map that might otherwise not be used (NEW ENTITY).
+-------- KEYS --------
+<real key="weight" name="Weight">non-zero floating point value, most often in the range 0 to 400. (Higher values are allowed but keep in mind that the bot should also be attracted to normal items.  Don't make the weight value too high.</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The item_botroam entity can be used when a bot does not roam the whole level or prefers to go to only specific areas. This (invisible) item can be placed in a map just like regular items. Nobody can actually pick up the item it's only used to attract bots to certain places of the map. The value is the weight of the roam_item is relative to the weight assigned other items in the map (each bot has its own weights). The bot character specific item weights are stored with the bot characters AI files ("botname"_i.c for items and "botname"_w.c for weapons) in the botfiles/bots/ sub-folder in the .pk3 file.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_enviro" color=".5 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/enviro.md3">
+Battle Suit power-up - Gives protection against slime, lava and weapon splash damage. Lasts 30 seconds.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 30).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_flight" color=".5 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/flight.md3">
+Flight power-up. Lasts 60 seconds.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 60).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_haste" color=".5 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/haste.md3">
+Speed power-up. Makes player run at double speed for 30 seconds.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 30).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_health" color=".8 .8 0" box="-16 -16 -16 16 16 16" model="models/powerups/health/medium_cross.md3">
+Yellow cross bubble - 25 Health. Cannot be picked up over 100 health.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 35, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Health Given">sets the amount of health points given to the player when item is picked up (default 25).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_health_large" color="1 0 0" box="-16 -16 -16 16 16 16" model="models/powerups/health/large_cross.md3">
+Gold cross bubble - 50 Health. Cannot be picked up over 100 health.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 35, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Health Given">sets the amount of health points given to the player when item is picked up (default 50).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_health_mega" color="0 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/health/mega_cross.md3">
+Blue M bubble - 100 Health. Adds 100 health points to current health up to a maximum of 200.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 40, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Health Given">sets the amount of health points given to the player when item is picked up (default 100).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_health_small" color="0 1 0" box="-16 -16 -16 16 16 16" model="models/powerups/health/small_cross.md3">
+Green cross bubble - 5 Health. Can be picked up over 100 health but slowly wears out to 100 afterwards.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 35, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Health Given">sets the amount of health points given to the player when item is picked up (default 5).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_invis" color=".5 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/invis.md3">
+Invisibility power-up. Lasts 30 seconds.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 30).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_quad" color=".4 .6 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/quad.md3">
+Quad Damage power-up. Lasts 30 seconds.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 30).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="item_regen" color=".5 0 1" box="-16 -16 -16 16 16 16" model="models/powerups/instant/regen.md3">
+Health Regeneration power-up. This will boost your current health by 5 points every second for a period of up to 30 seconds or up to 200 points whichever comes first. Afterwards, any health points over 100 slowly wears out to 100.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 120, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<real key="count" name="Powerup Duration">time in seconds power-up will last when picked up (default 30).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+
+LIGHT ENTITY
+
+=============================================================================
+-->
+
+
+<point name="light" color=".65 .65 1" box="-8 -8 -8 8 8 8">
+Non-displayed point light source. The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.
+-------- KEYS --------
+<real key="_light;light" name="Light Intensity">overrides the default 300 intensity.</real>
+<color key="color" name="Light Color">weighted RGB value of light color (default white - 1.0 1.0 1.0).</color>
+<target key="target" name="Target">Lights pointed at a target will be spotlights.</target>
+<real key="radius" name="Spotlight Radius">overrides the default 64 unit radius of a spotlight at the target point.</real>
+-------- Q3MAP2 KEYS --------
+<boolean key="_sun" name="Directional">Set this key to 1 on a spotlight to make an infinite sun light.</boolean>
+<real key="_sun" name="Linear Fade">Fades light attenuation. Only affects linear lights.</real>
+<real key="_sun" name="Intensity Scale">Scales light attentation, from SOF2/JK2. Scales the "light" value.</real>
+-------- SPAWNFLAGS --------
+<flag key="LINEAR" name="Linear Falloff" bit="0">Use a linear falloff. Default is inverse distance squared (more realistic).</flag>
+<flag key="NOANGLE" name="No Angle Attenuation" bit="1">Ignore angle attenuation.</flag>
+<flag key="NOGRIDLIGHT" name="Not Dynamic" bit="4">Do not affect the lightgrid (dynamic entity lighting).</flag>
+</point>
+
+<point name="lightJunior" color="0 0.7 0.3" box="-6 -6 -6 6 6 6">
+Non-displayed point light source THAT ONLY AFFECTS ENTITIES (lightgrid). The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.
+-------- KEYS --------
+<real key="_light;light" name="Light Intensity">overrides the default 300 intensity.</real>
+<color key="color" name="Light Color">weighted RGB value of light color (default white - 1.0 1.0 1.0).</color>
+<target key="target" name="Target">Lights pointed at a target will be spotlights.</target>
+<real key="radius" name="Spotlight Radius">overrides the default 64 unit radius of a spotlight at the target point.</real>
+-------- Q3MAP2 KEYS --------
+<boolean key="_sun" name="Directional">Set this key to 1 on a spotlight to make an infinite sun light.</boolean>
+<real key="_sun" name="Linear Fade">Fades light attenuation. Only affects linear lights.</real>
+<real key="_sun" name="Intensity Scale">Scales light attentation, from SOF2/JK2. Scales the "light" value.</real>
+-------- SPAWNFLAGS --------
+<flag key="LINEAR" name="Linear Falloff" bit="0">Use a linear falloff. Default is inverse distance squared (more realistic).</flag>
+<flag key="NOANGLE" name="No Angle Attenuation" bit="1">Ignore angle attenuation.</flag>
+<flag key="NOGRIDLIGHT" name="Not Dynamic" bit="4">Do not affect the lightgrid (dynamic entity lighting). Setting this spawnflag will disable this light entirely.</flag>
+</point>
+
+<!--
+=============================================================================
+
+MISC_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="misc_model" color="1 .5 .25" box="-16 -16 -16 16 16 16">
+Generic placeholder for inserting MD3 models in game. Requires compilation of map geometry to be added to level. If the map is compiled with Q3Map2, then ASE, 3DS, OBJ and other model formats are supported.
+-------- KEYS --------
+<angle key="angle" name="Yaw Angle">direction in which model will be oriented.</angle>
+<model key="model" name="Model File">path/name of model to use (eg: models/mapobjects/teleporter/teleporter.md3).</model>
+-------- Q3MAP2 KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">Individual control of PITCH, YAW, and ROLL (default 0 0 0).</angles>
+<real key="modelscale" name="Uniform Scale">Floating-point value used to scale a model up or down (default 1.0).</real>
+<real3 key="modelscale_vec" name="Scale XYZ">Floating-point vector used to scale a model's axes individually (default 1.0 1.0 1.0).</real3>
+<array key="_remap" name="Shader Remaps">Used to remap textures/shaders in the model. To remap all shaders to a given shader, use "*;models/mymodel/mytexture". To remap a specific shader, use "models/mymodel/old;models/mymodel/new".</array>
+<target key="target" name="Target">Used to attach the misc_model to a brush entity, where its "targetname" key is the same value.</target>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on this model (if model is using lightmapped shaders) (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture>
+
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="misc_portal_camera" color="1 .5 .25" box="-8 -8 -8 8 8 8">
+Portal camera. This camera is used to project its view onto a portal surface in the level through the intermediary of a misc_portal_surface entity. Use the "angles" key or target a target_position or info_notnull entity to set the camera's pointing direction.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">this sets the pitch and yaw aiming angles of the portal camera (default 0 0). Use "roll" key to set roll angle.</angles>
+<target key="target" name="Target">point this to a target_position entity to set the camera's pointing direction.</target>
+<targetname key="targetname" name="Target Name">a misc_portal_surface portal surface indicator must point to this.</targetname>
+<real key="roll" name="Roll">roll angle of camera. A value of 0 is upside down and 180 is the same as the player's view.</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SLOWROTATE" name="Rotate Slowly" bit="0">makes the portal camera rotate slowly along the roll axis.</flag>
+<flag key="FASTROTATE" name="Rotate Faster" bit="1">makes the portal camera rotate faster along the roll axis.</flag>
+-------- NOTES --------
+Both the setting "angles" key or "targeting a target_position" methods can be used to aim the camera. However, the target_position method is simpler. In both cases, the "roll" key must be used to set the roll angle. If either the SLOWROTATE or FASTROTATE spawnflag is set, then the "roll" value is irrelevant.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="misc_portal_surface" color="1 .5 .25" box="-8 -8 -8 8 8 8">
+Portal surface indicator. This will "lock on" the brush face closest to it and identify as a portal. The view displayed on the portal surface is the view of the misc_portal_camera that this entity targets. Also used for mirrors (see Notes).
+-------- KEYS --------
+<target key="target" name="Target">point this to a misc_portal_camera that "sees" the view you want to display on the portal.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+The entity must be no farther than 64 units away from the portal surface to lock onto it. To make a mirror, apply the common/mirror shader to the surface, place this entity near it but don't target a misc_portal_camera.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="misc_teleporter_dest" color="1 .5 .25" box="-32 -32 -24 32 32 -16">
+Teleport destination location point for trigger_teleporter entities.
+-------- KEYS --------
+<angle key="angle" name="Yaw Angle">direction in which player will look when teleported.</angle>
+<targetname key="targetname" name="Target Name">make the trigger_teleporter point to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+
+PATH_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="path_corner" color=".5 .3 0" box="-8 -8 -8 8 8 8">
+Path corner entity that func_trains can be made to follow.
+-------- KEYS --------
+<target key="target" name="Target">point to next path_corner in the path.</target>
+<targetname key="targetname" name="Target Name">the train following the path or the previous path_corner in the path points to this.</targetname>
+<real key="speed" name="Move Speed">speed of func_train while moving to the next path corner. This will override the speed value of the train.</real>
+<real key="wait" name="Corner Delay">number of seconds func_train will pause on path corner before moving to next path corner (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+Setting the wait key to -1 will not make the train stop on the path corner, it will simply default to 0.
+</point>
+
+<!--
+=============================================================================
+
+SHOOTER_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="shooter_grenade" color="1 0 .5" box="-8 -8 -8 8 8 8">
+This will shoot a grenade each time it's triggered. Aiming is done by setting the "angles" key or by targeting an info_notnull or target_position entity.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">this sets the pitch and yaw aiming angles of shooter (default 0 0). The roll angle does not apply.</angles>
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this points to a target_position entity for aiming the grenades.</target>
+<real key="random" name="Angle Variance">random aiming variance in degrees from the straight line to the targeted entity (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a maximum angle deviation from the normal trajectory formed by a straight line between the shooter and the aiming entity it targets. The final trajectory will be a random value anywhere between no deviation at all (0) to maximum deviation (value of the random key).
+
+Both the setting "angles" key or "targeting a target_position" methods can be used to aim the shooter. However, the target_position method is simpler.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="shooter_plasma" color="1 0 .5" box="-8 -8 -8 8 8 8">
+This will shoot a plasma ball each time it's triggered. Aiming is done by setting the "angles" key or by targeting an info_notnull or target_position entity.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">this sets the pitch and yaw aiming angles of shooter (default 0 0). The roll angle does not apply.</angles>
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this points to a target_position entity for aiming the plasma balls.</target>
+<real key="random" name="Angle Variance">random aiming variance in degrees from the straight line to the targeted entity (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a maximum angle deviation from the normal trajectory formed by a straight line between the shooter and the aiming entity it targets. The final trajectory will be a random value anywhere between no deviation at all (0) to maximum deviation (value of the random key).
+
+Both the setting "angles" key or "targeting a target_position" methods can be used to aim the shooter. However, the target_position method is simpler.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="shooter_rocket" color="1 0 .5" box="-8 -8 -8 8 8 8">
+This will shoot a rocket each time it's triggered. Aiming is done by setting the "angles" key or by targeting an info_notnull or target_position entity.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">this sets the pitch and yaw aiming angles of shooter (default 0 0). The roll angle does not apply.</angles>
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this points to a target_position entity for aiming the rockets.</target>
+<real key="random" name="Angle Variance">random aiming variance in degrees from the straight line to the targeted entity (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a maximum angle deviation from the normal trajectory formed by a straight line between the shooter and the aiming entity it targets. The final trajectory will be a random value anywhere between no deviation at all (0) to maximum deviation (value of the random key).
+
+Both the setting "angles" key or "targeting a target_position" methods can be used to aim the shooter. However, the target_position method is simpler.
+</point>
+
+<!--
+=============================================================================
+
+TARGET_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="target_delay" color="0 .7 .7" box="-8 -8 -8 8 8 8">
+Time delay trigger intermediary. Like a target_relay, this can only be fired by other triggers which will cause it in turn to fire its own targets.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this points to entities to activate when this entity is triggered.</target>
+<real key="wait" name="Delay">delay in seconds from when this gets triggered to when it fires its own targets (default approx. 1).</real>
+<real key="delay" name="Delay">same as wait? replaces it? WTF?...I'm confused now.</real>
+<real key="random" name="Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_give" color="0 .5 0" box="-8 -8 -8 8 8 8">
+This is used to give ammo, weapons, health or items to the player who activates it.
+-------- KEYS --------
+<target key="target" name="Target">this points to the item(s) to give when activated.</target>
+<targetname key="targetname" name="Target Name">activating trigger or spawn entity points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+There are 2 ways to use this entity.
+a) automatically give items to players when they spawn in the game: make a spawn location entity like info_player_deathmatch or CTF respawn points target this entity, then make it target the item(s) to give to the player upon respawn.
+b) give items to players during the game: make a trigger_multiple target this entity, then make it target the item(s) to give to the player when the trigger is touched.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_kill" color="0 .5 0" box="-8 -8 -8 8 8 8">
+This will kill the player who activates the trigger that fires this target.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">the activating trigger points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<!--
+<point name="target_laser" color="0 .5 0" box="-8 -8 -8 8 8 8) START_ON
+Generates a red laser beam. I think this can somehow spawn in the game, I saw it once but it's too inconsistent to be usable. Commented out.
+======== KEYS ========
+<angles key="angles" name="Pitch Yaw Roll">alternate "pitch, yaw, roll" angles method of aiming laser (default 0 0 0).
+<target key="target" name="Target">point this to a target_position entity to set the laser's aiming direction.
+<targetname key="targetname" name="Target Name">the activating trigger points to this.
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+======== SPAWNFLAGS ========
+START_ON : when set, the laser will start on in the game.
+</point>
+-->
+<!--
+=============================================================================
+-->
+
+<list name="colorIndex">
+  <item name="white" value="0"/>
+  <item name="red" value="1"/>
+  <item name="green" value="2"/>
+  <item name="yellow" value="3"/>
+  <item name="blue" value="4"/>
+  <item name="cyan" value="5"/>
+  <item name="magenta" value="6"/>
+  <item name="white2" value="7"/>
+</list>
+
+<point name="target_location" color="0 .5 0" box="-8 -8 -8 8 8 8">
+Location marker used by bots and players for team orders and team chat in the course of Teamplay games. The closest target_location in sight is used for the location. If none is in sight, the closest in distance is used.
+-------- KEYS --------
+message :  name of the location (text string). Displayed in parentheses in front of all team chat and order messages.
+<colorIndex key="count" name="Text Color" value="0">color of the location text displayed in parentheses during team chat. Set to 0-7 for color.
+   0 : white (default)
+   1 : red
+   2 : green
+   3 : yellow
+   4 : blue
+   5 : cyan
+   6 : magenta
+   7 : white</colorIndex>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_position" color="0 .5 0" box="-8 -8 -8 8 8 8">
+Aiming target for entities like light, misc_portal_camera and trigger_push (jump pads) in particular.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">the entity that requires an aiming direction points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+To make a jump pad, place this entity at the highest point of the jump and target it with a trigger_push entity.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_print" color="0 .5 0" box="-8 -8 -8 8 8 8">
+This will print a message on the center of the screen when triggered. By default, all the clients will see the message.
+-------- KEYS --------
+<string key="message" name="Message">text string to print on screen.</string>
+<targetname key="targetname" name="Target Name">the activating trigger points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="REDTEAM" name="Red Team Only" bit="0">only the red team players will see the message.</flag>
+<flag key="BLUETEAM" name="Blue Team Only" bit="1">only the blue team players will see the message.</flag>
+<flag key="PRIVATE" name="Activator Only" bit="2">only the player that activates the target will see the message.</flag>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_push" color=".5 .5 .5" box="-8 -8 -8 8 8 8">
+This can be used to create jump pads and launch ramps. The direction of push can be set by the "angles" key or pointing to a target_position or info_notnull entity. Unlike trigger_push, this is NOT client side predicted and must be activated by a trigger.
+-------- KEYS --------
+<angles key="angles" name="Pitch Yaw Roll">this sets the pitch and yaw aiming angles of push entity (default 0 0). The roll angle does not apply.</angles>
+<real key="speed" name="Push Speed">speed of push (default 1000). Has no effect if entity targets an aiming entity.</real>
+<targetname key="targetname" name="Target Name">the activating trigger points to this. Push originates from the location of the trigger.</targetname>
+<target key="target" name="Target">this points to the aiming entity to which the player will jump.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="BOUNCEPAD" name="Bounce Sounds" bit="0">if set, trigger will play bounce noise instead of beep noise when activated (recommended).</flag>
+-------- NOTES --------
+To make a jump pad or launch ramp, create a trigger_multiple where the jump must originate. Place the target_push directly above the trigger_multiple and place the target_position entity at the highest point of the jump. Target the trigger_multiple to the target_push and target the target_push to the target_position/info_notnull (or set the target_push's "angles" key). Note that the "angle" key also works.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_relay" color="0 .7 .7" box="-8 -8 -8 8 8 8">
+This can only be activated by other triggers which will cause it in turn to activate its own targets.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this points to entities to activate when this entity is triggered.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="RED_ONLY" name="Red Team Only" bit="0">only red team players can activate trigger.</flag>
+<flag key="BLUE_ONLY" name="Blue Team Only" bit="1">only red team players can activate trigger.</flag>
+<flag key="RANDOM" name="Random Target" bit="2">one one of the targeted entities will be triggered at random.</flag>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_remove_powerups" color="0 .7 .7" box="-8 -8 -8 8 8 8">
+This takes away any and all item_* type powerups from player except health and armor (holdable_* items are not taken away either). Must be activated by a button or trigger_multiple entity. The player that activates the trigger will lose any powerup(s) currently in his possession.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_score" color="0 .5 0" box="-8 -8 -8 8 8 8">
+This is used to automatically give frag points to the player who activates this. A spawn location entity like info_player_* or CTF respawn points can target this entity to give points to the player when he spawns in the game. Or a trigger can also be used to activate this. The activator of the trigger will get the points.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">ativating entity points to this.</targetname>
+<integer key="count" name="Frags Given">number of frag points to give to player (default 1).</integer>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_speaker" color="0 .7 .7" box="-8 -8 -8 8 8 8">
+Sound generating entity that plays .wav files. Normal non-looping sounds play each time the target_speaker is triggered. Looping sounds can be set to play by themselves (no activating trigger) or be toggled on/off by a trigger.
+-------- KEYS --------
+<sound key="noise" name="Sound File">path/name of .wav file to play (eg. sound/world/growl1.wav - see Notes).</sound>
+<real key="wait" name="Repeat Time">delay in seconds between each time the sound is played ("random" key must be set - see Notes).</real>
+<real key="random" name="Repeat Time Variance">random time variance in seconds added or subtracted from "wait" delay ("wait" key must be set - see Notes).</real>
+<targetname key="targetname" name="Target Name">the activating button or trigger points to this.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="LOOPED_ON" name="Loop, Start On" bit="0">sound will loop and initially start on in level (will toggle on/off when triggered).</flag>
+<flag key="LOOPED_OFF" name="Loop, Start Off" bit="1">sound will loop and initially start off in level (will toggle on/off when triggered).</flag>
+<flag key="GLOBAL" name="No Distance Attenuation" bit="2">sound will play full volume throughout the level.</flag>
+<flag key="ACTIVATOR" name="Audible Only To Activator" bit="3">sound will play only for the player that activated the target.</flag>
+-------- NOTES --------
+The path portion value of the "noise" key can be replaced by the implicit folder character "*" for triggered sounds that belong to a particular player model. For example, if you want to create a "bottomless pit" in which the player screams and dies when he falls into, you would place a trigger_multiple over the floor of the pit and target a target_speaker with it. Then, you would set the "noise" key to "*falling1.wav". The * character means the current player model's sound folder. So if your current player model is Visor, * = sound/player/visor, if your current player model is Sarge, * = sound/player/sarge, etc. This cool feature provides an excellent way to create "player-specific" triggered sounds in your levels.
+
+The combination of the "wait" and "random" keys can be used to play non-looping sounds without requiring an activating trigger but both keys must be used together. The value of the "random" key is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="target_teleporter" color="0 .5 0" box="-8 -8 -8 8 8 8">
+Activating this will teleport players to the location of the targeted misc_teleporter_dest entity. Unlike trigger_teleport, this entity must be activated by a trigger and does NOT allow client prediction of events.
+-------- KEYS --------
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<target key="target" name="Target">this must point to a misc_teleporter_dest entity.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+
+TEAM_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="team_CTF_blueflag" color="0 .2 1" box="-16 -16 -16 16 16 16" model="models/flags/b_flag.md3">
+Blue team flag for CTF games.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="team_CTF_blueplayer" color="0 .2 1" box="-16 -16 -24 16 16 32">
+Initial Blue team spawning position for CTF games. This is where players spawn when they join the Blue team.
+-------- KEYS --------
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="team_CTF_bluespawn" color="0 .2 1" box="-16 -16 -24 16 16 32">
+Blue team respawning position for CTF games. This is where Blue team players respawn after they get fragged.
+-------- KEYS --------
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="team_CTF_redflag" color="1 .2 0" box="-16 -16 -16 16 16 16" model="models/flags/r_flag.md3">
+Red team flag for CTF games.
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="team_CTF_redplayer" color="1 .2 0" box="-16 -16 -24 16 16 32">
+Initial Red team spawning position for CTF games. This is where players spawn when they join the Red team.
+-------- KEYS --------
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="team_CTF_redspawn" color="0 .2 1" box="-16 -16 -24 16 16 32">
+Red team respawning position for CTF games. This is where Red team players respawn after they get fragged.
+-------- KEYS --------
+<target key="target" name="Target">this can point at a target_give entity for respawn freebies.</target>
+</point>
+
+<!--
+=============================================================================
+
+TRIGGER_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="trigger_always" color=".5 .5 .5" box="-8 -8 -8 8 8 8">
+Automatic trigger. It will fire the entities it targets as soon as it spawns in the game.
+-------- KEYS --------
+<target key="target" name="Target">this points to the entity to activate.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</point>
+
+<!--
+=============================================================================
+-->
+
+<group name="trigger_hurt" color=".5 .5 .5">
+Any player that touches this will be hurt by "dmg" points of damage once per server frame (very fast). A sizzling sound is also played while the player is being hurt.
+-------- KEYS --------
+<integer key="dmg" name="Damage Inflicted">number of points of damage inflicted to player per server frame (default 5 - integer values only).</integer>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- SPAWNFLAGS --------
+<flag key="START_OFF" name="Start Disabled" bit="0">needs to be triggered (toggle) for damage</flag>
+<flag key="SILENT" name="Silent" bit="2">supresses the sizzling sound while player is being hurt.</flag>
+<flag key="NO_PROTECTION" name="No Powerup Protection" bit="3">player will be hurt regardless of protection (see Notes).</flag>
+<flag key="SLOW" name="Damage Once Per Second" bit="4">changes the damage rate to once per second.</flag>
+-------- NOTES --------
+The invulnerability power-up (item_enviro) does not protect the player from damage caused by this entity regardless of whether the NO_PROTECTION spawnflag is set or not. Triggering a trigger_hurt will have no effect if the START_OFF spawnflag is not set. A trigger_hurt always starts on in the game.
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="trigger_multiple" color=".5 .5 .5">
+Variable size repeatable trigger. It will fire the entities it targets when touched by player. Can be made to operate like a trigger_once entity by setting the "wait" key to -1. It can also be activated by another trigger that targets it.
+-------- KEYS --------
+<target key="target" name="Target">this points to the entity to activate.</target>
+<targetname key="targetname" name="Target Name">activating trigger points to this.</targetname>
+<real key="wait" name="Repeat Time">time in seconds until trigger becomes re-triggerable after it's been touched (default 0.2, -1 = trigger once).</real>
+<real key="random" name="Repeat Time Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="trigger_push" color=".5 .5 .5">
+This is used to create jump pads and launch ramps. It MUST point to a target_position or info_notnull entity to work. Unlike target_push, this is client side predicted.
+-------- KEYS --------
+<target key="target" name="Target">this points to the target_position to which the player will jump.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+-------- NOTES --------
+To make a jump pad or launch ramp, place the target_position/info_notnull entity at the highest point of the jump and target it with this entity.
+</group>
+
+<!--
+=============================================================================
+-->
+
+<group name="trigger_teleport" color=".5 .5 .5">
+Touching this will teleport players to the location of the targeted misc_teleporter_dest entity. This entity allows client prediction of events.
+-------- KEYS --------
+<target key="target" name="Target">this must point to a misc_teleporter_dest entity.</target>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+</group>
+
+<!--
+=============================================================================
+
+WEAPON_* ENTITIES
+
+=============================================================================
+-->
+
+<point name="weapon_bfg" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/bfg/bfg.md3">
+Big Freaking Gun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 20).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_gauntlet" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/gauntlet/gauntlet.md3">
+Gauntlet.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_grapplinghook" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/grapple/grapple.md3">
+Grappling Hook. Spawns in the game and works but is unskinned.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_grenadelauncher" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/grenadel/grenadel.md3">
+Grenade Launcher.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_lightning" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models\weapons2\lightning\lightning.md3">
+Lightning Gun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 100).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_machinegun" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models\weapons2\machinegun\machinegun.md3">
+Machine Gun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 100).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_plasmagun" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/plasma/plasma.md3">
+Plasma gun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 50).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_railgun" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/railgun/railgun.md3">
+Railgun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_rocketlauncher" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/rocketl/rocketl.md3">
+Rocket Launcher.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+-->
+
+<point name="weapon_shotgun" color="1 0 .5" box="-16 -16 -16 16 16 16" model="models/weapons2/shotgun/shotgun.md3">
+Shotgun.
+-------- KEYS --------
+<real key="wait" name="Respawn Delay">time in seconds before item respawns after being picked up (default 5, -1 = never respawn).</real>
+<real key="random" name="Respawn Delay Variance">random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).</real>
+<integer key="count" name="Ammo Given">sets the amount of ammo given to the player when weapon is picked up (default 10).</integer>
+<string key="team" name="Team Name">set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).</string>
+<target key="target" name="Target">picking up the item will trigger the entity this points to.</target>
+<targetname key="targetname" name="Target Name">a target_give entity can point to this for respawn freebies.</targetname>
+<boolean key="notfree" name="Hidden For FFA">when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.</boolean>
+<boolean key="notteam" name="Hidden For Teamplay">when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.</boolean>
+<boolean key="notsingle" name="Hidden For SP">when set to 1, entity will not spawn in Single Player mode (bot play mode).</boolean>
+<boolean key="notbot" name="Invisible To Bots">used to make an item invisible for bot attraction.</boolean>
+-------- SPAWNFLAGS --------
+<flag key="SUSPENDED" name="No Drop To Floor" bit="0">item will spawn where it was placed in map and won't drop to the floor.</flag>
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+</point>
+
+<!--
+=============================================================================
+
+WORLDSPAWN ENTITY
+
+=============================================================================
+-->
+
+<group name="worldspawn" color="0 0 0">
+Only used for the world.
+-------- KEYS --------
+<string key="message" name="Logon Message">text to print at user logon. Used for name of level.</string>
+<sound key="music" name="Music File">path/name of looping .wav file used for level's music (eg. music/sonic5.wav).</sound>
+<real key="_ambient;ambient" name="Ambient Intensity">Adds a constant value to overall lighting. Use is not recommended. Ambient light will have a tendency to flatten out variations in light and shade.</real>
+<color key="color" name="Ambient Color">RGB value for ambient light color (default is 0 0 0).</color>
+<real key="gravity" name="Gravity">gravity of level (default is normal gravity: 800).</real>
+<integer3 key="gridsize" name="Dynamic Light Granularity">granularity of the lightgrid created by q3map. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 128 128 256. Use larger powers of 2 to reduce BSP size and compile time on very large maps.</integer3>
+<integer key="_blocksize" name="BSP Block Size">q3map always splits the BSP tree along the planes X=_blocksize*n and Y=_blocksize*n. Default _blocksize value is 1024. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density.</integer>
+-------- Q3MAP2 KEYS --------
+<real key="_minlight" name="Min Lightmap Intensity">Minimum light value, levelwide. Uses the _color key to set color. Does not add unlike ambient.</real>
+<real key="_minvertexlight" name="Min Vertex Intensity">Minimum vertex lighting, levelwide.</real>
+<real key="_mingridlight" name="Min Dynamic Intensity">Minimum lightgrid (dynamic entity lighting) levelwide.</real>
+<boolean key="_keeplights" name="Keep Light Entities">Keep light entities in the BSP. Normally stripped out by the BSP process and read from the .map file by the lighting phase.</boolean>
+<boolean key="_noshadersun" name="Ignore Shader Sun">Ignore q3map_sun/sun directives in sky shaders and ONLY use entity sun lights.</boolean>
+<real key="_farplanedist" name="Far Clip Distance">Limit on how many units the vis phase of compilation can see. Used in combination with level-wide fog, it can help reduce r_speeds on large, open maps.</real>
+<texture key="_foghull" name="Fog Hull Shader">Shader to use for "fog hull." Foghull shader should be a sky shader. Omit the "textures/" prefix.</texture>
+<real key="_lightmapscale" name="Lightmap Scale">Floating point value scaling the resolution of lightmaps on brushes/patches in the world. Can be overridden in func_group (or other entities) (default 1.0).</real>
+<integer key="_castshadows;_cs" name="Shadow Caster Level">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. > 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
+<integer key="_receiveshadows;_rs" name="Shadow Reciever Level">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. > 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
+<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: omit the "textures/" prefix.</texture> Overridable in entities.
+-------- Q3MAP2 TERRAIN KEYS --------
+<texture key="_indexmap;alphamap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
+<integer key="_layers;layers" name="Terrain Layers">Integer value is the number unique root shaders that will be use on the terrain.</integer>
+<texture key="_shader;shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
+</group>
+</classes>

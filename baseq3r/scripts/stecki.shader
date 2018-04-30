@@ -1,200 +1,131 @@
-textures/stecki/beam
+textures/stecki/haze
 {
-	qer_editorimage textures/stecki/beam.tga
-
-        surfaceparm trans	
-        surfaceparm nomarks	
-        surfaceparm nonsolid
+	qer_editorimage textures/stecki/haze_rt.tga
+	surfaceparm sky
+	surfaceparm noimpact
 	surfaceparm nolightmap
-	deformVertexes autosprite2
-	cull none
-
-	{
-		map textures/stecki/beam.tga
-                blendFunc GL_SRC_ALPHA GL_ONE
-        }
-
-     
+	q3map_sun 1 .992 .879 80 38 30
+	q3map_surfacelight 50
+	skyparms textures/stecki/haze - -
 }
 
-
-textures/stecki/flare
+//stecki haze fog
+textures/stecki/fog_haze
 {
-	qer_editorimage textures/stecki/flare1.tga
+qer_editorimage textures/sfx/fog_grey.tga
+surfaceparm	trans
+surfaceparm	nonsolid
+surfaceparm	fog
+surfaceparm	nolightmap
 
-        surfaceparm trans	
-        surfaceparm nomarks	
-        surfaceparm nonsolid
-	surfaceparm nolightmap
-	cull none
-	{
-		map textures/stecki/flare1.tga
-                blendFunc add
-        }
+fogparms ( .477 .477 .479 ) 400
 
-     
 }
 
-
-//steam1
-
-textures/stecki/steam01
+textures/stecki/cameraflash
 {
-	qer_editorimage textures/stecki/steam1.tga
-
-
-        surfaceparm trans	
-        surfaceparm nomarks	
-        surfaceparm nonsolid
-//	surfaceparm nolightmap
-	cull none
-//	surfaceparm nomipmaps
-
-
-//	{
-//		map textures/stecki/steam_mask1.tga
-//		blendFunc	add
-//		depthWrite
-//		rgbGen identity
-//	}
-
-//	{
-//		map textures/stecki/steam1.tga
-//		tcMod scroll 0 -1
-//		blendFunc add
-//		blendFunc	GL_DST_COLOR GL_ZERO
-//		depthWrite
-//		rgbGen identity
-//	}
-	{
-		map textures/stecki/manhole1.tga
-		tcMod scroll 0 -1.3
-		blendFunc GL_ZERO GL_SRC_COLOR
-		depthWrite
-		rgbGen identity
-	}
-	{
-		map textures/stecki/steam_mask1.tga
-//		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		blendFunc GL_SRC_ALPHA GL_ONE
-		depthWrite
-		rgbGen identity
-	}
-
-
-
-//	{
-//		map textures/stecki/steamscroll1.tga
-//		tcMod scroll 0 -1.3
-//		blendFunc add
-//		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-//		alphaFunc GT0
-//		depthWrite
-//		rgbGen identity
-//	}
-
-}
-
-//fffdrip1
-
-textures/stecki/droplet
-{
-	qer_editorimage textures/stecki/droplet.tga
-
-
-//      surfaceparm trans	
-        surfaceparm nomarks	
-        surfaceparm nonsolid
-	surfaceparm nolightmap
-	cull none
-//	surfaceparm nomipmaps
-
-
-	{
-		animMap 3 textures/stecki/droplet.tga textures/stecki/droplet2.tga textures/stecki/droplet2.tga textures/stecki/droplet2.tga
-		tcMod scroll 0 -3
-		blendFunc add
-//		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-//		alphaFunc GT0
-//		depthWrite
-	}
-
-}
-
-//fffsplash
-
-textures/stecki/splash
-{
-        surfaceparm nomarks	
-        surfaceparm nonsolid
-	surfaceparm nolightmap
-	cull none
-	{
-		clampmap textures/stecki/splash.tga
-		blendfunc add
-		tcMod stretch sin .7 .5 0 1.5
-//		rgbGen wave square .5 .5 .25 1.5
-//depthWrite
-	}
-}
-
-
-textures/stecki/quadglobe
-{
-	qer_editorimage textures/effects/quadmap2.tga
-	surfaceparm nolightmap
-
-//	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/quadmap2.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-                tcmod rotate 30
-		//tcMod turb 0 0.2 0 .2
-                tcmod scroll 1 .1
-	}
-}
-
-textures/stecki/fffchrome
-{      
-	surfaceparm nolightmap
-	{
-		map textures/effects/tinfx2c.tga
-            tcGen environment
-          rgbGen identity
-	}
-	{
-		map textures/effects/quadmap2.tga
-		blendfunc GL_ONE GL_ONE
-//		tcGen environment
-                tcmod rotate 30
-                tcmod scroll 1 .1
-	}
-}
-
-textures/stecki/lightning1
-{
-	qer_editorimage textures/stecki/lightning1
-	surfaceparm trans	
+	qer_editorimage textures/stecki/cameraflash_01.tga
       surfaceparm nomarks	
       surfaceparm nonsolid
 	surfaceparm nolightmap
-	cull none
-	q3map_surfacelight 1000
-	//light 1
+	deformVertexes autosprite
 
-	// lightning
-//	{
-//		map $lightmap
-//		rgbGen identity
-//	}
 	{
-		map textures/stecki/lightning1.tga
+	animMap 2 textures/stecki/cameraflash_01.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga
 		blendFunc add
-		tcmod scroll 0 10
-		rgbGen identity
+		rgbGen wave Inversesawtooth 0 2 0 2
+//		rgbGen wave Inversesawtooth 1 1 0 1
 	}
+}
+
+textures/stecki/cameraflash2
+{
+	qer_editorimage textures/stecki/cameraflash_01.tga
+      surfaceparm nomarks	
+      surfaceparm nonsolid
+	surfaceparm nolightmap
+	deformVertexes autosprite
+
+	{
+	animMap 2 textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_01.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga
+		blendFunc add
+		rgbGen wave Inversesawtooth 0 2 0 2
+//		rgbGen wave Inversesawtooth 1 1 0 1
+	}
+}
+
+textures/stecki/cameraflash3
+{
+	qer_editorimage textures/stecki/cameraflash_01.tga
+      surfaceparm nomarks	
+      surfaceparm nonsolid
+	surfaceparm nolightmap
+	deformVertexes autosprite
+
+	{
+	animMap 2 textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_01.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga
+		blendFunc add
+		rgbGen wave Inversesawtooth 0 2 0 2
+//		rgbGen wave Inversesawtooth 1 1 0 1
+	}
+}
+
+textures/stecki/cameraflash4
+{
+	qer_editorimage textures/stecki/cameraflash_01.tga
+      surfaceparm nomarks	
+      surfaceparm nonsolid
+	surfaceparm nolightmap
+	deformVertexes autosprite
+
+	{
+	animMap 2 textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_01.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga
+		blendFunc add
+		rgbGen wave Inversesawtooth 0 2 0 2
+//		rgbGen wave Inversesawtooth 1 1 0 1
+	}
+}
+
+textures/stecki/cameraflash5
+{
+	qer_editorimage textures/stecki/cameraflash_01.tga
+      surfaceparm nomarks	
+      surfaceparm nonsolid
+	surfaceparm nolightmap
+	deformVertexes autosprite
+
+	{
+	animMap 2 textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_02.tga textures/stecki/cameraflash_01.tga textures/stecki/cameraflash_02.tga
+		blendFunc add
+		rgbGen wave Inversesawtooth 0 2 0 2
+//		rgbGen wave Inversesawtooth 1 1 0 1
+	}
+}
+
+
+textures/stecki/night01
+{
+	qer_editorimage textures/stecki/night01_up.tga
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm sky
+//        q3map_lightimage textures/stecki/night01_up.tga
+	q3map_sun	.9 .8 1 30 30 60
+	q3map_surfacelight 5
+
+        skyparms textures/stecki/night01 512 textures/stecki/night01
 
 }
 
+textures/stecki/decal01
+{
+	qer_editorimage gfx/damage/plasma_mrk.tga
+	polygonOffset
+	{
+		map gfx/damage/plasma_mrk.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen vertex
+		alphaGen vertex
+	}
+}
 

@@ -6593,25 +6593,25 @@ textures/base_light/ceil1_26
 {
 	surfaceparm nomarks
 	q3map_surfacelight 10000
-	//light1
+	light1
 }
 textures/base_light/ceil1_28
 {
 	surfaceparm nomarks
 	q3map_surfacelight 10000
-	//light1
+	light1
 }
 textures/base_light/ceil1_6
 {
 	surfaceparm nomarks
 	q3map_surfacelight 10000
-	//light1
+	light1
 }
 textures/base_light/tlight05
 {
 	surfaceparm nomarks
 	q3map_surfacelight 5000
-	//light1
+	light1
 }
 
 textures/base_light/invisi_light1
