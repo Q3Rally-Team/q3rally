@@ -781,18 +781,19 @@ textures/q3r_ctf/q3r_redlong_decal
 textures/q3r_ctf/q3r_bluelong_01
 {
 	qer_editorimage textures/q3r_ctf/q3r_bannerbluelong.tga
+	//deformVertexes wave sin 0 1 0 .1
 	surfaceparm nolightmap
 	surfaceparm nomarks
 	polygonoffset
 	{
 		map textures/q3r_ctf/q3r_bannerbluelong.tga
-		wave sin 0 1 0 .1
 	}
 	
 }
 
 textures/q3r_ctf/q3r_redlong_01
-{}
+{
+}
 
 
 ///////////////////////////
