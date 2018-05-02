@@ -264,7 +264,7 @@ extern int demo_protocols[];
 #endif
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
-#define MASTER_SERVER_NAME	"master.ioquake3.org"
+#define MASTER_SERVER_NAME	"dpmaster.deathmask.net"
 #endif
 
 #ifndef STANDALONE
