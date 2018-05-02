@@ -859,9 +859,17 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
+1=engine\code\q3_ui\ui_menu.c
+2=engine\code\q3_ui\ui_rally_credits.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
-TopLine=51
+TopLine=47
 Caret=39,70
+[engine\code\q3_ui\ui_menu.c]
+TopLine=422
+Caret=63,431
+[engine\code\q3_ui\ui_rally_credits.c]
+TopLine=84
+Caret=65,102
