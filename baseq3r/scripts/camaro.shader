@@ -22,6 +22,26 @@ models/players/camaro/body
 	}
 }
 
+//DEFAULT - GREY
+
+
+models/players/camaro/body_grey
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/body_grey.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //DEFAULT - BLUE
 
 
@@ -75,6 +95,26 @@ models/players/camaro/body_red
 	}
 	{
 		map models/players/camaro/body_red.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+//DEFAULT - WHITE
+
+
+models/players/camaro/body_white
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/body_white.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
