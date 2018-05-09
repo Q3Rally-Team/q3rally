@@ -22,6 +22,26 @@ models/players/camaro/body
 	}
 }
 
+//DEFAULT - BROWN
+
+
+models/players/camaro/body_brown
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/body_brown.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //DEFAULT - GREY
 
 
