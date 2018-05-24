@@ -1883,10 +1883,10 @@ static void ServerOptions_InitBotNames( void ) {
 	char		bots[MAX_INFO_STRING];
 
 	if( s_serveroptions.gametype >= GT_TEAM ) {
-		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "grunt", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "major", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "Bobby", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "Carla", 16 );
 		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[3], "visor", 16 );
+			Q_strncpyz( s_serveroptions.playerNameBuffers[3], "Paul", 16 );
 		}
 		else {
 			s_serveroptions.playerType[3].curvalue = 2;
@@ -1894,11 +1894,11 @@ static void ServerOptions_InitBotNames( void ) {
 		s_serveroptions.playerType[4].curvalue = 2;
 		s_serveroptions.playerType[5].curvalue = 2;
 
-		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "sarge", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "grunt", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "major", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "Alexandra", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "Sam", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "Dean", 16 );
 		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[9], "visor", 16 );
+			Q_strncpyz( s_serveroptions.playerNameBuffers[9], "Janine", 16 );
 		}
 		else {
 			s_serveroptions.playerType[9].curvalue = 2;

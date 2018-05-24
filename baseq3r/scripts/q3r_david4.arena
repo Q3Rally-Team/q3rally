@@ -1,0 +1,14 @@
+{
+map "q3r_david4"
+longname "Jungle Opening"
+type "q3r_ctf"
+starts "14"
+laps "-"
+length "-"
+checkpoints "-"
+observerspots "0"
+weapons "RL - LG"
+powerups "0"
+reversable "0"
+author "|CE - P3rlE"
+}

@@ -1,0 +1,14 @@
+{
+map "q3r_ctf_01"
+longname "Capture in the Jungle"
+type "q3r_ctf"
+starts "8"
+laps "0"
+length "0"
+checkpoints "0"
+observerspots "0"
+weapons "6"
+powerups "8"
+reversable "0"
+author "Perle"
+}
