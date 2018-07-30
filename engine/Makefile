@@ -289,15 +289,18 @@ bin_path=$(shell which $(1) 2> /dev/null)
 # The autoupdater uses curl, so figure out its flags no matter what.
 # We won't need this if we only build the server
 
-# set PKG_CONFIG_PATH to influence this, e.g.
-# PKG_CONFIG_PATH=/opt/cross/i386-mingw32msvc/lib/pkgconfig
-ifneq ($(call bin_path, pkg-config),)
-  CURL_CFLAGS ?= $(shell pkg-config --silence-errors --cflags libcurl)
-  CURL_LIBS ?= $(shell pkg-config --silence-errors --libs libcurl)
-  OPENAL_CFLAGS ?= $(shell pkg-config --silence-errors --cflags openal)
-  OPENAL_LIBS ?= $(shell pkg-config --silence-errors --libs openal)
-  SDL_CFLAGS ?= $(shell pkg-config --silence-errors --cflags sdl2|sed 's/-Dmain=SDL_main//')
-  SDL_LIBS ?= $(shell pkg-config --silence-errors --libs sdl2)
+# set PKG_CONFIG_PATH or PKG_CONFIG to influence this, e.g.
+# PKG_CONFIG_PATH=/opt/cross/i386-mingw32msvc/lib/pkgconfig or
+# PKG_CONFIG=arm-linux-gnueabihf-pkg-config
+PKG_CONFIG ?= pkg-config
+
+ifneq ($(call bin_path, $(PKG_CONFIG)),)
+  CURL_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags libcurl)
+  CURL_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs libcurl)
+  OPENAL_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags openal)
+  OPENAL_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs openal)
+  SDL_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags sdl2|sed 's/-Dmain=SDL_main//')
+  SDL_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs sdl2)
 else
   # assume they're in the system default paths (no -I or -L needed)
   CURL_LIBS ?= -lcurl
@@ -364,11 +367,11 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu" "gnu")
     HAVE_VM_COMPILED=true
   else
   ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -maltivec
+    ALTIVEC_CFLAGS = -maltivec
     HAVE_VM_COMPILED=true
   endif
   ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -maltivec
+    ALTIVEC_CFLAGS = -maltivec
     HAVE_VM_COMPILED=true
   endif
   ifeq ($(ARCH),sparc)
@@ -456,10 +459,12 @@ ifeq ($(PLATFORM),darwin)
                  -DMAC_OS_X_VERSION_MIN_REQUIRED=$(MAC_OS_X_VERSION_MIN_REQUIRED)
 
   ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -arch ppc -faltivec
+    BASE_CFLAGS += -arch ppc
+    ALTIVEC_CFLAGS = -faltivec
   endif
   ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -arch ppc64 -faltivec
+    BASE_CFLAGS += -arch ppc64
+    ALTIVEC_CFLAGS = -faltivec
   endif
   ifeq ($(ARCH),x86)
     OPTIMIZEVM += -march=prescott -mfpmath=sse
@@ -496,6 +501,9 @@ ifeq ($(PLATFORM),darwin)
   BASE_CFLAGS += -fno-strict-aliasing -fno-common -pipe
 
   ifeq ($(USE_OPENAL),1)
+    ifneq ($(USE_LOCAL_HEADERS),1)
+      CLIENT_CFLAGS += -I/System/Library/Frameworks/OpenAL.framework/Headers
+    endif
     ifneq ($(USE_OPENAL_DLOPEN),1)
       CLIENT_LIBS += -framework OpenAL
     endif
@@ -510,21 +518,29 @@ ifeq ($(PLATFORM),darwin)
 
   BASE_CFLAGS += -D_THREAD_SAFE=1
 
-  # FIXME: It is not possible to build using system SDL2 framework
-  #  1. IF you try, this Makefile will still drop libSDL-2.0.0.dylib into the builddir
-  #  2. Debugger warns that you have 2- which one will be used is undefined
-  ifeq ($(USE_LOCAL_HEADERS),1)
-    BASE_CFLAGS += -I$(SDLHDIR)/include
-  endif
+  CLIENT_LIBS += -framework IOKit
+  RENDERER_LIBS += -framework OpenGL
 
-  # We copy sdlmain before ranlib'ing it so that subversion doesn't think
-  #  the file has been modified by each build.
-  LIBSDLMAIN=$(B)/libSDL2main.a
-  LIBSDLMAINSRC=$(LIBSDIR)/macosx/libSDL2main.a
-  CLIENT_LIBS += -framework IOKit \
-    $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
-  RENDERER_LIBS += -framework OpenGL $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
-  CLIENT_EXTRA_FILES += $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
+  ifeq ($(USE_LOCAL_HEADERS),1)
+    # libSDL2-2.0.0.dylib for PPC is SDL 2.0.1 + changes to compile
+    ifneq ($(findstring $(ARCH),ppc ppc64),)
+      BASE_CFLAGS += -I$(SDLHDIR)/include-macppc
+    else
+      BASE_CFLAGS += -I$(SDLHDIR)/include
+    endif
+
+    # We copy sdlmain before ranlib'ing it so that subversion doesn't think
+    #  the file has been modified by each build.
+    LIBSDLMAIN=$(B)/libSDL2main.a
+    LIBSDLMAINSRC=$(LIBSDIR)/macosx/libSDL2main.a
+    CLIENT_LIBS += $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
+    RENDERER_LIBS += $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
+    CLIENT_EXTRA_FILES += $(LIBSDIR)/macosx/libSDL2-2.0.0.dylib
+  else
+    BASE_CFLAGS += -I/Library/Frameworks/SDL2.framework/Headers
+    CLIENT_LIBS += -framework SDL2
+    RENDERER_LIBS += -framework SDL2
+  endif
 
   OPTIMIZE = $(OPTIMIZEVM) -ffast-math
 
@@ -773,11 +789,11 @@ ifeq ($(PLATFORM),openbsd)
     HAVE_VM_COMPILED=true
   else
   ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -maltivec
+    ALTIVEC_CFLAGS = -maltivec
     HAVE_VM_COMPILED=true
   endif
   ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -maltivec
+    ALTIVEC_CFLAGS = -maltivec
     HAVE_VM_COMPILED=true
   endif
   ifeq ($(ARCH),sparc64)
@@ -1069,8 +1085,8 @@ ifeq ($(NEED_OPUS),1)
       -I$(OPUSDIR)/include -I$(OPUSDIR)/celt -I$(OPUSDIR)/silk \
       -I$(OPUSDIR)/silk/float -I$(OPUSFILEDIR)/include
   else
-    OPUS_CFLAGS ?= $(shell pkg-config --silence-errors --cflags opusfile opus || true)
-    OPUS_LIBS ?= $(shell pkg-config --silence-errors --libs opusfile opus || echo -lopusfile -lopus)
+    OPUS_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags opusfile opus || true)
+    OPUS_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs opusfile opus || echo -lopusfile -lopus)
   endif
   CLIENT_CFLAGS += $(OPUS_CFLAGS)
   CLIENT_LIBS += $(OPUS_LIBS)
@@ -1082,8 +1098,8 @@ ifeq ($(USE_CODEC_VORBIS),1)
   ifeq ($(USE_INTERNAL_VORBIS),1)
     CLIENT_CFLAGS += -I$(VORBISDIR)/include -I$(VORBISDIR)/lib
   else
-    VORBIS_CFLAGS ?= $(shell pkg-config --silence-errors --cflags vorbisfile vorbis || true)
-    VORBIS_LIBS ?= $(shell pkg-config --silence-errors --libs vorbisfile vorbis || echo -lvorbisfile -lvorbis)
+    VORBIS_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags vorbisfile vorbis || true)
+    VORBIS_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs vorbisfile vorbis || echo -lvorbisfile -lvorbis)
   endif
   CLIENT_CFLAGS += $(VORBIS_CFLAGS)
   CLIENT_LIBS += $(VORBIS_LIBS)
@@ -1094,8 +1110,8 @@ ifeq ($(NEED_OGG),1)
   ifeq ($(USE_INTERNAL_OGG),1)
     OGG_CFLAGS = -I$(OGGDIR)/include
   else
-    OGG_CFLAGS ?= $(shell pkg-config --silence-errors --cflags ogg || true)
-    OGG_LIBS ?= $(shell pkg-config --silence-errors --libs ogg || echo -logg)
+    OGG_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags ogg || true)
+    OGG_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs ogg || echo -logg)
   endif
   CLIENT_CFLAGS += $(OGG_CFLAGS)
   CLIENT_LIBS += $(OGG_LIBS)
@@ -1112,8 +1128,8 @@ endif
 ifeq ($(USE_INTERNAL_ZLIB),1)
   ZLIB_CFLAGS = -DNO_GZIP -I$(ZDIR)
 else
-  ZLIB_CFLAGS ?= $(shell pkg-config --silence-errors --cflags zlib || true)
-  ZLIB_LIBS ?= $(shell pkg-config --silence-errors --libs zlib || echo -lz)
+  ZLIB_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags zlib || true)
+  ZLIB_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs zlib || echo -lz)
 endif
 BASE_CFLAGS += $(ZLIB_CFLAGS)
 LIBS += $(ZLIB_LIBS)
@@ -1124,15 +1140,15 @@ ifeq ($(USE_INTERNAL_JPEG),1)
 else
   # IJG libjpeg doesn't have pkg-config, but libjpeg-turbo uses libjpeg.pc;
   # we fall back to hard-coded answers if libjpeg.pc is unavailable
-  JPEG_CFLAGS ?= $(shell pkg-config --silence-errors --cflags libjpeg || true)
-  JPEG_LIBS ?= $(shell pkg-config --silence-errors --libs libjpeg || echo -ljpeg)
+  JPEG_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags libjpeg || true)
+  JPEG_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs libjpeg || echo -ljpeg)
   BASE_CFLAGS += $(JPEG_CFLAGS)
   RENDERER_LIBS += $(JPEG_LIBS)
 endif
 
 ifeq ($(USE_FREETYPE),1)
-  FREETYPE_CFLAGS ?= $(shell pkg-config --silence-errors --cflags freetype2 || true)
-  FREETYPE_LIBS ?= $(shell pkg-config --silence-errors --libs freetype2 || echo -lfreetype)
+  FREETYPE_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags freetype2 || true)
+  FREETYPE_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs freetype2 || echo -lfreetype)
 
   BASE_CFLAGS += -DBUILD_FREETYPE $(FREETYPE_CFLAGS)
   RENDERER_LIBS += $(FREETYPE_LIBS)
@@ -1201,9 +1217,19 @@ $(echo_cmd) "CC $<"
 $(Q)$(CC) $(NOTSHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -o $@ -c $<
 endef
 
+define DO_CC_ALTIVEC
+$(echo_cmd) "CC $<"
+$(Q)$(CC) $(NOTSHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) $(ALTIVEC_CFLAGS) -o $@ -c $<
+endef
+
 define DO_REF_CC
 $(echo_cmd) "REF_CC $<"
 $(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) -o $@ -c $<
+endef
+
+define DO_REF_CC_ALTIVEC
+$(echo_cmd) "REF_CC $<"
+$(Q)$(CC) $(SHLIBCFLAGS) $(CFLAGS) $(CLIENT_CFLAGS) $(OPTIMIZE) $(ALTIVEC_CFLAGS) -o $@ -c $<
 endef
 
 define DO_REF_STR
@@ -1679,6 +1705,7 @@ Q3OBJ = \
   $(B)/client/net_ip.o \
   $(B)/client/huffman.o \
   \
+  $(B)/client/snd_altivec.o \
   $(B)/client/snd_adpcm.o \
   $(B)/client/snd_dma.o \
   $(B)/client/snd_mem.o \
@@ -1832,6 +1859,7 @@ Q3R2STRINGOBJ = \
   $(B)/renderergl2/glsl/tonemap_vp.o
 
 Q3ROBJ = \
+  $(B)/renderergl1/tr_altivec.o \
   $(B)/renderergl1/tr_animation.o \
   $(B)/renderergl1/tr_backend.o \
   $(B)/renderergl1/tr_bsp.o \
@@ -2673,6 +2701,9 @@ $(B)/client/%.o: $(ASMDIR)/%.s
 $(B)/client/%.o: $(ASMDIR)/%.c
 	$(DO_CC) -march=k8
 
+$(B)/client/snd_altivec.o: $(CDIR)/snd_altivec.c
+	$(DO_CC_ALTIVEC)
+
 $(B)/client/%.o: $(CDIR)/%.c
 	$(DO_CC)
 
@@ -2736,6 +2767,9 @@ $(B)/renderergl1/%.o: $(RCOMMONDIR)/%.c
 
 $(B)/renderergl1/%.o: $(RGL1DIR)/%.c
 	$(DO_REF_CC)
+
+$(B)/renderergl1/tr_altivec.o: $(RGL1DIR)/tr_altivec.c
+	$(DO_REF_CC_ALTIVEC)
 
 $(B)/renderergl2/glsl/%.c: $(RGL2DIR)/glsl/%.glsl
 	$(DO_REF_STR)

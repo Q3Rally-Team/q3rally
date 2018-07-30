@@ -1716,29 +1716,16 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 // END
 
 				return;
-			} else {
-				// drop them to free spectators unless they are dedicated camera followers
-				if ( ent->client->sess.spectatorClient >= 0 ) {
-// STONELANCE
-					// try cycling to a new client
-					clientNum = ent->client->sess.spectatorClient;
-					Cmd_FollowCycle_f( ent, 1 );
-//					Com_Printf( "Cycle target\n" );
-
-					if ( clientNum == ent->client->sess.spectatorClient )
-					{
-//						Com_Printf( "Follow Cam: drop back to free\n" );
-//						G_DebugLogPrintf( "Follow Cam: drop back to free\n" );
-
-//						ent->client->sess.spectatorState = SPECTATOR_FREE;
-//						ClientBegin( ent->client - level.clients );
-//						ent->client->ps.clientNum = ent->client - level.clients;
-
-						StopFollowing( ent );
-					}
-// END
-				}
 			}
+		}
+
+		if ( ent->client->ps.pm_flags & PMF_FOLLOW ) {
+			// drop them to free spectators unless they are dedicated camera followers
+			if ( ent->client->sess.spectatorClient >= 0 ) {
+				ent->client->sess.spectatorState = SPECTATOR_FREE;
+			}
+
+			ClientBegin( ent->client - level.clients );
 		}
 	}
 // STONELANCE
@@ -1786,31 +1773,33 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 				ent->client->ps.damageYaw = ANGLE2SHORT(ent->client->ps.viewangles[YAW]);
 
 				ent->client->ps.pm_flags |= PMF_OBSERVE;
-			}
-			else {
-				// drop them to free spectators unless they are dedicated camera followers
-				if ( ent->client->sess.spectatorClient >= 0 ) {
-					// try cycling to a new client
-					clientNum = ent->client->sess.spectatorClient;
-					Cmd_FollowCycle_f( ent, 1 );
-//					Com_Printf( "Cycle target\n" );
-
-					if ( clientNum == ent->client->sess.spectatorClient )
-					{
-//						Com_Printf( "Observer Cam: drop back to free\n" );
-//						G_DebugLogPrintf( "Observer Cam: drop back to free\n" );
-
-//						ent->client->sess.spectatorState = SPECTATOR_FREE;
-//						ClientBegin( ent->client - level.clients );
-//						ent->client->ps.clientNum = ent->client - level.clients;
-
-						StopFollowing( ent );
-					}
-				}
+				return;
 			}
 		}
 //		else
 //			G_DebugLogPrintf( "Observer Cam: Target client %i\n", clientNum );
+
+		if ( ent->client->ps.pm_flags & PMF_OBSERVE ) {
+			// drop them to free spectators unless they are dedicated camera followers
+			if ( ent->client->sess.spectatorClient >= 0 ) {
+// STONELANCE
+				// try cycling to a new client
+				clientNum = ent->client->sess.spectatorClient;
+				Cmd_FollowCycle_f( ent, 1 );
+				if ( clientNum != ent->client->sess.spectatorClient ) {
+//					Com_Printf( "Observer Cam: cycle to next player\n" );
+//					G_DebugLogPrintf( "Observer Cam: cycle to next player\n" );
+					return;
+				}
+//				Com_Printf( "Observer Cam: drop back to free\n" );
+//				G_DebugLogPrintf( "Observer Cam: drop back to free\n" );
+// END
+
+				ent->client->sess.spectatorState = SPECTATOR_FREE;
+			}
+
+			ClientBegin( ent->client - level.clients );
+		}
 	}
 // END
 
