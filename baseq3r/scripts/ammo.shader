@@ -184,3 +184,26 @@ models/powerups/ammo/bfgammo2
 	}
 }
 
+//8. Flamethrower
+models/powerups/ammo/flameammo
+{
+	{
+		map models/powerups/ammo/ammobox.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map models/powerups/ammo/ammolights.tga
+		blendfunc blend
+		rgbGen const ( 0 0.4 1 )
+		alphaGen wave sawtooth 0 1 0 1 
+	}
+}
+
+models/powerups/ammo/flameammo2
+{
+	{
+		map models/powerups/ammo/flmeammo2.tga
+		rgbGen identity
+	}
+}
+

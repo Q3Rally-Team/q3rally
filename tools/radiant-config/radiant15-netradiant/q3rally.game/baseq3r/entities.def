@@ -247,6 +247,32 @@ model="models/powerups/ammo/railgunam.md3"*/
 
 //=============================================================================
 
+/*QUAKED ammo_flame (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+Flamethrower ammo. Gives the player 50 by default.
+-------- KEYS --------
+wait : time in seconds before item respawns after being picked up (default 40, -1 = never respawn).
+random : random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).
+count: sets the amount of ammo given to the player when picked up (default 10).
+team : set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).
+target : picking up the item will trigger the entity this points to.
+target2 : picking up the item will trigger the entity this points to.
+targetname : a target_give entity can point to this for respawn freebies.
+targetname2 : a target_give entity can point to this for respawn freebies.
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+notbot : used to make an item invisible for bot attraction.
+-------- SPAWNFLAGS --------
+SUSPENDED : item will spawn where it was placed in map and won't drop to the floor.
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/powerups/ammo/flameam.md3"*/
+
+//=============================================================================
+
 FUNC_* ENTITIES
 
 //=============================================================================
@@ -2455,6 +2481,32 @@ The amount of time it takes for an item in the team to respawn is determined by 
 When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
 -------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
 model="models/weapons2/shotgun/shotgun.md3"*/
+
+//=============================================================================
+
+/*QUAKED weapon_flamethrower (1 0 .5) (-16 -16 -16) (16 16 16) SUSPENDED
+Flamethrower.
+-------- KEYS --------
+wait : time in seconds before item respawns after being picked up (default 5, -1 = never respawn).
+random : random time variance in seconds added or subtracted from "wait" delay (default 0 - see Notes).
+count: sets the amount of ammo given to the player when weapon is picked up (default 10).
+team : set this to team items. Teamed items will respawn randomly after team master is picked up (see Notes).
+target : picking up the item will trigger the entity this points to.
+target2 : picking up the item will trigger the entity this points to.
+targetname : a target_give entity can point to this for respawn freebies.
+targetname2 : a target_give entity can point to this for respawn freebies.
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+notbot : used to make an item invisible for bot attraction.
+-------- SPAWNFLAGS --------
+SUSPENDED : item will spawn where it was placed in map and won't drop to the floor.
+-------- NOTES --------
+The amount of time it takes for an item in the team to respawn is determined by the "wait" value of the item that was picked up previously. So if one of the items in the team has it's "wait" key set to -1 (never respawn), the random respawning cycle of the teamed items will stop after that item is picked up.
+
+When the random key is set, its value is used to calculate a minimum and a maximum delay. The final time delay will be a random value anywhere between the minimum and maximum values: (min delay = wait - random) (max delay = wait + random).
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/weapons2/flamethrower/flamethrower.md3"*/
 
 //
 =================================
