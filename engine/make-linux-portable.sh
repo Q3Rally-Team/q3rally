@@ -151,17 +151,25 @@ if [ $VERBOSE -eq 1 ] ; then
 	# Find glibc lines, remove text before GLIBC, then sort by required glibc version
 	# "sort -t _ -k 2 -V" is short form of "sort --field-separator='_' --key=2 --version-sort"
 	echo
-	echo "spearmint-server_$ARCH:"
-	objdump -T build/release-linux-$ARCH/spearmint-server_$ARCH | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+	if [ "$ARCH" = "x86" ] ; then
+		echo "q3rally-server:"
+		objdump -T build/release-linux-$ARCH/q3rally-server | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+		echo
+		echo "q3rally:"
+		objdump -T build/release-linux-$ARCH/q3rally | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+	else
+		echo "q3rally-server.$ARCH:"
+		objdump -T build/release-linux-$ARCH/q3rally-server.$ARCH | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+		echo
+		echo "q3rally.$ARCH:"
+		objdump -T build/release-linux-$ARCH/q3rally.$ARCH | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+	fi
 	echo
-	echo "spearmint_$ARCH:"
-	objdump -T build/release-linux-$ARCH/spearmint_$ARCH | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+	echo "renderer_opengl1_$ARCH.so:"
+	objdump -T build/release-linux-$ARCH/renderer_opengl1_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
 	echo
-	echo "spearmint-renderer-opengl1_$ARCH.so:"
-	objdump -T build/release-linux-$ARCH/spearmint-renderer-opengl1_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
-	echo
-	echo "spearmint-renderer-opengl2_$ARCH.so:"
-	objdump -T build/release-linux-$ARCH/spearmint-renderer-opengl2_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
+	echo "renderer_opengl2_$ARCH.so:"
+	objdump -T build/release-linux-$ARCH/renderer_opengl2_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
 	echo
 	echo "lib/$ARCH/libSDL2-2.0.so.0:"
 	objdump -T build/release-linux-$ARCH/lib/$ARCH/libSDL2-2.0.so.0 | grep GLIBC | sed -e "s/.*GLIBC_/GLIBC_/g" | sort -t _ -k 2 -V
@@ -169,10 +177,15 @@ fi
 
 # Find glibc lines, remove text before and including GLIBC_, remove trailing function name, sort by required glibc version, then grab the last (highest) version
 # "sort -uV" is short form of "sort --unique --version-sort"
-GLIBC_SERVER=$(objdump -T build/release-linux-$ARCH/spearmint-server_$ARCH | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
-GLIBC_C1=$(objdump -T build/release-linux-$ARCH/spearmint_$ARCH | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
-GLIBC_C2=$(objdump -T build/release-linux-$ARCH/spearmint-renderer-opengl1_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
-GLIBC_C3=$(objdump -T build/release-linux-$ARCH/spearmint-renderer-opengl2_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+if [ "$ARCH" = "x86" ] ; then
+	GLIBC_SERVER=$(objdump -T build/release-linux-$ARCH/q3rally-server | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+	GLIBC_C1=$(objdump -T build/release-linux-$ARCH/q3rally | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+else
+	GLIBC_SERVER=$(objdump -T build/release-linux-$ARCH/q3rally-server.$ARCH | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+	GLIBC_C1=$(objdump -T build/release-linux-$ARCH/q3rally.$ARCH | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+fi
+GLIBC_C2=$(objdump -T build/release-linux-$ARCH/renderer_opengl1_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
+GLIBC_C3=$(objdump -T build/release-linux-$ARCH/renderer_opengl2_$ARCH.so | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
 GLIBC_C4=$(objdump -T build/release-linux-$ARCH/lib/$ARCH/libSDL2-2.0.so.0 | grep GLIBC | sed -e "s/.*GLIBC_//g" | cut -d' ' -f1 | sort -uV | tail -1)
 GLIBC_CLIENT=$(printf "$GLIBC_C1\n$GLIBC_C2\n$GLIBC_C3\n$GLIBC_C4\n" | sort -uV | tail -1)
 
