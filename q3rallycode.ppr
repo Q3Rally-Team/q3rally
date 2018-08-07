@@ -863,13 +863,13 @@ q3rallycode
 2=engine\code\qcommon\qcommon.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\files.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=55
-Caret=40,70
+Caret=39,70
 [engine\code\qcommon\files.c]
 TopLine=194
-Caret=38,211
+Caret=34,209
 [engine\code\qcommon\qcommon.h]
-TopLine=357
+TopLine=677
 Caret=79,708
