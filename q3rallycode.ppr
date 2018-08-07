@@ -869,7 +869,7 @@ TopLine=55
 Caret=39,70
 [engine\code\qcommon\files.c]
 TopLine=194
-Caret=34,209
+Caret=33,210
 [engine\code\qcommon\qcommon.h]
-TopLine=677
+TopLine=595
 Caret=79,708
