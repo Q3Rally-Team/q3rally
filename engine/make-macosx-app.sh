@@ -137,12 +137,8 @@ IOQ3_RENDERER_GL2_ARCHS=""
 IOQ3_CGAME_ARCHS=""
 IOQ3_GAME_ARCHS=""
 IOQ3_UI_ARCHS=""
-IOQ3_MP_CGAME_ARCHS=""
-IOQ3_MP_GAME_ARCHS=""
-IOQ3_MP_UI_ARCHS=""
 
-BASEDIR="baseq3"
-MISSIONPACKDIR="missionpack"
+BASEDIR="baseq3r"
 
 CGAME="cgame"
 GAME="qagame"
@@ -150,7 +146,8 @@ UI="ui"
 
 RENDERER_OPENGL="renderer_opengl"
 
-DEDICATED_NAME="ioq3ded"
+EXECUTABLE_NAME="q3rally"
+DEDICATED_NAME="q3rally-server"
 
 CGAME_NAME="${CGAME}.dylib"
 GAME_NAME="${GAME}.dylib"
@@ -160,18 +157,17 @@ RENDERER_OPENGL1_NAME="${RENDERER_OPENGL}1.dylib"
 RENDERER_OPENGL2_NAME="${RENDERER_OPENGL}2.dylib"
 
 ICNSDIR="misc"
-ICNS="quake3_flat.icns"
-PKGINFO="APPLIOQ3"
+ICNS="quake3.icns"
+PKGINFO="APPL????"
 
 OBJROOT="build"
 #BUILT_PRODUCTS_DIR="${OBJROOT}/${TARGET_NAME}-darwin-${CURRENT_ARCH}"
-PRODUCT_NAME="ioquake3"
+PRODUCT_NAME="Q3Rally"
 WRAPPER_EXTENSION="app"
 WRAPPER_NAME="${PRODUCT_NAME}.${WRAPPER_EXTENSION}"
 CONTENTS_FOLDER_PATH="${WRAPPER_NAME}/Contents"
 UNLOCALIZED_RESOURCES_FOLDER_PATH="${CONTENTS_FOLDER_PATH}/Resources"
 EXECUTABLE_FOLDER_PATH="${CONTENTS_FOLDER_PATH}/MacOS"
-EXECUTABLE_NAME="${PRODUCT_NAME}"
 
 # loop through the architectures to build string lists for each universal binary
 for ARCH in $SEARCH_ARCHS; do
@@ -220,16 +216,6 @@ for ARCH in $SEARCH_ARCHS; do
 	if [ -e ${BUILT_PRODUCTS_DIR}/${BASEDIR}/${IOQ3_UI} ]; then
 		IOQ3_UI_ARCHS="${BUILT_PRODUCTS_DIR}/${BASEDIR}/${IOQ3_UI} ${IOQ3_UI_ARCHS}"
 	fi
-	# missionpack
-	if [ -e ${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_CGAME} ]; then
-		IOQ3_MP_CGAME_ARCHS="${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_CGAME} ${IOQ3_MP_CGAME_ARCHS}"
-	fi
-	if [ -e ${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_GAME} ]; then
-		IOQ3_MP_GAME_ARCHS="${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_GAME} ${IOQ3_MP_GAME_ARCHS}"
-	fi
-	if [ -e ${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_UI} ]; then
-		IOQ3_MP_UI_ARCHS="${BUILT_PRODUCTS_DIR}/${MISSIONPACKDIR}/${IOQ3_UI} ${IOQ3_MP_UI_ARCHS}"
-	fi
 
 	#echo "valid arch: ${ARCH}"
 done
@@ -238,12 +224,12 @@ done
 cd `dirname $0`
 
 if [ ! -f Makefile ]; then
-	echo "$0 must be run from the ioquake3 build directory"
+	echo "$0 must be run from the q3rally build directory"
 	exit 1
 fi
 
 if [ "${IOQ3_CLIENT_ARCHS}" == "" ]; then
-	echo "$0: no ioquake3 binary architectures were found for target '${TARGET_NAME}'"
+	echo "$0: no q3rally binary architectures were found for target '${TARGET_NAME}'"
 	exit 1
 fi
 
@@ -272,9 +258,6 @@ echo ""
 if [ ! -d "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/$BASEDIR" ]; then
 	mkdir -p "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/$BASEDIR" || exit 1;
 fi
-if [ ! -d "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/$MISSIONPACKDIR" ]; then
-	mkdir -p "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_FOLDER_PATH}/$MISSIONPACKDIR" || exit 1;
-fi
 if [ ! -d "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" ]; then
 	mkdir -p "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" || exit 1;
 fi
@@ -294,9 +277,9 @@ PLIST="<?xml version=\"1.0\" encoding=\"UTF-8\"?>
     <key>CFBundleExecutable</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIconFile</key>
-    <string>quake3_flat</string>
+    <string>quake3</string>
     <key>CFBundleIdentifier</key>
-    <string>org.ioquake.${PRODUCT_NAME}</string>
+    <string>com.q3rally.${PRODUCT_NAME}</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -397,11 +380,3 @@ action "${BUNDLEBINDIR}/${BASEDIR}/${UI_NAME}"			"${IOQ3_UI_ARCHS}"
 symlinkArch "${CGAME}"	"${CGAME}"	""	"${BUNDLEBINDIR}/${BASEDIR}"
 symlinkArch "${GAME}"	"${GAME}"	""	"${BUNDLEBINDIR}/${BASEDIR}"
 symlinkArch "${UI}"		"${UI}"		""	"${BUNDLEBINDIR}/${BASEDIR}"
-
-# missionpack
-action "${BUNDLEBINDIR}/${MISSIONPACKDIR}/${CGAME_NAME}"	"${IOQ3_MP_CGAME_ARCHS}"
-action "${BUNDLEBINDIR}/${MISSIONPACKDIR}/${GAME_NAME}"		"${IOQ3_MP_GAME_ARCHS}"
-action "${BUNDLEBINDIR}/${MISSIONPACKDIR}/${UI_NAME}"		"${IOQ3_MP_UI_ARCHS}"
-symlinkArch "${CGAME}"	"${CGAME}"	""	"${BUNDLEBINDIR}/${MISSIONPACKDIR}"
-symlinkArch "${GAME}"	"${GAME}"	""	"${BUNDLEBINDIR}/${MISSIONPACKDIR}"
-symlinkArch "${UI}"		"${UI}"		""	"${BUNDLEBINDIR}/${MISSIONPACKDIR}"
