@@ -990,12 +990,14 @@ endif
 TARGETS =
 
 ifndef FULLBINEXT
-# Leave .x86 off win32 binaries
-ifeq ($(ARCH),x86)
-  FULLBINEXT=$(BINEXT)
-else
   FULLBINEXT=.$(ARCH)$(BINEXT)
-endif
+
+  # Leave .x86 off win32 binaries
+  ifdef MINGW
+    ifeq ($(ARCH),x86)
+      FULLBINEXT=$(BINEXT)
+    endif
+  endif
 endif
 
 ifndef SHLIBNAME
