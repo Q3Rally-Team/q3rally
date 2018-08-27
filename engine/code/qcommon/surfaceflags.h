@@ -83,9 +83,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // STONELANCE
 #define SURF_GRASS				0x80000
 #define SURF_ASPHALT			0x100000
-#define SURF_WET				  0x200000
-#define SURF_SNOW				  0x400000
+#define SURF_WET				0x200000
+#define SURF_SNOW				0x400000
 #define SURF_GRAVEL				0x800000
-#define SURF_ICE          0x1000000
-#define SURF_DIRT         0x2000000
+#define SURF_ICE                0x1000000
+#define SURF_DIRT               0x2000000
+#define SURF_METAL              0x4000000
 // END
+

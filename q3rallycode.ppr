@@ -16,7 +16,7 @@ HTServer=localhost
 [Project tree]
 q3rallycode
 	+engine
-		+code
+		-code
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -486,7 +486,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			+qcommon
+			-qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -860,12 +860,24 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\files.c
 1=engine\code\qcommon\q_shared.h
+2=engine\Makefile
+3=engine\code\cgame\cg_players.c
+4=engine\code\qcommon\surfaceflags.h
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\files.c]
-TopLine=194
+TopLine=184
 Caret=3,211
 [engine\code\qcommon\q_shared.h]
 TopLine=49
-Caret=34,70
+Caret=39,70
+[engine\Makefile]
+TopLine=99
+Caret=17,114
+[engine\code\cgame\cg_players.c]
+TopLine=2747
+Caret=1,2762
+[engine\code\qcommon\surfaceflags.h]
+TopLine=69
+Caret=1,93
