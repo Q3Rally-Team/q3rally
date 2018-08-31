@@ -865,7 +865,7 @@ q3rallycode
 4=engine\code\qcommon\surfaceflags.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\Makefile
 [engine\code\qcommon\files.c]
 TopLine=184
 Caret=3,211
