@@ -1,5 +1,6 @@
 textures/q3r_road/asphalt
 {
+	surfaceparm SURF_ASPHALT
 	{
 		map $lightmap
 		rgbGen identity

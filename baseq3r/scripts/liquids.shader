@@ -3,7 +3,7 @@ textures/q3r_liquids/q3r_water_01
 	qer_editorimage textures/q3r_liquids/water.tga
 	surfaceparm nomarks
 	surfaceparm trans
-	surfaceparm water
+	surfaceparm SURF_WET
 	cull disable
 	fogparms ( 0.215686 0.278431 0.333333 ) 1024
 	{
@@ -35,7 +35,7 @@ textures/q3r_liquids/q3r_water_02
 	qer_editorimage textures/q3r_liquids/water.tga
 	surfaceparm nomarks
 	surfaceparm trans
-	surfaceparm water
+	surfaceparm SURF_WET
 	cull disable
 	deformVertexes wave 512 sin 0 7 0 0.4
 	fogparms ( 0.215686 0.278431 0.333333 ) 1024
@@ -64,7 +64,7 @@ textures/q3r_liquids/q3r_water_03
 	qer_editorimage textures/q3r_liquids/water.tga
 	surfaceparm nomarks
 	surfaceparm trans
-	surfaceparm water
+	surfaceparm SURF_WET
 	cull disable
 	deformVertexes wave 512 sin 0 7 0 0.4
 	fogparms ( 0.215686 0.278431 0.333333 ) 1024
@@ -282,7 +282,7 @@ textures/liquids/watertest
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 
 		cull disable
 		tessSize 32
@@ -337,7 +337,7 @@ textures/liquids/xctf_painwater
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 		q3map_surfacelight 450
 
@@ -379,7 +379,7 @@ textures/liquids/clear_calm1
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 	
 		cull disable
 		deformVertexes wave 64 sin .25 .25 0 .5	
@@ -422,7 +422,7 @@ textures/liquids/clear_ripple3
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 	
 		cull disable
 		deformVertexes wave 64 sin .5 .5 0 .5	
@@ -476,7 +476,7 @@ textures/liquids/clear_ripple2
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 
 		cull disable
 		deformVertexes wave 64 sin .5 .5 0 .5	
@@ -530,7 +530,7 @@ textures/liquids/clear_ripple1
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 
 		cull disable
 		deformVertexes wave 64 sin .5 .5 0 .5	
@@ -582,7 +582,7 @@ textures/liquids/clear_ripple1_q3dm1
 		q3map_globaltexture
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 
 		cull disable
 		deformVertexes wave 64 sin .5 .5 0 .5	
@@ -966,7 +966,7 @@ textures/liquids/calm_pool
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		cull disable
@@ -1007,7 +1007,7 @@ textures/liquids/ps_bloodwater1
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 		q3map_surfacelight 50
 
@@ -1052,7 +1052,7 @@ textures/liquids/calm_poollight
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 		q3map_surfacelight 50
 
@@ -1113,7 +1113,7 @@ textures/liquids/calm_pool2
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 
 		cull disable
 		tesssize 64
@@ -1169,7 +1169,7 @@ textures/liquids/pool
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		q3map_globaltexture		
@@ -1233,7 +1233,7 @@ textures/liquids/calm_pool_bgtess
 
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		cull disable
@@ -1274,7 +1274,7 @@ textures/liquids/ripplewater2
 	
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		// JDC: testing foggy water
@@ -1324,7 +1324,7 @@ textures/liquids/proto_pool3
 	    	qer_trans .80
                 surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
                 q3map_surfacelight 50
 		cull disable
                 // tesssize 256
@@ -1473,7 +1473,7 @@ textures/liquids/jello
 	     // qer_trans .001
                 surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
                 cull disable
 	        
 		
@@ -1505,7 +1505,7 @@ textures/liquids/proto_gruel
                 surfaceparm trans
 		surfaceparm nonsolid
                 surfaceparm nomarks
-		surfaceparm water
+		surfaceparm SURF_WET
 		cull disable
                 //tesssize 256
 	        //deformVertexes wave 100 sin 1 5 .1 .5
@@ -1552,7 +1552,7 @@ textures/liquids/xripplewater2
 	
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		// JDC, testing backshader cull disable
@@ -1599,7 +1599,7 @@ ripplewater2_back
 	//	this is used when looking from inside the water to the outside
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 //		fogonly
@@ -1627,7 +1627,7 @@ textures/liquids/ripplewater2a
 		qer_editorimage textures/liquids/ripplewater2
 		surfaceparm trans
 		surfaceparm nonsolid
-		surfaceparm water
+		surfaceparm SURF_WET
 		surfaceparm nolightmap
 
 		cull disable
@@ -1820,7 +1820,7 @@ textures/liquids/bloodwater_pj
 	
 	surfaceparm trans
 	surfaceparm nonsolid
-	surfaceparm water
+	surfaceparm SURF_WET
 	surfaceparm nolightmap
 	//testing out a dim surface light, march 19 - bj
 	q3map_surfacelight 500
@@ -1867,7 +1867,7 @@ textures/liquids/bloodwater
 
 	surfaceparm trans
 	surfaceparm nonsolid
-	surfaceparm water
+	surfaceparm SURF_WET
 	surfaceparm nolightmap
 	//testing out a dim surface light, march 19 - bj
 	q3map_surfacelight 200

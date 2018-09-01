@@ -209,7 +209,7 @@ textures/q3r_metals/rail03
 textures/q3r_metals/plate01
 
 {
-	surfaceparm metal
+	surfaceparm SURF_METAL
      	{
 	        map textures/effects/tinfx2d.tga
 		tcGen environment

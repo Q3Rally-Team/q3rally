@@ -4,7 +4,7 @@
 
 textures/qrally2/sand3
 {
-	surfaceparm	dust		
+	surfaceparm SURF_DIRT
 
 	{
 		map $lightmap
@@ -19,8 +19,8 @@ textures/qrally2/sand3
 
 textures/qrally2/sandwet
 {
-	surfaceparm	dust
-	surfaceparm	wet
+	surfaceparm SURF_DIRT
+	surfaceparm SURF_WET
 
 	{
 		map $lightmap
@@ -35,6 +35,7 @@ textures/qrally2/sandwet
 
 textures/qrally2/qrally2asphalt
 {
+	surfaceparm SURF_ASPHALT
 	{
 		map $lightmap
 		rgbGen identity
@@ -48,7 +49,7 @@ textures/qrally2/qrally2asphalt
 
 textures/qrally2/qrally2grass0_1
 {
-	surfaceparm grass
+	surfaceparm SURF_GRASS
 	{
 		map $lightmap
 		rgbGen identity

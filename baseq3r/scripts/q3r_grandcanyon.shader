@@ -27,7 +27,7 @@ textures/q3r_grandcanyon/concrete
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
-	surfaceparm asphalt
+	surfaceparm SURF_ASPHALT
 
 	qer_editorimage textures/q3r_grandcanyon/concrete
 	
@@ -46,7 +46,7 @@ textures/q3r_grandcanyon/concrete
 
 textures/q3r_grandcanyon/pjrock1
 {
-	surfaceparm gravel
+	surfaceparm SURF_GRAVEL
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
@@ -63,7 +63,7 @@ textures/q3r_grandcanyon/pjrock1
 
 textures/q3r_grandcanyon/pjrock16
 {
-	surfaceparm dirt
+	surfaceparm SURF_DIRT
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
@@ -84,7 +84,7 @@ textures/q3r_grandcanyon/pjrock21
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
-	surfaceparm dirt
+	surfaceparm SURF_DIRT
 
 	qer_editorimage textures/q3r_grandcanyon/pjrock21b
 	
@@ -103,7 +103,7 @@ textures/q3r_grandcanyon/pjrock16-1
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
-	surfaceparm dirt
+	surfaceparm SURF_DIRT
 	{
 
 		rgbgen vertex
@@ -118,7 +118,7 @@ textures/q3r_grandcanyon/pjrock16-21
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
-	surfaceparm dirt
+	surfaceparm SURF_DIRT
 	{
 
 		rgbgen vertex
@@ -133,7 +133,7 @@ textures/q3r_grandcanyon/pjrock21-1
 	Surfaceparm nolightmap //signifies vertex lighting only.
 //	Q3map_novertexshadows //this is what keeps those caulk vis blockers from causing ugly shadows to form on your terrain.
 	q3map_forcesunlight
-	surfaceparm dirt
+	surfaceparm SURF_DIRT
 	{
 
 		rgbgen vertex
@@ -162,7 +162,7 @@ textures/q3r_grandcanyon/water
 	q3map_globaltexture
 	surfaceparm trans
 	surfaceparm nonsolid
-	surfaceparm water
+	surfaceparm SURF_WET
 
 	cull disable
 

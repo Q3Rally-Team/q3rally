@@ -183,17 +183,9 @@ console
         {
 		map gfx/misc/console01.tga
                 blendFunc GL_ONE GL_ZERO
-                tcMod scroll .02  0
-                tcmod scale 2 1
+               
 	}
-        {
-                map gfx/misc/console02.tga
-                //map textures/sfx/firegorre3.tga
-                blendFunc add
-                tcMod turb 0 .1 0 .1
-                tcMod scale 2 1
-                tcmod scroll 0.2  .1
-	} 
+        
 
 }
 
@@ -205,29 +197,12 @@ menuback
 {
 	nopicmip
 	nomipmaps
-        //{
-        //        map textures/sfx/logo512.tga
-        //}
 
-        //{
-        //        map textures/sfx/specular.tga
-         //       //blendfunc add
-        //        tcMod turb 0 .8 0 .2
-        //        tcmod scroll -.1  -.2
-	//} 
-         {
+        {
                 map textures/sfx/logo512.tga
-                // blendFunc blend
-                rgbgen identity
         }
-        //{
-	//	map textures/sfx/proto_zzzdrk.tga
-        //        blendFunc add
-        //        tcMod turb 0 .1 0 .9
-        //         tcmod scale .2 .2
-        //         tcMod scroll .02  0.7
-        //         rgbgen identity
-	//} 
+
+       
         
 }
 menubacknologo
@@ -237,10 +212,6 @@ menubacknologo
        
         {
                map gfx/colors/black.tga
-	       //map textures/sfx/proto_zzzdrk.tga
-               // tcMod turb 0 .1 0 .9
-               // tcmod scale .2 .2
-               // tcMod scroll .02  0.7
 	} 
         
 }
@@ -275,7 +246,7 @@ levelShotDetail
 	nopicmip
 	{
 		map textures/sfx/detail.tga
-        blendFunc GL_DST_COLOR GL_SRC_COLOR
+        	blendFunc GL_DST_COLOR GL_SRC_COLOR
 		rgbgen identity
 	}
 }
