@@ -685,6 +685,7 @@ gitem_t	bg_itemlist[] =
 		"",							// precache
 		""							// sounds
 	},
+
 // END
 
 	//

@@ -1106,6 +1106,7 @@ typedef struct {
 	qhandle_t	MMapShader;
 	//TBB FIN
 	qhandle_t	turboModel;
+    
 // Q3Rally Code END
 
 	// sounds

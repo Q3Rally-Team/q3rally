@@ -1399,6 +1399,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	}
 // END
 
+
 	//
 	// add the gun
 	//
