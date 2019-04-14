@@ -95,7 +95,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -165,7 +165,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -861,22 +861,13 @@ q3rallycode
 0=engine\code\qcommon\files.c
 1=engine\code\qcommon\q_shared.h
 2=engine\Makefile
-3=engine\code\cgame\cg_players.c
-4=engine\code\q3_ui\ui_players.c
-5=engine\code\cgame\cg_draw.c
-6=engine\code\cgame\cg_view.c
-7=engine\code\game\bg_misc.c
-8=engine\code\game\bg_public.h
-9=engine\code\q3_ui\ui_qmenu.c
-10=engine\code\q3_ui\ui_controls2.c
-11=engine\code\cgame\cg_main.c
-12=engine\code\cgame\cg_local.h
-13=engine\code\q3_ui\ui_local.h
+3=engine\code\q3_ui\ui_menu.c
+4=engine\code\q3_ui\ui_rally_credits.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_players.c
+Selected=engine\code\q3_ui\ui_rally_credits.c
 [engine\code\qcommon\files.c]
-TopLine=184
+TopLine=180
 Caret=3,211
 [engine\code\qcommon\q_shared.h]
 TopLine=49
@@ -884,36 +875,9 @@ Caret=40,70
 [engine\Makefile]
 TopLine=99
 Caret=17,114
-[engine\code\cgame\cg_players.c]
-TopLine=3363
-Caret=37,3376
-[engine\code\q3_ui\ui_players.c]
-TopLine=1041
-Caret=21,1055
-[engine\code\cgame\cg_draw.c]
-TopLine=1789
-Caret=1,1804
-[engine\code\cgame\cg_view.c]
-TopLine=926
-Caret=1,941
-[engine\code\game\bg_misc.c]
-TopLine=653
-Caret=1,676
-[engine\code\game\bg_public.h]
-TopLine=383
-Caret=18,415
-[engine\code\q3_ui\ui_qmenu.c]
-TopLine=2245
-Caret=80,2260
-[engine\code\q3_ui\ui_controls2.c]
-TopLine=734
-Caret=1,751
-[engine\code\cgame\cg_main.c]
-TopLine=1210
-Caret=86,1232
-[engine\code\cgame\cg_local.h]
-TopLine=1094
-Caret=23,1108
-[engine\code\q3_ui\ui_local.h]
-TopLine=741
-Caret=25,756
+[engine\code\q3_ui\ui_menu.c]
+TopLine=420
+Caret=63,438
+[engine\code\q3_ui\ui_rally_credits.c]
+TopLine=101
+Caret=65,102
