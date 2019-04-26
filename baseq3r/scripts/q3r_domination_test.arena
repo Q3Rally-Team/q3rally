@@ -1,0 +1,11 @@
+{
+map "q3r_domination_test"
+longname "Domination Test Map"
+fraglimit 150
+type "q3r_dom q3r_ctf"
+starts "8"
+observerspots "0"
+weapons "0"
+powerups "0"
+author "Perle"
+}

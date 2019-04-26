@@ -1,0 +1,264 @@
+
+// entity 0
+{
+"classname" "worldspawn"
+// brush 0
+{
+( -576 56 8 ) ( -576 -72 8 ) ( -576 -72 0 ) q3r_dirt_grass/darkdirt02 0 0 0 0.5 0.5 0 0 0
+( 48 384 8 ) ( -80 384 8 ) ( -80 384 0 ) q3r_dirt_grass/darkdirt02 0 0 0 0.5 0.5 0 0 0
+( 576 -64 8 ) ( 576 64 8 ) ( 576 64 0 ) q3r_dirt_grass/darkdirt02 0 0 0 0.5 0.5 0 0 0
+( -48 -384 8 ) ( 80 -384 8 ) ( 80 -384 0 ) q3r_dirt_grass/darkdirt02 0 0 0 0.5 0.5 0 0 0
+( -64 -64 8 ) ( -64 64 8 ) ( 64 64 8 ) q3r_dirt_grass/darkdirt02 128 128 0 -0.5 0.5 0 0 0
+( 64 64 0 ) ( -64 64 0 ) ( -64 -64 0 ) q3r_dirt_grass/darkdirt02 0 0 0 0.5 0.5 0 0 0
+}
+// brush 1
+{
+( -576 384 64 ) ( -576 -384 64 ) ( -576 -384 8 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+( -504 384 0 ) ( -576 384 0 ) ( -576 384 -56 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+( -568 -384 64 ) ( -568 384 64 ) ( -568 384 8 ) q3r_building/brick01 0 64 0 -0.125 0.125 0 0 0
+( -576 -384 64 ) ( -504 -384 64 ) ( -504 -384 8 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+( -576 -384 72 ) ( -576 384 72 ) ( -504 384 72 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+( -504 384 8 ) ( -576 384 8 ) ( -576 -384 8 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+}
+// brush 2
+{
+( 576 -384 8 ) ( 576 384 8 ) ( 504 384 8 ) q3r_building/brick01 -256 0 0 0.5 0.5 0 0 0
+( 504 384 72 ) ( 576 384 72 ) ( 576 -384 72 ) q3r_building/brick01 -256 0 0 0.5 0.5 0 0 0
+( 504 -384 8 ) ( 504 -384 64 ) ( 576 -384 64 ) q3r_building/brick01 -256 0 0 0.5 0.5 0 0 0
+( 568 384 8 ) ( 568 384 64 ) ( 568 -384 64 ) q3r_building/brick01 0 64 0 -0.125 0.125 0 0 0
+( 576 384 -56 ) ( 576 384 0 ) ( 504 384 0 ) q3r_building/brick01 -256 0 0 0.5 0.5 0 0 0
+( 576 -384 8 ) ( 576 -384 64 ) ( 576 384 64 ) q3r_building/brick01 0 0 0 0.5 0.5 0 0 0
+}
+// brush 3
+{
+( -568 -384 8 ) ( 200 -384 8 ) ( 200 -312 8 ) q3r_building/brick01 -384 -368 -90 0.5 0.5 0 0 0
+( 200 -312 72 ) ( 200 -384 72 ) ( -568 -384 72 ) q3r_building/brick01 -384 -368 -90 0.5 0.5 0 0 0
+( -568 -312 8 ) ( -568 -312 64 ) ( -568 -384 64 ) q3r_building/brick01 -384 0 -180 0.5 -0.5 0 0 0
+( 200 -376 8 ) ( 200 -376 64 ) ( -568 -376 64 ) q3r_building/brick01 -448 63 -180 0.125 -0.125 0 0 0
+( 568 -384 -64 ) ( 568 -384 -8 ) ( 568 -312 -8 ) q3r_building/brick01 -384 0 -180 0.5 -0.5 0 0 0
+( -568 -384 8 ) ( -568 -384 64 ) ( 200 -384 64 ) q3r_building/brick01 368 0 0 0.5 0.5 0 0 0
+}
+// brush 4
+{
+( 568 384 8 ) ( 568 384 64 ) ( -200 384 64 ) q3r_building/brick01 368 0 -180 0.5 -0.5 0 0 0
+( -568 384 -64 ) ( -568 384 -8 ) ( -568 312 -8 ) q3r_building/brick01 -384 0 0 0.5 0.5 0 0 0
+( -200 376 8 ) ( -200 376 64 ) ( 568 376 64 ) q3r_building/brick01 -448 63 0 0.125 0.125 0 0 0
+( 568 312 8 ) ( 568 312 64 ) ( 568 384 64 ) q3r_building/brick01 -384 0 0 0.5 0.5 0 0 0
+( -200 312 72 ) ( -200 384 72 ) ( 568 384 72 ) q3r_building/brick01 -384 -368 90 0.5 0.5 0 0 0
+( 568 384 8 ) ( -200 384 8 ) ( -200 312 8 ) q3r_building/brick01 -384 -368 90 0.5 0.5 0 0 0
+}
+// brush 5
+{
+( -584 384 384 ) ( -584 -384 384 ) ( -584 -384 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( -384 384 384 ) ( -584 384 384 ) ( -584 384 0 ) q3r_skies/env/mp_us/mp_us 16 0 0 0.5 0.5 0 0 0
+( -576 -408 384 ) ( -576 360 384 ) ( -576 360 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( -584 -384 384 ) ( -384 -384 384 ) ( -384 -384 0 ) q3r_skies/env/mp_us/mp_us 16 0 0 0.5 0.5 0 0 0
+( -584 -384 384 ) ( -584 384 384 ) ( -384 384 384 ) q3r_skies/env/mp_us/mp_us 16 0 0 0.5 0.5 0 0 0
+( -384 384 0 ) ( -584 384 0 ) ( -584 -384 0 ) q3r_skies/env/mp_us/mp_us 16 0 0 0.5 0.5 0 0 0
+}
+// brush 6
+{
+( 384 -384 0 ) ( 584 -384 0 ) ( 584 384 0 ) q3r_skies/env/mp_us/mp_us 16 0 -180 0.5 0.5 0 0 0
+( 584 384 384 ) ( 584 -384 384 ) ( 384 -384 384 ) q3r_skies/env/mp_us/mp_us 16 0 -180 0.5 0.5 0 0 0
+( 584 384 384 ) ( 384 384 384 ) ( 384 384 0 ) q3r_skies/env/mp_us/mp_us 16 0 -180 0.5 -0.5 0 0 0
+( 576 408 384 ) ( 576 -360 384 ) ( 576 -360 0 ) q3r_skies/env/mp_us/mp_us 0 0 -180 0.5 -0.5 0 0 0
+( 384 -384 384 ) ( 584 -384 384 ) ( 584 -384 0 ) q3r_skies/env/mp_us/mp_us 16 0 -180 0.5 -0.5 0 0 0
+( 584 -384 384 ) ( 584 384 384 ) ( 584 384 0 ) q3r_skies/env/mp_us/mp_us 0 0 -180 0.5 -0.5 0 0 0
+}
+// brush 7
+{
+( -608 384 384 ) ( 160 384 384 ) ( 160 384 0 ) q3r_skies/env/mp_us/mp_us -144 0 -180 0.5 -0.5 0 0 0
+( -584 584 384 ) ( -584 384 384 ) ( -584 384 0 ) q3r_skies/env/mp_us/mp_us -128 0 0 0.5 0.5 0 0 0
+( 208 392 384 ) ( -560 392 384 ) ( -560 392 0 ) q3r_skies/env/mp_us/mp_us -144 0 -180 0.5 -0.5 0 0 0
+( 584 368 384 ) ( 584 568 384 ) ( 584 568 0 ) q3r_skies/env/mp_us/mp_us -128 0 0 0.5 0.5 0 0 0
+( 184 384 384 ) ( -584 384 384 ) ( -584 584 384 ) q3r_skies/env/mp_us/mp_us -128 144 90 0.5 0.5 0 0 0
+( -584 584 0 ) ( -584 384 0 ) ( 184 384 0 ) q3r_skies/env/mp_us/mp_us -128 144 90 0.5 0.5 0 0 0
+}
+// brush 8
+{
+( 584 -584 0 ) ( 584 -384 0 ) ( -184 -384 0 ) q3r_skies/env/mp_us/mp_us -128 -112 -90 0.5 0.5 0 0 0
+( -184 -384 384 ) ( 584 -384 384 ) ( 584 -584 384 ) q3r_skies/env/mp_us/mp_us -128 -112 -90 0.5 0.5 0 0 0
+( -584 -368 384 ) ( -584 -568 384 ) ( -584 -568 0 ) q3r_skies/env/mp_us/mp_us -128 0 -180 0.5 -0.5 0 0 0
+( -208 -392 384 ) ( 560 -392 384 ) ( 560 -392 0 ) q3r_skies/env/mp_us/mp_us 112 0 0 0.5 0.5 0 0 0
+( 584 -584 384 ) ( 584 -384 384 ) ( 584 -384 0 ) q3r_skies/env/mp_us/mp_us -128 0 -180 0.5 -0.5 0 0 0
+( 608 -384 384 ) ( -160 -384 384 ) ( -160 -384 0 ) q3r_skies/env/mp_us/mp_us 112 0 0 0.5 0.5 0 0 0
+}
+// brush 9
+{
+( -584 392 384 ) ( -584 -392 384 ) ( -584 -392 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( 584 392 384 ) ( -584 392 384 ) ( -584 392 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( 584 -392 384 ) ( 584 392 384 ) ( 584 392 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( -584 -392 384 ) ( 584 -392 384 ) ( 584 -392 0 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( -584 -392 392 ) ( -584 392 392 ) ( 584 392 392 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+( 608 392 384 ) ( -560 392 384 ) ( -560 -392 384 ) q3r_skies/env/mp_us/mp_us 0 0 0 0.5 0.5 0 0 0
+}
+}
+// entity 1
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-480 -256 40"
+"angle" "0"
+}
+// entity 2
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-480 256 40"
+"angle" "0"
+}
+// entity 3
+{
+"classname" "team_CTF_redspawn"
+"origin" "480 256 40"
+"angle" "180"
+}
+// entity 4
+{
+"classname" "team_CTF_redspawn"
+"angle" "180"
+"origin" "480 -256 40"
+}
+// entity 5
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-480 128 40"
+"angle" "0"
+}
+// entity 6
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-480 -128 40"
+"angle" "0"
+}
+// entity 7
+{
+"classname" "team_CTF_redplayer"
+"origin" "480 -128 40"
+"angle" "180"
+}
+// entity 8
+{
+"classname" "team_CTF_redplayer"
+"angle" "180"
+"origin" "480 128 40"
+}
+// entity 9
+{
+"classname" "team_DOMINATION_sigil"
+"origin" "128 -256 40"
+}
+// entity 10
+{
+"classname" "team_DOMINATION_sigil"
+"origin" "0 0 40"
+}
+// entity 11
+{
+"classname" "team_DOMINATION_sigil"
+"origin" "-128 256 40"
+}
+// entity 12
+{
+"classname" "info_player_deathmatch"
+"origin" "-480 0 40"
+"angle" "0"
+}
+// entity 13
+{
+"classname" "info_player_deathmatch"
+"origin" "480 0 40"
+"angle" "180"
+}
+// entity 14
+{
+"classname" "weapon_flamethrower"
+"origin" "0 128 40"
+}
+// entity 15
+{
+"classname" "ammo_flame"
+"origin" "-48 128 40"
+}
+// entity 16
+{
+"classname" "ammo_flame"
+"origin" "48 128 40"
+}
+// entity 17
+{
+"classname" "info_player_deathmatch"
+"origin" "384 0 40"
+"angle" "180"
+}
+// entity 18
+{
+"classname" "info_player_deathmatch"
+"origin" "384 -120 40"
+"angle" "180"
+}
+// entity 19
+{
+"classname" "info_player_deathmatch"
+"origin" "384 256 40"
+"angle" "180"
+}
+// entity 20
+{
+"classname" "info_player_deathmatch"
+"origin" "384 136 40"
+"angle" "180"
+}
+// entity 21
+{
+"classname" "info_player_deathmatch"
+"origin" "384 -256 40"
+"angle" "180"
+}
+// entity 22
+{
+"classname" "info_player_deathmatch"
+"origin" "-384 0 40"
+"angle" "0"
+}
+// entity 23
+{
+"classname" "info_player_deathmatch"
+"origin" "-384 -120 40"
+"angle" "0"
+}
+// entity 24
+{
+"classname" "info_player_deathmatch"
+"origin" "-384 256 40"
+"angle" "0"
+}
+// entity 25
+{
+"classname" "info_player_deathmatch"
+"origin" "-384 136 40"
+"angle" "0"
+}
+// entity 26
+{
+"classname" "info_player_deathmatch"
+"origin" "-384 -256 40"
+"angle" "0"
+}
+// entity 27
+{
+"classname" "rally_startfinish"
+// brush 0
+{
+( 32 32 368 ) ( 32 -32 368 ) ( -16 32 368 ) common/startfinish 0 0 0 0.5 0.5 0 0 0
+( 32 32 368 ) ( -16 32 368 ) ( 32 32 336 ) common/startfinish 0 32 0 0.5 0.5 0 0 0
+( 32 32 368 ) ( 32 32 336 ) ( 32 -32 368 ) common/startfinish 0 32 0 0.5 0.5 0 0 0
+( -16 -32 336 ) ( 32 -32 336 ) ( -16 32 336 ) common/startfinish 0 0 0 0.5 0.5 0 0 0
+( -16 -32 336 ) ( -16 -32 368 ) ( 32 -32 336 ) common/startfinish 0 32 0 0.5 0.5 0 0 0
+( -16 -32 336 ) ( -16 32 336 ) ( -16 -32 368 ) common/startfinish 0 32 0 0.5 0.5 0 0 0
+}
+}
+// entity 28
+{
+"classname" "weapon_plasmagun"
+"origin" "48.000000 -128.000000 32.000000"
+"count" "200"
+}
