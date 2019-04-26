@@ -219,9 +219,22 @@ void	trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], in
 	syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater );
 }
 
+
 sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed ) {
 	return syscall( CG_S_REGISTERSOUND, sample, compressed );
 }
+
+/* Temp Debug Code
+
+sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compressed, const char *file, int line ) {
+        if ( !sample ) {
+                Com_Printf( "DEBUG: trap_S_RegisterSound: NULL sound name at %s:%d\n", file, line );
+        }
+ 
+        return syscall( CG_S_REGISTERSOUND, sample, compressed );
+}
+
+*/
 
 void	trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
 	syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop );

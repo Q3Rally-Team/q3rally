@@ -890,6 +890,61 @@ Only in CTF games
 /* sounds */ ""
 	},
 
+// Q3Rally Code Start
+	
+/*QUAKED team_DOMINATION_sigil_red
+Only in Domination games
+*/
+  {
+    "team_DOMINATION_sigil_red",
+    NULL,
+    { "models/flags/r_flag.md3",
+    0, 0, 0 },
+/* icon */    "icons/iconf_red1",
+/* pickup */  "Flag",
+    0,
+    IT_SIGIL,
+    PW_SIGILRED,
+/* precache */    "",
+/* sounds */    ""
+    },
+    
+/*QUAKED team_DOMINATION_sigil_blue
+Only in Domination games
+*/
+  {
+    "team_DOMINATION_sigil_blue",
+    NULL,
+    { "models/flags/b_flag.md3",
+    0, 0, 0 },
+/* icon */    "icons/iconf_blu1",
+/* pickup */  "Flag",
+    0,
+    IT_SIGIL,
+    PW_SIGILBLUE,
+/* precache */ "",
+/* sounds */ ""
+	},
+    
+/*QUAKED team_DOMINATION_sigil
+Only in Domination games
+*/
+  {
+    "team_DOMINATION_sigil",
+    NULL,
+    { "models/flags/n_flag.md3",
+    0, 0, 0 },
+/* icon */    "icons/iconf_neutral1",
+/* pickup */  "Flag",
+    0,
+    IT_SIGIL,
+    PW_SIGILWHITE,
+/* precache */    "",
+/* sounds */    ""
+    },
+    
+// Q3Rally Code END
+
 #ifdef MISSIONPACK
 /*QUAKED holdable_kamikaze (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
@@ -1170,7 +1225,8 @@ gitem_t	*BG_FindItemForPowerup( powerup_t pw ) {
 	for ( i = 0 ; i < bg_numItems ; i++ ) {
 		if ( (bg_itemlist[i].giType == IT_POWERUP || 
 					bg_itemlist[i].giType == IT_TEAM ||
-					bg_itemlist[i].giType == IT_PERSISTANT_POWERUP) && 
+					bg_itemlist[i].giType == IT_PERSISTANT_POWERUP ||
+          bg_itemlist[i].giType == IT_SIGIL ) && 
 			bg_itemlist[i].giTag == pw ) {
 			return &bg_itemlist[i];
 		}
@@ -1437,6 +1493,18 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		}
 #endif
 		return qfalse;
+        
+        // Q3Rally Code Start
+	case IT_SIGIL:
+	  // red team cannot touch a red sigil
+	  if (ps->persistant[PERS_TEAM] == TEAM_RED && ent->powerups == PW_SIGILRED)
+	     return qfalse;
+	  // blue team cannot touch a blue sigil
+	  else if (ps->persistant[PERS_TEAM] == TEAM_BLUE && ent->powerups == PW_SIGILBLUE)
+	     return qfalse;
+	  else
+	     return qtrue;
+// Q3Rally Code END
 
 	case IT_HOLDABLE:
 		// can only hold one item at a time
@@ -1591,9 +1659,9 @@ char *eventnames[] = {
 	"EV_NOAMMO",
 	"EV_CHANGE_WEAPON",
 	"EV_FIRE_WEAPON",
+    "EV_ALTFIRE_WEAPON",
 // STONELANCE
 	"EV_HAZARD",
-	"EV_ALTFIRE_WEAPON",
 	"EV_FIRE_REARWEAPON",
 // END
 

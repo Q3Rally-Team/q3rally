@@ -86,3 +86,8 @@ void TeamplayInfoMessage( gentity_t *ent );
 void CheckTeamStatus(void);
 
 int Pickup_Team( gentity_t *ent, gentity_t *other );
+   
+// Q3Rally Code Start
+int Sigil_Touch( gentity_t *ent, gentity_t *other );
+void ValidateSigilsInMap( gentity_t *ent );
+// Q3Rally Code END

@@ -131,7 +131,8 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TEAM_RACING_DM    6
 #define GAMES_TEAMPLAY                  7
 #define GAMES_CTF                               8
-#define GAMES_NUM_GAMES                 9
+#define GAMES_DOMINATION                9
+#define GAMES_NUM_GAMES                 10
 // END
 
 static const char *master_items[] = {
@@ -163,6 +164,7 @@ static const char *servertype_items[] = {
         "Team Racing Deathmatch",
         "Team Deathmatch",
         "Capture the Flag",
+        "Domination",
 // END
         0
 };
@@ -201,6 +203,7 @@ static char* gamenames[] = {
         "TRace DM",
         "Team DM",      // team deathmatch
         "CTF",  // capture the flag
+        "Domination",   // domination
 // END
         "???",                  // unknown
         0
@@ -519,6 +522,10 @@ int ArenaServers_GametypeForGames(int games) {
 // END
         case GAMES_CTF:
                 gametype = GT_CTF;
+                break;
+                
+        case GAMES_DOMINATION:
+                gametype = GT_DOMINATION;
                 break;
 	}
 

@@ -838,7 +838,9 @@ typedef struct {
 	qhandle_t	redFlagShader[3];
 	qhandle_t	blueFlagShader[3];
 	qhandle_t	flagShader[4];
-
+// Q3Rally Code Start
+	qhandle_t sigilShader;
+// Q3Rally Code END
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;
 
@@ -1342,7 +1344,7 @@ typedef struct {
 // Q3Rally Code END
 	int				redflag, blueflag;		// flag status from configstrings
 	int				flagStatus;
-
+    int       sigil[MAX_SIGILS];
 	qboolean  newHud;
 
 	//
@@ -1496,6 +1498,7 @@ extern	vmCvar_t		cg_oldRail;
 extern	vmCvar_t		cg_oldRocket;
 extern	vmCvar_t		cg_oldPlasma;
 extern	vmCvar_t		cg_trueLightning;
+extern  vmCvar_t        cg_sigilLocator;
 #ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;
@@ -2071,7 +2074,17 @@ void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 // respatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position
 void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
+
 sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed );		// returns buzz if not found
+
+
+/* Temp Debug Code
+
+#define trap_S_RegisterSound( sample, compressed ) trap_S_RegisterSoundDebug( sample, compressed, __FILE__, __LINE__ )
+sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compressed, const char *file, int line );
+
+*/
+
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	trap_S_StopBackgroundTrack( void );
 

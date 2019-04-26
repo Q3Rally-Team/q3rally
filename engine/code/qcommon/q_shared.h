@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.0.1.5_r253"
+#define PRODUCT_VERSION "v0.0.2.1_r253"
 #endif
 
 
@@ -1787,7 +1787,18 @@ typedef enum _flag_status {
 	FLAG_TAKEN_BLUE,	// One Flag CTF
 	FLAG_DROPPED
 } flagStatus_t;
+        
+// Q3Rally Code Start
 
+#define MAX_SIGILS  3
+
+typedef enum _sigil_status {
+  SIGIL_ISWHITE = 0,
+  SIGIL_ISRED,
+  SIGIL_ISBLUE
+} sigilStatus_t;
+
+// Q3Rally Code END
 
 
 #define	MAX_GLOBAL_SERVERS				4096

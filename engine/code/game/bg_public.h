@@ -106,6 +106,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //#define       CS_MODELS                               32
 #define CS_MODELS                               30
+#define CS_SIGILSTATUS                  31
 // Q3Rally Code END
 #define CS_SOUNDS                               (CS_MODELS+MAX_MODELS)
 // STONELANCE
@@ -148,6 +149,7 @@ typedef enum {
         GT_TEAM_RACING,         // team racing
         GT_TEAM_RACING_DM,      // team racing with weapons
         GT_CTF,                         // capture the flag
+        GT_DOMINATION,              // domination
 // Q3Rally Code END
         GT_MAX_GAME_TYPE
 } gametype_t;
@@ -425,6 +427,9 @@ typedef enum {
         PW_AMMOREGEN,
         PW_INVULNERABILITY,
 
+        PW_SIGILWHITE,
+        PW_SIGILRED,
+        PW_SIGILBLUE,
 
         PW_NUM_POWERUPS
 
@@ -825,6 +830,7 @@ typedef enum {
         IT_TEAM,
 // Q3Rally Code Start
         IT_RFWEAPON,
+        IT_SIGIL
 // Q3Rally Code END
 } itemType_t;
 

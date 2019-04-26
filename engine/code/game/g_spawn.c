@@ -324,6 +324,15 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 		G_Printf ("G_CallSpawn: NULL classname\n");
 		return qfalse;
 	}
+    
+// Q3Rally Code Start	
+	if (g_gametype.integer == GT_DOMINATION)
+	{
+      RegisterItem(BG_FindItemForPowerup(PW_SIGILWHITE));
+      RegisterItem(BG_FindItemForPowerup(PW_SIGILRED));
+      RegisterItem(BG_FindItemForPowerup(PW_SIGILBLUE));
+  }
+// Q3Rally Code END    
 
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
@@ -335,7 +344,12 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 					|| item->giTag == PW_HASTE || item->giTag == PW_SHIELD ){
 					return qfalse;
 					
-				}
+                }
+            }
+      if ( item->giType == IT_TEAM && g_gametype.integer == GT_DOMINATION ) {
+          item = BG_FindItemForPowerup(PW_SIGILWHITE);
+          ent->classname = item->classname;
+          ent->r.svFlags = SVF_BROADCAST;
 			}
 
 			G_SpawnItem( ent, item );
@@ -762,6 +776,20 @@ void SP_worldspawn( void ) {
 
 
 /*
+============================
+G_ValidateSigils
+============================
+*/
+void G_ValidateSigils()
+  {
+      gentity_t       *it_ent;
+      
+      it_ent = G_Spawn();
+      it_ent->think = ValidateSigilsInMap;
+      it_ent->nextthink = level.time + 500;
+  }
+
+/*
 ==============
 G_SpawnEntitiesFromString
 
@@ -786,6 +814,10 @@ void G_SpawnEntitiesFromString( void ) {
 		G_SpawnGEntityFromSpawnVars();
 	}	
 
+// make sure Domination maps have a 3rd sigil
+if (g_gametype.integer == GT_DOMINATION)
+    G_ValidateSigils();
+    
+    
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 }
-

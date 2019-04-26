@@ -116,6 +116,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TEAM_RACING_DM	6
 #define GAMES_TEAMPLAY			7
 #define GAMES_CTF				8
+#define GAMES_DOMINATION        9
 // END
 
 static const char *master_items[] = {
@@ -143,6 +144,7 @@ static const char *servertype_items[] = {
 	"Team Racing Deathmatch",
 	"Team Deathmatch",
 	"Capture the Flag",
+    "Domination",
 // END
 	0
 };
@@ -180,6 +182,7 @@ static char* gamenames[] = {
 	"TRace DM",
 	"Team DM",	// team deathmatch
 	"CTF",	// capture the flag
+    "Domination", // domination
 // END
 	"???",			// unknown
 	0
@@ -615,6 +618,12 @@ static void ArenaServers_UpdateMenu( void ) {
 			}
 			break;
 		
+        case GAMES_DOMINATION:
+			if( servernodeptr->gametype != GT_DOMINATION ) {
+				continue;
+			}
+			break;        
+        
 		}
 
 		if( servernodeptr->pingtime < servernodeptr->minPing ) {
@@ -1182,6 +1191,10 @@ static void ArenaServers_StartRefresh( void )
 			strcpy( myargs, " ctf" );
 			break;
 			
+        case GAMES_DOMINATION:
+			strcpy( myargs, " domination" );
+			break;            
+            
 		}
 
 

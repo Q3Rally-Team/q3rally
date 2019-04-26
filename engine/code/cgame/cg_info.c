@@ -263,6 +263,10 @@ void CG_DrawInformation( void ) {
 	case GT_CTF:
 		s = "Capture The Flag";
 		break;
+// Q3Rally Code Start
+	case GT_DOMINATION:
+	  s = "Domination";        
+		break;
 
 /*
 #ifdef MISSIONPACK
