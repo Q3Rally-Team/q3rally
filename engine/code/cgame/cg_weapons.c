@@ -2029,6 +2029,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		sfx = cgs.media.sfx_plasmaexp;
 		mark = cgs.media.burnMarkShader;
 		radius = 16;
+		isSprite = qtrue;
 		break;
 // Q3Rally Code END
 

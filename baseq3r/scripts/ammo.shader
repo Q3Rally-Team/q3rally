@@ -202,7 +202,7 @@ models/powerups/ammo/flameammo
 models/powerups/ammo/flameammo2
 {
 	{
-		map models/powerups/ammo/flmeammo2.tga
+		map models/powerups/ammo/flameammo2.tga
 		rgbGen identity
 	}
 }

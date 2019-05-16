@@ -620,7 +620,7 @@ gitem_t	bg_itemlist[] =
 {
 	"ammo_flame",
 	"sound/misc/am_pkup.wav",
-	{ "models/powerups/ammo/bfgam.md3", 
+	{ "models/powerups/ammo/flameam.md3", 
 	NULL, NULL, NULL},
 /* icon */ "icons/icona_flame",
 /* pickup */	"Flame Ammo",
