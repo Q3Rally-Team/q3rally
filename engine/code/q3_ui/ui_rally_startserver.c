@@ -1250,8 +1250,8 @@ typedef struct {
 	menufield_s			flaglimit;
 	menuradiobutton_s	friendlyfire;
 	menufield_s			hostname;
-    menulist_s      dominationSpawnStyle;
-	menuradiobutton_s  sigillocator;
+    menulist_s          dominationSpawnStyle;
+	menuradiobutton_s   sigillocator;
 // STONLANCE
 	menulist_s			trackLength;
 	menulist_s			reversed;
