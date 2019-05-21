@@ -3157,7 +3157,7 @@ void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, v
           VectorNormalize(temp);
           vectoangles(temp,angles);
           
-          angles[YAW]=AngleSubtract(cg.snap->ps.viewangles[YAW],angles[YAW]);
+          angles[YAW]=AngleSubtract(cg.refdefViewAngles[YAW],angles[YAW]);
           angle=(angles[YAW] + 180.0f)/360.0f;
           angle -=0.25;
           angle *= (2*M_PI);
