@@ -814,13 +814,15 @@ void G_CheckTeamItems( void ) {
 // Q3Rally Code Start	
 	if ( g_gametype.integer == GT_DOMINATION )
 	{
-      gitem_t       *item;
-      
-      // check for at least one sigil
-      item = BG_FindItem( "Flag" );
-      if ( !item || !itemRegistered[item - bg_itemlist] )
-        G_Printf( S_COLOR_YELLOW "WARNING: No team_DOMINATION_sigil in map" );
-  }
+		gentity_t	*ent;
+
+		// check for at least one sigil
+		ent = NULL;
+		ent = G_Find( ent, FOFS(classname), "team_DOMINATION_sigil" );
+		if( !ent ) {
+			G_Printf( S_COLOR_YELLOW "WARNING: No team_DOMINATION_sigil in map\n" );
+		}
+	}
 // Q3Rally Code END
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_1FCTF ) {

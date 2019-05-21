@@ -780,7 +780,7 @@ void SP_worldspawn( void ) {
 G_ValidateSigils
 ============================
 */
-void G_ValidateSigils()
+void G_ValidateSigils( void )
   {
       gentity_t       *it_ent;
       

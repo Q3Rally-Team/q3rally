@@ -74,9 +74,11 @@ void Team_InitGame( void ) {
 		
 	case GT_DOMINATION:
 	  Init_Sigils();
-	  teamgame.sigil[0].status = teamgame.sigil[1].status = teamgame.sigil[2].status = -1; // Invalid to force update
+	  teamgame.sigil[0].status = -1; // Invalid to force update
 	  Team_SetSigilStatus( 0, SIGIL_ISWHITE );
+	  teamgame.sigil[1].status = -1; // Invalid to force update
 	  Team_SetSigilStatus( 1, SIGIL_ISWHITE );
+	  teamgame.sigil[2].status = -1; // Invalid to force update
 	  Team_SetSigilStatus( 2, SIGIL_ISWHITE );
 	  break;
 	  
@@ -255,12 +257,12 @@ void Init_Sigils( void ) {
         if (!point->inuse)
             continue;
             
-        if (!strcmp(point->classname, "team_Domination_sigil")) {
+        if (!Q_stricmp(point->classname, "team_domination_sigil")) {
             teamgame.sigil[sigilNum].entity = point;
             sigilNum++;
         }
         
-        if ( sigilNum == 2 )
+        if ( sigilNum == 3 )
             return;
         }
     }
@@ -273,9 +275,11 @@ void Team_SetSigilStatus( int sigilNum, sigilStatus_t status ) {
         qboolean modified = qfalse;
                 
                 // update only the sigil modified
-                if( teamgame.sigil[sigilNum].status != status );
-                teamgame.sigil[sigilNum].status = status;
-                modified = qtrue;
+                if( teamgame.sigil[sigilNum].status != status )
+                {
+                    teamgame.sigil[sigilNum].status = status;
+                    modified = qtrue;
+                }
     
     
     if( modified ) {
@@ -308,7 +312,10 @@ void ValidateSigilsInMap( gentity_t *ent )
       qboolean    foundItem = qfalse, foundPreferredItem = qfalse;
       gitem_t     *item;
       
-      // if 3rd sigil exists, this function doesn´t need to run
+      if (!teamgame.sigil[0].entity || !teamgame.sigil[1].entity)
+          return;
+
+      // if 3rd sigil exists, this function doesn't need to run
       if (teamgame.sigil[2].entity)
           return;
           
