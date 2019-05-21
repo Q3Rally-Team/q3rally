@@ -658,7 +658,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			// count down health when over max
 // STONELANCE
 //			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
-			if (((!isRallyRace() && !g_gametype.integer == GT_DERBY)
+			if (((!isRallyRace() && g_gametype.integer != GT_DERBY)
 				|| level.startRaceTime) && ent->health > client->ps.stats[STAT_MAX_HEALTH]){
 // END
 				ent->health--;
@@ -668,7 +668,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// count down armor when over max
 // STONELANCE
 //		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
-		if (((!isRallyRace() && !g_gametype.integer == GT_DERBY) || level.startRaceTime)
+		if (((!isRallyRace() && g_gametype.integer != GT_DERBY) || level.startRaceTime)
 			&& client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH]){
 // END
 			client->ps.stats[STAT_ARMOR]--;
