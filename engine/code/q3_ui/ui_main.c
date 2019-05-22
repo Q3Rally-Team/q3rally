@@ -136,6 +136,13 @@ vmCvar_t	ui_ctf_capturelimit;
 vmCvar_t	ui_ctf_timelimit;
 vmCvar_t	ui_ctf_friendly;
 
+// Q3Rally Code Start
+vmCvar_t	ui_dom_capturelimit;
+vmCvar_t	ui_dom_timelimit;
+vmCvar_t	ui_dom_friendly;
+vmCvar_t	ui_sigilLocator;
+// Q3Rally Code END
+
 vmCvar_t	ui_arenasFile;
 vmCvar_t	ui_botsFile;
 vmCvar_t	ui_spScores1;
@@ -238,6 +245,13 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_ctf_capturelimit, "ui_ctf_capturelimit", "8", CVAR_ARCHIVE },
 	{ &ui_ctf_timelimit, "ui_ctf_timelimit", "30", CVAR_ARCHIVE },
 	{ &ui_ctf_friendly, "ui_ctf_friendly",  "0", CVAR_ARCHIVE },
+
+// Q3Rally Code Start
+	{ &ui_dom_capturelimit, "ui_dom_capturelimit", "0", CVAR_ARCHIVE },
+	{ &ui_dom_timelimit, "ui_dom_timelimit", "30", CVAR_ARCHIVE },
+	{ &ui_dom_friendly, "ui_dom_friendly", "0", CVAR_ARCHIVE },
+	{ &ui_sigilLocator, "cg_sigilLocator", "1", CVAR_ARCHIVE },
+// Q3Rally Code END
 
 	{ &ui_racing_tracklength, "ui_racing_tracklength", "1", CVAR_ARCHIVE },
 	{ &ui_racing_trackreversed, "ui_racing_trackreversed",  "0", CVAR_ARCHIVE },

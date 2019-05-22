@@ -1434,7 +1434,7 @@ static void ServerOptions_Start( void ) {
 	case GT_TEAM_RACING_DM:
 		trap_Cvar_SetValue( "ui_team_racing_laplimit", fraglimit );
 		trap_Cvar_SetValue( "ui_team_racing_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_team_racing_friendlt", friendlyfire );
+		trap_Cvar_SetValue( "ui_team_racing_friendly", friendlyfire );
 		break;
 
 	case GT_DERBY:
@@ -1449,23 +1449,24 @@ static void ServerOptions_Start( void ) {
 	case GT_TEAM:
 		trap_Cvar_SetValue( "ui_team_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_team_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_team_friendlt", friendlyfire );
+		trap_Cvar_SetValue( "ui_team_friendly", friendlyfire );
 		break;
 
 	case GT_CTF:
-		trap_Cvar_SetValue( "ui_ctf_fraglimit", fraglimit );
+		trap_Cvar_SetValue( "ui_ctf_capturelimit", flaglimit );
 		trap_Cvar_SetValue( "ui_ctf_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_ctf_friendlt", friendlyfire );
+		trap_Cvar_SetValue( "ui_ctf_friendly", friendlyfire );
 		break;
 		
+// Q3Rally Code Start
     case GT_DOMINATION:
-	    trap_Cvar_SetValue ("g_dominationSpawnStyle", Com_Clamp( 0, dominationSpawnStyle, dominationSpawnStyle ) );
-        trap_Cvar_SetValue ("cg_sigilLocator", Com_Clamp( 1, sigillocator, sigillocator) );
-        trap_Cvar_SetValue( "fraglimit", fraglimit );
-		trap_Cvar_SetValue( "timelimit", timelimit );
-		trap_Cvar_SetValue( "friendlt", friendlyfire );
+		trap_Cvar_SetValue( "g_dominationSpawnStyle", Com_Clamp( 0, 1, dominationSpawnStyle ) );
+		trap_Cvar_SetValue( "cg_sigilLocator", Com_Clamp( 0, 1, sigillocator) );
+		trap_Cvar_SetValue( "ui_dom_capturelimit", flaglimit );
+		trap_Cvar_SetValue( "ui_dom_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_dom_friendly", friendlyfire );
 		break;
-        
+// Q3Rally Code END
 	}
 
 	trap_Cvar_SetValue( "sv_maxclients", Com_Clamp( 0, 12, maxclients ) );
@@ -2080,6 +2081,15 @@ static void ServerOptions_SetMenuItems( void ) {
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ctf_timelimit" ) ) );
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ctf_friendly" ) );
 		break;
+
+// Q3Rally Code Start
+	case GT_DOMINATION:
+		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_dom_capturelimit" ) ) );
+		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dom_timelimit" ) ) );
+		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_dom_friendly" ) );
+		s_serveroptions.sigillocator.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_sigilLocator" ) );
+		break;
+// Q3Rally Code END
 	}
 
 	Q_strncpyz( s_serveroptions.hostname.field.buffer, UI_Cvar_VariableString( "sv_hostname" ), sizeof( s_serveroptions.hostname.field.buffer ) );
