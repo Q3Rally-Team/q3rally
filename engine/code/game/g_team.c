@@ -98,6 +98,23 @@ void Team_InitGame( void ) {
 	}
 }
 
+// Q3Rally Code Start
+void Team_EndGame( void ) {
+	// stop adding score when intermission starts
+	if ( g_gametype.integer == GT_DOMINATION ) {
+		if( teamgame.sigil[0].entity ) {
+			teamgame.sigil[0].entity->nextthink = 0;
+		}
+		if( teamgame.sigil[1].entity ) {
+			teamgame.sigil[1].entity->nextthink = 0;
+		}
+		if( teamgame.sigil[2].entity ) {
+			teamgame.sigil[2].entity->nextthink = 0;
+		}
+	}
+}
+// Q3Rally Code END
+
 int OtherTeam(int team) {
 	if (team==TEAM_RED)
 		return TEAM_BLUE;

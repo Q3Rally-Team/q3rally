@@ -1241,6 +1241,9 @@ void BeginIntermission( void ) {
 	// send the current scoring to all clients
 	SendScoreboardMessageToAllClients();
 
+// Q3Rally Code Start
+	Team_EndGame();
+// Q3Rally Code END
 }
 
 
