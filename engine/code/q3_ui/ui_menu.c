@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2015 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2019 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -35,23 +35,23 @@ MAIN MENU
 
 #define ID_SINGLEPLAYER                 10
 #define ID_MULTIPLAYER                  11
-#define ID_SETUP                                12
-#define ID_DEMOS                                13
+#define ID_SETUP                        12
+#define ID_DEMOS                        13
 #define ID_CINEMATICS                   14
 // STONELANCE
 // #define ID_TEAMARENA                 15
 // END
-#define ID_MODS                                 16
-#define ID_EXIT                                 17
+#define ID_MODS                         16
+#define ID_EXIT                         17
 
 
 // STONELANCE
-//#define MAIN_BANNER_MODEL                             "models/mapobjects/banners/banner5.md3"
+//#define MAIN_BANNER_MODEL             "models/mapobjects/banners/banner5.md3"
 //#define MAIN_MENU_VERTICAL_SPACING    34
 
-#define MAIN_BANNER_MODEL                               "models/mapobjects/q3rtitle/q3rtitle.md3"
-#define MAIN_MENU_VERTICAL_SPACING              50
-#define MAX_PLAYERMODELS                                256
+#define MAIN_BANNER_MODEL               "models/mapobjects/q3rtitle/q3rtitle.md3"
+#define MAIN_MENU_VERTICAL_SPACING      50
+#define MAX_PLAYERMODELS                256
 // END
 
 
@@ -71,7 +71,7 @@ typedef struct {
 
 // STONELANCE
         menutext_s              banner;
-        menubitmap_s    carlogo;
+        menubitmap_s            carlogo;
 
         playerInfo_t    playerinfo;
         char                    modelskin[MAX_QPATH];
@@ -518,7 +518,7 @@ void UI_MainMenu( void ) {
         s_main.banner.generic.flags                     = QMF_INACTIVE;
         s_main.banner.generic.x                         = 320;
         s_main.banner.generic.y                         = 17;
-        s_main.banner.string                            = "Q 3 R A L L Y";
+        s_main.banner.string                            = "Q 3 R a l l y";
         s_main.banner.color                             = text_color_normal;
         s_main.banner.style                             = UI_CENTER;
 

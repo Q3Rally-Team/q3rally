@@ -862,9 +862,14 @@ q3rallycode
 1=engine\code\qcommon\q_shared.h
 2=engine\Makefile
 3=engine\code\q3_ui\ui_rally_startserver.c
+4=engine\code\cgame\cg_local.h
+5=engine\code\cgame\cg_main.c
+6=engine\code\client\snd_dma.c
+7=engine\code\game\g_spawn.c
+8=engine\code\q3_ui\ui_menu.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_menu.c
 [engine\code\qcommon\files.c]
 TopLine=183
 Caret=129,192
@@ -877,3 +882,18 @@ Caret=17,114
 [engine\code\q3_ui\ui_rally_startserver.c]
 TopLine=1250
 Caret=22,1254
+[engine\code\cgame\cg_local.h]
+TopLine=2061
+Caret=10,2089
+[engine\code\cgame\cg_main.c]
+TopLine=2254
+Caret=1,2269
+[engine\code\client\snd_dma.c]
+TopLine=709
+Caret=1,724
+[engine\code\game\g_spawn.c]
+TopLine=655
+Caret=1,670
+[engine\code\q3_ui\ui_menu.c]
+TopLine=479
+Caret=33,74
