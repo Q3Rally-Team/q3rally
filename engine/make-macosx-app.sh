@@ -329,6 +329,8 @@ PLIST="${PLIST}
     <string>QUAKE III ARENA Copyright © 1999-2000 id Software, Inc. All rights reserved.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <false/>
 </dict>
 </plist>
 "
