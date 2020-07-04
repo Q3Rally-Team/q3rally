@@ -518,14 +518,14 @@ void UI_MainMenu( void ) {
         s_main.banner.generic.flags                     = QMF_INACTIVE;
         s_main.banner.generic.x                         = 320;
         s_main.banner.generic.y                         = 17;
-        s_main.banner.string                            = "Q 3 R a l l y";
+        s_main.banner.string                            = "Q 3 R A L L Y";
         s_main.banner.color                             = text_color_normal;
-        s_main.banner.style                             = UI_CENTER;
+        s_main.banner.style                             = UI_CENTER|UI_DROPSHADOW;
 
-        x = 240;
+        x = 175;
         y = 100;
 
-
+        
         s_main.singleplayer.generic.type                = MTYPE_PTEXT;
         s_main.singleplayer.generic.id                  = ID_SINGLEPLAYER;
         s_main.singleplayer.generic.callback            = Main_MenuEvent;

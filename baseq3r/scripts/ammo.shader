@@ -1,6 +1,13 @@
-// // // // SHADERS FOR OPEN ARENA AMMOBOX POWERUPS 
-// // // //  jzero --> johnzero@verizon.net
-// 1.machinegun
+// ------------------------------------------------------------
+// Shaders for Q3Rally Ammo Boxes - rewritten by P3rlE
+// based on the ammo.shader from jzero --> johnzero@verizon.net
+// ------------------------------------------------------------
+
+
+// ------------------------------------------------------------
+// 1.Machinegun
+// ------------------------------------------------------------
+
 models/powerups/ammo/machammo
 {
 	{
@@ -23,7 +30,10 @@ models/powerups/ammo/machammo2
 	}
 }
 
-// 2.shotgun
+// ------------------------------------------------------------
+// 2.Shotgun
+// ------------------------------------------------------------
+
 models/powerups/ammo/shotammo
 {
 	{
@@ -46,7 +56,10 @@ models/powerups/ammo/shotammo2
 	}
 }
 
-// 3.grenade launcher
+// ------------------------------------------------------------
+// 3.Grenadelauncher
+// ------------------------------------------------------------
+
 models/powerups/ammo/grenammo
 {
 	{
@@ -69,7 +82,10 @@ models/powerups/ammo/grenammo2
 	}
 }
 
-// 4.lightning gun
+// ------------------------------------------------------------
+// 4.Lightninggun
+// ------------------------------------------------------------
+
 models/powerups/ammo/lighammo
 {
 	{
@@ -79,7 +95,7 @@ models/powerups/ammo/lighammo
 	{
 		map models/powerups/ammo/ammolights.tga
 		blendfunc blend
-		rgbGen const ( 1 1 0.69 )
+		rgbGen const ( 0.50 1 1 )
 		alphaGen wave sawtooth 0 1 0 1 
 	}
 }
@@ -92,7 +108,10 @@ models/powerups/ammo/lighammo2
 	}
 }
 
-// 5.plasma gun
+// ------------------------------------------------------------
+// 5.Plasmagun
+// ------------------------------------------------------------
+
 models/powerups/ammo/plasammo
 {
 	{
@@ -102,7 +121,7 @@ models/powerups/ammo/plasammo
 	{
 		map models/powerups/ammo/ammolights.tga
 		blendfunc blend
-		rgbGen const ( 0.8 0 1 )
+		rgbGen const ( 0 0 1 )
 		alphaGen wave sawtooth 0 1 0 1 
 	}
 }
@@ -115,7 +134,10 @@ models/powerups/ammo/plasammo2
 	}
 }
 
-//6.rocket launcher
+// ------------------------------------------------------------
+// 6.Rocketlauncher
+// ------------------------------------------------------------
+
 models/powerups/ammo/rockammo
 {
 	{
@@ -138,7 +160,10 @@ models/powerups/ammo/rockammo2
 	}
 }
 
-//7. railgun
+// ------------------------------------------------------------
+// 7.Railgun
+// ------------------------------------------------------------
+
 models/powerups/ammo/railammo
 {
 	{
@@ -161,7 +186,10 @@ models/powerups/ammo/railammo2
 	}
 }
 
-//8. BFG
+// ------------------------------------------------------------
+// 8.BigFuckingGun
+// ------------------------------------------------------------
+
 models/powerups/ammo/bfgammo
 {
 	{
@@ -171,7 +199,7 @@ models/powerups/ammo/bfgammo
 	{
 		map models/powerups/ammo/ammolights.tga
 		blendfunc blend
-		rgbGen const ( 0 0.4 1 )
+		rgbGen const ( 0 1 0 )
 		alphaGen wave sawtooth 0 1 0 1 
 	}
 }
@@ -184,7 +212,10 @@ models/powerups/ammo/bfgammo2
 	}
 }
 
-//8. Flamethrower
+// ------------------------------------------------------------
+// 9.Flamethrower
+// ------------------------------------------------------------
+
 models/powerups/ammo/flameammo
 {
 	{
@@ -194,7 +225,7 @@ models/powerups/ammo/flameammo
 	{
 		map models/powerups/ammo/ammolights.tga
 		blendfunc blend
-		rgbGen const ( 0 0.4 1 )
+		rgbGen const ( 1 0.5 0 )
 		alphaGen wave sawtooth 0 1 0 1 
 	}
 }

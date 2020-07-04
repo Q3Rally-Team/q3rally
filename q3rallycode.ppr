@@ -427,7 +427,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			-q3_ui
+			+q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -836,7 +836,7 @@ q3rallycode
 			engine\misc\quake3-tango.png
 			engine\misc\quake3-tango.xcf
 			engine\misc\ReadMe-OSX.rtf
-		-ui
+		+ui
 			engine\ui\hud.txt
 			engine\ui\hud2.txt
 			engine\ui\ingame.txt
@@ -867,15 +867,20 @@ q3rallycode
 6=engine\code\client\snd_dma.c
 7=engine\code\game\g_spawn.c
 8=engine\code\q3_ui\ui_menu.c
+9=engine\code\q3_ui\ui_credits.c
+10=engine\code\q3_ui\ui_rally_controls.c
+11=engine\code\q3_ui\ui_rally_options.c
+12=engine\code\game\g_weapon.c
+13=engine\code\game\g_rally_rearweapon.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_menu.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\files.c]
 TopLine=183
 Caret=129,192
 [engine\code\qcommon\q_shared.h]
-TopLine=53
-Caret=39,70
+TopLine=47
+Caret=40,70
 [engine\Makefile]
 TopLine=114
 Caret=17,114
@@ -895,5 +900,20 @@ Caret=1,724
 TopLine=655
 Caret=1,670
 [engine\code\q3_ui\ui_menu.c]
-TopLine=479
-Caret=33,74
+TopLine=103
+Caret=22,121
+[engine\code\q3_ui\ui_credits.c]
+TopLine=49
+Caret=1,64
+[engine\code\q3_ui\ui_rally_controls.c]
+TopLine=544
+Caret=80,574
+[engine\code\q3_ui\ui_rally_options.c]
+TopLine=147
+Caret=27,147
+[engine\code\game\g_weapon.c]
+TopLine=582
+Caret=13,612
+[engine\code\game\g_rally_rearweapon.c]
+TopLine=201
+Caret=3,223

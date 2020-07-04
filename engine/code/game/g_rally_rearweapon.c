@@ -212,11 +212,18 @@ void FireRearWeapon( gentity_t *ent ) {
 	vec3_t		angles;
 	int			weapon, i;
 /*
+==============================================
+Quadfactor-Test 16/03/2020
+==============================================
 	if (ent->client->ps.powerups[PW_QUAD] ) {
+		G_AddEvent( ent, EV_POWERUP_QUAD, 0 );
 		s_quadFactor = g_quadfactor.value;
 	} else {
 		s_quadFactor = 1;
 	}
+==============================================
+Quadfactor-Test 16/03/2020   End
+==============================================
 */
 
 	// set aiming directions
