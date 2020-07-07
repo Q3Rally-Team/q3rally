@@ -1,13 +1,6 @@
 //shaderlist
 ammo
-base_button
-base_door
-base_floor
-base_light
-base_object
-base_support
-base_trim
-base_wall
+base_textures
 beams
 blimp
 building

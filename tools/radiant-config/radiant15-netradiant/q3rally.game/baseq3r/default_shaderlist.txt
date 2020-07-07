@@ -1,25 +1,46 @@
-//*********************************************************//
-//	shaderlist.txt modified for GTKRadiant/Netradiant	    //
-//	by Perle for use with Q3Rally - 30/12/2017		    //
-//                                                        //             //										   //
-//      Rev history:  						   //                                                  //										   //
-//********************************************************//
+//---------------------------------------------------------------
+// shaderlist.txt modified for GTKRadiant/Netradiant	 
+// by Perle for use with Q3Rally - 30/12/2017
+// updated 07/07/2020
+//---------------------------------------------------------------
 
 // this file lists all the separate shader files
-//shaderlist
-common
-glass
+
+ammo
+base_textures
+beams
 blimp
 building
+clown2
+common
+ctf
+decals
+details
 dirt_grass
+evil8
+evil8_base
+flaretest
+gibs
 glass
+heads
+hotmenu
+iconsprites
+item_health
+liquids
+mapobjects
+mappinggfx
+maybe_useless
 metals
 people
-signage
-sponsors
-road
-trees
-skies
-liquids
+plates
+powerups
 q3r_lights
-break
+road
+signage
+simpleitems
+skies
+sponsors
+stecki
+teleporter
+terrain
+trees
