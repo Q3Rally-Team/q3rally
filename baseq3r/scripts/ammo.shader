@@ -5,7 +5,7 @@
 
 
 // ------------------------------------------------------------
-// 1.Machinegun
+// 1.Machinegun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/machammo
@@ -31,7 +31,7 @@ models/powerups/ammo/machammo2
 }
 
 // ------------------------------------------------------------
-// 2.Shotgun
+// 2.Shotgun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/shotammo
@@ -57,7 +57,7 @@ models/powerups/ammo/shotammo2
 }
 
 // ------------------------------------------------------------
-// 3.Grenadelauncher
+// 3.Grenadelauncher ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/grenammo
@@ -83,7 +83,7 @@ models/powerups/ammo/grenammo2
 }
 
 // ------------------------------------------------------------
-// 4.Lightninggun
+// 4.Lightninggun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/lighammo
@@ -109,7 +109,7 @@ models/powerups/ammo/lighammo2
 }
 
 // ------------------------------------------------------------
-// 5.Plasmagun
+// 5.Plasmagun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/plasammo
@@ -135,7 +135,7 @@ models/powerups/ammo/plasammo2
 }
 
 // ------------------------------------------------------------
-// 6.Rocketlauncher
+// 6.Rocketlauncher ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/rockammo
@@ -161,7 +161,7 @@ models/powerups/ammo/rockammo2
 }
 
 // ------------------------------------------------------------
-// 7.Railgun
+// 7.Railgun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/railammo
@@ -187,7 +187,7 @@ models/powerups/ammo/railammo2
 }
 
 // ------------------------------------------------------------
-// 8.BigFuckingGun
+// 8.BigFuckingGun ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/bfgammo
@@ -213,7 +213,7 @@ models/powerups/ammo/bfgammo2
 }
 
 // ------------------------------------------------------------
-// 9.Flamethrower
+// 9.Flamethrower ammo
 // ------------------------------------------------------------
 
 models/powerups/ammo/flameammo
