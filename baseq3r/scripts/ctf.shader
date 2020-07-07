@@ -1,4 +1,12 @@
-//eh
+// ------------------------------------------------------------
+// Shaders for Q3Rally CTF - rewritten by P3rlE
+// based on the ctf.shader
+// ------------------------------------------------------------
+
+// ------------------------------------------------------------
+// 1.sprites (friend)
+// ------------------------------------------------------------
+
 sprites/friend
 {
 	nomipmaps
@@ -8,6 +16,10 @@ sprites/friend
 	}
 }
 
+// ------------------------------------------------------------
+// 2.sprites (foe)
+// ------------------------------------------------------------
+
 sprites/foe
 {
 	nomipmaps
@@ -16,6 +28,10 @@ sprites/foe
 		blendfunc blend
 	}
 }
+
+// ------------------------------------------------------------
+// 3.flags (b_flag)
+// ------------------------------------------------------------
 
 models/flags/b_flag
 {
@@ -40,6 +56,10 @@ models/flags/b_flag
 	}
 }
 
+// ------------------------------------------------------------
+// 4.flags (pole)
+// ------------------------------------------------------------
+
 models/flags/pole
 {
 	{
@@ -54,6 +74,10 @@ models/flags/pole
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 5.flags (r_flag)
+// ------------------------------------------------------------
 
 models/flags/r_flag
 {
@@ -77,6 +101,10 @@ models/flags/r_flag
 		tcGen environment 
 	}
 }
+
+// ------------------------------------------------------------
+// 6.teleporter (blue_telep)
+// ------------------------------------------------------------
 
 textures/ctf/blue_telep
 { 
@@ -127,6 +155,11 @@ textures/ctf/blue_telep
 
 
 }
+
+// ------------------------------------------------------------
+// 7.teleporter (red_telep)
+// ------------------------------------------------------------
+
 textures/ctf/red_telep
 { 
         cull disable	
@@ -172,6 +205,10 @@ textures/ctf/red_telep
 
 }
 
+// ------------------------------------------------------------
+// 8.test2 (test2_trans)
+// ------------------------------------------------------------
+
 textures/ctf/test2_trans
 {
 	qer_editorimage textures/ctf/test2.tga
@@ -188,6 +225,10 @@ textures/ctf/test2_trans
 
 }
 
+// ------------------------------------------------------------
+// 9.test2 (test2_r_trans)
+// ------------------------------------------------------------
+
 textures/ctf/test2_r_trans
 {
 	qer_editorimage textures/ctf/test2_r.tga
@@ -203,6 +244,10 @@ textures/ctf/test2_r_trans
 		blendFunc GL_DST_COLOR GL_ZERO
 	}
 }
+
+// ------------------------------------------------------------
+// 10.killblockctf_r (blocks15cgeomtrn.tga)
+// ------------------------------------------------------------
 
 textures/ctf/killblockctf_r
 {
@@ -242,6 +287,11 @@ textures/ctf/killblockctf_r
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 11.killblockctf_b (killblockgeomtrn.tga)
+// ------------------------------------------------------------
+
 textures/ctf/killblockctf_b
 {
    qer_editorimage   textures/gothic_block/killblockgeomtrn.tga
@@ -280,6 +330,11 @@ textures/ctf/killblockctf_b
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 12.ctf_arch_b_shiny (ctf_arch_b_shiny)
+// ------------------------------------------------------------
+
 textures/ctf/ctf_arch_b_shiny
 {      
      qer_editorimage textures/ctf/ctf_arch_b.tga
@@ -753,24 +808,24 @@ sprites/foe
 //////////
 textures/q3r_ctf/q3r_bluelong_decal
 {
-	qer_editorimage textures/q3r_ctf/q3r_bannerbluelong.tga
+	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
 	surfaceparm nolightmap
 	surfaceparm nomarks
 	polygonoffset
 	{
-		map textures/q3r_ctf/q3r_bannerbluelong.tga
+		map textures/ctf/q3r_bannerbluelong.tga
 	}
 	
 }
 
 textures/q3r_ctf/q3r_redlong_decal
 {
-	qer_editorimage textures/q3r_ctf/q3r_bannerredlong.tga
+	qer_editorimage textures/ctf/q3r_bannerredlong.tga
 	surfaceparm nolightmap
 	surfaceparm nomarks
 	polygonoffset
 	{
-		map textures/q3r_ctf/q3r_bannerredlong.tga
+		map textures/ctf/q3r_bannerredlong.tga
 	}
 	
 }
@@ -780,67 +835,25 @@ textures/q3r_ctf/q3r_redlong_decal
 ////////////////
 textures/q3r_ctf/q3r_bluelong_01
 {
-	qer_editorimage textures/q3r_ctf/q3r_bannerbluelong.tga
-	//deformVertexes wave sin 0 1 0 .1
+	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
+	deformVertexes wave sin 0 1 0 .1
 	surfaceparm nolightmap
 	surfaceparm nomarks
 	polygonoffset
 	{
-		map textures/q3r_ctf/q3r_bannerbluelong.tga
+		map textures/ctf/q3r_bannerbluelong.tga
 	}
 	
 }
 
 textures/q3r_ctf/q3r_redlong_01
 {
-}
-
-
-///////////////////////////
-//these have transparency//
-///////////////////////////
-
-textures/q3r_ctf/q3r_curtainredwide_01
-{
-	qer_editorimage textures/q3r_ctf/q3r_curtainredwide_shader.tga
+	qer_editorimage textures/ctf/q3r_bannerredlong.tga
+	deformVertexes wave sin 0 1 0 .1
 	surfaceparm nolightmap
 	surfaceparm nomarks
+	polygonoffset
 	{
-		map textures/q3r_ctf/q3r_curtainredwide_shader.tga
-		alphagen lt_128
-	}
-}
-
-textures/q3r_ctf/q3r_curtainbluewide_01
-{
-	qer_editorimage textures/q3r_ctf/q3r_curtainbluewide_shader.tga
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	{
-		map textures/q3r_ctf/q3r_curtainbluewide_shader.tga
-	}
-}
-
-textures/q3r_ctf/q3r_curtainneuwide_01
-{
-	qer_editorimage textures/q3r_ctf/q3r_curtainneuwide.tga
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	{
-		map textures/q3r_ctf/q3r_curtainneuwide.tga
-	}
-}
-
-/////////////////
-//experimenting
-/////////////////
-
-textures/q3r_ctf/q3r_doorwideneu_01
-{
-	qer_editorimage textures/q3r_ctf/q3r_curtainneuwide.tga
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	{
-		map textures/q3r_ctf/q3r_curtainneuwide.tga
+		map textures/ctf/q3r_bannerredlong.tga
 	}
 }

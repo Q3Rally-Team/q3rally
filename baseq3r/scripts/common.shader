@@ -1,6 +1,11 @@
-//================
-//	Mirror	
-//================
+// ------------------------------------------------------------
+// Shaders for Q3Rally common textures - rewritten by P3rlE
+// based on the common.shader
+// ------------------------------------------------------------
+
+// ------------------------------------------------------------
+// 1.mirror
+// ------------------------------------------------------------
 
 textures/common/mirrortut
 {
@@ -18,9 +23,9 @@ textures/common/mirrortut
 
 }
 
-//============================
-//	rally_weather_rain	
-//============================
+// ------------------------------------------------------------
+// 2.rain
+// ------------------------------------------------------------
 
 textures/common/rain
 {
@@ -31,9 +36,9 @@ textures/common/rain
 	surfaceparm nomarks
 }
 
-//============================
-//	rally_weather_snow	
-//============================
+// ------------------------------------------------------------
+// 3.snow
+// ------------------------------------------------------------
 
 textures/common/snow
 {
@@ -44,9 +49,9 @@ textures/common/snow
 	surfaceparm nomarks
 }
 
-//======================
-//	q3r_checkpoint	
-//======================
+// ------------------------------------------------------------
+// 4.checkpoint
+// ------------------------------------------------------------
 
 textures/common/checkpoint
 {
@@ -57,9 +62,9 @@ textures/common/checkpoint
 	surfaceparm nomarks
 }
 
-//======================
-//	q3r_startfinish	
-//======================
+// ------------------------------------------------------------
+// 5.startfinish
+// ------------------------------------------------------------
 
 textures/common/startfinish
 {
@@ -70,9 +75,9 @@ textures/common/startfinish
 	surfaceparm nomarks
 }
 
-//======================
-//	Areaportal		
-//======================
+// ------------------------------------------------------------
+// 6.areaportal
+// ------------------------------------------------------------
 
 textures/common/areaportal
 {
@@ -86,9 +91,9 @@ textures/common/areaportal
 	surfaceparm areaportal
 }
 
-//================
-//	Caulk		
-//================
+// ------------------------------------------------------------
+// 7.caulk
+// ------------------------------------------------------------
 
 textures/common/caulk
 {
@@ -97,9 +102,9 @@ textures/common/caulk
 	surfaceparm nomarks
 }
 
-//================
-//	Clip		
-//================
+// ------------------------------------------------------------
+// 8.clip
+// ------------------------------------------------------------
 
 textures/common/clip
 {
@@ -113,9 +118,9 @@ textures/common/clip
 	surfaceparm playerclip
 }
 
-//======================
-//	Clusterportal	
-//======================
+// ------------------------------------------------------------
+// 9.clusterportal
+// ------------------------------------------------------------
 
 textures/common/clusterportal
 {
@@ -128,9 +133,9 @@ textures/common/clusterportal
 	surfaceparm clusterportal
 }
 
-//======================
-//	Cushion		
-//======================
+// ------------------------------------------------------------
+// 10.cushion
+// ------------------------------------------------------------
 
 textures/common/cushion
 {
@@ -143,9 +148,9 @@ textures/common/cushion
 	surfaceparm nodamage
 }
 
-//======================
-//	DoNotEnter		
-//======================
+// ------------------------------------------------------------
+// 11.donotenter
+// ------------------------------------------------------------
 
 textures/common/donotenter
 {
@@ -157,22 +162,22 @@ textures/common/donotenter
 	surfaceparm donotenter
 }
 
-//======================
-//	Full Clip		
-//======================
+// ------------------------------------------------------------
+// 12.full_clip
+// ------------------------------------------------------------
 
-textures/common/full_clip // maybe removing?
+textures/common/full_clip
 {
 	qer_trans 0.40
 	surfaceparm nodraw
 	surfaceparm playerclip
 }
 
-//================
-//	Hint		
-//================
+// ------------------------------------------------------------
+// 13.hint
+// ------------------------------------------------------------
 
-textures/common/hint // should NOT use surfaceparm hint.. strange but true
+textures/common/hint
 {
 	qer_nocarve
 	qer_trans 0.30
@@ -181,12 +186,12 @@ textures/common/hint // should NOT use surfaceparm hint.. strange but true
 	surfaceparm structural
 	surfaceparm trans
 	surfaceparm noimpact
-	surfaceparm hint	// ydnar: yes it should.
+	surfaceparm hint	
 }
 
-//======================
-//	Invisible		
-//======================
+// ------------------------------------------------------------
+// 14.invisible
+// ------------------------------------------------------------
 
 textures/common/invisible // solid, transparent polygons, casts shadows
 {
@@ -199,9 +204,9 @@ textures/common/invisible // solid, transparent polygons, casts shadows
         }
 }
 
-//======================
-//	Missile Clip	
-//======================
+// ------------------------------------------------------------
+// 15.missileclip
+// ------------------------------------------------------------
 
 textures/common/missileclip
 {
@@ -214,9 +219,9 @@ textures/common/missileclip
 	surfaceparm trans
 }
 
-//================
-//	No Draw	
-//================
+// ------------------------------------------------------------
+// 16.nodraw
+// ------------------------------------------------------------
 
 textures/common/nodraw
 {
@@ -227,9 +232,9 @@ textures/common/nodraw
 	surfaceparm nomarks
 }
 
-//============================
-//	No Draw Non Solid		
-//============================
+// ------------------------------------------------------------
+// 17.nodrawnonsolid
+// ------------------------------------------------------------
 
 textures/common/nodrawnonsolid
 {
@@ -238,9 +243,9 @@ textures/common/nodrawnonsolid
 	surfaceparm nodraw
 }
 
-//================
-//	No Drop	
-//================
+// ------------------------------------------------------------
+// 18.nodrop
+// ------------------------------------------------------------
 
 textures/common/nodrop
 {
@@ -254,9 +259,9 @@ textures/common/nodrop
 	surfaceparm nodrop
 }
 
-//================
-//	No Impact	
-//================
+// ------------------------------------------------------------
+// 19.noimpact
+// ------------------------------------------------------------
 
 textures/common/noimpact
 {
@@ -264,18 +269,18 @@ textures/common/noimpact
 	surfaceparm noimpact
 }
 
-//======================
-//	No Lightmap		
-//======================
+// ------------------------------------------------------------
+// 20.nolightmap
+// ------------------------------------------------------------
 
 textures/common/nolightmap
 {
 	surfaceparm nolightmap
 }
 
-//================
-//	Origin	
-//================
+// ------------------------------------------------------------
+// 21.origin
+// ------------------------------------------------------------
 
 textures/common/origin
 {
@@ -287,9 +292,9 @@ textures/common/origin
 	surfaceparm origin
 }
 
-//================
-//	Portal	
-//================
+// ------------------------------------------------------------
+// 22.portal
+// ------------------------------------------------------------
 
 textures/common/portal
 {
@@ -305,9 +310,9 @@ textures/common/portal
 	}
 }
 
-//================
-//	Slick		
-//================
+// ------------------------------------------------------------
+// 23.slick
+// ------------------------------------------------------------
 
 textures/common/slick
 {
@@ -319,9 +324,9 @@ textures/common/slick
 	surfaceparm slick
 }
 
-//================
-//	Terrain	
-//================
+// ------------------------------------------------------------
+// 24.terrain
+// ------------------------------------------------------------
 
 textures/common/terrain
 {
@@ -331,9 +336,9 @@ textures/common/terrain
 	surfaceparm nomarks
 }
 
-//================
-//	Terrain 2	
-//================
+// ------------------------------------------------------------
+// 25.terrain2
+// ------------------------------------------------------------
 
 textures/common/terrain2
 {
@@ -345,9 +350,9 @@ textures/common/terrain2
 	surfaceparm nolightmap
 }
 
-//================
-//	Tim Portal	
-//================
+// ------------------------------------------------------------
+// 26.timportal
+// ------------------------------------------------------------
 
 textures/common/timportal
 {
@@ -362,9 +367,9 @@ textures/common/timportal
 	}
 }
 
-//================
-//	Trigger	
-//================
+// ------------------------------------------------------------
+// 27.trigger
+// ------------------------------------------------------------
 
 textures/common/trigger
 {
@@ -373,9 +378,9 @@ textures/common/trigger
 	surfaceparm nodraw
 }
 
-//================
-//	Weapon Clip	
-//================
+// ------------------------------------------------------------
+// 28.weapclip
+// ------------------------------------------------------------
 
 textures/common/weapclip
 {
@@ -386,9 +391,9 @@ textures/common/weapclip
 	surfaceparm nomarks
 }
 
-//================
-//	Metal Clip	
-//================
+// ------------------------------------------------------------
+// 29.metalclip
+// ------------------------------------------------------------
 
 textures/common/metalclip
 {
@@ -403,9 +408,9 @@ textures/common/metalclip
 	surfaceparm metalsteps
 }
 
-//================
-//	Bot Clip	
-//================
+// ------------------------------------------------------------
+// 30.botclip
+// ------------------------------------------------------------
 
 textures/common/botclip
 {
@@ -419,15 +424,17 @@ textures/common/botclip
 	surfaceparm botclip
 }
 
-
-//=================================================================
+// ------------------------------------------------------------
+// 31.lightgrid
+// ------------------------------------------------------------
+// ------------------------------------------------------------
 // ydnar q3map lightgrid bounds
 //
 // the min/max bounds of brushes with this shader in a map
-// will define the bounds of the map's lightgrid (model lighting)
+// will def the bounds of the map's lightgrid (model lighting)
 // note: make it as small as possible around player space
 // to minimize bsp size and compile time
-//=================================================================
+// ------------------------------------------------------------
 
 textures/common/lightgrid
 {
@@ -441,9 +448,9 @@ textures/common/lightgrid
 	surfaceparm lightgrid
 }
 
-//================
-// q3r checkpoint sign 1
-//================
+// ------------------------------------------------------------
+// 32.q3r_checkpoint_a
+// ------------------------------------------------------------
 
 textures/common/q3r_checkpoint_a
 {
@@ -453,6 +460,10 @@ textures/common/q3r_checkpoint_a
 		AnimMap 2 textures/common/q3r_checkpoint_a.tga textures/common/q3r_checkpoint_ainv.tga
 	}
 }
+
+// ------------------------------------------------------------
+// 33.energypad
+// ------------------------------------------------------------
 
 textures/common/energypad
 {

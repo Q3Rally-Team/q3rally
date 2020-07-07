@@ -13563,3 +13563,72 @@ textures/base_wall/green_contrim_noisey
 		blendFunc GL_DST_COLOR GL_ZERO
 	}
 }
+
+// ------------------------------------------------------------
+// 499.base_wall (c_met5_)
+// ------------------------------------------------------------
+
+textures/base_wall/c_met5_
+{
+	{
+		map $lightmap 
+		tcGen lightmap 
+	}
+	{
+		map textures/base_wall/c_met5_2.tga
+	}
+	{
+		map textures/detail/d_conc.tga
+		blendfunc gl_dst_color gl_src_color
+		tcMod scale 4 4
+		detail
+	}
+}
+
+// ------------------------------------------------------------
+// 500.base_wall (baslt4_1_2k)
+// ------------------------------------------------------------
+
+textures/base_light/baslt4_1_2k
+{
+	qer_editorimage textures/base_light/baslt4_1_2k.jpg
+	surfaceparm nomarks
+	surfaceparm nodlight
+	q3map_surfacelight 2000
+	cull disable
+	{	
+		map textures/base_light/baslt4_1_2k.jpg
+	}
+}
+
+// ------------------------------------------------------------
+// 501.base_wall (baslt4_1_4k)
+// ------------------------------------------------------------
+
+textures/base_light/baslt4_1_4k
+{
+	qer_editorimage textures/base_light/baslt4_1_4k.jpg
+	surfaceparm nomarks
+	surfaceparm nodlight
+	q3map_surfacelight 4000
+	cull disable
+	{	
+		map textures/base_light/baslt4_1_4k.jpg
+	}
+}
+
+// ------------------------------------------------------------
+// 502.base_wall (proto_lightmap)
+// ------------------------------------------------------------
+
+textures/base_light/proto_lightmap
+{
+	qer_editorimage textures/base_light/proto_lightmap.jpg
+	surfaceparm nomarks
+	surfaceparm nodlight
+	q3map_surfacelight 4000
+	cull disable
+	{	
+		map textures/base_light/proto_lightmap.jpg
+	}
+}
