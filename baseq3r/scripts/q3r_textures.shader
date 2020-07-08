@@ -2996,7 +2996,7 @@ textures/q3r_signage/dirsign03_red
 }
 
 // ------------------------------------------------------------
-// 158.q3r_signage (dirsign03_red)
+// 158.q3r_signage (dirsign03_ylw)
 // ------------------------------------------------------------
 
 textures/q3r_signage/dirsign03_ylw
@@ -5063,14 +5063,10 @@ textures/terrain/q3rcountry2_5to6
 	}
 }
 
+// ------------------------------------------------------------
+// 235.terrain (q3rcountry3_0)
+// ------------------------------------------------------------
 
-
-//****************************************************
-// *************************************************
-// *
-// * Q3Rcountry3 test pathmap
-// *
-// *************************************************
 textures/terrain/q3rcountry3_0
 {
 	surfaceparm nolightmap
@@ -5092,6 +5088,10 @@ textures/terrain/q3rcountry3_0
 	}
 }
 
+// ------------------------------------------------------------
+// 236.terrain (q3rcountry3_1)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_1
 {
 	surfaceparm nolightmap
@@ -5111,6 +5111,10 @@ textures/terrain/q3rcountry3_1
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 237.terrain (q3rcountry3_2)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_2
 {
@@ -5132,6 +5136,11 @@ textures/terrain/q3rcountry3_2
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 238.terrain (q3rcountry3_3)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_3
 {
 	surfaceparm nolightmap
@@ -5152,6 +5161,11 @@ textures/terrain/q3rcountry3_3
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 239.terrain (q3rcountry3_4)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_4
 {
 	surfaceparm nolightmap
@@ -5172,6 +5186,11 @@ textures/terrain/q3rcountry3_4
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 240.terrain (q3rcountry3_5)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_5
 {
 	surfaceparm nolightmap
@@ -5192,6 +5211,11 @@ textures/terrain/q3rcountry3_5
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 241.terrain (q3rcountry3_6)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_6
 {
 	surfaceparm nolightmap
@@ -5213,6 +5237,9 @@ textures/terrain/q3rcountry3_6
 	}
 }
 
+// ------------------------------------------------------------
+// 242.terrain (q3rcountry3_0to1)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_0to1
 {
@@ -5243,6 +5270,9 @@ textures/terrain/q3rcountry3_0to1
 	}
 }
 
+// ------------------------------------------------------------
+// 243.terrain (q3rcountry3_0to2)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_0to2
 {
@@ -5271,6 +5301,11 @@ textures/terrain/q3rcountry3_0to2
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 244.terrain (q3rcountry3_0to3)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_0to3
 {
 	surfaceparm nolightmap
@@ -5299,6 +5334,11 @@ textures/terrain/q3rcountry3_0to3
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 245.terrain (q3rcountry3_0to4)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_0to4
 {
 	surfaceparm nolightmap
@@ -5326,6 +5366,11 @@ textures/terrain/q3rcountry3_0to4
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 246.terrain (q3rcountry3_0to5)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_0to5
 {
 	surfaceparm nolightmap
@@ -5353,6 +5398,11 @@ textures/terrain/q3rcountry3_0to5
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 247.terrain (q3rcountry3_0to6)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_0to6
 {
 	surfaceparm nolightmap
@@ -5380,6 +5430,10 @@ textures/terrain/q3rcountry3_0to6
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 248.terrain (q3rcountry3_1to2)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_1to2
 {
@@ -5410,6 +5464,10 @@ textures/terrain/q3rcountry3_1to2
 	}
 }
 
+// ------------------------------------------------------------
+// 249.terrain (q3rcountry3_1to3)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_1to3
 {
 	surfaceparm nolightmap
@@ -5438,6 +5496,10 @@ textures/terrain/q3rcountry3_1to3
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 250.terrain (q3rcountry3_1to4)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_1to4
 {
@@ -5468,6 +5530,10 @@ textures/terrain/q3rcountry3_1to4
 	}
 }
 
+// ------------------------------------------------------------
+// 251.terrain (q3rcountry3_1to5)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_1to5
 {
 	surfaceparm nolightmap
@@ -5495,6 +5561,10 @@ textures/terrain/q3rcountry3_1to5
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 252.terrain (q3rcountry3_1to6)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_1to6
 {
@@ -5524,6 +5594,10 @@ textures/terrain/q3rcountry3_1to6
 	}
 }
 
+// ------------------------------------------------------------
+// 253.terrain (q3rcountry3_2to3)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_2to3
 {
 	surfaceparm nolightmap
@@ -5552,6 +5626,10 @@ textures/terrain/q3rcountry3_2to3
 	}
 }
 
+// ------------------------------------------------------------
+// 254.terrain (q3rcountry3_2to4)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_2to4
 {
 	surfaceparm nolightmap
@@ -5579,6 +5657,10 @@ textures/terrain/q3rcountry3_2to4
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 255.terrain (q3rcountry3_2to5)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_2to5
 {
@@ -5609,6 +5691,10 @@ textures/terrain/q3rcountry3_2to5
 	}
 }
 
+// ------------------------------------------------------------
+// 256.terrain (q3rcountry3_2to6)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_2to6
 {
 	surfaceparm nolightmap
@@ -5637,6 +5723,10 @@ textures/terrain/q3rcountry3_2to6
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 257.terrain (q3rcountry3_3to4)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_3to4
 {
@@ -5667,6 +5757,10 @@ textures/terrain/q3rcountry3_3to4
 	}
 }
 
+// ------------------------------------------------------------
+// 258.terrain (q3rcountry3_3to5)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_3to5
 {
 	surfaceparm nolightmap
@@ -5695,6 +5789,10 @@ textures/terrain/q3rcountry3_3to5
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 259.terrain (q3rcountry3_3to6)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_3to6
 {
@@ -5725,6 +5823,10 @@ textures/terrain/q3rcountry3_3to6
 	}
 }
 
+// ------------------------------------------------------------
+// 260.terrain (q3rcountry3_4to5)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_4to5
 {
 	surfaceparm nolightmap
@@ -5753,6 +5855,10 @@ textures/terrain/q3rcountry3_4to5
 //		tcmod transform 1 0 1 1 1 1
 	}
 }
+
+// ------------------------------------------------------------
+// 261.terrain (q3rcountry3_4to6)
+// ------------------------------------------------------------
 
 textures/terrain/q3rcountry3_4to6
 {
@@ -5783,6 +5889,10 @@ textures/terrain/q3rcountry3_4to6
 	}
 }
 
+// ------------------------------------------------------------
+// 262.terrain (q3rcountry3_5to6)
+// ------------------------------------------------------------
+
 textures/terrain/q3rcountry3_5to6
 {
 	surfaceparm nolightmap
@@ -5809,5 +5919,364 @@ textures/terrain/q3rcountry3_5to6
 		tcmod scale 0.0039 0.0039
 //		tcmod scale 0.015625 0.015625
 //		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 263.q3r_road (asph01)
+// ------------------------------------------------------------
+
+textures\q3r_road\asph01
+{
+	qer_editorimage textures\q3r_road\asph01.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asph01.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 264.q3r_road (asph02)
+// ------------------------------------------------------------
+
+textures\q3r_road\asph02
+{
+	qer_editorimage textures\q3r_road\asph02.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asph02.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 265.q3r_road (asph02linien)
+// ------------------------------------------------------------
+
+textures\q3r_road\asph02linien
+{
+	qer_editorimage textures\q3r_road\asph02linien.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asph02linien.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 266.q3r_road (asph02parking)
+// ------------------------------------------------------------
+
+textures\q3r_road\asph02parking
+{
+	qer_editorimage textures\q3r_road\asph02parking.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asph02parking.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 267.q3r_road (asph03)
+// ------------------------------------------------------------
+
+textures\q3r_road\asph03
+{
+	qer_editorimage textures\q3r_road\asph03.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asph03.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 268.q3r_road (asphalt_lined)
+// ------------------------------------------------------------
+
+textures\q3r_road\asphalt_lined
+{
+	qer_editorimage textures\q3r_road\asphalt_lined.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\asphalt_lined.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 269.q3r_road (cobbels01)
+// ------------------------------------------------------------
+
+textures\q3r_road\cobbles01
+{
+	qer_editorimage textures\q3r_road\cobbles01.jpg
+	cull disable
+	surfaceparm SURF_GRAVEL
+	{
+		map textures\q3r_road\cobbles01.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 270.q3r_road (concrete)
+// ------------------------------------------------------------
+
+textures\q3r_road\concrete
+{
+	qer_editorimage textures\q3r_road\concrete.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\concrete.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 271.q3r_road (road-1)
+// ------------------------------------------------------------
+
+textures\q3r_road\road-1
+{
+	qer_editorimage textures\q3r_road\road-1.tga
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\raod-1.tga
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 272.q3r_road (road)
+// ------------------------------------------------------------
+
+textures\q3r_road\road
+{
+	qer_editorimage textures\q3r_road\road.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 273.q3r_road (road_02)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_02
+{
+	qer_editorimage textures\q3r_road\road_02.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_02.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 274.q3r_road (road_grid)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_grid
+{
+	qer_editorimage textures\q3r_road\road_grid.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_grid.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 275.q3r_road (road_pitend)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_pitend
+{
+	qer_editorimage textures\q3r_road\road_pitend.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_pitend.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 276.q3r_road (road_pitend_2)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_pitend_2
+{
+	qer_editorimage textures\q3r_road\road_pitend_2.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_pitend_2.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 277.q3r_road (road_pitend_3)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_pitend_3
+{
+	qer_editorimage textures\q3r_road\road_pitend_3.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_pitend_3.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 278.q3r_road (road_pitend_4)
+// ------------------------------------------------------------
+
+textures\q3r_road\road_pitend_4
+{
+	qer_editorimage textures\q3r_road\road_pitend_4.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road_pitend_4.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 279.q3r_road (road-start)
+// ------------------------------------------------------------
+
+textures\q3r_road\road-start
+{
+	qer_editorimage textures\q3r_road\road-start.jpg
+	cull disable
+	surfaceparm SURF_ASPHALT
+	{
+		map textures\q3r_road\road-start.jpg
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// 280.q3r_ground (tuerkis_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/tuerkis_slick
+{
+	qer_editorimage textures/q3r_layout/tuerkis.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	{
+		map textures/q3r_layout/tuerkis.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 281.q3r_ground (snowy01_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy01_slick
+{
+	qer_editorimage textures/q3r_ground/snowy01.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy01.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 282.q3r_ground (snowy02_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy02_slick
+{
+	qer_editorimage textures/q3r_ground/snowy02.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy01.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 283.q3r_ground (snowy02_slick2)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy02_slick2
+{
+	qer_editorimage textures/q3r_ground/snowy02_slick.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy02_slick.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 284.q3r_ground (snowy03_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy03_slick
+{
+	qer_editorimage textures/q3r_ground/snowy03.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy03.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 285.q3r_ground (snowy04_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy04_slick
+{
+	qer_editorimage textures/q3r_ground/snowy04.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy04.tga
+	}
+}
+
+// ------------------------------------------------------------
+// 286.q3r_ground (snowy05_slick)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy05_slick
+{
+	qer_editorimage textures/q3r_ground/snowy05.tga
+	surfaceparm SURF_SLICK
+	surfaceparm nolightmap
+	cull disable
+	{
+		map textures/q3r_ground/snowy05.tga
 	}
 }
