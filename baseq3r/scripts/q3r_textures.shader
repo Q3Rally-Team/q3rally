@@ -2881,3 +2881,2933 @@ textures/q3r_road/asphalt
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 151.q3r_metals (grate)
+// ------------------------------------------------------------
+
+textures/q3r_metals/grate
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm playerclip
+	{
+		map textures/q3r_metals/grate.tga
+		blendFunc blend
+		alphaFunc GE128
+		depthWrite
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendFunc GL_DST_COLOR GL_ZERO
+		depthFunc equal
+	}
+
+}
+
+// ------------------------------------------------------------
+// 152.q3r_signage (checkpoint)
+// ------------------------------------------------------------
+
+textures/q3r_signage/checkpoint
+{
+	qer_trans	0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+}
+
+// ------------------------------------------------------------
+// 153.q3r_signage (startfinish)
+// ------------------------------------------------------------
+
+textures/q3r_signage/startfinish
+{
+	qer_trans	0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+}
+
+// ------------------------------------------------------------
+// 154.q3r_signage (dirsign03_blu)
+// ------------------------------------------------------------
+
+textures/q3r_signage/dirsign03_blu
+{
+	qer_editorimage textures/q3r_signage/dirsign02_blu.tga
+	cull disable
+	
+	{
+		map textures/q3r_signage/dirsign02_blu.tga
+		rgbgen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 155.q3r_signage (dirsign03_bnw)
+// ------------------------------------------------------------
+
+textures/q3r_signage/dirsign03_bnw
+{
+	cull disable
+	qer_editorimage textures/q3r_signage/dirsign02_bnw.tga
+	
+	{
+		map textures/q3r_signage/dirsign02_bnw.tga
+		rgbgen identity
+	}
+
+}
+
+// ------------------------------------------------------------
+// 156.q3r_signage (dirsign03_grn)
+// ------------------------------------------------------------
+
+textures/q3r_signage/dirsign03_grn
+{
+	cull disable
+	qer_editorimage textures/q3r_signage/dirsign02_grn.tga
+	
+	{
+		map textures/q3r_signage/dirsign02_grn.tga
+		rgbgen identity
+	}
+
+
+// ------------------------------------------------------------
+// 157.q3r_signage (dirsign03_red)
+// ------------------------------------------------------------
+
+textures/q3r_signage/dirsign03_red
+{
+	cull disable
+	qer_editorimage textures/q3r_signage/dirsign02_red.tga
+	{
+		map textures/q3r_signage/dirsign02_red.tga
+		rgbgen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 158.q3r_signage (dirsign03_red)
+// ------------------------------------------------------------
+
+textures/q3r_signage/dirsign03_ylw
+{
+	cull disable
+	qer_editorimage textures/q3r_signage/dirsign02_ylw.tga
+	
+	{
+		map textures/q3r_signage/dirsign02_ylw.tga
+		rgbgen identity
+	}
+
+}
+
+// ------------------------------------------------------------
+// 159.q3r_signage (flags01_blu)
+// ------------------------------------------------------------
+
+textures/q3r_signage/flags01_blu
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+
+	{
+		map textures/q3r_signage/flags01_blu.tga
+		blendFunc blend
+		alphaFunc GE128
+		depthWrite
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendFunc GL_DST_COLOR GL_ZERO
+		depthFunc equal
+	}
+}
+
+// ------------------------------------------------------------
+// 160.q3r_signage (flags01_bnw)
+// ------------------------------------------------------------
+
+textures/q3r_signage/flags01_bnw
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+
+	{
+		map textures/q3r_signage/flags01_bnw.tga
+		blendFunc blend
+		alphaFunc GE128
+		depthWrite
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendFunc GL_DST_COLOR GL_ZERO
+		depthFunc equal
+	}
+}
+
+// ------------------------------------------------------------
+// 161.q3r_signage (flags01_grn)
+// ------------------------------------------------------------
+
+textures/q3r_signage/flags01_grn
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/q3r_signage/flags01_grn.tga
+		blendFunc GL_DST_COLOR GL_SRC_ALPHA
+		alphaGen lightingSpecular
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 162.q3r_signage (flags01_red)
+// ------------------------------------------------------------
+
+textures/q3r_signage/flags01_red
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/q3r_signage/flags01_red.tga
+		blendFunc GL_DST_COLOR GL_SRC_ALPHA
+		alphaGen lightingSpecular
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 163.q3r_signage (flags01_ylw)
+// ------------------------------------------------------------
+
+textures/q3r_signage/flags01_ylw
+{
+	cull disable
+	surfaceparm alphashadow
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm nomarks
+
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/q3r_signage/flags01_ylw.tga
+		blendFunc GL_DST_COLOR GL_SRC_ALPHA
+		alphaGen lightingSpecular
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 164.q3r_sponsors (q3r01banner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/q3r01banner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/q3r01banner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 165.q3r_sponsors (bighousebanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/bighousebanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/bighousebanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 166.q3r_sponsors (bwbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/bwbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/bwbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 167.q3r_sponsors (fffbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/fffbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/fffbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 168.q3r_sponsors (gamespybanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/gamespybanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/gamespybanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 169.q3r_sponsors (lvlbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/lvlbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/lvlbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 170.q3r_sponsors (polycountbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/polycountbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/polycountbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+
+// ------------------------------------------------------------
+// 171.q3r_sponsors (pqdebanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/pqdebanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/pqdebanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+}
+
+// ------------------------------------------------------------
+// 172.q3r_sponsors (ra3banner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/ra3banner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/ra3banner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 173.q3r_sponsors (shackbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/shackbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/shackbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+}
+
+
+// ------------------------------------------------------------
+// 174.q3r_sponsors (stompedbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/stompedbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/stompedbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+
+// ------------------------------------------------------------
+// 175.q3r_sponsors (telefraggedbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/telefraggedbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/telefraggedbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+
+// ------------------------------------------------------------
+// 176.q3r_sponsors (webdogbanner)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/webdogbanner
+{
+     cull disable
+     surfaceparm nonsolid
+     surfaceparm trans	
+     surfaceparm nomarks
+     tessSize 64
+     deformVertexes wave 30 sin 0 3 0 .2
+     deformVertexes wave 100 sin 0 3 0 .7
+     
+        {
+                map textures/q3r_sponsors/webdogbanner.tga
+		depthWrite
+		rgbGen vertex
+        }
+        {
+		map $lightmap
+		rgbGen identity
+		blendFunc filter
+		depthFunc equal
+	}
+
+
+}
+
+// ------------------------------------------------------------
+// 177.q3r_sponsors (q3r_long_01)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/q3r_long_01
+{
+	qer_editorimage textures/q3r_sponsors/q3rlong01.tga
+
+	{
+		map textures/base_wall/concrete.jpg
+	}
+
+	{
+		map textures/q3r_sponsors/q3rlong01.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		tcMod scale .5 .5
+	}
+
+}
+
+// ------------------------------------------------------------
+// 178.q3r_sponsors (q3r_logo_01)
+// ------------------------------------------------------------
+
+textures/q3r_sponsors/q3r_logo_01
+{
+	qer_editorimage textures/q3r_sponsors/q3rlogo01a.tga
+
+	{
+		map textures/base_wall/concrete_dark.jpg
+	}
+	{
+		map textures/q3r_sponsors/q3rlogo01a.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		tcMod scale .25 .25
+	//	tcMod transform .8 0 0 .8 0 0
+	}
+}
+
+// ------------------------------------------------------------
+// 179.terrain (q3rcountry1_0)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 180.terrain (q3rcountry1_1)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 181.terrain (q3rcountry1_2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 182.terrain (q3rcountry1_3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 183.terrain (q3rcountry1_4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 184.terrain (q3rcountry1_5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 185.terrain (q3rcountry1_6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 186.terrain (q3rcountry1_0to1)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 187.terrain (q3rcountry1_0to2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 188.terrain (q3rcountry1_0to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 189.terrain (q3rcountry1_0to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 190.terrain (q3rcountry1_0to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 191.terrain (q3rcountry1_0to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_0to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 192.terrain (q3rcountry1_1to2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 193.terrain (q3rcountry1_1to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 194.terrain (q3rcountry1_1to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 195.terrain (q3rcountry1_1to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 196.terrain (q3rcountry1_1to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_1to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 197.terrain (q3rcountry1_2to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_2to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 198.terrain (q3rcountry1_2to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_2to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 199.terrain (q3rcountry1_2to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_2to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 200.terrain (q3rcountry1_2to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_2to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 201.terrain (q3rcountry1_3to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_3to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 202.terrain (q3rcountry1_3to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_3to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 203.terrain (q3rcountry1_3to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_3to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 204.terrain (q3rcountry1_4to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_4to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 205.terrain (q3rcountry1_4to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_4to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass09.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 206.terrain (q3rcountry1_5to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry1_5to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/skies2/clouds.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.01 0.01
+		tcMod scroll -0.05 0.05
+		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+// ------------------------------------------------------------
+// 207.terrain (q3rcountry2_0)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		tcmod scale 0.125 0.125
+	}
+
+}
+
+// ------------------------------------------------------------
+// 208.terrain (q3rcountry2_1)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		tcmod scale 0.125 0.125
+	}
+
+}
+
+// ------------------------------------------------------------
+// 209.terrain (q3rcountry2_2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 210.terrain (q3rcountry2_3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.0625 0.0625
+		rgbGen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 211.terrain (q3rcountry2_4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 212.terrain (q3rcountry2_5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 213.terrain (q3rcountry2_6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+
+}
+
+// ------------------------------------------------------------
+// 214.terrain (q3rcountry2_0to1)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+
+}
+
+// ------------------------------------------------------------
+// 215.terrain (q3rcountry2_0to2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 216.terrain (q3rcountry2_0to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.0625 0.0625
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 217.terrain (q3rcountry2_0to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 218.terrain (q3rcountry2_0to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 219.terrain (q3rcountry2_0to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_0to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 220.terrain (q3rcountry2_1to2)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 221.terrain (q3rcountry2_1to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.0625 0.0625
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 222.terrain (q3rcountry2_1to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 223.terrain (q3rcountry2_1to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 224.terrain (q3rcountry2_1to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_1to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 225.terrain (q3rcountry2_2to3)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_2to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		tcmod scale 0.0625 0.0625
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 226.terrain (q3rcountry2_2to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_2to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 227.terrain (q3rcountry2_2to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_2to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 228.terrain (q3rcountry2_2to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_2to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 229.terrain (q3rcountry2_3to4)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_3to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.0625 0.0625
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 230.terrain (q3rcountry2_3to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_3to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.0625 0.0625
+	}
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 231.terrain (q3rcountry2_3to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_3to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rock03.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.0625 0.0625
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 232.terrain (q3rcountry2_4to5)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_4to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 233.terrain (q3rcountry2_4to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_4to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+// ------------------------------------------------------------
+// 234.terrain (q3rcountry2_5to6)
+// ------------------------------------------------------------
+
+textures/terrain/q3rcountry2_5to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/greengrass.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+
+
+//****************************************************
+// *************************************************
+// *
+// * Q3Rcountry3 test pathmap
+// *
+// *************************************************
+textures/terrain/q3rcountry3_0
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail		
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+
+textures/terrain/q3rcountry3_0to1
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+
+textures/terrain/q3rcountry3_0to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_0to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		rgbGen vertex
+
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_0to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_0to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+textures/terrain/q3rcountry3_0to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+	{
+		map textures/q3r_dirt_grass/dirt04.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1to2
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_1to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/dirt01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_2to3
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		tcmod scale 0.125 0.125
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_2to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_2to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_2to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/stones01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_3to4
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_3to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail		
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_3to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/rockwall01.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.125 0.125
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_4to5
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_4to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass08.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}
+
+textures/terrain/q3rcountry3_5to6
+{
+	surfaceparm nolightmap
+	q3map_novertexshadows
+	q3map_forcesunlight
+
+	{
+		map textures/q3r_dirt_grass/grass02.tga
+		rgbGen vertex
+		alphaGen vertex
+		tcmod scale 0.25 0.25
+	}
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		tcmod scale 0.25 0.25
+		rgbGen vertex
+		alphaGen vertex
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+	{
+		map textures/terra/q3r_countrydetail.tga
+		blendfunc filter
+		detail
+		tcmod scale 0.0039 0.0039
+//		tcmod scale 0.015625 0.015625
+//		tcmod transform 1 0 1 1 1 1
+	}
+}

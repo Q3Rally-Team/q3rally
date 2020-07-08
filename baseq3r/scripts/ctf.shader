@@ -10,11 +10,14 @@
 sprites/friend
 {
 	nomipmaps
+	nopicmip
 	{
 		map sprites/friend1.tga
-		blendfunc blend
+		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
+
+
 
 // ------------------------------------------------------------
 // 2.sprites (foe)
@@ -23,9 +26,10 @@ sprites/friend
 sprites/foe
 {
 	nomipmaps
+	nopicmip
 	{
 		map sprites/foe2.tga
-		blendfunc blend
+		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
@@ -103,7 +107,7 @@ models/flags/r_flag
 }
 
 // ------------------------------------------------------------
-// 6.teleporter (blue_telep)
+// 6.ctf (blue_telep)
 // ------------------------------------------------------------
 
 textures/ctf/blue_telep
@@ -157,7 +161,7 @@ textures/ctf/blue_telep
 }
 
 // ------------------------------------------------------------
-// 7.teleporter (red_telep)
+// 7.ctf (red_telep)
 // ------------------------------------------------------------
 
 textures/ctf/red_telep
@@ -206,7 +210,7 @@ textures/ctf/red_telep
 }
 
 // ------------------------------------------------------------
-// 8.test2 (test2_trans)
+// 8.ctf (test2_trans)
 // ------------------------------------------------------------
 
 textures/ctf/test2_trans
@@ -226,7 +230,7 @@ textures/ctf/test2_trans
 }
 
 // ------------------------------------------------------------
-// 9.test2 (test2_r_trans)
+// 9.ctf (test2_r_trans)
 // ------------------------------------------------------------
 
 textures/ctf/test2_r_trans
@@ -246,7 +250,7 @@ textures/ctf/test2_r_trans
 }
 
 // ------------------------------------------------------------
-// 10.killblockctf_r (blocks15cgeomtrn.tga)
+// 10.ctf (killblockctf_r)
 // ------------------------------------------------------------
 
 textures/ctf/killblockctf_r
@@ -289,7 +293,7 @@ textures/ctf/killblockctf_r
 }
 
 // ------------------------------------------------------------
-// 11.killblockctf_b (killblockgeomtrn.tga)
+// 11.ctf (killblockctf_b)
 // ------------------------------------------------------------
 
 textures/ctf/killblockctf_b
@@ -332,7 +336,7 @@ textures/ctf/killblockctf_b
 }
 
 // ------------------------------------------------------------
-// 12.ctf_arch_b_shiny (ctf_arch_b_shiny)
+// 12.ctf (ctf_arch_b_shiny)
 // ------------------------------------------------------------
 
 textures/ctf/ctf_arch_b_shiny
@@ -363,6 +367,10 @@ textures/ctf/ctf_arch_b_shiny
          
 }
 
+// ------------------------------------------------------------
+// 13.ctf (ctf_arch_r_shiny)
+// ------------------------------------------------------------
+
 textures/ctf/ctf_arch_r_shiny
 {
 	qer_editorimage textures/ctf/ctf_arch_r.tga      
@@ -391,6 +399,10 @@ textures/ctf/ctf_arch_r_shiny
          
 }
 
+// ------------------------------------------------------------
+// 14.ctf (door02_bred2_shiny)
+// ------------------------------------------------------------
+
 textures/gothic_door/door02_bred2_shiny
 {              
 qer_editorimage textures/gothic_door/door02_bred2.tga 
@@ -409,6 +421,9 @@ qer_editorimage textures/gothic_door/door02_bred2.tga
 
 }
 
+// ------------------------------------------------------------
+// 15.ctf (door02_eblue2_shiny)
+// ------------------------------------------------------------
 
 textures/gothic_door/door02_eblue2_shiny
 {              
@@ -429,7 +444,9 @@ qer_editorimage textures/gothic_door/door02_eblue2.tga
 
 }
 
-
+// ------------------------------------------------------------
+// 16.ctf (red_scary4_d3fin)
+// ------------------------------------------------------------
 
 textures/ctf/red_scary4_d3fin
 {              
@@ -449,6 +466,10 @@ textures/ctf/red_scary4_d3fin
 
 }
 
+// ------------------------------------------------------------
+// 17.ctf (ctf_tower_bluefin_shiny)
+// ------------------------------------------------------------
+
 textures/ctf/ctf_tower_bluefin_shiny
 {              
 qer_editorimage textures/ctf/ctf_tower_bluefin.tga 
@@ -467,6 +488,9 @@ qer_editorimage textures/ctf/ctf_tower_bluefin.tga
 
 }
 
+// ------------------------------------------------------------
+// 18.ctf (ctf_tower_redfin_shiny)
+// ------------------------------------------------------------
 
 textures/ctf/ctf_tower_redfin_shiny
 {              
@@ -486,6 +510,9 @@ qer_editorimage textures/ctf/ctf_tower_redfin.tga
 
 }
 
+// ------------------------------------------------------------
+// 19.ctf (metalbase09_bluekillblock_shiny)
+// ------------------------------------------------------------
 
 textures/ctf/metalbase09_bluekillblock_shiny
 {              
@@ -505,6 +532,10 @@ qer_editorimage textures/ctf/metalbase09_bluekillblock.tga
 
 }
 
+// ------------------------------------------------------------
+// 20.ctf (red_scary4_cfin)
+// ------------------------------------------------------------
+
 textures/ctf/red_scary4_cfin
 {              
 
@@ -523,6 +554,9 @@ textures/ctf/red_scary4_cfin
 
 }
 
+// ------------------------------------------------------------
+// 21.ctf (red_scary4_csansfacefin)
+// ------------------------------------------------------------
 
 textures/ctf/red_scary4_csansfacefin
 {              
@@ -542,7 +576,9 @@ textures/ctf/red_scary4_csansfacefin
 
 }
 
-
+// ------------------------------------------------------------
+// 22.ctf (tallblue_2_fin)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_2_fin
 {              
@@ -562,6 +598,10 @@ textures/ctf/tallblue_2_fin
 
 }
 
+// ------------------------------------------------------------
+// 23.ctf (tallblue_1L_fin_shiny)
+// ------------------------------------------------------------
+
 textures/ctf/tallblue_1L_fin_shiny
 {              
 qer_editorimage textures/ctf/tallblue_1L_fin.tga 
@@ -579,6 +619,10 @@ qer_editorimage textures/ctf/tallblue_1L_fin.tga
 	}
 
 }
+
+// ------------------------------------------------------------
+// 24.ctf (tallblue_1R_fin_shiny)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_1R_fin_shiny
 {              
@@ -598,7 +642,9 @@ qer_editorimage textures/ctf/tallblue_1R_fin.tga
 
 }
 
-
+// ------------------------------------------------------------
+// 25.ctf (tallblue_2b_fin)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_2b_fin
 {              
@@ -617,6 +663,10 @@ textures/ctf/tallblue_2b_fin
 	}
 
 }
+
+// ------------------------------------------------------------
+// 26.ctf (tallblue_4c_fin_shiny)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_4c_fin_shiny
 {              
@@ -637,8 +687,9 @@ qer_editorimage textures/ctf/tallblue_4c_fin.tga
 
 }
 
-
-
+// ------------------------------------------------------------
+// 27.ctf (tallblue_4bsmall_fin)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_4bsmall_fin
 {              
@@ -658,6 +709,9 @@ textures/ctf/tallblue_4bsmall_fin
 
 }
 
+// ------------------------------------------------------------
+// 28.ctf (tallblue_5esmallb_fin)
+// ------------------------------------------------------------
 
 textures/ctf/tallblue_5esmallb_fin
 {              
@@ -676,6 +730,10 @@ textures/ctf/tallblue_5esmallb_fin
 	}
 
 }
+
+// ------------------------------------------------------------
+// 29.ctf (ctf_blueflag)
+// ------------------------------------------------------------
 
 textures/ctf/ctf_blueflag
 {
@@ -716,6 +774,11 @@ textures/ctf/ctf_blueflag
                rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 30.ctf (ctf_redflag)
+// ------------------------------------------------------------
+
 textures/ctf/ctf_redflag
 {
         tessSize 64
@@ -756,6 +819,11 @@ textures/ctf/ctf_redflag
                rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 31.powerups (redflag)
+// ------------------------------------------------------------
+
 powerups/redflag
 {
 	deformVertexes wave 100 sin 3 0 0 0
@@ -766,6 +834,10 @@ powerups/redflag
 		tcMod turb 0 0.2 0 1
 	}
 }
+
+// ------------------------------------------------------------
+// 32.powerups (blueflag)
+// ------------------------------------------------------------
 
 powerups/blueflag
 {
@@ -778,34 +850,10 @@ powerups/blueflag
 	}
 }
 
-sprites/friend
-{
-	nomipmaps
-	nopicmip
-	{
-		map sprites/friend1.tga
-		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
+// ------------------------------------------------------------
+// 33.ctf (q3r_bluelong_decal)
+// ------------------------------------------------------------
 
-sprites/foe
-{
-	nomipmaps
-	nopicmip
-	{
-		map sprites/foe2.tga
-		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-//for q3rally,
-//this will be the place for ctf decorations eg) banners, curtains, etc.
-//used the q3r logo as base
-//to be completed by devteam --thebigbuu
-
-//////////
-//decals//
-//////////
 textures/q3r_ctf/q3r_bluelong_decal
 {
 	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
@@ -818,7 +866,11 @@ textures/q3r_ctf/q3r_bluelong_decal
 	
 }
 
-textures/q3r_ctf/q3r_redlong_decal
+// ------------------------------------------------------------
+// 34.ctf (q3r_redlong_decal)
+// ------------------------------------------------------------
+
+textures/ctf/q3r_redlong_decal
 {
 	qer_editorimage textures/ctf/q3r_bannerredlong.tga
 	surfaceparm nolightmap
@@ -830,10 +882,11 @@ textures/q3r_ctf/q3r_redlong_decal
 	
 }
 
-////////////////
-//wavy banners//
-////////////////
-textures/q3r_ctf/q3r_bluelong_01
+// ------------------------------------------------------------
+// 35.ctf (q3r_bluelong_01)
+// ------------------------------------------------------------
+
+textures/ctf/q3r_bluelong_01
 {
 	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
 	deformVertexes wave sin 0 1 0 .1
@@ -846,7 +899,11 @@ textures/q3r_ctf/q3r_bluelong_01
 	
 }
 
-textures/q3r_ctf/q3r_redlong_01
+// ------------------------------------------------------------
+// 36.ctf (q3r_redlong_01)
+// ------------------------------------------------------------
+
+textures/ctf/q3r_redlong_01
 {
 	qer_editorimage textures/ctf/q3r_bannerredlong.tga
 	deformVertexes wave sin 0 1 0 .1
