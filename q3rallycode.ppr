@@ -872,15 +872,16 @@ q3rallycode
 11=engine\code\q3_ui\ui_rally_options.c
 12=engine\code\game\g_weapon.c
 13=engine\code\game\g_rally_rearweapon.c
+14=engine\code\q3_ui\ui_rally_credits.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_menu.c
 [engine\code\qcommon\files.c]
 TopLine=183
 Caret=129,192
 [engine\code\qcommon\q_shared.h]
 TopLine=47
-Caret=40,70
+Caret=39,70
 [engine\Makefile]
 TopLine=114
 Caret=17,114
@@ -900,10 +901,10 @@ Caret=1,724
 TopLine=655
 Caret=1,670
 [engine\code\q3_ui\ui_menu.c]
-TopLine=103
-Caret=22,121
+TopLine=416
+Caret=63,438
 [engine\code\q3_ui\ui_credits.c]
-TopLine=49
+TopLine=21
 Caret=1,64
 [engine\code\q3_ui\ui_rally_controls.c]
 TopLine=544
@@ -917,3 +918,6 @@ Caret=13,612
 [engine\code\game\g_rally_rearweapon.c]
 TopLine=201
 Caret=3,223
+[engine\code\q3_ui\ui_rally_credits.c]
+TopLine=89
+Caret=65,102
