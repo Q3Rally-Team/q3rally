@@ -914,3 +914,289 @@ textures/ctf/q3r_redlong_01
 		map textures/ctf/q3r_bannerredlong.tga
 	}
 }
+
+// ------------------------------------------------------------
+// 37.ctf (blueteam01)
+// ------------------------------------------------------------
+
+textures/ctf2/blueteam01
+{
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	polygonoffset
+	cull none
+	{
+		map textures/ctf2/blueteam01.tga
+		alphafunc GE128
+		blendFunc GL_DST_COLOR GL_ONE
+		rgbgen wave sin .9 1 0 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 38.ctf (redteam01)
+// ------------------------------------------------------------
+
+textures/ctf2/redteam01
+{
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	polygonoffset
+	cull none
+	{
+		map textures/ctf2/redteam01.tga
+		alphafunc GE128
+		blendFunc GL_DST_COLOR GL_ONE
+		rgbgen wave sin .9 1 0 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 39.ctf (blueteam02)
+// ------------------------------------------------------------
+
+textures/ctf2/blueteam02
+{
+	qer_editorimage textures/ctf2/blueteam01.tga
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	polygonoffset
+	cull none
+	{
+		map textures/ctf2/blueteam01.tga
+		alphafunc GE128
+		blendFunc GL_DST_COLOR GL_ONE
+		rgbgen wave sin .9 1 0 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 40.ctf (redteam02)
+// ------------------------------------------------------------
+
+textures/ctf2/redteam02
+{
+	qer_editorimage textures/ctf2/redteam01.tga
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	polygonoffset
+	cull none
+	{
+		map textures/ctf2/redteam01.tga
+		alphafunc GE128
+		blendFunc GL_DST_COLOR GL_ONE
+		rgbgen wave sin .9 1 0 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 41.ctf (blue_banner02)
+// ------------------------------------------------------------
+
+textures/ctf2/blue_banner02
+{
+	cull none
+	{
+		map textures/ctf2/blue_banner02.tga
+		rgbgen identity
+	}
+	{
+		map $lightmap
+		rgbgen identity
+		blendfunc filter
+	}
+}
+
+// ------------------------------------------------------------
+// 42.ctf (red_banner02)
+// ------------------------------------------------------------
+
+textures/ctf2/red_banner02
+{
+	cull none
+	{
+		map textures/ctf2/red_banner02.tga
+		rgbgen identity
+	}
+	{
+		map $lightmap
+		rgbgen identity
+		blendfunc filter
+	}
+}
+
+// ------------------------------------------------------------
+// 43.ctf (blue_telep)
+// ------------------------------------------------------------
+
+textures/ctf/blue_telep
+{
+	q3map_lightimage textures/effects/jumpcircblue.tga
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm nomarks
+	surfaceparm trans
+	cull disable
+	q3map_surfacelight 455
+	{
+		clampmap textures/effects/jumpcircblue.tga
+		blendfunc add
+		tcMod rotate 46
+	}
+	{
+		clampmap textures/effects/jumpcircblue.tga
+		blendfunc add
+		tcMod rotate -80
+		tcMod stretch sin 0.6 -0.3 0 0.5 
+	}
+	{
+		clampmap textures/effects/jumpcircblue.tga
+		blendfunc add
+		tcMod rotate -80
+		tcMod stretch sin 0.5 0.3 0 0.5 
+	}
+}
+
+// ------------------------------------------------------------
+// 44.ctf (red_telep)
+// ------------------------------------------------------------
+
+textures/ctf/red_telep
+{
+	q3map_lightimage textures/effects/jumpcircred.tga
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm nomarks
+	surfaceparm trans
+	cull disable
+	q3map_surfacelight 455
+	{
+		clampmap textures/effects/jumpcircred.tga
+		blendfunc add
+		tcMod rotate 46
+	}
+	{
+		clampmap textures/effects/jumpcircred.tga
+		blendfunc add
+		tcMod rotate -80
+		tcMod stretch sin 0.6 -0.3 0 0.5 
+	}
+	{
+		clampmap textures/effects/jumpcircred.tga
+		blendfunc add
+		tcMod rotate -80
+		tcMod stretch sin 0.5 0.3 0 0.5 
+	}
+}
+
+// ------------------------------------------------------------
+// 45.ctf (weapfloor_red)
+// ------------------------------------------------------------
+
+textures/bubctf1/weapfloor_red
+{
+	cull disable
+	{
+		clampmap textures/flares/largeglow.tga
+		blendfunc add
+		rgbGen const ( 0.85098 0.701961 0.701961 )
+		tcMod rotate -40
+	}
+	{
+		clampmap textures/flares/wide.tga
+		blendfunc add
+		rgbGen const ( 1 0 0 )
+		tcMod rotate 42
+		tcMod stretch sin 1 0.1 0 1 
+	}
+}
+
+// ------------------------------------------------------------
+// 46.ctf (weapfloor_blue)
+// ------------------------------------------------------------
+
+textures/bubctf1/weapfloor_blue
+{
+	cull disable
+	{
+		clampmap textures/flares/largeglow.tga
+		blendfunc add
+		rgbGen const ( 0.705882 0.717647 0.847059 )
+		tcMod rotate -40
+	}
+	{
+		clampmap textures/flares/wide.tga
+		blendfunc add
+		rgbGen const ( 0 0 1 )
+		tcMod rotate 42
+		tcMod stretch sin 1 0.1 0 1 
+	}
+}
+
+// ------------------------------------------------------------
+// 47.ctf (ta_techspawn_blue)
+// ------------------------------------------------------------
+
+textures/ctf_unified/ta_techspawn_blue
+{
+	cull disable
+	{
+		clampmap textures/flares/largeglow.tga
+		blendfunc add
+		rgbGen const ( 0.705882 0.717647 0.847059 )
+		tcMod rotate -40
+	}
+	{
+		clampmap textures/flares/wide.tga
+		blendfunc add
+		rgbGen const ( 0 0 1 )
+		tcMod rotate 42
+		tcMod stretch sin 1 0.1 0 1 
+	}
+}
+
+// ------------------------------------------------------------
+// 48.ctf (ta_techspawn_red)
+// ------------------------------------------------------------
+
+textures/ctf_unified/ta_techspawn_red
+{
+	cull disable
+	{
+		clampmap textures/flares/largeglow.tga
+		blendfunc add
+		rgbGen const ( 0.85098 0.701961 0.701961 )
+		tcMod rotate -40
+	}
+	{
+		clampmap textures/flares/wide.tga
+		blendfunc add
+		rgbGen const ( 1 0 0 )
+		tcMod rotate 42
+		tcMod stretch sin 1 0.1 0 1 
+	}
+}
+
+// ------------------------------------------------------------
+// 49.ctf (weapfloor_neutral)
+// ------------------------------------------------------------
+
+textures/bubctf1/weapfloor_neutral
+{
+	cull disable
+	{
+		clampmap textures/flares/largeglow.tga
+		blendfunc add
+		tcMod rotate -40
+	}
+	{
+		clampmap textures/flares/wide.tga
+		blendfunc add
+		tcMod rotate 42
+		tcMod stretch sin 1 0.1 0 1 
+	}
+}

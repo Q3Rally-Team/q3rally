@@ -1,3 +1,7 @@
+// ------------------------------------------------------------
+// Shaders for Q3Rally plates - rewritten by P3rlE
+// based on plates.shader from quake3rally
+// ------------------------------------------------------------
 
 models/players/plates/default
 {

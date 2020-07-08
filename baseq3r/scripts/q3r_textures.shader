@@ -6280,3 +6280,51 @@ textures/q3r_ground/snowy05_slick
 		map textures/q3r_ground/snowy05.tga
 	}
 }
+
+// ------------------------------------------------------------
+// 287.q3r_trees (tree01_still)
+// ------------------------------------------------------------
+
+textures/q3r_trees/tree01_still
+{
+	surfaceparm trans
+	surfaceparm alphashadow
+
+	{
+		map textures/q3r_trees/tree01_still.tga
+		blendFunc blend
+		alphaFunc GE128
+		depthWrite
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendFunc GL_DST_COLOR GL_ZERO
+		depthFunc equal
+	}
+}
+
+// ------------------------------------------------------------
+// 288.q3r_trees (tree03_still)
+// ------------------------------------------------------------
+
+textures/q3r_trees/tree03_still
+{
+	surfaceparm trans
+	surfaceparm alphashadow
+
+	{
+		map textures/q3r_trees/tree03_still.tga
+		blendFunc blend
+		alphaFunc GE128
+		depthWrite
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendFunc GL_DST_COLOR GL_ZERO
+		depthFunc equal
+	}
+}

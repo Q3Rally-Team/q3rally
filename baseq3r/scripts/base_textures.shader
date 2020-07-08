@@ -13632,3 +13632,281 @@ textures/base_light/proto_lightmap
 		map textures/base_light/proto_lightmap.jpg
 	}
 }
+
+// ------------------------------------------------------------
+// 503.base_floor (tilefloor7_ow)
+// ------------------------------------------------------------
+
+textures/base_floor/tilefloor7_ow
+{
+	qer_editorimage textures/base_floor/tilefloor7_ow.jpg
+	q3map_lightimage textures/base_floor/tilefloor7_owfx.jpg
+	q3map_surfacelight 50
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/base_floor/tilefloor7_ow.jpg
+		blendfunc filter
+		rgbgen identity
+	}
+	{
+		map textures/base_floor/tilefloor7_owfx.jpg
+		blendfunc add
+		rgbgen wave sin 2 1 .5 6
+	}
+	
+}
+
+// ------------------------------------------------------------
+// 504.base_wall (metalfloor_wall_10)
+// ------------------------------------------------------------
+
+textures/base_wall/metalfloor_wall_10
+{
+	qer_editorimage textures/base_wall/metalfloor_wall_10.jpg
+	{
+		map textures/base_wall/metalfloor_wall_10.jpg
+		rgbgen identity
+	}
+	{
+		map textures/effects/tinfx.tga
+		tcgen environment
+		rgbgen vertex
+	}
+	{
+		map textures/base_wall/metalfloor_wall_10.jpg
+		blendfunc add
+		rgbgen identity
+	}
+	{
+		map textures/base_wall/metalfloor_wall_10_glow.tga
+		blendfunc blend
+		rgbGen wave sin 0 1 0 1
+	}
+	{
+		map $lightmap
+		blendfunc filter
+		rgbgen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 505.base_wall (respawn_effect1)
+// ------------------------------------------------------------
+
+textures/base_wall2/respawn_effect1
+{
+	qer_editorimage textures/base_wall2/redjet_1.tga
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm nomarks
+	cull none
+	{
+		map textures/base_wall2/redjet_1.tga
+		blendfunc add
+		tcmod scroll .4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 0 1 0 .5
+	}
+	{
+		map textures/base_wall2/redjet_2.tga
+		blendfunc add
+		tcmod scroll -.4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 1 0 0 1.5
+	}
+	{
+		map textures/base_wall2/redjet_3.tga
+		blendfunc add
+		tcmod scale 1 -1
+	}
+}
+
+// ------------------------------------------------------------
+// 506.base_wall (respawn_effect1_blue)
+// ------------------------------------------------------------
+
+textures/base_wall2/respawn_effect1_blue
+{
+	qer_editorimage textures/base_wall2/bluejet_1.tga
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm nomarks
+	cull none
+	{
+		map textures/base_wall2/bluejet_1.tga
+		blendfunc add
+		tcmod scroll .4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 0 1 0 .5
+	}
+	{
+		map textures/base_wall2/bluejet_2.tga
+		blendfunc add
+		tcmod scroll -.4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 1 0 0 1.5
+	}
+	{
+		map textures/base_wall2/bluejet_3.tga
+		blendfunc add
+		tcmod scale 1 -1
+	}
+}
+
+// ------------------------------------------------------------
+// 507.base_wall (respawn_effect1_ntrl)
+// ------------------------------------------------------------
+
+textures/base_wall2/respawn_effect1_ntrl
+{
+	qer_editorimage textures/base_wall2/ntrljet_1.tga
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	surfaceparm nomarks
+	cull none
+	{
+		map textures/base_wall2/ntrljet_1.tga
+		blendfunc add
+		tcmod scroll .4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 0 1 0 .5
+	}
+	{
+		map textures/base_wall2/ntrljet_2.tga
+		blendfunc add
+		tcmod scroll -.4 0
+		tcmod scale 1 -1
+		rgbGen wave sin 1 0 0 1.5
+	}
+	{
+		map textures/base_wall2/ntrljet_3.tga
+		blendfunc add
+		tcmod scale 1 -1
+		
+	}
+}
+
+// ------------------------------------------------------------
+// 508.base_wall (patch10beatup_spec)
+// ------------------------------------------------------------
+
+textures/base_wall/patch10beatup_spec
+{
+	qer_editorimage textures/base_wall/patch10_beatup4_alpha.tga
+	surfaceparm metalsteps
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/base_wall/patch10_beatup4_alpha.tga
+		blendfunc gl_dst_color gl_src_alpha
+		rgbgen identitylighting
+		alphagen lightingspecular
+	}
+}
+
+// ------------------------------------------------------------
+// 509.base_wall (patch10shiny_trans)
+// ------------------------------------------------------------
+
+textures/base_wall/patch10shiny_trans
+{
+	qer_editorimage textures/base_wall/patch10.jpg
+	surfaceparm nonsolid
+	{
+		map textures/base_wall/patch10.jpg
+		rgbGen identity
+		
+	}
+	{
+		map textures/base_wall/chrome_env.jpg
+		tcGen environment 
+		rgbGen oneminusvertex
+		tcmod scale .5 .5
+	}
+	{
+		map textures/base_wall/patch10.jpg
+		blendFunc add
+		rgbGen identity
+		
+	}
+	{
+		map $lightmap
+		blendFunc filter
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 510.base_wall (space_concrete)
+// ------------------------------------------------------------
+
+textures/base_wall2/space_concrete
+{
+	qer_editorimage textures/base_wall2/space_panel_alt.tga
+	{
+		map textures/base_wall/concrete1.tga
+		rgbgen identity
+	}
+	{
+		map textures/base_wall2/space_panel_alt.tga
+		blendfunc filter
+		tcmod scale .1 .1
+	}
+	{
+		map textures/base_wall2/space_panel_alt2.tga
+		blendfunc filter
+		tcmod scale .03 .03
+	}
+	{
+		map $lightmap
+		rgbgen identity
+		blendfunc filter
+	}
+}
+
+// ------------------------------------------------------------
+// 511.base_wall (scuffs1)
+// ------------------------------------------------------------
+
+textures/base_wall2/scuffs1
+{
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	polygonoffset
+	{
+		map textures/base_wall2/scuffs1.tga
+		blendfunc filter
+		rgbgen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 512.base_wall (metalfloor_wall_14_specular)
+// ------------------------------------------------------------
+
+textures/base_wall/metalfloor_wall_14_specular
+{
+	qer_editorimage textures/base_wall/metalfloor_wall_14_specular.tga
+	{
+		map $lightmap
+		rgbgen identity
+	}
+	{
+		map textures/base_wall/metalfloor_wall_14_specular.tga
+		blendfunc gl_dst_color gl_src_alpha
+		rgbgen identitylighting
+		alphagen lightingspecular
+	}
+}

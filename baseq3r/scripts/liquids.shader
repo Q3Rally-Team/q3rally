@@ -1,3 +1,8 @@
+// ------------------------------------------------------------
+// Shaders for Q3Rally liquids - rewritten by P3rlE
+// based on the q3r_liquids.shader from quake3rally
+// ------------------------------------------------------------
+
 textures/q3r_liquids/q3r_water_01
 {
 	qer_editorimage textures/q3r_liquids/water.tga
@@ -111,7 +116,6 @@ textures/q3r_liquids/q3r_lavahell
 	
 }
 
-// lava for q3r --tbb
 textures/q3r_liquids/lava_1a
 {
 	qer_editorimage textures/q3r_liquids/lava_1a.tga
@@ -135,7 +139,6 @@ textures/q3r_liquids/lava_1a
 	
 }
 
-// rotating fireball --tbb
 textures/q3r_liquids/fireball_rot2
 {
 	qer_editorimage textures/q3r_liquids/fireball_1a.tga
@@ -155,7 +158,6 @@ textures/q3r_liquids/fireball_rot2
 	}
 }
 
-// rotating fireball --tbb
 textures/q3r_liquids/fireball_rot1
 {
 	qer_editorimage textures/q3r_liquids/fireball_1a.tga
@@ -170,6 +172,7 @@ textures/q3r_liquids/fireball_rot1
 		tcMod rotate 180
 	}
 }
+
 textures/q3r_liquids/fireball_rotani1
 {
 	qer_editorimage textures/q3r_liquids/fireball_1a.tga
@@ -183,7 +186,6 @@ textures/q3r_liquids/fireball_rotani1
 		blendfunc gl_src_alpha gl_one
 	}
 }
-
 
 textures/liquids/protolava
 {
@@ -219,12 +221,6 @@ textures/liquids/protolava
 
 textures/liquids/slime2
 	{
-	//	*************************************************		
-	//	* SLIME Feb 11 1999 				*
-	//	* IF YOU CHANGE THIS PLEASE COMMENT THE CHANGE	*
-	//	*************************************************	
-
-		// Added to g3map_global texture on May 11, 1999
 		qer_editorimage textures/liquids/slime7e.tga
 		q3map_lightimage textures/liquids/slime7e4.tga
 		q3map_globaltexture
@@ -271,10 +267,6 @@ textures/liquids/slime2
 	}
 
 textures/liquids/watertest
-
-//	************************************************************
-//	*      Water test with environmentmap. Created September 21*
-//	************************************************************
 	
 	{
 		qer_editorimage textures/liquids/pool3d_3b.tga
@@ -307,7 +299,6 @@ textures/liquids/watertest
 
 textures/liquids/flatripplewater_1500
 {
-	// Added to g3map_global texture on May 11, 1999
 	qer_editorimage textures/liquids/pool2.tga
 	q3map_globaltexture
 	q3map_lightsubdivide 32
@@ -319,8 +310,6 @@ textures/liquids/flatripplewater_1500
 	q3map_surfacelight 500
 	cull disable
 	
-//	tesssize 128
-//	cull disable
 	deformVertexes wave 100 sin 3 2 .1 0.1
 	
 	{
@@ -367,12 +356,8 @@ textures/liquids/xctf_painwater
                         //rgbgen wave sin .1 1 5 .1
 		}
 	}
-textures/liquids/clear_calm1
 
-//	*********************************************************
-//	*      Medium clear calm water. Created September 9	*
-//	*********************************************************
-		
+textures/liquids/clear_calm1	
 	{
 		qer_editorimage textures/liquids/pool3d_3e.tga
 		qer_trans .5
@@ -407,15 +392,9 @@ textures/liquids/clear_calm1
 	
 	
 
-//	END
 	}
 
-textures/liquids/clear_ripple3
-
-//	*********************************************************
-//	*      Medium clear ripple water. Created September 9	*
-//	*********************************************************
-		
+textures/liquids/clear_ripple3	
 	{
 		qer_editorimage textures/liquids/pool3d_3c.tga
 		qer_trans .5

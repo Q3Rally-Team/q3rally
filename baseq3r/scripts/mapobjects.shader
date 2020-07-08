@@ -1,3 +1,8 @@
+// ------------------------------------------------------------
+// Shaders for Q3Rally mapobjects - rewritten by P3rlE
+// based on mapobjects.shader from quake3rally
+// ------------------------------------------------------------
+
 //================
 //	watertower	
 //================
