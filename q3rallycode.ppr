@@ -875,7 +875,7 @@ q3rallycode
 14=engine\code\q3_ui\ui_rally_credits.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_menu.c
+Selected=engine\Makefile
 [engine\code\qcommon\files.c]
 TopLine=183
 Caret=129,192
@@ -883,7 +883,7 @@ Caret=129,192
 TopLine=47
 Caret=39,70
 [engine\Makefile]
-TopLine=114
+TopLine=100
 Caret=17,114
 [engine\code\q3_ui\ui_rally_startserver.c]
 TopLine=1250
