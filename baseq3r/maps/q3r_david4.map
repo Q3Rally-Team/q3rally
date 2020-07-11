@@ -1413,3 +1413,8 @@ base_trim/rusty_pewter_big
 "spawnflags" "1"
 "angle" "240"
 }
+// entity 87
+{
+"classname" "info_player_deathmatch"
+"origin" "1800.000000 776.000000 0.000000"
+}
