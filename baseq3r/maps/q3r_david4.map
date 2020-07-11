@@ -1426,3 +1426,80 @@ base_trim/rusty_pewter_big
 "classname" "info_player_deathmatch"
 "origin" "1800.000000 776.000000 0.000000"
 }
+// entity 88
+{
+"classname" "weapon_grenadelauncher"
+"origin" "-1280.000000 1288.000000 8.000000"
+"count" "25"
+}
+// entity 89
+{
+"classname" "ammo_grenades"
+"origin" "-1280.000000 1192.000000 8.000000"
+"count" "15"
+}
+// entity 90
+{
+"classname" "ammo_grenades"
+"origin" "-1280.000000 1400.000000 8.000000"
+"count" "15"
+}
+// entity 91
+{
+"classname" "weapon_bfg"
+"origin" "-1280.000000 272.000000 8.000000"
+"count" "25"
+}
+// entity 92
+{
+"classname" "ammo_bfg"
+"origin" "-1280.000000 144.000000 8.000000"
+"count" "15"
+}
+// entity 93
+{
+"classname" "ammo_bfg"
+"origin" "-1280.000000 392.000000 8.000000"
+"count" "15"
+}
+// entity 94
+{
+"classname" "weapon_grenadelauncher"
+"origin" "4864.000000 1272.000000 8.000000"
+"count" "25"
+}
+// entity 95
+{
+"classname" "ammo_grenades"
+"origin" "4864.000000 1176.000000 8.000000"
+"count" "15"
+}
+// entity 96
+{
+"classname" "ammo_grenades"
+"origin" "4864.000000 1384.000000 8.000000"
+"count" "15"
+}
+// entity 97
+{
+"classname" "weapon_bfg"
+"origin" "4864.000000 256.000000 8.000000"
+"count" "25"
+}
+// entity 98
+{
+"classname" "ammo_bfg"
+"origin" "4864.000000 128.000000 8.000000"
+"count" "15"
+}
+// entity 99
+{
+"classname" "ammo_bfg"
+"origin" "4864.000000 376.000000 8.000000"
+"count" "15"
+}
+// entity 100
+{
+"classname" "rally_item_invis"
+"origin" "1664.000000 -888.000000 8.000000"
+}
