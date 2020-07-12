@@ -42,9 +42,9 @@ int GetTeamAtRank( int rank ){
 			if (!counts[j]) continue;
 
 			if (isRallyRace()){
-				if (level.teamTimes[i] > level.teamTimes[j]) count++;
+				if (level.teamTimes[i + TEAM_RED] > level.teamTimes[j + TEAM_RED]) count++;
 			}
-			else if (level.teamScores[i] < level.teamScores[j]) count++;
+			else if (level.teamScores[i + TEAM_RED] < level.teamScores[j + TEAM_RED]) count++;
 		}
 
 		while( count < 4 && ranks[count] ) count++; // rank is taken so move to the next one

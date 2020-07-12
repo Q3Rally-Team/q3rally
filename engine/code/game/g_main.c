@@ -1605,8 +1605,8 @@ qboolean ScoreIsTied( void ) {
 			if (i == winner) continue;
 			if (!TeamCount(-1, TEAM_RED + i)) continue;
 
-			if ((isRallyRace() && level.teamTimes[winner] == level.teamTimes[i])
-				|| (!isRallyRace() && level.teamScores[winner] == level.teamScores[i])){
+			if ((isRallyRace() && level.teamTimes[winner + TEAM_RED] == level.teamTimes[i + TEAM_RED])
+				|| (!isRallyRace() && level.teamScores[winner + TEAM_RED] == level.teamScores[i + TEAM_RED])){
 				tied = qtrue;
 				break;
 			}
