@@ -1415,6 +1415,7 @@ textures/q3r_dirt_grass/grass03
 textures/q3r_dirt_grass/grass04
 {
 	surfaceparm SURF_GRASS
+	surfaceparm SURF_WET
 	{
 		map textures/q3r_dirt_grass/grass04.tga
 	}  
@@ -6106,7 +6107,7 @@ textures\q3r_road\road_grid
 // 275.q3r_road (road_pitend)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend
+textures\q3r_textures\road_pitend
 {
 	qer_editorimage textures\q3r_road\road_pitend.jpg
 	cull disable
@@ -6121,7 +6122,7 @@ textures\q3r_road\road_pitend
 // 276.q3r_road (road_pitend_2)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_2
+textures\q3r_textures\road_pitend_2
 {
 	qer_editorimage textures\q3r_road\road_pitend_2.jpg
 	cull disable
@@ -6136,7 +6137,7 @@ textures\q3r_road\road_pitend_2
 // 277.q3r_road (road_pitend_3)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_3
+textures\q3r_textures\road_pitend_3
 {
 	qer_editorimage textures\q3r_road\road_pitend_3.jpg
 	cull disable
@@ -6151,7 +6152,7 @@ textures\q3r_road\road_pitend_3
 // 278.q3r_road (road_pitend_4)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_4
+textures\q3r_textures\road_pitend_4
 {
 	qer_editorimage textures\q3r_road\road_pitend_4.jpg
 	cull disable
