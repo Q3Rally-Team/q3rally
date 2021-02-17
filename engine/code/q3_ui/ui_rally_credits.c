@@ -64,7 +64,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Steve \"Stone Lance\" Heijster", UI_CENTER|UI_SMALLFONT, color_white );
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-        UI_DrawProportionalString( 320, y, "Per \"Perle\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
+        UI_DrawProportionalString( 320, y, "Per \"P3rlE\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Art and Models:", UI_CENTER|UI_SMALLFONT, color_white );
@@ -72,6 +72,10 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         UI_DrawProportionalString( 320, y, "Jeff \"Stecki\" Garstecki", UI_CENTER|UI_SMALLFONT, color_white );
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "\"Steel Painter\"", UI_CENTER|UI_SMALLFONT, color_white );
+        y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
+        UI_DrawProportionalString( 320, y, "Per \"P3rlE\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
+        y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
+        UI_DrawProportionalString( 320, y, "\"insellium\"", UI_CENTER|UI_SMALLFONT, color_white );
         
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Maps:", UI_CENTER|UI_SMALLFONT, color_white );
@@ -86,7 +90,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "Michael \"Cyberdemon\" Kaminsky", UI_CENTER|UI_SMALLFONT, color_white );
         y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-        UI_DrawProportionalString( 320, y, "Per \"Perle\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
+        UI_DrawProportionalString( 320, y, "Per \"P3rlE\" Thormann", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
         UI_DrawProportionalString( 320, y, "SDK Document Design and Layout:", UI_CENTER|UI_SMALLFONT, color_white );
