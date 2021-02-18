@@ -427,7 +427,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			-q3_ui
+			+q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -486,7 +486,7 @@ q3rallycode
 				engine\code\q3_ui\ui_team.c
 				engine\code\q3_ui\ui_teamorders.c
 				engine\code\q3_ui\ui_video.c
-			+qcommon
+			-qcommon
 				engine\code\qcommon\cm_load.c
 				engine\code\qcommon\cm_local.h
 				engine\code\qcommon\cm_patch.c
@@ -865,9 +865,11 @@ q3rallycode
 4=engine\code\qcommon\q_shared.h
 5=engine\code\q3_ui\ui_rally_credits.c
 6=engine\code\q3_ui\ui_credits.c
+7=engine\code\q3_ui\ui_qmenu.c
+8=engine\code\q3_ui\ui_local.h
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_credits.c
+Selected=engine\code\q3_ui\ui_local.h
 [engine\code\qcommon\files.c]
 TopLine=3681
 Caret=1,3695
@@ -889,3 +891,9 @@ Caret=1,78
 [engine\code\q3_ui\ui_credits.c]
 TopLine=110
 Caret=76,135
+[engine\code\q3_ui\ui_qmenu.c]
+TopLine=1899
+Caret=64,1916
+[engine\code\q3_ui\ui_local.h]
+TopLine=25
+Caret=33,40

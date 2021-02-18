@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef void (*voidfunc_f)(void);
 
 // STONELANCE
-#define MENU_TRANSITION_TIME	1000
+#define MENU_TRANSITION_TIME	665
 
 #define	DEFAULT_MODEL			"sidepipe"
 #define	DEFAULT_SKIN			"red"
