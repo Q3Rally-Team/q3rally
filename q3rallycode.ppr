@@ -869,7 +869,7 @@ q3rallycode
 8=engine\code\q3_ui\ui_local.h
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_local.h
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\files.c]
 TopLine=3681
 Caret=1,3695
