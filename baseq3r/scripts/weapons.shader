@@ -231,6 +231,23 @@ lightningBoltNewNPM
 	}
 }
 
+lightnnFlash
+{
+	cull disable
+	{
+		clampmap models/weapons2/lightning/muzzle1.tga
+		blendfunc add
+		rgbGen entity
+		tcMod rotate -74
+	}
+	{
+		clampmap models/weapons2/lightning/muzzle1.tga
+		blendfunc add
+		rgbGen entity
+		tcMod rotate 53
+	}
+}
+
 // ------------------------------------------------------------
 // 3.Flamethrower
 // ------------------------------------------------------------
@@ -894,17 +911,17 @@ models/weapons2/railgun/glass
 	}
 }
 
-railgunFlash
+lowRailgunFlash
 {
 	cull disable
 	{
-		clampmap models/weapons2/railgun/f_railgun2.tga
+		clampmap models/weapons2/railgun/f_railgun2.jpg
 		blendfunc add
 		rgbGen entity
 		tcMod rotate -74
 	}
 	{
-		clampmap models/weapons2/railgun/f_railgun2.tga
+		clampmap models/weapons2/railgun/f_railgun2.jpg
 		blendfunc add
 		rgbGen entity
 		tcMod rotate 53
@@ -915,7 +932,7 @@ railDisc
 {
 	cull disable
 	{
-		clampmap models/weapons2/railgun/f_railgun3.tga
+		clampmap models/weapons2/railgun/f_railgun3.jpg
 		blendfunc add
 		rgbGen vertex
 		tcmod rotate 130
