@@ -443,6 +443,38 @@ models/players/plates/eu_greatbritain
 	}
 }
 
+models/players/plates/eu_austria
+{
+	{
+		map models/players/plates/eu_austria.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_croatia
+{
+	{
+		map models/players/plates/eu_croatia.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_france
+{
+	{
+		map models/players/plates/eu_france.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_slowenia
+{
+	{
+		map models/players/plates/eu_slowenia.tga
+		rgbGen lightingdiffuse
+	}
+}
+
 models/players/plates/usa_Abu_Dhabi
 {
 	{
@@ -450,6 +482,7 @@ models/players/plates/usa_Abu_Dhabi
 		rgbGen lightingdiffuse
 	}
 }
+
 
 models/players/plates/usa_alaska_susitna
 {

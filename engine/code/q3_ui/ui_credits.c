@@ -101,6 +101,8 @@ cr_line credits[] = { // edit this as necessary for your credits
 { "Art and Models", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW|UI_PULSE, &color_headertext },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },
 { "Jeff 'Stecki' Garstecki", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
+{ "Per 'P3rlE' Thormann", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
+{ "'insellium'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "'Steel Painter'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "Thomas aka. 'To-mos'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },
