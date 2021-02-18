@@ -132,6 +132,7 @@ cr_line credits[] = { // edit this as necessary for your credits
 { "Mirco 'PaniC' Herrmann", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "Jeremiah aka. 'BETAMONKEY'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "'Onai'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
+{ "'insellium'", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_headertext },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },
 { "", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_blue },

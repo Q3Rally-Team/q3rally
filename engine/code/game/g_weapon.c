@@ -609,7 +609,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-	damage = 50 * s_quadFactor;
+	damage = 17 * s_quadFactor;
 
 	VectorMA (muzzle, 8192, forward, end);
 
@@ -1211,10 +1211,9 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_BFG:
 		BFG_Fire( ent );
 		break;
-
-  case WP_FLAME_THROWER:
-    Weapon_fire_flame( ent );
-    break;
+    case WP_FLAME_THROWER:
+        Weapon_fire_flame( ent );
+        break;
 
 #ifdef MISSIONPACK
 	case WP_NAILGUN:
