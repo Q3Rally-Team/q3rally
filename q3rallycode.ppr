@@ -867,6 +867,12 @@ q3rallycode
 6=engine\code\q3_ui\ui_credits.c
 7=engine\code\q3_ui\ui_qmenu.c
 8=engine\code\q3_ui\ui_local.h
+9=engine\code\game\bg_public.h
+10=engine\code\cgame\cg_event.c
+11=engine\code\cgame\cg_effects.c
+12=engine\code\cgame\cg_local.h
+13=engine\code\cgame\cg_rally_hud.c
+14=engine\code\q3_ui\ui_rally_options.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -877,10 +883,10 @@ Caret=1,3695
 TopLine=593
 Caret=13,612
 [engine\code\cgame\cg_weapons.c]
-TopLine=766
-Caret=17,810
+TopLine=677
+Caret=1,692
 [engine\code\game\g_missile.c]
-TopLine=1022
+TopLine=201
 Caret=1,201
 [engine\code\qcommon\q_shared.h]
 TopLine=55
@@ -889,7 +895,7 @@ Caret=39,70
 TopLine=63
 Caret=1,78
 [engine\code\q3_ui\ui_credits.c]
-TopLine=110
+TopLine=111
 Caret=76,135
 [engine\code\q3_ui\ui_qmenu.c]
 TopLine=1899
@@ -897,3 +903,21 @@ Caret=64,1916
 [engine\code\q3_ui\ui_local.h]
 TopLine=25
 Caret=33,40
+[engine\code\game\bg_public.h]
+TopLine=587
+Caret=25,611
+[engine\code\cgame\cg_event.c]
+TopLine=1117
+Caret=1,1132
+[engine\code\cgame\cg_effects.c]
+TopLine=208
+Caret=48,229
+[engine\code\cgame\cg_local.h]
+TopLine=1784
+Caret=1,1799
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=723
+Caret=1,738
+[engine\code\q3_ui\ui_rally_options.c]
+TopLine=227
+Caret=1,242

@@ -144,65 +144,9 @@ BFGTrail
 }
 
 // ------------------------------------------------------------
-// 2.Chaingun
+// 2.Lightning Gun
 // ------------------------------------------------------------
 
-vulcanFlash
-{
-	cull disable
-	deformVertexes bulge 3 3 76
-	{
-		clampmap models/weapons/vulcan/muzzy.tga
-		blendfunc add
-		rgbGen wave inversesawtooth 0 1 0 30 
-		tcMod rotate 1554
-	}
-	{
-		clampmap models/weapons/vulcan/muzzy.tga
-		blendfunc add
-		rgbGen wave inversesawtooth 0 1 0 30 
-		tcMod rotate -2640
-	}
-	{
-		clampmap models/weapons/vulcan/muzzy.tga
-		blendfunc add
-		rgbGen wave inversesawtooth 0 1 0 30 
-		tcMod rotate 7402
-		tcMod stretch sin 0 1 0 1 
-	}
-	{
-		clampmap models/weapons/vulcan/muzzy.tga
-		blendfunc add
-		rgbGen wave inversesawtooth 0 1 0 30 
-		tcMod rotate -6403
-		tcMod stretch sin 0.5 0.5 0 1 
-	}
-}
-
-models/weapons/vulcan/vulcan
-{
-	{
-		map models/weapons/vulcan/vulcan.tga
-		rgbGen lightingDiffuse
-	}
-}
-
-lightningBolt
-{
-	cull disable
-	{
-		animmap 30 textures/oafx/lbeam3.tga textures/oafx/lbeam4.tga textures/oafx/lbeam5.tga textures/oafx/lbeam6.tga textures/oafx/lbeam7.tga textures/oafx/lbeam8.tga textures/oafx/lbeam5.tga textures/oafx/lbeam7.tga 
-		blendfunc add
-		tcMod scale 0.5 1
-		tcMod scroll -1 0
-	}
-	{
-		animmap 40 textures/oafx/lbeam8.tga textures/oafx/lbeam7.tga textures/oafx/lbeam4.tga textures/oafx/lbeam5.tga textures/oafx/lbeam6.tga textures/oafx/lbeam3.tga textures/oafx/lbeam7.tga textures/oafx/lbeam4.tga 
-		blendfunc add
-		tcMod scale 0.2 1
-		tcMod scroll -0.3 0
-	}
-}
 
 lightningBoltnew
 {
@@ -211,23 +155,6 @@ lightningBoltnew
 		animmap 30 textures/oafx/lbeam3.tga textures/oafx/lbeam4.tga textures/oafx/lbeam5.tga textures/oafx/lbeam6.tga textures/oafx/lbeam7.tga textures/oafx/lbeam8.tga textures/oafx/lbeam5.tga textures/oafx/lbeam7.tga 
 		blendfunc add
 		tcMod scroll -1 0
-	}
-}
-
-lightningBoltNewNPM
-{
-	cull disable
-	{
-		animmap 30 textures/oafx/lbeam3.tga textures/oafx/lbeam4.tga textures/oafx/lbeam5.tga textures/oafx/lbeam6.tga textures/oafx/lbeam7.tga textures/oafx/lbeam8.tga textures/oafx/lbeam5.tga textures/oafx/lbeam7.tga 
-		blendfunc add
-		tcMod scale 0.5 1
-		tcMod scroll -1 0
-	}
-	{
-		animmap 40 textures/oafx/lbeam8.tga textures/oafx/lbeam7.tga textures/oafx/lbeam4.tga textures/oafx/lbeam5.tga textures/oafx/lbeam6.tga textures/oafx/lbeam3.tga textures/oafx/lbeam7.tga textures/oafx/lbeam4.tga 
-		blendfunc add
-		tcMod scale 0.2 1
-		tcMod scroll -0.3 0
 	}
 }
 
@@ -246,6 +173,36 @@ lightnnFlash
 		rgbGen entity
 		tcMod rotate 53
 	}
+
+}
+
+models/weapons2/lightning/f_lightning
+{
+	sort additive
+	cull disable
+	{
+		map models/weapons2/lightning/f_lightning.tga
+		blendfunc GL_ONE GL_ONE
+	}
+}
+
+models/weaphits/electric
+{
+	cull none
+	
+	{
+		clampmap models/weaphits/electric.jpg
+		blendFunc GL_ONE GL_ONE
+                rgbgen wave triangle .8 2 0 9
+                tcMod rotate 360
+	}	
+        {
+		clampmap models/weaphits/electric.tga
+		blendFunc GL_ONE GL_ONE
+                rgbgen wave triangle 1 1.4 0 9.5
+                tcMod rotate -202
+	}	
+	
 }
 
 // ------------------------------------------------------------
