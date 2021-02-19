@@ -439,7 +439,7 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 	gentity_t	*m;
 
 	// extra vertical velocity
-	forward[2] += 0.2f;
+	forward[2] += 0.0f;
 	VectorNormalize( forward );
 
 	m = fire_grenade (ent, muzzle, forward);
@@ -461,7 +461,7 @@ void weapon_cluster_grenadelauncher_fire (gentity_t *ent) {
 	gentity_t	*m;
 
 	// extra vertical velocity
-	forward[2] += 0.2f;
+	forward[2] += 0.15f;
 	VectorNormalize( forward );
 
 	m = fire_cluster_grenade (ent, muzzle, forward);
