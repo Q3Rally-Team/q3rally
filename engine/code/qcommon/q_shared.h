@@ -57,7 +57,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 // Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing
-#define HEARTBEAT_FOR_MASTER		"Q3Rally"
+#define HEARTBEAT_FOR_MASTER		"DarkPlaces"
 
 // When com_gamename is LEGACY_MASTER_GAMENAME, use quake3 master protocol.
 // You shouldn't change this unless you know what you're doing
@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.0.3.0_r297"
+#define PRODUCT_VERSION "v0.0.3.0_r298"
 #endif
 
 
