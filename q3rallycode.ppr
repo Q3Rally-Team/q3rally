@@ -875,9 +875,10 @@ q3rallycode
 14=engine\code\q3_ui\ui_rally_options.c
 15=engine\code\q3_ui\ui_rally_servers.c
 16=engine\code\qcommon\qcommon.h
+17=engine\code\q3_ui\ui_serverinfo.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\qcommon.h
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\files.c]
 TopLine=3681
 Caret=1,3695
@@ -929,3 +930,6 @@ Caret=1,1244
 [engine\code\qcommon\qcommon.h]
 TopLine=253
 Caret=51,267
+[engine\code\q3_ui\ui_serverinfo.c]
+TopLine=111
+Caret=29,136
