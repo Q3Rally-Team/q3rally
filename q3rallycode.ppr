@@ -885,6 +885,7 @@ q3rallycode
 24=engine\code\cgame\cg_draw.c
 25=engine\code\game\bg_pmove.c
 26=engine\code\q3_ui\ui_cinematics.c
+27=engine\code\cgame\cg_players.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -969,3 +970,6 @@ Caret=1,2029
 [engine\code\q3_ui\ui_cinematics.c]
 TopLine=21
 Caret=1,35
+[engine\code\cgame\cg_players.c]
+TopLine=183
+Caret=1,29
