@@ -507,3 +507,67 @@ models/players/plates/usa_florida
 		rgbGen lightingdiffuse
 	}
 }
+
+models/players/plates/eu_russia
+{
+	{
+		map models/players/plates/eu_russia.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_belarus
+{
+	{
+		map models/players/plates/eu_belarus.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_kazakhstan
+{
+	{
+		map models/players/plates/eu_kazakhstan.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/eu_ukraine
+{
+	{
+		map models/players/plates/eu_ukraine.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/usa_russia
+{
+	{
+		map models/players/plates/usa_russia.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/usa_belarus
+{
+	{
+		map models/players/plates/usa_belarus.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/usa_kazakhstan
+{
+	{
+		map models/players/plates/usa_kazakhstan.tga
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/plates/usa_ukraine
+{
+	{
+		map models/players/plates/usa_ukraine.tga
+		rgbGen lightingdiffuse
+	}
+}
