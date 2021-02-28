@@ -425,3 +425,20 @@ models/players/raptor/lvl_lites
 		rgbGen identity
 	}    
 }
+
+// DREAMCAST
+
+models/players/raptor/dreamcast
+{      
+	{
+		map textures/reflect/reflect.jpg
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/raptor/dreamcast.tga
+            blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+}

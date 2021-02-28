@@ -893,8 +893,8 @@ Selected=engine\code\qcommon\q_shared.h
 TopLine=3681
 Caret=1,3695
 [engine\code\game\g_weapon.c]
-TopLine=429
-Caret=20,442
+TopLine=776
+Caret=1,776
 [engine\code\cgame\cg_weapons.c]
 TopLine=2106
 Caret=1,2120
@@ -971,5 +971,5 @@ Caret=1,2029
 TopLine=21
 Caret=1,35
 [engine\code\cgame\cg_players.c]
-TopLine=183
+TopLine=29
 Caret=1,29

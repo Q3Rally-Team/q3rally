@@ -625,3 +625,173 @@ models/players/mini/telefragged_roof
 		rgbGen lightingdiffuse
 	}       
 }
+
+//VAPORWAVE VERSION
+
+models/players/mini/main_vaporwave
+{      
+      {
+	  	map models/players/mini/main_vaporwave.tga
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+	{
+	//	map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		blendFunc add       
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/mini/main_vaporwave.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+//          blendFunc GL_SRC_ALPHA GL_ONE
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+}
+
+
+models/players/mini/hlites_vaporwave
+{
+
+      {
+	  	map models/players/mini/hlites_vaporwave.tga
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+  	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		blendFunc add             
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/mini/hlites_vaporwave.tga
+            blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+      {
+		map models/players/mini/hlites_g.tga
+            blendFunc add
+		rgbGen lightingdiffuse
+	}    
+}
+
+models/players/mini/roof_vaporwave
+{      
+      {
+	  	map models/players/mini/roof_vaporwave.tga
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+            tcGen environment
+            blendFunc add
+	}
+      {
+	  	map models/players/mini/roof_vaporwave.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+}
+
+models/players/mini/glass_vaporwave
+{
+	{
+		map models/players/mini/glass_vaporwave.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen lightingdiffuse
+	}
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		tcGen environment
+		blendFunc add
+	}
+	{
+		map models/players/mini/glass_uj_r.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen lightingdiffuse
+	}
+}
+
+//BROWN
+
+models/players/mini/brown_main
+{      
+      {
+	  	map models/players/mini/brown_main.tga
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+	{
+	//	map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		blendFunc add       
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/mini/brown_main.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+//          blendFunc GL_SRC_ALPHA GL_ONE
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+}
+
+
+models/players/mini/hlites_brown
+{
+
+      {
+	  	map models/players/mini/hlites_brown.tga
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+  	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		blendFunc add             
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/mini/hlites_brown.tga
+            blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}       
+      {
+		map models/players/mini/hlites_g.tga
+            blendFunc add
+		rgbGen lightingdiffuse
+	}    
+}
+
+
+models/players/mini/glass_brown
+{
+	{
+		map models/players/mini/glass_brown.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen lightingdiffuse
+	}
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg  
+		tcGen environment
+		blendFunc add
+	}
+	{
+		map models/players/mini/glass_brown_r.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen lightingdiffuse
+	}
+}

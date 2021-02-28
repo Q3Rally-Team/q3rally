@@ -526,3 +526,46 @@ models/players/macdaddy/yellow_ornament
 		rgbGen lightingdiffuse
 	}
 }
+
+//Hit or Miss
+
+models/players/macdaddy/hitormiss_main
+
+{      
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg             
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/macdaddy/hitormiss_main.tga
+            blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+         
+}
+
+models/players/macdaddy/hitormiss_hlites
+
+{      
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg             
+            tcGen environment
+            rgbGen lightingdiffuse
+	}
+      {
+	  	map models/players/macdaddy/hitormiss_hlites.tga
+            blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/macdaddy/hlites_g.tga
+            blendFunc add
+		rgbGen identity
+	}  
+         
+}
