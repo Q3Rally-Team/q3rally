@@ -78,7 +78,7 @@ typedef struct {
 static postgameMenuInfo_t	postgameMenuInfo;
 static char					arenainfo[MAX_INFO_VALUE];
 
-char	*ui_medalNames[] = {"Accuracy", "Impressive", "Excellent", "Gauntlet", "Frags", "Perfect"};
+char	*ui_medalNames[] = {"Accuracy", "Impressive", "Excellent", "Chainsaw", "Frags", "Perfect"};
 char	*ui_medalPicNames[] = {
 	"menu/medals/medal_accuracy",
 	"menu/medals/medal_impressive",

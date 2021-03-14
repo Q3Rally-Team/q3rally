@@ -254,7 +254,7 @@ BotWeaponNameForMeansOfDeath
 char *BotWeaponNameForMeansOfDeath(int mod) {
 	switch(mod) {
 		case MOD_SHOTGUN: return "Shotgun";
-		case MOD_GAUNTLET: return "Gauntlet";
+		case MOD_GAUNTLET: return "Chainsaw";
 		case MOD_MACHINEGUN: return "Machinegun";
 		case MOD_GRENADE:
 		case MOD_GRENADE_SPLASH: return "Grenade Launcher";
@@ -292,7 +292,7 @@ char *BotRandomWeaponName(void) {
 	rnd = random() * 8.9;
 #endif
 	switch(rnd) {
-		case 0: return "Gauntlet";
+		case 0: return "Chainsaw";
 		case 1: return "Shotgun";
 		case 2: return "Machinegun";
 		case 3: return "Grenade Launcher";

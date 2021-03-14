@@ -1,6 +1,7 @@
 // Quake3 Arena entity definition file for Q3Radiant
 // Based on draft by Suicide 20 7.30.99 and inolen 9-3-99
 // Upgraded by Eutectic: eutectic@ritualistic.com
+// Q3Rally model defs added (info_player_start scale modified) by: To-mos 3-13-2021
 // (visible models added by raYGunn - paths provided by Suicide 20)
 // (terrain information added to func_group entity by Paul Jaquays)
 // Q3Map2 entitys/keys added by ydnar
@@ -958,7 +959,8 @@ In genuine bot arena matches, the podium for the 1st, 2nd and 3rd place players 
 
 //=============================================================================
 
-/*QUAKED info_player_start (1 0 0) (-16 -16 -24) (16 16 32)
+//*QUAKED info_player_start (1 0 0) (-16 -16 -24) (16 16 32)
+/*QUAKED info_player_start (1 0 0) (-50 -24 -24) (50 24 24)
 Player spawn location. It works in Quake III Arena, but it is not used in the Id maps. Use info_player_deathmatch instead.
 -------- KEYS --------
 angle : direction in which player will look when spawning in the game. Does not apply to bots.
@@ -2514,6 +2516,10 @@ Q3Rally Entities
 =================================
 //
 
+/*QUAKED rally_scripted_object (0 .9 .1) ?
+
+*/
+
 /*QUAKED rally_startfinish (0 .9 .1) ?
 
 "laps"	number of laps, default is 1
@@ -2564,85 +2570,85 @@ disable_splash turns off splashes, improving framerates since there is not as mu
 
 //WEAPONS
 
-/*QUAKED rally_weapon_bio (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_weapon_bio (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/rearfire/rf_bio.md3"*/
 
-/*QUAKED rally_weapon_flame (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_weapon_flame (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/rearfire/rf_flame.md3"*/
 
-/*QUAKED rally_weapon_mine (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_weapon_mine (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/rearfire/rf_mines.md3"*/
 
-/*QUAKED rally_weapon_oil (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_weapon_oil (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/rearfire/rf_oil.md3"*/
 
-/*QUAKED rally_weapon_smoke (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_weapon_smoke (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/rearfire/rf_smoke.md3"*/
 
 
 //ITEMS
 
-/*QUAKED rally_item_shield (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_shield (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/shield/shield.md3"*/
 
-/*QUAKED rally_item_turbo (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_turbo (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/turbo/turbo.md3"*/
 
-/*QUAKED rally_item_env (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_env (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/env/atomic.md3"*/
 
-/*QUAKED rally_item_invis (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_invis (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/invis/invis.md3"*/
 
-/*QUAKED rally_item_regen (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_regen (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/regen/regen.md3"*/
 
-/*QUAKED rally_item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/haste/haste.md3"*/
 
-/*QUAKED rally_item_quad (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
+/*QUAKED rally_item_quad (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
+model="models/powerups/quad/quad.md3"*/
 
 
 //ROADSIDE OBJECTS
 
 /*QUAKED rally_misc_cone (1 .5 0) (-6 -6 -7) (6 6 7)
 "model"		selects skin type by path, random by default
-*/
+model="models/mapobjects/cones/cone01.md3"*/
 
 /*QUAKED rally_misc_pylon (1 .5 0) (-4 -4 0) (4 4 32)
 "model"		selects skin type by path, random by default
-*/
+model="models/mapobjects/pylons/pylon01.md3"*/
 
 /*QUAKED rally_misc_barreloil (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_oil.md3"*/
 
 /*QUAKED rally_misc_barrelexp (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_exp.md3"*/
 
 /*QUAKED rally_misc_barrelbio (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_bio.md3"*/
 
 /*QUAKED rally_misc_barrelpoison (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_psn.md3"*/
 
 /*QUAKED rally_misc_barrelq3r (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_q3r.md3"*/
 
 /*QUAKED rally_misc_barrel311 (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_311.md3"*/
 
 /*QUAKED rally_misc_barreldef (1 .5 0) (-8 -8 -13) (8 8 13)
-*/
+model="models/mapobjects/barrels/b_default.md3"*/
 
 /*QUAKED rally_misc_barrel01 (1 .5 0) (-10 -10 -13) (10 10 13)
-*/
+model="models/mapobjects/barrels/barrel01.md3"*/
 
 /*QUAKED rally_misc_barrel02 (1 .5 0) (-10 -10 -13) (10 10 21)
-*/
+model="models/mapobjects/barrels/barrel02.md3"*/
 
 /*QUAKED rally_misc_barrel03 (1 .5 0) (-10 -10 -16) (10 10 18)
-*/
+model="models/mapobjects/barrels/barrel03.md3"*/
 
 
 //=============================================================================

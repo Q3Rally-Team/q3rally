@@ -228,7 +228,7 @@ gitem_t	bg_itemlist[] =
         { "models/weapons2/gauntlet/gauntlet.md3",
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_gauntlet",
-/* pickup */	"Gauntlet",
+/* pickup */	"Chainsaw",
 		0,
 		IT_WEAPON,
 		WP_GAUNTLET,
