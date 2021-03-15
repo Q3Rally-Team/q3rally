@@ -8,7 +8,7 @@
 !define PUBLISHER "The Q3Rally Team"
 !define URL "http://q3rally.com/"
 
-!define MUI_ICON "../quake3.ico"
+!define MUI_ICON "../q3r_icon.ico"
 
 !macro FILES
   File ctc0.pk3

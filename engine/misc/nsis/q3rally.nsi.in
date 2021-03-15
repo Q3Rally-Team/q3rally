@@ -31,7 +31,7 @@
 !include MultiUser.nsh
 
 !include "MUI2.nsh"
-!define MUI_ICON "../quake3.ico"
+!define MUI_ICON "../q3r_icon.ico"
 
 ; The name of the installer
 Name "${GAMENAME} ${VERSION}"
