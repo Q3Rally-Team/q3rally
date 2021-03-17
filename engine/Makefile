@@ -1330,6 +1330,11 @@ $(echo_cmd) "WINDRES $<"
 $(Q)$(WINDRES) -i $< -o $@
 endef
 
+define DO_DED_WINDRES
+$(echo_cmd) "DED_WINDRES $<"
+$(Q)$(WINDRES) -DDEDICATED -i $< -o $@
+endef
+
 
 #############################################################################
 # MAIN TARGETS
@@ -2829,7 +2834,7 @@ $(B)/ded/%.o: $(SYSDIR)/%.m
 	$(DO_DED_CC)
 
 $(B)/ded/win_resource.o: $(SYSDIR)/win_resource.rc $(SYSDIR)/win_manifest.xml
-	$(DO_WINDRES)
+	$(DO_DED_WINDRES)
 
 $(B)/ded/%.o: $(NDIR)/%.c
 	$(DO_DED_CC)
