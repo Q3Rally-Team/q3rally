@@ -55,15 +55,15 @@ END
 // remains consistent on all systems.
 #ifdef DEDICATED
 #ifndef __MINGW32__
-IDI_ICON1               ICON    DISCARDABLE     "../q3r_icon.ico"
+IDI_ICON1               ICON    DISCARDABLE     "../q3r_ded_icon.ico"
 #else
-IDI_ICON1               ICON    DISCARDABLE     "misc/q3r_icon.ico"
+IDI_ICON1               ICON    DISCARDABLE     "misc/q3r_ded_icon.ico"
 #endif
 #else
 #ifndef __MINGW32__
-IDI_ICON1               ICON    DISCARDABLE     "../quake3.ico"
+IDI_ICON1               ICON    DISCARDABLE     "../q3r_icon.ico"
 #else
-IDI_ICON1               ICON    DISCARDABLE     "misc/quake3.ico"
+IDI_ICON1               ICON    DISCARDABLE     "misc/q3r_icon.ico"
 #endif
 #endif
 
