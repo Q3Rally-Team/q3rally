@@ -165,7 +165,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -859,9 +859,13 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
+1=engine\code\q3_ui\ui_rally_startserver.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_rally_startserver.c
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
+[engine\code\q3_ui\ui_rally_startserver.c]
+TopLine=853
+Caret=40,868

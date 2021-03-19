@@ -1688,7 +1688,7 @@ static void ArenaServers_MenuInit( void ) {
         g_arenaservers.mappic.generic.flags                     = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
         g_arenaservers.mappic.generic.x                         = 72;
         g_arenaservers.mappic.generic.y                         = 80;
-        g_arenaservers.mappic.width                                     = 128;
+        g_arenaservers.mappic.width                             = 170;
         g_arenaservers.mappic.height                            = 96;
         g_arenaservers.mappic.errorpic                          = ART_UNKNOWNMAP;
 

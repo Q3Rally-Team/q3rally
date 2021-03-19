@@ -82,8 +82,6 @@ START SERVER MENU *****
 #define ID_STARTSERVERNEXT		18
 #define ID_LIST					19
 
-#define ID_CIRCUIT			20		//TBB - define circuit picture
-
 
 typedef struct {
 	menuframework_s	menu;
@@ -103,7 +101,6 @@ typedef struct {
 	menutext_s		next;
 
 	menubitmap_s	mappic;
-	menubitmap_s	cirpic;		//TBB - circuitpic bitmap struct
 	menutext_s		mapname;
 	menulist_s		list;
 	menulist_s		statlist;
@@ -444,8 +441,6 @@ static void StartServer_Update( void ) {
 //	int				top;
 // END
 	static	char	picname[64];
-	
-	static 	char	cirname[64];		//TBB - circuit name
 
 // STONELANCE
 	/*
@@ -483,38 +478,6 @@ static void StartServer_Update( void ) {
 	Com_sprintf( picname, sizeof(picname), "levelshots/%s", s_startserver.maplist[s_startserver.list.curvalue] );
 	s_startserver.mappic.generic.name   = picname;
 	s_startserver.mappic.shader         = 0;
-	//TBB - cirname
-	Com_sprintf( cirname, sizeof(cirname), "levelshots/%s_c", s_startserver.maplist[s_startserver.list.curvalue] );
-	s_startserver.cirpic.generic.name = cirname;		
-	s_startserver.cirpic.shader         = 0;
-	//TBB FIN
-	/*
-	switch(s_serveroptions.trackLength.curvalue){
-		case 0:
-			Com_sprintf( cirname, sizeof(cirname), "levelshots/%s_cs", s_startserver.maplist[s_startserver.list.curvalue] );
-			s_startserver.cirpic.generic.name = cirname;		
-			s_startserver.cirpic.shader         = 0;
-			break;
-		case 1:
-			Com_sprintf( cirname, sizeof(cirname), "levelshots/%s_cm", s_startserver.maplist[s_startserver.list.curvalue] );
-			s_startserver.cirpic.generic.name = cirname;		
-			s_startserver.cirpic.shader         = 0;
-			break;
-		case 2:
-			Com_sprintf( cirname, sizeof(cirname), "levelshots/%s_cl", s_startserver.maplist[s_startserver.list.curvalue] );
-			s_startserver.cirpic.generic.name = cirname;		
-			s_startserver.cirpic.shader         = 0;
-			break;
-		default:
-			//Com_sprintf( cirname, sizeof(cirname), "levelshots/%s_c", s_startserver.maplist[s_startserver.list.curvalue] );
-			//s_startserver.cirpic.generic.name = cirname;		
-			//s_startserver.cirpic.shader         = 0;
-			break;
-	}
-	*/
-	//TBB FIN
-	
-
 
 	// no servers to start
 	if( !s_startserver.nummaps ) {
@@ -524,9 +487,6 @@ static void StartServer_Update( void ) {
 
 		// set the map name
 		strcpy( s_startserver.mapname.string, "NO MAPS FOUND" );
-		//TBB
-		//strcpy( s_startserver.cirname.string, "NO MAPS FOUND" );
-		//FIN
 
 // STONELANCE
 		UI_SetupMapStatsForArena(-1);
@@ -706,7 +666,6 @@ static void StartServer_LevelshotDraw( void *self ) {
 	int				y;
 	int				w;
 	int				h;
-	int				x1;//TBB
 	
 // STONELANCE
 //	int				n;
@@ -726,27 +685,23 @@ static void StartServer_LevelshotDraw( void *self ) {
 	}
 
 // STONELANCE
-	//w = 256;	//TBB
-	w = 256+56;	//TBB
-	x = b->generic.x - w/2;//TBB
-	//x = b->generic.x;//TBB
+	w = 256;
+	x = b->generic.x - w/2;
 	y = b->generic.y;
-	UI_FillRect( x, y, w, 136, menu_back_color );
+	UI_FillRect( x, y, w, 140, menu_back_color );
 
 	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
 		return;
 
-	//x = b->generic.x - b->width / 2;TBB
 	x = b->generic.x - b->width / 2;
 // END
 	
-	//x = b->generic.x - b->width / 2; //TBB
-	x1 = b->generic.x - b->width; //TBB
+	x = b->generic.x - b->width / 2;
 	y = b->generic.y;
 	w = b->width;
 	h =	b->height;
 	if( b->shader ) {
-		UI_DrawHandlePic( x1, y, w, h, b->shader );//TBB - circuit draw
+		UI_DrawHandlePic( x, y, w, h, b->shader );
 	}
 
 	x += b->width / 2;
@@ -777,103 +732,6 @@ static void StartServer_LevelshotDraw( void *self ) {
 		
 	}
 }
-
-//TBB - circuit lvlshotdraw
-/*
-===============
-StartServer_LevelshotDraw2
-===============
-*/
-static void StartServer_LevelshotDraw2( void *self ) {
-	menubitmap_s	*b;
-
-// STONELANCE
-//	char			*s;
-//	char			*info;
-//	char			author[MAX_QPATH];
-// END
-	int				x;
-	int				y;
-	int				w;
-	int				h;
-
-// STONELANCE
-//	int				n;
-// END
-
-	b = (menubitmap_s *)self;
-
-	if( !b->generic.name ) {
-		return;
-	}
-
-	if( b->generic.name && !b->shader ) {
-		b->shader = trap_R_RegisterShaderNoMip( b->generic.name );
-		if( !b->shader && b->errorpic ) {
-			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
-		}
-	}
-
-// STONELANCE
-	//TBB - remove background fill color
-	/*
-	w = 256;
-	x = b->generic.x - w/2;
-	x = b->generic.x;
-	y = b->generic.y;
-	UI_FillRect( x, y, w, 200, menu_back_color );
-	*/
-	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
-		return;
-
-	//x = b->generic.x - b->width / 2; //TBB
-	
-// END
-	
-	x = b->generic.x - b->width;
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height;
-	if( b->shader ) {
-		UI_DrawHandlePic( x, y, w, h, b->shader );//TBB - circuit draw
-	}
-	//TBB - remove useless text
-	/* 
-	x += b->width / 2;
-
-// STONELANCE
-	y += 96 + 4;
-//	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	//UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
-	UI_DrawString( x, y, s_startserver.maplistname[s_startserver.list.curvalue], UI_CENTER|UI_SMALLFONT, text_color_normal );
-
-	info = s_startserver.mapinfo[s_startserver.currentmap];
-	s = Info_ValueForKey( info, "author");
-	if (!s || !strcmp(s, ""))
-		Com_sprintf(author, sizeof(author), "Author: Unknown");
-	else
-		Com_sprintf(author, sizeof(author), "Author: %s", s);
-
-	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, author, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	
-	
-	// END
-
-	y += SMALLCHAR_HEIGHT;
-	*/
-	//TBB FIN
-
-	x = b->generic.x;
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height + 28;
-	if( b->generic.flags & QMF_HIGHLIGHT ) {	
-		UI_DrawHandlePic( x, y, w, h, b->focusshader );
-		
-	}
-}
-//TBB FIN
 
 /*
 =================
@@ -1007,30 +865,15 @@ static void StartServer_MenuInit( void ) {
 
 	s_startserver.mappic.generic.type		= MTYPE_BITMAP;
 	s_startserver.mappic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	//s_startserver.mappic.generic.x			= 410;	//TBB
-	s_startserver.mappic.generic.x			= 450;		//TBB
+	s_startserver.mappic.generic.x			= 445;
 	s_startserver.mappic.generic.y			= 80;
 	s_startserver.mappic.generic.id			= ID_PICTURE;
-	s_startserver.mappic.width  			= 128;
+	s_startserver.mappic.width  			= 170;
 	s_startserver.mappic.height  			= 96;
 	s_startserver.mappic.errorpic			= GAMESERVER_UNKNOWNMAP;
 	s_startserver.mappic.generic.ownerdraw	= StartServer_LevelshotDraw;
 // END
 
-	// TBB - setting up circuit pic placement next to levelshot
-	s_startserver.cirpic.generic.type		= MTYPE_BITMAP;
-	s_startserver.cirpic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_startserver.cirpic.generic.x			= 450+128;
-	s_startserver.cirpic.generic.y			= 80;
-	s_startserver.cirpic.generic.id			= ID_CIRCUIT;
-	s_startserver.cirpic.width  			= 128;
-	s_startserver.cirpic.height  			= 96;
-	s_startserver.cirpic.errorpic			= GAMESERVER_UNKNOWNMAP;
-	//s_startserver.cirpic.generic.ownerdraw	= StartServer_LevelshotDraw;
-	s_startserver.cirpic.generic.ownerdraw	= StartServer_LevelshotDraw2;
-	//TBB FIN
-	
-	
 	s_startserver.mapname.generic.type  = MTYPE_PTEXT;
 	s_startserver.mapname.generic.flags = QMF_CENTER_JUSTIFY|QMF_INACTIVE;
 // STONELANCE
@@ -1114,8 +957,6 @@ static void StartServer_MenuInit( void ) {
 
 		Menu_AddItem( &s_startserver.menu, &s_startserver.mappic );
 // END
-	
-		Menu_AddItem( &s_startserver.menu, &s_startserver.cirpic );	//TBB
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.next );
@@ -1184,11 +1025,6 @@ void StartServer_Cache( void )
 			Com_sprintf( picname, sizeof(picname), "levelshots/%s", s_startserver.maplist[i] );
 			trap_R_RegisterShaderNoMip(picname);
 			
-			//TBB
-			Com_sprintf( picname, sizeof(picname), "levelshots/%s_c", s_startserver.maplist[i] );
-			trap_R_RegisterShaderNoMip(picname);
-			//FIN
-			
 		}
 	}
 
@@ -1237,7 +1073,6 @@ typedef struct {
 	menutext_s			banner;
 
 	menubitmap_s		mappic;
-	menubitmap_s		cirpic; //TBB
 	
 
 // STONELANCE
@@ -1695,7 +1530,6 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	char			*info;
 	char			author[MAX_QPATH];
 	int				x;
-	int				x1;	//TBB - displacement for fitting circuit levelshit
 	int				y;
 	int				w;
 	int				h;
@@ -1724,99 +1558,16 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
 	}
 
-	//w = 256;	//TBB
-	w = 256+56;	//TBB
-	x = b->generic.x - w/2;
-	y = b->generic.y;
-	UI_FillRect( x, y, w, 152, menu_back_color );
+	// STONELANCE
+//	w = 256;
+//	x = b->generic.x - 100;
+//	y = b->generic.y;
+	UI_FillRect( 325, 80, 256, 140, menu_back_color );
+
+	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
+		return;
 
 	x = b->generic.x - b->width / 2;
-	x1 = b->generic.x - b->width ;	//TBB
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height;
-	if( b->shader ) {
-		UI_DrawHandlePic( x1, y, w, h, b->shader );
-	}
-
-	x += b->width / 2;
-	y += 96 + 4;
-//	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	//UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
-	UI_DrawString( x, y, s_startserver.maplistname[s_startserver.list.curvalue], UI_CENTER|UI_SMALLFONT, text_color_normal );
-
-	info = s_startserver.mapinfo[s_startserver.currentmap];
-	s = Info_ValueForKey( info, "author");
-	if (!s || !strcmp(s, ""))
-		Com_sprintf(author, sizeof(author), "Author: Unknown");
-	else
-		Com_sprintf(author, sizeof(author), "Author: %s", s);
-
-	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, author, UI_CENTER|UI_SMALLFONT, text_color_normal );
-
-	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, text_color_normal );
-
-	x = b->generic.x;
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height + 28;
-	if( b->generic.flags & QMF_HIGHLIGHT ) {	
-		UI_DrawHandlePic( x, y, w, h, b->focusshader );
-	}
-}
-
-//TBB - draw circuit levelshot
-/*
-===============
-ServerOptions_LevelshotDraw2
-===============
-*/
-static void ServerOptions_LevelshotDraw2( void *self ) {
-	menubitmap_s	*b;
-//	char			*s;
-//	char			*info;
-//	char			author[MAX_QPATH];
-	int				x;
-	int				y;
-	int				w;
-	int				h;
-//	int				n;
-
-	// strange place for this, but it works
-	if( s_serveroptions.newBot ) {
-		Q_strncpyz( s_serveroptions.playerNameBuffers[s_serveroptions.newBotIndex], s_serveroptions.newBotName, 16 );
-		s_serveroptions.newBot = qfalse;
-	}
-
-	b = (menubitmap_s *)self;
-
-	if( !b->generic.name ) {
-		return;
-	}
-
-	if( b->generic.name && !b->shader ) {
-		b->shader = trap_R_RegisterShaderNoMip( b->generic.name );
-		if( !b->shader && b->errorpic ) {
-			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
-		}
-	}
-
-	if( b->focuspic && !b->focusshader ) {
-		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
-	}
-	
-	//TBB - remove bg fill color
-	/*
-	w = 256;
-	x = b->generic.x - w/2;
-	y = b->generic.y;
-	UI_FillRect( x, y, w, 152, menu_back_color );
-	*/
-
-	//x = b->generic.x - b->width / 2; //TBB
-	x = b->generic.x - b->width ;
 	y = b->generic.y;
 	w = b->width;
 	h =	b->height;
@@ -1824,10 +1575,8 @@ static void ServerOptions_LevelshotDraw2( void *self ) {
 		UI_DrawHandlePic( x, y, w, h, b->shader );
 	}
 
-	/* TBB - remove useless text
 	x += b->width / 2;
 	y += 96 + 4;
-	
 //	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
 	//UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
 	UI_DrawString( x, y, s_startserver.maplistname[s_startserver.list.curvalue], UI_CENTER|UI_SMALLFONT, text_color_normal );
@@ -1844,16 +1593,13 @@ static void ServerOptions_LevelshotDraw2( void *self ) {
 
 	y += SMALLCHAR_HEIGHT;
 	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, text_color_normal );
-	*/
-		//TBB FIN
+
 	x = b->generic.x;
 	y = b->generic.y;
 	w = b->width;
 	h =	b->height + 28;
 	if( b->generic.flags & QMF_HIGHLIGHT ) {	
 		UI_DrawHandlePic( x, y, w, h, b->focusshader );
-
-
 	}
 }
 
@@ -1988,50 +1734,7 @@ static void ServerOptions_InitBotNames( void ) {
 	}
 }
 
-//TBB - show circuits depending on the tracklength selected my shit dont work right
-		/*
-		switch(s_serveroptions.trackLength.curvalue ){
-			
-		case 0:
-			Com_sprintf( cirname, 64, "levelshots/%s_cs", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-			break;
 
-		case 1:
-			Com_sprintf( cirname, 64, "levelshots/%s_cm", s_serveroptions.trackLength.oldvalue);
-			s_serveroptions.cirpic.generic.name = cirname;
-			break;
-
-		case 2:
-			Com_sprintf( cirname, 64, "levelshots/%s_cl", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-			break;
-
-		 default:
-			Com_sprintf( cirname, 64, "levelshots/%s_cl", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-			break; 
-		}*/
-
-		/*
-		if (s_serveroptions.trackLength.curvalue == 0){
-			Com_sprintf( cirname, 64, "levelshots/%s_cs", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-		}
-		else if (s_serveroptions.trackLength.curvalue == 1){
-			Com_sprintf( cirname, 64, "levelshots/%s_cm", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-		}
-		else if (s_serveroptions.trackLength.curvalue == 2){
-			Com_sprintf( cirname, 64, "levelshots/%s_cl", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-		}
-		else {
-			Com_sprintf( cirname, 64, "levelshots/%s_c", s_startserver.maplist[s_startserver.currentmap] );
-			s_serveroptions.cirpic.generic.name = cirname;
-		}
-		*/
-		//TBB FIN
 
 /*
 =================
@@ -2040,9 +1743,6 @@ ServerOptions_SetMenuItems
 */
 static void ServerOptions_SetMenuItems( void ) {
 	static char picname[64];
-	//TBB
-	static char cirname[64];
-	//FIN
 
 	switch( s_serveroptions.gametype ) {
 // STONELANCE
@@ -2102,11 +1802,6 @@ static void ServerOptions_SetMenuItems( void ) {
 	// set the map pic
 	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
 	s_serveroptions.mappic.generic.name = picname;
-	
-	//TBB - circuit of map
-	Com_sprintf( cirname, 64, "levelshots/%s_c", s_startserver.maplist[s_startserver.currentmap] );
-	s_serveroptions.cirpic.generic.name = cirname;
-	//TBB FIN
 
 
 	// set the map name
@@ -2202,29 +1897,16 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.banner.style  				= UI_CENTER;
 
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
-	//s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;	//TBB
-	s_serveroptions.mappic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;	//TBB
+	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 // STONELANCE
 //	s_serveroptions.mappic.generic.x			= 352;
 	s_serveroptions.mappic.generic.x			= 455;
 	s_serveroptions.mappic.generic.y			= 80;
-	s_serveroptions.mappic.width				= 128;
+	s_serveroptions.mappic.width				= 170;
 	s_serveroptions.mappic.height				= 96;
 // END
 	s_serveroptions.mappic.errorpic				= GAMESERVER_UNKNOWNMAP;
 	s_serveroptions.mappic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
-	
-	//TBB - circuit levelshot
-	s_serveroptions.cirpic.generic.type			= MTYPE_BITMAP;
-	s_serveroptions.cirpic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_serveroptions.cirpic.generic.x			= 455+128;
-	s_serveroptions.cirpic.generic.y			= 80;
-	s_serveroptions.cirpic.width				= 128;
-	s_serveroptions.cirpic.height				= 96;
-	s_serveroptions.cirpic.errorpic				= GAMESERVER_UNKNOWNMAP;
-	//s_serveroptions.cirpic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
-	s_serveroptions.cirpic.generic.ownerdraw	= ServerOptions_LevelshotDraw2;
-	//TBB FIN
 
 // STONELANCE
 /*
@@ -2490,10 +2172,6 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.mappic );
 
-	//TBB - adding circuit pic to menu
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.cirpic );
-	//TBB FIN
-
 // STONELANCE
 //	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.picframe );
 // END
@@ -2532,53 +2210,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		|| s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
 		
-		//TBB - this should switch the pic as you switch the tracklength
-		/*
-		switch( s_serveroptions.trackLength.curvalue){
-			case 0:
-				Com_sprintf( cirname, 64, "levelshots/%s_cs", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			case 1:
-				Com_sprintf( cirname, 64, "levelshots/%s_cm", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			case 2:
-				Com_sprintf( cirname, 64, "levelshots/%s_cl", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			default:
-				Com_sprintf( cirname, 64, "levelshots/%s_c", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				
-				break;
-		}*/
 		
-		//TBB FIN
-		
-		//TBB - this should switch the pic as you switch the tracklength
-		/*
-		switch( s_serveroptions.trackLength.curvalue){
-			case 0:
-				Com_sprintf( cirname, 64, "levelshots/%s_cs", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			case 1:
-				Com_sprintf( cirname, 64, "levelshots/%s_cm", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			case 2:
-				Com_sprintf( cirname, 64, "levelshots/%s_cl", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				break;
-			default:
-				Com_sprintf( cirname, 64, "levelshots/%s_c", s_startserver.maplist[s_startserver.currentmap] );
-				s_serveroptions.cirpic.generic.name = cirname;
-				
-				break;
-		}
-		*/
-		//TBB FIN
 		if ( reversable )
 			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.reversed );
 	}
