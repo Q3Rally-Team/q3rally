@@ -29,6 +29,17 @@ models/powerups/ammo/bfgammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
+	{
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/bfgammo1
 {
@@ -60,6 +71,17 @@ models/powerups/ammo/grenammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
+	   {
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/grenammo1
 {
@@ -114,6 +136,17 @@ models/powerups/ammo/lighammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
+	{
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/lighammo1
 {
@@ -145,6 +178,17 @@ models/powerups/ammo/machammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
+	   {
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+          }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/machammo1
 {
@@ -189,6 +233,17 @@ models/powerups/ammo/plasammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
+	{
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/plasammo1
 {
@@ -241,6 +296,17 @@ models/powerups/ammo/railammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
+	{
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/railammo2
 {
@@ -263,6 +329,17 @@ models/powerups/ammo/rockammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
+	   {
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/rockammo1
 {
@@ -294,6 +371,17 @@ models/powerups/ammo/shotammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
+	   {
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/shotammo1
 {
@@ -339,6 +427,17 @@ models/powerups/ammo/flameammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
+	{
+            stage normalmap
+            map models/powerups/ammo/ammo_n.png
+            normalScale 1 1
+        }
+        {
+            stage specularmap
+            map models/powerups/ammo/ammo_s.png
+            specularReflectance 1
+            specularExponent 32
+        }
 }
 models/powerups/ammo/flameammo1
 {
