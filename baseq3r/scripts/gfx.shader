@@ -218,6 +218,28 @@ sprites/friend
 // 10.misc effects
 // ------------------------------------------------------------
 
+textures/sfx/beam
+{
+        surfaceparm trans	
+        surfaceparm nomarks	
+        surfaceparm nonsolid
+	surfaceparm nolightmap
+	cull none
+	//surfaceparm nomipmaps
+        //nopicmip
+	{
+		map textures/sfx/beam.tga
+                tcMod Scroll .3 0
+                blendFunc add
+        }
+        // {
+	//	map textures/sfx/beam.tga
+        //        tcMod Scroll -.3 0
+        //        blendFunc GL_ONE GL_ONE
+        // }
+     
+}
+
 sprites/plasma1
 {
 	cull disable
