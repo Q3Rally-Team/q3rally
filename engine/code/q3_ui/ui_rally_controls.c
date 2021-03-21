@@ -151,6 +151,8 @@ typedef struct
 #define ID_SMOOTHMOUSE	45
 
 #define ID_AUTODROP		46
+#define ID_STARTDEMO    47
+#define ID_STOPDEMO     48
 
 // END
 // END
@@ -193,6 +195,8 @@ typedef struct
 #define ANIM_HORN		27
 #define ANIM_DROPREAR	28
 #define ANIM_TURBO		29
+#define ANIM_STARTDEMO  30
+#define ANIM_STOPDEMO   31
 // END
 
 typedef struct
@@ -240,10 +244,10 @@ typedef struct
 	menuaction_s		railgun;
 	menuaction_s		plasma;
 	menuaction_s		bfg;
-	menuaction_s    flamethrower;
+	menuaction_s        flamethrower;
 	menuaction_s		attack;
 // STONELANCE
-	menuaction_s    alt_attack;
+	menuaction_s        alt_attack;
 	menuaction_s		rearattack;
 
 	menuaction_s		droprear;
@@ -277,6 +281,8 @@ typedef struct
 // STONELANCE
 	menuaction_s		headlight;
 	menuaction_s		horn;
+    menuaction_s        startdemo;
+    menuaction_s        stopdemo;
 // END
 
 	menuradiobutton_s	joyenable;
@@ -306,19 +312,6 @@ static bind_t g_bindings[] =
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-// STONELANCE
-/*
-	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
-	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
-	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
-	{"+moveleft", 		"step left",		ID_MOVELEFT,	ANIM_STEPLEFT,	',',			-1,		-1, -1},
-	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
-	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
-	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
-	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-*/
 	{"+forward", 		"accelerate",		ID_ACCEL,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"brake",			ID_BRAKE,		ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
 	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
@@ -329,7 +322,6 @@ static bind_t g_bindings[] =
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+button12", 		"rear attack",		ID_REARATTACK,	ANIM_REARATTACK, K_KP_INS,		-1,		-1, -1},
-// END
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
@@ -344,23 +336,21 @@ static bind_t g_bindings[] =
 	{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1},
 	{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1},
 	{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1},
-	{"weapon 10",   "flame thrower", ID_WEAPON10, ANIM_WEAPON10, '0', -1, -1, -1},
+	{"weapon 10",       "flame thrower",    ID_WEAPON10,    ANIM_WEAPON10,  '0',            -1,     -1, -1},
 	{"+attack", 		"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1,		-1, -1},
-	{"+button5",    "secondary attack",  ID_ALT_ATTACK,   ANIM_ALT_ATTACK,  K_MOUSE2,   -1,  -1,   -1},
+	{"+button5",        "secondary attack", ID_ALT_ATTACK,  ANIM_ALT_ATTACK, K_MOUSE2,   -1,  -1,   -1},
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
-// STONELANCE
-//	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"+button3", 		"horn",				ID_HORN,		ANIM_HORN,		'h',			-1,		-1, -1},
-// END
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
-// STONELANCE
 	{"dropWeapon", 		"drop rear weapon",	ID_DROP_REAR,	ANIM_DROPREAR,	'r',			-1,		-1, -1},
-  {"headlights", 		"headlight toggle",		ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',			-1,		-1, -1},
-// END
+    {"headlights", 		"headlight toggle",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
+    {"record",          "start demo",       ID_STARTDEMO,   ANIM_STARTDEMO, 'j',            -1,     -1, -1},
+    {"stoprecord",      "stop demo",        ID_STOPDEMO,    ANIM_STOPDEMO,  'k',            -1,     -1, -1},
+
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
 
@@ -380,40 +370,24 @@ static configcvar_t g_configcvars[] =
 	{NULL,				0,					0}
 };
 
-static menucommon_s *g_movement_controls[] =
-{
-// STONELANCE
-/*
-	(menucommon_s *)&s_controls.alwaysrun,     
-	(menucommon_s *)&s_controls.run,            
-	(menucommon_s *)&s_controls.walkforward,
-	(menucommon_s *)&s_controls.backpedal,
-	(menucommon_s *)&s_controls.stepleft,      
-	(menucommon_s *)&s_controls.stepright,     
-*/
-	(menucommon_s *)&s_controls.accel,
+static menucommon_s *g_movement_controls[] = {
+    (menucommon_s *)&s_controls.accel,
 	(menucommon_s *)&s_controls.brake,
 	(menucommon_s *)&s_controls.handbrake,      
 	(menucommon_s *)&s_controls.turbo,     
-// END
 	(menucommon_s *)&s_controls.moveup,        
 	(menucommon_s *)&s_controls.movedown,      
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,    
-// STONELANCE
-//	(menucommon_s *)&s_controls.sidestep,
-// END
-	NULL
+	NULL,
 };
 
 static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.attack,
-  (menucommon_s *)&s_controls.alt_attack,
-// STONELANCE
+    (menucommon_s *)&s_controls.alt_attack,
 	(menucommon_s *)&s_controls.rearattack,
 	(menucommon_s *)&s_controls.droprear,
 	(menucommon_s *)&s_controls.autodroprear,
-// END
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.autoswitch,    
@@ -426,7 +400,7 @@ static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.railgun,          
 	(menucommon_s *)&s_controls.plasma,           
 	(menucommon_s *)&s_controls.bfg,
-  (menucommon_s *)&s_controls.flamethrower,              
+    (menucommon_s *)&s_controls.flamethrower,              
 	NULL,
 };
 
@@ -448,17 +422,14 @@ static menucommon_s *g_looking_controls[] = {
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
 	(menucommon_s *)&s_controls.useitem,
-// STONELANCE
-//	(menucommon_s *)&s_controls.gesture,
-// END
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
 	(menucommon_s *)&s_controls.chat4,
-// STONELANCE
 	(menucommon_s *)&s_controls.headlight,
 	(menucommon_s *)&s_controls.horn,
-// END
+    (menucommon_s *)&s_controls.startdemo,
+    (menucommon_s *)&s_controls.stopdemo,
 	NULL,
 };
 
@@ -810,7 +781,7 @@ static void Controls_DrawKeyBinding( void *self )
 
 	b1 = g_bindings[a->generic.id].bind1;
 	if (b1 == -1)
-		strcpy(name,"???");
+		strcpy(name,"-?-");
 	else
 	{
 		trap_Key_KeynumToStringBuf( b1, name, 32 );
@@ -1855,6 +1826,19 @@ static void Controls_MenuInit( void )
 	s_controls.horn.generic.callback  = Controls_ActionEvent;
 	s_controls.horn.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.horn.generic.id        = ID_HORN;
+    
+    s_controls.startdemo.generic.type      = MTYPE_ACTION;
+    s_controls.startdemo.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+    s_controls.startdemo.generic.callback  = Controls_ActionEvent;
+    s_controls.startdemo.generic.ownerdraw = Controls_DrawKeyBinding;
+    s_controls.startdemo.generic.id        = ID_STARTDEMO;
+    
+    s_controls.stopdemo.generic.type      = MTYPE_ACTION;
+    s_controls.stopdemo.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+    s_controls.stopdemo.generic.callback  = Controls_ActionEvent;
+    s_controls.stopdemo.generic.ownerdraw = Controls_DrawKeyBinding;
+    s_controls.stopdemo.generic.id        = ID_STOPDEMO;
+    
 // END
 
 	s_controls.joyenable.generic.type      = MTYPE_RADIOBUTTON;
@@ -1960,7 +1944,10 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.chat4 );
 // STONELANCE
 	Menu_AddItem( &s_controls.menu, &s_controls.headlight );
+    Menu_AddItem( &s_controls.menu, &s_controls.startdemo );
+    Menu_AddItem( &s_controls.menu, &s_controls.stopdemo );    
 	Menu_AddItem( &s_controls.menu, &s_controls.horn );
+
 // END
 
 	Menu_AddItem( &s_controls.menu, &s_controls.back );
