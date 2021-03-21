@@ -2003,3 +2003,15 @@ models/players/heads/doom_f
 	}
 	
 }
+
+// ------------------------------------------------------------
+// 23.Torch
+// ------------------------------------------------------------
+
+models/mapobjects/gratelamp/gratetorch2b
+{
+	{
+		map models/mapobjects/gratelamp/gratetorch2b.tga
+		blendfunc blend
+    }
+}
