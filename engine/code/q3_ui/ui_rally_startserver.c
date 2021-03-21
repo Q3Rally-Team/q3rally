@@ -1562,7 +1562,7 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 //	w = 256;
 //	x = b->generic.x - 100;
 //	y = b->generic.y;
-	UI_FillRect( 325, 80, 256, 140, menu_back_color );
+	UI_FillRect( 325, 80, 256, 160, menu_back_color );
 
 	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
 		return;
@@ -1591,7 +1591,7 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	y += SMALLCHAR_HEIGHT;
 	UI_DrawString( x, y, author, UI_CENTER|UI_SMALLFONT, text_color_normal );
 
-	y += SMALLCHAR_HEIGHT;
+	y += SMALLCHAR_HEIGHT + 2;
 	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, text_color_normal );
 
 	x = b->generic.x;
