@@ -72,9 +72,15 @@ console
 	nomipmaps
     
         {
-		map gfx/misc/console01.tga
+		map gfx/misc/screen01.tga
                 blendFunc GL_ONE GL_ZERO
-               
+                tcMod scroll 7.1  0.2
+                tcmod scale .8 1
+	}
+        {
+		map gfx/misc/console01.tga
+                blendFunc Add
+                
 	}
         
 
