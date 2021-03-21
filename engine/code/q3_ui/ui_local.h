@@ -145,6 +145,7 @@ extern vmCvar_t	ui_checkpointArrowMode;
 extern vmCvar_t	ui_atmosphericLevel;
 extern vmCvar_t	ui_drawPositionSprites;
 extern vmCvar_t	ui_engineSounds;
+extern vmCvar_t ui_drawMinimap;
 extern vmCvar_t	ui_tightCamTracking;
 extern vmCvar_t	ui_rearViewRenderLevel;
 extern vmCvar_t	ui_mainViewRenderLevel;

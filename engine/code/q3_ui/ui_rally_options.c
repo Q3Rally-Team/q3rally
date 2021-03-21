@@ -28,30 +28,31 @@ qboolean isRaceObserver( int clientNum )
 	return qfalse;
 }
 
-#define ID_UNITS			10
-#define ID_SKID_LENGTH		11
-#define ID_CONTROL_MODE		12
-#define ID_MANUAL_SHIFT		13
-#define ID_REAR_VIEW		14
-#define ID_CP_ARROW_MODE	15
-#define ID_ATMOSPHERIC_LEVEL		16
-#define ID_POSITION_SPRITES	17
-#define ID_CAM_TRACKING		18
-#define ID_ENGINE_SOUNDS	19
+#define ID_UNITS                10
+#define ID_SKID_LENGTH          11
+#define ID_CONTROL_MODE         12
+#define ID_MANUAL_SHIFT         13
+#define ID_REAR_VIEW            14
+#define ID_CP_ARROW_MODE        15
+#define ID_ATMOSPHERIC_LEVEL	16
+#define ID_POSITION_SPRITES     17
+#define ID_CAM_TRACKING         18
+#define ID_ENGINE_SOUNDS        19
+#define ID_DRAW_MINIMAP         20
 
-#define ID_RVRL_PLAYERS		20
-#define ID_RVRL_OBJECTS		21
-#define ID_RVRL_SMOKE		22
-#define ID_RVRL_MARKS		23
-#define ID_RVRL_SPARKS		24
+#define ID_RVRL_PLAYERS         21
+#define ID_RVRL_OBJECTS         22
+#define ID_RVRL_SMOKE           23
+#define ID_RVRL_MARKS           24
+#define ID_RVRL_SPARKS          25
 
-#define ID_MVRL_PLAYERS		30
-#define ID_MVRL_OBJECTS		31
-#define ID_MVRL_SMOKE		32
-#define ID_MVRL_MARKS		33
-#define ID_MVRL_SPARKS		34
+#define ID_MVRL_PLAYERS         30
+#define ID_MVRL_OBJECTS         31
+#define ID_MVRL_SMOKE           32
+#define ID_MVRL_MARKS           33
+#define ID_MVRL_SPARKS          34
 
-#define ID_BACK				40
+#define ID_BACK                 40
 
 typedef struct {
 	menuframework_s	menu;
@@ -85,6 +86,7 @@ typedef struct {
 	menutext_s		mvrl_heading;
 
 	menuradiobutton_s	engineSounds;
+    menuradiobutton_s   drawMinimap;
 
 	menutext_s		back;
 } q3roptionsmenu_t;
@@ -183,7 +185,9 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
 		break;
 
-
+    case ID_DRAW_MINIMAP:
+        trap_Cvar_SetValue( "cg_drawMMap", s_q3roptions.drawMinimap.curvalue );
+        break;
 
 	case ID_RVRL_PLAYERS:
 	case ID_RVRL_OBJECTS:
@@ -288,7 +292,9 @@ static void Q3ROptions_StatusBar( void *self )
 		text = "Turns on engine sounds in game.";
 		break;
 
-
+    case ID_DRAW_MINIMAP:
+        text = "Turns on the Minimap in game.";
+        break;
 
 	case ID_RVRL_PLAYERS:
 		text = "Show other players in the rear view mirror.";
@@ -356,6 +362,8 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
 
 	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer;
+    
+    s_q3roptions.drawMinimap.curvalue = ui_drawMinimap.integer;
 
 	s_q3roptions.rvrl_players.curvalue = ( ui_rearViewRenderLevel.integer & RL_PLAYERS ) ? 1 : 0;
 	s_q3roptions.rvrl_objects.curvalue = ( ui_rearViewRenderLevel.integer & RL_OBJECTS ) ? 1 : 0;
@@ -464,7 +472,15 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.engineSounds.generic.callback		= Q3ROptions_MenuEvent;
 	s_q3roptions.engineSounds.generic.statusbar		= Q3ROptions_StatusBar;
 
-
+    s_q3roptions.drawMinimap.generic.type           = MTYPE_RADIOBUTTON;
+    s_q3roptions.drawMinimap.generic.flags          = QMF_SMALLFONT;
+    s_q3roptions.drawMinimap.generic.x              = 500;
+    s_q3roptions.drawMinimap.generic.y              = 90 + 80;
+    s_q3roptions.drawMinimap.generic.name           = "Minimap:";
+    s_q3roptions.drawMinimap.generic.id             = ID_DRAW_MINIMAP;
+    s_q3roptions.drawMinimap.generic.callback       = Q3ROptions_MenuEvent;
+    s_q3roptions.drawMinimap.generic.statusbar      = Q3ROptions_StatusBar;
+    
 	// sliders
 	s_q3roptions.skidlength.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.skidlength.generic.flags		= QMF_SMALLFONT;
@@ -630,6 +646,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rearView );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
+    Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.drawMinimap );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
