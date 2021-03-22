@@ -221,50 +221,74 @@ models/weapons2/flamethrower/f_flamethrower
 }
 
 // ------------------------------------------------------------
-// 4.Gauntlet
+// 4.Chainsaw
 // ------------------------------------------------------------
 
-models/weapons2/gauntlet/skin
+models/weapons2/gauntlet/blade
 {
+//	{
+//		map textures/sfx/specular.tga
+//		blendFunc GL_ONE GL_ZERO
+//		tcGen environment
+//		rgbGeb identity
+//	}
 	{
-		map textures/base_wall/bluemetal2_shiny.tga
+		map models/weapons2/gauntlet/blade.tga
+		blendFunc GL_ONE GL_ONE_MINUS_SRC_ALPHA
+//		rgbGen lightingDiffuse
+//		rgbGen identity
+	}
+}
+models/weapons2/gauntlet/chain
+{      
+	{
+		map models/weapons2/gauntlet/main.tga
+		tcMod scroll -3 0
+	//	blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	//	rgbGen lightingDiffuse
+	}
+}
+models/weapons2/gauntlet/wheel
+{      
+        {
+                map models/weapons2/gauntlet/env_map.tga
+                blendFunc GL_ONE GL_ZERO
+                tcGen environment
+                //rgbGen lightingDiffuse
+                rgbGen identity
+	}  
+        {
+		map models/weapons2/gauntlet/wheel.tga
+                blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		rgbGen lightingDiffuse
 	}
 }
-
-models/weapons2/gauntlet/saw
-{
-	{
-		map textures/skies/topclouds.tga
+models/weapons2/gauntlet/tube
+{      
+        {
+                map models/weapons2/gauntlet/tube2.tga
+                blendFunc GL_ONE GL_ZERO
+        //	tcGen environment
+        //	rgbGen lightingDiffuse
+		tcMod scroll .1 .75
+                rgbGen identity
+	}  
+        {
+		map models/weapons2/gauntlet/tube.tga
+                blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		rgbGen lightingDiffuse
-		tcMod rotate 4
-		tcGen environment 
-	}
-	{
-		map textures/effects/tinfx2c.tga
-		blendfunc add
-		rgbGen lightingDiffuse
-		tcMod rotate -8
-		tcGen environment 
 	}
 }
-
-models/weapons2/gauntlet/flare
+models/weapons2/gauntlet/main
 {
-	deformVertexes autosprite
+	sort additive
 	{
-		map models/weapons2/gauntlet/glow.tga
-		blendfunc add
-		rgbGen wave sin 0.08 0.02 0 15 
+		map models/weapons2/gauntlet/main.tga
 	}
-}
-
-models/weapons2/gauntlet/glow
-{
 	{
-		map models/weapons2/gauntlet/glow.tga
-		blendfunc add
-		rgbGen wave sin 1 0.1 0 15 
+		map models/weapons2/gauntlet/mainlite.jpg
+		blendFunc add
+		rgbgen wave sin .575 .25 0 10
 	}
 }
 
