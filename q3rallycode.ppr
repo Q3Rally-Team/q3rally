@@ -860,12 +860,20 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\q3_ui\ui_rally_controls.c
+2=engine\code\cgame\cg_info.c
+3=engine\code\q3_ui\ui_controls2.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_rally_controls.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=411
-Caret=5,374
+TopLine=267
+Caret=77,352
+[engine\code\cgame\cg_info.c]
+TopLine=150
+Caret=52,180
+[engine\code\q3_ui\ui_controls2.c]
+TopLine=223
+Caret=1,1

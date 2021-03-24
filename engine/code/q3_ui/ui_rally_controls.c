@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2015 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -306,7 +306,7 @@ typedef struct
 
 static controls_t s_controls;
 
-//static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
+// static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
 
 static bind_t g_bindings[] = 
 {
@@ -348,8 +348,8 @@ static bind_t g_bindings[] =
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"dropWeapon", 		"drop rear weapon",	ID_DROP_REAR,	ANIM_DROPREAR,	'r',			-1,		-1, -1},
     {"headlights", 		"headlight toggle",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
-    {"record",          "start demo",       ID_STARTDEMO,   ANIM_STARTDEMO, 'j',            -1,     -1, -1},
-    {"stoprecord",      "stop demo",        ID_STOPDEMO,    ANIM_STOPDEMO,  'k',            -1,     -1, -1},
+    {"record",          "start",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
+    {"stoprecord",      "stop",             ID_STOPDEMO,    ANIM_STOPDEMO,  'u',            -1,     -1, -1},
 
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
