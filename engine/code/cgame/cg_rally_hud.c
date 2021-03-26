@@ -744,7 +744,7 @@ static float CG_DrawSpeed( float y ) {
 	// draw digital speed
 	x -= 48 + (CG_DrawStrlen(va("%i", vel_speed)) * SMALLCHAR_WIDTH) / 2;
 	y -= 28;
-	CG_DrawSmallDigitalStringColor( x, y, va("%i", vel_speed), colors[0]);
+	CG_DrawSmallDigitalStringColor( x, y, va("%i", vel_speed), colorWhite);
 
 	// draw needle
 
@@ -799,11 +799,11 @@ static float CG_DrawSpeed( float y ) {
 
 	// draw gear over center of gauge
 	if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "R", colors[0]);
+		CG_DrawSmallDigitalStringColor( x+10, y+4, "R", colorWhite);
 	else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "N", colors[0]);
+		CG_DrawSmallDigitalStringColor( x+10, y+4, "N", colorWhite);
 	else
-		CG_DrawSmallDigitalStringColor( x+10, y+4, va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
+		CG_DrawSmallDigitalStringColor( x+10, y+4, va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite);
 
 	y -= 39;
 
