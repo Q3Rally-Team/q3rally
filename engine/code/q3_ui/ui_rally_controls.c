@@ -128,6 +128,8 @@ typedef struct
 // STONELANCE
 #define ID_DROP_REAR	36
 #define ID_HEADLIGHT	37
+#define ID_STARTDEMO	38
+#define ID_STOPDEMO		39
 // END
 // all others
 // STONELANCE
@@ -141,18 +143,17 @@ typedef struct
 #define ID_JOYTHRESHOLD	44
 #define ID_SMOOTHMOUSE	45
 */
-#define ID_FREELOOK		38
-#define ID_INVERTMOUSE	39
-#define ID_ALWAYSRUN	40
-#define ID_AUTOSWITCH	41
-#define ID_MOUSESPEED	42
-#define ID_JOYENABLE	43
-#define ID_JOYTHRESHOLD	44
-#define ID_SMOOTHMOUSE	45
+#define ID_FREELOOK		40
+#define ID_INVERTMOUSE	41
+#define ID_ALWAYSRUN	42
+#define ID_AUTOSWITCH	43
+#define ID_MOUSESPEED	44
+#define ID_JOYENABLE	45
+#define ID_JOYTHRESHOLD	46
+#define ID_SMOOTHMOUSE	47
 
-#define ID_AUTODROP		46
-#define ID_STARTDEMO    47
-#define ID_STOPDEMO     48
+#define ID_AUTODROP		48
+
 
 // END
 // END
