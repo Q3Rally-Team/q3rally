@@ -868,15 +868,15 @@ q3rallycode
 7=engine\code\cgame\cg_rally_hud2.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_rally_hud.c
+Selected=engine\code\q3_ui\ui_rally_controls.c
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=326
-Caret=77,352
+TopLine=328
+Caret=35,353
 [engine\code\cgame\cg_info.c]
-TopLine=154
+TopLine=156
 Caret=52,180
 [engine\code\q3_ui\ui_controls2.c]
 TopLine=223
@@ -885,7 +885,7 @@ Caret=1,1
 TopLine=231
 Caret=1,246
 [engine\code\cgame\cg_rally_hud.c]
-TopLine=781
+TopLine=782
 Caret=108,806
 [engine\code\cgame\cg_local.h]
 TopLine=1876
