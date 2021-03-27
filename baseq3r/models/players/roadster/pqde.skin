@@ -1,6 +1,6 @@
 b_glass,models/players/slingshot/glass_conv.tga
 b_hlites,models/players/slingshot/hlites.tga
-b_tlites,models/players/slingshot/pqde_tlites.tga
+b_main,models/players/slingshot/pqde_main.tga
 b_int,models/players/slingshot/int.tga
 b_tlites,models/players/slingshot/tlites.tga
 b_under,models/players/slingshot/under.tga
