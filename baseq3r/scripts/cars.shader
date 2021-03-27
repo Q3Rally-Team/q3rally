@@ -3942,6 +3942,39 @@ models/players/slingshot/green_main
 	}
 }
 
+//PS2
+models/players/slingshot/ps2_main
+{
+
+	{
+		map textures/reflect/reflect.jpg
+		tcGen environment
+          rgbGen lightingdiffuse
+	}
+{
+		map models/players/slingshot/ps2_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+            rgbGen lightingdiffuse
+
+	}
+}
+
+models/players/slingshot/ps2_roof
+{
+	{
+		map textures/reflect/reflect.jpg
+		tcGen environment
+            rgbGen lightingdiffuse
+
+	}
+	{
+		map models/players/slingshot/ps2_roof.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+            rgbGen lightingdiffuse
+
+	}
+}
+
 //PLANETQUAKE.DE 
 
 models/players/slingshot/pqde_main
