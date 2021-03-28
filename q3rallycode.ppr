@@ -427,7 +427,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			+q3_ui
+			-q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -860,12 +860,8 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\q3_ui\ui_rally_controls.c
-2=engine\code\cgame\cg_info.c
-3=engine\code\q3_ui\ui_controls2.c
-4=engine\code\q3_ui\ui_rally_options.c
-5=engine\code\cgame\cg_rally_hud.c
-6=engine\code\cgame\cg_local.h
-7=engine\code\cgame\cg_rally_hud2.c
+2=engine\code\q3_ui\ui_rally_options.c
+3=engine\code\cgame\cg_rally_hud.c
 [Selected Project Files]
 Main=
 Selected=engine\code\q3_ui\ui_rally_controls.c
@@ -873,23 +869,11 @@ Selected=engine\code\q3_ui\ui_rally_controls.c
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=328
-Caret=35,353
-[engine\code\cgame\cg_info.c]
-TopLine=156
-Caret=52,180
-[engine\code\q3_ui\ui_controls2.c]
-TopLine=223
-Caret=1,1
+TopLine=1469
+Caret=40,1484
 [engine\code\q3_ui\ui_rally_options.c]
 TopLine=231
 Caret=1,246
 [engine\code\cgame\cg_rally_hud.c]
 TopLine=782
 Caret=108,806
-[engine\code\cgame\cg_local.h]
-TopLine=1876
-Caret=1,1891
-[engine\code\cgame\cg_rally_hud2.c]
-TopLine=48
-Caret=1,63
