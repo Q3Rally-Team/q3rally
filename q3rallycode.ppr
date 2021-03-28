@@ -564,7 +564,7 @@ q3rallycode
 				engine\code\renderer\tr_surface.c
 				engine\code\renderer\tr_types.h
 				engine\code\renderer\tr_world.c
-			-sdl
+			+sdl
 				engine\code\sdl\sdl_gamma.c
 				engine\code\sdl\sdl_glimp.c
 				engine\code\sdl\sdl_icon.h
@@ -862,18 +862,30 @@ q3rallycode
 1=engine\code\q3_ui\ui_rally_controls.c
 2=engine\code\q3_ui\ui_rally_options.c
 3=engine\code\cgame\cg_rally_hud.c
+4=engine\code\cgame\cg_draw.c
+5=engine\code\sdl\sdl_icon.h
+6=engine\code\sdl\sdl_glimp.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_rally_controls.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=1469
-Caret=40,1484
+TopLine=853
+Caret=47,870
 [engine\code\q3_ui\ui_rally_options.c]
 TopLine=231
 Caret=1,246
 [engine\code\cgame\cg_rally_hud.c]
 TopLine=782
 Caret=108,806
+[engine\code\cgame\cg_draw.c]
+TopLine=434
+Caret=1,449
+[engine\code\sdl\sdl_icon.h]
+TopLine=107
+Caret=28,137
+[engine\code\sdl\sdl_glimp.c]
+TopLine=309
+Caret=38,390
