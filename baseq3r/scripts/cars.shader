@@ -563,7 +563,7 @@ models/players/alpine/stompedflite
 //DEFAULT - YELLOW
 
 
-models/players/camaro/body
+models/players/camaro/body_yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
@@ -572,7 +572,7 @@ models/players/camaro/body
 		rgbGen lightingdiffuse
 	}
 	{
-		map models/players/camaro/body.tga
+		map models/players/camaro/body_yellow.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -580,10 +580,7 @@ models/players/camaro/body
 	}
 }
 
-//DEFAULT - BROWN
-
-
-models/players/camaro/body_brown
+models/players/camaro/lines1_yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
@@ -592,7 +589,7 @@ models/players/camaro/body_brown
 		rgbGen lightingdiffuse
 	}
 	{
-		map models/players/camaro/body_brown.tga
+		map models/players/camaro/lines1_yellow.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -600,10 +597,7 @@ models/players/camaro/body_brown
 	}
 }
 
-//DEFAULT - GREY
-
-
-models/players/camaro/body_grey
+models/players/camaro/lines2_yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
@@ -612,7 +606,7 @@ models/players/camaro/body_grey
 		rgbGen lightingdiffuse
 	}
 	{
-		map models/players/camaro/body_grey.tga
+		map models/players/camaro/lines2_yellow.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -640,8 +634,41 @@ models/players/camaro/body_blue
 	}
 }
 
-//DEFAULT - GREEN
+models/players/camaro/lines1_blue
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines1_blue.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
 
+models/players/camaro/lines2_blue
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines2_blue.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+//DEFAULT - GREEN
 
 models/players/camaro/body_green
 {
@@ -653,6 +680,40 @@ models/players/camaro/body_green
 	}
 	{
 		map models/players/camaro/body_green.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines1_green
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines1_green.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines2_green
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines2_green.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -680,8 +741,41 @@ models/players/camaro/body_red
 	}
 }
 
-//DEFAULT - WHITE
+models/players/camaro/lines1_red
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines1_red.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
 
+models/players/camaro/lines2_red
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines2_red.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+//DEFAULT - WHITE
 
 models/players/camaro/body_white
 {
@@ -693,6 +787,40 @@ models/players/camaro/body_white
 	}
 	{
 		map models/players/camaro/body_white.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines1_white
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines1_white.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines2_white
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines2_white.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -713,6 +841,40 @@ models/players/camaro/body_black
 	}
 	{
 		map models/players/camaro/body_black.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines1_black
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines1_black.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/lines2_black
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/lines2_black.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
