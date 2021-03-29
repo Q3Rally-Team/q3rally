@@ -867,13 +867,13 @@ q3rallycode
 6=engine\code\sdl\sdl_glimp.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_rally_controls.c
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=853
-Caret=47,870
+TopLine=333
+Caret=42,353
 [engine\code\q3_ui\ui_rally_options.c]
 TopLine=231
 Caret=1,246
