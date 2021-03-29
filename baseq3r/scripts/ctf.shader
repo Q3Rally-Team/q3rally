@@ -854,7 +854,7 @@ powerups/blueflag
 // 33.ctf (q3r_bluelong_decal)
 // ------------------------------------------------------------
 
-textures/q3r_ctf/q3r_bluelong_decal
+textures/ctf/q3r_bluelong_decal
 {
 	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
 	surfaceparm nolightmap

@@ -544,33 +544,6 @@ textures/q3r_building/windows25A
 }
 
 // ------------------------------------------------------------
-// 21.q3r_building (windows29A)
-// ------------------------------------------------------------
-
-textures/q3r_building/windows29A
-{
-	qer_editorimage textures/q3r_building/windows29A.tga
-	{
-		map textures/effects/tinfx.tga
-		rgbGen identity
-		tcMod scale 0.5 0.5
-		tcGen environment 
-	}
-	{
-		map textures/q3r_building/windows29A.tga
-		blendfunc blend
-		rgbGen identity
-		alphaFunc GE128
-	}
-	{
-		map $lightmap 
-		blendfunc filter
-		rgbGen identity
-		tcGen lightmap 
-	}
-}
-
-// ------------------------------------------------------------
 // 22.q3r_building (windows5A)
 // ------------------------------------------------------------
 
@@ -757,45 +730,6 @@ textures/q3r_building/night_dark
 	q3map_surfacelight 35
 	q3map_sun 0.545098 0.690196 0.705882 15 319 58
 	skyParms env/xnight2 128 -
-}
-
-// ------------------------------------------------------------
-// 30.q3r_building (wirehead)
-// ------------------------------------------------------------
-
-textures/q3r_building/wirehead
-{
-	qer_editorimage textures/q3r_building/wirehead.tga
-	surfaceparm nolightmap
-	{
-		map textures/q3r_building/wirehead.tga
-		blendfunc add
-		rgbGen wave sin 2 1.2 0 4 
-	}
-	{
-		map textures/base_wall/comp3text.tga
-		blendfunc add
-		rgbGen wave square 0.5 0.5 0 8 
-		tcMod scroll 0 -2
-	}
-}
-
-// ------------------------------------------------------------
-// 31.q3r_building (wirehead_graphic)
-// ------------------------------------------------------------
-
-textures/q3r_building/wirehead_graphic
-{
-	qer_editorimage textures/q3r_building/wirehead_decal.tga
-	surfaceparm nonsolid
-	surfaceparm trans
-	cull disable
-	polygonoffset
-	{
-		map textures/q3r_building/wirehead.tga
-		blendfunc add
-		rgbGen identity
-	}
 }
 
 // ------------------------------------------------------------
@@ -1909,25 +1843,6 @@ textures/q3r_lights/bluesurfacelit
 }
 
 // ------------------------------------------------------------
-// 114.q3r_lights (oransurfacelit)
-// ------------------------------------------------------------
-
-textures/q3r_lights/oransurfacelit
-{
-	qer_editorimage textures/ridgeracer/sky_set.tga
-	surfaceparm noimpact
-	surfaceparm nomarks
-	surfaceparm nodlight
-	q3map_surfacelight 2000
-	q3map_lightsubdivide 256
-	cull disable
-	{
-		//map $lightmap
-		map textures/ridgeracer/sky_set.tga
-	}
-}
-
-// ------------------------------------------------------------
 // 115.q3r_trees (birch01_f)
 // ------------------------------------------------------------
 
@@ -2906,32 +2821,6 @@ textures/q3r_metals/grate
 		depthFunc equal
 	}
 
-}
-
-// ------------------------------------------------------------
-// 152.q3r_signage (checkpoint)
-// ------------------------------------------------------------
-
-textures/q3r_signage/checkpoint
-{
-	qer_trans	0.5
-	surfaceparm nodraw
-	surfaceparm nonsolid
-	surfaceparm trans
-	surfaceparm nomarks
-}
-
-// ------------------------------------------------------------
-// 153.q3r_signage (startfinish)
-// ------------------------------------------------------------
-
-textures/q3r_signage/startfinish
-{
-	qer_trans	0.5
-	surfaceparm nodraw
-	surfaceparm nonsolid
-	surfaceparm trans
-	surfaceparm nomarks
 }
 
 // ------------------------------------------------------------
@@ -6107,7 +5996,7 @@ textures\q3r_road\road_grid
 // 275.q3r_road (road_pitend)
 // ------------------------------------------------------------
 
-textures\q3r_textures\road_pitend
+textures\q3r_road\road_pitend
 {
 	qer_editorimage textures\q3r_road\road_pitend.jpg
 	cull disable
@@ -6122,7 +6011,7 @@ textures\q3r_textures\road_pitend
 // 276.q3r_road (road_pitend_2)
 // ------------------------------------------------------------
 
-textures\q3r_textures\road_pitend_2
+textures\q3r_road\road_pitend_2
 {
 	qer_editorimage textures\q3r_road\road_pitend_2.jpg
 	cull disable
@@ -6137,7 +6026,7 @@ textures\q3r_textures\road_pitend_2
 // 277.q3r_road (road_pitend_3)
 // ------------------------------------------------------------
 
-textures\q3r_textures\road_pitend_3
+textures\q3r_road\road_pitend_3
 {
 	qer_editorimage textures\q3r_road\road_pitend_3.jpg
 	cull disable
@@ -6152,7 +6041,7 @@ textures\q3r_textures\road_pitend_3
 // 278.q3r_road (road_pitend_4)
 // ------------------------------------------------------------
 
-textures\q3r_textures\road_pitend_4
+textures\q3r_road\road_pitend_4
 {
 	qer_editorimage textures\q3r_road\road_pitend_4.jpg
 	cull disable

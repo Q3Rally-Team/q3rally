@@ -15,6 +15,9 @@ q3r_textures
 skies
 sprites
 weapons
-
+cars
+domination
+heads
+q3map2_q3r_nightcity
 
 

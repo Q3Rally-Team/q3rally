@@ -407,7 +407,7 @@ models/powerups/health/red2
 {	
 	
 	{
-		map textures/effects/envmapred.tga
+		map textures/effects/envmapred.jpg
                 tcGen environment
 		blendfunc GL_ONE GL_ZERO
 		
@@ -525,7 +525,7 @@ models/powerups/health/yellow
 {
 	
 	{
-		map textures/effects/envmapyel.tga
+		map textures/effects/envmapyel.jpg
                 tcGen environment
 		//blendfunc GL_ONE GL_ONE
 		
@@ -546,7 +546,7 @@ models/powerups/health/yellow
 {
 	
 	{
-		map textures/effects/envmapyel.tga
+		map textures/effects/envmapyel.jpg
                 tcGen environment
 		//blendfunc GL_ONE GL_ONE
 		
