@@ -12124,13 +12124,16 @@ textures/base_wall/bluemetalsupport2f
 	
 	{
 		map textures/base_wall/bluemetalsupport2f.tga
-		blendFunc GL_ONE_MINUS_SRC_ALPHA GL_SRC_ALPHA	
+		blendFunc blend	
+		rgbGen identity
 	}
 	{
 		map $lightmap
-		blendfunc gl_dst_color gl_zero
+		blendfunc filter
 		rgbGen identity
 	}
+
+
 }
 
 // ------------------------------------------------------------

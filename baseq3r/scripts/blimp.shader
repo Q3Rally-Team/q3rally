@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Shaders for Q3Rally Blimp - rewritten by P3rlE (fixed by insellium)
+// Shaders for Q3Rally Blimp - rewritten by P3rlE
 // based on the blimp.shader from stecki
 // ------------------------------------------------------------
 
@@ -30,7 +30,19 @@ models/mapobjects/blimp/red
 }
 
 // ------------------------------------------------------------
-// 3.Blimp (blimp02)
+// 3.Blimp (blimp01)
+// ------------------------------------------------------------
+
+models/mapobjects/blimp/blimp01
+{
+	{
+		map models/mapobjects/blimp/blimp01.tga
+		rgbGen exactVertex
+	}
+}
+
+// ------------------------------------------------------------
+// 4.Blimp (blimp02)
 // ------------------------------------------------------------
 
 models/mapobjects/blimp/blimp02

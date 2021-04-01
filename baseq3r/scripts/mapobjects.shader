@@ -417,3 +417,35 @@ models/mapobjects/oak/oakblaetter3
 		blendfunc blend
     }
 }
+
+models/mapobjects/carmodels/reaper/main
+{
+	{
+		map models/mapobjects/carmodels/reaper/main.tga
+		rgbGen exactVertex
+	}
+}
+
+models/mapobjects/carmodels/reaper/parts
+{
+	{
+		map models/mapobjects/carmodels/reaper/parts.tga
+		rgbGen exactVertex
+	}
+}
+
+models/mapobjects/carmodels/reaper/tlites
+{
+	{
+		map models/mapobjects/carmodels/reaper/tlites.tga
+		rgbGen exactVertex
+	}
+}
+
+models/mapobjects/carmodels/sidepipe/orange
+{
+	{
+		map models/mapobjects/carmodels/sidepipe/orange.tga
+		rgbGen exactVertex
+	}
+}
