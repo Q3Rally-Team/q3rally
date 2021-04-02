@@ -2073,7 +2073,7 @@ count : number of times this spawnpoint can be used to spawn a player. Omit or s
 
 //=============================================================================
 
-/*QUAKED team_CTF_redspawn (0 .2 1) (-16 -16 -24) (16 16 32)
+/*QUAKED team_CTF_redspawn (1 .2 0) (-16 -16 -24) (16 16 32)
 Red team respawning position for CTF games. This is where Red team players respawn after they get fragged.
 -------- KEYS --------
 target : this can point at a target_give entity for respawn freebies.
