@@ -33,13 +33,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	CONTENTS_SLIME			16
 #define	CONTENTS_WATER			32
 #define	CONTENTS_FOG			64
-
 #define CONTENTS_NOTTEAM1		0x0080
 #define CONTENTS_NOTTEAM2		0x0100
 #define CONTENTS_NOBOTCLIP		0x0200
-
 #define	CONTENTS_AREAPORTAL		0x8000
-
 #define	CONTENTS_PLAYERCLIP		0x10000
 #define	CONTENTS_MONSTERCLIP	0x20000
 //bot specific contents types
@@ -49,9 +46,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CONTENTS_DONOTENTER		0x200000
 #define CONTENTS_BOTCLIP		0x400000
 #define CONTENTS_MOVER			0x800000
-
 #define	CONTENTS_ORIGIN			0x1000000	// removed before bsping an entity
-
 #define	CONTENTS_BODY			0x2000000	// should never be on a brush, only in game
 #define	CONTENTS_CORPSE			0x4000000
 #define	CONTENTS_DETAIL			0x8000000	// brushes not used for the bsp
@@ -79,8 +74,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	SURF_ALPHASHADOW		0x10000	// do per-pixel light shadow casting in q3map
 #define	SURF_NODLIGHT			0x20000	// don't dlight even if solid (solid lava, skies)
 #define SURF_DUST				0x40000 // leave a dust trail when walking on this surface
-
-// STONELANCE
 #define SURF_GRASS				0x80000
 #define SURF_ASPHALT			0x100000
 #define SURF_WET				0x200000
@@ -89,5 +82,4 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SURF_ICE                0x1000000
 #define SURF_DIRT               0x2000000
 #define SURF_METAL              0x4000000
-// END
 

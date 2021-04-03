@@ -86,6 +86,7 @@ vmCvar_t	pmove_msec;
 vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
 vmCvar_t	g_localTeamPref;
+vmCvar_t    g_enableSnow;
 #ifdef MISSIONPACK
 vmCvar_t	g_obeliskHealth;
 vmCvar_t	g_obeliskRegenPeriod;
@@ -199,6 +200,7 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
+    { &g_enableSnow, "g_enableSnow", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
 
 #ifdef MISSIONPACK
 	{ &g_obeliskHealth, "g_obeliskHealth", "2500", 0, 0, qfalse },

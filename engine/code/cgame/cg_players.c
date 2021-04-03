@@ -2018,15 +2018,6 @@ static void CG_DustTrail( centity_t *cent ) {
 		return;
 	}
 
-// STONELANCE - UPDATE: use this instead of my dust function?
-/*
-	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != LEGS_LANDB && anim != LEGS_LAND ) {
-		return;
-	}
-*/
-// END
-
 	cent->dustTrailTime += 40;
 	if ( cent->dustTrailTime < cg.time ) {
 		cent->dustTrailTime = cg.time;
@@ -2054,6 +2045,51 @@ static void CG_DustTrail( centity_t *cent ) {
 }
 
 #endif
+
+/*
+===============
+CG_SnowTrail
+===============
+*/
+static void CG_SnowTrail( centity_t *cent ) {
+//	int				anim;
+	vec3_t end, vel;
+	trace_t tr;
+
+	if (!cg_enableSnow.integer)
+		return;
+
+	if ( cent->snowTrailTime > cg.time ) {
+		return;
+	}
+
+	cent->snowTrailTime += 40;
+	if ( cent->snowTrailTime < cg.time ) {
+		cent->snowTrailTime = cg.time;
+	}
+
+	VectorCopy(cent->currentState.pos.trBase, end);
+	end[2] -= 64;
+	CG_Trace( &tr, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
+
+	if ( !(tr.surfaceFlags & SURF_SNOW) )
+		return;
+
+	VectorCopy( cent->currentState.pos.trBase, end );
+	end[2] -= 16;
+
+	VectorSet(vel, 0, 0, -30);
+	CG_SmokePuff( end, vel,
+				  24,
+				  .8f, .8f, 0.7f, 0.33f,
+				  500,
+				  cg.time,
+				  0,
+				  0,
+				  cgs.media.snowPuffShader );
+}
+
+// #endif
 
 /*
 ===============
@@ -2891,6 +2927,10 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 			shader = cgs.media.SMDirtShader;
 			colorIndex = 1;
 		}
+        else if (tr.surfaceFlags & SURF_SNOW){
+			shader = cgs.media.SMDirtShader;
+			colorIndex = 1;
+		}
 		else if (tr.surfaceFlags & SURF_DIRT) {
 			shader = cgs.media.SMDirtShader;
 			colorIndex = 1;
@@ -2926,14 +2966,13 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				return;
 			}
 
-//			trap_S_AddRealLoopingSound( cent->currentState.clientNum, origin, cent->currentState.pos.trDelta, trap_S_RegisterSound( "sound/rally/car/skid.wav", qfalse ) );
-/*
+			trap_S_AddRealLoopingSound( cent->currentState.clientNum, origin, cent->currentState.pos.trDelta, trap_S_RegisterSound( "sound/rally/car/skid.wav", qfalse ) );
+
 			if( cent->skidSoundTime + 500 < cg.time )
 			{
 				trap_S_StartSound( origin, cent->currentState.clientNum, CHAN_VOICE, trap_S_RegisterSound( "sound/rally/car/skid.wav", qfalse ) );
 				cent->skidSoundTime = cg.time;
 			}
-*/
 
 			VectorMA(curOrigin, 1/2.0F, delta, origin);
 			VectorNormalize(delta);

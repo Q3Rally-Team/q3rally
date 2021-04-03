@@ -705,7 +705,10 @@ void SP_worldspawn( void ) {
 
 	G_SpawnString( "enableDust", "0", &s );
 	trap_Cvar_Set( "g_enableDust", s );
-
+    
+    G_SpawnString( "enableSnow", "0", &s );
+    trap_Cvar_Set( "g_enableSnow", s );
+    
 	G_SpawnString( "enableBreath", "0", &s );
 	trap_Cvar_Set( "g_enableBreath", s );
 

@@ -197,6 +197,7 @@ typedef struct centity_s {
 
 	int				trailTime;		// so missile trails can handle dropped initial packets
 	int				dustTrailTime;
+    int             snowTrailTime;
 	int				miscTime;
 
 	int				snapShotTime;	// last time this entity was found in a snapshot
@@ -387,7 +388,7 @@ typedef struct {
 	int				defendCount;
 	int				assistCount;
 	int				captures;
-	qboolean	perfect;
+	qboolean	    perfect;
 	int				team;
 // Q3Rally Code Start
 	int				damageDealt;
@@ -1062,6 +1063,8 @@ typedef struct {
 	// special effects models
 	qhandle_t	teleportEffectModel;
 	qhandle_t	teleportEffectShader;
+    qhandle_t	dustPuffShader;
+    qhandle_t   snowPuffShader;
 #ifdef MISSIONPACK
 	qhandle_t	kamikazeEffectModel;
 	qhandle_t	kamikazeShockWave;
@@ -1075,11 +1078,12 @@ typedef struct {
 	qhandle_t	invulnerabilityJuicedModel;
 	qhandle_t	medkitUsageModel;
 	qhandle_t	dustPuffShader;
+    qhandle_t   snowPuffShader;
 	qhandle_t	heartShader;
 	qhandle_t	invulnerabilityPowerupModel;
 // Q3Rally Code Start
 #endif
-	qhandle_t	dustPuffShader;
+
 //#endif
 // Q3Rally Code END
 
@@ -1344,7 +1348,7 @@ typedef struct {
 // Q3Rally Code END
 	int				redflag, blueflag;		// flag status from configstrings
 	int				flagStatus;
-    int       sigil[MAX_SIGILS];
+    int             sigil[MAX_SIGILS];
 	qboolean  newHud;
 
 	//
@@ -1499,6 +1503,7 @@ extern	vmCvar_t		cg_oldRocket;
 extern	vmCvar_t		cg_oldPlasma;
 extern	vmCvar_t		cg_trueLightning;
 extern  vmCvar_t        cg_sigilLocator;
+extern  vmCvar_t        cg_enableSnow;
 #ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;

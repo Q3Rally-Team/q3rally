@@ -6219,7 +6219,7 @@ textures/q3r_ground/snowy04_slick
 textures/q3r_ground/snowy05_slick
 {
 	qer_editorimage textures/q3r_ground/snowy05.tga
-	surfaceparm SURF_SLICK
+	surfaceparm SURF_SNOW
 	surfaceparm nolightmap
 	cull disable
 	{
