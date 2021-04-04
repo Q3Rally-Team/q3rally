@@ -1152,7 +1152,8 @@ rocketFlare
 // 10.Shotgun
 // ------------------------------------------------------------
 
-models/weapons2/shotgun/skinoa
+
+models/weapons2/shotgun/shotgun
 {
     {
         map models/weapons2/shotgun/shotgun.tga
@@ -1166,14 +1167,6 @@ models/weapons2/shotgun/skinoa
     }
 }
 
-models/weapons2/shotgun/shotgun_laser
-{
-	
-	{
-		map	models/weapons2/shotgun/shotgun_laser.tga
-		blendfunc add
-	}
-}
 
 models/weapons2/shells/sgunshell_2
 {
@@ -1186,29 +1179,13 @@ models/weapons2/shells/sgunshell_2
 
 }
 
-shotgunFlash
+models/weapons2/shotgun/f_shotgun
 {
+	sort additive
 	cull disable
 	{
-		map models/weapons2/shotgun/muzzley.tga
+		map	models/weapons2/shotgun/f_shotgun.tga
 		blendfunc add
-	}
-}
-
-cmuz_def_cone1
-{
-	cull disable
-	{
-		map textures/oa/muzzle/muz3.tga
-		blendfunc add
-		rgbGen const ( 0.992157 0.533333 0.192157 )
-		tcMod rotate 1024
-	}
-	{
-		map textures/oa/muzzle/muz6.tga
-		blendfunc add
-		rgbGen const ( 0.992157 0.533333 0.192157 )
-		tcMod rotate -1024
 	}
 }
 
@@ -1274,36 +1251,6 @@ cmuz_def_fuzz4
 		animmap 52 textures/oa/muzzle/muz8.tga textures/oa/muzzle/muz6.tga textures/oa/muzzle/muz7.tga textures/oa/muzzle/muz5.tga textures/oa/muzzle/muz4.tga textures/oa/muzzle/muz3.tga textures/oa/muzzle/muz2.tga textures/oa/muzzle/muz1.tga 
 		blendfunc add
 		rgbGen const ( 0.584314 0.352941 0.14902 )
-	}
-}
-
-muzzleSprite
-{
-	sort additive
-	cull disable
-	deformVertexes autosprite
-	{
-		map	models/weapons2/shotgun/shotgun_flash.tga
-		blendfunc add
-	}
-}
-muzzleSide
-{
-	sort additive
-	deformVertexes autosprite2
-	{
-		map	models/weapons2/shotgun/shotgun_flashside.tga
-		blendfunc add
-	}
-}
-
-muzzleSphere
-{
-	sort additive
-	cull disable
-	{
-		map	models/weapons2/shotgun/shotgun_flash.tga
-		blendfunc add
 	}
 }
 
