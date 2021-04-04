@@ -6,5 +6,5 @@ type "q3r_derby q3r_dm q3r_team_dm"
 starts "8"
 observerspots "1"
 weapons "RL,PG,SG"
-author "gout"
+author "gout (updated by insellium)"
 }

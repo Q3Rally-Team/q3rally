@@ -3471,13 +3471,8 @@ textures/q3r_sponsors/q3r_long_01
 	qer_editorimage textures/q3r_sponsors/q3rlong01.tga
 
 	{
-		map textures/base_wall/concrete.jpg
-	}
-
-	{
 		map textures/q3r_sponsors/q3rlong01.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		tcMod scale .5 .5
 	}
 
 }
@@ -6274,3 +6269,74 @@ textures/q3r_trees/tree03_still
 		depthFunc equal
 	}
 }
+
+// ------------------------------------------------------------
+// 289.q3r_dirt_grass (darkdirt01)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/darkdirt01
+{
+	surfaceparm SURF_DIRT
+	surfaceparm dust
+	{
+		map textures/q3r_dirt_grass/darkdirt01.tga
+	}  
+}
+
+// ------------------------------------------------------------
+// 290.base_floor (concretefloor2)
+// ------------------------------------------------------------
+
+textures/base_floor/concretefloor2
+{
+
+	{
+		map textures/base_wall/chrome_env.tga
+		tcgen environment
+		rgbgen wave sin .25 0 0 0
+	}
+
+
+	{
+		map textures/base_floor/concretefloor2.tga
+		blendFunc GL_ZERO GL_SRC_ALPHA
+		rgbgen identity	
+	}
+
+	{
+		map textures/base_floor/concretefloor2.tga
+		blendFunc GL_ONE GL_SRC_ALPHA
+		rgbgen identity	
+	}
+
+
+	{
+		map $lightmap
+        	blendfunc gl_dst_color gl_zero
+		rgbgen identity 
+	}
+
+
+
+
+}
+
+// ------------------------------------------------------------
+// 291.jim (bigscreen)
+// ------------------------------------------------------------
+
+textures/jim/bigscreen
+{
+	{
+		map textures/jim/bigscreen.tga
+	}
+
+	{
+		map gfx/misc/screen01.tga
+                blendFunc Add
+                tcMod scroll 7.1  0.2
+                tcmod scale .8 1
+	}
+        
+
+}   
