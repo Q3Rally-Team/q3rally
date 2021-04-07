@@ -1434,9 +1434,18 @@ textures/q3r_dirt_grass/grass06
 textures/q3r_dirt_grass/grass07
 {
 	surfaceparm SURF_GRASS
+	surfaceparm dust
+
 	{
-		map textures/q3r_dirt_grass/grass07.tga
-	}  
+        	map $lightmap
+        	rgbgen identity      
+    	}
+		{
+			map textures/q3r_dirt_grass/grass07.tga
+			blendFunc GL_DST_COLOR GL_ZERO
+        		rgbGen identity
+        		alphaGen lightingSpecular
+		}  
 }
 
 // ------------------------------------------------------------
@@ -1578,8 +1587,16 @@ textures/q3r_dirt_grass/stones01
 	surfaceparm SURF_GRAVEL
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/stones01.tga
-	}  
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
+		{
+			map textures/q3r_dirt_grass/stones01.tga
+			blendFunc GL_DST_COLOR GL_ZERO
+        		rgbGen identity
+        		alphaGen lightingSpecular
+		}  
 }
 
 // ------------------------------------------------------------
@@ -6278,8 +6295,17 @@ textures/q3r_dirt_grass/darkdirt01
 {
 	surfaceparm SURF_DIRT
 	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
 	{
 		map textures/q3r_dirt_grass/darkdirt01.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        	rgbGen identity
+        	alphaGen lightingSpecular
 	}  
 }
 

@@ -1580,7 +1580,7 @@ void UI_Refresh( int realtime )
 
 	// draw cursor
 
-//  UI_SetColor( NULL );
+//
 //  UI_DrawCursor( uis.cursorx-24, uis.cursory-24, 48, 48, uis.cursorModel );
 
 	UI_SetColor( NULL );

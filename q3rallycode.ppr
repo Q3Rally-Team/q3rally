@@ -859,17 +859,13 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\cgame\cg_rally_tools.c
-2=engine\code\game\g_spawn.c
+1=engine\code\cgame\cg_rally_hud.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
-[engine\code\cgame\cg_rally_tools.c]
-TopLine=639
-Caret=1,644
-[engine\code\game\g_spawn.c]
-TopLine=722
-Caret=1,737
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=440
+Caret=22,430

@@ -418,15 +418,16 @@ static float CG_DrawTimes( float y ) {
 		
 	}
 
-  //
-  // Best Time
-  //
+//
+// Best Time
+//
   
 	if ( cgs.gametype != GT_DERBY ){
 		time = getStringForTime( cent->bestLapTime );
 		
-		Com_sprintf(s, sizeof(s), "B; %s", time);
-		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
+		Com_sprintf(s, sizeof(s), "B: %s", time);
+//		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
+        x = 636 - 96;
 		CG_FillRect ( x, y, 96, 18, bgColor );
 		x+= 8;
 		
@@ -435,9 +436,9 @@ static float CG_DrawTimes( float y ) {
 		y += TINYCHAR_HEIGHT + 4;
 	}
 
-	//
-	// Lap Time
-	//
+//
+// Lap Time
+//
 
 	
 
@@ -445,11 +446,12 @@ static float CG_DrawTimes( float y ) {
 		time = getStringForTime(lapTime);
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
-		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-    CG_FillRect( x, y, 96, 18, bgColor );
-    x+= 8;
+//		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
+        x = 636 - 96;
+        CG_FillRect( x, y, 96, 18, bgColor );
+        x+= 8;
     
-    y+= 4;
+        y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
 	}
