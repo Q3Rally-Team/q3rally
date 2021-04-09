@@ -1,0 +1,10 @@
+New features planned for 0.0.4.0
+
+- switch between analog and digital gauge
+- optical effects for sand and snow (and others?)
+- online best time list for racing maps (like a ladder)
+- discord button in main menu (maybe in 0.0.3.0)
+- New gamemode Last Man Standing
+- New gamemode Drag Race
+- Change Gamemode Demolition Derby to use all weapons
+- ...
