@@ -350,7 +350,8 @@ models/mapobjects/GR_trees/nadel
 {
 	{
 		map models/mapobjects/GR_trees/nadel.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -358,7 +359,8 @@ models/mapobjects/GR_trees/nadelsnow
 {
 	{
 		map models/mapobjects/GR_trees/nadelsnow.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -366,7 +368,8 @@ models/mapobjects/GR_trees/tree
 {
 	{
 		map models/mapobjects/GR_trees/tree.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -374,7 +377,8 @@ models/mapobjects/GR_trees/tree3
 {
 	{
 		map models/mapobjects/GR_trees/tree3.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -382,7 +386,8 @@ models/mapobjects/GR_trees/tree4
 {
 	{
 		map models/mapobjects/GR_trees/tree4.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -390,7 +395,8 @@ models/mapobjects/GR_trees/tree6
 {
 	{
 		map models/mapobjects/GR_trees/tree6.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -398,7 +404,8 @@ models/mapobjects/oak/oakblaetter
 {
 	{
 		map models/mapobjects/oak/oakblaetter.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -406,7 +413,8 @@ models/mapobjects/oak/oakblaetter2
 {
 	{
 		map models/mapobjects/oak/oakblaetter2.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 
@@ -414,7 +422,8 @@ models/mapobjects/oak/oakblaetter3
 {
 	{
 		map models/mapobjects/oak/oakblaetter3.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
     }
 }
 

@@ -741,8 +741,15 @@ textures/q3r_dirt_grass/dirt01
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -754,8 +761,15 @@ textures/q3r_dirt_grass/dirt01road01
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -767,8 +781,15 @@ textures/q3r_dirt_grass/dirt01road01a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -780,8 +801,15 @@ textures/q3r_dirt_grass/dirt01road01b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -793,8 +821,15 @@ textures/q3r_dirt_grass/dirt01road01c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -806,8 +841,15 @@ textures/q3r_dirt_grass/dirt01road01d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -819,8 +861,15 @@ textures/q3r_dirt_grass/dirt01road01e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road01e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road01e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -832,8 +881,15 @@ textures/q3r_dirt_grass/dirt01road02
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -845,8 +901,15 @@ textures/q3r_dirt_grass/dirt01road02a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -858,8 +921,16 @@ textures/q3r_dirt_grass/dirt01road02b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -871,8 +942,16 @@ textures/q3r_dirt_grass/dirt01road02c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -884,8 +963,16 @@ textures/q3r_dirt_grass/dirt01road02d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -897,8 +984,16 @@ textures/q3r_dirt_grass/dirt01road02e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road02e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road02e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -910,8 +1005,16 @@ textures/q3r_dirt_grass/dirt01road03
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -923,8 +1026,16 @@ textures/q3r_dirt_grass/dirt01road03a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -936,8 +1047,16 @@ textures/q3r_dirt_grass/dirt01road03b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -949,8 +1068,16 @@ textures/q3r_dirt_grass/dirt01road03c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -962,8 +1089,16 @@ textures/q3r_dirt_grass/dirt01road03d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -975,8 +1110,16 @@ textures/q3r_dirt_grass/dirt01road03e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt01road03e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt01road03e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -988,8 +1131,16 @@ textures/q3r_dirt_grass/dirt02
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1001,8 +1152,16 @@ textures/q3r_dirt_grass/dirt02road01
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1014,8 +1173,16 @@ textures/q3r_dirt_grass/dirt02road01a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1027,8 +1194,16 @@ textures/q3r_dirt_grass/dirt02road01b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1040,8 +1215,16 @@ textures/q3r_dirt_grass/dirt02road01c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1053,8 +1236,16 @@ textures/q3r_dirt_grass/dirt02road01d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1066,8 +1257,16 @@ textures/q3r_dirt_grass/dirt02road01e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road01e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road01e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1079,8 +1278,16 @@ textures/q3r_dirt_grass/dirt02road02
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1092,8 +1299,16 @@ textures/q3r_dirt_grass/dirt02road02a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1105,8 +1320,16 @@ textures/q3r_dirt_grass/dirt02road02b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1118,8 +1341,16 @@ textures/q3r_dirt_grass/dirt02road02c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1131,8 +1362,16 @@ textures/q3r_dirt_grass/dirt02road02d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1144,8 +1383,16 @@ textures/q3r_dirt_grass/dirt02road02e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1157,8 +1404,16 @@ textures/q3r_dirt_grass/dirt02road02f
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road02f.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road02f.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1170,8 +1425,16 @@ textures/q3r_dirt_grass/dirt02road03
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1182,8 +1445,16 @@ textures/q3r_dirt_grass/dirt02road03a
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1194,8 +1465,16 @@ textures/q3r_dirt_grass/dirt02road03b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1207,8 +1486,16 @@ textures/q3r_dirt_grass/dirt02road03c
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03c.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03c.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1220,8 +1507,16 @@ textures/q3r_dirt_grass/dirt02road03d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1233,8 +1528,16 @@ textures/q3r_dirt_grass/dirt02road03e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1246,8 +1549,16 @@ textures/q3r_dirt_grass/dirt02road03f
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road03f.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road03f.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1259,8 +1570,16 @@ textures/q3r_dirt_grass/dirt02road04f
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt02road04f.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt02road04f.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1272,8 +1591,16 @@ textures/q3r_dirt_grass/dirt03
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt03.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt03.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1285,8 +1612,16 @@ textures/q3r_dirt_grass/dirt03road01b
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt03road01b.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt03road01b.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1298,8 +1633,16 @@ textures/q3r_dirt_grass/dirt03road01d
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt03road01d.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt03road01d.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1311,8 +1654,16 @@ textures/q3r_dirt_grass/dirt03road01e
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt03road01e.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt03road01e.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1324,8 +1675,16 @@ textures/q3r_dirt_grass/dirt04
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirt04.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirt04.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1337,8 +1696,16 @@ textures/q3r_dirt_grass/dirtgrass01
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirtgrass01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirtgrass01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1350,8 +1717,16 @@ textures/q3r_dirt_grass/dirtgrass02
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/dirtgrass02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/dirtgrass02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1362,8 +1737,16 @@ textures/q3r_dirt_grass/grass01
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/grass01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1374,8 +1757,16 @@ textures/q3r_dirt_grass/grass02
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/grass02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1386,8 +1777,16 @@ textures/q3r_dirt_grass/grass03
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/grass03.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass03.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1399,8 +1798,16 @@ textures/q3r_dirt_grass/grass04
 	surfaceparm SURF_GRASS
 	surfaceparm SURF_WET
 	{
-		map textures/q3r_dirt_grass/grass04.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass04.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1411,8 +1818,16 @@ textures/q3r_dirt_grass/grass05
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/grass05.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass05.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1423,8 +1838,16 @@ textures/q3r_dirt_grass/grass06
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/grass06.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass06.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        
+    }
 }
 
 // ------------------------------------------------------------
@@ -1435,17 +1858,16 @@ textures/q3r_dirt_grass/grass07
 {
 	surfaceparm SURF_GRASS
 	surfaceparm dust
-
 	{
-        	map $lightmap
-        	rgbgen identity      
-    	}
-		{
-			map textures/q3r_dirt_grass/grass07.tga
-			blendFunc GL_DST_COLOR GL_ZERO
-        		rgbGen identity
-        		alphaGen lightingSpecular
-		}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass07.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1457,8 +1879,15 @@ textures/q3r_dirt_grass/grass08
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/grass08.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass08.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1470,8 +1899,15 @@ textures/q3r_dirt_grass/grass09
 	surfaceparm SURF_DIRT
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/grass09.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/grass09.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1482,8 +1918,15 @@ textures/q3r_dirt_grass/gravel01
 {
 	surfaceparm SURF_GRAVEL
 	{
-		map textures/q3r_dirt_grass/gravel01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/gravel01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1494,8 +1937,15 @@ textures/q3r_dirt_grass/gravel02
 {
 	surfaceparm SURF_GRAVEL
 	{
-		map textures/q3r_dirt_grass/gravel02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/gravel02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1506,8 +1956,15 @@ textures/q3r_dirt_grass/greengrass
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/greengrass.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/greengrass.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1518,8 +1975,15 @@ textures/q3r_dirt_grass/lawn01
 {
 	surfaceparm SURF_GRASS
 	{
-		map textures/q3r_dirt_grass/lawn01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/lawn01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1532,8 +1996,15 @@ textures/q3r_dirt_grass/mud01
 	surfaceparm SURF_WET
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/mud01.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/mud01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1546,8 +2017,15 @@ textures/q3r_dirt_grass/mud01_a
 	surfaceparm SURF_WET
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/mud01_a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/mud01_a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1560,8 +2038,15 @@ textures/q3r_dirt_grass/mud02
 	surfaceparm SURF_WET
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/mud02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/mud02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1574,8 +2059,15 @@ textures/q3r_dirt_grass/mud02_a
 	surfaceparm SURF_WET
 	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/mud02_a.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/mud02_a.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1587,16 +2079,15 @@ textures/q3r_dirt_grass/stones01
 	surfaceparm SURF_GRAVEL
 	surfaceparm dust
 	{
-        	map $lightmap
-        	rgbgen identity      
-    	}
-
-		{
-			map textures/q3r_dirt_grass/stones01.tga
-			blendFunc GL_DST_COLOR GL_ZERO
-        		rgbGen identity
-        		alphaGen lightingSpecular
-		}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/stones01.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1606,9 +2097,17 @@ textures/q3r_dirt_grass/stones01
 textures/q3r_dirt_grass/stones02
 {
 	surfaceparm SURF_GRAVEL
+	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/stones02.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/stones02.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1618,9 +2117,17 @@ textures/q3r_dirt_grass/stones02
 textures/q3r_dirt_grass/stones03
 {
 	surfaceparm SURF_GRAVEL
+	surfaceparm dust
 	{
-		map textures/q3r_dirt_grass/stones03.tga
-	}  
+        map $lightmap
+        rgbgen identity      
+    }
+    
+    {
+        map textures/q3r_dirt_grass/stones03.tga
+        blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1633,7 +2140,14 @@ textures/q3r_dirt_grass/blended01
 	surfaceparm dust
 	qer_editorimage textures/q3r_dirt_grass/dirt02
 	{
+        map $lightmap
+        rgbgen identity      
+    }
+	{
 		map textures/q3r_dirt_grass/dirt02.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+        alphaGen lightingSpecular
 	}
 	{
 		map textures/q3r_dirt_grass/trans01.tga
@@ -1641,12 +2155,15 @@ textures/q3r_dirt_grass/blended01
 		blendFunc GL_DST_COLOR GL_SRC_ALPHA
 		detail
 		tcMod scale .1 .1
+		rgbGen identity
+        alphaGen lightingSpecular
 		
 	}
 	{
 		map textures/q3r_dirt_grass/grass02.tga
-		
 		blendFunc GL_DST_COLOR GL_SRC_COLOR
+		rgbGen identity
+        alphaGen lightingSpecular
 	}
 }
 
@@ -1710,8 +2227,8 @@ textures/q3r_glass/glassbrick2A
 
 textures/q3r_glass/blueglass
 {
-	surfaceparm nolightmap
-	surfaceparm nonsolid
+    qer_trans .5
+    surfaceparm trans
 	cull twosided
 	{
 		map textures/q3r_glass/blueglass.tga
@@ -1719,7 +2236,13 @@ textures/q3r_glass/blueglass
 		tcMod turb 0 0.01 0 0.01	        
 		tcmod scroll .0 .0
 		blendfunc GL_ONE GL_ONE
-                }
+		rgbGen identity
+	}
+	{
+        map $lightmap
+        blendFunc gl_dst_color gl_zero
+        rgbgen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1727,24 +2250,23 @@ textures/q3r_glass/blueglass
 // ------------------------------------------------------------
 
 textures/q3r_glass/darkglass
-       {
-                      qer_trans .5
-                      surfaceparm trans
-//		      surfaceparm solid
-
-                      cull disable
-                      {
-                      map textures/effects/tinfx.tga
-                      tcgen environment
-                      blendfunc gl_one gl_one
-                      rgbGen identity
-                      }
-                      {
-                      map $lightmap
-                      blendFunc gl_dst_color gl_zero
-                      rgbgen identity
-                      }
-        }
+{
+	qer_trans .5
+	surfaceparm trans
+	//surfaceparm solid
+	cull disable
+    {
+        map textures/effects/tinfx.tga
+        tcgen environment
+        blendfunc gl_one gl_one
+        rgbGen identity
+    }
+    {
+        map $lightmap
+        blendFunc gl_dst_color gl_zero
+        rgbgen identity
+    }
+}
 
 // ------------------------------------------------------------
 // 105.q3r_glass (plainglass)
@@ -1752,14 +2274,20 @@ textures/q3r_glass/darkglass
 
 textures/q3r_glass/plainglass
 {
-	surfaceparm nolightmap
-	surfaceparm nonsolid
+	qer_trans .5
+	surfaceparm trans
 	cull twosided
 	{
 		map textures/q3r_glass/plainglass.tga
 		tcGen environment
 		blendfunc GL_ONE GL_ONE
-                }
+		rgbGen identity
+    }
+    {
+        map $lightmap
+        blendFunc gl_dst_color gl_zero
+        rgbgen identity
+    }
 }
 
 // ------------------------------------------------------------
@@ -1922,10 +2450,13 @@ textures/q3r_lights/bluesurfacelit
 textures/q3r_trees/birch01_f
 {
 	cull disable
+	surfaceparm trans
+	surfaceparm alphashadow
 
 	{
 		map textures/q3r_trees/birch01_f.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
 	}
 }
 
@@ -1936,10 +2467,13 @@ textures/q3r_trees/birch01_f
 textures/q3r_trees/birch01_s
 {
 	cull disable
+	surfaceparm trans
+	surfaceparm alphashadow
 
 	{
 		map textures/q3r_trees/birch01_s.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
 	}
 }
 
@@ -1950,10 +2484,13 @@ textures/q3r_trees/birch01_s
 textures/q3r_trees/pine01_f
 {
 	cull disable
+	surfaceparm trans
+	surfaceparm alphashadow
 
 	{
 		map textures/q3r_trees/pine01_f.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
 	}
 }
 
@@ -1964,10 +2501,13 @@ textures/q3r_trees/pine01_f
 textures/q3r_trees/pine01_s
 {
 	cull disable
+	surfaceparm trans
+	surfaceparm alphashadow
 
 	{
 		map textures/q3r_trees/pine01_s.tga
-		blendfunc blend
+		alphaFunc GE128
+		rgbGen exactVertex
 	}
 }
 
@@ -2390,6 +2930,7 @@ textures/q3r_metals/metrust03
 	cull disable
 	surfaceparm alphashadow
 	surfaceparm playerclip
+	surfaceparm SURF_METAL
 	{
 		map textures/q3r_metals/metrust03.tga
 		blendFunc blend
@@ -2596,7 +3137,7 @@ textures/q3r_metals/plate01
 
 textures/q3r_people/male01
 {
-cull disable
+	cull disable
 	deformVertexes autosprite2
 	{
 		map textures/q3r_people/male01.tga
@@ -5890,8 +6431,13 @@ textures\q3r_road\asph01
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asph01.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5905,8 +6451,13 @@ textures\q3r_road\asph02
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asph02.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5920,8 +6471,13 @@ textures\q3r_road\asph02linien
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asph02linien.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5935,8 +6491,13 @@ textures\q3r_road\asph02parking
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asph02parking.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5950,8 +6511,13 @@ textures\q3r_road\asph03
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asph03.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5965,8 +6531,13 @@ textures\q3r_road\asphalt_lined
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\asphalt_lined.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5980,8 +6551,13 @@ textures\q3r_road\cobbles01
 	cull disable
 	surfaceparm SURF_GRAVEL
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\cobbles01.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -5995,8 +6571,13 @@ textures\q3r_road\concrete
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\concrete.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6010,8 +6591,13 @@ textures\q3r_road\road-1
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
-		map textures\q3r_road\raod-1.tga
-		blendfunc blend
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures\q3r_road\road-1.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6025,8 +6611,13 @@ textures\q3r_road\road
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\road.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6040,8 +6631,13 @@ textures\q3r_road\road_02
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\road_02.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6055,68 +6651,93 @@ textures\q3r_road\road_grid
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\road_grid.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
 // ------------------------------------------------------------
-// 275.q3r_road (road_pitend)
+// 275.q3r_road (road_pitent)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend
+textures\q3r_road\road_pitent
 {
-	qer_editorimage textures\q3r_road\road_pitend.jpg
+	qer_editorimage textures\q3r_road\road_pitent.jpg
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
-		map textures\q3r_road\road_pitend.jpg
-		blendfunc blend
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures\q3r_road\road_pitent.jpg
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
 // ------------------------------------------------------------
-// 276.q3r_road (road_pitend_2)
+// 276.q3r_road (road_pitent_2)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_2
+textures\q3r_road\road_pitent_2
 {
-	qer_editorimage textures\q3r_road\road_pitend_2.jpg
+	qer_editorimage textures\q3r_road\road_pitent_2.jpg
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
-		map textures\q3r_road\road_pitend_2.jpg
-		blendfunc blend
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures\q3r_road\road_pitent_2.jpg
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
 // ------------------------------------------------------------
-// 277.q3r_road (road_pitend_3)
+// 277.q3r_road (road_pitent_3)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_3
+textures\q3r_road\road_pitent_3
 {
-	qer_editorimage textures\q3r_road\road_pitend_3.jpg
+	qer_editorimage textures\q3r_road\road_pitent_3.jpg
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
-		map textures\q3r_road\road_pitend_3.jpg
-		blendfunc blend
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures\q3r_road\road_pitent_3.jpg
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
 // ------------------------------------------------------------
-// 278.q3r_road (road_pitend_4)
+// 278.q3r_road (road_pitent_4)
 // ------------------------------------------------------------
 
-textures\q3r_road\road_pitend_4
+textures\q3r_road\road_pitent_4
 {
-	qer_editorimage textures\q3r_road\road_pitend_4.jpg
+	qer_editorimage textures\q3r_road\road_pitent_4.jpg
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
-		map textures\q3r_road\road_pitend_4.jpg
-		blendfunc blend
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures\q3r_road\road_pitent_4.jpg
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6130,8 +6751,13 @@ textures\q3r_road\road-start
 	cull disable
 	surfaceparm SURF_ASPHALT
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures\q3r_road\road-start.jpg
-		blendfunc blend
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6143,9 +6769,14 @@ textures/q3r_ground/tuerkis_slick
 {
 	qer_editorimage textures/q3r_layout/tuerkis.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
+	{
+		map $lightmap
+		rgbGen identity
+	}
 	{
 		map textures/q3r_layout/tuerkis.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6157,10 +6788,15 @@ textures/q3r_ground/snowy01_slick
 {
 	qer_editorimage textures/q3r_ground/snowy01.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
 	cull disable
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures/q3r_ground/snowy01.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6172,10 +6808,15 @@ textures/q3r_ground/snowy02_slick
 {
 	qer_editorimage textures/q3r_ground/snowy02.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
 	cull disable
 	{
-		map textures/q3r_ground/snowy01.tga
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy02.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6187,10 +6828,15 @@ textures/q3r_ground/snowy02_slick2
 {
 	qer_editorimage textures/q3r_ground/snowy02_slick.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
 	cull disable
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures/q3r_ground/snowy02_slick.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6202,10 +6848,15 @@ textures/q3r_ground/snowy03_slick
 {
 	qer_editorimage textures/q3r_ground/snowy03.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
 	cull disable
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures/q3r_ground/snowy03.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6217,10 +6868,15 @@ textures/q3r_ground/snowy04_slick
 {
 	qer_editorimage textures/q3r_ground/snowy04.tga
 	surfaceparm SURF_SLICK
-	surfaceparm nolightmap
 	cull disable
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures/q3r_ground/snowy04.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6231,11 +6887,16 @@ textures/q3r_ground/snowy04_slick
 textures/q3r_ground/snowy05_slick
 {
 	qer_editorimage textures/q3r_ground/snowy05.tga
-	surfaceparm SURF_SNOW
-	surfaceparm nolightmap
+	surfaceparm SURF_SLICK
 	cull disable
 	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
 		map textures/q3r_ground/snowy05.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
 	}
 }
 
@@ -6305,12 +6966,95 @@ textures/q3r_dirt_grass/darkdirt01
 		map textures/q3r_dirt_grass/darkdirt01.tga
 		blendFunc GL_DST_COLOR GL_ZERO
         	rgbGen identity
-        	alphaGen lightingSpecular
 	}  
 }
 
 // ------------------------------------------------------------
-// 290.base_floor (concretefloor2)
+// 290.q3r_dirt_grass (checker01)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/checker01
+{
+	surfaceparm SURF_DIRT
+	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
+	{
+		map textures/q3r_dirt_grass/checker01.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        	rgbGen identity
+	}  
+}
+
+// ------------------------------------------------------------
+// 291.q3r_dirt_grass (darkdirt02)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/darkdirt02
+{
+	surfaceparm SURF_DIRT
+	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
+	{
+		map textures/q3r_dirt_grass/darkdirt02.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        	rgbGen identity
+	}  
+}
+
+// ------------------------------------------------------------
+// 292.q3r_dirt_grass (darkdirtgrass01)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/darkdirtgrass01
+{
+	surfaceparm SURF_DIRT
+	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
+	{
+		map textures/q3r_dirt_grass/darkdirtgrass01.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        	rgbGen identity
+	}  
+}
+
+// ------------------------------------------------------------
+// 293.q3r_dirt_grass (darkdirtgrass01)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/stones01grass
+{
+	surfaceparm SURF_GRAVEL
+	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    	}
+
+	{
+		map textures/q3r_dirt_grass/stones01grass.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        	rgbGen identity
+	}  
+}
+
+// ------------------------------------------------------------
+// 294.base_floor (concretefloor2)
 // ------------------------------------------------------------
 
 textures/base_floor/concretefloor2
@@ -6348,7 +7092,7 @@ textures/base_floor/concretefloor2
 }
 
 // ------------------------------------------------------------
-// 291.jim (bigscreen)
+// 295.jim (bigscreen)
 // ------------------------------------------------------------
 
 textures/jim/bigscreen
@@ -6366,3 +7110,124 @@ textures/jim/bigscreen
         
 
 }   
+
+// ------------------------------------------------------------
+// 296.q3r_dirt_grass (sand)
+// ------------------------------------------------------------
+
+textures/q3r_dirt_grass/sand
+{
+	surfaceparm SURF_WET
+	surfaceparm dust
+
+	{
+        	map $lightmap
+        	rgbgen identity      
+    }
+
+	{
+		map textures/q3r_dirt_grass/sand.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+        rgbGen identity
+	}  
+}
+
+// ------------------------------------------------------------
+// 297.q3r_ground (snowy01)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy01
+{
+	qer_editorimage textures/q3r_ground/snowy01.tga
+	surfaceparm SURF_SNOW
+	cull disable
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy01.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 298.q3r_ground (snowy02)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy02
+{
+	qer_editorimage textures/q3r_ground/snowy02.tga
+	surfaceparm SURF_SNOW
+	cull disable
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy02.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 299.q3r_ground (snowy03)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy03
+{
+	qer_editorimage textures/q3r_ground/snowy03.tga
+	surfaceparm SURF_SNOW
+	cull disable
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy03.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 300.q3r_ground (snowy04)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy04
+{
+	qer_editorimage textures/q3r_ground/snowy04.tga
+	surfaceparm SURF_SNOW
+	cull disable
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy04.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 301.q3r_ground (snowy05)
+// ------------------------------------------------------------
+
+textures/q3r_ground/snowy05
+{
+	qer_editorimage textures/q3r_ground/snowy05.tga
+	surfaceparm SURF_SNOW
+	cull disable
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/q3r_ground/snowy05.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+}
