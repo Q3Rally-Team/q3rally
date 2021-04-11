@@ -24,6 +24,42 @@ textures/common/mirrortut
 }
 
 // ------------------------------------------------------------
+// 1b.mirror1
+// ------------------------------------------------------------
+
+textures/common/mirror1
+{
+	qer_editorimage textures/common/mirror1.tga
+	surfaceparm nolightmap
+	portal
+	{
+		map textures/common/mirror1.tga
+		blendfunc GL_ONE GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+	}
+}
+
+// ------------------------------------------------------------
+// 1c.mirror2
+// ------------------------------------------------------------
+
+textures/common/mirror2
+{
+	qer_editorimage textures/common/qer_mirror.tga
+	surfaceparm nolightmap
+	portal
+	{
+		map textures/common/mirror1.tga
+		blendfunc GL_ONE GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+	}
+	{
+		map textures/sfx/mirror.tga
+		blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
+	}
+}
+
+// ------------------------------------------------------------
 // 2.rain
 // ------------------------------------------------------------
 
@@ -98,7 +134,7 @@ textures/common/areaportal
 textures/common/caulk
 {
 	surfaceparm nodraw
-    surfaceparm nolightmap
+    	surfaceparm nolightmap
 	surfaceparm nomarks
 }
 
@@ -190,10 +226,26 @@ textures/common/hint
 }
 
 // ------------------------------------------------------------
-// 14.invisible
+// 13b.hintlocal
 // ------------------------------------------------------------
 
-textures/common/invisible // solid, transparent polygons, casts shadows
+textures/common/hintlocal
+{
+	qer_nocarve
+	qer_trans 0.30
+	qer_editorImage textures/common/hintlocal.tga
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm structural
+	surfaceparm trans
+	surfaceparm noimpact
+}
+
+// ------------------------------------------------------------
+// 14.invisible (solid, transparent polygons, casts shadows)
+// ------------------------------------------------------------
+
+textures/common/invisible 
 {
 	surfaceparm nolightmap			
         {
@@ -332,7 +384,7 @@ textures/common/terrain
 {
 	q3map_terrain
 	surfaceparm nodraw
-    surfaceparm nolightmap
+    	surfaceparm nolightmap
 	surfaceparm nomarks
 }
 
@@ -476,4 +528,156 @@ textures/common/energypad
 		tcGen environment
 		tcMod turb 0 0.25 0 0.05
 	}
+}
+
+// ------------------------------------------------------------
+// 34.antiportal (works like hint, but supresses portals)
+// ------------------------------------------------------------
+
+textures/common/antiportal
+{
+	qer_nocarve
+	qer_trans 0.30
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm structural
+	surfaceparm trans
+	surfaceparm noimpact
+	surfaceparm antiportal
+}
+
+// ------------------------------------------------------------
+// 35.skip
+// ------------------------------------------------------------
+// ydnar: skip works like quake 2 hint: it doesn't generate bsp splits
+// use on sides of hint brushes where you don't want bsp splits or portals
+
+textures/common/skip
+{
+	qer_nocarve
+	qer_trans 0.30
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm structural
+	surfaceparm trans
+	surfaceparm noimpact
+	surfaceparm skip
+}
+
+// ------------------------------------------------------------
+// 36.hintskip 
+// ------------------------------------------------------------
+// same as skip but name changed to allow CTRL+H to filter both hint and skip
+
+textures/common/hintskip
+{
+	qer_nocarve
+	qer_trans 0.30
+	qer_editorImage textures/common/skip.tga
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm structural
+	surfaceparm trans
+	surfaceparm noimpact
+	surfaceparm skip
+}
+
+// ------------------------------------------------------------
+// 37.watercaulk
+// ------------------------------------------------------------
+// 2 usages for watercaulk depending on water brush complexity
+// SIMPLE WATER BRUSHES - use watercaulk on faces between water brushes
+// COMPLEX WATER BRUSHES - overlap complex water brushes with watercaulk.
+// Water shader should be nodraw, nonsolid, trans, *sans-water*
+
+textures/common/watercaulk
+{
+	qer_trans 0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm water
+}
+
+// ------------------------------------------------------------
+// 38.slimecaulk
+// ------------------------------------------------------------
+
+textures/common/slimecaulk
+{
+	qer_trans 0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm slime
+}
+
+// ------------------------------------------------------------
+// 39.lavacaulk
+// ------------------------------------------------------------
+
+textures/common/lavacaulk
+{
+	qer_trans 0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm lava
+}
+
+// ------------------------------------------------------------
+// 40.alphafade
+// ------------------------------------------------------------
+// alpha fade shaders
+// (c) 2004 randy reddig
+// http://www.shaderlab.com
+
+textures/common/alpha_100
+{
+	qer_trans 0.5
+	q3map_alphaMod volume
+	q3map_alphaMod scale 1.0
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+}
+
+textures/common/alpha_75
+{
+	qer_trans 0.5
+	q3map_alphaMod volume
+	q3map_alphaMod scale 0.75
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+}
+
+textures/common/alpha_50
+{
+	qer_trans 0.5
+	q3map_alphaMod volume
+	q3map_alphaMod scale 0.5
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+}
+
+textures/common/alpha_25
+{
+	qer_trans 0.5
+	q3map_alphaMod volume
+	q3map_alphaMod scale 0.25
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
+}
+
+textures/common/alpha_0
+{
+	qer_trans 0.5
+	q3map_alphaMod volume
+	q3map_alphaMod scale 0
+	surfaceparm nodraw
+	surfaceparm nonsolid
+	surfaceparm trans
 }
