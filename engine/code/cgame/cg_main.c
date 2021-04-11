@@ -223,14 +223,15 @@ vmCvar_t	cg_oldRocket;
 vmCvar_t	cg_oldPlasma;
 vmCvar_t	cg_trueLightning;
 vmCvar_t    cg_sigilLocator;
+vmCvar_t	cg_enableDust;
 vmCvar_t    cg_enableSnow;
+vmCvar_t    cg_enableSand;
 #ifdef MISSIONPACK
 vmCvar_t 	cg_redTeamName;
 vmCvar_t 	cg_blueTeamName;
 vmCvar_t	cg_currentSelectedPlayer;
 vmCvar_t	cg_currentSelectedPlayerName;
 vmCvar_t	cg_singlePlayer;
-vmCvar_t	cg_enableDust;
 vmCvar_t	cg_enableBreath;
 vmCvar_t	cg_singlePlayerActive;
 vmCvar_t	cg_recordSPDemo;
@@ -405,6 +406,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_singlePlayer, "ui_singlePlayerActive", "0", CVAR_USERINFO},
 	{ &cg_enableDust, "g_enableDust", "0", CVAR_SERVERINFO},
     { &cg_enableSnow, "g_enableSnow", "0", CVAR_SERVERINFO},
+    { &cg_enableSand, "g_enableSand", "0", CVAR_SERVERINFO},
 	{ &cg_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO},
 	{ &cg_singlePlayerActive, "ui_singlePlayerActive", "0", CVAR_USERINFO},
 	{ &cg_recordSPDemo, "ui_recordSPDemo", "0", CVAR_ARCHIVE},
@@ -1025,8 +1027,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.scoreboardName = trap_R_RegisterShaderNoMip( "menu/tab/name.tga" );
 	cgs.media.scoreboardPing = trap_R_RegisterShaderNoMip( "menu/tab/ping.tga" );
 	cgs.media.scoreboardScore = trap_R_RegisterShaderNoMip( "menu/tab/score.tga" );
-	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.tga" );
-    cgs.media.snowPuffShader = trap_R_RegisterShader("snowPuff" );   
+	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.tga" );   
     cgs.media.hastePuffShader = trap_R_RegisterShader("hasteSmokePuff" );
 	cgs.media.smokePuffShader = trap_R_RegisterShader( "smokePuff" );
 	cgs.media.smokePuffRageProShader = trap_R_RegisterShader( "smokePuffRagePro" );
@@ -1144,7 +1145,8 @@ static void CG_RegisterGraphics( void ) {
 // Q3Rally Code Start
 #endif
 	cgs.media.dustPuffShader = trap_R_RegisterShader("hasteSmokePuff" );
-   	cgs.media.snowPuffShader = trap_R_RegisterShader("snowPuff" );
+    cgs.media.snowPuffShader = trap_R_RegisterShader("snowPuff" );
+    cgs.media.sandPuffShader = trap_R_RegisterShader("sandPuff" );
 //#endif
 // Q3Rally Code END
 

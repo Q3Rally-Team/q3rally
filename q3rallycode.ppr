@@ -95,7 +95,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -860,12 +860,36 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\cgame\cg_rally_hud.c
+2=engine\code\qcommon\surfaceflags.h
+3=engine\code\cgame\cg_players.c
+4=engine\code\cgame\cg_main.c
+5=engine\code\game\bg_physics.c
+6=engine\code\game\bg_physics.h
+7=engine\code\cgame\cg_local.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\cgame\cg_main.c
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\cgame\cg_rally_hud.c]
 TopLine=440
 Caret=22,430
+[engine\code\qcommon\surfaceflags.h]
+TopLine=63
+Caret=1,86
+[engine\code\cgame\cg_players.c]
+TopLine=2023
+Caret=31,2044
+[engine\code\cgame\cg_main.c]
+TopLine=965
+Caret=73,707
+[engine\code\game\bg_physics.c]
+TopLine=995
+Caret=1,998
+[engine\code\game\bg_physics.h]
+TopLine=81
+Caret=32,108
+[engine\code\cgame\cg_local.h]
+TopLine=185
+Caret=35,201

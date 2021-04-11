@@ -198,6 +198,7 @@ typedef struct centity_s {
 	int				trailTime;		// so missile trails can handle dropped initial packets
 	int				dustTrailTime;
     int             snowTrailTime;
+    int             sandTrailTime;
 	int				miscTime;
 
 	int				snapShotTime;	// last time this entity was found in a snapshot
@@ -1503,14 +1504,15 @@ extern	vmCvar_t		cg_oldRocket;
 extern	vmCvar_t		cg_oldPlasma;
 extern	vmCvar_t		cg_trueLightning;
 extern  vmCvar_t        cg_sigilLocator;
+extern	vmCvar_t		cg_enableDust;
 extern  vmCvar_t        cg_enableSnow;
+extern  vmCvar_t        cg_enableSand;
 #ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;
 extern	vmCvar_t		cg_currentSelectedPlayer;
 extern	vmCvar_t		cg_currentSelectedPlayerName;
 extern	vmCvar_t		cg_singlePlayer;
-extern	vmCvar_t		cg_enableDust;
 extern	vmCvar_t		cg_enableBreath;
 extern	vmCvar_t		cg_singlePlayerActive;
 extern  vmCvar_t		cg_recordSPDemo;

@@ -104,6 +104,8 @@ extern	float CP_GEAR_RATIOS[];
 #define	CP_SNOW_KCOF		0.27f
 //#define	CP_SNOW_SCOF		0.7f		// packed snow
 //#define	CP_SNOW_KCOF		0.5f
+#define CP_SAND_SCOF        0.75f
+#define CP_SAND_KCOF        0.6f
 #define	CP_OIL_SCOF			0.3f		// oil
 #define	CP_OIL_KCOF			0.2f
 

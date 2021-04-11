@@ -82,4 +82,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SURF_ICE                0x1000000
 #define SURF_DIRT               0x2000000
 #define SURF_METAL              0x4000000
+#define SURF_SAND               0x8000000
+
 

@@ -640,8 +640,8 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->scof = CP_ICE_SCOF;
 	}
 	else if (trace->surfaceFlags & SURF_ICE) {
-	  point->kcof = CP_ICE_KCOF;
-	  point->scof = CP_ICE_SCOF;
+	    point->kcof = CP_ICE_KCOF;
+	    point->scof = CP_ICE_SCOF;
 	}
 	else if (trace->surfaceFlags & SURF_GRASS){
 		point->kcof = CP_GRASS_KCOF;
@@ -651,18 +651,22 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->kcof = CP_DIRT_KCOF;
 		point->scof = CP_DIRT_SCOF;
 	}
+    else if (trace->surfaceFlags & SURF_SAND){
+        point->kcof = CP_SAND_KCOF;
+        point->scof = CP_SAND_SCOF;
+    }
 	else if (trace->surfaceFlags & SURF_SNOW){
 		point->kcof = CP_SNOW_KCOF;
 		point->scof = CP_SNOW_SCOF;
 	}
 	else if (trace->surfaceFlags & SURF_GRAVEL) {
-    point->kcof = CP_GRAVEL_KCOF;
-    point->scof = CP_GRAVEL_SCOF;
-  }
-  else if (trace->surfaceFlags & SURF_DIRT) {
-    point->kcof = CP_DIRT_KCOF;
-    point->scof = CP_DIRT_SCOF;
-  }
+        point->kcof = CP_GRAVEL_KCOF;
+        point->scof = CP_GRAVEL_SCOF;
+   }
+    else if (trace->surfaceFlags & SURF_DIRT) {
+        point->kcof = CP_DIRT_KCOF;
+        point->scof = CP_DIRT_SCOF;
+   }
 	else {
 		point->kcof = CP_KCOF;
 		point->scof = CP_SCOF;
@@ -673,8 +677,8 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->scof *= CP_WET_SCALE;
 	}
 
-	point->kcof *= pm->car_friction_scale;
-	point->scof *= pm->car_friction_scale;
+	    point->kcof *= pm->car_friction_scale;
+	    point->scof *= pm->car_friction_scale;
 }
 
 

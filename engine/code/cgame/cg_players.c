@@ -2044,7 +2044,7 @@ static void CG_DustTrail( centity_t *cent ) {
 				  cgs.media.dustPuffShader );
 }
 
-#endif
+// #endif
 
 /*
 ===============
@@ -2090,6 +2090,51 @@ static void CG_SnowTrail( centity_t *cent ) {
 }
 
 // #endif
+
+/*
+===============
+CG_SandTrail
+===============
+*/
+static void CG_SandTrail( centity_t *cent ) {
+//	int				anim;
+	vec3_t end, vel;
+	trace_t tr;
+
+	if (!cg_enableSand.integer)
+		return;
+
+	if ( cent->sandTrailTime > cg.time ) {
+		return;
+	}
+
+	cent->sandTrailTime += 40;
+	if ( cent->sandTrailTime < cg.time ) {
+		cent->sandTrailTime = cg.time;
+	}
+
+	VectorCopy(cent->currentState.pos.trBase, end);
+	end[2] -= 64;
+	CG_Trace( &tr, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
+
+	if ( !(tr.surfaceFlags & SURF_SAND) )
+		return;
+
+	VectorCopy( cent->currentState.pos.trBase, end );
+	end[2] -= 16;
+
+	VectorSet(vel, 0, 0, -30);
+	CG_SmokePuff( end, vel,
+				  24,
+				  .8f, .8f, 0.7f, 0.33f,
+				  500,
+				  cg.time,
+				  0,
+				  0,
+				  cgs.media.sandPuffShader );
+}
+
+ #endif
 
 /*
 ===============
