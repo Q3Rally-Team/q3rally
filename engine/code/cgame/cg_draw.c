@@ -2478,7 +2478,7 @@ CROSSHAIR
 =================
 CG_DrawCrosshair
 =================
-*/
+
 static void CG_DrawCrosshair(void)
 {
 	float		w, h;
@@ -2535,12 +2535,12 @@ static void CG_DrawCrosshair(void)
 
 	trap_R_SetColor( NULL );
 }
-
+*/
 /*
 =================
 CG_DrawCrosshair3D
 =================
-*/
+
 static void CG_DrawCrosshair3D(void)
 {
 	float		w;
@@ -2611,7 +2611,7 @@ static void CG_DrawCrosshair3D(void)
 	trap_R_AddRefEntityToScene(&ent);
 }
 
-
+*/
 
 /*
 =================
@@ -3288,7 +3288,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		CG_DrawSpectator();
 
 		if(stereoFrame == STEREO_CENTER)
-			CG_DrawCrosshair();
+//			CG_DrawCrosshair();
 
 		CG_DrawCrosshairNames();
 	} else {
@@ -3316,7 +3316,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 			CG_DrawProxWarning();
 #endif      
 			if(stereoFrame == STEREO_CENTER)
-				CG_DrawCrosshair();
+//				CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();
 
@@ -3413,7 +3413,7 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	CG_TileClear();
 
 	if(stereoView != STEREO_CENTER)
-		CG_DrawCrosshair3D();
+//		CG_DrawCrosshair3D();
 	// apply earthquake effect
 	CG_Earthquake();
 

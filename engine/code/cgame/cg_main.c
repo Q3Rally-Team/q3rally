@@ -1048,7 +1048,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.selectShader = trap_R_RegisterShader( "gfx/2d/select" );
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
-		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/crosshair%c", 'a'+i) );
+//		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/crosshair%c", 'a'+i) );
 	}
 
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
@@ -1146,7 +1146,7 @@ static void CG_RegisterGraphics( void ) {
 #endif
 	cgs.media.dustPuffShader = trap_R_RegisterShader("hasteSmokePuff" );
     cgs.media.snowPuffShader = trap_R_RegisterShader("snowPuff" );
-    cgs.media.sandPuffShader = trap_R_RegisterShader("sandPuff" );
+// FIX THIS !!!    cgs.media.sandPuffShader = trap_R_RegisterShader("sandPuff" );
 //#endif
 // Q3Rally Code END
 

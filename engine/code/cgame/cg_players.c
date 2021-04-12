@@ -2131,7 +2131,8 @@ static void CG_SandTrail( centity_t *cent ) {
 				  cg.time,
 				  0,
 				  0,
-				  cgs.media.sandPuffShader );
+// FIX THIS !!!   cgs.media.sandPuffShader );
+				  cgs.media.snowPuffShader );
 }
 
  #endif

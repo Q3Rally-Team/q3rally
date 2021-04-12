@@ -295,7 +295,8 @@ typedef struct
 	vec3_t				playerMoveangles;
 	int					playerLegs;
 	int					playerTorso;
-	int					playerWeapon;
+//  int                 playerWeapon;
+	weapon_t			playerWeapon;
 	qboolean			playerChat;
 
 // STONELANCE
@@ -528,7 +529,8 @@ static void Controls_UpdateModel( int anim ) {
 	s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW];
 	s_controls.playerLegs		     = LEGS_IDLE;
 	s_controls.playerTorso			 = TORSO_STAND;
-	s_controls.playerWeapon			 = -1;
+//	s_controls.playerWeapon			 = -1;
+    s_controls.playerWeapon			 = WP_NUM_WEAPONS;
 	s_controls.playerChat			 = qfalse;
 
 	switch( anim ) {
@@ -617,19 +619,17 @@ static void Controls_UpdateModel( int anim ) {
 		s_controls.playerWeapon = WP_BFG;
 		break;
 
-// STONELANCE
 	case ANIM_WEAPON10:
-	  s_controls.playerWeapon = WP_FLAME_THROWER;
-	  break;
-// END
+	   s_controls.playerWeapon = WP_FLAME_THROWER;
+	   break;
 
 	case ANIM_ATTACK:
 		s_controls.playerTorso = TORSO_ATTACK;
 		break;
 		
 	case ANIM_ALT_ATTACK:
-	  s_controls.playerTorso = TORSO_ATTACK;
-	  break;
+	   s_controls.playerTorso = TORSO_ATTACK;
+	   break;
 // STONELANCE
 /*
 	case ANIM_GESTURE:

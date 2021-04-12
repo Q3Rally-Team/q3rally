@@ -431,7 +431,8 @@ static void Controls_UpdateModel( int anim ) {
 	s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW];
 	s_controls.playerLegs		     = LEGS_IDLE;
 	s_controls.playerTorso			 = TORSO_STAND;
-	s_controls.playerWeapon			 = -1;
+//  s_controls.playerWeapon          = -1;    
+	s_controls.playerWeapon			 = WP_NUM_WEAPONS;
 	s_controls.playerChat			 = qfalse;
 
 	switch( anim ) {

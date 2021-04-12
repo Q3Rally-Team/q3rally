@@ -861,8 +861,6 @@ q3rallycode
 0=engine\code\qcommon\q_shared.h
 1=engine\code\q3_ui\ui_rally_controls.c
 2=engine\code\q3_ui\ui_controls2.c
-3=engine\code\q3_ui\ui_options.c
-4=engine\code\q3_ui\ui_preferences.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -870,14 +868,8 @@ Selected=engine\code\qcommon\q_shared.h
 TopLine=53
 Caret=39,70
 [engine\code\q3_ui\ui_rally_controls.c]
-TopLine=373
-Caret=1,1
+TopLine=533
+Caret=48,533
 [engine\code\q3_ui\ui_controls2.c]
-TopLine=199
-Caret=1,1
-[engine\code\q3_ui\ui_options.c]
-TopLine=27
-Caret=1,1
-[engine\code\q3_ui\ui_preferences.c]
-TopLine=383
-Caret=3,405
+TopLine=121
+Caret=1,138
