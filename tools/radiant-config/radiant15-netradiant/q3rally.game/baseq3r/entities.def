@@ -929,7 +929,8 @@ notsingle : when set to 1, entity will not spawn in Single Player mode.*/
 
 //=============================================================================
 
-/*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) INITIAL DISABLED
+//*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) INITIAL DISABLED
+/*QUAKED info_player_deathmatch (1 0 1) (-50 -24 -24) (50 24 24) INITIAL DISABLED
 Normal player spawning location for Q3A levels.
 -------- KEYS --------
 angle : direction in which player will look when spawning in the game. Does not apply to bots.
@@ -2038,7 +2039,8 @@ model="models/flags/b_flag.md3"*/
 
 //=============================================================================
 
-/*QUAKED team_CTF_blueplayer (0 .2 1) (-16 -16 -24) (16 16 32)
+//*QUAKED team_CTF_blueplayer (0 .2 1) (-16 -16 -24) (16 16 32)
+/*QUAKED team_CTF_blueplayer (0 .2 1) (-50 -24 -24) (50 24 24)
 Initial Blue team spawning position for CTF games. This is where players spawn when they join the Blue team.
 -------- KEYS --------
 target : this can point at a target_give entity for respawn freebies.
@@ -2048,7 +2050,8 @@ count : number of times this spawnpoint can be used to spawn a player. Omit or s
 
 //=============================================================================
 
-/*QUAKED team_CTF_bluespawn (0 .2 1) (-16 -16 -24) (16 16 32)
+//*QUAKED team_CTF_bluespawn (0 .2 1) (-16 -16 -24) (16 16 32)
+/*QUAKED team_CTF_bluespawn (0 .2 1) (-50 -24 -24) (50 24 24)
 Blue team respawning position for CTF games. This is where Blue team players respawn after they get fragged.
 -------- KEYS --------
 target : this can point at a target_give entity for respawn freebies.
@@ -2064,7 +2067,8 @@ model="models/flags/r_flag.md3"*/
 
 //=============================================================================
 
-/*QUAKED team_CTF_redplayer (1 .2 0) (-16 -16 -24) (16 16 32)
+//*QUAKED team_CTF_redplayer (1 .2 0) (-16 -16 -24) (16 16 32)
+/*QUAKED team_CTF_redplayer (1 .2 0) (-50 -24 -24) (50 24 24)
 Initial Red team spawning position for CTF games. This is where players spawn when they join the Red team.
 -------- KEYS --------
 target : this can point at a target_give entity for respawn freebies.
@@ -2073,7 +2077,8 @@ count : number of times this spawnpoint can be used to spawn a player. Omit or s
 
 //=============================================================================
 
-/*QUAKED team_CTF_redspawn (1 .2 0) (-16 -16 -24) (16 16 32)
+//*QUAKED team_CTF_redspawn (1 .2 0) (-16 -16 -24) (16 16 32)
+/*QUAKED team_CTF_redspawn (1 .2 0) (-50 -24 -24) (50 24 24)
 Red team respawning position for CTF games. This is where Red team players respawn after they get fragged.
 -------- KEYS --------
 target : this can point at a target_give entity for respawn freebies.
