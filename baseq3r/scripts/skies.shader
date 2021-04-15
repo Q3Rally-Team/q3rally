@@ -406,3 +406,13 @@ textures/skies/tim_dm3_red
 		tcMod scale 3 2
 	}
 }
+
+textures/skies/night_dark
+{
+	qer_editorimage textures/skies/xnight2_up.tga
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	q3map_surfacelight 35
+	q3map_sun 0.545098 0.690196 0.705882 15 319 58
+	skyParms env/xnight2 128 -
+}
