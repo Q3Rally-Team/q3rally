@@ -860,12 +860,16 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\qcommon\surfaceflags.h
+2=engine\code\cgame\cg_draw.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\surfaceflags.h
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
 [engine\code\qcommon\surfaceflags.h]
 TopLine=59
 Caret=19,59
+[engine\code\cgame\cg_draw.c]
+TopLine=2696
+Caret=67,2713

@@ -2710,7 +2710,7 @@ static void CG_DrawSpectator(void) {
 */
 // Q3Rally Code END
 	if ( cgs.gametype >= GT_TEAM ) {
-		CG_DrawBigString(320 - 39 * 8, 460, "press ESC and use the JOIN menu to play", 1.0F);
+		CG_DrawBigString(320 - 39 * 8, 460, "press ESC and use the START menu to play", 1.0F);
 	}
 }
 
