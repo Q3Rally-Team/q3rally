@@ -427,7 +427,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			+q3_ui
+			-q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -531,7 +531,7 @@ q3rallycode
 				engine\code\qcommon\vm_x86.c
 				engine\code\qcommon\vm_x86_64.c
 				engine\code\qcommon\vm_x86_64_assembler.c
-			-renderer
+			+renderer
 				engine\code\renderer\qgl.h
 				engine\code\renderer\tr_animation.c
 				engine\code\renderer\tr_backend.c
@@ -836,7 +836,7 @@ q3rallycode
 			engine\misc\quake3-tango.png
 			engine\misc\quake3-tango.xcf
 			engine\misc\ReadMe-OSX.rtf
-		+ui
+		-ui
 			engine\ui\hud.txt
 			engine\ui\hud2.txt
 			engine\ui\ingame.txt
@@ -859,17 +859,13 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\q3_ui\ui_rally_controls.c
-2=engine\code\q3_ui\ui_controls2.c
+1=engine\code\qcommon\surfaceflags.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\qcommon\surfaceflags.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
-[engine\code\q3_ui\ui_rally_controls.c]
-TopLine=533
-Caret=48,533
-[engine\code\q3_ui\ui_controls2.c]
-TopLine=121
-Caret=1,138
+[engine\code\qcommon\surfaceflags.h]
+TopLine=59
+Caret=19,59
