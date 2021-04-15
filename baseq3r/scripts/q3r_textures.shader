@@ -4049,8 +4049,6 @@ textures/q3r_sponsors/q3r_logo_01
 	{
 		map textures/q3r_sponsors/q3rlogo01a.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		tcMod scale .25 .25
-	//	tcMod transform .8 0 0 .8 0 0
 	}
 }
 
