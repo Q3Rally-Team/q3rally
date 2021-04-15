@@ -7231,3 +7231,42 @@ textures/q3r_ground/snowy05
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// 302.q3r_signage (wirehead)
+// ------------------------------------------------------------
+
+textures/q3r_signage/wirehead
+{
+	qer_editorimage textures/q3r_signage/wirehead.tga
+	surfaceparm nolightmap
+	{
+		map textures/q3r_signage/wirehead.tga
+		blendfunc add
+		rgbGen wave sin 2 1.2 0 4 
+	}
+	{
+		map textures/base_wall/comp3text.tga
+		blendfunc add
+		rgbGen wave square 0.5 0.5 0 8 
+		tcMod scroll 0 -2
+	}
+}
+
+// ------------------------------------------------------------
+// 303.q3r_signage (wirehead_graphic)
+// ------------------------------------------------------------
+
+textures/q3r_signage/wirehead_graphic
+{
+	qer_editorimage textures/q3r_signage/wirehead.tga
+	surfaceparm nonsolid
+	surfaceparm trans
+	cull disable
+	polygonoffset
+	{
+		map textures/q3r_signage/wirehead2.tga
+		alphaFunc GE128
+		rgbGen exactVertex
+	}
+}

@@ -6,6 +6,7 @@
 "message" "The Lava Falls"
 "_ambient" "15"
 "_color" "2 1 1"
+"reflectionImage" "/textures/reflect/lavafalls.jpg"
 // brush 0
 {
 brushDef
@@ -15414,11 +15415,11 @@ brushDef
 {
 brushDef
 {
-( 1504 832 -200 ) ( 1504 832 -320 ) ( 1504 1424 -320 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/WTF 0 0 0
-( 1888 1424 -200 ) ( 1888 1424 -320 ) ( 1888 832 -320 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/WTF 0 0 0
-( 1888 832 -200 ) ( 1888 832 -320 ) ( 1504 832 -320 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/WTF 0 0 0
-( 1504 1424 -200 ) ( 1504 1424 -320 ) ( 1888 1424 -320 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/WTF 0 0 0
-( 1504 1424 -320 ) ( 1504 832 -320 ) ( 1888 832 -320 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/WTF 0 0 0
+( 1504 832 -200 ) ( 1504 832 -320 ) ( 1504 1424 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
+( 1888 1424 -200 ) ( 1888 1424 -320 ) ( 1888 832 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
+( 1888 832 -200 ) ( 1888 832 -320 ) ( 1504 832 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
+( 1504 1424 -200 ) ( 1504 1424 -320 ) ( 1888 1424 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
+( 1504 1424 -320 ) ( 1504 832 -320 ) ( 1888 832 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
 ( 1504 832 -200 ) ( 1504 1424 -200 ) ( 1888 1424 -200 ) ( ( 0 0.0078125 0 ) ( -0.0078125 0 0 ) ) q3r_liquids/q3r_lavahell 0 0 0
 }
 }
@@ -20235,7 +20236,7 @@ brushDef
 // entity 118
 {
 "classname" "info_player_intermission"
-"origin" "3552 200 128"
+"origin" "2840 656 128"
 "angle" "90"
 }
 // entity 119
@@ -21075,7 +21076,7 @@ brushDef
 // entity 218
 {
 "classname" "target_speaker"
-"noise" "sound/world/wind1.wav"
+"noise" "sound/world/wind2.wav"
 "origin" "3082 836 204"
 "spawnflags" "1"
 }
@@ -21106,7 +21107,7 @@ brushDef
 // entity 222
 {
 "classname" "target_speaker"
-"noise" "sound/world/wind1.wav"
+"noise" "sound/world/wind2.wav"
 "origin" "3530 836 204"
 "spawnflags" "1"
 "angles" "0 180 180"
