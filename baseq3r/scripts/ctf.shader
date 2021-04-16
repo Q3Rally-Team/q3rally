@@ -1200,3 +1200,18 @@ textures/bubctf1/weapfloor_neutral
 		tcMod stretch sin 1 0.1 0 1 
 	}
 }
+
+// ------------------------------------------------------------
+// 50.flags (flagsphere)
+// ------------------------------------------------------------
+
+models/flags/flagsphere
+{
+	{
+		map textures/base_wall/chrome_env.tga
+		rgbGen lightingDiffuse
+		tcMod scale 0.5 0.5
+		tcGen environment 
+		blendfunc GL_ONE GL_ONE
+	}
+}
