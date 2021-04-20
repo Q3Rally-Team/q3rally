@@ -209,15 +209,108 @@ models/weaphits/electric
 // 3.Flamethrower
 // ------------------------------------------------------------
 
-models/weapons2/flamethrower/f_flamethrower
+models/mapobjects/jets/jet_1
+{
+     surfaceparm	trans
+     nomipmaps
+     cull disable
+        {
+		map models/mapobjects/jets/jet_1.tga
+                blendFunc add
+                tcmod scale  .5  1
+                tcmod scroll 6 0
+                rgbGen identity
+	}
+        {
+		map models/mapobjects/jets/jet_2.tga
+                blendFunc add
+                tcmod scroll 3 -.5
+                rgbGen wave inversesawtooth -.3 1.3 0 .5
+	}
+}
+models/mapobjects/jets/jet_as
+{
+     deformVertexes autoSprite2
+     deformVertexes wave 100 sin 0 1 0 9
+     surfaceparm	trans
+     nomipmaps
+        {
+		map models/mapobjects/jets/jet_as.tga
+                blendFunc add
+                rgbGen identity
+	}
+}
+models/weapons2/flamethrower/trail2
+{
+	{
+		map models/weapons2/flamethrower/trail2.tga
+		tcMod scroll 3.1 1
+                rgbgen wave triangle 1 2 0 7
+		blendfunc GL_ONE GL_ONE
+	}
+        {
+		map models/weapons2/flamethrower/trail2.tga
+		tcMod scroll -1.7 1
+                rgbgen wave triangle 1 1.1 0 5.1
+		blendfunc GL_ONE GL_ONE
+	}
+}
+models/mapobjects/console/centercon
+
 {
 	cull disable
-	{
-		clampmap models/weapons2/flamethrower/f_flamethrower.tga
-		blendfunc add
-		rgbGen identity
-		tcMod rotate 5288
+        {
+		map models/mapobjects/console/scrolltext.tga
+		blendFunc add
+                tcmod scroll 0 -.3
+                //tcMod stretch sin .9 0.1 0 1.1
+		rgbGen vertex
 	}
+        
+        {
+		clampmap models/mapobjects/console/centercon.tga
+		blendFunc add
+                tcMod stretch sin .9 0.1 0 .2
+                tcmod rotate 40
+		rgbGen vertex
+	}
+}
+
+textures/sfx/xflame2
+{
+
+	//	*************************************************
+	//	*      	Yellow Flame Surface Light 5500		*
+	//	*      	April 30 1999				*	
+	//	*	Please Comment Changes			*
+	//	*************************************************
+	
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	cull none
+	q3map_surfacelight 5500
+	qer_editorimage textures/sfx/flame1.tga
+	
+
+	{
+		animMap 10 textures/sfx/flame1.tga textures/sfx/flame2.tga textures/sfx/flame3.tga textures/sfx/flame4.tga textures/sfx/flame5.tga textures/sfx/flame6.tga textures/sfx/flame7.tga textures/sfx/flame8.tga
+		blendFunc GL_ONE GL_ONE
+		rgbGen wave inverseSawtooth 0 1 0 10
+		
+	}	
+	{
+		animMap 10 textures/sfx/flame2.tga textures/sfx/flame3.tga textures/sfx/flame4.tga textures/sfx/flame5.tga textures/sfx/flame6.tga textures/sfx/flame7.tga textures/sfx/flame8.tga textures/sfx/flame1.tga
+		blendFunc GL_ONE GL_ONE
+		rgbGen wave sawtooth 0 1 0 10
+	}	
+
+
+	{
+		map textures/sfx/flameball.tga
+		blendFunc GL_ONE GL_ONE
+		rgbGen wave sin .6 .2 0 .6	
+	}
+
 }
 
 // ------------------------------------------------------------
