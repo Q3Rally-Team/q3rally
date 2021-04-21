@@ -55,7 +55,7 @@ aifile		bots/jenna_c.c
 {
 name		Tobias
 model		raptor/black
-aifile		bots/kyonshi_c.c
+aifile		bots/sarge_c.c
 }
 
 {
@@ -67,11 +67,11 @@ aifile		bots/liz_c.c
 {
 name		Paul
 model		sidepipe/blue
-aifile		bots/grism_c.c
+aifile		bots/penguin_c.c
 }
 
 {
 name		Josh
 model		camaro/green
-aifile		bots/angelyss_c.c
+aifile		bots/skelebot_c.c
 }
