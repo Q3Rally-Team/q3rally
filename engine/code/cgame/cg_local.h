@@ -1951,16 +1951,9 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h);
 float CG_DrawUpperRightHUD( float y );
 float CG_DrawLowerRightHUD( float y );
 float CG_DrawLowerLeftHUD( float y );
-/*TBB - minimap EXPERIMENTAL - 
-modified rearview but only render stuff from +8192(Z) from 
-center of bsp, pitched downward, and render only players (flags for ctf).
-this will probably drop fps, hopefully not too much and ,
-might have to make a cvar for displaying it plus opacity
-trying to get this to work like the minimap from UrT
-from scratch. must try to make it 2d bitmap
-*/
 void CG_DrawMMap( float x, float y, float w, float h );
-//TBB FIN
+void CG_DrawHUD_DerbyList(float x, float y);
+
 
 //
 // cg_rally_hud2.c

@@ -349,7 +349,7 @@ void CG_DrawHUD_Scores(float x, float y){
 CG_DrawHUD_DerbyList
 
 =================
-
+*/
 void CG_DrawHUD_DerbyList(float x, float y){
 	int			i;
 	vec4_t		color;
@@ -358,19 +358,20 @@ void CG_DrawHUD_DerbyList(float x, float y){
 	float		playTime;
 
 	// draw heading
-	CG_FillRect(x, y, 536, 18, bgColor);
+    x = 636 - 120;
+	CG_FillRect(x, y, 120, 18, bgColor);
 
 	// name
-	CG_DrawSmallDigitalStringColor( x + 42, y, "PLAYER:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 16, y, "P:", colorWhite);
 
 	// time
-	CG_DrawSmallDigitalStringColor( x + 206, y, "TIME:", colorWhite);
+//	CG_DrawTinyStringColor( x + 70, y, "TIME:", colorWhite);
 
 	// dmg dealt
-	CG_DrawSmallDigitalStringColor( x + 294, y, "DMG DEALT:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 70, y, "DD:", colorWhite);
 
 	// dmg taken
-	CG_DrawSmallDigitalStringColor( x + 442, y, "DMG TAKEN:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 100, y, "DT:", colorWhite);
 
 	y += 20;
 
@@ -381,7 +382,7 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		cent = &cg_entities[cg.scores[i].client];
 		if (!cent) continue;
 
-		CG_FillRect(x, y, 536, 18, bgColor);
+		CG_FillRect(x, y, 120, 18, bgColor);
 
 		Vector4Copy(colorWhite, color);
 		if (cg.scores[i].client == cg.snap->ps.clientNum){
@@ -402,24 +403,24 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		time = getStringForTime(playTime);
 
 		// num
-		CG_DrawSmallDigitalStringColor( x + 6, y, va("0%i", (i+1)), color);
+		CG_DrawTinyDigitalStringColor( x + 2, y, va("%i", (i+1)), color);
 
 		// name
-		CG_DrawSmallDigitalStringColor( x + 42, y, cgs.clientinfo[cg.scores[i].client].name, color);
+		CG_DrawTinyDigitalStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
 
 		// time
-		CG_DrawSmallDigitalStringColor( x + 192, y, time, color);
+//		CG_DrawTinyStringColor( x + 70, y, time, color);
 
 		// dmg dealt
-		CG_DrawSmallDigitalStringColor( x + 326, y, va("%i", cg.scores[i].damageDealt), color);
+		CG_DrawTinyDigitalStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
 
 		// dmg taken
-		CG_DrawSmallDigitalStringColor( x + 474, y, va("%i", cg.scores[i].damageTaken), color);
+		CG_DrawTinyDigitalStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
 
 		y += 20;
 	}
 }
-*/
+
 
 /*
 =================
@@ -468,12 +469,13 @@ qboolean CG_DrawHUD( void ) {
 	case GT_DEATHMATCH:
 	case GT_TEAM:
 	case GT_CTF:
+    case GT_DOMINATION:
 		CG_DrawHUD_Scores(264, 130);
 
 		break;
 
 	case GT_DERBY:
-//		CG_DrawHUD_DerbyList(44, 130);
+		CG_DrawHUD_DerbyList(44, 130);
 
 		break;
 	}

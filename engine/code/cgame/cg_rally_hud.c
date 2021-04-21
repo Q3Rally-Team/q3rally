@@ -389,7 +389,6 @@ code:
 /*
 ================
 CG_DrawTimes
-
 ================
 */
 static float CG_DrawTimes( float y ) {
@@ -427,9 +426,9 @@ static float CG_DrawTimes( float y ) {
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 96;
-		CG_FillRect ( x, y, 96, 18, bgColor );
-		x+= 8;
+        x = 636 - 120;
+		CG_FillRect ( x, y, 120, 18, bgColor );
+		x+= 25;
 		
 		y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
@@ -447,9 +446,9 @@ static float CG_DrawTimes( float y ) {
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 96;
-        CG_FillRect( x, y, 96, 18, bgColor );
-        x+= 8;
+        x = 636 - 120;
+        CG_FillRect( x, y, 120, 18, bgColor );
+        x+= 25;
     
         y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
@@ -474,9 +473,9 @@ static float CG_DrawTimes( float y ) {
 
 	Com_sprintf(s, sizeof(s), "T: %s", time);
 
-	x = 636 - 96;
-	CG_FillRect( x, y, 96, 18, bgColor );
-	x += 8;
+	x = 636 - 120;
+	CG_FillRect( x, y, 120, 18, bgColor );
+	x += 25;
 
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
@@ -491,7 +490,6 @@ static float CG_DrawTimes( float y ) {
 /*
 ================
 CG_DrawLaps
-
 ================
 */
 static float CG_DrawLaps( float y ) {
@@ -510,9 +508,9 @@ static float CG_DrawLaps( float y ) {
 
 	Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
 
-	x = 636 - 96;
-	CG_FillRect( x, y, 96, 18, bgColor );
-	x += 8;
+	x = 636 - 120;
+	CG_FillRect( x, y, 120, 18, bgColor );
+	x += 25;
 
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
@@ -543,13 +541,13 @@ static float CG_DrawCurrentPosition( float y ) {
 
 	Com_sprintf(s, sizeof(s), "POS: ");
 
-	x = 636 - 96;
-	width = 96;
+	x = 636 - 120;
+	width = 120;
 	height = 18;
 
 	CG_FillRect( x, y, width, height, bgColor );
 
-	x += 8;
+	x += 25;
 	y += 4;
 
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
@@ -587,8 +585,8 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 	endPos = startPos + 8 > cgs.numRacers ? cgs.numRacers : startPos + 8;
 	startPos = endPos - 8 < 1 ? 1 : endPos - 8;
 
-	x = 636 - 96;
-	width = 96;
+	x = 636 - 120;
+	width = 120;
 	height = TINYCHAR_HEIGHT;
 
 	for (i = startPos; i <= endPos; i++){
@@ -625,9 +623,8 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 /*
 =================
 CG_DrawHUD_DerbyList
-
 =================
-*/
+
 void CG_DrawHUD_DerbyList(float x, float y){
 	int			i;
 	vec4_t		color;
@@ -639,16 +636,16 @@ void CG_DrawHUD_DerbyList(float x, float y){
 	CG_FillRect(x, y, 536, 18, bgColor);
 
 	// name
-	CG_DrawTinyDigitalStringColor( x + 42, y, "PLAYER:", colorWhite);
+	CG_DrawTinyStringColor( x + 42, y, "PLAYER:", colorWhite);
 
 	// time
-	CG_DrawTinyDigitalStringColor( x + 206, y, "TIME:", colorWhite);
+	CG_DrawTinyStringColor( x + 206, y, "TIME:", colorWhite);
 
 	// dmg dealt
-	CG_DrawTinyDigitalStringColor( x + 294, y, "DMG DEALT:", colorWhite);
+	CG_DrawTinyStringColor( x + 294, y, "DMG DEALT:", colorWhite);
 
 	// dmg taken
-	CG_DrawTinyDigitalStringColor( x + 442, y, "DMG TAKEN:", colorWhite);
+	CG_DrawTinyStringColor( x + 442, y, "DMG TAKEN:", colorWhite);
 
 	y += 20;
 
@@ -680,23 +677,24 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		time = getStringForTime(playTime);
 
 		// num
-		CG_DrawTinyDigitalStringColor( x + 6, y, va("0%i", (i+1)), color);
+		CG_DrawTinyStringColor( x + 6, y, va("0%i", (i+1)), color);
 
 		// name
-		CG_DrawTinyDigitalStringColor( x + 42, y, cgs.clientinfo[cg.scores[i].client].name, color);
+		CG_DrawTinyStringColor( x + 42, y, cgs.clientinfo[cg.scores[i].client].name, color);
 
 		// time
-		CG_DrawTinyDigitalStringColor( x + 192, y, time, color);
+		CG_DrawTinyStringColor( x + 192, y, time, color);
 
 		// dmg dealt
-		CG_DrawTinyDigitalStringColor( x + 326, y, va("%i", cg.scores[i].damageDealt), color);
+		CG_DrawTinyStringColor( x + 326, y, va("%i", cg.scores[i].damageDealt), color);
 
 		// dmg taken
-		CG_DrawTinyDigitalStringColor( x + 474, y, va("%i", cg.scores[i].damageTaken), color);
+		CG_DrawTinyStringColor( x + 474, y, va("%i", cg.scores[i].damageTaken), color);
 
 		y += 20;
 	}
 }
+*/
 #endif
 
 /*
@@ -914,7 +912,7 @@ float CG_DrawUpperRightHUD( float y ) {
 		}
 		else if (cgs.gametype == GT_DERBY)
 			y = CG_DrawTimes( y );
-//			CG_DrawHUD_DerbyList(44, 130);
+			CG_DrawHUD_DerbyList(44, 130);
 			
 	}
 
@@ -952,7 +950,7 @@ float CG_DrawLowerLeftHUD( float y ) {
 	
 // Comment this out in the full release Version
 
-y = CG_DrawSDKMessage( y );
+// y = CG_DrawSDKMessage( y );
 
 	return y;
-}
+ }

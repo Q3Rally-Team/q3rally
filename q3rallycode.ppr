@@ -531,7 +531,7 @@ q3rallycode
 				engine\code\qcommon\vm_x86.c
 				engine\code\qcommon\vm_x86_64.c
 				engine\code\qcommon\vm_x86_64_assembler.c
-			+renderer
+			-renderer
 				engine\code\renderer\qgl.h
 				engine\code\renderer\tr_animation.c
 				engine\code\renderer\tr_backend.c
@@ -859,17 +859,37 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\qcommon\surfaceflags.h
-2=engine\code\cgame\cg_draw.c
+1=engine\code\q3_ui\ui_qmenu.c
+2=engine\code\q3_ui\ui_menu.c
+3=engine\code\cgame\cg_ents.c
+4=engine\code\cgame\cg_rally_hud.c
+5=engine\code\cgame\cg_rally_hud2.c
+6=engine\code\cgame\cg_draw.c
+7=engine\code\cgame\cg_local.h
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
-[engine\code\qcommon\surfaceflags.h]
-TopLine=59
-Caret=19,59
+[engine\code\q3_ui\ui_qmenu.c]
+TopLine=2273
+Caret=1,2287
+[engine\code\q3_ui\ui_menu.c]
+TopLine=477
+Caret=1,492
+[engine\code\cgame\cg_ents.c]
+TopLine=1390
+Caret=1,1405
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=930
+Caret=1,955
+[engine\code\cgame\cg_rally_hud2.c]
+TopLine=436
+Caret=19,361
 [engine\code\cgame\cg_draw.c]
-TopLine=2696
-Caret=67,2713
+TopLine=1280
+Caret=1,1295
+[engine\code\cgame\cg_local.h]
+TopLine=1885
+Caret=1,1900
