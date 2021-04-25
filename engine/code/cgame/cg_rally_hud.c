@@ -354,8 +354,12 @@ static float CG_DrawArrowToCheckpoint( float y ) {
 	}
 	trap_R_SetColor( color );
 
-//	if (cg_developer.integer)
-//		CG_Draw3DLine( cent->currentState.origin, cg.snap->ps.origin );
+/* Developer Mode for Racing Bots
+
+	if (cg_developer.integer)
+		CG_Draw3DLine( cent->currentState.origin, cg.snap->ps.origin );
+        
+*/
 
 	CG_DrawStringExt( x, SCREEN_HEIGHT * .30, "WRONG WAY!", color, qfalse, qtrue,
 		BIGCHAR_WIDTH, (int)(BIGCHAR_WIDTH * 1.5), 0 );
@@ -812,6 +816,7 @@ static float CG_DrawSpeed( float y ) {
 	return y;
 }
 
+/*
 static float CG_DrawSDKMessage( float y ) {
 	int			x, w;
 	vec4_t		bg_color;
@@ -859,7 +864,7 @@ static float CG_DrawSDKMessage( float y ) {
 
 	return y;
 }
-
+*/
 
 #if 0
 /*
@@ -912,7 +917,7 @@ float CG_DrawUpperRightHUD( float y ) {
 		}
 		else if (cgs.gametype == GT_DERBY)
 			y = CG_DrawTimes( y );
-			CG_DrawHUD_DerbyList(44, 130);
+//			CG_DrawHUD_DerbyList(44, 130);
 			
 	}
 

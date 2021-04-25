@@ -718,6 +718,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/flamer/fl_fire.wav", qfalse );
 		cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
 	break;
+    
 // Q3Rally Code END
 
 #ifdef MISSIONPACK

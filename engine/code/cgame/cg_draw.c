@@ -617,7 +617,7 @@ static void CG_DrawStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = -10;
 		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-		CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
+        CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 	//
@@ -760,10 +760,11 @@ static void CG_DrawRallyStatusBar( void ) {
 
 	// armor background
 	if ( ps->stats[ STAT_ARMOR ] )
-		CG_FillRect( 190, 476 - 68, 106, 32, bg_color );
+//		CG_FillRect( 190, 476 - 68, 106, 32, bg_color );
+        CG_FillRect( 370, 476 - 32, 106, 32, bg_color );
 
 	// health background
-	CG_FillRect( 190, 476 - 32, 106, 32, bg_color );
+	   CG_FillRect( 190, 476 - 32, 106, 32, bg_color );
 
 	// rearammo background
 	weapon = 0;
@@ -823,7 +824,8 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = -10;
 		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-		CG_Draw3DModel( 196, 476 - 64, 26, 26,
+//		CG_Draw3DModel( 196, 476 - 64, 26, 26,
+        CG_Draw3DModel( 376, 476 - 28, 26, 26,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -938,7 +940,8 @@ static void CG_DrawRallyStatusBar( void ) {
 	value = ps->stats[STAT_ARMOR];
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
-		CG_DrawField ( 242, 476 - 64, 3, value);
+//		CG_DrawField ( 242, 476 - 64, 3, value);
+        CG_DrawField ( 422, 476 - 28, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
