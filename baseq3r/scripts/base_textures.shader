@@ -13684,11 +13684,6 @@ textures/base_wall/metalfloor_wall_10
 		rgbgen identity
 	}
 	{
-		map textures/base_wall/metalfloor_wall_10_glow.tga
-		blendfunc blend
-		rgbGen wave sin 0 1 0 1
-	}
-	{
 		map $lightmap
 		blendfunc filter
 		rgbgen identity

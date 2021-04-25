@@ -141,7 +141,7 @@ textures/q3r_skies/clouds
 
 textures/skies/pjbasesky_arena1_sky
 {
-	qer_editorimage textures/skies/pjbasesky.tga
+	qer_editorimage textures/skies/hellsky.tga
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	q3map_globaltexture
@@ -158,7 +158,7 @@ textures/skies/pjbasesky_arena1_sky
 		depthWrite
 	}
 	{
-		map textures/skies/pjbasesky.tga
+		map textures/skies/hellsky.tga
 		blendfunc GL_ONE GL_ONE
 		tcMod scroll -0.01 -0.01
 		tcMod scale 5 5
