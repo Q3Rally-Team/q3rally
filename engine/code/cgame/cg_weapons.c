@@ -711,9 +711,11 @@ void CG_RegisterWeapon( int weaponNum ) {
 */
 
 	case WP_FLAME_THROWER:
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly.wav", qfalse );
-		MAKERGB( weaponInfo->flashDlightColor, 0.6, 0.6, 1 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
+        weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/flamer/fl_hum.wav", qfalse );
+		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/flamer/fl_fly.wav", qfalse );
+        MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
+		MAKERGB( weaponInfo->flashDlightColor, 1, 0.75f, 0 );
+		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/flamer/fl_fire.wav", qfalse );
 		cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
 	break;
 // Q3Rally Code END

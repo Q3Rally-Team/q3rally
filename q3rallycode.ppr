@@ -866,9 +866,12 @@ q3rallycode
 5=engine\code\cgame\cg_rally_hud2.c
 6=engine\code\cgame\cg_draw.c
 7=engine\code\cgame\cg_local.h
+8=engine\code\game\g_weapon.c
+9=engine\code\game\g_local.h
+10=engine\code\cgame\cg_weapons.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\cgame\cg_weapons.c
 [engine\code\qcommon\q_shared.h]
 TopLine=53
 Caret=39,70
@@ -882,10 +885,10 @@ Caret=1,492
 TopLine=1390
 Caret=1,1405
 [engine\code\cgame\cg_rally_hud.c]
-TopLine=930
+TopLine=931
 Caret=1,955
 [engine\code\cgame\cg_rally_hud2.c]
-TopLine=436
+TopLine=361
 Caret=19,361
 [engine\code\cgame\cg_draw.c]
 TopLine=1280
@@ -893,3 +896,12 @@ Caret=1,1295
 [engine\code\cgame\cg_local.h]
 TopLine=1885
 Caret=1,1900
+[engine\code\game\g_weapon.c]
+TopLine=128
+Caret=16,146
+[engine\code\game\g_local.h]
+TopLine=637
+Caret=1,652
+[engine\code\cgame\cg_weapons.c]
+TopLine=701
+Caret=64,716
