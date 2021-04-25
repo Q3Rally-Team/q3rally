@@ -264,7 +264,6 @@ models/mapobjects/console/centercon
 		blendFunc add
                 tcmod scroll 0 -.3
                 //tcMod stretch sin .9 0.1 0 1.1
-		rgbGen vertex
 	}
         
         {
@@ -272,7 +271,6 @@ models/mapobjects/console/centercon
 		blendFunc add
                 tcMod stretch sin .9 0.1 0 .2
                 tcmod rotate 40
-		rgbGen vertex
 	}
 }
 
