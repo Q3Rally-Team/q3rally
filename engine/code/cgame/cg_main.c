@@ -1102,6 +1102,8 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_blu3" );
 // Q3Rally Code Start
         cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_neutral1" );
+        cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
+        cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );       
 // Q3Rally Code END
 
 #ifdef MISSIONPACK

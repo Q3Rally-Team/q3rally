@@ -842,6 +842,8 @@ typedef struct {
 	qhandle_t	flagShader[4];
 // Q3Rally Code Start
 	qhandle_t sigilShader;
+    qhandle_t redsigilShader;
+    qhandle_t bluesigilShader;
 // Q3Rally Code END
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;

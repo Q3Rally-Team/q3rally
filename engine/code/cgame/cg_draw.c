@@ -545,11 +545,11 @@ void CG_DrawSigilHUD( void ) {
                   break;
 
                 case SIGIL_ISRED:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.redFlagShader[0] );
+                  CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
                   break;
         
                 case SIGIL_ISBLUE:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.blueFlagShader[0] );
+                  CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
                   break;
                 }
               x+= 19;
@@ -720,8 +720,8 @@ static void CG_DrawRallyStatusBar( void ) {
 
 // draw the dtf sigils
 
-// if ( cgs.gametype == GT_DOMINATION )
-// CG_DrawSigilHUD();
+    if ( cgs.gametype == GT_DOMINATION )
+    CG_DrawSigilHUD();
 
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
@@ -761,10 +761,10 @@ static void CG_DrawRallyStatusBar( void ) {
 	// armor background
 	if ( ps->stats[ STAT_ARMOR ] )
 //		CG_FillRect( 190, 476 - 68, 106, 32, bg_color );
-        CG_FillRect( 370, 476 - 32, 106, 32, bg_color );
+        CG_FillRect( 256, 476 - 32, 106, 32, bg_color );
 
 	// health background
-	   CG_FillRect( 190, 476 - 32, 106, 32, bg_color );
+	   CG_FillRect( 130, 476 - 32, 106, 32, bg_color );
 
 	// rearammo background
 	weapon = 0;
@@ -805,7 +805,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = -5;
 		angles[YAW] = 180 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 196, 476 - 28, 26, 26,
+		CG_Draw3DModel( 136, 476 - 28, 26, 26,
 					   healthModel, 0, origin, angles );
 	}
 
@@ -825,7 +825,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[2] = -10;
 		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 376, 476 - 28, 26, 26,
+        CG_Draw3DModel( 262, 476 - 28, 26, 26,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -929,7 +929,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	// stretch the health up when taking damage
-	CG_DrawField ( 242, 476 - 28, 3, value);
+	CG_DrawField ( 178, 476 - 28, 3, value);
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
@@ -941,7 +941,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
 //		CG_DrawField ( 242, 476 - 64, 3, value);
-        CG_DrawField ( 422, 476 - 28, 3, value);
+        CG_DrawField ( 304, 476 - 28, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
