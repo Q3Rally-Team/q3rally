@@ -2029,7 +2029,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	case WP_FLAME_THROWER:
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.flameExplosionShader;
-		sfx = cgs.media.sfx_plasmaexp;
+		sfx = cgs.media.sfx_flameexp;
 		mark = cgs.media.burnMarkShader;
 		radius = 16;
 		isSprite = qtrue;
