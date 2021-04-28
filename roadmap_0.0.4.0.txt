@@ -10,3 +10,5 @@ New features planned for 0.0.4.0
 - Menu music rotation
 - Secret car skins (Like a Krusade from Q3A)
 - finish the 4 Teams Modes (CTF and DOM)
+- Make unique logos for 4 teams (Like UT99)
+- Porting the Flamethrower from Return to Castle Wolfenstein
