@@ -525,7 +525,7 @@ Controls_UpdateModel
 static void Controls_UpdateModel( int anim ) {
 	VectorClear( s_controls.playerViewangles );
 	VectorClear( s_controls.playerMoveangles );
-	s_controls.playerViewangles[YAW] = 180 - 30;
+	s_controls.playerViewangles[YAW] = 0;
 	s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW];
 	s_controls.playerLegs		     = LEGS_IDLE;
 	s_controls.playerTorso			 = TORSO_STAND;
@@ -558,21 +558,21 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case ANIM_TURNLEFT:
-		s_controls.playerViewangles[YAW] += 90;
+		s_controls.playerViewangles[YAW] += 70;
 		break;
 
 	case ANIM_TURNRIGHT:
-		s_controls.playerViewangles[YAW] -= 90;
+		s_controls.playerViewangles[YAW] -= 70;
 		break;
 
 	case ANIM_STEPLEFT:
 		s_controls.playerLegs = LEGS_WALK;
-		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] + 90;
+		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] + 70;
 		break;
 
 	case ANIM_STEPRIGHT:
 		s_controls.playerLegs = LEGS_WALK;
-		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] - 90;
+		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] - 70;
 		break;
 
 	case ANIM_LOOKUP:
