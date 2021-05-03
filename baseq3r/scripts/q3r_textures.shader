@@ -7268,3 +7268,18 @@ textures/q3r_signage/wirehead_graphic
 		rgbGen exactVertex
 	}
 }
+
+// ------------------------------------------------------------
+// 304.q3r_glass (glass03)
+// ------------------------------------------------------------
+
+textures/q3r_glass/glass03
+{
+	qer_editorimage textures/q3r_glass/glass03.jpg
+	surfaceparm trans
+	qer_trans 0.2
+	{
+		map textures/q3r_glass/glass03.jpg
+		blendfunc add
+	}
+}
