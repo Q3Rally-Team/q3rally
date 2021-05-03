@@ -32,6 +32,7 @@ MAIN MENU
 
 #include "ui_local.h"
 
+#define ART_DISCORDLOGO                 "menu/art/discordlogo"
 
 #define ID_SINGLEPLAYER                 10
 #define ID_MULTIPLAYER                  11
@@ -72,6 +73,7 @@ typedef struct {
 // STONELANCE
         menutext_s              banner;
         menubitmap_s            carlogo;
+        menubitmap_s            discordlogo;
 
         playerInfo_t    playerinfo;
         char                    modelskin[MAX_QPATH];
@@ -580,6 +582,14 @@ void UI_MainMenu( void ) {
         s_main.carlogo.generic.y                        = 0;
         s_main.carlogo.width                            = 480;
         s_main.carlogo.height                           = 480;
+        
+        s_main.discordlogo.generic.type                     = MTYPE_BITMAP;
+        s_main.discordlogo.generic.flags                    = QMF_INACTIVE;
+        s_main.discordlogo.generic.name                = ART_DISCORDLOGO;
+        s_main.discordlogo.generic.x                        = - 95;
+        s_main.discordlogo.generic.y                        = 430;
+        s_main.discordlogo.width                            = 40;
+        s_main.discordlogo.height                           = 40;
 
 
         y += MAIN_MENU_VERTICAL_SPACING;
@@ -596,6 +606,7 @@ void UI_MainMenu( void ) {
 
         Menu_AddItem( &s_main.menu,     &s_main.banner );
         Menu_AddItem( &s_main.menu,     &s_main.carlogo );
+        Menu_AddItem( &s_main.menu,     &s_main.discordlogo );
         Menu_AddItem( &s_main.menu,     &s_main.singleplayer );
         Menu_AddItem( &s_main.menu,     &s_main.multiplayer );
         Menu_AddItem( &s_main.menu,     &s_main.setup );
