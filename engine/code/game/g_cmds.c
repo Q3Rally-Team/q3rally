@@ -1947,7 +1947,7 @@ void Cmd_Stats_f( gentity_t *ent ) {
 // STONELANCE
 void Cmd_SaveBPoints_f( gentity_t *other )
 {
-	int				i;
+	int				i, j;
 	fileHandle_t	f;
 	char			buffer[256];
 	char			serverinfo[MAX_INFO_STRING];
@@ -1955,7 +1955,7 @@ void Cmd_SaveBPoints_f( gentity_t *other )
 
 	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
 
-	Com_sprintf( buffer, sizeof(buffer), "maps/%s_bpd.txt.", Info_ValueForKey( serverinfo, "mapname" ) );
+	Com_sprintf( buffer, sizeof(buffer), "bezier/%s_bpd.txt", Info_ValueForKey( serverinfo, "mapname" ) );
 	Com_Printf( "Writing out bezier path information to: '%s'\n", buffer );
 	trap_FS_FOpenFile( buffer, &f, FS_WRITE );
 
