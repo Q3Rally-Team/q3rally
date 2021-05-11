@@ -138,7 +138,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 // TelefragPlayer
 //==================================================
 
-void TelefragPlayer( gentity_t *player, vec3_t origin ) { // removed angles
+void TelefragPlayer_P( gentity_t *player, vec3_t origin ) { // removed angles
  gentity_t *tent;
 
  // use temp events at source and destination to prevent the effect

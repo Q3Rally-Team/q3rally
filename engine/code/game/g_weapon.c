@@ -733,7 +733,7 @@ TELEFRAG GUN - Altfire to Railgun
 ======================================================================
 */
 
-/*
+
 void TelefragPlayer( gentity_t *player, vec3_t origin ) {
 	gentity_t	*tent;
 
@@ -771,7 +771,7 @@ void TelefragPlayer( gentity_t *player, vec3_t origin ) {
 		trap_LinkEntity (player);
 	}
 }
-*/
+
 
 void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t right,vec3_t up) {
 	

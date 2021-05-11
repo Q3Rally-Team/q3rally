@@ -693,6 +693,7 @@ void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, 
 void SnapVectorTowards( vec3_t v, vec3_t to );
 qboolean CheckGauntletAttack( gentity_t *ent );
 void TelefragPlayer( gentity_t *player, vec3_t origin );
+void TelefragPlayer_P( gentity_t *player, vec3_t origin );
 void weapon_telefrag_fire (gentity_t *ent, vec3_t muzzle, vec3_t forward, vec3_t right, vec3_t up);
 
 

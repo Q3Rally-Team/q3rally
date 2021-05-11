@@ -30,7 +30,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 G_HomingMissile
 ================
 */
-void G_HomingMissile( gentity_t *ent )
+
+#define ROCKET_SPEED   600
+
+void rocket_think( gentity_t *ent )
 {
     gentity_t   *target = NULL;
     gentity_t   *rad = NULL;
@@ -46,7 +49,7 @@ void G_HomingMissile( gentity_t *ent )
             continue;
         if (rad->client->sess.sessionTeam == TEAM_SPECTATOR)
             continue;
-        if ( (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF) && rad->client->sess.sessionTeam == rad->parent->client->sess.sessionTeam)
+        if ( (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF || g_gametype.integer == GT_DOMINATION ) && rad->client->sess.sessionTeam == rad->parent->client->sess.sessionTeam)
             continue;
         if (!visible (ent, rad))
             continue;
@@ -76,6 +79,7 @@ void G_HomingMissile( gentity_t *ent )
     }
     ent->nextthink = level.time + 100;
 }
+
 
 /*
 =================
@@ -1093,8 +1097,8 @@ gentity_t *fire_homing_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "rocket";
-	bolt->nextthink = level.time + 60;
-	bolt->think = G_HomingMissile;
+	bolt->nextthink = level.time + 1;
+	bolt->think = rocket_think;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
@@ -1114,7 +1118,7 @@ gentity_t *fire_homing_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorCopy( start, bolt->s.pos.trBase );
 // STONELANCE
 //	VectorScale( dir, 900, bolt->s.pos.trDelta );
-	VectorScale( dir, 500, bolt->s.pos.trDelta );
+	VectorScale( dir, ROCKET_SPEED, bolt->s.pos.trDelta );
 // END
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
