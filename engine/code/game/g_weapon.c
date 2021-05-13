@@ -733,49 +733,9 @@ TELEFRAG GUN - Altfire to Railgun
 ======================================================================
 */
 
-
-void TelefragPlayer( gentity_t *player, vec3_t origin ) {
-	gentity_t	*tent;
-
-	// use temp events at source and destination to prevent the effect
-	// from getting dropped by a second player event
-	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
-		tent = G_TempEntity( player->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
-		tent->s.clientNum = player->s.clientNum;
-
-		tent = G_TempEntity( origin, EV_PLAYER_TELEPORT_IN );
-		tent->s.clientNum = player->s.clientNum;
-	}
-
-	// unlink to make sure it can't possibly interfere with G_KillBox
-	trap_UnlinkEntity (player);
-
-	VectorCopy ( origin, player->client->ps.origin );
-	player->client->ps.origin[2] += 1;
-
-	// toggle the teleport bit so the client knows to not lerp
-	player->client->ps.eFlags ^= EF_TELEPORT_BIT;
-
-	// kill anything at the destination
-	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
-		G_KillBox (player);
-	}
-
-	// save results of pmove
-	BG_PlayerStateToEntityState( &player->client->ps, &player->s, qtrue );
-
-	// use the precise origin for linking
-	VectorCopy( player->client->ps.origin, player->r.currentOrigin );
-
-	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
-		trap_LinkEntity (player);
-	}
-}
-
-
 void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t right,vec3_t up) {
 	
-  vec3_t		end;
+    vec3_t		end;
 	trace_t		trace;
 	gentity_t	*tent;
 	gentity_t	*traceEnt;
@@ -792,7 +752,9 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 	if ( trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
 
 		// Who exactly is this entity (a reference to the entity structure)
-		traceEnt = &g_entities[ trace.entityNum ];
+        
+        if (g_entities[ trace.entityNum ].flags & FL_EXTRA_BBOX)
+			traceEnt = &g_entities[ g_entities[ trace.entityNum ].r.ownerNum ];
 
 		// Can this entity be damaged?
 		if ( traceEnt->takedamage )
@@ -818,7 +780,7 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 				// Damage, then telefrag
 				}else{
 					G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
-					TelefragPlayer(ent, traceEnt->r.currentOrigin);
+					TelefragPlayer(ent, traceEnt->r.currentOrigin, traceEnt->r.currentAngles);
 				}
 			}else{
 				// Damage 

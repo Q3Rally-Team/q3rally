@@ -2032,7 +2032,7 @@ static void PM_Alt_Weapon( void ) {
 
 	switch( pm->ps->weapon ) {	
 	case WP_RAILGUN:
-		ammo_use = 3; //megarailgun
+		ammo_use = 10; //megarailgun
 		break;
 	case WP_LIGHTNING:
 		ammo_use = 1;

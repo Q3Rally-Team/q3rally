@@ -3,7 +3,7 @@ New features planned for 0.0.4.0
 - switch between analog and digital gauge
 - optical effects for sand and snow (and others?)
 - online best time list for racing maps (like a ladder)
-- discord button in main menu (maybe in 0.0.3.0)
+- discord button in main menu linking to discord
 - New gamemode Last Man Standing (with all weapons)
 - New gamemode Drag Race
 - Change Gamemode Demolition Derby to use only chainsaw
@@ -12,3 +12,5 @@ New features planned for 0.0.4.0
 - finish the 4 Teams Modes (CTF and DOM)
 - Make unique logos for 4 teams (Like UT99)
 - Porting the Flamethrower from Return to Castle Wolfenstein
+- finishing the flag status hud for domination
+- rotating weapons (maybe, for now only a thought)

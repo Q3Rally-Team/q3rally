@@ -718,9 +718,11 @@ static void CG_DrawRallyStatusBar( void ) {
 		return;
 	}
 
+
 // draw the dtf sigils
 
     if ( cgs.gametype == GT_DOMINATION )
+
     CG_DrawSigilHUD();
 
 	cent = &cg_entities[cg.snap->ps.clientNum];

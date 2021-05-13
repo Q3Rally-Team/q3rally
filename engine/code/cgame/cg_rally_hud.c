@@ -917,6 +917,7 @@ float CG_DrawUpperRightHUD( float y ) {
 		}
 		else if (cgs.gametype == GT_DERBY)
 			y = CG_DrawTimes( y );
+// 0.0.4.0
 //			CG_DrawHUD_DerbyList(44, 130);
 			
 	}

@@ -96,7 +96,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -166,7 +166,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -860,21 +860,29 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\game\g_misc.c
-2=engine\code\game\g_weapon.c
-3=engine\code\game\g_local.h
+1=engine\code\cgame\cg_rally_hud2.c
+2=engine\code\cgame\cg_rally_hud.c
+3=engine\code\cgame\cg_draw.c
+4=engine\code\q3_ui\ui_menu.c
+5=engine\code\game\bg_pmove.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_misc.c
+Selected=engine\code\game\bg_pmove.c
 [engine\code\qcommon\q_shared.h]
 TopLine=57
 Caret=39,70
-[engine\code\game\g_misc.c]
-TopLine=128
-Caret=22,141
-[engine\code\game\g_weapon.c]
-TopLine=736
-Caret=1,737
-[engine\code\game\g_local.h]
-TopLine=674
-Caret=22,696
+[engine\code\cgame\cg_rally_hud2.c]
+TopLine=393
+Caret=1,357
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=900
+Caret=11,920
+[engine\code\cgame\cg_draw.c]
+TopLine=715
+Caret=1,757
+[engine\code\q3_ui\ui_menu.c]
+TopLine=568
+Caret=66,590
+[engine\code\game\bg_pmove.c]
+TopLine=2026
+Caret=16,2035

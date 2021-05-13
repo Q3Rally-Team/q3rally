@@ -138,48 +138,44 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 // TelefragPlayer
 //==================================================
 
-void TelefragPlayer_P( gentity_t *player, vec3_t origin ) { // removed angles
- gentity_t *tent;
+void TelefragPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
+   gentity_t  *tent;
+   qboolean noAngles;
+   
+   noAngles = (angles[0] > 999999.0);
+   // use temp events at source and destination to prevent the effect
+   // from getting dropped by a second player event
+   if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+       tent = G_TempEntity( player->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
+       tent->s.clientNum = player->s.clientNum;
 
- // use temp events at source and destination to prevent the effect
- // from getting dropped by a second player event
- if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
-  tent = G_TempEntity( player->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
-  tent->s.clientNum = player->s.clientNum;
+       tent = G_TempEntity( origin, EV_PLAYER_TELEPORT_IN );
+       tent->s.clientNum = player->s.clientNum;
+    }
 
-  tent = G_TempEntity( origin, EV_PLAYER_TELEPORT_IN );
-  tent->s.clientNum = player->s.clientNum;
- }
+    // unlink to make sure it can't possibly interfere with G_KillBox
+    trap_UnlinkEntity (player);
 
- // unlink to make sure it can't possibly interfere with G_KillBox
- trap_UnlinkEntity (player);
-
- VectorCopy ( origin, player->client->ps.origin );
- player->client->ps.origin[2] += 1;
-
- // Zygote
- // Remove angles and "spit-out"
- /*
- // spit the player out
- AngleVectors( angles, player->client->ps.velocity, NULL, NULL );
- VectorScale( player->client->ps.velocity, 400, player->client->ps.velocity );
- player->client->ps.pm_time = 160;  // hold time
- player->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
- */
- // toggle the teleport bit so the client knows to not lerp
- player->client->ps.eFlags ^= EF_TELEPORT_BIT;
-
- // Zygote
- // Remove angles
-/*
- // set angles
- SetClientViewAngle( player, angles );
-*/
-
+    VectorCopy ( origin, player->client->ps.origin );
+    player->client->ps.origin[2] += 1;
+    if (!noAngles) {
+        // spit the player out
+        AngleVectors( angles, player->client->ps.velocity, NULL, NULL );
+        VectorScale( player->client->ps.velocity, 400, player->client->ps.velocity );
+        player->client->ps.pm_time = 160;		// hold time
+        player->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+        // set angles
+        SetClientViewAngle(player, angles);
+     }
+     // toggle the teleport bit so the client knows to not lerp
+     player->client->ps.eFlags ^= EF_TELEPORT_BIT;
 // STONELANCE - reset car
 //	PM_InitializeVehicle( &player->client->car, origin, angles, player->client->ps.velocity, car_frontweight_dist.value );
 	VectorCopy( origin, player->client->ps.origin );
-	player->client->car.initializeOnNextMove = qtrue;
+    if (!noAngles) {
+    	VectorCopy( angles, player->client->ps.viewangles );
+    }
+    player->client->car.initializeOnNextMove = qtrue;
 // END
 
  // kill anything at the destination
@@ -196,7 +192,9 @@ void TelefragPlayer_P( gentity_t *player, vec3_t origin ) { // removed angles
  if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
   trap_LinkEntity (player);
  }
-} 
+}
+
+//=============================================================
 
 /*QUAKED misc_teleporter_dest (1 0 0) (-32 -32 -24) (32 32 -16)
 Point teleporters at these.

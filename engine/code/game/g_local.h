@@ -678,6 +678,8 @@ void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace
 //
 // g_misc.c
 //
+//void TelefragPlayer( gentity_t *player, vec3_t origin );
+void TelefragPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
 void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
 #ifdef MISSIONPACK
 void DropPortalSource( gentity_t *ent );
@@ -692,8 +694,6 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker );
 void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint );
 void SnapVectorTowards( vec3_t v, vec3_t to );
 qboolean CheckGauntletAttack( gentity_t *ent );
-void TelefragPlayer( gentity_t *player, vec3_t origin );
-void TelefragPlayer_P( gentity_t *player, vec3_t origin );
 void weapon_telefrag_fire (gentity_t *ent, vec3_t muzzle, vec3_t forward, vec3_t right, vec3_t up);
 
 

@@ -437,7 +437,7 @@ static void Main_MenuDraw( void ) {
         } else {
 // STONELANCE
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2021 | 19 Years of Q3R | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2021 | 19 Years of Q3R | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         }
@@ -587,9 +587,9 @@ void UI_MainMenu( void ) {
         s_main.discordlogo.generic.flags                    = QMF_INACTIVE;
         s_main.discordlogo.generic.name                = ART_DISCORDLOGO;
         s_main.discordlogo.generic.x                        = - 95;
-        s_main.discordlogo.generic.y                        = 430;
-        s_main.discordlogo.width                            = 40;
-        s_main.discordlogo.height                           = 40;
+        s_main.discordlogo.generic.y                        = 462;
+        s_main.discordlogo.width                            = 442 / 3;
+        s_main.discordlogo.height                           = 40 / 3;
 
 
         y += MAIN_MENU_VERTICAL_SPACING;

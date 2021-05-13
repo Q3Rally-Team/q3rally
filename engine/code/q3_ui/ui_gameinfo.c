@@ -193,7 +193,7 @@ static void UI_LoadArenas( void ) {
 	else {
 // STONELANCE
 //		UI_LoadArenasFromFile("scripts/arenas.txt");
-		UI_LoadArenasFromFile("scripts/q3r_arenas.txt");
+//		UI_LoadArenasFromFile("scripts/q3r_arenas.txt");
 // END
 
 	}
