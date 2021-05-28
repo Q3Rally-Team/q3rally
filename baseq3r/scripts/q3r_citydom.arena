@@ -1,11 +1,11 @@
 {
 map "q3r_citydom"
 longname "Dominate the City"
-fraglimit 50
+fraglimit 30
 type "q3r_dom"
-starts "1"
+starts "8"
 observerspots "0"
-weapons "0"
-powerups "0"
+weapons "8"
+powerups "6"
 author "P3rlE"
 }
