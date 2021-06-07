@@ -470,3 +470,14 @@ models/mapobjects/videocamera/videocamerasupport
 		rgbGen vertex
         }
 }
+
+models/mapobjects/skel/skel
+{
+    cull disable
+    surfaceparm alphashadow
+	{
+		map models/mapobjects/skel/skel.tga
+		alphaFunc GE128
+		rgbGen exactVertex
+	}
+}

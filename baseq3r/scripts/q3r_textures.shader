@@ -7283,3 +7283,117 @@ textures/q3r_glass/glass03
 		blendfunc add
 	}
 }
+
+// ------------------------------------------------------------
+// 305.dip_valley (water)
+// ------------------------------------------------------------
+
+textures/dip_valley/water
+{
+	qer_editorimage textures/dip_valley/water2.tga
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm water
+	cull disable
+	deformVertexes wave 64 sin 0.5 0.5 0 0.5 
+	qer_trans 0.5
+	q3map_globaltexture
+	{
+		map textures/dip_valley/water1.tga
+		blendfunc blend
+		rgbGen identity
+		tcMod scroll 0.01 0.02
+		tcMod scale 0.5 0.5
+	}
+	{
+		map textures/dip_valley/water1.tga
+		blendfunc blend
+		rgbGen identity
+		tcMod scroll -0.01 -0.03
+		tcMod turb 0 0.05 0 0.125
+	}
+	{
+		map $lightmap 
+		blendfunc filter
+		rgbGen identity
+		tcGen lightmap 
+	}
+}
+
+// ------------------------------------------------------------
+// 306.dip_valley (waterfall)
+// ------------------------------------------------------------
+
+textures/dip_valley/waterfall
+{
+	qer_editorimage textures/dip_valley/wfall2.tga
+	surfaceparm nonsolid
+	surfaceparm trans
+	surfaceparm water
+	cull disable
+	qer_trans 0.5
+	q3map_globaltexture
+	{
+		map textures/dip_valley/wfall1.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen identity
+		tcMod scroll 0 -2
+	}
+	{
+		map textures/dip_valley/wfall2.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen identity
+		tcMod scroll 0 -1
+	}
+	{
+		map textures/dip_valley/wfall3.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen identity
+		tcMod scroll 0 -3
+	}
+	{
+		map $lightmap 
+		blendfunc filter
+		rgbGen identity
+		tcGen lightmap 
+	}
+}
+
+// ------------------------------------------------------------
+// 307.dip_valley (wfsplash)
+// ------------------------------------------------------------
+
+textures/dip_valley/wfsplash
+{
+	qer_editorimage textures/dip_valley/splash.tga
+	cull disable
+	deformVertexes wave 512 sin 0 1 3 2.5 
+	{
+		map textures/dip_valley/splash.tga
+		blendfunc blend
+		rgbGen identity
+		tcMod scroll 1 0
+		tcMod scale 0.5 1
+	}
+	{
+		map textures/dip_valley/splash.tga
+		blendfunc gl_zero gl_dst_alpha
+		rgbGen identity
+		tcMod scroll 5.7 0
+		tcMod scale 0.5 1
+	}
+	{
+		map textures/dip_valley/splash.tga
+		blendfunc blend
+		rgbGen identity
+		tcMod scroll 7.8 0
+		tcMod scale 0.9 1
+	}
+	{
+		map textures/dip_valley/splash.tga
+		blendfunc gl_zero gl_dst_alpha
+		rgbGen identity
+		tcMod scroll 7.8 0
+		tcMod scale 0.2 1
+	}
+}

@@ -2,10 +2,10 @@
 map "q3r_babel"
 longname "Babel's Military Base"
 fraglimit 150
-type "q3r_dom q3r_dm q3r_team_dm"
+type "q3r_dom"
 starts "16"
 observerspots "1"
-weapons "3 (DOM), 4 (DM)"
+weapons "4"
 powerups "0"
 author "Marc Fontaine & insellium"
 }

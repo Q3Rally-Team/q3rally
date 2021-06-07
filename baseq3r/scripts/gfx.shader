@@ -1892,3 +1892,32 @@ models/mapobjects/gratelamp/gratetorch2b
 		blendfunc blend
     }
 }
+
+textures/sfx/beam_dusty2
+{
+	qer_editorimage textures/sfx/beam.tga
+        surfaceparm trans	
+        surfaceparm nomarks	
+        surfaceparm nonsolid
+	surfaceparm nolightmap
+	cull none
+	surfaceparm nomipmaps
+        //nopicmip
+	{
+		map textures/sfx/beam_1.tga
+           //     tcMod Scroll .3 0
+                blendFunc add
+        }
+ //        {
+//		map textures/sfx/beamdust.tga
+//		tcmod scale 2 2
+//		tcMod turb 0 0.015 0.025 0.05
+ //               tcMod Scroll -0.15 0
+   //             blendFunc GL_ONE GL_ONE
+   //      }
+     	//{
+	//	map textures/sfx/beam_mask.tga
+        //        blendFunc GL_DST_COLOR GL_ONE_MINUS_SRC_COLOR  
+      //	}
+}
+

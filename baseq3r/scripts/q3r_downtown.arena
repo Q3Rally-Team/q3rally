@@ -1,0 +1,14 @@
+{
+map "q3r_downtown"
+longname "Down Town"
+author "OliverV"
+fraglimit "10"
+type "q3r_racing q3r_team_racing"
+starts "8"
+laps "8"
+length "2.5 miles"
+checkpoints "25"
+observerspots "nil"
+weapons "0"
+powerups "0"
+}

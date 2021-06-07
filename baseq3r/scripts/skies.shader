@@ -416,3 +416,16 @@ textures/skies/night_dark
 	q3map_sun 0.545098 0.690196 0.705882 15 319 58
 	skyParms env/xnight2 128 -
 }
+
+textures/vsky/vsky
+{
+	qer_editorimage textures/vsky/vsky_up.jpg
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	q3map_lightsubdivide 128
+	q3map_surfacelight 100
+	q3map_globaltexture
+	
+	q3map_sun 0.980392 0.67451 0.372549 100 334 57
+	skyparms textures/vsky/vsky - -
+}
