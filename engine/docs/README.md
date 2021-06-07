@@ -1,3 +1,5 @@
+![Build](https://github.com/ioquake/ioq3/workflows/Build/badge.svg)
+
                    ,---------------------------------------.
                    |   _                     _       ____  |
                    |  (_)___  __ _ _  _ __ _| |_____|__ /  |
@@ -5,13 +7,13 @@
                    |  |_\___/\__, |\_,_\__,_|_\_\___|___/  |
                    |            |_|                        |
                    |                                       |
-                   `---------- http://ioquake3.org --------'
+                   `--------- https://ioquake3.org --------'
 
 The intent of this project is to provide a baseline Quake 3 which may be used
 for further development and baseq3 fun.
 Some of the major features currently implemented are:
 
-  * SDL backend
+  * SDL 2 backend
   * OpenAL sound API support (multiple speaker support and better sound
     quality)
   * Full x86_64 support on Linux
@@ -44,6 +46,27 @@ http://wiki.ioquake3.org/
 If you've got issues that you aren't sure are worth filing as bugs, or just
 want to chat, please visit our forums:
 http://discourse.ioquake.org
+
+# Thank You:
+
+<p>
+  <a href="https://www.digitalocean.com/">Digital Ocean<br/>
+    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg" width="201px">
+  </a>
+</p>
+---
+<p>
+<a href="https://www.discourse.org/">Discourse<br/>
+<img src=
+"https://user-images.githubusercontent.com/1681963/52239617-e2683480-289c-11e9-922b-5da55472e5b4.png"
+ width="300px"></a>
+</p>
+---
+<p>
+<a href="https://icculus.org/">icculus dot org<br/>
+<img src="http://icculus.org/icculus-org-now.png" width="300px"></a>
+</p>
+
 
 # Compilation and installation
 
@@ -359,11 +382,13 @@ value in the prototype with intptr_t (arg0, arg1, ...stay int).
 
 Add the following code snippet to q_shared.h:
 
-    #ifdef Q3_VM
-    typedef int intptr_t;
-    #else
-    #include <stdint.h>
-    #endif
+```c
+#ifdef Q3_VM
+typedef int intptr_t;
+#else
+#include <stdint.h>
+#endif
+```
 
 Note if you simply wish to run mods on a 64bit platform you do not need to
 recompile anything since by default Q3 uses a virtual machine system.
