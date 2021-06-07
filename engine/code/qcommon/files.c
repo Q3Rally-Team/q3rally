@@ -207,9 +207,9 @@ typedef struct
 const purePak_t com_purePaks[] =
 {
 
-	{BASEGAME, "assets0", 684878755u},
+	{BASEGAME, "assets0", 3629305249u},
     {BASEGAME, "qvm", 2059895209u},
-    {BASEGAME, "textures", 2140773524u},
+    {BASEGAME, "textures", 2208510430u},
   
 
 #if 0

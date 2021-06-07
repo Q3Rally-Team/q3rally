@@ -1,0 +1,59 @@
+!!! --- Q3Rally v0.3 changelog --- !!!
+
+new since v0.0.1.2
+
+Added:
+
+– new Domination game type
+– new car model
+– added new skins from Bloody Rally (thx insellium)
+– changed gauntlet to chainsaw
+– new unknownmap image
+– new icon for q3rally.exe files
+– different icons for client and server
+– widescreen preview in offline and online mode
+– new widesreen map images
+– new ammoboxes and ammosprites
+– new shotgun sound
+– new console background
+– minimap can now switched on/off in the q3roptions menu
+– start/stop demo recording key binding via menu
+– added more skins (PS2)
+– new skins for the camaro
+– two new domination maps
+– added discord button to main menu
+– added alt fire mode for railgun (telefrag gun)
+
+Fixed:
+
+– sync the code with ioquake3
+– some tweaks on Domination
+– change console background to something more readable
+– revised all shaders
+– minor changes on q3r_david4
+– get surfaceparms to work
+– fix bug where the game freeze at 161 mph
+– bug fixed where blue cannot win a ctf game (thx zturtleman)
+– fixed bug where q3rally crashed by selecting eu_greatbritain plate
+– fixed splash screen overlay in HUD
+– tweaked the overpowered railgun
+– fixed the menu transitions, now they are a bit faster
+– fixed serverinfo menu from q3a style to q3rally style
+– tweaked flags from insellium
+– code changes for chainsaw
+– fixed q3r_david4 map
+– tweaked flag models again
+– removed useless files
+– changed sounds from .wav to .ogg
+– fixed startserver screen (on and offline)
+– fixed torch shader
+– updated q3r_banner texture
+– tweaked/merged scripts
+– fixed tree shader
+– updated file headers
+– polished the speedometer
+– polished menu buttons, etc…
+– q3r_ctf_01 updated
+– shotgun bullet bug fixed
+– fixed bug in bot path creation system
+– reworked readme files
