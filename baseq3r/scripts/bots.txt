@@ -53,9 +53,9 @@ aifile		bots/jenna_c.c
 }
 
 {
-name		Tobias
-model		raptor/black
-aifile		bots/sarge_c.c
+name		Minori
+model		mini/vaporwave
+aifile		bots/kyonshi_c.c
 }
 
 {
@@ -65,13 +65,73 @@ aifile		bots/liz_c.c
 }
 
 {
+name		Vlad
+model		viper/graphite
+aifile		bots/major_c.c
+}
+
+{
+name		Zack
+model		roadster/green
+aifile		bots/merman_c.c
+}
+
+{
+name		Kuro
+model		murcielago/redhot
+aifile		bots/neko_c.c
+}
+
+{
 name		Paul
 model		sidepipe/blue
 aifile		bots/penguin_c.c
 }
 
 {
+name		Emma
+model		alpine/frefrafac
+aifile		bots/rai_c.c
+}
+
+{
+name		Tobias
+model		raptor/black
+aifile		bots/sarge_c.c
+}
+
+{
+name		Ivan
+model		murcielago/red
+aifile		bots/sergei_c.c
+}
+
+{
 name		Josh
 model		camaro/green
 aifile		bots/skelebot_c.c
+}
+
+{
+name		Steve
+model		mini/brown
+aifile		bots/sly_c.c
+}
+
+{
+name		Tanya
+model		raptor/pink
+aifile		bots/tanisha_c.c
+}
+
+{
+name		Tony
+model		macdaddy/checker
+aifile		bots/tony_c.c
+}
+
+{
+name		Bee
+model		camaro/yellow
+aifile		bots/widowe_c.c
 }

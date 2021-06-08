@@ -1,8 +1,9 @@
-b_main,models/players/reaper/shack.tga
-b_parts,models/players/reaper/shack_parts.tga
-b_taillites,models/players/reaper/shack_tlites.tga
-b_net01,models/players/reaper/shack_net.tga
-b_bumper01,models/players/reaper/shack_parts.tga
+b_main,models/players/reaper/main_shack.tga
+b_parts,models/players/reaper/parts_shack.tga
+b_headlites,models/players/reaper/hlites_shack.tga
+b_taillites,models/players/reaper/tlites_shack.tga
+b_net01,models/players/reaper/net_shack.tga
+b_bumper01,models/players/reaper/bumper_shack.tga
 tag_weapon,
 tag_wheelfr,
 tag_wheelfl,
