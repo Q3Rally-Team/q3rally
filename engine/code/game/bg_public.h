@@ -430,6 +430,8 @@ typedef enum {
         PW_SIGILWHITE,
         PW_SIGILRED,
         PW_SIGILBLUE,
+        PW_SIGILGREEN,
+        PW_SIGILYELLOW,
 
         PW_NUM_POWERUPS
 

@@ -42,7 +42,7 @@ typedef void (*voidfunc_f)(void);
 #define	DEFAULT_MODEL			"sidepipe"
 #define	DEFAULT_SKIN			"red"
 #define	DEFAULT_TEAM_MODEL		"sidepipe"
-#define	DEFAULT_TEAM_HEAD			"doom"
+#define	DEFAULT_TEAM_HEAD		"doom"
 #define	DEFAULT_HEAD			"doom"
 #define	DEFAULT_RIM				"svt_cobra"
 #define	DEFAULT_PLATE			"plate_usa"

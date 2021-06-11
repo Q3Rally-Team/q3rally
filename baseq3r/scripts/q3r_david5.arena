@@ -1,6 +1,7 @@
 {
 map "q3r_david5"
 longname "Underground Battle Arena"
+bots "Jim Bobby Sam"
 type "q3r_dm q3r_team_dm q3r_derby"
 starts "4"
 laps "-"

@@ -541,16 +541,24 @@ void CG_DrawSigilHUD( void ) {
                 {
 
                 case SIGIL_ISWHITE:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
-                  break;
+                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
+                    break;
 
                 case SIGIL_ISRED:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
-                  break;
+                    CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
+                    break;
         
                 case SIGIL_ISBLUE:
-                  CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
-                  break;
+                    CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
+                    break;
+                  
+                case SIGIL_ISGREEN:
+                    CG_DrawPic( x, y, 18, 18, cgs.media.greensigilShader );
+                    break;
+                    
+                case SIGIL_ISYELLOW:
+                    CG_DrawPic( x, y, 18, 18, cgs.media.yellowsigilShader );
+                    break;
                 }
               x+= 19;
             }    
@@ -1334,16 +1342,12 @@ Draw the small two score display
 =================
 */
 #ifndef MISSIONPACK
-// Q3Rally Code Start
-// static float CG_DrawScores( float y ) {
+
 float CG_DrawScores( float x, float y ) {
-// Q3Rally Code END
+
 	const char	*s;
 	int			s1, s2, score;
-// Q3Rally Code Start
-//	int			x, w;
 	int			s3, s4, w;
-// Q3Rally Code END
 	int			v;
 	vec4_t		color;
 	float		y1;
@@ -1351,23 +1355,19 @@ float CG_DrawScores( float x, float y ) {
 
 	s1 = cgs.scores1;
 	s2 = cgs.scores2;
-// Q3Rally Code Start
 	s3 = cgs.scores3;
 	s4 = cgs.scores4;
 
-//	y -= BIGCHAR_HEIGHT + 8;
-//	y1 = y;
-
 	y1 = y + 18;
-// Q3Rally Code END
+
 
 	// draw from the right side to left
 	if ( cgs.gametype >= GT_TEAM ) {
-// Q3Rally Code Start
-//		x = 640;
+
 		CG_FillRect( x - 96, y, 96, 18, bgColor );
 
-		if (cgs.gametype != GT_CTF){
+//		if (cgs.gametype != GT_CTF){
+        if (cgs.gametype >= GT_TEAM){
 			// draw yellow
 			color[0] = 1.0f;
 			color[1] = 1.0f;
@@ -1396,47 +1396,34 @@ float CG_DrawScores( float x, float y ) {
 			}
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
 		}
-// Q3Rally Code END
 
 		color[0] = 0.0f;
 		color[1] = 0.0f;
 		color[2] = 1.0f;
 		color[3] = 0.33f;
 		s = va( "%2i", s2 );
-// Q3Rally Code Start
-//		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 		x -= w;
-// Q3Rally Code Start
-//		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+        
 		CG_FillRect( x+1, y+1, w-2, 16, color );
-// Q3Rally Code END
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-// Q3Rally Code Start
-//			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 			CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-// Q3Rally Code END
+
 		}
-// Q3Rally Code Start
-//		CG_DrawBigString( x + 4, y, s, 1.0F);
+
 		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
 
 		if ( cgs.gametype == GT_CTF ) {
 			// Display flag status
 			item = BG_FindItemForPowerup( PW_BLUEFLAG );
 
 			if (item) {
-// Q3Rally Code Start
-				y1 = y + TINYCHAR_HEIGHT + 8;
-//				y1 = y - BIGCHAR_HEIGHT - 8;
-// Q3Rally Code END
+
+				y1 = y + TINYCHAR_HEIGHT + 8;		
 				if( cgs.blueflag >= 0 && cgs.blueflag <= 2 ) {
-// Q3Rally Code Start
-//					CG_DrawPic( x, y1-4, w, BIGCHAR_HEIGHT+8, cgs.media.blueFlagShader[cgs.blueflag] );
+
 					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.blueFlagShader[cgs.blueflag] );
-// Q3Rally Code END
+
 				}
 			}
 		}
@@ -1446,40 +1433,29 @@ float CG_DrawScores( float x, float y ) {
 		color[2] = 0.0f;
 		color[3] = 0.33f;
 		s = va( "%2i", s1 );
-// Q3Rally Code Start
-//		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 		x -= w;
-// Q3Rally Code Start
-//		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+
 		CG_FillRect( x+1, y+1, w-2, 16, color );
-// Q3Rally Code END
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED ) {
-// Q3Rally Code Start
-//			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+
 			CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-// Q3Rally Code END
+
 		}
-// Q3Rally Code Start
-//		CG_DrawBigString( x + 4, y, s, 1.0F);
+
 		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
 
 		if ( cgs.gametype == GT_CTF ) {
 			// Display flag status
 			item = BG_FindItemForPowerup( PW_REDFLAG );
 
 			if (item) {
-// Q3Rally Code Start
-//				y1 = y - BIGCHAR_HEIGHT - 8;
+
 				y1 = y + TINYCHAR_HEIGHT + 8;
-// Q3Rally Code END
+
 				if( cgs.redflag >= 0 && cgs.redflag <= 2 ) {
-// Q3Rally Code Start
-//					CG_DrawPic( x, y1-4, w, BIGCHAR_HEIGHT+8, cgs.media.redFlagShader[cgs.redflag] );
-					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.redFlagShader[cgs.redflag] );
-// Q3Rally Code END
+
+
 				}
 			}
 		}
@@ -1502,30 +1478,21 @@ float CG_DrawScores( float x, float y ) {
 		} else {
 			v = cgs.fraglimit;
 		}
-// Q3Rally Code Start
-//		if ( v ) {
+
 		if ( v && !isRallyRace()) {
-// Q3Rally Code END
+
 			s = va( "%2i", v );
-// Q3Rally Code Start
-//			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 			x -= w;
-// Q3Rally Code Start
-//			CG_DrawBigString( x + 4, y, s, 1.0F);
+
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
+
 		}
 
 	} else {
 		qboolean	spectator;
 
-// Q3Rally Code Start
-//		x = 640;
-
 		CG_FillRect( x - 96, y, 96, 18, bgColor );
-// Q3Rally Code END
 
 		score = cg.snap->ps.persistant[PERS_SCORE];
 		spectator = ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR );
@@ -1536,92 +1503,72 @@ float CG_DrawScores( float x, float y ) {
 		}
 		if ( s2 != SCORE_NOT_PRESENT ) {
 			s = va( "%2i", s2 );
-// Q3Rally Code Start
-//			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 			x -= w;
 			if ( !spectator && score == s2 && score != s1 ) {
 				color[0] = 1.0f;
 				color[1] = 0.0f;
 				color[2] = 0.0f;
 				color[3] = 0.33f;
-// Q3Rally Code Start
-//				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-//				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+
 				CG_FillRect( x+1, y+1, w-2, 16, color );
 				CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-// Q3Rally Code END
+
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
 				color[2] = 0.5f;
 				color[3] = 0.33f;
-// Q3Rally Code Start
-//				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+
 				CG_FillRect( x+1, y+1, w-2, 16, color );
-// Q3Rally Code END
+
 			}	
-// Q3Rally Code Start
-//			CG_DrawBigString( x + 4, y, s, 1.0F);
+
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
+
 		}
 
 		// first place
 		if ( s1 != SCORE_NOT_PRESENT ) {
 			s = va( "%2i", s1 );
-// Q3Rally Code Start
-//			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 			x -= w;
 			if ( !spectator && score == s1 ) {
 				color[0] = 0.0f;
 				color[1] = 0.0f;
 				color[2] = 1.0f;
 				color[3] = 0.33f;
-// Q3Rally Code Start
-//				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-//				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+
 				CG_FillRect( x+1, y+1, w-2, 16, color );
 				CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-// Q3Rally Code END
+
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
 				color[2] = 0.5f;
 				color[3] = 0.33f;
-// Q3Rally Code Start
-//				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+
 				CG_FillRect( x+1, y+1, w-2, 16, color );
-// Q3Rally Code END
+
 			}	
-// Q3Rally Code Start
-//			CG_DrawBigString( x + 4, y, s, 1.0F);
+
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
+
 		}
 
 		if ( cgs.fraglimit ) {
 			s = va( "%2i", cgs.fraglimit );
-// Q3Rally Code Start
-//			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-// Q3Rally Code END
 			x -= w;
-// Q3Rally Code Start
-//			CG_DrawBigString( x + 4, y, s, 1.0F);
+
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-// Q3Rally Code END
+
 		}
 
 	}
 
-// Q3Rally Code Start
-//	return y1 - 8;
 	return y1;
-// Q3Rally Code END
+
 }
 #endif // MISSIONPACK
 
@@ -3195,7 +3142,7 @@ static void CG_DrawSigilLocations( void ) {
           snapshot_t *snap;
           int i;
           vec3_t origin, end;
-          int redSigil, blueSigil, whiteSigil;
+          int redSigil, blueSigil, greenSigil, yellowSigil, whiteSigil;
 
           if ( cgs.gametype != GT_DOMINATION)
             return;
@@ -3211,6 +3158,8 @@ static void CG_DrawSigilLocations( void ) {
       VectorCopy(cg.snap->ps.origin,origin);
       redSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILRED ) );
       blueSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILBLUE ) );
+      greenSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILGREEN ) );
+      yellowSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILYELLOW ) );
       whiteSigil = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILWHITE ) );
       
       for ( i = 0; i < snap->numEntities; i++ )
@@ -3220,7 +3169,7 @@ static void CG_DrawSigilLocations( void ) {
     if (target->currentState.eType != ET_ITEM)
     continue;
 
-    if ( target->currentState.modelindex != redSigil && target->currentState.modelindex != blueSigil && target->currentState.modelindex != whiteSigil )
+    if ( target->currentState.modelindex != redSigil && target->currentState.modelindex != blueSigil && target->currentState.modelindex != greenSigil && target->currentState.modelindex != yellowSigil && target->currentState.modelindex != whiteSigil )
     continue;
     
     VectorCopy(target->lerpOrigin,end);
@@ -3231,6 +3180,12 @@ static void CG_DrawSigilLocations( void ) {
     else if (target->currentState.modelindex == blueSigil)
         CG_DrawSigilLocationInfo(origin, end, cgs.media.blueFlagShader[0], colorBlue);
     
+    else if (target->currentState.modelindex == greenSigil)
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.greenFlagShader[0], colorGreen);
+        
+    else if (target->currentState.modelindex == yellowSigil)
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.yellowFlagShader[0], colorYellow);
+        
     else if (target->currentState.modelindex == whiteSigil)
         CG_DrawSigilLocationInfo(origin, end, cgs.media.sigilShader, colorWhite);
     }

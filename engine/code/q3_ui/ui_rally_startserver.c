@@ -1603,48 +1603,11 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	}
 }
 
-
 /*
 ===============
-ServerOptions_LevelshotDraw
+ServerOptions_InitBotNames
 ===============
 */
-/*
-static void ServerOptions_LevelshotDraw( void *self ) {
-	menubitmap_s	*b;
-	int				x;
-	int				y;
-
-	// strange place for this, but it works
-	if( s_serveroptions.newBot ) {
-		Q_strncpyz( s_serveroptions.playerNameBuffers[s_serveroptions.newBotIndex], s_serveroptions.newBotName, 16 );
-		s_serveroptions.newBot = qfalse;
-	}
-
-	b = (menubitmap_s *)self;
-
-	Bitmap_Draw( b );
-
-	x = b->generic.x;
-	y = b->generic.y + b->height;
-	UI_FillRect( x, y, b->width, 40, colorBlack );
-
-	x += b->width / 2;
-	y += 4;
-// STONELANCE
-	//UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT, color_orange );
-	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT, text_color_normal );
-// END
-
-	y += SMALLCHAR_HEIGHT;
-// STONELANCE
-	//UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, color_orange );
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, text_color_normal );
-// END
-}
-*/
-// END
-
 static void ServerOptions_InitBotNames( void ) {
 	int			count;
 	int			n;
@@ -1657,9 +1620,9 @@ static void ServerOptions_InitBotNames( void ) {
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "Bobby", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "Carla", 16 );
-		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[3], "Paul", 16 );
-		}
+	if( s_serveroptions.gametype == GT_TEAM ) {
+		Q_strncpyz( s_serveroptions.playerNameBuffers[3], "Paul", 16 );
+		}    
 		else {
 			s_serveroptions.playerType[3].curvalue = 2;
 		}
@@ -1669,8 +1632,8 @@ static void ServerOptions_InitBotNames( void ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "Alexandra", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "Sam", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "Dean", 16 );
-		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[9], "Janine", 16 );
+	if( s_serveroptions.gametype == GT_TEAM ) {
+		Q_strncpyz( s_serveroptions.playerNameBuffers[9], "Janine", 16 );
 		}
 		else {
 			s_serveroptions.playerType[9].curvalue = 2;

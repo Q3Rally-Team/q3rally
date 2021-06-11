@@ -1,6 +1,7 @@
 {
 map "q3r_dm02"
 longname "Classic Demolition Derby"
+bots "Emma Ivan Kuro"
 fraglimit 30
 type "q3r_derby q3r_dm q3r_team_dm"
 starts "8"

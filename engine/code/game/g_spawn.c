@@ -331,6 +331,8 @@ qboolean G_CallSpawn( gentity_t *ent ) {
       RegisterItem(BG_FindItemForPowerup(PW_SIGILWHITE));
       RegisterItem(BG_FindItemForPowerup(PW_SIGILRED));
       RegisterItem(BG_FindItemForPowerup(PW_SIGILBLUE));
+      RegisterItem(BG_FindItemForPowerup(PW_SIGILGREEN));
+      RegisterItem(BG_FindItemForPowerup(PW_SIGILYELLOW));
   }
 // Q3Rally Code END    
 

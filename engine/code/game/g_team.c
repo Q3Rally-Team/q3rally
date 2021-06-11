@@ -1117,9 +1117,49 @@ Sigil_Think
 ===================
 */
 void Sigil_Think( gentity_t *ent ) {
+  team_t team;
+
+  switch( ent->s.powerups ) {
+    case PW_SIGILRED :
+      team = TEAM_RED;
+      break;
+
+    case PW_SIGILBLUE :
+      team = TEAM_BLUE;
+      break;
+
+    case PW_SIGILGREEN :
+      team = TEAM_GREEN;
+      break;
+
+    case PW_SIGILYELLOW :
+      team = TEAM_YELLOW;
+      break;
+
+    default :
+      team = TEAM_RED;
+  }
+
+  ent->count = 0;
+  level.teamScores[team]++;
+  ent->nextthink = level.time + 10000;
+
+  // refresh scoreboard
+  CalculateRanks();
+}
+
+/*
+void Sigil_Think( gentity_t *ent ) {
         team_t team;
         
-        team = (ent->s.powerups == PW_SIGILRED) ? TEAM_RED : TEAM_BLUE;
+        if (team = (ent->s.powerups == PW_SIGILRED) ? TEAM_RED : TEAM_BLUE);
+        
+        else if (team = (ent->s.powerups == PW_SIGILBLUE) ? TEAM_BLUE : TEAM_BLUE);
+        
+        else if (team = (ent->s.powerups == PW_SIGILGREEN) ? TEAM_GREEN : TEAM_BLUE);
+        
+        else if (team = (ent->s.powerups == PW_SIGILYELLOW) ? TEAM_YELLOW : TEAM_BLUE);
+        
         ent->count = 0;
         level.teamScores[team]++;
         ent->nextthink = level.time + 10000;
@@ -1127,6 +1167,7 @@ void Sigil_Think( gentity_t *ent ) {
         // refresh scoreboard
         CalculateRanks();
                   }
+*/
 
 /*
 ====================================
@@ -1155,14 +1196,32 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
         ent->s.powerups = PW_SIGILRED;
         ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILRED ) );
         ent->count = 1;
-}
-            else if ( cl->sess.sessionTeam == TEAM_BLUE && ent->s.powerups != PW_SIGILBLUE )
+    }
+    else if ( cl->sess.sessionTeam == TEAM_BLUE && ent->s.powerups != PW_SIGILBLUE )
     {
         Team_SetSigilStatus(sigilNum, SIGIL_ISBLUE);
         ent->nextthink = level.time - (level.time % 4000) + 4000;
         ent->think = Sigil_Think;
         ent->s.powerups = PW_SIGILBLUE;
         ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILBLUE ) );
+        ent->count = 1;
+    }
+    if ( cl->sess.sessionTeam == TEAM_GREEN && ent->s.powerups != PW_SIGILGREEN )
+    {
+        Team_SetSigilStatus(sigilNum, SIGIL_ISGREEN);
+        ent->nextthink = level.time - (level.time % 4000) + 4000;
+        ent->think = Sigil_Think;
+        ent->s.powerups = PW_SIGILGREEN;
+        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILGREEN ) );
+        ent->count = 1;
+    }
+    if ( cl->sess.sessionTeam == TEAM_YELLOW && ent->s.powerups != PW_SIGILYELLOW )
+    {
+        Team_SetSigilStatus(sigilNum, SIGIL_ISYELLOW);
+        ent->nextthink = level.time - (level.time % 4000) + 4000;
+        ent->think = Sigil_Think;
+        ent->s.powerups = PW_SIGILYELLOW;
+        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILYELLOW ) );
         ent->count = 1;
     }
     return 0;

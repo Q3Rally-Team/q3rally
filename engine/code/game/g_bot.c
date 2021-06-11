@@ -168,7 +168,7 @@ static void G_LoadArenas( void ) {
 	else {
 // STONELANCE
 //		G_LoadArenasFromFile("scripts/arenas.txt");
-//		G_LoadArenasFromFile("scripts/q3r_arenas.txt");
+		G_LoadArenasFromFile("scripts/q3r_arenas.txt");
 // END
 	}
 

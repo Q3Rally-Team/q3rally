@@ -844,7 +844,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	if ( !ci->headModel ) {
 		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load head model: %s\n", filename );
 
-		// use default wheel model
+		// use default head model
 		Com_sprintf( filename, sizeof(filename), "models/players/heads/%s.md3", DEFAULT_HEAD );
 		ci->headModel = trap_R_RegisterModel( filename );
 		if( !ci->headModel ) {
@@ -950,14 +950,14 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 			Q_strncpyz(teamname, cg_blueTeamName.string, sizeof(teamname) );
 		}
 // Q3Rally Code Start
-/*
+
 		else if( ci->team == TEAM_GREEN ) {
 			Q_strncpyz(teamname, cg_greenTeamName.string, sizeof(teamname) );
 		}
 		else if( ci->team == TEAM_YELLOW ) {
 			Q_strncpyz(teamname, cg_yellowTeamName.string, sizeof(teamname) );
 		}
-*/
+
 // END
 		else {
 			Q_strncpyz(teamname, cg_redTeamName.string, sizeof(teamname) );
@@ -985,7 +985,14 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 			// keep skin name
 			if( ci->team == TEAM_BLUE ) {
 				Q_strncpyz(teamname, DEFAULT_BLUETEAM_NAME, sizeof(teamname) );
-			} else {
+			}
+            else if( ci->team == TEAM_GREEN ) {
+                Q_strncpyz(teamname, DEFAULT_GREENTEAM_NAME, sizeof(teamname) );
+            }
+            else if( ci->team == TEAM_YELLOW ) {
+                Q_strncpyz(teamname, DEFAULT_YELLOWTEAM_NAME, sizeof(teamname) );
+            }
+            else {
 				Q_strncpyz(teamname, DEFAULT_REDTEAM_NAME, sizeof(teamname) );
 			}
 // Q3Rally Code Start
@@ -2089,7 +2096,7 @@ static void CG_SnowTrail( centity_t *cent ) {
 				  cgs.media.snowPuffShader );
 }
 
-// #endif
+
 
 /*
 ===============

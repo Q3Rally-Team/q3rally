@@ -1,6 +1,7 @@
 {
 map "q3r_nightcity"
 longname "Night City"
+bots "Tony Minori Carla"
 fraglimit "30"
 type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
 starts "16"

@@ -88,6 +88,8 @@ void UpdateTournamentInfo( void ) {
 		if (g_gametype.integer >= GT_CTF) {
 			score1 = level.teamScores[TEAM_RED];
 			score2 = level.teamScores[TEAM_BLUE];
+            score3 = level.teamScores[TEAM_GREEN];
+            score4 = level.teamScores[TEAM_YELLOW];
 			if (level.clients[playerClientNum].sess.sessionTeam	== TEAM_RED) {
 				won = (level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE]);
 			} else {

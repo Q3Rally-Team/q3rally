@@ -112,6 +112,8 @@ extern	vec4_t				bgColor; // Q3Rally Code - UPDATE change variable name?
 
 #define DEFAULT_REDTEAM_NAME		"Red Devils"
 #define DEFAULT_BLUETEAM_NAME		"Blue Angels"
+#define DEFAULT_GREENTEAM_NAME      "Green Hornets"
+#define DEFAULT_YELLOWTEAM_NAME     "Yellow Beasts"
 
 typedef enum {
 	FOOTSTEP_NORMAL,
@@ -836,14 +838,20 @@ typedef struct {
 #endif
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
+    qhandle_t   greenFlagModel;
+    qhandle_t   yellowFlagModel;
 	qhandle_t	neutralFlagModel;
 	qhandle_t	redFlagShader[3];
 	qhandle_t	blueFlagShader[3];
+    qhandle_t   greenFlagShader[3];
+    qhandle_t   yellowFlagShader[3];
 	qhandle_t	flagShader[4];
 // Q3Rally Code Start
-	qhandle_t sigilShader;
-    qhandle_t redsigilShader;
-    qhandle_t bluesigilShader;
+	qhandle_t  sigilShader;
+    qhandle_t   redsigilShader;
+    qhandle_t   bluesigilShader;
+    qhandle_t   greensigilShader;
+    qhandle_t   yellowsigilShader;
 // Q3Rally Code END
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;

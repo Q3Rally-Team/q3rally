@@ -1,6 +1,7 @@
 {
 map "q3r_demobowl"
 longname "Destroy Yourself Now"
+bots "Jennifer Samuel Vlad"
 fraglimit 20
 type "q3r_dm q3r_team_dm q3r_derby"
 starts "17"

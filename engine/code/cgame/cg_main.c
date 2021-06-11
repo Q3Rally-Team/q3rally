@@ -401,6 +401,8 @@ static cvarTable_t cvarTable[] = {
 #ifdef MISSIONPACK
 	{ &cg_redTeamName, "g_redteam", DEFAULT_REDTEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
 	{ &cg_blueTeamName, "g_blueteam", DEFAULT_BLUETEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
+    { &cg_greenTeamName, "g_greenteam", DEFAULT_GREENTEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
+    { &cg_yellowTeamName, "g_yellowteam", DEFAULT_YELLOWTEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
 	{ &cg_currentSelectedPlayer, "cg_currentSelectedPlayer", "0", CVAR_ARCHIVE},
 	{ &cg_currentSelectedPlayerName, "cg_currentSelectedPlayerName", "", CVAR_ARCHIVE},
 	{ &cg_singlePlayer, "ui_singlePlayerActive", "0", CVAR_USERINFO},
@@ -1094,16 +1096,26 @@ static void CG_RegisterGraphics( void ) {
 #endif
 		cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag.md3" );
 		cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag.md3" );
+        cgs.media.greenFlagModel = trap_R_RegisterModel( "models/flags/g_flag.md3" );
+        cgs.media.yellowFlagModel = trap_R_RegisterModel( "models/flags/y_flag.md3" );
 		cgs.media.redFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
 		cgs.media.redFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_red2" );
 		cgs.media.redFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_red3" );
 		cgs.media.blueFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );
 		cgs.media.blueFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_blu2" );
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_blu3" );
+        cgs.media.greenFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_green1" );
+        cgs.media.greenFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_green2" );
+        cgs.media.greenFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_green3" );
+        cgs.media.yellowFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_yell1" );
+        cgs.media.yellowFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_yell2" );
+        cgs.media.yellowFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_yell3" );
 // Q3Rally Code Start
         cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_neutral1" );
         cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
-        cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );       
+        cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );
+        cgs.media.greensigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_green1" );
+        cgs.media.yellowsigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_yell1" );       
 // Q3Rally Code END
 
 #ifdef MISSIONPACK

@@ -1,6 +1,7 @@
 {
 map "q3r_dirtyfun"
 longname "Dirty Fun"
+bots "Zack Kuro Paul"
 author "Stecki"
 type "q3r_racing q3r_team_racing"
 starts "8"

@@ -1,6 +1,7 @@
 {
 map "q3r_country01"
 longname "Roll On Down The Line"
+bots "Bee Dean Minori"
 fraglimit 5
 type "q3r_racing q3r_team_racing"
 starts "9"

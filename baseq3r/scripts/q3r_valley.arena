@@ -1,6 +1,7 @@
 {
 map "q3r_valley"
 longname "Desert Valley"
+bots "Ivan Tony Bee"
 fraglimit 6
 type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
 starts "6"

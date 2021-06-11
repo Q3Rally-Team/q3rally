@@ -925,6 +925,40 @@ Only in Domination games
 /* precache */ "",
 /* sounds */ ""
 	},
+
+/*QUAKED team_DOMINATION_sigil_green
+Only in Domination games
+*/
+  {
+    "team_DOMINATION_sigil_green",
+    NULL,
+    { "models/flags/g_flag.md3",
+    0, 0, 0 },
+/* icon */    "icons/iconf_green1",
+/* pickup */  "Flag",
+    0,
+    IT_SIGIL,
+    PW_SIGILGREEN,
+/* precache */    "",
+/* sounds */    ""
+    },
+
+/*QUAKED team_DOMINATION_sigil_yellow
+Only in Domination games
+*/
+  {
+    "team_DOMINATION_sigil_yellow",
+    NULL,
+    { "models/flags/y_flag.md3",
+    0, 0, 0 },
+/* icon */    "icons/iconf_yell1",
+/* pickup */  "Flag",
+    0,
+    IT_SIGIL,
+    PW_SIGILYELLOW,
+/* precache */    "",
+/* sounds */    ""
+    },
     
 /*QUAKED team_DOMINATION_sigil
 Only in Domination games

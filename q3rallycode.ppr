@@ -18,6 +18,32 @@ HTServer=localhost
 q3rallycode
 	+engine
 		+code
+			-renderergl1
+				engine\code\renderergl1\tr_world.c
+				engine\code\renderergl1\tr_surface.c
+				engine\code\renderergl1\tr_subs.c
+				engine\code\renderergl1\tr_sky.c
+				engine\code\renderergl1\tr_shadows.c
+				engine\code\renderergl1\tr_shader.c
+				engine\code\renderergl1\tr_shade_calc.c
+				engine\code\renderergl1\tr_shade.c
+				engine\code\renderergl1\tr_scene.c
+				engine\code\renderergl1\tr_model_iqm.c
+				engine\code\renderergl1\tr_model.c
+				engine\code\renderergl1\tr_mesh.c
+				engine\code\renderergl1\tr_marks.c
+				engine\code\renderergl1\tr_main.c
+				engine\code\renderergl1\tr_local.h
+				engine\code\renderergl1\tr_light.c
+				engine\code\renderergl1\tr_init.c
+				engine\code\renderergl1\tr_image.c
+				engine\code\renderergl1\tr_flares.c
+				engine\code\renderergl1\tr_curve.c
+				engine\code\renderergl1\tr_cmds.c
+				engine\code\renderergl1\tr_bsp.c
+				engine\code\renderergl1\tr_backend.c
+				engine\code\renderergl1\tr_animation.c
+				engine\code\renderergl1\tr_altivec.c
 			-AL
 				engine\code\AL\al.h
 				engine\code\AL\alc.h
@@ -96,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -863,16 +889,30 @@ q3rallycode
 1=engine\code\qcommon\qcommon.h
 2=engine\code\cgame\cg_info.c
 3=engine\code\qcommon\files.c
-4=engine\code\game\g_spawn.c
-5=engine\code\cgame\cg_main.c
-6=engine\code\cgame\cg_local.h
-7=engine\code\cgame\cg_rally_tools.c
+4=engine\code\game\bg_public.h
+5=engine\code\cgame\cg_local.h
+6=engine\code\cgame\cg_main.c
+7=engine\code\cgame\cg_players.c
+8=engine\code\cgame\cg_draw.c
+9=engine\code\cgame\cg_newdraw.c
+10=engine\code\cgame\cg_rally_hud.c
+11=engine\code\cgame\cg_rally_hud2.c
+12=engine\code\game\g_team.c
+13=engine\code\cgame\cg_scoreboard.c
+14=engine\code\game\g_client.c
+15=engine\code\game\g_cmds.c
+16=engine\code\renderergl1\tr_shade_calc.c
+17=engine\code\cgame\cg_servercmds.c
+18=engine\code\game\bg_misc.c
+19=engine\code\game\g_items.c
+20=engine\code\game\g_spawn.c
+21=engine\code\game\g_arenas.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\game\g_team.c
 [engine\code\qcommon\q_shared.h]
-TopLine=42
-Caret=36,70
+TopLine=1787
+Caret=17,1804
 [engine\code\qcommon\qcommon.h]
 TopLine=700
 Caret=1,715
@@ -882,15 +922,57 @@ Caret=1,210
 [engine\code\qcommon\files.c]
 TopLine=193
 Caret=21,210
-[engine\code\game\g_spawn.c]
-TopLine=730
-Caret=1,745
-[engine\code\cgame\cg_main.c]
-TopLine=984
-Caret=29,1000
+[engine\code\game\bg_public.h]
+TopLine=417
+Caret=24,434
 [engine\code\cgame\cg_local.h]
-TopLine=1909
-Caret=1,1924
-[engine\code\cgame\cg_rally_tools.c]
-TopLine=611
-Caret=1,618
+TopLine=676
+Caret=1,684
+[engine\code\cgame\cg_main.c]
+TopLine=1095
+Caret=25,1097
+[engine\code\cgame\cg_players.c]
+TopLine=2084
+Caret=1,2099
+[engine\code\cgame\cg_draw.c]
+TopLine=533
+Caret=27,561
+[engine\code\cgame\cg_newdraw.c]
+TopLine=1192
+Caret=29,1211
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=828
+Caret=1,835
+[engine\code\cgame\cg_rally_hud2.c]
+TopLine=114
+Caret=1,129
+[engine\code\game\g_team.c]
+TopLine=1137
+Caret=3,1170
+[engine\code\cgame\cg_scoreboard.c]
+TopLine=444
+Caret=1,457
+[engine\code\game\g_client.c]
+TopLine=686
+Caret=1,700
+[engine\code\game\g_cmds.c]
+TopLine=110
+Caret=1,124
+[engine\code\renderergl1\tr_shade_calc.c]
+TopLine=896
+Caret=44,909
+[engine\code\cgame\cg_servercmds.c]
+TopLine=397
+Caret=1,415
+[engine\code\game\bg_misc.c]
+TopLine=937
+Caret=19,958
+[engine\code\game\g_items.c]
+TopLine=805
+Caret=1,819
+[engine\code\game\g_spawn.c]
+TopLine=318
+Caret=59,335
+[engine\code\game\g_arenas.c]
+TopLine=79
+Caret=52,92

@@ -1,6 +1,7 @@
 {
 map "q3r_sk1"
 longname "Canyon Cruise"
+bots "Samuel Jim Sam"
 fraglimit 5
 type "q3r_racing q3r_team_racing"
 starts "8"

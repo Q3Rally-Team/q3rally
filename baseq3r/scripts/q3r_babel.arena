@@ -1,6 +1,7 @@
 {
 map "q3r_babel"
 longname "Babel's Military Base"
+bots "Tobias Ivan Josh Steve Tanya Tony"
 fraglimit 150
 type "q3r_dom"
 starts "16"

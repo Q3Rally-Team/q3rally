@@ -1,6 +1,7 @@
 {
 map "q3r_downtown"
 longname "Down Town"
+bots "Tobias Josh Bee"
 author "OliverV"
 fraglimit "10"
 type "q3r_racing q3r_team_racing"
