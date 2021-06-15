@@ -1104,7 +1104,7 @@ gentity_t *fire_homing_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
-	bolt->damage = 80;
+	bolt->damage = 40;
 	//bolt->splashDamage = 100; //TBB - too high for being splash
 	bolt->splashDamage = 60; //TBB
 	bolt->splashRadius = 75;

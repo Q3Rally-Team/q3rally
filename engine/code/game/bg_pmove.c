@@ -2047,7 +2047,7 @@ static void PM_Alt_Weapon( void ) {
 		ammo_use = 3; //there are 6 trajectories in g_missile.c: G_ExplodeCluster()
 		break;
 	case WP_ROCKET_LAUNCHER:
-		ammo_use = 1; //homing
+		ammo_use = 3; //homing
 		break;
 	case WP_PLASMAGUN:
 		ammo_use = 1; //rotational defense

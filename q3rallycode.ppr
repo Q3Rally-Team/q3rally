@@ -907,12 +907,16 @@ q3rallycode
 19=engine\code\game\g_items.c
 20=engine\code\game\g_spawn.c
 21=engine\code\game\g_arenas.c
+22=engine\code\game\bg_pmove.c
+23=engine\code\game\g_weapon.c
+24=engine\code\cgame\cg_weapons.c
+25=engine\code\game\g_missile.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_team.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
-TopLine=1787
-Caret=17,1804
+TopLine=55
+Caret=46,70
 [engine\code\qcommon\qcommon.h]
 TopLine=700
 Caret=1,715
@@ -953,7 +957,7 @@ Caret=3,1170
 TopLine=444
 Caret=1,457
 [engine\code\game\g_client.c]
-TopLine=686
+TopLine=1
 Caret=1,700
 [engine\code\game\g_cmds.c]
 TopLine=110
@@ -976,3 +980,15 @@ Caret=59,335
 [engine\code\game\g_arenas.c]
 TopLine=79
 Caret=52,92
+[engine\code\game\bg_pmove.c]
+TopLine=1871
+Caret=15,2050
+[engine\code\game\g_weapon.c]
+TopLine=1295
+Caret=25,1308
+[engine\code\cgame\cg_weapons.c]
+TopLine=2121
+Caret=1,2125
+[engine\code\game\g_missile.c]
+TopLine=1092
+Caret=19,1107
