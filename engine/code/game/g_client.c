@@ -1333,6 +1333,7 @@ void ClientSpawn(gentity_t *ent) {
 	int		eventSequence;
 	char	userinfo[MAX_INFO_STRING];
 // STONELANCE
+	int		savedFinishRaceTime;
 	int		savedDamageTaken;
 	int		savedDamageDealt;
 	gentity_t	*savedCarPoints[4];
@@ -1425,6 +1426,7 @@ void ClientSpawn(gentity_t *ent) {
 	savedSess = client->sess;
 	savedPing = client->ps.ping;
 // STONELANCE
+	savedFinishRaceTime = client->finishRaceTime;
 	savedDamageDealt = client->ps.stats[STAT_DAMAGE_DEALT];
 	savedDamageTaken = client->ps.stats[STAT_DAMAGE_TAKEN];
 // END
@@ -1461,6 +1463,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->carPoints[1] = savedCarPoints[1];
 	client->carPoints[2] = savedCarPoints[2];
 	client->carPoints[3] = savedCarPoints[3];
+	client->finishRaceTime = savedFinishRaceTime;
 	client->ps.stats[STAT_DAMAGE_DEALT] = savedDamageDealt;
 	client->ps.stats[STAT_DAMAGE_TAKEN] = savedDamageTaken;
 	client->ps.stats[STAT_NEXT_CHECKPOINT] = ent->number;
