@@ -31,7 +31,7 @@ G_HomingMissile
 ================
 */
 
-#define ROCKET_SPEED   600
+#define ROCKET_SPEED   650
 
 void rocket_think( gentity_t *ent )
 {
@@ -95,7 +95,6 @@ void Missile_Smooth_H( gentity_t *ent, vec3_t origin, trace_t *tr )
 /*
 ================
 G_BounceMissile
-
 ================
 */
 void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
@@ -158,21 +157,7 @@ void G_ExplodeCluster( gentity_t *ent ){
     	
 	VectorSet(dir, 11, -11, -66);
     fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);  
-	
-	
-	/*
-	VectorSet(dir, 33, 33, 0);
-	fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);
-    VectorSet(dir, -33, 33, 0);
-    fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);
-    VectorSet(dir, 0, -33, 0);
-    fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);
-    VectorSet(dir, 33, 33, 40);
-    fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);
-    VectorSet(dir, -33, 33, 30);
-    fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);
-    VectorSet(dir, 0, -33, 20);
-    fire_cluster_grenade2(ent->parent, ent->r.currentOrigin, dir);  */
+
 
 }
 
@@ -778,13 +763,9 @@ void G_RunMissile( gentity_t *ent ) {
 	G_RunThink( ent );
 }
 
-
-//=============================================================================
-
 /*
 =================
 fire_plasma
-
 =================
 */
 gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
@@ -824,9 +805,7 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 }	
 
 //=============================================================================
-
 //fire_plasma_bounce
-
 //=============================================================================
 
 
@@ -1049,36 +1028,22 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->classname = "rocket";
 	bolt->nextthink = level.time + 15000;
 	bolt->think = G_ExplodeMissile;
-  bolt->health = 5;
-  bolt->takedamage = qtrue;
-  bolt->die = G_MissileDie;
-  bolt->r.contents = CONTENTS_BODY;
-    VectorSet(bolt->r.mins, -10, -3, 0);
-    VectorCopy(bolt->r.mins, bolt->r.absmin);
-    VectorSet(bolt->r.maxs, 10, 3, 6);
-    VectorCopy(bolt->r.maxs, bolt->r.absmax);
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
-	//bolt->damage = 100; //TBB - too high for short reload
-	bolt->damage = 80; //TBB
-	//bolt->splashDamage = 100; //TBB - too high for short reload
-	bolt->splashDamage = 60; //TBB
+	bolt->damage = 80;
+	bolt->splashDamage = 60;
 	bolt->splashRadius = 120;
 	bolt->methodOfDeath = MOD_ROCKET;
 	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
-
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-// STONELANCE
-//	VectorScale( dir, 900, bolt->s.pos.trDelta );
-	VectorScale( dir, 1800, bolt->s.pos.trDelta );
-// END
+	VectorScale( dir, 1400, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
 
@@ -1099,71 +1064,39 @@ gentity_t *fire_homing_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->classname = "rocket";
 	bolt->nextthink = level.time + 1;
 	bolt->think = rocket_think;
+    bolt->health = 5;
+    bolt->takedamage = qtrue;
+    bolt->die = G_MissileDie;
+    bolt->r.contents = CONTENTS_BODY;
+    VectorSet(bolt->r.mins, -10, -3, 0);
+    VectorCopy(bolt->r.mins, bolt->r.absmin);
+    VectorSet(bolt->r.maxs, 10, 3, 6);
+    VectorCopy(bolt->r.maxs, bolt->r.absmax);
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
 	bolt->damage = 40;
-	//bolt->splashDamage = 100; //TBB - too high for being splash
-	bolt->splashDamage = 60; //TBB
+	bolt->splashDamage = 60;
 	bolt->splashRadius = 75;
 	bolt->methodOfDeath = MOD_ROCKET;
 	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
-
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-// STONELANCE
-//	VectorScale( dir, 900, bolt->s.pos.trDelta );
 	VectorScale( dir, ROCKET_SPEED, bolt->s.pos.trDelta );
-// END
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
 
 	return bolt;
 }
 
-/*
-=================
-fire_grapple
-=================
-*/
-// STONELANCE - removed hook
-/*
-gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*hook;
-
-	VectorNormalize (dir);
-
-	hook = G_Spawn();
-	hook->classname = "hook";
-	hook->nextthink = level.time + 10000;
-	hook->think = Weapon_HookFree;
-	hook->s.eType = ET_MISSILE;
-	hook->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	hook->s.weapon = WP_GRAPPLING_HOOK;
-	hook->r.ownerNum = self->s.number;
-	hook->methodOfDeath = MOD_GRAPPLE;
-	hook->clipmask = MASK_SHOT;
-	hook->parent = self;
-	hook->target_ent = NULL;
-
-	hook->s.pos.trType = TR_LINEAR;
-	hook->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	hook->s.otherEntityNum = self->s.number; // use to match beam in client
-	VectorCopy( start, hook->s.pos.trBase );
-	VectorScale( dir, 800, hook->s.pos.trDelta );
-	SnapVector( hook->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, hook->r.currentOrigin);
-
-	self->client->hook = hook;
-
-	return hook;
-}
-*/
+//=====================================
+// fire mine
+//=====================================
 
 
 gentity_t *fire_mine( gentity_t *self, vec3_t start, vec3_t dir){

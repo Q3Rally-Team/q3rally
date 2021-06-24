@@ -265,7 +265,7 @@ void CG_DrawInformation( void ) {
 		break;
 // Q3Rally Code Start
 	case GT_DOMINATION:
-	  s = "Domination";        
+	    s = "Domination";        
 		break;
 
 /*

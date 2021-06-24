@@ -241,6 +241,7 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage, int mod ) {
 	for (i = 0; i < 10; i++) {
 
 		trap_Trace (&tr, muzzle, NULL, NULL, end, passent, MASK_SHOT);
+//        trap_Trace (&tr, muzzle, NULL, NULL, end, ENTITYNUM_NONE, MASK_SHOT);
 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 			return;
 		}

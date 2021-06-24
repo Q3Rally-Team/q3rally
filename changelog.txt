@@ -1,5 +1,23 @@
 !!! --- Q3Rally v0.3 changelog --- !!!
 
+new since v0.3b
+
+Fixed:
+
+- A bug in racing mode was fixed where it could be that after the race you lost your position
+  in the ranking to a player who crossed the finish line after you
+- The power of the homing rockets has been reduced and the amount of ammunition
+  used has been increased from 1 to 3
+
+new since v0.3
+
+Added:
+
+- 2 Racing Maps moved from AddOn to Official
+- 1 Deathmatch Map moved from AddOn to Official
+- added the ability to play Domination with 4 Teams
+- codebase synced with latest ioq3
+
 new since v0.0.1.2
 
 Added:
