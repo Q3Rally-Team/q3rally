@@ -4886,3 +4886,179 @@ models/players/viper/f_lites_green
 
 
 }
+
+//GRAVELORD
+
+models/players/gravelord/default
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/default.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+//TEAM COLOR SKINS
+
+models/players/gravelord/green
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/green.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/blue
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/blue.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/yellow
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/yellow.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/red
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/red.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+//ECTO-1 GHOSTBUSTERS SKIN
+
+models/players/gravelord/ecto
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/ecto.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/windows
+{
+	{
+//		map textures/effects/tinfx2.tga
+		map textures/reflect/reflect.tga
+		blendfunc add
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/windows.tga
+		blendfunc gl_one gl_src_alpha
+		rgbGen lightingDiffuse
+	}
+}
+
+models/players/gravelord/curtain
+{
+	cull disable
+	{
+		map models/players/gravelord/curtain.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/coffin
+{
+	{
+		map textures/reflect/reflect.tga
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/coffin.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/no_curtain
+{
+
+	{
+		map models/players/gravelord/no_curtain.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/no_coffin
+{
+
+	{
+		map models/players/gravelord/no_coffin.tga
+		blendfunc blend
+		rgbGen lightingDiffuse
+		depthWrite
+	}
+}
+
+models/players/gravelord/gb_windows
+{
+	{
+//		map textures/effects/tinfx2.tga
+		map textures/reflect/reflect.tga
+		blendfunc add
+		rgbGen identity
+		tcGen environment 
+	}
+	{
+		map models/players/gravelord/gb_windows.tga
+		blendfunc gl_one gl_src_alpha
+		rgbGen lightingDiffuse
+	}
+}

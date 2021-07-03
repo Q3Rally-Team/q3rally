@@ -8,6 +8,10 @@ Fixed:
   in the ranking to a player who crossed the finish line after you
 - The power of the homing rockets has been reduced and the amount of ammunition
   used has been increased from 1 to 3
+- fixed Viper icons
+- 1 car moved from AddOn to Official - Gravelord
+- replaced some q3 textures with their remakes
+
 
 new since v0.3
 
