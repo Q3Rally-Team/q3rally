@@ -11,6 +11,9 @@ Fixed:
 - fixed Viper icons
 - 1 car moved from AddOn to Official - Gravelord
 - replaced some q3 textures with their remakes
+- Removed unnecessary icons
+- Flags textures updated
+- Icons of flag status updated
 
 
 new since v0.3
