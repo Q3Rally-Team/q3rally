@@ -122,8 +122,8 @@ textures/ctf/blue_telep
 	        clampmap textures/ctf/blue_telep.tga
 		blendFunc add
                 //depthWrite
-                //tcMod stretch sin .9 0.1 0 .5
-                tcmod rotate 327
+                //tcMod stretch sin .9 0.4 0 .5
+                tcmod rotate 521
                 rgbGen identity
 	}
         {
@@ -131,7 +131,7 @@ textures/ctf/blue_telep
 		blendFunc add
                 //depthWrite
                 //tcMod stretch sin .9 0.1 0 .1
-                tcmod rotate -211
+                tcmod rotate -111
                 rgbGen identity
         }
         {
@@ -174,15 +174,15 @@ textures/ctf/red_telep
 	        
 	        clampmap textures/ctf/red_telep.tga
 		blendFunc add
-                //tcMod stretch sin .9 0.1 0 .5
-                tcmod rotate 327
+                //tcMod stretch sin .9 0.4 0 .5
+                tcmod rotate 521
                 rgbGen identity
 	}
         {
 	        clampmap textures/ctf/red_telep2.tga
 		blendFunc add
                 //tcMod stretch sin .9 0.1 0 .1
-                tcmod rotate -211
+                tcmod rotate -111
                 rgbGen identity
         }
         {
@@ -738,8 +738,8 @@ textures/ctf/tallblue_5esmallb_fin
 textures/ctf/ctf_blueflag
 {
         tessSize 64
-        deformVertexes wave 194 sin 0 3 0 .4
-        deformVertexes normal .5 .1
+        deformVertexes wave 194 sin 0 0.1 0 .2
+        deformVertexes normal .1 .2
         surfaceparm nomarks
         cull none
         
@@ -748,10 +748,9 @@ textures/ctf/ctf_blueflag
 		rgbGen identity
 	}
         {
-		map textures/effects/redflagmap.tga
+		map textures/effects/redflagmap2.tga
                 tcGen environment
-                tcmod scale 9 3
-                tcmod scroll .1 .7
+                tcmod scroll .1 .2
                 
                 blendFunc GL_ONE GL_ONE
                 rgbGen identity
@@ -782,8 +781,8 @@ textures/ctf/ctf_blueflag
 textures/ctf/ctf_redflag
 {
         tessSize 64
-        deformVertexes wave 194 sin 0 3 0 .4
-        deformVertexes normal .3 .2
+        deformVertexes wave 194 sin 0 0.1 0 .2
+        deformVertexes normal .1 .2
         surfaceparm nomarks
         cull none
 
@@ -792,10 +791,9 @@ textures/ctf/ctf_redflag
 		rgbGen identity
 	}
         {
-		map textures/effects/blueflagmap.tga
+		map textures/effects/blueflagmap2.tga
                  tcGen environment
-                tcmod scale 9 3
-                tcmod scroll .1 .7
+                tcmod scroll .1 .2
                 
                 blendFunc GL_ONE GL_ONE
                 rgbGen identity
