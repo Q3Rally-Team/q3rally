@@ -12,8 +12,8 @@ Fixed:
 - 1 car moved from AddOn to Official - Gravelord
 - replaced some q3 textures with their remakes
 - Removed unnecessary icons
-- Flags textures updated
-- Icons of flag status updated
+- CTF textures and icons updated
+- q3r_david5 preview fixed
 
 
 new since v0.3
