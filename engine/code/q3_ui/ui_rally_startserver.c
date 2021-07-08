@@ -131,7 +131,7 @@ typedef struct {
 static startserver_t s_startserver;
 
 static const char *gametype_items[] = {
-// STONELANCE
+
 	"Racing",
 	"Racing Deathmatch",
 	"Demolition Derby",
@@ -139,7 +139,6 @@ static const char *gametype_items[] = {
 	"Team Deathmatch",
 	"Team Racing",
 	"Team Racing Deathmatch",
-// END
 	"Capture the Flag",
     "Domination",
 	0
@@ -186,6 +185,12 @@ char *UI_GetStatKey(int num){
 
 	case MS_TRACKLENGTHS:
 		return "tracklengths";
+    
+    case MS_BOTSUPPORT:
+        return "bots";
+        
+    case MS_NUMTEAMS:
+        return "teams";
 
 	default:
 		return "";
@@ -195,7 +200,7 @@ char *UI_GetStatKey(int num){
 char *UI_GetStatName(int num){
 	switch(num){
 	case MS_NUMSTARTS:
-		return "Number of start positions:";
+		return "Start positions:";
 
 	case MS_LAPS:
 		return "Default number of laps:";
@@ -210,16 +215,22 @@ char *UI_GetStatName(int num){
 		return "Number of observer spots:";
 
 	case MS_NUMWEAPONS:
-		return "Number of weapons:";
+		return "Weapons:";
 
 	case MS_NUMPOWERUPS:
-		return "Number of powerups:";
+		return "Powerups:";
 
 	case MS_REVERSABLE:
-		return "Reversable option available:";
+		return "Reversable:";
 
 	case MS_TRACKLENGTHS:
 		return "Track lengths available:";
+    
+    case MS_BOTSUPPORT:
+        return "Bot Support:";
+        
+    case MS_NUMTEAMS:
+        return "Teams:";
 
 	default:
 		return "";
@@ -255,6 +266,12 @@ char *UI_GetDefaultStatValue( int num ){
 
 	case MS_TRACKLENGTHS:
 		return "0 1 2";
+        
+    case MS_BOTSUPPORT:
+        return "Unknown";
+        
+    case MS_NUMTEAMS:
+        return "Unknown";
 
 	default:
 		return "";
