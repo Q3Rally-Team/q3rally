@@ -165,8 +165,8 @@ char *UI_GetStatKey(int num){
 	case MS_LAPS:
 		return "laps";
 
-	case MS_TRACKLENGTH:
-		return "length";
+	case MS_LAPTIME:
+		return "laptime";
 
 	case MS_NUMCHECKPOINTS:
 		return "checkpoints";
@@ -187,7 +187,7 @@ char *UI_GetStatKey(int num){
 		return "tracklengths";
     
     case MS_BOTSUPPORT:
-        return "bots";
+        return "botsupport";
         
     case MS_NUMTEAMS:
         return "teams";
@@ -205,8 +205,8 @@ char *UI_GetStatName(int num){
 	case MS_LAPS:
 		return "Default number of laps:";
 
-	case MS_TRACKLENGTH:
-		return "Track length:";
+	case MS_LAPTIME:
+		return "Laptime:";
 
 	case MS_NUMCHECKPOINTS:
 		return "Number of checkpoints:";
@@ -246,7 +246,7 @@ char *UI_GetDefaultStatValue( int num ){
 	case MS_LAPS:
 		return "Unknown";
 
-	case MS_TRACKLENGTH:
+	case MS_LAPTIME:
 		return "Unknown";
 
 	case MS_NUMCHECKPOINTS:
@@ -1634,10 +1634,14 @@ static void ServerOptions_InitBotNames( void ) {
 	char		*bot;
 	char		bots[MAX_INFO_STRING];
 
-	if( s_serveroptions.gametype >= GT_TEAM ) {
+// changed to declare bots in arena files
+//	if( s_serveroptions.gametype >= GT_TEAM ) {
+    if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "Bobby", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "Carla", 16 );
-	if( s_serveroptions.gametype == GT_TEAM ) {
+// changed to declare bots in arena files
+//	if( s_serveroptions.gametype == GT_TEAM ) {
+    if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[3], "Paul", 16 );
 		}    
 		else {
@@ -1649,7 +1653,9 @@ static void ServerOptions_InitBotNames( void ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "Alexandra", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "Sam", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "Dean", 16 );
-	if( s_serveroptions.gametype == GT_TEAM ) {
+// changed to declare bots in arena files
+//	if( s_serveroptions.gametype == GT_TEAM ) {
+    if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[9], "Janine", 16 );
 		}
 		else {

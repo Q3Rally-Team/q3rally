@@ -226,31 +226,31 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_tourney_fraglimit, "ui_tourney_fraglimit", "0", CVAR_ARCHIVE },
 	{ &ui_tourney_timelimit, "ui_tourney_timelimit", "15", CVAR_ARCHIVE },
 */
-	{ &ui_racing_laplimit, "ui_racing_laplimit", "6", CVAR_ARCHIVE },
+	{ &ui_racing_laplimit, "ui_racing_laplimit", "3", CVAR_ARCHIVE },
 	{ &ui_racing_timelimit, "ui_racing_timelimit", "0", CVAR_ARCHIVE },
 
-	{ &ui_team_racing_laplimit, "ui_team_racing_laplimit", "6", CVAR_ARCHIVE },
+	{ &ui_team_racing_laplimit, "ui_team_racing_laplimit", "3", CVAR_ARCHIVE },
 	{ &ui_team_racing_timelimit, "ui_team_racing_timelimit", "0", CVAR_ARCHIVE },
 	{ &ui_team_racing_friendly, "ui_team_racing_friendly",  "1", CVAR_ARCHIVE },
 
 	{ &ui_derby_timelimit, "ui_derby_timelimit", "10", CVAR_ARCHIVE },
 
-	{ &ui_dm_fraglimit, "ui_dm_fraglimit", "0", CVAR_ARCHIVE },
-	{ &ui_dm_timelimit, "ui_dm_timelimit", "0", CVAR_ARCHIVE },
+	{ &ui_dm_fraglimit, "ui_dm_fraglimit", "15", CVAR_ARCHIVE },
+	{ &ui_dm_timelimit, "ui_dm_timelimit", "10", CVAR_ARCHIVE },
 // END
 
-	{ &ui_team_fraglimit, "ui_team_fraglimit", "0", CVAR_ARCHIVE },
-	{ &ui_team_timelimit, "ui_team_timelimit", "20", CVAR_ARCHIVE },
+	{ &ui_team_fraglimit, "ui_team_fraglimit", "15", CVAR_ARCHIVE },
+	{ &ui_team_timelimit, "ui_team_timelimit", "10", CVAR_ARCHIVE },
 	{ &ui_team_friendly, "ui_team_friendly",  "1", CVAR_ARCHIVE },
 
 	{ &ui_ctf_capturelimit, "ui_ctf_capturelimit", "8", CVAR_ARCHIVE },
 	{ &ui_ctf_timelimit, "ui_ctf_timelimit", "30", CVAR_ARCHIVE },
-	{ &ui_ctf_friendly, "ui_ctf_friendly",  "0", CVAR_ARCHIVE },
+	{ &ui_ctf_friendly, "ui_ctf_friendly",  "1", CVAR_ARCHIVE },
 
 // Q3Rally Code Start
-	{ &ui_dom_capturelimit, "ui_dom_capturelimit", "0", CVAR_ARCHIVE },
-	{ &ui_dom_timelimit, "ui_dom_timelimit", "30", CVAR_ARCHIVE },
-	{ &ui_dom_friendly, "ui_dom_friendly", "0", CVAR_ARCHIVE },
+	{ &ui_dom_capturelimit, "ui_dom_capturelimit", "300", CVAR_ARCHIVE },
+	{ &ui_dom_timelimit, "ui_dom_timelimit", "15", CVAR_ARCHIVE },
+	{ &ui_dom_friendly, "ui_dom_friendly", "1", CVAR_ARCHIVE },
 	{ &ui_sigilLocator, "cg_sigilLocator", "1", CVAR_ARCHIVE },
 // Q3Rally Code END
 
