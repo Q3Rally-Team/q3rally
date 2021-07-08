@@ -269,6 +269,8 @@ void CG_SetConfigValues( void ) {
       cgs.sigil[0] = s[0] - '0';
       cgs.sigil[1] = s[1] - '0';
       cgs.sigil[2] = s[2] - '0';
+      cgs.sigil[3] = s[3] - '0';
+      cgs.sigil[4] = s[4] - '0';
     }
     
 #ifdef MISSIONPACK
@@ -415,6 +417,8 @@ static void CG_ConfigStringModified( void ) {
 		        cgs.sigil[0] = str[0] - '0';
 		        cgs.sigil[1] = str[1] - '1';
 		        cgs.sigil[2] = str[2] - '2';
+                cgs.sigil[3] = str[3] - '3';
+                cgs.sigil[4] = str[4] - '4';
 	       }
         }
 	else if ( num == CS_SHADERSTATE ) {
@@ -448,7 +452,7 @@ static void CG_AddToTeamChat( const char *str ) {
 		return;
 	}
 
-	len = 0;
+
 
 	p = cgs.teamChatMsgs[cgs.teamChatPos % chatHeight];
 	*p = 0;

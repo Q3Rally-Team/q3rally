@@ -791,7 +791,7 @@ gitem_t	bg_itemlist[] =
 /* pickup */	"Invisibility",
 		30,
 		IT_POWERUP,
-		PW_INVIS,
+        PW_INVIS,
 /* precache */ "",
 /* sounds */ ""
 	},
@@ -898,10 +898,10 @@ Only in Domination games
   {
     "team_DOMINATION_sigil_red",
     NULL,
-    { "models/flags/r_flag.md3",
+    { "models/flags/r_sigil.md3",
     0, 0, 0 },
-/* icon */    "icons/iconf_red1",
-/* pickup */  "Flag",
+/* icon */    "icons/icons_red",
+/* pickup */  "Sigil",
     0,
     IT_SIGIL,
     PW_SIGILRED,
@@ -915,10 +915,10 @@ Only in Domination games
   {
     "team_DOMINATION_sigil_blue",
     NULL,
-    { "models/flags/b_flag.md3",
+    { "models/flags/b_sigil.md3",
     0, 0, 0 },
-/* icon */    "icons/iconf_blu1",
-/* pickup */  "Flag",
+/* icon */    "icons/icons_blu",
+/* pickup */  "Sigil",
     0,
     IT_SIGIL,
     PW_SIGILBLUE,
@@ -932,10 +932,10 @@ Only in Domination games
   {
     "team_DOMINATION_sigil_green",
     NULL,
-    { "models/flags/g_flag.md3",
+    { "models/flags/g_sigil.md3",
     0, 0, 0 },
-/* icon */    "icons/iconf_green1",
-/* pickup */  "Flag",
+/* icon */    "icons/icons_green",
+/* pickup */  "Sigil",
     0,
     IT_SIGIL,
     PW_SIGILGREEN,
@@ -949,10 +949,10 @@ Only in Domination games
   {
     "team_DOMINATION_sigil_yellow",
     NULL,
-    { "models/flags/y_flag.md3",
+    { "models/flags/y_sigil.md3",
     0, 0, 0 },
-/* icon */    "icons/iconf_yell1",
-/* pickup */  "Flag",
+/* icon */    "icons/icons_yellow",
+/* pickup */  "Sigil",
     0,
     IT_SIGIL,
     PW_SIGILYELLOW,
@@ -966,10 +966,10 @@ Only in Domination games
   {
     "team_DOMINATION_sigil",
     NULL,
-    { "models/flags/n_flag.md3",
+    { "models/flags/n_sigil.md3",
     0, 0, 0 },
-/* icon */    "icons/iconf_neutral1",
-/* pickup */  "Flag",
+/* icon */    "icons/icons_neutral",
+/* pickup */  "Sigil",
     0,
     IT_SIGIL,
     PW_SIGILWHITE,
@@ -1530,12 +1530,18 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
         
         // Q3Rally Code Start
 	case IT_SIGIL:
-	  // red team cannot touch a red sigil
-	  if (ps->persistant[PERS_TEAM] == TEAM_RED && ent->powerups == PW_SIGILRED)
-	     return qfalse;
-	  // blue team cannot touch a blue sigil
-	  else if (ps->persistant[PERS_TEAM] == TEAM_BLUE && ent->powerups == PW_SIGILBLUE)
-	     return qfalse;
+        // red team cannot touch a red sigil
+        if (ps->persistant[PERS_TEAM] == TEAM_RED && ent->powerups == PW_SIGILRED)
+            return qfalse;
+        // blue team cannot touch a blue sigil
+        else if (ps->persistant[PERS_TEAM] == TEAM_BLUE && ent->powerups == PW_SIGILBLUE)
+            return qfalse;
+        // green team cannot touch a green sigil
+        else if (ps->persistant[PERS_TEAM] == TEAM_GREEN && ent->powerups == PW_SIGILGREEN)
+            return qfalse;
+        // yellow team cannot touch a yellow sigil
+        else if (ps->persistant[PERS_TEAM] == TEAM_YELLOW && ent->powerups == PW_SIGILYELLOW)
+            return qfalse;
 	  else
 	     return qtrue;
 // Q3Rally Code END

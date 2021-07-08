@@ -534,15 +534,14 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 CG_DrawSigilHUD
 =======================
 */
+
 void CG_DrawSigilHUD( void ) {
-                      int i, x=480, y=0;
+
+                      int i, x=440, y=0;
                       for (i=0; i<MAX_SIGILS; i++) {
                       switch ( cgs.sigil[i] )
+                      
                 {
-
-                case SIGIL_ISWHITE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
-                    break;
 
                 case SIGIL_ISRED:
                     CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
@@ -559,9 +558,15 @@ void CG_DrawSigilHUD( void ) {
                 case SIGIL_ISYELLOW:
                     CG_DrawPic( x, y, 18, 18, cgs.media.yellowsigilShader );
                     break;
+                
+                case SIGIL_ISWHITE:
+                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
+                    break;
+                    
                 }
+                
               x+= 19;
-            }    
+            }
 }
 
 /*
@@ -3098,8 +3103,8 @@ static void CG_DrawWarmup( void ) {
 //=======================================
 //CG_DrawSigilLocationInfo
 //=======================================
-void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, vec4_t color )
-          {
+void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, vec4_t color )    {
+
           int x = 320, y = 240;
           int w = 320, h = 240;
           float angle, distance;
@@ -3175,16 +3180,16 @@ static void CG_DrawSigilLocations( void ) {
     VectorCopy(target->lerpOrigin,end);
     
     if (target->currentState.modelindex == redSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.redFlagShader[0], colorRed);
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.redsigilShader, colorRed);
     
     else if (target->currentState.modelindex == blueSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.blueFlagShader[0], colorBlue);
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.bluesigilShader, colorBlue);
     
     else if (target->currentState.modelindex == greenSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.greenFlagShader[0], colorGreen);
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.greensigilShader, colorGreen);
         
     else if (target->currentState.modelindex == yellowSigil)
-        CG_DrawSigilLocationInfo(origin, end, cgs.media.yellowFlagShader[0], colorYellow);
+        CG_DrawSigilLocationInfo(origin, end, cgs.media.yellowsigilShader, colorYellow);
         
     else if (target->currentState.modelindex == whiteSigil)
         CG_DrawSigilLocationInfo(origin, end, cgs.media.sigilShader, colorWhite);

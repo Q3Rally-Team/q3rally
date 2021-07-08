@@ -841,13 +841,18 @@ typedef struct {
     qhandle_t   greenFlagModel;
     qhandle_t   yellowFlagModel;
 	qhandle_t	neutralFlagModel;
+    qhandle_t   redSigilModel;
+    qhandle_t   blueSigilModel;
+    qhandle_t   greenSigilModel;
+    qhandle_t   yellowSigilModel;
+    qhandle_t   neutralSigilModel;
 	qhandle_t	redFlagShader[3];
 	qhandle_t	blueFlagShader[3];
     qhandle_t   greenFlagShader[3];
     qhandle_t   yellowFlagShader[3];
 	qhandle_t	flagShader[4];
 // Q3Rally Code Start
-	qhandle_t  sigilShader;
+	qhandle_t   sigilShader;
     qhandle_t   redsigilShader;
     qhandle_t   bluesigilShader;
     qhandle_t   greensigilShader;

@@ -80,6 +80,10 @@ void Team_InitGame( void ) {
 	  Team_SetSigilStatus( 1, SIGIL_ISWHITE );
 	  teamgame.sigil[2].status = -1; // Invalid to force update
 	  Team_SetSigilStatus( 2, SIGIL_ISWHITE );
+      teamgame.sigil[3].status = -1; // Invalid to force update
+	  Team_SetSigilStatus( 3, SIGIL_ISWHITE );
+	  teamgame.sigil[4].status = -1; // Invalid to force update
+	  Team_SetSigilStatus( 4, SIGIL_ISWHITE );
 	  break;
 	  
 // Q3Rally Code END
@@ -110,6 +114,12 @@ void Team_EndGame( void ) {
 		}
 		if( teamgame.sigil[2].entity ) {
 			teamgame.sigil[2].entity->nextthink = 0;
+		}
+        if( teamgame.sigil[3].entity ) {
+			teamgame.sigil[3].entity->nextthink = 0;
+		}
+        if( teamgame.sigil[4].entity ) {
+			teamgame.sigil[4].entity->nextthink = 0;
 		}
 	}
 }
@@ -300,13 +310,15 @@ void Team_SetSigilStatus( int sigilNum, sigilStatus_t status ) {
     
     
     if( modified ) {
-            char st[4];
+            char st[6];
             
-            //send all 3 sigils' status to the configstring
+            //send all 5 sigils' status to the configstring
             st[0] = dominationSigilStatusRemap[teamgame.sigil[0].status];
             st[1] = dominationSigilStatusRemap[teamgame.sigil[1].status];
             st[2] = dominationSigilStatusRemap[teamgame.sigil[2].status];
-            st[3] = 0;
+            st[3] = dominationSigilStatusRemap[teamgame.sigil[3].status];
+            st[4] = dominationSigilStatusRemap[teamgame.sigil[4].status];
+            st[5] = 0;
             
             trap_SetConfigstring( CS_SIGILSTATUS, st );
             

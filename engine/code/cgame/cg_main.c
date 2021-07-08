@@ -1098,6 +1098,11 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag.md3" );
         cgs.media.greenFlagModel = trap_R_RegisterModel( "models/flags/g_flag.md3" );
         cgs.media.yellowFlagModel = trap_R_RegisterModel( "models/flags/y_flag.md3" );
+        cgs.media.redSigilModel = trap_R_RegisterModel( "models/flags/r_sigil.md3" );
+        cgs.media.blueSigilModel = trap_R_RegisterModel( "models/flags/b_sigil.md3" );
+        cgs.media.greenSigilModel = trap_R_RegisterModel( "models/flags/g_sigil.md3" );
+        cgs.media.yellowSigilModel = trap_R_RegisterModel( "models/flags/y_sigil.md3" );
+        cgs.media.neutralSigilModel = trap_R_RegisterModel( "models/flags/n_sigil.md3" );
 		cgs.media.redFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
 		cgs.media.redFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_red2" );
 		cgs.media.redFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_red3" );
@@ -1111,11 +1116,11 @@ static void CG_RegisterGraphics( void ) {
         cgs.media.yellowFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_yell2" );
         cgs.media.yellowFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_yell3" );
 // Q3Rally Code Start
-        cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_neutral1" );
-        cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
-        cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );
-        cgs.media.greensigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_green1" );
-        cgs.media.yellowsigilShader = trap_R_RegisterShaderNoMip( "icons/iconf_yell1" );       
+        cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/icons_neutral" );
+        cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/icons_red" );
+        cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/icons_blu" );
+        cgs.media.greensigilShader = trap_R_RegisterShaderNoMip( "icons/icons_green" );
+        cgs.media.yellowsigilShader = trap_R_RegisterShaderNoMip( "icons/icons_yellow" );       
 // Q3Rally Code END
 
 #ifdef MISSIONPACK
@@ -2182,7 +2187,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
 	cgs.flagStatus = -1;
 // Q3Rally Code Start
-	cgs.sigil[0] = cgs.sigil[1] = cgs.sigil[2] = -1; // Sigil Reset
+	cgs.sigil[0] = cgs.sigil[1] = cgs.sigil[2] = cgs.sigil[3] = cgs.sigil[4] = -1; // Sigil Reset
 // Q3Rally Code END
 	// old servers
 

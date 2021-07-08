@@ -122,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -192,7 +192,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -886,21 +886,21 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\game\g_client.c
-2=engine\code\game\g_missile.c
-3=engine\code\game\g_weapon.c
+1=engine\code\q3_ui\ui_playersettings.c
+2=engine\code\cgame\cg_draw.c
+3=engine\code\cgame\cg_local.h
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
-TopLine=55
+TopLine=51
 Caret=36,70
-[engine\code\game\g_client.c]
-TopLine=1651
-Caret=9,1672
-[engine\code\game\g_missile.c]
-TopLine=15
-Caret=27,34
-[engine\code\game\g_weapon.c]
-TopLine=734
-Caret=27,742
+[engine\code\q3_ui\ui_playersettings.c]
+TopLine=303
+Caret=1,311
+[engine\code\cgame\cg_draw.c]
+TopLine=547
+Caret=2,570
+[engine\code\cgame\cg_local.h]
+TopLine=1352
+Caret=1,1368
