@@ -1,12 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_demobowl"
+
+//IN-GAME MAP NAME
 longname "Destroy Yourself Now"
-bots "Jennifer Samuel Vlad"
-fraglimit 20
-type "q3r_dm q3r_team_dm q3r_derby"
-starts "17"
-observerspots "0"
-weapons "3"
-powerups "0"
+
+//AUTHOR OF THE MAP
 author "Stecki"
+
+//GAME TYPE SUPPORTS
+type "q3r_dm q3r_team_dm q3r_derby"
+
+//CUSTOM BOTS
+bots "Jennifer Samuel Vlad"
+
+//PLAYER STARTS
+starts "17"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots " "
+
+//WEAPONS
+weapons "LG,RL,RG"
+
+//POWERUPS
+powerups "0"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport "Good"
+
+//TEAMS
+teams "All"
 }

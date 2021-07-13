@@ -1,15 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_valley"
+
+//IN-GAME MAP NAME
 longname "Desert Valley"
-bots "Ivan Tony Bee"
-fraglimit 6
-type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
-starts "6"
-laps "6"
-length "0.338 KM."
-checkpoints "12"
-observerspots "0"
-weapons "0"
+
+//AUTHOR OF THE MAP
 author "Dipso (updated by insellium)"
+
+//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+
+//CUSTOM BOTS
+bots "Ivan Tony Bee"
+
+//PLAYER STARTS
+starts "12"
+
+//LAPTIME
+laptime "28 sec"
+
+//CHECKPOINTS
+checkpoints "12"
+
+//OBSERVER SPOTS
+observerspots "0"
+
+//WEAPONS
+weapons "PG,RL,SG"
+
+//POWERUPS
 powerups "3"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
 }

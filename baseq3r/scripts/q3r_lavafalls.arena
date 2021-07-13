@@ -1,15 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_lavafalls"
+
+//IN-GAME MAP NAME
 longname "Lava Falls"
-bots "Steve Paul Tanya"
+
+//AUTHOR OF THE MAP
 author "Cyberdemon (updated by insellium)"
-fraglimit 5
+
+//GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+
+//CUSTOM BOTS
+bots "Steve Paul Tanya"
+
+//PLAYER STARTS
 starts "14"
-laps "4"
-length "0.610 miles"
+
+//LAPTIME
+laptime "1 min 07 sec"
+
+//CHECKPOINTS
 checkpoints "22"
+
+//OBSERVER SPOTS
 observerspots "0"
-weapons "3"
+
+//WEAPONS
+weapons "FT,PG,RG,RL"
+
+//POWERUPS
 powerups "1"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
 }

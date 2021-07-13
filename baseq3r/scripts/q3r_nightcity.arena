@@ -1,17 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_nightcity"
+
+//IN-GAME MAP NAME
 longname "Night City"
-bots "Tony Minori Carla"
-fraglimit "30"
-type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
-starts "16"
-laps "10"
-length "0.351 Miles / 0.500 Miles"
-checkpoints "9 / 12"
-observerspots "9"
-weapons "5"
-powerups "6"
-reversable "1"
+
+//AUTHOR OF THE MAP
 author "Amphetamine"
+
+//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+
+//CUSTOM BOTS
+bots "Tony Minori Carla"
+
+//PLAYER STARTS
+starts "16"
+
+//LAPTIME
+laptime "34 sec & 45 sec"
+
+//CHECKPOINTS
+checkpoints "9 & 12"
+
+//OBSERVER SPOTS
+observerspots "9"
+
+//WEAPONS
+weapons "GL,RG,RL"
+
+//POWERUPS
+powerups "6"
+
+//REVERSABLE
+reversable "1"
+
+//TRACK LENGTHS
 tracklengths "0 1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
 }

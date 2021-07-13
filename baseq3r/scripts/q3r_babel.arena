@@ -1,12 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_babel"
+
+//IN-GAME MAP NAME
 longname "Babel's Military Base"
-bots "Tobias Ivan Josh Steve Tanya Tony"
-fraglimit 150
+
+//AUTHOR OF THE MAP
+author "Marc Fontaine (insellium remix)"
+
+//GAME TYPE SUPPORTS
 type "q3r_dom"
+
+//CUSTOM BOTS
+bots ""
+
+//PLAYER STARTS
 starts "16"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints "20"
+
+//OBSERVER SPOTS
 observerspots "1"
-weapons "4"
+
+//WEAPONS
+weapons "SG,RG,PG,RL,BFG"
+
+//POWERUPS
 powerups "0"
-author "Marc Fontaine & insellium"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport "Bad"
+
+//TEAMS
+teams "2-4"
 }

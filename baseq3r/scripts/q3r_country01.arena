@@ -1,15 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_country01"
+
+//IN-GAME MAP NAME
 longname "Roll On Down The Line"
-bots "Bee Dean Minori"
-fraglimit 5
-type "q3r_racing q3r_team_racing"
-starts "9"
-laps "4"
-length "0.658 miles"
-checkpoints "20"
-observerspots "12"
-weapons "0"
-powerups "0"
+
+//AUTHOR OF THE MAP
 author "Stecki"
+
+//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing"
+
+//CUSTOM BOTS
+bots "Bee Dean Minori"
+
+//PLAYER STARTS
+starts "9"
+
+//LAPTIME
+laptime "55 sec"
+
+//CHECKPOINTS
+checkpoints "20"
+
+//OBSERVER SPOTS
+observerspots "12"
+
+//WEAPONS
+weapons "0"
+
+//POWERUPS
+powerups "8"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "2"
+
+//BOT SUPPORTS
+botsupport "Very Good!"
+
+//TEAMS
+teams "All"
 }

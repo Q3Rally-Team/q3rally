@@ -1,16 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_sk1"
+
+//IN-GAME MAP NAME
 longname "Canyon Cruise"
-bots "Samuel Jim Sam"
-fraglimit 5
-type "q3r_racing q3r_team_racing"
-starts "8"
-laps "6"
-length "0.427 miles"
-checkpoints "14"
-observerspots "0"
-weapons "0"
-powerups "0"
-reversable "0"
+
+//AUTHOR OF THE MAP
 author "SystemKrash (updated by insellium)"
+
+//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing"
+
+//CUSTOM BOTS
+bots "Samuel Jim Sam"
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime "34 sec"
+
+//CHECKPOINTS
+checkpoints "14"
+
+//OBSERVER SPOTS
+observerspots "0"
+
+//WEAPONS
+weapons "0"
+
+//POWERUPS
+powerups "0"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
 }

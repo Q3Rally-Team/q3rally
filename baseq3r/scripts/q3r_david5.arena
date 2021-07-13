@@ -1,15 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_david5"
+
+//IN-GAME MAP NAME
 longname "Underground Battle Arena"
-bots "Jim Bobby Sam"
-type "q3r_dm q3r_team_dm q3r_derby"
-starts "4"
-laps "-"
-length "-"
-checkpoints "-"
-observerspots "0"
-weapons "4 RL"
-powerups "0"
-reversable "0"
+
+//AUTHOR OF THE MAP
 author "|CE"
+
+//GAME TYPE SUPPORTS
+type "q3r_dm q3r_team_dm q3r_derby"
+
+//CUSTOM BOTS
+bots "Jim Bobby Sam"
+
+//PLAYER STARTS
+starts "4"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots " "
+
+//WEAPONS
+weapons "RL,PG"
+
+//POWERUPS
+powerups "0"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport "Good"
+
+//TEAMS
+teams "All"
 }

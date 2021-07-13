@@ -1,15 +1,46 @@
 {
+//MAP FILE NAME
 map "q3r_downtown"
-longname "Down Town"
-bots "Tobias Josh Bee"
+
+//IN-GAME MAP NAME
+longname "DownTown"
+
+//AUTHOR OF THE MAP
 author "OliverV"
-fraglimit "10"
+
+//GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing"
+
+//CUSTOM BOTS
+bots "Tobias Josh Bee"
+
+//PLAYER STARTS
 starts "8"
-laps "8"
-length "2.5 miles"
+
+//LAPTIME
+laptime "1 min 04 sec"
+
+//CHECKPOINTS
 checkpoints "25"
-observerspots "nil"
+
+//OBSERVER SPOTS
+observerspots "0"
+
+//WEAPONS
 weapons "0"
+
+//POWERUPS
 powerups "0"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
 }
