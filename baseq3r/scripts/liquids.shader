@@ -1926,3 +1926,24 @@ textures/liquids/lavahell_2500_subd
 		tcMod turb 0 .2 0 .1
 	}
 }
+
+textures/q3r_liquids/lavabattlecanyon
+{
+qer_editorimage textures/q3r_liquids/protolava.tga
+	q3map_globaltexture
+	surfaceparm lava
+	surfaceparm nodlight
+	surfaceparm noimpact
+	surfaceparm nolightmap
+	q3map_surfacelight 600
+	cull disable
+deformVertexes wave 512 sin 0 7 0 0.4
+    { 
+        map textures/q3r_liquids/protolava.tga
+        rgbgen identity
+        tcmod scroll -.05 .001
+    }
+
+      fogparms ( .76 .73 .54 ) 30000
+ 
+}

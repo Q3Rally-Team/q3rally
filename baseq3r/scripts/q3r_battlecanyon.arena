@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_battlecanyon"
+
+//IN-GAME MAP NAME
+longname "Battle Canyon"
+
+//AUTHOR OF THE MAP
+author "P3rle & insellium"
+
+//GAME TYPE SUPPORTS
+type "q3r_derby q3r_dm q3r_team_dm"
+
+//CUSTOM BOTS
+bots ""
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots "1"
+
+//WEAPONS
+weapons "RL,PG,RG,SG,LG"
+
+//POWERUPS
+powerups "2 & Mines"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport " "
+
+//TEAMS
+teams "All"
+}
