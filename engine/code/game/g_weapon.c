@@ -539,22 +539,22 @@ PLASMA GUN - Altfire
 void Weapon_Plasmagun_Circular_Fire (gentity_t *ent) {
 	gentity_t	*m;
 //	gentity_t	*n;
-	vec3_t		temp, temp2;
+//	vec3_t		temp, temp2;
 	
 	//forward[0] += (float)sin( m->s.pos.trTime / m->s.pos.trDuration );
-	temp[0] = (float) sin( level.time * 2 * 3.14 / 1000.0);
-	temp[1] = 0; temp[2] = 0;
+//	temp[0] = (float) sin( level.time * 2 * 3.14 / 1000.0);
+//	temp[1] = 0; temp[2] = 0;
 	
-	temp2[0] = (float) cos( level.time * 2 * 3.14 / 1000.0);
-	temp2[1] = 0; temp2[2] = 0;
+//	temp2[0] = (float) cos( level.time * 2 * 3.14 / 1000.0);
+//	temp2[1] = 0; temp2[2] = 0;
 	
-	VectorAdd( forward, temp, temp);
-	VectorAdd( right, temp2, temp2);
-	VectorAdd( temp, temp2, temp2);
+//	VectorAdd( forward, temp, temp);
+//	VectorAdd( right, temp2, temp2);
+//	VectorAdd( temp, temp2, temp2);
 
 	//VectorMA( m->s.pos.trBase, 100, forward, temp2);
 
-	m = fire_plasma_bounce(ent, muzzle, temp2);
+	m = fire_plasma_bounce(ent, muzzle, forward);
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
 /*
