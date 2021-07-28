@@ -14,7 +14,13 @@ Fixed:
 - Removed unnecessary icons
 - CTF textures and icons updated
 - q3r_david5 preview fixed
-
+- Added the new Sigils and Icons for Domination
+- New strings in map info
+- New map - Battle Canyon
+- updated .arena files
+- updated dirtyfun.jpg reflect file
+- fixed plasmagun alt fire
+- fixed q3r_babel map
 
 new since v0.3
 
