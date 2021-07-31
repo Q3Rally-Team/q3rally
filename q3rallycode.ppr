@@ -887,32 +887,12 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\q3_ui\ui_rally_startserver.c
-2=engine\code\q3_ui\ui_local.h
-3=engine\code\q3_ui\ui_main.c
-4=engine\code\q3_ui\ui_rally_controls.c
-5=engine\code\game\g_weapon.c
-6=engine\code\game\g_missile.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\q3_ui\ui_rally_startserver.c
 [engine\code\qcommon\q_shared.h]
 TopLine=51
 Caret=36,70
 [engine\code\q3_ui\ui_rally_startserver.c]
-TopLine=1397
-Caret=36,1413
-[engine\code\q3_ui\ui_local.h]
-TopLine=44
-Caret=1,60
-[engine\code\q3_ui\ui_main.c]
-TopLine=225
-Caret=47,243
-[engine\code\q3_ui\ui_rally_controls.c]
-TopLine=93
-Caret=22,98
-[engine\code\game\g_weapon.c]
-TopLine=539
-Caret=45,557
-[engine\code\game\g_missile.c]
-TopLine=748
-Caret=1,768
+TopLine=253
+Caret=12,215

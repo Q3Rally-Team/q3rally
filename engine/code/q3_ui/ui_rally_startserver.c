@@ -203,16 +203,16 @@ char *UI_GetStatName(int num){
 		return "Start positions:";
 
 	case MS_LAPS:
-		return "Default number of laps:";
+		return "Laps:";
 
 	case MS_LAPTIME:
 		return "Laptime:";
 
 	case MS_NUMCHECKPOINTS:
-		return "Number of checkpoints:";
+		return "Checkpoints:";
 
 	case MS_NUMOBSERVERSPOTS:
-		return "Number of observer spots:";
+		return "Observer spots:";
 
 	case MS_NUMWEAPONS:
 		return "Weapons:";
@@ -1410,7 +1410,7 @@ static void ServerOptions_InitPlayerItems( void ) {
 
 	// init teams
 	if( s_serveroptions.gametype >= GT_TEAM ) {
-		for( n = 0; n < (PLAYER_SLOTS / 2); n++ ) {
+		for( n = 0; n < (PLAYER_SLOTS / 3); n++ ) {
 			s_serveroptions.playerTeam[n].curvalue = 0;
 		}
 		for( ; n < PLAYER_SLOTS; n++ ) {
