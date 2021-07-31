@@ -886,13 +886,33 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\q3_ui\ui_rally_startserver.c
+1=engine\code\q3_ui\ui_rally_options.c
+2=engine\code\cgame\cg_local.h
+3=engine\code\cgame\cg_main.c
+4=engine\code\cgame\cg_players.c
+5=engine\code\q3_ui\ui_rally_startserver.c
+6=engine\code\q3_ui\ui_local.h
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_rally_startserver.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=51
 Caret=36,70
+[engine\code\q3_ui\ui_rally_options.c]
+TopLine=152
+Caret=46,172
+[engine\code\cgame\cg_local.h]
+TopLine=1534
+Caret=1,1552
+[engine\code\cgame\cg_main.c]
+TopLine=347
+Caret=1,366
+[engine\code\cgame\cg_players.c]
+TopLine=2597
+Caret=5,2610
 [engine\code\q3_ui\ui_rally_startserver.c]
-TopLine=253
-Caret=12,215
+TopLine=228
+Caret=16,246
+[engine\code\q3_ui\ui_local.h]
+TopLine=332
+Caret=3,348

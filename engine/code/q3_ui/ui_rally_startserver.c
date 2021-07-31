@@ -162,8 +162,8 @@ char *UI_GetStatKey(int num){
 	case MS_NUMSTARTS:
 		return "starts";
 
-	case MS_LAPS:
-		return "laps";
+//	case MS_LAPS:
+//		return "laps";
 
 	case MS_LAPTIME:
 		return "laptime";
@@ -202,8 +202,8 @@ char *UI_GetStatName(int num){
 	case MS_NUMSTARTS:
 		return "Start positions:";
 
-	case MS_LAPS:
-		return "Laps:";
+//	case MS_LAPS:
+//		return "Laps:";
 
 	case MS_LAPTIME:
 		return "Laptime:";
@@ -243,8 +243,8 @@ char *UI_GetDefaultStatValue( int num ){
 	case MS_NUMSTARTS:
 		return "Unknown";
 
-	case MS_LAPS:
-		return "Unknown";
+//	case MS_LAPS:
+//		return "Unknown";
 
 	case MS_LAPTIME:
 		return "Unknown";

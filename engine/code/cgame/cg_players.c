@@ -2607,8 +2607,8 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 // Q3Rally Code Start
 	// UPDATE - enable this
-//	if ( cg_drawPositionSprites.integer && isRallyRace() &&
-	if ( isRallyRace() &&
+	if ( cg_drawPositionSprites.integer && isRallyRace() &&
+//	if ( isRallyRace() &&
 		cg_entities[cent->currentState.number].currentPosition >= 1 &&
 		cg_entities[cent->currentState.number].positionChangeTime + 5000 > cg.time) {
 		CG_PlayerFloatSpriteField( cent, cg_entities[cent->currentState.number].currentPosition );
