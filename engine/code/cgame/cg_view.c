@@ -724,9 +724,9 @@ static int CG_CalcViewValues( void ) {
 		cg.refdefViewAngles[ROLL] = 0;
 
 		angle = abs(AngleDifference(cg.refdefViewAngles[YAW], oldAngles[YAW]));
-		scale = floor(angle / 5 + 1); //changed from 10 to 5
+		scale = floor(angle / 10 + 1); //changed back to 10 from 5
 
-		scale *= (2 + cg_tightCamTracking.value); // changed from 1 to 2
+		scale *= (1 + cg_tightCamTracking.value); // changed from 1 to 2
 
 		f = scale * cg.frametime / 1000.0F;
 		if (f > 1)

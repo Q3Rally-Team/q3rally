@@ -252,9 +252,9 @@ static void Q3ROptions_StatusBar( void *self )
 
 	case ID_CONTROL_MODE:
 		if( s_q3roptions.controlMode.curvalue == 0 )
-			text = "Mouse control allows a freelook like normal Q3A and the car\n turns towards the direction you are looking.";
+			text = "Mouse control allows a freelook like normal Q3A and the Car turns towards the direction you are looking.";
 		else
-			text = "Joystick control maps the axis directly to the wheel angle.";
+			text = "Keyboard/Joystick control maps the axis directly to the wheel angle.";
 		break;
 
 	case ID_ATMOSPHERIC_LEVEL:
