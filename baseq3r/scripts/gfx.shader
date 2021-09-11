@@ -1035,6 +1035,17 @@ gfx/2d/bigchars
 	}
 }
 
+gfx/2d/bigchars_plates
+{
+	nopicmip
+	nomipmaps
+	{
+		map gfx/2d/bigchars_plates.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbgen vertex
+	}
+}
+
 gfx/2d/select
 {
 	nopicmip

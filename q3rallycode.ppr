@@ -889,6 +889,9 @@ q3rallycode
 1=engine\code\game\g_spawn.c
 2=engine\code\game\g_target.c
 3=engine\code\cgame\cg_rally_platetools.c
+4=engine\code\cgame\cg_main.c
+5=engine\code\client\cl_main.c
+6=engine\code\q3_ui\ui_qmenu.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -902,5 +905,14 @@ Caret=1,153
 TopLine=24
 Caret=3,41
 [engine\code\cgame\cg_rally_platetools.c]
-TopLine=131
-Caret=17,152
+TopLine=127
+Caret=38,151
+[engine\code\cgame\cg_main.c]
+TopLine=2159
+Caret=85,2176
+[engine\code\client\cl_main.c]
+TopLine=3114
+Caret=67,3131
+[engine\code\q3_ui\ui_qmenu.c]
+TopLine=2219
+Caret=72,2236
