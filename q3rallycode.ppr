@@ -894,7 +894,7 @@ q3rallycode
 6=engine\code\q3_ui\ui_qmenu.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\cgame\cg_main.c
 [engine\code\qcommon\q_shared.h]
 TopLine=59
 Caret=36,70
@@ -909,10 +909,10 @@ TopLine=127
 Caret=38,151
 [engine\code\cgame\cg_main.c]
 TopLine=2159
-Caret=85,2176
+Caret=72,2175
 [engine\code\client\cl_main.c]
 TopLine=3114
-Caret=67,3131
+Caret=61,3130
 [engine\code\q3_ui\ui_qmenu.c]
 TopLine=2219
-Caret=72,2236
+Caret=66,2235
