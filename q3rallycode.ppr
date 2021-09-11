@@ -122,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -886,25 +886,21 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\q3_ui\ui_rally_options.c
-2=engine\code\cgame\cg_view.c
-3=engine\code\cgame\cg_consolecmds.c
-4=engine\code\cgame\cg_main.c
+1=engine\code\game\g_spawn.c
+2=engine\code\game\g_target.c
+3=engine\code\cgame\cg_rally_platetools.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=59
 Caret=36,70
-[engine\code\q3_ui\ui_rally_options.c]
-TopLine=237
-Caret=21,257
-[engine\code\cgame\cg_view.c]
-TopLine=713
-Caret=14,729
-[engine\code\cgame\cg_consolecmds.c]
-TopLine=455
-Caret=1,470
-[engine\code\cgame\cg_main.c]
-TopLine=2284
-Caret=1,2300
+[engine\code\game\g_spawn.c]
+TopLine=134
+Caret=1,153
+[engine\code\game\g_target.c]
+TopLine=24
+Caret=3,41
+[engine\code\cgame\cg_rally_platetools.c]
+TopLine=131
+Caret=17,152

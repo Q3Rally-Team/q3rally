@@ -148,7 +148,7 @@ static qboolean WriteNameOnTexture(TextureImage *texture, const char *name, int 
 	int				t, f, len, cnt;
 	TextureImage	font;
 
-	if (!LoadTGA(&font, "gfx/2d/bigchars.tga"))
+	if (!LoadTGA(&font, "gfx/2d/bigchars_plates.tga"))
 		return qfalse;
 //	LoadTGA(&font, "menu/art/font1_prop.tga");
 
