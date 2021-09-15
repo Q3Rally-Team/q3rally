@@ -614,6 +614,23 @@ models/players/camaro/lines2_yellow
 	}
 }
 
+models/players/camaro/mirror_yellow
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_yellow.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //DEFAULT - BLUE
 
 
@@ -668,6 +685,23 @@ models/players/camaro/lines2_blue
 	}
 }
 
+models/players/camaro/mirror_blue
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_blue.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //DEFAULT - GREEN
 
 models/players/camaro/body_green
@@ -714,6 +748,23 @@ models/players/camaro/lines2_green
 	}
 	{
 		map models/players/camaro/lines2_green.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/mirror_green
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_green.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -775,6 +826,23 @@ models/players/camaro/lines2_red
 	}
 }
 
+models/players/camaro/mirror_red
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_red.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //DEFAULT - WHITE
 
 models/players/camaro/body_white
@@ -821,6 +889,23 @@ models/players/camaro/lines2_white
 	}
 	{
 		map models/players/camaro/lines2_white.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/camaro/mirror_white
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_white.tga
 		alphaGen const 0.8
 		blendFunc blend
 		depthWrite
@@ -882,6 +967,23 @@ models/players/camaro/lines2_black
 	}
 }
 
+models/players/camaro/mirror_black
+{
+	{
+//		map textures/effects/tinfx2b.tga
+		map textures/reflect/reflect.jpg
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+	{
+		map models/players/camaro/mirror_black.tga
+		alphaGen const 0.8
+		blendFunc blend
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
 //SHARED - GLASS
 
 
@@ -928,7 +1030,6 @@ models/players/macdaddy/tlites
 		rgbGen identity
 	}    
 }
-
 
 //MACDADDY COLORS
 
