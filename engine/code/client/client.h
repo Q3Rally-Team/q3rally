@@ -580,7 +580,6 @@ void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
 void	SCR_DrawSmallChar( int x, int y, int ch );
 
-
 //
 // cl_cin.c
 //

@@ -598,7 +598,7 @@ void Con_DrawNotify (void)
 				currentColor = ColorIndexForNumber( text[x]>>8 );
 				re.SetColor( g_color_table[currentColor] );
 			}
-			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v-336, text[x] & 0xff );
+			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v+300, text[x] & 0xff );
 		}
 
 		v += SMALLCHAR_HEIGHT;
@@ -615,12 +615,12 @@ void Con_DrawNotify (void)
 	{
 		if (chat_team)
 		{
-			SCR_DrawBigString (8, v, "Team Chat:", 1.0f, qfalse );
+			SCR_DrawBigString (8, v, "Team Chat: ", 1.0f, qfalse );
 			skip = 10;
 		}
 		else
 		{
-			SCR_DrawBigString (8, v, "Chat:", 1.0f, qfalse );
+			SCR_DrawBigString (8, v, "Chat: ", 1.0f, qfalse );
 			skip = 5;
 		}
 

@@ -892,6 +892,7 @@ q3rallycode
 4=engine\code\cgame\cg_local.h
 5=engine\code\client\cl_console.c
 6=engine\code\client\cl_scrn.c
+7=engine\code\client\client.h
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -911,8 +912,11 @@ Caret=31,2597
 TopLine=732
 Caret=1,748
 [engine\code\client\cl_console.c]
-TopLine=559
-Caret=9,576
+TopLine=603
+Caret=36,623
 [engine\code\client\cl_scrn.c]
-TopLine=231
-Caret=1,191
+TopLine=198
+Caret=1,216
+[engine\code\client\client.h]
+TopLine=563
+Caret=48,581
