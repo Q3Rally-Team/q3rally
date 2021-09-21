@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.3c_r434"   
+#define PRODUCT_VERSION "v0.3c_r436"   
 #endif
 
 
@@ -1148,7 +1148,7 @@ typedef struct {
 // in order from highest priority to lowest
 // if none of the catchers are active, bound key strings will be executed
 #define KEYCATCH_CONSOLE		0x0001
-#define	KEYCATCH_UI					0x0002
+#define	KEYCATCH_UI				0x0002
 #define	KEYCATCH_MESSAGE		0x0004
 #define	KEYCATCH_CGAME			0x0008
 

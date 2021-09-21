@@ -573,7 +573,7 @@ void Con_DrawNotify (void)
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
 
-	v = 0;
+	v = 336;
 	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
 	{
 		if (i < 0)
@@ -582,7 +582,7 @@ void Con_DrawNotify (void)
 		if (time == 0)
 			continue;
 		time = cls.realtime - time;
-		if (time > con_notifytime->value*1000)
+		if (time > con_notifytime->value*2000)
 			continue;
 		text = con.text + (i % con.totallines)*con.linewidth;
 
@@ -598,7 +598,7 @@ void Con_DrawNotify (void)
 				currentColor = ColorIndexForNumber( text[x]>>8 );
 				re.SetColor( g_color_table[currentColor] );
 			}
-			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v, text[x] & 0xff );
+			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v-336, text[x] & 0xff );
 		}
 
 		v += SMALLCHAR_HEIGHT;
@@ -615,12 +615,12 @@ void Con_DrawNotify (void)
 	{
 		if (chat_team)
 		{
-			SCR_DrawBigString (8, v, "say_team:", 1.0f, qfalse );
+			SCR_DrawBigString (8, v, "Team Chat:", 1.0f, qfalse );
 			skip = 10;
 		}
 		else
 		{
-			SCR_DrawBigString (8, v, "say:", 1.0f, qfalse );
+			SCR_DrawBigString (8, v, "Chat:", 1.0f, qfalse );
 			skip = 5;
 		}
 

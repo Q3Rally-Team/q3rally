@@ -2594,7 +2594,7 @@ void BotGoForPowerups(bot_state_t *bs) {
 
 	//don't avoid any of the powerups anymore
 	BotDontAvoid(bs, "Quad Damage");
-	BotDontAvoid(bs, "Regeneration");
+	BotDontAvoid(bs, "Auto Repair");
 	BotDontAvoid(bs, "Battle Suit");
 	BotDontAvoid(bs, "Speed");
 	BotDontAvoid(bs, "Invisibility");
