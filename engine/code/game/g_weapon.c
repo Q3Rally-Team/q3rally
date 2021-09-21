@@ -610,7 +610,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-	damage = 17 * s_quadFactor;
+	damage = 50 * s_quadFactor;
 
 	VectorMA (muzzle, 8192, forward, end);
 
@@ -821,9 +821,9 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 	} else {
 		// check for "impressive" reward sound
 		ent->client->accurateCount += hits;
-		if ( ent->client->accurateCount >= 2 )
+		if ( ent->client->accurateCount >= 4 )
 		{
-			ent->client->accurateCount -= 2;
+			ent->client->accurateCount -= 4;
 			ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
 			// add the sprite over the player's head
 			ent->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
