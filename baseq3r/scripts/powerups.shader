@@ -129,6 +129,18 @@ models/powerups/quad/quad
 	}
 }
 
+models/powerups/quad/quadpurple
+{
+	{
+		map textures/effects/quadpurple.tga
+		blendfunc GL_ONE GL_ZERO
+		tcGen environment
+		rgbGen identity
+			tcmod rotate 30
+			tcmod scroll 1 .1
+	}
+}
+
 // ------------------------------------------------------------
 // 9.turbo
 // ------------------------------------------------------------
@@ -402,6 +414,63 @@ models/powerups/armor/energy_red1
 // ------------------------------------------------------------
 // 17.health
 // ------------------------------------------------------------
+models/powerups/health/megabox
+{
+	{
+		map models/powerups/health/box.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map models/powerups/health/lights.tga
+		blendfunc blend
+		rgbGen const ( 0 0.4 1 )
+		alphaGen wave sawtooth 0 1 0 1 
+	}
+}
+
+models/powerups/health/largebox
+{
+	{
+		map models/powerups/health/box.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map models/powerups/health/lights.tga
+		blendfunc blend
+		rgbGen const ( 1 0 0 )
+		alphaGen wave sawtooth 0 1 0 1 
+	}
+}
+
+models/powerups/health/mediumbox
+{
+	{
+		map models/powerups/health/box.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map models/powerups/health/lights.tga
+		blendfunc blend
+		rgbGen const ( 1 1 0 )
+		alphaGen wave sawtooth 0 1 0 1 
+	}
+}
+
+models/powerups/health/smallbox
+{
+	{
+		map models/powerups/health/box.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map models/powerups/health/lights.tga
+		blendfunc blend
+		rgbGen const ( 0 1 0 )
+		alphaGen wave sawtooth 0 1 0 1 
+	}
+}
+
+//HEALTHBOX EFFECTS
 
 models/powerups/health/red2
 {	
@@ -442,22 +511,19 @@ models/powerups/health/blue_sphere
 	}
 }
 
-models/powerups/health/green
-{
-	
+models/powerups/health/mega
+{	
 	{
-		map textures/effects/envmaprail.tga
+		map textures/effects/tinfx2b.tga
 		tcGen environment
-		
+		blendFunc	add
+		rgbGen lightingdiffuse
 	}
-}
-
-models/powerups/health/green_sphere
-{
 	{
-		map textures/reflect/reflect.jpg
-		tcGen environment
-		blendfunc GL_ONE GL_ONE
+		map textures/sfx/proto_zzztblu3.tga
+		rgbGen identity
+		tcMod turb 1 1 0.5 0.3
+		tcGen environment 
 	}
 }
 
@@ -491,39 +557,14 @@ models/powerups/health/mega2
 	}
 }
 
-models/powerups/health/red
-{	
-	
-	{
-		map textures/effects/envmapgold.tga
-                tcGen environment
-		blendfunc GL_ONE GL_ZERO
-		
-	}
-        {
-		map textures/sfx/kenelectric.tga
-                tcmod scale 2 2
-                tcmod rotate 333
-                tcmod scroll 9 9
-		blendfunc GL_ONE GL_ONE
-		
-	}
-}
-
-models/powerups/health/red_sphere
-{
-	{
-		map textures/reflect/reflect.jpg
-                tcGen environment
-                tcmod rotate 33
-                tcmod scroll 1 1
-		blendfunc GL_ONE GL_ONE
-	}
-}
-
 models/powerups/health/yellow
 {
-	
+	{
+		map textures/effects/tinfx2b.tga
+		tcGen environment
+		blendFunc	add
+		rgbGen lightingdiffuse
+	}
 	{
 		map textures/effects/envmapyel.jpg
                 tcGen environment
@@ -542,72 +583,19 @@ models/powerups/health/yellow_sphere
 	}
 }
 
-models/powerups/health/yellow
-{
-	
-	{
-		map textures/effects/envmapyel.jpg
-                tcGen environment
-		//blendfunc GL_ONE GL_ONE
-		
-	}
-        
-}
-models/powerups/health/yellow_sphere
-{
-	{
-		map textures/reflect/reflect.jpg
-		tcGen environment
-		blendfunc GL_ONE GL_ONE
-	}
-}
-
 models/powerups/health/red
 {	
-	
 	{
-		map textures/effects/envmapgold.tga
-                tcGen environment
-		blendfunc GL_ONE GL_ZERO
-		
+		map textures/effects/tinfx2b.tga
+		tcGen environment
+		blendFunc	add
+		rgbGen lightingdiffuse
 	}
-        {
-		map textures/sfx/kenelectric.tga
-                tcmod scale 2 2
-                tcmod rotate 333
-                tcmod scroll 9 9
-		blendfunc GL_ONE GL_ONE
-		
-	}
-}
-
-models/powerups/health/mega2
-{	
-	
 	{
-		map textures/effects/envmapblue.tga
-                tcGen environment
-		blendfunc GL_ONE GL_ZERO
-		
-	}
-        {
-		map textures/sfx/kenelectric.tga
-                tcmod scale 2 2
-                tcmod rotate 333
-                tcmod scroll 9 9
-		blendfunc GL_ONE GL_ONE
-		
-	}
-}
-
-models/powerups/health/mega1
-{
-	{
-		map textures/effects/envmapblue2.tga
-                tcGen environment
-                tcmod rotate 33
-                tcmod scroll 1 1
-		blendfunc GL_ONE GL_ONE
+		map textures/sfx/proto_zzzt.tga
+		rgbGen identity
+		tcMod turb 1 1 0.5 0.3
+		tcGen environment 
 	}
 }
 
@@ -623,12 +611,18 @@ models/powerups/health/red_sphere
 }
 
 models/powerups/health/green
-{
-	
+{	
 	{
-		map textures/effects/envmaprail.tga
+		map textures/effects/tinfx2b.tga
 		tcGen environment
-		
+		blendFunc	add
+		rgbGen lightingdiffuse
+	}
+	{
+		map textures/sfx/proto_zzztgreen.tga
+		rgbGen identity
+		tcMod turb 1 1 0.5 0.3
+		tcGen environment 
 	}
 }
 
