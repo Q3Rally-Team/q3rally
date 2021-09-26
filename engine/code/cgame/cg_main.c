@@ -253,7 +253,7 @@ vmCvar_t	cg_developer;
 // cutom variable used in modified atmospheric effects from q3f
 vmCvar_t	cg_atmosphericLevel;
 
-// vmCvar_t	cg_fpsLimit;
+vmCvar_t	cg_fpsLimit;
 vmCvar_t	cg_autodrop;
 vmCvar_t	cg_drawPositionSprites;
 vmCvar_t	cg_tightCamTracking;
@@ -361,7 +361,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_rearViewRenderLevel, "cg_rearViewRenderLevel", "3", CVAR_ARCHIVE },
 	{ &cg_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },
 
-//	{ &cg_fpsLimit, "cg_fpsLimit", "30", CVAR_ARCHIVE },
+	{ &cg_fpsLimit, "cg_fpsLimit", "60", CVAR_ARCHIVE },
 	{ &cg_autodrop, "cg_autodrop", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
 

@@ -13,23 +13,22 @@
 
 float colors[4][4] = { 
 //		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
-		{ 1.0f, 0.69f, 0.0f, 1.0f } ,		// normal
-		{ 1.0f, 0.2f, 0.2f, 1.0f },		// low health
-		{ 0.5f, 0.5f, 0.5f, 1.0f },			// weapon firing
-		{ 1.0f, 1.0f, 1.0f, 1.0f }				// health > 100
+		{ 1.0f, 0.69f, 0.0f, 1.0f } ,	  // normal
+		{ 1.0f, 0.2f, 0.2f, 1.0f },	      // low health
+		{ 0.5f, 0.5f, 0.5f, 1.0f },       // weapon firing
+		{ 1.0f, 1.0f, 1.0f, 1.0f }		  // health > 100
 };
 
 
 /*
-================
+=====================
 CG_DrawRearviewMirror
-
-================
+=====================
 */
 void CG_DrawRearviewMirror( float x, float y, float w, float h) {
-	//static int  lastLowFPSTime;
+	static int  lastLowFPSTime;
 	int		i;
-	//int		fps;
+	int		fps;
 	float	mx, my, mw, mh;
 	int		tmp;
 
@@ -42,7 +41,6 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
 
-/*
 	if (cg_fpsLimit.integer >= 100)
 		return;
 
@@ -61,7 +59,7 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 			return;
 		}
 	}
-*/
+
 	mx = x - 8;
 	my = y - 7;
 	mw = w * 1.0534F;
@@ -81,14 +79,14 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 
 	cg.mirrorRefdef.time = cg.time;
 	cg.mirrorRefdef.rdflags = 0;
+/*
+	AnglesToAxis( cg.predictedPlayerState.viewangles, mirrorRefdef.viewaxis );
+	VectorInverse( mirrorRefdef.viewaxis[0] );
+	VectorInverse( mirrorRefdef.viewaxis[1] );
 
-//	AnglesToAxis( cg.predictedPlayerState.viewangles, mirrorRefdef.viewaxis );
-//	VectorInverse( mirrorRefdef.viewaxis[0] );
-//	VectorInverse( mirrorRefdef.viewaxis[1] );
-
-//	VectorCopy( cg.predictedPlayerState.origin, mirrorRefdef.vieworg );
-//	VectorMA( mirrorRefdef.vieworg, 16, mirrorRefdef.viewaxis[2], mirrorRefdef.vieworg );
-
+	VectorCopy( cg.predictedPlayerState.origin, mirrorRefdef.vieworg );
+	VectorMA( mirrorRefdef.vieworg, 16, mirrorRefdef.viewaxis[2], mirrorRefdef.vieworg );
+*/
 	// add entities and graphics to rearview scene
 	if (cg_rearViewRenderLevel.integer & RL_MARKS){
 		CG_AddMarks();
@@ -120,17 +118,9 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 }
 
 /*
-================
+===========
 CG_DrawMMap
-
-TBB - minimap EXPERIMENTAL - 
-modified rearview but only render stuff from +8192(Z) from 
-center of bsp, pitched downward, and render only players (flags for ctf).
-this will probably drop fps, hopefully not too much and ,
-might have to make a cvar for displaying it plus opacity
-trying to get this to work like the minimap from UrT
-from scratch. must try to make it 2d bitmap
-================
+===========
 */
 
 void CG_DrawMMap( float x, float y, float w, float h ) {
@@ -147,12 +137,15 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
 	
-	/* TBB - minimap to show for only racing and team racing no weapons (for now)
+/* minimap to show for only racing and team racing no weapons (for now)
+
 	if ( cgs.gametype != GT_RACING )
 		return;
 	
 	if ( (cgs.gametype != GT_RACING) || (cgs.gametype != GT_TEAM_RACING) )
-		return; */
+		return;
+        
+*/
 
 	mx = x ;
 	my = y ;
@@ -181,7 +174,6 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 //	VectorCopy( cg.predictedPlayerState.origin, mirrorRefdef.vieworg );
 //	VectorMA( mirrorRefdef.vieworg, 16, mirrorRefdef.viewaxis[2], mirrorRefdef.vieworg );
 
-	//TBB
 	/*only add players to minimap scene
 	add ctf flag entities later*/
 	if (cg_rearViewRenderLevel.integer & RL_MARKS){
@@ -213,15 +205,11 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	trap_R_RenderScene( &cg.mmapRefdef );
 	CG_DrawPic( mx, my, mw, mh, cgs.media.MMapShader );
 }
-//TBB FIN
-
-
 
 /*
-================
+========================
 CG_DrawArrowToCheckpoint
-
-================
+========================
 */
 static float CG_DrawArrowToCheckpoint( float y ) {
 	centity_t	*cent;
@@ -525,10 +513,9 @@ static float CG_DrawLaps( float y ) {
 
 
 /*
-================
+======================
 CG_DrawCurrentPosition
-
-================
+======================
 */
 static float CG_DrawCurrentPosition( float y ) {
 	centity_t		*cent;
@@ -567,10 +554,9 @@ static float CG_DrawCurrentPosition( float y ) {
 
 
 /*
-================
+========================
 CG_DrawCarAheadAndBehind
-
-================
+========================
 */
 static float CG_DrawCarAheadAndBehind( float y ) {
 	centity_t	*cent, *other;
@@ -625,9 +611,9 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 
 #if 0
 /*
-=================
+====================
 CG_DrawHUD_DerbyList
-=================
+====================
 
 void CG_DrawHUD_DerbyList(float x, float y){
 	int			i;
@@ -702,10 +688,9 @@ void CG_DrawHUD_DerbyList(float x, float y){
 #endif
 
 /*
-================
+============
 CG_DrawSpeed
-
-================
+============
 */
 static float CG_DrawSpeed( float y ) {
 	playerState_t	*ps;
@@ -868,10 +853,9 @@ static float CG_DrawSDKMessage( float y ) {
 
 #if 0
 /*
-================
+===========
 CG_DrawGear
-
-================
+===========
 */
  static float CG_DrawGear( float y ) {
 	CG_DrawSmallDigitalStringColor( 560, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);

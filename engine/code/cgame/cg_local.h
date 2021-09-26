@@ -1547,7 +1547,7 @@ extern	vmCvar_t		cg_checkpointArrowMode;
 extern	vmCvar_t		cg_atmosphericLevel;
 extern	vmCvar_t		cg_developer;
 
-// extern	vmCvar_t		cg_fpsLimit;
+extern	vmCvar_t		cg_fpsLimit;
 extern	vmCvar_t		cg_autodrop;
 extern	vmCvar_t		cg_drawPositionSprites;
 extern	vmCvar_t		cg_tightCamTracking;

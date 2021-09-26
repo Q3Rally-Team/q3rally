@@ -259,10 +259,9 @@ static void CG_DrawField (int x, int y, int width, int value) {
 #endif // MISSIONPACK
 
 /*
-================
+==============
 CG_Draw3DModel
-
-================
+==============
 */
 void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, qhandle_t skin, vec3_t origin, vec3_t angles ) {
 	refdef_t		refdef;
@@ -415,10 +414,9 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 }
 
 /*
-================
+====================
 CG_DrawStatusBarHead
-
-================
+====================
 */
 #ifndef MISSIONPACK
 #if 0 // ZTM: Not used by Q3Rally
@@ -478,10 +476,9 @@ static void CG_DrawStatusBarHead( float x ) {
 #endif // MISSIONPACK
 
 /*
-================
+====================
 CG_DrawStatusBarFlag
-
-================
+====================
 */
 #ifndef MISSIONPACK
 static void CG_DrawStatusBarFlag( float x, int team ) {
@@ -490,10 +487,9 @@ static void CG_DrawStatusBarFlag( float x, int team ) {
 #endif // MISSIONPACK
 
 /*
-================
+=====================
 CG_DrawTeamBackground
-
-================
+=====================
 */
 void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 {
@@ -800,7 +796,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[0] = 70;
 		origin[1] = 0;
 		origin[2] = 0;
-		angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
+		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 		CG_Draw3DModel( 10, 476 - 28, 26, 26,
 					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
@@ -816,10 +812,10 @@ static void CG_DrawRallyStatusBar( void ) {
 		healthModel = trap_R_RegisterModel( "models/powerups/health/small_cross.md3" );
 
 	if ( healthModel ) {
-		origin[0] = 35;
+		origin[0] = 68;
 		origin[1] = 0;
-		origin[2] = -5;
-		angles[YAW] = 180 * sin( cg.time / 1000.0 );
+		origin[2] = 0;
+		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 		CG_Draw3DModel( 136, 476 - 28, 26, 26,
 					   healthModel, 0, origin, angles );
 	}
@@ -838,7 +834,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[0] = 45;
 		origin[1] = 0;
 		origin[2] = -10;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
+		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
         CG_Draw3DModel( 262, 476 - 28, 26, 26,
 					   cgs.media.armorModel, 0, origin, angles );
@@ -891,7 +887,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[0] = 70;
 		origin[1] = 0;
 		origin[2] = 0;
-		angles[YAW] = 20 * sin( cg.time / 1000.0 );
+		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 		CG_Draw3DModel( 10, 476 - 64, 26, 26,
 					   cg_weapons[ weapon ].weaponModel, 0, origin, angles );
 	}
