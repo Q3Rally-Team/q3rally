@@ -1,12 +1,19 @@
 // ------------------------------------------------------------
-// Shaders for Q3Rally powerups - rewritten by P3rlE
+// Shaders for Q3Rally powerups - rewritten by P3rlE & insellium
 // based on powerups_shaders
 // ------------------------------------------------------------
-
 
 // ------------------------------------------------------------
 // 1.haste
 // ------------------------------------------------------------
+icons/haste
+{
+       nopicmip
+       {
+              map icons/haste.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
 
 powerups/haste
 {
@@ -20,176 +27,6 @@ powerups/haste
                 tcmod scroll 1 .1
 	}
 }
-
-// ------------------------------------------------------------
-// 2.sheild
-// ------------------------------------------------------------
-
-models/powerups/sheild/sheild
-{
-	{
-		map textures/effects/envmapred.tga
-		tcGen environment
-	}
-}
-
-powerups/shield
-{
-	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/shieldmap.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-                tcmod rotate 30
-		//tcMod turb 0 0.2 0 .2
-                tcmod scroll 1 .1
-	}
-}
-
-// ------------------------------------------------------------
-// 3.regeneration
-// ------------------------------------------------------------
-
-models/powerups/regen/regen
-{
-	{
-		map textures/effects/envmaprail.tga
-                //map textures/sfx/specular.tga
-		tcGen environment
-	}
-}
-
-// ------------------------------------------------------------
-// 4.gear1
-// ------------------------------------------------------------
-
-models/powerups/gear1
-{
-	{
-		map textures/effects/envmaprail.tga
-		tcGen environment
-		
-	}
-}
-
-// ------------------------------------------------------------
-// 5.invisibility
-// ------------------------------------------------------------
-
-models/powerups/invis/invis
-{
-	{
-		map textures/effects/tinfx2c.tga
-                //map textures/sfx/specular.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-	}
-}
-
-// ------------------------------------------------------------
-// 6.atomic
-// ------------------------------------------------------------
-
-models/powerups/env/atomic
-{
-	{
-		map textures/effects/envmapgold.tga
-		blendfunc GL_ONE GL_ZERO
-		tcGen environment
-                rgbGen identity
-	}
-}
-
-// ------------------------------------------------------------
-// 7.shield
-// ------------------------------------------------------------
-
-models/powerups/shield/shield
-{
-	{
-		map textures/effects/envmapred.tga
-		tcGen environment
-	}
-}
-
-// ------------------------------------------------------------
-// 8.quad
-// ------------------------------------------------------------
-
-models/powerups/quad/quad
-{
-	//{
-	//	map gfx/colors/darkblue.tga
-	//}
-	{
-		map textures/effects/envmapblue.tga
-		blendfunc GL_ONE GL_ZERO
-		tcGen environment
-                rgbGen identity
-	}
-}
-
-models/powerups/quad/quadpurple
-{
-	{
-		map textures/effects/quadpurple.tga
-		blendfunc GL_ONE GL_ZERO
-		tcGen environment
-		rgbGen identity
-			tcmod rotate 30
-			tcmod scroll 1 .1
-	}
-}
-
-// ------------------------------------------------------------
-// 9.turbo
-// ------------------------------------------------------------
-
-models/barrels/turbo
-{	
-	
-	{
-		map textures/effects/envmapgold.tga
-                tcGen environment
-		blendfunc GL_ONE GL_ZERO
-		
-	}
-        {
-		map textures/sfx/kenelectric.tga
-                tcmod scale 2 2
-                tcmod rotate 333
-                tcmod scroll 9 9
-		blendfunc GL_ONE GL_ONE
-		
-	}
-}
-
-// ------------------------------------------------------------
-// 10.mega2
-// ------------------------------------------------------------
-
-models/powerups/quad/mega2
-{	
-	
-	{
-		map textures/effects/envmapblue.tga
-                tcGen environment
-		blendfunc GL_ONE GL_ZERO
-		
-	}
-        {
-		map textures/sfx/kenelectric.tga
-                tcmod scale 2 2
-                tcmod rotate 333
-                tcmod scroll 9 9
-		blendfunc GL_ONE GL_ONE
-		
-	}
-}
-
-// ------------------------------------------------------------
-// 11.q3r_haste
-// ------------------------------------------------------------
 
 models/powerups/haste/haste
 {
@@ -220,8 +57,258 @@ models/powerups/haste/hasteshell
 }
 
 // ------------------------------------------------------------
-// 12.q3r_turbo
+// 2.shield
 // ------------------------------------------------------------
+
+icons/shield
+{
+       nopicmip
+       {
+              map icons/shield.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/powerups/shield/shield
+{
+	{
+		map textures/effects/envmapred.tga
+		tcGen environment
+	}
+}
+
+powerups/shield
+{
+	deformVertexes wave 100 sin 3 0 0 0
+	{
+		map textures/effects/shieldmap.tga
+		blendfunc GL_ONE GL_ONE
+		tcGen environment
+                tcmod rotate 30
+		//tcMod turb 0 0.2 0 .2
+                tcmod scroll 1 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 3.regeneration
+// ------------------------------------------------------------
+
+icons/regen
+{
+       nopicmip
+       {
+              map icons/regen.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/powerups/regen/regen
+{
+	{
+		map textures/effects/envmaprail.tga
+                //map textures/sfx/specular.tga
+		tcGen environment
+	}
+}
+
+powerups/regen
+{
+	deformVertexes wave 100 sin 3 0 0 0
+	{
+		map textures/effects/regenmap2.tga
+		blendfunc GL_ONE GL_ONE
+		tcGen environment
+                tcmod rotate 30
+		//tcMod turb 0 0.2 0 .2
+                tcmod scroll 1 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 4.gear1
+// ------------------------------------------------------------
+
+models/powerups/gear1
+{
+	{
+		map textures/effects/envmaprail.tga
+		tcGen environment
+		
+	}
+}
+
+// ------------------------------------------------------------
+// 5.invisibility
+// ------------------------------------------------------------
+
+icons/invis
+{
+       nopicmip
+       {
+              map icons/invis.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/powerups/invis/invis
+{
+	{
+		map textures/effects/tinfx2c.tga
+                //map textures/sfx/specular.tga
+		blendfunc GL_ONE GL_ONE
+		tcGen environment
+	}
+}
+
+powerups/invisibility
+{
+	{
+		map textures/effects/invismap.tga
+                //map textures/sfx/specular.tga
+		blendfunc GL_ONE GL_ONE
+		tcMod turb 0 0.15 0 0.25
+		tcGen environment
+	}
+}
+
+// ------------------------------------------------------------
+// 6.atomic
+// ------------------------------------------------------------
+
+icons/env
+{
+       nopicmip
+       {
+              map icons/env.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/powerups/env/atomic
+{
+	{
+		map textures/effects/envmapgold.tga
+		blendfunc GL_ONE GL_ZERO
+		tcGen environment
+                rgbGen identity
+	}
+}
+
+// ------------------------------------------------------------
+// 7.quad
+// ------------------------------------------------------------
+
+icons/quad
+{
+       nopicmip
+       {
+              map icons/quad.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/powerups/quad/quad
+{
+	//{
+	//	map gfx/colors/darkblue.tga
+	//}
+	{
+		map textures/effects/envmapblue.tga
+		blendfunc GL_ONE GL_ZERO
+		tcGen environment
+                rgbGen identity
+	}
+}
+
+models/powerups/quad/quadpurple
+{
+	{
+		map textures/effects/quadpurple.tga
+		blendfunc GL_ONE GL_ZERO
+		tcGen environment
+		rgbGen identity
+			tcmod rotate 30
+			tcmod scroll 1 .1
+	}
+}
+
+models/powerups/quad/mega2
+{	
+	
+	{
+		map textures/effects/envmapblue.tga
+                tcGen environment
+		blendfunc GL_ONE GL_ZERO
+		
+	}
+        {
+		map textures/sfx/kenelectric.tga
+                tcmod scale 2 2
+                tcmod rotate 333
+                tcmod scroll 9 9
+		blendfunc GL_ONE GL_ONE
+		
+	}
+}
+
+powerups/quad
+{
+	deformVertexes wave 100 sin 3 0 0 0
+	{
+		map textures/effects/quadmap2.tga
+		blendfunc GL_ONE GL_ONE
+		tcGen environment
+                tcmod rotate 30
+		//tcMod turb 0 0.2 0 .2
+                tcmod scroll 1 .1
+	}
+}
+
+powerups/quadWeapon
+{
+	deformVertexes wave 100 sin 0.5 0 0 0
+	{
+		map textures/effects/quadmap2.tga
+		blendfunc GL_ONE GL_ONE
+		tcGen environment
+                tcmod rotate 30
+		//tcMod turb 0 0.2 0 .2
+                tcmod scroll 1 .1
+	}
+}
+
+// ------------------------------------------------------------
+// 8.turbo
+// ------------------------------------------------------------
+
+icons/turbo
+{
+       nopicmip
+       {
+              map icons/turbo.tga
+              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+       }
+}
+
+models/barrels/turbo
+{	
+	
+	{
+		map textures/effects/envmapgold.tga
+                tcGen environment
+		blendfunc GL_ONE GL_ZERO
+		
+	}
+        {
+		map textures/sfx/kenelectric.tga
+                tcmod scale 2 2
+                tcmod rotate 333
+                tcmod scroll 9 9
+		blendfunc GL_ONE GL_ONE
+		
+	}
+}
 
 models/powerups/turbo/booster
 {
@@ -258,7 +345,7 @@ models/powerups/turbo/thrust
 }
 
 // ------------------------------------------------------------
-// 13.armor_red
+// 9.armor_red
 // ------------------------------------------------------------
 
 models/powerups/armor/energy_red1
@@ -273,7 +360,7 @@ models/powerups/armor/energy_red1
 }
 
 // ------------------------------------------------------------
-// 14.armor_yellow
+// 10.armor_yellow
 // ------------------------------------------------------------
 
 models/powerups/armor/energy_yel1
@@ -777,80 +864,46 @@ largeCrossFlare
 	}
 }
 
+
 // ------------------------------------------------------------
-// 18.icons
+// HEALTH ICONS
 // ------------------------------------------------------------
 
-icons/env
+icons/iconh_green
 {
-       nopicmip
-       {
-              map icons/env.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
+	nopicmip
+	{
+		map icons/iconh_green.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
 }
 
-icons/haste
+icons/iconh_yellow
 {
-       nopicmip
-       {
-              map icons/haste.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
+	nopicmip
+	{
+		map icons/iconh_yellow.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
 }
 
-icons/invis
+icons/iconh_red
 {
-       nopicmip
-       {
-              map icons/invis.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
+	nopicmip
+	{
+		map icons/iconh_red.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+
 }
 
-icons/regen
+icons/iconh_mega
 {
-       nopicmip
-       {
-              map icons/regen.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
-
-icons/quad
-{
-       nopicmip
-       {
-              map icons/quad.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
-
-icons/megahealth
-{
-       nopicmip
-       {
-              map icons/megahealth.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
-
-icons/shield
-{
-       nopicmip
-       {
-              map icons/shield.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
-
-icons/turbo
-{
-       nopicmip
-       {
-              map icons/turbo.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
+	nopicmip
+	{
+		map icons/iconh_mega.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
 }
 
 // Weapons
@@ -921,24 +974,6 @@ icons/icona_flame
 }
 
 // Flags
-
-icons/iconf_blu1
-{
-       nopicmip
-       {
-              map icons/iconf_blu1.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
-
-icons/iconf_red1
-{
-       nopicmip
-       {
-              map icons/iconf_red1.tga
-              blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-       }
-}
 
 icons/iconf_neutral1
 {
@@ -1072,11 +1107,11 @@ icons/iconw_bfg
 	}
 }
 
-icons/iconw_grapple
+icons/iconw_nailgun
 {
 	nopicmip
 	{
-		map icons/iconw_grapple.tga
+		map icons/iconw_nailgun.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
@@ -1158,82 +1193,12 @@ icons/icona_bfg
 	}
 }
 
-
-powerups/battleSuit
+icons/icona_nailgun
 {
-	deformVertexes wave 100 sin 1 0 0 0
+	nopicmip
 	{
-		map textures/effects/envmapgold2.tga
-                //map textures/sfx/specular.tga
-		tcGen environment
-		tcMod turb 0 0.15 0 0.3
-                tcmod rotate 333
-                tcmod scroll .3 .3
-		blendfunc GL_ONE GL_ONE
-	}
-}
-
-powerups/battleWeapon
-{
-	deformVertexes wave 100 sin 0.5 0 0 0
-	{
-		map textures/effects/envmapgold2.tga
-                //map textures/sfx/specular.tga
-		tcGen environment
-		tcMod turb 0 0.15 0 0.3
-                tcmod rotate 333
-                tcmod scroll .3 .3
-		blendfunc GL_ONE GL_ONE
-	}
-}
-
-powerups/invisibility
-{
-	{
-		map textures/effects/invismap.tga
-                //map textures/sfx/specular.tga
-		blendfunc GL_ONE GL_ONE
-		tcMod turb 0 0.15 0 0.25
-		tcGen environment
-	}
-}
-
-powerups/quad
-{
-	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/quadmap2.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-                tcmod rotate 30
-		//tcMod turb 0 0.2 0 .2
-                tcmod scroll 1 .1
-	}
-}
-
-powerups/quadWeapon
-{
-	deformVertexes wave 100 sin 0.5 0 0 0
-	{
-		map textures/effects/quadmap2.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-                tcmod rotate 30
-		//tcMod turb 0 0.2 0 .2
-                tcmod scroll 1 .1
-	}
-}
-
-powerups/regen
-{
-	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/regenmap2.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-                tcmod rotate 30
-		//tcMod turb 0 0.2 0 .2
-                tcmod scroll 1 .1
+		map icons/icona_nailgun.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
@@ -1277,60 +1242,6 @@ icons/teleporter
 	}
 }
 
-icons/envirosuit
-{
-	nopicmip
-	{
-		map icons/envirosuit.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/flight
-{
-	nopicmip
-	{
-		map icons/flight.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/haste
-{
-	nopicmip
-	{
-		map icons/haste.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/invis
-{
-	nopicmip
-	{
-		map icons/invis.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/quad
-{
-	nopicmip
-	{
-		map icons/quad.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/regen
-{
-	nopicmip
-	{
-		map icons/regen.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
 medal_excellent
 {
 	nopicmip
@@ -1348,177 +1259,6 @@ medal_gauntlet
 		blendFunc blend
 	}
 }
-
-medal_impressive
-{
-	nopicmip
-	{
-		clampmap menu/medals/medal_impressive.tga
-		blendFunc blend
-	}
-}
-
-icons/iconr_shard
-{
-	nopicmip
-	{
-		map icons/iconr_shard.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconr_yellow
-{
-	nopicmip
-	{
-		map icons/iconr_yellow.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconr_red
-{
-	nopicmip
-	{
-		map icons/iconr_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-//
-// health icons
-//
-
-icons/iconh_green
-{
-	nopicmip
-	{
-		map icons/iconh_green.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconh_yellow
-{
-	nopicmip
-	{
-		map icons/iconh_yellow.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconh_red
-{
-	nopicmip
-	{
-		map icons/iconh_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-        //{
-	//	clampmap icons/iconh_red2.tga
-	//	blendFunc blend
-        //        tcMod stretch sin .04 1 0 1
-	//}
-}
-
-icons/iconh_mega
-{
-	nopicmip
-	{
-		map icons/iconh_mega.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-//
-// CTF icons
-//
-
-icons/iconf_red
-{
-	nopicmip
-	{
-		map icons/iconf_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconf_blu
-{
-	nopicmip
-	{
-		map icons/iconf_blu.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-icons/teleporter
-{
-	nopicmip
-	{
-		map icons/teleporter.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/medkit
-{
-	nopicmip
-	{
-		map icons/medkit.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/envirosuit
-{
-	nopicmip
-	{
-		map icons/envirosuit.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/quad
-{
-	nopicmip
-	{
-		map icons/quad.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/haste
-{
-	nopicmip
-	{
-		map icons/haste.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/invis
-{
-	nopicmip
-	{
-		map icons/invis.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/regen
-{
-	nopicmip
-	{
-		map icons/regen.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/flight
-{
-	nopicmip
-	{
-		map icons/flight.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
 
 medal_impressive
 {
@@ -1534,24 +1274,6 @@ medal_frags
 	nopicmip
 	{
 		clampmap menu/medals/medal_frags.tga
-		blendFunc blend
-	}
-}
-
-medal_excellent
-{
-	nopicmip
-	{
-		clampmap menu/medals/medal_excellent.tga
-		blendFunc blend
-	}
-}
-
-medal_gauntlet
-{
-	nopicmip
-	{
-		clampmap menu/medals/medal_gauntlet.tga
 		blendFunc blend
 	}
 }
@@ -1583,279 +1305,6 @@ medal_capture
 	}
 }
 
-
-icons/iconw_gauntlet
-{
-	nopicmip
-	{
-		map icons/iconw_gauntlet.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/iconw_machinegun
-{
-	nopicmip
-	{
-		map icons/iconw_machinegun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/iconw_rocket
-{
-	nopicmip
-	{
-		map icons/iconw_rocket.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_shotgun
-{
-	nopicmip
-	{
-		map icons/iconw_shotgun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbgen identitylighting
-	}
-}
-
-icons/iconw_grenade
-{
-	nopicmip
-	{
-		map icons/iconw_grenade.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_lightning
-{
-	nopicmip
-	{
-		map icons/iconw_lightning.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_plasma
-{
-	nopicmip
-	{
-		map icons/iconw_plasma.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_railgun
-{
-	nopicmip
-	{
-		map icons/iconw_railgun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_bfg
-{
-	nopicmip
-	{
-		map icons/iconw_bfg.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconw_grapple
-{
-	nopicmip
-	{
-		map icons/iconw_grapple.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_machinegun
-{
-	nopicmip
-	{
-		map icons/icona_machinegun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-icons/icona_rocket
-{
-	nopicmip
-	{
-		map icons/icona_rocket.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_shotgun
-{
-	nopicmip
-	{
-		map icons/icona_shotgun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbgen identitylighting
-	}
-}
-
-icons/icona_grenade
-{
-	nopicmip
-	{
-		map icons/icona_grenade.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_lightning
-{
-	nopicmip
-	{
-		map icons/icona_lightning.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_plasma
-{
-	nopicmip
-	{
-		map icons/icona_plasma.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_railgun
-{
-	nopicmip
-	{
-		map icons/icona_railgun.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_bfg
-{
-	nopicmip
-	{
-		map icons/icona_bfg.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-icons/iconr_shard
-{
-	nopicmip
-	{
-		map icons/iconr_shard.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconr_yellow
-{
-	nopicmip
-	{
-		map icons/iconr_yellow.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconr_red
-{
-	nopicmip
-	{
-		map icons/iconr_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-icons/iconh_green
-{
-	nopicmip
-	{
-		map icons/iconh_green.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconh_yellow
-{
-	nopicmip
-	{
-		map icons/iconh_yellow.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconh_red
-{
-	nopicmip
-	{
-		map icons/iconh_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-
-}
-
-icons/iconh_mega
-{
-	nopicmip
-	{
-		map icons/iconh_mega.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconf_red
-{
-	nopicmip
-	{
-		map icons/iconf_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconf_blu
-{
-	nopicmip
-	{
-		map icons/iconf_blu.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-
-gfx/2d/menuinfo
-{
-	nopicmip
-	{
-		map gfx/2d/menuinfo.tga
-	}
-}
-
-gfx/2d/menuinfo2
-{
-	nopicmip
-	{
-		map gfx/2d/menuinfo2.tga
-	}
-}
-
-gfx/2d/quit
-{
-	nopicmip
-	nomipmaps
-	{
-		map gfx/2d/quit.tga
-	}
-}
-
 gfx/2d/cursor
 {
     nopicmip
@@ -1868,20 +1317,8 @@ gfx/2d/cursor
 sprites/balloon3
 {
 	{
-		map sprites/balloon4.tga
+		map sprites/balloon3.tga
 		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-viewBloodBlend
-{
-	sort	nearest
-	{
-		//map models/weaphits/blood201.tga
-                map gfx/damage/blood_screen.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbGen identityLighting
-		alphaGen vertex
 	}
 }
 
@@ -1926,82 +1363,6 @@ gfx/misc/tracer
 	}
 }
 
-bloodMark
-{
-	nopicmip			
-	polygonOffset
-	{
-		clampmap gfx/damage/blood_stain.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbGen identityLighting
-		alphaGen vertex
-	}
-}
-
-bloodTrail
-{
-        
-	nopicmip			
-	entityMergable		
-	{
-		//clampmap gfx/misc/blood.tga
-                clampmap gfx/damage/blood_spurt.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbGen		vertex
-		alphaGen	vertex
-	}
-}
-
-scoreboardName
-{
-	nopicmip
-	nomipmaps
-	{
-		clampmap menu/tab/name.tga
-		blendfunc blend
-	}
-}
-
-scoreboardScore
-{
-	nopicmip
-	nomipmaps
-	{
-		clampmap menu/tab/score.tga
-		blendfunc blend
-	}
-}
-
-scoreboardTime
-{
-	nopicmip
-	nomipmaps
-	{
-		clampmap menu/tab/time.tga
-		blendfunc blend
-	}
-}
-
-scoreboardPing
-{
-	nopicmip
-	nomipmaps
-	{
-		clampmap menu/tab/ping.tga
-		blendfunc blend
-	}
-}
-
-gfx/2d/bigchars
-{
-	nopicmip
-	nomipmaps
-	{
-		map gfx/2d/bigchars.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbgen vertex
-	}
-}
 gfx/2d/select
 {
 	nopicmip
@@ -2013,39 +1374,32 @@ gfx/2d/select
 	}
 }
 
+// ------------------------------------------------------------
+// FONT
+// ------------------------------------------------------------
 
-gfx/2d/assault1d
+gfx/2d/bigchars
 {
 	nopicmip
+	nomipmaps
 	{
-		map gfx/2d/assault1d.tga
+		map gfx/2d/bigchars.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbgen vertex
 	}
 }
-gfx/2d/armor1h
+
+gfx/2d/bigchars_plates
 {
 	nopicmip
+	nomipmaps
 	{
-		map gfx/2d/armor1h.tga
+		map gfx/2d/bigchars_plates.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbgen vertex
 	}
 }
-gfx/2d/health
-{
-	nopicmip
-	{
-		map gfx/2d/health.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-gfx/2d/blank
-{
-	nopicmip
-	{
-		map gfx/2d/blank.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
+
 gfx/2d/numbers/zero_32b
 {
 	nopicmip
@@ -2146,225 +1500,154 @@ gfx/2d/numbers/minus_32b
 	}
 }
 
+scoreboardName
+{
+	nopicmip
+	nomipmaps
+	{
+		clampmap menu/tab/name.tga
+		blendfunc blend
+	}
+}
 
-// missionpack icons
+scoreboardScore
+{
+	nopicmip
+	nomipmaps
+	{
+		clampmap menu/tab/score.tga
+		blendfunc blend
+	}
+}
 
-icons/iconw_chaingun
+scoreboardTime
+{
+	nopicmip
+	nomipmaps
+	{
+		clampmap menu/tab/time.tga
+		blendfunc blend
+	}
+}
+
+scoreboardPing
+{
+	nopicmip
+	nomipmaps
+	{
+		clampmap menu/tab/ping.tga
+		blendfunc blend
+	}
+}
+
+// ------------------------------------------------------------
+// CTF FLAGS
+// ------------------------------------------------------------
+
+icons/iconf_blu1
 {
 	nopicmip
 	{
-		map icons/iconw_chaingun.tga
+		map icons/iconf_blu1.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_chaingun_cl1
+icons/iconf_blu2
 {
 	nopicmip
 	{
-		map icons/iconw_chaingun_cl1.tga
+		map icons/iconf_blu2.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_chaingun_cl2
+icons/iconf_blu3
 {
 	nopicmip
 	{
-		map icons/iconw_chaingun_cl2.tga
+		map icons/iconf_blu3.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_grapple
+icons/iconf_red1
 {
 	nopicmip
 	{
-		map icons/iconw_grapple.tga
+		map icons/iconf_red1.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_kamikaze
+icons/iconf_red2
 {
 	nopicmip
 	{
-		map icons/iconw_kamikaze.tga
+		map icons/iconf_red2.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_nailgun
+icons/iconf_red3
 {
 	nopicmip
 	{
-		map icons/iconw_nailgun.tga
+		map icons/iconf_red3.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/iconw_proxlauncher
+icons/iconf_green1
 {
 	nopicmip
 	{
-		map icons/iconw_proxlauncher.tga
+		map icons/iconf_green1.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/icona_chaingun
+icons/iconf_green2
 {
 	nopicmip
 	{
-		map icons/icona_chaingun.tga
+		map icons/iconf_green2.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-
-icons/icona_proxlauncher
+icons/iconf_green3
 {
 	nopicmip
 	{
-		map icons/icona_proxlauncher.tga
+		map icons/iconf_green3.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-
-icons/icona_nailgun
+icons/iconf_yell1
 {
 	nopicmip
 	{
-		map icons/icona_nailgun.tga
+		map icons/iconf_yell1.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-
-icons/guard
+icons/iconf_yell2
 {
 	nopicmip
 	{
-		map icons/guard.tga
+		map icons/iconf_yell2.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
 
-icons/doubler
+icons/iconf_yell3
 {
 	nopicmip
 	{
-		map icons/doubler.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/ammo_regen
-{
-	nopicmip
-	{
-		map icons/ammo_regen.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/scout
-{
-	nopicmip
-	{
-		map icons/scout.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-icons/icona_red
-{
-	nopicmip
-	{
-		map icons/icona_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_blue
-{
-	nopicmip
-	{
-		map icons/icona_blue.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_white
-{
-	nopicmip
-	{
-		map icons/icona_white.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconb_red
-{
-	nopicmip
-	{
-		map icons/iconb_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconb_blue
-{
-	nopicmip
-	{
-		map icons/iconb_blue.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconb_white
-{
-	nopicmip
-	{
-		map icons/iconb_white.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_red
-{
-	nopicmip
-	{
-		map icons/icona_red.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/icona_blue
-{
-	nopicmip
-	{
-		map icons/icona_blue.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconf_blu
-{
-	nopicmip
-	{
-		map icons/iconf_blu.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-icons/iconf_red
-{
-	nopicmip
-	{
-		map icons/iconf_red.tga
+		map icons/iconf_yell3.tga
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }

@@ -12,7 +12,7 @@ author "|CE (updated by P3rlE)"
 type "q3r_ctf"
 
 //CUSTOM BOTS
-bots ""
+bots "Sam Dean Minori Vlad Kuro Emma Bee"
 
 //PLAYER STARTS
 starts "15"

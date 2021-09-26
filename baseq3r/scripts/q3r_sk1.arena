@@ -12,7 +12,7 @@ author "SystemKrash (updated by insellium)"
 type "q3r_racing q3r_team_racing"
 
 //CUSTOM BOTS
-bots "Samuel Jim Sam"
+bots "Samuel Jim Sam Tobias Kuro"
 
 //PLAYER STARTS
 starts "8"

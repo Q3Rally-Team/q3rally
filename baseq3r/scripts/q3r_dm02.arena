@@ -12,7 +12,7 @@ author "gout (updated by insellium)"
 type "q3r_derby q3r_dm q3r_team_dm"
 
 //CUSTOM BOTS
-bots "Emma Ivan Kuro"
+bots "Emma Ivan Paul Steve"
 
 //PLAYER STARTS
 starts "8"

@@ -12,7 +12,7 @@ author "OliverV"
 type "q3r_racing q3r_team_racing"
 
 //CUSTOM BOTS
-bots "Tobias Josh Bee"
+bots "Tobias Josh Bee Paul Ivan"
 
 //PLAYER STARTS
 starts "8"

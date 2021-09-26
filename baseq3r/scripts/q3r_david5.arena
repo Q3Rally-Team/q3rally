@@ -12,7 +12,7 @@ author "|CE"
 type "q3r_dm q3r_team_dm q3r_derby"
 
 //CUSTOM BOTS
-bots "Jim Bobby Sam"
+bots "Jim Bobby Sam Tobias"
 
 //PLAYER STARTS
 starts "4"

@@ -12,7 +12,7 @@ author "P3rle & insellium"
 type "q3r_derby q3r_dm q3r_team_dm"
 
 //CUSTOM BOTS
-bots ""
+bots "Kuro Tobias Vlad Samuel Chloe Tony"
 
 //PLAYER STARTS
 starts "8"

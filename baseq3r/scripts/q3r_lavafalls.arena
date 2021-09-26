@@ -12,7 +12,7 @@ author "Cyberdemon (updated by insellium)"
 type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
 
 //CUSTOM BOTS
-bots "Steve Paul Tanya"
+bots "Steve Paul Tanya Kuro Janine"
 
 //PLAYER STARTS
 starts "14"

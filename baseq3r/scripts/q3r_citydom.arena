@@ -12,7 +12,7 @@ author "P3rlE"
 type "q3r_dom"
 
 //CUSTOM BOTS
-bots ""
+bots "Ivan Tanya Kuro Alexandra Bobby Samuel Jennifer"
 
 //PLAYER STARTS
 starts "8"

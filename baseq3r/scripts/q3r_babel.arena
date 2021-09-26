@@ -12,7 +12,7 @@ author "Marc Fontaine (insellium remix)"
 type "q3r_dom"
 
 //CUSTOM BOTS
-bots ""
+bots "Dean Minori Vlad Emma Tobias Alexandra Sam"
 
 //PLAYER STARTS
 starts "16"
