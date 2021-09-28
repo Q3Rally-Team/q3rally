@@ -35,9 +35,9 @@ static gfxloading_t s_gfxloading;
 
 
 /*
-===============
+============================
 UI_GFX_Loading_HandleCaching
-===============
+============================
 */
 #define NUM_OF_CACHES		7
 static void UI_GFX_Loading_HandleCaching( void ) {
@@ -103,9 +103,9 @@ static void UI_GFX_Loading_HandleCaching( void ) {
 
 
 /*
-===============
+=======================
 UI_GFX_Loading_MenuDraw
-===============
+=======================
 */
 static void UI_GFX_Loading_MenuDraw( void ) {
 	Menu_Draw( &s_gfxloading.menu );

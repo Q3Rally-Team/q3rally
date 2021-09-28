@@ -26,9 +26,9 @@ CG_DrawRearviewMirror
 =====================
 */
 void CG_DrawRearviewMirror( float x, float y, float w, float h) {
-	static int  lastLowFPSTime;
+//	static int  lastLowFPSTime;
 	int		i;
-	int		fps;
+//	int		fps;
 	float	mx, my, mw, mh;
 	int		tmp;
 
@@ -40,6 +40,8 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
+        
+/*
 
 	if (cg_fpsLimit.integer >= 100)
 		return;
@@ -59,6 +61,8 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 			return;
 		}
 	}
+    
+*/
 
 	mx = x - 8;
 	my = y - 7;

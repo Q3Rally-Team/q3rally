@@ -568,7 +568,6 @@ void CG_DrawSigilHUD( void ) {
 /*
 ================
 CG_DrawStatusBar
-
 ================
 */
 #ifndef MISSIONPACK
@@ -706,10 +705,9 @@ static void CG_DrawStatusBar( void ) {
 
 
 /*
-================
+=====================
 CG_DrawRallyStatusBar
-
-================
+=====================
 */
 static void CG_DrawRallyStatusBar( void ) {
 	int			color;
@@ -975,7 +973,6 @@ static void CG_DrawRallyStatusBar( void ) {
 /*
 ================
 CG_DrawAttacker
-
 ================
 */
 static float CG_DrawAttacker( float y ) {
@@ -1030,9 +1027,9 @@ static float CG_DrawAttacker( float y ) {
 }
 
 /*
-==================
+===============
 CG_DrawSnapshot
-==================
+===============
 */
 static float CG_DrawSnapshot( float y ) {
 	char		*s;
@@ -1048,9 +1045,9 @@ static float CG_DrawSnapshot( float y ) {
 }
 
 /*
-==================
+==========
 CG_DrawFPS
-==================
+==========
 */
 #define	FPS_FRAMES	4
 static float CG_DrawFPS( float y ) {
