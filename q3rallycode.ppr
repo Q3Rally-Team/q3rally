@@ -122,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -886,37 +886,29 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\cgame\cg_rally_hud.c
-2=engine\code\cgame\cg_rally_hud2.c
-3=engine\code\cgame\cg_local.h
-4=engine\code\cgame\cg_main.c
-5=engine\code\cgame\cg_draw.c
-6=engine\code\cgame\cg_newdraw.c
-7=engine\code\q3_ui\ui_rally_gfxloading.c
+1=engine\code\q3_ui\ui_rally_options.c
+2=engine\code\cgame\cg_local.h
+3=engine\code\cgame\cg_main.c
+4=engine\code\q3_ui\ui_main.c
+5=engine\code\q3_ui\ui_rally_controls.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_rally_hud.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=57
 Caret=36,70
-[engine\code\cgame\cg_rally_hud.c]
-TopLine=44
-Caret=1,45
-[engine\code\cgame\cg_rally_hud2.c]
-TopLine=1
-Caret=1,1
+[engine\code\q3_ui\ui_rally_options.c]
+TopLine=180
+Caret=46,204
 [engine\code\cgame\cg_local.h]
-TopLine=1661
-Caret=1,1677
+TopLine=1538
+Caret=1,1554
 [engine\code\cgame\cg_main.c]
-TopLine=348
-Caret=35,364
-[engine\code\cgame\cg_draw.c]
-TopLine=3369
-Caret=1,3385
-[engine\code\cgame\cg_newdraw.c]
-TopLine=524
-Caret=1,540
-[engine\code\q3_ui\ui_rally_gfxloading.c]
-TopLine=99
-Caret=24,108
+TopLine=284
+Caret=1,284
+[engine\code\q3_ui\ui_main.c]
+TopLine=241
+Caret=1,241
+[engine\code\q3_ui\ui_rally_controls.c]
+TopLine=1453
+Caret=1,1445

@@ -218,14 +218,7 @@ vmCvar_t	ui_cdkeychecked;
 vmCvar_t	ui_ioq3;
 
 static cvarTable_t		cvarTable[] = {
-// STONELANCE
-/*
-	{ &ui_ffa_fraglimit, "ui_ffa_fraglimit", "20", CVAR_ARCHIVE },
-	{ &ui_ffa_timelimit, "ui_ffa_timelimit", "0", CVAR_ARCHIVE },
 
-	{ &ui_tourney_fraglimit, "ui_tourney_fraglimit", "0", CVAR_ARCHIVE },
-	{ &ui_tourney_timelimit, "ui_tourney_timelimit", "15", CVAR_ARCHIVE },
-*/
 	{ &ui_racing_laplimit, "ui_racing_laplimit", "3", CVAR_ARCHIVE },
 	{ &ui_racing_timelimit, "ui_racing_timelimit", "0", CVAR_ARCHIVE },
 
@@ -237,7 +230,6 @@ static cvarTable_t		cvarTable[] = {
 
 	{ &ui_dm_fraglimit, "ui_dm_fraglimit", "15", CVAR_ARCHIVE },
 	{ &ui_dm_timelimit, "ui_dm_timelimit", "10", CVAR_ARCHIVE },
-// END
 
 	{ &ui_team_fraglimit, "ui_team_fraglimit", "15", CVAR_ARCHIVE },
 	{ &ui_team_timelimit, "ui_team_timelimit", "10", CVAR_ARCHIVE },
@@ -247,12 +239,10 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_ctf_timelimit, "ui_ctf_timelimit", "30", CVAR_ARCHIVE },
 	{ &ui_ctf_friendly, "ui_ctf_friendly",  "1", CVAR_ARCHIVE },
 
-// Q3Rally Code Start
 	{ &ui_dom_capturelimit, "ui_dom_capturelimit", "300", CVAR_ARCHIVE },
 	{ &ui_dom_timelimit, "ui_dom_timelimit", "15", CVAR_ARCHIVE },
 	{ &ui_dom_friendly, "ui_dom_friendly", "1", CVAR_ARCHIVE },
 	{ &ui_sigilLocator, "cg_sigilLocator", "1", CVAR_ARCHIVE },
-// Q3Rally Code END
 
 	{ &ui_racing_tracklength, "ui_racing_tracklength", "1", CVAR_ARCHIVE },
 	{ &ui_racing_trackreversed, "ui_racing_trackreversed",  "0", CVAR_ARCHIVE },
@@ -318,7 +308,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
     { &ui_drawMinimap, "cg_drawMMap", "1", CVAR_ARCHIVE },
 	{ &ui_tightCamTracking, "cg_tightCamTracking", "1", CVAR_ARCHIVE },
-	{ &ui_rearViewRenderLevel, "cg_rearViewRenderLevel", "3", CVAR_ARCHIVE },
+	{ &ui_rearViewRenderLevel, "cg_rearViewRenderLevel", "31", CVAR_ARCHIVE },
 	{ &ui_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },
 
 	{ &ui_model, "model", "sidepipe/red", CVAR_USERINFO|CVAR_ARCHIVE },

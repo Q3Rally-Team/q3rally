@@ -281,10 +281,9 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_autoswitch, "cg_autoswitch", "1", CVAR_ARCHIVE },
 	{ &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE },
-// Q3Rally Code Start
-//	{ &cg_fov, "cg_fov", "90", CVAR_ARCHIVE },
+
 	{ &cg_fov, "cg_fov", "100", CVAR_ARCHIVE },
-// Q3Rally Code END
+
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
 	{ &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
 	{ &cg_gibs, "cg_gibs", "1", CVAR_ARCHIVE  },
@@ -325,24 +324,17 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_debugEvents, "cg_debugevents", "0", CVAR_CHEAT },
 	{ &cg_errorDecay, "cg_errordecay", "100", 0 },
 	{ &cg_nopredict, "cg_nopredict", "0", 0 },
-// Q3Rally Code Start
-//	{ &cg_errorDecay, "cg_errordecay", "0", 0 },
-//	{ &cg_nopredict, "cg_nopredict", "1", 0 },
-// Q3Rally Code END
+
 	{ &cg_noPlayerAnims, "cg_noplayeranims", "0", CVAR_CHEAT },
 	{ &cg_showmiss, "cg_showmiss", "0", 0 },
 	{ &cg_footsteps, "cg_footsteps", "1", CVAR_CHEAT },
 	{ &cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT },
 	{ &cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT },
 	{ &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
-//Q3Rally Code Start
-//	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "40", CVAR_CHEAT },
+
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "150", CVAR_ARCHIVE },
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "40", CVAR_ARCHIVE },
-// Q3Rally Code END
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
-// Q3Rally Code - third person view on by default
-//	{ &cg_thirdPerson, "cg_thirdPerson", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
@@ -358,7 +350,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
 
 
-	{ &cg_rearViewRenderLevel, "cg_rearViewRenderLevel", "3", CVAR_ARCHIVE },
+	{ &cg_rearViewRenderLevel, "cg_rearViewRenderLevel", "31", CVAR_ARCHIVE },
 	{ &cg_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },
 
 	{ &cg_fpsLimit, "cg_fpsLimit", "60", CVAR_ARCHIVE },

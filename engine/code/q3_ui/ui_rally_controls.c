@@ -24,15 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ui_local.h"
 
-// STONELANCE
-/*
-#define ART_BACK0			"menu/art/back_0"
-#define ART_BACK1			"menu/art/back_1"
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
-*/
-// END
-
 typedef struct {
 	char	*command;
 	char	*label;
@@ -75,14 +66,6 @@ typedef struct
 // bindable actions
 #define ID_SHOWSCORES	0
 #define ID_USEITEM		1
-// STONELANCE
-/*
-#define ID_SPEED		2	
-#define ID_FORWARD		3	
-#define ID_BACKPEDAL	4
-#define ID_MOVELEFT		5
-#define ID_MOVERIGHT	6
-*/
 #define ID_ACCEL		2
 #define ID_BRAKE		3
 #define ID_HANDBRAKE	4
@@ -90,13 +73,9 @@ typedef struct
 #define ID_MOVEUP		6	
 #define ID_MOVEDOWN		7
 #define ID_SHOWHUD2		8
-// END
 #define ID_LEFT			9
-#define ID_RIGHT		10
-// STONELANCE
-//#define ID_STRAFE		11	
+#define ID_RIGHT		10	
 #define ID_REARATTACK	11
-// END
 #define ID_LOOKUP		12	
 #define ID_LOOKDOWN		13
 #define ID_MOUSELOOK	14
@@ -111,38 +90,20 @@ typedef struct
 #define ID_WEAPON7		23	
 #define ID_WEAPON8		24	
 #define ID_WEAPON9		25
-#define ID_WEAPON10   26
+#define ID_WEAPON10     26
 #define ID_ATTACK		27
-#define ID_ALT_ATTACK  28
+#define ID_ALT_ATTACK   28
 #define ID_WEAPPREV		29
 #define ID_WEAPNEXT		30
-// STONELANCE
-// #define ID_GESTURE		29
 #define ID_HORN			31
-// END
 #define ID_CHAT			32
 #define ID_CHAT2		33
 #define ID_CHAT3		34
 #define ID_CHAT4		35
-
-// STONELANCE
 #define ID_DROP_REAR	36
 #define ID_HEADLIGHT	37
 #define ID_STARTDEMO	38
 #define ID_STOPDEMO		39
-// END
-// all others
-// STONELANCE
-/*
-#define ID_FREELOOK		38
-#define ID_INVERTMOUSE	39
-#define ID_ALWAYSRUN	40
-#define ID_AUTOSWITCH	41
-#define ID_MOUSESPEED	42
-#define ID_JOYENABLE	43
-#define ID_JOYTHRESHOLD	44
-#define ID_SMOOTHMOUSE	45
-*/
 #define ID_FREELOOK		40
 #define ID_INVERTMOUSE	41
 #define ID_ALWAYSRUN	42
@@ -151,17 +112,10 @@ typedef struct
 #define ID_JOYENABLE	45
 #define ID_JOYTHRESHOLD	46
 #define ID_SMOOTHMOUSE	47
-
 #define ID_AUTODROP		48
 
 
-// END
-// END
-
 #define ANIM_IDLE		0
-// STONELANCE
-// #define ANIM_RUN		1
-// END
 #define ANIM_WALK		1
 #define ANIM_BACK		2
 #define ANIM_JUMP		3
@@ -183,15 +137,10 @@ typedef struct
 #define ANIM_WEAPON9	19
 #define ANIM_WEAPON10	20
 #define ANIM_ATTACK		21
-#define ANIM_ALT_ATTACK    22
-// STONELANCE
-// #define ANIM_GESTURE	23
+#define ANIM_ALT_ATTACK 22
 #define ANIM_REARATTACK	23
-// END
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
-
-// STONELANCE
 #define ANIM_HEADLIGHT	26
 #define ANIM_HORN		27
 #define ANIM_DROPREAR	28
@@ -205,37 +154,22 @@ typedef struct
 	menuframework_s		menu;
 
 	menutext_s			banner;
-// STONELANCE
-//	menubitmap_s		framel;
-//	menubitmap_s		framer;
-// END
 	menubitmap_s		player;
-
 	menutext_s			movement;
 	menutext_s			looking;
 	menutext_s			weapons;
 	menutext_s			misc;
-
-// STONELANCE
-/*
-	menuaction_s		walkforward;
-	menuaction_s		backpedal;
-	menuaction_s		stepleft;
-	menuaction_s		stepright;
-*/
+    
 	menuaction_s		accel;
 	menuaction_s		brake;
 	menuaction_s		handbrake;
 	menuaction_s		turbo;
-// END
+
 	menuaction_s		moveup;
 	menuaction_s		movedown;
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
-// STONELANCE
-//	menuaction_s		sidestep;
-//	menuaction_s		run;
-// END
+
 	menuaction_s		machinegun;
 	menuaction_s		chainsaw;
 	menuaction_s		shotgun;
@@ -247,13 +181,12 @@ typedef struct
 	menuaction_s		bfg;
 	menuaction_s        flamethrower;
 	menuaction_s		attack;
-// STONELANCE
+
 	menuaction_s        alt_attack;
 	menuaction_s		rearattack;
-
 	menuaction_s		droprear;
 	menuradiobutton_s	autodroprear;
-// END
+
 	menuaction_s		prevweapon;
 	menuaction_s		nextweapon;
 	menuaction_s		lookup;
@@ -262,9 +195,6 @@ typedef struct
 	menuradiobutton_s	freelook;
 	menuaction_s		centerview;
 	menuaction_s		zoomview;
-// STONELANCE
-//	menuaction_s		gesture;
-// END
 	menuradiobutton_s	invertmouse;
 	menuslider_s		sensitivity;
 	menuradiobutton_s	smoothmouse;
@@ -279,12 +209,10 @@ typedef struct
 	menuaction_s		chat3;
 	menuaction_s		chat4;
 
-// STONELANCE
 	menuaction_s		headlight;
 	menuaction_s		horn;
     menuaction_s        startdemo;
     menuaction_s        stopdemo;
-// END
 
 	menuradiobutton_s	joyenable;
 	menuslider_s		joythreshold;
@@ -295,14 +223,10 @@ typedef struct
 	vec3_t				playerMoveangles;
 	int					playerLegs;
 	int					playerTorso;
-//  int                 playerWeapon;
 	weapon_t			playerWeapon;
 	qboolean			playerChat;
 
-// STONELANCE
-//	menubitmap_s		back;
 	menutext_s			back;
-// END
 	menutext_s			name;
 } controls_t; 	
 
@@ -312,17 +236,17 @@ static controls_t s_controls;
 
 static bind_t g_bindings[] = 
 {
-	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
-	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-	{"+forward", 		"accelerate",		ID_ACCEL,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
-	{"+back", 			"brake",			ID_BRAKE,		ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
+	{"+scores",			  "show scores",		  ID_SHOWSCORES,	  ANIM_IDLE,		  K_TAB,			-1,		-1, -1},
+	{"+button2",		  "use item",			  ID_USEITEM,		  ANIM_IDLE,		  K_ENTER,		    -1,		-1, -1},
+	{"+forward", 		  "accelerate",		      ID_ACCEL,		      ANIM_WALK,		  'w',		        -1,		-1, -1},
+	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            -1,		-1, -1},
 	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
 	{"+speed", 			"turbo",			ID_TURBO,		ANIM_TURBO,		K_SHIFT,		-1,		-1,	-1},
 	{"+moveup",			"up",				ID_MOVEUP,		ANIM_JUMP,		'x',			-1,		-1, -1},
 	{"+movedown",		"down",				ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
 	{"+hud", 			"show HUD",			ID_SHOWHUD2,	0,				'q',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
+	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	'a',	-1,		-1, -1},
+	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	'd',	-1,		-1, -1},
 	{"+button12", 		"rear attack",		ID_REARATTACK,	ANIM_REARATTACK, K_KP_INS,		-1,		-1, -1},
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
