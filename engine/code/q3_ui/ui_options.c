@@ -31,15 +31,6 @@ SYSTEM CONFIGURATION MENU
 #include "ui_local.h"
 
 
-// STONELANCE
-/*
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
-#define ART_BACK0			"menu/art/back_0"
-#define ART_BACK1			"menu/art/back_1"
-*/
-// END
-
 #define ID_GRAPHICS			10
 #define ID_DISPLAY			11
 #define ID_SOUND			12
@@ -52,31 +43,21 @@ typedef struct {
 	menuframework_s	menu;
 
 	menutext_s		banner;
-// STONELANCE
-/*
-	menubitmap_s	framel;
-	menubitmap_s	framer;
-*/
-// END
-
 	menutext_s		graphics;
 	menutext_s		display;
 	menutext_s		sound;
 	menutext_s		network;
-
-// STONELANCE
-//	menubitmap_s	back;
 	menutext_s		back;
-// END
+
 } optionsmenu_t;
 
 static optionsmenu_t	s_options;
 
 
 /*
-=================
+=============
 Options_Event
-=================
+=============
 */
 static void Options_Event( void* ptr, int event ) {
 	if( event != QM_ACTIVATED ) {
@@ -108,25 +89,18 @@ static void Options_Event( void* ptr, int event ) {
 
 
 /*
-===============
+==================
 SystemConfig_Cache
-===============
+==================
 */
 void SystemConfig_Cache( void ) {
-// STONELANCE
-/*
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
-	trap_R_RegisterShaderNoMip( ART_BACK0 );
-	trap_R_RegisterShaderNoMip( ART_BACK1 );
-*/
-// END
+
 }
 
 /*
-===============
+================
 Options_MenuInit
-===============
+================
 */
 void Options_MenuInit( void ) {
 	int				y;
@@ -153,26 +127,6 @@ void Options_MenuInit( void ) {
 	s_options.banner.color			= color_white;
 	s_options.banner.style			= UI_CENTER;
 
-// STONELANCE
-/*
-	s_options.framel.generic.type  = MTYPE_BITMAP;
-	s_options.framel.generic.name  = ART_FRAMEL;
-	s_options.framel.generic.flags = QMF_INACTIVE;
-	s_options.framel.generic.x	   = 8;  
-	s_options.framel.generic.y	   = 76;
-	s_options.framel.width  	   = 256;
-	s_options.framel.height  	   = 334;
-
-	s_options.framer.generic.type  = MTYPE_BITMAP;
-	s_options.framer.generic.name  = ART_FRAMER;
-	s_options.framer.generic.flags = QMF_INACTIVE;
-	s_options.framer.generic.x	   = 376;
-	s_options.framer.generic.y	   = 76;
-	s_options.framer.width  	   = 256;
-	s_options.framer.height  	   = 334;
-*/
-// END
-
 	y = 168;
 	s_options.graphics.generic.type		= MTYPE_PTEXT;
 	s_options.graphics.generic.flags	= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -181,10 +135,7 @@ void Options_MenuInit( void ) {
 	s_options.graphics.generic.x		= 320;
 	s_options.graphics.generic.y		= y;
 	s_options.graphics.string			= "GRAPHICS";
-// BAGPUSS
-//	s_options.graphics.color			= color_red;
 	s_options.graphics.color			= text_color_normal;
-// END
 	s_options.graphics.style			= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -195,10 +146,7 @@ void Options_MenuInit( void ) {
 	s_options.display.generic.x			= 320;
 	s_options.display.generic.y			= y;
 	s_options.display.string			= "DISPLAY";
-// BAGPUSS
-//	s_options.display.color				= color_red;
 	s_options.display.color				= text_color_normal;
-// END
 	s_options.display.style				= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -209,10 +157,7 @@ void Options_MenuInit( void ) {
 	s_options.sound.generic.x			= 320;
 	s_options.sound.generic.y			= y;
 	s_options.sound.string				= "SOUND";
-// BAGPUSS
-//	s_options.sound.color				= color_red;
 	s_options.sound.color				= text_color_normal;
-// END
 	s_options.sound.style				= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -223,25 +168,8 @@ void Options_MenuInit( void ) {
 	s_options.network.generic.x			= 320;
 	s_options.network.generic.y			= y;
 	s_options.network.string			= "NETWORK";
-// BAGPUSS
-//	s_options.network.color				= color_red;
 	s_options.network.color				= text_color_normal;
-// END
 	s_options.network.style				= UI_CENTER;
-
-// STONELANCE
-/*
-	s_options.back.generic.type	    = MTYPE_BITMAP;
-	s_options.back.generic.name     = ART_BACK0;
-	s_options.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_options.back.generic.callback = Options_Event;
-	s_options.back.generic.id	    = ID_BACK;
-	s_options.back.generic.x		= 0;
-	s_options.back.generic.y		= 480-64;
-	s_options.back.width  		    = 128;
-	s_options.back.height  		    = 64;
-	s_options.back.focuspic         = ART_BACK1;
-*/
 
 	s_options.back.generic.type			= MTYPE_PTEXT;
 	s_options.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -252,15 +180,8 @@ void Options_MenuInit( void ) {
 	s_options.back.string				= "< BACK";
 	s_options.back.color				= text_color_normal;
 	s_options.back.style				= UI_LEFT | UI_SMALLFONT;
-// END
 
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.banner );
-// STONELANCE
-/*
-	Menu_AddItem( &s_options.menu, ( void * ) &s_options.framel );
-	Menu_AddItem( &s_options.menu, ( void * ) &s_options.framer );
-*/
-// END
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.graphics );
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.display );
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.sound );
@@ -270,9 +191,9 @@ void Options_MenuInit( void ) {
 
 
 /*
-===============
+===================
 UI_SystemConfigMenu
-===============
+===================
 */
 void UI_SystemConfigMenu( void ) {
 // STONELANCE FIXME: get rid of this after proper tansitions are added
