@@ -158,7 +158,7 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 
 	CG_AdjustFrom640( &x, &y, &w, &h );
 
-	cg.mmapRefdef.x = x;
+	cg.mmapRefdef.x = x - cg_wideoffset.integer * 1.6;
 	cg.mmapRefdef.y = y;
 	cg.mmapRefdef.width = w;
 	cg.mmapRefdef.height = h;
@@ -207,7 +207,7 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	}
 	//trap_R_RenderScene( &cg.mirrorRefdef );
 	trap_R_RenderScene( &cg.mmapRefdef );
-	CG_DrawPic( mx, my, mw, mh, cgs.media.MMapShader );
+	CG_DrawPic( mx - cg_wideoffset.integer, my, mw, mh, cgs.media.MMapShader );
 }
 
 /*
@@ -423,11 +423,11 @@ static float CG_DrawTimes( float y ) {
 		Com_sprintf(s, sizeof(s), "B: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
         x = 636 - 120;
-		CG_FillRect ( x, y, 120, 18, bgColor );
+		CG_FillRect ( x  + cg_wideoffset.integer, y, 120, 18, bgColor );
 		x+= 25;
 		
 		y+= 4;
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
 	}
 
@@ -443,11 +443,11 @@ static float CG_DrawTimes( float y ) {
 		Com_sprintf(s, sizeof(s), "L: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
         x = 636 - 120;
-        CG_FillRect( x, y, 120, 18, bgColor );
+        CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
         x+= 25;
     
         y+= 4;
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
 	}
 
@@ -470,11 +470,11 @@ static float CG_DrawTimes( float y ) {
 	Com_sprintf(s, sizeof(s), "T: %s", time);
 
 	x = 636 - 120;
-	CG_FillRect( x, y, 120, 18, bgColor );
+	CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
 	x += 25;
 
 	y += 4;
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
 
 	return y;
@@ -505,11 +505,11 @@ static float CG_DrawLaps( float y ) {
 	Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
 
 	x = 636 - 120;
-	CG_FillRect( x, y, 120, 18, bgColor );
+	CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
 	x += 25;
 
 	y += 4;
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
 
 	return y;
@@ -540,16 +540,16 @@ static float CG_DrawCurrentPosition( float y ) {
 	width = 120;
 	height = 18;
 
-	CG_FillRect( x, y, width, height, bgColor );
+	CG_FillRect( x + cg_wideoffset.integer, y, width, height, bgColor );
 
 	x += 25;
 	y += 4;
 
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 
 	x += TINYCHAR_WIDTH * 5;
 
-	CG_DrawTinyDigitalStringColor( x, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
+	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
 
 	y += 10 + 4;
 
@@ -597,15 +597,15 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 		if (num < 0 || num > cgs.maxclients) continue;
 
 		if (num == cent->currentState.clientNum){
-			CG_FillRect( x, y, width, height, selected );
+			CG_FillRect( x + cg_wideoffset.integer, y, width, height, selected );
 		}
 		else {
-			CG_FillRect( x, y, width, height, background );
+			CG_FillRect( x + cg_wideoffset.integer, y, width, height, background );
 		}
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
 		Com_sprintf(s, sizeof(s), "%i-%s", cg_entities[num].currentPosition, player);
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 
 		y += TINYCHAR_HEIGHT;
 	}
@@ -731,13 +731,13 @@ static float CG_DrawSpeed( float y ) {
 	// draw speedometer here
 	x2 = x - 96;
 	y2 = y - 96;
-	CG_DrawPic( x2, y2, 96, 96, trap_R_RegisterShaderNoMip("gfx/hud/gauge01"));
+	CG_DrawPic( x2 + cg_wideoffset.integer, y2, 96, 96, trap_R_RegisterShaderNoMip("gfx/hud/gauge01"));
 	
 
 	// draw digital speed
 	x -= 48 + (CG_DrawStrlen(va("%i", vel_speed)) * SMALLCHAR_WIDTH) / 2;
 	y -= 28;
-	CG_DrawSmallDigitalStringColor( x, y, va("%i", vel_speed), colorWhite);
+	CG_DrawSmallDigitalStringColor( x + cg_wideoffset.integer, y, va("%i", vel_speed), colorWhite);
 
 	// draw needle
 
@@ -771,7 +771,7 @@ static float CG_DrawSpeed( float y ) {
 	refdef.fov_x = 30;
 	refdef.fov_y = 30;
 
-	refdef.x = x2;
+	refdef.x = x2 + cg_wideoffset.integer  * 1.6;
 	refdef.y = y2;
 	refdef.width = w;
 	refdef.height = h;
@@ -788,15 +788,15 @@ static float CG_DrawSpeed( float y ) {
 
 	x -= 60;
 	y -= 60;
-	CG_DrawPic( x, y, 24, 24, trap_R_RegisterShaderNoMip("gfx/hud/center01"));
+	CG_DrawPic( x + cg_wideoffset.integer, y, 24, 24, trap_R_RegisterShaderNoMip("gfx/hud/center01"));
 
 	// draw gear over center of gauge
 	if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "R", colorWhite);
+		CG_DrawSmallDigitalStringColor( x+10 + cg_wideoffset.integer, y+4, "R", colorWhite);
 	else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "N", colorWhite);
+		CG_DrawSmallDigitalStringColor( x+10 + cg_wideoffset.integer, y+4, "N", colorWhite);
 	else
-		CG_DrawSmallDigitalStringColor( x+10, y+4, va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite);
+		CG_DrawSmallDigitalStringColor( x+10 + cg_wideoffset.integer, y+4, va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite);
 
 	y -= 39;
 
@@ -862,9 +862,9 @@ CG_DrawGear
 ===========
 */
  static float CG_DrawGear( float y ) {
-	CG_DrawSmallDigitalStringColor( 560, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
+	CG_DrawSmallDigitalStringColor( 560 + cg_wideoffset.integer, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
 	y -= SMALLCHAR_HEIGHT;
-	CG_DrawTinyDigitalStringColor( 560, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
+	CG_DrawTinyDigitalStringColor( 560 + cg_wideoffset.integer, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
 	y -= SMALLCHAR_HEIGHT;
 	return y;
 }
@@ -911,7 +911,7 @@ float CG_DrawUpperRightHUD( float y ) {
 	}
 
 	if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY){
-		y = CG_DrawScores( 636, y );
+		y = CG_DrawScores( 636 + cg_wideoffset.integer, y );
 	}
 
 	return y;

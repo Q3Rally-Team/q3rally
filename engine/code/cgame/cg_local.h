@@ -1422,6 +1422,7 @@ extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 
+extern	vmCvar_t		cg_tester;
 extern	vmCvar_t		cg_centertime;
 extern	vmCvar_t		cg_runpitch;
 extern	vmCvar_t		cg_runroll;
@@ -1536,6 +1537,8 @@ extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
 // Q3Rally Code Start
+extern	vmCvar_t		cg_widescreen;
+extern	vmCvar_t		cg_wideoffset;
 extern	vmCvar_t		cg_metricUnits;
 extern	vmCvar_t		cg_minSkidLength;
 extern	vmCvar_t		cg_controlMode;

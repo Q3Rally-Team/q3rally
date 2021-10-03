@@ -240,7 +240,12 @@ static void CG_DrawField (int x, int y, int width, int value) {
 	l = strlen(num);
 	if (l > width)
 		l = width;
-	x += 2 + CHAR_WIDTH*(width - l);
+if(cg_widescreen.integer == 1){
+	x += 2 + CHAR_WIDTH* 1.4 *(width - l);
+}
+if(cg_widescreen.integer == 0){
+	x += 2 + CHAR_WIDTH *(width - l);
+}
 
 	ptr = num;
 	while (*ptr && l)
@@ -250,8 +255,14 @@ static void CG_DrawField (int x, int y, int width, int value) {
 		else
 			frame = *ptr -'0';
 
+if(cg_widescreen.integer == 1){
+		CG_DrawPic( x,y, CHAR_WIDTH * 1.4, CHAR_HEIGHT, cgs.media.numberShaders[frame] );
+		x += CHAR_WIDTH * 1.4;
+}
+if(cg_widescreen.integer == 0){
 		CG_DrawPic( x,y, CHAR_WIDTH, CHAR_HEIGHT, cgs.media.numberShaders[frame] );
 		x += CHAR_WIDTH;
+}
 		ptr++;
 		l--;
 	}
@@ -540,23 +551,23 @@ void CG_DrawSigilHUD( void ) {
                 {
 
                 case SIGIL_ISRED:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
+                    CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.redsigilShader );
                     break;
         
                 case SIGIL_ISBLUE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
+                    CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.bluesigilShader );
                     break;
                   
                 case SIGIL_ISGREEN:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.greensigilShader );
+                    CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.greensigilShader );
                     break;
                     
                 case SIGIL_ISYELLOW:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.yellowsigilShader );
+                    CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.yellowsigilShader );
                     break;
                 
                 case SIGIL_ISWHITE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
+                    CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.sigilShader );
                     break;
                     
                 }
@@ -650,7 +661,7 @@ static void CG_DrawStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (0, 432, 3, value);
+			CG_DrawField (0 - 16, 432, 3, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -692,7 +703,7 @@ static void CG_DrawStatusBar( void ) {
 	value = ps->stats[STAT_ARMOR];
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
-		CG_DrawField (370, 432, 3, value);
+		CG_DrawField (370 - 16, 432, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
@@ -765,15 +776,15 @@ static void CG_DrawRallyStatusBar( void ) {
 	// draw ammo background
 	value = ps->ammo[cent->currentState.weapon];
 	if ( value > -1 )
-		CG_FillRect( 4, 476 - 32, 106, 32, bg_color );
+		CG_FillRect( 4 - cg_wideoffset.integer, 476 - 28, 112, 32, bg_color );
 
 	// armor background
 	if ( ps->stats[ STAT_ARMOR ] )
 //		CG_FillRect( 190, 476 - 68, 106, 32, bg_color );
-        CG_FillRect( 256, 476 - 32, 106, 32, bg_color );
+        CG_FillRect( 256 - cg_wideoffset.integer, 476 - 28, 112, 32, bg_color );
 
 	// health background
-	   CG_FillRect( 130, 476 - 32, 106, 32, bg_color );
+	   CG_FillRect( 130 - cg_wideoffset.integer, 476 - 28, 112, 32, bg_color ); // from 106 to 112
 
 	// rearammo background
 	weapon = 0;
@@ -787,7 +798,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	if ( weapon )
-		CG_FillRect( 4, 476 - 68, 106, 32, bg_color );
+		CG_FillRect( 4 - cg_wideoffset.integer, 476 - 68, 112, 32, bg_color );
 
 	// draw any 3D icons now, so the changes back to 2D are minimized
 	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
@@ -795,7 +806,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 10, 476 - 28, 26, 26,
+		CG_Draw3DModel( 10 - cg_wideoffset.integer, 476 - 25, 26, 26,
 					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
 
@@ -814,7 +825,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 136, 476 - 28, 26, 26,
+		CG_Draw3DModel( 136 - cg_wideoffset.integer, 476 - 23, 28, 28,
 					   healthModel, 0, origin, angles );
 	}
 
@@ -834,7 +845,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[2] = -10;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 262, 476 - 28, 26, 26,
+        CG_Draw3DModel( 262 - cg_wideoffset.integer, 476 - 23, 28, 28,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -862,7 +873,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (52, 476 - 28, 3, value);
+			CG_DrawField (52 - 16 - cg_wideoffset.integer, 476 - 24, 3, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -871,7 +882,7 @@ static void CG_DrawRallyStatusBar( void ) {
 
 				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
 				if ( icon ) {
-					CG_DrawPic( 10, 476 - 28, 26, 26, icon );
+					CG_DrawPic( 10 - cg_wideoffset.integer, 476 - 23, 28, 28, icon );
 				}
 			}
 		}
@@ -886,7 +897,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 10, 476 - 64, 26, 26,
+		CG_Draw3DModel( 10 - cg_wideoffset.integer, 476 - 64, 26, 26,
 					   cg_weapons[ weapon ].weaponModel, 0, origin, angles );
 	}
 
@@ -906,7 +917,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (52 + CHAR_WIDTH, 476 - 64, 2, value);
+			CG_DrawField (52 + CHAR_WIDTH - 15 - cg_wideoffset.integer, 476 - 64, 2, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -915,7 +926,7 @@ static void CG_DrawRallyStatusBar( void ) {
 
 				icon = cg_weapons[ weapon ].weaponIcon;
 				if ( icon ) {
-					CG_DrawPic( 6, 480 - 67, 26, 26, icon );
+					CG_DrawPic( 6 - cg_wideoffset.integer, 480 - 67, 26, 26, icon );
 				}
 			}
 		}
@@ -938,7 +949,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	// stretch the health up when taking damage
-	CG_DrawField ( 178, 476 - 28, 3, value);
+	CG_DrawField ( 178 - 15 - cg_wideoffset.integer, 476 - 24, 3, value);
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
@@ -950,11 +961,11 @@ static void CG_DrawRallyStatusBar( void ) {
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
 //		CG_DrawField ( 242, 476 - 64, 3, value);
-        CG_DrawField ( 304, 476 - 28, 3, value);
+        CG_DrawField ( 304 - 15 - cg_wideoffset.integer, 476 - 24, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 196, 476 - 64, 26, 26, cgs.media.armorIcon );
+			CG_DrawPic( 196 - cg_wideoffset.integer, 476 - 64, 26, 26, cgs.media.armorIcon );
 		}
 	}
 }
@@ -1871,8 +1882,8 @@ static int CG_DrawPickupItem( int y ) {
 		if ( fadeColor ) {
 			CG_RegisterItemVisuals( value );
 			trap_R_SetColor( fadeColor );
-			CG_DrawPic( 8, y, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
-			CG_DrawBigString( ICON_SIZE + 16, y + (ICON_SIZE/2 - BIGCHAR_HEIGHT/2), bg_itemlist[ value ].pickup_name, fadeColor[0] );
+			CG_DrawPic( 8 - cg_wideoffset.integer, y, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
+			CG_DrawBigString( ICON_SIZE + 16 - cg_wideoffset.integer, y + (ICON_SIZE/2 - BIGCHAR_HEIGHT/2), bg_itemlist[ value ].pickup_name, fadeColor[0] );
 			trap_R_SetColor( NULL );
 		}
 	}
@@ -3115,14 +3126,14 @@ void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, v
           x +=cos(angle)*w;
           y +=sin(angle)*w;
           
-          if (x<15)
-                  x=15;
+          if (x<15 - cg_wideoffset.integer)
+                  x=15 - cg_wideoffset.integer;
           else {
         
-          if (x>605)
-                  x=605;
+          if (x>605 + cg_wideoffset.integer)
+                  x=605 + cg_wideoffset.integer;
         }
-        if (y<20)
+        if (y<20 )
                 y=20;
         else 
           {

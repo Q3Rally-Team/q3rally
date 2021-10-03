@@ -38,11 +38,14 @@ void CG_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 		*x += 0.5 * ( cgs.glconfig.vidWidth - ( cgs.glconfig.vidHeight * 640 / 480 ) );
 	}
 #endif
+// Q3Rally Code Start(Danil_Dm)
 	// scale for screen sizes
-	*x *= cgs.screenXScale;
+	//*x *= cgs.screenXScale;
+	*x = *x * cgs.screenXScale + cgs.screenXBias;
 	*y *= cgs.screenYScale;
 	*w *= cgs.screenXScale;
 	*h *= cgs.screenYScale;
+// Q3Rally Code END(Danil_Dm)
 }
 
 /*
@@ -145,10 +148,18 @@ void CG_DrawChar( int x, int y, int width, int height, int ch ) {
 	fcol = col*0.0625;
 	size = 0.0625;
 
-	trap_R_DrawStretchPic( ax, ay, aw, ah,
+if(cg_widescreen.integer == 1){
+	trap_R_DrawStretchPic( ax, ay, aw  * 1.4, ah,
 					   fcol, frow, 
 					   fcol + size, frow + size, 
 					   cgs.media.charsetShader );
+}
+if(cg_widescreen.integer == 0){
+	trap_R_DrawStretchPic( ax, ay, aw , ah,
+					   fcol, frow, 
+					   fcol + size, frow + size, 
+					   cgs.media.charsetShader );
+}
 }
 
 
@@ -193,7 +204,12 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 			cnt++;
 // Q3Rally Code Start - move letters closer together
 //			xx += charWidth;
-			xx += charWidth - 2;
+if(cg_widescreen.integer == 1){
+		xx += charWidth + 2;
+}
+if(cg_widescreen.integer == 0){
+		xx += charWidth - 2;
+}
 // Q3Rally Code END
 			s++;
 		}
@@ -217,7 +233,12 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 		CG_DrawChar( xx, y, charWidth, charHeight, *s );
 // Q3Rally Code Start - move letters closer together
 //		xx += charWidth;
+if(cg_widescreen.integer == 1){
+		xx += charWidth + 2;
+}
+if(cg_widescreen.integer == 0){
 		xx += charWidth - 2;
+}
 // Q3Rally Code END
 		cnt++;
 		s++;
