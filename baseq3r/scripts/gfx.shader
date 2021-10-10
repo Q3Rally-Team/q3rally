@@ -191,7 +191,7 @@ gfx/2d/cursor
 sprites/balloon3
 {
 	{
-		map sprites/balloon4.tga
+		map sprites/balloon3.tga
 		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
