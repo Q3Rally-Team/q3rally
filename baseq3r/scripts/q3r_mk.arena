@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_mk"
+
+//IN-GAME MAP NAME
+longname "Warehouse Playground"
+
+//AUTHOR OF THE MAP
+author "insellium"
+
+//GAME TYPE SUPPORTS
+type "q3r_derby q3r_dm q3r_team_dm q3r_dom"
+
+//CUSTOM BOTS
+bots "Tony Steve Tanya Zack Jennifer Ivan Tobias"
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots "1"
+
+//WEAPONS
+weapons "All"
+
+//POWERUPS
+powerups "All"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport "Good"
+
+//TEAMS
+teams "All"
+}
