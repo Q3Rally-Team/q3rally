@@ -152,9 +152,7 @@ gitem_t	bg_itemlist[] =
 	{
 		"item_health_small",
 		"sound/items/s_health.wav",
-        { "models/powerups/health/small_cross.md3", 
-		"models/powerups/health/small_sphere.md3", 
-		NULL, NULL },
+        { "models/powerups/health/small_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_green",
 /* pickup */	"5 Health",
 		5,
@@ -169,9 +167,7 @@ gitem_t	bg_itemlist[] =
 	{
 		"item_health",
 		"sound/items/n_health.wav",
-        { "models/powerups/health/medium_cross.md3", 
-		"models/powerups/health/medium_sphere.md3", 
-		NULL, NULL },
+        { "models/powerups/health/medium_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_yellow",
 /* pickup */	"25 Health",
 		25,
@@ -186,9 +182,7 @@ gitem_t	bg_itemlist[] =
 	{
 		"item_health_large",
 		"sound/items/l_health.wav",
-        { "models/powerups/health/large_cross.md3", 
-		"models/powerups/health/large_sphere.md3", 
-		NULL, NULL },
+        { "models/powerups/health/large_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_red",
 /* pickup */	"50 Health",
 		50,
@@ -203,9 +197,7 @@ gitem_t	bg_itemlist[] =
 	{
 		"item_health_mega",
 		"sound/items/m_health.wav",
-        { "models/powerups/health/mega_cross.md3", 
-		"models/powerups/health/mega_sphere.md3", 
-		NULL, NULL },
+        { "models/powerups/health/mega_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_mega",
 /* pickup */	"Mega Health",
 		100,

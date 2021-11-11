@@ -60,7 +60,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEAD_VIEWHEIGHT         -16
 
 // STONELANCE
-#define TIME_BONUS_PER_FRAG     5000
+#define TIME_BONUS_PER_FRAG     500
 #define RACE_OBSERVER_DELAY     5000
 
 #define NORMAL_WEAPON_TIME_MASK 0x0000ffff

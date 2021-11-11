@@ -162,10 +162,8 @@ extern vmCvar_t	ui_mainViewRenderLevel;
 #define	MAX_EDIT_LINE			256
 
 #define MAX_MENUDEPTH			8
-// STONELANCE
-// #define MAX_MENUITEMS			64
 #define MAX_MENUITEMS			128
-// END
+
 
 #define MTYPE_NULL				0
 #define MTYPE_SLIDER			1	
@@ -178,7 +176,6 @@ extern vmCvar_t	ui_mainViewRenderLevel;
 #define MTYPE_SCROLLLIST		8
 #define MTYPE_PTEXT				9
 #define MTYPE_BTEXT				10
-// STONELANCE
 #define MTYPE_LISTBOX			11
 
 #define SB_WIDTH				16
@@ -189,7 +186,6 @@ extern vmCvar_t	ui_mainViewRenderLevel;
 #define SB_TOP					4
 #define SB_BOTTOM				8
 #define SB_HIDE					16
-// END
 
 #define QMF_BLINK				((unsigned int) 0x00000001)
 #define QMF_SMALLFONT			((unsigned int) 0x00000002)
@@ -212,9 +208,7 @@ extern vmCvar_t	ui_mainViewRenderLevel;
 #define QMF_LOWERCASE			((unsigned int) 0x00040000)	// edit field is all lower case
 #define QMF_UPPERCASE			((unsigned int) 0x00080000)	// edit field is all upper case
 #define QMF_SILENT				((unsigned int) 0x00100000)
-// STONELANCE
 #define QMF_SCROLL_ONLY			((unsigned int) 0x00200000)
-// END
 
 // callback notifications
 #define QM_GOTFOCUS				1
