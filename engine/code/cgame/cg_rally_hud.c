@@ -422,9 +422,9 @@ static float CG_DrawTimes( float y ) {
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 120;
-		CG_FillRect ( x  + cg_wideoffset.integer, y, 120, 18, bgColor );
-		x+= 25;
+        x = 636 - 80;
+		CG_FillRect ( x  + cg_wideoffset.integer, y, 90, 18, bgColor );
+		x+= 10;
 		
 		y+= 4;
 		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
@@ -442,9 +442,9 @@ static float CG_DrawTimes( float y ) {
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 120;
-        CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
-        x+= 25;
+        x = 636 - 80;
+        CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
+        x+= 10;
     
         y+= 4;
 		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
@@ -469,9 +469,9 @@ static float CG_DrawTimes( float y ) {
 
 	Com_sprintf(s, sizeof(s), "T: %s", time);
 
-	x = 636 - 120;
-	CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
-	x += 25;
+	x = 636 - 80;
+	CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
+	x += 10;
 
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
@@ -504,9 +504,9 @@ static float CG_DrawLaps( float y ) {
 
 	Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
 
-	x = 636 - 120;
-	CG_FillRect( x + cg_wideoffset.integer, y, 120, 18, bgColor );
-	x += 25;
+	x = 636 - 80;
+	CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
+	x += 10;
 
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
@@ -536,13 +536,13 @@ static float CG_DrawCurrentPosition( float y ) {
 
 	Com_sprintf(s, sizeof(s), "POS: ");
 
-	x = 636 - 120;
-	width = 120;
+	x = 636 - 80;
+	width = 90;
 	height = 18;
 
 	CG_FillRect( x + cg_wideoffset.integer, y, width, height, bgColor );
 
-	x += 25;
+	x += 10;
 	y += 4;
 
 	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
@@ -550,8 +550,8 @@ static float CG_DrawCurrentPosition( float y ) {
 	x += TINYCHAR_WIDTH * 5;
 
 	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
-
-	y += 10 + 4;
+    
+	y += 20;
 
 	return y;
 }
@@ -579,8 +579,8 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 	endPos = startPos + 8 > cgs.numRacers ? cgs.numRacers : startPos + 8;
 	startPos = endPos - 8 < 1 ? 1 : endPos - 8;
 
-	x = 636 - 120;
-	width = 120;
+	x = 636 - 80;
+	width = 90;
 	height = TINYCHAR_HEIGHT;
 
 	for (i = startPos; i <= endPos; i++){
