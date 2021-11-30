@@ -608,6 +608,7 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 		CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
 
 		y += TINYCHAR_HEIGHT;
+
 	}
 
 	return y;

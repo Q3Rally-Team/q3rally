@@ -1373,7 +1373,7 @@ float CG_DrawScores( float x, float y ) {
 	// draw from the right side to left
 	if ( cgs.gametype >= GT_TEAM ) {
 
-		CG_FillRect( x - 96, y, 96, 18, bgColor );
+		CG_FillRect( x - 80, y, 96, 18, bgColor );
 
 //		if (cgs.gametype != GT_CTF){
         if (cgs.gametype >= GT_TEAM){
@@ -1501,7 +1501,7 @@ float CG_DrawScores( float x, float y ) {
 	} else {
 		qboolean	spectator;
 
-		CG_FillRect( x - 96, y, 96, 18, bgColor );
+		CG_FillRect( x - 80, y, 96, 18, bgColor );
 
 		score = cg.snap->ps.persistant[PERS_SCORE];
 		spectator = ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR );

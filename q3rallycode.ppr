@@ -888,6 +888,8 @@ q3rallycode
 0=engine\code\qcommon\q_shared.h
 1=engine\code\cgame\cg_rally_hud.c
 2=engine\code\cgame\cg_rally_hud2.c
+3=engine\code\cgame\cg_local.h
+4=engine\code\cgame\cg_draw.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
@@ -895,8 +897,14 @@ Selected=engine\code\qcommon\q_shared.h
 TopLine=57
 Caret=36,70
 [engine\code\cgame\cg_rally_hud.c]
-TopLine=533
-Caret=5,553
+TopLine=590
+Caret=1,610
 [engine\code\cgame\cg_rally_hud2.c]
-TopLine=160
-Caret=40,204
+TopLine=328
+Caret=1,344
+[engine\code\cgame\cg_local.h]
+TopLine=1638
+Caret=1,1654
+[engine\code\cgame\cg_draw.c]
+TopLine=1546
+Caret=22,1504
