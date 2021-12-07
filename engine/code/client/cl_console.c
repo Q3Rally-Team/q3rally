@@ -1,6 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2002-2009 Q3Rally Team (Per Thormann - perle@q3rally.com)
 
 This file is part of Quake III Arena source code.
 

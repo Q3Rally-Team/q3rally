@@ -122,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -158,7 +158,7 @@ q3rallycode
 				engine\code\cgame\cg_syscalls.c
 				engine\code\cgame\cg_view.c
 				engine\code\cgame\cg_weapons.c
-			-client
+			+client
 				engine\code\client\cl_avi.c
 				engine\code\client\cl_cgame.c
 				engine\code\client\cl_cin.c
@@ -890,9 +890,11 @@ q3rallycode
 2=engine\code\cgame\cg_rally_hud2.c
 3=engine\code\cgame\cg_local.h
 4=engine\code\cgame\cg_draw.c
+5=engine\code\client\cl_console.c
+6=engine\code\client\client.h
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\client\client.h
 [engine\code\qcommon\q_shared.h]
 TopLine=57
 Caret=36,70
@@ -903,8 +905,14 @@ Caret=1,610
 TopLine=328
 Caret=1,344
 [engine\code\cgame\cg_local.h]
-TopLine=1638
-Caret=1,1654
+TopLine=1
+Caret=72,4
 [engine\code\cgame\cg_draw.c]
-TopLine=1546
+TopLine=1
 Caret=22,1504
+[engine\code\client\cl_console.c]
+TopLine=1
+Caret=72,4
+[engine\code\client\client.h]
+TopLine=1
+Caret=72,4
