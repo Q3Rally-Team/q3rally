@@ -7448,36 +7448,36 @@ brushDef
 {
 brushDef
 {
-( -1144 -624 388 ) ( -1224 -624 388 ) ( -1224 -656 388 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
+( -1144 -624 388.5 ) ( -1224 -624 388.5 ) ( -1224 -656 388.5 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
 ( -1216 -632 444 ) ( -1152 -632 444 ) ( -1152 -648 444 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
-( -1224 -624 388 ) ( -1144 -624 388 ) ( -1152 -632 444 ) ( ( -0.12500076 0 0.00090026 ) ( 0 0.003867015 0.0609509945 ) ) sfx/beam_dusty2 0 0 0
-( -1144 -624 388 ) ( -1144 -656 388 ) ( -1152 -648 444 ) ( ( -0.1250005364 -0.00000014 1.9995727539 ) ( 0.00000001 0.003867005 0.3453285694 ) ) sfx/beam_dusty2 0 0 0
-( -1144 -656 388 ) ( -1224 -656 388 ) ( -1216 -648 444 ) ( ( 0.1250003129 0 0.00036622 ) ( 0 0.003867005 0.3609415293 ) ) sfx/beam_dusty2 0 0 0
-( -1224 -656 388 ) ( -1224 -624 388 ) ( -1216 -632 444 ) ( ( 0.1249993593 -0.00000014 0.00039672 ) ( 0 0.0038669701 0.0503096618 ) ) sfx/beam_dusty2 0 0 0
+( -1224 -624 388 ) ( -1144 -624 388 ) ( -1152 -632 444 ) ( ( -0.0125000002 0 0.2999992371 ) ( 0 0.0176776759 0.3500032425 ) ) sfx/beam_dusty2 0 0 0
+( -1144 -624 388.5 ) ( -1144 -656 388.5 ) ( -1152 -648 444.5 ) ( ( -0.0312500447 -0.000000035 0.4999523163 ) ( 0.0000000457 0.017677661 0.6500244141 ) ) sfx/beam_dusty2 0 0 0
+( -1144 -656 388 ) ( -1224 -656 388 ) ( -1216 -648 444 ) ( ( 0.012500003 0 0.3000030518 ) ( 0 0.0176776703 0.1500000954 ) ) sfx/beam_dusty2 0 0 0
+( -1224 -656 388 ) ( -1224 -624 388 ) ( -1216 -632 444 ) ( ( 0.0312500037 -0.000000035 0.4999885559 ) ( 0 0.0176776648 0.7299990654 ) ) sfx/beam_dusty2 0 0 0
 }
 }
 // brush 620
 {
 brushDef
 {
-( -792 -624 388 ) ( -872 -624 388 ) ( -872 -656 388 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
+( -792 -624 388.5 ) ( -872 -624 388.5 ) ( -872 -656 388.5 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
 ( -864 -632 444 ) ( -800 -632 444 ) ( -800 -648 444 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
-( -872 -624 388 ) ( -792 -624 388 ) ( -800 -632 444 ) ( ( -0.1249999031 0 1.9999389648 ) ( 0 0.0038669901 0.0609369315 ) ) sfx/beam_dusty2 0 0 0
-( -792 -624 388 ) ( -792 -656 388 ) ( -800 -648 444 ) ( ( -0.1249992624 -0.00000014 0.00039672 ) ( -0.000000005 0.0038669701 0.1528036594 ) ) sfx/beam_dusty2 0 0 0
-( -792 -656 388 ) ( -872 -656 388 ) ( -864 -648 444 ) ( ( 0.1250003129 0 0.0002594 ) ( 0 0.003867005 0.3609411716 ) ) sfx/beam_dusty2 0 0 0
-( -872 -656 388 ) ( -872 -624 388 ) ( -864 -632 444 ) ( ( 0.1249995381 -0.00000014 0.00028228 ) ( 0 0.0038669701 0.2428067923 ) ) sfx/beam_dusty2 0 0 0
+( -872 -624 388 ) ( -792 -624 388 ) ( -800 -632 444 ) ( ( -0.0124999974 0 0.8999986649 ) ( 0 0.0176776685 0.3499994278 ) ) sfx/beam_dusty2 0 0 0
+( -792 -624 388 ) ( -792 -656 388 ) ( -800 -648 444 ) ( ( -0.0312499944 -0.000000035 0.4999828339 ) ( -0.0000000229 0.0176776536 0.7699766159 ) ) sfx/beam_dusty2 0 0 0
+( -792 -656 388 ) ( -872 -656 388 ) ( -864 -648 444 ) ( ( 0.0124999881 0 0.8999891281 ) ( 0 0.0176776685 0.1499986649 ) ) sfx/beam_dusty2 0 0 0
+( -872 -656 388 ) ( -872 -624 388 ) ( -864 -632 444 ) ( ( 0.0312500186 -0.000000035 0.4999790192 ) ( 0 0.0176776536 0.6099953651 ) ) sfx/beam_dusty2 0 0 0
 }
 }
 // brush 621
 {
 brushDef
 {
-( -440 -624 388 ) ( -520 -624 388 ) ( -520 -656 388 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
+( -440 -624 388.5 ) ( -520 -624 388.5 ) ( -520 -656 388.5 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
 ( -512 -632 444 ) ( -448 -632 444 ) ( -448 -648 444 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/nodraw 0 0 0
-( -520 -624 388 ) ( -440 -624 388 ) ( -448 -632 444 ) ( ( -0.1250003129 0 0.00016784 ) ( 0 0.0038670001 0.0609433651 ) ) sfx/beam_dusty2 0 0 0
-( -440 -624 388 ) ( -440 -656 388 ) ( -448 -648 444 ) ( ( -0.124999322 -0.00000014 0.00038146 ) ( 0 0.0038669701 0.4603068829 ) ) sfx/beam_dusty2 0 0 0
-( -440 -656 388 ) ( -520 -656 388 ) ( -512 -648 444 ) ( ( 0.1249999404 0 1.9999923706 ) ( 0 0.0038669901 0.3609377146 ) ) sfx/beam_dusty2 0 0 0
-( -520 -656 388 ) ( -520 -624 388 ) ( -512 -632 444 ) ( ( 0.1250005364 -0.00000014 1.9996109009 ) ( 0 0.003867005 0.4353171587 ) ) sfx/beam_dusty2 0 0 0
+( -520 -624 388 ) ( -440 -624 388 ) ( -448 -632 444 ) ( ( -0.012500002 0 0.5000004768 ) ( 0 0.0176776759 0.3500032425 ) ) sfx/beam_dusty2 0 0 0
+( -440 -624 388 ) ( -440 -656 388 ) ( -448 -648 444 ) ( ( -0.0312500075 -0.000000035 0.4999752045 ) ( 0 0.0176776648 0.8899974823 ) ) sfx/beam_dusty2 0 0 0
+( -440 -656 388 ) ( -520 -656 388 ) ( -512 -648 444 ) ( ( 0.0125000002 0 0.5 ) ( 0 0.0176776703 0.1500000954 ) ) sfx/beam_dusty2 0 0 0
+( -520 -656 388.5 ) ( -520 -624 388.5 ) ( -512 -632 444.5 ) ( ( 0.0312500447 -0.000000035 0.4999599457 ) ( 0 0.0176776703 0.4899992943 ) ) sfx/beam_dusty2 0 0 0
 }
 }
 // brush 622
@@ -12586,13 +12586,6 @@ brushDef
 }
 // entity 62
 {
-"classname" "misc_model"
-"origin" "-944 -3720 0"
-"angle" "315"
-"model" "models/mapobjects/skel/skel02mid.md3"
-}
-// entity 63
-{
 "classname" "rally_checkpoint"
 "angle" "270"
 "target" "c14"
@@ -12610,7 +12603,7 @@ brushDef
 }
 }
 }
-// entity 64
+// entity 63
 {
 "classname" "rally_checkpoint"
 "angle" "225"
@@ -12629,7 +12622,7 @@ brushDef
 }
 }
 }
-// entity 65
+// entity 64
 {
 "classname" "rally_checkpoint"
 "angle" "270"
@@ -12648,7 +12641,7 @@ brushDef
 }
 }
 }
-// entity 66
+// entity 65
 {
 "classname" "rally_checkpoint"
 "angle" "360"
@@ -12667,7 +12660,7 @@ brushDef
 }
 }
 }
-// entity 67
+// entity 66
 {
 "classname" "rally_checkpoint"
 "angle" "90"
@@ -12686,56 +12679,56 @@ brushDef
 }
 }
 }
-// entity 68
+// entity 67
 {
 "classname" "info_notnull"
 "angle" "270"
 "origin" "992 856 216"
 "targetname" "c14"
 }
-// entity 69
+// entity 68
 {
 "classname" "info_notnull"
 "angle" "45"
 "origin" "72 1224 200"
 "targetname" "c5"
 }
-// entity 70
+// entity 69
 {
 "classname" "info_notnull"
 "angle" "225"
 "origin" "1016 -312 328"
 "targetname" "c15"
 }
-// entity 71
+// entity 70
 {
 "classname" "info_notnull"
 "angle" "315"
 "origin" "-2296 -3640 184"
 "targetname" "c17"
 }
-// entity 72
+// entity 71
 {
 "classname" "info_notnull"
 "angle" "360"
 "origin" "-440 -4064 40"
 "targetname" "c18"
 }
-// entity 73
+// entity 72
 {
 "classname" "info_notnull"
 "angle" "90"
 "origin" "-56 -2912 24"
 "targetname" "c19"
 }
-// entity 74
+// entity 73
 {
 "classname" "info_notnull"
 "angle" "135"
 "targetname" "c20"
 "origin" "-984 -2544 24"
 }
-// entity 75
+// entity 74
 {
 "classname" "rally_checkpoint"
 "target" "c20"
@@ -12754,7 +12747,7 @@ brushDef
 }
 }
 }
-// entity 76
+// entity 75
 {
 "classname" "rally_checkpoint"
 "angle" "45"
@@ -12773,14 +12766,14 @@ brushDef
 }
 }
 }
-// entity 77
+// entity 76
 {
 "classname" "info_notnull"
 "angle" "45"
 "origin" "-1160 -1760 24"
 "targetname" "c12"
 }
-// entity 78
+// entity 77
 {
 "classname" "rally_checkpoint"
 "target" "c13"
@@ -12799,14 +12792,14 @@ brushDef
 }
 }
 }
-// entity 79
+// entity 78
 {
 "classname" "info_notnull"
 "angle" "45"
 "origin" "-184 -1616 24"
 "targetname" "c13"
 }
-// entity 80
+// entity 79
 {
 "classname" "rally_checkpoint"
 "target" "c16"
@@ -12825,148 +12818,148 @@ brushDef
 }
 }
 }
-// entity 81
+// entity 80
 {
 "classname" "info_notnull"
 "angle" "225"
 "origin" "-1528 -584 312"
 "targetname" "c16"
 }
+// entity 81
+{
+"classname" "info_player_start"
+"origin" "144 -873.375 32"
+"angle" "90"
+"number" "12"
+}
 // entity 82
 {
 "classname" "info_player_start"
-"origin" "144 -777.375 32"
+"origin" "-16 -873.375 32"
 "angle" "90"
-"number" "12"
+"number" "11"
 }
 // entity 83
 {
 "classname" "info_player_start"
-"origin" "-16 -777.375 32"
 "angle" "90"
-"number" "11"
-}
-// entity 84
-{
-"classname" "info_player_start"
-"angle" "90"
-"origin" "64 -777.375 32"
+"origin" "64 -873.375 32"
 "number" "10"
 }
-// entity 85
+// entity 84
 {
 "classname" "info_player_start"
 "angle" "90"
 "origin" "-16 -504 32"
 "number" "2"
 }
-// entity 86
+// entity 85
 {
 "classname" "info_player_start"
 "angle" "90"
 "origin" "144 -504 32"
 "number" "3"
 }
-// entity 87
+// entity 86
 {
 "classname" "info_player_start"
 "origin" "64 -504 32"
 "angle" "90"
 "number" "1"
 }
+// entity 87
+{
+"classname" "info_player_start"
+"origin" "144 -750.25 32"
+"angle" "90"
+"number" "9"
+}
 // entity 88
 {
 "classname" "info_player_start"
-"origin" "144 -686.25 32"
 "angle" "90"
-"number" "9"
+"origin" "64 -750.25 32"
+"number" "7"
 }
 // entity 89
 {
 "classname" "info_player_start"
+"origin" "144 -627.125 32"
 "angle" "90"
-"origin" "64 -686.25 32"
-"number" "7"
+"number" "6"
 }
 // entity 90
 {
 "classname" "info_player_start"
-"origin" "144 -595.125 32"
+"origin" "-16 -750.25 32"
 "angle" "90"
-"number" "6"
+"number" "8"
 }
 // entity 91
 {
 "classname" "info_player_start"
-"origin" "-16 -686.25 32"
 "angle" "90"
-"number" "8"
+"origin" "64 -627.125 32"
+"number" "4"
 }
 // entity 92
 {
 "classname" "info_player_start"
-"angle" "90"
-"origin" "64 -595.125 32"
-"number" "4"
-}
-// entity 93
-{
-"classname" "info_player_start"
-"origin" "-16 -595.125 32"
+"origin" "-16 -627.125 32"
 "angle" "90"
 "number" "5"
 }
-// entity 94
+// entity 93
 {
 "classname" "light"
 "origin" "-97.25 -808 259.25"
 "light" "100"
 }
-// entity 95
+// entity 94
 {
 "classname" "light"
 "origin" "229.25 -808 259.25"
 "light" "100"
 }
-// entity 96
+// entity 95
 {
 "classname" "light"
 "origin" "-202.75 1433.62 431.25"
 "light" "100"
 }
-// entity 97
+// entity 96
 {
 "classname" "light"
 "origin" "222.75 -470.875 259.25"
 "light" "100"
 }
-// entity 98
+// entity 97
 {
 "classname" "light"
 "origin" "-97.25 -470.875 259.25"
 "light" "100"
 }
-// entity 99
+// entity 98
 {
 "classname" "ammo_shells"
 "origin" "184 432 80"
 }
-// entity 100
+// entity 99
 {
 "classname" "ammo_shells"
 "origin" "-64 464 80"
 }
-// entity 101
+// entity 100
 {
 "classname" "ammo_shells"
 "origin" "192 528 80"
 }
-// entity 102
+// entity 101
 {
 "classname" "ammo_shells"
 "origin" "-80 368 80"
 }
-// entity 103
+// entity 102
 {
 "classname" "trigger_hurt"
 "dmg" "999"
@@ -12983,27 +12976,27 @@ brushDef
 }
 }
 }
-// entity 104
+// entity 103
 {
 "classname" "misc_model"
 "origin" "196.875 396.875 144"
 "model" "models/mapobjects/gratelamp/gratetorch.md3"
 "angle" "180"
 }
-// entity 105
+// entity 104
 {
 "classname" "misc_model"
 "origin" "-97.875 396.875 144"
 "model" "models/mapobjects/gratelamp/gratetorch.md3"
 }
-// entity 106
+// entity 105
 {
 "classname" "info_notnull"
 "origin" "64 -624 32"
 "angle" "90"
 "targetname" "start"
 }
-// entity 107
+// entity 106
 {
 "classname" "info_player_intermission"
 "origin" "-1440 -640 320"
