@@ -6,7 +6,7 @@ map "q3r_sk1"
 longname "Canyon Cruise"
 
 //AUTHOR OF THE MAP
-author "SystemKrash (updated by insellium)"
+author "SystemKrash & insellium"
 
 //GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing"

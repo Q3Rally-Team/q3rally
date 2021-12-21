@@ -6,7 +6,7 @@ map "q3r_dm02"
 longname "Classic Demolition Derby"
 
 //AUTHOR OF THE MAP
-author "gout (updated by insellium)"
+author "gout"
 
 //GAME TYPE SUPPORTS
 type "q3r_derby q3r_dm q3r_team_dm"

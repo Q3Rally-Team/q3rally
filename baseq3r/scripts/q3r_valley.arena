@@ -6,7 +6,7 @@ map "q3r_valley"
 longname "Desert Valley"
 
 //AUTHOR OF THE MAP
-author "Dipso (updated by insellium)"
+author "Dipso"
 
 //GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
