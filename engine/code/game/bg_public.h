@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
 
-#define GAME_VERSION		BASEGAME "-1"
+#define GAME_VERSION		BASEGAME "-2"
 
 #define	DEFAULT_GRAVITY		800
 #define	GIB_HEALTH			-40
@@ -103,11 +103,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_SCORES3                              27
 #define CS_SCORES4                              28
 #define CS_REFLECTION_IMAGE             29
-
-//#define       CS_MODELS                               32
-#define CS_MODELS                               30
-#define CS_SIGILSTATUS                  31
+#define CS_SIGILSTATUS                  30
 // Q3Rally Code END
+
+#define CS_MODELS                               32
 #define CS_SOUNDS                               (CS_MODELS+MAX_MODELS)
 // STONELANCE
 //#define       CS_PLAYERS                              (CS_SOUNDS+MAX_SOUNDS)
@@ -219,7 +218,9 @@ typedef enum {
 #define PMF_GRAPPLE_PULL        2048    // pull towards grapple location
 #define PMF_FOLLOW                      4096    // spectate following another player
 #define PMF_SCOREBOARD          8192    // spectate as a scoreboard
+#ifdef MISSIONPACK
 #define PMF_INVULEXPAND         16384   // invulnerability sphere set to full size
+#endif
 // STONELANCE
 #define PMF_OBSERVE                     32768   // spectate as an observer
 // END
@@ -421,11 +422,13 @@ typedef enum {
         PW_BLUEFLAG,
         PW_NEUTRALFLAG,
 
+#ifdef MISSIONPACK
         PW_SCOUT,
         PW_GUARD,
         PW_DOUBLER,
         PW_AMMOREGEN,
         PW_INVULNERABILITY,
+#endif
 
         PW_SIGILWHITE,
         PW_SIGILRED,
