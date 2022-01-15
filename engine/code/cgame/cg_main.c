@@ -2160,7 +2160,7 @@ int realVidHeight;
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	const char	*s;
 // Q3Rally Code Start
-	int		size;
+	int		i, size;
 // Q3Rally Code END
 
 	// clear everything
@@ -2190,10 +2190,12 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
 	cgs.flagStatus = -1;
-// Q3Rally Code Start
-	cgs.sigil[0] = cgs.sigil[1] = cgs.sigil[2] = cgs.sigil[3] = cgs.sigil[4] = -1; // Sigil Reset
-// Q3Rally Code END
 	// old servers
+// Q3Rally Code Start
+	for ( i = 0; i < MAX_SIGILS; i++ ) {
+		cgs.sigil[i] = SIGIL_NONE; // Sigil Reset
+	}
+// Q3Rally Code END
 
 // Q3Rally Code Start(Danil_Dm)
 	if(cg_widescreen.integer == 1){

@@ -242,6 +242,28 @@ static void CG_ParseWarmup( void ) {
 }
 
 /*
+==================
+CG_ParseSigilStatus
+==================
+*/
+static void CG_ParseSigilStatus( void ) {
+	const char *str;
+	int i;
+
+	str = CG_ConfigString( CS_SIGILSTATUS );
+
+	for ( i = 0; i < MAX_SIGILS; i++ ) {
+		if ( str[i] == 0 ) {
+			break;
+		}
+		cgs.sigil[i] = str[i] - '0';
+	}
+	for (/**/; i < MAX_SIGILS; i++ ) {
+		cgs.sigil[i] = SIGIL_NONE;
+	}
+}
+
+/*
 ================
 CG_SetConfigValues
 
@@ -263,16 +285,11 @@ void CG_SetConfigValues( void ) {
 		cgs.redflag = s[0] - '0';
 		cgs.blueflag = s[1] - '0';
 	}
-    
-     else if ( cgs.gametype == GT_DOMINATION ) {
-      s = CG_ConfigString( CS_SIGILSTATUS );
-      cgs.sigil[0] = s[0] - '0';
-      cgs.sigil[1] = s[1] - '0';
-      cgs.sigil[2] = s[2] - '0';
-      cgs.sigil[3] = s[3] - '0';
-      cgs.sigil[4] = s[4] - '0';
-    }
-    
+
+	else if ( cgs.gametype == GT_DOMINATION ) {
+		CG_ParseSigilStatus();
+	}
+
 #ifdef MISSIONPACK
 	else if( cgs.gametype == GT_1FCTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
@@ -410,17 +427,12 @@ static void CG_ConfigStringModified( void ) {
 			cgs.flagStatus = str[0] - '0';
 		}
 #endif
-              }
-	
+	}
 	else if ( num == CS_SIGILSTATUS ) {
-		    if ( cgs.gametype == GT_DOMINATION ) {
-		        cgs.sigil[0] = str[0] - '0';
-		        cgs.sigil[1] = str[1] - '0';
-		        cgs.sigil[2] = str[2] - '0';
-                cgs.sigil[3] = str[3] - '0';
-                cgs.sigil[4] = str[4] - '0';
-	       }
-        }
+		if( cgs.gametype == GT_DOMINATION ) {
+			CG_ParseSigilStatus();
+		}
+	}
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();
 	}

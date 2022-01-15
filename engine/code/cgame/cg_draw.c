@@ -570,6 +570,8 @@ void CG_DrawSigilHUD( void ) {
                     CG_DrawPic( x + cg_wideoffset.integer, y, 18, 18, cgs.media.sigilShader );
                     break;
                     
+                case SIGIL_NONE:
+                    break;
                 }
                 
               x+= 19;

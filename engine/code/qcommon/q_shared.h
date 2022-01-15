@@ -1797,7 +1797,8 @@ typedef enum _flag_status {
 #define MAX_SIGILS  5
 
 typedef enum _sigil_status {
-  SIGIL_ISWHITE = 0,
+  SIGIL_NONE = 0,
+  SIGIL_ISWHITE,
   SIGIL_ISRED,
   SIGIL_ISBLUE,
   SIGIL_ISGREEN,

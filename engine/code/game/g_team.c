@@ -46,6 +46,7 @@ typedef struct teamgame_s {
 	int				blueObeliskAttackedTime;
 // Q3Rally Code Start
 	domination_sigil_t     sigil[MAX_SIGILS];
+	int				numSigils;
 // Q3Rally Code END
 } teamgame_t;
 
@@ -60,6 +61,8 @@ void Init_Sigils( void );
 // Q3Rally Code END
 
 void Team_InitGame( void ) {
+	int i;
+
 	memset(&teamgame, 0, sizeof teamgame);
 
 	switch( g_gametype.integer ) {
@@ -74,16 +77,14 @@ void Team_InitGame( void ) {
 		
 	case GT_DOMINATION:
 	  Init_Sigils();
-	  teamgame.sigil[0].status = -1; // Invalid to force update
-	  Team_SetSigilStatus( 0, SIGIL_ISWHITE );
-	  teamgame.sigil[1].status = -1; // Invalid to force update
-	  Team_SetSigilStatus( 1, SIGIL_ISWHITE );
-	  teamgame.sigil[2].status = -1; // Invalid to force update
-	  Team_SetSigilStatus( 2, SIGIL_ISWHITE );
-      teamgame.sigil[3].status = -1; // Invalid to force update
-	  Team_SetSigilStatus( 3, SIGIL_ISWHITE );
-	  teamgame.sigil[4].status = -1; // Invalid to force update
-	  Team_SetSigilStatus( 4, SIGIL_ISWHITE );
+	  for ( i = 0; i < teamgame.numSigils; i++ ) {
+	    teamgame.sigil[i].status = -1; // Invalid to force update
+	    Team_SetSigilStatus( i, SIGIL_ISWHITE );
+	  }
+	  for ( ; i < MAX_SIGILS; i++ ) {
+	    teamgame.sigil[i].status = -1; // Invalid to force update
+	    Team_SetSigilStatus( i, SIGIL_NONE );
+	  }
 	  break;
 	  
 // Q3Rally Code END
@@ -106,20 +107,11 @@ void Team_InitGame( void ) {
 void Team_EndGame( void ) {
 	// stop adding score when intermission starts
 	if ( g_gametype.integer == GT_DOMINATION ) {
-		if( teamgame.sigil[0].entity ) {
-			teamgame.sigil[0].entity->nextthink = 0;
-		}
-		if( teamgame.sigil[1].entity ) {
-			teamgame.sigil[1].entity->nextthink = 0;
-		}
-		if( teamgame.sigil[2].entity ) {
-			teamgame.sigil[2].entity->nextthink = 0;
-		}
-        if( teamgame.sigil[3].entity ) {
-			teamgame.sigil[3].entity->nextthink = 0;
-		}
-        if( teamgame.sigil[4].entity ) {
-			teamgame.sigil[4].entity->nextthink = 0;
+		int i;
+		for ( i = 0; i < teamgame.numSigils; i++ ) {
+			if( teamgame.sigil[i].entity ) {
+				teamgame.sigil[i].entity->nextthink = 0;
+			}
 		}
 	}
 }
@@ -274,7 +266,7 @@ Init_Sigils
 */
 void Init_Sigils( void ) {
     gentity_t     *point = NULL;
-    int           sigilNum = 0;
+    teamgame.numSigils = 0;
     for (point = g_entities; point < &g_entities[level.num_entities] ;
     point++)
     {
@@ -282,12 +274,11 @@ void Init_Sigils( void ) {
             continue;
             
         if (!Q_stricmp(point->classname, "team_domination_sigil")) {
-            teamgame.sigil[sigilNum].entity = point;
-            sigilNum++;
-        }
-        
-        if ( sigilNum == MAX_SIGILS )
-            return;
+            teamgame.sigil[teamgame.numSigils].entity = point;
+            teamgame.numSigils++;
+            if ( teamgame.numSigils == MAX_SIGILS )
+                return;
+            }
         }
     }
 /*    
@@ -312,15 +303,14 @@ void Team_SetSigilStatus( int sigilNum, sigilStatus_t status ) {
     
     
     if( modified ) {
-            char st[6];
+            char st[MAX_SIGILS+1];
+            int i;
             
-            //send all 5 sigils' status to the configstring
-            st[0] = '0' + teamgame.sigil[0].status;
-            st[1] = '0' + teamgame.sigil[1].status;
-            st[2] = '0' + teamgame.sigil[2].status;
-            st[3] = '0' + teamgame.sigil[3].status;
-            st[4] = '0' + teamgame.sigil[4].status;
-            st[5] = 0;
+            //send all sigils' status to the configstring
+            for ( i = 0; i < teamgame.numSigils; i++ ) {
+                st[i] = '0' + teamgame.sigil[i].status;
+            }
+            st[teamgame.numSigils] = 0;
             
             trap_SetConfigstring( CS_SIGILSTATUS, st );
             
@@ -342,12 +332,9 @@ void ValidateSigilsInMap( gentity_t *ent )
       float       vlen;
       qboolean    foundItem = qfalse, foundPreferredItem = qfalse;
       gitem_t     *item;
-      
-      if (!teamgame.sigil[0].entity || !teamgame.sigil[1].entity)
-          return;
 
       // if 3rd sigil exists, this function doesn't need to run
-      if (teamgame.sigil[2].entity)
+      if (teamgame.numSigils != 2 || MAX_SIGILS < 3)
           return;
           
       VectorCopy(teamgame.sigil[0].entity->r.currentOrigin, start);
@@ -408,7 +395,8 @@ void ValidateSigilsInMap( gentity_t *ent )
                 targ->item = item;
                 targ->r.svFlags = SVF_BROADCAST;
                 targ->s.powerups = PW_SIGILWHITE;
-                teamgame.sigil[2].entity = targ;
+                teamgame.sigil[teamgame.numSigils].entity = targ;
+                teamgame.numSigils++;
             }
         // kill the entity that does the spawn conversions
         G_FreeEntity(ent);
