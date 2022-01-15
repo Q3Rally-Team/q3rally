@@ -263,9 +263,6 @@ qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 ) {
 	return qfalse;
 }
 
-// Q3Rally Code Start
-static char dominationSigilStatusRemap[] = { '0', '1', '2' };
-// Q3Rally Code END
 static char ctfFlagStatusRemap[] = { '0', '1', '*', '*', '2' };
 static char oneFlagStatusRemap[] = { '0', '1', '2', '3', '4' };
 
@@ -289,7 +286,7 @@ void Init_Sigils( void ) {
             sigilNum++;
         }
         
-        if ( sigilNum == 3 )
+        if ( sigilNum == MAX_SIGILS )
             return;
         }
     }
@@ -300,7 +297,12 @@ Team_SetSigilStatus
 */
 void Team_SetSigilStatus( int sigilNum, sigilStatus_t status ) {
         qboolean modified = qfalse;
-                
+
+        // This can happen if there are too many sigils on the map.
+        if ( sigilNum >= MAX_SIGILS ) {
+                return;
+        }
+
                 // update only the sigil modified
                 if( teamgame.sigil[sigilNum].status != status )
                 {
@@ -313,11 +315,11 @@ void Team_SetSigilStatus( int sigilNum, sigilStatus_t status ) {
             char st[6];
             
             //send all 5 sigils' status to the configstring
-            st[0] = dominationSigilStatusRemap[teamgame.sigil[0].status];
-            st[1] = dominationSigilStatusRemap[teamgame.sigil[1].status];
-            st[2] = dominationSigilStatusRemap[teamgame.sigil[2].status];
-            st[3] = dominationSigilStatusRemap[teamgame.sigil[3].status];
-            st[4] = dominationSigilStatusRemap[teamgame.sigil[4].status];
+            st[0] = '0' + teamgame.sigil[0].status;
+            st[1] = '0' + teamgame.sigil[1].status;
+            st[2] = '0' + teamgame.sigil[2].status;
+            st[3] = '0' + teamgame.sigil[3].status;
+            st[4] = '0' + teamgame.sigil[4].status;
             st[5] = 0;
             
             trap_SetConfigstring( CS_SIGILSTATUS, st );

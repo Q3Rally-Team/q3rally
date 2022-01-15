@@ -415,10 +415,10 @@ static void CG_ConfigStringModified( void ) {
 	else if ( num == CS_SIGILSTATUS ) {
 		    if ( cgs.gametype == GT_DOMINATION ) {
 		        cgs.sigil[0] = str[0] - '0';
-		        cgs.sigil[1] = str[1] - '1';
-		        cgs.sigil[2] = str[2] - '2';
-                cgs.sigil[3] = str[3] - '3';
-                cgs.sigil[4] = str[4] - '4';
+		        cgs.sigil[1] = str[1] - '0';
+		        cgs.sigil[2] = str[2] - '0';
+                cgs.sigil[3] = str[3] - '0';
+                cgs.sigil[4] = str[4] - '0';
 	       }
         }
 	else if ( num == CS_SHADERSTATE ) {
