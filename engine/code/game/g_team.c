@@ -395,6 +395,7 @@ void ValidateSigilsInMap( gentity_t *ent )
                 targ->item = item;
                 targ->r.svFlags = SVF_BROADCAST;
                 targ->s.powerups = PW_SIGILWHITE;
+                targ->count = 0;
                 teamgame.sigil[teamgame.numSigils].entity = targ;
                 teamgame.numSigils++;
             }
