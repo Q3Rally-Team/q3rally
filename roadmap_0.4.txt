@@ -9,8 +9,12 @@ New features planned for 0.4
 - Change Gamemode Demolition Derby to use only chainsaw
 - Menu music rotation
 - Secret car skins (Like a Krusade from Q3A)
-- finish the 4 Teams Modes (CTF and DOM)
-- Make unique logos for 4 teams (Like UT99)
+- finish the 4 Teams CTF Mode
 - Porting the Flamethrower from Return to Castle Wolfenstein
-- finishing the flag status hud for domination
 - rotating weapons (maybe, for now only a thought)
+
+Finished features
+
+- Make unique logos for 4 teams (Like UT99)
+- finishing the flag status hud for domination
+- finished 4 Teams Domination
