@@ -701,13 +701,11 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi,  const char *modelSkinNam
 typedef struct {
 	int					frametime;
 	int					realtime;
-	int					cursor_hx;
-	int					cursor_hy;
-	float				cursorx;
-	float				cursory;
+	int					cursorx;
+	int					cursory;
 // STONELANCE
-	float				cursorpx;	// previous position
-	float				cursorpy;	// previous position
+	int					cursorpx;	// previous position
+	int					cursorpy;	// previous position
 // END
 	int					menusp;
 	menuframework_s*	activemenu;
