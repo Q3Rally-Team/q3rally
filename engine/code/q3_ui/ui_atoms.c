@@ -1084,17 +1084,21 @@ void UI_MouseEvent( int dx, int dy )
 	uis.cursorpy = uis.cursory;
 // END
 
-	uis.cursorx += dx;
-	if (uis.cursorx < -uis.bias)
-		uis.cursorx = -uis.bias;
-	else if (uis.cursorx > SCREEN_WIDTH+uis.bias)
-		uis.cursorx = SCREEN_WIDTH+uis.bias;
+	uis.cursor_hx += dx;
+	if (uis.cursor_hx < 0)
+		uis.cursor_hx = 0;
+	else if (uis.cursor_hx > uis.glconfig.vidWidth - 1)
+		uis.cursor_hx = uis.glconfig.vidWidth - 1;
 
-	uis.cursory += dy;
-	if (uis.cursory < 0)
-		uis.cursory = 0;
-	else if (uis.cursory > SCREEN_HEIGHT)
-		uis.cursory = SCREEN_HEIGHT;
+	uis.cursor_hy += dy;
+	if (uis.cursor_hy < 0)
+		uis.cursor_hy = 0;
+	else if (uis.cursor_hy > uis.glconfig.vidHeight - 1)
+		uis.cursor_hy = uis.glconfig.vidHeight - 1;
+
+	// update virtual mouse cursor coordinates
+	uis.cursorx = ( uis.cursor_hx - uis.bias ) / uis.xscale;
+	uis.cursory = uis.cursor_hy / uis.yscale;
 
 	// region test the active menu items
 	for (i=0; i<uis.activemenu->nitems; i++)
@@ -1595,7 +1599,7 @@ void UI_Refresh( int realtime )
 	if (uis.debug)
 	{
 		// cursor coordinates
-		UI_DrawString( 0, 0, va("(%d,%d)",uis.cursorx,uis.cursory), UI_LEFT|UI_SMALLFONT, colorRed );
+		UI_DrawString( 0, 0, va("(%.1f,%.1f)",uis.cursorx,uis.cursory), UI_LEFT|UI_SMALLFONT, colorRed );
 	}
 #endif
 
