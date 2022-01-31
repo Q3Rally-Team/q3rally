@@ -155,30 +155,30 @@
 }
 // brush 16
 {
-( -3524 1624 -100 ) ( -3524 1624 -104 ) ( -3524 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 1396 3788 -100 ) ( 1396 3788 -104 ) ( 1396 1624 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 1396 1624 -100 ) ( 1396 1624 -104 ) ( -3524 1624 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3524 3788 -100 ) ( -3524 3788 -104 ) ( 1396 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3524 3788 -104 ) ( -3524 1624 -104 ) ( 1396 1624 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3524 1624 -100 ) ( -3524 3788 -100 ) ( 1396 3788 -100 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3524 1624 0 ) ( -3524 1624 -4 ) ( -3524 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1396 3788 0 ) ( 1396 3788 -4 ) ( 1396 1624 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1396 1624 0 ) ( 1396 1624 -4 ) ( -3524 1624 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3524 3788 0 ) ( -3524 3788 -4 ) ( 1396 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3524 3788 -4 ) ( -3524 1624 -4 ) ( 1396 1624 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3524 1624 0 ) ( -3524 3788 0 ) ( 1396 3788 0 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 // brush 17
 {
-( 1392 -500 -100 ) ( 1392 -500 -104 ) ( 1392 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 3520 3788 -100 ) ( 3520 3788 -104 ) ( 3520 -500 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 3520 -500 -100 ) ( 3520 -500 -104 ) ( 1392 -500 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 1392 3788 -100 ) ( 1392 3788 -104 ) ( 3520 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 1392 3788 -104 ) ( 1392 -500 -104 ) ( 3520 -500 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 1392 -500 -100 ) ( 1392 3788 -100 ) ( 3520 3788 -100 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1392 -500 0 ) ( 1392 -500 -4 ) ( 1392 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 3520 3788 0 ) ( 3520 3788 -4 ) ( 3520 -500 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 3520 -500 0 ) ( 3520 -500 -4 ) ( 1392 -500 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1392 3788 0 ) ( 1392 3788 -4 ) ( 3520 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1392 3788 -4 ) ( 1392 -500 -4 ) ( 3520 -500 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1392 -500 0 ) ( 1392 3788 0 ) ( 3520 3788 0 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 // brush 18
 {
-( -3516 -1284 -100 ) ( -3516 -1284 -104 ) ( -3516 -500 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 2180 -500 -100 ) ( 2180 -500 -104 ) ( 2180 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( 2180 -1284 -100 ) ( 2180 -1284 -104 ) ( -3516 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3516 -500 -100 ) ( -3516 -500 -104 ) ( 2180 -500 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3516 -500 -104 ) ( -3516 -1284 -104 ) ( 2180 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3516 -1284 -100 ) ( -3516 -500 -100 ) ( 2180 -500 -100 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 -1284 0 ) ( -3516 -1284 -4 ) ( -3516 -500 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 2180 -500 0 ) ( 2180 -500 -4 ) ( 2180 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 2180 -1284 0 ) ( 2180 -1284 -4 ) ( -3516 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 -500 0 ) ( -3516 -500 -4 ) ( 2180 -500 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 -500 -4 ) ( -3516 -1284 -4 ) ( 2180 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 -1284 0 ) ( -3516 -500 0 ) ( 2180 -500 0 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 // brush 19
 {
@@ -4065,12 +4065,12 @@
 }
 // brush 393
 {
-( -5056 -1284 -100 ) ( -5056 -1284 -104 ) ( -5056 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3516 3788 -100 ) ( -3516 3788 -104 ) ( -3516 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -3516 -1284 -100 ) ( -3516 -1284 -104 ) ( -5056 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -5056 3788 -100 ) ( -5056 3788 -104 ) ( -3516 3788 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -5056 3788 -104 ) ( -5056 -1284 -104 ) ( -3516 -1284 -104 ) common/caulk 0 0 0 0.5 0.5 0 0 0
-( -5056 -1284 -100 ) ( -5056 3788 -100 ) ( -3516 3788 -100 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -5056 -1284 0 ) ( -5056 -1284 -4 ) ( -5056 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 3788 0 ) ( -3516 3788 -4 ) ( -3516 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -3516 -1284 0 ) ( -3516 -1284 -4 ) ( -5056 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -5056 3788 0 ) ( -5056 3788 -4 ) ( -3516 3788 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -5056 3788 -4 ) ( -5056 -1284 -4 ) ( -3516 -1284 -4 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -5056 -1284 0 ) ( -5056 3788 0 ) ( -3516 3788 0 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 // brush 394
 {
@@ -5675,226 +5675,226 @@ q3r_signage/dirsign02_blu
 }
 // entity 31
 {
-"classname" "info_player_deathmatch"
-"number" "6"
-"origin" "-3112 3264 28"
-}
-// entity 32
-{
-"classname" "info_player_deathmatch"
-"number" "5"
-"origin" "-3048 3392 28"
-}
-// entity 33
-{
-"classname" "info_player_deathmatch"
-"number" "11"
-"origin" "-3520 3392 28"
-}
-// entity 34
-{
-"classname" "info_player_deathmatch"
-"number" "2"
-"origin" "-2788 3264 28"
-}
-// entity 35
-{
-"classname" "info_player_deathmatch"
-"number" "3"
-"origin" "-2880 3392 28"
-}
-// entity 36
-{
-"classname" "info_player_deathmatch"
-"number" "7"
-"origin" "-3200 3392 28"
-}
-// entity 37
-{
-"classname" "info_player_deathmatch"
-"number" "8"
-"origin" "-3268 3264 28"
-}
-// entity 38
-{
-"classname" "info_player_deathmatch"
-"number" "10"
-"origin" "-3428 3264 28"
-}
-// entity 39
-{
-"classname" "info_player_deathmatch"
-"number" "12"
-"origin" "-3588 3264 28"
-}
-// entity 40
-{
-"classname" "info_player_deathmatch"
-"number" "4"
-"origin" "-2944 3264 28"
-}
-// entity 41
-{
-"classname" "info_player_deathmatch"
-"number" "9"
-"origin" "-3360 3392 28"
-}
-// entity 42
-{
 "classname" "light"
 "origin" "592 2416 208"
 "light" "10"
 }
-// entity 43
+// entity 32
 {
 "classname" "target_speaker"
 "origin" "-2288 2176 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 44
+// entity 33
 {
 "classname" "target_speaker"
 "origin" "-2448 3296 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 45
+// entity 34
 {
 "classname" "target_speaker"
 "origin" "-3120 3296 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 46
+// entity 35
 {
 "classname" "target_speaker"
 "origin" "-3888 3296 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 47
+// entity 36
 {
 "classname" "target_speaker"
 "origin" "-3888 1728 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 48
+// entity 37
 {
 "classname" "target_speaker"
 "origin" "-3888 -16 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 49
+// entity 38
 {
 "classname" "target_speaker"
 "origin" "-3888 -944 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 50
+// entity 39
 {
 "classname" "target_speaker"
 "origin" "-2304 -944 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 51
+// entity 40
 {
 "classname" "target_speaker"
 "origin" "-224 -944 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 52
+// entity 41
 {
 "classname" "target_speaker"
 "origin" "1776 -944 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 53
+// entity 42
 {
 "classname" "target_speaker"
 "origin" "1776 384 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 54
+// entity 43
 {
 "classname" "target_speaker"
 "origin" "2768 384 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 55
+// entity 44
 {
 "classname" "target_speaker"
 "origin" "2768 1552 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 56
+// entity 45
 {
 "classname" "target_speaker"
 "origin" "3136 2912 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 57
+// entity 46
 {
 "classname" "target_speaker"
 "origin" "2608 2912 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 58
+// entity 47
 {
 "classname" "target_speaker"
 "origin" "2608 2272 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 59
+// entity 48
 {
 "classname" "target_speaker"
 "origin" "1680 2272 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 60
+// entity 49
 {
 "classname" "target_speaker"
 "origin" "1680 3296 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 61
+// entity 50
 {
 "classname" "target_speaker"
 "origin" "96 3296 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 62
+// entity 51
 {
 "classname" "target_speaker"
 "origin" "96 2176 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 63
+// entity 52
 {
 "classname" "target_speaker"
 "origin" "-1056 2176 208"
 "noise" "sound/world/rain"
 "spawnflags" "1"
 }
-// entity 64
+// entity 53
 {
 "classname" "info_notnull"
 "targetname" "end1"
 "origin" "-2856 -808 136"
+}
+// entity 54
+{
+"classname" "info_player_start"
+"number" "7"
+"origin" "-3200 3392 28"
+}
+// entity 55
+{
+"classname" "info_player_start"
+"number" "5"
+"origin" "-3048 3392 28"
+}
+// entity 56
+{
+"classname" "info_player_start"
+"number" "6"
+"origin" "-3112 3264 28"
+}
+// entity 57
+{
+"classname" "info_player_start"
+"number" "2"
+"origin" "-2788 3264 28"
+}
+// entity 58
+{
+"classname" "info_player_start"
+"number" "3"
+"origin" "-2880 3392 28"
+}
+// entity 59
+{
+"classname" "info_player_start"
+"number" "11"
+"origin" "-3520 3392 28"
+}
+// entity 60
+{
+"classname" "info_player_start"
+"number" "12"
+"origin" "-3588 3264 28"
+}
+// entity 61
+{
+"classname" "info_player_start"
+"number" "8"
+"origin" "-3268 3264 28"
+}
+// entity 62
+{
+"classname" "info_player_start"
+"number" "4"
+"origin" "-2944 3264 28"
+}
+// entity 63
+{
+"classname" "info_player_start"
+"number" "10"
+"origin" "-3428 3264 28"
+}
+// entity 64
+{
+"classname" "info_player_start"
+"number" "9"
+"origin" "-3360 3392 28"
 }
