@@ -6,7 +6,7 @@ map "q3r_dirtyfun"
 longname "Dirty Fun"
 
 //AUTHOR OF THE MAP
-author "Stecki"
+author "Stecki & insellium"
 
 //GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing"
