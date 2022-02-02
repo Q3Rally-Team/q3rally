@@ -192,7 +192,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -886,45 +886,13 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\cgame\cg_rally_hud.c
-2=engine\code\cgame\cg_rally_hud2.c
-3=engine\code\cgame\cg_local.h
-4=engine\code\cgame\cg_draw.c
-5=engine\code\client\cl_console.c
-6=engine\code\client\client.h
-7=engine\code\game\g_team.c
-8=engine\code\cgame\cg_main.c
-9=engine\code\cgame\cg_servercmds.c
+1=engine\code\game\g_weapon.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\game\g_weapon.c
 [engine\code\qcommon\q_shared.h]
 TopLine=46
 Caret=36,70
-[engine\code\cgame\cg_rally_hud.c]
-TopLine=590
-Caret=1,610
-[engine\code\cgame\cg_rally_hud2.c]
-TopLine=328
-Caret=1,344
-[engine\code\cgame\cg_local.h]
-TopLine=1
-Caret=72,4
-[engine\code\cgame\cg_draw.c]
-TopLine=539
-Caret=41,549
-[engine\code\client\cl_console.c]
-TopLine=1
-Caret=72,4
-[engine\code\client\client.h]
-TopLine=1
-Caret=72,4
-[engine\code\game\g_team.c]
-TopLine=1189
-Caret=1,1205
-[engine\code\cgame\cg_main.c]
-TopLine=2178
-Caret=1,2194
-[engine\code\cgame\cg_servercmds.c]
-TopLine=373
-Caret=1,417
+[engine\code\game\g_weapon.c]
+TopLine=693
+Caret=35,717
