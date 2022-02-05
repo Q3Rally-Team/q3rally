@@ -1269,6 +1269,15 @@ medal_impressive
 	}
 }
 
+medal_telefragged
+{
+	nopicmip
+	{
+		clampmap menu/medals/medal_telefragged.tga
+		blendFunc blend
+	}
+}
+
 medal_frags
 {
 	nopicmip
