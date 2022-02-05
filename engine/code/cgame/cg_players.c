@@ -2579,6 +2579,11 @@ static void CG_PlayerSprites( centity_t *cent ) {
 		CG_PlayerFloatSprite( cent, cgs.media.medalImpressive );
 		return;
 	}
+    
+    if ( cent->currentState.eFlags & EF_AWARD_IMPRESSIVETELEFRAG ) {
+		CG_PlayerFloatSprite( cent, cgs.media.medalImpressiveTelefrag );
+		return;
+	}
 
 	if ( cent->currentState.eFlags & EF_AWARD_EXCELLENT ) {
 		CG_PlayerFloatSprite( cent, cgs.media.medalExcellent );

@@ -98,6 +98,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 // END
 			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
 			cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
+            cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
 			cl->ps.persistant[PERS_EXCELLENT_COUNT],
 			cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
 			cl->ps.persistant[PERS_DEFEND_COUNT], 
@@ -369,6 +370,10 @@ void Cmd_Give_f (gentity_t *ent)
 	}
 	if (Q_stricmp(name, "impressive") == 0) {
 		ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
+		return;
+	}
+    if (Q_stricmp(name, "impressive telefrag") == 0) {
+		ent->client->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT]++;
 		return;
 	}
 	if (Q_stricmp(name, "gauntletaward") == 0) {

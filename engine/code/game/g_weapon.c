@@ -440,7 +440,7 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 	gentity_t	*m;
 
 	// extra vertical velocity
-	forward[2] += -0.2f;
+	forward[2] += 0.2f;
 	VectorNormalize( forward );
 
 	m = fire_grenade (ent, muzzle, forward);
@@ -587,13 +587,6 @@ RAILGUN
 
 ======================================================================
 */
-
-
-/*
-=================
-weapon_railgun_fire
-=================
-*/
 #define	MAX_RAIL_HITS	4
 void weapon_railgun_fire (gentity_t *ent) {
 	vec3_t		end;
@@ -610,7 +603,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-	damage = 17 * s_quadFactor;
+    damage = 17 * s_quadFactor;
 
 	VectorMA (muzzle, 8192, forward, end);
 
@@ -713,15 +706,16 @@ void weapon_railgun_fire (gentity_t *ent) {
 	} else {
 		// check for "impressive" reward sound
 		ent->client->accurateCount += hits;
-		if ( ent->client->accurateCount >= 4 ) {
-			ent->client->accurateCount -= 4;
+		if ( ent->client->accurateCount >= 6 ) {
+			ent->client->accurateCount -= 6;
 			ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
 			// add the sprite over the player's head
-			ent->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
+			ent->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_IMPRESSIVETELEFRAG | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
 			ent->client->ps.eFlags |= EF_AWARD_IMPRESSIVE;
 			ent->client->rewardTime = level.time + REWARD_SPRITE_TIME;
 		}
 		ent->client->accuracy_hits++;
+
 	}
 
 }
@@ -817,17 +811,17 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 	if ( hits == 0 )
 	{
 		// complete miss
-		ent->client->accurateCount = 0;
+		ent->client->accurateCountTelefrag = 0;
 	} else {
-		// check for "impressive" reward sound
-		ent->client->accurateCount += hits;
-		if ( ent->client->accurateCount >= 4 )
+		// check for "telefragged" reward sound
+		ent->client->accurateCountTelefrag += hits;
+		if ( ent->client->accurateCountTelefrag >= 2 )
 		{
-			ent->client->accurateCount -= 4;
-			ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
+			ent->client->accurateCountTelefrag -= 2;
+			ent->client->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT]++;
 			// add the sprite over the player's head
-			ent->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
-			ent->client->ps.eFlags |= EF_AWARD_IMPRESSIVE;
+			ent->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_IMPRESSIVETELEFRAG | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
+			ent->client->ps.eFlags |= EF_AWARD_IMPRESSIVETELEFRAG;
 			ent->client->rewardTime = level.time + REWARD_SPRITE_TIME;
 		}
 		ent->client->accuracy_hits++;

@@ -887,6 +887,10 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\game\g_weapon.c
+2=engine\code\game\g_missile.c
+3=engine\code\game\g_local.h
+4=engine\code\cgame\cg_main.c
+5=engine\code\cgame\cg_playerstate.c
 [Selected Project Files]
 Main=
 Selected=engine\code\game\g_weapon.c
@@ -894,5 +898,17 @@ Selected=engine\code\game\g_weapon.c
 TopLine=46
 Caret=36,70
 [engine\code\game\g_weapon.c]
-TopLine=693
-Caret=35,717
+TopLine=699
+Caret=35,710
+[engine\code\game\g_missile.c]
+TopLine=1066
+Caret=1,1077
+[engine\code\game\g_local.h]
+TopLine=26
+Caret=30,42
+[engine\code\cgame\cg_main.c]
+TopLine=769
+Caret=89,775
+[engine\code\cgame\cg_playerstate.c]
+TopLine=86
+Caret=1,50

@@ -582,8 +582,8 @@ typedef struct {
 } skulltrail_t;
 
 
-#define MAX_REWARDSTACK		10
-#define MAX_SOUNDBUFFER		20
+#define MAX_REWARDSTACK		15
+#define MAX_SOUNDBUFFER		25
 
 //======================================================================
 
@@ -662,10 +662,8 @@ typedef struct {
 
 	// view rendering
 	refdef_t	refdef;
-// Q3Rally Code Start
 	refdef_t	mirrorRefdef;
-	refdef_t	mmapRefdef;	//TBB minimap rendering
-// Q3Rally Code END
+	refdef_t	mmapRefdef;	            // minimap rendering
 	vec3_t		refdefViewAngles;		// will be converted to refdef.viewaxis
 
 	// zoom key
@@ -680,11 +678,8 @@ typedef struct {
 	int			scoresRequestTime;
 	int			numScores;
 	int			selectedScore;
-// Q3Rally Code Start
-//	int			teamScores[2];
 	int			teamScores[4];
 	int			teamTimes[4];
-// Q3Rally Code END
 	score_t		scores[MAX_CLIENTS];
 	qboolean	showScores;
 	qboolean	scoreBoardShowing;
@@ -699,11 +694,6 @@ typedef struct {
 	int				spectatorOffset;										// current offset from start
 	int				spectatorPaintLen; 									// current offset from start
 
-#ifdef MISSIONPACK
-	// skull trails
-	skulltrail_t	skulltrails[MAX_CLIENTS];
-#endif
-
 	// centerprinting
 	int			centerPrintTime;
 	int			centerPrintCharWidth;
@@ -711,10 +701,8 @@ typedef struct {
 	char		centerPrint[1024];
 	int			centerPrintLines;
 
-// Q3Rally Code Start
 	char		countDownPrint[16];
 	int			countDownEnd;
-// Q3Rally Code END
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
@@ -743,13 +731,6 @@ typedef struct {
 	int			soundBufferOut;
 	int			soundTime;
 	qhandle_t	soundBuffer[MAX_SOUNDBUFFER];
-
-#ifdef MISSIONPACK
-	// for voice chat buffer
-	int			voiceChatTime;
-	int			voiceChatBufferIn;
-	int			voiceChatBufferOut;
-#endif
 
 	// warmup countdown
 	int			warmup;
@@ -796,22 +777,14 @@ typedef struct {
 	refEntity_t		testModelEntity;
 	char			testModelName[MAX_QPATH];
 	qboolean		testGun;
-
-// Q3Rally Code Start
 	int			wrongWayTime;
 	int			wrongWayStartTime;
-
 	car_t		car;
 	int			pDebug;
-
 	qboolean	showHUD;
-
 	qboolean	newSnap;
-
 //	int			lastPhysicsCommand;
-
 	int			currentBezierPoint;
-// Q3Rally Code END
 } cg_t;
 
 
@@ -825,17 +798,9 @@ typedef struct {
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
-// Q3Rally Code Start
 	qhandle_t	flameBallShader;
 	qhandle_t	flameExplosionShader;
-// Q3Rally Code END
 
-#ifdef MISSIONPACK
-	qhandle_t	redCubeModel;
-	qhandle_t	blueCubeModel;
-	qhandle_t	redCubeIcon;
-	qhandle_t	blueCubeIcon;
-#endif
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
     qhandle_t   greenFlagModel;
@@ -851,13 +816,11 @@ typedef struct {
     qhandle_t   greenFlagShader[3];
     qhandle_t   yellowFlagShader[3];
 	qhandle_t	flagShader[4];
-// Q3Rally Code Start
 	qhandle_t   sigilShader;
     qhandle_t   redsigilShader;
     qhandle_t   bluesigilShader;
     qhandle_t   greensigilShader;
     qhandle_t   yellowsigilShader;
-// Q3Rally Code END
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;
 
@@ -869,18 +832,6 @@ typedef struct {
 	qhandle_t	blueFlagBaseModel;
 	qhandle_t	neutralFlagBaseModel;
 
-#ifdef MISSIONPACK
-	qhandle_t	overloadBaseModel;
-	qhandle_t	overloadTargetModel;
-	qhandle_t	overloadLightsModel;
-	qhandle_t	overloadEnergyModel;
-
-	qhandle_t	harvesterModel;
-	qhandle_t	harvesterRedSkin;
-	qhandle_t	harvesterBlueSkin;
-	qhandle_t	harvesterNeutralModel;
-#endif
-
 	qhandle_t	armorModel;
 	qhandle_t	armorIcon;
 
@@ -889,7 +840,7 @@ typedef struct {
 	qhandle_t	deferShader;
 
 	// gib explosions
-// Q3Rally Code Start - car gibs
+
 	qhandle_t	gibFan;
 	qhandle_t	gibHose1;
 	qhandle_t	gibHose2;
@@ -959,8 +910,7 @@ typedef struct {
 	qhandle_t debrisstone3;
 	qhandle_t debrisstone4;
 	qhandle_t debrisstone5;
-  
-// Q3Rally Code END
+
 
 	qhandle_t	smoke2;
 
@@ -991,7 +941,6 @@ typedef struct {
 	qhandle_t	plasmaBallShader;
 	qhandle_t	waterBubbleShader;
 	qhandle_t	bloodTrailShader;
-// Q3Rally Code Start
   	qhandle_t	glass01;
   	qhandle_t	glass02;
   	qhandle_t	glass03;
@@ -1003,12 +952,7 @@ typedef struct {
   	qhandle_t	metal01;
   	qhandle_t	metal02;
   	qhandle_t	metal03;
-// Q3Rally Code END
 
-#ifdef MISSIONPACK
-	qhandle_t	nailPuffShader;
-	qhandle_t	blueProxMine;
-#endif
 
 	qhandle_t	numberShaders[11];
 
@@ -1020,11 +964,9 @@ typedef struct {
 	qhandle_t	wakeMarkShader;
 	qhandle_t	bloodMarkShader;
 	qhandle_t	bulletMarkShader;
-// Q3Rally Code Start
 	qhandle_t	bioMarkShader;
 	qhandle_t	oilMarkShader;
 	qhandle_t	sparkShader;
-// Q3Rally Code END
 	qhandle_t	burnMarkShader;
 	qhandle_t	holeMarkShader;
 	qhandle_t	energyMarkShader;
@@ -1036,32 +978,22 @@ typedef struct {
 	qhandle_t	invisShader;
 	qhandle_t	regenShader;
 	qhandle_t	battleSuitShader;
-// Q3Rally Code Start
 	qhandle_t	hasteShader;
 	qhandle_t	shieldShader;
-// Q3Rally Code END
+
 
 	qhandle_t	battleWeaponShader;
 	qhandle_t	hastePuffShader;
-#ifdef MISSIONPACK
-	qhandle_t	redKamikazeShader;
-	qhandle_t	blueKamikazeShader;
-#endif
-
-// Q3Rally Code Start
 	qhandle_t	SMAsphaltShader;
 	qhandle_t	SMDirtShader;
 	qhandle_t	SMGrassShader;
 	qhandle_t	SMFleshShader;
-
 	qhandle_t	checkpointArrow;
-// Q3Rally Code END
+
 
 	// weapon effect models
-// Q3Rally Code Start
-	qhandle_t	fireModel;
-// Q3Rally Code END
 
+	qhandle_t	fireModel;
 	qhandle_t	bulletFlashModel;
 	qhandle_t	ringFlashModel;
 	qhandle_t	dishFlashModel;
@@ -1081,27 +1013,6 @@ typedef struct {
 	qhandle_t	teleportEffectShader;
     qhandle_t	dustPuffShader;
     qhandle_t   snowPuffShader;
-#ifdef MISSIONPACK
-	qhandle_t	kamikazeEffectModel;
-	qhandle_t	kamikazeShockWave;
-	qhandle_t	kamikazeHeadModel;
-	qhandle_t	kamikazeHeadTrail;
-	qhandle_t	guardPowerupModel;
-	qhandle_t	scoutPowerupModel;
-	qhandle_t	doublerPowerupModel;
-	qhandle_t	ammoRegenPowerupModel;
-	qhandle_t	invulnerabilityImpactModel;
-	qhandle_t	invulnerabilityJuicedModel;
-	qhandle_t	medkitUsageModel;
-	qhandle_t	dustPuffShader;
-    qhandle_t   snowPuffShader;
-	qhandle_t	heartShader;
-	qhandle_t	invulnerabilityPowerupModel;
-// Q3Rally Code Start
-#endif
-
-//#endif
-// Q3Rally Code END
 
 
 	// scoreboard headers
@@ -1112,24 +1023,18 @@ typedef struct {
 
 	// medals shown during gameplay
 	qhandle_t	medalImpressive;
+    qhandle_t   medalImpressiveTelefrag;
 	qhandle_t	medalExcellent;
 	qhandle_t	medalGauntlet;
 	qhandle_t	medalDefend;
 	qhandle_t	medalAssist;
 	qhandle_t	medalCapture;
-
-// Q3Rally Code Start
 	qhandle_t	headLightGlow;
 	qhandle_t	brakeLightGlow;
 	qhandle_t	reverseLightGlow;
-
 	qhandle_t	rearviewMirrorShader;
-	//TBB - minimap handling
 	qhandle_t	MMapShader;
-	//TBB FIN
 	qhandle_t	turboModel;
-    
-// Q3Rally Code END
 
 	// sounds
 	sfxHandle_t	quadSound;
@@ -1137,44 +1042,17 @@ typedef struct {
 	sfxHandle_t	selectSound;
 	sfxHandle_t	useNothingSound;
 	sfxHandle_t	wearOffSound;
-// Q3Rally Code Start
 	sfxHandle_t	turboSound;
 	sfxHandle_t	shieldSound;
-//	sfxHandle_t	footsteps[FOOTSTEP_TOTAL][4];
-// Q3Rally Code END
 	sfxHandle_t	sfx_lghit1;
 	sfxHandle_t	sfx_lghit2;
 	sfxHandle_t	sfx_lghit3;
 	sfxHandle_t	sfx_ric1;
 	sfxHandle_t	sfx_ric2;
 	sfxHandle_t	sfx_ric3;
-	//sfxHandle_t	sfx_railg;
 	sfxHandle_t	sfx_rockexp;
 	sfxHandle_t	sfx_plasmaexp;
     sfxHandle_t sfx_flameexp;
-#ifdef MISSIONPACK
-	sfxHandle_t	sfx_proxexp;
-	sfxHandle_t	sfx_nghit;
-	sfxHandle_t	sfx_nghitflesh;
-	sfxHandle_t	sfx_nghitmetal;
-	sfxHandle_t	sfx_chghit;
-	sfxHandle_t	sfx_chghitflesh;
-	sfxHandle_t	sfx_chghitmetal;
-	sfxHandle_t kamikazeExplodeSound;
-	sfxHandle_t kamikazeImplodeSound;
-	sfxHandle_t kamikazeFarSound;
-	sfxHandle_t useInvulnerabilitySound;
-	sfxHandle_t invulnerabilityImpactSound1;
-	sfxHandle_t invulnerabilityImpactSound2;
-	sfxHandle_t invulnerabilityImpactSound3;
-	sfxHandle_t invulnerabilityJuicedSound;
-	sfxHandle_t obeliskHitSound1;
-	sfxHandle_t obeliskHitSound2;
-	sfxHandle_t obeliskHitSound3;
-	sfxHandle_t	obeliskRespawnSound;
-	sfxHandle_t	winnerSound;
-	sfxHandle_t	loserSound;
-#endif
 	sfxHandle_t	gibSound;
 	sfxHandle_t	gibBounce1Sound;
 	sfxHandle_t	gibBounce2Sound;
@@ -1201,6 +1079,7 @@ typedef struct {
 	sfxHandle_t hitSoundLowArmor;
 	sfxHandle_t hitTeamSound;
 	sfxHandle_t impressiveSound;
+    sfxHandle_t impressiveTelefragSound;
 	sfxHandle_t excellentSound;
 	sfxHandle_t deniedSound;
 	sfxHandle_t humiliationSound;
@@ -1224,10 +1103,6 @@ typedef struct {
 
 	sfxHandle_t flightSound;
 	sfxHandle_t medkitSound;
-
-#ifdef MISSIONPACK
-	sfxHandle_t weaponHoverSound;
-#endif
 
 	// teamplay sounds
 	sfxHandle_t captureAwardSound;

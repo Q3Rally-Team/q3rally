@@ -78,10 +78,11 @@ typedef struct {
 static postgameMenuInfo_t	postgameMenuInfo;
 static char					arenainfo[MAX_INFO_VALUE];
 
-char	*ui_medalNames[] = {"Accuracy", "Impressive", "Excellent", "Chainsaw", "Frags", "Perfect"};
+char	*ui_medalNames[] = {"Accuracy", "Impressive", "Telefragged", "Excellent", "Chainsaw", "Frags", "Perfect"};
 char	*ui_medalPicNames[] = {
 	"menu/medals/medal_accuracy",
 	"menu/medals/medal_impressive",
+    "menu/medals/medal_telefragged",
 	"menu/medals/medal_excellent",
 	"menu/medals/medal_gauntlet",
 	"menu/medals/medal_frags",
@@ -89,7 +90,8 @@ char	*ui_medalPicNames[] = {
 };
 char	*ui_medalSounds[] = {
 	"sound/feedback/accuracy.wav",
-	"sound/feedback/impressive_a.wav",
+	"sound/feedback/impressive_a.ogg",
+    "sound/feedback/telefragged.ogg",
 	"sound/feedback/excellent_a.wav",
 	"sound/feedback/gauntlet.wav",
 	"sound/feedback/frags.wav",
