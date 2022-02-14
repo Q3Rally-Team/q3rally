@@ -734,7 +734,7 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 	trace_t		trace;
 	gentity_t	*tent;
 	gentity_t	*traceEnt;
-	int			damage = 1000;
+	int			damage = 50;
 	int			hits = 0;
 	int			passent = ent->s.number;
 
@@ -807,7 +807,7 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
 	}
 	tent->s.clientNum = ent->s.clientNum;
 
-	// give the shooter a reward sound if they have made two railgun hits in a row
+	// give the shooter a reward sound if they have made two telefrag hits in a row
 	if ( hits == 0 )
 	{
 		// complete miss

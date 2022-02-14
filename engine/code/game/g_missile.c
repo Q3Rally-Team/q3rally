@@ -25,61 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	MISSILE_PRESTEP_TIME	50
 
-/*
-================
-G_HomingMissile
-================
-*/
-
-#define ROCKET_SPEED   650
-
-void rocket_think( gentity_t *ent )
-{
-    gentity_t   *target = NULL;
-    gentity_t   *rad = NULL;
-    vec3_t dir, dir2, raddir, start;
-    
-    while ((rad = findradius(rad, ent->r.currentOrigin, 1000)) != NULL)
-    {
-        if (!rad->client)
-            continue;
-        if (rad == ent->parent)
-            continue;
-        if (rad->health <= 0)
-            continue;
-        if (rad->client->sess.sessionTeam == TEAM_SPECTATOR)
-            continue;
-        if ( (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF || g_gametype.integer == GT_DOMINATION ) && rad->client->sess.sessionTeam == rad->parent->client->sess.sessionTeam)
-            continue;
-        if (!visible (ent, rad))
-            continue;
-            
-        VectorSubtract(rad->r.currentOrigin, ent->r.currentOrigin, raddir);
-        raddir[2] += 16;
-        if ((target == NULL) || (VectorLength(raddir) < VectorLength(dir)))
-        {
-            target = rad;
-            VectorCopy(raddir, dir);
-        }
-    }
-    
-    if (target != NULL)
-    {
-        VectorCopy( ent->r.currentOrigin, start );
-        VectorCopy( ent->r.currentAngles, dir2 );
-        VectorNormalize(dir);
-        VectorScale(dir, 0.2, dir);
-        VectorAdd(dir, dir2, dir);
-        VectorNormalize(dir);
-        VectorCopy( start, ent->s.pos.trBase );
-        VectorScale( dir, 400, ent->s.pos.trDelta );
-        SnapVector( ent->s.pos.trDelta );
-        VectorCopy (start, ent->r.currentOrigin);
-        VectorCopy (dir, ent->r.currentAngles);
-    }
-    ent->nextthink = level.time + 100;
-}
-
 
 /*
 =================
@@ -845,47 +790,6 @@ gentity_t *fire_plasma_bounce (gentity_t *self, vec3_t start, vec3_t dir) {
 
 /*
 =================
-fire_grenade
-=================
-*/
-gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*bolt;
-
-	VectorNormalize (dir);
-
-	bolt = G_Spawn();
-	bolt->classname = "grenade";
-	bolt->nextthink = level.time + 2500;
-	bolt->think = G_ExplodeMissile;
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_GRENADE_LAUNCHER;
-	bolt->s.eFlags = EF_BOUNCE_HALF;
-	bolt->r.ownerNum = self->s.number;
-	bolt->parent = self;
-	//bolt->damage = 100; //TBB - too high for short reload
-	bolt->damage = 40; //TBB
-	//bolt->splashDamage = 100; //TBB - too high for short reload
-	bolt->splashDamage = 20; //TBB
-	bolt->splashRadius = 150;
-	bolt->methodOfDeath = MOD_GRENADE;
-	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
-	bolt->clipmask = MASK_SHOT;
-	bolt->target_ent = NULL;
-
-	bolt->s.pos.trType = TR_GRAVITY;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 800, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	return bolt;
-}
-
-/*
-=================
 fire_cluster_grenade
 =================
 */
@@ -968,6 +872,47 @@ gentity_t *fire_cluster_grenade2 (gentity_t *self, vec3_t start, vec3_t dir) {
 	return bolt;
 }
 
+/*
+=================
+fire_grenade
+=================
+*/
+gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
+	gentity_t	*bolt;
+
+	VectorNormalize (dir);
+
+	bolt = G_Spawn();
+	bolt->classname = "grenade";
+	bolt->nextthink = level.time + 2500;
+	bolt->think = G_ExplodeMissile;
+	bolt->s.eType = ET_MISSILE;
+	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	bolt->s.weapon = WP_GRENADE_LAUNCHER;
+	bolt->s.eFlags = EF_BOUNCE_HALF;
+	bolt->r.ownerNum = self->s.number;
+	bolt->parent = self;
+	bolt->damage = 40;
+	bolt->splashDamage = 20;
+	bolt->splashRadius = 150;
+	bolt->methodOfDeath = MOD_GRENADE;
+	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
+	bolt->clipmask = MASK_SHOT;
+	bolt->target_ent = NULL;
+
+	bolt->s.pos.trType = TR_GRAVITY;
+	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	VectorCopy( start, bolt->s.pos.trBase );
+	VectorScale( dir, 800, bolt->s.pos.trDelta );
+	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+
+	VectorCopy (start, bolt->r.currentOrigin);
+
+	return bolt;
+}
+
+
+
 //=============================================================================
 
 
@@ -1014,6 +959,8 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 //=============================================================================
 
 
+
+
 /*
 =================
 fire_rocket
@@ -1048,6 +995,61 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorCopy (start, bolt->r.currentOrigin);
 
 	return bolt;
+}
+
+/*
+================
+G_HomingMissile
+================
+*/
+
+#define ROCKET_SPEED   650
+
+void rocket_think( gentity_t *ent )
+{
+    gentity_t   *target = NULL;
+    gentity_t   *rad = NULL;
+    vec3_t dir, dir2, raddir, start;
+    
+    while ((rad = findradius(rad, ent->r.currentOrigin, 1000)) != NULL)
+    {
+        if (!rad->client)
+            continue;
+        if (rad == ent->parent)
+            continue;
+        if (rad->health <= 0)
+            continue;
+        if (rad->client->sess.sessionTeam == TEAM_SPECTATOR)
+            continue;
+        if ( (g_gametype.integer == GT_TEAM || g_gametype.integer == GT_CTF || g_gametype.integer == GT_DOMINATION ) && rad->client->sess.sessionTeam == rad->parent->client->sess.sessionTeam)
+            continue;
+        if (!visible (ent, rad))
+            continue;
+            
+        VectorSubtract(rad->r.currentOrigin, ent->r.currentOrigin, raddir);
+        raddir[2] += 16;
+        if ((target == NULL) || (VectorLength(raddir) < VectorLength(dir)))
+        {
+            target = rad;
+            VectorCopy(raddir, dir);
+        }
+    }
+    
+    if (target != NULL)
+    {
+        VectorCopy( ent->r.currentOrigin, start );
+        VectorCopy( ent->r.currentAngles, dir2 );
+        VectorNormalize(dir);
+        VectorScale(dir, 0.2, dir);
+        VectorAdd(dir, dir2, dir);
+        VectorNormalize(dir);
+        VectorCopy( start, ent->s.pos.trBase );
+        VectorScale( dir, 400, ent->s.pos.trDelta );
+        SnapVector( ent->s.pos.trDelta );
+        VectorCopy (start, ent->r.currentOrigin);
+        VectorCopy (dir, ent->r.currentAngles);
+    }
+    ent->nextthink = level.time + 100;
 }
 
 /*
