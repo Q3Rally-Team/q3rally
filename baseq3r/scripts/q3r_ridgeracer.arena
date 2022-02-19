@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_ridgeracer"
+
+//IN-GAME MAP NAME
+longname "Ridge Racer"
+
+//AUTHOR OF THE MAP
+author "TheBigBuu & insellium"
+
+//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+
+//CUSTOM BOTS
+bots "Zack Samuel Carla Tobias Josh"
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime "0 min 32 sec"
+
+//CHECKPOINTS
+checkpoints "19"
+
+//OBSERVER SPOTS
+observerspots "5"
+
+//WEAPONS
+weapons "0"
+
+//POWERUPS
+powerups "0"
+
+//REVERSABLE
+reversable "0"
+
+//TRACK LENGTHS
+tracklengths "1"
+
+//BOT SUPPORTS
+botsupport "Very bad"
+
+//TEAMS
+teams "All"
+}
