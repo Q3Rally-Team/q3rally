@@ -898,15 +898,15 @@ q3rallycode
 10=engine\code\game\g_items.c
 [Selected Project Files]
 Main=
-Selected=engine\code\game\g_missile.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=58
 Caret=36,70
 [engine\code\game\g_missile.c]
-TopLine=1065
+TopLine=896
 Caret=26,896
 [engine\code\game\g_local.h]
-TopLine=627
+TopLine=42
 Caret=30,42
 [engine\code\cgame\cg_event.c]
 TopLine=1069
