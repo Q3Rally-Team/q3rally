@@ -3728,7 +3728,7 @@ FS_CheckPaks
 
 Checks that default pk3s are present and their checksums are correct
 ===================
-*/
+
 static void FS_CheckPaks( void )
 {
 	searchpath_t	*path;
@@ -3813,6 +3813,8 @@ static void FS_CheckPaks( void )
 #endif
 	}
 }
+
+*/
 
 /*
 =====================
@@ -4161,7 +4163,7 @@ void FS_InitFilesystem( void ) {
 #ifndef STANDALONE
 	FS_CheckPak0( );
 #endif
-	FS_CheckPaks();
+//	FS_CheckPaks();
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
@@ -4200,7 +4202,7 @@ void FS_Restart( int checksumFeed ) {
 #ifndef STANDALONE
 	FS_CheckPak0( );
 #endif
-	FS_CheckPaks();
+//	FS_CheckPaks();
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
