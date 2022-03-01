@@ -422,16 +422,9 @@ static float CG_DrawTimes( float y ) {
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-<<<<<<< HEAD
-        x = 636 - 80;
-		CG_FillRect ( x  + cg_wideoffset.integer, y, 90, 18, bgColor );
-		x+= 10;
-=======
         x = 636 - 120;
 		CG_FillRect ( x, y, 120, 18, bgColor );
-		x+= 25;
->>>>>>> parent of 9cf5988f (Widescreen Support(Danil_Dm))
-		
+		x+= 25;		
 		y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
@@ -448,16 +441,9 @@ static float CG_DrawTimes( float y ) {
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-<<<<<<< HEAD
-        x = 636 - 80;
-        CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
-        x+= 10;
-=======
         x = 636 - 120;
         CG_FillRect( x, y, 120, 18, bgColor );
         x+= 25;
->>>>>>> parent of 9cf5988f (Widescreen Support(Danil_Dm))
-    
         y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
@@ -481,16 +467,9 @@ static float CG_DrawTimes( float y ) {
 
 	Com_sprintf(s, sizeof(s), "T: %s", time);
 
-<<<<<<< HEAD
-	x = 636 - 80;
-	CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
-	x += 10;
-=======
 	x = 636 - 120;
 	CG_FillRect( x, y, 120, 18, bgColor );
 	x += 25;
->>>>>>> parent of 9cf5988f (Widescreen Support(Danil_Dm))
-
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
@@ -522,16 +501,9 @@ static float CG_DrawLaps( float y ) {
 
 	Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
 
-<<<<<<< HEAD
-	x = 636 - 80;
-	CG_FillRect( x + cg_wideoffset.integer, y, 90, 18, bgColor );
-	x += 10;
-=======
 	x = 636 - 120;
 	CG_FillRect( x, y, 120, 18, bgColor );
 	x += 25;
->>>>>>> parent of 9cf5988f (Widescreen Support(Danil_Dm))
-
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
@@ -573,15 +545,9 @@ static float CG_DrawCurrentPosition( float y ) {
 
 	x += TINYCHAR_WIDTH * 5;
 
-<<<<<<< HEAD
-	CG_DrawTinyDigitalStringColor( x + cg_wideoffset.integer, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
-    
-	y += 20;
-=======
 	CG_DrawTinyDigitalStringColor( x, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
 
 	y += 10 + 4;
->>>>>>> parent of 9cf5988f (Widescreen Support(Danil_Dm))
 
 	return y;
 }
@@ -936,7 +902,7 @@ float CG_DrawUpperRightHUD( float y ) {
 		}
 		else if (cgs.gametype == GT_DERBY)
 			y = CG_DrawTimes( y );
-// 0.0.4.0
+// 0.5
 //			CG_DrawHUD_DerbyList(44, 130);
 			
 	}
