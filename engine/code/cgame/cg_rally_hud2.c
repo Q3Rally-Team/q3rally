@@ -58,34 +58,34 @@ void CG_DrawHUD_Times(float x, float y){
 	//bestTime = cent->bestLapTime;
 
 	// draw heading
-	CG_FillRect(x + cg_wideoffset.integer, y, 170, 18, bgColor);
+	CG_FillRect(x, y, 170, 18, bgColor);
 	CG_DrawSmallDigitalStringColor(x + 12, y, "TIMES", colorWhite);
 
 	y += 20;
 
 	// draw lap time
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "LAP:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
 	time = getStringForTime( lapTime );
-	CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, time, colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
 
 	y += 20;
 
 	// draw last lap time
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "LAST:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "LAST:", colorWhite);
 	if ( lastTime ){
 		time = getStringForTime( lastTime );
-		CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, time, colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
 	}
 	else {
-		CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, "N/A", colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 102, y, "N/A", colorWhite);
 	}
 
 	y += 20;
 
 	// draw total time
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "TOTAL:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "TOTAL:", colorWhite);
 	time = getStringForTime( totalTime );
-	CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, time, colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
 
 	y += 20;
 
@@ -141,9 +141,9 @@ void CG_DrawHUD_Times(float x, float y){
 		// average team time
 		teamTime /= count;
 
-		CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "TEAM:", colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 12, y, "TEAM:", colorWhite);
 		time = getStringForTime(teamTime);
-		CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, time, colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
 	}
 }
 
@@ -171,20 +171,20 @@ void CG_DrawHUD_Positions(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "POSITION", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "POSITION", colorWhite);
 
 	y += 20;
 
 	// draw your position
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "YOU:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentPosition, cgs.numRacers), colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "YOU:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentPosition, cgs.numRacers), colorWhite);
 
 	y += 20;
 
 	// draw team position
 	if (cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM){
-		CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "TEAM:", colorWhite);
-		CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, va("%i/%i", team_rank, num_teams), colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 12, y, "TEAM:", colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", team_rank, num_teams), colorWhite);
 	}
 }
 
@@ -197,8 +197,8 @@ void CG_DrawHUD_Laps(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12 + cg_wideoffset.integer, y, "LAP:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 102 + cg_wideoffset.integer, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
 }
 
 /*
@@ -227,8 +227,8 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 	// draw your position
 	CG_FillRect(x, y, width, height, bgColor);
-	CG_DrawSmallDigitalStringColor(x + cg_wideoffset.integer, y, "POS:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 82 + cg_wideoffset.integer, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
+	CG_DrawSmallDigitalStringColor(x, y, "POS:", colorWhite);
+	CG_DrawSmallDigitalStringColor(x + 82, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
 
 	y += 20;
 
@@ -276,11 +276,11 @@ void CG_DrawHUD_OpponentList(float x, float y){
 			Vector4Copy(bgColor, color);
 		}
 
-		CG_FillRect(x + cg_wideoffset.integer, y, width, height, color);
+		CG_FillRect(x, y, width, height, color);
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
 		Com_sprintf(s, sizeof(s), " %i: %s", cgs.clientinfo[num].position, player);
-		CG_DrawSmallDigitalStringColor( x + cg_wideoffset.integer, y, s, colorWhite);
+		CG_DrawSmallDigitalStringColor( x, y, s, colorWhite);
 
 		y += 20;
 	}
@@ -301,9 +301,9 @@ void CG_DrawHUD_Scores(float x, float y){
 
 	s = va("%i", cgs.clientinfo[cg.snap->ps.clientNum].score);
 	w = CG_DrawStrlen( s ) * GIANTCHAR_WIDTH;
-	CG_FillRect(x + cg_wideoffset.integer, y, 96, 72, bgColor);
-	CG_DrawSmallDigitalStringColor( x + 20 + cg_wideoffset.integer, y + 6, "FRAGS:", colorWhite);
-	CG_DrawGiantDigitalStringColor( x + 48 - w/2 + cg_wideoffset.integer, y + 26, s, colorWhite);
+	CG_FillRect(x, y, 96, 72, bgColor);
+	CG_DrawSmallDigitalStringColor( x + 20, y + 6, "FRAGS:", colorWhite);
+	CG_DrawGiantDigitalStringColor( x + 48 - w/2, y + 26, s, colorWhite);
 
 	y += 72;
 
@@ -329,14 +329,14 @@ void CG_DrawHUD_Scores(float x, float y){
 		s = va( "%i", score );
 		w = CG_DrawStrlen( s ) * GIANTCHAR_WIDTH;
 		CG_FillRect(x, y, 96, 78, bgColor);
-		CG_DrawSmallDigitalStringColor( x + 24 + cg_wideoffset.integer, y + 6, "TEAM:", colorWhite);
-		CG_DrawGiantDigitalStringColor( x + 48 - w/2 + cg_wideoffset.integer, y + 26, s, colorWhite);
+		CG_DrawSmallDigitalStringColor( x + 24, y + 6, "TEAM:", colorWhite);
+		CG_DrawGiantDigitalStringColor( x + 48 - w/2, y + 26, s, colorWhite);
 
 		y += 78;
 	}
 
 	// draw scores from cg_draw
-	CG_DrawScores(x + 96 + cg_wideoffset.integer, y);
+	CG_DrawScores(x + 96, y);
 }
 
 /*
@@ -353,19 +353,19 @@ void CG_DrawHUD_DerbyList(float x, float y){
 
 	// draw heading
     x = 636 - 120;
-	CG_FillRect(x + cg_wideoffset.integer, y, 120, 18, bgColor);
+	CG_FillRect(x, y, 120, 18, bgColor);
 
 	// name
-	CG_DrawTinyDigitalStringColor( x + 16 + cg_wideoffset.integer, y, "P:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 16, y, "P:", colorWhite);
 
 	// time
 //	CG_DrawTinyStringColor( x + 70, y, "TIME:", colorWhite);
 
 	// dmg dealt
-	CG_DrawTinyDigitalStringColor( x + 70 + cg_wideoffset.integer, y, "DD:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 70, y, "DD:", colorWhite);
 
 	// dmg taken
-	CG_DrawTinyDigitalStringColor( x + 100 + cg_wideoffset.integer, y, "DT:", colorWhite);
+	CG_DrawTinyDigitalStringColor( x + 100, y, "DT:", colorWhite);
 
 	y += 20;
 
@@ -376,7 +376,7 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		cent = &cg_entities[cg.scores[i].client];
 		if (!cent) continue;
 
-		CG_FillRect(x + cg_wideoffset.integer, y, 120, 18, bgColor);
+		CG_FillRect(x, y, 120, 18, bgColor);
 
 		Vector4Copy(colorWhite, color);
 		if (cg.scores[i].client == cg.snap->ps.clientNum){
@@ -397,19 +397,19 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		time = getStringForTime(playTime);
 
 		// num
-		CG_DrawTinyDigitalStringColor( x + 2 + cg_wideoffset.integer, y, va("%i", (i+1)), color);
+		CG_DrawTinyDigitalStringColor( x + 2, y, va("%i", (i+1)), color);
 
 		// name
-		CG_DrawTinyDigitalStringColor( x + 16 + cg_wideoffset.integer, y, cgs.clientinfo[cg.scores[i].client].name, color);
+		CG_DrawTinyDigitalStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
 
 		// time
 //		CG_DrawTinyStringColor( x + 70, y, time, color);
 
 		// dmg dealt
-		CG_DrawTinyDigitalStringColor( x + 75 + cg_wideoffset.integer, y, va("%i", cg.scores[i].damageDealt), color);
+		CG_DrawTinyDigitalStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
 
 		// dmg taken
-		CG_DrawTinyDigitalStringColor( x + 105 + cg_wideoffset.integer, y, va("%i", cg.scores[i].damageTaken), color);
+		CG_DrawTinyDigitalStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
 
 		y += 20;
 	}

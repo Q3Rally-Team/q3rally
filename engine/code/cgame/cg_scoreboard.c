@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // Q3Rally Code Start
 // #define	SCOREBOARD_X		(0)
-#define	SCOREBOARD_X		22 - cg_wideoffset.integer / 2
+#define	SCOREBOARD_X		(32)
 // END
 
 #define SB_HEADER			86
@@ -53,29 +53,29 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SB_RIGHT_BOTICON_X	(SCOREBOARD_X+64)
 #define SB_RIGHT_HEAD_X		(SCOREBOARD_X+96)
 // Normal
-#define SB_BOTICON_X		(SCOREBOARD_X+32) - cg_wideoffset.integer / 2
-#define SB_HEAD_X			(SCOREBOARD_X+64) - cg_wideoffset.integer / 2
+#define SB_BOTICON_X		(SCOREBOARD_X+32)
+#define SB_HEAD_X			(SCOREBOARD_X+64)
 
 // Q3Rally Code Start
 // #define SB_SCORELINE_X		112
- #define SB_SCORELINE_X		128 - cg_wideoffset.integer / 2
+ #define SB_SCORELINE_X		128
 // END
 
 #define SB_RATING_WIDTH	    (6 * BIGCHAR_WIDTH) // width 6
 // Q3Rally Code Start
 //#define SB_SCORE_X			(SB_SCORELINE_X + BIGCHAR_WIDTH) // width 6
-#define SB_RATING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH) - cg_wideoffset.integer / 2 // width 6
+#define SB_RATING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH) // width 6
 /*
 #define SB_PING_X			(SB_SCORELINE_X + 12 * BIGCHAR_WIDTH + 8) // width 5
 #define SB_TIME_X			(SB_SCORELINE_X + 17 * BIGCHAR_WIDTH + 8) // width 5
 #define SB_NAME_X			(SB_SCORELINE_X + 22 * BIGCHAR_WIDTH) // width 15
 */
 
-#define SB_SCORE_X			(SB_SCORELINE_X + BIGCHAR_WIDTH) - cg_wideoffset.integer / 2 // width 6
-#define SB_PING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH + 8) - cg_wideoffset.integer / 2// width 5
-#define SB_TIME_X			(SB_SCORELINE_X + 11 * BIGCHAR_WIDTH + 8) - cg_wideoffset.integer / 2 // width 5
-#define SB_TOTAL_TIME_X		(SB_SCORELINE_X + 16 * BIGCHAR_WIDTH + 8) - cg_wideoffset.integer / 2 // width 5
-#define SB_NAME_X			(SB_SCORELINE_X + 21 * BIGCHAR_WIDTH) - cg_wideoffset.integer / 2 // width 15
+#define SB_SCORE_X			(SB_SCORELINE_X + BIGCHAR_WIDTH) // width 6
+#define SB_PING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_TIME_X			(SB_SCORELINE_X + 11 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_TOTAL_TIME_X		(SB_SCORELINE_X + 16 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_NAME_X			(SB_SCORELINE_X + 21 * BIGCHAR_WIDTH) // width 15
 // END
 
 // The new and improved score board
@@ -305,7 +305,7 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 //		CG_FillRect( SB_SCORELINE_X + BIGCHAR_WIDTH + (SB_RATING_WIDTH / 2), y, 
 //			640 - SB_SCORELINE_X - BIGCHAR_WIDTH, BIGCHAR_HEIGHT+1, hcolor );
 		CG_FillRect( SB_SCORE_X - (SB_RATING_WIDTH / 2), y, 
-			640 + cg_wideoffset.integer * 100 - SB_SCORELINE_X - SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT+1, hcolor );
+			560 - SB_SCORELINE_X - SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT+1, hcolor );
 // END
 	}
 
@@ -527,7 +527,7 @@ qboolean CG_DrawOldScoreboard( void ) {
 				continue;
 
 			n1 = CG_TeamScoreboard( y, team, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0 - cg_wideoffset.integer, y - topBorderSize, 640 + cg_wideoffset.integer * 2, n1 * lineHeight + bottomBorderSize, 0.33f, team );
+			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, team );
 			y += (n1 * lineHeight) + SMALLCHAR_HEIGHT;
 			maxClients -= n1;
 		}

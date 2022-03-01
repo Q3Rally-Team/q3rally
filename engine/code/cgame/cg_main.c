@@ -123,7 +123,6 @@ weaponInfo_t		cg_weapons[MAX_WEAPONS];
 itemInfo_t			cg_items[MAX_ITEMS];
 
 
-vmCvar_t	cg_tester;
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
 vmCvar_t	cg_runpitch;
@@ -241,8 +240,6 @@ vmCvar_t	cg_obeliskRespawnDelay;
 #endif
 
 // Q3Rally Code Start
-vmCvar_t	cg_widescreen;
-vmCvar_t	cg_wideoffset;
 vmCvar_t	cg_metricUnits;
 vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
@@ -287,7 +284,6 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_fov, "cg_fov", "100", CVAR_ARCHIVE },
 
-	{ &cg_tester, "cg_tester", "0", 0 },
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
 	{ &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
 	{ &cg_gibs, "cg_gibs", "1", CVAR_ARCHIVE  },
@@ -341,8 +337,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 
-	{ &cg_wideoffset, "cg_wideoffset", "0", CVAR_ARCHIVE },
-	{ &cg_widescreen, "cg_widescreen", "0", CVAR_ARCHIVE },
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
 	{ &cg_minSkidLength, "cg_minSkidLength", "12", CVAR_ARCHIVE },
 	{ &cg_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
@@ -2121,12 +2115,6 @@ Called after every level change or subsystem restart
 Will perform callbacks to make the loading info screen update.
 =================
 */
-// Q3Rally Code Start(Danil_Dm)
-int wideAdjustX;
-int realVidWidth;
-int realVidHeight;
-// Q3Rally Code END(Danil_Dm)
-
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	const char	*s;
 // Q3Rally Code Start
@@ -2167,56 +2155,10 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	}
 // Q3Rally Code END
 
-// Q3Rally Code Start(Danil_Dm)
-	if(cg_widescreen.integer == 1){
 	// get the rendering configuration from the client system
 	trap_GetGlconfig( &cgs.glconfig );
 	cgs.screenXScale = cgs.glconfig.vidWidth / 640.0;
 	cgs.screenYScale = cgs.glconfig.vidHeight / 480.0;
-
-	realVidWidth = cgs.glconfig.vidWidth;
-	realVidHeight = cgs.glconfig.vidHeight;
-
-
-	{
-		float resbias, resbiasy;
-		float rex, rey, rias;
-		int newresx, newresy;
-		float adjustx, adjusty;
-
-		rex = 640.0f / realVidWidth;
-		rey = 480.0f / realVidHeight;
-		
-		newresx = 640.0f * (rex);
-		newresy = 480.0f * (rey);
-	
-		newresx = realVidWidth * rey;
-		newresy = realVidHeight * rey;
-	
-		resbias  = 0.5 * ( newresx -  ( newresy * (640.0/480.0) ) );
-		resbiasy = 0.5 * ( newresy -  ( newresx * (640.0/480.0) ) );
-
-
-		wideAdjustX = resbias;
-
-	}
-	if ( cgs.glconfig.vidWidth * 480 > cgs.glconfig.vidHeight * 640 ) {
-		// wide screen
-		cgs.screenXBias = 0.5 * ( cgs.glconfig.vidWidth - ( cgs.glconfig.vidHeight * (640.0/480.0) ) );
-		cgs.screenXScale = cgs.screenYScale;
-	}
-	else {
-		// no wide screen
-		cgs.screenXBias = 0;
-	}
-	}
-	if(cg_widescreen.integer == 0){
-	// get the rendering configuration from the client system
-	trap_GetGlconfig( &cgs.glconfig );
-	cgs.screenXScale = cgs.glconfig.vidWidth / 640.0;
-	cgs.screenYScale = cgs.glconfig.vidHeight / 480.0;	
-	}
-// Q3Rally Code END(Danil_Dm)
 
 	// get the gamestate from the client system
 	trap_GetGameState( &cgs.gameState );
