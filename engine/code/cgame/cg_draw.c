@@ -196,11 +196,9 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 #endif
 
 /*
-==============
-CG_DrawField
-
-Draws large numbers for status bar and powerups
-==============
+==============================================================
+CG_DrawField - Draws large numbers for status bar and powerups
+==============================================================
 */
 #ifndef MISSIONPACK
 static void CG_DrawField (int x, int y, int width, int value) {
@@ -313,62 +311,9 @@ void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, qhandl
 }
 
 /*
-================
-CG_DrawHead
-
-Used for both the status bar and the scoreboard
-================
-*/
-// Q3Rally Code Start - Removed Function
-/*
-void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t headAngles ) {
-	clipHandle_t	cm;
-	clientInfo_t	*ci;
-	float			len;
-	vec3_t			origin;
-	vec3_t			mins, maxs;
-
-	ci = &cgs.clientinfo[ clientNum ];
-
-	if ( cg_draw3dIcons.integer ) {
-		cm = ci->headModel;
-		if ( !cm ) {
-			return;
-		}
-
-		// offset the origin y and z to center the head
-		trap_R_ModelBounds( cm, mins, maxs );
-
-		origin[2] = -0.5 * ( mins[2] + maxs[2] );
-		origin[1] = 0.5 * ( mins[1] + maxs[1] );
-
-		// calculate distance so the head nearly fills the box
-		// assume heads are taller than wide
-		len = 0.7 * ( maxs[2] - mins[2] );		
-		origin[0] = len / 0.268;	// len / tan( fov/2 )
-
-		// allow per-model tweaking
-		VectorAdd( origin, ci->headOffset, origin );
-
-		CG_Draw3DModel( x, y, w, h, ci->headModel, ci->headSkin, origin, headAngles );
-	} else if ( cg_drawIcons.integer ) {
-		CG_DrawPic( x, y, w, h, ci->modelIcon );
-	}
-
-	// if they are deferred, draw a cross out
-	if ( ci->deferred ) {
-		CG_DrawPic( x, y, w, h, cgs.media.deferShader );
-	}
-}
-*/
-// Q3Rally Code END
-
-/*
-================
-CG_DrawFlagModel
-
-Used for both the status bar and the scoreboard
-================
+==================================================================
+CG_DrawFlagModel - Used for both the status bar and the scoreboard
+==================================================================
 */
 void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean force2D ) {
 	qhandle_t		cm;
@@ -478,10 +423,6 @@ static void CG_DrawStatusBarHead( float x ) {
 	angles[YAW] = cg.headStartYaw + ( cg.headEndYaw - cg.headStartYaw ) * frac;
 	angles[PITCH] = cg.headStartPitch + ( cg.headEndPitch - cg.headStartPitch ) * frac;
 
-// Q3Rally Code Start - Removed Function
-//	CG_DrawHead( x, 480 - size, size, size, 
-//				cg.snap->ps.clientNum, angles );
-// Q3Rally CodeEND
 }
 #endif
 #endif // MISSIONPACK
@@ -537,9 +478,9 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 }
 
 /*
-=======================
+===============
 CG_DrawSigilHUD
-=======================
+===============
 */
 
 void CG_DrawSigilHUD( void ) {
@@ -648,10 +589,9 @@ static void CG_DrawStatusBar( void ) {
 		value = ps->ammo[cent->currentState.weapon];
 		if ( value > -1 ) {
 			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-// Q3Rally Code Start
-//				&& cg.predictedPlayerState.weaponTime > 100 ) {
+
 				&& (cg.predictedPlayerState.weaponTime & NORMAL_WEAPON_TIME_MASK) > 100 ) {
-// Q3Rally Code END
+
 				// draw as dark grey when reloading
 				color = 2;	// dark grey
 			} else {
@@ -813,7 +753,6 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	// Replace head with '+' sign.
-	// CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
 	VectorClear( angles );
 	if (ps->stats[STAT_HEALTH] < 25)
 		healthModel = trap_R_RegisterModel( "models/powerups/health/large_cross.md3" );
@@ -978,7 +917,7 @@ static void CG_DrawRallyStatusBar( void ) {
 /*
 ===========================================================================================
 
-  UPPER RIGHT CORNER
+ UPPER RIGHT CORNER
 
 ===========================================================================================
 */
@@ -1102,9 +1041,9 @@ static float CG_DrawFPS( float y ) {
 }
 
 /*
-=================
+============
 CG_DrawTimer
-=================
+============
 */
 static float CG_DrawTimer( float y ) {
 	char		*s;
@@ -1130,9 +1069,9 @@ static float CG_DrawTimer( float y ) {
 
 
 /*
-=================
+==================
 CG_DrawTeamOverlay
-=================
+==================
 */
 
 static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
@@ -1304,10 +1243,9 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 
 
 /*
-=====================
+=================
 CG_DrawUpperRight
-
-=====================
+=================
 */
 static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
 {
@@ -1315,9 +1253,7 @@ static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
 
 	y = 0;
 
-// Q3Rally Code Start
 	y = CG_DrawUpperRightHUD( y );
-// Q3Rally Code END
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 1 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qtrue );
@@ -1346,11 +1282,9 @@ static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
 */
 
 /*
-=================
-CG_DrawScores
-
-Draw the small two score display
-=================
+================================================
+CG_DrawScores - Draw the small two score display
+================================================
 */
 #ifndef MISSIONPACK
 
@@ -1377,7 +1311,6 @@ float CG_DrawScores( float x, float y ) {
 
 		CG_FillRect( x - 80, y, 96, 18, bgColor );
 
-//		if (cgs.gametype != GT_CTF){
         if (cgs.gametype >= GT_TEAM){
 			// draw yellow
 			color[0] = 1.0f;
@@ -1692,9 +1625,9 @@ static float CG_DrawPowerups( float y ) {
 
 // Q3Rally Code Start
 /*
-================
+====================
 CG_DrawRallyPowerups
-================
+====================
 */
 static float CG_DrawRallyPowerups( float y ) {
 	int		sorted[MAX_POWERUPS];
@@ -1830,17 +1763,14 @@ static float CG_DrawRallyPowerups( float y ) {
 
 
 /*
-=====================
+=================
 CG_DrawLowerRight
-
-=====================
+=================
 */
 #ifndef MISSIONPACK
 static void CG_DrawLowerRight( void ) {
 	float	y;
 
-// Q3Rally Code Start
-//	y = 480 - ICON_SIZE;
 	y = 470;
 
 	if ( isRaceObserver( cg.snap->ps.clientNum ) )
@@ -1849,23 +1779,18 @@ static void CG_DrawLowerRight( void ) {
 	CG_DrawRallyPowerups( 476 );
 
 	y = CG_DrawLowerRightHUD( y );
-// Q3Rally Code END
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 2 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
 
-// Q3Rally Code Start
-//	y = CG_DrawScores( y );
-//	CG_DrawPowerups( y );
-// Q3Rally Code END
 }
 #endif // MISSIONPACK
 
 /*
-===================
+=================
 CG_DrawPickupItem
-===================
+=================
 */
 #ifndef MISSIONPACK
 static int CG_DrawPickupItem( int y ) {
@@ -1895,24 +1820,20 @@ static int CG_DrawPickupItem( int y ) {
 #endif // MISSIONPACK
 
 /*
-=====================
+================
 CG_DrawLowerLeft
-
-=====================
+================
 */
 #ifndef MISSIONPACK
 static void CG_DrawLowerLeft( void ) {
 	float	y;
 
-// Q3Rally Code Start
-//	y = 480 - ICON_SIZE;
 	y = 480;
 
 	if (y > 404)
 		y = 404;
 
 	y = CG_DrawLowerLeftHUD( y );
-// Q3Rally Code END
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 3 ) {
 		y = CG_DrawTeamOverlay( y, qfalse, qfalse );
@@ -2009,9 +1930,9 @@ static void CG_DrawHoldableItem( void ) {
 
 #ifdef MISSIONPACK
 /*
-===================
+========================
 CG_DrawPersistantPowerup
-===================
+========================
 */
 #if 0 // sos001208 - DEAD
 static void CG_DrawPersistantPowerup( void ) { 
@@ -2028,9 +1949,9 @@ static void CG_DrawPersistantPowerup( void ) {
 
 
 /*
-===================
+=============
 CG_DrawReward
-===================
+=============
 */
 static void CG_DrawReward( void ) { 
 	float	*color;
@@ -2101,11 +2022,9 @@ static void CG_DrawReward( void ) {
 
 
 /*
-===============================================================================
-
+=========
 LAGOMETER
-
-===============================================================================
+=========
 */
 
 #define	LAG_SAMPLES		128
@@ -2122,11 +2041,9 @@ typedef struct {
 lagometer_t		lagometer;
 
 /*
-==============
-CG_AddLagometerFrameInfo
-
-Adds the current interpolate / extrapolate bar for this frame
-==============
+========================================================================================
+CG_AddLagometerFrameInfo - Adds the current interpolate / extrapolate bar for this frame
+========================================================================================
 */
 void CG_AddLagometerFrameInfo( void ) {
 	int			offset;
@@ -2137,14 +2054,14 @@ void CG_AddLagometerFrameInfo( void ) {
 }
 
 /*
-==============
+=======================================================
 CG_AddLagometerSnapshotInfo
 
 Each time a snapshot is received, log its ping time and
 the number of snapshots that were dropped before it.
 
 Pass NULL for a dropped packet.
-==============
+=======================================================
 */
 void CG_AddLagometerSnapshotInfo( snapshot_t *snap ) {
 	// dropped packet
@@ -2161,11 +2078,9 @@ void CG_AddLagometerSnapshotInfo( snapshot_t *snap ) {
 }
 
 /*
-==============
-CG_DrawDisconnect
-
-Should we draw something differnet for long lag vs no packets?
-==============
+==================================================================================
+CG_DrawDisconnect - Should we draw something differnet for long lag vs no packets?
+==================================================================================
 */
 static void CG_DrawDisconnect( void ) {
 	float		x, y;
@@ -2208,9 +2123,9 @@ static void CG_DrawDisconnect( void ) {
 #define	MAX_LAGOMETER_RANGE	300
 
 /*
-==============
+================
 CG_DrawLagometer
-==============
+================
 */
 static void CG_DrawLagometer( void ) {
 	int		a, x, y, i;
@@ -2500,9 +2415,9 @@ static void CG_DrawCrosshair(void)
 }
 */
 /*
-=================
+==================
 CG_DrawCrosshair3D
-=================
+==================
 
 static void CG_DrawCrosshair3D(void)
 {
@@ -2577,9 +2492,9 @@ static void CG_DrawCrosshair3D(void)
 */
 
 /*
-=================
+=========================
 CG_ScanForCrosshairEntity
-=================
+=========================
 */
 static void CG_ScanForCrosshairEntity( void ) {
 	trace_t		trace;
@@ -2678,9 +2593,9 @@ static void CG_DrawSpectator(void) {
 }
 
 /*
-=================
+===========
 CG_DrawVote
-=================
+===========
 */
 static void CG_DrawVote(void) {
 	char	*s;
@@ -2712,9 +2627,9 @@ static void CG_DrawVote(void) {
 }
 
 /*
-=================
+===============
 CG_DrawTeamVote
-=================
+===============
 */
 static void CG_DrawTeamVote(void) {
 	char	*s;
@@ -2811,9 +2726,9 @@ static qboolean CG_DrawScoreboard( void ) {
 }
 
 /*
-=================
+===================
 CG_DrawIntermission
-=================
+===================
 */
 static void CG_DrawIntermission( void ) {
 //	int key;
@@ -2839,9 +2754,9 @@ static void CG_DrawIntermission( void ) {
 }
 
 /*
-=================
+=============
 CG_DrawFollow
-=================
+=============
 */
 static qboolean CG_DrawFollow( void ) {
 	float		x;
@@ -2871,9 +2786,9 @@ static qboolean CG_DrawFollow( void ) {
 
 
 /*
-=================
+==================
 CG_DrawAmmoWarning
-=================
+==================
 */
 static void CG_DrawAmmoWarning( void ) {
 	const char	*s;
@@ -2905,9 +2820,9 @@ static void CG_DrawAmmoWarning( void ) {
 
 #ifdef MISSIONPACK
 /*
-=================
+==================
 CG_DrawProxWarning
-=================
+==================
 */
 static void CG_DrawProxWarning( void ) {
 	char s [32];
@@ -2937,178 +2852,10 @@ static void CG_DrawProxWarning( void ) {
 }
 #endif
 
-
-/*
-=================
-CG_DrawWarmup
-=================
-*/
-// Q3Rally Code Start - removed function
-/*
-static void CG_DrawWarmup( void ) {
-	int			w;
-	int			sec;
-	int			i;
-#ifdef MISSIONPACK
-	float		scale;
-#else
-	int			cw;
-#endif
-	clientInfo_t	*ci1, *ci2;
-	const char	*s;
-
-	sec = cg.warmup;
-	if ( !sec ) {
-		return;
-	}
-
-	if ( sec < 0 ) {
-		s = "Waiting for players";		
-		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-		CG_DrawBigString(320 - w / 2, 24, s, 1.0F);
-		cg.warmupCount = 0;
-		return;
-	}
-
-// Q3Rally Code Start - removed gametype
-/ *
-	if (cgs.gametype == GT_TOURNAMENT) {
-		// find the two active players
-		ci1 = NULL;
-		ci2 = NULL;
-		for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-			if ( cgs.clientinfo[i].infoValid && cgs.clientinfo[i].team == TEAM_FREE ) {
-				if ( !ci1 ) {
-					ci1 = &cgs.clientinfo[i];
-				} else {
-					ci2 = &cgs.clientinfo[i];
-				}
-			}
-		}
-
-		if ( ci1 && ci2 ) {
-			s = va( "%s vs %s", ci1->name, ci2->name );
-#ifdef MISSIONPACK
-			w = CG_Text_Width(s, 0.6f, 0);
-			CG_Text_Paint(320 - w / 2, 60, 0.6f, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
-			w = CG_DrawStrlen( s );
-			if ( w > 640 / GIANT_WIDTH ) {
-				cw = 640 / w;
-			} else {
-				cw = GIANT_WIDTH;
-			}
-			CG_DrawStringExt( 320 - w * cw/2, 20,s, colorWhite, 
-					qfalse, qtrue, cw, (int)(cw * 1.5f), 0 );
-#endif
-		}
-	} else {
-		if ( cgs.gametype == GT_FFA ) {
-			s = "Free For All";
-		} else if ( cgs.gametype == GT_TEAM ) {
-			s = "Team Deathmatch";
-		} else if ( cgs.gametype == GT_CTF ) {
-			s = "Capture the Flag";
-// Q3Rally Code Start - removed gametype
-/ *
-#ifdef MISSIONPACK
-		} else if ( cgs.gametype == GT_1FCTF ) {
-			s = "One Flag CTF";
-		} else if ( cgs.gametype == GT_OBELISK ) {
-			s = "Overload";
-		} else if ( cgs.gametype == GT_HARVESTER ) {
-			s = "Harvester";
-#endif
-* /
-// Q3Rally Code END
-		} else {
-			s = "";
-		}
-#ifdef MISSIONPACK
-		w = CG_Text_Width(s, 0.6f, 0);
-		CG_Text_Paint(320 - w / 2, 90, 0.6f, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
-		w = CG_DrawStrlen( s );
-		if ( w > 640 / GIANT_WIDTH ) {
-			cw = 640 / w;
-		} else {
-			cw = GIANT_WIDTH;
-		}
-		CG_DrawStringExt( 320 - w * cw/2, 25,s, colorWhite, 
-				qfalse, qtrue, cw, (int)(cw * 1.1f), 0 );
-#endif
-// Q3Rally Code Start
-//	}
-// Q3Rally Code END
-
-	sec = ( sec - cg.time ) / 1000;
-	if ( sec < 0 ) {
-		cg.warmup = 0;
-		sec = 0;
-	}
-	s = va( "Starts in: %i", sec + 1 );
-	if ( sec != cg.warmupCount ) {
-		cg.warmupCount = sec;
-		switch ( sec ) {
-		case 0:
-			trap_S_StartLocalSound( cgs.media.count1Sound, CHAN_ANNOUNCER );
-			break;
-		case 1:
-			trap_S_StartLocalSound( cgs.media.count2Sound, CHAN_ANNOUNCER );
-			break;
-		case 2:
-			trap_S_StartLocalSound( cgs.media.count3Sound, CHAN_ANNOUNCER );
-			break;
-		default:
-			break;
-		}
-	}
-
-#ifdef MISSIONPACK
-	switch ( cg.warmupCount ) {
-	case 0:
-		scale = 0.54f;
-		break;
-	case 1:
-		scale = 0.51f;
-		break;
-	case 2:
-		scale = 0.48f;
-		break;
-	default:
-		scale = 0.45f;
-		break;
-	}
-
-	w = CG_Text_Width(s, scale, 0);
-	CG_Text_Paint(320 - w / 2, 125, scale, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
-	switch ( cg.warmupCount ) {
-	case 0:
-		cw = 28;
-		break;
-	case 1:
-		cw = 24;
-		break;
-	case 2:
-		cw = 20;
-		break;
-	default:
-		cw = 16;
-		break;
-	}
-
-	w = CG_DrawStrlen( s );
-	CG_DrawStringExt( 320 - w * cw/2, 70, s, colorWhite, 
-			qfalse, qtrue, cw, (int)(cw * 1.5), 0 );
-#endif
-}
-*/
-// Q3Rally Code END
-
-//=======================================
+//========================
 //CG_DrawSigilLocationInfo
-//=======================================
+//========================
+
 void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, vec4_t color )    {
 
           int x = 320, y = 240;
@@ -3146,9 +2893,10 @@ void CG_DrawSigilLocationInfo( vec3_t origin, vec3_t target, qhandle_t shader, v
         CG_DrawStringExt( x-50, y+20, va("%10.2f",distance/100.0), color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
     }
 
-//=======================================
+//=====================
 //CG_DrawSigilLocations
-//=======================================
+//=====================
+
 static void CG_DrawSigilLocations( void ) {
           snapshot_t *snap;
           int i;
@@ -3220,9 +2968,9 @@ void CG_DrawTimedMenus( void ) {
 }
 #endif
 /*
-=================
+=========
 CG_Draw2D
-=================
+=========
 */
 static void CG_Draw2D(stereoFrame_t stereoFrame)
 {
@@ -3245,29 +2993,18 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		return;
 	}
 
-/*
-	if (cg.cameraMode) {
-		return;
-	}
-*/
-
-// Q3Rally Code Start
-//	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR 
 		|| isRaceObserver( cg.snap->ps.clientNum ) ) {
-// Q3Rally Code END
+
 		CG_DrawSpectator();
 
 		if(stereoFrame == STEREO_CENTER)
-//			CG_DrawCrosshair();
 
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-// Q3Rally Code Start
+
 		if ( !cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
-//		if ( !cg.showScores && !cg.showHUD && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
-// Q3Rally Code END
 
 #ifdef MISSIONPACK
 			if ( cg_drawStatus.integer ) {
@@ -3275,10 +3012,9 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 				CG_DrawTimedMenus();
 			}
 #else
-// Q3Rally Code Start
-//			CG_DrawStatusBar();
+
 			CG_DrawRallyStatusBar();
-// Q3Rally Code END
+
 #endif
       
 			CG_DrawAmmoWarning();
@@ -3287,14 +3023,13 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 			CG_DrawProxWarning();
 #endif      
 			if(stereoFrame == STEREO_CENTER)
-//				CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();
 
 #ifndef MISSIONPACK
 			CG_DrawHoldableItem();
 #else
-			//CG_DrawPersistantPowerup();
+	
 #endif
 			CG_DrawReward();
 		}
@@ -3327,40 +3062,30 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 	CG_DrawLowerLeft();
 #endif
 
-// Q3Rally Code Start - removed function
 	CG_DrawFollow();
-/*
-	if ( !CG_DrawFollow() ) {
-		CG_DrawWarmup();
-	}
-*/
-// Q3Rally Code END
 
-// Q3Rally Code Start
 	cg.scoreBoardShowing = CG_DrawHUD();
-// Q3Rally Code END
+
 
 	// don't draw center string if scoreboard is up
-// Q3Rally Code Start
+
 	if (!cg.scoreBoardShowing)
-// Q3Rally Code END
+
 		cg.scoreBoardShowing = CG_DrawScoreboard();
 
 	if ( !cg.scoreBoardShowing) {
 		CG_DrawCenterString();
-// Q3Rally Code Start
+
 		CG_DrawRaceCountDown();
-// Q3Rally Code END
+
 	}
 }
 
 
 /*
-=====================
-CG_DrawActive
-
-Perform all drawing needed to completely fill the screen
-=====================
+========================================================================
+CG_DrawActive - Perform all drawing needed to completely fill the screen
+========================================================================
 */
 void CG_DrawActive( stereoFrame_t stereoView ) {
 	// optionally draw the info screen instead
@@ -3368,17 +3093,6 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		CG_DrawInformation();
 		return;
 	}
-
-	// optionally draw the tournement scoreboard instead
-// Q3Rally Code Start
-/*
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
-		( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
-		CG_DrawTourneyScoreboard();
-		return;
-	}
-*/
-// Q3Rally Code END
 
 	// clear around the rendered view if sized down
 	CG_TileClear();

@@ -122,7 +122,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			-cgame
+			+cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -192,7 +192,7 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			+game
+			-game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -889,9 +889,12 @@ q3rallycode
 1=engine\code\qcommon\files.c
 2=engine\code\q3_ui\ui_menu.c
 3=engine\code\q3_ui\ui_rally_credits.c
+4=engine\code\cgame\cg_rally_hud.c
+5=engine\code\cgame\cg_rally_hud2.c
+6=engine\code\cgame\cg_draw.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_rally_credits.c
+Selected=engine\code\cgame\cg_draw.c
 [engine\code\qcommon\q_shared.h]
 TopLine=58
 Caret=35,70
@@ -904,3 +907,12 @@ Caret=77,440
 [engine\code\q3_ui\ui_rally_credits.c]
 TopLine=90
 Caret=79,106
+[engine\code\cgame\cg_rally_hud.c]
+TopLine=931
+Caret=1,1
+[engine\code\cgame\cg_rally_hud2.c]
+TopLine=335
+Caret=33,422
+[engine\code\cgame\cg_draw.c]
+TopLine=1
+Caret=3,3095

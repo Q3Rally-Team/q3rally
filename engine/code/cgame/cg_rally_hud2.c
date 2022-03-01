@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
 =================
 CG_DrawHUD_Times
-
 =================
 */
 void CG_DrawHUD_Times(float x, float y){
@@ -150,10 +149,9 @@ void CG_DrawHUD_Times(float x, float y){
 
 
 /*
-=================
+====================
 CG_DrawHUD_Positions
-
-=================
+====================
 */
 void CG_DrawHUD_Positions(float x, float y){
 	int		i, num_teams, team_rank;
@@ -191,10 +189,9 @@ void CG_DrawHUD_Positions(float x, float y){
 }
 
 /*
-=================
+===============
 CG_DrawHUD_Laps
-
-=================
+===============
 */
 void CG_DrawHUD_Laps(float x, float y){
 
@@ -205,10 +202,9 @@ void CG_DrawHUD_Laps(float x, float y){
 }
 
 /*
-=================
+=======================
 CG_DrawHUD_OpponentList
-
-=================
+=======================
 */
 void CG_DrawHUD_OpponentList(float x, float y){
 	centity_t	*cent, *other;
@@ -293,7 +289,6 @@ void CG_DrawHUD_OpponentList(float x, float y){
 /*
 =================
 CG_DrawHUD_Scores
-
 =================
 */
 void CG_DrawHUD_Scores(float x, float y){
@@ -345,10 +340,9 @@ void CG_DrawHUD_Scores(float x, float y){
 }
 
 /*
-=================
+====================
 CG_DrawHUD_DerbyList
-
-=================
+====================
 */
 void CG_DrawHUD_DerbyList(float x, float y){
 	int			i;
@@ -423,11 +417,9 @@ void CG_DrawHUD_DerbyList(float x, float y){
 
 
 /*
-=================
-CG_DrawHUD
-
-Draws the extra HUD
-=================
+================================
+CG_DrawHUD - Draws the extra HUD
+================================
 */
 qboolean CG_DrawHUD( void ) {
 	// don't draw anything if the menu or console is up
