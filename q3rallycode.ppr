@@ -895,7 +895,7 @@ q3rallycode
 7=engine\code\cgame\cg_main.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\cgame\cg_main.c
 [engine\code\qcommon\q_shared.h]
 TopLine=58
 Caret=35,70
@@ -918,5 +918,5 @@ Caret=33,422
 TopLine=3052
 Caret=3,3095
 [engine\code\cgame\cg_main.c]
-TopLine=1
-Caret=7,41
+TopLine=2166
+Caret=22,2174
