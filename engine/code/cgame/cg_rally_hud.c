@@ -422,9 +422,9 @@ static float CG_DrawTimes( float y ) {
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 120;
-		CG_FillRect ( x, y, 120, 18, bgColor );
-		x+= 25;		
+        x = 636 - 80;
+		CG_FillRect ( x, y, 90, 18, bgColor );
+		x+= 10;		
 		y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
@@ -441,9 +441,9 @@ static float CG_DrawTimes( float y ) {
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 120;
-        CG_FillRect( x, y, 120, 18, bgColor );
-        x+= 25;
+        x = 636 - 80;
+        CG_FillRect( x, y, 90, 18, bgColor );
+        x+= 10;
         y+= 4;
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 		y += TINYCHAR_HEIGHT + 4;
@@ -467,9 +467,9 @@ static float CG_DrawTimes( float y ) {
 
 	Com_sprintf(s, sizeof(s), "T: %s", time);
 
-	x = 636 - 120;
-	CG_FillRect( x, y, 120, 18, bgColor );
-	x += 25;
+	x = 636 - 80;
+	CG_FillRect( x, y, 90, 18, bgColor );
+	x += 10;
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
@@ -501,9 +501,9 @@ static float CG_DrawLaps( float y ) {
 
 	Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
 
-	x = 636 - 120;
-	CG_FillRect( x, y, 120, 18, bgColor );
-	x += 25;
+	x = 636 - 80;
+	CG_FillRect( x, y, 90, 18, bgColor );
+	x += 10;
 	y += 4;
 	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 	y += TINYCHAR_HEIGHT + 4;
@@ -547,7 +547,7 @@ static float CG_DrawCurrentPosition( float y ) {
 
 	CG_DrawTinyDigitalStringColor( x, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
 
-	y += 10 + 4;
+	y += 20;
 
 	return y;
 }
