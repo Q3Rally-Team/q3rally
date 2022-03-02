@@ -2380,7 +2380,8 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 
 	// quad gives a dlight
 	if ( powerups & ( 1 << PW_QUAD ) ) {
-		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1 );
+//		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1.0 );
+        trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.63f, 0.13f, 0.94f );
 	}
 
 	// flight plays a looped sound
@@ -2414,6 +2415,33 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1.0 );
 	}
+
+/* finish in 0.5
+
+    // greenflag
+	if ( powerups & ( 1 << PW_GREENFLAG ) ) {
+		if (ci->newAnims){
+			CG_PlayerFlag( cent, cgs.media.greenFlagFlapSkin, torso );
+		}
+		else {
+			CG_TrailItem( cent, cgs.media.greenFlagModel );
+		}
+		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 1.0, 0.2f );
+	}
+
+    // yellowflag
+	if ( powerups & ( 1 << PW_YELLOWFLAG ) ) {
+		if (ci->newAnims){
+			CG_PlayerFlag( cent, cgs.media.yellowFlagFlapSkin, torso );
+		}
+		else {
+			CG_TrailItem( cent, cgs.media.yellowFlagModel );
+		}
+		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 0.2f );
+	}
+
+// end finish in 0.5
+*/
 
 	// neutralflag
 	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {

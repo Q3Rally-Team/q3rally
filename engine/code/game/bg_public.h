@@ -404,6 +404,8 @@ typedef enum {
 
         PW_REDFLAG,
         PW_BLUEFLAG,
+//        PW_GREENFLAG,
+//        PW_YELLOWFLAG,
         PW_NEUTRALFLAG,
 
 #ifdef MISSIONPACK
