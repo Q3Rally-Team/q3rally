@@ -894,7 +894,7 @@ q3rallycode
 6=engine\code\game\bg_public.h
 [Selected Project Files]
 Main=
-Selected=engine\code\game\bg_public.h
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
 TopLine=58
 Caret=35,70
