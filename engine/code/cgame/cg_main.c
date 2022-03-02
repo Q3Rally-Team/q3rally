@@ -282,7 +282,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE },
 
-	{ &cg_fov, "cg_fov", "100", CVAR_ARCHIVE },
+	{ &cg_fov, "cg_fov", "106", CVAR_ARCHIVE },
 
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
 	{ &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
@@ -332,8 +332,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT },
 	{ &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
 
-	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "150", CVAR_ARCHIVE },
-	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "40", CVAR_ARCHIVE },
+	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "170", CVAR_ARCHIVE },
+	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "60", CVAR_ARCHIVE },
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },

@@ -1334,7 +1334,7 @@ void UI_Init( void ) {
 
 	trap_FS_FOpenFile( va("models/players/%s/body.md3", modelname), &f, FS_READ );
 	if ( !f )
-		trap_Cvar_Set( "model", "sidepipe/red" );
+		trap_Cvar_Set( "model", "alpine/red" );
 	else
 		trap_FS_FCloseFile( f );
 // END

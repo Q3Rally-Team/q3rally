@@ -850,7 +850,7 @@ static void ClientCleanName(const char *in, char *out, int outSize)
 
 	// don't allow empty names
 	if( *out == '\0' || colorlessLen == 0)
-		Q_strncpyz(out, "UnnamedPlayer", outSize );
+		Q_strncpyz(out, "Player", outSize );
 }
 
 

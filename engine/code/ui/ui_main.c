@@ -5208,7 +5208,7 @@ void _UI_Init( qboolean inGameLoad ) {
 	uiInfo.previewMovie = -1;
 
 	if (trap_Cvar_VariableValue("ui_TeamArenaFirstRun") == 0) {
-		trap_Cvar_Set("s_volume", "0.8");
+		trap_Cvar_Set("s_volume", "1");
 		trap_Cvar_Set("s_musicvolume", "0.5");
 		trap_Cvar_Set("ui_TeamArenaFirstRun", "1");
 	}
