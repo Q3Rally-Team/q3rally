@@ -5149,6 +5149,9 @@ void _UI_Init( qboolean inGameLoad ) {
 	uiInfo.uiDC.stopCinematic = &UI_StopCinematic;
 	uiInfo.uiDC.drawCinematic = &UI_DrawCinematic;
 	uiInfo.uiDC.runCinematicFrame = &UI_RunCinematicFrame;
+    uiInfo.uiDC.adjustFrom640 = &UI_AdjustFrom640;
+	uiInfo.uiDC.setScreenPlacement = NULL;
+	uiInfo.uiDC.popScreenPlacement = NULL;
 
 	Init_Display(&uiInfo.uiDC);
 

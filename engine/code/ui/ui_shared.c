@@ -3638,16 +3638,6 @@ qboolean Item_Bind_HandleKey(itemDef_t *item, int key, qboolean down) {
 	return qtrue;
 }
 
-
-
-void AdjustFrom640(float *x, float *y, float *w, float *h) {
-	//*x = *x * DC->scale + DC->bias;
-	*x *= DC->xscale;
-	*y *= DC->yscale;
-	*w *= DC->xscale;
-	*h *= DC->yscale;
-}
-
 void Item_Model_Paint(itemDef_t *item) {
 	float x, y, w, h;
 	refdef_t refdef;
@@ -3669,7 +3659,7 @@ void Item_Model_Paint(itemDef_t *item) {
 	w = item->window.rect.w-2;
 	h = item->window.rect.h-2;
 
-	AdjustFrom640( &x, &y, &w, &h );
+	DC->adjustFrom640( &x, &y, &w, &h );
 
 	refdef.x = x;
 	refdef.y = y;

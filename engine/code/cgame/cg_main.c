@@ -314,7 +314,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_statusScale, "cg_statusScale", "1", CVAR_ARCHIVE },
 	{ &cg_fovAspectAdjust, "cg_fovAspectAdjust", "0", CVAR_ARCHIVE },
 	{ &cg_fovGunAdjust, "cg_fovGunAdjust", "0", CVAR_ARCHIVE },
-	{ &cg_stretch, "cg_stretch", "1", CVAR_ARCHIVE },
+	{ &cg_stretch, "cg_stretch", "0", CVAR_ARCHIVE },
 	{ &cg_crosshairSize, "cg_crosshairSize", "24", CVAR_ARCHIVE },
 	{ &cg_crosshairHealth, "cg_crosshairHealth", "1", CVAR_ARCHIVE },
 	{ &cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE },
@@ -2111,6 +2111,9 @@ void CG_LoadHudMenu( void ) {
 	cgDC.stopCinematic = &CG_StopCinematic;
 	cgDC.drawCinematic = &CG_DrawCinematic;
 	cgDC.runCinematicFrame = &CG_RunCinematicFrame;
+    cgDC.adjustFrom640 = &CG_AdjustFrom640;
+	cgDC.setScreenPlacement = &CG_SetScreenPlacement;
+	cgDC.popScreenPlacement = &CG_PopScreenPlacement;
 	
 	Init_Display(&cgDC);
 
