@@ -786,15 +786,15 @@ static void CG_DrawRallyStatusBar( void ) {
 	// draw ammo background
 	value = ps->ammo[cent->currentState.weapon];
 	if ( value > -1 )
-		CG_FillRect( 4, 476 - 32, 106, 32, bg_color );
+		CG_FillRect( -20, 476 - 32, 106, 32, bg_color );
+
+	// health background
+	   CG_FillRect( 106, 476 - 32, 106, 32, bg_color );
 
 	// armor background
 	if ( ps->stats[ STAT_ARMOR ] )
-//		CG_FillRect( 190, 476 - 68, 106, 32, bg_color );
-        CG_FillRect( 256, 476 - 32, 106, 32, bg_color );
 
-	// health background
-	   CG_FillRect( 130, 476 - 32, 106, 32, bg_color );
+        CG_FillRect( 232, 476 - 32, 106, 32, bg_color );
 
 	// rearammo background
 	weapon = 0;
@@ -808,7 +808,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	if ( weapon )
-		CG_FillRect( 4, 476 - 68, 106, 32, bg_color );
+		CG_FillRect( 358, 476 - 32, 106, 32, bg_color );
 
 	// draw any 3D icons now, so the changes back to 2D are minimized
 	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
@@ -816,7 +816,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 10, 476 - 28, 26, 26,
+		CG_Draw3DModel( -14, 476 - 28, 26, 26,
 					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
 
@@ -834,18 +834,18 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 136, 476 - 28, 26, 26,
+		CG_Draw3DModel( 112, 476 - 28, 26, 26,
 					   healthModel, 0, origin, angles );
 	}
 
 	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
-		CG_DrawStatusBarFlag( 196 + 26, TEAM_RED);
+		CG_DrawStatusBarFlag( -70, TEAM_RED);
 	else if (cg.predictedPlayerState.powerups[PW_BLUEFLAG])
-		CG_DrawStatusBarFlag( 196 + 26, TEAM_BLUE);
+		CG_DrawStatusBarFlag( -70, TEAM_BLUE);
 	else if (cg_entities[cg.snap->ps.clientNum].finishRaceTime &&
 		cg_entities[cg.snap->ps.clientNum].currentPosition == 1){
 
-		CG_DrawStatusBarFlag( 196 + 26, -1);
+		CG_DrawStatusBarFlag( -70, -1);
 	}
 
 	if ( ps->stats[ STAT_ARMOR ] ) {
@@ -854,7 +854,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[2] = -10;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 262, 476 - 28, 26, 26,
+        CG_Draw3DModel( 238, 476 - 28, 26, 26,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -882,7 +882,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (52, 476 - 28, 3, value);
+			CG_DrawField (28, 476 - 28, 3, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -906,7 +906,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 10, 476 - 64, 26, 26,
+		CG_Draw3DModel( 364, 476 - 32, 26, 26,
 					   cg_weapons[ weapon ].weaponModel, 0, origin, angles );
 	}
 
@@ -926,7 +926,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (52 + CHAR_WIDTH, 476 - 64, 2, value);
+			CG_DrawField (422, 476 - 28, 2, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -958,7 +958,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	// stretch the health up when taking damage
-	CG_DrawField ( 178, 476 - 28, 3, value);
+	CG_DrawField ( 154, 476 - 28, 3, value);
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
@@ -970,7 +970,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
 //		CG_DrawField ( 242, 476 - 64, 3, value);
-        CG_DrawField ( 304, 476 - 28, 3, value);
+        CG_DrawField ( 280, 476 - 28, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
@@ -1796,7 +1796,7 @@ static float CG_DrawRallyPowerups( float y ) {
 		CG_FillRect( x, y, 106, 32, bg_color );
 
 		trap_R_SetColor( colors[color] );
-		CG_DrawField( x + 52 + CHAR_WIDTH, y + 3, 2, sortedTime[ i ] / 1000 );
+		CG_DrawField( x + 48 + CHAR_WIDTH, y + 3, 2, sortedTime[ i ] / 1000 );
 
 		t = ps->powerups[ sorted[i] ];
 		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
