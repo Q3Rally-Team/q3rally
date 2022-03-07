@@ -2056,7 +2056,7 @@ static void CG_DrawReward( void ) {
 		return;
 	}
 
-    CG_SetScreenPlacement(PLACE_RIGHT, PLACE_CENTER);
+    CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
 
 	color = CG_FadeColor( cg.rewardTime, REWARD_TIME );
 	if ( !color ) {
@@ -2093,7 +2093,7 @@ static void CG_DrawReward( void ) {
 	*/
 
 	if ( cg.rewardCount[0] >= 10 ) {
-		y = 56;
+		y = 100;
 		x = 320 - ICON_SIZE/2;
 		CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
 		Com_sprintf(buf, sizeof(buf), "%d", cg.rewardCount[0]);
@@ -2105,7 +2105,7 @@ static void CG_DrawReward( void ) {
 
 		count = cg.rewardCount[0];
 
-		y = 56;
+		y = 100;
 		x = 320 - count * ICON_SIZE/2;
 		for ( i = 0 ; i < count ; i++ ) {
 			CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
