@@ -2093,7 +2093,7 @@ static void CG_DrawReward( void ) {
 	*/
 
 	if ( cg.rewardCount[0] >= 10 ) {
-		y = 100;
+		y = 112;
 		x = 320 - ICON_SIZE/2;
 		CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
 		Com_sprintf(buf, sizeof(buf), "%d", cg.rewardCount[0]);
@@ -2105,7 +2105,7 @@ static void CG_DrawReward( void ) {
 
 		count = cg.rewardCount[0];
 
-		y = 100;
+		y = 112;
 		x = 320 - count * ICON_SIZE/2;
 		for ( i = 0 ; i < count ; i++ ) {
 			CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
@@ -2930,7 +2930,7 @@ static void CG_DrawAmmoWarning( void ) {
 		s = "LOW AMMO WARNING";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-	CG_DrawBigString(320 - w / 2, 64, s, 1.0F);
+	CG_DrawBigString(320 - w / 2, 98, s, 1.0F);
 }
 
 

@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.4_r509"
+#define PRODUCT_VERSION "v0.4_r510"
 #endif
 
 
@@ -421,33 +421,23 @@ extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 #define	SCREEN_WIDTH		640
 #define	SCREEN_HEIGHT		480
 
-// STONELANCE
-/*
-#define TINYCHAR_WIDTH		(SMALLCHAR_WIDTH)
-#define TINYCHAR_HEIGHT		(SMALLCHAR_HEIGHT/2)
-*/
 #define TINYCHAR_WIDTH		6
 #define TINYCHAR_HEIGHT		10
-// END
 
 // ZTM: Only change size for Q3Rally VMs, not client console text
 #if defined CGAME || defined UI
-// STONELANCE - drawn pic is actually bigger because this
-// is the value after the letters are moved closer together
-//#define SMALLCHAR_WIDTH	8
 #define SMALLCHAR_WIDTH		6
-// END
 #define SMALLCHAR_HEIGHT	16
 #else
-#define SMALLCHAR_WIDTH	8
+#define SMALLCHAR_WIDTH	    8
 #define SMALLCHAR_HEIGHT	16
 #endif
 
-#define BIGCHAR_WIDTH		16
-#define BIGCHAR_HEIGHT		16
+#define BIGCHAR_WIDTH		10
+#define BIGCHAR_HEIGHT		10
 
-#define	GIANTCHAR_WIDTH		32
-#define	GIANTCHAR_HEIGHT	48
+#define	GIANTCHAR_WIDTH		20
+#define	GIANTCHAR_HEIGHT	30
 
 extern	vec4_t		colorBlack;
 extern	vec4_t		colorRed;

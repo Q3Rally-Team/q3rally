@@ -71,11 +71,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SB_NAME_X			(SB_SCORELINE_X + 22 * BIGCHAR_WIDTH) // width 15
 */
 
-#define SB_SCORE_X			(SB_SCORELINE_X + BIGCHAR_WIDTH) // width 6
-#define SB_PING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_TIME_X			(SB_SCORELINE_X + 11 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_TOTAL_TIME_X		(SB_SCORELINE_X + 16 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_NAME_X			(SB_SCORELINE_X + 21 * BIGCHAR_WIDTH) // width 15
+#define SB_SCORE_X			(SB_SCORELINE_X + 2 * BIGCHAR_WIDTH) // width 6
+#define SB_PING_X			(SB_SCORELINE_X + 11 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_TIME_X			(SB_SCORELINE_X + 18 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_TOTAL_TIME_X		(SB_SCORELINE_X + 26 * BIGCHAR_WIDTH + 8) // width 5
+#define SB_NAME_X			(SB_SCORELINE_X + 33 * BIGCHAR_WIDTH) // width 15
 // END
 
 // The new and improved score board

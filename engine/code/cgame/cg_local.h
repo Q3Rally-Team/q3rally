@@ -70,8 +70,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // Q3Rally Code Start
 //#define	CHAR_WIDTH			32
 //#define	CHAR_HEIGHT			48
-#define	CHAR_WIDTH			17
-#define	CHAR_HEIGHT			26
+#define	CHAR_WIDTH			21 //14
+#define	CHAR_HEIGHT			21
 // Q3Rally Code END
 #define	TEXT_ICON_SPACE		4
 
@@ -79,8 +79,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAMCHAT_HEIGHT		8
 
 // very large characters
-#define	GIANT_WIDTH			32
-#define	GIANT_HEIGHT		48
+#define	GIANT_WIDTH			22
+#define	GIANT_HEIGHT		33
 
 #define	NUM_CROSSHAIRS		10
 

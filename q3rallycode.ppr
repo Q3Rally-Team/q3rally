@@ -889,12 +889,28 @@ q3rallycode
 [Open project files]
 0=engine\code\qcommon\q_shared.h
 1=engine\code\cgame\cg_draw.c
+2=engine\code\cgame\cg_local.h
+3=engine\code\cgame\cg_event.c
+4=engine\code\ui\ui_local.h
+5=engine\code\cgame\cg_scoreboard.c
 [Selected Project Files]
 Main=
-Selected=engine\code\qcommon\q_shared.h
+Selected=engine\code\cgame\cg_local.h
 [engine\code\qcommon\q_shared.h]
-TopLine=49
+TopLine=54
 Caret=35,70
 [engine\code\cgame\cg_draw.c]
-TopLine=1788
-Caret=23,1799
+TopLine=230
+Caret=30,255
+[engine\code\cgame\cg_local.h]
+TopLine=57
+Caret=29,73
+[engine\code\cgame\cg_event.c]
+TopLine=275
+Caret=58,297
+[engine\code\ui\ui_local.h]
+TopLine=135
+Caret=1,139
+[engine\code\cgame\cg_scoreboard.c]
+TopLine=54
+Caret=41,78
