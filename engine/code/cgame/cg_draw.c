@@ -786,15 +786,15 @@ static void CG_DrawRallyStatusBar( void ) {
 	// draw ammo background
 	value = ps->ammo[cent->currentState.weapon];
 	if ( value > -1 )
-		CG_FillRect( -20, 476 - 32, 106, 32, bg_color );
+		CG_FillRect( 20, 476 - 30, 90, 24, bg_color );
 
 	// health background
-	   CG_FillRect( 106, 476 - 32, 106, 32, bg_color );
+	   CG_FillRect( 210, 476 - 30, 90, 24, bg_color );
 
 	// armor background
 	if ( ps->stats[ STAT_ARMOR ] )
 
-        CG_FillRect( 232, 476 - 32, 106, 32, bg_color );
+        CG_FillRect( 305, 476 - 30, 90, 24, bg_color );
 
 	// rearammo background
 	weapon = 0;
@@ -808,7 +808,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	if ( weapon )
-		CG_FillRect( 358, 476 - 32, 106, 32, bg_color );
+		CG_FillRect( 115, 476 - 30, 90, 24, bg_color );
 
 	// draw any 3D icons now, so the changes back to 2D are minimized
 	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
@@ -816,7 +816,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( -14, 476 - 28, 26, 26,
+		CG_Draw3DModel( 26, 476 - 27, 19, 19,
 					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
 
@@ -834,18 +834,18 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 112, 476 - 28, 26, 26,
+		CG_Draw3DModel( 212, 476 - 26, 19, 19,
 					   healthModel, 0, origin, angles );
 	}
 
 	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
-		CG_DrawStatusBarFlag( -70, TEAM_RED);
+		CG_DrawStatusBarFlag( 525, TEAM_RED);
 	else if (cg.predictedPlayerState.powerups[PW_BLUEFLAG])
-		CG_DrawStatusBarFlag( -70, TEAM_BLUE);
+		CG_DrawStatusBarFlag( 525, TEAM_BLUE);
 	else if (cg_entities[cg.snap->ps.clientNum].finishRaceTime &&
 		cg_entities[cg.snap->ps.clientNum].currentPosition == 1){
 
-		CG_DrawStatusBarFlag( -70, -1);
+		CG_DrawStatusBarFlag( 525, 15);
 	}
 
 	if ( ps->stats[ STAT_ARMOR ] ) {
@@ -854,7 +854,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[2] = -10;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 238, 476 - 28, 26, 26,
+        CG_Draw3DModel( 311, 476 - 27, 19, 19,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -882,7 +882,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (28, 476 - 28, 3, value);
+			CG_DrawField (42, 476 - 28, 3, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -906,7 +906,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 364, 476 - 32, 26, 26,
+		CG_Draw3DModel( 120, 476 - 28, 19, 19,
 					   cg_weapons[ weapon ].weaponModel, 0, origin, angles );
 	}
 
@@ -926,7 +926,7 @@ static void CG_DrawRallyStatusBar( void ) {
 			}
 			trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (422, 476 - 28, 2, value);
+			CG_DrawField (158, 476 - 28, 2, value);
 			trap_R_SetColor( NULL );
 
 			// if we didn't draw a 3D icon, draw a 2D icon for ammo
@@ -958,7 +958,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	// stretch the health up when taking damage
-	CG_DrawField ( 154, 476 - 28, 3, value);
+	CG_DrawField ( 232, 476 - 28, 3, value);
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
@@ -970,7 +970,7 @@ static void CG_DrawRallyStatusBar( void ) {
 	if (value > 0 ) {
 		trap_R_SetColor( colors[0] );
 //		CG_DrawField ( 242, 476 - 64, 3, value);
-        CG_DrawField ( 280, 476 - 28, 3, value);
+        CG_DrawField ( 327, 476 - 28, 3, value);
 		trap_R_SetColor( NULL );
 		// if we didn't draw a 3D icon, draw a 2D icon for armor
 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
@@ -980,7 +980,247 @@ static void CG_DrawRallyStatusBar( void ) {
 }
 #endif
 
+/*
+================
+CG_DrawPowerups
+================
+*/
+#ifndef MISSIONPACK
+#if 0 // ZTM: Not used by Q3Rally
+static float CG_DrawPowerups( float y ) {
+	int		sorted[MAX_POWERUPS];
+	int		sortedTime[MAX_POWERUPS];
+	int		i, j, k;
+	int		active;
+	playerState_t	*ps;
+	int		t;
+	gitem_t	*item;
+	int		x;
+	int		color;
+	float	size;
+	float	f;
+	static float colors[2][4] = { 
+    { 0.2f, 1.0f, 0.2f, 1.0f } , 
+    { 1.0f, 0.2f, 0.2f, 1.0f } 
+  };
 
+	ps = &cg.snap->ps;
+
+	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+		return y;
+	}
+
+	// sort the list by time remaining
+	active = 0;
+	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
+		if ( !ps->powerups[ i ] ) {
+			continue;
+		}
+
+		// ZOID--don't draw if the power up has unlimited time
+		// This is true of the CTF flags
+		if ( ps->powerups[ i ] == INT_MAX ) {
+			continue;
+		}
+
+		t = ps->powerups[ i ] - cg.time;
+		if ( t <= 0 ) {
+			continue;
+		}
+
+		// insert into the list
+		for ( j = 0 ; j < active ; j++ ) {
+			if ( sortedTime[j] >= t ) {
+				for ( k = active - 1 ; k >= j ; k-- ) {
+					sorted[k+1] = sorted[k];
+					sortedTime[k+1] = sortedTime[k];
+				}
+				break;
+			}
+		}
+		sorted[j] = i;
+		sortedTime[j] = t;
+		active++;
+	}
+
+	// draw the icons and timers
+	x = 640 - ICON_SIZE - CHAR_WIDTH * 2;
+	for ( i = 0 ; i < active ; i++ ) {
+		item = BG_FindItemForPowerup( sorted[i] );
+
+    if (item) {
+
+		  color = 1;
+
+		  y -= ICON_SIZE;
+
+		  trap_R_SetColor( colors[color] );
+		  CG_DrawField( x, y, 2, sortedTime[ i ] / 1000 );
+
+		  t = ps->powerups[ sorted[i] ];
+		  if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
+			  trap_R_SetColor( NULL );
+		  } else {
+			  vec4_t	modulate;
+
+			  f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
+			  f -= (int)f;
+			  modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
+			  trap_R_SetColor( modulate );
+		  }
+
+		  if ( cg.powerupActive == sorted[i] && 
+			  cg.time - cg.powerupTime < PULSE_TIME ) {
+			  f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
+			  size = ICON_SIZE * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
+		  } else {
+			  size = ICON_SIZE;
+		  }
+
+		  CG_DrawPic( 640 - size, y + ICON_SIZE / 2 - size / 2, 
+			  size, size, trap_R_RegisterShader( item->icon ) );
+    }
+	}
+	trap_R_SetColor( NULL );
+
+	return y;
+}
+#endif
+
+// Q3Rally Code Start
+/*
+====================
+CG_DrawRallyPowerups
+====================
+*/
+static float CG_DrawRallyPowerups( float y ) {
+	int		sorted[MAX_POWERUPS];
+	int		sortedTime[MAX_POWERUPS];
+	int		i, j, k;
+	int		active;
+	playerState_t	*ps;
+	int		t;
+	gitem_t	*item;
+	int		color;
+	float	size;
+	float	f;
+	vec4_t	bg_color;
+
+	static float colors[2][4] = { 
+		{ 0.2f, 1.0f, 0.2f, 1.0f } ,
+		{ 1.0f, 0.2f, 0.2f, 1.0f }
+	};
+
+	ps = &cg.snap->ps;
+
+	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+		return y;
+	}
+
+	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
+	case TEAM_RED:
+		Vector4Copy(colorRed, bg_color);
+		bg_color[3] = 0.5f;
+		break;
+
+	case TEAM_BLUE:
+		Vector4Copy(colorBlue, bg_color);
+		bg_color[3] = 0.5f;
+		break;
+
+	case TEAM_GREEN:
+		Vector4Copy(colorGreen, bg_color);
+		bg_color[3] = 0.5f;
+		break;
+
+	case TEAM_YELLOW:
+		Vector4Copy(colorYellow, bg_color);
+		bg_color[3] = 0.5f;
+		break;
+	
+	default:
+		Vector4Copy(bgColor, bg_color);
+	}
+
+	// sort the list by time remaining
+	active = 0;
+	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
+		if ( !ps->powerups[ i ] ) {
+			continue;
+		}
+		t = ps->powerups[ i ] - cg.time;
+
+		if (i == PW_TURBO && ps->powerups[ i ] < 0)
+			t = -ps->powerups[ i ];
+
+		// ZOID--don't draw if the power up has unlimited time (999 seconds)
+		// This is true of the CTF flags
+		if ( t < 0 || t > 999000 ) {
+			continue;
+		}
+
+		// insert into the list
+		for ( j = 0 ; j < active ; j++ ) {
+			if ( sortedTime[j] >= t ) {
+				for ( k = active - 1 ; k >= j ; k-- ) {
+					sorted[k+1] = sorted[k];
+					sortedTime[k+1] = sortedTime[k];
+				}
+				break;
+			}
+		}
+		sorted[j] = i;
+		sortedTime[j] = t;
+		active++;
+	}
+
+	// draw the icons and timers
+
+	for ( i = 0 ; i < active ; i++ ) {
+		item = BG_FindItemForPowerup( sorted[i] );
+
+		color = 1;
+
+		CG_FillRect( 402, 476 - 28, 90, 24, bg_color );
+
+		trap_R_SetColor( colors[color] );
+		CG_DrawField( 424 + CHAR_WIDTH, 476 - 26, 2, sortedTime[ i ] / 1000 );
+
+		t = ps->powerups[ sorted[i] ];
+		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
+			trap_R_SetColor( NULL );
+		}
+		// dont blink turbo when not on
+		else if (item->giTag == PW_TURBO && ps->powerups[ item->giTag ] < 0){
+			trap_R_SetColor( NULL );
+		}
+		else {
+			vec4_t	modulate;
+
+			f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
+			f -= (int)f;
+			modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
+			trap_R_SetColor( modulate );
+		}
+
+		if ( cg.powerupActive == sorted[i] && 
+			cg.time - cg.powerupTime < PULSE_TIME ) {
+			f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
+			size = 19 * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
+		} else {
+			size = 19;
+		}
+
+		CG_DrawPic( 408, 476 - 25, size, size, trap_R_RegisterShader( item->icon ) );
+
+//		y -= 36;
+	}
+	trap_R_SetColor( NULL );
+
+	return y;
+}
+#endif // MISSIONPACK
+// Q3Rally Code END
 
 /*
 ===========================================================================================
@@ -1589,252 +1829,6 @@ float CG_DrawScores( float x, float y ) {
 
 }
 #endif // MISSIONPACK
-
-/*
-================
-CG_DrawPowerups
-================
-*/
-#ifndef MISSIONPACK
-#if 0 // ZTM: Not used by Q3Rally
-static float CG_DrawPowerups( float y ) {
-	int		sorted[MAX_POWERUPS];
-	int		sortedTime[MAX_POWERUPS];
-	int		i, j, k;
-	int		active;
-	playerState_t	*ps;
-	int		t;
-	gitem_t	*item;
-	int		x;
-	int		color;
-	float	size;
-	float	f;
-	static float colors[2][4] = { 
-    { 0.2f, 1.0f, 0.2f, 1.0f } , 
-    { 1.0f, 0.2f, 0.2f, 1.0f } 
-  };
-
-	ps = &cg.snap->ps;
-
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		return y;
-	}
-
-	// sort the list by time remaining
-	active = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( !ps->powerups[ i ] ) {
-			continue;
-		}
-
-		// ZOID--don't draw if the power up has unlimited time
-		// This is true of the CTF flags
-		if ( ps->powerups[ i ] == INT_MAX ) {
-			continue;
-		}
-
-		t = ps->powerups[ i ] - cg.time;
-		if ( t <= 0 ) {
-			continue;
-		}
-
-		// insert into the list
-		for ( j = 0 ; j < active ; j++ ) {
-			if ( sortedTime[j] >= t ) {
-				for ( k = active - 1 ; k >= j ; k-- ) {
-					sorted[k+1] = sorted[k];
-					sortedTime[k+1] = sortedTime[k];
-				}
-				break;
-			}
-		}
-		sorted[j] = i;
-		sortedTime[j] = t;
-		active++;
-	}
-
-	// draw the icons and timers
-	x = 640 - ICON_SIZE - CHAR_WIDTH * 2;
-	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
-
-    if (item) {
-
-		  color = 1;
-
-		  y -= ICON_SIZE;
-
-		  trap_R_SetColor( colors[color] );
-		  CG_DrawField( x, y, 2, sortedTime[ i ] / 1000 );
-
-		  t = ps->powerups[ sorted[i] ];
-		  if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
-			  trap_R_SetColor( NULL );
-		  } else {
-			  vec4_t	modulate;
-
-			  f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
-			  f -= (int)f;
-			  modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
-			  trap_R_SetColor( modulate );
-		  }
-
-		  if ( cg.powerupActive == sorted[i] && 
-			  cg.time - cg.powerupTime < PULSE_TIME ) {
-			  f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
-			  size = ICON_SIZE * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
-		  } else {
-			  size = ICON_SIZE;
-		  }
-
-		  CG_DrawPic( 640 - size, y + ICON_SIZE / 2 - size / 2, 
-			  size, size, trap_R_RegisterShader( item->icon ) );
-    }
-	}
-	trap_R_SetColor( NULL );
-
-	return y;
-}
-#endif
-
-// Q3Rally Code Start
-/*
-====================
-CG_DrawRallyPowerups
-====================
-*/
-static float CG_DrawRallyPowerups( float y ) {
-	int		sorted[MAX_POWERUPS];
-	int		sortedTime[MAX_POWERUPS];
-	int		i, j, k;
-	int		active;
-	playerState_t	*ps;
-	int		t;
-	gitem_t	*item;
-	int		x;
-	int		color;
-	float	size;
-	float	f;
-	vec4_t	bg_color;
-
-	static float colors[2][4] = { 
-		{ 0.2f, 1.0f, 0.2f, 1.0f } ,
-		{ 1.0f, 0.2f, 0.2f, 1.0f }
-	};
-
-	ps = &cg.snap->ps;
-
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		return y;
-	}
-
-	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
-	case TEAM_RED:
-		Vector4Copy(colorRed, bg_color);
-		bg_color[3] = 0.5f;
-		break;
-
-	case TEAM_BLUE:
-		Vector4Copy(colorBlue, bg_color);
-		bg_color[3] = 0.5f;
-		break;
-
-	case TEAM_GREEN:
-		Vector4Copy(colorGreen, bg_color);
-		bg_color[3] = 0.5f;
-		break;
-
-	case TEAM_YELLOW:
-		Vector4Copy(colorYellow, bg_color);
-		bg_color[3] = 0.5f;
-		break;
-	
-	default:
-		Vector4Copy(bgColor, bg_color);
-	}
-
-	// sort the list by time remaining
-	active = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( !ps->powerups[ i ] ) {
-			continue;
-		}
-		t = ps->powerups[ i ] - cg.time;
-
-		if (i == PW_TURBO && ps->powerups[ i ] < 0)
-			t = -ps->powerups[ i ];
-
-		// ZOID--don't draw if the power up has unlimited time (999 seconds)
-		// This is true of the CTF flags
-		if ( t < 0 || t > 999000 ) {
-			continue;
-		}
-
-		// insert into the list
-		for ( j = 0 ; j < active ; j++ ) {
-			if ( sortedTime[j] >= t ) {
-				for ( k = active - 1 ; k >= j ; k-- ) {
-					sorted[k+1] = sorted[k];
-					sortedTime[k+1] = sortedTime[k];
-				}
-				break;
-			}
-		}
-		sorted[j] = i;
-		sortedTime[j] = t;
-		active++;
-	}
-
-	// draw the icons and timers
-	x = 380;
-	y -= 32;
-	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
-
-		color = 1;
-
-		CG_FillRect( x, y, 106, 32, bg_color );
-
-		trap_R_SetColor( colors[color] );
-		CG_DrawField( x + 48 + CHAR_WIDTH, y + 3, 2, sortedTime[ i ] / 1000 );
-
-		t = ps->powerups[ sorted[i] ];
-		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
-			trap_R_SetColor( NULL );
-		}
-		// dont blink turbo when not on
-		else if (item->giTag == PW_TURBO && ps->powerups[ item->giTag ] < 0){
-			trap_R_SetColor( NULL );
-		}
-		else {
-			vec4_t	modulate;
-
-			f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
-			f -= (int)f;
-			modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
-			trap_R_SetColor( modulate );
-		}
-
-		if ( cg.powerupActive == sorted[i] && 
-			cg.time - cg.powerupTime < PULSE_TIME ) {
-			f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
-			size = 26 * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
-		} else {
-			size = 26;
-		}
-
-		CG_DrawPic( x + 6, y + 3,
-			size, size, trap_R_RegisterShader( item->icon ) );
-
-		y -= 36;
-	}
-	trap_R_SetColor( NULL );
-
-	return y;
-}
-#endif // MISSIONPACK
-// Q3Rally Code END
-
 
 /*
 =================

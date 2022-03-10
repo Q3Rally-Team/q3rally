@@ -895,13 +895,13 @@ q3rallycode
 5=engine\code\cgame\cg_scoreboard.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_local.h
+Selected=engine\code\cgame\cg_draw.c
 [engine\code\qcommon\q_shared.h]
 TopLine=54
 Caret=35,70
 [engine\code\cgame\cg_draw.c]
-TopLine=230
-Caret=30,255
+TopLine=832
+Caret=32,848
 [engine\code\cgame\cg_local.h]
 TopLine=57
 Caret=29,73
