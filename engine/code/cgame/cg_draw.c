@@ -839,13 +839,13 @@ static void CG_DrawRallyStatusBar( void ) {
 	}
 
 	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
-		CG_DrawStatusBarFlag( 525, TEAM_RED);
+		CG_DrawStatusBarFlag( 495, TEAM_RED);
 	else if (cg.predictedPlayerState.powerups[PW_BLUEFLAG])
-		CG_DrawStatusBarFlag( 525, TEAM_BLUE);
+		CG_DrawStatusBarFlag( 495, TEAM_BLUE);
 	else if (cg_entities[cg.snap->ps.clientNum].finishRaceTime &&
 		cg_entities[cg.snap->ps.clientNum].currentPosition == 1){
 
-		CG_DrawStatusBarFlag( 525, 15);
+		CG_DrawStatusBarFlag( 495, 15);
 	}
 
 	if ( ps->stats[ STAT_ARMOR ] ) {

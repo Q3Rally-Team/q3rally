@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.4_r512"
+#define PRODUCT_VERSION "v0.4_r513"
 #endif
 
 
@@ -433,8 +433,8 @@ extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 #define SMALLCHAR_HEIGHT	16
 #endif
 
-#define BIGCHAR_WIDTH		10
-#define BIGCHAR_HEIGHT		10
+#define BIGCHAR_WIDTH		14 //10
+#define BIGCHAR_HEIGHT		14 //10
 
 #define	GIANTCHAR_WIDTH		20
 #define	GIANTCHAR_HEIGHT	30

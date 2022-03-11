@@ -124,7 +124,7 @@ q3rallycode
 				engine\code\botlib\l_utils.h
 				engine\code\botlib\lcc.mak
 				engine\code\botlib\linux-i386.mak
-			+cgame
+			-cgame
 				engine\code\cgame\cg_atmospheric.c
 				engine\code\cgame\cg_consolecmds.c
 				engine\code\cgame\cg_draw.c
@@ -456,7 +456,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			-q3_ui
+			+q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -895,23 +895,24 @@ q3rallycode
 5=engine\code\cgame\cg_scoreboard.c
 6=engine\code\q3_ui\ui_rally_credits.c
 7=engine\code\q3_ui\ui_menu.c
+8=engine\code\q3_ui\ui_video.c
 [Selected Project Files]
 Main=
-Selected=engine\code\q3_ui\ui_menu.c
+Selected=engine\code\cgame\cg_draw.c
 [engine\code\qcommon\q_shared.h]
-TopLine=54
-Caret=35,70
+TopLine=419
+Caret=27,437
 [engine\code\cgame\cg_draw.c]
-TopLine=832
-Caret=32,848
+TopLine=828
+Caret=28,848
 [engine\code\cgame\cg_local.h]
 TopLine=57
-Caret=29,73
+Caret=27,76
 [engine\code\cgame\cg_event.c]
 TopLine=275
 Caret=58,297
 [engine\code\ui\ui_local.h]
-TopLine=135
+TopLine=129
 Caret=1,139
 [engine\code\cgame\cg_scoreboard.c]
 TopLine=54
@@ -922,3 +923,6 @@ Caret=45,107
 [engine\code\q3_ui\ui_menu.c]
 TopLine=572
 Caret=66,592
+[engine\code\q3_ui\ui_video.c]
+TopLine=1
+Caret=1,1085
