@@ -430,14 +430,16 @@ static void Main_MenuDraw( void ) {
 // STONELANCE
                 UI_DrawProportionalString( 320, 432, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, text_color_normal );
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+//				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 320, 460, Q3_VERSION " | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
 //              UI_DrawString( 320, 400, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         } else {
 // STONELANCE
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+//				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 365, 460, Q3_VERSION " | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         }
@@ -586,8 +588,8 @@ void UI_MainMenu( void ) {
         s_main.discordlogo.generic.type                     = MTYPE_BITMAP;
         s_main.discordlogo.generic.flags                    = QMF_INACTIVE;
         s_main.discordlogo.generic.name                = ART_DISCORDLOGO;
-        s_main.discordlogo.generic.x                        = - 95;
-        s_main.discordlogo.generic.y                        = 462;
+        s_main.discordlogo.generic.x                        = 0;
+        s_main.discordlogo.generic.y                        = 461;
         s_main.discordlogo.width                            = 442 / 3;
         s_main.discordlogo.height                           = 40 / 3;
 

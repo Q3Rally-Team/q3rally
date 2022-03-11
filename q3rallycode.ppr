@@ -893,9 +893,11 @@ q3rallycode
 3=engine\code\cgame\cg_event.c
 4=engine\code\ui\ui_local.h
 5=engine\code\cgame\cg_scoreboard.c
+6=engine\code\q3_ui\ui_rally_credits.c
+7=engine\code\q3_ui\ui_menu.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_draw.c
+Selected=engine\code\q3_ui\ui_menu.c
 [engine\code\qcommon\q_shared.h]
 TopLine=54
 Caret=35,70
@@ -914,3 +916,9 @@ Caret=1,139
 [engine\code\cgame\cg_scoreboard.c]
 TopLine=54
 Caret=41,78
+[engine\code\q3_ui\ui_rally_credits.c]
+TopLine=84
+Caret=45,107
+[engine\code\q3_ui\ui_menu.c]
+TopLine=572
+Caret=66,592
