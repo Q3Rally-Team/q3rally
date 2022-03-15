@@ -898,10 +898,10 @@ q3rallycode
 8=engine\code\q3_ui\ui_video.c
 [Selected Project Files]
 Main=
-Selected=engine\code\cgame\cg_draw.c
+Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
-TopLine=419
-Caret=27,437
+TopLine=51
+Caret=35,70
 [engine\code\cgame\cg_draw.c]
 TopLine=828
 Caret=28,848
@@ -924,5 +924,5 @@ Caret=45,107
 TopLine=572
 Caret=66,592
 [engine\code\q3_ui\ui_video.c]
-TopLine=1
+TopLine=1042
 Caret=1,1085

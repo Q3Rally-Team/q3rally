@@ -1,4 +1,4 @@
-*** Q3Rally Readme File - 01/06/2021 ***
+*** Q3Rally Readme File - 02/03/2022 ***
 
 
 ** System Requirements **
@@ -28,7 +28,9 @@ This is a beta version of Q3Rally. This represents not the complete release of Q
 
 ** Source **
 
-The Source for content and code is available at https://sourceforge.net/p/q3rallysa/code/HEAD/tree/
+The Source for content and code is available at
+
+https://github.com/Q3Rally-Team/q3rally
 
 ** CREDITS **
 
