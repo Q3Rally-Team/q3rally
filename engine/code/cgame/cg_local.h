@@ -1520,12 +1520,8 @@ screenPlacement_e CG_GetScreenVerticalPlacement(void);
 void CG_AdjustFrom640( float *x, float *y, float *w, float *h );
 void CG_FillRect( float x, float y, float width, float height, const float *color );
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
-void CG_DrawString( float x, float y, const char *string, 
-				   float charWidth, float charHeight, const float *modulate );
-
-
-void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
-		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars );
+void CG_DrawString( float x, float y, const char *string, float charWidth, float charHeight, const float *modulate );
+void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars );
 void CG_DrawBigString( int x, int y, const char *s, float alpha );
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color );
 void CG_DrawSmallString( int x, int y, const char *s, float alpha );
@@ -1555,15 +1551,10 @@ extern  char systemChat[256];
 extern  char teamChat1[256];
 extern  char teamChat2[256];
 
-// Q3Rally Code Start
 float CG_DrawScores( float x, float y );
-// Q3Rally Code END
 void CG_AddLagometerFrameInfo( void );
 void CG_AddLagometerSnapshotInfo( snapshot_t *snap );
 void CG_CenterPrint( const char *str, int y, int charWidth );
-// Q3Rally Code (removed function)
-// void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t headAngles );
-// Q3Rally Code END
 void CG_DrawActive( stereoFrame_t stereoView );
 void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean force2D );
 void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team );
@@ -1876,7 +1867,7 @@ float CG_DrawUpperRightHUD( float y );
 float CG_DrawLowerRightHUD( float y );
 float CG_DrawLowerLeftHUD( float y );
 void CG_DrawMMap( float x, float y, float w, float h );
-// void CG_DrawHUD_DerbyList(float x, float y);
+void CG_DrawHUD_DerbyList(float x, float y);
 
 
 //

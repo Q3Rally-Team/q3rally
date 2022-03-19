@@ -194,7 +194,8 @@ q3rallycode
 				engine\code\client\snd_openal.c
 				engine\code\client\snd_public.h
 				engine\code\client\snd_wavelet.c
-			-game
+				engine\code\client\cl_cin_ogm.c
+			+game
 				engine\code\game\ai_chat.c
 				engine\code\game\ai_chat.h
 				engine\code\game\ai_cmd.c
@@ -456,7 +457,7 @@ q3rallycode
 				engine\code\null\null_main.c
 				engine\code\null\null_net.c
 				engine\code\null\null_snddma.c
-			+q3_ui
+			-q3_ui
 				engine\code\q3_ui\ui.def
 				engine\code\q3_ui\ui_addbots.c
 				engine\code\q3_ui\ui_atoms.c
@@ -745,7 +746,7 @@ q3rallycode
 					engine\code\tools\lcc\LOG
 					engine\code\tools\lcc\README
 					engine\code\tools\lcc\README.id
-			+ui
+			-ui
 				engine\code\ui\ui_atoms.c
 				engine\code\ui\ui_gameinfo.c
 				engine\code\ui\ui_local.h
@@ -888,41 +889,29 @@ q3rallycode
 		engine\cross-make-mingw64.sh
 [Open project files]
 0=engine\code\qcommon\q_shared.h
-1=engine\code\cgame\cg_draw.c
-2=engine\code\cgame\cg_local.h
-3=engine\code\cgame\cg_event.c
-4=engine\code\ui\ui_local.h
-5=engine\code\cgame\cg_scoreboard.c
-6=engine\code\q3_ui\ui_rally_credits.c
-7=engine\code\q3_ui\ui_menu.c
-8=engine\code\q3_ui\ui_video.c
+1=engine\Makefile
+2=engine\code\client\cl_cin.c
+3=engine\code\client\client.h
+4=engine\code\qcommon\files.c
+5=engine\code\game\g_mover.c
 [Selected Project Files]
 Main=
 Selected=engine\code\qcommon\q_shared.h
 [engine\code\qcommon\q_shared.h]
-TopLine=51
+TopLine=56
 Caret=35,70
-[engine\code\cgame\cg_draw.c]
-TopLine=828
-Caret=28,848
-[engine\code\cgame\cg_local.h]
-TopLine=57
-Caret=27,76
-[engine\code\cgame\cg_event.c]
-TopLine=275
-Caret=58,297
-[engine\code\ui\ui_local.h]
-TopLine=129
-Caret=1,139
-[engine\code\cgame\cg_scoreboard.c]
-TopLine=54
-Caret=41,78
-[engine\code\q3_ui\ui_rally_credits.c]
-TopLine=84
-Caret=45,107
-[engine\code\q3_ui\ui_menu.c]
-TopLine=572
-Caret=66,592
-[engine\code\q3_ui\ui_video.c]
-TopLine=1042
-Caret=1,1085
+[engine\Makefile]
+TopLine=342
+Caret=6,347
+[engine\code\client\cl_cin.c]
+TopLine=382
+Caret=5,397
+[engine\code\client\client.h]
+TopLine=584
+Caret=31,615
+[engine\code\qcommon\files.c]
+TopLine=2426
+Caret=6,2445
+[engine\code\game\g_mover.c]
+TopLine=1857
+Caret=3,1864

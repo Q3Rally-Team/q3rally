@@ -2438,6 +2438,12 @@ int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int
 		return FS_GetModList(listbuf, bufsize);
 	}
 
+const char *extensions[] = { "RoQ", "roq"
+#if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
+			, "ogm", "ogv"
+#endif
+			};
+
 	pFiles = FS_ListFiles(path, extension, &nFiles);
 
 	for (i =0; i < nFiles; i++) {

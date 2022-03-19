@@ -190,6 +190,10 @@ ifndef USE_CODEC_OPUS
 USE_CODEC_OPUS=1
 endif
 
+ifndef USE_CODEC_THEORA
+USE_CODEC_THEORA=1
+endif
+
 ifndef USE_MUMBLE
 USE_MUMBLE=1
 endif
@@ -216,6 +220,10 @@ endif
 
 ifndef USE_INTERNAL_OPUS
 USE_INTERNAL_OPUS=$(USE_INTERNAL_LIBS)
+endif
+
+ifndef USE_INTERNAL_THEORA
+USE_INTERNAL_THEORA=$(USE_INTERNAL_LIBS)
 endif
 
 ifndef USE_INTERNAL_ZLIB
@@ -270,6 +278,7 @@ OGGDIR=$(MOUNT_DIR)/libogg-1.3.3
 VORBISDIR=$(MOUNT_DIR)/libvorbis-1.3.6
 OPUSDIR=$(MOUNT_DIR)/opus-1.2.1
 OPUSFILEDIR=$(MOUNT_DIR)/opusfile-0.9
+THEORADIR=$(MOUNT_DIR)/libtheora-1.1.1
 ZDIR=$(MOUNT_DIR)/zlib
 TOOLSDIR=$(MOUNT_DIR)/tools
 Q3ASMDIR=$(MOUNT_DIR)/tools/asm
@@ -326,21 +335,15 @@ ifeq ($(SDL_CFLAGS),)
   endif
 endif
 
-# Add svn version info
-USE_SVN=
-ifeq ($(wildcard ../.svn),../.svn)
-  SVN_REV=$(shell LANG=C svnversion .)
-  ifneq ($(SVN_REV),)
-    VERSION:=$(VERSION)_r$(SVN_REV)
-    USE_SVN=1
+
+# Add git version info
+USE_GIT=
+ifeq ($(wildcard .git),.git)
+  GIT_REV=$(shell git show -s --pretty=format:%ad+%h --date=short | tr -d '-')
+  ifneq ($(GIT_REV),)
+    VERSION:=$(VERSION)+$(GIT_REV)
+    USE_GIT=1
   endif
-else
-ifeq ($(wildcard ../.git/svn/.metadata),../.git/svn/.metadata)
-  SVN_REV=$(shell LANG=C git svn info | awk '$$1 == "Revision:" {print $$2; exit 0}')
-  ifneq ($(SVN_REV),)
-    VERSION:=$(VERSION)_r$(SVN_REV)
-  endif
-endif
 endif
 ifdef IOQ3_REVISION
   VERSION:=$(VERSION)_IOQ3r$(IOQ3_REVISION)
@@ -931,7 +934,7 @@ ifeq ($(PLATFORM),sunos)
   CC=gcc
   INSTALL=ginstall
   MKDIR=gmkdir -p
-  COPYDIR="/usr/local/share/games/quake3"
+  COPYDIR="/usr/local/share/games/q3rally"
 
   ifneq ($(ARCH),x86)
     ifneq ($(ARCH),sparc)
@@ -1099,6 +1102,19 @@ ifeq ($(USE_CURL),1)
   endif
 endif
 
+
+ifeq ($(USE_CODEC_THEORA),1)
+  CLIENT_CFLAGS += -DUSE_CIN_THEORA
+  ifeq ($(USE_INTERNAL_THEORA),1)
+    THEORA_CFLAGS=-I$(THEORADIR)/include
+  else
+    THEORA_CFLAGS ?= $(shell $(PKG_CONFIG) --silence-errors --cflags theoradec || true)
+    THEORA_LIBS ?= $(shell $(PKG_CONFIG) --silence-errors --libs theoradec || echo -ltheoradec)
+  endif
+  CLIENT_CFLAGS += $(THEORA_CFLAGS)
+  CLIENT_LIBS += $(THEORA_LIBS)
+  NEED_OGG=1
+endif
 ifeq ($(USE_VOIP),1)
   CLIENT_CFLAGS += -DUSE_VOIP
   SERVER_CFLAGS += -DUSE_VOIP
@@ -1475,6 +1491,7 @@ endif
 makedirs:
 	@$(MKDIR) $(B)/autoupdater
 	@$(MKDIR) $(B)/client/opus
+	@$(MKDIR) $(B)/client/theora
 	@$(MKDIR) $(B)/client/vorbis
 	@$(MKDIR) $(B)/renderergl1
 	@$(MKDIR) $(B)/renderergl2
@@ -1721,6 +1738,7 @@ $(B)/$(AUTOUPDATER_BIN): $(Q3AUTOUPDATEROBJ)
 Q3OBJ = \
   $(B)/client/cl_cgame.o \
   $(B)/client/cl_cin.o \
+  $(B)/client/cl_cin_ogm.o \
   $(B)/client/cl_console.o \
   $(B)/client/cl_input.o \
   $(B)/client/cl_keys.o \
@@ -2013,6 +2031,38 @@ ifeq ($(ARCH),x86_64)
     $(B)/client/ftola.o
 endif
 
+
+ifeq ($(USE_CODEC_THEORA),1)
+ifeq ($(USE_INTERNAL_THEORA),1)
+Q3OBJ += \
+  $(B)/client/theora/apiwrapper.o \
+  $(B)/client/theora/bitpack.o \
+  $(B)/client/theora/decapiwrapper.o \
+  $(B)/client/theora/decinfo.o \
+  $(B)/client/theora/decode.o \
+  $(B)/client/theora/dequant.o \
+  $(B)/client/theora/fragment.o \
+  $(B)/client/theora/huffdec.o \
+  $(B)/client/theora/idct.o \
+  $(B)/client/theora/info.o \
+  $(B)/client/theora/internal.o \
+  $(B)/client/theora/quant.o \
+  $(B)/client/theora/state.o
+
+THEORA_OBJ_X86 = \
+  $(B)/client/theora/mmxidct.o \
+  $(B)/client/theora/mmxfrag.o \
+  $(B)/client/theora/mmxstate.o \
+  $(B)/client/theora/x86state.o
+
+ifeq ($(ARCH),x86)
+  Q3OBJ += $(THEORA_OBJ_X86)
+endif
+ifeq ($(ARCH),x86_64)
+  Q3OBJ += $(THEORA_OBJ_X86)
+endif
+endif
+endif
 ifeq ($(NEED_OPUS),1)
 ifeq ($(USE_INTERNAL_OPUS),1)
 Q3OBJ += \
@@ -2763,6 +2813,12 @@ $(B)/client/%.o: $(OGGDIR)/src/%.c
 	$(DO_CC)
 
 $(B)/client/vorbis/%.o: $(VORBISDIR)/lib/%.c
+	$(DO_CC)
+
+$(B)/client/theora/%.o: $(THEORADIR)/lib/%.c
+	$(DO_CC)
+
+$(B)/client/theora/%.o: $(THEORADIR)/lib/x86/%.c
 	$(DO_CC)
 
 $(B)/client/opus/%.o: $(OPUSDIR)/src/%.c
