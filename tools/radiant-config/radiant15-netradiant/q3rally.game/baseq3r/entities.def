@@ -313,18 +313,20 @@ Target this entity with a misc_model to have the model attached to the entity (s
 
 //=============================================================================
 
-/*QUAKED func_breakable (0 .5 .8) ? LIGHT_DEBRIS DARK_DEBRIS LIGHT_LARGE_DEBRIS DARK_LARGE_DEBRIS WOOD_DEBRIS FLESH_DEBRIS GLASS_DEBRIS STONE_DEBRIS
+/*QUAKED func_breakable (0 .5 .8) ? LIGHT_DEBRIS DARK_DEBRIS LIGHT_LARGE_DEBRIS DARK_LARGE_DEBRIS WOOD_DEBRIS FLESH_DEBRIS GLASS_DEBRIS STONE_DEBRIS - - NO_PLAYER NO_BOTS NO_SHOOTER EXPLOSION
 A static entity that is removed when it receives a set amount of damage.
 -------- KEYS --------
 health : The entire entity is removed once this amount of damages has been inflicted to it.
 count : The entity will spew out this number of chunks of debris when it's broken (default = 0).
+dmg : Amount of splashdamage the func_breakable will deal when it is removed (default = 0).
+radius : The radius in which the splashdamage is dealt (default = 120).
+breaksound : Sound to play when it's broken (by default, no sound will be played)
 target : Targetted entity will be triggered once the func_breakable is destroyed.
 target2 : Targetted entity will be triggered once the func_breakable is destroyed.
+targetname : activating entity points to this.
+targetname2 : activating entity points to this.
 light : constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).
 color : constantLight color of .md3 model included with entity. Has no effect on the entity's brushes (default 1 1 1).
-notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
-notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-notsingle : when set to 1, entity will not spawn in Single Player mode.
 -------- Q3MAP2 KEYS --------
 _targetname : Used to attach a misc_model entity to this entity.
 _lightmapscale : Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).
@@ -344,6 +346,10 @@ WOOD_DEBRIS : Emit pieces of wooden debris.
 FLESH_DEBRIS : Emit gibs.
 GLASS_DEBRIS : Emit shards of glass.
 STONE_DEBRIS : Emit chunks of stone.
+NO_PLAYER : The player cannot damage the func_breakable.
+NO_BOTS : Bots cannot damage the func_breakable.
+NO_SHOOTER : Shooter entities cannot damage the func_breakable.
+EXPLOSION : When the func_breakable is destroyed, an explosion effect is shown.
 -------- NOTES --------
 Target this entity with a misc_model to have the model attached to the entity (set the model's "target" key to the same value as this entity's "targetname").
 

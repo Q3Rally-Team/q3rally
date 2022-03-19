@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.4_r518"
+#define PRODUCT_VERSION "v0.4_r519"
 #endif
 
 
@@ -1609,7 +1609,7 @@ signed signed_10bit4:10; //-511 to 511
 unsigned :24; //Do not use
 unsigned c7:8; //Unsigned char 0 to 255
 
-//powerups
+ÿ po??  ps
 unsigned :16; //Do not use
 signed s2:16; //Signed -32767 to 32767
 

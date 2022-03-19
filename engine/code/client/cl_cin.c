@@ -1434,7 +1434,7 @@ if (cinTable[currentHandle].fileType == FT_OGM)
 			cinTable[currentHandle].buf = Cin_OGM_GetOutput(&newW, &newH);
 
 			if (newW != cinTable[currentHandle].CIN_WIDTH)
-			{
+        	{
 				cinTable[currentHandle].CIN_WIDTH = newW;
 				resolutionChange = qtrue;
 			}
@@ -1693,7 +1693,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 */
 
 		if (cinTable[currentHandle].alterGameState) {
-			CL_ShowMainMenu();
+			VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 		} else {
 			cinTable[currentHandle].playonwalls = cl_inGameVideo->integer;
 		}

@@ -1869,57 +1869,110 @@ BREAKABLE
 ===============================================================================
 */
 
+void Think_Breakable( gentity_t *ent ) {
+	Break_Breakable( ent, ent->activator );
+}
+
 //other is the player that broke the func_breakable
 void Break_Breakable(gentity_t *ent, gentity_t *other) {
-        vec3_t size;
-        vec3_t center;
-        int count = 0;
-        int spawnflags = 0;
-        gentity_t *tmp;
-        //int type = EV_EMIT_DEBRIS_LIGHT;
+	vec3_t size;
+	vec3_t center;
+	int count = 0;
+	int sound = 0;
+	int spawnflags = 0;
+	gentity_t *tmp, *tmp2;
+	int type = EV_EMIT_DEBRIS_LIGHT;
 
-        // Get the center of the glass (code donated by Perle)
-        VectorSubtract(ent->r.maxs, ent->r.mins, size);
+	if ( other != ent->activator && !strcmp( other->classname, "func_breakable" ) ) {
+		//if the splash damage from another func_breakable is causing this func_breakable to break
+		//then delay the break to get a nice chain explosion effect
+		ent->activator = other;
+		ent->think = Think_Breakable;
+		ent->nextthink = level.time + 400;
+		return;
+	}
+	
+	// Get the center of the func_breakable (code donated by Perle)
+	VectorSubtract(ent->r.maxs, ent->r.mins, size);
 	VectorScale(size, 0.5, size);
 	VectorAdd(ent->r.mins, size, center);
 
+	ent->takedamage = qfalse;
+	ent->s.eType = ET_INVISIBLE;
+	G_UseTargets( ent, other );
 
-        ent->takedamage = qfalse;
-        ent->s.eType = ET_INVISIBLE;
-        G_UseTargets( ent, other );
 
-        //need to store properties of the entity in seperate variables because we're going to free the entity
-        if ( ent->count > 0) {
-                count = ent->count;
-                spawnflags = ent->spawnflags;
-        }
 
-        G_FreeEntity( ent );
+	//need to store properties of the entity in separate variables because we're going to free the entity
+	if ( ent->count > 0) {
+		count = ent->count;
+		spawnflags = ent->spawnflags;
+	}
 
-        //spray out debris
-        if ( count > 0 ) {
-                tmp = G_TempEntity( center, PickDebrisType ( spawnflags ) );
-                tmp->s.eventParm = count;
-        }
+
+
+
+	if ( ent->soundPos2 )
+		sound = ent->soundPos2;
+
+	//apply radius damage
+	if ( ent->damage )
+		G_RadiusDamage( center, ent, ent->damage, ent->splashRadius, ent, MOD_BREAKABLE_SPLASH );
+
+
+	//free the entity so it disappears
+	G_FreeEntity( ent );
+
+
+	//spray out debris
+	if ( count > 0 ) {
+		tmp = G_TempEntity( center, PickDebrisType( spawnflags ) );
+		tmp->s.eventParm = count;
+	}
+
+	//play sound
+	if ( sound )
+	{
+		tmp2 = G_TempEntity( center, EV_GENERAL_SOUND );
+		tmp2->s.eventParm = sound;
+	}
+
+	//show explosion effect
+	if (spawnflags & 8192) {
+		G_TempEntity(center, EV_EXPLOSION);
+	}
 }
 
+void Use_Breakable (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+	Break_Breakable( ent, activator );
+}
 
 /*QUAKED func_breakable (0 .5 .8) ? see PickDebrisType in g_util.c for spawnflags
 A bmodel that just sits there, doing nothing. It is removed when it received a set amount of damage.
-"model2"        .md3 model to also draw
-"color"         constantLight color
-"light"         constantLight radius
-"health"        the amount of damage required before this entity is removed
+"model2"	.md3 model to also draw
+"color"		constantLight color
+"light"		constantLight radius
+"health"	the amount of damage required before this entity is removed
 */
 void SP_func_breakable( gentity_t *ent ) {
-        trap_SetBrushModel( ent, ent->model );
-        InitMover( ent );
-        VectorCopy( ent->s.origin, ent->s.pos.trBase );
-        VectorCopy( ent->s.origin, ent->r.currentOrigin );
-        ent->takedamage = qtrue;
-        ent->use = 0;
-        ent->r.contents = CONTENTS_SOLID; 
-        ent->clipmask = MASK_SOLID;
+	char  *noise;
+
+	trap_SetBrushModel( ent, ent->model );
+	InitMover( ent );
+	VectorCopy( ent->s.origin, ent->s.pos.trBase );
+	VectorCopy( ent->s.origin, ent->r.currentOrigin );
+	ent->takedamage = qtrue;
+	ent->use = Use_Breakable;
+	ent->r.contents = CONTENTS_SOLID; 
+	ent->clipmask = MASK_SOLID;
+
+	G_SpawnInt( "dmg", "0", &ent->damage );
+	G_SpawnInt( "radius", "120", &ent->splashRadius );	//120 is default splash radius of a rocket
+	
+	G_SpawnString("breaksound", "", &noise);
+	if (strlen(noise) > 0) {
+		ent->soundPos2 = G_SoundIndex(noise);
+	}
 }
 
 /*

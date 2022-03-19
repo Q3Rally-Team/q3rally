@@ -764,9 +764,7 @@ typedef enum {
         MOD_ROCKET_SPLASH,
         MOD_PLASMA,
         MOD_PLASMA_SPLASH,
-// Q3Rally Code Start
         MOD_FLAME_THROWER,
-// Q3Rally Code End
         MOD_RAILGUN,
         MOD_LIGHTNING,
         MOD_BFG,
@@ -787,7 +785,6 @@ typedef enum {
         MOD_KAMIKAZE,
         MOD_JUICED,
 #endif
-// STONELANCE
         MOD_UPSIDEDOWN,
         MOD_BO_SHOCKS,
         MOD_CAR_COLLISION,
@@ -799,8 +796,8 @@ typedef enum {
         MOD_MINE,
         MOD_POISON,
         MOD_FIRE,
-// END
-        MOD_GRAPPLE
+        MOD_GRAPPLE,
+        MOD_BREAKABLE_SPLASH
 } meansOfDeath_t;
 
 

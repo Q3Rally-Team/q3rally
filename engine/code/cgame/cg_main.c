@@ -1334,16 +1334,17 @@ static void CG_RegisterGraphics( void ) {
 // wall marks
 	cgs.media.bulletMarkShader = trap_R_RegisterShader( "gfx/damage/bullet_mrk" );
 	cgs.media.burnMarkShader = trap_R_RegisterShader( "gfx/damage/burn_med_mrk" );
-// Q3Rally Code Start
 	cgs.media.bioMarkShader = trap_R_RegisterShader( "gfx/damage/bio_mark" );
 	cgs.media.oilMarkShader = trap_R_RegisterShader( "gfx/damage/oil_mark" );
 	cgs.media.sparkShader = trap_R_RegisterShader( "gfx/damage/spark" );
-// Q3Rally Code END
 	cgs.media.holeMarkShader = trap_R_RegisterShader( "gfx/damage/hole_lg_mrk" );
 	cgs.media.energyMarkShader = trap_R_RegisterShader( "gfx/damage/plasma_mrk" );
 	cgs.media.shadowMarkShader = trap_R_RegisterShader( "markShadow" );
 	cgs.media.wakeMarkShader = trap_R_RegisterShader( "wake" );
 	cgs.media.bloodMarkShader = trap_R_RegisterShader( "bloodMark" );
+    
+//explosion effect
+	cgs.media.rocketExplosionShader = trap_R_RegisterShader("rocketExplosion");
 
 	// register the inline models
 	cgs.numInlineModels = trap_CM_NumInlineModels();
