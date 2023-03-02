@@ -1,4 +1,4 @@
-New features planned for 0.4
+New features planned for 0.5
 
 - switch between analog and digital gauge
 - optical effects for sand and snow (and others?)
@@ -18,5 +18,3 @@ Finished features
 - Make unique logos for 4 teams (Like UT99)
 - finishing the flag status hud for domination
 - finished 4 Teams Domination
-- 
-- 

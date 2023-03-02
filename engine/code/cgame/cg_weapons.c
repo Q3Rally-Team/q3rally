@@ -676,6 +676,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 	}
 
 	switch ( weaponNum ) {
+
 	case WP_GAUNTLET:
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun.wav", qfalse );
@@ -696,20 +697,6 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 		break;
 
-// Q3Rally Code Start - removed and added flamethrower
-/*
-	case WP_GRAPPLING_HOOK:
-		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
-		weaponInfo->missileModel = trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
-		weaponInfo->missileTrailFunc = CG_GrappleTrail;
-		weaponInfo->missileDlight = 200;
-		MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
-		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
-		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun.wav", qfalse );
-		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
-		break;
-*/
-
 	case WP_FLAME_THROWER:
         weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/flamer/fl_hum.wav", qfalse );
 		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/flamer/fl_fly.wav", qfalse );
@@ -718,8 +705,6 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/flamer/fl_fire.wav", qfalse );
 		cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
 	break;
-    
-// Q3Rally Code END
 
 #ifdef MISSIONPACK
 	case WP_CHAINGUN:
@@ -829,7 +814,6 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
 		break;
 
-// Q3Rally Code Start
 	case RWP_MINE:
 		weaponInfo->missileModel = trap_R_RegisterModel( "models/rearfire/mine.md3" );
 		//weaponInfo->missileTrailFunc = CG_GrenadeTrail;
@@ -847,7 +831,6 @@ void CG_RegisterWeapon( int weaponNum ) {
 		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 1 );
 		weaponInfo->flashSound[0] = 0;
 		break;
-// END
 
 	 default:
 		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 1 );
@@ -1369,10 +1352,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	}
 
 	// add the flash
-// Q3Rally Code Start
-//	if ( ( weaponNum == WP_LIGHTNING || weaponNum == WP_GAUNTLET || weaponNum == WP_GRAPPLING_HOOK )
 	if ( ( weaponNum == WP_LIGHTNING || weaponNum == WP_GAUNTLET )
-// END
+    
 		&& ( nonPredictedCent->currentState.eFlags & EF_FIRING ) ) 
 	{
 		// continuous flash
@@ -1682,9 +1663,9 @@ void CG_NextWeapon_f( void ) {
 		if ( cg.weaponSelect == MAX_WEAPONS ) {
 			cg.weaponSelect = 0;
 		}
-		if ( cg.weaponSelect == WP_GAUNTLET ) {
-			continue;		// never cycle to gauntlet
-		}
+//		if ( cg.weaponSelect == WP_GAUNTLET ) {
+//			continue;		// never cycle to gauntlet
+//		}
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}
@@ -1718,9 +1699,9 @@ void CG_PrevWeapon_f( void ) {
 		if ( cg.weaponSelect == -1 ) {
 			cg.weaponSelect = MAX_WEAPONS - 1;
 		}
-		if ( cg.weaponSelect == WP_GAUNTLET ) {
-			continue;		// never cycle to gauntlet
-		}
+//		if ( cg.weaponSelect == WP_GAUNTLET ) {
+//			continue;		// never cycle to gauntlet
+//		}
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}

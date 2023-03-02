@@ -453,23 +453,19 @@ typedef enum {
         WP_RAILGUN,
         WP_PLASMAGUN,
         WP_BFG,
-// Q3Rally Code End
         WP_FLAME_THROWER,
-//      WP_GRAPPLING_HOOK,
-// Q3Rally Code End
+
 #ifdef MISSIONPACK
         WP_NAILGUN,
         WP_PROX_LAUNCHER,
         WP_CHAINGUN,
 #endif
 
-// STONELANCE
         RWP_SMOKE,
         RWP_OIL,
         RWP_MINE,
         RWP_FLAME,
         RWP_BIO,
-// END
 
         WP_NUM_WEAPONS
 } weapon_t;

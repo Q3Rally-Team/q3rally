@@ -879,8 +879,12 @@ void ClientUserinfoChanged( int clientNum ) {
 	gclient_t	*client;
 	char	c1[MAX_INFO_STRING];
 	char	c2[MAX_INFO_STRING];
+    char    c3[MAX_INFO_STRING];
+    char    c4[MAX_INFO_STRING];
 	char	redTeam[MAX_INFO_STRING];
 	char	blueTeam[MAX_INFO_STRING];
+    char    greenTeam[MAX_INFO_STRING];
+    char    yellowTeam[MAX_INFO_STRING];
 	char	userinfo[MAX_INFO_STRING];
 
 	ent = g_entities + clientNum;
@@ -1027,17 +1031,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( *s ) {
 		client->pers.manualShift = atoi( s );
 	}
-// END
-
-	/*
-	s = Info_ValueForKey( userinfo, "cg_pmove_fixed" );
-	if ( !*s || atoi( s ) == 0 ) {
-		client->pers.pmoveFixed = qfalse;
-	}
-	else {
-		client->pers.pmoveFixed = qtrue;
-	}
-	*/
 
 	// team task (0 = none, 1 = offence, 2 = defence)
 	teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
@@ -1047,9 +1040,13 @@ void ClientUserinfoChanged( int clientNum ) {
 	// colors
 	Q_strncpyz(c1, Info_ValueForKey( userinfo, "color1" ), sizeof( c1 ));
 	Q_strncpyz(c2, Info_ValueForKey( userinfo, "color2" ), sizeof( c2 ));
+    Q_strncpyz(c3, Info_ValueForKey( userinfo, "color3" ), sizeof( c3 ));
+    Q_strncpyz(c4, Info_ValueForKey( userinfo, "color4" ), sizeof( c4 ));
 
 	Q_strncpyz(redTeam, Info_ValueForKey( userinfo, "g_redteam" ), sizeof( redTeam ));
 	Q_strncpyz(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ), sizeof( blueTeam ));
+    Q_strncpyz(greenTeam, Info_ValueForKey( userinfo, "g_greenteam" ), sizeof( greenTeam ));
+    Q_strncpyz(yellowTeam, Info_ValueForKey( userinfo, "g_yellowteam" ), sizeof( yellowTeam ));
 // STONELANCE - UPDATE: need to add names for green and yellow teams?
 	
 	// send over a subset of the userinfo keys so other clients can
@@ -1508,15 +1505,16 @@ void ClientSpawn(gentity_t *ent) {
 	VectorCopy (playerMins, ent->r.mins);
 	VectorCopy (playerMaxs, ent->r.maxs);
 
-// STONELANCE
 	client->ps.pm_flags |= SVF_CAPSULE;
-// END
+
 
 	client->ps.clientNum = index;
 
-// STONELANCE (dont give machinegun on spawn in races)
-	if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY */){
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
+// dont give machinegun on spawn in races
+//      if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY */){
+        if ( g_gametype.integer == GT_RACING || g_gametype.integer == GT_TEAM_RACING ) {
+            client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GAUNTLET );
+
 		if ( g_gametype.integer == GT_TEAM ) {
 			client->ps.ammo[WP_MACHINEGUN] = 50;
 		} else {
@@ -1531,22 +1529,7 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.stats[STAT_WEAPONS] &= ~( 1 << WP_GAUNTLET );
 	}
 
-/*
-	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-	if ( g_gametype.integer == GT_TEAM ) {
-		client->ps.ammo[WP_MACHINEGUN] = 50;
-	} else {
-		client->ps.ammo[WP_MACHINEGUN] = 100;
-	}
-
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
-*/
-// END
-
 	client->ps.ammo[WP_GAUNTLET] = -1;
-// STONELANCE
-//	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
-// END
 
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
