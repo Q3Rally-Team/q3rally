@@ -18,7 +18,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Linux
-        path: build/*.zip
+        path: engine/build/*.zip
   windows:
     name: Windows
     runs-on: windows-2019
@@ -33,7 +33,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Windows
-        path: build/*.zip
+        path: engine/build/*.zip
   macos:
     name: macOS
     runs-on: macos-10.15
@@ -46,5 +46,4 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: macOS
-        path: build/*.zip
-
+        path: engine/build/*.zip
