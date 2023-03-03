@@ -43,8 +43,8 @@ ifndef BUILD_DEFINES
   BUILD_DEFINES    =
 endif
 
-# ioquake3 svn version that this is based on
-IOQ3_REVISION = 6925
+# ioquake3 git commit that this is based on
+IOQ3_REVISION = bc8737d7
 
 #############################################################################
 #
@@ -346,7 +346,7 @@ ifeq ($(wildcard .git),.git)
   endif
 endif
 ifdef IOQ3_REVISION
-  VERSION:=$(VERSION)_IOQ3r$(IOQ3_REVISION)
+  VERSION:=$(VERSION)_IOQ3+$(IOQ3_REVISION)
 endif
 
 #############################################################################
