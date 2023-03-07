@@ -8,13 +8,15 @@ Q3Rally is compiled using GNU Make (`make`) from a terminal while in the engine 
 
 `make ARCH=x86`, `make ARCH=x86_64`, `make ARCH=aarch64` (ARM64/Apple Silicon) specify compiling for a specific architecture instead of the host architecture.
 
+If you have commit access and use an SSH key use `git clone git@github.com:Q3Rally-Team/q3rally.git` instead.
+
 ### Windows
 There is several ways to get an MinGW-w64 build environment.
 
 #### MSYS2
 1. Install MSYS2 with packages: git, make, mingw-w64-i686-gcc mingw-w64-x86_64-gcc
 2. Open "MSYS2 MinGW 64-bit"
-3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`. (If you have commit access use `git://` instead.)
+3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 4. Change to the engine directory using "cd q3rally/engine"
 5. Run `make`
 
@@ -22,7 +24,7 @@ There is several ways to get an MinGW-w64 build environment.
 :_This was more relevant before MSYS2 was made._
 1. Install Cygwin with packages: git, make, mingw64-i686-gcc-core, mingw64-x86_64-gcc-core
 2. Open "Cygwin"
-3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git` (If you have commit access use `git://` instead.)
+3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 4. Change to the engine directory using `cd q3rally/engine`
 5. Run `make`
 
@@ -31,15 +33,15 @@ There is several ways to get an MinGW-w64 build environment.
 2. Install a Linux distribution from the Windows store (e.g., Ubuntu).
 3. Open the start menu entry for the distribution (e.g., Ubuntu).
 4. Install Git, Make, and MinGW-w64 packages, for Ubuntu run: `sudo apt install git make mingw-w64`
-5. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`. (If you have commit access use `git://` instead.)
+5. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 6. Change to the engine directory using "cd q3rally/engine"
 7. Run `make PLATFORM=mingw32`
 
-It possible to compile for Linux under WSL using `make` or `./make-linux-portable.sh`. Compiling for macOS using osxcross is not supported under WSL as of writting.
+It's possible to compile for Linux under WSL using `make` or `./make-linux-portable.sh`. Compiling for macOS using osxcross is not supported under WSL as of writting.
 
 ### Linux
 1. Install `git make gcc libsdl2-dev` packages for your Linux distribution.
-2. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`. (If you have commit access use `git://` instead.)
+2. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 3. Change to the engine directory using "cd q3rally/engine"
 4. Run `make`
 
@@ -50,7 +52,7 @@ To make a release which includes SDL2 run: `./make-linux-portable.sh x86_64` (al
 ### macOS
 1. Install Xcode from the AppStore (the GUI is optional, only the command-line tools are required).
 2. Open Terminal app.
-3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`. (If you have commit access use `git://` instead.)
+3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 4. Change to the engine directory using "cd q3rally/engine"
 5. Run `make`
 
