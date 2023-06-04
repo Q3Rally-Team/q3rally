@@ -718,6 +718,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			break;
 		}
 */
+		int i = 0;
 // END
 
 		// for the no-blood option, we need to prevent the health
