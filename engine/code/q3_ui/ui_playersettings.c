@@ -549,7 +549,7 @@ static void PlayerSettings_SaveChanges( void ) {
 	trap_Cvar_SetValue( "handicap", 100 - s_playersettings.handicap.curvalue * 5 );
 
 	// effects color
-	trap_Cvar_SetValue( "color", uitogamecode[s_playersettings.effects.curvalue] );
+	trap_Cvar_SetValue( "color1", uitogamecode[s_playersettings.effects.curvalue] );
 }
 
 
@@ -596,7 +596,7 @@ static void PlayerSettings_SetMenuItems( void ) {
 	Q_strncpyz( s_playersettings.name.field.buffer, UI_Cvar_VariableString("name"), sizeof(s_playersettings.name.field.buffer) );
 
 	// effects color
-	c = trap_Cvar_VariableValue( "color" ) - 1;
+	c = trap_Cvar_VariableValue( "color1" ) - 1;
 	if( c < 0 || c > 6 ) {
 		c = 6;
 	}
