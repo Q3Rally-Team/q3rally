@@ -352,8 +352,9 @@ static float CG_DrawArrowToCheckpoint( float y ) {
 		CG_Draw3DLine( cent->currentState.origin, cg.snap->ps.origin );
         
 */
-//    CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
+	CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
 	CG_DrawStringExt( x, SCREEN_HEIGHT * .30, "WRONG WAY!", color, qfalse, qtrue, BIGCHAR_WIDTH, (int)(BIGCHAR_WIDTH * 1.5), 0 );
+	CG_PopScreenPlacement();
 
 	return y;
 }
