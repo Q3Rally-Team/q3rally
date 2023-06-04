@@ -3070,6 +3070,15 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 //	Com_Printf( "f %f\n", f );
 
+	// Bot goes backward if f is 0 or 1 so limit range.
+	// origin is fine but derivitives seem to be invalid.
+	// --zturtleman
+	if ( f > 0.95f ) {
+		f = 0.95f;
+	} else 	if ( f < 0.05f ) {
+		f = 0.05f;
+	}
+
 	G_GetPointOnCurveBetweenCheckpoints( prev, next, f, origin );
 	G_Get2ndDervOnCurveBetweenCheckpoints( prev, next, f, alpha );
 	G_GetDervOnCurveBetweenCheckpoints( prev, next, f, delta );
