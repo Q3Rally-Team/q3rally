@@ -1111,6 +1111,10 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		if( pi->currentWeapon != pi->weapon ) {
 			trap_S_StartLocalSound( weaponChangeSound, CHAN_LOCAL );
 		}
+
+		// Q3 changes weapon model at end of TORSO_DROP animation
+		// but Q3Rally doesn't use it so just change weapon now.
+		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 	}
 
 	UI_AdjustFrom640( &x, &y, &w, &h );
