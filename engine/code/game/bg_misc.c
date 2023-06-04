@@ -1691,9 +1691,9 @@ char *eventnames[] = {
 	"EV_NOAMMO",
 	"EV_CHANGE_WEAPON",
 	"EV_FIRE_WEAPON",
-    "EV_ALTFIRE_WEAPON",
 // STONELANCE
 	"EV_HAZARD",
+	"EV_ALTFIRE_WEAPON",
 	"EV_FIRE_REARWEAPON",
 // END
 
@@ -1757,7 +1757,7 @@ char *eventnames[] = {
 //Q3Rally Code End
 	"EV_SCOREPLUM",			// score plum
 
-//#ifdef MISSIONPACK
+#ifdef MISSIONPACK
 	"EV_PROXIMITY_MINE_STICK",
 	"EV_PROXIMITY_MINE_TRIGGER",
 	"EV_KAMIKAZE",			// kamikaze explodes
@@ -1766,7 +1766,7 @@ char *eventnames[] = {
 	"EV_INVUL_IMPACT",		// invulnerability sphere impact
 	"EV_JUICED",				// invulnerability juiced effect
 	"EV_LIGHTNINGBOLT",		// lightning bolt bounced of invulnerability sphere
-//#endif
+#endif
 
 	"EV_DEBUG_LINE",
 	"EV_STOPLOOPINGSOUND",
