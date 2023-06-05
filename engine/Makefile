@@ -52,7 +52,7 @@ ifndef BUILD_DEFINES
 endif
 
 # ioquake3 git commit that this is based on
-IOQ3_REVISION = 4610a240
+IOQ3_REVISION = 47c96419
 
 #############################################################################
 #
