@@ -1200,7 +1200,10 @@ static void IN_ProcessEvents( void )
 
 					if( !xrel && !yrel )
 						break;
-					Com_QueueEvent( in_eventTime, SE_MOUSE, xrel, yrel, 0, NULL );
+
+					if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
+						Com_QueueEvent( in_eventTime, SE_MOUSE, xrel, yrel, 0, NULL );
+					}
 					break;
 				}
 				break;
