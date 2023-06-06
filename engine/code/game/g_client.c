@@ -1511,9 +1511,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 // dont give machinegun on spawn in races
-//      if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY */){
-        if ( g_gametype.integer == GT_RACING || g_gametype.integer == GT_TEAM_RACING ) {
-            client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GAUNTLET );
+	if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY */){
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 
 		if ( g_gametype.integer == GT_TEAM ) {
 			client->ps.ammo[WP_MACHINEGUN] = 50;
