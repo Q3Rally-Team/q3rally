@@ -1300,6 +1300,8 @@ void CL_KeyDownEvent( int key, unsigned time )
 				S_StopAllSounds();
 				VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 			}
+
+			IN_SyncMousePosition();
 			return;
 		}
 

@@ -44,6 +44,10 @@ static SDL_Joystick *stick = NULL;
 
 static qboolean mouseAvailable = qfalse;
 static qboolean mouseActive = qfalse;
+static int mouseLastX = 0;
+static int mouseLastY = 0;
+static float mouse640X = 0.0f;
+static float mouse640Y = 0.0f;
 
 static cvar_t *in_mouse             = NULL;
 static cvar_t *in_nograb;
@@ -383,7 +387,7 @@ static void IN_ActivateMouse( qboolean isFullscreen )
 IN_DeactivateMouse
 ===============
 */
-static void IN_DeactivateMouse( qboolean isFullscreen )
+static void IN_DeactivateMouse( qboolean isFullscreen, qboolean showSystemCursor )
 {
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
@@ -391,7 +395,7 @@ static void IN_DeactivateMouse( qboolean isFullscreen )
 	// Always show the cursor when the mouse is disabled,
 	// but not when fullscreen
 	if( !isFullscreen )
-		SDL_ShowCursor( SDL_TRUE );
+		SDL_ShowCursor( showSystemCursor );
 
 	if( !mouseAvailable )
 		return;
@@ -405,9 +409,112 @@ static void IN_DeactivateMouse( qboolean isFullscreen )
 
 		// Don't warp the mouse unless the cursor is within the window
 		if( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_MOUSE_FOCUS )
-			SDL_WarpMouseInWindow( SDL_window, cls.glconfig.vidWidth / 2, cls.glconfig.vidHeight / 2 );
+			SDL_WarpMouseInWindow( SDL_window, mouseLastX, mouseLastY );
 
 		mouseActive = qfalse;
+	}
+}
+
+/*
+================
+SCR_AdjustTo640
+
+Adjusted for resolution and screen aspect ratio
+================
+*/
+void SCR_AdjustTo640( float *x, float *y, float *w, float *h ) {
+	float	xscale;
+	float	yscale;
+	float	bias;
+
+	xscale = cls.glconfig.vidWidth * (1.0/640.0);
+	yscale = cls.glconfig.vidHeight * (1.0/480.0);
+	if ( cls.glconfig.vidWidth * 480 > cls.glconfig.vidHeight * 640 ) {
+		bias = 0.5 * ( cls.glconfig.vidWidth - ( cls.glconfig.vidHeight * (640.0/480.0) ) );
+		xscale = yscale;
+	} else {
+		bias = 0;
+	}
+
+	// convert X bias to 640 coords
+	bias = bias / xscale;
+
+	// scale for screen sizes
+	xscale = ( 640.0 + bias * 2 ) / cls.glconfig.vidWidth;
+	yscale = 480.0 / cls.glconfig.vidHeight;
+	if ( x ) {
+		*x *= xscale;
+	}
+	if ( y ) {
+		*y *= yscale;
+	}
+	if ( w ) {
+		*w *= xscale;
+	}
+	if ( h ) {
+		*h *= yscale;
+	}
+}
+
+/*
+===============
+IN_UpdateMouseMenuPosition
+===============
+*/
+void IN_UpdateMouseMenuPosition( int xabs, int yabs, int *xrelp, int *yrelp ) {
+	float x = xabs;
+	float y = yabs;
+	float fx, fy;
+	int xrel, yrel;
+
+	mouseLastX = xabs;
+	mouseLastY = yabs;
+
+	SCR_AdjustTo640( &x, &y, NULL, NULL );
+
+	xrel = floorf( x - mouse640X );
+	yrel = floorf( y - mouse640Y );
+
+	// lost fraction
+	fx = ( x - mouse640X ) - xrel;
+	fy = ( y - mouse640Y ) - yrel;
+
+	mouse640X = x - fx;
+	mouse640Y = y - fy;
+
+	*xrelp = xrel;
+	*yrelp = yrel;
+}
+
+/*
+===============
+IN_SyncMousePosition
+===============
+*/
+void IN_SyncMousePosition( void ) {
+	// set UI's menu cursor position to 0,0
+	Com_QueueEvent( 0, SE_MOUSE, -10000, -10000, 0, NULL );
+
+	mouse640X = 0;
+	mouse640Y = 0;
+
+	{
+		int x, y, xrel, yrel;
+
+		if ( mouseActive ) {
+			// ignore the real mouse position if in relative mode
+			x = mouseLastX;
+			y = mouseLastY;
+		} else {
+			SDL_GetMouseState( &x, &y );
+			mouseLastX = x;
+			mouseLastY = y;
+		}
+
+		IN_UpdateMouseMenuPosition( x, y, &xrel, &yrel );
+		if ( xrel != 0 || yrel != 0 ) {
+			Com_QueueEvent( 0, SE_MOUSE, xrel, yrel, 0, NULL );
+		}
 	}
 }
 
@@ -1084,6 +1191,18 @@ static void IN_ProcessEvents( void )
 						break;
 					Com_QueueEvent( in_eventTime, SE_MOUSE, e.motion.xrel, e.motion.yrel, 0, NULL );
 				}
+				else
+				{
+					int xrel;
+					int yrel;
+
+					IN_UpdateMouseMenuPosition( e.motion.x, e.motion.y, &xrel, &yrel );
+
+					if( !xrel && !yrel )
+						break;
+					Com_QueueEvent( in_eventTime, SE_MOUSE, xrel, yrel, 0, NULL );
+					break;
+				}
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
@@ -1194,17 +1313,20 @@ void IN_Frame( void )
 	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{
 		// Console is down in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen );
+		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
 	}
 	else if( !cls.glconfig.isFullscreen && loading )
 	{
 		// Loading in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen );
+		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
 	}
 	else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
 	{
 		// Window not got focus
-		IN_DeactivateMouse( cls.glconfig.isFullscreen );
+		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
+	}
+	else if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
+		IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
 	}
 	else
 		IN_ActivateMouse( cls.glconfig.isFullscreen );
@@ -1253,7 +1375,9 @@ void IN_Init( void *windowData )
 	SDL_StartTextInput( );
 
 	mouseAvailable = ( in_mouse->value != 0 );
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0 );
+	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
+
+	SDL_GetMouseState( &mouseLastX, &mouseLastY );
 
 	appState = SDL_GetWindowFlags( SDL_window );
 	Cvar_SetValue( "com_unfocused",	!( appState & SDL_WINDOW_INPUT_FOCUS ) );
@@ -1272,7 +1396,7 @@ void IN_Shutdown( void )
 {
 	SDL_StopTextInput( );
 
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0 );
+	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
 	mouseAvailable = qfalse;
 
 	IN_ShutdownJoystick( );

@@ -1966,11 +1966,14 @@ void Com_QueueEvent( int time, sysEventType_t type, int value, int value2, int p
 	sysEvent_t  *ev;
 
 	// combine mouse movement with previous mouse event
-	if ( type == SE_MOUSE && eventHead != eventTail )
+	// but only if it's not resetting UI position to 0,0
+	if ( type == SE_MOUSE && eventHead != eventTail
+		&& !( value == -10000 && value2 == -10000 ) )
 	{
 		ev = &eventQueue[ ( eventHead + MAX_QUEUED_EVENTS - 1 ) & MASK_QUEUED_EVENTS ];
 
-		if ( ev->evType == SE_MOUSE )
+		if ( ev->evType == SE_MOUSE
+			&& !( ev->evValue == -10000 && ev->evValue2 == -10000 ) )
 		{
 			ev->evValue += value;
 			ev->evValue2 += value2;

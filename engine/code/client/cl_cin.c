@@ -1693,7 +1693,10 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 */
 
 		if (cinTable[currentHandle].alterGameState) {
-			VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+			if ( uivm ) {
+				VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+				IN_SyncMousePosition();
+			}
 		} else {
 			cinTable[currentHandle].playonwalls = cl_inGameVideo->integer;
 		}
@@ -1732,6 +1735,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 		// close the menu
 		if ( uivm ) {
 			VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+			IN_SyncMousePosition();
 		}
 	} else {
 		cinTable[currentHandle].playonwalls = cl_inGameVideo->integer;

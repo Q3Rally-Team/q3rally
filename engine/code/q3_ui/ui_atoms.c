@@ -1073,6 +1073,7 @@ UI_MouseEvent
 void UI_MouseEvent( int dx, int dy )
 {
 	int				i;
+	int				bias;
 	menucommon_s*	m;
 
 	if (!uis.activemenu)
@@ -1084,11 +1085,14 @@ void UI_MouseEvent( int dx, int dy )
 	uis.cursorpy = uis.cursory;
 // END
 
+	// convert X bias to 640 coords
+	bias = uis.bias / uis.xscale;
+
 	uis.cursorx += dx;
-	if (uis.cursorx < -uis.bias)
-		uis.cursorx = -uis.bias;
-	else if (uis.cursorx > SCREEN_WIDTH+uis.bias)
-		uis.cursorx = SCREEN_WIDTH+uis.bias;
+	if (uis.cursorx < -bias)
+		uis.cursorx = -bias;
+	else if (uis.cursorx > SCREEN_WIDTH+bias)
+		uis.cursorx = SCREEN_WIDTH+bias;
 
 	uis.cursory += dy;
 	if (uis.cursory < 0)

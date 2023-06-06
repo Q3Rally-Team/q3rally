@@ -503,6 +503,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 			// force menu up
 			S_StopAllSounds();
 			VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+			IN_SyncMousePosition();
 			break;
 		case CA_CONNECTING:
 		case CA_CHALLENGING:

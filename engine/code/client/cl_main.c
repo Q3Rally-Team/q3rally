@@ -1430,6 +1430,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	if ( uivm && showMainMenu ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+		IN_SyncMousePosition();
 	}
 
 	SCR_StopCinematic ();
@@ -2957,11 +2958,13 @@ void CL_Frame ( int msec ) {
 		// bring up the cd error dialog if needed
 		cls.cddialog = qfalse;
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NEED_CD );
+		IN_SyncMousePosition();
 	} else	if ( clc.state == CA_DISCONNECTED && !( Key_GetCatcher( ) & KEYCATCH_UI )
 		&& !com_sv_running->integer && uivm ) {
 		// if disconnected, bring up the menu
 		S_StopAllSounds();
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+		IN_SyncMousePosition();
 	}
 
 	// if recording an avi, lock to a fixed fps
