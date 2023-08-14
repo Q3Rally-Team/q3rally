@@ -3002,11 +3002,11 @@ $(B)/ded/win_resource.o: $(SYSDIR)/win_resource.rc $(SYSDIR)/win_manifest.xml
 $(B)/ded/%.o: $(NDIR)/%.c
 	$(DO_DED_CC)
 
-# Extra dependencies to ensure the SVN version is incorporated
-ifeq ($(USE_SVN),1)
-  $(B)/client/cl_console.o : ../.svn/entries
-  $(B)/client/common.o : ../.svn/entries
-  $(B)/ded/common.o : ../.svn/entries
+# Extra dependencies to ensure the git version is incorporated
+ifeq ($(USE_GIT),1)
+  $(B)/client/cl_console.o : .git
+  $(B)/client/common.o : .git
+  $(B)/ded/common.o : .git
 endif
 
 
@@ -3203,10 +3203,7 @@ else
 endif
 
 dist:
-	rm -rf $(CLIENTBIN)-$(VERSION)
-	svn export . $(CLIENTBIN)-$(VERSION)
-	tar --owner=root --group=root --force-local -cjf $(CLIENTBIN)-$(VERSION).tar.bz2 $(CLIENTBIN)-$(VERSION)
-	rm -rf $(CLIENTBIN)-$(VERSION)
+	git archive --format zip --output $(CLIENTBIN)-$(VERSION).zip HEAD
 
 #############################################################################
 # DEPENDENCIES
