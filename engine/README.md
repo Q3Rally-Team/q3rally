@@ -6,7 +6,9 @@ Q3Rally is a standalone game based on ioquake3. However it's not compatible with
 ## Compiling
 Q3Rally is compiled using GNU Make (`make`) from a terminal while in the engine directory.
 
-`make ARCH=x86`, `make ARCH=x86_64`, `make ARCH=aarch64` (ARM64/Apple Silicon) specify compiling for a specific architecture instead of the host architecture.
+`make ARCH=x86`, `make ARCH=x86_64`, `make ARCH=arm64` (ARM64/Apple Silicon) specify compiling for a specific architecture instead of the host architecture. (Windows ARM64 is unsupported.)
+
+Compiling Linux arm64 from a x86\_64 host requires `CC=aarch64-linux-gnu-gcc`. Compiling for a different architechture than the host on Linux requires setting `SDL_CFLAGS=... SDL_LIBS=...` (see output of pkg-config sdl2 --cflags and --libs) with the paths to a build of SDL2 for that architechture.
 
 If you have commit access and use an SSH key use `git clone git@github.com:Q3Rally-Team/q3rally.git` instead.
 
@@ -57,7 +59,7 @@ To make a release which includes SDL2 run: `./make-linux-portable.sh x86_64` (al
 5. Run `make`
 
 To create an AppBundle:
-* Single architecture: `./make-macosx.sh x86_64` (if needed, replace x86\_64 with aarch64 (Apple Silicon), x86, or ppc).
+* Single architecture: `./make-macosx.sh x86_64` (if needed, replace x86\_64 with arm64 (Apple Silicon), x86, or ppc).
 * Modern macOS 10.9+ (Apple Silicon, x86_64): `./make-macosx-ub2.sh`
 * Legacy macOS 10.5+ (x86_64, x86, ppc): `./make-macosx-ub.sh`
 
@@ -80,7 +82,7 @@ make PLATFORM=mingw32 ARCH=x86_64 clean release -j8
 ./make-linux-portable.sh ARCH=x86_64 clean release -j8
 
 # macOS Modern; run on macOS or Linux with osxcross
-make PLATFORM=darwin ARCH=aarch64 clean
+make PLATFORM=darwin ARCH=arm64 clean
 make PLATFORM=darwin ARCH=x86_64 clean
 ./make-macosx-ub2.sh
 
