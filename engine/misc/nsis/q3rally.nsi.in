@@ -5,20 +5,22 @@
 ; This file is used to automatically build the installers in the
 ; openSUSE build service, don't break this!
 ;
-; you have to copy SDL2.dll and OpenAL32.dll here manually
+; you have to copy assets0.pk3 and OpenAL32.dll here manually
 
 !define VERSION "XXXVERSIONXXX"
 !define RELEASE "XXXRELEASEXXX"
+!define EXE_SUFFIX "XXXEXE_SUFFIXXXX"
 
 !define MODDIR "baseq3r"
 !define PUBLISHER "The Q3Rally Team"
 !define URL "http://q3rally.com/"
 
 !define GAMENAME "Q3Rally"
-!define CLIENT "q3rally.exe"
-!define SERVER "q3rally_ded.exe"
+!define CLIENT "q3rally${EXE_SUFFIX}.exe"
+!define SERVER "q3rally-server${EXE_SUFFIX}.exe"
 !define GAMEDIR "Q3Rally"
 !define GAME_FSNAME "q3rally"
+!define PROTOCOL_HANDLER "q3rally"
 
 !define MULTIUSER_MUI
 !define MULTIUSER_EXECUTIONLEVEL Highest
@@ -58,7 +60,7 @@ OutFile "${GAME_FSNAME}-${VERSION}-${RELEASE}.x86.exe"
 
 !insertmacro MULTIUSER_PAGE_INSTALLMODE
 ;!insertmacro MUI_PAGE_LICENSE "../../COPYING.txt"
-!define MUI_COMPONENTSPAGE_NODESC
+!define MUI_COMPONENTSPAGE_SMALLDESC
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -84,7 +86,7 @@ Function un.onInit
 FunctionEnd
 
 ; The stuff to install
-Section "${GAMENAME} ${VERSION}-${RELEASE} (required)"
+Section "${GAMENAME} ${VERSION}-${RELEASE} (required)" game
 
   SectionIn RO
 
@@ -107,8 +109,8 @@ Section "${GAMENAME} ${VERSION}-${RELEASE} (required)"
   File "../../build/release-mingw32-x86/renderer_opengl2_x86.dll"
 !endif
 
-  File "../../COPYING.txt"
-  File "/oname=README.txt" "../../README"
+  File "../../docs/COPYING.txt"
+  File "/oname=README.txt" "../../docs/README.md"
 
   SetOutPath "$INSTDIR\${MODDIR}"
   File "assets0.pk3"
@@ -133,7 +135,7 @@ Section "${GAMENAME} ${VERSION}-${RELEASE} (required)"
 SectionEnd
 
 ; Optional section (can be disabled by the user)
-Section "Start Menu Shortcuts"
+Section "Start Menu Shortcuts" StartMenuShortcuts
 
   CreateDirectory "$SMPROGRAMS\${GAMENAME}"
   CreateShortCut "$SMPROGRAMS\${GAMENAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
@@ -141,8 +143,18 @@ Section "Start Menu Shortcuts"
 
 SectionEnd
 
+Section "Protocol Handler" ProtocolHandler
+
+  WriteRegStr SHCTX "Software\Classes\${PROTOCOL_HANDLER}" "CustomUrlApplication" "$INSTDIR\${CLIENT}"
+  WriteRegStr SHCTX "Software\Classes\${PROTOCOL_HANDLER}" "CustomUrlArguments" '--uri "%1"'
+  WriteRegStr SHCTX "Software\Classes\${PROTOCOL_HANDLER}" "URL Protocol" ""
+  WriteRegStr SHCTX "Software\Classes\${PROTOCOL_HANDLER}\DefaultIcon" "" "$INSTDIR\${CLIENT},0"
+  WriteRegStr SHCTX "Software\Classes\${PROTOCOL_HANDLER}\shell\open\command" "" '"$INSTDIR\${CLIENT}" --uri "%1"'
+
+SectionEnd
+
 !ifdef USE_OPENAL_DLOPEN
-Section "OpenAL-Soft library"
+Section "OpenAL-Soft library" OpenAL
 
   SetOutPath $INSTDIR
 
@@ -152,7 +164,7 @@ SectionEnd
 !endif
 
 !ifdef USE_CURL_DLOPEN
-Section "libcurl"
+Section "libcurl" libcurl
 
   SetOutPath $INSTDIR
 
@@ -170,6 +182,11 @@ Section "Uninstall"
   ; Remove registry keys
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${GAME_FSNAME}"
   DeleteRegKey SHCTX "Software\${GAME_FSNAME}"
+
+  ReadRegStr $0 SHCTX "Software\Classes\${PROTOCOL_HANDLER}\shell\open\command" ""
+  ${If} $0 == '"$INSTDIR\${CLIENT}" --uri "%1"'
+    DeleteRegKey SHCTX "Software\Classes\${PROTOCOL_HANDLER}"
+  ${EndIf}
 
   ; Remove files and uninstaller
   Delete $INSTDIR\${MODDIR}\pak0.pk3
@@ -214,3 +231,15 @@ Section "Uninstall"
   RMDir "$INSTDIR"
 
 SectionEnd
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${game} "The game executables and data files."
+  !insertmacro MUI_DESCRIPTION_TEXT ${StartMenuShortcuts} "Create shortcuts in the start menu."
+  !insertmacro MUI_DESCRIPTION_TEXT ${ProtocolHandler} "The protocol handler lets you connect to a game by clicking a link in a web browser."
+!ifdef USE_OPENAL_DLOPEN
+  !insertmacro MUI_DESCRIPTION_TEXT ${OpenAL} "Advanced audio mixer that supports surround sound."
+!endif
+!ifdef USE_CURL_DLOPEN
+  !insertmacro MUI_DESCRIPTION_TEXT ${libcurl} "Used for HTTP file downloads."
+!endif
+!insertmacro MUI_FUNCTION_DESCRIPTION_END

@@ -42,6 +42,13 @@ ifndef OPENALDLL
 		OPENALDLL=OpenAL32.dll
 	endif
 endif
+ifndef EXE_SUFFIX
+	ifeq ($(ARCH),x86_64)
+		EXE_SUFFIX=.x86_64
+	else
+		EXE_SUFFIX=
+	endif
+endif
 
 DEFINES=
 ifeq ($(USE_RENDERER_DLOPEN),1)
@@ -64,7 +71,7 @@ endif
 all: q3rally-$(VERSION)-$(RELEASE).$(ARCH).exe
 
 q3rally.$(ARCH).nsi: q3rally.nsi.in
-	sed 's/XXXVERSIONXXX/$(VERSION)/;s/XXXRELEASEXXX/$(RELEASE)/;s/mingw32/$(PLATFORM)/g;s/x86/$(ARCH)/g;s/SDL2.dll/$(SDLDLL)/g;s/OpenAL32.dll/$(OPENALDLL)/g' < $< > $@
+	sed 's/XXXVERSIONXXX/$(VERSION)/;s/XXXRELEASEXXX/$(RELEASE)/;s/mingw32/$(PLATFORM)/g;s/x86/$(ARCH)/g;s/SDL2.dll/$(SDLDLL)/g;s/OpenAL32.dll/$(OPENALDLL)/g;s/XXXEXE_SUFFIXXXX/$(EXE_SUFFIX)/g' < $< > $@
 
 q3rally-$(VERSION)-$(RELEASE).$(ARCH).exe: q3rally.$(ARCH).nsi
 	makensis $(DEFINES) q3rally.$(ARCH).nsi
