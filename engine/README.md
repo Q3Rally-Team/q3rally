@@ -1,7 +1,20 @@
 Q3Rally engine
 ==============
 
-Q3Rally is a standalone game based on ioquake3. However it's not compatible with ioquake3.
+Q3Rally is a standalone game based on ioquake3.
+
+There are enhancements and customizations to the engine. It is prefered to use Q3Rally engine instead of ioquake3 to run the game.
+
+Engine changes compared to ioquake3:
+
+- Added Theora video playback for the Q3Rally intro video
+- Changed various cvar defaults
+- Changed the fallback missing sound filename
+- Modified mouse handling in menus
+- Changed invalid default pk3 checksums to use sv_pure 0
+- Added baseq3r pk3 checksums
+
+(This list may be incomplete.)
 
 ## Compiling
 Q3Rally is compiled using GNU Make (`make`) from a terminal while in the engine directory.
