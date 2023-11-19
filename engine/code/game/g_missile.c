@@ -676,7 +676,7 @@ void G_RunMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( tr.endpos, ent->r.currentOrigin );
 	}
-  Missile_Smooth_H(ent,origin,&tr);
+
 	trap_LinkEntity( ent );
 
 	if ( tr.fraction != 1 ) {
