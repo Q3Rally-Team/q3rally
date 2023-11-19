@@ -676,7 +676,9 @@ void G_RunMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( tr.endpos, ent->r.currentOrigin );
 	}
-
+	if ( ent->s.weapon == WP_ROCKET_LAUNCHER ) {
+	Missile_Smooth_H(ent,origin,&tr);
+	}
 	trap_LinkEntity( ent );
 
 	if ( tr.fraction != 1 ) {
@@ -1044,7 +1046,7 @@ void rocket_think( gentity_t *ent )
         VectorAdd(dir, dir2, dir);
         VectorNormalize(dir);
         VectorCopy( start, ent->s.pos.trBase );
-        VectorScale( dir, 400, ent->s.pos.trDelta );
+        VectorScale( dir, 650, ent->s.pos.trDelta );
         SnapVector( ent->s.pos.trDelta );
         VectorCopy (start, ent->r.currentOrigin);
         VectorCopy (dir, ent->r.currentAngles);
