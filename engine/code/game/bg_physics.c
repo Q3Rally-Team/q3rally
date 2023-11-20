@@ -1483,7 +1483,7 @@ static void PM_AccelerateAndMoveBody( car_t *car, carBody_t *sBody, carBody_t *t
 	// damage stuff
 	VectorSubtract(tBody->v, sBody->v, vec);
 	impulseDamage = VectorLength(vec);
-	if (impulseDamage > 5.0f){
+	if (impulseDamage > 500.0f){
 //		Com_Printf("impulseDamage %f\n", impulseDamage);
 		pm->damage.damage += impulseDamage / 25.0f;
 	}
