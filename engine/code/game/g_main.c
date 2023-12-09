@@ -1178,10 +1178,7 @@ void FindIntermissionPoint( void ) {
 		SelectSpawnPoint ( vec3_origin, level.intermission_origin, level.intermission_angle, qfalse );
 	} else {
 		VectorCopy (ent->s.origin, level.intermission_origin);
-// STONELANCE
-//		VectorCopy (ent->s.angles, level.intermission_angle);
-		VectorCopy (ent->s.angles2, level.intermission_angle);
-// END
+		VectorCopy (ent->s.angles, level.intermission_angle);
 		// if it has a target, look towards it
 		if ( ent->target ) {
 			target = G_PickTarget( ent->target );
