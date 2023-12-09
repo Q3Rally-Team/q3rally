@@ -517,7 +517,7 @@ void PM_AddRoadForces(car_t *car, carBody_t *body, carPoint_t *points, float sec
 		}
 
 		if (pm->controlMode == CT_MOUSE){
-			car->wheelAngle = WheelAngle(pm->ps->viewangles[YAW], SHORT2ANGLE(pm->ps->damageYaw));
+			car->wheelAngle = WheelAngle(pm->ps->viewangles[YAW], BYTE2ANGLE(pm->ps->damageYaw));
 
 			if (v < 0.5f && v > -0.5f)
 				car->wheelAngle = 0.0;
@@ -561,8 +561,8 @@ void PM_AddRoadForces(car_t *car, carBody_t *body, carPoint_t *points, float sec
 			if (car->wheelAngle < -20.0f)
 				car->wheelAngle = -20.0f;
 
-			pm->ps->damagePitch = ANGLE2SHORT(0.0f);
-			pm->ps->damageYaw = ANGLE2SHORT(car->wheelAngle);
+			pm->ps->damagePitch = ANGLE2BYTE(0.0f);
+			pm->ps->damageYaw = ANGLE2BYTE(car->wheelAngle);
 		}
 	}
 	else {

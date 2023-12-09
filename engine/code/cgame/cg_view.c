@@ -690,8 +690,8 @@ static int CG_CalcViewValues( void ) {
 		VectorCopy( ps->origin, cg.refdef.vieworg );
 // STONELANCE (uses new way of sending view angles)
 //		VectorCopy( ps->viewangles, cg.refdefViewAngles );
-		cg.refdefViewAngles[PITCH] = SHORT2ANGLE(ps->damagePitch);
-		cg.refdefViewAngles[YAW] = SHORT2ANGLE(ps->damageYaw);
+		cg.refdefViewAngles[PITCH] = BYTE2ANGLE(ps->damagePitch);
+		cg.refdefViewAngles[YAW] = BYTE2ANGLE(ps->damageYaw);
 		cg.refdefViewAngles[ROLL] = 0;
 // END
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -717,8 +717,8 @@ static int CG_CalcViewValues( void ) {
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );
 /*
 		if (!cg_paused.integer){
-			Com_Printf("pitch: angles2 %f, damage %f, viewangle %f\n", cg.predictedPlayerEntity.currentState.angles2[PITCH], SHORT2ANGLE(ps->damagePitch), ps->viewangles[PITCH]);
-			Com_Printf("yaw: angles2 %f, damage %f, viewangle %f\n", cg.predictedPlayerEntity.currentState.angles2[YAW], SHORT2ANGLE(ps->damageYaw), ps->viewangles[YAW]);
+			Com_Printf("pitch: angles2 %f, damage %f, viewangle %f\n", cg.predictedPlayerEntity.currentState.angles2[PITCH], BYTE2ANGLE(ps->damagePitch), ps->viewangles[PITCH]);
+			Com_Printf("yaw: angles2 %f, damage %f, viewangle %f\n", cg.predictedPlayerEntity.currentState.angles2[YAW], BYTE2ANGLE(ps->damageYaw), ps->viewangles[YAW]);
 			Com_Printf( "origin: %f %f %f, vel %f %f %f\n", cg.refdef.vieworg[0], cg.refdef.vieworg[1], cg.refdef.vieworg[2], ps->velocity[0], ps->velocity[1], ps->velocity[2] );
 		}
 */
@@ -759,8 +759,8 @@ static int CG_CalcViewValues( void ) {
 //		if( !cg_paused.integer )
 //			Com_Printf( "5 predictedPlayerState damageYaw %d\n", ps->damageYaw );
 
-		cg.refdefViewAngles[PITCH] = SHORT2ANGLE(ps->damagePitch);
-		cg.refdefViewAngles[YAW] = SHORT2ANGLE(ps->damageYaw);
+		cg.refdefViewAngles[PITCH] = BYTE2ANGLE(ps->damagePitch);
+		cg.refdefViewAngles[YAW] = BYTE2ANGLE(ps->damageYaw);
 		cg.refdefViewAngles[ROLL] = 0;
 	}
 
@@ -795,8 +795,8 @@ static int CG_CalcViewValues( void ) {
 #else
 		// Use third-person mouse view (not car viewpoint)
 		angles[ROLL] = 0;
-		angles[PITCH] = 0; // SHORT2ANGLE(ps->damagePitch);
-		angles[YAW] = SHORT2ANGLE(ps->damageYaw);
+		angles[PITCH] = 0; // BYTE2ANGLE(ps->damagePitch);
+		angles[YAW] = BYTE2ANGLE(ps->damageYaw);
 #endif
 
 		AnglesToAxis( angles, cg.mmapRefdef.viewaxis );

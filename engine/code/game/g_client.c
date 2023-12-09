@@ -591,8 +591,8 @@ void SetClientViewAngle( gentity_t *ent, vec3_t angle ) {
 	VectorCopy (ent->s.angles, ent->client->ps.viewangles);
 // STONELANCE
 	VectorCopy( angle, ent->s.angles2 );
-	ent->client->ps.damagePitch = ANGLE2SHORT(ent->s.angles2[PITCH]);
-	ent->client->ps.damageYaw = ANGLE2SHORT(ent->s.angles2[YAW]);
+	ent->client->ps.damagePitch = ANGLE2BYTE(ent->s.angles2[PITCH]);
+	ent->client->ps.damageYaw = ANGLE2BYTE(ent->s.angles2[YAW]);
 // END
 }
 

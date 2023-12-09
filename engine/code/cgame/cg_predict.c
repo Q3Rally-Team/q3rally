@@ -418,8 +418,8 @@ static void CG_InterpolatePlayerState( qboolean grabAngles ) {
 */
 
 	if ( !grabAngles ) {
-		out->damagePitch = ANGLE2SHORT(LerpAngle( SHORT2ANGLE(prev->ps.damagePitch), SHORT2ANGLE(next->ps.damagePitch), f ));
-		out->damageYaw = ANGLE2SHORT(LerpAngle( SHORT2ANGLE(prev->ps.damageYaw), SHORT2ANGLE(next->ps.damageYaw), f ));
+		out->damagePitch = ANGLE2BYTE(LerpAngle( BYTE2ANGLE(prev->ps.damagePitch), BYTE2ANGLE(next->ps.damagePitch), f ));
+		out->damageYaw = ANGLE2BYTE(LerpAngle( BYTE2ANGLE(prev->ps.damageYaw), BYTE2ANGLE(next->ps.damageYaw), f ));
 	}
 // END
 

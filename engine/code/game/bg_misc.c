@@ -1938,8 +1938,8 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	}
 
 	// View Angles
-	s->angles2[PITCH] = SHORT2ANGLE(ps->damagePitch);
-	s->angles2[YAW] = SHORT2ANGLE(ps->damageYaw);
+	s->angles2[PITCH] = BYTE2ANGLE(ps->damagePitch);
+	s->angles2[YAW] = BYTE2ANGLE(ps->damageYaw);
 //	s->angles2[YAW] = ps->movementDir;
 // END
 	s->legsAnim = ps->legsAnim;
@@ -2065,8 +2065,8 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 // END
 
 	// View Angles
-	s->angles2[PITCH] = SHORT2ANGLE(ps->damagePitch);
-	s->angles2[YAW] = SHORT2ANGLE(ps->damageYaw);
+	s->angles2[PITCH] = BYTE2ANGLE(ps->damagePitch);
+	s->angles2[YAW] = BYTE2ANGLE(ps->damageYaw);
 //	s->angles2[YAW] = ps->movementDir;
 // END
 	s->legsAnim = ps->legsAnim;

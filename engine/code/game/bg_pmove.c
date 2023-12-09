@@ -961,7 +961,7 @@ static void PM_NoclipMove( void ) {
 	VectorMA (pm->ps->origin, pml.frametime, pm->ps->velocity, pm->ps->origin);
 
 // STONELANCE
-	pm->ps->viewangles[YAW] = SHORT2ANGLE(pm->ps->damageYaw);
+	pm->ps->viewangles[YAW] = BYTE2ANGLE(pm->ps->damageYaw);
 	PM_InitializeVehicle(pm->car, pm->ps->origin, pm->ps->viewangles, pm->ps->velocity /* , pm->car_frontweight_dist */ );
 // END
 }
@@ -2403,10 +2403,10 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd, int controlMo
 // STONELANCE use damage yaw and pitch for view angles
 		if (controlMode == CT_MOUSE){
 			if (i == PITCH){
-				ps->damagePitch = temp;
+				ps->damagePitch = ANGLE2BYTE( SHORT2ANGLE( temp ) );
 			}
 			if (i == YAW){
-				ps->damageYaw = temp;
+				ps->damageYaw = ANGLE2BYTE( SHORT2ANGLE( temp ) );
 			}
 		}
 // END
@@ -2519,8 +2519,8 @@ void PmoveSingle (pmove_t *pmove) {
 	PM_UpdateViewAngles( pm->ps, &pm->cmd, pm->controlMode );
 
 //	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
-	delta[YAW] = SHORT2ANGLE(pm->ps->damageYaw);
-	delta[PITCH] = SHORT2ANGLE(pm->ps->damagePitch);
+	delta[YAW] = BYTE2ANGLE(pm->ps->damageYaw);
+	delta[PITCH] = BYTE2ANGLE(pm->ps->damagePitch);
 	delta[ROLL] = 0;
 	AngleVectors (delta, pml.forward, pml.right, pml.up);
 // END
