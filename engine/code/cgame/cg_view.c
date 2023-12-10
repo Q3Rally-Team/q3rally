@@ -739,7 +739,7 @@ static int CG_CalcViewValues( void ) {
 		VectorMA(cg.refdef.vieworg, ps->velocity[1], right, cg.refdef.vieworg);
 		VectorMA(cg.refdef.vieworg, ps->velocity[2], up, cg.refdef.vieworg);
 	}
-	else if (cgs.clientinfo[cg.snap->ps.clientNum].controlMode == CT_JOYSTICK || ps->pm_flags & PMF_FOLLOW ){
+	else if (cgs.clientinfo[cg.snap->ps.clientNum].controlMode == CT_JOYSTICK || ( ps->pm_flags & PMF_FOLLOW ) ){
 		float angle, f, scale;
 
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );
