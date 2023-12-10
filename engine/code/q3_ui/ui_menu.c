@@ -431,7 +431,7 @@ static void Main_MenuDraw( void ) {
                 UI_DrawProportionalString( 320, 432, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, text_color_normal );
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 320, 460, Q3_VERSION " | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 320, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
 //              UI_DrawString( 320, 400, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
@@ -439,7 +439,7 @@ static void Main_MenuDraw( void ) {
 // STONELANCE
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 365, 460, Q3_VERSION " | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         }
