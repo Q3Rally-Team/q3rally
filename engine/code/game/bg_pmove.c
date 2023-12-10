@@ -961,7 +961,7 @@ static void PM_NoclipMove( void ) {
 	VectorMA (pm->ps->origin, pml.frametime, pm->ps->velocity, pm->ps->origin);
 
 // STONELANCE
-	pm->ps->viewangles[YAW] = BYTE2ANGLE(pm->ps->damageYaw);
+	pm->ps->viewangles[YAW] = pm->ps->damageAngles[YAW];
 	PM_InitializeVehicle(pm->car, pm->ps->origin, pm->ps->viewangles, pm->ps->velocity /* , pm->car_frontweight_dist */ );
 // END
 }
@@ -2375,6 +2375,9 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd, int controlMo
 	int		i;
 
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
+		ps->damageAngles[PITCH] = BYTE2ANGLE( ps->damagePitch );
+		ps->damageAngles[YAW] = BYTE2ANGLE( ps->damageYaw );
+		ps->damageAngles[ROLL] = 0;
 		return;		// no view changes at all
 	}
 
@@ -2400,18 +2403,24 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd, int controlMo
 			}
 		}
 
-// STONELANCE use damage yaw and pitch for view angles
-		if (controlMode == CT_MOUSE){
-			if (i == PITCH){
-				ps->damagePitch = ANGLE2BYTE( SHORT2ANGLE( temp ) );
-			}
-			if (i == YAW){
-				ps->damageYaw = ANGLE2BYTE( SHORT2ANGLE( temp ) );
-			}
+// Q3Rally
+//		ps->viewangles[i] = SHORT2ANGLE(temp);
+		if ( controlMode == CT_MOUSE ) {
+			ps->damageAngles[i] = SHORT2ANGLE(temp);
 		}
 // END
-// SKWID
-//		ps->viewangles[i] = SHORT2ANGLE(temp);
+	}
+
+// STONELANCE use damage yaw and pitch for view angles
+	if ( controlMode == CT_MOUSE ) {
+		// camera view angle
+		ps->damagePitch = ANGLE2BYTE( SHORT2ANGLE( ps->damageAngles[PITCH] ) );
+		ps->damageYaw = ANGLE2BYTE( SHORT2ANGLE( ps->damageAngles[YAW] ) );
+	} else /* CT_JOYSTICK */ {
+		// wheel angle
+		ps->damageAngles[PITCH] = BYTE2ANGLE( ps->damagePitch );
+		ps->damageAngles[YAW] = BYTE2ANGLE( ps->damageYaw );
+		ps->damageAngles[ROLL] = 0;
 	}
 // END
 }
@@ -2427,7 +2436,7 @@ void trap_SnapVector( float *v );
 
 void PmoveSingle (pmove_t *pmove) {
 // STONELANCE
-	vec3_t	delta;
+	//vec3_t	delta;
 	float	dot;
 // END
 
@@ -2519,10 +2528,7 @@ void PmoveSingle (pmove_t *pmove) {
 	PM_UpdateViewAngles( pm->ps, &pm->cmd, pm->controlMode );
 
 //	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
-	delta[YAW] = BYTE2ANGLE(pm->ps->damageYaw);
-	delta[PITCH] = BYTE2ANGLE(pm->ps->damagePitch);
-	delta[ROLL] = 0;
-	AngleVectors (delta, pml.forward, pml.right, pml.up);
+	AngleVectors (pm->ps->damageAngles, pml.forward, pml.right, pml.up);
 // END
 
 	if ( pm->cmd.upmove < 10 ) {

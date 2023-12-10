@@ -690,9 +690,7 @@ static int CG_CalcViewValues( void ) {
 		VectorCopy( ps->origin, cg.refdef.vieworg );
 // STONELANCE (uses new way of sending view angles)
 //		VectorCopy( ps->viewangles, cg.refdefViewAngles );
-		cg.refdefViewAngles[PITCH] = BYTE2ANGLE(ps->damagePitch);
-		cg.refdefViewAngles[YAW] = BYTE2ANGLE(ps->damageYaw);
-		cg.refdefViewAngles[ROLL] = 0;
+		VectorCopy( ps->damageAngles, cg.refdefViewAngles );
 // END
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 		return CG_CalcFov();
@@ -759,9 +757,7 @@ static int CG_CalcViewValues( void ) {
 //		if( !cg_paused.integer )
 //			Com_Printf( "5 predictedPlayerState damageYaw %d\n", ps->damageYaw );
 
-		cg.refdefViewAngles[PITCH] = BYTE2ANGLE(ps->damagePitch);
-		cg.refdefViewAngles[YAW] = BYTE2ANGLE(ps->damageYaw);
-		cg.refdefViewAngles[ROLL] = 0;
+		VectorCopy( ps->damageAngles, cg.refdefViewAngles );
 	}
 
 	// rear view mirror setup
@@ -795,8 +791,8 @@ static int CG_CalcViewValues( void ) {
 #else
 		// Use third-person mouse view (not car viewpoint)
 		angles[ROLL] = 0;
-		angles[PITCH] = 0; // BYTE2ANGLE(ps->damagePitch);
-		angles[YAW] = BYTE2ANGLE(ps->damageYaw);
+		angles[PITCH] = 0; // ps->damageAngles[PITCH];
+		angles[YAW] = ps->damageAngles[YAW];
 #endif
 
 		AnglesToAxis( angles, cg.mmapRefdef.viewaxis );

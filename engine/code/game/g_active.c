@@ -1769,8 +1769,9 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 					}
 				}
 
-				ent->client->ps.damagePitch = ANGLE2BYTE(ent->client->ps.viewangles[PITCH]);
-				ent->client->ps.damageYaw = ANGLE2BYTE(ent->client->ps.viewangles[YAW]);
+				VectorCopy( ent->client->ps.viewangles, ent->client->ps.damageAngles );
+				ent->client->ps.damagePitch = ANGLE2BYTE(ent->client->ps.damageAngles[PITCH]);
+				ent->client->ps.damageYaw = ANGLE2BYTE(ent->client->ps.damageAngles[YAW]);
 
 				ent->client->ps.pm_flags |= PMF_OBSERVE;
 				return;

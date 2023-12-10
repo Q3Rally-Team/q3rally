@@ -320,6 +320,10 @@ static void CG_ExtrapolatePlayerState( qboolean grabAngles ) {
 	if ( !grabAngles ) {
 		out->damagePitch = prev->ps.damagePitch;
 		out->damageYaw = prev->ps.damageYaw;
+
+		out->damageAngles[PITCH] = BYTE2ANGLE(prev->ps.damagePitch);
+		out->damageAngles[YAW] = BYTE2ANGLE(prev->ps.damageYaw);
+		out->damageAngles[ROLL] = 0;
 	}
 
 	for ( i = 0 ; i < 3 ; i++ ) {
@@ -420,6 +424,10 @@ static void CG_InterpolatePlayerState( qboolean grabAngles ) {
 	if ( !grabAngles ) {
 		out->damagePitch = ANGLE2BYTE(LerpAngle( BYTE2ANGLE(prev->ps.damagePitch), BYTE2ANGLE(next->ps.damagePitch), f ));
 		out->damageYaw = ANGLE2BYTE(LerpAngle( BYTE2ANGLE(prev->ps.damageYaw), BYTE2ANGLE(next->ps.damageYaw), f ));
+
+		out->damageAngles[PITCH] = LerpAngle( BYTE2ANGLE(prev->ps.damagePitch), BYTE2ANGLE(next->ps.damagePitch), f );
+		out->damageAngles[YAW] = LerpAngle( BYTE2ANGLE(prev->ps.damageYaw), BYTE2ANGLE(next->ps.damageYaw), f );
+		out->damageAngles[ROLL] = 0;
 	}
 // END
 
@@ -1009,6 +1017,7 @@ void CG_PredictPlayerState( void ) {
 			// over the net.
 			// This function overwrites the damageYaw and damagePitch values based on
 			// the command and the delta_angles of the player
+			// This also sets damageAngles which is not reduced to 8-bit
 			PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd, cg_controlMode.integer );
 //		}
 // END

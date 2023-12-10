@@ -1143,9 +1143,10 @@ void MoveClientToIntermission( gentity_t *ent ) {
 	VectorCopy( level.intermission_origin, ent->client->ps.origin );
 // STONELANCE (used for viewing angles client side)
 //	VectorCopy (level.intermission_angle, ent->client->ps.viewangles);
+	VectorCopy (level.intermission_angle, ent->client->ps.damageAngles);
 	VectorCopy( level.intermission_angle, ent->s.angles2 ); // FIXME: need  this?
-	ent->client->ps.damagePitch = ANGLE2BYTE(ent->s.angles2[PITCH]);
-	ent->client->ps.damageYaw = ANGLE2BYTE(ent->s.angles2[YAW]);
+	ent->client->ps.damagePitch = ANGLE2BYTE(ent->client->ps.damageAngles[PITCH]);
+	ent->client->ps.damageYaw = ANGLE2BYTE(ent->client->ps.damageAngles[YAW]);
 // END
 	ent->client->ps.pm_type = PM_INTERMISSION;
 

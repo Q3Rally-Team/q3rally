@@ -1347,6 +1347,11 @@ typedef struct playerState_s {
 	int			pmove_framecount;
 	int			jumppad_frame;
 	int			entityEventSequence;
+
+	// float angles for camera view angle (CT_MOUSE) or wheel angle (CT_JOYSTICK)
+	// they are networked as 8-bit in playerState_t damagePitch and damageYaw
+	// and float in entityState_t angles2
+	vec3_t		damageAngles;
 } playerState_t;
 
 
