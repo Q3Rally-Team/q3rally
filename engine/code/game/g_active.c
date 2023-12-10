@@ -1742,6 +1742,8 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 			clientNum = level.follow2;
 		}
 
+		ent->client->ps.persistant[PERS_ATTACKER] = -1;
+
 		if ( clientNum >= 0 ) {
 //			ent->client->ps.clientNum = clientNum;
 			cl = &level.clients[ clientNum ];
@@ -1754,6 +1756,8 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 					VectorSubtract(cl->ps.origin, ent->client->ps.origin, delta);
 					vectoangles(delta, angles);
 					VectorCopy(angles, ent->client->ps.viewangles);
+
+					ent->client->ps.persistant[PERS_ATTACKER] = clientNum;
 				}
 
 				VectorClear(ent->client->ps.velocity);

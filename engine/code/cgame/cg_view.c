@@ -712,7 +712,6 @@ static int CG_CalcViewValues( void ) {
 	{
 		vec3_t	forward, right, up;
 
-		VectorCopy( ps->viewangles, cg.refdefViewAngles );
 /*
 		if (!cg_paused.integer){
 			Com_Printf("pitch: angles2 %f, damage %f, viewangle %f\n", cg.predictedPlayerEntity.currentState.angles2[PITCH], BYTE2ANGLE(ps->damagePitch), ps->viewangles[PITCH]);
@@ -720,6 +719,21 @@ static int CG_CalcViewValues( void ) {
 			Com_Printf( "origin: %f %f %f, vel %f %f %f\n", cg.refdef.vieworg[0], cg.refdef.vieworg[1], cg.refdef.vieworg[2], ps->velocity[0], ps->velocity[1], ps->velocity[2] );
 		}
 */
+
+		if ( ps->persistant[PERS_ATTACKER] >= 0 && ps->persistant[PERS_ATTACKER] < MAX_CLIENTS
+			&& cg_entities[ps->persistant[PERS_ATTACKER]].currentValid ) {
+			centity_t *cent;
+			vec3_t delta, angles;
+
+			cent = &cg_entities[ps->persistant[PERS_ATTACKER]];
+
+			VectorSubtract(cent->lerpOrigin, ps->origin, delta);
+			vectoangles(delta, angles);
+			VectorCopy(angles, cg.refdefViewAngles);
+		} else {
+			VectorCopy( ps->viewangles, cg.refdefViewAngles );
+		}
+
 		AngleVectors(cg.refdefViewAngles, forward, right, up);
 		VectorMA(cg.refdef.vieworg, ps->velocity[0], forward, cg.refdef.vieworg);
 		VectorMA(cg.refdef.vieworg, ps->velocity[1], right, cg.refdef.vieworg);
