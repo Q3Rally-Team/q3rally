@@ -676,7 +676,7 @@ void G_RunMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( tr.endpos, ent->r.currentOrigin );
 	}
-	if ( ent->s.weapon == WP_ROCKET_LAUNCHER || !strcmp(ent->classname,"fire_cluster_grenade") ) {
+	if ( ent->s.weapon == WP_ROCKET_LAUNCHER ) {
 	Missile_Smooth_H(ent,origin,&tr);
 	}
 	trap_LinkEntity( ent );
@@ -820,7 +820,7 @@ gentity_t *fire_cluster_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
-	bolt->s.pos.trType = TR_GRAVITY;
+	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, 1200, bolt->s.pos.trDelta ); //TBB - speed is 2000 in g_weapon.c
