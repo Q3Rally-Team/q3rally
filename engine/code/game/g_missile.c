@@ -676,7 +676,7 @@ void G_RunMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( tr.endpos, ent->r.currentOrigin );
 	}
-	if ( ent->s.weapon == WP_ROCKET_LAUNCHER ) {
+	if ( ent->s.weapon == WP_ROCKET_LAUNCHER || !strcmp(ent->classname,"fire_cluster_grenade") ) {
 	Missile_Smooth_H(ent,origin,&tr);
 	}
 	trap_LinkEntity( ent );
