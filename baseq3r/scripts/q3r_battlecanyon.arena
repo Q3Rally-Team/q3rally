@@ -9,7 +9,7 @@ longname "Battle Canyon"
 author "P3rle & insellium"
 
 //GAME TYPE SUPPORTS
-type "q3r_derby q3r_dm q3r_team_dm"
+type "q3r_dm q3r_team_dm"
 
 //CUSTOM BOTS
 bots "Kuro Tobias Vlad Samuel Chloe Tony"

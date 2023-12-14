@@ -9,7 +9,7 @@ longname "Warehouse Playground"
 author "insellium"
 
 //GAME TYPE SUPPORTS
-type "q3r_derby q3r_dm q3r_team_dm q3r_dom"
+type "q3r_dm q3r_team_dm q3r_dom"
 
 //CUSTOM BOTS
 bots "Tony Steve Tanya Zack Jennifer Ivan Tobias"
