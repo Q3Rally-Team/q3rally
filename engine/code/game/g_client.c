@@ -1512,7 +1512,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 // dont give machinegun on spawn in races
-	if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY */){
+	if (!isRallyRace() && g_gametype.integer != GT_DERBY ){
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 
 		if ( g_gametype.integer == GT_TEAM ) {
@@ -1642,7 +1642,7 @@ void ClientSpawn(gentity_t *ent) {
 			G_KillBox(ent);
 			// force the base weapon up
 // STONELANCE
-			if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY*/){
+			if (!isRallyRace() && g_gametype.integer != GT_DERBY ){
 				client->ps.weapon = WP_MACHINEGUN;
 			}
 			else if (!isRallyNonDMRace()/*TEMP DERBY && g_gametype.integer != GT_DERBY*/){
