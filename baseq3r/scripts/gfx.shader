@@ -96,7 +96,7 @@ menuback
 	nomipmaps
 
         {
-                map textures/sfx/logo512.tga
+                map textures/sfx/menucar01.tga
         }
 
        
@@ -127,7 +127,7 @@ menubackRagePro	// blends turn to shit on rage pro, so skip it
 	nopicmip
 	nomipmaps
         {
-                map textures/sfx/logo512.tga
+                map textures/sfx/menucar01.tga
         }
         
 }

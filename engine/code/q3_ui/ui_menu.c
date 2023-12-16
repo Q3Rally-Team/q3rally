@@ -145,13 +145,13 @@ static void MainMenu_BuildList( void )
         // choose one from list randomly
         if (numItems){
                 car = (int)(UI_Random() * numItems);
-                strncpy(carName, cars[car], sizeof(carName));
+                strncpy(carName, cars[car], sizeof(carName) - 1);
+                carName[sizeof(carName) - 1] = '\0';
         }
-        else
-                strncpy(carName, DEFAULT_MODEL, sizeof(carName));
-
-//      Com_Printf("car: %d, numItems %d\n", car, numItems);
-//      Com_Printf("carName: %s\n", carName);
+        else {
+                strncpy(carName, DEFAULT_MODEL, sizeof(carName) - 1);
+                carName[sizeof(carName) - 1] = '\0';
+        }
 
         // get skins for the choosen car
         numItems = UI_BuildFileList( va("models/players/%s", carName), "skin", "", qtrue, qfalse, qfalse, 0, cars);
@@ -159,13 +159,13 @@ static void MainMenu_BuildList( void )
         // choose a skin from the list randomly
         if (numItems){
                 skin = UI_Random() * numItems;
-                strncpy(skinName, cars[skin], sizeof(skinName));
+                strncpy(skinName, cars[skin], sizeof(skinName) - 1);
+                skinName[sizeof(skinName) - 1] = '\0';
         }
-        else
-                strncpy(skinName, DEFAULT_SKIN, sizeof(skinName));
-
-//      Com_Printf("skin: %d, numItems %d\n", skin, numItems);
-//      Com_Printf("skinName: %s\n", skinName);
+        else {
+                strncpy(skinName, DEFAULT_SKIN, sizeof(skinName) - 1);
+                skinName[sizeof(skinName) - 1] = '\0';
+        }
 
         // FIXME: choose rim randomly?
         Com_sprintf(s_main.modelskin, sizeof(s_main.modelskin), "%s/%s", carName, skinName);
@@ -493,7 +493,14 @@ void UI_MainMenu( void ) {
 //	int	style = UI_CENTER | UI_DROPSHADOW;
 	int	style = UI_RIGHT | UI_DROPSHADOW;
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/q3r_menumusic\n" );
+	int numMusicFiles, selectedMusic;
+	char musicFiles[256][MAX_QPATH];
+	char musicCommand[MAX_QPATH];
+
+	numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
+	selectedMusic = (int)(UI_Random() * numMusicFiles);
+	Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
+	trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
 // END
 
 	trap_Cvar_Set( "sv_killserver", "1" );
@@ -522,7 +529,7 @@ void UI_MainMenu( void ) {
         s_main.banner.generic.flags                     = QMF_INACTIVE;
         s_main.banner.generic.x                         = 320;
         s_main.banner.generic.y                         = 17;
-        s_main.banner.string                            = "Q 3 R A L L Y";
+        s_main.banner.string                            = "Q3RALLY STANDALONE";
         s_main.banner.color                             = text_color_normal;
         s_main.banner.style                             = UI_CENTER|UI_DROPSHADOW;
 
