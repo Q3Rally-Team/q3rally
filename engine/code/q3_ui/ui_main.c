@@ -121,6 +121,8 @@ vmCvar_t	ui_team_racing_friendly;
 
 vmCvar_t	ui_derby_timelimit;
 
+vmCvar_t	ui_lcs_timelimit;
+
 vmCvar_t	ui_dm_fraglimit;
 vmCvar_t	ui_dm_timelimit;
 

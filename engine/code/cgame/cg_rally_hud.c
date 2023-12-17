@@ -417,7 +417,7 @@ static float CG_DrawTimes( float y ) {
 // Best Time
 //
   
-	if ( cgs.gametype != GT_DERBY ){
+	if ( cgs.gametype != GT_DERBY || cgs.gametype != GT_LCS ){
 		time = getStringForTime( cent->bestLapTime );
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
@@ -436,7 +436,7 @@ static float CG_DrawTimes( float y ) {
 
 	
 
-	if (cgs.gametype != GT_DERBY){
+	if (cgs.gametype != GT_DERBY || cgs.gametype != GT_LCS ){
 		time = getStringForTime(lapTime);
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);
@@ -900,14 +900,14 @@ float CG_DrawUpperRightHUD( float y ) {
 			y = CG_DrawCurrentPosition( y );
 			y = CG_DrawCarAheadAndBehind( y );
 		}
-		else if (cgs.gametype == GT_DERBY)
+		else if (cgs.gametype == GT_DERBY || cgs.gametype == GT_LCS )
 			y = CG_DrawTimes( y );
 // 0.5
 //			CG_DrawHUD_DerbyList(44, 130);
 			
 	}
 
-	if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY){
+	if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS){
 		y = CG_DrawScores( 636, y );
 	}
 

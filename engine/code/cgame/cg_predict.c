@@ -982,7 +982,7 @@ void CG_PredictPlayerState( void ) {
 
 
 // Q3Rally Code Start
-		if ((isRallyRace() || cgs.gametype == GT_DERBY) && !cg_entities[cg.snap->ps.clientNum].startRaceTime){
+		if ((isRallyRace() || cgs.gametype == GT_DERBY || cgs.gametype == GT_LCS) && !cg_entities[cg.snap->ps.clientNum].startRaceTime){
 			cg_pmove.cmd.buttons = BUTTON_HANDBRAKE;
 
 			cg_pmove.cmd.forwardmove = 0;

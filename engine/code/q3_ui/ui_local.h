@@ -66,6 +66,8 @@ extern vmCvar_t	ui_team_racing_friendly;
 
 extern vmCvar_t	ui_derby_timelimit;
 
+extern vmCvar_t	ui_lcs_timelimit;
+
 extern vmCvar_t	ui_dm_fraglimit;
 extern vmCvar_t	ui_dm_timelimit;
 

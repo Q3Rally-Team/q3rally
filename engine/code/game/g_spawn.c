@@ -480,7 +480,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// UPDATE : change these
 // STONELANCE
 //	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester"};
-	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "dm", "team", "team_racing", "team_racing_dm", "ctf"};
+	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "lcs", "dm", "team", "team_racing", "team_racing_dm", "ctf"};
 // END
 
 	// get the next free entity
@@ -771,7 +771,7 @@ void SP_worldspawn( void ) {
 	}
 
 // STONELANCE
-	if (isRallyRace() || g_gametype.integer == GT_DERBY){
+	if (isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS){
 		CreateRallyStarter();
 	}
 

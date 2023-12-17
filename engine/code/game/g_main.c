@@ -926,7 +926,7 @@ int QDECL SortRanks( const void *a, const void *b ) {
 		}
 	}
 	// sort by finish time if derby
-	else if (g_gametype.integer == GT_DERBY){
+	else if (g_gametype.integer == GT_DERBY && g_gametype.integer == GT_LCS ){
 		if ( ca->finishRaceTime && cb->finishRaceTime ) {
 			if (ca->finishRaceTime < cb->finishRaceTime)
 				return 1;
@@ -1581,7 +1581,7 @@ qboolean ScoreIsTied( void ) {
 	
 // STONELANCE
 	// races or rallys can never be tied, otherwise then the level will not end
-	if ( g_gametype.integer == GT_DERBY || isRallyRace() )
+	if ( g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || isRallyRace() )
 	{
 /*
 		a = level.clients[level.sortedClients[0]].finishRaceTime;
@@ -1705,6 +1705,56 @@ void CheckExitRules( void ) {
 
 		return;
 	}
+	
+	if (g_gametype.integer == GT_LCS && level.startRaceTime && !level.finishRaceTime) {
+		gclient_t	*winner = NULL;
+
+		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
+			cl = level.clients + i;
+			if ( cl->pers.connected != CON_CONNECTED ) continue;
+			if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+			if ( isRaceObserver( cl->ps.clientNum ) ) continue;
+			if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+
+			count++;
+			winner = cl;
+		}
+
+		if (winner && count == 1) {
+			level.winnerNumber = winner->ps.clientNum;
+			level.finishRaceTime = level.time;
+
+			trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
+		}
+
+		return;
+	}
+	
+		if (g_gametype.integer == GT_LCS && level.startRaceTime && !level.finishRaceTime) {
+		gclient_t	*winner = NULL;
+
+		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
+			cl = level.clients + i;
+			if ( cl->pers.connected != CON_CONNECTED ) continue;
+			if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+			if ( isRaceObserver( cl->ps.clientNum ) ) continue;
+			if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+
+			count++;
+			winner = cl;
+		}
+
+		if (winner && count == 1) {
+			level.winnerNumber = winner->ps.clientNum;
+			level.finishRaceTime = level.time;
+
+			trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
+		}
+
+		return;
+	}
 
 
 	for ( i = 0, count = 0 ; i< g_maxclients.integer ; i++ ) {
@@ -1741,11 +1791,19 @@ void CheckExitRules( void ) {
 		LogExit( "Derby finished." );
 		return;
 	}
+	
+	if ( level.finishRaceTime && g_gametype.integer == GT_LCS
+		&& level.finishRaceTime + 10000 < level.time ){
+		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
+		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
+		LogExit( "Last car standing finished." );
+		return;
+	}
 // END
 
 // STONELANCE
 	// dont check frags or captures during a race or derby
-	if ( isRallyRace() || g_gametype.integer == GT_DERBY ){
+	if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS ){
 		return;
 	}
 // END

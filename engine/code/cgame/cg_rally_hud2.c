@@ -467,6 +467,7 @@ qboolean CG_DrawHUD( void ) {
 		break;
 
 	case GT_DERBY:
+	case GT_LCS:
 //		CG_DrawHUD_DerbyList(44, 130);
 
 		break;

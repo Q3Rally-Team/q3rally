@@ -1237,7 +1237,7 @@ void ClientBegin( int clientNum ) {
 // STONELANCE
 	// Make sure that clients that were not fully connected when the
 	// race was started will spawn as spectators
-	if ((isRallyRace() || g_gametype.integer == GT_DERBY) && level.startRaceTime &&
+	if ((isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS) && level.startRaceTime &&
 		client->sess.sessionTeam != TEAM_SPECTATOR && !isRaceObserver( clientNum ) &&
 		!client->finishRaceTime ){
 

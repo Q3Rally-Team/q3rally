@@ -658,7 +658,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			// count down health when over max
 // STONELANCE
 //			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
-			if (((!isRallyRace() && g_gametype.integer != GT_DERBY)
+			if (((!isRallyRace() && g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS)
 				|| level.startRaceTime) && ent->health > client->ps.stats[STAT_MAX_HEALTH]){
 // END
 				ent->health--;
@@ -668,7 +668,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// count down armor when over max
 // STONELANCE
 //		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
-		if (((!isRallyRace() && g_gametype.integer != GT_DERBY) || level.startRaceTime)
+		if (((!isRallyRace() && g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS) || level.startRaceTime)
 			&& client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH]){
 // END
 			client->ps.stats[STAT_ARMOR]--;
@@ -1105,7 +1105,7 @@ void ClientThink_real( gentity_t *ent ) {
 	// check for car reset
 	G_ResetCar( ent );
 
-	if (!level.startRaceTime &&	(isRallyRace() || g_gametype.integer == GT_DERBY)){
+	if (!level.startRaceTime &&	(isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS)){
 		if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) && !ent->ready ) {
 			trap_SendServerCommand( ent->s.clientNum, "cp \"Waiting for other players...\n\"");
 			ent->ready = qtrue;
@@ -1572,7 +1572,7 @@ void ClientThink_real( gentity_t *ent ) {
 			if ( g_forcerespawn.integer > 0 && 
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
 // STONELANCE
-				if (g_gametype.integer != GT_DERBY || !ent->client->finishRaceTime)
+				if (g_gametype.integer != GT_DERBY || g_gametype.integer != GT_LCS || !ent->client->finishRaceTime)
 // END
 				ClientRespawn( ent );
 				return;
@@ -1581,7 +1581,7 @@ void ClientThink_real( gentity_t *ent ) {
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 // STONELANCE
-				if (g_gametype.integer != GT_DERBY || !ent->client->finishRaceTime)
+				if (g_gametype.integer != GT_DERBY || g_gametype.integer != GT_LCS || !ent->client->finishRaceTime)
 // END
 				ClientRespawn( ent );
 			}

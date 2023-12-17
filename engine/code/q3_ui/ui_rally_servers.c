@@ -126,13 +126,14 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_RACING                    1
 #define GAMES_RACING_DM                 2
 #define GAMES_DERBY                             3
-#define GAMES_DEATHMATCH                4
-#define GAMES_TEAM_RACING               5
-#define GAMES_TEAM_RACING_DM    6
-#define GAMES_TEAMPLAY                  7
-#define GAMES_CTF                               8
-#define GAMES_DOMINATION                9
-#define GAMES_NUM_GAMES                 10
+#define GAMES_LCS                            4
+#define GAMES_DEATHMATCH                5
+#define GAMES_TEAM_RACING               6
+#define GAMES_TEAM_RACING_DM    7
+#define GAMES_TEAMPLAY                  8
+#define GAMES_CTF                               9
+#define GAMES_DOMINATION                10
+#define GAMES_NUM_GAMES                 11
 // END
 
 static const char *master_items[] = {
@@ -159,6 +160,7 @@ static const char *servertype_items[] = {
         "Racing",
         "Racing Deathmatch",
         "Demolition Derby",
+        "Last Car Standing",
         "Deathmatch",
         "Team Racing",
         "Team Racing Deathmatch",
@@ -198,6 +200,7 @@ static char* gamenames[] = {
         "Race DM",
         "SP ",
         "Derby",
+		"LCS ",
         "DM ",
         "TRace",
         "TRace DM",
@@ -496,6 +499,10 @@ int ArenaServers_GametypeForGames(int games) {
 
         case GAMES_DERBY:
                 gametype = GT_DERBY;
+                break;
+
+        case GAMES_LCS:
+                gametype = GT_LCS;
                 break;
 
         case GAMES_TEAM_RACING:

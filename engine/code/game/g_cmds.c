@@ -69,7 +69,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		else
 			time = level.startRaceTime;
 */
-		if ( isRallyRace() || g_gametype.integer == GT_DERBY )
+		if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS )
 			time = level.startRaceTime;
 		else
 			time = cl->switchTeamTime;
@@ -648,7 +648,7 @@ void SetTeam( gentity_t *ent, const char *s ) {
 		specState = SPECTATOR_FREE;
 		specWilling = qfalse;
 	}
-	else if ((isRallyRace() || g_gametype.integer == GT_DERBY) && level.startRaceTime){
+	else if ((isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS) && level.startRaceTime){
 		trap_SendServerCommand( clientNum, "cp \"Cannot change teams\nduring a race.\n\"");
 		return; // dont allow any change except to spectator during a race.
 	}
