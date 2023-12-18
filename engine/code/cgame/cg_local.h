@@ -1800,11 +1800,6 @@ void CG_AddAtmosphericEffects( void );
 void CG_Atmospheric_SetParticles( int type, int numParticles, qboolean diableSplashes );
 
 //
-// cg_cameraposition.c
-//
-void CG_CameraPosition(void);
-
-//
 // cg_rally_scripted_objects.c
 //
 void CG_Scripted_Object( centity_t *cent );

@@ -1,43 +1,26 @@
-extern int cg_thirdPersonHeight;
-extern int cg_thirdPersonRange;
+#include "cg_local.h"
 
-void cg_cameraposition(void) {
-
-    switch(ui_cameraposition.integer) {
-
+void CG_CameraPosition(void) {
+    switch(cg_cameraposition.integer) {
         case 0:
-
-            // Default settings
-            cg_thirdPersonHeight = 170;
-            cg_thirdPersonRange = 60;
-
+            trap_Cvar_Set("cg_thirdPersonHeight", "60");
+            trap_Cvar_Set("cg_thirdPersonRange", "170");
             break;
-
         case 1:
-
-            cg_thirdPersonHeight = 30;
-            cg_thirdPersonRange = 0;
-
+            trap_Cvar_Set("cg_thirdPersonHeight", "30");
+            trap_Cvar_Set("cg_thirdPersonRange", "0");
             break;
-
         case 2:
-
-            // Set the values for mode 2
-
+            trap_Cvar_Set("cg_thirdPersonHeight", "30");
+            trap_Cvar_Set("cg_thirdPersonRange", "110");
             break;
-
         case 3:
-
-            // Set the values for mode 3
-
+            trap_Cvar_Set("cg_thirdPersonHeight", "500");
+            trap_Cvar_Set("cg_thirdPersonRange", "500");
             break;
-
         default:
-
-            // Handle invalid mode
-
+            trap_Cvar_Set("cg_thirdPersonHeight", "170");
+            trap_Cvar_Set("cg_thirdPersonRange", "60");
             break;
-
     }
-
 }

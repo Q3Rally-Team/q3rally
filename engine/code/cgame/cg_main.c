@@ -360,7 +360,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
-	{ &cg_atmosphericLevel, "cg_cameraposition", "0", CVAR_ARCHIVE },
+	{ &cg_cameraposition, "cg_cameraposition", "0", CVAR_ARCHIVE },
 	
 	{ &cg_developer, "developer", "0", 0 },
 
