@@ -2568,6 +2568,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/bg_lib.o \
   $(B)/$(BASEGAME)/cgame/bg_wheel_forces.o \
   $(B)/$(BASEGAME)/cgame/cg_atmospheric.o \
+  $(B)/$(BASEGAME)/cgame/cg_cameraposition.o \
   $(B)/$(BASEGAME)/cgame/cg_consolecmds.o \
   $(B)/$(BASEGAME)/cgame/cg_draw.o \
   $(B)/$(BASEGAME)/cgame/cg_drawtools.o \

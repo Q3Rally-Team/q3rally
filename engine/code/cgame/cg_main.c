@@ -260,6 +260,7 @@ vmCvar_t	cg_developer;
 
 // cutom variable used in modified atmospheric effects from q3f
 vmCvar_t	cg_atmosphericLevel;
+vmCvar_t	cg_cameraposition;
 
 vmCvar_t	cg_fpsLimit;
 vmCvar_t	cg_autodrop;
@@ -359,7 +360,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
-
+	{ &cg_atmosphericLevel, "cg_cameraposition", "0", CVAR_ARCHIVE },
+	
 	{ &cg_developer, "developer", "0", 0 },
 
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },

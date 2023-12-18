@@ -201,6 +201,7 @@ vmCvar_t	ui_minSkidLength;
 vmCvar_t	ui_drawRearView;
 vmCvar_t	ui_checkpointArrowMode;
 vmCvar_t	ui_atmosphericLevel;
+vmCvar_t	ui_cameraposition;
 vmCvar_t	ui_drawPositionSprites;
 vmCvar_t	ui_engineSounds;
 vmCvar_t    ui_drawMinimap;
@@ -304,6 +305,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
 	{ &ui_checkpointArrowMode, "cg_checkpointArrowMode", "2", CVAR_ARCHIVE },
 	{ &ui_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
+	{ &ui_cameraposition, "cg_cameraposition", "0", CVAR_ARCHIVE },
 	{ &ui_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
 	{ &ui_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
     { &ui_drawMinimap, "cg_drawMMap", "0", CVAR_ARCHIVE },

@@ -1432,6 +1432,7 @@ extern	vmCvar_t		cg_drawMMap; //TBB - minimap
 extern	vmCvar_t		cg_checkpointArrowMode;
 
 extern	vmCvar_t		cg_atmosphericLevel;
+extern	vmCvar_t		cg_cameraposition;
 extern	vmCvar_t		cg_developer;
 
 extern	vmCvar_t		cg_fpsLimit;
@@ -1791,13 +1792,17 @@ void CG_Respawn( void );
 void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops );
 void CG_CheckChangedPredictableEvents( playerState_t *ps );
 
-
 // Q3Rally Code Start
 //
 // cg_atmospheric.c
 //
 void CG_AddAtmosphericEffects( void );
 void CG_Atmospheric_SetParticles( int type, int numParticles, qboolean diableSplashes );
+
+//
+// cg_cameraposition.c
+//
+void CG_CameraPosition(void);
 
 //
 // cg_rally_scripted_objects.c

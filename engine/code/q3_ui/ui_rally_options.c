@@ -45,6 +45,7 @@ qboolean isRaceObserver( int clientNum )
 #define ID_RVRL_SMOKE           23
 #define ID_RVRL_MARKS           24
 #define ID_RVRL_SPARKS          25
+#define ID_CAMERA_POSITION      26
 
 #define ID_MVRL_PLAYERS         30
 #define ID_MVRL_OBJECTS         31
@@ -63,6 +64,7 @@ typedef struct {
 	menulist_s		arrowMode;
 	menulist_s		controlMode;
 	menulist_s		atomspheric;
+	menulist_s		camerapos;
 
 	menuradiobutton_s	manualShift;
 	menuradiobutton_s	rearView;
@@ -119,6 +121,14 @@ static const char *q3roptions_atmospheric[] = {
 	0
 };
 
+static const char *q3roptions_camera_position[] = {
+	"Normal",
+	"First Person",
+	"Need For Speed",
+	"Micro Machines",
+	0
+};
+
 
 /*
 =================
@@ -156,7 +166,9 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "cg_atmosphericLevel", s_q3roptions.atomspheric.curvalue );
 		break;
 
-
+	case ID_CAMERA_POSITION:
+		trap_Cvar_SetValue( "cg_cameraposition", s_q3roptions.camerapos.curvalue );
+		break;
 
 	case ID_MANUAL_SHIFT:
 		trap_Cvar_SetValue( "cg_manualShift", s_q3roptions.manualShift.curvalue );
@@ -260,6 +272,10 @@ static void Q3ROptions_StatusBar( void *self )
 	case ID_ATMOSPHERIC_LEVEL:
 		text = "Determines the relative number of environment particles to show.";
 		break;
+		
+	case ID_CAMERA_POSITION:
+		text = "Sets the position of the camera above the car.";
+		break;
 
 
 
@@ -353,6 +369,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.arrowMode.curvalue = ui_checkpointArrowMode.integer;
 	s_q3roptions.controlMode.curvalue = ui_controlMode.integer;
 	s_q3roptions.atomspheric.curvalue = ui_atmosphericLevel.integer;
+	s_q3roptions.camerapos.curvalue = ui_cameraposition.integer;
 
 	s_q3roptions.manualShift.curvalue = ui_manualShift.integer;
 	s_q3roptions.rearView.curvalue = ui_drawRearView.integer;
@@ -432,6 +449,16 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.atomspheric.generic.x			= 200;
 	s_q3roptions.atomspheric.generic.y			= 90 + 60;
 	s_q3roptions.atomspheric.itemnames			= q3roptions_atmospheric;
+	
+		s_q3roptions.camerapos.generic.type		= MTYPE_SPINCONTROL;
+	s_q3roptions.camerapos.generic.name		= "Car camera position:";
+	s_q3roptions.camerapos.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_q3roptions.camerapos.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.camerapos.generic.statusbar	= Q3ROptions_StatusBar;
+	s_q3roptions.camerapos.generic.id			= ID_CAMERA_POSITION;
+	s_q3roptions.camerapos.generic.x			= 200;
+	s_q3roptions.camerapos.generic.y			= 90 + 80;
+	s_q3roptions.camerapos.itemnames			= q3roptions_camera_position;
 
 
 
@@ -641,6 +668,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.arrowMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.controlMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.atomspheric );
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camerapos );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.manualShift );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rearView );

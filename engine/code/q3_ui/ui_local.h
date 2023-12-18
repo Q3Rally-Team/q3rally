@@ -143,6 +143,7 @@ extern vmCvar_t	ui_minSkidLength;
 extern vmCvar_t	ui_drawRearView;
 extern vmCvar_t	ui_checkpointArrowMode;
 extern vmCvar_t	ui_atmosphericLevel;
+extern vmCvar_t	ui_cameraposition;
 extern vmCvar_t	ui_drawPositionSprites;
 extern vmCvar_t	ui_engineSounds;
 extern vmCvar_t ui_drawMinimap;
