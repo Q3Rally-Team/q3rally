@@ -48,7 +48,7 @@ ifndef BUILD_AUTOUPDATER  # DON'T build unless you mean to!
 endif
 
 # ioquake3 git commit that this is based on
-IOQ3_REVISION = b1e6ef14
+IOQ3_REVISION = 972635ea
 
 #############################################################################
 #
@@ -1090,7 +1090,6 @@ endif
 
 ifneq ($(HAVE_VM_COMPILED),true)
   BASE_CFLAGS += -DNO_VM_COMPILED
-  BUILD_GAME_QVM=0
 endif
 
 TARGETS =
