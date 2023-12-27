@@ -2903,7 +2903,7 @@ static void CG_DrawAmmoWarning( void ) {
 	int			w;
 
 // Q3Rally Code Start
-	if (isRallyNonDMRace()){
+	if (isRallyNonDMRace() || cgs.gametype == GT_DERBY){
 		return;
 	}
 // Q3Rally Code END
