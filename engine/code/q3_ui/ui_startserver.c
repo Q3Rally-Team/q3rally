@@ -97,15 +97,14 @@ static startserver_t s_startserver;
 static const char *gametype_items[] = {
 	"Free For All",
 	"Team Deathmatch",
-	"Demolition Derby",
-	"Last Car Standing",
+	"Tournament",
 	"Capture the Flag",
 	0
 };
 
 // STONELANCE - removed gametype
 // static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_TOURNAMENT, GT_CTF};
-static int gametype_remap[] = {GT_RACING, GT_TEAM, GT_DERBY, GT_LCS, GT_CTF};
+static int gametype_remap[] = {GT_RACING, GT_TEAM, GT_DERBY, GT_CTF};
 // END
 static int gametype_remap2[] = {0, 2, 0, 1, 3};
 

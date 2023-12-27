@@ -436,7 +436,7 @@ void RallyStarter_Think( gentity_t *ent ){
 
 		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.wav") );
 
-		if (g_gametype.integer != GT_DERBY || g_gametype.integer != GT_LCS)
+		if (g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS)
 			ent->think = RallyRace_Think;
 	}
 	else if ( level.time > ent->pain_debounce_time + 4000 ){

@@ -148,7 +148,7 @@ static const char *gametype_items[] = {
 // STONELANCE
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
 static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_DERBY, GT_LCS, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_DOMINATION};
-static int gametype_remap2[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+static int gametype_remap2[] = {0, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9};
 
 int		allowLength[3];
 int		reversable;
@@ -2188,56 +2188,50 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		}
 	}
 
-// STONELANCE
-if( s_serveroptions.gametype == GT_DERBY || s_serveroptions.gametype == GT_LCS ) {
-    // Your code here
-}
-// END
+	// STONELANCE
+	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_DOMINATION ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
+	}
+	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
+	}
+	// END
 
-if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_DOMINATION 
-    && s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS ) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
-}
-else if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_DOMINATION ) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
-}
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
 
-Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
+	if( s_serveroptions.gametype >= GT_TEAM ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.friendlyfire );
+	}
 
-if( s_serveroptions.gametype >= GT_TEAM ) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.friendlyfire );
-}
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
 
-Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
+	// STONELANCE
+	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
+		|| s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
 
-// STONELANCE
-if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
-    || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
-    
+		if ( reversable )
+			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.reversed );
+	}
+	// END
 
-    if ( reversable )
-        Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.reversed );
-}
-// END
+	if( s_serveroptions.multiplayer ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dedicated );
+	}
 
-if( s_serveroptions.multiplayer ) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dedicated );
-}
+	if( s_serveroptions.multiplayer ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
+	}
 
-if( s_serveroptions.multiplayer ) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
-}
+	if (s_serveroptions.gametype == GT_DOMINATION) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationSpawnStyle );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.sigillocator );
+	}
 
-if (s_serveroptions.gametype == GT_DOMINATION) {
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationSpawnStyle );
-    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.sigillocator );
-}
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );
 
-Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
-Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );
-
-ServerOptions_SetMenuItems();
+	ServerOptions_SetMenuItems();
 }
 
 /*

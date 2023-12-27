@@ -417,7 +417,7 @@ static float CG_DrawTimes( float y ) {
 // Best Time
 //
   
-	if ( cgs.gametype != GT_DERBY || cgs.gametype != GT_LCS ){
+	if ( cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
 		time = getStringForTime( cent->bestLapTime );
 		
 		Com_sprintf(s, sizeof(s), "B: %s", time);
@@ -436,7 +436,7 @@ static float CG_DrawTimes( float y ) {
 
 	
 
-	if (cgs.gametype != GT_DERBY || cgs.gametype != GT_LCS ){
+	if ( cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
 		time = getStringForTime(lapTime);
 
 		Com_sprintf(s, sizeof(s), "L: %s", time);

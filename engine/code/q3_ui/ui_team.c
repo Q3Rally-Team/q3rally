@@ -210,11 +210,6 @@ void TeamMain_MenuInit( void ) {
 	case GT_RACING_DM:
 	case GT_DEATHMATCH:
 	case GT_DERBY:
-		s_teammain.joinred.generic.flags  |= QMF_GRAYED;
-		s_teammain.joinblue.generic.flags |= QMF_GRAYED;
-		s_teammain.joingreen.generic.flags  |= QMF_GRAYED;
-		s_teammain.joinyellow.generic.flags |= QMF_GRAYED;
-		break;
 	case GT_LCS:
 		s_teammain.joinred.generic.flags  |= QMF_GRAYED;
 		s_teammain.joinblue.generic.flags |= QMF_GRAYED;

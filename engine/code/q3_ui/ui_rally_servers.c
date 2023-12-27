@@ -200,7 +200,7 @@ static char* gamenames[] = {
         "Race DM",
         "SP ",
         "Derby",
-		"LCS ",
+        "LCS",
         "DM ",
         "TRace",
         "TRace DM",
