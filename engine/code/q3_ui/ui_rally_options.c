@@ -123,6 +123,7 @@ static const char *q3roptions_atmospheric[] = {
 
 static const char *q3roptions_camera_position[] = {
 	"Normal",
+	"Q3R Mod 2002",
 	"First Person",
 	"Need For Speed",
 	"Micro Machines",
