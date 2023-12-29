@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_lcs1"
+
+//IN-GAME MAP NAME
+longname "LCS TEST MAP"
+
+//AUTHOR OF THE MAP
+author "insellium"
+
+//GAME TYPE SUPPORTS
+type "q3r_lcs"
+
+//CUSTOM BOTS
+bots "Chloe Jim Zack Paul Tobias Josh Tony Steve Paul Tanya Kuro"
+
+//PLAYER STARTS
+starts "Too many"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots " "
+
+//WEAPONS
+weapons "All"
+
+//POWERUPS
+powerups "No"
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport "Bad"
+
+//TEAMS
+teams "0"
+}
