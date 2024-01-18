@@ -27,13 +27,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 void CG_DrawCheckpointLinks(void)
 {
 	int			i, j;
-	centity_t	*cents[40];
+	centity_t	*cents[100];
 	qboolean	checkpointFound;
 	int			numCheckpoints = 0;
 	vec3_t		handle;
 
-	// FIXME: max of 40 checkpoints
-	for (i = 0; i < 40; i++)
+	// Checkpoint limit
+	for (i = 0; i < 100; i++)
 	{
 		checkpointFound = qfalse;
 		for (j = 0; j < MAX_GENTITIES; j++)

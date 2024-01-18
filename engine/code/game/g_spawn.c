@@ -701,7 +701,7 @@ void SP_worldspawn( void ) {
 
 // STONELANCE
 //	G_SpawnString( "gravity", "800", &s );
-	G_SpawnString( "gravity", "1100", &s );
+	G_SpawnString( "gravity", "1400", &s );
 // END
 	trap_Cvar_Set( "g_gravity", s );
 
