@@ -36,14 +36,6 @@ void CG_CheckAmmo( void ) {
 	int		previous;
 	int		weapons;
 
-// Q3Rally Code Start
-	if ( cg.snap->ps.weapon == WP_NONE ||
-		 cg.snap->ps.weapon == WP_GAUNTLET ) {
-		cg.lowAmmoWarning = 0;
-		return;
-	}
-// Q3Rally Code END
-
 	// see about how many seconds of ammo we have remaining
 	weapons = cg.snap->ps.stats[ STAT_WEAPONS ];
 	total = 0;
