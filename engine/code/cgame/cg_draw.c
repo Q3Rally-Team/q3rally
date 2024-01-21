@@ -42,6 +42,8 @@ char systemChat[256];
 char teamChat1[256];
 char teamChat2[256];
 
+static void CG_DrawRallyPowerups( void );
+
 #ifdef MISSIONPACK
 
 int CG_Text_Width(const char *text, float scale, int limit) {
@@ -838,6 +840,8 @@ static void CG_DrawRallyStatusBar( void ) {
 					   healthModel, 0, origin, angles );
 	}
 
+	CG_DrawRallyPowerups();
+
 	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
 		CG_DrawStatusBarFlag( 495, TEAM_RED);
 	else if (cg.predictedPlayerState.powerups[PW_BLUEFLAG])
@@ -1093,7 +1097,7 @@ static float CG_DrawPowerups( float y ) {
 CG_DrawRallyPowerups
 ====================
 */
-static float CG_DrawRallyPowerups( float y ) {
+static void CG_DrawRallyPowerups( void ) {
 	int		sorted[MAX_POWERUPS];
 	int		sortedTime[MAX_POWERUPS];
 	int		i, j, k;
@@ -1114,7 +1118,7 @@ static float CG_DrawRallyPowerups( float y ) {
 	ps = &cg.snap->ps;
 
 	if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		return y;
+		return;
 	}
 
 	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
@@ -1181,10 +1185,10 @@ static float CG_DrawRallyPowerups( float y ) {
 
 		color = 1;
 
-		CG_FillRect( 402, 476 - 28, 90, 24, bg_color );
+		CG_FillRect( 402, 476 - 30, 90, 24, bg_color );
 
 		trap_R_SetColor( colors[color] );
-		CG_DrawField( 424 + CHAR_WIDTH, 476 - 26, 2, sortedTime[ i ] / 1000 );
+		CG_DrawField( 424 + CHAR_WIDTH, 476 - 28, 2, sortedTime[ i ] / 1000 );
 
 		t = ps->powerups[ sorted[i] ];
 		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
@@ -1211,13 +1215,9 @@ static float CG_DrawRallyPowerups( float y ) {
 			size = 19;
 		}
 
-		CG_DrawPic( 408, 476 - 25, size, size, trap_R_RegisterShader( item->icon ) );
-
-//		y -= 36;
+		CG_DrawPic( 408, 476 - 27, size, size, trap_R_RegisterShader( item->icon ) );
 	}
 	trap_R_SetColor( NULL );
-
-	return y;
 }
 #endif // MISSIONPACK
 // Q3Rally Code END
@@ -1845,8 +1845,6 @@ static void CG_DrawLowerRight( void ) {
 
 	if ( isRaceObserver( cg.snap->ps.clientNum ) )
 		return;
-
-	CG_DrawRallyPowerups( 476 );
 
 	y = CG_DrawLowerRightHUD( y );
 
