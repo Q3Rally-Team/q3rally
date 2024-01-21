@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // A user mod should never modify this file
 
 #ifdef STANDALONE
-  #define PRODUCT_NAME				"Q3Rally"
+  #define PRODUCT_NAME				"Q3Rally Standalone"
   #define BASEGAME					"baseq3r"
-  #define CLIENT_WINDOW_TITLE     	"Q3Rally"
+  #define CLIENT_WINDOW_TITLE     	"Q3Rally Standalone (Classic)"
   #define CLIENT_WINDOW_MIN_TITLE 	"Q3R"
   #define HOMEPATH_NAME_UNIX		".q3rally"
   #define HOMEPATH_NAME_WIN			"Q3Rally"
@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.5_r591"
+#define PRODUCT_VERSION "v0.5 Classic (r594)"
 #endif
 
 
