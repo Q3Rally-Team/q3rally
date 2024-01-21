@@ -785,7 +785,7 @@ static void CG_DrawRallyStatusBar( void ) {
 
 	// draw ammo background
 	value = ps->ammo[cent->currentState.weapon];
-	if ( value > -1 )
+	if ( cent->currentState.weapon && value > -1 )
 		CG_FillRect( 20, 476 - 30, 90, 24, bg_color );
 
 	// health background
