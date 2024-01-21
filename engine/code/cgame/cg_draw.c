@@ -748,6 +748,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		return;
 	}
 
+	CG_SetScreenPlacement(PLACE_CENTER, PLACE_BOTTOM);
 
 // draw the dtf sigils
 
