@@ -1964,7 +1964,7 @@ void Cmd_SaveBPoints_f( gentity_t *other )
 	Com_Printf( "Writing out bezier path information to: '%s'\n", buffer );
 	trap_FS_FOpenFile( buffer, &f, FS_WRITE );
 
-	for (i = 1; i < 40; i++)
+	for (i = 1; i < 100; i++)
 	{
 		ent = NULL;
 		while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
