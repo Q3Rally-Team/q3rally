@@ -323,6 +323,7 @@ typedef struct {
 	qboolean	teamInfo;			// send team overlay updates?
 // STONELANCE
 	int			controlMode;		// control mode
+    int         autoDrop;           // autodrop
 	qboolean	manualShift;		// shift manually?
 // END
 } clientPersistant_t;

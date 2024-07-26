@@ -529,7 +529,7 @@ void UI_MainMenu( void ) {
         s_main.banner.generic.flags                     = QMF_INACTIVE;
         s_main.banner.generic.x                         = 320;
         s_main.banner.generic.y                         = 17;
-        s_main.banner.string                            = "Q3RALLY STANDALONE";
+        s_main.banner.string                            = "Q3RALLY";
         s_main.banner.color                             = text_color_normal;
         s_main.banner.style                             = UI_CENTER|UI_DROPSHADOW;
 

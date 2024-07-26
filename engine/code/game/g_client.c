@@ -1012,16 +1012,15 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 #endif
 
-// STONELANCE
-	// UPDATE: enable this
-/*
+// P3rlE
+	// UPDATE: Tryout Autodrop
+
 	s = Info_ValueForKey( userinfo, "cg_autodrop" );
 	if ( ! *s || atoi( s ) != 0 ) {
 		client->pers.autoDrop = qtrue;
 	} else {
 		client->pers.autoDrop = qfalse;
 	}
-*/
 
 	s = Info_ValueForKey( userinfo, "cg_controlMode" );
 	if ( *s ) {

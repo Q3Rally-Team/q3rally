@@ -444,10 +444,10 @@ Touch_Item
 ===============
 */
 void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
-	int			respawn;
+    int			respawn;
 	qboolean	predict;
 // Q3Rally Code Start
-//	int			i;
+	int			i;
 // Q3Rally Code END
 
 	if (!other->client)
@@ -458,7 +458,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 // STONELANCE
 	// FIXME: implement autoDrop
 	// autoDrop old weapon
-/*
+
 	if ( ent->item->giType == IT_RFWEAPON && other->client->pers.autoDrop ){
 		for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
 			if (ent->item->giTag == i) continue;
@@ -473,7 +473,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 			}
 		}
 	}
-*/
+
 // END
 
 	// the same pickup rules are used for client side and server side
