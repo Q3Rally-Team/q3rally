@@ -1128,8 +1128,8 @@ void FireWeapon( gentity_t *ent ) {
 
 		trap_Trace( &tr, tr.endpos, mins, maxs, end, entNumber, CONTENTS_PLAYERCLIP | CONTENTS_BODY );
 	}
-
-	if ( count == 10000 ){
+// tryout r604
+	if ( count == 100000 ){
 		Com_Printf( "Detected long loop in verticle autoaiming\n" );
 		Com_Printf( "fraction %f, startsolid %i, contents %i, entityNum %i\n", tr.fraction, tr.startsolid, tr.contents, tr.entityNum );
 	}
@@ -1272,8 +1272,8 @@ void FireAltWeapon( gentity_t *ent ) {
 
 		trap_Trace( &tr, tr.endpos, mins, maxs, end, entNumber, CONTENTS_PLAYERCLIP | CONTENTS_BODY );
 	}
-
-	if ( count == 10000 ){
+// tryout r604
+	if ( count == 100000 ){
 		Com_Printf( "Detected long loop in verticle autoaiming\n" );
 		Com_Printf( "fraction %f, startsolid %i, contents %i, entityNum %i\n", tr.fraction, tr.startsolid, tr.contents, tr.entityNum );
 	}
