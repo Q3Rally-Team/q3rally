@@ -827,6 +827,8 @@ typedef struct {
 
 	qhandle_t	redFlagFlapSkin;
 	qhandle_t	blueFlagFlapSkin;
+    qhandle_t   greenFlagFlapSkin;
+    qhandle_t   yellowFlagFlapSkin;
 	qhandle_t	neutralFlagFlapSkin;
 
 	qhandle_t	redFlagBaseModel;

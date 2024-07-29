@@ -143,6 +143,20 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 		else {
 			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_BLUE, qfalse );
 		}
+    } else if ( ci->powerups & ( 1 << PW_GREENFLAG ) ) {
+		if( largeFormat ) {
+			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, TEAM_GREEN, qfalse );
+		}
+		else {
+			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_GREEN, qfalse );
+		}
+    } else if ( ci->powerups & ( 1 << PW_YELLOWFLAG ) ) {
+		if( largeFormat ) {
+			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, TEAM_YELLOW, qfalse );
+		}
+		else {
+			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_YELLOW, qfalse );
+		}
 	}
 // STONELANCE - draw flag beside winner
 	else if (cg_entities[score->client].finishRaceTime &&
