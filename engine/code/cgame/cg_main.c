@@ -2203,7 +2203,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	cg.weaponSelect = WP_MACHINEGUN;
 
-	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
+	cgs.redflag = cgs.blueflag = cgs.greenflag = cgs.yellowflag = -1; // For compatibily, default to unset for
 	cgs.flagStatus = -1;
 // Q3Rally Code Start
 	for ( i = 0; i < MAX_SIGILS; i++ ) {
