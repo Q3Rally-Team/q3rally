@@ -457,12 +457,6 @@ void Team_CheckDroppedItem( gentity_t *dropped ) {
 	else if( dropped->item->giTag == PW_BLUEFLAG ) {
 		Team_SetFlagStatus( TEAM_BLUE, FLAG_DROPPED );
 	}
-    else if( dropped->item->giTag == PW_GREENFLAG ) {
-		Team_SetFlagStatus( TEAM_GREEN, FLAG_DROPPED );
-	}
-    else if( dropped->item->giTag == PW_YELLOWFLAG ) {
-		Team_SetFlagStatus( TEAM_YELLOW, FLAG_DROPPED );
-	}
 	else if( dropped->item->giTag == PW_NEUTRALFLAG ) {
 		Team_SetFlagStatus( TEAM_FREE, FLAG_DROPPED );
 	}
@@ -713,17 +707,10 @@ void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 	if (!targ->client || !attacker->client)
 		return;
 
-	if (targ->client->sess.sessionTeam == TEAM_RED || targ->client->sess.sessionTeam == TEAM_GREEN || targ->client->sess.sessionTeam == TEAM_YELLOW)
+	if (targ->client->sess.sessionTeam == TEAM_RED)
 		flag_pw = PW_BLUEFLAG;
-	else if
-		(targ->client->sess.sessionTeam == TEAM_BLUE || targ->client->sess.sessionTeam == TEAM_GREEN || targ->client->sess.sessionTeam == TEAM_YELLOW)
-        flag_pw = PW_REDFLAG;
-    else if
-		(targ->client->sess.sessionTeam == TEAM_GREEN || targ->client->sess.sessionTeam == TEAM_RED || targ->client->sess.sessionTeam == TEAM_BLUE)
-        flag_pw = PW_YELLOWFLAG;
-    else if
-		(targ->client->sess.sessionTeam == TEAM_BLUE || targ->client->sess.sessionTeam == TEAM_RED || targ->client->sess.sessionTeam == TEAM_YELLOW)
-        flag_pw = PW_GREENFLAG;
+	else
+		flag_pw = PW_REDFLAG;
 
 #ifdef MISSIONPACK
 	if (g_gametype.integer == GT_1FCTF) {
@@ -878,13 +865,7 @@ void Team_FreeEntity( gentity_t *ent ) {
 	}
 	else if( ent->item->giTag == PW_BLUEFLAG ) {
 		Team_ReturnFlag( TEAM_BLUE );
-    }
-    else if( ent->item->giTag == PW_GREENFLAG ) {
-		Team_ReturnFlag( TEAM_GREEN );
 	}
-    else if( ent->item->giTag == PW_YELLOWFLAG ) {
-		Team_ReturnFlag( TEAM_YELLOW );
-    }
 	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
 		Team_ReturnFlag( TEAM_FREE );
 	}
@@ -907,12 +888,6 @@ void Team_DroppedFlagThink(gentity_t *ent) {
 	}
 	else if( ent->item->giTag == PW_BLUEFLAG ) {
 		team = TEAM_BLUE;
-	}
-    else if( ent->item->giTag == PW_GREENFLAG ) {
-		team = TEAM_GREEN;
-	}
-    else if( ent->item->giTag == PW_YELLOWFLAG ) {
-		team = TEAM_YELLOW;
 	}
 	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
 		team = TEAM_FREE;
@@ -940,19 +915,12 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 	}
 	else {
 #endif
-	if (cl->sess.sessionTeam == TEAM_RED || cl->sess.sessionTeam == TEAM_GREEN || cl->sess.sessionTeam == TEAM_YELLOW) {
+	if (cl->sess.sessionTeam == TEAM_RED) {
 		enemy_flag = PW_BLUEFLAG;
-	} 
-    else if (cl->sess.sessionTeam == TEAM_RED || cl->sess.sessionTeam == TEAM_BLUE || cl->sess.sessionTeam == TEAM_GREEN) {
-		enemy_flag = PW_YELLOWFLAG;
-	}
-    else if (cl->sess.sessionTeam == TEAM_BLUE || cl->sess.sessionTeam == TEAM_GREEN || cl->sess.sessionTeam == TEAM_YELLOW) {
+	} else {
 		enemy_flag = PW_REDFLAG;
-    }
-    else if (cl->sess.sessionTeam == TEAM_RED || cl->sess.sessionTeam == TEAM_BLUE || cl->sess.sessionTeam == TEAM_YELLOW) {
-		enemy_flag = PW_GREENFLAG;
-    }
-    
+	}
+
 	if ( ent->flags & FL_DROPPED_ITEM ) {
 		// hey, it's not home.  return it by teleporting it back
 		PrintMsg( NULL, "%s" S_COLOR_WHITE " returned the %s flag!\n", 
@@ -1075,12 +1043,8 @@ int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, int team ) {
 
 		if (team == TEAM_RED)
 			cl->ps.powerups[PW_REDFLAG] = INT_MAX; // flags never expire
-		else if (team == TEAM_BLUE)
+		else
 			cl->ps.powerups[PW_BLUEFLAG] = INT_MAX; // flags never expire
-        else if (team == TEAM_GREEN)
-			cl->ps.powerups[PW_GREENFLAG] = INT_MAX; // flags never expire
-        else if (team == TEAM_YELLOW)
-			cl->ps.powerups[PW_YELLOWFLAG] = INT_MAX; // flags never expire
 
 		Team_SetFlagStatus( team, FLAG_TAKEN );
 #ifdef MISSIONPACK

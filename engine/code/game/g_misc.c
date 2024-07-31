@@ -479,14 +479,6 @@ static void PortalTouch( gentity_t *self, gentity_t *other, trace_t *trace) {
 		Drop_Item( other, BG_FindItemForPowerup( PW_BLUEFLAG ), 0 );
 		other->client->ps.powerups[PW_BLUEFLAG] = 0;
 	}
-    else if ( other->client->ps.powerups[PW_GREENFLAG] ) {	// only happens in standard CTF
-		Drop_Item( other, BG_FindItemForPowerup( PW_GREENFLAG ), 0 );
-		other->client->ps.powerups[PW_GREENFLAG] = 0;
-	}
-    else if ( other->client->ps.powerups[PW_YELLOWFLAG] ) {	// only happens in standard CTF
-		Drop_Item( other, BG_FindItemForPowerup( PW_YELLOWFLAG ), 0 );
-		other->client->ps.powerups[PW_YELLOWFLAG] = 0;
-	}
 
 	// find the destination
 	destination = NULL;

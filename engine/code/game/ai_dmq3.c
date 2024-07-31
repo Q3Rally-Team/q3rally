@@ -135,8 +135,6 @@ int BotCTFCarryingFlag(bot_state_t *bs) {
 
 	if (bs->inventory[INVENTORY_REDFLAG] > 0) return CTF_FLAG_RED;
 	else if (bs->inventory[INVENTORY_BLUEFLAG] > 0) return CTF_FLAG_BLUE;
-    else if (bs->inventory[INVENTORY_GREENFLAG] > 0) return CTF_FLAG_GREEN;
-    else if (bs->inventory[INVENTORY_YELLOWFLAG] > 0) return CTF_FLAG_YELLOW;
 	return CTF_FLAG_NONE;
 }
 
@@ -230,10 +228,6 @@ qboolean EntityCarriesFlag(aas_entityinfo_t *entinfo) {
 	if ( entinfo->powerups & ( 1 << PW_REDFLAG ) )
 		return qtrue;
 	if ( entinfo->powerups & ( 1 << PW_BLUEFLAG ) )
-		return qtrue;
-    if ( entinfo->powerups & ( 1 << PW_GREENFLAG ) )
-		return qtrue;
-    if ( entinfo->powerups & ( 1 << PW_YELLOWFLAG ) )
 		return qtrue;
 #ifdef MISSIONPACK
 	if ( entinfo->powerups & ( 1 << PW_NEUTRALFLAG ) )
@@ -1805,8 +1799,6 @@ void BotUpdateInventory(bot_state_t *bs) {
 #endif
 	bs->inventory[INVENTORY_REDFLAG] = bs->cur_ps.powerups[PW_REDFLAG] != 0;
 	bs->inventory[INVENTORY_BLUEFLAG] = bs->cur_ps.powerups[PW_BLUEFLAG] != 0;
-    bs->inventory[INVENTORY_GREENFLAG] = bs->cur_ps.powerups[PW_GREENFLAG] != 0;
-    bs->inventory[INVENTORY_YELLOWFLAG] = bs->cur_ps.powerups[PW_YELLOWFLAG] != 0;
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_NEUTRALFLAG] = bs->cur_ps.powerups[PW_NEUTRALFLAG] != 0;
 	if (BotTeam(bs) == TEAM_RED) {

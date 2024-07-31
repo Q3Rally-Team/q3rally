@@ -25,66 +25,64 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //armor
 #define INVENTORY_ARMOR				            1
 //weapons
-#define INVENTORY_GAUNTLET			            4
+#define INVENTORY_GAUNTLET			          4
 #define INVENTORY_SHOTGUN			            5
-#define INVENTORY_MACHINEGUN		            6
-#define INVENTORY_GRENADELAUNCHER	            7
-#define INVENTORY_ROCKETLAUNCHER	            8
-#define INVENTORY_LIGHTNING			            9
-#define INVENTORY_RAILGUN			           10
-#define INVENTORY_PLASMAGUN			           11
-#define INVENTORY_BFG10K			           12
-#define INVENTORY_GRAPPLINGHOOK		           13
-#define INVENTORY_NAILGUN			           14
-#define INVENTORY_PROXLAUNCHER		           15
-#define INVENTORY_CHAINGUN			           16
-#define INVENTORY_FLAMETHROWER                 17 // rally
+#define INVENTORY_MACHINEGUN		          6
+#define INVENTORY_GRENADELAUNCHER	        7
+#define INVENTORY_ROCKETLAUNCHER	        8
+#define INVENTORY_LIGHTNING			          9
+#define INVENTORY_RAILGUN			            10
+#define INVENTORY_PLASMAGUN			          11
+#define INVENTORY_BFG10K			            12
+#define INVENTORY_GRAPPLINGHOOK		        13
+#define INVENTORY_NAILGUN			            14
+#define INVENTORY_PROXLAUNCHER		        15
+#define INVENTORY_CHAINGUN			          16
+#define INVENTORY_FLAMETHROWER            17 // rally
 //ammo
-#define INVENTORY_SHELLS			           18
-#define INVENTORY_BULLETS			           19
-#define INVENTORY_GRENADES			           20
-#define INVENTORY_CELLS				           21
-#define INVENTORY_LIGHTNINGAMMO		           22
-#define INVENTORY_ROCKETS			           23
-#define INVENTORY_SLUGS				           24
-#define INVENTORY_BFGAMMO			           25
-#define INVENTORY_FLAMETHROWERAMMO             26 // rally
-#define INVENTORY_NAILS				           27
-#define INVENTORY_MINES				           28
-#define INVENTORY_BELT				           29
+#define INVENTORY_SHELLS			            18
+#define INVENTORY_BULLETS			            19
+#define INVENTORY_GRENADES			          20
+#define INVENTORY_CELLS				            21
+#define INVENTORY_LIGHTNINGAMMO		        22
+#define INVENTORY_ROCKETS			            23
+#define INVENTORY_SLUGS				            24
+#define INVENTORY_BFGAMMO			            25
+#define INVENTORY_FLAMETHROWERAMMO        26 // rally
+#define INVENTORY_NAILS				            27
+#define INVENTORY_MINES				            28
+#define INVENTORY_BELT				            29
 //powerups
-#define INVENTORY_HEALTH			           30
-#define INVENTORY_TELEPORTER		           31
-#define INVENTORY_MEDKIT			           32
-#define INVENTORY_TURBO				           33 // rally
-#define INVENTORY_KAMIKAZE			           34
-#define INVENTORY_PORTAL			           35
-#define INVENTORY_INVULNERABILITY	           36
-#define INVENTORY_QUAD				           37
-#define INVENTORY_ENVIRONMENTSUIT	           38
-#define INVENTORY_HASTE				           39
-#define INVENTORY_INVISIBILITY		           40
-#define INVENTORY_REGEN				           41
+#define INVENTORY_HEALTH			            30
+#define INVENTORY_TELEPORTER		          31
+#define INVENTORY_MEDKIT			            32
+#define INVENTORY_TURBO				            33 // rally
+#define INVENTORY_KAMIKAZE			          34
+#define INVENTORY_PORTAL			            35
+#define INVENTORY_INVULNERABILITY	        36
+#define INVENTORY_QUAD				            37
+#define INVENTORY_ENVIRONMENTSUIT	        38
+#define INVENTORY_HASTE				            39
+#define INVENTORY_INVISIBILITY		        40
+#define INVENTORY_REGEN				            41
 //#define INVENTORY_FLIGHT
-#define INVENTORY_SHIELD			           42 // rally
+#define INVENTORY_SHIELD			            42 // rally
 //missionpack
-#define INVENTORY_SCOUT				           43
-#define INVENTORY_GUARD				           44
-#define INVENTORY_DOUBLER			           45
-#define INVENTORY_AMMOREGEN			           46
-#define INVENTORY_REDFLAG			           47
-#define INVENTORY_BLUEFLAG			           48
-#define INVENTORY_GREENFLAG                    49
-#define INVENTORY_YELLOWFLAG                   50
-#define INVENTORY_NEUTRALFLAG		           51
-#define INVENTORY_REDCUBE			           52
-#define INVENTORY_BLUECUBE			           53
+#define INVENTORY_SCOUT				            43
+#define INVENTORY_GUARD				            44
+#define INVENTORY_DOUBLER			            45
+#define INVENTORY_AMMOREGEN			          46
+#define INVENTORY_REDFLAG			            47
+#define INVENTORY_BLUEFLAG			          48
+#define INVENTORY_NEUTRALFLAG		          49
+#define INVENTORY_REDCUBE			            50
+#define INVENTORY_BLUECUBE			          51
 //rally rearfire weapons
-#define INVENTORY_RWP_SMOKE                    54
-#define INVENTORY_RWP_OIL                      55
-#define INVENTORY_RWP_MINE                     56
-#define INVENTORY_RWP_FLAME                    57
-#define INVENTORY_RWP_BIO                      58
+#define INVENTORY_RWP_SMOKE               52
+#define INVENTORY_RWP_OIL                 53
+#define INVENTORY_RWP_MINE                54
+#define INVENTORY_RWP_FLAME               55
+#define INVENTORY_RWP_BIO                 56
 //enemy stuff
 #define ENEMY_HORIZONTAL_DIST		          200
 #define ENEMY_HEIGHT				              201

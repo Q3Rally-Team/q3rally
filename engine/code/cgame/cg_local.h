@@ -827,8 +827,6 @@ typedef struct {
 
 	qhandle_t	redFlagFlapSkin;
 	qhandle_t	blueFlagFlapSkin;
-    qhandle_t   greenFlagFlapSkin;
-    qhandle_t   yellowFlagFlapSkin;
 	qhandle_t	neutralFlagFlapSkin;
 
 	qhandle_t	redFlagBaseModel;
@@ -1244,7 +1242,7 @@ typedef struct {
 // Q3Rally Code Start
 	int				scores3, scores4;		// from configstrings
 // Q3Rally Code END
-	int				redflag, blueflag, greenflag, yellowflag;		// flag status from configstrings
+	int				redflag, blueflag;		// flag status from configstrings
 	int				flagStatus;
     int             sigil[MAX_SIGILS];
 	qboolean  newHud;

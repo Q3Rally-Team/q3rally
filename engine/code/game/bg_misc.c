@@ -881,40 +881,7 @@ Only in CTF games
 /* precache */ "",
 /* sounds */ ""
 	},
-    
-/*QUAKED team_CTF_greenflag (0 1 0) (-16 -16 -16) (16 16 16)
-Only in CTF games
-*/
-	{
-		"team_CTF_greenflag",
-		NULL,
-        { "models/flags/b_flag.md3",
-		NULL, NULL, NULL },
-/* icon */		"icons/iconf_green1",
-/* pickup */	"Green Flag",
-		0,
-		IT_TEAM,
-		PW_GREENFLAG,
-/* precache */ "",
-/* sounds */ ""
-	},
 
-/*QUAKED team_CTF_yellowflag (1 1 0) (-16 -16 -16) (16 16 16)
-Only in CTF games
-*/
-	{
-		"team_CTF_yellowflag",
-		NULL,
-        { "models/flags/b_flag.md3",
-		NULL, NULL, NULL },
-/* icon */		"icons/iconf_yell1",
-/* pickup */	"Yellow Flag",
-		0,
-		IT_TEAM,
-		PW_YELLOWFLAG,
-/* precache */ "",
-/* sounds */ ""
-	},
 // Q3Rally Code Start
 	
 /*QUAKED team_DOMINATION_sigil_red
@@ -1538,28 +1505,12 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 					(item->giTag == PW_REDFLAG && ent->modelindex2) ||
 					(item->giTag == PW_REDFLAG && ps->powerups[PW_BLUEFLAG]) )
 					return qtrue;
-			}
-            
-            else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
+			} else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
 				if (item->giTag == PW_REDFLAG ||
 					(item->giTag == PW_BLUEFLAG && ent->modelindex2) ||
 					(item->giTag == PW_BLUEFLAG && ps->powerups[PW_REDFLAG]) )
 					return qtrue;
 			}
-            
-            else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
-				if (item->giTag == PW_REDFLAG ||
-					(item->giTag == PW_BLUEFLAG && ent->modelindex2) ||
-					(item->giTag == PW_BLUEFLAG && ps->powerups[PW_REDFLAG]) )
-					return qtrue;
-            }
-            
-            else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
-				if (item->giTag == PW_REDFLAG ||
-					(item->giTag == PW_BLUEFLAG && ent->modelindex2) ||
-					(item->giTag == PW_BLUEFLAG && ps->powerups[PW_REDFLAG]) )
-					return qtrue;
-            }
 		}
 
 #ifdef MISSIONPACK
