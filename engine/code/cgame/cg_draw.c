@@ -1343,7 +1343,7 @@ static float CG_DrawFPS( float y ) {
 		s = va( "%ifps", fps );
 		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 
-		CG_DrawBigString( 635 - w, y + 2, s, 1.0F);
+		CG_DrawBigString( 622 - w, 355 + 2, s, 1.0F);
 	}
 
 	return y + BIGCHAR_HEIGHT + 4;
@@ -1625,9 +1625,9 @@ float CG_DrawScores( float x, float y ) {
 	if ( cgs.gametype >= GT_TEAM ) {
 
 		CG_FillRect( x - 80, y, 96, 18, bgColor );
-
-        if (cgs.gametype >= GT_TEAM){
-			// draw yellow
+			
+            // draw yellow
+            
 			color[0] = 1.0f;
 			color[1] = 1.0f;
 			color[2] = 0.0f;
@@ -1641,7 +1641,23 @@ float CG_DrawScores( float x, float y ) {
 			}
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
 
+            if ( cgs.gametype == GT_CTF ) {
+			         // Display yellow flag status
+			         item = BG_FindItemForPowerup( PW_YELLOWFLAG );
+
+			if (item) {
+
+			     	y1 = y + TINYCHAR_HEIGHT + 8;		
+				    if( cgs.yellowflag >= 0 && cgs.yellowflag <= 2 ) {
+
+					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.yellowFlagShader[cgs.yellowflag] );
+
+				     } 
+			     }
+		    }
+
 			// draw green
+            
 			color[0] = 0.0f;
 			color[1] = 1.0f;
 			color[2] = 0.0f;
@@ -1654,71 +1670,84 @@ float CG_DrawScores( float x, float y ) {
 				CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
 			}
 			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-		}
 
-		color[0] = 0.0f;
-		color[1] = 0.0f;
-		color[2] = 1.0f;
-		color[3] = 0.33f;
-		s = va( "%2i", s2 );
-		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-		x -= w;
-        
-		CG_FillRect( x+1, y+1, w-2, 16, color );
-		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-			CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-
-		}
-
-		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-
-		if ( cgs.gametype == GT_CTF ) {
-			// Display flag status
-			item = BG_FindItemForPowerup( PW_BLUEFLAG );
+            if ( cgs.gametype == GT_CTF ) {
+			         // Display green flag status
+			         item = BG_FindItemForPowerup( PW_GREENFLAG );
 
 			if (item) {
 
-				y1 = y + TINYCHAR_HEIGHT + 8;		
-				if( cgs.blueflag >= 0 && cgs.blueflag <= 2 ) {
+			     	y1 = y + TINYCHAR_HEIGHT + 8;		
+				    if( cgs.greenflag >= 0 && cgs.greenflag <= 2 ) {
+
+					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.greenFlagShader[cgs.greenflag] );
+
+				     } 
+			     }
+		    }
+
+            // draw blue
+             
+		    color[0] = 0.0f;
+		    color[1] = 0.0f;
+		    color[2] = 1.0f;
+		    color[3] = 0.33f;
+		    s = va( "%2i", s2 );
+		    w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
+		    x -= w;
+            CG_FillRect( x+1, y+1, w-2, 16, color );
+		    if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
+			    CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
+            }
+            CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
+
+		    if ( cgs.gametype == GT_CTF ) {
+			         // Display blue flag status
+			         item = BG_FindItemForPowerup( PW_BLUEFLAG );
+
+			if (item) {
+
+				    y1 = y + TINYCHAR_HEIGHT + 8;		
+				    if( cgs.blueflag >= 0 && cgs.blueflag <= 2 ) {
 
 					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.blueFlagShader[cgs.blueflag] );
 
-				}
-			}
-		}
+				     }
+			     }
+		    }
+            
+            // draw red
 
-		color[0] = 1.0f;
-		color[1] = 0.0f;
-		color[2] = 0.0f;
-		color[3] = 0.33f;
-		s = va( "%2i", s1 );
-		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-		x -= w;
+		    color[0] = 1.0f;
+		    color[1] = 0.0f;
+		    color[2] = 0.0f;
+		    color[3] = 0.33f;
+		    s = va( "%2i", s1 );
+		    w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
+		    x -= w;
+            CG_FillRect( x+1, y+1, w-2, 16, color );
+		    if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED ) {
+                CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
+		    }
+            CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
 
-		CG_FillRect( x+1, y+1, w-2, 16, color );
-		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED ) {
-
-			CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-
-		}
-
-		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-
-		if ( cgs.gametype == GT_CTF ) {
-			// Display flag status
-			item = BG_FindItemForPowerup( PW_REDFLAG );
+		    if ( cgs.gametype == GT_CTF ) {
+			         // Display red flag status
+			         item = BG_FindItemForPowerup( PW_REDFLAG );
 
 			if (item) {
 
-				y1 = y + TINYCHAR_HEIGHT + 8;
+				    y1 = y + TINYCHAR_HEIGHT + 8;
+                    if( cgs.redflag >= 0 && cgs.redflag <= 2 ) {
 
-				if( cgs.redflag >= 0 && cgs.redflag <= 2 ) {
+                    CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.redFlagShader[cgs.redflag] );
+                    
+				     }
+			     }
+		    }
 
-
-				}
-			}
-		}
-
+        
+        
 #ifdef MISSIONPACK
 		if ( cgs.gametype == GT_1FCTF ) {
 			// Display flag status
