@@ -1130,6 +1130,8 @@ static void CG_RegisterGraphics( void ) {
 
 		cgs.media.redFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/red.skin" );
 		cgs.media.blueFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/blue.skin" );
+        cgs.media.greenFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/green.skin" );
+        cgs.media.yellowFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/yellow.skin" );
 		cgs.media.neutralFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/white.skin" );
 
 		cgs.media.redFlagBaseModel = trap_R_RegisterModel( "models/mapobjects/flagbase/red_base.md3" );
@@ -1910,6 +1912,10 @@ static const char *CG_FeederItemText(float feederID, int index, int column, qhan
 		team = TEAM_RED;
 	} else if (feederID == FEEDER_BLUETEAM_LIST) {
 		team = TEAM_BLUE;
+    } else if (feederID == FEEDER_GREENTEAM_LIST) {
+		team = TEAM_GREEN;
+    } else if (feederID == FEEDER_YELLOWTEAM_LIST) {
+		team = TEAM_YELLOW;
 	}
 
 	info = CG_InfoFromScoreIndex(index, team, &scoreIndex);
@@ -1926,6 +1932,10 @@ static const char *CG_FeederItemText(float feederID, int index, int column, qhan
 					*handle = cg_items[ ITEM_INDEX(item) ].icon;
 				} else if ( info->powerups & ( 1 << PW_BLUEFLAG ) ) {
 					item = BG_FindItemForPowerup( PW_BLUEFLAG );
+                } else if ( info->powerups & ( 1 << PW_GREENFLAG ) ) {
+					item = BG_FindItemForPowerup( PW_GREENFLAG );
+                } else if ( info->powerups & ( 1 << PW_YELLOWFLAG ) ) {
+					item = BG_FindItemForPowerup( PW_YELLOWFLAG );
 					*handle = cg_items[ ITEM_INDEX(item) ].icon;
 				} else {
 					if ( info->botSkill > 0 && info->botSkill <= 5 ) {

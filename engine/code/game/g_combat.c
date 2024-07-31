@@ -415,6 +415,8 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 	// if this player was carrying a flag
 	if ( self->client->ps.powerups[PW_REDFLAG] ||
 		self->client->ps.powerups[PW_BLUEFLAG] ||
+        self->client->ps.powerups[PW_GREENFLAG] ||
+        self->client->ps.powerups[PW_YELLOWFLAG] ||
 		self->client->ps.powerups[PW_NEUTRALFLAG] ) {
 		// get the goal flag this player should have been going for
 		if ( g_gametype.integer == GT_CTF ) {
@@ -630,6 +632,14 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		else if ( self->client->ps.powerups[PW_BLUEFLAG] ) {	// only happens in standard CTF
 			Team_ReturnFlag( TEAM_BLUE );
 			self->client->ps.powerups[PW_BLUEFLAG] = 0;
+		}
+        else if ( self->client->ps.powerups[PW_GREENFLAG] ) {	// only happens in standard CTF
+			Team_ReturnFlag( TEAM_GREEN );
+			self->client->ps.powerups[PW_GREENFLAG] = 0;
+		}
+        else if ( self->client->ps.powerups[PW_YELLOWFLAG] ) {	// only happens in standard CTF
+			Team_ReturnFlag( TEAM_YELLOW );
+			self->client->ps.powerups[PW_YELLOWFLAG] = 0;
 		}
 	}
 
