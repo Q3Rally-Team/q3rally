@@ -1343,7 +1343,7 @@ static float CG_DrawFPS( float y ) {
 		s = va( "%ifps", fps );
 		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 
-		CG_DrawBigString( 635 - w, y + 2, s, 1.0F);
+		CG_DrawBigString( 621 - w, 355 + 2, s, 1.0F);
 	}
 
 	return y + BIGCHAR_HEIGHT + 4;
