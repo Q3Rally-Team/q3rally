@@ -70,23 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-#define PRODUCT_VERSION "v0.5 r607"
-=======
-#define PRODUCT_VERSION "v0.5 r605"
->>>>>>> parent of c9856b0d (prepare new Gametype 4-Teams-CTF)
-=======
-#define PRODUCT_VERSION "v0.5 r605"
->>>>>>> parent of c9856b0d (prepare new Gametype 4-Teams-CTF)
-=======
-#define PRODUCT_VERSION "v0.5 r605"
->>>>>>> parent of c9856b0d (prepare new Gametype 4-Teams-CTF)
-=======
-#define PRODUCT_VERSION "v0.5 r607"
->>>>>>> 4347bd4648d9315f81c43fe093cb4a6b6ef8a030
+#define PRODUCT_VERSION "v0.5 (r613)"
 #endif
 
 
