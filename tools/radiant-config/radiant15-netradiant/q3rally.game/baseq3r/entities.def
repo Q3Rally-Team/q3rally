@@ -611,7 +611,7 @@ HOLDABLE_* ENTITIES
 
 //=============================================================================
 
-/*QUAKED repair_kit (.7 0 1) (-16 -16 -16) (16 16 16) SUSPENDED
+/*QUAKED holdable_medkit (.7 0 1) (-16 -16 -16) (16 16 16) SUSPENDED
 Repair Kit that can be picked up and used later. Brings the player's health up to 125 when used. Player can only carry one holdable item at a time.
 -------- KEYS --------
 wait : time in seconds before item respawns after being picked up (default 60, -1 = never respawn).
