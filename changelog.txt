@@ -1,4 +1,26 @@
-!!! --- Q3Rally v0.3 changelog --- !!!
+!!! --- Q3Rally Changelog --- !!!
+
+new in v0.5
+
+Fixed:
+
+- Telefrag Gun doesn't work correctly
+- Flattened numbers & "Wrong way" is not on center
+- Gone is the Machinegun as a starting weapon
+- "info_player_intermission" camera angle bug
+- Unable to join a match back in Derby & Last Car Standing
+- If you die quickly, you win the race.
+- Fix gametype: Time Trial
+- Empty square in Racing / Team Racing
+- Wrong hud position of power-ups & flag in various screen aspect ratio
+- cg_autodrop in not working
+
+Added:
+
+- codebase synced with ioq3
+- individual car horns for all cars
+- Usable server map rotation configs
+- New intro
 
 new since v0.3b
 
