@@ -1,5 +1,6 @@
-Q3Rally _It's damn fast, baby._
+Q3Rally — *It's damn fast, baby*
 ===============================
+
 
 Q3Rally is a standalone game based on ioquake3.
 
