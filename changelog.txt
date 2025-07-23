@@ -24,6 +24,7 @@ Added:
 - Make unique logos for 4 teams (Like UT99)
 - finished the flag status hud for domination
 - finished 4 Teams Domination
+- main menu music rotation
 
 new since v0.3b
 
