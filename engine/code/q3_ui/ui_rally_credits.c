@@ -104,7 +104,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 //        UI_DrawString( 320, y, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-        UI_DrawString( 320, y, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+        UI_DrawString( 320, y, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 }
 
 

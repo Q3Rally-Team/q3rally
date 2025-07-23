@@ -242,9 +242,9 @@ static void CG_ParseWarmup( void ) {
 }
 
 /*
-==================
+===================
 CG_ParseSigilStatus
-==================
+===================
 */
 static void CG_ParseSigilStatus( void ) {
 	const char *str;
@@ -264,11 +264,11 @@ static void CG_ParseSigilStatus( void ) {
 }
 
 /*
-================
+===============================================================
 CG_SetConfigValues
 
 Called on load to set the initial values from configure strings
-================
+===============================================================
 */
 void CG_SetConfigValues( void ) {
 	const char *s;

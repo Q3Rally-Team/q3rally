@@ -781,9 +781,9 @@ void SP_worldspawn( void ) {
 
 
 /*
-============================
+================
 G_ValidateSigils
-============================
+================
 */
 void G_ValidateSigils( void )
   {
@@ -795,11 +795,11 @@ void G_ValidateSigils( void )
   }
 
 /*
-==============
+===========================================================================
 G_SpawnEntitiesFromString
 
 Parses textual entity definitions out of an entstring and spawns gentities.
-==============
+===========================================================================
 */
 void G_SpawnEntitiesFromString( void ) {
 	// allow calls to G_Spawn*()

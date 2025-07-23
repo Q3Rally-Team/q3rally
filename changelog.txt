@@ -21,6 +21,9 @@ Added:
 - individual car horns for all cars
 - Usable server map rotation configs
 - New intro
+- Make unique logos for 4 teams (Like UT99)
+- finished the flag status hud for domination
+- finished 4 Teams Domination
 
 new since v0.3b
 
