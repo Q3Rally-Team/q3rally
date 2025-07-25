@@ -1553,28 +1553,37 @@ qboolean CIN_TheCheckExtension(char *filename)
 #endif
 		};
 	fileHandle_t hnd;
-	char fn[MAX_QPATH];
-	int stringlen = strlen(filename);
-	char *extptr;
-	int i;
+char fn[MAX_QPATH];
+char *extptr;
+int i;
+int stringlen;  // Length of the filename string
 
-	strncpy(fn, filename, stringlen+1);
-	extptr = strrchr(fn, '.');
+#define MAX_FN_LEN MAX_QPATH
 
-	if(!extptr)
-	{
-		extptr = &fn[stringlen];
+// Copy filename safely, ensuring null-termination
+strncpy(fn, filename, MAX_FN_LEN - 1);
+fn[MAX_FN_LEN - 1] = '\0';
 
-		extptr[0] = '.';
-		extptr[1] = 'R';
-		extptr[2] = 'o';
-		extptr[3] = 'Q';
-		extptr[4] = '\0';
+// Get length of the copied filename
+stringlen = strlen(fn);
 
-		stringlen += 4;
+// Find the last '.' in the filename (file extension)
+extptr = strrchr(fn, '.');
 
-		skipCin[CIN_RoQ] = qtrue;
-	}
+if (!extptr) {
+    // No extension found, add ".RoQ" extension manually
+    extptr = &fn[stringlen];
+
+    extptr[0] = '.';
+    extptr[1] = 'R';
+    extptr[2] = 'o';
+    extptr[3] = 'Q';
+    extptr[4] = '\0';
+
+    stringlen += 4;
+
+    skipCin[CIN_RoQ] = qtrue;
+}
 
 	FS_FOpenFileRead(fn, &hnd, qtrue);
 

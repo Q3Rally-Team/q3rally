@@ -14,6 +14,7 @@ Fixed:
 - Empty square in Racing / Team Racing
 - Wrong hud position of power-ups & flag in various screen aspect ratio
 - cg_autodrop in not working
+- minimap fits better in UI
 
 Added:
 

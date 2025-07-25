@@ -1,6 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -149,8 +150,7 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 		count = 0;
 		while (s && *s && count < len) {
 			glyph = &font->glyphs[*s & 255];
-      //int yadj = Assets.textFont.glyphs[text[i]].bottom + Assets.textFont.glyphs[text[i]].top;
-      //float yadj = scale * (Assets.textFont.glyphs[text[i]].imageHeight - Assets.textFont.glyphs[text[i]].height);
+
 			if ( Q_IsColorString( s ) ) {
 				memcpy( newColor, g_color_table[ColorIndex(*(s+1))], sizeof( newColor ) );
 				newColor[3] = color[3];
@@ -184,7 +184,6 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 													glyph->s2,
 													glyph->t2,
 													glyph->glyph);
-				// CG_DrawPic(x, y - yadj, scale * cgDC.Assets.textFont.glyphs[text[i]].imageWidth, scale * cgDC.Assets.textFont.glyphs[text[i]].imageHeight, cgDC.Assets.textFont.glyphs[text[i]].glyph);
 				x += (glyph->xSkip * useScale) + adjust;
 				s++;
 				count++;
@@ -419,7 +418,7 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 ====================
 CG_DrawStatusBarHead
 ====================
-*/
+
 #ifndef MISSIONPACK
 #if 0 // ZTM: Not used by Q3Rally
 static void CG_DrawStatusBarHead( float x ) {
@@ -472,6 +471,7 @@ static void CG_DrawStatusBarHead( float x ) {
 }
 #endif
 #endif // MISSIONPACK
+*/
 
 /*
 ====================
@@ -533,39 +533,48 @@ CG_DrawSigilHUD
 */
 
 void CG_DrawSigilHUD( void ) {
+    int i;
+    int x = 440;
+    int y = 0;
+    vec4_t color;
 
-                      int i, x=440, y=0;
-                      for (i=0; i<MAX_SIGILS; i++) {
-                      switch ( cgs.sigil[i] )
-                      
-                {
+    color[0] = 1.0f;  // Red
+    color[1] = 1.0f;  // Green
+    color[2] = 1.0f;  // Blue
+    color[3] = 0.3f;  // Alpha (60% transparency)
 
-                case SIGIL_ISRED:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
-                    break;
-        
-                case SIGIL_ISBLUE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
-                    break;
-                  
-                case SIGIL_ISGREEN:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.greensigilShader );
-                    break;
-                    
-                case SIGIL_ISYELLOW:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.yellowsigilShader );
-                    break;
-                
-                case SIGIL_ISWHITE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
-                    break;
-                    
-                case SIGIL_NONE:
-                    break;
-                }
-                
-              x+= 19;
-            }
+    trap_R_SetColor(color);
+
+    for (i = 0; i < MAX_SIGILS; i++) {
+        switch (cgs.sigil[i]) {
+            case SIGIL_ISRED:
+                CG_DrawPic(x, y, 18, 18, cgs.media.redsigilShader);
+                break;
+
+            case SIGIL_ISBLUE:
+                CG_DrawPic(x, y, 18, 18, cgs.media.bluesigilShader);
+                break;
+
+            case SIGIL_ISGREEN:
+                CG_DrawPic(x, y, 18, 18, cgs.media.greensigilShader);
+                break;
+
+            case SIGIL_ISYELLOW:
+                CG_DrawPic(x, y, 18, 18, cgs.media.yellowsigilShader);
+                break;
+
+            case SIGIL_ISWHITE:
+                CG_DrawPic(x, y, 18, 18, cgs.media.sigilShader);
+                break;
+
+            case SIGIL_NONE:
+                break;
+        }
+
+        x += 19;
+    }
+
+    trap_R_SetColor(NULL); // Reset to default
 }
 
 /*

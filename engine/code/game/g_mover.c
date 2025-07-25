@@ -1881,7 +1881,6 @@ void Break_Breakable(gentity_t *ent, gentity_t *other) {
 	int sound = 0;
 	int spawnflags = 0;
 	gentity_t *tmp, *tmp2;
-	int type = EV_EMIT_DEBRIS_LIGHT;
 
 	if ( other != ent->activator && !strcmp( other->classname, "func_breakable" ) ) {
 		//if the splash damage from another func_breakable is causing this func_breakable to break

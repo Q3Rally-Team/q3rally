@@ -89,27 +89,25 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		}
 		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
 
-		Com_sprintf (entry, sizeof(entry),
-// STONELANCE
-//			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
-			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
-//			cl->ps.persistant[PERS_SCORE], ping, (level.time - cl->pers.enterTime)/60000,
-			cl->ps.persistant[PERS_SCORE], ping, time,
-// END
-			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
-			cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
-            cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
-			cl->ps.persistant[PERS_EXCELLENT_COUNT],
-			cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
-			cl->ps.persistant[PERS_DEFEND_COUNT], 
-			cl->ps.persistant[PERS_ASSIST_COUNT], 
-			perfect,
-// STONELANCE
-//			cl->ps.persistant[PERS_CAPTURES]);
-			cl->ps.persistant[PERS_CAPTURES],
-			cl->ps.stats[STAT_DAMAGE_DEALT],
-			cl->ps.stats[STAT_DAMAGE_TAKEN],
-			cl->ps.stats[STAT_POSITION]
+		Com_sprintf (entry, sizeof(entry), " %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
+        level.sortedClients[i],
+        cl->ps.persistant[PERS_SCORE],
+        ping,
+        time,
+        scoreFlags,
+        g_entities[level.sortedClients[i]].s.powerups,
+        accuracy, 
+		cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
+        cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
+		cl->ps.persistant[PERS_EXCELLENT_COUNT],
+		cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
+		cl->ps.persistant[PERS_DEFEND_COUNT], 
+		cl->ps.persistant[PERS_ASSIST_COUNT], 
+		perfect,
+		cl->ps.persistant[PERS_CAPTURES],
+		cl->ps.stats[STAT_DAMAGE_DEALT],
+		cl->ps.stats[STAT_DAMAGE_TAKEN],
+		cl->ps.stats[STAT_POSITION]
 			);
 // END
 
@@ -1952,7 +1950,7 @@ void Cmd_Stats_f( gentity_t *ent ) {
 // STONELANCE
 void Cmd_SaveBPoints_f( gentity_t *other )
 {
-	int				i, j;
+	int				i;
 	fileHandle_t	f;
 	char			buffer[256];
 	char			serverinfo[MAX_INFO_STRING];

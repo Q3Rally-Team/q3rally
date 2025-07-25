@@ -125,8 +125,6 @@ void CG_DrawMMap(float x, float y, float w, float h) {
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
 
-	// Removed gametype restrictions – minimap will always be shown
-
 	// Store original dimensions for overlay shader
 	mx = x,
     my = y,
@@ -778,56 +776,6 @@ static float CG_DrawSpeed( float y ) {
 	return y;
 }
 
-/*
-static float CG_DrawSDKMessage( float y ) {
-	int			x, w;
-	vec4_t		bg_color;
-
-	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
-	case TEAM_RED:
-		Vector4Copy(colorRed, bg_color);
-		bg_color[3] = 0.5;
-		break;
-
-	case TEAM_BLUE:
-		Vector4Copy(colorBlue, bg_color);
-		bg_color[3] = 0.5;
-		break;
-
-	case TEAM_GREEN:
-		Vector4Copy(colorGreen, bg_color);
-		bg_color[3] = 0.5;
-		break;
-
-	case TEAM_YELLOW:
-		Vector4Copy(colorYellow, bg_color);
-		bg_color[3] = 0.5;
-		break;
-	
-	default:
-		Vector4Copy(bgColor, bg_color);
-	}
-
-	x = 4;
-	w = (CG_DrawStrlen("Not the finished game.") * TINYCHAR_WIDTH);
-
-	y -= 3*TINYCHAR_HEIGHT+2;
-
-	CG_FillRect( x, y, w, 3*TINYCHAR_HEIGHT+2, bg_color );
-
-	CG_DrawTinyStringColor( x, y, Q3_VERSION, colorWhite);
-	y += TINYCHAR_HEIGHT;
-	CG_DrawTinyStringColor( x, y, "Beta Version", colorWhite);
-	y += TINYCHAR_HEIGHT;
-	CG_DrawTinyStringColor( x, y, "Not the finished game.", colorWhite);
-	y += TINYCHAR_HEIGHT;
-
-	y -= 3*TINYCHAR_HEIGHT+2;
-
-	return y;
-}
-*/
-
 #if 0
 /*
 ===========
@@ -915,9 +863,5 @@ float CG_DrawLowerLeftHUD( float y ) {
 		}
 	}
 	
-// Comment this out in the full release Version
-
-// y = CG_DrawSDKMessage( y );
-
 	return y;
  }

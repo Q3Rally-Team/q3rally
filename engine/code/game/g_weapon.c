@@ -730,7 +730,7 @@ void weapon_telefrag_fire (gentity_t *ent,vec3_t muzzle,vec3_t forward,vec3_t ri
     vec3_t		end;
 	trace_t		trace;
 	gentity_t	*tent;
-	gentity_t	*traceEnt;
+	gentity_t	*traceEnt = NULL;
 	int			damage = 50;
 	int			hits = 0;
 	int			passent = ent->s.number;
