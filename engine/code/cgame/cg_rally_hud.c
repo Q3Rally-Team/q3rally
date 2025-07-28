@@ -1,12 +1,24 @@
 /*
-**  	Copyright (C) 2004 by the Q3Rally Development team
-**  	All rights reserved.
-**
-**  	cg_rally_hud.c
-**
-**  	Components for the common HUD elements.
-**
-**		Author: STONELANCE
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+
+This file is part of q3rally source code.
+
+q3rally source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+q3rally source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with q3rally; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+===========================================================================
 */
 
 #include "cg_local.h"
@@ -40,29 +52,6 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
-        
-/*
-
-	if (cg_fpsLimit.integer >= 100)
-		return;
-
-	if (cg_fpsLimit.integer > 0){
-		fps = 0;
-		if (cg.frametime){
-			fps = 1000 / cg.frametime;
-		}
-
-		if (lastLowFPSTime + 3000 >= cg.time){
-			return;
-		}
-
-		if (fps < cg_fpsLimit.integer){
-			lastLowFPSTime = cg.time;
-			return;
-		}
-	}
-    
-*/
 
 	mx = x - 8;
 	my = y - 7;
@@ -83,14 +72,7 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 
 	cg.mirrorRefdef.time = cg.time;
 	cg.mirrorRefdef.rdflags = 0;
-/*
-	AnglesToAxis( cg.predictedPlayerState.viewangles, mirrorRefdef.viewaxis );
-	VectorInverse( mirrorRefdef.viewaxis[0] );
-	VectorInverse( mirrorRefdef.viewaxis[1] );
 
-	VectorCopy( cg.predictedPlayerState.origin, mirrorRefdef.vieworg );
-	VectorMA( mirrorRefdef.vieworg, 16, mirrorRefdef.viewaxis[2], mirrorRefdef.vieworg );
-*/
 	// add entities and graphics to rearview scene
 	if (cg_rearViewRenderLevel.integer & RL_MARKS){
 		CG_AddMarks();
@@ -122,17 +104,18 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 }
 
 /*
-===========
+==========================
 CG_DrawMMap
-===========
+Draws the minimap overlay.
+==========================
 */
 
-void CG_DrawMMap( float x, float y, float w, float h ) {
-	int		i;
-	float	mx, my, mw, mh;
-	int tmp;
-
-	if ( !cg_drawMMap.integer )
+void CG_DrawMMap(float x, float y, float w, float h) {
+	
+    float mx, my, mw, mh, tmp;
+    int i;
+    
+    if (!cg_drawMMap.integer)
 		return;
 
 	if (cg.snap->ps.pm_type == PM_INTERMISSION)
@@ -141,73 +124,65 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR)
 		return;
 	
-/* minimap to show for only racing and team racing no weapons (for now)
+	// Store original dimensions for overlay shader
+	mx = x,
+    my = y,
+    mw = w * 0.68f;
+    mh = h * 0.68f;
 
-	if ( cgs.gametype != GT_RACING )
-		return;
-	
-	if ( (cgs.gametype != GT_RACING) || (cgs.gametype != GT_TEAM_RACING) )
-		return;
-        
-*/
+    // Convert coordinates for different screen resolutions
+	CG_AdjustFrom640(&x, &y, &w, &h);
 
-	mx = x ;
-	my = y ;
-	mw = w;
-	mh = h;
-
-	CG_AdjustFrom640( &x, &y, &w, &h );
-
+    // Set up minimap rendering definition
 	cg.mmapRefdef.x = x;
 	cg.mmapRefdef.y = y;
-	cg.mmapRefdef.width = w;
-	cg.mmapRefdef.height = h;
-
-	cg.mmapRefdef.fov_x = 70;
-	tmp = cg.mmapRefdef.width / tan( cg.mmapRefdef.fov_x / 360 * M_PI );
-	cg.mmapRefdef.fov_y = atan2( cg.mmapRefdef.height, tmp );
-	cg.mmapRefdef.fov_y = cg.mmapRefdef.fov_y * 360 / M_PI;
+	cg.mmapRefdef.width = 240;
+	cg.mmapRefdef.height = 180;
+    cg.mmapRefdef.fov_x = 70;
+	
+    // Calculate fov_y from fov_x and aspect ratio
+	tmp = cg.mmapRefdef.width / tan(cg.mmapRefdef.fov_x / 360.0f * M_PI);
+	cg.mmapRefdef.fov_y = atan2(cg.mmapRefdef.height, tmp) * 360.0f / M_PI;
 
 	cg.mmapRefdef.time = cg.time;
 	cg.mmapRefdef.rdflags = 0;
 
-//	AnglesToAxis( cg.predictedPlayerState.viewangles, mirrorRefdef.viewaxis );
-//	VectorInverse( mirrorRefdef.viewaxis[0] );
-//	VectorInverse( mirrorRefdef.viewaxis[1] );
-
-//	VectorCopy( cg.predictedPlayerState.origin, mirrorRefdef.vieworg );
-//	VectorMA( mirrorRefdef.vieworg, 16, mirrorRefdef.viewaxis[2], mirrorRefdef.vieworg );
-
-	/*only add players to minimap scene
-	add ctf flag entities later*/
-	if (cg_rearViewRenderLevel.integer & RL_MARKS){
+    // Optional effects depending on render level
+	if (cg_rearViewRenderLevel.integer & RL_MARKS) {
 		CG_AddMarks();
 	}
 
-	if (cg_rearViewRenderLevel.integer & RL_SMOKE){
+	if (cg_rearViewRenderLevel.integer & RL_SMOKE) {
 		CG_AddLocalEntities();
 	}
 	
 
-	if (cg_rearViewRenderLevel.integer & RL_PLAYERS || cg_rearViewRenderLevel.integer & RL_OBJECTS){
-		for (i = 0; i < cg.snap->numEntities; i++){
-			if (!(cg_rearViewRenderLevel.integer & RL_OBJECTS)){
-				// skip non-players
-				if ( cg.snap->entities[i].eType != ET_PLAYER ) continue;
-			}
+	if (cg_rearViewRenderLevel.integer & (RL_PLAYERS | RL_OBJECTS)) {
+		for (i = 0; i < cg.snap->numEntities; i++) {
+			entityState_t *es = &cg.snap->entities[i];
 
-			if (!(cg_rearViewRenderLevel.integer & RL_PLAYERS)){
-				// skip players
-				if ( cg.snap->entities[i].eType == ET_PLAYER ) continue;
-			}
+			qboolean isPlayer = (es->eType == ET_PLAYER);
 
-			// FIXME: dont re-lerp entity
-			CG_AddCEntity( &cg_entities[ cg.snap->entities[ i ].number ] );
+    // Skip non-players if RL_OBJECTS is disabled
+			if (!(cg_rearViewRenderLevel.integer & RL_OBJECTS) && !isPlayer)
+				continue;
+
+			// Skip players if RL_PLAYERS is disabled
+			if (!(cg_rearViewRenderLevel.integer & RL_PLAYERS) && isPlayer)
+				continue;
+
+			// Add player or object to minimap
+			CG_AddCEntity(&cg_entities[es->number]);
+
 		}
 	}
-	//trap_R_RenderScene( &cg.mirrorRefdef );
-	trap_R_RenderScene( &cg.mmapRefdef );
-	CG_DrawPic( mx, my, mw, mh, cgs.media.MMapShader );
+	
+    // Render the minimap scene
+	trap_R_RenderScene(&cg.mmapRefdef);
+
+	// Draw the minimap overlay background shader
+	CG_DrawPic(mx, my, mw, mh, cgs.media.MMapShader);
+    
 }
 
 /*

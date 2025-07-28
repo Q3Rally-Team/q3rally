@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -3563,7 +3563,7 @@ void CG_Player( centity_t *cent ) {
 
 
 	// engine sounds
-/*
+
 	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
 		cg_engineSounds.integer &&
 		cent->engineSoundTime + cg_engineSoundDelay.integer < cg.time )
@@ -3577,7 +3577,7 @@ void CG_Player( centity_t *cent ) {
 
 		cent->engineSoundTime = cg.time;
 	}
-*/
+
 	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
 		cg_engineSounds.integer )
 	{
