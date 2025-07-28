@@ -42,7 +42,7 @@ char systemChat[256];
 char teamChat1[256];
 char teamChat2[256];
 
-static void CG_DrawRallyPowerups( void );
+static float CG_DrawRallyPowerups( float y );
 
 #ifdef MISSIONPACK
 
@@ -819,7 +819,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[1] = 0;
 		origin[2] = 0;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 26, 476 - 27, 19, 19,
+		CG_Draw3DModel( 26, 476 - 28, 19, 19,
 					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
 
@@ -841,7 +841,7 @@ static void CG_DrawRallyStatusBar( void ) {
 					   healthModel, 0, origin, angles );
 	}
 
-	CG_DrawRallyPowerups();
+	CG_DrawRallyPowerups( 476 );
 
 	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
 		CG_DrawStatusBarFlag( 495, TEAM_RED);
@@ -859,7 +859,7 @@ static void CG_DrawRallyStatusBar( void ) {
 		origin[2] = -10;
 		angles[YAW] = 270 * sin( cg.time / 1000.0 );
 //		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 311, 476 - 27, 19, 19,
+        CG_Draw3DModel( 311, 476 - 28, 19, 19,
 					   cgs.media.armorModel, 0, origin, angles );
 	}
 
@@ -989,7 +989,7 @@ static void CG_DrawRallyStatusBar( void ) {
 ================
 CG_DrawPowerups
 ================
-*/
+
 #ifndef MISSIONPACK
 #if 0 // ZTM: Not used by Q3Rally
 static float CG_DrawPowerups( float y ) {
@@ -1092,13 +1092,14 @@ static float CG_DrawPowerups( float y ) {
 }
 #endif
 
-// Q3Rally Code Start
+*/
+
 /*
 ====================
 CG_DrawRallyPowerups
 ====================
 */
-static void CG_DrawRallyPowerups( void ) {
+static float CG_DrawRallyPowerups( float y ) {
 	int		sorted[MAX_POWERUPS];
 	int		sortedTime[MAX_POWERUPS];
 	int		i, j, k;
@@ -1109,6 +1110,9 @@ static void CG_DrawRallyPowerups( void ) {
 	int		color;
 	float	size;
 	float	f;
+    float	x;
+	vec3_t	origin;
+	vec3_t	angles;
 	vec4_t	bg_color;
 
 	static float colors[2][4] = { 
@@ -1119,7 +1123,7 @@ static void CG_DrawRallyPowerups( void ) {
 	ps = &cg.snap->ps;
 
 	if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		return;
+		return y;
 	}
 
 	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
@@ -1166,7 +1170,7 @@ static void CG_DrawRallyPowerups( void ) {
 
 		// insert into the list
 		for ( j = 0 ; j < active ; j++ ) {
-			if ( sortedTime[j] >= t ) {
+			if ( sortedTime[j] <= t ) {
 				for ( k = active - 1 ; k >= j ; k-- ) {
 					sorted[k+1] = sorted[k];
 					sortedTime[k+1] = sortedTime[k];
@@ -1180,16 +1184,17 @@ static void CG_DrawRallyPowerups( void ) {
 	}
 
 	// draw the icons and timers
-
+    
+    x = 402;  // Start X position for horizontal layout
 	for ( i = 0 ; i < active ; i++ ) {
 		item = BG_FindItemForPowerup( sorted[i] );
 
 		color = 1;
 
-		CG_FillRect( 402, 476 - 30, 90, 24, bg_color );
+		CG_FillRect( x, y - 30, 90, 24, bg_color );
 
 		trap_R_SetColor( colors[color] );
-		CG_DrawField( 424 + CHAR_WIDTH, 476 - 28, 2, sortedTime[ i ] / 1000 );
+		CG_DrawField( x + 22 + CHAR_WIDTH, y - 28, 2, sortedTime[ i ] / 1000 );
 
 		t = ps->powerups[ sorted[i] ];
 		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
@@ -1216,12 +1221,20 @@ static void CG_DrawRallyPowerups( void ) {
 			size = 19;
 		}
 
-		CG_DrawPic( 408, 476 - 27, size, size, trap_R_RegisterShader( item->icon ) );
+		// Setup 3D model positioning and rotation
+		origin[0] = 68;
+		origin[1] = 0;
+		origin[2] = 0;
+		VectorClear( angles );
+		angles[YAW] = 270 * sin( cg.time / 1000.0 );
+		
+		CG_Draw3DModel( x + 6, y - 27, size, size, trap_R_RegisterModel( item->world_model[0] ), 0, origin, angles );
+		x += 96;  // Move to next horizontal position (90 width + 6 spacing)
 	}
 	trap_R_SetColor( NULL );
+    return y;
 }
-#endif // MISSIONPACK
-// Q3Rally Code END
+
 
 /*
 ===========================================================================================
