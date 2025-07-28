@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -990,7 +990,7 @@ static void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles ) {
 
 
 /*
-===============
+========================================================================
 CG_LightningBolt
 
 Origin will be the exact tag point, which is slightly
@@ -998,22 +998,14 @@ different than the muzzle point used for determining hits.
 The cent should be the non-predicted cent if it is from the player,
 so the endpoint will reflect the simulated strike (lagging the predicted
 angle)
-===============
+========================================================================
 */
 static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 	trace_t  trace;
 	refEntity_t  beam;
 	vec3_t   forward;
 	vec3_t   muzzlePoint, endPoint;
-	//int      anim;
-
-// Q3Rally Code Start
-	//vec3_t		delta, angles, mins, maxs;
 	vec3_t		up;
-	//trace_t		tr;
-	//int			entNumber;
-	//centity_t	*traceEnt;
-// END
 
 	if (cent->currentState.weapon != WP_LIGHTNING) {
 		return;
@@ -1044,99 +1036,18 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 			}
 		}
 
-// Q3Rally Code Start
-//		AngleVectors(angle, forward, NULL, NULL );
 		AngleVectors(angle, forward, NULL, up );
-// END
+
 		VectorCopy(cent->lerpOrigin, muzzlePoint );
-//		VectorCopy(cg.refdef.vieworg, muzzlePoint );
+
 	} else {
-		// !CPMA
-// Q3Rally Code Start
-//		AngleVectors( cent->lerpAngles, forward, NULL, NULL );
+
 		AngleVectors( cent->lerpAngles, forward, NULL, up );
-// END
+
 		VectorCopy(cent->lerpOrigin, muzzlePoint );
 	}
 
-// Q3Rally Code Start
-/*
-	anim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-	if ( anim == LEGS_WALKCR || anim == LEGS_IDLECR ) {
-		muzzlePoint[2] += CROUCH_VIEWHEIGHT;
-	} else {
-		muzzlePoint[2] += DEFAULT_VIEWHEIGHT;
-	}
-*/
 	VectorMA( muzzlePoint, CAR_HEIGHT/2, up, muzzlePoint );
-// END
-	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
-
-	// project forward by the lightning range
-	VectorMA( muzzlePoint, LIGHTNING_RANGE, forward, endPoint );
-
-	// see if it hit a wall
-	CG_Trace( &trace, muzzlePoint, vec3_origin, vec3_origin, endPoint, 
-		cent->currentState.number, MASK_SHOT );
-
-	// this is the endpoint
-	VectorCopy( trace.endpos, beam.oldorigin );
-
-	// use the provided origin, even though it may be slightly
-	// different than the muzzle origin
-	VectorCopy( origin, beam.origin );
-
-	beam.reType = RT_LIGHTNING;
-	beam.customShader = cgs.media.lightningShader;
-	trap_R_AddRefEntityToScene( &beam );
-
-	// add the impact flare if it hit something
-	if ( trace.fraction < 1.0 ) {
-		vec3_t	angles;
-		vec3_t	dir;
-
-		VectorSubtract( beam.oldorigin, beam.origin, dir );
-		VectorNormalize( dir );
-
-		memset( &beam, 0, sizeof( beam ) );
-		beam.hModel = cgs.media.lightningExplosionModel;
-
-		VectorMA( trace.endpos, -16, dir, beam.origin );
-
-		// make a random orientation
-		angles[0] = rand() % 360;
-		angles[1] = rand() % 360;
-		angles[2] = rand() % 360;
-		AnglesToAxis( angles, beam.axis );
-		trap_R_AddRefEntityToScene( &beam );
-	}
-}
-/*
-
-static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
-	trace_t		trace;
-	refEntity_t		beam;
-	vec3_t			forward;
-	vec3_t			muzzlePoint, endPoint;
-
-	if ( cent->currentState.weapon != WP_LIGHTNING ) {
-		return;
-	}
-
-	memset( &beam, 0, sizeof( beam ) );
-
-	// find muzzle point for this frame
-	VectorCopy( cent->lerpOrigin, muzzlePoint );
-
-// Q3Rally Code Start
-//	AngleVectors( cent->lerpAngles, forward, NULL, NULL );
-
-	// FIXME: crouch
-//	muzzlePoint[2] += DEFAULT_VIEWHEIGHT;
-
-	AngleVectors( cent->lerpAngles, forward, NULL, up );
-	VectorMA( muzzlePoint, CAR_HEIGHT/2, up, muzzlePoint );
-// END
 
 	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
 
@@ -1179,8 +1090,6 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 		trap_R_AddRefEntityToScene( &beam );
 	}
 }
-*/
-
 
 /*
 ======================
@@ -1266,12 +1175,9 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 
 	weaponNum = cent->currentState.weapon;
 
-// Q3Rally Code Start
 	if (!isRallyNonDMRace()/* TEMP DERBY && cgs.gametype != GT_DERBY*/){
 		CG_RegisterWeapon( weaponNum );
 	}
-//	CG_RegisterWeapon( weaponNum );
-// END
 
 	weapon = &cg_weapons[weaponNum];
 
@@ -1296,12 +1202,6 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-// Q3Rally Code Start
-//	if (cg_entities[cent->currentState.clientNum].finishRaceTime && cg_entities[cent->currentState.clientNum].currentPosition == 1){
-//		gun.hModel = cgs.media.checkeredFlagModel;
-//	}
-//	else
-// END
 	gun.hModel = weapon->weaponModel;
 	if (!gun.hModel) {
 		return;
@@ -1404,18 +1304,14 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 }
 
 /*
-==============
+===============================================
 CG_AddViewWeapon
 
 Add the weapon, and flash for the player's view
-==============
+===============================================
 */
 void CG_AddViewWeapon( playerState_t *ps ) {
 	refEntity_t	hand;
-// SKWID( removed animations )
-//	centity_t	*cent;
-//	clientInfo_t	*ci;
-// END
 	vec3_t		fovOffset;
 	vec3_t		angles;
 	weaponInfo_t	*weapon;
@@ -1429,7 +1325,6 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 	}
 
 	// no gun if in third person view or a camera is active
-	//if ( cg.renderingThirdPerson || cg.cameraMode) {
 	if ( cg.renderingThirdPerson ) {
 		return;
 	}
@@ -1468,18 +1363,10 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		fovOffset[2] = -0.2 * ( cg_fov.integer - 90 );
 	}
 
-// SKWID( removed animations )
-//	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
-// END
 	CG_RegisterWeapon( ps->weapon );
 	weapon = &cg_weapons[ ps->weapon ];
 
 	memset (&hand, 0, sizeof(hand));
-
-	// set up gun position
-// SKWID( removed function )
-//	CG_CalculateWeaponPosition( hand.origin, angles );
-// END
 
 	VectorMA( hand.origin, (cg_gun_x.value+fovOffset[0]), cg.refdef.viewaxis[0], hand.origin );
 	VectorMA( hand.origin, (cg_gun_y.value+fovOffset[1]), cg.refdef.viewaxis[1], hand.origin );
@@ -1494,15 +1381,7 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		hand.backlerp = 0;
 	} else {
 		// get clientinfo for animation map
-// SKWID( removed animations )
 		hand.frame = hand.oldframe = hand.backlerp = 0;
-/*
-		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-		hand.frame = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.frame );
-		hand.oldframe = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.oldFrame );
-		hand.backlerp = cent->pe.torso.backlerp;
-*/
-// END
 	}
 
 	hand.hModel = weapon->handsModel;

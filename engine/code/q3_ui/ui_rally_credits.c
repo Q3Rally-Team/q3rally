@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -103,8 +103,7 @@ static void UI_Rally_CreditMenu_Draw( void ) {
         UI_DrawProportionalString( 320, y, "Cyberdemon, Killaz and skw|d", UI_CENTER|UI_SMALLFONT, color_white );
 
         y += 2.0 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-//        UI_DrawString( 320, y, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-        UI_DrawString( 320, y, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+        UI_DrawString( 320, y, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 }
 
 
@@ -114,9 +113,8 @@ UI_Rally_CreditMenu
 ===============
 */
 void UI_Rally_CreditMenu( void ) {
-// STONELANCE
+
         uis.transitionIn = 0;
-// END
 
         memset( &s_rally_credits, 0 ,sizeof(s_rally_credits) );
 

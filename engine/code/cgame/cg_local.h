@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2009 Q3Rally Team (Per Thormann - perle@q3rally.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - perle@q3rally.com)
 
 This file is part of q3rally source code.
 
@@ -1312,6 +1312,7 @@ extern	vmCvar_t		cg_shadows;
 extern	vmCvar_t		cg_gibs;
 extern	vmCvar_t		cg_drawTimer;
 extern	vmCvar_t		cg_drawFPS;
+extern  vmCvar_t        cg_sigilSwitch;
 extern	vmCvar_t		cg_drawSnapshot;
 extern	vmCvar_t		cg_draw3dIcons;
 extern	vmCvar_t		cg_drawIcons;

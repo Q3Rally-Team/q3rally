@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2009 Q3Rally Team (Per Thormann - perle@q3rally.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - perle@q3rally.com)
 
 This file is part of q3rally source code.
 
@@ -135,6 +135,7 @@ vmCvar_t	cg_shadows;
 vmCvar_t	cg_gibs;
 vmCvar_t	cg_drawTimer;
 vmCvar_t	cg_drawFPS;
+vmCvar_t    cg_sigilSwitch;
 vmCvar_t	cg_drawSnapshot;
 vmCvar_t	cg_draw3dIcons;
 vmCvar_t	cg_drawIcons;
@@ -299,6 +300,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_drawStatus, "cg_drawStatus", "1", CVAR_ARCHIVE  },
 	{ &cg_drawTimer, "cg_drawTimer", "0", CVAR_ARCHIVE  },
 	{ &cg_drawFPS, "cg_drawFPS", "0", CVAR_ARCHIVE  },
+    { &cg_sigilSwitch, "cg_sigilSwitch", "0", CVAR_ARCHIVE  },
 	{ &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
 	{ &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },

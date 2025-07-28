@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -20,7 +20,7 @@ along with q3rally; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-//
+
 /*
 =======================================================================
 
@@ -46,6 +46,7 @@ GAME OPTIONS MENU
 #define ID_ALLOWDOWNLOAD		137
 #define ID_BACK					138
 #define ID_DRAWFPS              139
+#define ID_SIGILSWITCH          140
 
 #define	NUM_CROSSHAIRS			10
 
@@ -66,6 +67,7 @@ typedef struct {
 	menulist_s			drawteamoverlay;
 	menuradiobutton_s	allowdownload;
     menuradiobutton_s   drawfps;
+    menuradiobutton_s   sigilswitch;
 
 	menutext_s			back;
 
@@ -96,6 +98,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.drawteamoverlay.curvalue	= Com_Clamp( 0, 3, trap_Cvar_VariableValue( "cg_drawTeamOverlay" ) );
 	s_preferences.allowdownload.curvalue	= trap_Cvar_VariableValue( "cl_allowDownload" ) != 0;
     s_preferences.drawfps.curvalue          = trap_Cvar_VariableValue( "cg_DrawFPS" ) != 0;
+    s_preferences.sigilswitch.curvalue      = trap_Cvar_VariableValue( "cg_sigilSwitch" ) != 0;
 }
 
 
@@ -152,7 +155,11 @@ static void Preferences_Event( void* ptr, int notification ) {
     case ID_DRAWFPS:
         trap_Cvar_SetValue( "cg_DrawFPS", s_preferences.drawfps.curvalue );
         break;
-        
+    
+    case ID_SIGILSWITCH:
+        trap_Cvar_SetValue( "cg_sigilSwitch", s_preferences.sigilswitch.curvalue );
+        break;
+            
 	case ID_BACK:
 		UI_PopMenu();
 		break;
@@ -276,6 +283,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.drawfps.generic.x	       = PREFERENCES_X_POS;
 	s_preferences.drawfps.generic.y	       = y;
 
+    y += BIGCHAR_HEIGHT+2;
+    s_preferences.sigilswitch.generic.type      = MTYPE_RADIOBUTTON;
+    s_preferences.sigilswitch.generic.name      = "Convert Entity to 3rd Sigil?:";
+    s_preferences.sigilswitch.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+    s_preferences.sigilswitch.generic.callback  = Preferences_Event;
+    s_preferences.sigilswitch.generic.id        = ID_SIGILSWITCH;
+    s_preferences.sigilswitch.generic.x         = PREFERENCES_X_POS;
+    s_preferences.sigilswitch.generic.y         = y;
+
 	s_preferences.back.generic.type				= MTYPE_PTEXT;
 	s_preferences.back.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_preferences.back.generic.x				= 20;
@@ -299,6 +315,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.drawteamoverlay );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
     Menu_AddItem( &s_preferences.menu, &s_preferences.drawfps );
+    Menu_AddItem( &s_preferences.menu, &s_preferences.sigilswitch );
 
 	Menu_AddItem( &s_preferences.menu, &s_preferences.back );
 

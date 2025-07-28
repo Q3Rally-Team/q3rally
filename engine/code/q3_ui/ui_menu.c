@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2019 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -39,16 +39,9 @@ MAIN MENU
 #define ID_SETUP                        12
 #define ID_DEMOS                        13
 #define ID_CINEMATICS                   14
-// STONELANCE
-// #define ID_TEAMARENA                 15
-// END
+
 #define ID_MODS                         16
 #define ID_EXIT                         17
-
-
-// STONELANCE
-//#define MAIN_BANNER_MODEL             "models/mapobjects/banners/banner5.md3"
-//#define MAIN_MENU_VERTICAL_SPACING    34
 
 #define MAIN_BANNER_MODEL               "models/mapobjects/q3rtitle/q3rtitle.md3"
 #define MAIN_MENU_VERTICAL_SPACING      50
@@ -64,13 +57,9 @@ typedef struct {
         menutext_s              setup;
         menutext_s              demos;
         menutext_s              cinematics;
-// STONELANCE
-//      menutext_s              teamArena;
-// END
         menutext_s              mods;
         menutext_s              exit;
 
-// STONELANCE
         menutext_s              banner;
         menubitmap_s            carlogo;
         menubitmap_s            discordlogo;
@@ -80,15 +69,11 @@ typedef struct {
         char                    rimskin[MAX_QPATH];
         char                    headskin[MAX_QPATH];
 
-//      qhandle_t               bannerModel;
-// END
 } mainmenu_t;
 
 
 static mainmenu_t s_main;
 
-
-// STONELANCE (new function)
 /*
 =================
 MainMenu_UpdateModel
@@ -122,9 +107,6 @@ static void MainMenu_DrawPlayer( void *self ) {
         b = (menubitmap_s*) self;
         UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo, uis.realtime );
 }
-
-
-
 
 /*
 =================
@@ -178,18 +160,7 @@ MainMenu_Update
 =================
 */
 void MainMenu_Update( void ){
-/*
-        seed = rand();
 
-        if(s_main.modelskin[0])
-                return;
-
-        // get model
-        model = (int)(uis.realtime % s_main.nummodels);
-
-        buffptr  = s_main.modelnames[model] + strlen("models/players/");
-        strcpy(s_main.modelskin, buffptr);
-*/
         MainMenu_BuildList();
 
         trap_Cvar_VariableStringBuffer( "rim", s_main.rimskin, sizeof( s_main.rimskin ) );
@@ -197,8 +168,6 @@ void MainMenu_Update( void ){
        
         MainMenu_UpdateModel();
 }
-// END
-
 
 /*
 =================
@@ -210,9 +179,9 @@ static void MainMenu_ExitAction( qboolean result ) {
                 return;
         }
         UI_PopMenu();
-// STONELANCE
+
         UI_Rally_CreditMenu();
-// END
+
         UI_CreditMenu();
 }
 
@@ -230,7 +199,7 @@ void Main_MenuEvent (void* ptr, int event) {
 
 
         switch( ((menucommon_s*)ptr)->id ) {
-// STONELANCE
+
         case ID_SINGLEPLAYER:
         case ID_MULTIPLAYER:
         case ID_SETUP:
@@ -241,46 +210,12 @@ void Main_MenuEvent (void* ptr, int event) {
                 uis.transitionOut = uis.realtime;
                 break;
 
-/*
-        case ID_SINGLEPLAYER:
-                UI_SPLevelMenu();
-                break;
-
-        case ID_MULTIPLAYER:
-                UI_ArenaServersMenu();
-                break;
-
-        case ID_SETUP:
-                UI_SetupMenu();
-                break;
-
-        case ID_DEMOS:
-                UI_DemosMenu();
-                break;
-
-        case ID_CINEMATICS:
-                UI_CinematicsMenu();
-                break;
-
-        case ID_MODS:
-                UI_ModsMenu();
-                break;
-
-        case ID_TEAMARENA:
-                trap_Cvar_Set( "fs_game", BASETA);
-                trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
-                break;
-*/
-// END
-
         case ID_EXIT:
                 UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
                 break;
         }
 }
 
-
-// STONELANCE
 /*
 ===============
 MainMenu_ChangeMenu
@@ -340,8 +275,6 @@ void MainMenu_RunTransition( float frac ) {
 
         s_main.carlogo.generic.x = (int)(640 - 440 * frac);
 }
-// END
-
 
 /*
 ===============
@@ -349,11 +282,9 @@ MainMenu_Cache
 ===============
 */
 void MainMenu_Cache( void ) {
-// STONELANCE
-//      s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
 
         MainMenu_Update();
-// END
+
 }
 
 
@@ -363,85 +294,20 @@ Main_MenuDraw
 ===============
 */
 static void Main_MenuDraw( void ) {
-// STONELANCE - dont draw 3d banner
-/*
-        refdef_t                refdef;
-        refEntity_t             ent;
-        vec3_t                  origin;
-        vec3_t                  angles;
-        float                   adjust;
-        float                   x, y, w, h;
-        vec4_t                  color = {0.5, 0, 0, 1};
-
-        // setup the refdef
-
-        memset( &refdef, 0, sizeof( refdef ) );
-
-        refdef.rdflags = RDF_NOWORLDMODEL;
-
-        AxisClear( refdef.viewaxis );
-
-        x = 0;
-        y = 0;
-        w = 640;
-        h = 120;
-        UI_AdjustFrom640( &x, &y, &w, &h );
-        refdef.x = x;
-        refdef.y = y;
-        refdef.width = w;
-        refdef.height = h;
-
-        adjust = 0; // JDC: Kenneth asked me to stop this 1.0 * sin( (float)uis.realtime / 1000 );
-        refdef.fov_x = 60 + adjust;
-        refdef.fov_y = 19.6875 + adjust;
-
-        refdef.time = uis.realtime;
-
-        origin[0] = 300;
-        origin[1] = 0;
-        origin[2] = -32;
-
-        trap_R_ClearScene();
-
-        // add the model
-
-        memset( &ent, 0, sizeof(ent) );
-
-        adjust = 5.0 * sin( (float)uis.realtime / 5000 );
-        VectorSet( angles, 0, 180 + adjust, 0 );
-        AnglesToAxis( angles, ent.axis );
-        ent.hModel = s_main.bannerModel;
-        VectorCopy( origin, ent.origin );
-        VectorCopy( origin, ent.lightingOrigin );
-        ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
-        VectorCopy( ent.origin, ent.oldorigin );
-
-        trap_R_AddRefEntityToScene( &ent );
-
-        trap_R_RenderScene( &refdef );
-*/
-// END
 
         // standard menu drawing
 
         Menu_Draw( &s_main.menu );
 
         if (uis.demoversion) {
-// STONELANCE
+
                 UI_DrawProportionalString( 320, 432, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-//				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 320, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-//              UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
-//              UI_DrawString( 320, 400, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
-// END
+                UI_DrawString( 320, 460, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+
         } else {
-// STONELANCE
-                //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
-//				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-//              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
-// END
+
+                UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+
         }
 }
 
@@ -486,22 +352,25 @@ and that local cinematics are killed
 ===============
 */
 void UI_MainMenu( void ) {
-	int		y;
-//	qboolean teamArena = qfalse;
-// STONELANCE
-	int	x;
-//	int	style = UI_CENTER | UI_DROPSHADOW;
+	
+	int x;
+	int y;
 	int	style = UI_RIGHT | UI_DROPSHADOW;
-
-	int numMusicFiles, selectedMusic;
+	int numMusicFiles;
+	int selectedMusic;
 	char musicFiles[256][MAX_QPATH];
 	char musicCommand[MAX_QPATH];
 
+	
+	srand((unsigned int)trap_Milliseconds());
+
 	numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
-	selectedMusic = (int)(UI_Random() * numMusicFiles);
-	Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
-	trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
-// END
+
+	if (numMusicFiles > 0) {
+		selectedMusic = rand() % numMusicFiles;
+		Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
+		trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
+	}
 
 	trap_Cvar_Set( "sv_killserver", "1" );
 
