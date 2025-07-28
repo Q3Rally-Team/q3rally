@@ -431,7 +431,7 @@ static void Main_MenuDraw( void ) {
                 UI_DrawProportionalString( 320, 432, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, text_color_normal );
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //				UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 320, 460, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 320, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
 //              UI_DrawString( 320, 400, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
@@ -439,7 +439,7 @@ static void Main_MenuDraw( void ) {
 // STONELANCE
                 //UI_DrawString( 320, 460, Q3_VERSION " (c) 2002 - 2009 New Team Q3Rally | www.q3rally.com", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //				UI_DrawString( 365, 460, Q3_VERSION " (c) 2002 - 2022 | 20th Anniversary | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
-                UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
+                UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2024 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 //              UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 // END
         }
@@ -484,49 +484,24 @@ The main menu only comes up when not in a game,
 so make sure that the attract loop server is down
 and that local cinematics are killed
 ===============
-
+*/
 void UI_MainMenu( void ) {
-
 	int		y;
-
+//	qboolean teamArena = qfalse;
+// STONELANCE
 	int	x;
-
+//	int	style = UI_CENTER | UI_DROPSHADOW;
 	int	style = UI_RIGHT | UI_DROPSHADOW;
 
 	int numMusicFiles, selectedMusic;
 	char musicFiles[256][MAX_QPATH];
 	char musicCommand[MAX_QPATH];
 
-// Test
-    srand(trap_Milliseconds());
-// Test Ende
-
 	numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
 	selectedMusic = (int)(UI_Random() * numMusicFiles);
 	Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
 	trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
-*/
-
-void UI_MainMenu( void ) {
-	// ? ALLE Variablen zuerst deklarieren ?
-	int x;
-	int y;
-	int	style = UI_RIGHT | UI_DROPSHADOW;
-	int numMusicFiles;
-	int selectedMusic;
-	char musicFiles[256][MAX_QPATH];
-	char musicCommand[MAX_QPATH];
-
-	// ? Initialisierung ?
-	srand((unsigned int)trap_Milliseconds());
-
-	numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
-
-	if (numMusicFiles > 0) {
-		selectedMusic = rand() % numMusicFiles;
-		Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
-		trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
-	}
+// END
 
 	trap_Cvar_Set( "sv_killserver", "1" );
 

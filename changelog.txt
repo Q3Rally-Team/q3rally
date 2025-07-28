@@ -22,10 +22,13 @@ Added:
 - individual car horns for all cars
 - Usable server map rotation configs
 - New intro
+<<<<<<< HEAD
 - Make unique logos for 4 teams (Like UT99)
 - finished the flag status hud for domination
 - finished 4 Teams Domination
 - main menu music rotation
+=======
+>>>>>>> parent of ace405fc (🎵 Add random main menu music selection feature)
 
 new since v0.3b
 

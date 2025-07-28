@@ -12,3 +12,9 @@ New features planned for 0.5
 - finish the 4 Teams CTF Mode
 - Porting the Flamethrower from Return to Castle Wolfenstein
 - rotating weapons (maybe, for now only a thought)
+
+Finished features
+
+- Make unique logos for 4 teams (Like UT99)
+- finishing the flag status hud for domination
+- finished 4 Teams Domination

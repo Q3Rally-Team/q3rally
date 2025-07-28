@@ -70,7 +70,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
+<<<<<<< HEAD
 #define PRODUCT_VERSION "v0.5 (r628)"
+=======
+#define PRODUCT_VERSION "v0.5 (r613)"
+>>>>>>> parent of ace405fc (🎵 Add random main menu music selection feature)
 #endif
 
 
