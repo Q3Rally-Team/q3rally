@@ -3563,7 +3563,7 @@ void CG_Player( centity_t *cent ) {
 
 
 	// engine sounds
-
+/*
 	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
 		cg_engineSounds.integer &&
 		cent->engineSoundTime + cg_engineSoundDelay.integer < cg.time )
@@ -3577,7 +3577,7 @@ void CG_Player( centity_t *cent ) {
 
 		cent->engineSoundTime = cg.time;
 	}
-
+*/
 	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
 		cg_engineSounds.integer )
 	{
@@ -3594,7 +3594,6 @@ void CG_Player( centity_t *cent ) {
 //								cg.predictedPlayerState.velocity,
 //								cgs.clientinfo[cg.predictedPlayerState.clientNum].sounds[index] );
 	}
-
 
 	if (ci->controlMode == CT_MOUSE){
 		wheelAngle = WheelAngle(cent->currentState.apos.trBase[YAW], cent->currentState.angles2[YAW]);

@@ -447,7 +447,7 @@ CG_AddToTeamChat
 =======================
 */
 static void CG_AddToTeamChat( const char *str ) {
-	int len = 0;
+	int len;
 	char *p, *ls;
 	int lastcolor;
 	int chatHeight;

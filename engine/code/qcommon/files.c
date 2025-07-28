@@ -2427,67 +2427,41 @@ void FS_FreeFileList( char **list ) {
 FS_GetFileList
 ================
 */
-int FS_GetFileList(const char *path, const char *extension, char *listbuf, int bufsize) {
-	int nFiles = 0;
-	int i;
-	int nTotal = 0;
-	int nLen;
+int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
+	int		nFiles, i, nTotal, nLen;
 	char **pFiles = NULL;
 
-	*listbuf = '\0';
+	*listbuf = 0;
+	nFiles = 0;
+	nTotal = 0;
 
-	// Special case: return mod list
 	if (Q_stricmp(path, "$modlist") == 0) {
 		return FS_GetModList(listbuf, bufsize);
 	}
 
-	// Special handling for video extensions (e.g., cinematics)
-	if (Q_stricmp(extension, ".roq") == 0) {
-		int extCount = 0;
-		char *videoExts[] = {
-			".RoQ", ".roq",
+const char *extensions[] = { "RoQ", "roq"
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
-			".ogm", ".ogv",
+			, "ogm", "ogv"
 #endif
-		};
+			};
 
-		for (i = 0; i < sizeof(videoExts)/sizeof(videoExts[0]); i++) {
-			pFiles = FS_ListFiles(path, videoExts[i], &nFiles);
+	pFiles = FS_ListFiles(path, extension, &nFiles);
 
-			for (extCount = 0; extCount < nFiles; extCount++) {
-				nLen = strlen(pFiles[extCount]) + 1;
-				if (nTotal + nLen + 1 < bufsize) {
-					strcpy(listbuf, pFiles[extCount]);
-					listbuf += nLen;
-					nTotal += nLen;
-				} else {
-					FS_FreeFileList(pFiles);
-					goto done;
-				}
-			}
-
-			FS_FreeFileList(pFiles);
+	for (i =0; i < nFiles; i++) {
+		nLen = strlen(pFiles[i]) + 1;
+		if (nTotal + nLen + 1 < bufsize) {
+			strcpy(listbuf, pFiles[i]);
+			listbuf += nLen;
+			nTotal += nLen;
 		}
-	} else {
-		// Regular extension handling
-		pFiles = FS_ListFiles(path, extension, &nFiles);
-
-		for (i = 0; i < nFiles; i++) {
-			nLen = strlen(pFiles[i]) + 1;
-			if (nTotal + nLen + 1 < bufsize) {
-				strcpy(listbuf, pFiles[i]);
-				listbuf += nLen;
-				nTotal += nLen;
-			} else {
-				nFiles = i;
-				break;
-			}
+		else {
+			nFiles = i;
+			break;
 		}
-
-		FS_FreeFileList(pFiles);
 	}
 
-done:
+	FS_FreeFileList(pFiles);
+
 	return nFiles;
 }
 

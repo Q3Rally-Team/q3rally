@@ -653,7 +653,7 @@ gitem_t	bg_itemlist[] =
 		"models/powerups/holdable/medkit_sphere.md3",
 		NULL, NULL},
 /* icon */		"icons/medkit",
-/* pickup */	"Repair Kit",
+/* pickup */	"Medkit",
 		60,
 		IT_HOLDABLE,
 		HI_MEDKIT,

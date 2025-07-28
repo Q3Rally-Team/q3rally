@@ -75,8 +75,7 @@ int UI_BuildFileList( const char *directory, const char *extension, const char *
 		prefix++;
 	}
 
-	strncpy(p, prefix, sizeof(p) - 1);
-    p[sizeof(p) - 1] = '\0';  // Ensure null-termination
+	strncpy(p, prefix, sizeof(p));
 	for (sizeofPrefix = 0; sizeofPrefix < sizeof(p); sizeofPrefix++){
 		if (p[sizeofPrefix] == 0)
 			break;
