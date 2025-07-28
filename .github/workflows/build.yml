@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   linux:
     name: Linux
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - name: Install Dependencies
@@ -21,13 +21,14 @@ jobs:
         path: engine/build/*.zip
   windows:
     name: Windows
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
     - name: Compile
       run: |
         choco install zip
-        make release -j $env:NUMBER_OF_PROCESSORS -C engine
+        # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
+        make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
       env:
         ARCHIVE: 1
     - uses: actions/upload-artifact@v4
@@ -36,7 +37,7 @@ jobs:
         path: engine/build/*.zip
   macos:
     name: macOS
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v4
     - name: Compile
