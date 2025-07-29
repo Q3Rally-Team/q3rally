@@ -571,6 +571,18 @@ models/powerups/health/red2
 
 }
 
+models/powerups/health/red
+{	
+	
+	{
+		map textures/effects/envmapred.jpg
+                tcGen environment
+		blendfunc GL_ONE GL_ZERO
+		
+	}
+
+}
+
 models/powerups/health/red_sphere2
 {
 	{

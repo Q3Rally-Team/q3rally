@@ -1586,7 +1586,7 @@ TEAM_* ENTITIES
 
 //=============================================================================
 
-/*QUAKED team_DOMINATION_neutral (1 1 1) (-16 -16 -16) (16 16 16)
+/*QUAKED team_DOMINATION_sigil (1 1 1) (-16 -16 -16) (16 16 16)
 Neutral flag for DOMINATION games.
 -------- KEYS --------
 notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
@@ -1594,6 +1594,46 @@ notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 notsingle : when set to 1, entity will not spawn in Single Player mode.
 -------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
 model="models/flags/n_sigil.md3"
+*/
+
+/*QUAKED team_DOMINATION_sigil_red (1 0 0) (-16 -16 -16) (16 16 16)
+Red flag for DOMINATION games.
+-------- KEYS --------
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/flags/r_sigil.md3"
+*/
+
+/*QUAKED team_DOMINATION_sigil_blue (0 0 1) (-16 -16 -16) (16 16 16)
+Blue flag for DOMINATION games.
+-------- KEYS --------
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/flags/b_sigil.md3"
+*/
+
+/*QUAKED team_DOMINATION_sigil_green (0 1 0) (-16 -16 -16) (16 16 16)
+Green flag for DOMINATION games.
+-------- KEYS --------
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/flags/g_sigil.md3"
+*/
+
+/*QUAKED team_DOMINATION_sigil_yellow (1 1 0) (-16 -16 -16) (16 16 16)
+Yellow flag for DOMINATION games.
+-------- KEYS --------
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+notsingle : when set to 1, entity will not spawn in Single Player mode.
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/flags/y_sigil.md3"
 */
 
 //=============================================================================
