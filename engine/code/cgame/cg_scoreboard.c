@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -20,685 +20,549 @@ along with q3rally; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-// cg_scoreboard -- draw the scoreboard on top of the game screen
+
+/* cg_scoreboard.c -- Modern scoreboard design for Q3Rally */
 #include "cg_local.h"
 
+/* Modern scoreboard layout constants - ERWEITERT */
+#define MODERN_SB_X             32
+#define MODERN_SB_Y             120
+#define MODERN_SB_WIDTH         650  /* Breiter fuer zusaetzliche Spalte */
+#define MODERN_SB_HEADER_HEIGHT 48
+#define MODERN_SB_ROW_HEIGHT    36
+#define MODERN_SB_COMPACT_HEIGHT 24
 
-// Q3Rally Code Start
-// #define	SCOREBOARD_X		(0)
-#define	SCOREBOARD_X		(32)
-// END
+/* Column definitions - streamlined layout mit LAP TIME */
+#define COL_RANK_WIDTH          64
+#define COL_AVATAR_WIDTH        40
+#define COL_NAME_WIDTH          180  /* Etwas schmaler fuer mehr Platz */
+#define COL_POINTS_WIDTH        80
+#define COL_LAPTIME_WIDTH       100  /* Neue Spalte fuer Rundenzeit */
+#define COL_TIME_WIDTH          120
 
-#define SB_HEADER			86
-#define SB_TOP				(SB_HEADER+32)
+/* Column positions */
+#define COL_RANK_X              MODERN_SB_X
+#define COL_AVATAR_X            (COL_RANK_X + COL_RANK_WIDTH)
+#define COL_NAME_X              (COL_AVATAR_X + COL_AVATAR_WIDTH)
+#define COL_POINTS_X            (COL_NAME_X + COL_NAME_WIDTH)
+#define COL_LAPTIME_X           (COL_POINTS_X + COL_POINTS_WIDTH)
+#define COL_TIME_X              (COL_LAPTIME_X + COL_LAPTIME_WIDTH)
 
-// Where the status bar starts, so we don't overwrite it
-// Q3Rally Code Start
-// #define SB_STATUSBAR		420
-#define SB_STATUSBAR		400
-// END
+/* Visual styling */
+#define MODERN_SB_ALPHA         0.85f
+#define MODERN_SB_BORDER_SIZE   2
+#define MODERN_SB_PADDING       8
+#define MODERN_SB_CORNER_RADIUS 4
 
-#define SB_NORMAL_HEIGHT	40
-#define SB_INTER_HEIGHT		16 // interleaved height
+/* Maximum clients display */
+#define MAX_SCOREBOARD_CLIENTS  12
+#define MAX_COMPACT_CLIENTS     16
 
-#define SB_MAXCLIENTS_NORMAL  ((SB_STATUSBAR - SB_TOP) / SB_NORMAL_HEIGHT)
-#define SB_MAXCLIENTS_INTER   ((SB_STATUSBAR - SB_TOP) / SB_INTER_HEIGHT - 1)
-
-// Used when interleaved
-
-
-
-#define SB_LEFT_BOTICON_X	(SCOREBOARD_X+0)
-#define SB_LEFT_HEAD_X		(SCOREBOARD_X+32)
-#define SB_RIGHT_BOTICON_X	(SCOREBOARD_X+64)
-#define SB_RIGHT_HEAD_X		(SCOREBOARD_X+96)
-// Normal
-#define SB_BOTICON_X		(SCOREBOARD_X+32)
-#define SB_HEAD_X			(SCOREBOARD_X+64)
-
-// Q3Rally Code Start
-// #define SB_SCORELINE_X		112
- #define SB_SCORELINE_X		128
-// END
-
-#define SB_RATING_WIDTH	    (6 * BIGCHAR_WIDTH) // width 6
-// Q3Rally Code Start
-//#define SB_SCORE_X			(SB_SCORELINE_X + BIGCHAR_WIDTH) // width 6
-#define SB_RATING_X			(SB_SCORELINE_X + 6 * BIGCHAR_WIDTH) // width 6
-/*
-#define SB_PING_X			(SB_SCORELINE_X + 12 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_TIME_X			(SB_SCORELINE_X + 17 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_NAME_X			(SB_SCORELINE_X + 22 * BIGCHAR_WIDTH) // width 15
-*/
-
-#define SB_SCORE_X			(SB_SCORELINE_X + 2 * BIGCHAR_WIDTH) // width 6
-#define SB_PING_X			(SB_SCORELINE_X + 11 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_TIME_X			(SB_SCORELINE_X + 18 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_TOTAL_TIME_X		(SB_SCORELINE_X + 26 * BIGCHAR_WIDTH + 8) // width 5
-#define SB_NAME_X			(SB_SCORELINE_X + 33 * BIGCHAR_WIDTH) // width 15
-// END
-
-// The new and improved score board
-//
-// In cases where the number of clients is high, the score board heads are interleaved
-// here's the layout
-
-//
-//	0   32   80  112  144   240  320  400   <-- pixel position
-//  bot head bot head score ping time name
-//  
-//  wins/losses are drawn on bot icon now
-
-static qboolean localClient; // true if local client has been displayed
-
-
-							 /*
-=================
-CG_DrawScoreboard
-=================
-*/
-static void CG_DrawClientScore( int y, score_t *score, float *color, float fade, qboolean largeFormat ) {
-	char	string[1024];
-	clientInfo_t	*ci;
-	int iconx, headx;
-// Q3Rally Code Start
-//	vec3_t	headAngles;
-	int	totalTime;
-	char	*ttime, *time;
-// END
-
-	if ( score->client < 0 || score->client >= cgs.maxclients ) {
-		Com_Printf( "Bad score->client: %i\n", score->client );
-		return;
-	}
-	
-	ci = &cgs.clientinfo[score->client];
-
-// Q3Rally Code Start
-//	iconx = SB_BOTICON_X + (SB_RATING_WIDTH / 2);
-//	headx = SB_HEAD_X + (SB_RATING_WIDTH / 2);
-	iconx = SB_BOTICON_X - (SB_RATING_WIDTH / 2);
-	headx = SB_HEAD_X - (SB_RATING_WIDTH / 2);
-// END
-
-	// draw the handicap or bot skill marker (unless player has flag)
-	if ( ci->powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		if( largeFormat ) {
-			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, TEAM_FREE, qfalse );
-		}
-		else {
-			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_FREE, qfalse );
-		}
-	} else if ( ci->powerups & ( 1 << PW_REDFLAG ) ) {
-		if( largeFormat ) {
-			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, TEAM_RED, qfalse );
-		}
-		else {
-			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_RED, qfalse );
-		}
-	} else if ( ci->powerups & ( 1 << PW_BLUEFLAG ) ) {
-		if( largeFormat ) {
-			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, TEAM_BLUE, qfalse );
-		}
-		else {
-			CG_DrawFlagModel( iconx, y, 16, 16, TEAM_BLUE, qfalse );
-		}
-	}
-// STONELANCE - draw flag beside winner
-	else if (cg_entities[score->client].finishRaceTime &&
-		cg_entities[score->client].currentPosition == 1){
-	// UPDATE - enable this
-/*
-		if( largeFormat ) {
-			CG_DrawFlagModel( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, -1 );
-		}
-		else {
-			CG_DrawFlagModel( iconx, y, 16, 16, -1 );
-		}
-*/
-	}
-// END
-	else {
-		if ( ci->botSkill > 0 && ci->botSkill <= 5 ) {
-			if ( cg_drawIcons.integer ) {
-				if( largeFormat ) {
-					CG_DrawPic( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, cgs.media.botSkillShaders[ ci->botSkill - 1 ] );
-				}
-				else {
-					CG_DrawPic( iconx, y, 16, 16, cgs.media.botSkillShaders[ ci->botSkill - 1 ] );
-				}
-			}
-		} else if ( ci->handicap < 100 ) {
-			Com_sprintf( string, sizeof( string ), "%i", ci->handicap );
-// STONELANCE - removed gametype
-/*
-			if ( cgs.gametype == GT_TOURNAMENT )
-				CG_DrawSmallStringColor( iconx, y - SMALLCHAR_HEIGHT/2, string, color );
-			else
-*/
-// END
-				CG_DrawSmallStringColor( iconx, y, string, color );
-		}
-
-		// draw the wins / losses
-// STONELANCE - removed gametype
-/*
-		if ( cgs.gametype == GT_TOURNAMENT ) {
-			Com_sprintf( string, sizeof( string ), "%i/%i", ci->wins, ci->losses );
-			if( ci->handicap < 100 && !ci->botSkill ) {
-				CG_DrawSmallStringColor( iconx, y + SMALLCHAR_HEIGHT/2, string, color );
-			}
-			else {
-				CG_DrawSmallStringColor( iconx, y, string, color );
-			}
-		}
-*/
-// END
-	}
-
-	// draw the face
-// Q3Rally Code Start
-/*
-	VectorClear( headAngles );
-	headAngles[YAW] = 180;
-	if( largeFormat ) {
-		CG_DrawHead( headx, y - ( ICON_SIZE - BIGCHAR_HEIGHT ) / 2, ICON_SIZE, ICON_SIZE, 
-			score->client, headAngles );
-	}
-	else {
-		CG_DrawHead( headx, y, 16, 16, score->client, headAngles );
-	}
-*/
-	if( largeFormat )
-		CG_DrawPic( headx, y - ( ICON_SIZE - BIGCHAR_HEIGHT ) / 2, ICON_SIZE, ICON_SIZE, cgs.clientinfo[score->client].modelIcon );
-	else
-		CG_DrawPic( headx, y, 16, 16, cgs.clientinfo[score->client].modelIcon );
-
-	// times
-	if (cg_entities[score->client].finishRaceTime)
-		totalTime = cg_entities[score->client].finishRaceTime - score->time;
-	else if (score->time)
-		totalTime = cg.time - score->time;
-	else
-		totalTime = 0;
-
-	if (totalTime < 0)
-		totalTime = 0;
-
-	ttime = getStringForTime(totalTime);
-
-	if ( isRallyRace() && !isRallyNonDMRace() && score->score > 0){
-		totalTime -= TIME_BONUS_PER_FRAG * score->score;
-
-		time = getStringForTimeDuration(0, totalTime);
-	}
-	else
-		time = ttime;
-// END
-
-#ifdef MISSIONPACK
-	// draw the team task
-	if ( ci->teamTask != TEAMTASK_NONE ) {
-		if ( ci->teamTask == TEAMTASK_OFFENSE ) {
-			CG_DrawPic( headx + 48, y, 16, 16, cgs.media.assaultShader );
-		}
-		else if ( ci->teamTask == TEAMTASK_DEFENSE ) {
-			CG_DrawPic( headx + 48, y, 16, 16, cgs.media.defendShader );
-		}
-	}
-#endif
-	// draw the score line
-	if ( score->ping == -1 ) {
-		Com_sprintf(string, sizeof(string),
-			" connecting    %s", ci->name);
-	} else if ( ci->team == TEAM_SPECTATOR
-// Q3Rally Code Start
-//		&& !cg_entities[score->client].finishRaceTime
-// END
-		) {
-		Com_sprintf(string, sizeof(string),
-// Q3Rally Code Start
-//			" SPECT %3i %4i %s", score->ping, score->time, ci->name);
-			"   SPECT   %9i   %s   %s  %s", score->ping, time, ttime, ci->name);
-// END
-	} else {
-		Com_sprintf(string, sizeof(string),
-// Q3Rally Code Start
-//			"%5i %4i %4i %s", score->score, score->ping, score->time, ci->name);
-			"%10i %14i        %s      %s    %s", score->score, score->ping, time, ttime, ci->name);
-// END
-	}
-
-	// highlight your position
-	if ( score->client == cg.snap->ps.clientNum ) {
-		float	hcolor[4];
-		int		rank;
-
-		localClient = qtrue;
-
-		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR 
-			|| cgs.gametype >= GT_TEAM ) {
-			rank = -1;
-		} else {
-			rank = cg.snap->ps.persistant[PERS_RANK] & ~RANK_TIED_FLAG;
-		}
-		if ( rank == 0 ) {
-			hcolor[0] = 0;
-			hcolor[1] = 0;
-			hcolor[2] = 0.7f;
-		} else if ( rank == 1 ) {
-			hcolor[0] = 0.7f;
-			hcolor[1] = 0;
-			hcolor[2] = 0;
-		} else if ( rank == 2 ) {
-			hcolor[0] = 0.7f;
-			hcolor[1] = 0.7f;
-			hcolor[2] = 0;
-		} else {
-			hcolor[0] = 0.7f;
-			hcolor[1] = 0.7f;
-			hcolor[2] = 0.7f;
-		}
-
-		hcolor[3] = fade * 0.7;
-// Q3Rally Code Start
-//		CG_FillRect( SB_SCORELINE_X + BIGCHAR_WIDTH + (SB_RATING_WIDTH / 2), y, 
-//			640 - SB_SCORELINE_X - BIGCHAR_WIDTH, BIGCHAR_HEIGHT+1, hcolor );
-		CG_FillRect( SB_SCORE_X - (SB_RATING_WIDTH / 2), y, 
-			560 - SB_SCORELINE_X - SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT+1, hcolor );
-// END
-	}
-
-// Q3Rally Code Start
-//	CG_DrawBigString( SB_SCORELINE_X + (SB_RATING_WIDTH / 2), y, string, fade );
-	CG_DrawSmallString( SB_SCORELINE_X - (SB_RATING_WIDTH / 2), y, string, fade );
-// END
-
-	// add the "ready" marker for intermission exiting
-	if ( cg.snap->ps.stats[ STAT_CLIENTS_READY ] & ( 1 << score->client ) ) {
-// Q3Rally Code Start
-//		CG_DrawBigStringColor( iconx, y, "READY", color );
-		CG_DrawSmallStringColor( iconx, y, "READY", color );
-// END
-	}
-}
+static qboolean localClientDrawn;
 
 /*
 =================
-CG_TeamScoreboard
+CG_DrawModernBackground
+Draw a modern styled background with subtle gradients
 =================
 */
-static int CG_TeamScoreboard( int y, team_t team, float fade, int maxClients, int lineHeight ) {
-	int		i;
-	score_t	*score;
-	float	color[4];
-	int		count;
-	clientInfo_t	*ci;
-
-	color[0] = color[1] = color[2] = 1.0;
-	color[3] = fade;
-
-	count = 0;
-	for ( i = 0 ; i < cg.numScores && count < maxClients ; i++ ) {
-		score = &cg.scores[i];
-		ci = &cgs.clientinfo[ score->client ];
-
-		if ( team != ci->team ) {
-			continue;
-		}
-
-		CG_DrawClientScore( y + lineHeight * count, score, color, fade, lineHeight == SB_NORMAL_HEIGHT );
-
-		count++;
-	}
-
-	return count;
-}
-
-/*
-=================
-CG_DrawScoreboard
-
-Draw the normal in-game scoreboard
-=================
-*/
-qboolean CG_DrawOldScoreboard( void ) {
-	int		x, y, w, i, n1, n2;
-	float	fade;
-	float	*fadeColor;
-	char	*s;
-	int maxClients;
-	int lineHeight;
-	int topBorderSize, bottomBorderSize;
-	int		team;
-	char	*teamName;
-
-CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
-
-	// don't draw amuthing if the menu or console is up
-	if ( cg_paused.integer ) {
-		cg.deferredPlayerLoading = 0;
-		return qfalse;
-	}
-
-	if ( cgs.gametype == GT_SINGLE_PLAYER && cg.predictedPlayerState.pm_type == PM_INTERMISSION ) {
-		cg.deferredPlayerLoading = 0;
-		return qfalse;
-	}
-
-	// don't draw scoreboard during death while warmup up
-	if ( cg.warmup && !cg.showScores ) {
-		return qfalse;
-	}
-
-	if ( cg.showScores || cg.predictedPlayerState.pm_type == PM_DEAD ||
-		 cg.predictedPlayerState.pm_type == PM_INTERMISSION ) {
-		fade = 1.0;
-		fadeColor = colorWhite;
-	} else {
-		fadeColor = CG_FadeColor( cg.scoreFadeTime, FADE_TIME );
-		
-		if ( !fadeColor ) {
-			// next time scoreboard comes up, don't print killer
-			cg.deferredPlayerLoading = 0;
-			cg.killerName[0] = 0;
-			return qfalse;
-		}
-		fade = *fadeColor;
-	}
-
-// Q3Rally Code Start
-	if (cg.scoresRequestTime + 2000 < cg.time){
-		cg.scoresRequestTime = cg.time;
-		trap_SendClientCommand( "score" );
-/* UPDATE: need this?
-		if (cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM){
-			trap_SendClientCommand( "times" );
-		}
-*/
-	}
-// END
-
-	// fragged by ... line
-	if ( cg.killerName[0] ) {
-		s = va("Fragged by %s", cg.killerName );
-		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-		x = ( SCREEN_WIDTH - w ) / 2;
-		y = 40;
-		CG_DrawBigString( x, y, s, fade );
-	}
-
-	// current rank
-	if ( cgs.gametype < GT_TEAM) {
-		if (cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
-			s = va("%s place with %i",
-				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
-				cg.snap->ps.persistant[PERS_SCORE] );
-			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-			x = ( SCREEN_WIDTH - w ) / 2;
-			y = 60;
-			CG_DrawBigString( x, y, s, fade );
-		}
-	} else {
-// Q3Rally Code Start
-		if ( TiedWinner() ) {
-			team = GetTeamAtRank(1);
-			s = va("Winners are tied at %i", cg.teamScores[team-TEAM_RED] );
-		}
-		else {
-			team = GetTeamAtRank(1);
-			switch(team){
-			case TEAM_RED:
-				teamName = "Red";
-				break;
-			case TEAM_BLUE:
-				teamName = "Blue";
-				break;
-			case TEAM_GREEN:
-				teamName = "Green";
-				break;
-			case TEAM_YELLOW:
-				teamName = "Yellow";
-				break;
-			default:
-				teamName = "Unknown";
-				break;
-			}
-			s = va("%s leads with %i", teamName, cg.teamScores[team-TEAM_RED] );
-		}
-		/*
-		if ( cg.teamScores[0] == cg.teamScores[1] ) {
-			s = va("Teams are tied at %i", cg.teamScores[0] );
-		} else if ( cg.teamScores[0] >= cg.teamScores[1] ) {
-			s = va("Red leads %i to %i",cg.teamScores[0], cg.teamScores[1] );
-		} else {
-			s = va("Blue leads %i to %i",cg.teamScores[1], cg.teamScores[0] );
-		}
-		*/
-// END
-
-		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-		x = ( SCREEN_WIDTH - w ) / 2;
-		y = 60;
-		CG_DrawBigString( x, y, s, fade );
-	}
-
-	// scoreboard
-	y = SB_HEADER;
-
-// Q3Rally Code Start
-	CG_DrawPic( SB_SCORE_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardScore );
-// END
-	CG_DrawPic( SB_PING_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardPing );
-	CG_DrawPic( SB_TIME_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardTime );
-// Q3Rally Code Start
-	CG_DrawPic( SB_TOTAL_TIME_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardTime );
-// END
-	CG_DrawPic( SB_NAME_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardName );
-
-	y = SB_TOP;
-
-	// If there are more than SB_MAXCLIENTS_NORMAL, use the interleaved scores
-	if ( cg.numScores > SB_MAXCLIENTS_NORMAL ) {
-		maxClients = SB_MAXCLIENTS_INTER;
-		lineHeight = SB_INTER_HEIGHT;
-		topBorderSize = 8;
-		bottomBorderSize = 16;
-	} else {
-		maxClients = SB_MAXCLIENTS_NORMAL;
-		lineHeight = SB_NORMAL_HEIGHT;
-		topBorderSize = 16;
-		bottomBorderSize = 16;
-	}
-
-	localClient = qfalse;
-
-	if ( cgs.gametype >= GT_TEAM ) {
-		//
-		// teamplay scoreboard
-		//
-		y += lineHeight/2;
-
-// Q3Rally Code Start
-		for(i = 0; i < 4; i++){
-			team = GetTeamAtRank(i+1);
-			
-			if (team == -1)
-				continue;
-
-			n1 = CG_TeamScoreboard( y, team, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, team );
-			y += (n1 * lineHeight) + SMALLCHAR_HEIGHT;
-			maxClients -= n1;
-		}
-		/*
-		if ( cg.teamScores[0] >= cg.teamScores[1] ) {
-			n1 = CG_TeamScoreboard( y, TEAM_RED, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, TEAM_RED );
-			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
-			maxClients -= n1;
-			n2 = CG_TeamScoreboard( y, TEAM_BLUE, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n2 * lineHeight + bottomBorderSize, 0.33f, TEAM_BLUE );
-			y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
-			maxClients -= n2;
-		} else {
-			n1 = CG_TeamScoreboard( y, TEAM_BLUE, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, TEAM_BLUE );
-			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
-			maxClients -= n1;
-			n2 = CG_TeamScoreboard( y, TEAM_RED, fade, maxClients, lineHeight );
-			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n2 * lineHeight + bottomBorderSize, 0.33f, TEAM_RED );
-			y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
-			maxClients -= n2;
-		}
-		*/
-// END
-		n1 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients, lineHeight );
-		y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
-
-	} else {
-		//
-		// free for all scoreboard
-		//
-		n1 = CG_TeamScoreboard( y, TEAM_FREE, fade, maxClients, lineHeight );
-		y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
-		n2 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients - n1, lineHeight );
-		y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
-	}
-
-	if (!localClient) {
-		// draw local client at the bottom
-		for ( i = 0 ; i < cg.numScores ; i++ ) {
-			if ( cg.scores[i].client == cg.snap->ps.clientNum ) {
-				CG_DrawClientScore( y, &cg.scores[i], fadeColor, fade, lineHeight == SB_NORMAL_HEIGHT );
-				break;
-			}
-		}
-	}
-
-	// load any models that have been deferred
-	if ( ++cg.deferredPlayerLoading > 10 ) {
-		CG_LoadDeferredPlayers();
-	}
-
-	return qtrue;
-}
-
-//================================================================================
-
-// STONELANCE - removed
-#if 0
-/*
-================
-CG_CenterGiantLine
-================
-*/
-static void CG_CenterGiantLine( float y, const char *string ) {
-	float		x;
-	vec4_t		color;
-
-	color[0] = 1;
-	color[1] = 1;
-	color[2] = 1;
-	color[3] = 1;
-
-	x = 0.5 * ( 640 - GIANT_WIDTH * CG_DrawStrlen( string ) );
-
-	CG_DrawStringExt( x, y, string, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-}
-
-/*
-=================
-CG_DrawTourneyScoreboard
-
-Draw the oversize scoreboard for tournements
-=================
-*/
-void CG_DrawTourneyScoreboard( void ) {
-	const char		*s;
-	vec4_t			color;
-	int				min, tens, ones;
-	clientInfo_t	*ci;
-	int				y;
-	int				i;
-
-CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
-
-	// request more scores regularly
-	if ( cg.scoresRequestTime + 2000 < cg.time ) {
-		cg.scoresRequestTime = cg.time;
-		trap_SendClientCommand( "score" );
-	}
-
-	// draw the dialog background
-	color[0] = color[1] = color[2] = 0;
-	color[3] = 1;
-    CG_SetScreenPlacement(PLACE_STRETCH, PLACE_STRETCH);
-	CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color );
-    CG_PopScreenPlacement();
+static void CG_DrawModernBackground(int x, int y, int width, int height, 
+                                   float alpha, qboolean isHeader) {
+    vec4_t bgColor = {0.08f, 0.10f, 0.12f, 0.8f};
+    vec4_t borderColor = {0.2f, 0.25f, 0.3f, 0.6f};
     
-	color[0] = 1;
-	color[1] = 1;
-	color[2] = 1;
-	color[3] = 1;
-
-	// print the mesage of the day
-	s = CG_ConfigString( CS_MOTD );
-	if ( !s[0] ) {
-		s = "Scoreboard";
-	}
-
-	// print optional title
-	CG_CenterGiantLine( 8, s );
-
-	// print server time
-	ones = cg.time / 1000;
-	min = ones / 60;
-	ones %= 60;
-	tens = ones / 10;
-	ones %= 10;
-	s = va("%i:%i%i", min, tens, ones );
-
-	CG_CenterGiantLine( 64, s );
-
-
-	// print the two scores
-
-	y = 160;
-	if ( cgs.gametype >= GT_TEAM ) {
-		//
-		// teamplay scoreboard
-		//
-		CG_DrawStringExt( 8, y, "Red Team", color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-		s = va("%i", cg.teamScores[0] );
-		CG_DrawStringExt( 632 - GIANT_WIDTH * strlen(s), y, s, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-		
-		y += 64;
-
-		CG_DrawStringExt( 8, y, "Blue Team", color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-		s = va("%i", cg.teamScores[1] );
-		CG_DrawStringExt( 632 - GIANT_WIDTH * strlen(s), y, s, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-	} else {
-		//
-		// free for all scoreboard
-		//
-		for ( i = 0 ; i < MAX_CLIENTS ; i++ ) {
-			ci = &cgs.clientinfo[i];
-			if ( !ci->infoValid ) {
-				continue;
-			}
-			if ( ci->team != TEAM_FREE ) {
-				continue;
-			}
-
-			CG_DrawStringExt( 8, y, ci->name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-			s = va("%i", ci->score );
-			CG_DrawStringExt( 632 - GIANT_WIDTH * strlen(s), y, s, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
-			y += 64;
-		}
-	}
-
-
+    if (isHeader) {
+        /* Header background - darker */
+        bgColor[0] = 0.12f; bgColor[1] = 0.15f; bgColor[2] = 0.18f; bgColor[3] = alpha;
+        borderColor[0] = 0.3f; borderColor[1] = 0.4f; borderColor[2] = 0.5f; borderColor[3] = alpha;
+    } else {
+        /* Row background - lighter */
+        bgColor[0] = 0.08f; bgColor[1] = 0.10f; bgColor[2] = 0.12f; bgColor[3] = alpha * 0.8f;
+        borderColor[0] = 0.2f; borderColor[1] = 0.25f; borderColor[2] = 0.3f; borderColor[3] = alpha * 0.6f;
+    }
+    
+    /* Main background */
+    CG_FillRect(x, y, width, height, bgColor);
+    
+    /* Top border */
+    CG_FillRect(x, y, width, MODERN_SB_BORDER_SIZE, borderColor);
+    
+    /* Bottom border */
+    CG_FillRect(x, y + height - MODERN_SB_BORDER_SIZE, width, MODERN_SB_BORDER_SIZE, borderColor);
 }
-#endif
-// END
+
+/*
+=================
+CG_DrawModernText
+Draw text with modern styling and proper alignment
+=================
+*/
+static void CG_DrawModernText(int x, int y, const char *text, int align, 
+                             int columnWidth, float *color, qboolean isBold) {
+    int textWidth, drawX;
+    
+    if (!text) return;
+    
+    textWidth = CG_DrawStrlen(text) * (isBold ? BIGCHAR_WIDTH : SMALLCHAR_WIDTH);
+    
+    switch (align) {
+        case 0: /* Left align */
+            drawX = x + MODERN_SB_PADDING;
+            break;
+        case 1: /* Center align */
+            drawX = x + (columnWidth - textWidth) / 2;
+            break;
+        case 2: /* Right align */
+            drawX = x + columnWidth - textWidth - MODERN_SB_PADDING;
+            break;
+        default:
+            drawX = x;
+            break;
+    }
+    
+    if (isBold) {
+        if (color) {
+            CG_DrawBigStringColor(drawX, y, text, color);
+        } else {
+            CG_DrawBigString(drawX, y, text, 1.0f);
+        }
+    } else {
+        if (color) {
+            CG_DrawSmallStringColor(drawX, y, text, color);
+        } else {
+            CG_DrawSmallString(drawX, y, text, 1.0f);
+        }
+    }
+}
+
+/*
+=================
+CG_DrawModernHeader
+Draw the modern scoreboard header
+=================
+*/
+static void CG_DrawModernHeader(int y) {
+    vec4_t headerTextColor = {0.9f, 0.9f, 0.9f, 1.0f};
+    
+    /* Draw header background */
+    CG_DrawModernBackground(MODERN_SB_X, y, MODERN_SB_WIDTH, MODERN_SB_HEADER_HEIGHT, 
+                           MODERN_SB_ALPHA, qtrue);
+    
+    /* Draw column headers */
+    CG_DrawModernText(COL_RANK_X, y + 12, "POS", 1, COL_RANK_WIDTH, headerTextColor, qtrue);
+    CG_DrawModernText(COL_NAME_X, y + 12, "PLAYER", 0, COL_NAME_WIDTH, headerTextColor, qtrue);
+    CG_DrawModernText(COL_POINTS_X, y + 12, "PTS", 1, COL_POINTS_WIDTH, headerTextColor, qtrue);
+    CG_DrawModernText(COL_LAPTIME_X, y + 12, "BEST", 1, COL_LAPTIME_WIDTH, headerTextColor, qtrue);
+    CG_DrawModernText(COL_TIME_X, y + 12, "TOTAL", 1, COL_TIME_WIDTH, headerTextColor, qtrue);
+}
+
+/*
+=================
+CG_GetRankColor
+Get color based on player rank for visual hierarchy
+=================
+*/
+static void CG_GetRankColor(int rank, vec4_t color) {
+    switch (rank) {
+        case 1: /* Gold for 1st place */
+            color[0] = 1.0f; color[1] = 0.84f; color[2] = 0.0f; color[3] = 1.0f;
+            break;
+        case 2: /* Silver for 2nd place */
+            color[0] = 0.75f; color[1] = 0.75f; color[2] = 0.75f; color[3] = 1.0f;
+            break;
+        case 3: /* Bronze for 3rd place */
+            color[0] = 0.8f; color[1] = 0.5f; color[2] = 0.2f; color[3] = 1.0f;
+            break;
+        default: /* White for others */
+            color[0] = 0.9f; color[1] = 0.9f; color[2] = 0.9f; color[3] = 1.0f;
+            break;
+    }
+}
+
+/*
+=================
+CG_GetModernTeamColor
+Helper function to get team-specific colors
+=================
+*/
+static void CG_GetModernTeamColor(team_t team, vec4_t color) {
+    switch (team) {
+        case TEAM_RED:
+            color[0] = 1.0f; color[1] = 0.2f; color[2] = 0.2f; color[3] = 1.0f;
+            break;
+        case TEAM_BLUE:
+            color[0] = 0.2f; color[1] = 0.2f; color[2] = 1.0f; color[3] = 1.0f;
+            break;
+        case TEAM_GREEN:
+            color[0] = 0.2f; color[1] = 1.0f; color[2] = 0.2f; color[3] = 1.0f;
+            break;
+        case TEAM_YELLOW:
+            color[0] = 1.0f; color[1] = 1.0f; color[2] = 0.2f; color[3] = 1.0f;
+            break;
+        default:
+            color[0] = 0.9f; color[1] = 0.9f; color[2] = 0.9f; color[3] = 1.0f;
+            break;
+    }
+}
+
+/*
+=================
+CG_DrawModernPlayerRow
+Draw a single player row with modern styling
+=================
+*/
+static void CG_DrawModernPlayerRow(int y, score_t *score, int rank, 
+                                  qboolean isCompact, float fade) {
+    clientInfo_t *ci;
+    char rankStr[16], pointsStr[16];
+    char *timeStr, *lapTimeStr;
+    int totalTime, lapTime, rowHeight;
+    vec4_t rankColor = {0.9f, 0.9f, 0.9f, 1.0f};
+    vec4_t playerColor = {0.9f, 0.9f, 0.9f, 1.0f}; 
+    vec4_t localHighlight = {0.2f, 0.4f, 0.8f, 0.3f};
+    vec4_t teamColor = {0.9f, 0.9f, 0.9f, 1.0f};
+    vec4_t botColor = {0.5f, 0.8f, 0.5f, 1.0f};
+    vec4_t readyColor = {0.3f, 0.8f, 0.3f, 1.0f};
+    qboolean isLocalPlayer;
+    int avatarSize, textY;
+    
+    if (score->client < 0 || score->client >= cgs.maxclients) {
+        return;
+    }
+    
+    ci = &cgs.clientinfo[score->client];
+    isLocalPlayer = (score->client == cg.snap->ps.clientNum);
+    rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
+    avatarSize = rowHeight - 8;
+    textY = y + (rowHeight - SMALLCHAR_HEIGHT) / 2;
+    
+    /* Calculate time display */
+    if (cg_entities[score->client].finishRaceTime) {
+        totalTime = cg_entities[score->client].finishRaceTime - score->time;
+    } else if (score->time) {
+        totalTime = cg.time - score->time;
+    } else {
+        totalTime = 0;
+    }
+    
+    if (totalTime < 0) totalTime = 0;
+    timeStr = getStringForTime(totalTime);
+    
+    /* Calculate lap time - nutzt Q3Rally-spezifische Felder */
+    if (cg_entities[score->client].bestLapTime) {
+        lapTime = cg_entities[score->client].bestLapTime;
+    } else {
+        lapTime = 0;
+    }
+    
+    if (lapTime < 0) lapTime = 0;
+    lapTimeStr = getStringForTime(lapTime);
+    
+    /* Prepare display strings */
+    if (ci->team == TEAM_SPECTATOR) {
+        Com_sprintf(rankStr, sizeof(rankStr), "SPEC");
+        Com_sprintf(pointsStr, sizeof(pointsStr), "-");
+    } else if (cg_entities[score->client].currentPosition > 0) {
+        Com_sprintf(rankStr, sizeof(rankStr), "%d", cg_entities[score->client].currentPosition);
+        Com_sprintf(pointsStr, sizeof(pointsStr), "%d", score->score);
+    } else {
+        Com_sprintf(rankStr, sizeof(rankStr), "-");
+        Com_sprintf(pointsStr, sizeof(pointsStr), "%d", score->score);
+    }
+    
+    /* Highlight local player */
+    if (isLocalPlayer) {
+        localClientDrawn = qtrue;
+        localHighlight[0] = 0.2f; localHighlight[1] = 0.4f; 
+        localHighlight[2] = 0.8f; localHighlight[3] = 0.3f * fade;
+        CG_FillRect(MODERN_SB_X, y, MODERN_SB_WIDTH, rowHeight, localHighlight);
+    }
+    
+    /* Draw row background */
+    CG_DrawModernBackground(MODERN_SB_X, y, MODERN_SB_WIDTH, rowHeight, 
+                           MODERN_SB_ALPHA * fade, qfalse);
+    
+    /* Get colors */
+    if (ci->team == TEAM_SPECTATOR) {
+        playerColor[0] = 0.6f; playerColor[1] = 0.6f; 
+        playerColor[2] = 0.6f; playerColor[3] = fade;
+        rankColor[0] = 0.6f; rankColor[1] = 0.6f; 
+        rankColor[2] = 0.6f; rankColor[3] = fade;
+    } else {
+        CG_GetRankColor(cg_entities[score->client].currentPosition, rankColor);
+        rankColor[3] = fade;
+        playerColor[0] = 0.9f; playerColor[1] = 0.9f; 
+        playerColor[2] = 0.9f; playerColor[3] = fade;
+    }
+    
+    /* Draw player avatar */
+    if (ci->modelIcon) {
+        CG_DrawPic(COL_AVATAR_X + (COL_AVATAR_WIDTH - avatarSize) / 2, 
+                   y + (rowHeight - avatarSize) / 2, 
+                   avatarSize, avatarSize, ci->modelIcon);
+    }
+    
+    /* Draw rank with special styling for top 3 */
+    if (cg_entities[score->client].currentPosition <= 3 && 
+        cg_entities[score->client].currentPosition > 0) {
+        CG_DrawModernText(COL_RANK_X, textY, rankStr, 1, COL_RANK_WIDTH, 
+                         rankColor, qtrue);
+    } else {
+        CG_DrawModernText(COL_RANK_X, textY, rankStr, 1, COL_RANK_WIDTH, 
+                         playerColor, qfalse);
+    }
+    
+    /* Draw player name with team color if applicable */
+    if (cgs.gametype >= GT_TEAM && ci->team != TEAM_SPECTATOR) {
+        CG_GetModernTeamColor(ci->team, teamColor);
+        teamColor[3] = fade;
+        CG_DrawModernText(COL_NAME_X, textY, ci->name, 0, COL_NAME_WIDTH, 
+                         teamColor, qfalse);
+    } else {
+        CG_DrawModernText(COL_NAME_X, textY, ci->name, 0, COL_NAME_WIDTH, 
+                         playerColor, qfalse);
+    }
+    
+    /* Draw points */
+    CG_DrawModernText(COL_POINTS_X, textY, pointsStr, 1, COL_POINTS_WIDTH, 
+                     playerColor, qfalse);
+    
+    /* Draw lap time */
+    if (lapTimeStr && strcmp(lapTimeStr, "0:00:00") != 0) {
+        CG_DrawModernText(COL_LAPTIME_X, textY, lapTimeStr, 1, COL_LAPTIME_WIDTH, 
+                         playerColor, qfalse);
+    } else {
+        CG_DrawModernText(COL_LAPTIME_X, textY, "-", 1, COL_LAPTIME_WIDTH, 
+                         playerColor, qfalse);
+    }
+    
+    /* Draw total time */
+    if (timeStr && strcmp(timeStr, "0:00:00") != 0) {
+        CG_DrawModernText(COL_TIME_X, textY, timeStr, 1, COL_TIME_WIDTH, 
+                         playerColor, qfalse);
+    } else {
+        CG_DrawModernText(COL_TIME_X, textY, "-", 1, COL_TIME_WIDTH, 
+                         playerColor, qfalse);
+    }
+    
+    /* Draw connection status indicators */
+    if (ci->botSkill > 0 && ci->botSkill <= 5) {
+        /* Bot indicator */
+        botColor[3] = fade;
+        CG_DrawSmallStringColor(COL_NAME_X + COL_NAME_WIDTH - 32, textY, "BOT", botColor);
+    }
+    
+    /* Draw ready status in intermission */
+    if (cg.snap->ps.stats[STAT_CLIENTS_READY] & (1 << score->client)) {
+        readyColor[3] = fade;
+        CG_DrawSmallStringColor(COL_TIME_X + COL_TIME_WIDTH + 8, textY, "RDY", readyColor);
+    }
+}
+
+/*
+=================
+CG_DrawModernGameInfo
+Draw game information header
+=================
+*/
+static void CG_DrawModernGameInfo(int y, float fade) {
+    char *gameInfo;
+    int x, w;
+    int leadingTeam;
+    char *teamName;
+    vec4_t titleColor = {1.0f, 1.0f, 1.0f, 1.0f};
+    
+    titleColor[3] = fade;
+    
+    /* Draw current rank/status */
+    if (cgs.gametype < GT_TEAM) {
+        if (cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR) {
+            gameInfo = va("%s place",
+                         CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1));
+        } else {
+            gameInfo = "Spectating";
+        }
+    } else {
+        /* Team game info */
+        leadingTeam = GetTeamAtRank(1);
+        
+        switch (leadingTeam) {
+            case TEAM_RED:    teamName = "Red Team"; break;
+            case TEAM_BLUE:   teamName = "Blue Team"; break;
+            case TEAM_GREEN:  teamName = "Green Team"; break;
+            case TEAM_YELLOW: teamName = "Yellow Team"; break;
+            default:          teamName = "Unknown Team"; break;
+        }
+        
+        if (TiedWinner()) {
+            gameInfo = va("Teams tied");
+        } else {
+            gameInfo = va("%s in lead", teamName);
+        }
+    }
+    
+    w = CG_DrawStrlen(gameInfo) * BIGCHAR_WIDTH;
+    x = (SCREEN_WIDTH - w) / 2;
+    CG_DrawBigStringColor(x, y, gameInfo, titleColor);
+}
+
+/*
+=================
+CG_DrawModernScoreboard
+Main function to draw the modern scoreboard
+=================
+*/
+qboolean CG_DrawModernScoreboard(void) {
+    int y, maxClients, rowHeight;
+    int i, drawnClients;
+    int team, teamClients;
+    int j;
+    float fade, *fadeColor;
+    qboolean isCompact;
+    score_t *score;
+    clientInfo_t *ci;
+    
+    CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
+    
+    /* Don't draw if paused or in single player intermission */
+    if (cg_paused.integer) {
+        cg.deferredPlayerLoading = 0;
+        return qfalse;
+    }
+    
+    if (cgs.gametype == GT_SINGLE_PLAYER && 
+        cg.predictedPlayerState.pm_type == PM_INTERMISSION) {
+        cg.deferredPlayerLoading = 0;
+        return qfalse;
+    }
+    
+    /* Don't draw during warmup unless scores are forced */
+    if (cg.warmup && !cg.showScores) {
+        return qfalse;
+    }
+    
+    /* Calculate fade */
+    if (cg.showScores || cg.predictedPlayerState.pm_type == PM_DEAD ||
+        cg.predictedPlayerState.pm_type == PM_INTERMISSION) {
+        fade = 1.0f;
+        fadeColor = colorWhite;
+    } else {
+        fadeColor = CG_FadeColor(cg.scoreFadeTime, FADE_TIME);
+        if (!fadeColor) {
+            cg.deferredPlayerLoading = 0;
+            cg.killerName[0] = 0;
+            return qfalse;
+        }
+        fade = *fadeColor;
+    }
+    
+    /* Request scores update */
+    if (cg.scoresRequestTime + 2000 < cg.time) {
+        cg.scoresRequestTime = cg.time;
+        trap_SendClientCommand("score");
+    }
+    
+    y = 80;
+    
+    /* Draw "Fragged by" message */
+    if (cg.killerName[0]) {
+        char *fragMsg = va("Eliminated by %s", cg.killerName);
+        int w = CG_DrawStrlen(fragMsg) * BIGCHAR_WIDTH;
+        int x = (SCREEN_WIDTH - w) / 2;
+        vec4_t fragColor = {1.0f, 0.3f, 0.3f, 1.0f};
+        fragColor[3] = fade;
+        CG_DrawBigStringColor(x, y, fragMsg, fragColor);
+        y += BIGCHAR_HEIGHT + 16;
+    }
+    
+    /* Draw game info */
+    CG_DrawModernGameInfo(y, fade);
+    y += BIGCHAR_HEIGHT + 24;
+    
+    /* Determine layout mode */
+    isCompact = (cg.numScores > MAX_SCOREBOARD_CLIENTS);
+    maxClients = isCompact ? MAX_COMPACT_CLIENTS : MAX_SCOREBOARD_CLIENTS;
+    rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
+    
+    /* Draw header */
+    CG_DrawModernHeader(y);
+    y += MODERN_SB_HEADER_HEIGHT + 4;
+    
+    localClientDrawn = qfalse;
+    drawnClients = 0;
+    
+    if (cgs.gametype >= GT_TEAM) {
+        /* Team-based scoreboard */
+        for (i = 0; i < 4 && drawnClients < maxClients; i++) {
+            team = GetTeamAtRank(i + 1);
+            if (team == -1) continue;
+            
+            teamClients = 0;
+            for (j = 0; j < cg.numScores && drawnClients < maxClients; j++) {
+                score = &cg.scores[j];
+                ci = &cgs.clientinfo[score->client];
+                
+                if (ci->team != team) continue;
+                
+                CG_DrawModernPlayerRow(y, score, teamClients + 1, isCompact, fade);
+                y += rowHeight + 2;
+                drawnClients++;
+                teamClients++;
+            }
+            
+            if (teamClients > 0) {
+                y += 8; /* Space between teams */
+            }
+        }
+        
+        /* Draw spectators */
+        for (i = 0; i < cg.numScores && drawnClients < maxClients; i++) {
+            score = &cg.scores[i];
+            ci = &cgs.clientinfo[score->client];
+            
+            if (ci->team != TEAM_SPECTATOR) continue;
+            
+            CG_DrawModernPlayerRow(y, score, 0, isCompact, fade);
+            y += rowHeight + 2;
+            drawnClients++;
+        }
+    } else {
+        /* Free-for-all scoreboard */
+        for (i = 0; i < cg.numScores && drawnClients < maxClients; i++) {
+            score = &cg.scores[i];
+            ci = &cgs.clientinfo[score->client];
+            
+            CG_DrawModernPlayerRow(y, score, i + 1, isCompact, fade);
+            y += rowHeight + 2;
+            drawnClients++;
+        }
+    }
+    
+    /* Draw local client at bottom if not shown */
+    if (!localClientDrawn) {
+        for (i = 0; i < cg.numScores; i++) {
+            if (cg.scores[i].client == cg.snap->ps.clientNum) {
+                y += 16;
+                CG_DrawModernPlayerRow(y, &cg.scores[i], 0, isCompact, fade);
+                break;
+            }
+        }
+    }
+    
+    /* Load deferred models */
+    if (++cg.deferredPlayerLoading > 10) {
+        CG_LoadDeferredPlayers();
+    }
+    
+    return qtrue;
+}
+
+/*
+=================
+CG_DrawOldScoreboard
+Wrapper function to maintain compatibility
+=================
+*/
+qboolean CG_DrawOldScoreboard(void) {
+    return CG_DrawModernScoreboard();
+}
