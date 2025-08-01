@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MODERN_SB_X             32
 #define MODERN_SB_Y             120
 #define MODERN_SB_WIDTH         650  
-#define MODERN_SB_HEADER_HEIGHT 48
+#define MODERN_SB_HEADER_HEIGHT 40
 #define MODERN_SB_ROW_HEIGHT    36
-#define MODERN_SB_COMPACT_HEIGHT 24
+#define MODERN_SB_COMPACT_HEIGHT 20
 
 /* Column definitions - flexible layout */
 #define COL_RANK_WIDTH          64
@@ -212,13 +212,7 @@ static void CG_InitScoreboardColumns(void) {
     if (showDeaths) {
         columns[SBCOL_DEATHS].type = SBCOL_DEATHS;
         columns[SBCOL_DEATHS].width = COL_DEATHS_WIDTH;
-        
-        /* Different header for destruction modes */
-        if (cgs.gametype == GT_DERBY || cgs.gametype == GT_LCS) {
-            columns[SBCOL_DEATHS].header = "WRECKS";
-        } else {
-            columns[SBCOL_DEATHS].header = "DEATHS";
-        }
+        columns[SBCOL_DEATHS].header = "DMG";
         columns[SBCOL_DEATHS].visible = qtrue;
     }
     
@@ -242,13 +236,7 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_TOTALTIME].visible = qtrue;
     }
     
-    /* Always show ping */
-    columns[SBCOL_PING].type = SBCOL_PING;
-    columns[SBCOL_PING].width = COL_PING_WIDTH;
-    columns[SBCOL_PING].header = "PING";
-    columns[SBCOL_PING].visible = qtrue;
-    
-    /* Show status in intermission */
+    /* Status column only in intermission - no ping column */
     if (cg.predictedPlayerState.pm_type == PM_INTERMISSION) {
         columns[SBCOL_STATUS].type = SBCOL_STATUS;
         columns[SBCOL_STATUS].width = COL_STATUS_WIDTH;
@@ -378,17 +366,16 @@ static void CG_DrawModernHeader(int y) {
             case SBCOL_RANK:
             case SBCOL_SCORE:
             case SBCOL_DEATHS:
-            case SBCOL_PING:
             case SBCOL_LAPTIME:
             case SBCOL_TOTALTIME:
             case SBCOL_STATUS:
                 /* Center-aligned columns */
-                CG_DrawModernText(columns[i].x, y + 12, columns[i].header, 1, 
+                CG_DrawModernText(columns[i].x, y + 8, columns[i].header, 1, 
                                  columns[i].width, headerTextColor, qtrue);
                 break;
             case SBCOL_NAME:
                 /* Left-aligned text columns */
-                CG_DrawModernText(columns[i].x, y + 12, columns[i].header, 0, 
+                CG_DrawModernText(columns[i].x, y + 8, columns[i].header, 0, 
                                  columns[i].width, headerTextColor, qtrue);
                 break;
             default:
@@ -539,8 +526,8 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             } else {
-                /* Use damageTaken as deaths/wrecks indicator for Q3Rally */
-                Com_sprintf(buffer, sizeof(buffer), "%d", score->damageTaken);
+                /* Use damageDealt as damage indicator for Q3Rally */
+                Com_sprintf(buffer, sizeof(buffer), "%d", score->damageDealt);
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             }
             break;
@@ -578,11 +565,6 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                     CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
                 }
             }
-            break;
-            
-        case SBCOL_PING:
-            Com_sprintf(buffer, sizeof(buffer), "%d", score->ping);
-            CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             break;
             
         case SBCOL_STATUS:
@@ -969,18 +951,10 @@ const char* CG_GetGametypeScoreLabel(void) {
 /*
 =================
 CG_GetGametypeDeathLabel
-Get appropriate death/elimination label for current gametype
+Get appropriate damage label for current gametype
 =================
 */
 const char* CG_GetGametypeDeathLabel(void) {
-    switch (cgs.gametype) {
-        case GT_DERBY:
-        case GT_LCS:
-            return "WRECKS";
-        case GT_RACING:
-        case GT_TEAM_RACING:
-            return "CRASHES"; /* If deaths are shown in racing */
-        default:
-            return "DEATHS";
-    }
+    /* Always return DMG for consistency */
+    return "DMG";
 }
