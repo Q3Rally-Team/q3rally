@@ -393,11 +393,9 @@ typedef struct {
 	int				captures;
 	qboolean	    perfect;
 	int				team;
-// Q3Rally Code Start
 	int				damageDealt;
 	int				damageTaken;
 	int				position;
-// Q3Rally Code END
 } score_t;
 
 // each client has an associated clientInfo_t
