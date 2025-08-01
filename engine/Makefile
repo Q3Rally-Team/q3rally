@@ -51,7 +51,7 @@ ifndef BUILD_AUTOUPDATER  # DON'T build unless you mean to!
 endif
 
 # ioquake3 git commit that this is based on
-IOQ3_REVISION = c1ab47a7
+IOQ3_REVISION = c9697a01
 
 #############################################################################
 #
