@@ -25,9 +25,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 /* Modern scoreboard layout constants */
-#define MODERN_SB_X             32
 #define MODERN_SB_Y             120
 #define MODERN_SB_WIDTH         650  
+#define MODERN_SB_MIN_WIDTH     650  /* Minimum scoreboard width */
 #define MODERN_SB_HEADER_HEIGHT 40
 #define MODERN_SB_ROW_HEIGHT    36
 #define MODERN_SB_COMPACT_HEIGHT 20
@@ -79,6 +79,8 @@ typedef struct {
 static columnConfig_t columns[SBCOL_MAX];
 static int visibleColumns = 0;
 static int currentScoreboardWidth = 0;
+static int scoreboardX = 0; /* Dynamic X position for centering */
+static int contentStartX = 0; /* Starting X position for centered content */
 static qboolean localClientDrawn;
 
 /*
@@ -117,6 +119,7 @@ Initialize column configuration based on gametype - C89 compatible
 static void CG_InitScoreboardColumns(void) {
     int i;
     int currentX;
+    int totalContentWidth;
     qboolean showScore, showDeaths, showTimes, showLapTimes;
     qboolean isRacing, isTeam;
     
@@ -244,20 +247,37 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_STATUS].visible = qtrue;
     }
     
-    /* Calculate column positions */
-    currentX = MODERN_SB_X;
+    /* Calculate actual content width */
+    totalContentWidth = 0;
     visibleColumns = 0;
     
     for (i = 0; i < SBCOL_MAX; i++) {
         if (columns[i].visible) {
-            columns[i].x = currentX;
-            currentX += columns[i].width;
+            totalContentWidth += columns[i].width;
             visibleColumns++;
         }
     }
     
-    /* Update scoreboard width to fit visible columns */
-    currentScoreboardWidth = currentX - MODERN_SB_X;
+    /* Set scoreboard width to be at least the minimum or the content width */
+    currentScoreboardWidth = totalContentWidth;
+    if (currentScoreboardWidth < MODERN_SB_MIN_WIDTH) {
+        currentScoreboardWidth = MODERN_SB_MIN_WIDTH;
+    }
+    
+    /* Calculate centered X position for the entire scoreboard */
+    scoreboardX = (SCREEN_WIDTH - currentScoreboardWidth) / 2;
+    
+    /* Calculate starting X position for centered content within the scoreboard */
+    contentStartX = scoreboardX + (currentScoreboardWidth - totalContentWidth) / 2;
+    
+    /* Calculate column positions relative to the centered content start */
+    currentX = 0;
+    for (i = 0; i < SBCOL_MAX; i++) {
+        if (columns[i].visible) {
+            columns[i].x = contentStartX + currentX;
+            currentX += columns[i].width;
+        }
+    }
 }
 
 /*
@@ -353,7 +373,7 @@ static void CG_DrawModernHeader(int y) {
     headerTextColor[2] = 0.9f; headerTextColor[3] = 1.0f;
     
     /* Draw header background */
-    CG_DrawModernBackground(MODERN_SB_X, y, currentScoreboardWidth, MODERN_SB_HEADER_HEIGHT, 
+    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, MODERN_SB_HEADER_HEIGHT, 
                            MODERN_SB_ALPHA, qtrue);
     
     /* Draw visible column headers */
@@ -609,11 +629,11 @@ static void CG_DrawModernPlayerRow(int y, score_t *score, int rank,
     /* Highlight local player */
     if (isLocalPlayer) {
         localClientDrawn = qtrue;
-        CG_FillRect(MODERN_SB_X, y, currentScoreboardWidth, rowHeight, localHighlight);
+        CG_FillRect(scoreboardX, y, currentScoreboardWidth, rowHeight, localHighlight);
     }
     
     /* Draw row background */
-    CG_DrawModernBackground(MODERN_SB_X, y, currentScoreboardWidth, rowHeight, 
+    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, rowHeight, 
                            MODERN_SB_ALPHA * fade, qfalse);
     
     /* Draw all visible columns */
