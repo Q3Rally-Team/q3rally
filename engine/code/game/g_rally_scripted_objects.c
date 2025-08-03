@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -25,20 +25,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define		MAX_SCRIPT_TEXT		8192
 
-
-// collision types
+/* collision types */
 #define		CT_BOX			0
 #define		CT_CONE			1
 #define		CT_CYLINDER		2
 
+/* Global temporary force vector for testing */
+vec3_t		tempForce;
 
 qboolean SeekToSection( char **pointer, char *str ){
 	char		*token;
 
-	// UPDATE: using strstr instead?
-	// UPDATE: check if end of file is inside of a bracket (ie bad brackets in script file)
+	/* UPDATE: using strstr instead? */
+	/* UPDATE: check if end of file is inside of a bracket (ie bad brackets in script file) */
 
-	// seek to 'str {'
+	/* seek to 'str {' */
 	while ( 1 ) {
 		token = COM_Parse( pointer );
 
@@ -46,7 +47,7 @@ qboolean SeekToSection( char **pointer, char *str ){
 			return qfalse;
 
 		if ( !Q_stricmp( token, "{" ) ){
-			// loop through this
+			/* loop through this */
 			while ( 1 ) {
 				token = COM_Parse( pointer );
 
@@ -62,12 +63,11 @@ qboolean SeekToSection( char **pointer, char *str ){
 			break;
 	}
 
-	if( !token || token[0] == 0 ) // model not found 
+	if( !token || token[0] == 0 ) /* model not found */
 		return qfalse;
 
 	return qtrue;
 }
-
 
 qboolean G_ParseScriptedObject( gentity_t *ent ){
 	char		*text_p;
@@ -75,11 +75,9 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 	char		*token;
 	char		text[MAX_SCRIPT_TEXT];
 	char		filename[MAX_QPATH];
-//	char		model[MAX_QPATH];
-//	char		deadmodel[MAX_QPATH];
 	fileHandle_t	f;
 
-	// setup defaults
+	/* setup defaults */
 	ent->takedamage = qfalse;
 	VectorLength(ent->r.mins);
 	VectorLength(ent->r.maxs);
@@ -93,9 +91,9 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 		return qfalse;
 	}
 
-	// for debugging only load one object
-//	if( Q_stricmp( ent->script, "models/mapobjects/barrels/barrel01" ) )
-//		return qfalse;
+	/* for debugging only load one object */
+	/* if( Q_stricmp( ent->script, "models/mapobjects/barrels/barrel01" ) ) */
+	/*	return qfalse; */
 
 	Q_strncpyz(filename, ent->script, sizeof(filename));
 	token = strchr(filename, '.');
@@ -105,7 +103,7 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 	if (g_developer.integer)
 		Com_Printf("Attempting to load script %s\n", filename);
 
-	// load the file
+	/* load the file */
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
 
 	if ( !f ){
@@ -122,20 +120,20 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 
 	trap_FS_FCloseFile( f );
 
-	// parse the text
+	/* parse the text */
 	text_p = text;
 
-	// seek to "rally_scripted_object {"
+	/* seek to "rally_scripted_object {" */
 	if ( !SeekToSection( &text_p, "rally_scripted_object" ) ){
 		Com_Printf( "Script file '%s' did not contain rally_scripted_object\n", filename );
 		return qfalse;
 	}
 
-	// send script file name in CS so we dont need
-	// to do all of the drawing and stuff server side.
+	/* send script file name in CS so we dont need */
+	/* to do all of the drawing and stuff server side. */
 	ent->s.modelindex = G_ScriptIndex( ent->script );
 
-	// read optional parameters
+	/* read optional parameters */
 	while ( 1 ) {
 		token = COM_Parse( &text_p );
 
@@ -248,14 +246,14 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 			COM_Parse( &text_p );
 		}
 		else if ( !Q_stricmp( token, "gibs" ) ) {
-			// skip gibs part of script (it is only used client side)
+			/* skip gibs part of script (it is only used client side) */
 			token = COM_Parse( &text_p );
 			if ( !token ) {
 				break;
 			}
 
 			if ( !Q_stricmp( token, "{" ) ){
-				// loop through this
+				/* loop through this */
 				while ( 1 ) {
 					token = COM_Parse( &text_p );
 
@@ -281,7 +279,6 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 	return qtrue;
 }
 
-
 void G_ScriptedObject_ApplyForce( gentity_t *self, vec3_t force, vec3_t at ){
 	vec3_t	arm, moment;
 
@@ -293,26 +290,19 @@ void G_ScriptedObject_ApplyForce( gentity_t *self, vec3_t force, vec3_t at ){
 	VectorAdd( self->netMoment, moment, self->netMoment );
 }
 
-
 qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t normal, float elasticity ){
 	vec3_t	arm;
 	vec3_t	vP1;
 	vec3_t	impulse, impulseMoment;
 	vec3_t	cross, cross2;
 	float	impulseNum, impulseDen, dot;
-//	float	oppositeImpulseNum;
 
-	// temp for inverseWorldInertiaTensor
+	/* temp for inverseWorldInertiaTensor */
 	vec3_t	axis[3];
 	vec3_t	inverseBodyInertiaTensor;
 	vec3_t	inverseWorldInertiaTensor[3];
 
 	VectorSubtract( at, self->s.pos.trBase, arm );
-
-//	if (pm->pDebug){
-//		Com_Printf("PM_ApplyCollision: arm %0.3f, %0.3f, %0.3f\n", arm[0], arm[1], arm[2]);
-//		Com_Printf("PM_ApplyCollision: normal %0.3f, %0.3f, %0.3f\n", normal[0], normal[1], normal[2]);
-//	}
 
 	CrossProduct( self->s.apos.trDelta, arm, cross );
 	VectorAdd( self->s.pos.trDelta, cross, vP1 );
@@ -341,292 +331,36 @@ qboolean G_ScriptedObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t nor
 		MatrixMultiply( m, m2, inverseWorldInertiaTensor );
 	}
 
-	// added from collision
+	/* added from collision */
 	VectorClear(impulse);
 	dot = DotProduct(normal, vP1);
 	if ( dot < -8 ){
 		impulseNum = -(1.0f + elasticity) * DotProduct(normal, vP1);
-//		oppositeImpulseNum = -(1.0f - elasticity) * DotProduct(normal, vP1);
 
 		CrossProduct( arm, normal, cross );
 		VectorRotate( cross, inverseWorldInertiaTensor, cross2 );
 		CrossProduct( cross2, arm, cross );
-//		Com_Printf( "oneOverMass %f, cross.normal %f\n", 1.0f / body->mass, DotProduct(cross, normal) );
 		impulseDen = 1.0f / self->mass + DotProduct( cross, normal );
 
 		VectorScale( normal, impulseNum / impulseDen, impulse );
 	}
 	else {
-		// not hitting surface
-//		Com_Printf( "PM_ApplyCollision: not hitting surface, %f\n", dot );
+		/* not hitting surface */
 		return qfalse;
 	}
 
-	// apply impulse to primary quantities
+	/* apply impulse to primary quantities */
 	VectorMA( self->s.pos.trDelta, 1.0 / self->mass, impulse, self->s.pos.trDelta );
 	CrossProduct( arm, impulse, impulseMoment );
 	VectorAdd( self->angularMomentum, impulseMoment, self->angularMomentum );
     
-    // compute affected auxiliary quantities
-//	VectorRotate( self->angularMomentum, inverseWorldInertiaTensor, self->s.apos.trDelta );
+    /* compute affected auxiliary quantities */
+	/* VectorRotate( self->angularMomentum, inverseWorldInertiaTensor, self->s.apos.trDelta ); */
 
 	return qtrue;
 }
 
-/*
-
-qboolean G_TraceIntersect( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, vec3_t intersect )
-{
-	vec3_t	dir;
-	vec3_t	n, u, p, line;
-	vec3_t	lineP;
-	int		firstAxis, axis, lineAxis, next, next2;
-	float	len, len2, d, denom;
-
-	trap_Trace( tr, start, mins, maxs, end, passEntityNum, contentmask );
-
-	if( tr->fraction == 1.0f || tr->startsolid || tr->allsolid )
-	{
-		VectorCopy( tr->endpos, intersect );
-		return qfalse;
-	}
-
-	Com_Printf( "Trace: fraction %f, normal (%f %f %f), dist %f\n", tr->fraction, tr->plane.normal[0], tr->plane.normal[1], tr->plane.normal[2], tr->plane.dist );
-
-	VectorSubtract( end, start, dir );
-	len = VectorNormalize( dir );
-
-	if( len == 0 )
-	{
-		VectorCopy( tr->endpos, intersect );
-		return qfalse;
-	}
-
-	axis = 0;
-	if( fabs(dir[1]) > fabs(dir[0]) && fabs(dir[1]) > fabs(dir[2]) )
-		axis = 1;
-	else if( fabs(dir[2]) > fabs(dir[0]) && fabs(dir[2]) > fabs(dir[1]) )
-		axis = 2;
-
-	firstAxis = axis;
-
-	Com_Printf( "Axis %i, plane type %i\n", axis, tr->plane.type );
-
-	// create plane normal and point
-	VectorClear( n );
-	VectorCopy( tr->endpos, p );
-	if( dir[axis] > 0.0f )
-	{
-		p[axis] += maxs[axis];
-		n[axis] = 1.0f;
-	}
-	else
-	{
-		p[axis] += mins[axis];
-		n[axis] = -1.0f;
-	}
-
-	if( tr->plane.type == axis )
-	{
-		// FIXME: need to check other plane now? or check distances to make sure we are right.
-		Com_Printf( "Coplaniar\n" );
-		VectorCopy( p, intersect );
-
-		Com_Printf( "1: Point at (%f %f %f)\n", intersect[0], intersect[1], intersect[2] );
-
-		return qtrue;
-	}
-	d = p[axis] * n[axis];
-
-	Com_Printf( "Plane point (%f %f %f), normal (%f %f %f), dist %f\n", p[0], p[1], p[2], n[0], n[1], n[2], d );
-
-	CrossProduct( n, tr->plane.normal, u );
-	// FIXME: why is u not normalized already since n and plane.normal are normalized
-	len = VectorNormalize( u );
-//	if( len == 0 )
-//	{
-		// planes are parallel, Should already be handled previously
-//	}
-
-	lineAxis = 0;
-	if( fabs(u[1]) > fabs(u[0]) && fabs(u[1]) > fabs(u[2]) )
-		lineAxis = 1;
-	else if( fabs(u[2]) > fabs(u[0]) && fabs(u[2]) > fabs(u[1]) )
-		lineAxis = 2;
-
-	Com_Printf( "Line Axis %i\n", lineAxis );
-	next = (lineAxis + 1) % 3;
-	next2 = (next + 1) % 3;
-
-	// trace plane is 1, bbox plane is 2
-
-	Com_Printf( "Next %i, next2 %i\n", next, next2 );
-	denom = ( n[next] * tr->plane.normal[next2] - n[next2] * tr->plane.normal[next] );
-
-	Com_Printf( "Denom %f\n", denom );
-
-	lineP[axis] = 0;
-	lineP[next] = ( d * tr->plane.normal[next2] - n[next2] * tr->plane.dist ) / denom;
-	lineP[next2] = ( tr->plane.dist * n[next] - tr->plane.normal[next] * d ) / denom;
-
-	Com_Printf( "Line at (%f %f %f) in direction (%f %f %f)\n", lineP[0], lineP[1], lineP[2], u[0], u[1], u[2] );
-
-	axis = 0;
-	if( fabs(dir[1]) <= fabs(dir[0]) && fabs(dir[1]) > fabs(dir[2]) )
-		axis = 1;
-	else if( fabs(dir[1]) > fabs(dir[0]) && fabs(dir[1]) <= fabs(dir[2]) )
-		axis = 1;
-	else if( fabs(dir[2]) <= fabs(dir[0]) && fabs(dir[2]) > fabs(dir[1]) )
-		axis = 2;
-	else if( fabs(dir[2]) > fabs(dir[0]) && fabs(dir[2]) <= fabs(dir[1]) )
-		axis = 2;
-
-	if( axis == firstAxis )
-		axis = (axis + 1) % 3;
-
-	Com_Printf( "Axis %i\n", axis );
-
-	// create plane normal and point
-	VectorClear( n );
-	VectorCopy( tr->endpos, p );
-	if( dir[axis] > 0.0f )
-	{
-		p[axis] += maxs[axis];
-		n[axis] = 1.0f;
-	}
-	else
-	{
-		p[axis] += mins[axis];
-		n[axis] = -1.0f;
-	}
-
-	VectorSubtract( lineP, p, line );
-	len = DotProduct( line, n );
-
-	len2 = DotProduct( u, n );
-
-	Com_Printf( "len %f, len2 %f\n", len, len2 );
-
-	if( len2 == 0.0f )
-	{
-		// intersection line of two previous planes is parallel to the plane
-		VectorCopy( lineP, intersect );
-
-//		intersect[lineAxis] = tr->endpos[lineAxis];
-		next = (firstAxis + 1) % 3;
-		next2 = (next + 1) % 3;
-		if( next == axis )
-			intersect[next2] = tr->endpos[next2];
-		else
-			intersect[next] = tr->endpos[next];
-		
-		intersect[axis] = tr->endpos[axis];
-
-//		intersect[1] = -intersect[1];
-		Com_Printf( "2: Point at (%f %f %f)\n", intersect[0], intersect[1], intersect[2] );
-
-		return qtrue;
-	}
-
-	VectorMA( p, -len / len2, u, intersect );
-
-	Com_Printf( "3: Point at (%f %f %f)\n", intersect[0], intersect[1], intersect[2] );
-
-	return qtrue;
-}
-
-
-void G_ScriptedObject_TracePhysics( gentity_t *self, float time )
-{
-	trace_t		tr;
-	vec3_t		dir;
-	vec3_t		start, end, intersect;
-	float		dot;
-	float		moveDist, dist;
-
-	if( VectorLengthSquared( self->s.pos.trDelta ) == 0.0f )
-	{
-		dist = VectorNormalize2( self->lastNonZeroVelocity, dir );
-	}
-	else
-	{
-		dist = VectorNormalize2( self->s.pos.trDelta, dir );
-	}
-
-	moveDist = 0.5f > dist ? dist * 0.5f : 0.5f;
-	VectorMA( self->s.pos.trBase, -1, dir, start );
-	VectorMA( self->s.pos.trBase, time * ( dist + moveDist ), dir, end );
-
-//	trap_Trace( &tr, start, self->r.mins, self->r.maxs, end, self->s.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
-	if( G_TraceIntersect( &tr, start, self->r.mins, self->r.maxs, end, self->s.clientNum, CONTENTS_SOLID|CONTENTS_BODY, intersect ) )
-	{
-		G_SetOrigin( &g_entities[level.testModelID], intersect );
-		trap_LinkEntity( &g_entities[level.testModelID] );
-	}
-
-	if( tr.startsolid || tr.allsolid )
-	{
-		float	moveAhead = dist < 1.0f ? dist - 0.01f : 1.0f;
-
-		VectorMA( self->s.pos.trBase, moveAhead, dir, start );
-//		trap_Trace( &tr, start, self->r.mins, self->r.maxs, end, self->s.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
-		if( G_TraceIntersect( &tr, start, self->r.mins, self->r.maxs, end, self->s.clientNum, CONTENTS_SOLID|CONTENTS_BODY, intersect ) )
-		{
-			G_SetOrigin( &g_entities[level.testModelID], intersect );
-			trap_LinkEntity( &g_entities[level.testModelID] );
-		}
-
-		if( tr.startsolid || tr.allsolid )
-		{
-			Com_Printf( "in solid twice, vel %f %f %f, allsolid %i\n", self->s.pos.trDelta[0], self->s.pos.trDelta[1], self->s.pos.trDelta[2], tr.allsolid );
-		}
-	}
-
-//	if( tr.fraction == 1.0f )
-//		return;
-
-	if( tr.plane.normal[0] == 0 &&
-		tr.plane.normal[1] == 0 &&
-		tr.plane.normal[2] == 0 )
-		return;
-
-	dot = DotProduct( tr.plane.normal, self->s.pos.trDelta );
-	if( dot < -16.0f )
-	{
-		VectorMA( self->s.pos.trDelta, -dot * ( 1.00f + self->elasticity ), tr.plane.normal, self->s.pos.trDelta );
-	}
-	else if( dot < 0.0f )
-	{
-		// stop the object once it is slow enough
-//		VectorClear( self->s.pos.trDelta );
-		VectorMA( self->s.pos.trDelta, -dot, tr.plane.normal, self->s.pos.trDelta );
-	}
-#if 0
-	if( !G_ScriptedObject_ApplyCollision( self, intersect, tr.plane.normal, self->elasticity ) )
-	{
-		// stop the object once it is slow enough
-		VectorClear( self->s.pos.trDelta );
-//		VectorMA( self->s.pos.trDelta, -dot, tr.plane.normal, self->s.pos.trDelta );
-
-		// HACK for the angular velocity if we are stopped on the ground
-		// kind of the same thing as friction
-		VectorScale( self->angularMomentum, 0.99f, self->angularMomentum );
-	}
-#endif
-
-	dot = DotProduct( tr.plane.normal, self->netForce );
-	if( dot < 0.0f )
-	{
-//		vec3_t	force;
-//		VectorScale( tr.plane.normal, -dot, force );
-//		G_ScriptedObject_ApplyForce( self, force, intersect );
-		VectorMA( self->netForce, -dot, tr.plane.normal, self->netForce );
-	}
-}
-
-*/
-
-// Traces a cone at the current position and angles.
+/* Traces a cone at the current position and angles. */
 int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t maxs, int passEntityNum, int contentmask )
 {
 	vec3_t		forward, right, up;
@@ -650,7 +384,7 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 
 	VectorCopy( origin, start );
 
-	// right
+	/* right */
 	VectorMA( bottom, radius, right, end );
 	trap_Trace( tr, start, NULL, NULL, end, passEntityNum, contentmask );
 	if( tr->fraction < 1.0f )
@@ -674,7 +408,7 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 		}
 	}
 
-	// left
+	/* left */
 	VectorMA( bottom, -radius, right, end );
 	trap_Trace( tr, start, NULL, NULL, end, passEntityNum, contentmask );
 	if( tr->fraction < 1.0f )
@@ -698,7 +432,7 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 		}
 	}
 
-	// front
+	/* front */
 	VectorMA( bottom, radius, forward, end );
 	trap_Trace( tr, start, NULL, NULL, end, passEntityNum, contentmask );
 	if( tr->fraction < 1.0f )
@@ -722,7 +456,7 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 		}
 	}
 
-	// back
+	/* back */
 	VectorMA( bottom, -radius, forward, end );
 	trap_Trace( tr, start, NULL, NULL, end, passEntityNum, contentmask );
 	if( tr->fraction < 1.0f )
@@ -748,7 +482,6 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 
 	if( numHits )
 	{
-//		VectorScale( normal, 1.0f / numHits, tr->plane.normal );
 		VectorNormalize2( normal, tr->plane.normal );
 		VectorScale( intersect, 1.0f / numHits, tr->endpos );
 		tr->fraction = firstHit;
@@ -757,7 +490,6 @@ int G_TraceCone( trace_t *tr, vec3_t origin, vec3_t angles, vec3_t mins, vec3_t 
 
 	return 0;
 }
-
 
 void G_ScriptedObject_TracePhysics( gentity_t *self, float time )
 {
@@ -786,14 +518,16 @@ void G_ScriptedObject_TracePhysics( gentity_t *self, float time )
 		trap_Trace( &tr, start, NULL, NULL, end, self->s.number, MASK_PLAYERSOLID & ~CONTENTS_BODY );
 		if( tr.fraction < 1.0f || G_TraceCone( &tr, end, self->s.apos.trBase, self->r.mins, self->r.maxs, self->s.number, MASK_PLAYERSOLID & ~CONTENTS_BODY ) )
 		{
-//			G_SetOrigin( &g_entities[level.testModelID], tr.endpos );
-//			trap_LinkEntity( &g_entities[level.testModelID] );
+			/* Debug: Uncomment to visualize collision points */
+			/* G_SetOrigin( &g_entities[level.testModelID], tr.endpos ); */
+			/* trap_LinkEntity( &g_entities[level.testModelID] ); */
 		}
 	}
 	else if( tr.fraction < 1.0f || G_TraceCone( &tr, end, self->s.apos.trBase, self->r.mins, self->r.maxs, self->s.number, MASK_PLAYERSOLID ) )
 	{
-//		G_SetOrigin( &g_entities[level.testModelID], tr.endpos );
-//		trap_LinkEntity( &g_entities[level.testModelID] );
+		/* Debug: Uncomment to visualize collision points */
+		/* G_SetOrigin( &g_entities[level.testModelID], tr.endpos ); */
+		/* trap_LinkEntity( &g_entities[level.testModelID] ); */
 	}
 
 	if( tr.plane.normal[0] == 0 &&
@@ -808,40 +542,28 @@ void G_ScriptedObject_TracePhysics( gentity_t *self, float time )
 	}
 	else if( dot < 0.00f )
 	{
-		// stop the object once it is slow enough
-//		VectorClear( self->s.pos.trDelta );
+		/* stop the object once it is slow enough */
 		VectorMA( self->s.pos.trDelta, -dot * 1.00f, tr.plane.normal, self->s.pos.trDelta );
 	}
 
-/*
+	/* Apply advanced collision physics if needed (commented out for performance) */
+	/*
 	if( !G_ScriptedObject_ApplyCollision( self, tr.endpos, tr.plane.normal, self->elasticity ) )
 	{
-		// stop the object once it is slow enough
-//		VectorClear( self->s.pos.trDelta );
 		VectorMA( self->s.pos.trDelta, -dot, tr.plane.normal, self->s.pos.trDelta );
-
-		// HACK for the angular velocity if we are stopped on the ground
-		// kind of the same thing as friction
-//		VectorScale( self->angularMomentum, 0.99f, self->angularMomentum );
 	}
-*/
+	*/
 
-	// friction
+	/* Apply friction */
 	VectorMA( self->s.pos.trDelta, -dot, tr.plane.normal, dir );
-//	VectorScale( dir, -1.0f * self->mass, dir );
-//	G_ScriptedObject_ApplyForce( self, dir, tr.endpos );
 	VectorMA( self->netForce, -1.0f * self->mass, dir, self->netForce );
 
 	dot = DotProduct( tr.plane.normal, self->netForce );
 	if( dot < 0.00f )
 	{
-//		vec3_t	force;
-//		VectorScale( tr.plane.normal, -dot, force );
-//		G_ScriptedObject_ApplyForce( self, force, intersect );
 		VectorMA( self->netForce, -dot * 1.00f, tr.plane.normal, self->netForce );
 	}
 }
-
 
 void G_ScriptedObject_IntegratePhysics( gentity_t *self, float time )
 {
@@ -885,18 +607,14 @@ void G_ScriptedObject_IntegratePhysics( gentity_t *self, float time )
 		MatrixMultiply( m, m2, inverseWorldInertiaTensor );
 	}
 
-	//linear
+	/* linear physics */
 	VectorMA( self->s.pos.trDelta, time / self->mass, self->netForce, self->s.pos.trDelta );
 	VectorMA( self->s.pos.trBase, time, self->s.pos.trDelta, self->s.pos.trBase );
 	self->s.pos.trTime = level.time;
 
-	// angular
+	/* angular physics */
 	if( doAngular )
 	{
-//		vec3_t	oldAngles;
-
-//		VectorCopy( self->s.apos.trBase, oldAngles );
-
 		VectorMA( self->angularMomentum, time, self->netMoment, self->angularMomentum );
 		VectorRotate( self->angularMomentum, inverseWorldInertiaTensor, self->s.apos.trDelta );
 
@@ -908,10 +626,6 @@ void G_ScriptedObject_IntegratePhysics( gentity_t *self, float time )
 		MatrixAdd( axis, m2, axis );
 		OrthonormalizeOrientation( axis );
 		OrientationToAngles( axis, self->s.apos.trBase );
-
-//		VectorSubtract( self->s.apos.trBase, oldAngles, self->s.apos.trDelta );
-//		if( time != 0 )
-//			VectorScale( self->s.apos.trDelta, 1.0f / time, self->s.apos.trDelta );
 	}
 
 	if( self->s.pos.trDelta[0] != 0 || 
@@ -922,7 +636,6 @@ void G_ScriptedObject_IntegratePhysics( gentity_t *self, float time )
 	}
 }
 
-
 void G_ScriptedObject_Destroy( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ){
 	Com_Printf("Destroying scripted map object %s\n", self->classname);
 
@@ -931,55 +644,32 @@ void G_ScriptedObject_Destroy( gentity_t *self, gentity_t *inflictor, gentity_t 
 
 void G_ScriptedObject_Touch ( gentity_t *self, gentity_t *other, trace_t *trace ){
 	vec3_t		dir;
-//	float		angle, min;
 	float		dot;
-/*	
-	vec3_t		mins, maxs;
 
-	// FIXME: use width, height and depth instead of mins and maxs
-	mins[0] = min(-self->r.mins[0], self->r.maxs[0]);
-	mins[1] = min(-self->r.mins[1], self->r.maxs[1]);
-
-	min = min(mins[0], mins[1]);
-
-	VectorSet(mins, -min, -min, -min);
-	VectorSet(maxs, min, min, min);
-*/
-	// hit sound
-//	if (ent->hitSound)
-//		FIXME: play hit sound
-
-//	VectorSubtract( self->s.pos.trBase, other->s.pos.trBase, trace->plane.normal );
-//	VectorNormalize( trace->plane.normal );
+	/* Invert collision normal */
 	VectorInverse( trace->plane.normal );
 
+	/* Calculate relative velocity */
 	VectorMA( self->s.pos.trDelta, -1, other->s.pos.trDelta, dir );
 
+	/* Apply collision response with elasticity */
 	dot = DotProduct( trace->plane.normal, dir );
-//	if( dot < -16.0f )
-//	{
-		VectorMA( dir, -dot * ( 1.0f + self->elasticity ), trace->plane.normal, dir );
-		VectorAdd( other->s.pos.trDelta, dir, self->s.pos.trDelta );
-//	}
-//	else if( dot < 0.00f )
-//	{
-		// stop the object once it is slow enough
-//		VectorClear( self->s.pos.trDelta );
-//		VectorMA( dir, -dot * 1.00f, trace->plane.normal, self->s.pos.trDelta );
-//	}
+	VectorMA( dir, -dot * ( 1.0f + self->elasticity ), trace->plane.normal, dir );
+	VectorAdd( other->s.pos.trDelta, dir, self->s.pos.trDelta );
 
-//	G_ScriptedObject_ApplyCollision( self, trace->endpos, trace->plane.normal, self->elasticity );
+	/* Optional: Apply advanced collision physics */
+	/* G_ScriptedObject_ApplyCollision( self, trace->endpos, trace->plane.normal, self->elasticity ); */
 }
 
-
-vec3_t		tempForce;
 void G_ScriptedObject_Think ( gentity_t *self ){
-/*
-	float	time = ( level.time - self->updateTime ) / 1000.0f;
+	float time = ( level.time - self->updateTime ) / 1000.0f;
 
+	/* Apply gravity as default force */
 	VectorSet( self->netForce, 0, 0, -CP_CURRENT_GRAVITY * self->mass );
 	VectorClear( self->netMoment );
 
+	/* Optional: Add random impulse force every 5 seconds for testing */
+	/*
 	if( level.time % 5000 < 1000 )
 	{
 		if( tempForce[0] == 0 && tempForce[1] == 0 && tempForce[2] == 0 )
@@ -989,83 +679,96 @@ void G_ScriptedObject_Think ( gentity_t *self ){
 			tempForce[2] = random() * 1.5f;
 		}
 		VectorMA( self->netForce, CP_CURRENT_GRAVITY * self->mass, tempForce, self->netForce );
-//		VectorSet( self->netForce, -CP_CURRENT_GRAVITY * self->mass / 4.0f, 0, 0 );
-//		self->netForce[0] = -1;
 	}
 	else
 	{
 		VectorClear( tempForce );
 	}
+	*/
 
+	/* Only run physics simulation if object is moveable */
 	if( self->moveable )
 	{
+		/* Check for collisions and apply collision response */
 		G_ScriptedObject_TracePhysics( self, 0.050f );
+		
+		/* Integrate physics - update position and rotation */
 		G_ScriptedObject_IntegratePhysics( self, 0.050f );
 	}
-*/
+
+	/* Update entity position and angles for rendering */
 	VectorCopy( self->s.pos.trBase, self->r.currentOrigin );
 	VectorCopy( self->s.pos.trBase, self->s.origin );
 	VectorCopy( self->s.apos.trBase, self->r.currentAngles );
 	VectorCopy( self->s.apos.trBase, self->s.angles );
+	
+	/* Link entity into world for collision detection */
 	trap_LinkEntity( self );
 
+	/* Schedule next physics update in 50ms */
 	self->nextthink = level.time + 50;
 	self->updateTime = level.time;
 }
 
-
 void G_ScriptedObject_Pain ( gentity_t *self, gentity_t *attacker, int damage ){
-/*
-	// hit sound
-//	if (ent->hitSound)
-//		FIXME: play hit sound
-
+	/* Optional: Hit sound and frame animation based on health */
+	/*
 	if (self->number > 0){
 		self->s.frame = self->number - ((self->maxHealth / (float)self->number) * self->health);
 	}
-*/
-//	Com_Printf("Scripted map object %s was hit\n", self->classname);
+	*/
+
+	/* Debug output for pain events */
+	/* Com_Printf("Scripted map object %s was hit\n", self->classname); */
 }
 
-
 void SP_rally_scripted_object( gentity_t *ent ){
-//	G_LogPrintf("Spawning a rally_scripted_object\n");
-
-	// FIXME: check if one of these types of objects have
-	// already been loaded and use that one instead.
-
+	/* Check if script file can be loaded and parsed */
 	if ( !G_ParseScriptedObject( ent ) ){
-		// if there was a problem loading the script just get rid of this ent
+		/* If there was a problem loading the script, remove this entity */
 		G_FreeEntity(ent);
 		return;
 	}
 
+	/* Set entity type for client-side rendering */
 	ent->s.eType = ET_SCRIPTED;
 
+	/* Set collision properties - non-moveable objects block movement */
 	if (!ent->moveable)
 		ent->r.contents = CONTENTS_BODY;
 
+	/* Set up entity callbacks */
 	ent->die = G_ScriptedObject_Destroy;
-//	ent->touch = G_ScriptedObject_Touch;
+	ent->touch = G_ScriptedObject_Touch;    /* Enable collision with vehicles */
 	ent->pain = G_ScriptedObject_Pain;
 	ent->think = G_ScriptedObject_Think;
+	
+	/* Schedule first think in 1 second */
 	ent->nextthink = level.time + 1000;
 	ent->updateTime = ent->nextthink;
 
+	/* Initialize physics state */
 	VectorClear( ent->netForce );
 	VectorClear( ent->netMoment );
 	VectorClear( ent->angularMomentum );
 
+	/* Set trajectory types for interpolation */
 	ent->s.pos.trType = TR_LINEAR;
 	ent->s.apos.trType = TR_INTERPOLATE;
 
+	/* Initialize velocity tracking */
 	VectorSet( ent->lastNonZeroVelocity, 0, 0, 0 );
 
-//	if (ent->preSoundLoop)
-//		ent->s.loopSound = ent->preSoundLoop;
+	/* Optional: Set looping sound if defined in script */
+	/*
+	if (ent->preSoundLoop)
+		ent->s.loopSound = ent->preSoundLoop;
+	*/
 
+	/* Drop object to ground level */
 	DropToFloor(ent);
 
+	/* Link entity into world */
 	trap_LinkEntity (ent);
 }
 
