@@ -4,6 +4,7 @@
 // (visible models added by raYGunn - paths provided by Suicide 20)
 // (terrain information added to func_group entity by Paul Jaquays)
 // Q3Map2 entitys/keys added by ydnar
+// Updated 04.08.2025
 
 //=============================================================================
 
@@ -800,6 +801,8 @@ When the random key is set, its value is used to calculate a minimum and a maxim
 model="models/powerups/armor/greenshard.md3"
 */
 
+//=============================================================================
+
 /*QUAKED item_armor_yellow (0 .7 0) (-16 -16 -16) (16 16 16) SUSPENDED
 Yellow armor shard - 50 Armor. Adds up to 200 Armor.
 -------- KEYS --------
@@ -823,6 +826,8 @@ When the random key is set, its value is used to calculate a minimum and a maxim
 model="models/powerups/armor/yellowshard.md3"
 */
 
+//=============================================================================
+
 /*QUAKED item_armor_red (0 .7 0) (-16 -16 -16) (16 16 16) SUSPENDED
 Green armor shard - 100 Armor. Adds up to 200 Armor.
 -------- KEYS --------
@@ -845,6 +850,8 @@ When the random key is set, its value is used to calculate a minimum and a maxim
 -------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
 model="models/powerups/armor/redshard.md3"
 */
+
+//=============================================================================
 
 /*QUAKED item_health (.8 .8 0) (-16 -16 -16) (16 16 16) SUSPENDED
 Yellow cross bubble - 25 Health. Cannot be picked up over 100 health.
@@ -966,6 +973,8 @@ scale : Scales light attentation, from SOF2/JK2. Scales the "light" value.
 LINEAR : Use a linear falloff. Default is inverse distance squared (more realistic).
 NOANGLE : Ignore angle attenuation.
 NOGRIDLIGHT : Do not affect the lightgrid (dynamic entity lighting).*/
+
+//=============================================================================
 
 /*QUAKED lightJunior (0 0.7 0.3) (-6 -6 -6) (6 6 6) LINEAR NOANGLE UNUSED1 UNUSED2 NOGRIDLIGHT
 Non-displayed point light source THAT ONLY AFFECTS ENTITIES (lightgrid). The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.
@@ -2109,46 +2118,144 @@ RALLY_* ENTITIES
 
 //=============================================================================
 
-/*QUAKED rally_startfinish (0 .9 .1) ?
+/*QUAKED rally_startfinish (0 .9 .1) COUNTDOWN CHECKPOINT_ONLY
+Rally Start/Finish Line – Defines the entry and final checkpoint of a race. If the race uses laps, this marks where lap tracking begins and ends. Can also be used in A-to-B mode with countdown logic.
 
-"laps"	number of laps, default is 1
-"origin"	position of the player when they respawn
-"angle"	angle of player when they respawn after death
+-------- KEYS --------
+laps : Number of laps required to finish the race (default = 1).
+origin : XYZ position the player respawns at after crashing or dying.
+angle : Facing direction upon respawn, in degrees.
+target : Optional; fires when crossed (e.g. target_counter, target_print).
+target2 : Optional; fires a secondary target.
+targetname : Makes this entity addressable by other trigger/logic entities.
+message : Text shown to player when checkpoint/lap is reached.
 
+-------- SPAWNFLAGS --------
+COUNTDOWN : Enables pre-race delay using countdown logic and camera lock.
+CHECKPOINT_ONLY : Disables lap logic, acts as basic checkpoint trigger.
+
+-------- NOTES --------
+- Required for lap-based races (laps > 0); should be placed at race start.
+- If laps = 0, use `rally_finish` as final marker instead.
+- Combine with `info_player_intermission` for cinematic intros.
+- Works with `target_score`, `target_print`, or custom race logic to provide feedback or activate events.
 */
 
-/*QUAKED rally_checkpoint (0 .9 .1) ?
+/*QUAKED rally_checkpoint (0 .9 .1) CHECKPOINT_ONLY NO_RESPAWN
+Rally Checkpoint – Intermediate trigger zone used for lap or A-to-B racing modes. Tracks progress through the race and optionally sets respawn positions. Players must touch checkpoints in correct order to proceed toward finish.
 
-"number"	number of the checkpoint, default is 1
-"origin"	position of the player when they respawn
-"angle"	angle of player when they respawn after death
+-------- KEYS --------
+number : Identifier of the checkpoint (integer), starts at 1. Determines race logic sequence.
+origin : Respawn position after crash or death. If omitted, player will respawn at rally_startfinish.
+angle : Direction player faces after respawn (in degrees).
+target : Fires this entity when checkpoint is triggered.
+target2 : Fires secondary entity when triggered.
+targetname : Makes this checkpoint accessible by other logic triggers.
+message : Text displayed when player reaches the checkpoint.
 
+-------- SPAWNFLAGS --------
+CHECKPOINT_ONLY : Disables respawn override; checkpoint only used for race logic tracking.
+NO_RESPAWN : Player will not respawn here even if `origin` and `angle` are set.
+
+-------- NOTES --------
+- Checkpoints should be placed in numeric order along the race path.
+- If a player dies mid-race, they respawn at the latest checkpoint unless spawnflags prevent it.
+- Essential for multi-segment races or routes with complex layouts.
+- Can be paired with `target_score`, `target_print`, or `target_script` to trigger race events.
 */
 
-/*QUAKED info_observer_spot (0 .9 .1) (-8 -8 -8) (8 8 8) 0 1 2 3
-"target"	info_null or other entity with same targetname used to aim the camera (creates a fixed camera)
+/*QUAKED rally_finish (0 .9 .9) NO_RESPAWN SILENT
+Rally Finish Line – Final marker for A-to-B style races. Only active when laps = 0. Triggers race completion once all required checkpoints have been passed. Used to conclude linear race tracks without looping.
 
-SPAWNFLAGS
+-------- KEYS --------
+origin : XYZ position for player respawn after crash or death.
+angle : Direction player faces after respawn, in degrees.
+target : Fires when finish is triggered by a valid racer.
+target2 : Secondary trigger fired upon crossing.
+targetname : Allows external activation or logic linkage.
+message : Displays a message when the player finishes the race.
 
-0 - default, non-fixed angle
-1 - non-fixed angle, no zoom
+-------- SPAWNFLAGS --------
+NO_RESPAWN : Disables respawn override, player will not spawn here.
+SILENT : Suppresses sound or notification feedback upon crossing.
 
+-------- NOTES --------
+- Must follow all `rally_checkpoint` entities in sequence; player must touch them before reaching the finish.
+- Only active if race mode uses 0 laps (A-to-B logic).
+- Ideal for linear tracks or downhill stages without looping.
+- May be paired with intermission camera, scoring logic or custom triggers for celebration effects.
 */
 
 
-/*QUAKED rally_weather_snow (.5 .5 .5) ?
-"number"	number of particles to draw, usually 200-1000
+/*QUAKED info_observer_spot (0 .9 .1) (-8 -8 -8) (8 8 8) FIXED_ANGLE NO_ZOOM MANUAL_START FORCED_VIEW
+Observer Camera Spot – Used to define fixed or flexible camera positions for intermission or countdown sequences. Can optionally lock onto a target entity for cinematic views.
+
+-------- KEYS --------
+target : Points to a `target_position`, `info_null`, or similar aiming entity. Defines where the camera looks.
+message : Optional text shown during intermission or when entering observer mode.
+targetname : Allows linkage via logic or scripting entities.
+
+-------- SPAWNFLAGS --------
+FIXED_ANGLE (0) : Camera uses default static view based on entity angles.
+NO_ZOOM (1) : Prevents camera zoom effects, keeping field of view constant.
+MANUAL_START (2) : Camera only activates when triggered externally.
+FORCED_VIEW (3) : Forces all players to use this camera, overrides default.
+
+-------- NOTES --------
+- Used during pre-race countdown, intermission screens, or spectator modes.
+- If no `target` is set, camera faces forward based on entity angle.
+- For cinematic fly-ins, combine with `target_delay`, `target_mapchange`, or `target_objective`.
+- Camera position and orientation should be placed with clear view of track or players.
 */
 
-/*QUAKED rally_weather_rain (.5 .5 .5) ? DISABLE_SPLASH
-"number"	number of particles to draw, usually 200-1000
 
-SPAWNFLAGS
 
-disable_splash turns off splashes, improving framerates since there is not as much to calculate or draw. 
+/*QUAKED rally_weather_snow (.5 .5 .5) STATIC DENSE LIGHTWEIGHT
+Rally Weather – Snow Particle Emitter. Adds falling snow effect to the map for atmospheric flair. Works best with fog and muted lighting setups to simulate winter conditions. Should be placed above the playable area or strategically around track zones.
+
+-------- KEYS --------
+number : Sets the amount of snow particles rendered (suggested range: 200–1000). Higher values increase density but reduce performance.
+targetname : Allows this weather effect to be toggled or modified via logic triggers or scripting.
+message : Optional description shown if integrated with target_print or logic systems.
+
+-------- SPAWNFLAGS --------
+STATIC : Particles remain consistent across map sections.
+DENSE : Generates tightly packed snowfall clusters (best used sparingly).
+LIGHTWEIGHT : Performance-friendly setting with fewer particles and simplified effects.
+
+-------- NOTES --------
+- This is a visual-only entity; it does not affect physics or gameplay.
+- Avoid placing too many in view at once—consider fog or occluders to mask transitions.
+- Combine with `rally_weather_rain` or environmental sounds (`target_speaker`) for layered effects.
+- If particles appear too uniform, consider varying `number` across multiple emitters.
 */
 
-//WEAPONS
+
+/*QUAKED rally_weather_rain (.5 .5 .5) (-64 -64 -64) (64 64 64) DISABLE_SPLASH SILENT LIGHTWEIGHT
+Rally Weather – Rain Particle Emitter. Creates dynamic falling rain effect in outdoor sections of your race track. Aims to enhance atmosphere and immersion. The particle emitter can be tweaked for visual density and performance.
+
+-------- KEYS --------
+number : Number of rain particles rendered (recommended range: 200–1000). Affects performance and visual density.
+targetname : Allows external activation/deactivation via logic entities.
+message : Optional description displayed when triggered (e.g. for ambience scripts).
+
+-------- SPAWNFLAGS --------
+DISABLE_SPLASH : Prevents splash ripple or decal effects when rain particles hit surfaces – useful for performance or indoor sections.
+SILENT : Suppresses ambient rainfall sound (can be added separately via target_speaker).
+LIGHTWEIGHT : Enables simplified particle logic for performance on larger maps or low-end setups.
+
+-------- NOTES --------
+- Best placed above the play area or skybox. Multiple emitters can be spread out for broad coverage.
+- Combine with fog volumes or gray cloud shaders (`_skybox`) for realistic overcast settings.
+- Ideal companion to `rally_weather_snow` for hybrid weather systems or scripted transitions.
+- Consider pairing with `target_speaker` for thunder or rainfall ambiance if `SILENT` is not set.
+*/
+
+//=============================================================================
+
+RALLY_WEAPON_* ENTITIES
+
+//=============================================================================
 
 /*QUAKED rally_weapon_bio (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED
 Bio Sludge - Leave a trail of toxic mess that eats through armor like a knife through a scared, large breasted girl in a crappy horror flick. It also causes your pursuers to slow down a good deal, adding insult to injury..
@@ -2418,46 +2525,120 @@ model="models/powerups/quad/quad.md3"
 */
 
 
-//ROADSIDE OBJECTS
+//=============================================================================
 
-/*QUAKED rally_misc_cone (1 .5 0) (-6 -6 -7) (6 6 7)
-"model"		selects skin type by path, random by default
+ROADSIDE OBJECTS
+
+//=============================================================================
+
+/*QUAKED rally_misc_cone (1 .5 0) (-6 -6 -7) (6 6 7) STATIC RANDOM_ROTATE
+Traffic Cone – Decorative roadside object, often used to mark hazards or direct vehicle flow. Supports multiple skin variations via model path.
+
+-------- KEYS --------
+model : Optional path to a cone model (e.g. models/props/cone_orange.md3). If omitted, a random variation is used.
+targetname : Allows logic control for visibility or scripting triggers.
+
+-------- SPAWNFLAGS --------
+STATIC : Cone does not react to physics or collision.
+RANDOM_ROTATE : Applies a random rotation at spawn for variation.
+
+-------- NOTES --------
+- Purely decorative; does not block vehicle movement.
+- Use in clusters for visual effect, e.g. construction zones.
 */
 
-/*QUAKED rally_misc_pylon (1 .5 0) (-4 -4 0) (4 4 32)
-"model"		selects skin type by path, random by default
+
+/*QUAKED rally_misc_pylon (1 .5 0) (-4 -4 0) (4 4 32) STATIC BREAKABLE
+Roadside Pylon – Tall marker used to guide vehicle direction or mark race boundaries. Vertical shape offers high visibility.
+
+-------- KEYS --------
+model : Optional path to pylon model (e.g. models/props/pylon01.md3).
+targetname : Makes pylon addressable by logic triggers or destruction scripts.
+
+-------- SPAWNFLAGS --------
+STATIC : Pylon remains fixed and non-physical.
+BREAKABLE : Allows pylon to be destroyed or removed via script or weapon.
+
+-------- NOTES --------
+- May be combined with `target_debrisemitter` for visual destruction.
+- Ideal for checkpoint gates or caution markers.
 */
 
-/*QUAKED rally_misc_barreloil (1 .5 0) (-8 -8 -13) (8 8 13)
+
+/*QUAKED rally_misc_barreloil (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Oil Barrel – Classic metal drum for decoration. Can be combined with sound or scripting for visual flair.
+
+-------- NOTES --------
+- Non-explosive by default – purely aesthetic.
+- Ideal for garages, fuel stations, or storage areas.
 */
 
-/*QUAKED rally_misc_barrelexp (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barrelexp (1 .5 0) (-8 -8 -13) (8 8 13) STATIC EXPLOSIVE
+Explosive Barrel – Reacts to damage and can blow up when destroyed.
+
+-------- NOTES --------
+- Recommended to pair with sound, particle, and light effects!
+- Great for risky shortcuts or dramatic gameplay visuals.
 */
 
-/*QUAKED rally_misc_barrelbio (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barrelbio (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Biohazard Barrel – Decor barrel featuring biohazard symbols.
+
+-------- NOTES --------
+- Perfect for labs or contaminated zones.
+- No gameplay impact, purely visual.
 */
 
-/*QUAKED rally_misc_barrelpoison (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barrelpoison (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Poison Barrel – Toxic liquid container with danger markings.
+
+-------- NOTES --------
+- Works well in swampy environments or industrial sections.
+- Optional: green smoke or hazard effects via script.
 */
 
-/*QUAKED rally_misc_barrelq3r (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barrelq3r (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Q3R Barrel – Classic Quake III-themed drum for nostalgia.
+
+-------- NOTES --------
+- Great Easter egg for old-school players.
 */
 
-/*QUAKED rally_misc_barrel311 (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barrel311 (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Barrel 311 – Unique or mod-specific design.
+
+-------- NOTES --------
+- Use where skin relevance or thematic tie-ins apply.
 */
 
-/*QUAKED rally_misc_barreldef (1 .5 0) (-8 -8 -13) (8 8 13)
+/*QUAKED rally_misc_barreldef (1 .5 0) (-8 -8 -13) (8 8 13) STATIC
+Default Barrel – Neutral container used in general settings.
+
+-------- NOTES --------
+- Commonly grey or rust-colored in texture.
+- Reliable all-rounder for filler or background clutter.
 */
 
-/*QUAKED rally_misc_barrel01 (1 .5 0) (-10 -10 -13) (10 10 13)
+/*QUAKED rally_misc_barrel01 (1 .5 0) (-10 -10 -13) (10 10 13) STATIC
+Barrel 01 – Wider drum ideal for outdoor or spacious scenes.
+
+-------- NOTES --------
+- Combine with crates for layered environments.
 */
 
-/*QUAKED rally_misc_barrel02 (1 .5 0) (-10 -10 -13) (10 10 21)
+/*QUAKED rally_misc_barrel02 (1 .5 0) (-10 -10 -13) (10 10 21) STATIC
+Barrel 02 – Taller drum resembling stackable industrial barrels.
+
+-------- NOTES --------
+- Two stacked barrels form great visual columns.
 */
 
-/*QUAKED rally_misc_barrel03 (1 .5 0) (-10 -10 -16) (10 10 18)
-*/
+/*QUAKED rally_misc_barrel03 (1 .5 0) (-10 -10 -16) (10 10 18) STATIC
+Barrel 03 – Largest of the set, slightly taller in shape.
 
+-------- NOTES --------
+- Fits well in vehicle depots or corner spaces.
+*/
 
 //=============================================================================
 

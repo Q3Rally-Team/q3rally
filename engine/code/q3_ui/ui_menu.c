@@ -341,6 +341,12 @@ static qboolean UI_TeamArenaExists( void ) {
 }
 #endif
 
+static void DiscordLogo_Activate(void *self, int event) {
+    if (event != QM_ACTIVATED)
+        return;
+
+    trap_Cmd_ExecuteText(EXEC_APPEND, "start https://discord.gg/enHZNxkYhH\n");
+}
 
 /*
 ===============
@@ -461,14 +467,14 @@ void UI_MainMenu( void ) {
         s_main.carlogo.width                            = 480;
         s_main.carlogo.height                           = 480;
         
-        s_main.discordlogo.generic.type                     = MTYPE_BITMAP;
-        s_main.discordlogo.generic.flags                    = QMF_INACTIVE;
-        s_main.discordlogo.generic.name                = ART_DISCORDLOGO;
-        s_main.discordlogo.generic.x                        = -50;
-        s_main.discordlogo.generic.y                        = 461;
-        s_main.discordlogo.width                            = 442 / 3;
-        s_main.discordlogo.height                           = 40 / 3;
-
+        s_main.discordlogo.generic.type                 = MTYPE_BITMAP;
+        s_main.discordlogo.generic.flags                = QMF_MOUSEONLY;  
+        s_main.discordlogo.generic.name                 = ART_DISCORDLOGO;
+        s_main.discordlogo.generic.x                    = -50;
+        s_main.discordlogo.generic.y                    = 461;
+        s_main.discordlogo.width                        = 442 / 3;
+        s_main.discordlogo.height                       = 40 / 3;
+        s_main.discordlogo.generic.callback             = DiscordLogo_Activate;
 
         y += MAIN_MENU_VERTICAL_SPACING;
         s_main.exit.generic.type                        = MTYPE_PTEXT;

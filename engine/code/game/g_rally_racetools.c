@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -436,7 +436,7 @@ void RallyStarter_Think( gentity_t *ent ){
 
 		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.wav") );
 
-		if (g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS)
+		if (g_gametype.integer != GT_DERBY)
 			ent->think = RallyRace_Think;
 	}
 	else if ( level.time > ent->pain_debounce_time + 4000 ){
