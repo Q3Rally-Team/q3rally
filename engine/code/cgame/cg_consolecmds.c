@@ -496,11 +496,11 @@ static void CG_MoveBezierPoint_f( void )
 {
 	char	buffer[256];
 	vec3_t	delta;
-/*
+
 	int			i;
 	centity_t	*cent;
 
-	for (i = 0; i < MAX_ENTITIES; i++)
+	for (i = 0; i < MAX_GENTITIES; i++)
 	{
 		cent = &cg_entities[i];
 		if (cent->currentState.eType != ET_CHECKPOINT) continue;
@@ -512,7 +512,7 @@ static void CG_MoveBezierPoint_f( void )
 
 		break;
 	}
-*/
+
 
 	delta[0] = atof(CG_Argv(1));
 	delta[1] = atof(CG_Argv(2));
@@ -526,11 +526,11 @@ static void CG_MoveBezierHandle_f( void )
 {
 	char	buffer[256];
 	vec3_t	delta;
-/*
+
 	int			i;
 	centity_t	*cent;
 
-	for (i = 0; i < MAX_ENTITIES; i++)
+	for (i = 0; i < MAX_GENTITIES; i++)
 	{
 		cent = &cg_entities[i];
 		if (cent->currentState.eType != ET_CHECKPOINT) continue;
@@ -542,7 +542,7 @@ static void CG_MoveBezierHandle_f( void )
 
 		break;
 	}
-*/
+
 
 	delta[0] = atof(CG_Argv(1));
 	delta[1] = atof(CG_Argv(2));
@@ -552,7 +552,7 @@ static void CG_MoveBezierHandle_f( void )
 	trap_SendClientCommand( buffer );
 }
 
-/*
+
 static void CG_SaveBezierPoints_f( void )
 {
 	int				i, j;
@@ -568,7 +568,7 @@ static void CG_SaveBezierPoints_f( void )
 	for (i = 0; i < 40; i++)
 	{
 		checkpointFound = qfalse;
-		for (j = 0; j < MAX_ENTITIES; j++)
+		for (j = 0; j < MAX_GENTITIES; j++)
 		{
 			cent = &cg_entities[j];
 			if (cent->currentState.eType != ET_CHECKPOINT) continue;
@@ -587,7 +587,7 @@ static void CG_SaveBezierPoints_f( void )
 
 	trap_FS_FCloseFile( f );
 }
-*/
+
 // Q3Rally Code End
 
 
@@ -653,7 +653,7 @@ static consoleCommand_t	commands[] = {
 	{ "prevBPoint", CG_PrevBezierPoint_f },
 	{ "moveBPoint", CG_MoveBezierPoint_f },
 	{ "moveBHandle", CG_MoveBezierHandle_f },
-//	{ "saveBPoints", CG_SaveBezierPoints_f },
+	{ "saveBPoints", CG_SaveBezierPoints_f },
 // Q3Rally Code End
 	{ "startOrbit", CG_StartOrbit_f },
 	//{ "camera", CG_Camera_f },

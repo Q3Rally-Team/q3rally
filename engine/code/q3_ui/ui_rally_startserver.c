@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -32,40 +32,14 @@ START SERVER MENU *****
 
 #include "ui_local.h"
 
-
-// STONELANCEgametype
-/*
-#define GAMESERVER_BACK0		"menu/art/back_0"
-#define GAMESERVER_BACK1		"menu/art/back_1"
-#define GAMESERVER_NEXT0		"menu/art/next_0"
-#define GAMESERVER_NEXT1		"menu/art/next_1"
-#define GAMESERVER_FRAMEL		"menu/art/frame2_l"
-#define GAMESERVER_FRAMER		"menu/art/frame1_r"
-*/
-// END
 #define GAMESERVER_SELECT		"menu/art/maps_select"
 #define GAMESERVER_SELECTED		"menu/art/maps_selected"
-// STONELANCE
-/*
-#define GAMESERVER_FIGHT0		"menu/art/fight_0"
-#define GAMESERVER_FIGHT1		"menu/art/fight_1"
-*/
-// END
 #define GAMESERVER_UNKNOWNMAP	"menu/art/unknownmap"
-// STONELANCE
-/*
-#define GAMESERVER_ARROWS		"menu/art/gs_arrows_0"
-#define GAMESERVER_ARROWSL		"menu/art/gs_arrows_l"
-#define GAMESERVER_ARROWSR		"menu/art/gs_arrows_r"
-*/
-// END
 
-// STONELANCE
 #define MAX_MAPSPERPAGE		20
 
 #define MAX_STATSPERPAGE	5
 #define MAX_MAPSTATS		16
-// END
 
 #define	MAX_SERVERSTEXT	8192
 
@@ -73,9 +47,7 @@ START SERVER MENU *****
 #define MAX_NAMELENGTH	28
 
 #define ID_GAMETYPE				10
-// STONELANCE
 #define ID_PICTURE				11
-// END
 #define ID_PREVPAGE				15
 #define ID_NEXTPAGE				16
 #define ID_STARTSERVERBACK		17
@@ -87,44 +59,26 @@ typedef struct {
 	menuframework_s	menu;
 
 	menutext_s		banner;
-
 	menulist_s		gametype;
-// STONELANCE
-//	menubitmap_s	mappics[MAX_MAPSPERPAGE];
-//	menubitmap_s	mapbuttons[MAX_MAPSPERPAGE];
-
-/*
-	menubitmap_s	back;
-	menubitmap_s	next;
-*/
 	menutext_s		back;
 	menutext_s		next;
-
 	menubitmap_s	mappic;
 	menutext_s		mapname;
 	menulist_s		list;
 	menulist_s		statlist;
-// END
-
 	menubitmap_s	item_null;
 
 	qboolean		multiplayer;
 	int				currentmap;
 	int				nummaps;
-// STONE LANCE
-//	int				page;
-//	int				maxpages;
 	int				top;
-// END
 	char			maplist[MAX_SERVERMAPS][MAX_NAMELENGTH];
 	char			mapinfo[MAX_SERVERMAPS][BIG_INFO_STRING];
-// STONELANCE
 	char			maplistname[MAX_SERVERMAPS][MAX_NAMELENGTH];
 	char			mapstats[MAX_MAPSTATS][128];
 	char*			items[MAX_SERVERMAPS];
 	char*			statitems[MAX_SERVERMAPS];
 	int				numstats;
-// END
 	int				mapGamebits[MAX_SERVERMAPS];
 } startserver_t;
 
@@ -145,26 +99,19 @@ static const char *gametype_items[] = {
 	0
 };
 
-// STONELANCE
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
 static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_DERBY, GT_LCS, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_DOMINATION};
 static int gametype_remap2[] = {0, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9};
 
 int		allowLength[3];
 int		reversable;
-// END
-
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
 
-// STONELANCE
 char *UI_GetStatKey(int num){
 	switch(num){
 	case MS_NUMSTARTS:
 		return "starts";
-
-//	case MS_LAPS:
-//		return "laps";
 
 	case MS_LAPTIME:
 		return "laptime";
@@ -203,9 +150,6 @@ char *UI_GetStatName(int num){
 	case MS_NUMSTARTS:
 		return "Start positions:";
 
-//	case MS_LAPS:
-//		return "Laps:";
-
 	case MS_LAPTIME:
 		return "Laptime:";
 
@@ -243,9 +187,6 @@ char *UI_GetDefaultStatValue( int num ){
 	switch(num){
 	case MS_NUMSTARTS:
 		return "Unknown";
-
-//	case MS_LAPS:
-//		return "Unknown";
 
 	case MS_LAPTIME:
 		return "Unknown";
@@ -392,7 +333,7 @@ static int GametypeBits( char *string ) {
 		if( token[0] == 0 ) {
 			break;
 		}
-// STONELANCE
+
 		if( Q_stricmp( token, "q3r_racing" ) == 0 ) {
 			bits |= 1 << GT_RACING;
 			continue;
@@ -432,7 +373,6 @@ static int GametypeBits( char *string ) {
 			bits |= 1 << GT_TEAM_RACING_DM;
 			continue;
 		}
-// END
 
 		if( Q_stricmp( token, "q3r_team_dm" ) == 0 ) {
 			bits |= 1 << GT_TEAM;
@@ -459,44 +399,8 @@ StartServer_Update
 =================
 */
 static void StartServer_Update( void ) {
-// STONELANCE
-//	int				i;
-//	int				top;
-// END
+
 	static	char	picname[64];
-
-// STONELANCE
-	/*
-	top = s_startserver.page*MAX_MAPSPERPAGE;
-
-	for (i=0; i<MAX_MAPSPERPAGE; i++)
-	{
-		if (top+i >= s_startserver.nummaps)
-			break;
-
-		Com_sprintf( picname[i], sizeof(picname[i]), "levelshots/%s", s_startserver.maplist[top+i] );
-
-		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
-		s_startserver.mappics[i].generic.name   = picname[i];
-		s_startserver.mappics[i].shader         = 0;
-
-		// reset
-		s_startserver.mapbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
-		s_startserver.mapbuttons[i].generic.flags &= ~QMF_INACTIVE;
-	}
-
-	for (; i<MAX_MAPSPERPAGE; i++)
-	{
-		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
-		s_startserver.mappics[i].generic.name   = NULL;
-		s_startserver.mappics[i].shader         = 0;
-
-		// disable
-		s_startserver.mapbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
-		s_startserver.mapbuttons[i].generic.flags |= QMF_INACTIVE;
-	}
-*/
-// END
 
 	Com_sprintf( picname, sizeof(picname), "levelshots/%s", s_startserver.maplist[s_startserver.list.curvalue] );
 	s_startserver.mappic.generic.name   = picname;
@@ -504,35 +408,19 @@ static void StartServer_Update( void ) {
 
 	// no servers to start
 	if( !s_startserver.nummaps ) {
-// STONELANCE
-//		s_startserver.next.generic.flags |= QMF_INACTIVE;
-// END
 
 		// set the map name
 		strcpy( s_startserver.mapname.string, "NO MAPS FOUND" );
 
-// STONELANCE
 		UI_SetupMapStatsForArena(-1);
-// END
+
 	}
 	else {
-		// set the highlight
-// STONELANCE
-//		s_startserver.next.generic.flags &= ~QMF_INACTIVE;
 
-/*
-		i = s_startserver.currentmap - top;
-		if ( i >=0 && i < MAX_MAPSPERPAGE ) 
-		{
-			s_startserver.mappics[i].generic.flags    |= QMF_HIGHLIGHT;
-			s_startserver.mapbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
-		}
-*/
 		// set the map name
 		strcpy( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap] );
 
 		UI_SetupMapStatsForArena(s_startserver.currentmap);
-// END
 	}
 
 	Q_strupr( s_startserver.mapname.string );
@@ -561,9 +449,6 @@ static void StartServer_MapEvent( void* ptr, int event ) {
 		break;
 	}
 
-// STONELANCE
-//	s_startserver.currentmap = (s_startserver.page*MAX_MAPSPERPAGE) + (((menucommon_s*)ptr)->id - ID_PICTURES);
-// END
 	StartServer_Update();
 }
 
@@ -587,13 +472,7 @@ static void StartServer_GametypeEvent( void* ptr, int event ) {
 	count = UI_GetNumArenas();
 	s_startserver.nummaps = 0;
 	matchbits = 1 << gametype_remap[s_startserver.gametype.curvalue];
-// STONELANCE
-/*
-	if( gametype_remap[s_startserver.gametype.curvalue] == GT_FFA ) {
-		matchbits |= ( 1 << GT_SINGLE_PLAYER );
-	}
-*/
-// END
+
 	for( i = 0; i < count; i++ ) {
 		info = UI_GetArenaInfoByNumber( i );
 
@@ -602,31 +481,25 @@ static void StartServer_GametypeEvent( void* ptr, int event ) {
 			continue;
 		}
 
-// STONELANCE
 		Q_strncpyz(s_startserver.mapinfo[s_startserver.nummaps], info, sizeof(s_startserver.mapinfo[i]));
-// END
+
 		Q_strncpyz( s_startserver.maplist[s_startserver.nummaps], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
-		// ZTM: Disabled so linux without pk3s works
-		//Q_strupr( s_startserver.maplist[s_startserver.nummaps] );
-// STONELANCE
+
 		Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
 		if (s_startserver.maplistname[s_startserver.nummaps][0] == 0)
 			Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], s_startserver.maplist[s_startserver.nummaps], MAX_NAMELENGTH );
 		else
 			Q_strupr( s_startserver.maplistname[s_startserver.nummaps] );
-// END
+
 		s_startserver.mapGamebits[s_startserver.nummaps] = gamebits;
 		s_startserver.nummaps++;
 	}
-// STONELANCE
-//	s_startserver.maxpages = (s_startserver.nummaps + MAX_MAPSPERPAGE-1)/MAX_MAPSPERPAGE;
-//	s_startserver.page = 0;
+
 	s_startserver.currentmap = 0;
 	s_startserver.top = 0;
 	s_startserver.list.top = s_startserver.top;
 	s_startserver.list.curvalue = s_startserver.currentmap;
 	s_startserver.list.numitems = s_startserver.nummaps;
-// END
 
 	StartServer_Update();
 }
@@ -643,23 +516,7 @@ static void StartServer_MenuEvent( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-// STONELANCE
-/*
-	case ID_PREVPAGE:
-		if( s_startserver.page > 0 ) {
-			s_startserver.page--;
-			StartServer_Update();
-		}
-		break;
 
-	case ID_NEXTPAGE:
-		if( s_startserver.page < s_startserver.maxpages - 1 ) {
-			s_startserver.page++;
-			StartServer_Update();
-		}
-		break;
-*/
-// END
 	case ID_STARTSERVERNEXT:
 		trap_Cvar_SetValue( "g_gameType", gametype_remap[s_startserver.gametype.curvalue] );
 		UI_ServerOptionsMenu( s_startserver.multiplayer );
@@ -673,87 +530,103 @@ static void StartServer_MenuEvent( void* ptr, int event ) {
 
 
 /*
-===============
+=========================
 StartServer_LevelshotDraw
-===============
+=========================
 */
-static void StartServer_LevelshotDraw( void *self ) {
-	menubitmap_s	*b;
+static void StartServer_LevelshotDraw(void *self) {
+    menubitmap_s *b;
+    char *s;
+    char *info;
+    char author[MAX_QPATH];
+    int x, y, w, h;
+    int image_offset = 10;
+    int bottom_margin = 10;
 
-// STONELANCE
-	char			*s;
-	char			*info;
-	char			author[MAX_QPATH];
-// END
-	int				x;
-	int				y;
-	int				w;
-	int				h;
-	
-// STONELANCE
-//	int				n;
-// END
+    b = (menubitmap_s *)self;
 
-	b = (menubitmap_s *)self;
+    if (!b->generic.name) {
+        return;
+    }
 
-	if( !b->generic.name ) {
-		return;
-	}
+    // Register the shader if not already loaded
+    if (b->generic.name && !b->shader) {
+        b->shader = trap_R_RegisterShaderNoMip(b->generic.name);
+        if (!b->shader && b->errorpic) {
+            b->shader = trap_R_RegisterShaderNoMip(b->errorpic);
+        }
+    }
 
-	if( b->generic.name && !b->shader ) {
-		b->shader = trap_R_RegisterShaderNoMip( b->generic.name );
-		if( !b->shader && b->errorpic ) {
-			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
-		}
-	}
+    // Set fixed width for background rectangle
+    w = 256;
+    x = b->generic.x - w / 2;
+    y = b->generic.y;
+    UI_FillRect(x, y, w, 140, menu_back_color);
 
-// STONELANCE
-	w = 256;
-	x = b->generic.x - w/2;
-	y = b->generic.y;
-	UI_FillRect( x, y, w, 140, menu_back_color );
+    // Abort if the selected map index is invalid
+    if (s_startserver.list.curvalue < 0 || 
+        s_startserver.list.curvalue >= s_startserver.nummaps) {
+        return;
+    }
 
-	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
-		return;
+    // Draw map preview image (levelshot)
+    x = b->generic.x - b->width / 2;
+    y = b->generic.y + image_offset;  // Shift image down by 10px
+    w = b->width;
+    h = b->height;
 
-	x = b->generic.x - b->width / 2;
-// END
-	
-	x = b->generic.x - b->width / 2;
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height;
-	if( b->shader ) {
-		UI_DrawHandlePic( x, y, w, h, b->shader );
-	}
+    if (b->shader) {
+        UI_DrawHandlePic(x, y, w, h, b->shader);
+    }
 
-	x += b->width / 2;
-	
-// STONELANCE
-	y += 96 + 4;
-//	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	//UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
-	UI_DrawString( x, y, s_startserver.maplistname[s_startserver.list.curvalue], UI_CENTER|UI_SMALLFONT, text_color_normal );
+    // Center text relative to image
+    x += b->width / 2;
+    y += h + 4;  // Space between image and text
 
-	info = s_startserver.mapinfo[s_startserver.currentmap];
-	s = Info_ValueForKey( info, "author");
-	if (!s || !strcmp(s, ""))
-		Com_sprintf(author, sizeof(author), "Author: Unknown");
-	else
-		Com_sprintf(author, sizeof(author), "Author: %s", s);
+    // Draw map name
+    UI_DrawString(
+        x,
+        y,
+        s_startserver.maplistname[s_startserver.list.curvalue],
+        UI_CENTER | UI_SMALLFONT,
+        text_color_normal
+    );
 
-	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, author, UI_CENTER|UI_SMALLFONT, text_color_normal );
-// END
+    // Get author info
+    info = s_startserver.mapinfo[s_startserver.currentmap];
+    s = Info_ValueForKey(info, "author");
 
-	x = b->generic.x;
-	y = b->generic.y;
-	w = b->width;
-	h =	b->height + 28;
-	if( b->generic.flags & QMF_HIGHLIGHT ) {	
-		UI_DrawHandlePic( x, y, w, h, b->focusshader );
-		
-	}
+    if (!s || !strcmp(s, "")) {
+        Com_sprintf(author, sizeof(author), "Author: Unknown");
+    } else {
+        Com_sprintf(author, sizeof(author), "Author: %s", s);
+    }
+
+    y += SMALLCHAR_HEIGHT;
+
+    // Calculate available space and ensure bottom alignment
+    if ((y + SMALLCHAR_HEIGHT) > (b->generic.y + h + image_offset + 140 - bottom_margin)) {
+        y = b->generic.y + h + image_offset + 140 - SMALLCHAR_HEIGHT - bottom_margin;
+    }
+
+    // Draw author name
+    UI_DrawString(
+        x,
+        y,
+        author,
+        UI_CENTER | UI_SMALLFONT,
+        text_color_normal
+    );
+
+    // If highlighted, draw focus border
+    x = b->generic.x;
+    y = b->generic.y;
+    w = b->width;
+    h = b->height + 28;
+
+    if (b->generic.flags & QMF_HIGHLIGHT) {
+        UI_DrawHandlePic(x, y, w, h, b->focusshader);
+    }
 }
 
 /*
@@ -762,11 +635,8 @@ StartServer_MenuInit
 =================
 */
 static void StartServer_MenuInit( void ) {
-	int	i;
-// STONELANCE
-//	int	x;
-//	int	y;
-// END
+	
+    int	i;
 	static char mapnamebuffer[64];
 
 	// zero set all our globals
@@ -790,73 +660,8 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.gametype.generic.callback	= StartServer_GametypeEvent;
 	s_startserver.gametype.generic.id		= ID_GAMETYPE;
 	s_startserver.gametype.generic.x		= 320 - 24;
-// STONELANCE
-//	s_startserver.gametype.generic.y		= 368;
 	s_startserver.gametype.generic.y		= 480 - 50;
-// END
 	s_startserver.gametype.itemnames		= gametype_items;
-
-// STONELANCE
-/*
-	for (i=0; i<MAX_MAPSPERPAGE; i++)
-	{
-		x =	(i % MAX_MAPCOLS) * (128+8) + 188;
-		y = (i / MAX_MAPROWS) * (128+8) + 96;
-
-		s_startserver.mappics[i].generic.type   = MTYPE_BITMAP;
-		s_startserver.mappics[i].generic.flags  = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-		s_startserver.mappics[i].generic.x	    = x;
-		s_startserver.mappics[i].generic.y	    = y;
-		s_startserver.mappics[i].generic.id		= ID_PICTURES+i;
-		s_startserver.mappics[i].width  		= 128;
-		s_startserver.mappics[i].height  	    = 96;
-		s_startserver.mappics[i].focuspic       = GAMESERVER_SELECTED;
-		s_startserver.mappics[i].errorpic       = GAMESERVER_UNKNOWNMAP;
-		s_startserver.mappics[i].generic.ownerdraw = StartServer_LevelshotDraw;
-
-		s_startserver.mapbuttons[i].generic.type     = MTYPE_BITMAP;
-		s_startserver.mapbuttons[i].generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_NODEFAULTINIT;
-		s_startserver.mapbuttons[i].generic.id       = ID_PICTURES+i;
-		s_startserver.mapbuttons[i].generic.callback = StartServer_MapEvent;
-		s_startserver.mapbuttons[i].generic.x	     = x - 30;
-		s_startserver.mapbuttons[i].generic.y	     = y - 32;
-		s_startserver.mapbuttons[i].width  		     = 256;
-		s_startserver.mapbuttons[i].height  	     = 248;
-		s_startserver.mapbuttons[i].generic.left     = x;
-		s_startserver.mapbuttons[i].generic.top  	 = y;
-		s_startserver.mapbuttons[i].generic.right    = x + 128;
-		s_startserver.mapbuttons[i].generic.bottom   = y + 128;
-		s_startserver.mapbuttons[i].focuspic         = GAMESERVER_SELECT;
-	}
-
-	s_startserver.arrows.generic.type  = MTYPE_BITMAP;
-	s_startserver.arrows.generic.name  = GAMESERVER_ARROWS;
-	s_startserver.arrows.generic.flags = QMF_INACTIVE;
-	s_startserver.arrows.generic.x	   = 260;
-	s_startserver.arrows.generic.y	   = 400;
-	s_startserver.arrows.width  	   = 128;
-	s_startserver.arrows.height  	   = 32;
-
-	s_startserver.prevpage.generic.type	    = MTYPE_BITMAP;
-	s_startserver.prevpage.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.prevpage.generic.callback = StartServer_MenuEvent;
-	s_startserver.prevpage.generic.id	    = ID_PREVPAGE;
-	s_startserver.prevpage.generic.x		= 260;
-	s_startserver.prevpage.generic.y		= 400;
-	s_startserver.prevpage.width  		    = 64;
-	s_startserver.prevpage.height  		    = 32;
-	s_startserver.prevpage.focuspic         = GAMESERVER_ARROWSL;
-
-	s_startserver.nextpage.generic.type	    = MTYPE_BITMAP;
-	s_startserver.nextpage.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.nextpage.generic.callback = StartServer_MenuEvent;
-	s_startserver.nextpage.generic.id	    = ID_NEXTPAGE;
-	s_startserver.nextpage.generic.x		= 321;
-	s_startserver.nextpage.generic.y		= 400;
-	s_startserver.nextpage.width  		    = 64;
-	s_startserver.nextpage.height  		    = 32;
-	s_startserver.nextpage.focuspic         = GAMESERVER_ARROWSR;
-*/
 
 	s_startserver.list.generic.type			= MTYPE_LISTBOX;
 	s_startserver.list.generic.flags		= QMF_HIGHLIGHT_IF_FOCUS;
@@ -895,44 +700,15 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.mappic.height  			= 96;
 	s_startserver.mappic.errorpic			= GAMESERVER_UNKNOWNMAP;
 	s_startserver.mappic.generic.ownerdraw	= StartServer_LevelshotDraw;
-// END
 
 	s_startserver.mapname.generic.type  = MTYPE_PTEXT;
 	s_startserver.mapname.generic.flags = QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-// STONELANCE
-//	s_startserver.mapname.generic.x	    = 320;
-//	s_startserver.mapname.generic.y	    = 440;
 	s_startserver.mapname.generic.x	    = 455;
 	s_startserver.mapname.generic.y	    = 228;
-// END
 	s_startserver.mapname.string        = mapnamebuffer;
 	s_startserver.mapname.style         = UI_CENTER|UI_BIGFONT;
 	s_startserver.mapname.color         = text_color_normal;
 
-// STONELANCE
-/*
-	s_startserver.back.generic.type	    = MTYPE_BITMAP;
-	s_startserver.back.generic.name     = GAMESERVER_BACK0;
-	s_startserver.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.back.generic.callback = StartServer_MenuEvent;
-	s_startserver.back.generic.id	    = ID_STARTSERVERBACK;
-	s_startserver.back.generic.x		= 0;
-	s_startserver.back.generic.y		= 480-64;
-	s_startserver.back.width  		    = 128;
-	s_startserver.back.height  		    = 64;
-	s_startserver.back.focuspic         = GAMESERVER_BACK1;
-
-	s_startserver.next.generic.type	    = MTYPE_BITMAP;
-	s_startserver.next.generic.name     = GAMESERVER_NEXT0;
-	s_startserver.next.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.next.generic.callback = StartServer_MenuEvent;
-	s_startserver.next.generic.id	    = ID_STARTSERVERNEXT;
-	s_startserver.next.generic.x		= 640;
-	s_startserver.next.generic.y		= 480-64;
-	s_startserver.next.width  		    = 128;
-	s_startserver.next.height  		    = 64;
-	s_startserver.next.focuspic         = GAMESERVER_NEXT1;
-*/
 	s_startserver.back.generic.type			= MTYPE_PTEXT;
 	s_startserver.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_startserver.back.generic.x			= 20;
@@ -952,7 +728,6 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.next.string				= "NEXT >";
 	s_startserver.next.color				= text_color_normal;
 	s_startserver.next.style				= UI_RIGHT | UI_SMALLFONT;
-// END
 
 	s_startserver.item_null.generic.type	= MTYPE_BITMAP;
 	s_startserver.item_null.generic.flags	= QMF_LEFT_JUSTIFY|QMF_MOUSEONLY|QMF_SILENT;
@@ -962,25 +737,10 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.item_null.height			= 480;
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
-
 	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
-/*
-	for (i=0; i<MAX_MAPSPERPAGE; i++)
-	{
-		Menu_AddItem( &s_startserver.menu, &s_startserver.mappics[i] );
-		Menu_AddItem( &s_startserver.menu, &s_startserver.mapbuttons[i] );
-	}
-
-	Menu_AddItem( &s_startserver.menu, &s_startserver.arrows );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.prevpage );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.nextpage );
-*/
 	Menu_AddItem( &s_startserver.menu, &s_startserver.list );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.statlist );
-
-		Menu_AddItem( &s_startserver.menu, &s_startserver.mappic );
-// END
-
+    Menu_AddItem( &s_startserver.menu, &s_startserver.mappic );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.next );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.mapname );
@@ -1002,26 +762,9 @@ void StartServer_Cache( void )
 	qboolean		precache;
 	char			picname[64];
 
-// STONELANCE
-/*
-	trap_R_RegisterShaderNoMip( GAMESERVER_BACK0 );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_BACK1 );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_NEXT0 );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_NEXT1 );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_FRAMEL );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_FRAMER );
-*/
-// END
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECT );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECTED );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_UNKNOWNMAP );
-// STONELANCE
-/*
-	trap_R_RegisterShaderNoMip( GAMESERVER_ARROWS );
-	trap_R_RegisterShaderNoMip( GAMESERVER_ARROWSL );
-	trap_R_RegisterShaderNoMip( GAMESERVER_ARROWSR );
-*/
-// END
 
 	precache = trap_Cvar_VariableValue("com_buildscript");
 
@@ -1031,16 +774,12 @@ void StartServer_Cache( void )
 		info = UI_GetArenaInfoByNumber( i );
 
 		Q_strncpyz( s_startserver.maplist[i], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
-		// ZTM: Disabled so linux without pk3s works
-		//Q_strupr( s_startserver.maplist[i] );
 
-// STONELANCE
 		Q_strncpyz( s_startserver.maplistname[i], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
 		if (s_startserver.maplistname[i][0] == 0)
 			Q_strncpyz( s_startserver.maplistname[i], s_startserver.maplist[i], MAX_NAMELENGTH );
 		else
 			Q_strupr( s_startserver.maplistname[i] );
-// END
 
 		s_startserver.mapGamebits[i] = GametypeBits( Info_ValueForKey( info, "type") );
 
@@ -1051,9 +790,6 @@ void StartServer_Cache( void )
 		}
 	}
 
-// STONELANCE
-//	s_startserver.maxpages = (s_startserver.nummaps + MAX_MAPSPERPAGE-1)/MAX_MAPSPERPAGE;
-// END
 }
 
 
@@ -1083,10 +819,8 @@ SERVER OPTIONS MENU *****
 #define ID_DEDICATED			12
 #define ID_GO					13
 #define ID_BACK					14
-// STONELANCE
 #define ID_TRACK_LENGTH			15
 #define ID_TRACK_REVERSED		16
-// END
 #define PLAYER_SLOTS			12
 
 
@@ -1094,14 +828,7 @@ typedef struct {
 	menuframework_s		menu;
 
 	menutext_s			banner;
-
 	menubitmap_s		mappic;
-	
-
-// STONELANCE
-//	menubitmap_s		picframe;
-// END
-
 	menulist_s			dedicated;
 	menufield_s			timelimit;
 	menufield_s			fraglimit;
@@ -1110,27 +837,16 @@ typedef struct {
 	menufield_s			hostname;
     menulist_s          dominationSpawnStyle;
 	menuradiobutton_s   sigillocator;
-// STONLANCE
 	menulist_s			trackLength;
 	menulist_s			reversed;
-
 	menuradiobutton_s	pure;
 	menulist_s			botSkill;
-// END
-
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
 	menutext_s			playerName[PLAYER_SLOTS];
 	menulist_s			playerTeam[PLAYER_SLOTS];
-
-// STONELANCE
-/*
-	menubitmap_s		go;
-	menubitmap_s		back;
-*/
 	menutext_s			go;
 	menutext_s			back;
-// END
 
 	qboolean			multiplayer;
 	int					gametype;
@@ -1151,7 +867,6 @@ static const char *dedicated_list[] = {
 	0
 };
 
-// STONELANCE
 static char *track_length_list[] = {
 	"Short",
 	"Medium",
@@ -1159,21 +874,11 @@ static char *track_length_list[] = {
 	0
 };
 
-/*
-static const char *track_length_list[] = {
-	"Short",
-	"Medium",
-	"Long",
-	0
-};
-*/
-
 static const char *reversed_list[] = {
 	"No",
 	"Yes",
 	0
 };
-// END
 
 static const char *playerType_list[] = {
 	"Open",
@@ -1246,10 +951,8 @@ static void ServerOptions_Start( void ) {
 	int		friendlyfire;
 	int		flaglimit;
 	int		pure;
-// STONELANCE
 	int		trackLength;
 	int		reversed;
-// END
 	int		skill;
 	int		n;
 	char	buf[64];
@@ -1260,13 +963,11 @@ static void ServerOptions_Start( void ) {
 	dedicated	 = s_serveroptions.dedicated.curvalue;
 	friendlyfire = s_serveroptions.friendlyfire.curvalue;
 	pure		 = s_serveroptions.pure.curvalue;
-// STONELANCE
 	skill		 = s_serveroptions.botSkill.curvalue + 1;
     dominationSpawnStyle = s_serveroptions.dominationSpawnStyle.curvalue; // dtf
     sigillocator = s_serveroptions.sigillocator.curvalue; // dtf
 	trackLength  = s_serveroptions.trackLength.curvalue;
 	reversed     = s_serveroptions.reversed.curvalue;
-// END
 
 	//set maxclients
 	for( n = 0, maxclients = 0; n < PLAYER_SLOTS; n++ ) {
@@ -1280,7 +981,7 @@ static void ServerOptions_Start( void ) {
 	}
 
 	switch( s_serveroptions.gametype ) {
-// STONELANCE
+
 	case GT_RACING:
 	case GT_RACING_DM:
 	default:
@@ -1307,7 +1008,7 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_dm_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_dm_timelimit", timelimit );
 		break;
-// END
+
 	case GT_TEAM:
 		trap_Cvar_SetValue( "ui_team_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_team_timelimit", timelimit );
@@ -1320,7 +1021,6 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_ctf_friendly", friendlyfire );
 		break;
 		
-// Q3Rally Code Start
     case GT_DOMINATION:
 		trap_Cvar_SetValue( "g_dominationSpawnStyle", Com_Clamp( 0, 1, dominationSpawnStyle ) );
 		trap_Cvar_SetValue( "cg_sigilLocator", Com_Clamp( 0, 1, sigillocator) );
@@ -1328,26 +1028,21 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_dom_timelimit", timelimit );
 		trap_Cvar_SetValue( "ui_dom_friendly", friendlyfire );
 		break;
-// Q3Rally Code END
+
 	}
 
 	trap_Cvar_SetValue( "sv_maxclients", Com_Clamp( 0, 12, maxclients ) );
 	trap_Cvar_SetValue( "dedicated", Com_Clamp( 0, 2, dedicated ) );
 	trap_Cvar_SetValue ("timelimit", Com_Clamp( 0, timelimit, timelimit ) );
 	trap_Cvar_SetValue ("fraglimit", Com_Clamp( 0, fraglimit, fraglimit ) );
-// STONELANCE
 	trap_Cvar_SetValue ("laplimit", Com_Clamp( 0, fraglimit, fraglimit ) );
-// END
 	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
-// STONELANCE
 	trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLength, 2 ) );
 	trap_Cvar_SetValue( "g_trackReversed", Com_Clamp( 0, reversed, 1 ) );
-
 	trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLength, 2 ) );
 	trap_Cvar_SetValue( "ui_racing_trackreversed", Com_Clamp( 0, reversed, 1 ) );
-// END
 	trap_Cvar_Set("sv_hostname", s_serveroptions.hostname.field.buffer );
 
 	// the wait commands will allow the dedicated to take effect
@@ -1444,13 +1139,6 @@ static void ServerOptions_SetPlayerItems( void ) {
 	int		start;
 	int		n;
 
-	// types
-//	for( n = 0; n < PLAYER_SLOTS; n++ ) {
-//		if( (!s_serveroptions.multiplayer) && (n > 0) && (s_serveroptions.playerType[n].curvalue == 0) ) {
-//			s_serveroptions.playerType[n].curvalue = 1;
-//		}
-//	}
-
 	// names
 	if( s_serveroptions.dedicated.curvalue == 0 ) {
 		s_serveroptions.player0.string = "Human";
@@ -1544,12 +1232,10 @@ static void ServerOptions_StatusBar( void* ptr ) {
 	UI_DrawString( 320, 440, "0 = NO LIMIT", UI_CENTER|UI_SMALLFONT, colorWhite );
 }
 
-
-// STONELANCE
 /*
-===============
+===========================
 ServerOptions_LevelshotDraw
-===============
+===========================
 */
 static void ServerOptions_LevelshotDraw( void *self ) {
 	menubitmap_s	*b;
@@ -1585,10 +1271,6 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
 	}
 
-	// STONELANCE
-//	w = 256;
-//	x = b->generic.x - 100;
-//	y = b->generic.y;
 	UI_FillRect( 325, 80, 256, 160, menu_back_color );
 
 	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
@@ -1604,8 +1286,7 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 
 	x += b->width / 2;
 	y += 96 + 4;
-//	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	//UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
+
 	UI_DrawString( x, y, s_startserver.maplistname[s_startserver.list.curvalue], UI_CENTER|UI_SMALLFONT, text_color_normal );
 
 	info = s_startserver.mapinfo[s_startserver.currentmap];
@@ -1644,13 +1325,10 @@ static void ServerOptions_InitBotNames( void ) {
 	char		*bot;
 	char		bots[MAX_INFO_STRING];
 
-// changed to declare bots in arena files
-//	if( s_serveroptions.gametype >= GT_TEAM ) {
     if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "Bobby", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "Carla", 16 );
-// changed to declare bots in arena files
-//	if( s_serveroptions.gametype == GT_TEAM ) {
+
     if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[3], "Paul", 16 );
 		}    
@@ -1663,8 +1341,7 @@ static void ServerOptions_InitBotNames( void ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "Alexandra", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "Sam", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "Dean", 16 );
-// changed to declare bots in arena files
-//	if( s_serveroptions.gametype == GT_TEAM ) {
+
     if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[9], "Janine", 16 );
 		}
@@ -1741,7 +1418,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	static char picname[64];
 
 	switch( s_serveroptions.gametype ) {
-// STONELANCE
+
 	case GT_RACING:
 		
 	case GT_RACING_DM:
@@ -1769,7 +1446,7 @@ static void ServerOptions_SetMenuItems( void ) {
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dm_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dm_timelimit" ) ) );
 		break;
-// END
+
 	case GT_TEAM:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_timelimit" ) ) );
@@ -1782,22 +1459,19 @@ static void ServerOptions_SetMenuItems( void ) {
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ctf_friendly" ) );
 		break;
 
-// Q3Rally Code Start
 	case GT_DOMINATION:
 		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_dom_capturelimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dom_timelimit" ) ) );
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_dom_friendly" ) );
 		s_serveroptions.sigillocator.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_sigilLocator" ) );
 		break;
-// Q3Rally Code END
+
 	}
 
 	Q_strncpyz( s_serveroptions.hostname.field.buffer, UI_Cvar_VariableString( "sv_hostname" ), sizeof( s_serveroptions.hostname.field.buffer ) );
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
-// STONELANCE
 	s_serveroptions.trackLength.curvalue = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_racing_tracklength" ) );
 	s_serveroptions.reversed.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_racing_trackreversed" ) );
-// END
 
 	// set the map pic
 	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
@@ -1891,37 +1565,20 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.banner.generic.x			= 320;
 	s_serveroptions.banner.generic.y			= 16;
 	s_serveroptions.banner.string  				= "GAME SERVER";
-// STONELANCE
 	s_serveroptions.banner.color  				= text_color_normal;
-// END
 	s_serveroptions.banner.style  				= UI_CENTER;
-
+    
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
 	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-// STONELANCE
-//	s_serveroptions.mappic.generic.x			= 352;
 	s_serveroptions.mappic.generic.x			= 455;
 	s_serveroptions.mappic.generic.y			= 80;
 	s_serveroptions.mappic.width				= 170;
 	s_serveroptions.mappic.height				= 96;
-// END
 	s_serveroptions.mappic.errorpic				= GAMESERVER_UNKNOWNMAP;
 	s_serveroptions.mappic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
 
-// STONELANCE
-/*
-	s_serveroptions.picframe.generic.type		= MTYPE_BITMAP;
-	s_serveroptions.picframe.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE|QMF_HIGHLIGHT;
-	s_serveroptions.picframe.generic.x			= 352 - 38;
-	s_serveroptions.picframe.generic.y			= 80 - 40;
-	s_serveroptions.picframe.width  			= 320;
-	s_serveroptions.picframe.height  			= 320;
-	s_serveroptions.picframe.focuspic			= GAMESERVER_SELECT;
-*/
-// END
-
 	y = 272;
-// STONELANCE
+
 	if( s_serveroptions.gametype == GT_RACING ||
 		s_serveroptions.gametype == GT_RACING_DM ||
 		s_serveroptions.gametype == GT_TEAM_RACING ||
@@ -1937,8 +1594,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.fraglimit.field.maxchars     = 3;
 	}
 		else if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_DOMINATION ) {
-//	if( s_serveroptions.gametype != GT_CTF ) {
-// END
+
 		s_serveroptions.fraglimit.generic.type       = MTYPE_FIELD;
 		s_serveroptions.fraglimit.generic.name       = "Frag Limit:";
 		s_serveroptions.fraglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1990,7 +1646,6 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.pure.generic.flags |= QMF_GRAYED;
 	}
 
-// STONELANCE
 	n = 0;
 	if ( allowLength[0] ){
 		track_length_list[n] = "Short";
@@ -2010,7 +1665,6 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.trackLength.generic.type		= MTYPE_SPINCONTROL;
 	s_serveroptions.trackLength.generic.id			= ID_TRACK_LENGTH;
 	s_serveroptions.trackLength.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-//	s_serveroptions.trackLength.generic.callback	= ServerOptions_Event;
 	s_serveroptions.trackLength.generic.x			= OPTIONS_X;
 	s_serveroptions.trackLength.generic.y			= y;
 	s_serveroptions.trackLength.generic.name		= "Track Length:";
@@ -2020,12 +1674,11 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.reversed.generic.type			= MTYPE_SPINCONTROL;
 	s_serveroptions.reversed.generic.id				= ID_TRACK_REVERSED;
 	s_serveroptions.reversed.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-//	s_serveroptions.reversed.generic.callback		= ServerOptions_Event;
 	s_serveroptions.reversed.generic.x				= OPTIONS_X;
 	s_serveroptions.reversed.generic.y				= y;
 	s_serveroptions.reversed.generic.name			= "Track Reversed:";
 	s_serveroptions.reversed.itemnames				= reversed_list;
-// END
+
 	if( s_serveroptions.multiplayer ) {
 		y += BIGCHAR_HEIGHT+2;
 		s_serveroptions.dedicated.generic.type		= MTYPE_SPINCONTROL;
@@ -2080,10 +1733,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	s_serveroptions.player0.generic.flags			= QMF_SMALLFONT;
 	s_serveroptions.player0.generic.x				= 32 + SMALLCHAR_WIDTH;
 	s_serveroptions.player0.generic.y				= y;
-// STONELANCE
-	//s_serveroptions.player0.color					= color_orange;
 	s_serveroptions.player0.color					= text_color_normal;
-// END
 	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT;
 
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
@@ -2102,10 +1752,8 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		s_serveroptions.playerName[n].generic.callback	= ServerOptions_PlayerNameEvent;
 		s_serveroptions.playerName[n].generic.id		= n;
 		s_serveroptions.playerName[n].generic.ownerdraw	= PlayerName_Draw;
-// STONELANCE
-		//s_serveroptions.playerName[n].color				= color_orange;
 		s_serveroptions.playerName[n].color				= text_color_normal;
-// END
+        
 		s_serveroptions.playerName[n].style				= UI_SMALLFONT;
 		s_serveroptions.playerName[n].string			= s_serveroptions.playerNameBuffers[n];
 		s_serveroptions.playerName[n].generic.top		= s_serveroptions.playerName[n].generic.y;
@@ -2121,31 +1769,6 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 		y += ( SMALLCHAR_HEIGHT + 4 );
 	}
-
-// STONELANCE
-/*
-	s_serveroptions.back.generic.type	  = MTYPE_BITMAP;
-	s_serveroptions.back.generic.name     = GAMESERVER_BACK0;
-	s_serveroptions.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_serveroptions.back.generic.callback = ServerOptions_Event;
-	s_serveroptions.back.generic.id	      = ID_BACK;
-	s_serveroptions.back.generic.x		  = 0;
-	s_serveroptions.back.generic.y		  = 480-64;
-	s_serveroptions.back.width  		  = 128;
-	s_serveroptions.back.height  		  = 64;
-	s_serveroptions.back.focuspic         = GAMESERVER_BACK1;
-
-	s_serveroptions.go.generic.type	    = MTYPE_BITMAP;
-	s_serveroptions.go.generic.name     = GAMESERVER_FIGHT0;
-	s_serveroptions.go.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_serveroptions.go.generic.callback = ServerOptions_Event;
-	s_serveroptions.go.generic.id	    = ID_GO;
-	s_serveroptions.go.generic.x		= 640;
-	s_serveroptions.go.generic.y		= 480-64;
-	s_serveroptions.go.width  		    = 128;
-	s_serveroptions.go.height  		    = 64;
-	s_serveroptions.go.focuspic         = GAMESERVER_FIGHT1;
-*/
 
 	s_serveroptions.back.generic.type		= MTYPE_PTEXT;
 	s_serveroptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -2166,15 +1789,11 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	s_serveroptions.go.string				= "RACE!";
 	s_serveroptions.go.color				= text_color_normal;
 	s_serveroptions.go.style				= UI_RIGHT | UI_SMALLFONT;
-// END
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.banner );
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.mappic );
 
-// STONELANCE
-//	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.picframe );
-// END
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.botSkill );
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.player0 );
@@ -2188,14 +1807,12 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		}
 	}
 
-	// STONELANCE
 	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_DOMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
 	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
 	}
-	// END
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
 
@@ -2205,7 +1822,6 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
 
-	// STONELANCE
 	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
 		|| s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
@@ -2213,7 +1829,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		if ( reversable )
 			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.reversed );
 	}
-	// END
+
 
 	if( s_serveroptions.multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dedicated );
@@ -2240,15 +1856,7 @@ ServerOptions_Cache
 =================
 */
 void ServerOptions_Cache( void ) {
-// STONELANCE
-/*
-	trap_R_RegisterShaderNoMip( GAMESERVER_BACK0 );
-	trap_R_RegisterShaderNoMip( GAMESERVER_BACK1 );
-	trap_R_RegisterShaderNoMip( GAMESERVER_FIGHT0 );
-	trap_R_RegisterShaderNoMip( GAMESERVER_FIGHT1 );
-	trap_R_RegisterShaderNoMip( GAMESERVER_SELECT );
-*/
-// END
+
 	trap_R_RegisterShaderNoMip( GAMESERVER_UNKNOWNMAP );
 }
 
@@ -2302,12 +1910,8 @@ typedef struct {
 	menubitmap_s	left;
 	menubitmap_s	right;
 
-// STONELANCE
-//	menubitmap_s	go;
-//	menubitmap_s	back;
 	menutext_s		go;
 	menutext_s		back;
-// END
 
 	int				numBots;
 	int				modelpage;
@@ -2384,24 +1988,17 @@ static void ServerPlayerIcon( const char *modelAndSkin, char *iconName, int icon
 		*skin++ = '\0';
 	}
 	else {
-// STONELANCE
-//		skin = "default";
+
 		skin = "red";
-// END
+
 	}
 
 	Com_sprintf(iconName, iconNameMaxSize, "models/players/%s/icon_%s.tga", model, skin );
 
-// STONELANCE
-/*
-	if( !trap_R_RegisterShaderNoMip( iconName ) && Q_stricmp( skin, "default" ) != 0 ) {
-		Com_sprintf(iconName, iconNameMaxSize, "models/players/%s/icon_default.tga", model );
-	}
-*/
 	if( !trap_R_RegisterShaderNoMip( iconName ) ) {
 		Com_sprintf(iconName, iconNameMaxSize, "models/players/%s/icon_red.tga", model );
 	}
-// END
+
 }
 
 
@@ -2427,10 +2024,9 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 				botSelectInfo.picnames[i].color = color_red;
 			}
 			else {
-// STONELANCE
-				//botSelectInfo.picnames[i].color = color_orange;
+
 				botSelectInfo.picnames[i].color = text_color_normal;
-// END
+
 			}
 			botSelectInfo.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
 		}
@@ -2668,10 +2264,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 			botSelectInfo.picnames[k].generic.x				= x + 32;
 			botSelectInfo.picnames[k].generic.y				= y + 64;
 			botSelectInfo.picnames[k].string				= botSelectInfo.botnames[k];
-// STONELANCE
-			//botSelectInfo.picnames[k].color					= color_orange;
 			botSelectInfo.picnames[k].color					= text_color_normal;
-// END
 			botSelectInfo.picnames[k].style					= UI_CENTER|UI_SMALLFONT;
 
 			x += (64 + 6);
@@ -2705,29 +2298,6 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.right.height  		    = 32;
 	botSelectInfo.right.focuspic			= BOTSELECT_ARROWSR;
 
-// STONELANCE
-/*
-	botSelectInfo.back.generic.type		= MTYPE_BITMAP;
-	botSelectInfo.back.generic.name		= BOTSELECT_BACK0;
-	botSelectInfo.back.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	botSelectInfo.back.generic.callback	= UI_BotSelectMenu_BackEvent;
-	botSelectInfo.back.generic.x		= 0;
-	botSelectInfo.back.generic.y		= 480-64;
-	botSelectInfo.back.width			= 128;
-	botSelectInfo.back.height			= 64;
-	botSelectInfo.back.focuspic			= BOTSELECT_BACK1;
-
-	botSelectInfo.go.generic.type		= MTYPE_BITMAP;
-	botSelectInfo.go.generic.name		= BOTSELECT_ACCEPT0;
-	botSelectInfo.go.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	botSelectInfo.go.generic.callback	= UI_BotSelectMenu_SelectEvent;
-	botSelectInfo.go.generic.x			= 640;
-	botSelectInfo.go.generic.y			= 480-64;
-	botSelectInfo.go.width				= 128;
-	botSelectInfo.go.height				= 64;
-	botSelectInfo.go.focuspic			= BOTSELECT_ACCEPT1;
-*/
-
 	botSelectInfo.back.generic.type		= MTYPE_PTEXT;
 	botSelectInfo.back.generic.name		= BOTSELECT_BACK0;
 	botSelectInfo.back.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -2747,7 +2317,6 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.go.string				= "ACCEPT";
 	botSelectInfo.go.color				= text_color_normal;
 	botSelectInfo.go.style				= UI_RIGHT | UI_SMALLFONT;
-// END
 
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.banner );
 	for( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
