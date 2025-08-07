@@ -775,7 +775,12 @@ void SP_worldspawn( void ) {
 		CreateRallyStarter();
 	}
 
-//	loadBezierPathFile("maps/q3rloop.bzp");
+	char	mapname[MAX_QPATH];
+	char	serverinfo[MAX_INFO_STRING];
+
+	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
+	COM_StripExtension(Info_ValueForKey( serverinfo, "mapname" ), mapname, sizeof(mapname));
+	loadBezierPathFile(va("maps/%s.bpd", mapname));
 // END
 }
 

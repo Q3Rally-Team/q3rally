@@ -24,6 +24,93 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 
+void loadBezierPathFile(char *filename) {
+	int				len;
+	fileHandle_t	f;
+	char			*buf, *p;
+	char			token[MAX_TOKEN_CHARS];
+	int				i;
+	gentity_t		*ent;
+	vec3_t			pos, dir;
+
+	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+	if ( !f ) {
+		return;
+	}
+	if ( !len ) {
+		return;
+	}
+
+	buf = G_Alloc( len + 1 );
+	trap_FS_Read( buf, len, f );
+	trap_FS_FCloseFile( f );
+
+	p = buf;
+	while( p ) {
+		token = COM_Parse( &p );
+		if ( !token[0] ) {
+			break;
+		}
+		i = atoi(token);
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != ':' ) {
+			break;
+		}
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != '(' ) {
+			break;
+		}
+
+		token = COM_Parse( &p );
+		pos[0] = atof(token);
+		token = COM_Parse( &p );
+		pos[1] = atof(token);
+		token = COM_Parse( &p );
+		pos[2] = atof(token);
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != ')' ) {
+			break;
+		}
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != ':' ) {
+			break;
+		}
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != '(' ) {
+			break;
+		}
+
+		token = COM_Parse( &p );
+		dir[0] = atof(token);
+		token = COM_Parse( &p );
+		dir[1] = atof(token);
+		token = COM_Parse( &p );
+		dir[2] = atof(token);
+
+		token = COM_Parse( &p );
+		if ( !token[0] || token[0] != ')' ) {
+			break;
+		}
+
+		ent = NULL;
+		while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
+			if ( ent->number == i ) {
+				VectorCopy(pos, ent->s.origin2);
+				VectorCopy(dir, ent->s.angles2);
+				break;
+			}
+		}
+	}
+
+	G_Free(buf);
+}
+
+
 /*
 =================
 G_TempRallyEntity

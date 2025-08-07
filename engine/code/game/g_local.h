@@ -759,7 +759,6 @@ void DropToFloor( gentity_t *self );
 void G_GetPointOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t origin );
 void G_GetDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );
 void G_Get2ndDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );
-
 qboolean G_FrictionCalc( const carPoint_t *point, float *sCOF, float *kCOF );
 gentity_t *G_TempRallyEntity( vec3_t origin, int event );
 void G_ResetCar( gentity_t *ent );
@@ -1202,4 +1201,3 @@ void	trap_SnapVector( float *v );
 
 gentity_t *findradius (gentity_t *from, vec3_t org, float rad);
 qboolean visible( gentity_t *ent1, gentity_t *ent2 );
-
