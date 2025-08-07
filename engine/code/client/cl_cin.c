@@ -1558,7 +1558,7 @@ qboolean CIN_TheCheckExtension(char *filename)
 	char *extptr;
 	int i;
 
-	strncpy(fn, filename, stringlen+1);
+	Q_strncpyz(fn, filename, sizeof(fn));
 	extptr = strrchr(fn, '.');
 
 	if(!extptr)

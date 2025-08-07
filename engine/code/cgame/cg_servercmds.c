@@ -315,21 +315,34 @@ void CG_ShaderStateChanged(void) {
 	while (o && *o) {
 		n = strstr(o, "=");
 		if (n && *n) {
-			strncpy(originalShader, o, n-o);
-			originalShader[n-o] = 0;
+			int len = n - o;
+			if (len >= sizeof(originalShader)) {
+				len = sizeof(originalShader) - 1;
+			}
+			memcpy(originalShader, o, len);
+			originalShader[len] = 0;
+
 			n++;
 			t = strstr(n, ":");
 			if (t && *t) {
-				strncpy(newShader, n, t-n);
-				newShader[t-n] = 0;
+				len = t - n;
+				if (len >= sizeof(newShader)) {
+					len = sizeof(newShader) - 1;
+				}
+				memcpy(newShader, n, len);
+				newShader[len] = 0;
 			} else {
 				break;
 			}
 			t++;
 			o = strstr(t, "@");
 			if (o) {
-				strncpy(timeOffset, t, o-t);
-				timeOffset[o-t] = 0;
+				len = o - t;
+				if (len >= sizeof(timeOffset)) {
+					len = sizeof(timeOffset) - 1;
+				}
+				memcpy(timeOffset, t, len);
+				timeOffset[len] = 0;
 				o++;
 				trap_R_RemapShader( originalShader, newShader, timeOffset );
 			}
