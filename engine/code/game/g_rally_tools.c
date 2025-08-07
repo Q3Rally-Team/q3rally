@@ -47,52 +47,52 @@ void loadBezierPathFile(char *filename) {
 
 	p = buf;
 	while( p ) {
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] ) {
 			break;
 		}
 		i = atoi(token);
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != ':' ) {
 			break;
 		}
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != '(' ) {
 			break;
 		}
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		pos[0] = atof(token);
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		pos[1] = atof(token);
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		pos[2] = atof(token);
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != ')' ) {
 			break;
 		}
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != ':' ) {
 			break;
 		}
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != '(' ) {
 			break;
 		}
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		dir[0] = atof(token);
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		dir[1] = atof(token);
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		dir[2] = atof(token);
 
-		token = COM_Parse( &p );
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
 		if ( !token[0] || token[0] != ')' ) {
 			break;
 		}
