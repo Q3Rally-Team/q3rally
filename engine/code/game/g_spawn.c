@@ -775,12 +775,10 @@ void SP_worldspawn( void ) {
 		CreateRallyStarter();
 	}
 
-	char	mapname[MAX_QPATH];
 	char	serverinfo[MAX_INFO_STRING];
 
 	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
-	COM_StripExtension(Info_ValueForKey( serverinfo, "mapname" ), mapname, sizeof(mapname));
-	loadBezierPathFile(va("maps/%s.bpd", mapname));
+	loadBezierPathFile(va("bezier/%s_bpd.txt", Info_ValueForKey( serverinfo, "mapname" )));
 // END
 }
 

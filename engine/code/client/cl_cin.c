@@ -1530,7 +1530,7 @@ if (cinTable[currentHandle].fileType == FT_OGM)
 }
 
 // Also see S_TheCheckExtension
-qboolean CIN_TheCheckExtension(char *filename)
+qboolean CIN_TheCheckExtension(char *filename, int size)
 {
 	enum
 	{
@@ -1546,12 +1546,12 @@ qboolean CIN_TheCheckExtension(char *filename)
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
 		, "ogm\0", "ogv\0"
 #endif
-		};
+	};
 	qboolean skipCin[CIN_MAX] = { qfalse, qfalse
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
 		, qfalse, qfalse
 #endif
-		};
+	};
 	fileHandle_t hnd;
 	char fn[MAX_QPATH];
 	int stringlen = strlen(filename);
@@ -1615,7 +1615,7 @@ qboolean CIN_TheCheckExtension(char *filename)
 	}
 
 	FS_FCloseFile(hnd);
-	strcpy(filename, fn);
+	Q_strncpyz(filename, fn, size);
 
 	return qtrue;
 }
@@ -1639,7 +1639,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 		Com_sprintf (name, sizeof(name), "%s", arg);
 	}
 
-	if (!CIN_TheCheckExtension(name))
+	if (!CIN_TheCheckExtension(name, sizeof(name)))
 	{
 		// Can't find video
 		return -1;
@@ -1662,7 +1662,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 
 	cin.currentHandle = currentHandle;
 
-	strcpy(cinTable[currentHandle].fileName, name);
+	Q_strncpyz(cinTable[currentHandle].fileName, name, sizeof(cinTable[currentHandle].fileName));
 
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
 	ext = COM_GetExtension(name);

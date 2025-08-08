@@ -2991,25 +2991,18 @@ int Bot_CheckForObstacles( bot_state_t *bs, vec3_t angles, int throttleChange )
 	if( rightFrac < leftFrac )
 	{
 		VectorCopy( bs->cur_ps.viewangles, angles );
-		angles[YAW] += 45;
+		angles[YAW] += 15;
 //		Com_Printf( "Turning left\n" );
 	}
 	else if( rightFrac > leftFrac )
 	{
 		VectorCopy( bs->cur_ps.viewangles, angles );
-		angles[YAW] += -45;
+		angles[YAW] += -15;
 //		Com_Printf( "Turning right\n" );
 	}
 
 	if( centerFrac < 1.0f )
 	{
-		if (rightFrac > leftFrac) {
-			VectorCopy( bs->cur_ps.viewangles, angles );
-			angles[YAW] += 45;
-		} else {
-			VectorCopy( bs->cur_ps.viewangles, angles );
-			angles[YAW] += -45;
-		}
 //		Com_Printf( "Slowing down and possibly backing up\n" );
 		return -1;
 	}
