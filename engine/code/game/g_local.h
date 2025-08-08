@@ -1202,4 +1202,3 @@ void	trap_SnapVector( float *v );
 
 gentity_t *findradius (gentity_t *from, vec3_t org, float rad);
 qboolean visible( gentity_t *ent1, gentity_t *ent2 );
-

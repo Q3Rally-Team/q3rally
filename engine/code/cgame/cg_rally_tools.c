@@ -65,57 +65,17 @@ void CG_DrawCheckpointLinks(void)
 	if( cg.currentBezierPoint > numCheckpoints )
 		cg.currentBezierPoint = 1;
 //
-	for (i = 1; i < 40; i++){
-		checkpointFound = qfalse;
-		for (j = 0; j < MAX_GENTITIES; j++){
-			cent = &cg_entities[j];
-			if (cent->currentState.eType != ET_CHECKPOINT) continue;
-			if (cent->currentState.weapon != i) continue;
-
-			if( cent2 != NULL &&
-				cent3 != NULL &&
-				cent2->bezierDir[0] == 0.0f &&
-				cent2->bezierDir[1] == 0.0f && 
-				cent2->bezierDir[2] == 0.0f )
-			{
-				VectorSubtract( cent3->currentState.origin, cent->currentState.origin, cent->bezierDir );
-				VectorScale( cent->bezierDir, -0.35f, cent->bezierDir );
-				cent->bezierDir[0] = 400.0f;
-				Com_Printf( "setting bezier direction %i\n", i );
-			}
-
-			if( cent2 != NULL )
-			{
-				Com_Printf( "DrawLine: %f, %f, %f\n", cent2->currentState.origin[0], cent2->currentState.origin[1], cent2->currentState.origin[2] );
-				Com_Printf( "      to: %f, %f, %f\n", cent->currentState.origin[0], cent->currentState.origin[1], cent->currentState.origin[2] );
-				CG_Draw3DLine( cent2->currentState.origin, cent->currentState.origin, 1.0f, 0.0f, 0.0f, 1.0f );
-				CG_Draw3DBezierCurve( cent2->currentState.origin, cent2->bezierDir, cent->currentState.origin, cent->bezierDir, 16, 1.0f, 0.0f, 0.0f, 1.0f );
-			}
-			cent3 = cent2;
-			cent2 = cent;
-
-			checkpointFound = qtrue;
-		}
-
-		if( !checkpointFound )
-			break;
-	}
-
-	for (i = 0; i <= numCheckpoints; i++)
+	for (i = 0; i < numCheckpoints; i++)
 	{
-
 		if( cents[i]->bezierDir[0] == 0.0f &&
 			cents[i]->bezierDir[1] == 0.0f && 
 			cents[i]->bezierDir[2] == 0.0f )
 		{
 			VectorCopy( cents[i]->currentState.angles2, cents[i]->bezierDir );
-			VectorSubtract( cents[(i-1)%numCheckpoints]->bezierPos, cents[(i+1)%numCheckpoints]->bezierPos, cents[i]->bezierDir );
+			VectorSubtract( cents[(i-1+numCheckpoints)%numCheckpoints]->bezierPos, cents[(i+1)%numCheckpoints]->bezierPos, cents[i]->bezierDir );
 			VectorScale( cents[i]->bezierDir, -0.35f, cents[i]->bezierDir );
 		}
 
-		Com_Printf( "DrawLine: %f, %f, %f\n", cent2->currentState.origin[0], cent2->currentState.origin[1], cent2->currentState.origin[2] );
-		Com_Printf( "      to: %f, %f, %f\n", cent->currentState.origin[0], cent->currentState.origin[1], cent->currentState.origin[2] );
-		CG_Draw3DLine( cent2->currentState.origin, cent->currentState.origin, 1.0f, 0.0f, 0.0f, 1.0f );
 		CG_Draw3DBezierCurve( cents[i]->currentState.origin2, cents[i]->currentState.angles2, cents[(i+1)%numCheckpoints]->currentState.origin2, cents[(i+1)%numCheckpoints]->currentState.angles2, 16, 1.0f, 0.0f, 0.0f, 1.0f );
 
 		VectorAdd( cents[i]->currentState.origin2, cents[i]->currentState.angles2, handle );

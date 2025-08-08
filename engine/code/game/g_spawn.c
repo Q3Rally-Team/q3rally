@@ -738,7 +738,7 @@ void SP_worldspawn( void ) {
 
 	G_SpawnString( "reflectionImage", "/textures/reflect/chrometest2", &s );
 
-	strncpy(image, s, sizeof(image));
+	Q_strncpyz(image, s, sizeof(image));
 	pstr = strchr(image, '.');
 	if (pstr)
 		*pstr = '\0';
@@ -775,7 +775,10 @@ void SP_worldspawn( void ) {
 		CreateRallyStarter();
 	}
 
-//	loadBezierPathFile("maps/q3rloop.bzp");
+	char	serverinfo[MAX_INFO_STRING];
+
+	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
+	loadBezierPathFile(va("bezier/%s_bpd.txt", Info_ValueForKey( serverinfo, "mapname" )));
 // END
 }
 

@@ -559,9 +559,11 @@ static void CG_SaveBezierPoints_f( void )
 	centity_t		*cent;
 	fileHandle_t	f;
 	char			buffer[256];
+	char			mapname[MAX_QPATH];
 	qboolean		checkpointFound;
 
-	Com_sprintf( buffer, sizeof(buffer), "maps/%s.bpd", cgs.mapname );
+	COM_StripExtension(cgs.mapname, mapname, sizeof(mapname));
+	Com_sprintf( buffer, sizeof(buffer), "maps/%s.bpd", mapname );
 	Com_Printf( "Writing out bezier path information to: '%s'\n", buffer );
 	trap_FS_FOpenFile( buffer, &f, FS_WRITE );
 
