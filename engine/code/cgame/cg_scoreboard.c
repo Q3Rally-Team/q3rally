@@ -453,6 +453,36 @@ static void CG_GetModernTeamColor(team_t team, vec4_t color) {
     }
 }
 
+
+/*
+=================
+CG_DrawModernTeamHeaderRow
+Draws a header row for a team in the scoreboard
+=================
+*/
+static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, int damage, float fade) {
+    char teamText[128];
+    char scoreText[64];
+    vec4_t teamColor;
+    vec4_t textColor;
+    int rowHeight = MODERN_SB_COMPACT_HEIGHT; // Use compact height for team headers
+    int textY = y + (rowHeight - BIGCHAR_HEIGHT) / 2;
+
+    /* Background for the team header */
+    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, rowHeight, MODERN_SB_ALPHA * fade, qtrue);
+
+    /* Team Rank and Name */
+    CG_GetModernTeamColor(team, teamColor);
+    teamColor[3] = fade;
+    Com_sprintf(teamText, sizeof(teamText), "%d. %s", rank, CG_GetTeamName(team));
+    CG_DrawModernText(scoreboardX, textY, teamText, 0, currentScoreboardWidth, teamColor, qtrue);
+
+    /* Team Score & Damage */
+    textColor[0] = 0.9f; textColor[1] = 0.9f; textColor[2] = 0.9f; textColor[3] = fade;
+    Com_sprintf(scoreText, sizeof(scoreText), "%d pts / %d dmg", score, damage);
+    CG_DrawModernText(scoreboardX, textY, scoreText, 2, currentScoreboardWidth, textColor, qtrue);
+}
+
 /*
 =================
 CG_DrawColumnData
@@ -719,6 +749,7 @@ qboolean CG_DrawModernScoreboard(void) {
     qboolean isCompact;
     score_t *score;
     clientInfo_t *ci;
+
     
     CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
     
@@ -793,7 +824,7 @@ qboolean CG_DrawModernScoreboard(void) {
     y += BIGCHAR_HEIGHT + 24;
     
     /* Determine layout mode */
-    isCompact = (cg.numScores > MAX_SCOREBOARD_CLIENTS);
+    isCompact = (cg.numScores > MAX_SCOREBOARD_CLIENTS) || CG_IsTeamGametype();
     maxClients = isCompact ? MAX_COMPACT_CLIENTS : MAX_SCOREBOARD_CLIENTS;
     rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
     
@@ -807,11 +838,30 @@ qboolean CG_DrawModernScoreboard(void) {
     if (CG_IsTeamGametype()) {
         /* Team-based scoreboard */
         for (i = 0; i < 4 && drawnClients < maxClients; i++) {
+            qboolean hasPlayers = qfalse;
+            int teamDamage = 0;
             team = GetTeamAtRank(i + 1);
             if (team == -1) {
                 continue;
             }
             
+            // Check if team has players and calculate team damage
+            for (j = 0; j < cg.numScores; j++) {
+                score = &cg.scores[j];
+                if (cgs.clientinfo[score->client].team == team) {
+                    hasPlayers = qtrue;
+                    teamDamage += score->damageDealt;
+                }
+            }
+
+            if (!hasPlayers) {
+                continue;
+            }
+
+            // Draw team header
+            CG_DrawModernTeamHeaderRow(y, team, i + 1, cg.teamScores[team - TEAM_RED], teamDamage, fade);
+            y += MODERN_SB_COMPACT_HEIGHT + 2;
+
             teamClients = 0;
             for (j = 0; j < cg.numScores && drawnClients < maxClients; j++) {
                 score = &cg.scores[j];

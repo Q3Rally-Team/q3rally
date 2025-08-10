@@ -1614,6 +1614,7 @@ void CG_LoadDeferredPlayers( void );
 //
 void CG_CheckEvents( centity_t *cent );
 const char	*CG_PlaceString( int rank );
+const char *CG_GetTeamName(team_t team);
 void CG_EntityEvent( centity_t *cent, vec3_t position );
 void CG_PainEvent( centity_t *cent, int health );
 
