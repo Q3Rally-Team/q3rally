@@ -62,17 +62,11 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		cl = &level.clients[level.sortedClients[i]];
 
 // STONELANCE
-/*
-		if (cl->sess.sessionTeam == TEAM_SPECTATOR
-			&& !cl->finishRaceTime)
-			time = cl->sess.spectatorTime;
-		else
+		if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS ) {
 			time = level.startRaceTime;
-*/
-		if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS )
-			time = level.startRaceTime;
-		else
-			time = cl->switchTeamTime;
+		} else {
+			time = cl->pers.enterTime;
+		}
 // END
 
 		if ( cl->pers.connected == CON_CONNECTING ) {

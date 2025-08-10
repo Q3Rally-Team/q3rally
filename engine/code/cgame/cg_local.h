@@ -388,6 +388,7 @@ typedef struct {
 	int				powerUps;
 	int				accuracy;
 	int				impressiveCount;
+	int				impressiveTelefragCount;
 	int				excellentCount;
 	int				guantletCount;
 	int				defendCount;
