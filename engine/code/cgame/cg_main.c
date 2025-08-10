@@ -379,7 +379,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
 	{ &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
-	{ &cg_engineSoundDelay, "cg_engineSoundDelay", "300", CVAR_ARCHIVE },
+	{ &cg_engineSoundDelay, "cg_engineSoundDelay", "100", CVAR_ARCHIVE },
 
 	{ &cg_drawBotPaths, "cg_drawBotPaths", "0", 0 },
 // END

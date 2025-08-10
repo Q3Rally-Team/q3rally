@@ -33,7 +33,7 @@ for improved user experience and better visual feedback.
 #include "ui_local.h"
 
 #define NUM_OF_CACHES 7         /* total number of caching stages */
-#define MIN_STAGE_TIME 800      /* minimum milliseconds per stage */
+#define MIN_STAGE_TIME 450      /* minimum milliseconds per stage */
 #define FINAL_DISPLAY_TIME 1200 /* time to display 100% before transition */
 
 typedef struct {
@@ -189,7 +189,7 @@ static void UI_GFX_Loading_MenuDraw(void) {
     s_gfxloading.smoothProgress += (s_gfxloading.loadPercent - s_gfxloading.smoothProgress) * blendRate;
 
     /* Draw loading header */
-    UI_DrawString(320, 160, "Q3Rally - Loading Graphics", UI_CENTER | UI_BIGFONT, text_color_normal);
+    UI_DrawProportionalString(320, 160, "Q3Rally - Loading Graphics", UI_CENTER | UI_BIGFONT, text_color_normal);
 
     /* Draw current stage message */
     stage_index = s_gfxloading.currentCache;

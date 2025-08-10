@@ -3578,22 +3578,6 @@ void CG_Player( centity_t *cent ) {
 		cent->engineSoundTime = cg.time;
 	}
 
-	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
-		cg_engineSounds.integer )
-	{
-		int index = (int) (10.0f * (cg.predictedPlayerState.stats[STAT_RPM] - CP_RPM_MIN) / (CP_RPM_MAX - CP_RPM_MIN));
-
-		trap_S_AddLoopingSound( cent->currentState.number + 32,
-								cent->lerpOrigin,
-								vec3_origin,
-								cgs.clientinfo[cent->currentState.clientNum].sounds[index] );
-
-//		trap_S_StopLoopingSound( cg.predictedPlayerState.clientNum );
-//		trap_S_AddLoopingSound( cg_entities[cg.predictedPlayerState.clientNum].currentState.number,
-//								cg.predictedPlayerState.origin,
-//								cg.predictedPlayerState.velocity,
-//								cgs.clientinfo[cg.predictedPlayerState.clientNum].sounds[index] );
-	}
 
 	if (ci->controlMode == CT_MOUSE){
 		wheelAngle = WheelAngle(cent->currentState.apos.trBase[YAW], cent->currentState.angles2[YAW]);
