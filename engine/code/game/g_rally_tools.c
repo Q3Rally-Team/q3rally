@@ -24,6 +24,78 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 
+void loadBezierPathFile(char *filename) {
+	int				len;
+	fileHandle_t	f;
+	char			*buf, *p;
+	char			token[MAX_TOKEN_CHARS];
+	int				i, j;
+	gentity_t		*ent;
+	vec3_t			pos, dir;
+
+	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+	if ( !f ) {
+		G_Printf( "[BPD-DEBUG] Bezier path file not found: %s\n", filename );
+		return;
+	}
+	if ( !len ) {
+		G_Printf( "[BPD-DEBUG] Bezier path file is empty: %s\n", filename );
+		trap_FS_FCloseFile( f );
+		return;
+	}
+
+	G_Printf( "[BPD-DEBUG] Loading bezier path file: %s\n", filename );
+	buf = G_Alloc( len + 1 );
+	trap_FS_Read( buf, len, f );
+	trap_FS_FCloseFile( f );
+
+	p = buf;
+	while( p ) {
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
+		if ( !token[0] ) {
+			break;
+		}
+		i = atoi(token);
+
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
+		if ( !token[0] || token[0] != ':' ) {
+			G_Printf("[BPD-DEBUG] Parse error: expected ':', got '%s'. Stopping.\n", token);
+			break;
+		}
+
+		pos[0] = atof(COM_Parse( &p ));
+		pos[1] = atof(COM_Parse( &p ));
+		pos[2] = atof(COM_Parse( &p ));
+
+		Q_strncpyz(token, COM_Parse( &p ), sizeof(token));
+		if ( !token[0] || token[0] != ':' ) {
+			G_Printf("[BPD-DEBUG] Parse error: expected ':', got '%s'. Stopping.\n", token);
+			break;
+		}
+
+		dir[0] = atof(COM_Parse( &p ));
+		dir[1] = atof(COM_Parse( &p ));
+		dir[2] = atof(COM_Parse( &p ));
+
+		ent = NULL;
+		for (j = 0; j < level.num_entities; j++) {
+			ent = &g_entities[j];
+			if (!ent->inuse) {
+				continue;
+			}
+			if (ent->s.eType == ET_CHECKPOINT && ent->number == i) {
+				VectorCopy(pos, ent->s.origin2);
+				VectorCopy(dir, ent->s.angles2);
+				break;
+			}
+			ent = NULL;
+		}
+	}
+
+	G_Printf( "[BPD-DEBUG] Finished loading bezier path file.\n" );
+}
+
+
 /*
 =================
 G_TempRallyEntity
@@ -361,3 +433,5 @@ starts "10"
 	trap_FS_Write( string, strlen( string ), arenaFile );
 	trap_FS_FCloseFile( arenaFile );
 }
+
+

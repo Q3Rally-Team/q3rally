@@ -559,9 +559,11 @@ static void CG_SaveBezierPoints_f( void )
 	centity_t		*cent;
 	fileHandle_t	f;
 	char			buffer[256];
+	char			mapname[MAX_QPATH];
 	qboolean		checkpointFound;
 
-	Com_sprintf( buffer, sizeof(buffer), "maps/%s.bpd", cgs.mapname );
+	COM_StripExtension(COM_SkipPath(cgs.mapname), mapname, sizeof(mapname));
+	Com_sprintf( buffer, sizeof(buffer), "maps/%s.bpd", mapname );
 	Com_Printf( "Writing out bezier path information to: '%s'\n", buffer );
 	trap_FS_FOpenFile( buffer, &f, FS_WRITE );
 
@@ -574,7 +576,7 @@ static void CG_SaveBezierPoints_f( void )
 			if (cent->currentState.eType != ET_CHECKPOINT) continue;
 			if (cent->currentState.weapon != i+1) continue;
 
-			Com_sprintf( buffer, sizeof(buffer), "%i:(%f %f %f):(%f %f %f)\n", i, cent->bezierPos[0], cent->bezierPos[1], cent->bezierPos[2], cent->bezierDir[0], cent->bezierDir[1], cent->bezierDir[2] );
+			Com_sprintf( buffer, sizeof(buffer), "%i : %f %f %f : %f %f %f\n", i + 1, cent->bezierPos[0], cent->bezierPos[1], cent->bezierPos[2], cent->bezierDir[0], cent->bezierDir[1], cent->bezierDir[2] );
 			trap_FS_Write( buffer, strlen(buffer), f );
 
 			checkpointFound = qtrue;

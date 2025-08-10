@@ -666,6 +666,21 @@ qboolean G_ParseSpawnVars( void ) {
 
 
 
+void LoadBezierPathFile_Think(gentity_t *ent) {
+	char			serverinfo[MAX_INFO_STRING];
+	char			basemap[MAX_QPATH];
+	const char		*mapname;
+	char			mapname_copy[MAX_QPATH];
+
+	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
+	mapname = Info_ValueForKey( serverinfo, "mapname" );
+	Q_strncpyz(mapname_copy, mapname, sizeof(mapname_copy));
+	COM_StripExtension(COM_SkipPath(mapname_copy), basemap, sizeof(basemap));
+	loadBezierPathFile(va("maps/%s.bpd", basemap));
+
+	G_FreeEntity(ent);
+}
+
 /*QUAKED worldspawn (0 0 0) ?
 
 Every map should have exactly one worldspawn.
@@ -679,6 +694,7 @@ void SP_worldspawn( void ) {
 	char	*pstr;
 	char	image[MAX_QPATH];
 	int		allowTrack[3];
+	gentity_t *thinker;
 // END
 
 	G_SpawnString( "classname", "", &s );
@@ -738,7 +754,7 @@ void SP_worldspawn( void ) {
 
 	G_SpawnString( "reflectionImage", "/textures/reflect/chrometest2", &s );
 
-	strncpy(image, s, sizeof(image));
+	Q_strncpyz(image, s, sizeof(image));
 	pstr = strchr(image, '.');
 	if (pstr)
 		*pstr = '\0';
@@ -773,9 +789,11 @@ void SP_worldspawn( void ) {
 // STONELANCE
 	if (isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS){
 		CreateRallyStarter();
-	}
 
-//	loadBezierPathFile("maps/q3rloop.bzp");
+		thinker = G_Spawn();
+		thinker->think = LoadBezierPathFile_Think;
+		thinker->nextthink = level.time + (FRAMETIME * 2);
+	}
 // END
 }
 
@@ -826,3 +844,4 @@ if (g_gametype.integer == GT_DOMINATION)
     
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 }
+

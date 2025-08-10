@@ -1204,6 +1204,11 @@ void CG_AddCEntity( centity_t *cent ) {
 		break;
 // Q3Rally Code Start
 	case ET_CHECKPOINT:
+		if (!cent->bezierInitialized) {
+			VectorCopy(cent->currentState.origin2, cent->bezierPos);
+			VectorCopy(cent->currentState.angles2, cent->bezierDir);
+			cent->bezierInitialized = qtrue;
+		}
 // Q3Rally Code END
 	case ET_INVISIBLE:
 	case ET_PUSH_TRIGGER:

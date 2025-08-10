@@ -264,6 +264,7 @@ typedef struct centity_s {
 
 	vec3_t			bezierDir;
 	vec3_t			bezierPos;
+	qboolean		bezierInitialized;
 // Q3Rally Code END
 } centity_t;
 

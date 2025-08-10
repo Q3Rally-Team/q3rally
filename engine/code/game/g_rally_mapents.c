@@ -39,6 +39,11 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 		return;
 	}
 
+	// Debounce: prevent triggering too quickly
+	if ( other->client->lastCheckpointTime + 1000 > level.time ) {
+		return;
+	}
+
 	if (g_developer.integer)
 		G_Printf( "Client %i touched the startfinish line.  Checkpoint number %i\n", other->s.clientNum, self->number );
 
@@ -47,6 +52,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	}
 
 	if (self->number == other->number){
+		other->client->lastCheckpointTime = level.time;
 		other->currentLap++;
 		// increment lap
 		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
@@ -209,10 +215,16 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 		return;
 	}
 
+	// Debounce: prevent triggering too quickly
+	if ( other->client->lastCheckpointTime + 1000 > level.time ) {
+		return;
+	}
+
 	if (g_developer.integer)
 		G_Printf( "Client %i touched checkpoint number %i\n", other->s.clientNum, self->number );
 
 	if (self->number == other->number){
+		other->client->lastCheckpointTime = level.time;
 		other->number++;	// FIXME: get rid of number? use s.weapon instead?
 		other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
 		other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
@@ -332,3 +344,4 @@ void SP_rally_weather_snow( gentity_t *ent ){
 
 	trap_LinkEntity (ent);
 }
+

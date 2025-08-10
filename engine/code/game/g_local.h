@@ -409,6 +409,8 @@ struct gclient_s {
 	int			finishRaceTime;
 
 	int			horn_sound_time;
+
+	int			lastCheckpointTime;
 // END
 
 	char		*areabits;
@@ -756,6 +758,7 @@ void DropToFloor( gentity_t *self );
 //
 // g_rally_tools.c
 //
+void loadBezierPathFile(char *filename);
 void G_GetPointOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t origin );
 void G_GetDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );
 void G_Get2ndDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );
@@ -1202,4 +1205,3 @@ void	trap_SnapVector( float *v );
 
 gentity_t *findradius (gentity_t *from, vec3_t org, float rad);
 qboolean visible( gentity_t *ent1, gentity_t *ent2 );
-
