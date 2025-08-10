@@ -76,6 +76,46 @@ const char	*CG_PlaceString( int rank ) {
 }
 
 /*
+=================
+CG_GetTeamName
+=================
+*/
+const char *CG_GetTeamName(team_t team) {
+	switch (team) {
+		case TEAM_RED:
+			return "Team Red";
+		case TEAM_BLUE:
+			return "Team Blue";
+		case TEAM_GREEN:
+			return "Team Green";
+		case TEAM_YELLOW:
+			return "Team Yellow";
+		default:
+			return "No Team";
+	}
+}
+
+/*
+=================
+CG_GetTeamNameWithColor
+=================
+*/
+const char *CG_GetTeamNameWithColor(team_t team) {
+	switch (team) {
+		case TEAM_RED:
+			return S_COLOR_RED "Team Red";
+		case TEAM_BLUE:
+			return S_COLOR_BLUE "Team Blue";
+		case TEAM_GREEN:
+			return S_COLOR_GREEN "Team Green";
+		case TEAM_YELLOW:
+			return S_COLOR_YELLOW "Team Yellow";
+		default:
+			return "No Team";
+	}
+}
+
+/*
 =============
 CG_Obituary
 =============
@@ -94,6 +134,7 @@ static void CG_Obituary( entityState_t *ent ) {
 	char		attackerName[32];
 	gender_t	gender;
 	clientInfo_t	*ci;
+	clientInfo_t	*attackerCi;
 
 	target = ent->otherEntityNum;
 	attacker = ent->otherEntityNum2;
@@ -107,8 +148,10 @@ static void CG_Obituary( entityState_t *ent ) {
 	if ( attacker < 0 || attacker >= MAX_CLIENTS ) {
 		attacker = ENTITYNUM_WORLD;
 		attackerInfo = NULL;
+		attackerCi = NULL;
 	} else {
 		attackerInfo = CG_ConfigString( CS_PLAYERS + attacker );
+		attackerCi = &cgs.clientinfo[attacker];
 	}
 
 	targetInfo = CG_ConfigString( CS_PLAYERS + target );
@@ -290,7 +333,10 @@ static void CG_Obituary( entityState_t *ent ) {
 				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
 				cg.snap->ps.persistant[PERS_SCORE] );
 		} else {
-			s = va("You fragged %s", targetName );
+			if ( ci->team != TEAM_FREE )
+				s = va("You fragged %s from %s", targetName, CG_GetTeamNameWithColor(ci->team));
+			else
+				s = va("You fragged %s", targetName);
 		}
 #ifdef MISSIONPACK
 		if (!(cg_singlePlayerActive.integer && cg_cameraOrbit.integer)) {
@@ -312,7 +358,11 @@ static void CG_Obituary( entityState_t *ent ) {
 		strcat( attackerName, S_COLOR_WHITE );
 		// check for kill messages about the current clientNum
 		if ( target == cg.snap->ps.clientNum ) {
-			Q_strncpyz( cg.killerName, attackerName, sizeof( cg.killerName ) );
+			if (cgs.gametype >= GT_TEAM && attackerCi && attackerCi->team != TEAM_FREE) {
+				Q_strncpyz( cg.killerName, va("%s from %s", attackerName, CG_GetTeamNameWithColor(attackerCi->team)), sizeof( cg.killerName ) );
+			} else {
+				Q_strncpyz( cg.killerName, attackerName, sizeof( cg.killerName ) );
+			}
 		}
 	}
 
@@ -417,8 +467,18 @@ static void CG_Obituary( entityState_t *ent ) {
 		}
 
 		if (message) {
-			CG_Printf( "%s %s %s%s\n", 
-				targetName, message, attackerName, message2);
+			if (cgs.gametype >= GT_TEAM) {
+				if (attackerCi) {
+					CG_Printf( "%s from %s %s %s from %s%s\n",
+						targetName, CG_GetTeamNameWithColor(ci->team), message, attackerName, CG_GetTeamNameWithColor(attackerCi->team), message2);
+				} else {
+					CG_Printf( "%s from %s %s %s%s\n",
+						targetName, CG_GetTeamNameWithColor(ci->team), message, attackerName, message2);
+				}
+			} else {
+				CG_Printf( "%s %s %s%s\n",
+					targetName, message, attackerName, message2);
+			}
 			return;
 		}
 	}
