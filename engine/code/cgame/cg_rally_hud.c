@@ -34,12 +34,45 @@ float colors[4][4] = {
 
 /*
 =====================
+CG_AddObjectsToScene
+=====================
+*/
+static void CG_AddObjectsToScene( int renderLevel ) {
+	int		i;
+
+	if (renderLevel & RL_MARKS){
+		CG_AddMarks();
+	}
+
+	if (renderLevel & RL_SMOKE){
+		CG_AddLocalEntities();
+	}
+
+	if (renderLevel & RL_PLAYERS || renderLevel & RL_OBJECTS){
+		for (i = 0; i < cg.snap->numEntities; i++){
+			if (!(renderLevel & RL_OBJECTS)){
+				// skip non-players
+				if ( cg.snap->entities[i].eType != ET_PLAYER ) continue;
+			}
+
+			if (!(renderLevel & RL_PLAYERS)){
+				// skip players
+				if ( cg.snap->entities[i].eType == ET_PLAYER ) continue;
+			}
+
+			// FIXME: dont re-lerp entity
+			CG_AddCEntity( &cg_entities[ cg.snap->entities[ i ].number ] );
+		}
+	}
+}
+
+/*
+=====================
 CG_DrawRearviewMirror
 =====================
 */
 void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 //	static int  lastLowFPSTime;
-	int		i;
 //	int		fps;
 	float	mx, my, mw, mh;
 	int		tmp;
@@ -74,30 +107,7 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h) {
 	cg.mirrorRefdef.rdflags = 0;
 
 	// add entities and graphics to rearview scene
-	if (cg_rearViewRenderLevel.integer & RL_MARKS){
-		CG_AddMarks();
-	}
-
-	if (cg_rearViewRenderLevel.integer & RL_SMOKE){
-		CG_AddLocalEntities();
-	}
-
-	if (cg_rearViewRenderLevel.integer & RL_PLAYERS || cg_rearViewRenderLevel.integer & RL_OBJECTS){
-		for (i = 0; i < cg.snap->numEntities; i++){
-			if (!(cg_rearViewRenderLevel.integer & RL_OBJECTS)){
-				// skip non-players
-				if ( cg.snap->entities[i].eType != ET_PLAYER ) continue;
-			}
-
-			if (!(cg_rearViewRenderLevel.integer & RL_PLAYERS)){
-				// skip players
-				if ( cg.snap->entities[i].eType == ET_PLAYER ) continue;
-			}
-
-			// FIXME: dont re-lerp entity
-			CG_AddCEntity( &cg_entities[ cg.snap->entities[ i ].number ] );
-		}
-	}
+	CG_AddObjectsToScene(cg_rearViewRenderLevel.integer);
 
 	trap_R_RenderScene( &cg.mirrorRefdef );
 	CG_DrawPic( mx, my, mw, mh, cgs.media.rearviewMirrorShader );
@@ -112,8 +122,8 @@ Draws the minimap overlay.
 
 void CG_DrawMMap(float x, float y, float w, float h) {
 	
-    float mx, my, mw, mh, tmp;
-    int i;
+    float overlay_x, overlay_y, overlay_w, overlay_h;
+	float tmp;
     
     if (!cg_drawMMap.integer)
 		return;
@@ -125,10 +135,10 @@ void CG_DrawMMap(float x, float y, float w, float h) {
 		return;
 	
 	// Store original dimensions for overlay shader
-	mx = x,
-    my = y,
-    mw = w * 0.68f;
-    mh = h * 0.68f;
+	overlay_x = x,
+    overlay_y = y,
+    overlay_w = w * cg_mmap_size.value;
+    overlay_h = h * cg_mmap_size.value;
 
     // Convert coordinates for different screen resolutions
 	CG_AdjustFrom640(&x, &y, &w, &h);
@@ -136,52 +146,25 @@ void CG_DrawMMap(float x, float y, float w, float h) {
     // Set up minimap rendering definition
 	cg.mmapRefdef.x = x;
 	cg.mmapRefdef.y = y;
-	cg.mmapRefdef.width = 240;
-	cg.mmapRefdef.height = 180;
-    cg.mmapRefdef.fov_x = 70;
+	cg.mmapRefdef.width = w * cg_mmap_size.value;
+	cg.mmapRefdef.height = h * cg_mmap_size.value;
+    cg.mmapRefdef.fov_x = cg_mmap_fov.value;
 	
     // Calculate fov_y from fov_x and aspect ratio
-	tmp = cg.mmapRefdef.width / tan(cg.mmapRefdef.fov_x / 360.0f * M_PI);
+	tmp = cg.mmapRefdef.width / tan(cg_mmap_fov.value / 360.0f * M_PI);
 	cg.mmapRefdef.fov_y = atan2(cg.mmapRefdef.height, tmp) * 360.0f / M_PI;
 
 	cg.mmapRefdef.time = cg.time;
 	cg.mmapRefdef.rdflags = 0;
 
     // Optional effects depending on render level
-	if (cg_rearViewRenderLevel.integer & RL_MARKS) {
-		CG_AddMarks();
-	}
-
-	if (cg_rearViewRenderLevel.integer & RL_SMOKE) {
-		CG_AddLocalEntities();
-	}
-	
-
-	if (cg_rearViewRenderLevel.integer & (RL_PLAYERS | RL_OBJECTS)) {
-		for (i = 0; i < cg.snap->numEntities; i++) {
-			entityState_t *es = &cg.snap->entities[i];
-
-			qboolean isPlayer = (es->eType == ET_PLAYER);
-
-    // Skip non-players if RL_OBJECTS is disabled
-			if (!(cg_rearViewRenderLevel.integer & RL_OBJECTS) && !isPlayer)
-				continue;
-
-			// Skip players if RL_PLAYERS is disabled
-			if (!(cg_rearViewRenderLevel.integer & RL_PLAYERS) && isPlayer)
-				continue;
-
-			// Add player or object to minimap
-			CG_AddCEntity(&cg_entities[es->number]);
-
-		}
-	}
+	CG_AddObjectsToScene(cg_mmap_renderLevel.integer);
 	
     // Render the minimap scene
 	trap_R_RenderScene(&cg.mmapRefdef);
 
 	// Draw the minimap overlay background shader
-	CG_DrawPic(mx, my, mw, mh, cgs.media.MMapShader);
+	CG_DrawPic(overlay_x, overlay_y, overlay_w, overlay_h, cgs.media.MMapShader);
     
 }
 
