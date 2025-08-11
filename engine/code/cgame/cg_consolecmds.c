@@ -432,6 +432,47 @@ static void CG_StartOrbit_f( void ) {
 	}
 }
 
+static void CG_NextCameraAngle_f( void ) {
+	static int currentCamera = 0;
+	currentCamera++;
+	if (currentCamera >= 6) {
+		currentCamera = 0;
+	}
+
+	switch (currentCamera) {
+		case 0: // Default view
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "130");
+			trap_Cvar_Set("cg_thirdPersonHeight", "32");
+			break;
+		case 1: // Right side view
+			trap_Cvar_Set("cg_thirdPersonAngle", "45");
+			trap_Cvar_Set("cg_thirdPersonRange", "150");
+			trap_Cvar_Set("cg_thirdPersonHeight", "40");
+			break;
+		case 2: // Left side view
+			trap_Cvar_Set("cg_thirdPersonAngle", "-45");
+			trap_Cvar_Set("cg_thirdPersonRange", "150");
+			trap_Cvar_Set("cg_thirdPersonHeight", "40");
+			break;
+		case 3: // Front view
+			trap_Cvar_Set("cg_thirdPersonAngle", "180");
+			trap_Cvar_Set("cg_thirdPersonRange", "200");
+			trap_Cvar_Set("cg_thirdPersonHeight", "50");
+			break;
+		case 4: // Dense view
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "100");
+			trap_Cvar_Set("cg_thirdPersonHeight", "20");
+			break;
+		case 5: // Hood view
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "-50");
+			trap_Cvar_Set("cg_thirdPersonHeight", "25");
+			break;
+	}
+}
+
 /*
 static void CG_Camera_f( void ) {
 	char name[1024];
@@ -658,8 +699,9 @@ static consoleCommand_t	commands[] = {
 	{ "saveBPoints", CG_SaveBezierPoints_f },
 // Q3Rally Code End
 	{ "startOrbit", CG_StartOrbit_f },
+	{ "nextcamera", CG_NextCameraAngle_f },
 	//{ "camera", CG_Camera_f },
-	{ "loaddeferred", CG_LoadDeferredPlayers }	
+	{ "loaddeferred", CG_LoadDeferredPlayers }
 };
 
 

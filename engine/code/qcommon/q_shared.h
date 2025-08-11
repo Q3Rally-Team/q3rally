@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.6 (r657)"
+#define PRODUCT_VERSION "v0.6 (r661)"
 //#define PRODUCT_VERSION "v0.5"
 #endif
 

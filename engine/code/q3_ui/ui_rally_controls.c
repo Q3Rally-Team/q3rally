@@ -113,6 +113,7 @@ typedef struct
 #define ID_JOYTHRESHOLD	46
 #define ID_SMOOTHMOUSE	47
 #define ID_AUTODROP		48
+#define ID_NEXTCAMERA	49
 
 
 #define ANIM_IDLE		0
@@ -211,6 +212,7 @@ typedef struct
 
 	menuaction_s		headlight;
 	menuaction_s		horn;
+	menuaction_s		nextcamera;
     menuaction_s        startdemo;
     menuaction_s        stopdemo;
 
@@ -276,6 +278,7 @@ static bind_t g_bindings[] =
     {"headlights", 		"headlight toggle",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
     {"record",          "start demo record",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
     {"stoprecord",      "stop demo record",             ID_STOPDEMO,    ANIM_STOPDEMO,  'u',            -1,     -1, -1},
+	{"nextcamera",		"next camera",		  ID_NEXTCAMERA,	  ANIM_IDLE,		  'c',			-1,		-1, -1},
 
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
@@ -356,6 +359,7 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.horn,
     (menucommon_s *)&s_controls.startdemo,
     (menucommon_s *)&s_controls.stopdemo,
+	(menucommon_s *)&s_controls.nextcamera,
 	NULL,
 };
 
@@ -704,22 +708,30 @@ static void Controls_DrawKeyBinding( void *self )
 
 	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
 
-	b1 = g_bindings[a->generic.id].bind1;
-	if (b1 == -1)
-		strcpy(name,"-?-");
-	else
-	{
-		trap_Key_KeynumToStringBuf( b1, name, 32 );
-		Q_strupr(name);
+	// find the binding
+	for (b1 = 0; g_bindings[b1].command; b1++) {
+		if (g_bindings[b1].id == a->generic.id) {
+			break;
+		}
+	}
 
-		b2 = g_bindings[a->generic.id].bind2;
-		if (b2 != -1)
-		{
-			trap_Key_KeynumToStringBuf( b2, name2, 32 );
-			Q_strupr(name2);
+	if (!g_bindings[b1].command) {
+		strcpy(name, "<OUT OF RANGE>");
+	} else {
+		b2 = g_bindings[b1].bind1;
+		if (b2 == -1) {
+			strcpy(name, "-?-");
+		} else {
+			trap_Key_KeynumToStringBuf( b2, name, 32 );
+			Q_strupr(name);
 
-			strcat( name, " or " );
-			strcat( name, name2 );
+			b2 = g_bindings[b1].bind2;
+			if (b2 != -1) {
+				trap_Key_KeynumToStringBuf( b2, name2, 32 );
+				Q_strupr(name2);
+				strcat( name, " or " );
+				strcat( name, name2 );
+			}
 		}
 	}
 
@@ -727,7 +739,7 @@ static void Controls_DrawKeyBinding( void *self )
 	{
 		UI_FillRect( a->generic.left, a->generic.top, a->generic.right-a->generic.left+1, a->generic.bottom-a->generic.top+1, listbar_color ); 
 
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[a->generic.id].label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
+		UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
 		UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT|UI_PULSE, text_color_highlight );
 
 		if (s_controls.waitingforkey)
@@ -746,15 +758,15 @@ static void Controls_DrawKeyBinding( void *self )
 	{
 		if (a->generic.flags & QMF_GRAYED)
 		{
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[a->generic.id].label, UI_RIGHT|UI_SMALLFONT, text_color_disabled );
+			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_disabled );
 			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_disabled );
 		}
 		else
 		{
 // STONELANCE
-//			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[a->generic.id].label, UI_RIGHT|UI_SMALLFONT, controls_binding_color );
+//			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, controls_binding_color );
 //			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, controls_binding_color );
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[a->generic.id].label, UI_RIGHT|UI_SMALLFONT, text_color_normal );
+			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_normal );
 			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_normal );
 // END
 		}
@@ -1751,6 +1763,12 @@ static void Controls_MenuInit( void )
 	s_controls.horn.generic.callback  = Controls_ActionEvent;
 	s_controls.horn.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.horn.generic.id        = ID_HORN;
+
+	s_controls.nextcamera.generic.type       = MTYPE_ACTION;
+	s_controls.nextcamera.generic.flags      = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.nextcamera.generic.callback   = Controls_ActionEvent;
+	s_controls.nextcamera.generic.ownerdraw  = Controls_DrawKeyBinding;
+	s_controls.nextcamera.generic.id         = ID_NEXTCAMERA;
     
     s_controls.startdemo.generic.type      = MTYPE_ACTION;
     s_controls.startdemo.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1870,7 +1888,8 @@ static void Controls_MenuInit( void )
 // STONELANCE
 	Menu_AddItem( &s_controls.menu, &s_controls.headlight );
     Menu_AddItem( &s_controls.menu, &s_controls.startdemo );
-    Menu_AddItem( &s_controls.menu, &s_controls.stopdemo );    
+    Menu_AddItem( &s_controls.menu, &s_controls.stopdemo );
+	Menu_AddItem( &s_controls.menu, &s_controls.nextcamera );
 	Menu_AddItem( &s_controls.menu, &s_controls.horn );
 
 // END

@@ -2649,6 +2649,12 @@ static void CG_DrawCrosshairNames( void ) {
 	if ( !cg_drawCrosshair.integer ) {
 		return;
 	}
+
+	// only draw crosshair in hood view
+	if (cg_thirdPersonAngle.value != 0 || cg_thirdPersonRange.value != -20 || cg_thirdPersonHeight.value != 10) {
+		return;
+	}
+
 	if ( !cg_drawCrosshairNames.integer ) {
 		return;
 	}
