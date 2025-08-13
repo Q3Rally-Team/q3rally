@@ -665,7 +665,7 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.gametype.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_startserver.gametype.generic.callback	= StartServer_GametypeEvent;
 	s_startserver.gametype.generic.id		= ID_GAMETYPE;
-	s_startserver.gametype.generic.x		= 320 - 24;
+	s_startserver.gametype.generic.x		= 320;
 	s_startserver.gametype.generic.y		= 480 - 50;
 	s_startserver.gametype.itemnames		= gametype_items;
 
@@ -1278,13 +1278,16 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
 	}
 
-	UI_FillRect( 325, 80, 256, 160, menu_back_color );
+	w = 256;
+	x = b->generic.x - w / 2;
+	y = b->generic.y;
+	UI_FillRect( x, y, w, 160, menu_back_color );
 
 	if (s_startserver.list.curvalue < 0 || s_startserver.list.curvalue >= s_startserver.nummaps)
 		return;
 
 	x = b->generic.x - b->width / 2;
-	y = b->generic.y;
+	y = b->generic.y + 10;
 	w = b->width;
 	h =	b->height;
 	if( b->shader ) {
@@ -1578,7 +1581,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
     
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
 	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_serveroptions.mappic.generic.x			= 455;
+	s_serveroptions.mappic.generic.x			= 445;
 	s_serveroptions.mappic.generic.y			= 80;
 	s_serveroptions.mappic.width				= 170;
 	s_serveroptions.mappic.height				= 96;
