@@ -1099,31 +1099,31 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.blueCubeIcon = trap_R_RegisterShader( "icons/skull_blue" );
 	}
 
-	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_1FCTF || cgs.gametype == GT_HARVESTER || cg_buildScript.integer ) {
+	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_1FCTF || cgs.gametype == GT_HARVESTER || cg_buildScript.integer ) {
 #else
-	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_DOMINATION || cg_buildScript.integer ) {
+	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION || cg_buildScript.integer ) {
 #endif
 		cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag.md3" );
 		cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag.md3" );
-        cgs.media.greenFlagModel = trap_R_RegisterModel( "models/flags/g_flag.md3" );
-        cgs.media.yellowFlagModel = trap_R_RegisterModel( "models/flags/y_flag.md3" );
-        cgs.media.redSigilModel = trap_R_RegisterModel( "models/flags/r_sigil.md3" );
-        cgs.media.blueSigilModel = trap_R_RegisterModel( "models/flags/b_sigil.md3" );
-        cgs.media.greenSigilModel = trap_R_RegisterModel( "models/flags/g_sigil.md3" );
-        cgs.media.yellowSigilModel = trap_R_RegisterModel( "models/flags/y_sigil.md3" );
-        cgs.media.neutralSigilModel = trap_R_RegisterModel( "models/flags/n_sigil.md3" );
+		cgs.media.greenFlagModel = trap_R_RegisterModel( "models/flags/g_flag.md3" );
+		cgs.media.yellowFlagModel = trap_R_RegisterModel( "models/flags/y_flag.md3" );
+		cgs.media.redSigilModel = trap_R_RegisterModel( "models/flags/r_sigil.md3" );
+		cgs.media.blueSigilModel = trap_R_RegisterModel( "models/flags/b_sigil.md3" );
+		cgs.media.greenSigilModel = trap_R_RegisterModel( "models/flags/g_sigil.md3" );
+		cgs.media.yellowSigilModel = trap_R_RegisterModel( "models/flags/y_sigil.md3" );
+		cgs.media.neutralSigilModel = trap_R_RegisterModel( "models/flags/n_sigil.md3" );
 		cgs.media.redFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_red1" );
 		cgs.media.redFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_red2" );
 		cgs.media.redFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_red3" );
 		cgs.media.blueFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_blu1" );
 		cgs.media.blueFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_blu2" );
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_blu3" );
-        cgs.media.greenFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_green1" );
-        cgs.media.greenFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_green2" );
-        cgs.media.greenFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_green3" );
-        cgs.media.yellowFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_yell1" );
-        cgs.media.yellowFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_yell2" );
-        cgs.media.yellowFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_yell3" );
+		cgs.media.greenFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_green1" );
+		cgs.media.greenFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_green2" );
+		cgs.media.greenFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_green3" );
+		cgs.media.yellowFlagShader[0] = trap_R_RegisterShaderNoMip( "icons/iconf_yell1" );
+		cgs.media.yellowFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_yell2" );
+		cgs.media.yellowFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_yell3" );
 // Q3Rally Code Start
         cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/icons_neutral" );
         cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/icons_red" );
@@ -1138,6 +1138,8 @@ static void CG_RegisterGraphics( void ) {
 
 		cgs.media.redFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/red.skin" );
 		cgs.media.blueFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/blue.skin" );
+		cgs.media.greenFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/green.skin" );
+		cgs.media.yellowFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/yellow.skin" );
 		cgs.media.neutralFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/white.skin" );
 
 		cgs.media.redFlagBaseModel = trap_R_RegisterModel( "models/mapobjects/flagbase/red_base.md3" );

@@ -217,9 +217,14 @@ void TeamMain_MenuInit( void ) {
 		s_teammain.joinyellow.generic.flags |= QMF_GRAYED;
 		break;
 // END
-	default:
 	case GT_TEAM:
 	case GT_CTF:
+		s_teammain.joingreen.generic.flags |= QMF_GRAYED;
+		s_teammain.joinyellow.generic.flags |= QMF_GRAYED;
+		s_teammain.joingame.generic.flags |= QMF_GRAYED;
+		break;
+	case GT_CTF4:
+	default:
 		s_teammain.joingame.generic.flags |= QMF_GRAYED;
 		break;
 	}

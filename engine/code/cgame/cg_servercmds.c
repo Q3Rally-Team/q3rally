@@ -286,6 +286,13 @@ void CG_SetConfigValues( void ) {
 		cgs.redflag = s[0] - '0';
 		cgs.blueflag = s[1] - '0';
 	}
+	else if ( cgs.gametype == GT_CTF4 ) {
+		s = CG_ConfigString( CS_FLAGSTATUS );
+		cgs.redflag = s[0] - '0';
+		cgs.blueflag = s[1] - '0';
+		cgs.greenflag = s[2] - '0';
+		cgs.yellowflag = s[3] - '0';
+	}
 
 	else if ( cgs.gametype == GT_DOMINATION ) {
 		CG_ParseSigilStatus();
@@ -419,6 +426,11 @@ static void CG_ConfigStringModified( void ) {
 			// format is rb where its red/blue, 0 is at base, 1 is taken, 2 is dropped
 			cgs.redflag = str[0] - '0';
 			cgs.blueflag = str[1] - '0';
+		} else if ( cgs.gametype == GT_CTF4 ) {
+			cgs.redflag = str[0] - '0';
+			cgs.blueflag = str[1] - '0';
+			cgs.greenflag = str[2] - '0';
+			cgs.yellowflag = str[3] - '0';
 		}
 #ifdef MISSIONPACK
 		else if( cgs.gametype == GT_1FCTF ) {

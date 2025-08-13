@@ -467,8 +467,8 @@ static void CG_NextCameraAngle_f( void ) {
 			break;
 		case 5: // Hood view
 			trap_Cvar_Set("cg_thirdPersonAngle", "0");
-			trap_Cvar_Set("cg_thirdPersonRange", "-50");
-			trap_Cvar_Set("cg_thirdPersonHeight", "25");
+			trap_Cvar_Set("cg_thirdPersonRange", "-20");
+			trap_Cvar_Set("cg_thirdPersonHeight", "10");
 			break;
 	}
 }

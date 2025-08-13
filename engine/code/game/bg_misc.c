@@ -92,6 +92,40 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+/*QUAKED team_CTF_greenflag (0 1 0) (-16 -16 -16) (16 16 16)
+Only in CTF games
+*/
+	{
+		"team_CTF_greenflag",
+		NULL,
+        { "models/flags/g_flag.md3",
+		NULL, NULL, NULL },
+/* icon */		"icons/iconf_green1",
+/* pickup */	"Green Flag",
+		0,
+		IT_TEAM,
+		PW_GREENFLAG,
+/* precache */ "",
+/* sounds */ ""
+	},
+
+/*QUAKED team_CTF_yellowflag (1 1 0) (-16 -16 -16) (16 16 16)
+Only in CTF games
+*/
+	{
+		"team_CTF_yellowflag",
+		NULL,
+        { "models/flags/y_flag.md3",
+		NULL, NULL, NULL },
+/* icon */		"icons/iconf_yell1",
+/* pickup */	"Yellow Flag",
+		0,
+		IT_TEAM,
+		PW_YELLOWFLAG,
+/* precache */ "",
+/* sounds */ ""
+	},
+
 /*QUAKED item_armor_combat (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -1479,6 +1513,17 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 #endif
 
 	case IT_TEAM: // team items, such as flags
+		// if the player is already carrying a flag, they can't pick up another enemy flag
+		if ( ps->powerups[PW_REDFLAG] || ps->powerups[PW_BLUEFLAG] || ps->powerups[PW_GREENFLAG] || ps->powerups[PW_YELLOWFLAG] || ps->powerups[PW_NEUTRALFLAG] ) {
+			if (item->giTag == PW_REDFLAG && ps->persistant[PERS_TEAM] != TEAM_RED)
+				return qfalse;
+			if (item->giTag == PW_BLUEFLAG && ps->persistant[PERS_TEAM] != TEAM_BLUE)
+				return qfalse;
+			if (item->giTag == PW_GREENFLAG && ps->persistant[PERS_TEAM] != TEAM_GREEN)
+				return qfalse;
+			if (item->giTag == PW_YELLOWFLAG && ps->persistant[PERS_TEAM] != TEAM_YELLOW)
+				return qfalse;
+		}
 #ifdef MISSIONPACK		
 		if( gametype == GT_1FCTF ) {
 			// neutral flag can always be picked up
@@ -1496,19 +1541,41 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 			}
 		}
 #endif
-		if( gametype == GT_CTF ) {
-			// ent->modelindex2 is non-zero on items if they are dropped
-			// we need to know this because we can pick up our dropped flag (and return it)
-			// but we can't pick up our flag at base
+		if( gametype == GT_CTF || gametype == GT_CTF4 ) {
+			// can always pick up enemy flags
+			if (item->giTag == PW_REDFLAG && ps->persistant[PERS_TEAM] != TEAM_RED)
+				return qtrue;
+			if (item->giTag == PW_BLUEFLAG && ps->persistant[PERS_TEAM] != TEAM_BLUE)
+				return qtrue;
+			if (item->giTag == PW_GREENFLAG && ps->persistant[PERS_TEAM] != TEAM_GREEN)
+				return qtrue;
+			if (item->giTag == PW_YELLOWFLAG && ps->persistant[PERS_TEAM] != TEAM_YELLOW)
+				return qtrue;
+
+			// can pick up our flag if it's dropped
+			if (ent->modelindex2) {
+				if (item->giTag == PW_REDFLAG && ps->persistant[PERS_TEAM] == TEAM_RED)
+					return qtrue;
+				if (item->giTag == PW_BLUEFLAG && ps->persistant[PERS_TEAM] == TEAM_BLUE)
+					return qtrue;
+				if (item->giTag == PW_GREENFLAG && ps->persistant[PERS_TEAM] == TEAM_GREEN)
+					return qtrue;
+				if (item->giTag == PW_YELLOWFLAG && ps->persistant[PERS_TEAM] == TEAM_YELLOW)
+					return qtrue;
+			}
+
+			// can pick up our flag at base if we have an enemy flag
 			if (ps->persistant[PERS_TEAM] == TEAM_RED) {
-				if (item->giTag == PW_BLUEFLAG ||
-					(item->giTag == PW_REDFLAG && ent->modelindex2) ||
-					(item->giTag == PW_REDFLAG && ps->powerups[PW_BLUEFLAG]) )
+				if (item->giTag == PW_REDFLAG && (ps->powerups[PW_BLUEFLAG] || ps->powerups[PW_GREENFLAG] || ps->powerups[PW_YELLOWFLAG]))
 					return qtrue;
 			} else if (ps->persistant[PERS_TEAM] == TEAM_BLUE) {
-				if (item->giTag == PW_REDFLAG ||
-					(item->giTag == PW_BLUEFLAG && ent->modelindex2) ||
-					(item->giTag == PW_BLUEFLAG && ps->powerups[PW_REDFLAG]) )
+				if (item->giTag == PW_BLUEFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_GREENFLAG] || ps->powerups[PW_YELLOWFLAG]))
+					return qtrue;
+			} else if (ps->persistant[PERS_TEAM] == TEAM_GREEN) {
+				if (item->giTag == PW_GREENFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_BLUEFLAG] || ps->powerups[PW_YELLOWFLAG]))
+					return qtrue;
+			} else if (ps->persistant[PERS_TEAM] == TEAM_YELLOW) {
+				if (item->giTag == PW_YELLOWFLAG && (ps->powerups[PW_REDFLAG] || ps->powerups[PW_BLUEFLAG] || ps->powerups[PW_GREENFLAG]))
 					return qtrue;
 			}
 		}

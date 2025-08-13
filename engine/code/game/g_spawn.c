@@ -180,11 +180,11 @@ void SP_shooter_rocket( gentity_t *ent );
 void SP_shooter_plasma( gentity_t *ent );
 void SP_shooter_grenade( gentity_t *ent );
 
-void SP_team_CTF_redplayer( gentity_t *ent );
-void SP_team_CTF_blueplayer( gentity_t *ent );
+void SP_team_CTF_redflag( gentity_t *ent );
+void SP_team_CTF_blueflag( gentity_t *ent );
+void SP_team_CTF_greenflag( gentity_t *ent );
+void SP_team_CTF_yellowflag( gentity_t *ent );
 
-void SP_team_CTF_redspawn( gentity_t *ent );
-void SP_team_CTF_bluespawn( gentity_t *ent );
 
 void SP_func_door_rotating( gentity_t *ent );	// Rotating Doors
 
@@ -279,10 +279,19 @@ spawn_t	spawns[] = {
 
 	{"team_CTF_redplayer", SP_team_CTF_redplayer},
 	{"team_CTF_blueplayer", SP_team_CTF_blueplayer},
+	{"team_CTF_greenplayer", SP_team_CTF_greenplayer},
+	{"team_CTF_yellowplayer", SP_team_CTF_yellowplayer},
 
 	{"team_CTF_redspawn", SP_team_CTF_redspawn},
 	{"team_CTF_bluespawn", SP_team_CTF_bluespawn},
-	
+	{"team_CTF_greenspawn", SP_team_CTF_greenspawn},
+	{"team_CTF_yellowspawn", SP_team_CTF_yellowspawn},
+
+    {"team_CTF_redflag", SP_team_CTF_redflag},
+    {"team_CTF_blueflag", SP_team_CTF_blueflag},
+	{"team_CTF_greenflag", SP_team_CTF_greenflag},
+	{"team_CTF_yellowflag", SP_team_CTF_yellowflag},
+
 	{"func_door_rotating", SP_func_door_rotating},	// Rotating Doors
 
 
@@ -480,7 +489,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// UPDATE : change these
 // STONELANCE
 //	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester"};
-	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "lcs", "dm", "team", "team_racing", "team_racing_dm", "ctf"};
+	static char *gametypeNames[] = {"racing", "racing_dm", "single", "derby", "lcs", "dm", "team", "team_racing", "team_racing_dm", "ctf", "ctf4", "domination"};
 // END
 
 	// get the next free entity

@@ -107,6 +107,7 @@ static qboolean CG_IsTeamGametype(void) {
             cgs.gametype == GT_TEAM_RACING ||
             cgs.gametype == GT_TEAM_RACING_DM ||
             cgs.gametype == GT_CTF ||
+            cgs.gametype == GT_CTF4 ||
             cgs.gametype == GT_DOMINATION);
 }
 
@@ -150,6 +151,7 @@ static void CG_InitScoreboardColumns(void) {
         case GT_DEATHMATCH:
         case GT_TEAM:
         case GT_CTF:
+		case GT_CTF4:
         case GT_DOMINATION:
             /* Pure combat - only frags/score matter */
             showScore = qtrue;

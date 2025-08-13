@@ -27,6 +27,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../sys/sys_local.h"
 #include "../sys/sys_loadlib.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 #ifdef USE_MUMBLE
 #include "libmumblelink.h"
 #endif
@@ -1482,6 +1487,37 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		noGameRestart = qfalse;
 }
 
+
+/*
+=================
+CL_OpenURL_f
+=================
+*/
+void CL_OpenURL_f( void ) {
+    if ( Cmd_Argc() < 2 ) {
+        Com_Printf( "Usage: openURL <url>\n" );
+        return;
+    }
+    const char *url = Cmd_Argv(1);
+
+#ifdef _WIN32
+    if ( (int)ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL ) <= 32 ) {
+        Com_Printf( "Could not open URL %s\n", url );
+    }
+#elif defined( __APPLE__ )
+    char command[1024];
+    Com_sprintf( command, sizeof( command ), "open \"%s\"", url );
+    if ( system( command ) != 0 ) {
+        Com_Printf( "Could not open URL %s\n", url );
+    }
+#else
+    char command[1024];
+    Com_sprintf( command, sizeof( command ), "xdg-open \"%s\"", url );
+    if ( system( command ) != 0 ) {
+        Com_Printf( "Could not open URL %s\n", url );
+    }
+#endif
+}
 
 /*
 ===================
@@ -3668,6 +3704,7 @@ void CL_Init( void ) {
 	//
 	// register our commands
 	//
+	Cmd_AddCommand ("openURL", CL_OpenURL_f);
 	Cmd_AddCommand ("cmd", CL_ForwardToServer_f);
 	Cmd_AddCommand ("configstrings", CL_Configstrings_f);
 	Cmd_AddCommand ("clientinfo", CL_Clientinfo_f);

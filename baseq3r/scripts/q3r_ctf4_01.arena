@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_ctf4_01"
+
+//IN-GAME MAP NAME
+longname "Flag Frenzy Speedway"
+
+//AUTHOR OF THE MAP
+author "P3rlE"
+
+//GAME TYPE SUPPORTS
+type "q3r_ctf4"
+
+//CUSTOM BOTS
+//bots ""
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime " "
+
+//CHECKPOINTS
+checkpoints " "
+
+//OBSERVER SPOTS
+observerspots " "
+
+//WEAPONS
+weapons ""
+
+//POWERUPS
+powerups ""
+
+//REVERSABLE
+reversable " "
+
+//TRACK LENGTHS
+tracklengths " "
+
+//BOT SUPPORTS
+botsupport ""
+
+//TEAMS
+teams "4"
+}

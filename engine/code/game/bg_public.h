@@ -149,6 +149,7 @@ typedef enum {
         GT_TEAM_RACING,         // team racing
         GT_TEAM_RACING_DM,      // team racing with weapons
         GT_CTF,                         // capture the flag
+        GT_CTF4,                        // 4 team capture the flag
         GT_DOMINATION,              // domination
 // Q3Rally Code END
         GT_MAX_GAME_TYPE
@@ -405,8 +406,8 @@ typedef enum {
 
         PW_REDFLAG,
         PW_BLUEFLAG,
-//        PW_GREENFLAG,
-//        PW_YELLOWFLAG,
+        PW_GREENFLAG,
+        PW_YELLOWFLAG,
         PW_NEUTRALFLAG,
 
 #ifdef MISSIONPACK

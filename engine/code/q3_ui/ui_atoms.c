@@ -1026,6 +1026,9 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		return;
 		
 	case UIMENU_TEAM:
+		UI_TeamMainMenu();
+		return;
+
 	case UIMENU_POSTGAME:
 	default:
 #ifndef NDEBUG

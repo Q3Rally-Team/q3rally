@@ -37,13 +37,9 @@ typedef struct domination_sigil_s
 typedef struct teamgame_s {
 	float			last_flag_capture;
 	int				last_capture_team;
-	flagStatus_t	redStatus;	// CTF
-	flagStatus_t	blueStatus;	// CTF
-	flagStatus_t	flagStatus;	// One Flag CTF
-	int				redTakenTime;
-	int				blueTakenTime;
-	int				redObeliskAttackedTime;
-	int				blueObeliskAttackedTime;
+	flagStatus_t	flagStatus[TEAM_NUM_TEAMS];	// CTF
+	int				flagTakenTime[TEAM_NUM_TEAMS];
+	int				obeliskAttackedTime[TEAM_NUM_TEAMS];
 // Q3Rally Code Start
 	domination_sigil_t     sigil[MAX_SIGILS];
 	int				numSigils;
@@ -67,10 +63,21 @@ void Team_InitGame( void ) {
 
 	switch( g_gametype.integer ) {
 	case GT_CTF:
-		teamgame.redStatus = -1; // Invalid to force update
+		teamgame.flagStatus[TEAM_RED] = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
-		 teamgame.blueStatus = -1; // Invalid to force update
+		teamgame.flagStatus[TEAM_BLUE] = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_BLUE, FLAG_ATBASE );
+		break;
+
+	case GT_CTF4:
+		teamgame.flagStatus[TEAM_RED] = -1; // Invalid to force update
+		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
+		teamgame.flagStatus[TEAM_BLUE] = -1; // Invalid to force update
+		Team_SetFlagStatus( TEAM_BLUE, FLAG_ATBASE );
+		teamgame.flagStatus[TEAM_GREEN] = -1; // Invalid to force update
+		Team_SetFlagStatus( TEAM_GREEN, FLAG_ATBASE );
+		teamgame.flagStatus[TEAM_YELLOW] = -1; // Invalid to force update
+		Team_SetFlagStatus( TEAM_YELLOW, FLAG_ATBASE );
 		break;
         		
 // Q3Rally Code Start
@@ -91,7 +98,7 @@ void Team_InitGame( void ) {
 
 #ifdef MISSIONPACK
 	case GT_1FCTF:
-		teamgame.flagStatus = -1; // Invalid to force update
+		teamgame.flagStatus[TEAM_FREE] = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_FREE, FLAG_ATBASE );
 		break;
 #endif
@@ -201,34 +208,38 @@ void AddTeamScore(vec3_t origin, int team, int score) {
 	te->r.svFlags |= SVF_BROADCAST;
 
 // STONELANCE - FIXME: update this function for 4 teams
-	if ( team == TEAM_RED ) {
-		if ( level.teamScores[ TEAM_RED ] + score == level.teamScores[ TEAM_BLUE ] ) {
+	if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
+		int other_team_score = 0;
+		int other_team = 0;
+
+		if ( g_gametype.integer == GT_CTF ) {
+			other_team = (team == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
+			other_team_score = level.teamScores[other_team];
+		} else { // GT_CTF4
+			// In 4-team CTF, we need to decide what "taking the lead" means.
+			// For now, I will just play the scored sound.
+			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_SCORED;
+			else if (team == TEAM_BLUE) te->s.eventParm = GTS_BLUETEAM_SCORED;
+			else if (team == TEAM_GREEN) te->s.eventParm = GTS_REDTEAM_SCORED; // FIXME: need green sound
+			else if (team == TEAM_YELLOW) te->s.eventParm = GTS_BLUETEAM_SCORED; // FIXME: need yellow sound
+			level.teamScores[ team ] += score;
+			return;
+		}
+
+		if ( level.teamScores[ team ] + score == other_team_score ) {
 			//teams are tied sound
 			te->s.eventParm = GTS_TEAMS_ARE_TIED;
 		}
-		else if ( level.teamScores[ TEAM_RED ] <= level.teamScores[ TEAM_BLUE ] &&
-					level.teamScores[ TEAM_RED ] + score > level.teamScores[ TEAM_BLUE ]) {
-			// red took the lead sound
-			te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
+		else if ( level.teamScores[ team ] <= other_team_score &&
+					level.teamScores[ team ] + score > other_team_score ) {
+			// team took the lead sound
+			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
+			else te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
 		}
 		else {
-			// red scored sound
-			te->s.eventParm = GTS_REDTEAM_SCORED;
-		}
-	}
-	else {
-		if ( level.teamScores[ TEAM_BLUE ] + score == level.teamScores[ TEAM_RED ] ) {
-			//teams are tied sound
-			te->s.eventParm = GTS_TEAMS_ARE_TIED;
-		}
-		else if ( level.teamScores[ TEAM_BLUE ] <= level.teamScores[ TEAM_RED ] &&
-					level.teamScores[ TEAM_BLUE ] + score > level.teamScores[ TEAM_RED ]) {
-			// blue took the lead sound
-			te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
-		}
-		else {
-			// blue scored sound
-			te->s.eventParm = GTS_BLUETEAM_SCORED;
+			// team scored sound
+			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_SCORED;
+			else te->s.eventParm = GTS_BLUETEAM_SCORED;
 		}
 	}
 	level.teamScores[ team ] += score;
@@ -410,39 +421,29 @@ void ValidateSigilsInMap( gentity_t *ent )
 void Team_SetFlagStatus( int team, flagStatus_t status ) {
 	qboolean modified = qfalse;
 
-	switch( team ) {
-	case TEAM_RED:	// CTF
-		if( teamgame.redStatus != status ) {
-			teamgame.redStatus = status;
+	if ( team >= TEAM_FREE && team < TEAM_NUM_TEAMS ) {
+		if ( teamgame.flagStatus[team] != status ) {
+			teamgame.flagStatus[team] = status;
 			modified = qtrue;
 		}
-		break;
-
-	case TEAM_BLUE:	// CTF
-		if( teamgame.blueStatus != status ) {
-			teamgame.blueStatus = status;
-			modified = qtrue;
-		}
-		break;
-
-	case TEAM_FREE:	// One Flag CTF
-		if( teamgame.flagStatus != status ) {
-			teamgame.flagStatus = status;
-			modified = qtrue;
-		}
-		break;
 	}
 
 	if( modified ) {
-		char st[4];
+		char st[6];
 
 		if( g_gametype.integer == GT_CTF ) {
-			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
-			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
+			st[0] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_RED]];
+			st[1] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_BLUE]];
 			st[2] = 0;
+		} else if ( g_gametype.integer == GT_CTF4 ) {
+			st[0] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_RED]];
+			st[1] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_BLUE]];
+			st[2] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_GREEN]];
+			st[3] = ctfFlagStatusRemap[teamgame.flagStatus[TEAM_YELLOW]];
+			st[4] = 0;
 		}
 		else {		// GT_1FCTF
-			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
+			st[0] = oneFlagStatusRemap[teamgame.flagStatus[TEAM_FREE]];
 			st[1] = 0;
 		}
 
@@ -497,7 +498,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 {
 	int i;
 	gentity_t *ent;
-	int flag_pw, enemy_flag_pw;
+	int flag_pw = 0, enemy_flag_pw = 0;
 	int otherteam;
 	int tokens;
 	gentity_t *flag, *carrier = NULL;
@@ -511,16 +512,28 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 
 	team = targ->client->sess.sessionTeam;
 	otherteam = OtherTeam(targ->client->sess.sessionTeam);
-	if (otherteam < 0)
+	if (otherteam < 0 && g_gametype.integer < GT_CTF4) // g_gametype is not 4 team
 		return; // whoever died isn't on a team
 
 	// same team, if the flag at base, check to he has the enemy flag
-	if (team == TEAM_RED) {
-		flag_pw = PW_REDFLAG;
-		enemy_flag_pw = PW_BLUEFLAG;
-	} else {
-		flag_pw = PW_BLUEFLAG;
-		enemy_flag_pw = PW_REDFLAG;
+	if ( g_gametype.integer == GT_CTF4 ) {
+		if (attacker->client->sess.sessionTeam == TEAM_RED) flag_pw = PW_REDFLAG;
+		else if (attacker->client->sess.sessionTeam == TEAM_BLUE) flag_pw = PW_BLUEFLAG;
+		else if (attacker->client->sess.sessionTeam == TEAM_GREEN) flag_pw = PW_GREENFLAG;
+		else if (attacker->client->sess.sessionTeam == TEAM_YELLOW) flag_pw = PW_YELLOWFLAG;
+
+		if ( targ->client->ps.powerups[PW_REDFLAG] && team != TEAM_RED ) enemy_flag_pw = PW_REDFLAG;
+		else if ( targ->client->ps.powerups[PW_BLUEFLAG] && team != TEAM_BLUE ) enemy_flag_pw = PW_BLUEFLAG;
+		else if ( targ->client->ps.powerups[PW_GREENFLAG] && team != TEAM_GREEN ) enemy_flag_pw = PW_GREENFLAG;
+		else if ( targ->client->ps.powerups[PW_YELLOWFLAG] && team != TEAM_YELLOW ) enemy_flag_pw = PW_YELLOWFLAG;
+	} else { // GT_CTF
+		if (team == TEAM_RED) {
+			flag_pw = PW_REDFLAG;
+			enemy_flag_pw = PW_BLUEFLAG;
+		} else {
+			flag_pw = PW_BLUEFLAG;
+			enemy_flag_pw = PW_REDFLAG;
+		}
 	}
 
 #ifdef MISSIONPACK
@@ -545,10 +558,10 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 			attacker->client->pers.netname, TeamName(team));
 
 		// the target had the flag, clear the hurt carrier
-		// field on the other team
+		// field on all players
 		for (i = 0; i < g_maxclients.integer; i++) {
 			ent = g_entities + i;
-			if (ent->inuse && ent->client->sess.sessionTeam == otherteam)
+			if (ent->inuse && ent->client)
 				ent->client->pers.teamState.lasthurtcarrier = 0;
 		}
 		return;
@@ -621,7 +634,13 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 		break;
 	case TEAM_BLUE:
 		c = "team_CTF_blueflag";
-		break;		
+		break;
+	case TEAM_GREEN:
+		c = "team_CTF_greenflag";
+		break;
+	case TEAM_YELLOW:
+		c = "team_CTF_yellowflag";
+		break;
 	default:
 		return;
 	}
@@ -702,15 +721,28 @@ carrier defense.
 */
 void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 {
-	int flag_pw;
+	int flag_pw = 0;
 
 	if (!targ->client || !attacker->client)
 		return;
 
-	if (targ->client->sess.sessionTeam == TEAM_RED)
-		flag_pw = PW_BLUEFLAG;
-	else
-		flag_pw = PW_REDFLAG;
+	if ( g_gametype.integer == GT_CTF4 ) {
+		if ( targ->client->ps.powerups[PW_REDFLAG] && targ->client->sess.sessionTeam != TEAM_RED ) {
+			flag_pw = PW_REDFLAG;
+		} else if ( targ->client->ps.powerups[PW_BLUEFLAG] && targ->client->sess.sessionTeam != TEAM_BLUE ) {
+			flag_pw = PW_BLUEFLAG;
+		} else if ( targ->client->ps.powerups[PW_GREENFLAG] && targ->client->sess.sessionTeam != TEAM_GREEN ) {
+			flag_pw = PW_GREENFLAG;
+		} else if ( targ->client->ps.powerups[PW_YELLOWFLAG] && targ->client->sess.sessionTeam != TEAM_YELLOW ) {
+			flag_pw = PW_YELLOWFLAG;
+		}
+	} else { // GT_CTF
+		if (targ->client->sess.sessionTeam == TEAM_RED) {
+			flag_pw = PW_BLUEFLAG;
+		} else {
+			flag_pw = PW_REDFLAG;
+		}
+	}
 
 #ifdef MISSIONPACK
 	if (g_gametype.integer == GT_1FCTF) {
@@ -719,7 +751,7 @@ void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 #endif
 
 	// flags
-	if (targ->client->ps.powerups[flag_pw] &&
+	if ( flag_pw && targ->client->ps.powerups[flag_pw] &&
 		targ->client->sess.sessionTeam != attacker->client->sess.sessionTeam)
 		attacker->client->pers.teamState.lasthurtcarrier = level.time;
 
@@ -740,6 +772,12 @@ gentity_t *Team_ResetFlag( int team ) {
 		break;
 	case TEAM_BLUE:
 		c = "team_CTF_blueflag";
+		break;
+	case TEAM_GREEN:
+		c = "team_CTF_greenflag";
+		break;
+	case TEAM_YELLOW:
+		c = "team_CTF_yellowflag";
 		break;
 	case TEAM_FREE:
 		c = "team_CTF_neutralflag";
@@ -767,6 +805,11 @@ void Team_ResetFlags( void ) {
 	if( g_gametype.integer == GT_CTF ) {
 		Team_ResetFlag( TEAM_RED );
 		Team_ResetFlag( TEAM_BLUE );
+	} else if ( g_gametype.integer == GT_CTF4 ) {
+		Team_ResetFlag( TEAM_RED );
+		Team_ResetFlag( TEAM_BLUE );
+		Team_ResetFlag( TEAM_GREEN );
+		Team_ResetFlag( TEAM_YELLOW );
 	}
 #ifdef MISSIONPACK
 	else if( g_gametype.integer == GT_1FCTF ) {
@@ -803,23 +846,12 @@ void Team_TakeFlagSound( gentity_t *ent, int team ) {
 
 	// only play sound when the flag was at the base
 	// or not picked up the last 10 seconds
-	switch(team) {
-		case TEAM_RED:
-			if( teamgame.blueStatus != FLAG_ATBASE ) {
-				if (teamgame.blueTakenTime > level.time - 10000)
-					return;
-			}
-			teamgame.blueTakenTime = level.time;
-			break;
-
-		case TEAM_BLUE:	// CTF
-			if( teamgame.redStatus != FLAG_ATBASE ) {
-				if (teamgame.redTakenTime > level.time - 10000)
-					return;
-			}
-			teamgame.redTakenTime = level.time;
-			break;
+	if ( teamgame.flagStatus[team] != FLAG_ATBASE ) {
+		if ( teamgame.flagTakenTime[team] > level.time - 10000 ) {
+			return;
+		}
 	}
+	teamgame.flagTakenTime[team] = level.time;
 
 	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
 	if( team == TEAM_BLUE ) {
@@ -866,6 +898,12 @@ void Team_FreeEntity( gentity_t *ent ) {
 	else if( ent->item->giTag == PW_BLUEFLAG ) {
 		Team_ReturnFlag( TEAM_BLUE );
 	}
+	else if( ent->item->giTag == PW_GREENFLAG ) {
+		Team_ReturnFlag( TEAM_GREEN );
+	}
+	else if( ent->item->giTag == PW_YELLOWFLAG ) {
+		Team_ReturnFlag( TEAM_YELLOW );
+	}
 	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
 		Team_ReturnFlag( TEAM_FREE );
 	}
@@ -889,6 +927,12 @@ void Team_DroppedFlagThink(gentity_t *ent) {
 	else if( ent->item->giTag == PW_BLUEFLAG ) {
 		team = TEAM_BLUE;
 	}
+	else if( ent->item->giTag == PW_GREENFLAG ) {
+		team = TEAM_GREEN;
+	}
+	else if( ent->item->giTag == PW_YELLOWFLAG ) {
+		team = TEAM_YELLOW;
+	}
 	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
 		team = TEAM_FREE;
 	}
@@ -907,19 +951,32 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 	int			i;
 	gentity_t	*player;
 	gclient_t	*cl = other->client;
-	int			enemy_flag;
+	int			enemy_flag = 0;
 
+	if ( g_gametype.integer == GT_CTF4 ) {
+		if ( cl->ps.powerups[PW_REDFLAG] && cl->sess.sessionTeam != TEAM_RED) {
+			enemy_flag = PW_REDFLAG;
+		} else if ( cl->ps.powerups[PW_BLUEFLAG] && cl->sess.sessionTeam != TEAM_BLUE) {
+			enemy_flag = PW_BLUEFLAG;
+		} else if ( cl->ps.powerups[PW_GREENFLAG] && cl->sess.sessionTeam != TEAM_GREEN) {
+			enemy_flag = PW_GREENFLAG;
+		} else if ( cl->ps.powerups[PW_YELLOWFLAG] && cl->sess.sessionTeam != TEAM_YELLOW) {
+			enemy_flag = PW_YELLOWFLAG;
+		}
+	}
 #ifdef MISSIONPACK
-	if( g_gametype.integer == GT_1FCTF ) {
+	else if( g_gametype.integer == GT_1FCTF ) {
 		enemy_flag = PW_NEUTRALFLAG;
 	}
-	else {
 #endif
-	if (cl->sess.sessionTeam == TEAM_RED) {
-		enemy_flag = PW_BLUEFLAG;
-	} else {
-		enemy_flag = PW_REDFLAG;
+	else { // GT_CTF
+		if (cl->sess.sessionTeam == TEAM_RED) {
+			enemy_flag = PW_BLUEFLAG;
+		} else {
+			enemy_flag = PW_REDFLAG;
+		}
 	}
+
 
 	if ( ent->flags & FL_DROPPED_ITEM ) {
 		// hey, it's not home.  return it by teleporting it back
@@ -932,14 +989,12 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 		Team_ReturnFlagSound(Team_ResetFlag(team), team);
 		return 0;
 	}
-#ifdef MISSIONPACK
-	}
-#endif
 
 	// the flag is at home base.  if the player has the enemy
 	// flag, he's just won!
-	if (!cl->ps.powerups[enemy_flag])
+	if ( !enemy_flag || !cl->ps.powerups[enemy_flag] ) {
 		return 0; // We don't have the flag
+	}
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_1FCTF ) {
 		PrintMsg( NULL, "%s" S_COLOR_WHITE " captured the flag!\n", cl->pers.netname );
@@ -1043,8 +1098,12 @@ int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, int team ) {
 
 		if (team == TEAM_RED)
 			cl->ps.powerups[PW_REDFLAG] = INT_MAX; // flags never expire
-		else
+		else if (team == TEAM_BLUE)
 			cl->ps.powerups[PW_BLUEFLAG] = INT_MAX; // flags never expire
+		else if (team == TEAM_GREEN)
+			cl->ps.powerups[PW_GREENFLAG] = INT_MAX;
+		else if (team == TEAM_YELLOW)
+			cl->ps.powerups[PW_YELLOWFLAG] = INT_MAX;
 
 		Team_SetFlagStatus( team, FLAG_TAKEN );
 #ifdef MISSIONPACK
@@ -1084,6 +1143,12 @@ int Pickup_Team( gentity_t *ent, gentity_t *other ) {
 	}
 	else if( strcmp(ent->classname, "team_CTF_blueflag") == 0 ) {
 		team = TEAM_BLUE;
+	}
+	else if( strcmp(ent->classname, "team_CTF_greenflag") == 0 ) {
+		team = TEAM_GREEN;
+	}
+	else if( strcmp(ent->classname, "team_CTF_yellowflag") == 0 ) {
+		team = TEAM_YELLOW;
 	}
 #ifdef MISSIONPACK
 	else if( strcmp(ent->classname, "team_CTF_neutralflag") == 0  ) {
@@ -1321,6 +1386,10 @@ gentity_t *SelectRandomTeamSpawnPoint( int teamstate, team_t team ) {
 			classname = "team_CTF_redplayer";
 		else if (team == TEAM_BLUE)
 			classname = "team_CTF_blueplayer";
+		else if (team == TEAM_GREEN)
+			classname = "team_CTF_greenplayer";
+		else if (team == TEAM_YELLOW)
+			classname = "team_CTF_yellowplayer";
 		else
 			return NULL;
 	} else {
@@ -1328,6 +1397,10 @@ gentity_t *SelectRandomTeamSpawnPoint( int teamstate, team_t team ) {
 			classname = "team_CTF_redspawn";
 		else if (team == TEAM_BLUE)
 			classname = "team_CTF_bluespawn";
+		else if (team == TEAM_GREEN)
+			classname = "team_CTF_greenspawn";
+		else if (team == TEAM_YELLOW)
+			classname = "team_CTF_yellowspawn";
 		else
 			return NULL;
 	}
@@ -1517,6 +1590,7 @@ void CheckTeamStatus(void) {
 Only in CTF games.  Red players spawn here at game start.
 */
 void SP_team_CTF_redplayer( gentity_t *ent ) {
+	(void)ent;
 }
 
 
@@ -1524,14 +1598,15 @@ void SP_team_CTF_redplayer( gentity_t *ent ) {
 Only in CTF games.  Blue players spawn here at game start.
 */
 void SP_team_CTF_blueplayer( gentity_t *ent ) {
+	(void)ent;
 }
-
 
 /*QUAKED team_CTF_redspawn (1 0 0) (-16 -16 -24) (16 16 32)
 potential spawning position for red team in CTF games.
 Targets will be fired when someone spawns in on them.
 */
 void SP_team_CTF_redspawn(gentity_t *ent) {
+	(void)ent;
 }
 
 /*QUAKED team_CTF_bluespawn (0 0 1) (-16 -16 -24) (16 16 32)
@@ -1539,7 +1614,96 @@ potential spawning position for blue team in CTF games.
 Targets will be fired when someone spawns in on them.
 */
 void SP_team_CTF_bluespawn(gentity_t *ent) {
+	(void)ent;
 }
+
+/*QUAKED team_CTF_greenplayer (0 1 0) (-16 -16 -16) (16 16 32)
+Only in CTF games.  Green players spawn here at game start.
+*/
+void SP_team_CTF_greenplayer( gentity_t *ent ) {
+	(void)ent;
+}
+
+/*QUAKED team_CTF_yellowplayer (1 1 0) (-16 -16 -16) (16 16 32)
+Only in CTF games.  Yellow players spawn here at game start.
+*/
+void SP_team_CTF_yellowplayer( gentity_t *ent ) {
+	(void)ent;
+}
+
+/*QUAKED team_CTF_greenspawn (0 1 0) (-16 -16 -24) (16 16 32)
+potential spawning position for green team in CTF games.
+Targets will be fired when someone spawns in on them.
+*/
+void SP_team_CTF_greenspawn(gentity_t *ent) {
+	(void)ent;
+}
+
+/*QUAKED team_CTF_yellowspawn (1 1 0) (-16 -16 -24) (16 16 32)
+potential spawning position for yellow team in CTF games.
+Targets will be fired when someone spawns in on them.
+*/
+void SP_team_CTF_yellowspawn(gentity_t *ent) {
+	(void)ent;
+}
+
+/*QUAKED team_CTF_redflag (1 0 0) (-16 -16 -16) (16 16 16)
+Red flag
+*/
+void SP_team_CTF_redflag( gentity_t *ent ) {
+	gitem_t *it = BG_FindItemForPowerup( PW_REDFLAG );
+	if (!it) {
+		ent->think = G_FreeEntity;
+		ent->nextthink = level.time + FRAMETIME;
+		G_Printf( "Couldn't find item for team_CTF_redflag\n" );
+		return;
+	}
+	G_SpawnItem( ent, it );
+}
+
+/*QUAKED team_CTF_blueflag (0 0 1) (-16 -16 -16) (16 16 16)
+Blue flag
+*/
+void SP_team_CTF_blueflag( gentity_t *ent ) {
+	gitem_t *it = BG_FindItemForPowerup( PW_BLUEFLAG );
+	if (!it) {
+		ent->think = G_FreeEntity;
+		ent->nextthink = level.time + FRAMETIME;
+		G_Printf( "Couldn't find item for team_CTF_blueflag\n" );
+		return;
+	}
+	G_SpawnItem( ent, it );
+}
+
+/*QUAKED team_CTF_greenflag (0 1 0) (-16 -16 -16) (16 16 16)
+Green flag
+*/
+void SP_team_CTF_greenflag( gentity_t *ent ) {
+	gitem_t *it = BG_FindItemForPowerup( PW_GREENFLAG );
+	if (!it) {
+		ent->think = G_FreeEntity;
+		ent->nextthink = level.time + FRAMETIME;
+		G_Printf( "Couldn't find item for team_CTF_greenflag\n" );
+		return;
+	}
+	G_SpawnItem( ent, it );
+}
+
+/*QUAKED team_CTF_yellowflag (1 1 0) (-16 -16 -16) (16 16 16)
+Yellow flag
+*/
+void SP_team_CTF_yellowflag( gentity_t *ent ) {
+	gitem_t *it = BG_FindItemForPowerup( PW_YELLOWFLAG );
+	if (!it) {
+		ent->think = G_FreeEntity;
+		ent->nextthink = level.time + FRAMETIME;
+		G_Printf( "Couldn't find item for team_CTF_yellowflag\n" );
+		return;
+	}
+	G_SpawnItem( ent, it );
+}
+
+
 
 
 #ifdef MISSIONPACK
