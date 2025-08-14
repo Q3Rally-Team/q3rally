@@ -830,6 +830,8 @@ typedef enum {
         HT_OIL,
         HT_SMOKE,
         HT_FIRE,
+		HT_FLAME_SMOKE,
+		HT_BRIGHT_FLAME_SMOKE,
 
         NUM_HAZARD_TYPES
 } hazard_t;

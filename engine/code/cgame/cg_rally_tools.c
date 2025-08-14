@@ -280,6 +280,24 @@ void CG_Hazard( int hazard, vec3_t origin, int radius) {
 		lightColor[2] = 0.0;
 		break;
 
+	case HT_FLAME_SMOKE:
+		radius = 128;
+		duration = 10000;
+
+		VectorSet(dir, 0, 0, 1);
+
+		CreateSmokeCloudEntity( origin, dir, 20, radius, duration, 0.1f, 0.1f, 0.1f, 1, cgs.media.smokePuffShader );
+		return;
+
+	case HT_BRIGHT_FLAME_SMOKE:
+		radius = 92;
+		duration = 2500;
+
+		VectorSet(dir, 0, 0, 1);
+
+		CreateSmokeCloudEntity( origin, dir, 20, radius, duration, 0.6f, 0.6f, 0.6f, 1, cgs.media.smokePuffShader );
+		return;
+
 	case HT_POISON:
 //		mod = cgs.media.dishFlashModel;
 //		shader = cgs.media.smokePuffShader;

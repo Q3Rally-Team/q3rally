@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -135,29 +135,28 @@ REAR WEAPON - Flame
 */
 void FlameThink(gentity_t *ent){
 	gentity_t	*owner;
-	trace_t		tr;
-	vec3_t		dest;
-	vec3_t		angles;
+	gentity_t	*smoke;
 
 	ent->nextthink = level.time + 200;
 
 	if (ent->freeAfterTime < level.time){
+		// puff of smoke when flame dies
+		smoke = G_TempEntity(ent->r.currentOrigin, EV_HAZARD);
+		smoke->s.weapon = HT_FLAME_SMOKE;
+
 		ent->think = G_FreeEntity;
 		return;
 	}
 
+	// trigger bright smoke
+	if (ent->count > 0 && level.time >= ent->timestamp) {
+		smoke = G_TempEntity(ent->r.currentOrigin, EV_HAZARD);
+		smoke->s.weapon = HT_BRIGHT_FLAME_SMOKE;
+		ent->count--;
+		ent->timestamp = level.time + 3000;
+	}
+
 	owner = &g_entities[ent->r.ownerNum];
-
-	VectorCopy(owner->client->ps.viewangles, angles);
-	angles[PITCH] = 0;
-	AngleVectors (angles, forward, NULL, NULL);
-	VectorMA( owner->r.currentOrigin, -80, forward, dest );
-
-	trap_Trace( &tr, owner->r.currentOrigin, NULL, NULL, dest, ent->s.number, MASK_SOLID );
-	VectorMA(tr.endpos, 1, tr.plane.normal, dest);
-	// allow to ride movers
-	ent->s.groundEntityNum = tr.entityNum;
-	G_SetOrigin( ent, dest );
 
 	CreateFireHazard(owner, ent->r.currentOrigin);
 }
@@ -177,7 +176,11 @@ void RFWeapon_FlameFire( gentity_t *ent ) {
 	tent->parent = ent;
 	tent->think = FlameThink;
 	tent->nextthink = level.time;
-	tent->freeAfterTime = level.time + 1000;
+	tent->freeAfterTime = level.time + 10000;
+
+	// setup for bright smoke
+	tent->count = 3;
+	tent->timestamp = level.time + 3000;
 
 //	CreateFireHazard(tent);
 }
