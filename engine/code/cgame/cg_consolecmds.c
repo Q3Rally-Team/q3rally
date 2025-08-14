@@ -435,7 +435,7 @@ static void CG_StartOrbit_f( void ) {
 static void CG_NextCameraAngle_f( void ) {
 	static int currentCamera = 0;
 	currentCamera++;
-	if (currentCamera >= 6) {
+	if (currentCamera >= 10) {
 		currentCamera = 0;
 	}
 
@@ -469,6 +469,26 @@ static void CG_NextCameraAngle_f( void ) {
 			trap_Cvar_Set("cg_thirdPersonAngle", "0");
 			trap_Cvar_Set("cg_thirdPersonRange", "-20");
 			trap_Cvar_Set("cg_thirdPersonHeight", "10");
+			break;
+		case 6: // Q3R 2002 Mod
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "150");
+			trap_Cvar_Set("cg_thirdPersonHeight", "20");
+			break;
+		case 7: // First Person View
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "0");
+			trap_Cvar_Set("cg_thirdPersonHeight", "30");
+			break;
+		case 8: // Need for Speed
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "110");
+			trap_Cvar_Set("cg_thirdPersonHeight", "30");
+			break;
+		case 9: // Micro Machines
+			trap_Cvar_Set("cg_thirdPersonAngle", "0");
+			trap_Cvar_Set("cg_thirdPersonRange", "500");
+			trap_Cvar_Set("cg_thirdPersonHeight", "500");
 			break;
 	}
 }
