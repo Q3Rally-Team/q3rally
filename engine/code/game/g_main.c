@@ -87,6 +87,9 @@ vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
 vmCvar_t	g_localTeamPref;
 vmCvar_t    g_enableSnow;
+vmCvar_t    g_dominationScoreInterval;
+vmCvar_t    g_dominationCaptureDelay;
+vmCvar_t    g_dominationSpawnStyle;
 #ifdef MISSIONPACK
 vmCvar_t	g_obeliskHealth;
 vmCvar_t	g_obeliskRegenPeriod;
@@ -258,8 +261,11 @@ static cvarTable_t		gameCvarTable[] = {
 // END
 
 	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse},
-	{ &g_localTeamPref, "g_localTeamPref", "", 0, 0, qfalse }
+	{ &g_localTeamPref, "g_localTeamPref", "", 0, 0, qfalse },
 
+	{ &g_dominationScoreInterval, "g_dominationScoreInterval", "10000", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_dominationCaptureDelay, "g_dominationCaptureDelay", "1500", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_dominationSpawnStyle, "g_dominationSpawnStyle", "0", CVAR_ARCHIVE, 0, qfalse }
 };
 
 static int gameCvarTableSize = ARRAY_LEN( gameCvarTable );

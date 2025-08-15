@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "g_local.h"
 
+extern vmCvar_t g_dominationSpawnStyle;
+
 // g_client.c -- client functions that don't happen every frame
 
 // STONELANCE
@@ -1369,7 +1371,7 @@ void ClientSpawn(gentity_t *ent) {
 // END
 			spawnPoint = SelectSpectatorSpawnPoint ( 
 						spawn_origin, spawn_angles);
-	} else if (g_gametype.integer >= GT_CTF ) {
+	} else if (g_gametype.integer >= GT_CTF && (g_gametype.integer != GT_DOMINATION || g_dominationSpawnStyle.integer != 0) ) {
 		// all base oriented team games use the CTF spawn points
 		spawnPoint = SelectCTFSpawnPoint ( 
 						client->sess.sessionTeam, 

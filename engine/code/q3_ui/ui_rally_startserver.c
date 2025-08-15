@@ -843,6 +843,8 @@ typedef struct {
 	menufield_s			hostname;
     menulist_s          dominationSpawnStyle;
 	menuradiobutton_s   sigillocator;
+	menufield_s			dominationScoreInterval;
+	menufield_s			dominationCaptureDelay;
 	menulist_s			trackLength;
 	menulist_s			reversed;
 	menuradiobutton_s	pure;
@@ -951,6 +953,8 @@ static void ServerOptions_Start( void ) {
 	int		timelimit;
 	int		fraglimit;
     int     dominationSpawnStyle;
+	int		dominationScoreInterval;
+	int		dominationCaptureDelay;
 	int     sigillocator;
 	int		maxclients;
 	int		dedicated;
@@ -966,6 +970,8 @@ static void ServerOptions_Start( void ) {
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
 	fraglimit	 = atoi( s_serveroptions.fraglimit.field.buffer );
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
+	dominationScoreInterval = atoi( s_serveroptions.dominationScoreInterval.field.buffer );
+	dominationCaptureDelay = atoi( s_serveroptions.dominationCaptureDelay.field.buffer );
 	dedicated	 = s_serveroptions.dedicated.curvalue;
 	friendlyfire = s_serveroptions.friendlyfire.curvalue;
 	pure		 = s_serveroptions.pure.curvalue;
@@ -1030,6 +1036,8 @@ static void ServerOptions_Start( void ) {
 		
     case GT_DOMINATION:
 		trap_Cvar_SetValue( "g_dominationSpawnStyle", Com_Clamp( 0, 1, dominationSpawnStyle ) );
+		trap_Cvar_SetValue( "g_dominationScoreInterval", Com_Clamp( 0, 99999, dominationScoreInterval * 1000 ) );
+		trap_Cvar_SetValue( "g_dominationCaptureDelay", Com_Clamp( 0, 9999, dominationCaptureDelay * 1000 ) );
 		trap_Cvar_SetValue( "cg_sigilLocator", Com_Clamp( 0, 1, sigillocator) );
 		trap_Cvar_SetValue( "ui_dom_capturelimit", flaglimit );
 		trap_Cvar_SetValue( "ui_dom_timelimit", timelimit );
@@ -1475,6 +1483,8 @@ static void ServerOptions_SetMenuItems( void ) {
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dom_timelimit" ) ) );
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_dom_friendly" ) );
 		s_serveroptions.sigillocator.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_sigilLocator" ) );
+		Com_sprintf( s_serveroptions.dominationScoreInterval.field.buffer, 6, "%i", (int)Com_Clamp( 0, 99999, trap_Cvar_VariableValue( "g_dominationScoreInterval" ) ) / 1000 );
+		Com_sprintf( s_serveroptions.dominationCaptureDelay.field.buffer, 5, "%i", (int)Com_Clamp( 0, 9999, trap_Cvar_VariableValue( "g_dominationCaptureDelay" ) ) / 1000 );
 		break;
 
 	}
@@ -1714,6 +1724,23 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	}
 
 if (s_serveroptions.gametype == GT_DOMINATION) {
+    s_serveroptions.dominationScoreInterval.generic.type       = MTYPE_FIELD;
+    s_serveroptions.dominationScoreInterval.generic.name       = "Score Interval (s):";
+    s_serveroptions.dominationScoreInterval.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+    s_serveroptions.dominationScoreInterval.generic.x	         = OPTIONS_X;
+    s_serveroptions.dominationScoreInterval.generic.y	         = y;
+    s_serveroptions.dominationScoreInterval.field.widthInChars = 5;
+    s_serveroptions.dominationScoreInterval.field.maxchars     = 5;
+
+    y += BIGCHAR_HEIGHT+2;
+    s_serveroptions.dominationCaptureDelay.generic.type       = MTYPE_FIELD;
+    s_serveroptions.dominationCaptureDelay.generic.name       = "Capture Delay (s):";
+    s_serveroptions.dominationCaptureDelay.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+    s_serveroptions.dominationCaptureDelay.generic.x	         = OPTIONS_X;
+    s_serveroptions.dominationCaptureDelay.generic.y	         = y;
+    s_serveroptions.dominationCaptureDelay.field.widthInChars = 4;
+    s_serveroptions.dominationCaptureDelay.field.maxchars     = 4;
+
     y += BIGCHAR_HEIGHT+2;
     s_serveroptions.dominationSpawnStyle.generic.type  = MTYPE_SPINCONTROL;
     s_serveroptions.dominationSpawnStyle.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1851,6 +1878,8 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	}
 
 	if (s_serveroptions.gametype == GT_DOMINATION) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationScoreInterval );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationCaptureDelay );
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dominationSpawnStyle );
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.sigillocator );
 	}

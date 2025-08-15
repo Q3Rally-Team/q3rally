@@ -24,6 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+extern vmCvar_t g_dominationScoreInterval;
+extern vmCvar_t g_dominationCaptureDelay;
+
 // Q3Rally Code Start
 
 typedef struct domination_sigil_s
@@ -338,15 +341,16 @@ ValidateSigilsInMap
 void ValidateSigilsInMap( gentity_t *ent )
 {
       vec3_t      start, end, temp, mins, maxs, tvec, offset = {FRADIUS, FRADIUS, FRADIUS};
-      int         numEnts, i, touch[MAX_GENTITIES], dist = FRADIUS;
-      gentity_t   *tent, *targ;
-      float       vlen;
-      qboolean    foundItem = qfalse, foundPreferredItem = qfalse;
+      int         numEnts, i, touch[MAX_GENTITIES];
+      gentity_t   *tent, *targ = NULL;
+      float       vlen, closest_dist = FRADIUS;
       gitem_t     *item;
 
       // if 3rd sigil exists, this function doesn't need to run
-      if (teamgame.numSigils != 2 || MAX_SIGILS < 3)
+      if (teamgame.numSigils != 2 || MAX_SIGILS < 3) {
+          G_FreeEntity(ent);
           return;
+      }
           
       VectorCopy(teamgame.sigil[0].entity->r.currentOrigin, start);
       VectorCopy(teamgame.sigil[1].entity->r.currentOrigin, end);
@@ -372,46 +376,28 @@ void ValidateSigilsInMap( gentity_t *ent )
           if (!(tent->item->giType == IT_HEALTH || tent->item->giType == IT_ARMOR || tent->item->giType == IT_WEAPON))
             continue;
             
-      VectorSubtract(temp, tent->r.currentOrigin, tvec);
-      vlen = abs(VectorLength(tvec));
+          VectorSubtract(temp, tent->r.currentOrigin, tvec);
+          vlen = VectorLength(tvec);
       
-          if (vlen > FRADIUS)
-            continue;
-            
-          if (  (foundItem && !foundPreferredItem) && (tent->item->giType == IT_HEALTH || tent->item->giType == IT_ARMOR) ) {
-          
-              foundPreferredItem = qtrue;
-              dist = abs(VectorLength(tvec));
+          if (vlen < closest_dist) {
+              closest_dist = vlen;
               targ = tent;
-            } else {
-                if ( vlen < dist ) {
-                  if (tent->item->giType == IT_HEALTH || tent->item->giType == IT_ARMOR || (tent->item->giType == IT_WEAPON && !foundPreferredItem ) ) {
-                  foundItem = qtrue;
-                  dist = abs(VectorLength(tvec));
-                  targ = tent;
-                  
-                  if (tent->item->giType == IT_HEALTH || tent->item->giType == IT_ARMOR)
-                    foundPreferredItem = qtrue;
-                    
-                  }
-                }
-              }
-            }
-        if (foundItem)
-            {
-            
-                item = BG_FindItemForPowerup(PW_SIGILWHITE);
-                targ->s.modelindex = item - bg_itemlist;
-                targ->classname = item->classname;
-                targ->item = item;
-                targ->r.svFlags = SVF_BROADCAST;
-                targ->s.powerups = PW_SIGILWHITE;
-                targ->count = 0;
-                teamgame.sigil[teamgame.numSigils].entity = targ;
-                teamgame.numSigils++;
-            }
-        // kill the entity that does the spawn conversions
-        G_FreeEntity(ent);
+          }
+      }
+
+      if (targ) {
+          item = BG_FindItemForPowerup(PW_SIGILWHITE);
+          targ->s.modelindex = item - bg_itemlist;
+          targ->classname = item->classname;
+          targ->item = item;
+          targ->r.svFlags = SVF_BROADCAST;
+          targ->s.powerups = PW_SIGILWHITE;
+          targ->count = 0;
+          teamgame.sigil[teamgame.numSigils].entity = targ;
+          teamgame.numSigils++;
+      }
+      // kill the entity that does the spawn conversions
+      G_FreeEntity(ent);
   }
   
 
@@ -1210,32 +1196,21 @@ void Sigil_Think( gentity_t *ent ) {
 
   ent->count = 0;
   level.teamScores[team]++;
-  ent->nextthink = level.time + 10000;
+  ent->nextthink = level.time + g_dominationScoreInterval.integer;
 
   // refresh scoreboard
   CalculateRanks();
 }
 
-/*
-void Sigil_Think( gentity_t *ent ) {
-        team_t team;
-        
-        if (team = (ent->s.powerups == PW_SIGILRED) ? TEAM_RED : TEAM_BLUE);
-        
-        else if (team = (ent->s.powerups == PW_SIGILBLUE) ? TEAM_BLUE : TEAM_BLUE);
-        
-        else if (team = (ent->s.powerups == PW_SIGILGREEN) ? TEAM_GREEN : TEAM_BLUE);
-        
-        else if (team = (ent->s.powerups == PW_SIGILYELLOW) ? TEAM_YELLOW : TEAM_BLUE);
-        
-        ent->count = 0;
-        level.teamScores[team]++;
-        ent->nextthink = level.time + 10000;
-        
-        // refresh scoreboard
-        CalculateRanks();
-                  }
-*/
+
+void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t powerup) {
+    Team_SetSigilStatus(sigilNum, status);
+    ent->nextthink = level.time - (level.time % 4000) + 4000;
+    ent->think = Sigil_Think;
+    ent->s.powerups = powerup;
+    ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( powerup ) );
+    ent->count = 1;
+}
 
 /*
 ====================================
@@ -1245,53 +1220,44 @@ Sigil_Touch
 int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
     gclient_t *cl = other->client;
     int sigilNum = 0;
+    powerup_t powerup = PW_NONE;
+    sigilStatus_t status = SIGIL_NONE;
     
     if (!cl)
         return 0;
         
-    if    (ent->count && ent->nextthink < level.time + 1500)    // protect against overflows by not counting
+    if    (ent->count && ent->nextthink < level.time + g_dominationCaptureDelay.integer)    // protect against overflows by not counting
         return 0;
         
     // find the index of the sigil reffered by ent
     while ( sigilNum < MAX_SIGILS && teamgame.sigil[sigilNum].entity != ent )
-          sigilNum++;        
-        
-    if ( cl->sess.sessionTeam == TEAM_RED && ent->s.powerups != PW_SIGILRED )
-    {
-        Team_SetSigilStatus(sigilNum, SIGIL_ISRED);
-        ent->nextthink = level.time - (level.time % 4000) + 4000;
-        ent->think = Sigil_Think;
-        ent->s.powerups = PW_SIGILRED;
-        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILRED ) );
-        ent->count = 1;
+          sigilNum++;
+
+    switch (cl->sess.sessionTeam) {
+        case TEAM_RED:
+            powerup = PW_SIGILRED;
+            status = SIGIL_ISRED;
+            break;
+        case TEAM_BLUE:
+            powerup = PW_SIGILBLUE;
+            status = SIGIL_ISBLUE;
+            break;
+        case TEAM_GREEN:
+            powerup = PW_SIGILGREEN;
+            status = SIGIL_ISGREEN;
+            break;
+        case TEAM_YELLOW:
+            powerup = PW_SIGILYELLOW;
+            status = SIGIL_ISYELLOW;
+            break;
+        default:
+            return 0;
     }
-    else if ( cl->sess.sessionTeam == TEAM_BLUE && ent->s.powerups != PW_SIGILBLUE )
-    {
-        Team_SetSigilStatus(sigilNum, SIGIL_ISBLUE);
-        ent->nextthink = level.time - (level.time % 4000) + 4000;
-        ent->think = Sigil_Think;
-        ent->s.powerups = PW_SIGILBLUE;
-        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILBLUE ) );
-        ent->count = 1;
+
+    if (ent->s.powerups != powerup) {
+        CaptureSigil(ent, sigilNum, status, powerup);
     }
-    if ( cl->sess.sessionTeam == TEAM_GREEN && ent->s.powerups != PW_SIGILGREEN )
-    {
-        Team_SetSigilStatus(sigilNum, SIGIL_ISGREEN);
-        ent->nextthink = level.time - (level.time % 4000) + 4000;
-        ent->think = Sigil_Think;
-        ent->s.powerups = PW_SIGILGREEN;
-        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILGREEN ) );
-        ent->count = 1;
-    }
-    if ( cl->sess.sessionTeam == TEAM_YELLOW && ent->s.powerups != PW_SIGILYELLOW )
-    {
-        Team_SetSigilStatus(sigilNum, SIGIL_ISYELLOW);
-        ent->nextthink = level.time - (level.time % 4000) + 4000;
-        ent->think = Sigil_Think;
-        ent->s.powerups = PW_SIGILYELLOW;
-        ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( PW_SIGILYELLOW ) );
-        ent->count = 1;
-    }
+
     return 0;
   }
 
