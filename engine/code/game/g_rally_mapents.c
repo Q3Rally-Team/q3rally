@@ -40,7 +40,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	}
 
 	// Debounce: prevent triggering too quickly
-	if ( other->client->lastCheckpointTime + 1000 > level.time ) {
+	if ( other->client->lastCheckpointTime + 300 > level.time ) {
 		return;
 	}
 
@@ -216,7 +216,7 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 	}
 
 	// Debounce: prevent triggering too quickly
-	if ( other->client->lastCheckpointTime + 1000 > level.time ) {
+	if ( other->client->lastCheckpointTime + 300 > level.time ) {
 		return;
 	}
 

@@ -503,15 +503,13 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 
 // Q3Rally Code Start
 //	if drawing snow start drawing it a little lower because it falls too slowly
-	if (tr.endpos[2] - origz > START_SNOW_HEIGHT){
-		VectorCopy(tr.endpos, testpoint);
-		testpoint[2] -= 10;
-		testend[2] = origz + (START_SNOW_HEIGHT * (random() * 0.8f + 0.2f));
+	VectorCopy(tr.endpos, testpoint);
+	testpoint[2] -= 10;
+	testend[2] = origz + (tr.fraction * MAX_ATMOSPHERIC_HEIGHT * (random() * 0.8f + 0.2f)) - 10;
 
-		CG_Trace( &tr, testpoint, NULL, NULL, testend, ENTITYNUM_NONE, MASK_SOLID|MASK_WATER );
-		if ( tr.fraction != 1 ){
-			return qfalse;
-		}
+	CG_Trace( &tr, testpoint, NULL, NULL, testend, ENTITYNUM_NONE, MASK_SOLID|MASK_WATER );
+	if ( tr.fraction != 1 ){
+		return qfalse;
 	}
 // END
 
@@ -525,7 +523,7 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 	VectorNormalize2( particle->delta, particle->deltaNormalized );
 	particle->height = ATMOSPHERIC_SNOW_HEIGHT + crandom() * 8;
 	particle->weight = particle->height * 0.5f;
-	particle->effectshader = &cg_atmFx->effectshaders[ (int) (random() * ( cg_atmFx->numEffectShaders - 1 )) ];
+	particle->effectshader = &cg_atmFx->effectshaders[ (int) (random() * cg_atmFx->numEffectShaders) ];
 
 	distance =  	((float)(tr.endpos[2] - MIN_ATMOSPHERIC_HEIGHT)) / -particle->delta[2];
 	VectorMA( tr.endpos, distance, particle->delta, testend );
