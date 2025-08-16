@@ -855,13 +855,21 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 
 	// figure out plate model
 	Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
-	if ( !Q_stricmpn( ci->plateSkinName, "usa_", 4 ) ){
+	if ( ci->plateSkinName[0] ) {
+		if ( !Q_stricmpn( ci->plateSkinName, "usa_", 4 ) ){
+			Q_strncpyz( ci->plateName, "plate_usa", sizeof( ci->plateName ) );
+			CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 10);
+		}
+		else{
+			Q_strncpyz( ci->plateName, "plate_eu", sizeof( ci->plateName ) );
+			CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 20);
+		}
+	} else if (ci->botSkill > 0) { // it's a bot without a plate skin
+		// just create a default plate with the bot's name
 		Q_strncpyz( ci->plateName, "plate_usa", sizeof( ci->plateName ) );
-		CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 10);
-	}
-	else{
-		Q_strncpyz( ci->plateName, "plate_eu", sizeof( ci->plateName ) );
-		CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 20);
+		CreateLicensePlateImage("models/players/plates/usa_california.tga", filename, ci->name, 10);
+		// set a dummy plateSkinName so that CG_RegisterClientSkin will use the generated texture
+		Q_strncpyz( ci->plateSkinName, "bot_plate", sizeof( ci->plateSkinName ) );
 	}
 
 	Com_sprintf( filename, sizeof( filename ), "models/players/plates/%s.md3", ci->plateName );
