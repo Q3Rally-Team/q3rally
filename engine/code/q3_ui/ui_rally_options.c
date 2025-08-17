@@ -46,6 +46,9 @@ qboolean isRaceObserver( int clientNum )
 #define ID_RVRL_MARKS           24
 #define ID_RVRL_SPARKS          25
 
+#define ID_MMAP_SIZE            26
+#define ID_MMAP_FOV             27
+
 #define ID_MVRL_PLAYERS         30
 #define ID_MVRL_OBJECTS         31
 #define ID_MVRL_SMOKE           32
@@ -69,6 +72,8 @@ typedef struct {
 	menuradiobutton_s	positionSprites;
 	menuslider_s		skidlength;
 	menuslider_s		camtracking;
+	menuslider_s		mmap_size;
+	menuslider_s		mmap_fov;
 
 	menuradiobutton_s	rvrl_players;
 	menuradiobutton_s	rvrl_objects;
@@ -180,6 +185,13 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "cg_tightCamTracking", s_q3roptions.camtracking.curvalue );
 		break;
 
+	case ID_MMAP_SIZE:
+		trap_Cvar_SetValue( "cg_mmap_size", s_q3roptions.mmap_size.curvalue );
+		break;
+
+	case ID_MMAP_FOV:
+		trap_Cvar_SetValue( "cg_mmap_fov", s_q3roptions.mmap_fov.curvalue );
+		break;
 
 	case ID_ENGINE_SOUNDS:
 		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
@@ -288,6 +300,14 @@ static void Q3ROptions_StatusBar( void *self )
 		text = "Tightness of the joystick camera tracking mode.  A higher value makes the camera stay behind the car more.";
 		break;
 
+	case ID_MMAP_SIZE:
+		text = "Changes the size of the minimap.";
+		break;
+
+	case ID_MMAP_FOV:
+		text = "Changes the zoom of the minimap.";
+		break;
+
 	case ID_ENGINE_SOUNDS:
 		text = "Turns on engine sounds in game.";
 		break;
@@ -360,6 +380,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
+	s_q3roptions.mmap_size.curvalue = ui_mmap_size.value;
+	s_q3roptions.mmap_fov.curvalue = ui_mmap_fov.value;
 
 	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer;
     
@@ -485,7 +507,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.skidlength.generic.flags		= QMF_SMALLFONT;
 	s_q3roptions.skidlength.generic.x			= 200;
-	s_q3roptions.skidlength.generic.y			= 200;
+	s_q3roptions.skidlength.generic.y			= 220;
 	s_q3roptions.skidlength.generic.name		= "Skid Segment Length:";
 	s_q3roptions.skidlength.generic.id			= ID_SKID_LENGTH;
 	s_q3roptions.skidlength.minvalue			= 4;
@@ -496,7 +518,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.camtracking.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.camtracking.generic.flags		= QMF_SMALLFONT;
 	s_q3roptions.camtracking.generic.x			= 500;
-	s_q3roptions.camtracking.generic.y			= 200;
+	s_q3roptions.camtracking.generic.y			= 220;
 	s_q3roptions.camtracking.generic.name		= "Camera Tracking Scale:";
 	s_q3roptions.camtracking.generic.id			= ID_CAM_TRACKING;
 	s_q3roptions.camtracking.minvalue			= 0;
@@ -504,7 +526,27 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.camtracking.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.camtracking.generic.statusbar	= Q3ROptions_StatusBar;
 
+	s_q3roptions.mmap_size.generic.type		= MTYPE_SLIDER;
+	s_q3roptions.mmap_size.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.mmap_size.generic.x			= 200;
+	s_q3roptions.mmap_size.generic.y			= 200;
+	s_q3roptions.mmap_size.generic.name		= "Minimap Size:";
+	s_q3roptions.mmap_size.generic.id			= ID_MMAP_SIZE;
+	s_q3roptions.mmap_size.minvalue			= 0.5;
+	s_q3roptions.mmap_size.maxvalue			= 2.0;
+	s_q3roptions.mmap_size.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.mmap_size.generic.statusbar	= Q3ROptions_StatusBar;
 
+	s_q3roptions.mmap_fov.generic.type		= MTYPE_SLIDER;
+	s_q3roptions.mmap_fov.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.mmap_fov.generic.x			= 500;
+	s_q3roptions.mmap_fov.generic.y			= 200;
+	s_q3roptions.mmap_fov.generic.name		= "Minimap Zoom:";
+	s_q3roptions.mmap_fov.generic.id			= ID_MMAP_FOV;
+	s_q3roptions.mmap_fov.minvalue			= 10;
+	s_q3roptions.mmap_fov.maxvalue			= 120;
+	s_q3roptions.mmap_fov.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.mmap_fov.generic.statusbar	= Q3ROptions_StatusBar;
 
 	// render levels
 	s_q3roptions.rvrl_heading.generic.type		= MTYPE_PTEXT;
@@ -650,6 +692,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mmap_size );
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mmap_fov );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_heading );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_players );

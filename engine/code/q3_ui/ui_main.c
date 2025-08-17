@@ -209,6 +209,8 @@ vmCvar_t    ui_drawMinimap;
 vmCvar_t	ui_tightCamTracking;
 vmCvar_t	ui_rearViewRenderLevel;
 vmCvar_t	ui_mainViewRenderLevel;
+vmCvar_t	ui_mmap_size;
+vmCvar_t	ui_mmap_fov;
 
 vmCvar_t	ui_model;
 vmCvar_t	ui_head;
@@ -312,6 +314,8 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_tightCamTracking, "cg_tightCamTracking", "1", CVAR_ARCHIVE },
 	{ &ui_rearViewRenderLevel, "cg_rearViewRenderLevel", "31", CVAR_ARCHIVE },
 	{ &ui_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },
+	{ &ui_mmap_size, "cg_mmap_size", "1.0", CVAR_ARCHIVE },
+	{ &ui_mmap_fov, "cg_mmap_fov", "60", CVAR_ARCHIVE },
 
 	{ &ui_model, "model", "alpine/red", CVAR_USERINFO|CVAR_ARCHIVE },
 	{ &ui_head, "head", "doom", CVAR_USERINFO|CVAR_ARCHIVE },

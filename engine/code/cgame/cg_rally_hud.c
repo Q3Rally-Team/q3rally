@@ -159,6 +159,11 @@ void CG_DrawMMap(float x, float y, float w, float h) {
 
     // Optional effects depending on render level
 	CG_AddObjectsToScene(cg_mmap_renderLevel.integer);
+
+	// TBB: add local player to the minimap
+	if (cg_mmap_renderLevel.integer & RL_PLAYERS) {
+		CG_AddCEntity(&cg_entities[cg.snap->ps.clientNum]);
+	}
 	
     // Render the minimap scene
 	trap_R_RenderScene(&cg.mmapRefdef);

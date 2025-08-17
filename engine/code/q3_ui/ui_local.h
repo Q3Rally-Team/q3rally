@@ -151,6 +151,8 @@ extern vmCvar_t ui_drawMinimap;
 extern vmCvar_t	ui_tightCamTracking;
 extern vmCvar_t	ui_rearViewRenderLevel;
 extern vmCvar_t	ui_mainViewRenderLevel;
+extern vmCvar_t	ui_mmap_size;
+extern vmCvar_t	ui_mmap_fov;
 // END
 
 //
