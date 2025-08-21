@@ -1,3 +1,27 @@
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+
+This file is part of q3rally source code.
+
+q3rally source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+q3rally source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with q3rally; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+===========================================================================
+*/
+
+
 #include "ui_local.h"
 
 /* simple proportional text wrapper (C89) */
@@ -70,6 +94,9 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 #define DESC_MAXWIDTH 750
 #define DESC_LINEHEIGHT 16
 
+/* semi-transparent background color */
+static vec4_t garage_background = { 0.0f, 0.0f, 0.0f, 0.25f };
+
 static char botNames[MAX_BOTS][NAME_BUFSIZE];
 static char botModels[MAX_BOTS][NAME_BUFSIZE];
 static char botAIFiles[MAX_BOTS][NAME_BUFSIZE];
@@ -127,6 +154,13 @@ static void UI_BotsMenu_NextPage(void *ptr, int event) {
     }
     if ((botPage + 1) * MAX_VISIBLE_BOTS < botCount) {
         botPage++;
+        /* select first bot on the new page */
+        botSelected = botPage * MAX_VISIBLE_BOTS;
+        if (botSelected >= botCount) {
+            botSelected = -1;
+        } else {
+            UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[botSelected], NULL, NULL, NULL);
+        }
         Com_Printf("[DEBUG] Page changed to: %d\n", botPage);
         UI_BotsMenu_DrawBotPage();
     }
@@ -138,6 +172,13 @@ static void UI_BotsMenu_PrevPage(void *ptr, int event) {
     }
     if (botPage > 0) {
         botPage--;
+        /* select first bot on the new page */
+        botSelected = botPage * MAX_VISIBLE_BOTS;
+        if (botSelected >= botCount) {
+            botSelected = -1;
+        } else {
+            UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[botSelected], NULL, NULL, NULL);
+        }
         Com_Printf("[DEBUG] Page changed to: %d\n", botPage);
         UI_BotsMenu_DrawBotPage();
     }
@@ -150,16 +191,16 @@ static sfxHandle_t UI_BotsMenu_Key(int key) {
 static void UI_BotsMenu_Draw(void) {
     int boxX = 0;
     int boxY = 100;
-    int boxW = 480;
+    int boxW = 640;
     int boxH = 300;
 
-    UI_FillRect(boxX, boxY, boxW, boxH, colorDkGrey);
+    UI_FillRect(boxX, boxY, boxW, boxH, garage_background);
 
     Menu_Draw(&s_bots.menu);
 
     if (botSelected >= 0 && botSelected < botCount) {
-        UI_DrawProportionalString( 20, 300, botPersonalities[botSelected], UI_LEFT | UI_SMALLFONT, color_white);
-        UI_DrawWrappedProportional( 20, 320, DESC_MAXWIDTH, DESC_LINEHEIGHT, botDescriptions[botSelected], UI_LEFT | UI_SMALLFONT, color_white );
+        UI_DrawProportionalString( 20, 300, botPersonalities[botSelected], UI_LEFT | UI_SMALLFONT, colorCyan);
+        UI_DrawWrappedProportional( 20, 320, DESC_MAXWIDTH, DESC_LINEHEIGHT, botDescriptions[botSelected], UI_LEFT | UI_SMALLFONT, colorYellow );
         
         // Draw 3D model of selected bot
         UI_DrawPlayer(270, 0, 425, 425, &s_garagePlayerInfo, uis.realtime);
@@ -319,22 +360,33 @@ static void UI_BotsMenu_Init(void) {
     s_bots.menu.draw = UI_BotsMenu_Draw;
     s_bots.menu.key = UI_BotsMenu_Key;
 
-    s_bots.banner.generic.type = MTYPE_BTEXT;
-    s_bots.banner.generic.flags = QMF_CENTER_JUSTIFY;
-    s_bots.banner.generic.x = 320;
-    s_bots.banner.generic.y = 16;
-    s_bots.banner.string = "THE GARAGE";
-    s_bots.banner.color = color_white;
-    s_bots.banner.style = UI_CENTER;
+    s_bots.banner.generic.type   = MTYPE_BTEXT;
+    s_bots.banner.generic.flags  = QMF_CENTER_JUSTIFY;
+    s_bots.banner.generic.x      = 320;
+    s_bots.banner.generic.y      = 16;
+    s_bots.banner.string         = "THE GARAGE";
+    s_bots.banner.color          = colorWhite;
+    s_bots.banner.style          = UI_CENTER;
 
-    s_bots.back.generic.type = MTYPE_PTEXT;
-    s_bots.back.generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
-    s_bots.back.generic.x = 15;
-    s_bots.back.generic.y = 440;
+    s_bots.back.generic.type     = MTYPE_PTEXT;
+    s_bots.back.generic.flags    = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+    s_bots.back.generic.x        = 15;
+    s_bots.back.generic.y        = 440;
     s_bots.back.generic.callback = UI_BotsMenu_BackEvent;
-    s_bots.back.string = "< BACK";
-    s_bots.back.color = color_white;
-    s_bots.back.style = UI_LEFT | UI_SMALLFONT;
+    s_bots.back.string           = "< BACK";
+    s_bots.back.color            = colorWhite;
+    s_bots.back.style            = UI_LEFT | UI_SMALLFONT;
 
+    /* initial page build */
     UI_BotsMenu_DrawBotPage();
+
+    /* auto-select first bot if available, and rebuild so highlight is correct */
+    if (botCount > 0) {
+        botSelected = 0;
+        UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[0], NULL, NULL, NULL);
+
+        /* rebuild list so the first entry is highlighted (yellow) */
+        UI_BotsMenu_DrawBotPage();
+    }
 }
+
