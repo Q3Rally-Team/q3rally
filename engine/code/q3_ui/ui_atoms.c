@@ -28,6 +28,41 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 **********************************************************************/
 #include "ui_local.h"
 
+#define POOLSIZE	128 * 1024
+static char		memoryPool[POOLSIZE];
+static int		allocPoint;
+qboolean outOfMemory;
+
+/*
+===============
+UI_Alloc
+===============
+*/
+void *UI_Alloc( int size ) {
+	char	*p;
+
+	if ( allocPoint + size > POOLSIZE ) {
+		outOfMemory = qtrue;
+		return NULL;
+	}
+
+	p = &memoryPool[allocPoint];
+
+	allocPoint += ( size + 31 ) & ~31;
+
+	return p;
+}
+
+/*
+===============
+UI_InitMemory
+===============
+*/
+void UI_InitMemory( void ) {
+	allocPoint = 0;
+	outOfMemory = qfalse;
+}
+
 uiStatic_t		uis;
 qboolean		m_entersound;		// after a frame, so caching won't disrupt the sound
 

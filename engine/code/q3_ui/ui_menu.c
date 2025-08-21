@@ -40,7 +40,8 @@ MAIN MENU
 #define ID_CINEMATICS                   14
 
 #define ID_MODS                         16
-#define ID_EXIT                         17
+#define ID_GARAGE                       17
+#define ID_EXIT                         18
 
 #define MAIN_BANNER_MODEL               "models/mapobjects/q3rtitle/q3rtitle.md3"
 #define MAIN_MENU_VERTICAL_SPACING      50
@@ -57,6 +58,7 @@ typedef struct {
         menutext_s              demos;
         menutext_s              cinematics;
         menutext_s              mods;
+        menutext_s              garage;
         menutext_s              exit;
 
         menutext_s              banner;
@@ -201,6 +203,7 @@ void Main_MenuEvent (void* ptr, int event) {
         case ID_SINGLEPLAYER:
         case ID_MULTIPLAYER:
         case ID_SETUP:
+        case ID_GARAGE:
         case ID_DEMOS:
         case ID_CINEMATICS:
         case ID_MODS:
@@ -233,6 +236,10 @@ void MainMenu_ChangeMenu( int menuId ){
         case ID_SETUP:
                 uis.mainMenu = 0;
                 UI_SetupMenu();
+                break;
+
+        case ID_GARAGE:
+                UI_BotsMenu();
                 break;
 
         case ID_DEMOS:
@@ -439,6 +446,18 @@ void UI_MainMenu( void ) {
 
 
         y += MAIN_MENU_VERTICAL_SPACING;
+        s_main.garage.generic.type                      = MTYPE_PTEXT;
+        s_main.garage.generic.id                        = ID_GARAGE;
+        s_main.garage.generic.callback                  = Main_MenuEvent;
+        s_main.garage.style                             = style;
+        s_main.garage.generic.flags                     = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+        s_main.garage.generic.x                         = x - 10;
+        s_main.garage.generic.y                         = y + 12;
+        s_main.garage.string                            = "THE GARAGE";
+        s_main.garage.color                             = text_color_normal;
+        
+        
+        y += MAIN_MENU_VERTICAL_SPACING;
         s_main.demos.generic.type                       = MTYPE_PTEXT;
         s_main.demos.generic.id                         = ID_DEMOS;
         s_main.demos.generic.callback                   = Main_MenuEvent;
@@ -475,6 +494,7 @@ void UI_MainMenu( void ) {
         Menu_AddItem( &s_main.menu,     &s_main.singleplayer );
         Menu_AddItem( &s_main.menu,     &s_main.multiplayer );
         Menu_AddItem( &s_main.menu,     &s_main.setup );
+        Menu_AddItem( &s_main.menu,     &s_main.garage );
         Menu_AddItem( &s_main.menu,     &s_main.demos );
         Menu_AddItem( &s_main.menu,     &s_main.exit );            
 

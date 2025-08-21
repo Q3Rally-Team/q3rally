@@ -1,137 +1,23 @@
-{
-name		Chloe
-model		roadster/blue
-aifile		bots/angelyss_c.c
-}
-
-{
-name		Janine
-model		reaper/yellow
-aifile		bots/arachna_c.c
-}
-
-{
-name		Jennifer
-model		mini/blue
-aifile		bots/ayumi_c.c
-}
-
-{
-name		Samuel
-model		alpine/stomped
-aifile		bots/beret_c.c
-}
-
-{
-name		Jim
-model		raptor/jp
-aifile		bots/dark_c.c
-}
-
-{
-name		Bobby
-model		slingshot/yellow
-aifile		bots/gargoyle_c.c
-}
-
-{
-name		Sam
-model		sidepipe/green
-aifile		bots/grism_c.c
-}
-
-{
-name		Dean
-model		alpine/green
-aifile		bots/grunt_c.c
-}
-
-{
-name		Carla
-model		reaper/green
-aifile		bots/jenna_c.c
-}
-
-{
-name		Minori
-model		mini/vaporwave
-aifile		bots/kyonshi_c.c
-}
-
-{
-name		Alexandra
-model		mini/green
-aifile		bots/liz_c.c
-}
-
-{
-name		Vlad
-model		viper/graphite
-aifile		bots/major_c.c
-}
-
-{
-name		Zack
-model		roadster/green
-aifile		bots/merman_c.c
-}
-
-{
-name		Kuro
-model		murcielago/redhot
-aifile		bots/neko_c.c
-}
-
-{
-name		Paul
-model		sidepipe/blue
-aifile		bots/penguin_c.c
-}
-
-{
-name		Emma
-model		alpine/frefrafac
-aifile		bots/rai_c.c
-}
-
-{
-name		Tobias
-model		raptor/black
-aifile		bots/sarge_c.c
-}
-
-{
-name		Ivan
-model		murcielago/red
-aifile		bots/sergei_c.c
-}
-
-{
-name		Josh
-model		camaro/green
-aifile		bots/skelebot_c.c
-}
-
-{
-name		Steve
-model		mini/brown
-aifile		bots/sly_c.c
-}
-
-{
-name		Tanya
-model		raptor/pink
-aifile		bots/tanisha_c.c
-}
-
-{
-name		Tony
-model		macdaddy/checker
-aifile		bots/tony_c.c
-}
-
-{
-name		Bee
-model		camaro/yellow
-aifile		bots/widowe_c.c
-}
+{ name "Chloe" model "roadster/blue" personality "balanced" description "A stylish roadster with balanced performance." aifile "bots/angelyss_c.c" }
+{ name "Janine" model "reaper/yellow" personality "aggressive" description "Fast and fierce, perfect for overtaking." aifile "bots/arachna_c.c" }
+{ name "Jennifer" model "mini/blue" personality "agile" description "Compact and quick on tight tracks." aifile "bots/ayumi_c.c" }
+{ name "Samuel" model "alpine/stomped" personality "steady" description "Sturdy build with good cornering." aifile "bots/beret_c.c" }
+{ name "Jim" model "raptor/jp" personality "wild" description "Built for speed, hard to tame." aifile "bots/dark_c.c" }
+{ name "Bobby" model "slingshot/yellow" personality "technical" description "Great acceleration and handling." aifile "bots/gargoyle_c.c" }
+{ name "Sam" model "sidepipe/green" personality "tough" description "A durable car for aggressive driving." aifile "bots/grism_c.c" }
+{ name "Dean" model "alpine/green" personality "calm" description "Reliable performance in all conditions." aifile "bots/grunt_c.c" }
+{ name "Carla" model "reaper/green" personality "fast" description "Great for quick starts and overtakes." aifile "bots/jenna_c.c" }
+{ name "Minori" model "mini/vaporwave" personality "quirky" description "Colorful design with nimble driving." aifile "bots/kyonshi_c.c" }
+{ name "Alexandra" model "mini/green" personality "cool" description "Balanced mini vehicle for city tracks." aifile "bots/liz_c.c" }
+{ name "Vlad" model "viper/graphite" personality "ruthless" description "A sleek and dangerous competitor." aifile "bots/major_c.c" }
+{ name "Zack" model "roadster/green" personality "stylish" description "Smooth curves and smooth driving." aifile "bots/merman_c.c" }
+{ name "Kuro" model "murcielago/redhot" personality "mysterious" description "A red hot ride with a secret." aifile "bots/neko_c.c" }
+{ name "Paul" model "sidepipe/blue" personality "stable" description "Dependable under pressure." aifile "bots/penguin_c.c" }
+{ name "Emma" model "alpine/frefrafac" personality "kind" description "A friendly driver with surprising pace." aifile "bots/rai_c.c" }
+{ name "Tobias" model "raptor/black" personality "strong" description "Dominates the field with power." aifile "bots/sarge_c.c" }
+{ name "Ivan" model "murcielago/red" personality "cold" description "Precision driver with cold efficiency." aifile "bots/sergei_c.c" }
+{ name "Josh" model "camaro/green" personality "fun" description "Loves wild races and close calls." aifile "bots/skelebot_c.c" }
+{ name "Steve" model "mini/brown" personality "smart" description "Outwits others with clever moves." aifile "bots/sly_c.c" }
+{ name "Tanya" model "raptor/pink" personality "bold" description "Eye-catching and fearless." aifile "bots/tanisha_c.c" }
+{ name "Tony" model "macdaddy/checker" personality "loud" description "Always making a scene — and winning." aifile "bots/tony_c.c" }
+{ name "Bee" model "camaro/yellow" personality "speedy" description "Yellow blur with fast reflexes." aifile "bots/widowe_c.c" }

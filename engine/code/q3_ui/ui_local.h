@@ -365,6 +365,9 @@ extern void			Menu_AdjustCursor( menuframework_s *menu, int dir );
 extern void			Menu_Draw( menuframework_s *menu );
 extern void			*Menu_ItemAtCursor( menuframework_s *m );
 extern sfxHandle_t	Menu_ActivateItem( menuframework_s *s, menucommon_s* item );
+extern void *UI_Alloc( int size );
+extern void UI_InitMemory( void );
+extern qboolean outOfMemory;
 extern void			Menu_SetCursor( menuframework_s *s, int cursor );
 extern void			Menu_SetCursorToItem( menuframework_s *m, void* ptr );
 extern sfxHandle_t	Menu_DefaultKey( menuframework_s *s, int key );
@@ -813,6 +816,7 @@ extern uiStatic_t	uis;
 void UI_SPLevelMenu_Cache( void );
 void UI_SPLevelMenu( void );
 void UI_SPLevelMenu_f( void );
+void UI_BotsMenu( void );
 void UI_SPLevelMenu_ReInit( void );
 
 //
