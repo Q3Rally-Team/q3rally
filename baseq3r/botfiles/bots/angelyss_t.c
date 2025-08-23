@@ -243,7 +243,7 @@ chat "Angelyss"
 	{
 		KILL_INSULT4;
 		"Why do you even bother?";
-	
+
 		
 		// 0 = enemy name
 	} //end type

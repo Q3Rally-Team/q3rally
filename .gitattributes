@@ -12,3 +12,9 @@
 # Denote all files that are truly binary and should not be modified.
 *.png binary
 *.jpg binary
+
+# Ganze Ordner weglassen
+.github/**        export-ignore
+baseq3r/**           export-ignore
+readme/**          export-ignore
+tools/**    export-ignore
