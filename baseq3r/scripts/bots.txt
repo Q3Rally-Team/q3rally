@@ -1,24 +1,25 @@
-{ name "Chloe" model "roadster/blue" personality "graceful" description "Blue roadster that dances through curves." aifile "bots/angelyss_c.c" }
-{ name "Janine" model "reaper/yellow" personality "relentless" description "Yellow menace, late on brakes, early on throttle." aifile "bots/arachna_c.c" }
-{ name "Jennifer" model "mini/blue" personality "nimble" description "Tiny footprint, ridiculous pace in tight sections." aifile "bots/ayumi_c.c" }
-{ name "Samuel" model "alpine/stomped" personality "methodical" description "Picks clean lines and repeats them flawlessly." aifile "bots/beret_c.c" }
-{ name "Jim" model "raptor/jp" personality "untamed" description "Explosive sprints and risky passes keep rivals nervous." aifile "bots/dark_c.c" }
-{ name "Bobby" model "slingshot/yellow" personality "calculating" description "Drafts patiently, then slings by when it counts." aifile "bots/gargoyle_c.c" }
-{ name "Sam" model "sidepipe/green" personality "bulldog" description "Holds position with elbows out and iron will." aifile "bots/grism_c.c" }
-{ name "Dean" model "alpine/green" personality "unflappable" description "Keeps cool pace no matter the chaos ahead." aifile "bots/grunt_c.c" }
-{ name "Carla" model "reaper/green" personality "opportunist" description "Launches hard and pounces the moment a gap opens." aifile "bots/jenna_c.c" }
-{ name "Minori" model "mini/vaporwave" personality "playful" description "Flashy paint, razor turns, and cheeky lines." aifile "bots/kyonshi_c.c" }
-{ name "Alexandra" model "mini/green" personality "precise" description "Clips apexes like a metronome, lap after lap." aifile "bots/liz_c.c" }
-{ name "Vlad" model "viper/graphite" personality "predatory" description "Dark viper that stalks and strikes on straights." aifile "bots/major_c.c" }
-{ name "Zack" model "roadster/green" personality "suave" description "Smooth inputs, smoother exits, always in style." aifile "bots/merman_c.c" }
-{ name "Kuro" model "murcielago/redhot" personality "enigmatic" description "Blazing red missile with quiet, deadly focus." aifile "bots/neko_c.c" }
-{ name "Paul" model "sidepipe/blue" personality "steadfast" description "Steady hands, steady pace, strong under pressure." aifile "bots/penguin_c.c" }
-{ name "Emma" model "alpine/frefrafac" personality "benevolent" description "Friendly wave, then quietly sets purple sectors." aifile "bots/rai_c.c" }
-{ name "Tobias" model "raptor/black" personality "domineering" description "Takes track space and dares you to contest it." aifile "bots/sarge_c.c" }
-{ name "Ivan" model "murcielago/red" personality "clinical" description "Cold accuracy, brutal exits, zero wasted motion." aifile "bots/sergei_c.c" }
-{ name "Josh" model "camaro/green" personality "mischievous" description "Lives for slides, duels, and photo finishes." aifile "bots/skelebot_c.c" }
-{ name "Steve" model "mini/brown" personality "crafty" description "Wins with brains, traps, and perfect timing." aifile "bots/sly_c.c" }
-{ name "Tanya" model "raptor/pink" personality "fearless" description "Bold moves and braver braking into every hairpin." aifile "bots/tanisha_c.c" }
-{ name "Tony" model "macdaddy/checker" personality "boisterous" description "Loud paint, louder pace, loves the spotlight." aifile "bots/tony_c.c" }
-{ name "Bee" model "camaro/yellow" personality "hyperactive" description "Yellow flash with twitchy reactions and turbo starts." aifile "bots/widowe_c.c" }
+{ name "Chloe" model "roadster/blue" personality "graceful" description "Blue roadster that dances through curves." aifile "bots/angelyss_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Janine" model "reaper/yellow" personality "relentless" description "Yellow menace, late on brakes, early on throttle." aifile "bots/arachna_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Jennifer" model "mini/blue" personality "nimble" description "Tiny footprint, ridiculous pace in tight sections." aifile "bots/ayumi_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Samuel" model "alpine/stomped" personality "methodical" description "Picks clean lines and repeats them flawlessly." aifile "bots/beret_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Jim" model "raptor/jp" personality "untamed" description "Explosive sprints and risky passes keep rivals nervous." aifile "bots/dark_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Bobby" model "slingshot/yellow" personality "calculating" description "Drafts patiently, then slings by when it counts." aifile "bots/gargoyle_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Sam" model "sidepipe/green" personality "bulldog" description "Holds position with elbows out and iron will." aifile "bots/grism_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Dean" model "alpine/green" personality "unflappable" description "Keeps cool pace no matter the chaos ahead." aifile "bots/grunt_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Carla" model "reaper/green" personality "opportunist" description "Launches hard and pounces the moment a gap opens." aifile "bots/jenna_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Minori" model "mini/vaporwave" personality "playful" description "Flashy paint, razor turns, and cheeky lines." aifile "bots/kyonshi_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Alexandra" model "mini/green" personality "precise" description "Clips apexes like a metronome, lap after lap." aifile "bots/liz_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Vlad" model "viper/graphite" personality "predatory" description "Dark viper that stalks and strikes on straights." aifile "bots/major_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Zack" model "roadster/green" personality "suave" description "Smooth inputs, smoother exits, always in style." aifile "bots/merman_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Kuro" model "murcielago/redhot" personality "enigmatic" description "Blazing red missile with quiet, deadly focus." aifile "bots/neko_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Paul" model "sidepipe/blue" personality "steadfast" description "Steady hands, steady pace, strong under pressure." aifile "bots/penguin_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Emma" model "alpine/frefrafac" personality "benevolent" description "Friendly wave, then quietly sets purple sectors." aifile "bots/rai_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Tobias" model "raptor/black" personality "domineering" description "Takes track space and dares you to contest it." aifile "bots/sarge_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Ivan" model "murcielago/red" personality "clinical" description "Cold accuracy, brutal exits, zero wasted motion." aifile "bots/sergei_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Josh" model "camaro/green" personality "mischievous" description "Lives for slides, duels, and photo finishes." aifile "bots/skelebot_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Steve" model "mini/brown" personality "crafty" description "Wins with brains, traps, and perfect timing." aifile "bots/sly_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Tanya" model "raptor/pink" personality "fearless" description "Bold moves and braver braking into every hairpin." aifile "bots/tanisha_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Tony" model "macdaddy/checker" personality "boisterous" description "Loud paint, louder pace, loves the spotlight." aifile "bots/tony_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Bee" model "camaro/yellow" personality "hyperactive" description "Yellow flash with twitchy reactions and turbo starts." aifile "bots/widowe_c.c" favoriteweapon "Rocket Launcher" }
+{ name "Carter" model "gremlin/blue" personality "stoic" description "Calm lines, iron consistency, punishes mistakes with silent precision." aifile "bots/rai_c.c" favoriteweapon "Rocket Launcher" }
 

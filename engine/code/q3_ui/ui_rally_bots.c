@@ -1,9 +1,23 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2025 Q3Rally Team
+Copyright (C) 2002-2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
-This file is part of q3rally source code and is distributed under the GPLv2+.
+This file is part of q3rally source code.
+
+q3rally source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+q3rally source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with q3rally; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
@@ -42,6 +56,71 @@ static qhandle_t UI_LoadModelIconFor( const char *modelSkin ) {
     if (h) return h;
 
     return trap_R_RegisterShaderNoMip("menu/art/unknownbot");
+}
+
+/* Canonicalize free-text weapon names from bots.txt into tokens like "ROCKETLAUNCHER" */
+static void UI_CanonicalizeWeapon( const char *in, char *out, int outSize ) {
+    int i = 0, j = 0;
+    char c;
+
+    if (!out || outSize <= 0) {
+        return;
+    }
+    out[0] = '\0';
+
+    if (!in || !*in) {
+        return;
+    }
+
+    /* Uppercase letters, drop spaces/hyphens/underscores; keep digits (rare) */
+    while ((c = in[i++]) != '\0' && j < outSize - 1) {
+        if (c == ' ' || c == '-' || c == '_') {
+            continue;
+        }
+        if (c >= 'a' && c <= 'z') {
+            c = (char)(c - 'a' + 'A');
+        }
+        out[j++] = c;
+    }
+    out[j] = '\0';
+
+    /* Strip leading "WEAPON" if present */
+    if (!Q_stricmpn(out, "WEAPON", 6)) {
+        int k = 0;
+        while (out[6 + k]) { out[k] = out[6 + k]; k++; }
+        out[k] = '\0';
+    }
+}
+
+/* Canonical token -> icon shader (icons/iconw_*) */
+typedef struct { const char *canon; const char *icon; } weaponiconmap_t;
+static const weaponiconmap_t s_weaponIconMap[] = {
+    { "GAUNTLET",        "icons/iconw_gauntlet" },  /* Chainsaw alias uses same icon */
+    { "CHAINSAW",        "icons/iconw_gauntlet" },
+    { "MACHINEGUN",      "icons/iconw_machinegun" },
+    { "SHOTGUN",         "icons/iconw_shotgun" },
+    { "GRENADELAUNCHER", "icons/iconw_grenade" },
+    { "ROCKETLAUNCHER",  "icons/iconw_rocket" },
+    { "LIGHTNING",       "icons/iconw_lightning" },
+    { "RAILGUN",         "icons/iconw_railgun" },
+    { "PLASMAGUN",       "icons/iconw_plasma" },
+    { "BFG10k",          "icons/iconw_bfg" },
+    { "FLAMETHROWER",    "icons/iconw_flame" }
+};
+#define WEAPONICONMAP_COUNT ( (int)(sizeof(s_weaponIconMap)/sizeof(s_weaponIconMap[0])) )
+
+/* Resolve icon handle from favoriteweapon text */
+static qhandle_t UI_WeaponIconFromText( const char *favoriteText ) {
+    char canon[32]; int i;
+    if (!favoriteText || !*favoriteText) return 0;
+    UI_CanonicalizeWeapon(favoriteText, canon, sizeof(canon));
+    if (!canon[0]) return 0;
+    for (i = 0; i < WEAPONICONMAP_COUNT; i++) {
+        if (Q_stricmp(s_weaponIconMap[i].canon, canon) == 0) {
+            return trap_R_RegisterShaderNoMip(s_weaponIconMap[i].icon);
+        }
+    }
+    return 0;
 }
 
 /* simple proportional text wrapper (C89) */
@@ -132,11 +211,26 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 /* semi-transparent background color */
 static vec4_t garage_background = { 0.0f, 0.0f, 0.0f, 0.25f };
 
+/* Draw weapon icon to the right of the car icon; derives position from given rect (no layout change) */
+static void UI_DrawWeaponIconNextTo( int x, int y, int w, int h, const char *favoriteText ) {
+    qhandle_t wi;
+    if (!favoriteText || !*favoriteText) return;
+    wi = UI_WeaponIconFromText(favoriteText);
+    if (!wi) return;
+    {
+#define WEAPON_ICON_DY 32
+    int wx = x + w + 24;
+    int wy = y + WEAPON_ICON_DY;
+        UI_DrawHandlePic(wx, wy, 40, 40, wi);
+    }
+}
+
 static char botNames[MAX_BOTS][NAME_BUFSIZE];
 static char botModels[MAX_BOTS][NAME_BUFSIZE];
 static char botAIFiles[MAX_BOTS][NAME_BUFSIZE];
 static char botDescriptions[MAX_BOTS][DESC_BUFSIZE];
 static char botPersonalities[MAX_BOTS][DESC_BUFSIZE];
+static char botFavWeapon[MAX_BOTS][DESC_BUFSIZE];
 static qhandle_t botIcons[MAX_BOTS];
 static int botCount = 0;
 static int botPage = 0;
@@ -226,9 +320,16 @@ static void UI_BotsMenu_Draw(void) {
     if (botSelected >= 0 && botSelected < botCount) {
         if (botIcons[botSelected]) {
             UI_DrawHandlePic(330, 375, 92, 92, botIcons[botSelected]);
+            UI_DrawWeaponIconNextTo(330, 375, 92, 92, botFavWeapon[botSelected][0] ? botFavWeapon[botSelected] : NULL);
         }
         UI_DrawProportionalString(20, 320, botPersonalities[botSelected], UI_LEFT | UI_SMALLFONT, colorCyan);
-        UI_DrawWrappedProportional( 20, 340, DESC_MAXWIDTH, DESC_LINEHEIGHT, botDescriptions[botSelected], UI_LEFT | UI_SMALLFONT, colorYellow );
+        {
+            const char *fw = (botFavWeapon[botSelected][0]) ? botFavWeapon[botSelected] : "-";
+            char fav[64];
+            Com_sprintf(fav, sizeof(fav), "Favorite Weapon: %s", fw);
+            UI_DrawProportionalString(20, 340, fav, UI_LEFT | UI_SMALLFONT, colorWhite);
+        }
+        UI_DrawWrappedProportional( 20, 360, DESC_MAXWIDTH, DESC_LINEHEIGHT, botDescriptions[botSelected], UI_LEFT | UI_SMALLFONT, colorYellow );
         UI_DrawPlayer(270, 0, 425, 425, &s_garagePlayerInfo, uis.realtime);
     }
 }
@@ -244,6 +345,7 @@ static void UI_BotsMenu_ParseBots(void) {
     char aifile[NAME_BUFSIZE];
     char description[DESC_BUFSIZE];
     char personality[DESC_BUFSIZE];
+    char favoriteweapon[DESC_BUFSIZE];
 
     len = trap_FS_FOpenFile("scripts/bots.txt", &f, FS_READ);
     if (!f) return;
@@ -265,6 +367,7 @@ static void UI_BotsMenu_ParseBots(void) {
         aifile[0] = '\0';
         description[0] = '\0';
         personality[0] = '\0';
+        favoriteweapon[0] = '\0';
 
         while (1) {
             token = COM_ParseExt(&text_p, qtrue);
@@ -286,6 +389,9 @@ static void UI_BotsMenu_ParseBots(void) {
             } else if (!Q_stricmp(token, "personality")) {
                 token = COM_ParseExt(&text_p, qfalse);
                 Q_strncpyz(personality, token, DESC_BUFSIZE);
+            } else if (!Q_stricmp(token, "favoriteweapon")) {
+                token = COM_ParseExt(&text_p, qfalse);
+                Q_strncpyz(favoriteweapon, token, DESC_BUFSIZE);
             } else {
                 token = COM_ParseExt(&text_p, qfalse);
             }
@@ -297,6 +403,7 @@ static void UI_BotsMenu_ParseBots(void) {
             Q_strncpyz(botAIFiles[botCount], aifile, NAME_BUFSIZE);
             Q_strncpyz(botDescriptions[botCount], description, DESC_BUFSIZE);
             Q_strncpyz(botPersonalities[botCount], personality, DESC_BUFSIZE);
+            Q_strncpyz(botFavWeapon[botCount], favoriteweapon, DESC_BUFSIZE);
             botIcons[botCount] = UI_LoadModelIconFor(model);
             
             botCount++;
