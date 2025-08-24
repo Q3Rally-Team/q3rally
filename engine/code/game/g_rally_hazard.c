@@ -46,8 +46,8 @@ qboolean G_FrictionCalc( const carPoint_t *point, float *sCOF, float *kCOF )
 
 	numListedEntities = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
 
-	for ( i = 0 ; i < numListedEntities ; i++ ) {
-		ent = &g_entities[entityList[ i ]];
+        for ( i = 0 ; i < numListedEntities ; i++ ) {
+                ent = &g_entities[ entityList[i] ];
 
 		if( ent->s.eType != ET_EVENTS + EV_HAZARD ) continue;
 		if( ent->s.weapon != HT_OIL ) continue;

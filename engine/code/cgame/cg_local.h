@@ -1859,7 +1859,7 @@ qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
 //
 // cg_rally_race_tools.c
 //
-void CG_NewLapTime( int lap, int time );
+void CG_NewLapTime( int client, int lap, int time );
 void CG_FinishedRace( int client, int time );
 void CG_StartRace( int time );
 void CG_DrawRaceCountDown( void );

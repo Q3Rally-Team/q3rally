@@ -1288,10 +1288,13 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( !strcmp( cmd, "newLapTime" ) ) {
-		CG_NewLapTime( atoi(CG_Argv(1)), atoi(CG_Argv(2)) );
-		return;
-	}
+       if ( !strcmp( cmd, "newLapTime" ) ) {
+               int client = atoi(CG_Argv(1));
+               int lap = atoi(CG_Argv(2));
+               int time = atoi(CG_Argv(3));
+               CG_NewLapTime( client, lap, time );
+               return;
+       }
 
 	if ( !strcmp( cmd, "positions" ) ) {
 		CG_ParsePositions();

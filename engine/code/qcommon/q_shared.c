@@ -307,8 +307,8 @@ short	BigShort(short l){return _BigShort(l);}
 short	LittleShort(short l) {return _LittleShort(l);}
 int		BigLong (int l) {return _BigLong(l);}
 int		LittleLong (int l) {return _LittleLong(l);}
-qint64 	BigLong64 (qint64 l) {return _BigLong64(l);}
-qint64 	LittleLong64 (qint64 l) {return _LittleLong64(l);}
+qint64	BigLong64 (qint64 l) {return _BigLong64(l);}
+qint64	LittleLong64 (qint64 l) {return _LittleLong64(l);}
 float	BigFloat (const float *l) {return _BigFloat(l);}
 float	LittleFloat (const float *l) {return _LittleFloat(l);}
 */
@@ -331,9 +331,9 @@ void CopyLongSwap(void *dest, void *src)
 	to[3] = from[0];
 }
 
-short   ShortSwap (short l)
+short	ShortSwap (short l)
 {
-	byte    b1,b2;
+	byte	b1,b2;
 
 	b1 = l&255;
 	b2 = (l>>8)&255;
@@ -348,7 +348,7 @@ short	ShortNoSwap (short l)
 
 int    LongSwap (int l)
 {
-	byte    b1,b2,b3,b4;
+	byte	b1,b2,b3,b4;
 
 	b1 = l&255;
 	b2 = (l>>8)&255;
@@ -1013,18 +1013,18 @@ void Q_strncpyz( char *dest, const char *src, int destsize ) {
 	strncpy( dest, src, destsize-1 );
   dest[destsize-1] = 0;
 }
-                 
+		 
 int Q_stricmpn (const char *s1, const char *s2, int n) {
 	int		c1, c2;
 
-        if ( s1 == NULL ) {
-           if ( s2 == NULL )
-             return 0;
-           else
-             return -1;
-        }
-        else if ( s2==NULL )
-          return 1;
+	if ( s1 == NULL ) {
+	   if ( s2 == NULL )
+	     return 0;
+	   else
+	     return -1;
+	}
+	else if ( s2==NULL )
+	  return 1;
 
 
 	
@@ -1129,12 +1129,12 @@ const char *Q_stristr( const char *s, const char *find)
     {
       do
       {
-        if ((sc = *s++) == 0)
-          return NULL;
-        if (sc >= 'a' && sc <= 'z')
-        {
-          sc -= ('a' - 'A');
-        }
+	if ((sc = *s++) == 0)
+	  return NULL;
+	if (sc >= 'a' && sc <= 'z')
+	{
+	  sc -= ('a' - 'A');
+	}
       } while (sc != c);
     } while (Q_stricmpn(s, find, len) != 0);
     s--;
@@ -1294,33 +1294,37 @@ char *Info_ValueForKey( const char *s, const char *key ) {
 
 	valueindex ^= 1;
 	if (*s == '\\')
-		s++;
+	       s++;
 	while (1)
 	{
-		o = pkey;
-		while (*s != '\\')
-		{
-			if (!*s)
-				return "";
-			*o++ = *s++;
-		}
-		*o = 0;
-		s++;
+	       o = pkey;
+	       while (*s != '\\')
+	       {
+		       if (!*s)
+			       return "";
+		       if (o - pkey < BIG_INFO_KEY - 1)
+			       *o++ = *s;
+		       s++;
+	       }
+	       *o = 0;
+	       s++;
 
-		o = value[valueindex];
+	       o = value[valueindex];
 
-		while (*s != '\\' && *s)
-		{
-			*o++ = *s++;
-		}
-		*o = 0;
+	       while (*s != '\\' && *s)
+	       {
+		       if (o - value[valueindex] < BIG_INFO_VALUE - 1)
+			       *o++ = *s;
+		       s++;
+	       }
+	       *o = 0;
 
-		if (!Q_stricmp (key, pkey) )
-			return value[valueindex];
+	       if (!Q_stricmp (key, pkey) )
+		       return value[valueindex];
 
-		if (!*s)
-			break;
-		s++;
+	       if (!*s)
+		       break;
+	       s++;
 	}
 
 	return "";
