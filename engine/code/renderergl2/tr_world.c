@@ -807,3 +807,92 @@ void R_AddWorldSurfaces (void) {
 		tr.refdef.dlightMask = ~tr.refdef.dlightMask;
 	}
 }
+
+/*
+=================
+R_GenerateReflectionCubemap
+
+Render six sides of a cubemap at the given origin using FBOs. The
+resulting image is stored in tr.renderCubeImage and bound to vehicle
+shaders via tr.dynamicReflectionImage. Falls back to the static
+reflection texture when FBOs are unavailable.
+=================
+*/
+void R_GenerateReflectionCubemap( const vec3_t origin ) {
+        int i;
+
+        if ( !r_dynamicReflections->integer || !glRefConfig.framebufferObject || !tr.renderCubeFbo || !tr.renderCubeImage ) {
+                tr.dynamicReflectionImage = tr.defaultReflectImage;
+                return;
+        }
+
+        for ( i = 0; i < 6; i++ ) {
+                refdef_t        refdef;
+                viewParms_t     parms;
+
+                Com_Memset( &refdef, 0, sizeof( refdef ) );
+                VectorCopy( origin, refdef.vieworg );
+
+                switch( i ) {
+                        case 0: // -X
+                                VectorSet( refdef.viewaxis[0], -1,  0,  0 );
+                                VectorSet( refdef.viewaxis[1],  0,  0, -1 );
+                                VectorSet( refdef.viewaxis[2],  0,  1,  0 );
+                                break;
+                        case 1: // +X
+                                VectorSet( refdef.viewaxis[0],  1,  0,  0 );
+                                VectorSet( refdef.viewaxis[1],  0,  0,  1 );
+                                VectorSet( refdef.viewaxis[2],  0,  1,  0 );
+                                break;
+                        case 2: // -Y
+                                VectorSet( refdef.viewaxis[0],  0, -1,  0 );
+                                VectorSet( refdef.viewaxis[1],  1,  0,  0 );
+                                VectorSet( refdef.viewaxis[2],  0,  0, -1 );
+                                break;
+                        case 3: // +Y
+                                VectorSet( refdef.viewaxis[0],  0,  1,  0 );
+                                VectorSet( refdef.viewaxis[1],  1,  0,  0 );
+                                VectorSet( refdef.viewaxis[2],  0,  0,  1 );
+                                break;
+                        case 4: // -Z
+                                VectorSet( refdef.viewaxis[0],  0,  0, -1 );
+                                VectorSet( refdef.viewaxis[1],  1,  0,  0 );
+                                VectorSet( refdef.viewaxis[2],  0,  1,  0 );
+                                break;
+                        case 5: // +Z
+                                VectorSet( refdef.viewaxis[0],  0,  0,  1 );
+                                VectorSet( refdef.viewaxis[1], -1,  0,  0 );
+                                VectorSet( refdef.viewaxis[2],  0,  1,  0 );
+                                break;
+                }
+
+                refdef.fov_x = refdef.fov_y = 90;
+                refdef.x = refdef.y = 0;
+                refdef.width = tr.renderCubeFbo->width;
+                refdef.height = tr.renderCubeFbo->height;
+                refdef.time = tr.refdef.time;
+
+                RE_BeginScene( &refdef );
+
+                Com_Memset( &parms, 0, sizeof( parms ) );
+                parms.viewportX = parms.viewportY = 0;
+                parms.viewportWidth = tr.renderCubeFbo->width;
+                parms.viewportHeight = tr.renderCubeFbo->height;
+                parms.isPortal = qfalse;
+                parms.isMirror = qtrue;
+                parms.flags = VPF_NOVIEWMODEL | VPF_NOCUBEMAPS;
+                parms.fovX = parms.fovY = 90;
+                VectorCopy( refdef.vieworg, parms.or.origin );
+                VectorCopy( refdef.viewaxis[0], parms.or.axis[0] );
+                VectorCopy( refdef.viewaxis[1], parms.or.axis[1] );
+                VectorCopy( refdef.viewaxis[2], parms.or.axis[2] );
+                VectorCopy( refdef.vieworg, parms.pvsOrigin );
+                parms.targetFbo = tr.renderCubeFbo;
+                parms.targetFboLayer = i;
+
+                R_RenderView( &parms );
+                RE_EndScene();
+        }
+
+        tr.dynamicReflectionImage = tr.renderCubeImage;
+}

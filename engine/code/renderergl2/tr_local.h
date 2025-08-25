@@ -1552,6 +1552,8 @@ typedef struct {
 	image_t                 *screenSsaoImage;
 	image_t					*hdrDepthImage;
 	image_t                 *renderCubeImage;
+	image_t			*defaultReflectImage;
+	image_t			*dynamicReflectionImage;
 	
 	image_t					*textureDepthImage;
 
@@ -1801,6 +1803,7 @@ extern  cvar_t  *r_parallaxMapping;
 extern  cvar_t  *r_parallaxMapOffset;
 extern  cvar_t  *r_parallaxMapShadows;
 extern  cvar_t  *r_cubeMapping;
+extern  cvar_t  *r_dynamicReflections;
 extern  cvar_t  *r_cubemapSize;
 extern  cvar_t  *r_deluxeSpecular;
 extern  cvar_t  *r_pbr;
@@ -1885,6 +1888,7 @@ void R_RenderDlightCubemaps(const refdef_t *fd);
 void R_RenderPshadowMaps(const refdef_t *fd);
 void R_RenderSunShadowMaps(const refdef_t *fd, int level);
 void R_RenderCubemapSide( int cubemapIndex, int cubemapSide, qboolean subscene );
+void R_GenerateReflectionCubemap( const vec3_t origin );
 
 void R_AddMD3Surfaces( trRefEntity_t *e );
 void R_AddNullModelSurfaces( trRefEntity_t *e );

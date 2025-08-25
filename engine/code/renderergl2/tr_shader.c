@@ -632,12 +632,17 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 				return qfalse;
 			}
 
-			if ( !Q_stricmp( token, "$whiteimage" ) )
-			{
-				stage->bundle[0].image[0] = tr.whiteImage;
-				continue;
-			}
-			else if ( !Q_stricmp( token, "$lightmap" ) )
+                        if ( !Q_stricmp( token, "$whiteimage" ) )
+                        {
+                                stage->bundle[0].image[0] = tr.whiteImage;
+                                continue;
+                        }
+                        else if ( !Q_stricmp( token, "$dynamicreflection" ) )
+                        {
+                                stage->bundle[0].image[0] = tr.dynamicReflectionImage;
+                                continue;
+                        }
+                        else if ( !Q_stricmp( token, "$lightmap" ) )
 			{
 				stage->bundle[0].isLightmap = qtrue;
 				if ( shader.lightmapIndex < 0 || !tr.lightmaps ) {

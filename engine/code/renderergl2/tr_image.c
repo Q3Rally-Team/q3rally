@@ -2992,6 +2992,8 @@ void R_CreateBuiltinImages( void ) {
 			tr.renderCubeImage = R_CreateImage("*renderCube", NULL, r_cubemapSize->integer, r_cubemapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
 		}
 	}
+	tr.defaultReflectImage = R_FindImageFile("textures/reflect/reflect.jpg", IMGTYPE_COLORALPHA, IMGFLAG_MIPMAP);
+	tr.dynamicReflectionImage = tr.defaultReflectImage;
 }
 
 

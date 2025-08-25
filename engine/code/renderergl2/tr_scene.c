@@ -517,20 +517,15 @@ void RE_RenderScene( const refdef_t *fd ) {
 		}
 	}
 
-	// playing with cube maps
-	// this is where dynamic cubemaps would be rendered
-	if (0) //(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ))
-	{
-		int i, j;
-
-		for (i = 0; i < tr.numCubemaps; i++)
-		{
-			for (j = 0; j < 6; j++)
-			{
-				R_RenderCubemapSide(i, j, qtrue);
-			}
-		}
-	}
+        // update dynamic reflection cubemap if enabled
+        if ( glRefConfig.framebufferObject && r_dynamicReflections->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
+        {
+                R_GenerateReflectionCubemap( tr.refdef.vieworg );
+        }
+        else
+        {
+                tr.dynamicReflectionImage = tr.defaultReflectImage;
+        }
 
 	// setup view parms for the initial view
 	//
