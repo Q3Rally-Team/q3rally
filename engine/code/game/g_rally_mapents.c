@@ -115,7 +115,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 			other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
 			other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
 //			Com_Printf( "resetting frac, sf\n" );
-                       trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time));
+                       trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time) );
 		}
 
 		
