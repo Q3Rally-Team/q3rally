@@ -12388,42 +12388,6 @@ textures/base_door/shinymetaldoor_outside3b
 } 
 
 // ------------------------------------------------------------
-// 458.base_wall (shinymetaldoor_outside)
-// ------------------------------------------------------------
-
-textures/base_door/shinymetaldoor_outside
-{
-
-	{
-		map textures/base_wall/chrome_env.tga
-                tcGen environment
-		tcmod scale .25 .25 
-		rgbGen identity   
-	}
-
-		
-	{
-		map textures/base_door/shinymetaldoor_outside.tga
-		blendFunc GL_ONE_MINUS_SRC_ALPHA GL_SRC_ALPHA
-		rgbGen identity
-	}
-
-	{
-		map textures/base_door/quake3sign_outside.tga
-		blendFunc GL_ONE_MINUS_SRC_ALPHA GL_SRC_ALPHA
-		rgbGen identity
-	}
-
-
-	{
-		map $lightmap
-		rgbgen identity
-		blendFunc GL_DST_COLOR GL_ZERO
-	}	
-		
-} 
-
-// ------------------------------------------------------------
 // 459.base_wall (steedmetal2)
 // ------------------------------------------------------------
 
@@ -12628,43 +12592,6 @@ textures/base_wall/bloodstain
 		alphaGen lightingSpecular
 	}
 			
-}
-
-// ------------------------------------------------------------
-// 468.base_wall (shinymetaldoor)
-// ------------------------------------------------------------
-
-textures/base_door/shinymetaldoor
-{
-
-	{
-		//map $lightmap
-		map textures/base_wall/chrome_env.tga
-                tcGen environment
-		tcmod scale .25 .25 
-		rgbGen identity   
-	}
-
-		
-	{
-		map textures/base_door/shinymetaldoor.tga
-		blendFunc GL_ONE_MINUS_SRC_ALPHA GL_SRC_ALPHA
-		rgbGen identity
-	}
-
-	{
-		map textures/base_door/quake3sign.tga
-		blendFunc GL_ONE_MINUS_SRC_ALPHA GL_SRC_ALPHA
-		rgbGen identity
-	}
-
-
-	{
-		map $lightmap
-		rgbgen identity
-		blendFunc GL_DST_COLOR GL_ZERO
-	}	
-		
 }
 
 // ------------------------------------------------------------

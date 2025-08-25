@@ -710,40 +710,24 @@ models/weapons2/plasma/f_plasmagun2
 
 models/weapons2/plasma/f_plasmagun3
 {
-	deformVertexes autosprite
-	{
-		clampmap textures/flares/twilightflare.tga
-		blendfunc add
-		tcMod rotate 1246
-	}
-	{
-		clampmap textures/flares/twilightflare.tga
-		blendfunc add
-		tcMod rotate -1246
-	}
+        deformVertexes autosprite
+        {
+                clampmap textures/flares/twilightflare.tga
+                blendfunc add
+                tcMod rotate 1246
+        }
+        {
+                clampmap textures/flares/twilightflare.tga
+                blendfunc add
+                tcMod rotate -1246
+        }
 }
-
-models/weapons2/plasma/muzzlecenter
-{
-	deformVertexes autosprite
-	{
-		clampmap textures/flares/twilightflare.tga
-		blendfunc add
-		tcMod rotate 1246
-	}
-	{
-		clampmap textures/flares/twilightflare.tga
-		blendfunc add
-		tcMod rotate -1246
-	}
-}
-
 models/weapons2/plasma/blackchrome
 {
-	{
-		map models/weapons2/plasma/blackchrome.tga
-		rgbGen lightingDiffuse
-		tcGen environment 
+        {
+                map models/weapons2/plasma/blackchrome.tga
+                rgbGen lightingDiffuse
+                tcGen environment
 	}
 }
 
@@ -1056,61 +1040,25 @@ models/weapons2/rocketl/muzzlside
 
 rocketFlash
 {
-	deformVertexes autosprite
-	{
-		clampmap models/weapons2/rocketl/muzzy.tga
-		blendfunc add
-		tcMod rotate 1246
-	}
-	{
-		clampmap models/weapons2/rocketl/muzzy.tga
-		blendfunc add
-		tcMod rotate -1246
-	}
+        deformVertexes autosprite
+        {
+                clampmap models/weapons2/rocketl/muzzy.tga
+                blendfunc add
+                tcMod rotate 1246
+        }
+        {
+                clampmap models/weapons2/rocketl/muzzy.tga
+                blendfunc add
+                tcMod rotate -1246
+        }
 }
-
-rocketFlare
-{
-	deformVertexes autosprite
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 0.980392 0.882353 0.737255 )
-		tcMod stretch inversesawtooth 0.6 0.4 0 4 
-	}
-}
-
-rocketThrust
-{
-	cull disable
-	{
-		clampmap textures/flares/flarey.tga
-		blendfunc add
-		rgbGen const ( 0.541176 0.341176 0.156863 )
-		tcMod rotate -96
-		tcMod stretch sin 0.3 0.7 0 8 
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 0.843137 0.588235 0.4 )
-	}
-	{
-		clampmap textures/flares/newflare.tga
-		blendfunc add
-		rgbGen const ( 0.713726 0.270588 0.121569 )
-		tcMod rotate 46
-		tcMod stretch inversesawtooth 0.6 0.4 0 4 
-	}
-}
-
 models/weapons2/rocketl/flare
 {
-	deformVertexes autosprite
-	{
-		map models/weapons2/rocketl/flare.tga
-		blendfunc add
-	}
+        deformVertexes autosprite
+        {
+                map models/weapons2/rocketl/flare.tga
+                blendfunc add
+        }
 }
 
 cmuz_rck_cone1
@@ -1451,28 +1399,7 @@ gfx/damage/bio_mark
 // ------------------------------------------------------------
 // 13.Rearfire Oilmarks
 // ------------------------------------------------------------
-
-gfx/damage/oil_mark
-{
-	polygonOffset
-
-
-	{
-		map gfx/damage/oil_mark.tga
-		blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
-		rgbGen exactVertex
-	}
-	{	
-	      map textures/reflect/oilreflect.tga
-		blendFunc add
-	      rgbGen exactVertex
-	}
-	{
-		map gfx/damage/oil_mark_reflect.tga
-		blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
-		rgbGen exactVertex
-	}
-}
+// Definition moved to gfx.shader
 
 // ------------------------------------------------------------
 // 14.Rearfire Flameballs

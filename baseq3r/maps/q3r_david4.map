@@ -1289,7 +1289,7 @@ base_trim/rusty_pewter_big
 {
 "classname" "misc_model"
 "origin" "1664 -648 800"
-"model" "models/mapobjects/watertower/tower.md3"
+"model" "models/mapobjects/watertower/tower.md3" // mapobjects shader
 "angle" "250"
 }
 // entity 64

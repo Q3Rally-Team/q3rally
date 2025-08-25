@@ -31,7 +31,7 @@ models/players/alpine/tlites
 models/players/alpine/yellowglass
 {
 	{
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -50,7 +50,7 @@ models/players/alpine/yellowglass
 models/players/alpine/yellow
 {      
 	{
-		map textures/reflect/reflect.jpg            
+		map $dynamicreflection            
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -76,7 +76,7 @@ models/players/alpine/yellowhglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
             tcGen environment
             rgbGen lightingdiffuse
@@ -112,7 +112,7 @@ models/players/alpine/yellowhlite
 models/players/alpine/blueglass
 {
 	{
-		map textures/reflect/reflect.jpg            
+		map $dynamicreflection            
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -131,7 +131,7 @@ models/players/alpine/blueglass
 models/players/alpine/blue
 {      
 	{
-		map textures/reflect/reflect.jpg            
+		map $dynamicreflection            
 		tcGen environment
 			rgbGen lightingdiffuse
 	}
@@ -157,7 +157,7 @@ models/players/alpine/bluehglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
 		tcGen environment
 		rgbGen lightingdiffuse
@@ -194,7 +194,7 @@ models/players/alpine/bluehlite
 models/players/alpine/redglass
 {
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -213,7 +213,7 @@ models/players/alpine/redglass
 models/players/alpine/red
 {      
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -239,7 +239,7 @@ models/players/alpine/redhglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
             tcGen environment
             rgbGen lightingdiffuse
@@ -275,7 +275,7 @@ models/players/alpine/redhlite
 models/players/alpine/greenglass
 {
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -294,7 +294,7 @@ models/players/alpine/greenglass
 models/players/alpine/green
 {      
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -320,7 +320,7 @@ models/players/alpine/greenhglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
             tcGen environment
             rgbGen lightingdiffuse
@@ -357,7 +357,7 @@ models/players/alpine/greenhlite
 models/players/alpine/fffglass
 {
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -376,7 +376,7 @@ models/players/alpine/fffglass
 models/players/alpine/fff
 {      
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -402,7 +402,7 @@ models/players/alpine/fffhglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
             tcGen environment
             rgbGen lightingdiffuse
@@ -446,7 +446,7 @@ models/players/alpine/fffflite
 models/players/alpine/stompedglass
 {
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		tcGen environment
 		blendFunc	add
 		rgbGen lightingdiffuse
@@ -465,7 +465,7 @@ models/players/alpine/stompedglass
 models/players/alpine/stomped
 {      
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -491,7 +491,7 @@ models/players/alpine/stompedhglass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg   
+		map $dynamicreflection   
 		blendFunc add         
             tcGen environment
             rgbGen lightingdiffuse
@@ -542,7 +542,7 @@ models/players/alpine/stompedflite
 models/players/camaro/body_yellow
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -558,7 +558,7 @@ models/players/camaro/body_yellow
 models/players/camaro/lines1_yellow
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -574,7 +574,7 @@ models/players/camaro/lines1_yellow
 models/players/camaro/lines2_yellow
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -590,7 +590,7 @@ models/players/camaro/lines2_yellow
 models/players/camaro/mirror_yellow
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -609,7 +609,7 @@ models/players/camaro/mirror_yellow
 models/players/camaro/body_blue
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -625,7 +625,7 @@ models/players/camaro/body_blue
 models/players/camaro/lines1_blue
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -641,7 +641,7 @@ models/players/camaro/lines1_blue
 models/players/camaro/lines2_blue
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -657,7 +657,7 @@ models/players/camaro/lines2_blue
 models/players/camaro/mirror_blue
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -675,7 +675,7 @@ models/players/camaro/mirror_blue
 models/players/camaro/body_green
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -691,7 +691,7 @@ models/players/camaro/body_green
 models/players/camaro/lines1_green
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -707,7 +707,7 @@ models/players/camaro/lines1_green
 models/players/camaro/lines2_green
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -723,7 +723,7 @@ models/players/camaro/lines2_green
 models/players/camaro/mirror_green
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -742,7 +742,7 @@ models/players/camaro/mirror_green
 models/players/camaro/body_red
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -758,7 +758,7 @@ models/players/camaro/body_red
 models/players/camaro/lines1_red
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -774,7 +774,7 @@ models/players/camaro/lines1_red
 models/players/camaro/lines2_red
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -790,7 +790,7 @@ models/players/camaro/lines2_red
 models/players/camaro/mirror_red
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -808,7 +808,7 @@ models/players/camaro/mirror_red
 models/players/camaro/body_white
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -824,7 +824,7 @@ models/players/camaro/body_white
 models/players/camaro/lines1_white
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -840,7 +840,7 @@ models/players/camaro/lines1_white
 models/players/camaro/lines2_white
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -856,7 +856,7 @@ models/players/camaro/lines2_white
 models/players/camaro/mirror_white
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -875,7 +875,7 @@ models/players/camaro/mirror_white
 models/players/camaro/body_black
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -891,7 +891,7 @@ models/players/camaro/body_black
 models/players/camaro/lines1_black
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -907,7 +907,7 @@ models/players/camaro/lines1_black
 models/players/camaro/lines2_black
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -923,7 +923,7 @@ models/players/camaro/lines2_black
 models/players/camaro/mirror_black
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -942,7 +942,7 @@ models/players/camaro/mirror_black
 models/players/camaro/glass
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -965,7 +965,7 @@ models/players/macdaddy/tlites
 
 {
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -990,7 +990,7 @@ models/players/macdaddy/red_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg              
+		map $dynamicreflection              
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1007,7 +1007,7 @@ models/players/macdaddy/red_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg              
+		map $dynamicreflection              
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1031,7 +1031,7 @@ models/players/macdaddy/black_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1048,7 +1048,7 @@ models/players/macdaddy/red_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1072,7 +1072,7 @@ models/players/macdaddy/blue_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1089,7 +1089,7 @@ models/players/macdaddy/blue_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1114,7 +1114,7 @@ models/players/macdaddy/checker_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1131,7 +1131,7 @@ models/players/macdaddy/checker_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1170,7 +1170,7 @@ models/players/macdaddy/classic_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1187,7 +1187,7 @@ models/players/macdaddy/classic_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1225,7 +1225,7 @@ models/players/macdaddy/green_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1242,7 +1242,7 @@ models/players/macdaddy/green_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1280,7 +1280,7 @@ models/players/macdaddy/pink_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1297,7 +1297,7 @@ models/players/macdaddy/pink_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1322,7 +1322,7 @@ models/players/macdaddy/purple_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1339,7 +1339,7 @@ models/players/macdaddy/purple_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1376,7 +1376,7 @@ models/players/macdaddy/white_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1393,7 +1393,7 @@ models/players/macdaddy/white_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1418,7 +1418,7 @@ models/players/macdaddy/yellow_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1435,7 +1435,7 @@ models/players/macdaddy/yellow_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1472,7 +1472,7 @@ models/players/macdaddy/hitormiss_main
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1489,7 +1489,7 @@ models/players/macdaddy/hitormiss_hlites
 
 {      
 	{
-		map textures/reflect/reflect.jpg             
+		map $dynamicreflection             
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -1521,7 +1521,7 @@ models/players/mini/main
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -1543,7 +1543,7 @@ models/players/mini/hlites
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg     
+		map $dynamicreflection     
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -1583,7 +1583,7 @@ models/players/mini/roof
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
 		blendFunc add
             rgbGen lightingdiffuse
@@ -1614,7 +1614,7 @@ models/players/mini/glass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -1680,7 +1680,7 @@ models/players/mini/main_uj
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -1703,7 +1703,7 @@ models/players/mini/hlites_uj
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -1729,7 +1729,7 @@ models/players/mini/roof_uj
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
             blendFunc add
 	}
@@ -1749,7 +1749,7 @@ models/players/mini/glass_uj
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -1770,7 +1770,7 @@ models/players/mini/main_yellow
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -1793,7 +1793,7 @@ models/players/mini/hlites_yellow
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -1819,7 +1819,7 @@ models/players/mini/roof_yellow
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
             blendFunc add
 	}
@@ -1839,7 +1839,7 @@ models/players/mini/glass_yellow
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -1861,7 +1861,7 @@ models/players/mini/main_green
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -1884,7 +1884,7 @@ models/players/mini/hlites_green
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -1911,7 +1911,7 @@ models/players/mini/glass_green
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -1933,7 +1933,7 @@ models/players/mini/gamespy_main
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -1956,7 +1956,7 @@ models/players/mini/gamespy_hlites
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -1983,7 +1983,7 @@ models/players/mini/gamespy_glass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -2003,7 +2003,7 @@ models/players/mini/gamespy_roof
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
 		blendFunc add
             rgbGen lightingdiffuse
@@ -2028,7 +2028,7 @@ models/players/mini/telefragged_main
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -2051,7 +2051,7 @@ models/players/mini/telefragged_hlites
 		rgbGen lightingdiffuse
 	}       
   	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -2078,7 +2078,7 @@ models/players/mini/telefragged_glass
 		rgbGen lightingdiffuse
 	}
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -2097,7 +2097,7 @@ models/players/mini/telefragged_roof
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
 		blendFunc add
             rgbGen lightingdiffuse
@@ -2120,7 +2120,7 @@ models/players/mini/main_vaporwave
 		rgbGen lightingdiffuse
 	}       
 	{
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -2144,7 +2144,7 @@ models/players/mini/hlites_vaporwave
 	}       
   	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -2171,7 +2171,7 @@ models/players/mini/roof_vaporwave
 	}       
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
             tcGen environment
             blendFunc add
 	}
@@ -2192,7 +2192,7 @@ models/players/mini/glass_vaporwave
 	}
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -2214,7 +2214,7 @@ models/players/mini/brown_main
 	}       
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add       
             tcGen environment
             rgbGen lightingdiffuse
@@ -2239,7 +2239,7 @@ models/players/mini/hlites_brown
 	}       
   	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		blendFunc add             
             tcGen environment
             rgbGen lightingdiffuse
@@ -2267,7 +2267,7 @@ models/players/mini/glass_brown
 	}
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg  
+		map $dynamicreflection  
 		tcGen environment
 		blendFunc add
 	}
@@ -2286,7 +2286,7 @@ models/players/mini/glass_brown
 models/players/murcielago/moddb_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2302,7 +2302,7 @@ models/players/murcielago/moddb_main
 models/players/murcielago/flame_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2318,7 +2318,7 @@ models/players/murcielago/flame_main
 models/players/murcielago/silverstripe_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2334,7 +2334,7 @@ models/players/murcielago/silverstripe_main
 models/players/murcielago/bluestripe_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2350,7 +2350,7 @@ models/players/murcielago/bluestripe_main
 models/players/murcielago/redstripe_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2366,7 +2366,7 @@ models/players/murcielago/redstripe_main
 models/players/murcielago/whitehot_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2382,7 +2382,7 @@ models/players/murcielago/whitehot_main
 models/players/murcielago/yellow_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2397,7 +2397,7 @@ models/players/murcielago/yellow_main
 models/players/murcielago/yellow_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2413,7 +2413,7 @@ models/players/murcielago/yellow_under
 models/players/murcielago/green_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2428,7 +2428,7 @@ models/players/murcielago/green_main
 models/players/murcielago/green_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2444,7 +2444,7 @@ models/players/murcielago/green_under
 models/players/murcielago/black_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2459,7 +2459,7 @@ models/players/murcielago/black_main
 models/players/murcielago/black_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2475,7 +2475,7 @@ models/players/murcielago/black_under
 models/players/murcielago/silver_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2490,7 +2490,7 @@ models/players/murcielago/silver_main
 models/players/murcielago/silver_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2506,7 +2506,7 @@ models/players/murcielago/silver_under
 models/players/murcielago/red_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2521,7 +2521,7 @@ models/players/murcielago/red_main
 models/players/murcielago/red_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2537,7 +2537,7 @@ models/players/murcielago/red_under
 models/players/murcielago/blue_main
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2552,7 +2552,7 @@ models/players/murcielago/blue_main
 models/players/murcielago/blue_under
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2568,7 +2568,7 @@ models/players/murcielago/blue_under
 models/players/murcielago/glass
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2583,7 +2583,7 @@ models/players/murcielago/glass
 models/players/murcielago/blite
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2603,7 +2603,7 @@ models/players/murcielago/blite
 models/players/murcielago/blitec
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen lightingDiffuse
 		tcGen environment 
 	}
@@ -2638,7 +2638,7 @@ models/players/murcielago/hglass
 		alphaFunc GT0
 	}
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		blendfunc add
 		rgbGen lightingDiffuse
 		tcGen environment 
@@ -2706,7 +2706,7 @@ models/players/raptor/green
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2725,7 +2725,7 @@ models/players/raptor/green_parts
 
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2745,7 +2745,7 @@ models/players/raptor/black
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2763,7 +2763,7 @@ models/players/raptor/black_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2783,7 +2783,7 @@ models/players/raptor/blue
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2801,7 +2801,7 @@ models/players/raptor/blue_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2820,7 +2820,7 @@ models/players/raptor/jp
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2838,7 +2838,7 @@ models/players/raptor/jp_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2859,7 +2859,7 @@ models/players/raptor/pink
 
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2878,7 +2878,7 @@ models/players/raptor/pink_parts
 
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2898,7 +2898,7 @@ models/players/raptor/red
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2916,7 +2916,7 @@ models/players/raptor/red_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2936,7 +2936,7 @@ models/players/raptor/yellow
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2954,7 +2954,7 @@ models/players/raptor/yellow_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2973,7 +2973,7 @@ models/players/raptor/webdog
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -2991,7 +2991,7 @@ models/players/raptor/webdog_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3035,7 +3035,7 @@ models/players/raptor/lvl
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3053,7 +3053,7 @@ models/players/raptor/lvl_parts
 {      
 	{
 	//	map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3085,7 +3085,7 @@ models/players/raptor/lvl_lites
 models/players/raptor/dreamcast
 {      
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3754,7 +3754,7 @@ models/players/sidepipe/tranny
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen identity
 	}
@@ -3777,7 +3777,7 @@ models/players/sidepipe/orange
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen identity
 	}
@@ -3797,7 +3797,7 @@ models/players/sidepipe/red
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3818,7 +3818,7 @@ models/players/sidepipe/blue
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3837,7 +3837,7 @@ models/players/sidepipe/green
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3856,7 +3856,7 @@ models/players/sidepipe/yellow
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg           
+		map $dynamicreflection           
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3875,7 +3875,7 @@ models/players/sidepipe/polycount
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3907,7 +3907,7 @@ models/players/sidepipe/ra3
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3942,7 +3942,7 @@ models/players/sidepipe/ra3_f
 models/players/slingshot/glass
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -3959,7 +3959,7 @@ models/players/slingshot/glass_conv
 	cull none
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
 		blendFunc add
             rgbGen lightingdiffuse
@@ -3977,7 +3977,7 @@ models/players/slingshot/glass_conv
 models/players/slingshot/roof
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
             rgbGen lightingdiffuse
 
@@ -4027,7 +4027,7 @@ models/players/slingshot/main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4043,7 +4043,7 @@ models/players/slingshot/blue_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4059,7 +4059,7 @@ models/players/slingshot/yellow_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4075,7 +4075,7 @@ models/players/slingshot/red_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4091,7 +4091,7 @@ models/players/slingshot/green_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4108,7 +4108,7 @@ models/players/slingshot/ps2_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4123,7 +4123,7 @@ models/players/slingshot/ps2_main
 models/players/slingshot/ps2_roof
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
             rgbGen lightingdiffuse
 
@@ -4142,7 +4142,7 @@ models/players/slingshot/pqde_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4158,7 +4158,7 @@ models/players/slingshot/pqde_main
 models/players/slingshot/pqde_roof
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
             rgbGen lightingdiffuse
 
@@ -4187,7 +4187,7 @@ models/players/slingshot/tbh_main
 {
 
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
           rgbGen lightingdiffuse
 	}
@@ -4203,7 +4203,7 @@ models/players/slingshot/tbh_main
 models/players/slingshot/tbh_roof
 {
 	{
-		map textures/reflect/reflect.jpg
+		map $dynamicreflection
 		tcGen environment
             rgbGen lightingdiffuse
 
@@ -4236,7 +4236,7 @@ models/players/viper/red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4256,7 +4256,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4276,7 +4276,7 @@ models/players/viper/r_lites_red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4296,7 +4296,7 @@ models/players/viper/f_lites_red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4318,7 +4318,7 @@ models/players/viper/blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4338,7 +4338,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4358,7 +4358,7 @@ models/players/viper/r_lites_blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4378,7 +4378,7 @@ models/players/viper/f_lites_blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4400,7 +4400,7 @@ models/players/viper/yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4420,7 +4420,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4440,7 +4440,7 @@ models/players/viper/r_lites_yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4460,7 +4460,7 @@ models/players/viper/f_lites_yellow
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4482,7 +4482,7 @@ models/players/viper/grey
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4502,7 +4502,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4522,7 +4522,7 @@ models/players/viper/r_lites_grey
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4542,7 +4542,7 @@ models/players/viper/f_lites_grey
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4564,7 +4564,7 @@ models/players/viper/stripe_red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4584,7 +4584,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4604,7 +4604,7 @@ models/players/viper/r_lites_red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4624,7 +4624,7 @@ models/players/viper/f_lites_red
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4646,7 +4646,7 @@ models/players/viper/stripe_blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4666,7 +4666,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4686,7 +4686,7 @@ models/players/viper/r_lites_blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4706,7 +4706,7 @@ models/players/viper/f_lites_blue
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4728,7 +4728,7 @@ models/players/viper/white
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4748,7 +4748,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4768,7 +4768,7 @@ models/players/viper/r_lites_white
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4788,7 +4788,7 @@ models/players/viper/f_lites_white
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4810,7 +4810,7 @@ models/players/viper/green
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4830,7 +4830,7 @@ models/players/viper/windows
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4850,7 +4850,7 @@ models/players/viper/r_lites_green
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4870,7 +4870,7 @@ models/players/viper/f_lites_green
 {
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
 		tcGen environment
 		rgbGen lightingdiffuse
 	}
@@ -4891,7 +4891,7 @@ models/players/viper/f_lites_green
 models/players/gravelord/default
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4908,7 +4908,7 @@ models/players/gravelord/default
 models/players/gravelord/green
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4923,7 +4923,7 @@ models/players/gravelord/green
 models/players/gravelord/blue
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4938,7 +4938,7 @@ models/players/gravelord/blue
 models/players/gravelord/yellow
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4953,7 +4953,7 @@ models/players/gravelord/yellow
 models/players/gravelord/red
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4970,7 +4970,7 @@ models/players/gravelord/red
 models/players/gravelord/ecto
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -4986,7 +4986,7 @@ models/players/gravelord/windows
 {
 	{
 //		map textures/effects/tinfx2.tga
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		blendfunc add
 		rgbGen identity
 		tcGen environment 
@@ -5012,7 +5012,7 @@ models/players/gravelord/curtain
 models/players/gravelord/coffin
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		rgbGen identity
 		tcGen environment 
 	}
@@ -5049,7 +5049,7 @@ models/players/gravelord/no_coffin
 models/players/gravelord/gb_windows
 {
 	{
-		map textures/reflect/reflect.tga
+		map $dynamicreflection
 		blendfunc add
 		rgbGen identity
 		tcGen environment 
@@ -5068,7 +5068,7 @@ models/players/gremlin/orange
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen identity
 	}
@@ -5088,7 +5088,7 @@ models/players/gremlin/red
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -5109,7 +5109,7 @@ models/players/gremlin/blue
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -5128,7 +5128,7 @@ models/players/gremlin/green
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg         
+		map $dynamicreflection         
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -5147,7 +5147,7 @@ models/players/gremlin/yellow
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg           
+		map $dynamicreflection           
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -5165,7 +5165,7 @@ models/players/gremlin/white
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg           
+		map $dynamicreflection           
             tcGen environment
             rgbGen lightingdiffuse
 	}
@@ -5183,7 +5183,7 @@ models/players/gremlin/black
 {      
 	{
 //		map textures/effects/tinfx2b.tga
-		map textures/reflect/reflect.jpg          
+		map $dynamicreflection          
             tcGen environment
             rgbGen identity
 	}

@@ -818,35 +818,8 @@ textures/ctf/ctf_redflag
 	}
 }
 
-// ------------------------------------------------------------
-// 31.powerups (redflag)
-// ------------------------------------------------------------
-
-powerups/redflag
-{
-	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/redflagmap.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-		tcMod turb 0 0.2 0 1
-	}
-}
-
-// ------------------------------------------------------------
-// 32.powerups (blueflag)
-// ------------------------------------------------------------
-
-powerups/blueflag
-{
-	deformVertexes wave 100 sin 3 0 0 0
-	{
-		map textures/effects/blueflagmap.tga
-		blendfunc GL_ONE GL_ONE
-		tcGen environment
-		tcMod turb 0 0.2 0 1
-	}
-}
+// powerups/redflag and powerups/blueflag are defined in
+// powerups.shader and referenced by maps and gameplay code.
 
 // ------------------------------------------------------------
 // 33.ctf (q3r_bluelong_decal)
