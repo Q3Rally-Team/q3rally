@@ -104,6 +104,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_SCORES4                              28
 #define CS_REFLECTION_IMAGE             29
 #define CS_SIGILSTATUS                  30
+#define CS_TRACKLENGTH                  31
 // Q3Rally Code END
 
 #define CS_MODELS                               32
@@ -331,7 +332,8 @@ typedef enum {
         STAT_DAMAGE_TAKEN, // STONELANCE - really need this one?
         STAT_NEXT_CHECKPOINT,
         STAT_POSITION,
-        STAT_FRAC_TO_NEXT_CHECKPOINT
+        STAT_FRAC_TO_NEXT_CHECKPOINT,
+        STAT_DISTANCE_REMAIN
 // END
 } statIndex_t;
 

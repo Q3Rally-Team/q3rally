@@ -254,8 +254,9 @@ vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
 vmCvar_t	cg_minSkidLength;
 vmCvar_t	cg_drawRearView;
-vmCvar_t	cg_checkpointArrowMode;
-vmCvar_t	cg_drawMMap;	//TBB - minimap cvar
+vmCvar_t        cg_checkpointArrowMode;
+vmCvar_t        cg_distanceFormat;
+vmCvar_t        cg_drawMMap;	//TBB - minimap cvar
 vmCvar_t	cg_mmap_fov;
 vmCvar_t	cg_mmap_size;
 vmCvar_t	cg_mmap_renderLevel;
@@ -367,8 +368,9 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
+        { &cg_distanceFormat, "cg_distanceFormat", "0", CVAR_ARCHIVE },
 
-	{ &cg_developer, "developer", "0", 0 },
+        { &cg_developer, "developer", "0", 0 },
 
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
 

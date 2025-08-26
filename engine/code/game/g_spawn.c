@@ -198,6 +198,8 @@ void SP_item_botroam( gentity_t *ent ) { }
 
 // STONELANCE
 void SP_rally_startfinish( gentity_t *ent );
+void SP_rally_start( gentity_t *ent );
+void SP_rally_finish( gentity_t *ent );
 void SP_rally_checkpoint( gentity_t *ent );
 
 void SP_rally_sun( gentity_t *ent );
@@ -303,8 +305,10 @@ spawn_t	spawns[] = {
 	{"item_botroam", SP_item_botroam},
 
 // STONELANCE
-	{"rally_startfinish", SP_rally_startfinish},
-	{"rally_checkpoint", SP_rally_checkpoint},
+{"rally_start", SP_rally_start},
+{"rally_finish", SP_rally_finish},
+{"rally_startfinish", SP_rally_startfinish},
+{"rally_checkpoint", SP_rally_checkpoint},
 
 	{"rally_sun", SP_rally_sun},
 

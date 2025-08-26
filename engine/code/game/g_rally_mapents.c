@@ -32,6 +32,103 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CHECKPOINT_SOUNDS		1
 #define CHECKPOINT_MESSAGES		2
 
+
+void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
+if ( !other->client ) {
+return;
+}
+
+if ( other->client->lastCheckpointTime + 300 > level.time ) {
+return;
+}
+
+if ( g_developer.integer )
+G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
+
+other->client->lastCheckpointTime = level.time;
+other->number = 1;
+other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
+other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
+
+trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
+
+Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
+}
+
+void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
+char*place;
+
+if ( !other->client ) {
+return;
+}
+
+if ( other->client->lastCheckpointTime + 300 > level.time ) {
+return;
+}
+
+if ( g_developer.integer )
+G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
+
+if ( self->number != other->number ) {
+return;
+}
+
+other->client->lastCheckpointTime = level.time;
+other->client->finishRaceTime = level.time;
+other->s.weapon = WP_NONE;
+other->takedamage = qfalse;
+
+trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+
+if ( !level.finishRaceTime ){
+other->client->ps.stats[STAT_POSITION] = 1;
+
+level.winnerNumber = other->s.clientNum;
+level.finishRaceTime = level.time;
+trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
+trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+}
+else {
+switch ( other->client->ps.stats[STAT_POSITION] ){
+case 1:
+place = "first";
+break;
+case 2:
+place = "second";
+break;
+case 3:
+place = "third";
+break;
+case 4:
+place = "forth";
+break;
+case 5:
+place = "fifth";
+break;
+case 6:
+place = "sixth";
+break;
+case 7:
+place = "seventh";
+break;
+case 8:
+place = "eighth";
+break;
+default:
+place = NULL;
+Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
+break;
+}
+
+if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
+trap_SendServerCommand( -1, va("print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ));
+}
+else {
+trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
+}
+}
+}
+
 void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	char	*place;
 
@@ -166,18 +263,51 @@ void Think_StartFinish( gentity_t *self ){
 
 	checkpoints = 0;
 
-	ent = NULL;
-	while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) checkpoints++;
-	level.numCheckpoints = checkpoints;
-	if (g_trackReversed.integer && level.trackIsReversable){
-		ent = NULL;
-		while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
-			ent->number = level.numCheckpoints - ent->number;
-		}
-	}
+        ent = NULL;
+        while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) checkpoints++;
+        level.numCheckpoints = checkpoints;
+        if (g_trackReversed.integer && level.trackIsReversable){
+                ent = NULL;
+                while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
+                        ent->number = level.numCheckpoints - ent->number;
+                }
+        }
 
-	self->number = level.numCheckpoints;
-	self->s.weapon = self->number;
+        memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
+        memset( level.cpDist, 0, sizeof( level.cpDist ) );
+        ent = NULL;
+        while ( ( ent = G_Find( ent, FOFS(classname), "rally_checkpoint" ) ) != NULL ) {
+                if ( ent->number > 0 && ent->number <= level.numCheckpoints ) {
+                        level.checkpoints[ ent->number - 1 ] = ent;
+                }
+        }
+
+        level.trackLength = 0.0f;
+        if ( level.numCheckpoints > 0 ) {
+                vec3_t last, first, delta;
+                int i;
+
+                VectorCopy( level.checkpoints[0]->s.origin, first );
+                VectorCopy( first, last );
+                level.cpDist[0] = 0.0f;
+                for ( i = 1; i < level.numCheckpoints; i++ ) {
+                        VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
+                        level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
+                        VectorCopy( level.checkpoints[i]->s.origin, last );
+                }
+                VectorSubtract( last, first, delta );
+                level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+        }
+
+        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
+
+        self->number = level.numCheckpoints;
+        self->s.weapon = self->number;
+}
+
+void Think_Finish( gentity_t *self ){
+Think_StartFinish( self );
+self->number++;
 }
 
 
@@ -204,6 +334,37 @@ void SP_rally_startfinish( gentity_t *ent ) {
 	ent->s.frame = 0;
 
 	trap_LinkEntity (ent);
+}
+
+void SP_rally_start( gentity_t *ent ) {
+trap_SetBrushModel( ent, ent->model );
+
+level.numberOfLaps = 1;
+trap_Cvar_Set( "laplimit", "1" );
+
+ent->r.svFlags |= SVF_BROADCAST;
+ent->s.eType = ET_CHECKPOINT;
+
+ent->touch = Touch_Start;
+ent->think = Think_StartFinish;
+ent->nextthink = level.time + 100;
+ent->s.frame = 0;
+
+trap_LinkEntity (ent);
+}
+
+void SP_rally_finish( gentity_t *ent ) {
+trap_SetBrushModel( ent, ent->model );
+
+ent->r.svFlags |= SVF_BROADCAST;
+ent->s.eType = ET_CHECKPOINT;
+
+ent->touch = Touch_Finish;
+ent->think = Think_Finish;
+ent->nextthink = level.time + 100;
+ent->s.frame = 0;
+
+trap_LinkEntity (ent);
 }
 
 //

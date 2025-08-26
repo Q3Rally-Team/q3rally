@@ -179,7 +179,12 @@ static void CG_InitScoreboardColumns(void) {
             showScore = qtrue;
             break;
     }
-    
+
+    /* Hide lap time column for A-to-B style races */
+    if (cgs.laplimit <= 1) {
+        showLapTimes = qfalse;
+    }
+
     /* Configure base columns (always visible) */
     columns[SBCOL_RANK].type = SBCOL_RANK;
     columns[SBCOL_RANK].width = COL_RANK_WIDTH;

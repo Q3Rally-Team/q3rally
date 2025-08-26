@@ -521,7 +521,11 @@ typedef struct {
 	// map variables
 	int			numCheckpoints;
 
-	int			testModelID;
+        float                   cpDist[MAX_GENTITIES];
+        gentity_t       *checkpoints[MAX_GENTITIES];
+        float                   trackLength;
+
+        int                     testModelID;
 // END
 } level_locals_t;
 

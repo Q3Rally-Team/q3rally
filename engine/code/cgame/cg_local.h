@@ -1291,6 +1291,7 @@ typedef struct {
 
 // Q3Rally Code Start
 	int				numRacers;
+        float                   trackLength;
 // Q3Rally Code END
 
 } cgs_t;
@@ -1437,6 +1438,7 @@ extern	vmCvar_t		cg_mmap_fov;
 extern	vmCvar_t		cg_mmap_size;
 extern	vmCvar_t		cg_mmap_renderLevel;
 extern	vmCvar_t		cg_checkpointArrowMode;
+extern      vmCvar_t                cg_distanceFormat;
 
 extern	vmCvar_t		cg_atmosphericLevel;
 extern	vmCvar_t		cg_developer;

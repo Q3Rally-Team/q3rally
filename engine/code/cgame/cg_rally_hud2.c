@@ -63,24 +63,26 @@ void CG_DrawHUD_Times(float x, float y){
 
 	y += 20;
 
-	// draw lap time
-	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
-	time = getStringForTime( lapTime );
-	CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+        if ( cgs.laplimit > 1 ){
+                // draw lap time
+                CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
+                time = getStringForTime( lapTime );
+                CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
 
-	y += 20;
+                y += 20;
 
-	// draw last lap time
-	CG_DrawSmallDigitalStringColor(x + 12, y, "LAST:", colorWhite);
-	if ( lastTime ){
-		time = getStringForTime( lastTime );
-		CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
-	}
-	else {
-		CG_DrawSmallDigitalStringColor(x + 102, y, "N/A", colorWhite);
-	}
+                // draw last lap time
+                CG_DrawSmallDigitalStringColor(x + 12, y, "LAST:", colorWhite);
+                if ( lastTime ){
+                        time = getStringForTime( lastTime );
+                        CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+                }
+                else {
+                        CG_DrawSmallDigitalStringColor(x + 102, y, "N/A", colorWhite);
+                }
 
-	y += 20;
+                y += 20;
+        }
 
 	// draw total time
 	CG_DrawSmallDigitalStringColor(x + 12, y, "TOTAL:", colorWhite);
@@ -198,7 +200,10 @@ void CG_DrawHUD_Laps(float x, float y){
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
 	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
+        if ( cgs.laplimit > 1 )
+                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
+        else
+                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i", cg_entities[cg.snap->ps.clientNum].currentLap), colorWhite);
 }
 
 /*
