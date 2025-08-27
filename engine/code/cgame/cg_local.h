@@ -1179,6 +1179,9 @@ typedef struct {
 	sfxHandle_t	wstbactvSound;
 
 // Q3Rally Code Start
+
+    qhandle_t       gaugeImperial;
+    qhandle_t       gaugeMetric;
 	// car sounds
 	sfxHandle_t	damage100[2];
 	sfxHandle_t	damage75[2];

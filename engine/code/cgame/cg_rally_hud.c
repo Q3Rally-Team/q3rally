@@ -723,7 +723,7 @@ static float CG_DrawSpeed( float y ) {
 	// draw speedometer here
 	x2 = x - 96;
 	y2 = y - 96;
-	CG_DrawPic( x2, y2, 96, 96, trap_R_RegisterShaderNoMip("gfx/hud/gauge01"));
+	CG_DrawPic( x2, y2, 96, 96, cg_metricUnits.integer ? cgs.media.gaugeMetric : cgs.media.gaugeImperial );
 	
 
 	// draw digital speed
