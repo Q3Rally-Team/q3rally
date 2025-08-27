@@ -139,6 +139,7 @@ extern vmCvar_t ui_trackReversed;
 
 
 extern vmCvar_t	ui_metricUnits;
+extern vmCvar_t     ui_speedometerMode;
 extern vmCvar_t	ui_controlMode;
 extern vmCvar_t	ui_manualShift;
 extern vmCvar_t	ui_minSkidLength;

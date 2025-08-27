@@ -197,6 +197,7 @@ vmCvar_t	ui_trackReversed;
 
 
 vmCvar_t	ui_metricUnits;
+vmCvar_t        ui_speedometerMode;
 vmCvar_t	ui_controlMode;
 vmCvar_t	ui_manualShift;
 vmCvar_t	ui_minSkidLength;
@@ -302,6 +303,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_trackReversed, "g_trackReversed", "0", CVAR_LATCH },
 
 	{ &ui_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
+        { &ui_speedometerMode, "cg_speedometerMode", "0", CVAR_ARCHIVE },
 	{ &ui_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE },
 	{ &ui_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE },
 	{ &ui_minSkidLength, "cg_minSkidLength", "12", CVAR_ARCHIVE },

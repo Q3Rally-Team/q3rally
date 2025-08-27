@@ -250,6 +250,7 @@ vmCvar_t	cg_obeliskRespawnDelay;
 
 // Q3Rally Code Start
 vmCvar_t	cg_metricUnits;
+vmCvar_t        cg_speedometerMode;
 vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
 vmCvar_t	cg_minSkidLength;
@@ -359,6 +360,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
+        { &cg_speedometerMode, "cg_speedometerMode", "0", CVAR_ARCHIVE },
 	{ &cg_minSkidLength, "cg_minSkidLength", "12", CVAR_ARCHIVE },
 	{ &cg_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
 	{ &cg_drawMMap, "cg_drawMMap", "1", CVAR_ARCHIVE }, //TBB minimap - default on

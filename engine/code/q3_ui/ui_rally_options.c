@@ -48,6 +48,7 @@ qboolean isRaceObserver( int clientNum )
 
 #define ID_MMAP_SIZE            26
 #define ID_MMAP_FOV             27
+#define ID_SPEEDOMETER_MODE     28
 
 #define ID_MVRL_PLAYERS         30
 #define ID_MVRL_OBJECTS         31
@@ -63,6 +64,7 @@ typedef struct {
 	menutext_s		banner;
 
 	menulist_s		units;
+        menulist_s              speedometer;
 	menulist_s		arrowMode;
 	menulist_s		controlMode;
 	menulist_s		atomspheric;
@@ -99,9 +101,15 @@ typedef struct {
 static q3roptionsmenu_t	s_q3roptions;
 
 static const char *q3roptions_units[] = {
-	"Imperial",
-	"Metric",
-	0
+        "Imperial",
+        "Metric",
+        0
+};
+
+static const char *q3roptions_speedometer_mode[] = {
+        "Analog",
+        "Digital",
+        0
 };
 
 static const char *q3roptions_control_mode[] = {
@@ -140,13 +148,17 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 
 	switch( ((menucommon_s*)ptr)->id )
 	{
-	case ID_UNITS:
-		trap_Cvar_SetValue( "cg_metricUnits", s_q3roptions.units.curvalue );
-		break;
+        case ID_UNITS:
+                trap_Cvar_SetValue( "cg_metricUnits", s_q3roptions.units.curvalue );
+                break;
 
-	case ID_CP_ARROW_MODE:
-		trap_Cvar_SetValue( "cg_checkpointArrowMode", s_q3roptions.arrowMode.curvalue );
-		break;
+        case ID_SPEEDOMETER_MODE:
+                trap_Cvar_SetValue( "cg_speedometerMode", s_q3roptions.speedometer.curvalue );
+                break;
+
+        case ID_CP_ARROW_MODE:
+                trap_Cvar_SetValue( "cg_checkpointArrowMode", s_q3roptions.arrowMode.curvalue );
+                break;
 
 	case ID_CONTROL_MODE:
 		trap_Cvar_SetValue( "cg_controlMode", s_q3roptions.controlMode.curvalue );
@@ -254,13 +266,17 @@ static void Q3ROptions_StatusBar( void *self )
 
 	switch( ((menucommon_s*)self)->id )
 	{
-	case ID_UNITS:
-		text = "Use KPH or MPH on the speedometer.";
-		break;
+        case ID_UNITS:
+                text = "Use KPH or MPH on the speedometer.";
+                break;
 
-	case ID_CP_ARROW_MODE:
-		text = "Display options for the next checkpoint arrow.";
-		break;
+        case ID_SPEEDOMETER_MODE:
+                text = "Select analog or digital speedometer.";
+                break;
+
+        case ID_CP_ARROW_MODE:
+                text = "Display options for the next checkpoint arrow.";
+                break;
 
 	case ID_CONTROL_MODE:
 		if( s_q3roptions.controlMode.curvalue == 0 )
@@ -369,8 +385,9 @@ void Q3ROptions_MenuInit( void ) {
 
 
 	// load current values
-	s_q3roptions.units.curvalue = ui_metricUnits.integer;
-	s_q3roptions.arrowMode.curvalue = ui_checkpointArrowMode.integer;
+        s_q3roptions.units.curvalue = ui_metricUnits.integer;
+        s_q3roptions.speedometer.curvalue = ui_speedometerMode.integer;
+        s_q3roptions.arrowMode.curvalue = ui_checkpointArrowMode.integer;
 	s_q3roptions.controlMode.curvalue = ui_controlMode.integer;
 	s_q3roptions.atomspheric.curvalue = ui_atmosphericLevel.integer;
 
@@ -454,6 +471,16 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.atomspheric.generic.x			= 200;
 	s_q3roptions.atomspheric.generic.y			= 90 + 60;
 	s_q3roptions.atomspheric.itemnames			= q3roptions_atmospheric;
+        s_q3roptions.speedometer.generic.type           = MTYPE_SPINCONTROL;
+        s_q3roptions.speedometer.generic.name           = "Speedometer Mode:";
+        s_q3roptions.speedometer.generic.flags          = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+        s_q3roptions.speedometer.generic.callback       = Q3ROptions_MenuEvent;
+        s_q3roptions.speedometer.generic.statusbar      = Q3ROptions_StatusBar;
+        s_q3roptions.speedometer.generic.id             = ID_SPEEDOMETER_MODE;
+        s_q3roptions.speedometer.generic.x              = 200;
+        s_q3roptions.speedometer.generic.y              = 90 + 80;
+        s_q3roptions.speedometer.itemnames              = q3roptions_speedometer_mode;
+
 
 
 
@@ -683,6 +710,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.arrowMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.controlMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.atomspheric );
+        Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.speedometer );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.manualShift );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rearView );

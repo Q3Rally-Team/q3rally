@@ -704,8 +704,59 @@ static float CG_DrawSpeed( float y ) {
 
 	AngleVectors( ps->viewangles, forward, NULL, NULL );
 
-	// use actual speed
-	vel_speed = (int)fabs( Q3VelocityToRL( DotProduct(ps->velocity, forward) ) );
+        // use actual speed
+        vel_speed = (int)fabs( Q3VelocityToRL( DotProduct(ps->velocity, forward) ) );
+
+       if ( cg_speedometerMode.integer ) {
+               char    speedStr[32];
+               char    rpmStr[32];
+               char    gearStr[16];
+               char    gearLabel[4];
+               int             maxLen, len;
+               float bgColor[4] = {0.0f, 0.0f, 0.0f, 0.25f};
+
+               Com_sprintf( speedStr, sizeof( speedStr ), "%i %s", vel_speed, cg_metricUnits.integer ? "KPH" : "MPH" );
+               Com_sprintf( rpmStr,   sizeof( rpmStr ),   "%d RPM", cg.predictedPlayerState.stats[STAT_RPM] );
+
+               if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 ) {
+                       Q_strncpyz( gearLabel, "R", sizeof( gearLabel ) );
+               } else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 ) {
+                       Q_strncpyz( gearLabel, "N", sizeof( gearLabel ) );
+               } else {
+                       Com_sprintf( gearLabel, sizeof( gearLabel ), "%i", cg.predictedPlayerState.stats[STAT_GEAR] );
+               }
+               Com_sprintf( gearStr, sizeof( gearStr ), "GEAR %s", gearLabel );
+
+               maxLen = CG_DrawStrlen( speedStr );
+               len = CG_DrawStrlen( rpmStr );
+               if ( len > maxLen ) {
+                       maxLen = len;
+               }
+               len = CG_DrawStrlen( gearStr );
+               if ( len > maxLen ) {
+                       maxLen = len;
+               }
+
+               x -= 38 + ( maxLen * SMALLCHAR_WIDTH ) / 2;
+
+               y -= 40;
+               {
+                       float rectX = x - 4, rectY = y - 4;
+                       float rectW = maxLen * SMALLCHAR_WIDTH + 8;
+                       float rectH = 3 * SMALLCHAR_HEIGHT + 8;
+                       CG_FillRect( rectX, rectY, rectW, rectH, bgColor );
+               }
+               CG_DrawSmallDigitalStringColor( x, y, speedStr, colorWhite );
+               y += SMALLCHAR_HEIGHT;
+               CG_DrawSmallDigitalStringColor( x, y, rpmStr, colorWhite );
+               y += SMALLCHAR_HEIGHT;
+               CG_DrawSmallDigitalStringColor( x, y, gearStr, colorWhite );
+
+               y = yorg;
+               y -= 44;
+               y -= 3 * SMALLCHAR_HEIGHT;
+               return y;
+       }
 /*
 #ifdef Q3_VM
 	if (ps->stats[STAT_GEAR] == -1)
