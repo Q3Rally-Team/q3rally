@@ -819,6 +819,13 @@ void CreateOilHazard (gentity_t *owner, vec3_t origin);
 void CreatePoisonHazard (gentity_t *owner, vec3_t origin);
 void CreatePoisonCloudHazard (gentity_t *owner, vec3_t origin);
 void CreateSmokeHazard (gentity_t *owner, vec3_t origin);
+//
+// g_rally_object_physics.c
+//
+void G_RallyObject_ApplyForce( gentity_t *self, vec3_t force, vec3_t at );
+qboolean G_RallyObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t normal, float elasticity );
+void G_RallyObject_TracePhysics( gentity_t *self, float time );
+void G_RallyObject_IntegratePhysics( gentity_t *self, float time );
 // END
 
 

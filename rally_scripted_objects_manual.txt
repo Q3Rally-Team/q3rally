@@ -1,0 +1,99 @@
+1.Scripted Objects in deiner Map einsetzen
+
+- Scriptdatei anlegen
+  Erstelle eine Datei *.script, in der du das Objekt beschreibst. Der Block rally_scripted_object definiert Eigenschaften wie Modell, zerstörtes Modell,
+  Masse oder Sounds.
+  
+  Beispiel:
+
+rally_scripted_object {
+    type 0
+    model "hydrant"
+    deadmodel "waterspray"
+    moveable 0
+    mass 50
+    health 1000
+    mins "-8 -8 -8"
+    maxs "8 8 8"
+    presound "sound/hydrant/metalcreak"
+    hitsound "sound/hydrant/solidmetalbang"
+    destroysound "sound/hydrant/solidmetalbreak"
+    postsound "sound/hydrant/waterspray"
+    gibs {
+        "models/mapobjects/hydrant/piece1" -3
+        "models/mapobjects/hydrant/piece2" 2
+        "models/mapobjects/hydrant/piece3" 1
+        "models/mapobjects/hydrant/piece4" 4
+    }
+}
+
+2.Entity im Editor platzieren
+
+- In Radiant (oder einem kompatiblen Editor) wählst du die Entity rally_scripted_object
+  Setze die Key/Value-Paare:
+
+  script ? Pfad zur oben erstellten Scriptdatei (ohne .script)
+  Optional: angle/angles für Ausrichtung, targetname für Trigger usw.
+  Der Spawn-Code mappt das Feld script direkt auf das Entity ({ "script", FOFS(script), F_STRING }),
+  und die Entity-Klasse wird über rally_scripted_object gebunden
+        
+3.Im Spiel
+
+- Beim Laden der Map liest das Spiel den Pfad aus script und lädt die zugehörige Datei.
+  Ohne gültige Scriptangabe wird das Objekt verworfen (No Script file specified).
+  Steht moveable 1, unterliegt das Objekt der Physik.
+  Wird health auf >0 gesetzt, kann es zerstört werden; deadmodel und gibs definieren das Aussehen und die Bruchstücke.
+  Die definierten Sounds (hitsound, presound, postsound, destroysound) werden automatisch abgespielt.
+  
+  Mit diesen Schritten lassen sich in Q3Rally interaktive, zerstörbare oder bewegliche Objekte in die Map integrieren.
+  
+1. Use scripted objects in your map
+
+- Create a script file
+  Create a *.script file in which you describe the object. The rally_scripted_object block defines properties such as model, destroyed model,
+  mass, or sounds.
+  
+  Example:
+
+rally_scripted_object {
+    type 0
+    model "hydrant"
+    deadmodel "waterspray"
+    moveable 0
+    mass 50
+    health 1000
+    mins "-8 -8 -8"
+    maxs "8 8 8"
+    presound "sound/hydrant/metalcreak"
+    hitsound "sound/hydrant/solidmetalbang"
+    destroysound "sound/hydrant/solidmetalbreak"
+    postsound "sound/hydrant/waterspray"
+    gibs {
+        "models/mapobjects/hydrant/piece1" -3
+        "models/mapobjects/hydrant/piece2" 2
+        "models/mapobjects/hydrant/piece3" 1
+        "models/mapobjects/hydrant/piece4" 4
+    }
+}
+
+2.Place entity in editor
+
+- In Radiant (or a compatible editor) select the entity rally_scripted_object 
+  Set the Key/value pairs:
+
+  script ? Path to the script file created above (without .script)
+  Optional: angle/angles for alignment, targetname for triggers, etc.
+  The spawn code maps the script field directly to the entity ({ "script", FOFS(script), F_STRING }),
+  and the entity class is bound via rally_scripted_object
+
+3. In the game
+
+- When loading the map, the game reads the path from script and loads the corresponding file.
+  Without a valid script specification, the object is discarded (No Script file specified).
+  If moveable is 1, the object is subject to physics.
+  If health is set to >0, it can be destroyed; deadmodel and gibs define the appearance and fragments.
+  The defined sounds (hitsound, presound, postsound, destroysound) are played automatically.
+
+  With these steps, interactive, destructible, or moving objects can be integrated into the map in Q3Rally.
+  
+  

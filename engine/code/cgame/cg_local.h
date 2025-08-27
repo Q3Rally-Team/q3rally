@@ -188,6 +188,9 @@ typedef struct {
 
 // centity_t have a direct corespondence with gentity_t in the game, but
 // only the entityState_t is directly communicated to the cgame
+
+// number of gib models that can be registered for a scripted object
+#define MAX_SCRIPT_GIBS       5
 typedef struct centity_s {
 	entityState_t	currentState;	// from cg.frame
 	entityState_t	nextState;		// from cg.nextFrame, if available
@@ -261,6 +264,11 @@ typedef struct centity_s {
 
 	qhandle_t		modelHandle;
 	qhandle_t		deadModelHandle;
+
+	int			numGibModels;
+	qhandle_t		gibModels[MAX_SCRIPT_GIBS];
+	qhandle_t		gibSounds[MAX_SCRIPT_GIBS];
+	qboolean		gibsSpawned;
 
 	vec3_t			bezierDir;
 	vec3_t			bezierPos;
@@ -1744,6 +1752,7 @@ void CG_ParticlesFromEntityState( vec3_t origin, int type, entityState_t *es);
 // void CG_GibPlayer( vec3_t playerOrigin );
 void CG_GibPlayer( vec3_t playerOrigin, vec3_t playerVelocity, int client );
 // Q3Rally Code END
+void CG_LaunchGib( vec3_t origin, vec3_t velocity, qhandle_t hModel, qhandle_t hSkin, float radius, qboolean carPart );
 void CG_BigExplode( vec3_t playerOrigin );
 void CG_LightningArc( vec3_t start, vec3_t end );
 void CG_BreakGlass( vec3_t playerOrigin );

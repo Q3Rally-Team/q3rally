@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 #define		MAX_SCRIPT_TEXT		8192
+#define GIB_VELOCITY 250
+#define GIB_JUMP 100
 
 qboolean SeekToSection( char **pointer, char *str ){
 	char		*token;
@@ -118,8 +120,13 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 		return qfalse;
 	}
 
-	model[0] = 0;
-	deadmodel[0] = 0;
+       model[0] = 0;
+       deadmodel[0] = 0;
+
+       cent->numGibModels = 0;
+       cent->gibsSpawned = qfalse;
+       memset( cent->gibModels, 0, sizeof( cent->gibModels ) );
+       memset( cent->gibSounds, 0, sizeof( cent->gibSounds ) );
 
 	// read optional parameters
 	while ( 1 ) {
@@ -262,30 +269,55 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 
 			continue;
 		}
-		else if ( !Q_stricmp( token, "gibs" ) ) {
-			// skip gibs part of script (it is only used client side)
-			token = COM_Parse( &text_p );
-			if ( !token ) {
-				break;
-			}
+               else if ( !Q_stricmp( token, "gibs" ) ) {
+                       token = COM_Parse( &text_p );
+                       if ( !token ) {
+                               break;
+                       }
 
-			if ( !Q_stricmp( token, "{" ) ){
-				// FIXME: add code to load gibs
+                       if ( !Q_stricmp( token, "{" ) ){
+                               int current = -1;
 
-				// loop through this
-				while ( 1 ) {
-					token = COM_Parse( &text_p );
+                               while ( 1 ) {
+                                       token = COM_Parse( &text_p );
 
-					if( !token || token[0] == 0 )
-						return qfalse;
+                                       if( !token || token[0] == 0 )
+                                               return qfalse;
 
-					if ( !Q_stricmp( token, "}" ) )
-						break;
-				}
-			}
+                                       if ( !Q_stricmp( token, "}" ) )
+                                               break;
 
-			continue;
-		}
+                                       if ( !Q_stricmp( token, "model" ) ) {
+                                               token = COM_Parse( &text_p );
+                                               if ( !token ) {
+                                                       break;
+                                               }
+
+                                               if ( cent->numGibModels < MAX_SCRIPT_GIBS ) {
+                                                       current = cent->numGibModels++;
+                                                       cent->gibModels[current] = trap_R_RegisterModel( token );
+                                               }
+                                               continue;
+                                       }
+
+                                       if ( !Q_stricmp( token, "sound" ) ) {
+                                               token = COM_Parse( &text_p );
+                                               if ( !token ) {
+                                                       break;
+                                               }
+
+                                               if ( current >= 0 && current < MAX_SCRIPT_GIBS ) {
+                                                       cent->gibSounds[current] = trap_S_RegisterSound( token, qfalse );
+                                               }
+                                               continue;
+                                       }
+
+                                       // skip any unknown token (like counts)
+                               }
+                       }
+
+                       continue;
+               }
 		else {
 			Com_Printf("Warning: Skipping unknown token %s in %s\n", token, filename);
 			continue;
@@ -299,7 +331,7 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 		if ( !SeekToSection( &text_p, model ) ){
 //			Com_Printf( "'%s' section not found in script file, assuming it was an actual filename\n", model );
 
-			cent->modelHandle = trap_R_RegisterModel( model );
+			cent->modelHandle = trap_R_RegisterModel( deadmodel );
 		}
 		else {
 			Com_Printf( "Loading model info for '%s'\n", model );
@@ -314,7 +346,7 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 		if ( !SeekToSection( &text_p, deadmodel ) ){
 //			Com_Printf( "'%s' section not found in script file, assuming it was an actual filename\n", model );
 
-			cent->deadModelHandle = trap_R_RegisterModel( model );
+			cent->deadModelHandle = trap_R_RegisterModel( deadmodel );
 		}
 		else {
 			Com_Printf( "Loading deadmodel info for '%s'\n", deadmodel );
@@ -360,19 +392,36 @@ void CG_Scripted_Object( centity_t *cent ){
 		return;
 	}
 
-	if ( !cent->scriptLoadTime ){
-		scriptName = CG_ConfigString( CS_SCRIPTS + s1->modelindex );
-		if ( !scriptName[0] ) {
-			return;
-		}
+        if ( !cent->scriptLoadTime ){
+                scriptName = CG_ConfigString( CS_SCRIPTS + s1->modelindex );
+                if ( !scriptName[0] ) {
+                        return;
+                }
 
 		if ( CG_ParseScriptedObject( cent, scriptName ) )
 			cent->scriptLoadTime = cg.time;
 		else
 			return;
-	}
+        }
 
-	memset (&ent, 0, sizeof(ent));
+       if ( (cent->currentState.eFlags & EF_DEAD) && !cent->gibsSpawned ) {
+               int i;
+               vec3_t velocity;
+
+               cent->gibsSpawned = qtrue;
+
+               for ( i = 0; i < cent->numGibModels; i++ ) {
+                       velocity[0] = crandom() * GIB_VELOCITY;
+                       velocity[1] = crandom() * GIB_VELOCITY;
+                       velocity[2] = GIB_JUMP + crandom() * GIB_VELOCITY;
+                       CG_LaunchGib( cent->lerpOrigin, velocity, cent->gibModels[i], -1, 0, qfalse );
+                       if ( cent->gibSounds[i] ) {
+                               trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_WORLD, CHAN_AUTO, cent->gibSounds[i] );
+                       }
+               }
+       }
+
+        memset (&ent, 0, sizeof(ent));
 
 	if ( cent->currentState.eFlags & EF_DEAD )
 		ent.hModel = cent->deadModelHandle;
