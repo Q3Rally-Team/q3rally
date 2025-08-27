@@ -728,7 +728,7 @@ static float CG_DrawSpeed( float y ) {
 
 	// draw digital speed
 	x -= 48 + (CG_DrawStrlen(va("%i", vel_speed)) * SMALLCHAR_WIDTH) / 2;
-	y -= 28;
+	y -= 35;
 	CG_DrawSmallDigitalStringColor( x, y, va("%i", vel_speed), colorWhite);
 
 	// draw needle
