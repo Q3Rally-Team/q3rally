@@ -2026,10 +2026,12 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	else if ( ps->stats[STAT_HEALTH] <= 50 )
 		s->eFlags |= EF_SMOKE_LIGHT;
 
-	if (ps->extra_eFlags & CF_REVERSE)
-		s->eFlags |= EF_REVERSE;
-	if (ps->extra_eFlags & CF_BRAKE)
-		s->eFlags |= EF_BRAKE;
+        if (ps->extra_eFlags & CF_REVERSE)
+                s->eFlags |= EF_REVERSE;
+        if (ps->extra_eFlags & CF_BRAKE)
+                s->eFlags |= EF_BRAKE;
+        if (ps->extra_eFlags & CF_HEADLIGHTS)
+                s->eFlags |= EF_HEADLIGHTS;
 // END
 
 	if ( ps->externalEvent ) {

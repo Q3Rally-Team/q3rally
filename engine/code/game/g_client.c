@@ -1493,10 +1493,15 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
-	client->ps.eFlags = flags;
+       client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+       client->ps.eFlags = flags;
+       ent->s.eFlags &= ~EF_HEADLIGHTS;
+       if ( client->sess.headlights ) {
+               client->ps.extra_eFlags |= CF_HEADLIGHTS;
+               ent->s.eFlags |= EF_HEADLIGHTS;
+       }
 
-	ent->s.groundEntityNum = ENTITYNUM_NONE;
+       ent->s.groundEntityNum = ENTITYNUM_NONE;
 	ent->client = &level.clients[index];
 	ent->takedamage = qtrue;
 	ent->inuse = qtrue;

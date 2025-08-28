@@ -1054,6 +1054,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	refEntity_t		plate;
 	refEntity_t		turbo;
 	refEntity_t		headlight;
+	refEntity_t		backlight;
 	refEntity_t		brakelight;
 	refEntity_t		reverselight;
 
@@ -1130,6 +1131,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 */
 	memset( &plate, 0, sizeof(plate) );
 	memset( &headlight, 0, sizeof(headlight) );
+        memset( &backlight, 0, sizeof(backlight) );
 	memset( &brakelight, 0, sizeof(brakelight) );
 	memset( &reverselight, 0, sizeof(reverselight) );
 	memset( &turbo, 0, sizeof(turbo) );
@@ -1326,11 +1328,11 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	//
 	// add the headlights
 	//
-	if (pi->headLights){
-		headlight.hModel = uis.headLightGlow;
-		if (!headlight.hModel) {
-			return;
-		}
+        if (pi->headLights){
+                headlight.hModel = uis.headLightGlow;
+                if (!headlight.hModel) {
+                        return;
+                }
 
 		VectorCopy( origin, headlight.lightingOrigin );
 		headlight.renderfx = renderfx;
@@ -1341,8 +1343,29 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 
 			UI_PositionEntityOnTag( &headlight, &body, pi->bodyModel, filename);
 			trap_R_AddRefEntityToScene( &headlight );
-		}
-	}
+                }
+        }
+
+        //
+        // add the backlights
+        //
+        if (pi->headLights){
+                backlight.hModel = uis.brakeLightGlow;
+                if (!backlight.hModel) {
+                        return;
+                }
+
+                VectorCopy( origin, backlight.lightingOrigin );
+                backlight.renderfx = renderfx;
+
+                for (i = 0; i < 3; i++){
+                        Com_sprintf(filename, sizeof(filename), "tag_blite%d", i+1);
+                        if (!UI_TagExists(pi->bodyModel, filename)) continue;
+
+                        UI_PositionEntityOnTag( &backlight, &body, pi->bodyModel, filename);
+                        trap_R_AddRefEntityToScene( &backlight );
+                }
+        }
 
 	//
 	// add the brakelights

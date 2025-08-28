@@ -275,7 +275,7 @@ static bind_t g_bindings[] =
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"dropWeapon", 		"drop rear weapon",	ID_DROP_REAR,	ANIM_DROPREAR,	'r',			-1,		-1, -1},
-    {"headlights", 		"headlight toggle",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
+    {"headlights", 		"lights",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
     {"record",          "start demo record",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
     {"stoprecord",      "stop demo record",             ID_STOPDEMO,    ANIM_STOPDEMO,  'u',            -1,     -1, -1},
 	{"nextcamera",		"next camera",		  ID_NEXTCAMERA,	  ANIM_IDLE,		  'c',			-1,		-1, -1},

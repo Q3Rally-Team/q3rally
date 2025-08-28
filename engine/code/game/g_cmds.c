@@ -2026,14 +2026,28 @@ void Cmd_MoveBHandle_f( gentity_t *other )
 
 	Com_Printf( "Moving Checkpoint %i by (%f %f %f)\n", curCheckpoint, delta[0], delta[1], delta[2] );
 
-	while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
-		if ( ent->number == curCheckpoint )
-		{
-			VectorAdd( ent->s.angles2, delta, ent->s.angles2 );
+        while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
+                if ( ent->number == curCheckpoint )
+                {
+                        VectorAdd( ent->s.angles2, delta, ent->s.angles2 );
 
-			break;
-		}
-	}
+                        break;
+                }
+        }
+}
+
+void Cmd_Headlight_Toggle_f( gentity_t *ent ) {
+       if ( !ent->client ) {
+               return;
+       }
+
+       ent->client->ps.extra_eFlags ^= CF_HEADLIGHTS;
+       if ( ent->client->ps.extra_eFlags & CF_HEADLIGHTS ) {
+               ent->s.eFlags |= EF_HEADLIGHTS;
+       } else {
+               ent->s.eFlags &= ~EF_HEADLIGHTS;
+       }
+       ent->client->sess.headlights = (ent->client->ps.extra_eFlags & CF_HEADLIGHTS) ? qtrue : qfalse;
 }
 // END
 
@@ -2189,20 +2203,18 @@ void ClientCommand( int clientNum ) {
 
 		G_PrintMapStats( ent, atoi(buffer), name );
 	}
-	else if (Q_stricmp (cmd, "times") == 0) {
-		Cmd_Times_f (ent);
-		return;
-	}
-/*
-	else if (Q_stricmp (cmd, "headlights") == 0) {
-		Cmd_Headlight_Toggle_f (ent);
-		return;
-	}
-*/
-	else if (Q_stricmp (cmd, "saveBPoints") == 0) {
-		Cmd_SaveBPoints_f (ent);
-		return;
-	}
+        else if (Q_stricmp (cmd, "times") == 0) {
+                Cmd_Times_f (ent);
+                return;
+        }
+        else if (Q_stricmp (cmd, "headlights") == 0) {
+                Cmd_Headlight_Toggle_f (ent);
+                return;
+        }
+        else if (Q_stricmp (cmd, "saveBPoints") == 0) {
+                Cmd_SaveBPoints_f (ent);
+                return;
+        }
 	else if (Q_stricmp (cmd, "moveBPoint") == 0) {
 		Cmd_MoveBPoint_f (ent);
 		return;

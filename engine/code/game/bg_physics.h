@@ -155,9 +155,6 @@ extern	float CP_GEAR_RATIOS[];
 #define HTYPE_BOTTOMED_OUT	1
 #define HTYPE_MAXED_OUT		2
 
-#define CF_REVERSE			1
-#define CF_BRAKE			2
-
 // assign sign bit of b to a, floats only
 // #define SetSign(a,b)		(*(DWORD *)&(a)) = ((*(DWORD *)&(b)) & 0x80000000) | ((*(DWORD *)&(a)) & 0x7FFFFFFF)
 
