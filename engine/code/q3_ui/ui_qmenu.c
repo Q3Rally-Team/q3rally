@@ -1054,6 +1054,9 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 					l->top = l->curvalue;
 				if( l->top + l->height <= l->curvalue )
 					l->top = l->curvalue - l->height + 1;
+				if (l->generic.callback) {
+					l->generic.callback(l, QM_GOTFOCUS);
+				}
 				return (menu_move_sound);
 			}
 			break;
@@ -1074,6 +1077,9 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 					l->top = l->curvalue;
 				if( l->top + l->height <= l->curvalue )
 					l->top = l->curvalue - l->height + 1;
+				if (l->generic.callback) {
+					l->generic.callback(l, QM_GOTFOCUS);
+				}
 				return (menu_move_sound);
 			}
 			break;
@@ -1091,6 +1097,9 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 					l->top = l->curvalue;
 				if( l->top + l->height <= l->curvalue )
 					l->top = l->curvalue - l->height + 1;
+				if (l->generic.callback) {
+					l->generic.callback(l, QM_GOTFOCUS);
+				}
 				return (menu_move_sound);
 			}
 			break;
@@ -1108,6 +1117,9 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 					l->top = l->curvalue;
 				if( l->top + l->height <= l->curvalue )
 					l->top = l->curvalue - l->height + 1;
+				if (l->generic.callback) {
+					l->generic.callback(l, QM_GOTFOCUS);
+				}
 				return (menu_move_sound);
 			}
 			break;
