@@ -32,9 +32,12 @@ for improved user experience and better visual feedback.
 
 #include "ui_local.h"
 
-#define NUM_OF_CACHES 7         /* total number of caching stages */
-#define MIN_STAGE_TIME 450      /* minimum milliseconds per stage */
-#define FINAL_DISPLAY_TIME 1200 /* time to display 100% before transition */
+static const int MIN_STAGE_TIME = 450;      /* minimum milliseconds per stage */
+static const int FINAL_DISPLAY_TIME = 1200; /* time to display 100% before transition */
+
+typedef struct {
+    void (*exec)(void);
+} gfx_stage_t;
 
 typedef struct {
     menuframework_s menu;
@@ -44,11 +47,60 @@ typedef struct {
     float smoothProgress;        /* smoothly interpolated value for visuals */
     int stageStartTime;          /* when current stage started */
     int finalDisplayStartTime;   /* when 100% display phase started */
+    qhandle_t carShader;         /* icon for progress indicator */
     qboolean cacheExecuted;      /* whether current stage's cache has been executed */
     qboolean finalPhase;         /* whether we're in the final display phase */
 } gfxloading_t;
 
 static gfxloading_t s_gfxloading;
+
+/*
+======================
+Stage Implementations
+======================
+*/
+static void GFXStage_Init(void) {}
+static void GFXStage_SetupMenu(void) { UI_SetupMenu_Cache(); }
+static void GFXStage_PlayerModel(void) { PlayerModel_Cache(); }
+static void GFXStage_PlayerSettings(void) { PlayerSettings_Cache(); }
+static void GFXStage_Controls(void) { Controls_Cache(); }
+static void GFXStage_ArenaServers(void) { ArenaServers_Cache(); }
+static void GFXStage_PlayerData(void) {
+    char model[MAX_QPATH];
+    char rim[MAX_QPATH];
+    char head[MAX_QPATH];
+    char plate[MAX_QPATH];
+
+    trap_Cvar_VariableStringBuffer("model", model, sizeof(model));
+    trap_Cvar_VariableStringBuffer("rim", rim, sizeof(rim));
+    trap_Cvar_VariableStringBuffer("head", head, sizeof(head));
+    trap_Cvar_VariableStringBuffer("plate", plate, sizeof(plate));
+    UI_PlayerInfo_SetModel(&s_gfxloading.playerinfo, model, rim, head, plate);
+}
+static void GFXStage_StartServer(void) { StartServer_Cache(); }
+
+static const char * const stageNames[] = {
+    "Initializing System...",
+    "Loading Setup Menu...",
+    "Caching Player Models...",
+    "Applying Player Settings...",
+    "Loading Control Bindings...",
+    "Building Arena Server List...",
+    "Configuring Player Data...",
+    "Finalizing User Interface...",
+    "Ready to Start!"
+};
+
+static const gfx_stage_t stages[] = {
+    {GFXStage_Init},
+    {GFXStage_SetupMenu},
+    {GFXStage_PlayerModel},
+    {GFXStage_PlayerSettings},
+    {GFXStage_Controls},
+    {GFXStage_ArenaServers},
+    {GFXStage_PlayerData},
+    {GFXStage_StartServer},
+};
 
 /*
 ============================
@@ -58,52 +110,14 @@ Executes the actual caching operations for the current stage.
 This is separated from the timing logic to allow for artificial delays.
 */
 static void UI_GFX_Loading_ExecuteStage(void) {
-    char model[MAX_QPATH];
-    char rim[MAX_QPATH];
-    char head[MAX_QPATH];
-    char plate[MAX_QPATH];
+    int totalStages = ARRAY_LEN(stages);
 
     if (s_gfxloading.cacheExecuted) {
         return; /* stage already executed */
     }
 
-    switch (s_gfxloading.currentCache) {
-    case 0:
-        /* Initialization - no actual work needed */
-        break;
-    case 1:
-        /* Setup menu assets */
-        UI_SetupMenu_Cache();
-        break;
-    case 2:
-        /* Player model assets */
-        PlayerModel_Cache();
-        break;
-    case 3:
-        /* Player settings and visuals */
-        PlayerSettings_Cache();
-        break;
-    case 4:
-        /* Controls and key bindings */
-        Controls_Cache();
-        break;
-    case 5:
-        /* Arena server browser */
-        ArenaServers_Cache();
-        break;
-    case 6:
-        /* Apply player model selections */
-        trap_Cvar_VariableStringBuffer("model", model, sizeof(model));
-        trap_Cvar_VariableStringBuffer("rim", rim, sizeof(rim));
-        trap_Cvar_VariableStringBuffer("head", head, sizeof(head));
-        trap_Cvar_VariableStringBuffer("plate", plate, sizeof(plate));
-        UI_PlayerInfo_SetModel(&s_gfxloading.playerinfo, model, rim, head, plate);
-        break;
-    case 7:
-    default:
-        /* Final setup for Start Server menu */
-        StartServer_Cache();
-        break;
+    if (s_gfxloading.currentCache < totalStages && stages[s_gfxloading.currentCache].exec) {
+        stages[s_gfxloading.currentCache].exec();
     }
 
     s_gfxloading.cacheExecuted = qtrue;
@@ -119,6 +133,7 @@ Handles artificial delays and smooth progress transitions.
 static void UI_GFX_Loading_UpdateProgress(void) {
     int currentTime = trap_Milliseconds();
     int stageElapsedTime;
+    int totalStages = ARRAY_LEN(stages);
     float stageProgress;
 
     /* Execute the current stage's caching operations early */
@@ -127,9 +142,9 @@ static void UI_GFX_Loading_UpdateProgress(void) {
     stageElapsedTime = currentTime - s_gfxloading.stageStartTime;
 
     /* Check if minimum stage time has passed */
-    if (stageElapsedTime >= MIN_STAGE_TIME && s_gfxloading.currentCache <= NUM_OF_CACHES) {
+    if (stageElapsedTime >= MIN_STAGE_TIME && s_gfxloading.currentCache < totalStages) {
         /* Move to next stage */
-        s_gfxloading.loadPercent = (float)(s_gfxloading.currentCache + 1) / (float)(NUM_OF_CACHES + 1);
+        s_gfxloading.loadPercent = (float)(s_gfxloading.currentCache + 1) / (float)totalStages;
         s_gfxloading.currentCache++;
         s_gfxloading.stageStartTime = currentTime;
         s_gfxloading.cacheExecuted = qfalse;
@@ -140,13 +155,13 @@ static void UI_GFX_Loading_UpdateProgress(void) {
             s_gfxloading.finalPhase = qtrue;
             s_gfxloading.finalDisplayStartTime = currentTime;
         }
-    } else if (s_gfxloading.currentCache <= NUM_OF_CACHES) {
+    } else if (s_gfxloading.currentCache < totalStages) {
         /* Calculate partial progress within current stage for smoother animation */
         stageProgress = (float)stageElapsedTime / (float)MIN_STAGE_TIME;
         if (stageProgress > 1.0f) stageProgress = 1.0f;
-        
+
         /* Interpolate between current and next stage */
-        s_gfxloading.loadPercent = ((float)s_gfxloading.currentCache + stageProgress) / (float)(NUM_OF_CACHES + 1);
+        s_gfxloading.loadPercent = ((float)s_gfxloading.currentCache + stageProgress) / (float)totalStages;
     }
 
     /* Ensure we don't exceed 100% */
@@ -162,21 +177,12 @@ UI_GFX_Loading_MenuDraw
 Draws the graphics loading menu and updates progress with enhanced visual feedback.
 */
 static void UI_GFX_Loading_MenuDraw(void) {
-    static char *stageNames[NUM_OF_CACHES + 2] = {
-        "Initializing System...",
-        "Loading Setup Menu...",
-        "Caching Player Models...",
-        "Applying Player Settings...",
-        "Loading Control Bindings...",
-        "Building Arena Server List...",
-        "Configuring Player Data...",
-        "Finalizing User Interface...",
-        "Ready to Start!"
-    };
     float blendRate;
     int bar_x, bar_y, bar_w, bar_h;
     int stage_index;
     int currentTime;
+    int totalStages = ARRAY_LEN(stages);
+    const char *stageName;
 
     /* Draw base menu (background, etc.) */
     Menu_Draw(&s_gfxloading.menu);
@@ -193,14 +199,16 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
     /* Draw current stage message */
     stage_index = s_gfxloading.currentCache;
-    if (stage_index > NUM_OF_CACHES + 1) {
-        stage_index = NUM_OF_CACHES + 1;
+    if (stage_index >= totalStages) {
+        stageName = stageNames[totalStages];
+    } else {
+        stageName = stageNames[stage_index];
     }
-    UI_DrawString(320, 200, stageNames[stage_index], UI_CENTER | UI_SMALLFONT, text_color_highlight);
+    UI_DrawString(320, 200, stageName, UI_CENTER | UI_SMALLFONT, text_color_highlight);
 
     /* Draw progress bar with enhanced visuals */
     bar_x = 200;
-    bar_y = 240;
+    bar_y = 240 + 50;
     bar_w = 240;
     bar_h = 24;
 
@@ -214,6 +222,21 @@ static void UI_GFX_Loading_MenuDraw(void) {
     /* Actual progress fill */
     if (s_gfxloading.smoothProgress > 0.0f) {
         UI_FillRect(bar_x, bar_y, (int)(bar_w * s_gfxloading.smoothProgress), bar_h, text_color_highlight);
+    }
+
+    /* Moving car icon */
+    {
+        const int iconWidth = 64;
+        const int iconHeight = 64;
+        float progress = s_gfxloading.smoothProgress;
+        int car_x;
+
+        /* Clamp progress to [0,1] to keep icon on bar */
+        if (progress < 0.0f) progress = 0.0f;
+        if (progress > 1.0f) progress = 1.0f;
+
+        car_x = bar_x + (int)(bar_w * progress) - iconWidth / 2;
+        UI_DrawHandlePic(car_x, bar_y - iconHeight, iconWidth, iconHeight, s_gfxloading.carShader);
     }
 
     /* Progress bar border */
@@ -250,6 +273,9 @@ Initializes and shows the enhanced graphics loading screen.
 void UI_GFX_Loading(void) {
     /* Clear all fields */
     memset(&s_gfxloading, 0, sizeof(gfxloading_t));
+
+    /* Load progress icon */
+    s_gfxloading.carShader = trap_R_RegisterShaderNoMip("menu/art/loading_car");
 
     /* Setup menu structure */
     s_gfxloading.menu.draw = UI_GFX_Loading_MenuDraw;
