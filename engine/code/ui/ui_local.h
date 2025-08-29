@@ -364,7 +364,7 @@ void UI_LoadArenasIntoMapList(void);
 //
 // ui_menu.c
 //
-extern void MainMenu_Cache( void );
+extern void MainMenu_Prepare( void );
 extern void UI_MainMenu(void);
 extern void UI_RegisterCvars( void );
 extern void UI_UpdateCvars( void );

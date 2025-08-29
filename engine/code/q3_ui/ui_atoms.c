@@ -1204,7 +1204,7 @@ UI_Cache
 =================
 */
 void UI_Cache_f( void ) {
-	MainMenu_Cache();
+        MainMenu_Prepare();
 	InGame_Cache();
 	ConfirmMenu_Cache();
 	PlayerModel_Cache();

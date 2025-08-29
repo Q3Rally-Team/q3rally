@@ -3031,14 +3031,17 @@ void Item_Text_Wrapped_Paint(itemDef_t *item) {
 	y = item->textRect.y;
 	start = textPtr;
 	p = strchr(textPtr, '\r');
-	while (p && *p) {
-		strncpy(buff, start, p-start+1);
-		buff[p-start] = '\0';
-		DC->drawText(x, y, item->textscale, color, buff, 0, 0, item->textStyle);
-		y += height + 5;
-		start += p - start + 1;
-		p = strchr(p+1, '\r');
-	}
+        while (p && *p) {
+                int len = p - start;
+                if (len >= sizeof(buff)) {
+                        len = sizeof(buff) - 1;
+                }
+                Q_strncpyz(buff, start, len + 1);
+                DC->drawText(x, y, item->textscale, color, buff, 0, 0, item->textStyle);
+                y += height + 5;
+                start += len + 1;
+                p = strchr(p + 1, '\r');
+        }
 	DC->drawText(x, y, item->textscale, color, start, 0, 0, item->textStyle);
 }
 

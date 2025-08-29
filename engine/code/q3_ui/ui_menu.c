@@ -126,13 +126,11 @@ static void MainMenu_BuildList( void )
 
         // choose one from list randomly
         if (numItems){
-                car = (int)(UI_Random() * numItems);
-                strncpy(carName, cars[car], sizeof(carName) - 1);
-                carName[sizeof(carName) - 1] = '\0';
+               car = UI_RandomInt( numItems );
+                Q_strncpyz(carName, cars[car], sizeof(carName));
         }
         else {
-                strncpy(carName, DEFAULT_MODEL, sizeof(carName) - 1);
-                carName[sizeof(carName) - 1] = '\0';
+                Q_strncpyz(carName, DEFAULT_MODEL, sizeof(carName));
         }
 
         // get skins for the choosen car
@@ -140,13 +138,11 @@ static void MainMenu_BuildList( void )
 
         // choose a skin from the list randomly
         if (numItems){
-                skin = UI_Random() * numItems;
-                strncpy(skinName, cars[skin], sizeof(skinName) - 1);
-                skinName[sizeof(skinName) - 1] = '\0';
+               skin = UI_RandomInt( numItems );
+                Q_strncpyz(skinName, cars[skin], sizeof(skinName));
         }
         else {
-                strncpy(skinName, DEFAULT_SKIN, sizeof(skinName) - 1);
-                skinName[sizeof(skinName) - 1] = '\0';
+                Q_strncpyz(skinName, DEFAULT_SKIN, sizeof(skinName));
         }
 
         // FIXME: choose rim randomly?
@@ -273,6 +269,7 @@ void MainMenu_RunTransition( float frac ) {
         s_main.singleplayer.color = uis.text_color;
         s_main.multiplayer.color = uis.text_color;
         s_main.setup.color = uis.text_color;
+        s_main.garage.color = uis.text_color;
         s_main.cinematics.color = uis.text_color;
         s_main.demos.color = uis.text_color;
         s_main.mods.color = uis.text_color;
@@ -283,10 +280,10 @@ void MainMenu_RunTransition( float frac ) {
 
 /*
 ===============
-MainMenu_Cache
+MainMenu_Prepare
 ===============
 */
-void MainMenu_Cache( void ) {
+void MainMenu_Prepare( void ) {
 
         MainMenu_Update();
 
@@ -347,6 +344,25 @@ static qboolean UI_TeamArenaExists( void ) {
 #endif
 
 /*
+=================
+InitMenuText
+=================
+*/
+
+static void InitMenuText(menutext_s *item, int id, char *label, int x, int y) {
+
+        item->generic.type = MTYPE_PTEXT;
+        item->generic.flags = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+        item->generic.id = id;
+        item->generic.callback = Main_MenuEvent;
+        item->generic.x = x;
+        item->generic.y = y;
+        item->style = UI_RIGHT|UI_DROPSHADOW;
+        item->string = label;
+        item->color = text_color_normal;
+}
+
+/*
 ===============
 UI_MainMenu
 
@@ -359,7 +375,6 @@ void UI_MainMenu( void ) {
 	
 	int x;
 	int y;
-	int	style = UI_RIGHT | UI_DROPSHADOW;
 	int numMusicFiles;
 	int selectedMusic;
 	char musicFiles[256][MAX_QPATH];
@@ -390,7 +405,7 @@ void UI_MainMenu( void ) {
 
 	memset( &s_main, 0 ,sizeof(mainmenu_t) );
 
-	MainMenu_Cache();
+        MainMenu_Prepare();
 
         s_main.menu.draw = Main_MenuDraw;
         s_main.menu.fullscreen = qtrue;
@@ -410,63 +425,23 @@ void UI_MainMenu( void ) {
         y = 100;
 
         
-        s_main.singleplayer.generic.type                = MTYPE_PTEXT;
-        s_main.singleplayer.generic.id                  = ID_SINGLEPLAYER;
-        s_main.singleplayer.generic.callback            = Main_MenuEvent;
-        s_main.singleplayer.style                       = style;
-        s_main.singleplayer.generic.flags               = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.singleplayer.generic.x                   = x - 10;
-        s_main.singleplayer.generic.y                   = y + 12;
-        s_main.singleplayer.string                      = "OFFLINE";
-        s_main.singleplayer.color                       = text_color_normal;
+	InitMenuText(&s_main.singleplayer, ID_SINGLEPLAYER, "OFFLINE", x - 10, y + 12);
 
 
-        y += MAIN_MENU_VERTICAL_SPACING;
-        s_main.multiplayer.generic.type                 = MTYPE_PTEXT;
-        s_main.multiplayer.generic.id                   = ID_MULTIPLAYER;
-        s_main.multiplayer.generic.callback             = Main_MenuEvent;
-        s_main.multiplayer.style                        = style;
-        s_main.multiplayer.generic.flags                = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.multiplayer.generic.x                    = x - 10;
-        s_main.multiplayer.generic.y                    = y + 12;
-        s_main.multiplayer.string                       = "ONLINE";
-        s_main.multiplayer.color                        = text_color_normal;
+	y += MAIN_MENU_VERTICAL_SPACING;
+	InitMenuText(&s_main.multiplayer, ID_MULTIPLAYER, "ONLINE", x - 10, y + 12);
 
 
-        y += MAIN_MENU_VERTICAL_SPACING;
-        s_main.setup.generic.type                       = MTYPE_PTEXT;
-        s_main.setup.generic.id                         = ID_SETUP;
-        s_main.setup.generic.callback                   = Main_MenuEvent;
-        s_main.setup.style                              = style;
-        s_main.setup.generic.flags                      = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.setup.generic.x                          = x - 10;
-        s_main.setup.generic.y                          = y + 12;
-        s_main.setup.string                             = "CONFIG";
-        s_main.setup.color                              = text_color_normal;
+	y += MAIN_MENU_VERTICAL_SPACING;
+	InitMenuText(&s_main.setup, ID_SETUP, "CONFIG", x - 10, y + 12);
 
 
-        y += MAIN_MENU_VERTICAL_SPACING;
-        s_main.garage.generic.type                      = MTYPE_PTEXT;
-        s_main.garage.generic.id                        = ID_GARAGE;
-        s_main.garage.generic.callback                  = Main_MenuEvent;
-        s_main.garage.style                             = style;
-        s_main.garage.generic.flags                     = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.garage.generic.x                         = x - 10;
-        s_main.garage.generic.y                         = y + 12;
-        s_main.garage.string                            = "THE GARAGE";
-        s_main.garage.color                             = text_color_normal;
+	y += MAIN_MENU_VERTICAL_SPACING;
+	InitMenuText(&s_main.garage, ID_GARAGE, "THE GARAGE", x - 10, y + 12);
         
         
-        y += MAIN_MENU_VERTICAL_SPACING;
-        s_main.demos.generic.type                       = MTYPE_PTEXT;
-        s_main.demos.generic.id                         = ID_DEMOS;
-        s_main.demos.generic.callback                   = Main_MenuEvent;
-        s_main.demos.style                              = style;
-        s_main.demos.generic.flags                      = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.demos.generic.x                          = x - 10;
-        s_main.demos.generic.y                          = y + 12;
-        s_main.demos.string                             = "DEMOS";
-        s_main.demos.color                              = text_color_normal;
+	y += MAIN_MENU_VERTICAL_SPACING;
+	InitMenuText(&s_main.demos, ID_DEMOS, "DEMOS", x - 10, y + 12);
 
 
         s_main.carlogo.generic.type                     = MTYPE_BITMAP;
@@ -477,16 +452,8 @@ void UI_MainMenu( void ) {
         s_main.carlogo.width                            = 480;
         s_main.carlogo.height                           = 480;
         
-        y += MAIN_MENU_VERTICAL_SPACING;
-        s_main.exit.generic.type                        = MTYPE_PTEXT;
-        s_main.exit.generic.id                          = ID_EXIT;
-        s_main.exit.generic.callback                    = Main_MenuEvent;
-        s_main.exit.style                               = style;
-        s_main.exit.generic.flags                       = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-        s_main.exit.generic.x                           = x - 10;
-        s_main.exit.generic.y                           = y + 12;
-        s_main.exit.string                              = "QUIT";
-        s_main.exit.color                               = text_color_normal;
+	y += MAIN_MENU_VERTICAL_SPACING;
+	InitMenuText(&s_main.exit, ID_EXIT, "QUIT", x - 10, y + 12);
 
 
         Menu_AddItem( &s_main.menu,     &s_main.banner );

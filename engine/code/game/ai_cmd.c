@@ -1105,9 +1105,8 @@ void BotMatch_JoinSubteam(bot_state_t *bs, bot_match_t *match) {
 	if (!BotAddressedToBot(bs, match)) return;
 	//get the sub team name
 	trap_BotMatchVariable(match, TEAMNAME, teammate, sizeof(teammate));
-	//set the sub team name
-	strncpy(bs->subteam, teammate, 32);
-	bs->subteam[31] = '\0';
+        //set the sub team name
+        Q_strncpyz(bs->subteam, teammate, sizeof(bs->subteam));
 	//
 	trap_BotMatchVariable(match, NETNAME, netname, sizeof(netname));
 	BotAI_BotInitialChat(bs, "joinedteam", teammate, NULL);
@@ -1296,10 +1295,9 @@ void BotMatch_StartTeamLeaderShip(bot_state_t *bs, bot_match_t *match) {
 	if (!TeamPlayIsOn()) return;
 	//if chats for him or herself
 	if (match->subtype & ST_I) {
-		//get the team mate that will be the team leader
-		trap_BotMatchVariable(match, NETNAME, teammate, sizeof(teammate));
-		strncpy(bs->teamleader, teammate, sizeof(bs->teamleader));
-		bs->teamleader[sizeof(bs->teamleader)-1] = '\0';
+                //get the team mate that will be the team leader
+                trap_BotMatchVariable(match, NETNAME, teammate, sizeof(teammate));
+                Q_strncpyz(bs->teamleader, teammate, sizeof(bs->teamleader));
 	}
 	//chats for someone else
 	else {
