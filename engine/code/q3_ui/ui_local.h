@@ -956,6 +956,7 @@ void UI_SoundOptionsMenu( void );
 #define BL_INCLUDE		0
 #define BL_EXCLUDE		1
 #define BL_ONLY			2
+void UI_InitRand( void );
 
 float UI_Random( void );
 int UI_RandomInt( int max );

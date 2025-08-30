@@ -23,27 +23,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ui_local.h"
 
+static int ui_randSeed;
+
+void UI_InitRand( void ) {
+	ui_randSeed = trap_Milliseconds();
+}
 
 float UI_Random( void ){
-/* op stack corrupted
-	int seed = (trap_RealTime() & 0x0fff);
-	int seed2 = Q_rand ( &seed );
-
-	Com_Printf("trap_Milliseconds %i\n", trap_Milliseconds());
-	Com_Printf("trap_RealTime %i\n", trap_RealTime());
-	Com_Printf("seed2 %i\n", seed2);
-
-	return ( trap_RealTime() & 0xffff ) / (float)0x10000;
-*/
-
-
-	int seed = trap_Milliseconds();
-	return Q_random( &seed );
+	return Q_random( &ui_randSeed );
 //	return random();
 }
 int UI_RandomInt( int max ){
-	int seed = trap_Milliseconds();
-	return Q_rand( &seed ) % max;
+	// Q_rand may return negative values, cast to unsigned to guarantee non-negative
+	return (unsigned)Q_rand( &ui_randSeed ) % max;
 }
 
 

@@ -48,6 +48,7 @@ typedef struct {
     int stageStartTime;          /* when current stage started */
     int finalDisplayStartTime;   /* when 100% display phase started */
     qhandle_t carShader;         /* icon for progress indicator */
+    int tipIndex;                /* index into loading tips */
     qboolean cacheExecuted;      /* whether current stage's cache has been executed */
     qboolean finalPhase;         /* whether we're in the final display phase */
 } gfxloading_t;
@@ -170,6 +171,15 @@ static void UI_GFX_Loading_UpdateProgress(void) {
     }
 }
 
+/* Helpful tips displayed during loading */
+static const char *loadingTips[] = {
+    "Use the handbrake to drift through tight corners.",
+    "Keep your speed up when hitting jumps.",
+    "Ramming opponents can knock them off the track.",
+    "Collect power-ups to gain an edge on rivals.",
+    "Watch for shortcuts to shave off lap times.",
+};
+
 /*
 =======================
 UI_GFX_Loading_MenuDraw
@@ -221,7 +231,18 @@ static void UI_GFX_Loading_MenuDraw(void) {
     
     /* Actual progress fill */
     if (s_gfxloading.smoothProgress > 0.0f) {
-        UI_FillRect(bar_x, bar_y, (int)(bar_w * s_gfxloading.smoothProgress), bar_h, text_color_highlight);
+        vec4_t startColor = {1.0f, 0.0f, 0.0f, 1.0f};
+        vec4_t endColor = {0.0f, 1.0f, 0.0f, 1.0f};
+        vec4_t progressColor;
+        int    i;
+
+        for (i = 0; i < 4; i++) {
+            progressColor[i] = startColor[i] + (endColor[i] - startColor[i]) * s_gfxloading.smoothProgress;
+        }
+
+        trap_R_SetColor(progressColor);
+        UI_FillRect(bar_x, bar_y, (int)(bar_w * s_gfxloading.smoothProgress), bar_h, progressColor);
+        trap_R_SetColor(NULL);
     }
 
     /* Moving car icon */
@@ -243,15 +264,13 @@ static void UI_GFX_Loading_MenuDraw(void) {
     UI_DrawRect(bar_x, bar_y, bar_w, bar_h, colorWhite);
 
     /* Draw percentage text with better formatting */
-    UI_DrawString(320, bar_y + bar_h + 16, 
-                  va("Loading Progress: %.1f%%", s_gfxloading.smoothProgress * 100.0f), 
+    UI_DrawString(320, bar_y + bar_h + 16,
+                  va("Loading Progress: %.1f%%", s_gfxloading.smoothProgress * 100.0f),
                   UI_CENTER | UI_SMALLFONT, text_color_normal);
 
-    /* Draw additional info during loading */
-    if (s_gfxloading.smoothProgress < 1.0f) {
-        UI_DrawString(320, bar_y + bar_h + 36, "Please wait...", 
-                      UI_CENTER | UI_SMALLFONT, text_color_disabled);
-    }
+    /* Draw random driving tip */
+    UI_DrawString(320, bar_y + bar_h + 46, loadingTips[s_gfxloading.tipIndex],
+                  UI_CENTER | UI_SMALLFONT, text_color_normal);
 
     /* Handle transition when loading is complete */
     if (s_gfxloading.finalPhase) {
@@ -296,5 +315,6 @@ void UI_GFX_Loading(void) {
     s_gfxloading.cacheExecuted = qfalse;
     s_gfxloading.finalPhase = qfalse;
     s_gfxloading.finalDisplayStartTime = 0;
+    s_gfxloading.tipIndex = UI_RandomInt( ARRAY_LEN(loadingTips) );
 }
 

@@ -375,21 +375,19 @@ void UI_MainMenu( void ) {
 	
 	int x;
 	int y;
-	int numMusicFiles;
-	int selectedMusic;
-	char musicFiles[256][MAX_QPATH];
-	char musicCommand[MAX_QPATH];
+        int numMusicFiles;
+        int selectedMusic;
+        char musicFiles[256][MAX_QPATH];
+        char musicCommand[MAX_QPATH];
 
-	
-	srand((unsigned int)trap_Milliseconds());
 
-	numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
+        numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
 
-	if (numMusicFiles > 0) {
-		selectedMusic = rand() % numMusicFiles;
-		Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
-		trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
-	}
+        if (numMusicFiles > 0) {
+                selectedMusic = UI_RandomInt( numMusicFiles );
+                Com_sprintf(musicCommand, sizeof(musicCommand), "music music/menumusic%s\n", musicFiles[selectedMusic]);
+                trap_Cmd_ExecuteText(EXEC_APPEND, musicCommand);
+        }
 
 	trap_Cvar_Set( "sv_killserver", "1" );
 

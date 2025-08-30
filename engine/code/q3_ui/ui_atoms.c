@@ -1320,9 +1320,10 @@ void UI_Init( void ) {
 	char			*slash;
 // END
 
-	UI_RegisterCvars();
+        UI_RegisterCvars();
 
-	UI_InitGameinfo();
+        UI_InitRand();
+        UI_InitGameinfo();
 
 	// cache redundant calulations
 	trap_GetGlconfig( &uis.glconfig );
