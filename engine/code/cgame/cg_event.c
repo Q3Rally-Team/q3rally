@@ -456,10 +456,10 @@ static void CG_Obituary( entityState_t *ent ) {
 			message = "got too close to";
 			message2 = "'s mine";
 			break;
-		case MOD_CAR_COLLISION:
-			message = "got rammed by";
-			message2 = "'s vehicle";
-			break;
+                case MOD_VEHICLE_COLLISION:
+                        message = "got rammed by";
+                        message2 = "'s vehicle";
+                        break;
 // Q3Rally Code END
 		default:
 			message = "was killed by";
@@ -709,6 +709,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	int				event;
 	vec3_t			dir;
 	const char		*s;
+        sfxHandle_t             sfx;
 	int				clientNum;
 	clientInfo_t	*ci;
 
@@ -800,16 +801,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			cg.landTime = cg.time;
 		}
 		break;
-	case EV_FALL_MEDIUM:
-		DEBUGNAME("EV_FALL_MEDIUM");
-		// use normal pain sound
-		trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
-		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
-			cg.landChange = -16;
-			cg.landTime = cg.time;
-		}
-		break;
+        case EV_FALL_MEDIUM:
+                DEBUGNAME("EV_FALL_MEDIUM");
+                trap_S_StartSound( NULL, es->number, CHAN_VOICE, cgs.media.damage100[(int)(random() * 2)] );
+                if ( clientNum == cg.predictedPlayerState.clientNum ) {
+                        // smooth landing z changes
+                        cg.landChange = -16;
+                        cg.landTime = cg.time;
+                }
+                break;
 	case EV_FALL_FAR:
 		DEBUGNAME("EV_FALL_FAR");
 // Q3Rally Code Start
@@ -1246,24 +1246,30 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_GENERAL_SOUND:
-		DEBUGNAME("EV_GENERAL_SOUND");
-		if ( cgs.gameSounds[ es->eventParm ] ) {
-			trap_S_StartSound (NULL, es->number, CHAN_VOICE, cgs.gameSounds[ es->eventParm ] );
-		} else {
-			s = CG_ConfigString( CS_SOUNDS + es->eventParm );
-			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, s ) );
-		}
-		break;
+                DEBUGNAME("EV_GENERAL_SOUND");
+                if ( cgs.gameSounds[ es->eventParm ] ) {
+                        trap_S_StartSound (NULL, es->number, CHAN_VOICE, cgs.gameSounds[ es->eventParm ] );
+                } else {
+                        s = CG_ConfigString( CS_SOUNDS + es->eventParm );
+                        sfx = CG_CustomSound( es->number, s );
+                        if ( sfx ) {
+                                trap_S_StartSound (NULL, es->number, CHAN_VOICE, sfx );
+                        }
+                }
+                break;
 
 	case EV_GLOBAL_SOUND:	// play from the player's head so it never diminishes
-		DEBUGNAME("EV_GLOBAL_SOUND");
-		if ( cgs.gameSounds[ es->eventParm ] ) {
-			trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, cgs.gameSounds[ es->eventParm ] );
-		} else {
-			s = CG_ConfigString( CS_SOUNDS + es->eventParm );
-			trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, CG_CustomSound( es->number, s ) );
-		}
-		break;
+                DEBUGNAME("EV_GLOBAL_SOUND");
+                if ( cgs.gameSounds[ es->eventParm ] ) {
+                        trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, cgs.gameSounds[ es->eventParm ] );
+                } else {
+                        s = CG_ConfigString( CS_SOUNDS + es->eventParm );
+                        sfx = CG_CustomSound( es->number, s );
+                        if ( sfx ) {
+                                trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, sfx );
+                        }
+                }
+                break;
 
 	case EV_GLOBAL_TEAM_SOUND:	// play from the player's head so it never diminishes
 		{

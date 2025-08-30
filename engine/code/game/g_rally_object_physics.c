@@ -263,6 +263,62 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
     VectorMA( self->s.pos.trBase, time * ( dist + moveDist ), dir, end );
 
     trap_Trace( &tr, start, NULL, NULL, end, self->s.number, MASK_PLAYERSOLID );
+
+    if( tr.fraction < 1.0f && tr.entityNum < ENTITYNUM_MAX_NORMAL ) {
+        gentity_t *hit = &g_entities[ tr.entityNum ];
+
+        if( hit->client != NULL || ( hit->r.svFlags & SVF_BOT ) ) {
+            vec3_t invNormal;
+            float vSelf, vHit, closing, totalDamage, damageSelfF, damageHitF;
+            int damageSelf, damageHit;
+
+            /* store normal velocities before collision response */
+            vSelf = DotProduct( self->s.pos.trDelta, tr.plane.normal );
+            vHit = -DotProduct( hit->s.pos.trDelta, tr.plane.normal );
+
+            if( G_RallyObject_ApplyCollision( self, tr.endpos, tr.plane.normal, self->elasticity ) ) {
+                VectorScale( tr.plane.normal, -1.0f, invNormal );
+                G_RallyObject_ApplyCollision( hit, tr.endpos, invNormal, self->elasticity );
+
+                if( vSelf < 0.0f ) {
+                    vSelf = 0.0f;
+                }
+                if( vHit < 0.0f ) {
+                    vHit = 0.0f;
+                }
+                closing = vSelf + vHit;
+                if( closing > 0.0f ) {
+                    totalDamage = ( closing + g_vehicleDamageOffset.value ) * g_vehicleDamageScale.value;
+                    totalDamage *= g_derbyDamageFactor.value;
+                    damageSelfF = totalDamage * ( vHit / closing );
+                    damageHitF  = totalDamage * ( vSelf / closing );
+                    damageHitF  *= g_derbyRammerDamageRatio.value;
+                    damageSelfF *= 2.0f - g_derbyRammerDamageRatio.value;
+                    damageSelf = (int)max( 1.0f, damageSelfF );
+                    damageHit = (int)max( 1.0f, damageHitF );
+
+                    if( !self->takedamage ) {
+                        self->takedamage = qtrue;
+                        if( self->health <= 0 ) {
+                            self->health = g_vehicleHealth.integer;
+                        }
+                    }
+                    if( !hit->takedamage ) {
+                        hit->takedamage = qtrue;
+                        if( hit->health <= 0 ) {
+                            hit->health = g_vehicleHealth.integer;
+                        }
+                    }
+
+                    G_Damage( self, hit, hit, tr.plane.normal, tr.endpos, damageSelf, DAMAGE_NO_ARMOR, MOD_VEHICLE_COLLISION );
+                    G_Damage( hit, self, self, invNormal, tr.endpos, damageHit, DAMAGE_NO_ARMOR, MOD_VEHICLE_COLLISION );
+                }
+            }
+
+            return;
+        }
+    }
+
     if( tr.startsolid || tr.allsolid )
     {
         trap_Trace( &tr, start, NULL, NULL, end, self->s.number, MASK_PLAYERSOLID & ~CONTENTS_BODY );

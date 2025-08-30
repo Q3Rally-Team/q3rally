@@ -779,10 +779,14 @@ void FinishSpawningItem( gentity_t *ent ) {
 		ent->nextthink = level.time + respawn * 1000;
 		ent->think = RespawnItem;
 		return;
-	}
+       }
 
+       if ( g_gametype.integer == GT_DERBY && ent->item->giType == IT_WEAPON ) {
+               G_FreeEntity( ent );
+               return;
+       }
 
-	trap_LinkEntity (ent);
+       trap_LinkEntity (ent);
 }
 
 
@@ -895,12 +899,12 @@ void ClearRegisteredItems( void ) {
 
 	// players always start with the base weapon
 // STONELANCE dont start with machinegun in race
-	if (!isRallyRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY*/){
-		RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
-	}
-	if (!isRallyNonDMRace()/* TEMP DERBY && g_gametype.integer != GT_DERBY*/){
-		RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
-	}
+        if (!isRallyRace() && g_gametype.integer != GT_DERBY){
+                RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
+        }
+        if (!isRallyNonDMRace() && g_gametype.integer != GT_DERBY){
+                RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
+        }
 //	RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
 //	RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
 // END

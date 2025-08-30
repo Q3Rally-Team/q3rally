@@ -613,7 +613,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 	weaponInfo = &cg_weapons[weaponNum];
 
-	if ( weaponNum == 0 ) {
+       if ( weaponNum == 0 ) {
 		return;
 	}
 
@@ -634,21 +634,26 @@ void CG_RegisterWeapon( int weaponNum ) {
 		}
 	}
 	if ( !item->classname ) {
-		CG_Error( "Couldn't find weapon %i", weaponNum );
-	}
+                CG_Error( "Couldn't find weapon %i", weaponNum );
+        }
+
+        weaponInfo->weaponIcon = trap_R_RegisterShader( item->icon );
+        weaponInfo->ammoIcon = trap_R_RegisterShader( item->icon );
+
+        if ( weaponNum == WP_DERBY_RAM ) {
+                return;
+        }
+
 	CG_RegisterItemVisuals( item - bg_itemlist );
 
-	// load cmodel before model so filecache works
-	weaponInfo->weaponModel = trap_R_RegisterModel( item->world_model[0] );
+        // load cmodel before model so filecache works
+        weaponInfo->weaponModel = trap_R_RegisterModel( item->world_model[0] );
 
 	// calc midpoint for rotation
 	trap_R_ModelBounds( weaponInfo->weaponModel, mins, maxs );
 	for ( i = 0 ; i < 3 ; i++ ) {
 		weaponInfo->weaponMidpoint[i] = mins[i] + 0.5 * ( maxs[i] - mins[i] );
 	}
-
-	weaponInfo->weaponIcon = trap_R_RegisterShader( item->icon );
-	weaponInfo->ammoIcon = trap_R_RegisterShader( item->icon );
 
 	for ( ammo = bg_itemlist + 1 ; ammo->classname ; ammo++ ) {
 		if ( ammo->giType == IT_AMMO && ammo->giTag == weaponNum ) {
@@ -1173,11 +1178,15 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
 
-	weaponNum = cent->currentState.weapon;
+        weaponNum = cent->currentState.weapon;
 
-	if (!isRallyNonDMRace()/* TEMP DERBY && cgs.gametype != GT_DERBY*/){
-		CG_RegisterWeapon( weaponNum );
-	}
+        if ( weaponNum == WP_DERBY_RAM ) {
+                return;
+        }
+
+        if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY){
+                CG_RegisterWeapon( weaponNum );
+        }
 
 	weapon = &cg_weapons[weaponNum];
 
@@ -1440,10 +1449,13 @@ void CG_DrawWeaponSelect( void ) {
 //	for ( i = 1 ; i < MAX_WEAPONS ; i++ ) {
 	for ( i = 1 ; i < RWP_SMOKE ; i++ ) {
 // END
-		if ( bits & ( 1 << i ) ) {
-			count++;
-		}
-	}
+		if ( i == WP_DERBY_RAM ) {
+                       continue;
+               }
+               if ( bits & ( 1 << i ) ) {
+                       count++;
+               }
+       }
 
 	x = 320 - count * 20 * cg_drawWeaponBar.value;
 	y = 380;
@@ -1461,9 +1473,12 @@ void CG_DrawWeaponSelect( void ) {
 //	for ( i = 1 ; i < MAX_WEAPONS ; i++ ) {
 	for ( i = 1 ; i < RWP_SMOKE ; i++ ) {
 // END
-		if ( !( bits & ( 1 << i ) ) ) {
-			continue;
-		}
+		if ( i == WP_DERBY_RAM ) {
+                       continue;
+               }
+               if ( !( bits & ( 1 << i ) ) ) {
+                       continue;
+               }
 
 		CG_RegisterWeapon( i );
 
@@ -1504,14 +1519,16 @@ CG_WeaponSelectable
 */
 static qboolean CG_WeaponSelectable( int i ) {
 // Q3Rally Code Start
-	// cant select rear weapons
-	if ( i >= RWP_SMOKE )
-		return qfalse;
+	/// cant select rear weapons
+        if ( i >= RWP_SMOKE )
+                return qfalse;
+        if ( i == WP_DERBY_RAM )
+                return qfalse;
 // END
 	if ( !cg.snap->ps.ammo[i] ) {
-		return qfalse;
-	}
-	if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1 << i ) ) ) {
+                return qfalse;
+        }
+        if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1 << i ) ) ) {
 		return qfalse;
 	}
 

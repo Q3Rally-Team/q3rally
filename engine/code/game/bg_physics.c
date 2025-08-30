@@ -2185,7 +2185,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		VectorCopy(hitOrigin, pm->damage.origin);
 		VectorCopy(normal, pm->damage.dir);
 		pm->damage.dflags = DAMAGE_NO_KNOCKBACK;
-		pm->damage.mod = MOD_CAR_COLLISION;
+                pm->damage.mod = MOD_VEHICLE_COLLISION;
 		pm->damage.otherEnt = trace.entityNum;
 
 		PM_CopyTargetToSource(&car->tBody, &car->sBody, tPoints, sPoints);

@@ -378,13 +378,13 @@ static void CG_ConfigStringModified( void ) {
 // Q3Rally Code Start
 	} else if ( num == CS_SCORES3 ) {
 		cgs.scores3 = atoi( str );
-        } else if ( num == CS_SCORES4 ) {
-                cgs.scores4 = atoi( str );
+	} else if ( num == CS_SCORES4 ) {
+		cgs.scores4 = atoi( str );
 // END
-        } else if ( num == CS_TRACKLENGTH ) {
-                cgs.trackLength = atof( str );
-        } else if ( num == CS_LEVEL_START_TIME ) {
-                cgs.levelStartTime = atoi( str );
+	} else if ( num == CS_TRACKLENGTH ) {
+		cgs.trackLength = atof( str );
+	} else if ( num == CS_LEVEL_START_TIME ) {
+		cgs.levelStartTime = atoi( str );
 	} else if ( num == CS_VOTE_TIME ) {
 		cgs.voteTime = atoi( str );
 		cgs.voteModified = qtrue;
@@ -655,6 +655,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	voiceChat_t *voiceChats;
 	qboolean compress;
 	sfxHandle_t sound;
+	const char *soundName;
 
 	compress = qtrue;
 	if (cg_buildScript.integer) {
@@ -722,18 +723,22 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 			}
 			if (!Q_stricmp(token, "}"))
 				break;
-			sound = trap_S_RegisterSound( token, compress );
-			voiceChats[voiceChatList->numVoiceChats].sounds[voiceChats[voiceChatList->numVoiceChats].numSounds] = sound;
+			soundName = token;
+			sound = trap_S_RegisterSound( soundName, compress );
 			token = COM_ParseExt(p, qtrue);
 			if (!token[0]) {
 				return qtrue;
 			}
-			Com_sprintf(voiceChats[voiceChatList->numVoiceChats].chats[
+			if ( sound ) {
+				voiceChats[voiceChatList->numVoiceChats].sounds[voiceChats[voiceChatList->numVoiceChats].numSounds] = sound;
+				Com_sprintf(voiceChats[voiceChatList->numVoiceChats].chats[
 							voiceChats[voiceChatList->numVoiceChats].numSounds], MAX_CHATSIZE, "%s", token);
-			if (sound)
 				voiceChats[voiceChatList->numVoiceChats].numSounds++;
-			if (voiceChats[voiceChatList->numVoiceChats].numSounds >= MAX_VOICESOUNDS)
-				break;
+				if (voiceChats[voiceChatList->numVoiceChats].numSounds >= MAX_VOICESOUNDS)
+					break;
+			} else {
+				trap_Print( va( S_COLOR_RED "Failed to load voice chat sound %s in %s\n", soundName, filename ) );
+			}
 		}
 		voiceChatList->numVoiceChats++;
 		if (voiceChatList->numVoiceChats >= maxVoiceChats)
@@ -951,7 +956,9 @@ void CG_PlayVoiceChat( bufferedVoiceChat_t *vchat ) {
 	}
 
 	if ( !cg_noVoiceChats.integer ) {
-		trap_S_StartLocalSound( vchat->snd, CHAN_VOICE);
+		if ( vchat->snd ) {
+			trap_S_StartLocalSound( vchat->snd, CHAN_VOICE);
+		}
 		if (vchat->clientNum != cg.snap->ps.clientNum) {
 			int orderTask = CG_ValidOrder(vchat->cmd);
 			if (orderTask > 0) {
@@ -1292,12 +1299,12 @@ static void CG_ServerCommand( void ) {
 	}
 
        if ( !strcmp( cmd, "newLapTime" ) ) {
-               int client = atoi(CG_Argv(1));
-               int lap = atoi(CG_Argv(2));
-               int time = atoi(CG_Argv(3));
+	       int client = atoi(CG_Argv(1));
+	       int lap = atoi(CG_Argv(2));
+	       int time = atoi(CG_Argv(3));
 
-               CG_NewLapTime( client, lap, time );
-               return;
+	       CG_NewLapTime( client, lap, time );
+	       return;
        }
 
 	if ( !strcmp( cmd, "positions" ) ) {

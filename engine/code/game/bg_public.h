@@ -428,6 +428,7 @@ typedef enum {
         WP_PLASMAGUN,
         WP_BFG,
         WP_FLAME_THROWER,
+        WP_DERBY_RAM,
 
 #ifdef MISSIONPACK
         WP_NAILGUN,
@@ -757,7 +758,7 @@ typedef enum {
 #endif
         MOD_UPSIDEDOWN,
         MOD_BO_SHOCKS,
-        MOD_CAR_COLLISION,
+        MOD_VEHICLE_COLLISION,
         MOD_WORLD_COLLISION,
         MOD_HIGH_FORCES,
 
@@ -769,6 +770,8 @@ typedef enum {
         MOD_GRAPPLE,
         MOD_BREAKABLE_SPLASH
 } meansOfDeath_t;
+
+#define MOD_CAR_COLLISION MOD_VEHICLE_COLLISION
 
 
 //---------------------------------------------------------

@@ -34,27 +34,24 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*engine5.wav",
 	"*engine6.wav",
 	"*engine7.wav",
-	"*engine8.wav",
-	"*engine9.wav",
-	"*engine10.wav",
-	"*horn.wav",
-	"*falling1.wav",
-/*
-	"*death1.wav",
-	"*death2.wav",
-	"*death3.wav",
-	"*jump1.wav",
-	"*pain25_1.wav",
-	"*pain50_1.wav",
-	"*pain75_1.wav",
-	"*pain100_1.wav",
-	"*falling1.wav",
-	"*gasp.wav",
-	"*drown.wav",
-	"*fall1.wav",
-	"*taunt.wav"
-*/
+        "*engine8.wav",
+        "*engine9.wav",
+        "*engine10.wav",
+        "*horn.wav",
 // END
+        "*death1.wav",
+        "*death2.wav",
+        "*death3.wav",
+        "*jump1.wav",
+        "*pain25_1.wav",
+        "*pain50_1.wav",
+        "*pain75_1.wav",
+        "*pain100_1.wav",
+        "*falling1.wav",
+        "*gasp.wav",
+        "*drown.wav",
+        "*fall1.wav",
+        "*taunt.wav"
 };
 
 
@@ -67,6 +64,10 @@ CG_CustomSound
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName ) {
 	clientInfo_t *ci;
 	int			i;
+
+        if ( !soundName ) {
+                return 0;
+        }
 
 	if ( soundName[0] != '*' ) {
 		return trap_S_RegisterSound( soundName, qfalse );

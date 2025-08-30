@@ -1267,8 +1267,23 @@ Only in One Flag CTF games
 	},
 #endif
 
-	// end of list marker
-	{NULL}
+       // dummy derby ram weapon
+       {
+               "weapon_derby_ram",
+               NULL,
+       { NULL,
+               NULL, NULL, NULL},
+               "gfx/2d/derbyram", // icon
+               "Derby Ram",
+               0,
+               IT_WEAPON,
+               WP_DERBY_RAM,
+/* precache */ "",
+/* sounds */ ""
+       },
+
+       // end of list marker
+       {NULL}
 };
 
 int		bg_numItems = ARRAY_LEN( bg_itemlist ) - 1;

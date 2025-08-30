@@ -357,7 +357,7 @@ char	*modNames[] = {
 // Q3Rally Code Start
 	"MOD_UPSIDEDOWN",
 	"MOD_BO_SHOCKS",
-	"MOD_CAR_COLLISION",
+        "MOD_VEHICLE_COLLISION",
 	"MOD_WORLD_COLLISION",
 	"MOD_HIGH_FORCES",
 

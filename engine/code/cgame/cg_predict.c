@@ -1004,9 +1004,9 @@ void CG_PredictPlayerState( void ) {
 			cg_pmove.cmd.upmove = 0;
 		}
 
-		if (isRallyNonDMRace()/* TEMP DERBY || cgs.gametype == GT_DERBY*/){
-			cg_pmove.cmd.weapon = cg.predictedPlayerState.weapon = WP_NONE;
-		}
+               if (isRallyNonDMRace() || cgs.gametype == GT_DERBY){
+                       cg_pmove.cmd.weapon = cg.predictedPlayerState.weapon = WP_NONE;
+               }
 // END
 
 // Q3Rally Code Start

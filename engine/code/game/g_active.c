@@ -1171,10 +1171,10 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 */
 
-	if (isRallyNonDMRace()/* TEMP DERBY || g_gametype.integer == GT_DERBY*/){
-		ent->s.weapon = WP_NONE;
-		ucmd->weapon = ent->s.weapon;
-	}
+       if (isRallyNonDMRace() || g_gametype.integer == GT_DERBY){
+               ent->s.weapon = WP_NONE;
+               ucmd->weapon = ent->s.weapon;
+       }
 
 // UPDATE - enable this
 	// sound horn
@@ -1525,6 +1525,8 @@ void ClientThink_real( gentity_t *ent ) {
 	{
 		if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
 			pm.damage.damage *= g_damageScale.value;
+		if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
+			pm.damage.damage /= g_damageScale.value;
 
 		if( pm.damage.damage > 0 )
 		{
@@ -1613,8 +1615,12 @@ void ClientThink_real( gentity_t *ent ) {
 		return;
 	}
 
-	// perform once-a-second actions
-	ClientTimerActions( ent, msec );
+        // perform once-a-second actions
+        ClientTimerActions( ent, msec );
+
+       if ( g_gametype.integer == GT_DERBY ) {
+               Weapon_DerbyRam( ent );
+       }
 
 // STONELANCE - UPDATE: enable this (use flags instead?)
 /*

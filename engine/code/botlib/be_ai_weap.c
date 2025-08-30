@@ -128,6 +128,14 @@ typedef struct bot_weaponstate_s
 static bot_weaponstate_t *botweaponstates[MAX_CLIENTS+1];
 static weaponconfig_t *weaponconfig;
 
+// global gametype variable declared in be_ai_goal.c
+extern int g_gametype;
+
+// Q3Rally specific game type not defined in botlib headers
+#ifndef GT_DERBY
+#define GT_DERBY 3
+#endif
+
 //========================================================================
 //
 // Parameter:				-
@@ -136,11 +144,15 @@ static weaponconfig_t *weaponconfig;
 //========================================================================
 int BotValidWeaponNumber(int weaponnum)
 {
-	if (weaponnum <= 0 || weaponnum > weaponconfig->numweapons)
-	{
-		botimport.Print(PRT_ERROR, "weapon number out of range\n");
-		return qfalse;
-	} //end if
+        if (weaponconfig->numweapons == 0 || g_gametype == GT_DERBY)
+        {
+                return qfalse;
+        }
+        if (weaponnum <= 0 || weaponnum > weaponconfig->numweapons)
+        {
+                botimport.Print(PRT_ERROR, "weapon number out of range\n");
+                return qfalse;
+        } //end if
 	return qtrue;
 } //end of the function BotValidWeaponNumber
 //========================================================================
