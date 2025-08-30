@@ -80,7 +80,7 @@ typedef struct {
 	char*			statitems[MAX_SERVERMAPS];
 	int				numstats;
 	int				mapGamebits[MAX_SERVERMAPS];
-} startserver_t;
+        } startserver_t;
 
 static startserver_t s_startserver;
 
@@ -317,85 +317,51 @@ static void UI_SetupMapStatsForArena( int arena ){
 }
 // END
 
+static const struct {
+        const char* name;
+        int bit;
+} gametype_bitnames[] = {
+        { "q3r_racing", GT_RACING },
+        { "q3r_racing_dm", GT_RACING_DM },
+        { "q3r_derby", GT_DERBY },
+        { "q3r_lcs", GT_LCS },
+        { "q3r_dm", GT_DEATHMATCH },
+        { "q3r_single", GT_SINGLE_PLAYER },
+        { "q3r_team_racing", GT_TEAM_RACING },
+        { "q3r_team_racing_dm", GT_TEAM_RACING_DM },
+        { "q3r_team_dm", GT_TEAM },
+        { "q3r_ctf", GT_CTF },
+        { "q3r_ctf4", GT_CTF4 },
+        { "q3r_dom", GT_DOMINATION },
+};
+
 /*
 =================
 GametypeBits
 =================
 */
 static int GametypeBits( char *string ) {
-	int		bits;
-	char	*p;
-	char	*token;
+        int             bits;
+        char    *p;
+        char    *token;
+        int             i;
 
-	bits = 0;
-	p = string;
-	while( 1 ) {
-		token = COM_ParseExt( &p, qfalse );
-		if( token[0] == 0 ) {
-			break;
-		}
+        bits = 0;
+        p = string;
+        while( 1 ) {
+                token = COM_ParseExt( &p, qfalse );
+                if( token[0] == 0 ) {
+                        break;
+                }
 
-		if( Q_stricmp( token, "q3r_racing" ) == 0 ) {
-			bits |= 1 << GT_RACING;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_racing_dm" ) == 0 ) {
-			bits |= 1 << GT_RACING_DM;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_derby" ) == 0 ) {
-			bits |= 1 << GT_DERBY;
-			continue;
-		}
-		
-		if( Q_stricmp( token, "q3r_lcs" ) == 0 ) {
-			bits |= 1 << GT_LCS;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_dm" ) == 0 ) {
-			bits |= 1 << GT_DEATHMATCH;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_single" ) == 0 ) {
-			bits |= 1 << GT_SINGLE_PLAYER;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_team_racing" ) == 0 ) {
-			bits |= 1 << GT_TEAM_RACING;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_team_racing_dm" ) == 0 ) {
-			bits |= 1 << GT_TEAM_RACING_DM;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_team_dm" ) == 0 ) {
-			bits |= 1 << GT_TEAM;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_ctf" ) == 0 ) {
-			bits |= 1 << GT_CTF;
-			continue;
-		}
-
-		if( Q_stricmp( token, "q3r_ctf4" ) == 0 ) {
-			bits |= 1 << GT_CTF4;
-			continue;
-		}
-
-    if( Q_stricmp( token, "q3r_dom" ) == 0 ) {
-			bits |= 1 << GT_DOMINATION;
-			continue;
-		}
-   	}
-	return bits;
+                for( i = 0; i < sizeof( gametype_bitnames ) / sizeof( gametype_bitnames[0] ); i++ ) {
+                        if( Q_stricmp( token, gametype_bitnames[i].name ) == 0 ) {
+                                bits |= 1 << gametype_bitnames[i].bit;
+                                break;
+                        }
+                }
+        }
+        return bits;
 }
 
 
@@ -416,7 +382,7 @@ static void StartServer_Update( void ) {
 	if( !s_startserver.nummaps ) {
 
 		// set the map name
-		strcpy( s_startserver.mapname.string, "NO MAPS FOUND" );
+                Q_strncpyz( s_startserver.mapname.string, "NO MAPS FOUND", sizeof( s_startserver.mapname.string ) );
 
 		UI_SetupMapStatsForArena(-1);
 
@@ -424,7 +390,7 @@ static void StartServer_Update( void ) {
 	else {
 
 		// set the map name
-		strcpy( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap] );
+                Q_strncpyz( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap], sizeof( s_startserver.mapname.string ) );
 
 		UI_SetupMapStatsForArena(s_startserver.currentmap);
 	}
@@ -479,27 +445,31 @@ static void StartServer_GametypeEvent( void* ptr, int event ) {
 	s_startserver.nummaps = 0;
 	matchbits = 1 << gametype_remap[s_startserver.gametype.curvalue];
 
-	for( i = 0; i < count; i++ ) {
-		info = UI_GetArenaInfoByNumber( i );
+        for( i = 0; i < count; i++ ) {
+                info = UI_GetArenaInfoByNumber( i );
 
-		gamebits = GametypeBits( Info_ValueForKey( info, "type") );
-		if( !( gamebits & matchbits ) ) {
-			continue;
-		}
+                gamebits = GametypeBits( Info_ValueForKey( info, "type") );
+                if( !( gamebits & matchbits ) ) {
+                        continue;
+                }
 
-		Q_strncpyz(s_startserver.mapinfo[s_startserver.nummaps], info, sizeof(s_startserver.mapinfo[i]));
+                if( s_startserver.nummaps >= MAX_SERVERMAPS ) {
+                        break;
+                }
 
-		Q_strncpyz( s_startserver.maplist[s_startserver.nummaps], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
+                Q_strncpyz(s_startserver.mapinfo[s_startserver.nummaps], info, sizeof(s_startserver.mapinfo[i]));
 
-		Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
-		if (s_startserver.maplistname[s_startserver.nummaps][0] == 0)
-			Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], s_startserver.maplist[s_startserver.nummaps], MAX_NAMELENGTH );
-		else
-			Q_strupr( s_startserver.maplistname[s_startserver.nummaps] );
+                Q_strncpyz( s_startserver.maplist[s_startserver.nummaps], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
 
-		s_startserver.mapGamebits[s_startserver.nummaps] = gamebits;
-		s_startserver.nummaps++;
-	}
+                Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], Info_ValueForKey( info, "longname"), MAX_NAMELENGTH );
+                if (s_startserver.maplistname[s_startserver.nummaps][0] == 0)
+                        Q_strncpyz( s_startserver.maplistname[s_startserver.nummaps], s_startserver.maplist[s_startserver.nummaps], MAX_NAMELENGTH );
+                else
+                        Q_strupr( s_startserver.maplistname[s_startserver.nummaps] );
+
+                s_startserver.mapGamebits[s_startserver.nummaps] = gamebits;
+                s_startserver.nummaps++;
+        }
 
 	s_startserver.currentmap = 0;
 	s_startserver.top = 0;
@@ -680,7 +650,7 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.list.height				= MAX_MAPSPERPAGE;
 	s_startserver.list.itemnames			= (const char **)s_startserver.items;
 	s_startserver.list.numitems				= s_startserver.nummaps;
-	for( i = 0; i < s_startserver.nummaps; i++ ) {
+	                for( i = 0; i < s_startserver.nummaps; i++ ) {
 		s_startserver.items[i] = s_startserver.maplistname[i];
 	}
 
@@ -774,9 +744,12 @@ void StartServer_Cache( void )
 
 	precache = trap_Cvar_VariableValue("com_buildscript");
 
-	s_startserver.nummaps = UI_GetNumArenas();
+        s_startserver.nummaps = UI_GetNumArenas();
+        if( s_startserver.nummaps > MAX_SERVERMAPS ) {
+                s_startserver.nummaps = MAX_SERVERMAPS;
+        }
 
-	for( i = 0; i < s_startserver.nummaps; i++ ) {
+        for( i = 0; i < s_startserver.nummaps; i++ ) {
 		info = UI_GetArenaInfoByNumber( i );
 
 		Q_strncpyz( s_startserver.maplist[i], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
