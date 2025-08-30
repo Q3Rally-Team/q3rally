@@ -1560,6 +1560,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->pmoveTime = 0;
 
 //	PM_InitializeVehicle(&client->car, client->ps.origin, spawn_angles /*client->ps.viewangles*/, vec3_origin, car_frontweight_dist.value );
+	if ( client->sess.sessionTeam != TEAM_SPECTATOR && !isRaceObserver( ent->s.number ) ) {
 	client->car.initializeOnNextMove = qtrue;
 
 	if ( !ent->frontBounds )
@@ -1605,7 +1606,7 @@ void ClientSpawn(gentity_t *ent) {
 	for (i = 0; i < FIRST_FRAME_POINT; i++){
 		if ( !client->carPoints[i] ) {
 			client->carPoints[i] = G_Spawn();
-//			Com_Printf("Spawning wheel entities\n");
+//				Com_Printf("Spawning wheel entities\n");
 		}
 /*
 		if (i == 0 || i == 1)
@@ -1628,6 +1629,23 @@ void ClientSpawn(gentity_t *ent) {
 
 		client->carPoints[i]->s.eType = ET_AUXENT;
 //		trap_LinkEntity(client->carPoints[i]);
+	}
+	} else {
+		client->car.initializeOnNextMove = qfalse;
+		if ( ent->frontBounds ) {
+			G_FreeEntity( ent->frontBounds );
+			ent->frontBounds = NULL;
+		}
+		if ( ent->rearBounds ) {
+			G_FreeEntity( ent->rearBounds );
+			ent->rearBounds = NULL;
+		}
+		for (i = 0; i < FIRST_FRAME_POINT; i++) {
+			if ( client->carPoints[i] ) {
+				G_FreeEntity( client->carPoints[i] );
+				client->carPoints[i] = NULL;
+			}
+		}
 	}
 // END
 
