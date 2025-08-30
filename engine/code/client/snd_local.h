@@ -136,11 +136,12 @@ typedef struct
 	void (*ClearLoopingSounds)( qboolean killall );
 	void (*AddLoopingSound)( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 	void (*AddRealLoopingSound)( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
-	void (*StopLoopingSound)(int entityNum );
-	void (*Respatialize)( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
-	void (*UpdateEntityPosition)( int entityNum, const vec3_t origin );
-	void (*Update)( void );
-	void (*DisableSounds)( void );
+        void (*StopLoopingSound)(int entityNum );
+        void (*Respatialize)( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
+        void (*UpdateEntityPosition)( int entityNum, const vec3_t origin );
+        void (*SetEntityPitch)( int entityNum, float pitch );
+        void (*Update)( void );
+        void (*DisableSounds)( void );
 	void (*BeginRegistration)( void );
 	sfxHandle_t (*RegisterSound)( const char *sample, qboolean compressed );
 	void (*ClearSoundBuffer)( void );

@@ -215,6 +215,11 @@ void	trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin ) {
 	syscall( CG_S_UPDATEENTITYPOSITION, entityNum, origin );
 }
 
+void    trap_S_SetEntityPitch( int entityNum, float pitch ) {
+        syscall( CG_S_SETENTITYPITCH, entityNum, PASSFLOAT( pitch ) );
+}
+
+
 void	trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater ) {
 	syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater );
 }

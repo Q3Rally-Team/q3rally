@@ -3569,19 +3569,24 @@ void CG_Player( centity_t *cent ) {
 
 	// engine sounds
 
-	if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
-		cg_engineSounds.integer &&
-		cent->engineSoundTime + cg_engineSoundDelay.integer < cg.time )
-	{
-		int index = (int) (10.0f * (cg.predictedPlayerState.stats[STAT_RPM] - CP_RPM_MIN) / (CP_RPM_MAX - CP_RPM_MIN));
+       if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
+               cg_engineSounds.integer )
+       {
+               int index = (int) (10.0f * (cg.predictedPlayerState.stats[STAT_RPM] - CP_RPM_MIN) / (CP_RPM_MAX - CP_RPM_MIN));
 
-		trap_S_StartSound( cg.predictedPlayerState.origin,
-						cg.predictedPlayerState.clientNum,
-						CHAN_VOICE,
-						cgs.clientinfo[cg.predictedPlayerState.clientNum].sounds[index] );
+               cent->engineSoundEntity = cg.predictedPlayerState.clientNum;
+               trap_S_AddRealLoopingSound( cent->engineSoundEntity,
+                               cg.predictedPlayerState.origin,
+                               cg.predictedPlayerState.velocity,
+                               cgs.clientinfo[cent->engineSoundEntity].sounds[index] );
 
-		cent->engineSoundTime = cg.time;
-	}
+               {
+                       float t = (cg.predictedPlayerState.stats[STAT_RPM] - CP_RPM_MIN) /
+                                       (float)(CP_RPM_MAX - CP_RPM_MIN);
+                       float pitch = 0.5f + 1.5f * t;
+                       trap_S_SetEntityPitch( cent->engineSoundEntity, pitch );
+               }
+       }
 
 
 	if (ci->controlMode == CT_MOUSE){

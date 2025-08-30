@@ -49,7 +49,7 @@ next frame.  This allows commands like:
 bind g "cmd use rocket ; +attack ; wait ; -attack ; cmd use blaster"
 ============
 */
-void Cmd_Wait_f( void ) {
+static void Cmd_Wait_f( void ) {
 	if ( Cmd_Argc() == 2 ) {
 		cmd_wait = atoi( Cmd_Argv( 1 ) );
 		if ( cmd_wait < 0 )
@@ -110,7 +110,7 @@ Adds command text immediately after the current command
 Adds a \n to the text
 ============
 */
-void Cbuf_InsertText( const char *text ) {
+static void Cbuf_InsertText( const char *text ) {
 	int		len;
 	int		i;
 
@@ -264,7 +264,7 @@ void Cbuf_Execute (void)
 Cmd_Exec_f
 ===============
 */
-void Cmd_Exec_f( void ) {
+static void Cmd_Exec_f( void ) {
 	qboolean quiet;
 	union {
 		char	*c;
@@ -303,7 +303,7 @@ Cmd_Vstr_f
 Inserts the current value of a variable as command text
 ===============
 */
-void Cmd_Vstr_f( void ) {
+static void Cmd_Vstr_f( void ) {
 	char	*v;
 
 	if (Cmd_Argc () != 2) {

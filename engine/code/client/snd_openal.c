@@ -1169,13 +1169,32 @@ S_AL_UpdateEntityPosition
 static
 void S_AL_UpdateEntityPosition( int entityNum, const vec3_t origin )
 {
-	vec3_t sanOrigin;
+        vec3_t sanOrigin;
 
 	VectorCopy( origin, sanOrigin );
 	S_AL_SanitiseVector( sanOrigin );
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES )
 		Com_Error( ERR_DROP, "S_UpdateEntityPosition: bad entitynum %i", entityNum );
-	VectorCopy( sanOrigin, entityList[entityNum].origin );
+        VectorCopy( sanOrigin, entityList[entityNum].origin );
+}
+
+/*
+=================
+S_AL_SetEntityPitch
+=================
+*/
+static void S_AL_SetEntityPitch( int entityNum, float pitch )
+{
+        if( entityNum < 0 || entityNum >= MAX_GENTITIES )
+                return;
+
+        if( !entityList[entityNum].srcAllocated )
+                return;
+
+        if( pitch < 0.1f )
+                pitch = 0.1f;
+
+        qalSourcef( srcList[ entityList[entityNum].srcIndex ].alSource, AL_PITCH, pitch );
 }
 
 /*
@@ -2708,10 +2727,11 @@ qboolean S_AL_Init( soundInterface_t *si )
 	si->AddLoopingSound = S_AL_AddLoopingSound;
 	si->AddRealLoopingSound = S_AL_AddRealLoopingSound;
 	si->StopLoopingSound = S_AL_StopLoopingSound;
-	si->Respatialize = S_AL_Respatialize;
-	si->UpdateEntityPosition = S_AL_UpdateEntityPosition;
-	si->Update = S_AL_Update;
-	si->DisableSounds = S_AL_DisableSounds;
+        si->Respatialize = S_AL_Respatialize;
+        si->UpdateEntityPosition = S_AL_UpdateEntityPosition;
+        si->SetEntityPitch = S_AL_SetEntityPitch;
+        si->Update = S_AL_Update;
+        si->DisableSounds = S_AL_DisableSounds;
 	si->BeginRegistration = S_AL_BeginRegistration;
 	si->RegisterSound = S_AL_RegisterSound;
 	si->ClearSoundBuffer = S_AL_ClearSoundBuffer;

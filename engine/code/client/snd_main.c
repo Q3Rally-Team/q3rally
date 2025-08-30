@@ -53,10 +53,11 @@ static qboolean S_ValidSoundInterface( soundInterface_t *si )
 	if( !si->ClearLoopingSounds ) return qfalse;
 	if( !si->AddLoopingSound ) return qfalse;
 	if( !si->AddRealLoopingSound ) return qfalse;
-	if( !si->StopLoopingSound ) return qfalse;
-	if( !si->Respatialize ) return qfalse;
-	if( !si->UpdateEntityPosition ) return qfalse;
-	if( !si->Update ) return qfalse;
+        if( !si->StopLoopingSound ) return qfalse;
+        if( !si->Respatialize ) return qfalse;
+        if( !si->UpdateEntityPosition ) return qfalse;
+        if( !si->SetEntityPitch ) return qfalse;
+        if( !si->Update ) return qfalse;
 	if( !si->DisableSounds ) return qfalse;
 	if( !si->BeginRegistration ) return qfalse;
 	if( !si->RegisterSound ) return qfalse;
@@ -217,9 +218,21 @@ S_UpdateEntityPosition
 */
 void S_UpdateEntityPosition( int entityNum, const vec3_t origin )
 {
-	if( si.UpdateEntityPosition ) {
-		si.UpdateEntityPosition( entityNum, origin );
-	}
+        if( si.UpdateEntityPosition ) {
+                si.UpdateEntityPosition( entityNum, origin );
+        }
+}
+
+/*
+=================
+S_SetEntityPitch
+=================
+*/
+void S_SetEntityPitch( int entityNum, float pitch )
+{
+        if( si.SetEntityPitch ) {
+                si.SetEntityPitch( entityNum, pitch );
+        }
 }
 
 /*

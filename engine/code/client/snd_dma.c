@@ -1105,10 +1105,19 @@ let the sound system know where an entity currently is
 ======================
 */
 void S_Base_UpdateEntityPosition( int entityNum, const vec3_t origin ) {
-	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
-		Com_Error( ERR_DROP, "S_UpdateEntityPosition: bad entitynum %i", entityNum );
-	}
-	VectorCopy( origin, loopSounds[entityNum].origin );
+        if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+                Com_Error( ERR_DROP, "S_UpdateEntityPosition: bad entitynum %i", entityNum );
+        }
+        VectorCopy( origin, loopSounds[entityNum].origin );
+}
+
+/*
+=====================
+S_Base_SetEntityPitch
+=====================
+*/
+void S_Base_SetEntityPitch( int entityNum, float pitch ) {
+        // base sound backend does not support pitch adjustment
 }
 
 
@@ -1595,12 +1604,13 @@ qboolean S_Base_Init( soundInterface_t *si ) {
 	si->StopAllSounds = S_Base_StopAllSounds;
 	si->ClearLoopingSounds = S_Base_ClearLoopingSounds;
 	si->AddLoopingSound = S_Base_AddLoopingSound;
-	si->AddRealLoopingSound = S_Base_AddRealLoopingSound;
-	si->StopLoopingSound = S_Base_StopLoopingSound;
-	si->Respatialize = S_Base_Respatialize;
-	si->UpdateEntityPosition = S_Base_UpdateEntityPosition;
-	si->Update = S_Base_Update;
-	si->DisableSounds = S_Base_DisableSounds;
+        si->AddRealLoopingSound = S_Base_AddRealLoopingSound;
+        si->StopLoopingSound = S_Base_StopLoopingSound;
+        si->Respatialize = S_Base_Respatialize;
+        si->UpdateEntityPosition = S_Base_UpdateEntityPosition;
+        si->SetEntityPitch = S_Base_SetEntityPitch;
+        si->Update = S_Base_Update;
+        si->DisableSounds = S_Base_DisableSounds;
 	si->BeginRegistration = S_Base_BeginRegistration;
 	si->RegisterSound = S_Base_RegisterSound;
 	si->ClearSoundBuffer = S_Base_ClearSoundBuffer;

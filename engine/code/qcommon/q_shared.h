@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.5c (r695)"
+#define PRODUCT_VERSION "v0.5c (r696)"
 //#define PRODUCT_VERSION "v0.5"
 #endif
 
@@ -1237,6 +1237,11 @@ typedef struct {
 
 #define PS_PMOVEFRAMECOUNTBITS	6
 
+// flags stored in playerState_t->extra_eFlags
+#define CF_REVERSE				1
+#define CF_BRAKE				2
+#define CF_HEADLIGHTS			4
+
 // playerState_t is the information needed by both the client and server
 // to predict player motion and actions
 // nothing outside of pmove should modify these, or some degree of prediction error
@@ -1429,6 +1434,35 @@ typedef struct {
 	vec3_t	trBase;
 	vec3_t	trDelta;			// velocity, etc
 } trajectory_t;
+
+// entityState_t->eFlags
+#define EF_DEAD                         0x00000001              // don't draw a foe marker over players with EF_DEAD
+#define EF_SMOKE_LIGHT                  0x00000002              // for light smoke
+#define EF_TELEPORT_BIT                 0x00000004              // toggled every time the origin abruptly changes
+#define EF_AWARD_EXCELLENT              0x00000008              // draw an excellent sprite
+#define EF_PLAYER_EVENT                 0x00000010
+#define EF_SMOKE_DARK                   0x00000020              // for dark smoke
+#define EF_AWARD_GAUNTLET               0x00000040              // draw a gauntlet sprite
+#define EF_NODRAW                       0x00000080              // may have an event, but no model (unspawned items)
+#define EF_FIRING                       0x00000100              // for lightning gun
+#define EF_BRAKE                        0x00000200              // player is braking
+#define EF_REVERSE                      0x00000400              // player is in reverse
+#define EF_AWARD_CAP                    0x00000800              // draw the capture sprite
+#define EF_TALK                         0x00001000              // draw a talk balloon
+#define EF_CONNECTION                   0x00002000              // draw a connection trouble sprite
+#define EF_VOTED                        0x00004000              // already cast a vote
+#define EF_AWARD_IMPRESSIVE             0x00008000              // draw an impressive sprite
+#define EF_AWARD_IMPRESSIVETELEFRAG     0x00010000              // draw a telefragged sprite
+#define EF_AWARD_DEFEND                 0x00020000              // draw a defend sprite
+#define EF_AWARD_ASSIST                 0x00030000              // draw a assist sprite
+#define EF_AWARD_DENIED                 0x00080000              // denied
+#define EF_TEAMVOTED                    0x00100000              // already cast a team vote
+#define EF_KAMIKAZE                     0x00200000
+#define EF_BOUNCE                       0x00400000              // for missiles
+#define EF_BOUNCE_HALF                  0x00800000              // for missiles
+#define EF_BOUNCE_NONE                  0x01000000              // for mines
+#define EF_MOVER_STOP                   0x02000000              // will push otherwise
+#define EF_HEADLIGHTS                   0x04000000
 
 // entityState_t is the information conveyed from the server
 // in an update message about entities that the client will

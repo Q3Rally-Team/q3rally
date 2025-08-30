@@ -252,7 +252,7 @@ typedef struct centity_s {
 	float			engineSmokeTime;
 
 	int				skidSoundTime;
-	int				engineSoundTime;
+	int				engineSoundEntity;
 
 	// scripted object variables
 	int				scriptLoadTime;
@@ -1465,7 +1465,6 @@ extern	vmCvar_t		cg_mainViewRenderLevel;
 extern	vmCvar_t		cg_debugpredict;
 
 extern	vmCvar_t		cg_engineSounds;
-extern	vmCvar_t		cg_engineSoundDelay;
 
 extern	vmCvar_t		cg_drawBotPaths;
 // Q3Rally Code END
@@ -2008,6 +2007,7 @@ void		trap_S_ClearLoopingSounds( qboolean killall );
 void		trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 void		trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
+void		trap_S_SetEntityPitch( int entityNum, float pitch );
 
 // respatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position

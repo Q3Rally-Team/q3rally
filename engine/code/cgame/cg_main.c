@@ -276,7 +276,6 @@ vmCvar_t	cg_mainViewRenderLevel;
 vmCvar_t	cg_debugpredict;
 
 vmCvar_t	cg_engineSounds;
-vmCvar_t	cg_engineSoundDelay;
 
 vmCvar_t	cg_drawBotPaths;
 
@@ -388,8 +387,7 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
-	{ &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
-	{ &cg_engineSoundDelay, "cg_engineSoundDelay", "100", CVAR_ARCHIVE },
+       { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
 
 	{ &cg_drawBotPaths, "cg_drawBotPaths", "0", 0 },
 // END
