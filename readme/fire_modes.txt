@@ -1,0 +1,39 @@
+Chainsaw / Kettensäge
+- Primär / Primary: Nahkampfangriff mit kurzer Reichweite. / Close-range melee strike.
+- Sekundär / Secondary: Identisch zum Primärmodus. / Same as primary.
+
+Shotgun / Schrotflinte
+- Primär / Primary: Streuung mehrerer Schrotkugeln. / Fires a spread of pellets.
+- Sekundär / Secondary: Einzelner Slug mit hoher Durchschlagskraft. / Fires a single high-damage slug.
+
+Machinegun / Maschinengewehr
+- Primär / Primary: Dauerfeuer von Kugeln. / Continuous stream of bullets.
+- Sekundär / Secondary: Präziser Dreifachstoß mit Nachladepause. / Precise three-round burst with cooldown.
+
+Grenade Launcher / Granatwerfer
+- Primär / Primary: Standardgranate mit Zeitzünder. / Standard timed/impact grenade.
+- Sekundär / Secondary: Clustergranate, die in mehrere Bomben zerfällt. / Cluster grenade that splits into multiple bombs.
+
+Rocket Launcher / Raketenwerfer
+- Primär / Primary: Normale Rakete mit Explosionsschaden. / Standard rocket explosion.
+- Sekundär / Secondary: Zielverfolgende Rakete. / Homing rocket that tracks targets.
+
+Lightning Gun / Blitzgewehr
+- Primär / Primary: Kontinuierlicher Blitzstrahl. / Continuous lightning beam.
+- Sekundär / Secondary: Kettenblitz, der auf weitere Gegner überspringt. / Chain lightning that arcs to nearby foes.
+
+Railgun / Railgun
+- Primär / Primary: Hochgeschwindigkeitsprojektil durchschlägt Ziele. / High-velocity slug that pierces targets.
+- Sekundär / Secondary: Telefrag-Schuss; teleportiert den Spieler zum Ziel und verursacht massiven Schaden. / Telefrag shot teleporting the player to the hit target for massive damage.
+
+Plasma Gun / Plasmagewehr
+- Primär / Primary: Schnelle Plasmabolzen fliegen geradeaus. / Rapid plasma bolts traveling straight.
+- Sekundär / Secondary: Abprallender Plasmaschuss, der eine Kreisbahn beschreibt. / Bouncing plasma bolt with circular motion.
+
+BFG / BFG
+- Primär / Primary: Schneller Energieschuss mit großem Splash. / Fast energy projectile with large splash.
+- Sekundär / Secondary: Langsamerer Energiesphären-Schuss mit vergrößertem Splash-Radius. / Slower sphere with expanded splash radius.
+
+Flame Thrower / Flammenwerfer
+- Primär / Primary: Flammenstrahl nach vorne. / Projects a stream of flame.
+- Sekundär / Secondary: Dreifacher Flammenfächer. / Triple flame spread forming a wide cone.

@@ -278,10 +278,38 @@ if path doesn't have an extension, then append
 void COM_DefaultExtension( char *path, int maxSize, const char *extension )
 {
 	const char *dot = strrchr(path, '.'), *slash;
-	if (dot && (!(slash = strrchr(path, '/')) || slash < dot))
-		return;
-	else
-		Q_strcat(path, maxSize, extension);
+        if (dot && (!(slash = strrchr(path, '/')) || slash < dot))
+                return;
+        else
+                Q_strcat(path, maxSize, extension);
+}
+
+/*
+====================
+COM_SanitizeFileName
+
+Removes potentially dangerous characters from a file name
+====================
+*/
+void COM_SanitizeFileName( const char *in, char *out, int destsize )
+{
+        int i, j;
+
+        if ( !in || !out || destsize <= 0 ) {
+                if ( out && destsize > 0 ) {
+                        out[0] = '\0';
+                }
+                return;
+        }
+
+        for ( i = 0, j = 0; in[i] && j < destsize - 1; i++ ) {
+                char c = in[i];
+                if ( c == ';' || c == '"' || c == '\n' || c == '\r' ) {
+                        continue;
+                }
+                out[j++] = c;
+        }
+        out[j] = '\0';
 }
 
 /*

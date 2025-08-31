@@ -2809,6 +2809,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_rally_mapents.o \
   $(B)/$(BASEGAME)/game/g_rally_mapobjects.o \
   $(B)/$(BASEGAME)/game/g_rally_observer_cams.o \
+  $(B)/$(BASEGAME)/game/g_rally_object_physics.o \
   $(B)/$(BASEGAME)/game/g_rally_racetools.o \
   $(B)/$(BASEGAME)/game/g_rally_rearweapon.o \
   $(B)/$(BASEGAME)/game/g_rally_scripted_objects.o \
@@ -2909,6 +2910,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_connect.o \
   $(B)/$(BASEGAME)/ui/ui_credits.o \
   $(B)/$(BASEGAME)/ui/ui_demo2.o \
+  $(B)/$(BASEGAME)/ui/ui_common.o \
   $(B)/$(BASEGAME)/ui/ui_display.o \
   $(B)/$(BASEGAME)/ui/ui_gameinfo.o \
   $(B)/$(BASEGAME)/ui/ui_ingame.o \
@@ -2970,6 +2972,7 @@ MPUIOBJ_ = \
   $(B)/$(MISSIONPACK)/ui/ui_gameinfo.o \
   $(B)/$(MISSIONPACK)/ui/ui_players.o \
   $(B)/$(MISSIONPACK)/ui/ui_shared.o \
+  $(B)/$(MISSIONPACK)/ui/ui_common.o \
   \
   $(B)/$(MISSIONPACK)/ui/bg_misc.o \
   $(B)/$(MISSIONPACK)/ui/bg_lib.o \

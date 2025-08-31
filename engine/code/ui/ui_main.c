@@ -2874,51 +2874,10 @@ UI_LoadDemos
 ===============
 */
 static void UI_LoadDemos( void ) {
-	char	demolist[NAMEBUFSIZE];
-	char	demoExt[32];
-	char	*demoname;
-	int	i, j, len;
-	int	protocol, protocolLegacy;
+	char    demolist[NAMEBUFSIZE];
 
-	protocolLegacy = trap_Cvar_VariableValue("com_legacyprotocol");
-	protocol = trap_Cvar_VariableValue("com_protocol");
-
-	if(!protocol)
-		protocol = trap_Cvar_VariableValue("protocol");
-	if(protocolLegacy == protocol)
-		protocolLegacy = 0;
-
-	Com_sprintf(demoExt, sizeof(demoExt), ".%s%d", DEMOEXT, protocol);
-	uiInfo.demoCount = trap_FS_GetFileList("demos", demoExt, demolist, ARRAY_LEN(demolist));
-	
-	demoname = demolist;
-	i = 0;
-
-	for(j = 0; j < 2; j++)
-	{
-		if(uiInfo.demoCount > MAX_DEMOS)
-			uiInfo.demoCount = MAX_DEMOS;
-
-		for(; i < uiInfo.demoCount; i++)
-		{
-			len = strlen(demoname);
-			uiInfo.demoList[i] = String_Alloc(demoname);
-			demoname += len + 1;
-		}
-		
-		if(!j)
-		{
-		        if(protocolLegacy > 0 && uiInfo.demoCount < MAX_DEMOS)
-		        {
-                        	Com_sprintf(demoExt, sizeof(demoExt), ".%s%d", DEMOEXT, protocolLegacy);
-                        	uiInfo.demoCount += trap_FS_GetFileList("demos", demoExt, demolist, ARRAY_LEN(demolist));
-                        	demoname = demolist;
-                        }
-                        else
-                                break;
-		}
-	}
-
+	uiInfo.demoCount = UI_FetchDemoList( demolist, sizeof( demolist ),
+		uiInfo.demoList, MAX_DEMOS, String_Alloc );
 }
 
 
@@ -3292,7 +3251,11 @@ static void UI_RunMenuScript(char **args) {
 			UI_BuildServerDisplayList(qtrue);
 		} else if (Q_stricmp(name, "RunSPDemo") == 0) {
 			if (uiInfo.demoAvailable) {
-			  trap_Cmd_ExecuteText( EXEC_APPEND, va("demo %s_%i\n", uiInfo.mapList[ui_currentMap.integer].mapLoadName, uiInfo.gameTypes[ui_gameType.integer].gtEnum));
+			  char rawName[MAX_QPATH];
+			  char cleanName[MAX_QPATH];
+			  Com_sprintf(rawName, sizeof(rawName), "%s_%i", uiInfo.mapList[ui_currentMap.integer].mapLoadName, uiInfo.gameTypes[ui_gameType.integer].gtEnum);
+			  COM_SanitizeFileName(rawName, cleanName, sizeof(cleanName));
+			  trap_Cmd_ExecuteText( EXEC_APPEND, va("demo \"%s\"\n", cleanName));
 			}
 		} else if (Q_stricmp(name, "LoadDemos") == 0) {
 			UI_LoadDemos();
@@ -3309,7 +3272,9 @@ static void UI_RunMenuScript(char **args) {
 			trap_Cvar_Set( "fs_game", uiInfo.modList[uiInfo.modIndex].modName);
 			trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
 		} else if (Q_stricmp(name, "RunDemo") == 0) {
-			trap_Cmd_ExecuteText( EXEC_APPEND, va("demo %s\n", uiInfo.demoList[uiInfo.demoIndex]));
+			char cleanName[MAX_QPATH];
+			COM_SanitizeFileName(uiInfo.demoList[uiInfo.demoIndex], cleanName, sizeof(cleanName));
+			trap_Cmd_ExecuteText( EXEC_APPEND, va("demo \"%s\"\n", cleanName));
 		} else if (Q_stricmp(name, "Quake3") == 0) {
 			trap_Cvar_Set( "fs_game", "");
 			trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );

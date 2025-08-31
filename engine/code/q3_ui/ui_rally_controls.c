@@ -847,10 +847,10 @@ static void Controls_GetKeyAssignment (char *command, int *twokeys)
 
 /*
 =================
-Controls_GetConfig
+RallyControls_GetConfig
 =================
 */
-static void Controls_GetConfig( void )
+static void RallyControls_GetConfig( void )
 {
 	int		i;
 	int		twokeys[2];
@@ -878,18 +878,18 @@ static void Controls_GetConfig( void )
 	s_controls.sensitivity.curvalue  = UI_ClampCvar( 2, 30, Controls_GetCvarValue( "sensitivity" ) );
 	s_controls.joyenable.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "in_joystick" ) );
 	s_controls.joythreshold.curvalue = UI_ClampCvar( 0.05, 0.75, Controls_GetCvarValue( "joy_threshold" ) );
-	s_controls.freelook.curvalue     = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_freelook" ) );
+        s_controls.freelook.curvalue     = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_freelook" ) );
 // STONELANCE
-	s_controls.autodroprear.curvalue = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_autodrop" ) );
+        s_controls.autodroprear.curvalue = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_autodrop" ) );
 // END
 }
 
 /*
 =================
-Controls_SetConfig
+RallyControls_SetConfig
 =================
 */
-static void Controls_SetConfig( void )
+static void RallyControls_SetConfig( void )
 {
 	int		i;
 	bind_t*	bindptr;
@@ -923,19 +923,19 @@ static void Controls_SetConfig( void )
 	trap_Cvar_SetValue( "sensitivity", s_controls.sensitivity.curvalue );
 	trap_Cvar_SetValue( "in_joystick", s_controls.joyenable.curvalue );
 	trap_Cvar_SetValue( "joy_threshold", s_controls.joythreshold.curvalue );
-	trap_Cvar_SetValue( "cl_freelook", s_controls.freelook.curvalue );
+        trap_Cvar_SetValue( "cl_freelook", s_controls.freelook.curvalue );
 // STONELANCE
-	trap_Cvar_SetValue( "cg_autodrop", s_controls.autodroprear.curvalue );
+        trap_Cvar_SetValue( "cg_autodrop", s_controls.autodroprear.curvalue );
 // END
-	trap_Cmd_ExecuteText( EXEC_APPEND, "in_restart\n" );
+        trap_Cmd_ExecuteText( EXEC_APPEND, "in_restart\n" );
 }
 
 /*
 =================
-Controls_SetDefaults
+RallyControls_SetDefaults
 =================
 */
-static void Controls_SetDefaults( void )
+static void RallyControls_SetDefaults( void )
 {
 	int	i;
 	bind_t*	bindptr;
@@ -992,7 +992,7 @@ static sfxHandle_t Controls_MenuKey( int key )
 			case K_MOUSE2:
 			case K_ESCAPE:
 				if (s_controls.changesmade)
-					Controls_SetConfig();
+                                        RallyControls_SetConfig();
 				goto ignorekey;	
 
 			default:
@@ -1100,7 +1100,7 @@ static void Controls_ResetDefaults_Action( qboolean result ) {
 	}
 
 	s_controls.changesmade = qtrue;
-	Controls_SetDefaults();
+        RallyControls_SetDefaults();
 	Controls_Update();
 }
 
@@ -1166,7 +1166,7 @@ static void Controls_MenuEvent( void* ptr, int event )
 			if (event == QM_ACTIVATED)
 			{
 				if (s_controls.changesmade)
-					Controls_SetConfig();
+                                        RallyControls_SetConfig();
 				UI_PopMenu();
 			}
 			break;
@@ -1174,7 +1174,7 @@ static void Controls_MenuEvent( void* ptr, int event )
 		case ID_SAVEANDEXIT:
 			if (event == QM_ACTIVATED)
 			{
-				Controls_SetConfig();
+                                RallyControls_SetConfig();
 				UI_PopMenu();
 			}
 			break;
@@ -1900,10 +1900,10 @@ static void Controls_MenuInit( void )
 	Q_CleanStr( s_controls.name.string );
 
 	// initialize the configurable cvars
-	Controls_InitCvars();
+        Controls_InitCvars();
 
-	// initialize the current config
-	Controls_GetConfig();
+        // initialize the current config
+        RallyControls_GetConfig();
 
 	// intialize the model
 	Controls_InitModel();

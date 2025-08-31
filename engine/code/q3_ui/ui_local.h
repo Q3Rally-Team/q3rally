@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../renderercommon/tr_types.h"
 //NOTE: include the ui_public.h from the new UI
 #include "../ui/ui_public.h"
+#include "../ui/ui_shared.h"
 //redefine to old API version
 #undef UI_API_VERSION
 #define UI_API_VERSION	4
@@ -167,7 +168,6 @@ extern vmCvar_t	ui_mmap_fov;
 #define	MAX_EDIT_LINE			256
 
 #define MAX_MENUDEPTH			8
-#define MAX_MENUITEMS			128
 
 
 #define MTYPE_NULL				0
@@ -479,6 +479,11 @@ extern void UI_SetupMenu(void);
 //
 extern void UI_TeamMainMenu( void );
 extern void TeamMain_Cache( void );
+
+//
+// ui_common.c
+//
+int UI_FetchDemoList( char *buffer, int bufSize, const char **list, int maxList, const char *(*copyFunc)(const char *) );
 
 //
 // ui_connect.c

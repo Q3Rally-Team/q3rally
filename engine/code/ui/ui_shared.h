@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MAX_MENUDEFFILE 4096
 #define MAX_MENUFILE 32768
 #define MAX_MENUS 64
-#define MAX_MENUITEMS 96
+#define MAX_MENUITEMS 128
 #define MAX_COLOR_RANGES 10
 #define MAX_OPEN_MENUS 16
 
@@ -78,6 +78,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MAX_STRING_HANDLES 4096
 
 #define MAX_SCRIPT_ARGS 12
+#define MAX_DEMOS 512
 #define MAX_EDITFIELD 256
 
 #define ART_FX_BASE			"menu/art/fx_base"
@@ -459,9 +460,6 @@ void *UI_Alloc( int size );
 void UI_InitMemory( void );
 qboolean UI_OutOfMemory( void );
 
-void Controls_GetConfig( void );
-void Controls_SetConfig(qboolean restart);
-void Controls_SetDefaults( void );
 
 int			trap_PC_AddGlobalDefine( char *define );
 int			trap_PC_LoadSource( const char *filename );

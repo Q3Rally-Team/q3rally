@@ -42,7 +42,6 @@ DEMOS MENU
 #define ART_RIGHT0      "menu/art/arrow_r0"
 #define ART_RIGHT1      "menu/art/arrow_r1"
 
-#define MAX_DEMOS			1024
 #define NAMEBUFSIZE			(MAX_DEMOS * 32)
 
 #define ID_BACK				10
@@ -86,10 +85,13 @@ static void Demos_MenuEvent( void *ptr, int event ) {
 
 	switch( ((menucommon_s*)ptr)->id ) {
 	case ID_GO:
-		UI_ForceMenuOff ();
-		trap_Cmd_ExecuteText( EXEC_APPEND, va( "demo %s\n",
-								s_demos.list.itemnames[s_demos.list.curvalue]) );
-		break;
+               UI_ForceMenuOff ();
+               {
+                       char cleanName[MAX_QPATH];
+                       COM_SanitizeFileName(s_demos.list.itemnames[s_demos.list.curvalue], cleanName, sizeof(cleanName));
+                       trap_Cmd_ExecuteText( EXEC_APPEND, va( "demo \"%s\"\n", cleanName) );
+               }
+               break;
 
 	case ID_BACK:
 		UI_PopMenu();
@@ -112,11 +114,6 @@ Demos_MenuInit
 ===============
 */
 static void Demos_MenuInit( void ) {
-	int		i, j;
-	int		len;
-	char	*demoname, extension[32];
-	int	protocol, protocolLegacy;
-
 	memset( &s_demos, 0 ,sizeof(demos_t) );
 
 	Demos_Cache();
@@ -184,47 +181,8 @@ static void Demos_MenuInit( void ) {
 	s_demos.list.itemnames			= (const char **)s_demos.demolist;
 	s_demos.list.columns			= 3;
 
-	protocolLegacy = trap_Cvar_VariableValue("com_legacyprotocol");
-	protocol = trap_Cvar_VariableValue("com_protocol");
-
-	if(!protocol)
-		protocol = trap_Cvar_VariableValue("protocol");
-	if(protocolLegacy == protocol)
-		protocolLegacy = 0;
-
-	Com_sprintf(extension, sizeof(extension), ".%s%d", DEMOEXT, protocol);
-	s_demos.numDemos = trap_FS_GetFileList("demos", extension, s_demos.names, ARRAY_LEN(s_demos.names));
-
-	demoname = s_demos.names;
-	i = 0;
-
-	for(j = 0; j < 2; j++)
-	{
-		if(s_demos.numDemos > MAX_DEMOS)
-			s_demos.numDemos = MAX_DEMOS;
-
-		for(; i < s_demos.numDemos; i++)
-		{
-			s_demos.list.itemnames[i] = demoname;
-		
-			len = strlen(demoname);
-
-			demoname += len + 1;
-		}
-
-		if(!j)
-		{
-			if(protocolLegacy > 0 && s_demos.numDemos < MAX_DEMOS)
-			{
-				Com_sprintf(extension, sizeof(extension), ".%s%d", DEMOEXT, protocolLegacy);
-				s_demos.numDemos += trap_FS_GetFileList("demos", extension, demoname,
-									ARRAY_LEN(s_demos.names) - (demoname - s_demos.names));
-			}
-			else
-				break;
-		}
-	}
-
+	s_demos.numDemos = UI_FetchDemoList( s_demos.names, sizeof( s_demos.names ),
+		(const char **)s_demos.demolist, MAX_DEMOS, NULL );
 	s_demos.list.numitems = s_demos.numDemos;
 
 	if(!s_demos.numDemos)

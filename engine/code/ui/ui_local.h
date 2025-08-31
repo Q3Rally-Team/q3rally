@@ -143,7 +143,6 @@ extern vmCvar_t ui_serverStatusTimeOut;
 #define	MAX_EDIT_LINE			256
 
 #define MAX_MENUDEPTH			8
-#define MAX_MENUITEMS			96
 
 #define MTYPE_NULL				0
 #define MTYPE_SLIDER			1	
@@ -399,6 +398,11 @@ extern void UI_TeamMainMenu( void );
 extern void TeamMain_Cache( void );
 
 //
+// ui_common.c
+//
+int UI_FetchDemoList( char *buffer, int bufSize, const char **list, int maxList, const char *(*copyFunc)(const char *) );
+
+//
 // ui_connect.c
 //
 extern void UI_DrawConnectScreen( qboolean overlay );
@@ -634,7 +638,6 @@ typedef struct {
 #define MAPS_PER_TIER 3
 #define MAX_TIERS 16
 #define MAX_MODS 64
-#define MAX_DEMOS 512
 #define MAX_MOVIES 256
 #define MAX_PLAYERMODELS 256
 

@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.5c (r699)"
+#define PRODUCT_VERSION "v0.5c (r700)"
 //#define PRODUCT_VERSION "v0.5"
 #endif
 
@@ -821,6 +821,7 @@ const char	*COM_GetExtension( const char *name );
 void	COM_StripExtension(const char *in, char *out, int destsize);
 qboolean COM_CompareExtension(const char *in, const char *ext);
 void	COM_DefaultExtension( char *path, int maxSize, const char *extension );
+void	COM_SanitizeFileName( const char *in, char *out, int destsize );
 
 void	COM_BeginParseSession( const char *name );
 int		COM_GetCurrentParseLine( void );
