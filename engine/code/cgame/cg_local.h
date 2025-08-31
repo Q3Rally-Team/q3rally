@@ -307,8 +307,8 @@ typedef enum {
 	LE_KAMIKAZE,
 	LE_INVULIMPACT,
 	LE_INVULJUICED,
-	LE_SHOWREFENTITY
 #endif
+	LE_SHOWREFENTITY
 } leType_t;
 
 typedef enum {
@@ -1739,8 +1739,9 @@ void CG_ObeliskExplode( vec3_t org, int entityNum );
 void CG_ObeliskPain( vec3_t org );
 void CG_InvulnerabilityImpact( vec3_t org, vec3_t angles );
 void CG_InvulnerabilityJuiced( vec3_t org );
-void CG_LightningBoltBeam( vec3_t start, vec3_t end );
 #endif
+void CG_LightningBoltBeam( vec3_t start, vec3_t end );
+void CG_LightningArc( vec3_t start, vec3_t end );
 void CG_ScorePlum( int client, vec3_t org, int score );
 void CG_ShowDebris( vec3_t srcOrigin, int count, int evType );
 void CG_StartEarthquake(int intensity, int duration);
@@ -1754,7 +1755,6 @@ void CG_GibPlayer( vec3_t playerOrigin, vec3_t playerVelocity, int client );
 // Q3Rally Code END
 void CG_LaunchGib( vec3_t origin, vec3_t velocity, qhandle_t hModel, qhandle_t hSkin, float radius, qboolean carPart );
 void CG_BigExplode( vec3_t playerOrigin );
-void CG_LightningArc( vec3_t start, vec3_t end );
 void CG_BreakGlass( vec3_t playerOrigin );
 void CG_BREAKWOOD( vec3_t playerOrigin );
 void CG_BREAKMETAL( vec3_t playerOrigin );

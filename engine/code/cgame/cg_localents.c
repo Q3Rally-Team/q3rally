@@ -810,6 +810,8 @@ void CG_AddInvulnerabilityJuiced( localEntity_t *le ) {
 	}
 }
 
+#endif
+
 /*
 ===================
 CG_AddRefEntity
@@ -823,7 +825,6 @@ void CG_AddRefEntity( localEntity_t *le ) {
 	trap_R_AddRefEntityToScene( &le->refEntity );
 }
 
-#endif
 /*
 ===================
 CG_AddScorePlum
@@ -986,10 +987,10 @@ void CG_AddLocalEntities( void ) {
 		case LE_INVULJUICED:
 			CG_AddInvulnerabilityJuiced( le );
 			break;
+#endif
 		case LE_SHOWREFENTITY:
 			CG_AddRefEntity( le );
 			break;
-#endif
 		}
 	}
 }

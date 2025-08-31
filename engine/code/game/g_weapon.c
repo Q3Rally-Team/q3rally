@@ -321,6 +321,26 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage, int mod ) {
 }
 
 
+void weapon_machinegun_burst_fire( gentity_t *ent ) {
+        int damage;
+        int spread;
+
+        if ( g_gametype.integer != GT_TEAM ) {
+                damage = MACHINEGUN_DAMAGE;
+        } else {
+                damage = MACHINEGUN_TEAM_DAMAGE;
+        }
+
+        spread = MACHINEGUN_SPREAD / 2;
+
+        Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
+        Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
+        Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
+
+        ent->client->ps.weaponTime += (300 & NORMAL_WEAPON_TIME_MASK);
+}
+
+
 /*
 ======================================================================
 
@@ -339,6 +359,32 @@ void BFG_Fire ( gentity_t *ent ) {
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
 
+/*
+======================================================================
+
+BFG - Altfire
+
+======================================================================
+*/
+
+void weapon_bfg_alt_fire( gentity_t *ent ) {
+	gentity_t	*m;
+
+	m = fire_bfg( ent, muzzle, forward );
+
+	/* scale damage for powerups */
+	m->damage *= s_quadFactor;
+	m->splashDamage *= s_quadFactor;
+
+	/* make the projectile travel slower to allow avoidance */
+	VectorScale( forward, 1000, m->s.pos.trDelta );
+	SnapVector( m->s.pos.trDelta );
+
+	/* expand the splash radius to create an energy dome effect */
+	m->splashRadius *= 2;
+}
+
+
 
 /*
 ======================================================================
@@ -351,6 +397,8 @@ SHOTGUN
 // DEFAULT_SHOTGUN_SPREAD and DEFAULT_SHOTGUN_COUNT	are in bg_public.h, because
 // client predicts same spreads
 #define	DEFAULT_SHOTGUN_DAMAGE	10
+#define SHOTGUN_SLUG_SPREAD     0
+#define SHOTGUN_SLUG_DAMAGE     50
 
 qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 	trace_t		tr;
@@ -448,6 +496,11 @@ void weapon_supershotgun_fire (gentity_t *ent) {
 
 	ShotgunPattern( tent->s.pos.trBase, tent->s.origin2, tent->s.eventParm, ent );
 }
+
+void weapon_shotgun_slug_fire (gentity_t *ent) {
+	Bullet_Fire( ent, SHOTGUN_SLUG_SPREAD, SHOTGUN_SLUG_DAMAGE, MOD_SHOTGUN );
+}
+
 
 
 /*
@@ -1026,6 +1079,148 @@ void Weapon_superLightningFire( gentity_t *ent ) {
 	}
 }
 
+/*
+======================================================================
+
+CHAIN LIGHTNING GUN (ALT FIRE)
+
+======================================================================
+*/
+
+#define LIGHTNING_CHAIN_RADIUS  256
+#define LIGHTNING_CHAIN_MAX     4
+
+/*
+================
+Weapon_LightningChainFire
+
+Fires a lightning beam and chains to nearby additional targets.
+Each additional target must be visible and within a fixed radius of
+the previous strike.  A temporary EV_LIGHTNINGBOLT entity is sent for
+each chained segment so clients can render the arc.
+================
+*/
+void Weapon_LightningChainFire( gentity_t *ent ) {
+        trace_t         tr;
+        vec3_t          end;
+        gentity_t       *traceEnt;
+        gentity_t       *tent;
+        vec3_t          start;
+        vec3_t          dir;
+        int                     damage;
+        gentity_t       *hit[LIGHTNING_CHAIN_MAX];
+        int                     numHit = 0;
+        int                     chain;
+
+        damage = 8 * s_quadFactor;
+
+        // first strike straight out from the muzzle
+        VectorCopy( muzzle, start );
+        VectorMA( start, LIGHTNING_RANGE, forward, end );
+        trap_Trace( &tr, start, NULL, NULL, end, ent->s.number, MASK_SHOT );
+        if ( tr.entityNum == ENTITYNUM_NONE ) {
+                return;
+        }
+
+        if ( g_entities[ tr.entityNum ].flags & FL_EXTRA_BBOX ) {
+                traceEnt = &g_entities[ g_entities[ tr.entityNum ].r.ownerNum ];
+        } else {
+                traceEnt = &g_entities[ tr.entityNum ];
+        }
+
+        if ( !traceEnt->takedamage ) {
+                return;
+        }
+
+        VectorSubtract( traceEnt->r.currentOrigin, start, dir );
+        VectorNormalize( dir );
+
+        if ( LogAccuracyHit( traceEnt, ent ) ) {
+                ent->client->accuracy_hits++;
+        }
+
+        G_Damage( traceEnt, ent, ent, dir, tr.endpos,
+                  damage, DAMAGE_WEAPON, MOD_LIGHTNING );
+
+        hit[numHit++] = traceEnt;
+        VectorCopy( traceEnt->r.currentOrigin, start );
+
+        // chain to additional targets
+        for ( chain = 1 ; chain < LIGHTNING_CHAIN_MAX ; chain++ ) {
+                int             entityList[MAX_GENTITIES];
+                int             numEnts;
+                vec3_t          mins, maxs;
+                gentity_t       *best = NULL;
+                float           bestDist = LIGHTNING_CHAIN_RADIUS * LIGHTNING_CHAIN_RADIUS;
+                int             i;
+                int             e;
+                int             k;
+
+                for ( i = 0 ; i < 3 ; i++ ) {
+                        mins[i] = start[i] - LIGHTNING_CHAIN_RADIUS;
+                        maxs[i] = start[i] + LIGHTNING_CHAIN_RADIUS;
+                }
+
+                numEnts = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
+                for ( e = 0 ; e < numEnts ; e++ ) {
+                        gentity_t *cand = &g_entities[ entityList[e] ];
+                        vec3_t      distVec;
+                        float       distSq;
+                        qboolean    already = qfalse;
+
+                        if ( !cand->takedamage || cand == ent ) {
+                                continue;
+                        }
+
+                        for ( k = 0 ; k < numHit ; k++ ) {
+                                if ( hit[k] == cand ) {
+                                        already = qtrue;
+                                        break;
+                                }
+                        }
+                        if ( already ) {
+                                continue;
+                        }
+
+                        // verify line of sight
+                        trap_Trace( &tr, start, NULL, NULL, cand->r.currentOrigin,
+                                    ent->s.number, MASK_SHOT );
+                        if ( tr.entityNum != cand->s.number ) {
+                                continue;
+                        }
+
+                        VectorSubtract( cand->r.currentOrigin, start, distVec );
+                        distSq = VectorLengthSquared( distVec );
+                        if ( distSq < bestDist ) {
+                                bestDist = distSq;
+                                best = cand;
+                        }
+                }
+
+                if ( !best ) {
+                        break;
+                }
+
+                // notify clients of the arc
+                tent = G_TempEntity( start, EV_LIGHTNINGBOLT );
+                VectorCopy( best->r.currentOrigin, tent->s.origin2 );
+                SnapVector( tent->s.origin2 );
+
+                // apply damage
+                VectorSubtract( best->r.currentOrigin, start, dir );
+                VectorNormalize( dir );
+                G_Damage( best, ent, ent, dir, best->r.currentOrigin,
+                          damage, DAMAGE_WEAPON, MOD_LIGHTNING );
+
+                if ( LogAccuracyHit( best, ent ) ) {
+                        ent->client->accuracy_hits++;
+                }
+
+                hit[numHit++] = best;
+                VectorCopy( best->r.currentOrigin, start );
+        }
+}
+
 #ifdef MISSIONPACK
 /*
 ======================================================================
@@ -1248,31 +1443,31 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_LIGHTNING:
 		Weapon_superLightningFire( ent );
 		break;
-	case WP_SHOTGUN:
-		weapon_supershotgun_fire( ent );
-		break;
-	case WP_MACHINEGUN:
-		if ( g_gametype.integer != GT_TEAM ) {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD_MACHINEGUN );
-		} else {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
-		}
-		break;
-	case WP_GRENADE_LAUNCHER:
-		weapon_grenadelauncher_fire( ent );
-		break;
+       case WP_SHOTGUN:
+               weapon_supershotgun_fire( ent );
+               break;
+       case WP_MACHINEGUN:
+               if ( g_gametype.integer != GT_TEAM ) {
+                       Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD_MACHINEGUN );
+               } else {
+                       Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
+               }
+               break;
+       case WP_GRENADE_LAUNCHER:
+               weapon_grenadelauncher_fire( ent );
+               break;
 	case WP_ROCKET_LAUNCHER:
 		Weapon_RocketLauncher_Fire( ent );
 		break;
 	case WP_PLASMAGUN:
 		Weapon_Plasmagun_Fire( ent );
 		break;
-	case WP_RAILGUN:
-		weapon_railgun_fire( ent );
-		break;
-	case WP_BFG:
-		BFG_Fire( ent );
-		break;
+        case WP_RAILGUN:
+                weapon_railgun_fire( ent );
+                break;
+        case WP_BFG:
+               BFG_Fire( ent );
+               break;
     case WP_FLAME_THROWER:
         Weapon_fire_flame( ent );
         break;
@@ -1389,22 +1584,18 @@ void FireAltWeapon( gentity_t *ent ) {
 	case WP_GAUNTLET:
 		Weapon_Gauntlet( ent );
 		break;
-	case WP_LIGHTNING:
-		Weapon_LightningFire( ent );
-		break;
-	case WP_SHOTGUN:
-		weapon_supershotgun_fire( ent );
-		break;
-	case WP_MACHINEGUN:
-		if ( g_gametype.integer != GT_TEAM ) {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD_MACHINEGUN );
-		} else {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
-		}
-		break;
-	case WP_GRENADE_LAUNCHER:
-		weapon_cluster_grenadelauncher_fire( ent );
-		break;
+        case WP_LIGHTNING:
+                Weapon_LightningChainFire( ent );
+                break;
+       case WP_SHOTGUN:
+               weapon_shotgun_slug_fire( ent );
+               break;
+       case WP_MACHINEGUN:
+               weapon_machinegun_burst_fire( ent );
+               break;
+       case WP_GRENADE_LAUNCHER:
+               weapon_cluster_grenadelauncher_fire( ent );
+               break;
 	case WP_ROCKET_LAUNCHER:
 		Weapon_Homing_RocketLauncher_Fire( ent );
 		break;
@@ -1414,9 +1605,9 @@ void FireAltWeapon( gentity_t *ent ) {
 	case WP_RAILGUN:
 		weapon_telefrag_fire( ent,muzzle,forward,right,up );
 		break;
-	case WP_BFG:
-		BFG_Fire( ent );
-		break;
+        case WP_BFG:
+               weapon_bfg_alt_fire( ent );
+               break;
     case WP_FLAME_THROWER:
         Weapon_cluster_fire_flame( ent );
         break;

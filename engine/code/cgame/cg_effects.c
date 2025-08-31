@@ -203,7 +203,6 @@ void CG_SpawnEffect( vec3_t org ) {
 }
 
 
-#ifdef MISSIONPACK
 /*
 ===============
 CG_LightningBoltBeam
@@ -225,10 +224,11 @@ void CG_LightningBoltBeam( vec3_t start, vec3_t end ) {
 	// this is the end point
 	VectorCopy( end, beam->oldorigin );
 
-	beam->reType = RT_LIGHTNING;
-	beam->customShader = cgs.media.lightningShader;
+        beam->reType = RT_LIGHTNING;
+        beam->customShader = cgs.media.lightningShader;
 }
 
+#ifdef MISSIONPACK
 /*
 ==================
 CG_KamikazeEffect

@@ -1187,12 +1187,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_JUICED");
 		CG_InvulnerabilityJuiced( cent->lerpOrigin );
 		break;
-	case EV_LIGHTNINGBOLT:
-		DEBUGNAME("EV_LIGHTNINGBOLT");
-		CG_LightningBoltBeam(es->origin2, es->pos.trBase);
-		break;
 #endif
-	case EV_SCOREPLUM:
+       case EV_LIGHTNINGBOLT:
+               DEBUGNAME("EV_LIGHTNINGBOLT");
+               CG_LightningArc(es->origin2, es->pos.trBase);
+               break;
+       case EV_SCOREPLUM:
 		DEBUGNAME("EV_SCOREPLUM");
 		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
 		break;

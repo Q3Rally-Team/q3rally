@@ -1091,9 +1091,35 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 		angles[0] = rand() % 360;
 		angles[1] = rand() % 360;
 		angles[2] = rand() % 360;
-		AnglesToAxis( angles, beam.axis );
-		trap_R_AddRefEntityToScene( &beam );
-	}
+                AnglesToAxis( angles, beam.axis );
+                trap_R_AddRefEntityToScene( &beam );
+        }
+}
+
+/*
+================
+CG_LightningArc
+
+Render a lightning bolt between two points and play the appropriate
+hit sound. Used for chained lightning segments.
+================
+*/
+void CG_LightningArc( vec3_t start, vec3_t end ) {
+        int r;
+        sfxHandle_t sfx;
+
+        CG_LightningBoltBeam( start, end );
+
+        r = rand() & 3;
+        if ( r < 2 ) {
+                sfx = cgs.media.sfx_lghit2;
+        } else if ( r == 2 ) {
+                sfx = cgs.media.sfx_lghit1;
+        } else {
+                sfx = cgs.media.sfx_lghit3;
+        }
+
+        trap_S_StartSound( end, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
 }
 
 /*

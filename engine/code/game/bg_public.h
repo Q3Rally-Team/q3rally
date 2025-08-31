@@ -570,8 +570,8 @@ typedef enum {
         EV_OBELISKPAIN,                 // obelisk is in pain
         EV_INVUL_IMPACT,                // invulnerability sphere impact
         EV_JUICED,                              // invulnerability juiced effect
-        EV_LIGHTNINGBOLT,               // lightning bolt bounced of invulnerability sphere
 #endif
+        EV_LIGHTNINGBOLT,               // lightning bolt bounced of invulnerability sphere
 
         EV_DEBUG_LINE,
         EV_STOPLOOPINGSOUND,
