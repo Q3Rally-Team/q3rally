@@ -174,7 +174,7 @@ static void G_LoadArenas( void ) {
 
 	// get all arenas from .arena files
 	numdirs = trap_FS_GetFileList("scripts", ".arena", dirlist, 1024 );
-	dirptr  = dirlist;
+	dirptr	= dirlist;
 	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);
 		strcpy(filename, "scripts/");
@@ -453,28 +453,7 @@ void G_CheckMinimumPlayers( void ) {
 		} else if (humanplayers + botplayers > minplayers && botplayers) {
 			G_RemoveRandomBot( TEAM_BLUE );
 		}
-	}
-// STONELANCE - removed gametype
-/*
-	else if (g_gametype.integer == GT_TOURNAMENT ) {
-		if (minplayers >= g_maxclients.integer) {
-			minplayers = g_maxclients.integer-1;
-		}
-		humanplayers = G_CountHumanPlayers( -1 );
-		botplayers = G_CountBotPlayers( -1 );
-		//
-		if (humanplayers + botplayers < minplayers) {
-			G_AddRandomBot( TEAM_FREE );
-		} else if (humanplayers + botplayers > minplayers && botplayers) {
-			// try to remove spectators first
-			if (!G_RemoveRandomBot( TEAM_SPECTATOR )) {
-				// just remove the bot that is playing
-				G_RemoveRandomBot( -1 );
-			}
-		}
-	}
-// STONELANCE - UPDATE: enable this for all game modes
-	else if (g_gametype.integer == GT_FFA) {
+	} else {	// FFA or other non-team gametypes
 		if (minplayers >= g_maxclients.integer) {
 			minplayers = g_maxclients.integer-1;
 		}
@@ -487,7 +466,6 @@ void G_CheckMinimumPlayers( void ) {
 			G_RemoveRandomBot( TEAM_FREE );
 		}
 	}
-*/
 // END
 }
 
@@ -827,7 +805,7 @@ void Svcmd_BotList_f( void ) {
 	char model[MAX_TOKEN_CHARS];
 	char aifile[MAX_TOKEN_CHARS];
 
-	trap_Print("^1name             model            aifile              funname\n");
+	trap_Print("^1name	       model		aifile		    funname\n");
 	for (i = 0; i < g_numBots; i++) {
 		Q_strncpyz(name, Info_ValueForKey( g_botInfos[i], "name" ), sizeof( name ));
 		if ( !*name ) {
@@ -966,7 +944,7 @@ static void G_LoadBots( void ) {
 
 	// get all bots from .bot files
 	numdirs = trap_FS_GetFileList("scripts", ".bot", dirlist, 1024 );
-	dirptr  = dirlist;
+	dirptr	= dirlist;
 	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);
 		strcpy(filename, "scripts/");

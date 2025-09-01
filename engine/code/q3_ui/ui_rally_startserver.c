@@ -44,7 +44,8 @@ START SERVER MENU *****
 #define	MAX_SERVERSTEXT	8192
 
 #define MAX_SERVERMAPS	64
-#define MAX_NAMELENGTH	28
+#define MAX_NAMELENGTH  28
+#define MAPNAMEBUFFER_SIZE 64
 
 #define ID_GAMETYPE				10
 #define ID_PICTURE				11
@@ -382,17 +383,17 @@ static void StartServer_Update( void ) {
 	if( !s_startserver.nummaps ) {
 
 		// set the map name
-                Q_strncpyz( s_startserver.mapname.string, "NO MAPS FOUND", sizeof( s_startserver.mapname.string ) );
+Q_strncpyz( s_startserver.mapname.string, "NO MAPS FOUND", MAPNAMEBUFFER_SIZE );
 
-		UI_SetupMapStatsForArena(-1);
+UI_SetupMapStatsForArena(-1);
 
 	}
 	else {
 
 		// set the map name
-                Q_strncpyz( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap], sizeof( s_startserver.mapname.string ) );
+Q_strncpyz( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap], MAPNAMEBUFFER_SIZE );
 
-		UI_SetupMapStatsForArena(s_startserver.currentmap);
+UI_SetupMapStatsForArena(s_startserver.currentmap);
 	}
 
 	Q_strupr( s_startserver.mapname.string );
@@ -613,7 +614,7 @@ StartServer_MenuInit
 static void StartServer_MenuInit( void ) {
 	
     int	i;
-	static char mapnamebuffer[64];
+static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 
 	// zero set all our globals
 	memset( &s_startserver, 0 ,sizeof(startserver_t) );
