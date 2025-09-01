@@ -529,15 +529,6 @@ static void CG_Missile( centity_t *cent ) {
 		return;
 	}
 
-	if ( cent->currentState.weapon == WP_FLAME_THROWER ) {
-		ent.reType = RT_SPRITE;
-		ent.radius = 32;
-		ent.rotation = 0;
-		ent.customShader = cgs.media.flameBallShader;
-		trap_R_AddRefEntityToScene( &ent );
-		return;
-	}
-
 // Q3Rally Code Start
 	if (cent->currentState.weapon == RWP_MINE){
 		if (cgs.gametype >= GT_TEAM){

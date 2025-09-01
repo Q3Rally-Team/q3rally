@@ -2040,7 +2040,7 @@ static void PM_Alt_Weapon( void ) {
 		ammo_use = 1;
 		break;
 	case WP_MACHINEGUN:
-		ammo_use = 1;
+		ammo_use = 3;
 		break;
 	case WP_SHOTGUN:
 		ammo_use = 1;

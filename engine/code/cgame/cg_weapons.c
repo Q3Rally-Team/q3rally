@@ -702,14 +702,16 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 		break;
 
-	case WP_FLAME_THROWER:
-        weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/flamer/fl_hum.wav", qfalse );
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/flamer/fl_fly.wav", qfalse );
-        MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
-		MAKERGB( weaponInfo->flashDlightColor, 1, 0.75f, 0 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/flamer/fl_fire.wav", qfalse );
-		cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
-	break;
+        case WP_FLAME_THROWER:
+                weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/flamer/fl_hum.wav", qfalse );
+                weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/flamer/fl_fly.wav", qfalse );
+                weaponInfo->missileModel = cgs.media.fireModel;
+                weaponInfo->missileTrailFunc = CG_FlameTrail;
+                MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
+                MAKERGB( weaponInfo->flashDlightColor, 1, 0.75f, 0 );
+                weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/flamer/fl_fire.wav", qfalse );
+                cgs.media.flameExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
+                break;
 
 #ifdef MISSIONPACK
 	case WP_CHAINGUN:

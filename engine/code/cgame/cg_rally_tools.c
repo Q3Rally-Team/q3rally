@@ -432,6 +432,47 @@ void CG_GetTagPosition( const refEntity_t *parent, qhandle_t parentModel, char *
 
 /*
 ====================
+CG_FlameTrail
+
+Creates a short-lived flame effect along a projectile's path
+====================
+*/
+void CG_FlameTrail( centity_t *cent, const weaponInfo_t *wi ) {
+       static qboolean initialized = qfalse;
+       static qhandle_t shaders[3];
+       int              step;
+       vec3_t           origin;
+       int              t;
+       int              startTime;
+       entityState_t   *es;
+
+       if ( cg_noProjectileTrail.integer ) {
+               return;
+       }
+
+       if ( !initialized ) {
+               shaders[0] = trap_R_RegisterShader( "models/rearfire/flametrail01" );
+               shaders[1] = trap_R_RegisterShader( "models/rearfire/flametrail02" );
+               shaders[2] = trap_R_RegisterShader( "models/rearfire/flametrail03" );
+               initialized = qtrue;
+       }
+
+       step = 40;
+       es = &cent->currentState;
+       startTime = cent->trailTime;
+       t = step * ( ( startTime + step ) / step );
+
+       for ( ; t <= cg.time ; t += step ) {
+               BG_EvaluateTrajectory( &es->pos, t, origin );
+               CreateFireEntity( origin, vec3_origin, cgs.media.fireModel,
+                                 shaders[rand() % 3], 300 );
+       }
+
+       cent->trailTime = cg.time;
+}
+
+/*
+====================
 CreateFireEntity
 
   Creates fire localEntities

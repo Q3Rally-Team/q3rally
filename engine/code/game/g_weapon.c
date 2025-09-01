@@ -331,13 +331,15 @@ void weapon_machinegun_burst_fire( gentity_t *ent ) {
                 damage = MACHINEGUN_TEAM_DAMAGE;
         }
 
+        damage *= 2;
+
         spread = MACHINEGUN_SPREAD / 2;
 
         Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
         Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
         Bullet_Fire( ent, spread, damage, MOD_MACHINEGUN );
 
-        ent->client->ps.weaponTime += (300 & NORMAL_WEAPON_TIME_MASK);
+        ent->client->ps.weaponTime += (900 & NORMAL_WEAPON_TIME_MASK);
 }
 
 
