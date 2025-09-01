@@ -1439,7 +1439,17 @@ void UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader ) {
 	}
 	
 	UI_AdjustFrom640( &x, &y, &w, &h );
-	trap_R_DrawStretchPic( x, y, w, h, s0, t0, s1, t1, hShader );
+        trap_R_DrawStretchPic( x, y, w, h, s0, t0, s1, t1, hShader );
+}
+
+void UI_DrawBackground( qhandle_t shader ) {
+        float sw = uis.glconfig.vidWidth;
+        float sh = uis.glconfig.vidHeight;
+        float pw = SCREEN_WIDTH, ph = SCREEN_HEIGHT;
+        float scale = (sw / pw > sh / ph) ? sw / pw : sh / ph;
+        float w = pw * scale, h = ph * scale;
+        float x = (sw - w) * 0.5f, y = (sh - h) * 0.5f;
+        trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, shader );
 }
 
 /*
