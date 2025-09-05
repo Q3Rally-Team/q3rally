@@ -70,8 +70,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-//#define PRODUCT_VERSION "v0.5c (r703)"
-#define PRODUCT_VERSION "v0.5c"
+#define PRODUCT_VERSION "v0.5c (r700)"
+//#define PRODUCT_VERSION "v0.5"
 #endif
 
 
@@ -1229,7 +1229,7 @@ typedef struct {
 //=========================================================
 
 // bit field limits
-#define	MAX_STATS				16
+#define	MAX_STATS				17
 #define	MAX_PERSISTANT			16
 #define	MAX_POWERUPS			16
 #define	MAX_WEAPONS				16		

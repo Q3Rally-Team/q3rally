@@ -89,7 +89,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 			cl->ps.persistant[PERS_SCORE], ping, time,
 			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
 			cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
-            cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
+	    cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
 			cl->ps.persistant[PERS_EXCELLENT_COUNT],
 			cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
 			cl->ps.persistant[PERS_DEFEND_COUNT], 
@@ -482,7 +482,7 @@ void Cmd_Noclip_f( gentity_t *ent ) {
 Cmd_LevelShot_f
 
 This is just to help generate the level pictures
-for the menus.  It goes to the intermission immediately
+for the menus.	It goes to the intermission immediately
 and sends over a command to the client to resize the view,
 hide the scoreboard, and take a special screenshot
 ==================
@@ -616,7 +616,7 @@ void SetTeam( gentity_t *ent, const char *s ) {
 	specWilling = qtrue;
 // END
 
-	if ( !Q_stricmp( s, "scoreboard" ) || !Q_stricmp( s, "score" )  ) {
+	if ( !Q_stricmp( s, "scoreboard" ) || !Q_stricmp( s, "score" )	) {
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_SCOREBOARD;
 	} else if ( !Q_stricmp( s, "follow1" ) ) {
@@ -1378,7 +1378,7 @@ static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 			G_Voice( ent, ent->enemy, SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
 		}
 		if (!(ent->r.svFlags & SVF_BOT)) {
-			G_Voice( ent, ent,        SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
+			G_Voice( ent, ent,	  SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
 		}
 		ent->enemy = NULL;
 		return;
@@ -2026,26 +2026,26 @@ void Cmd_MoveBHandle_f( gentity_t *other )
 
 	Com_Printf( "Moving Checkpoint %i by (%f %f %f)\n", curCheckpoint, delta[0], delta[1], delta[2] );
 
-        while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
-                if ( ent->number == curCheckpoint )
-                {
-                        VectorAdd( ent->s.angles2, delta, ent->s.angles2 );
+	while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
+		if ( ent->number == curCheckpoint )
+		{
+			VectorAdd( ent->s.angles2, delta, ent->s.angles2 );
 
-                        break;
-                }
-        }
+			break;
+		}
+	}
 }
 
 void Cmd_Headlight_Toggle_f( gentity_t *ent ) {
        if ( !ent->client ) {
-               return;
+	       return;
        }
 
        ent->client->ps.extra_eFlags ^= CF_HEADLIGHTS;
        if ( ent->client->ps.extra_eFlags & CF_HEADLIGHTS ) {
-               ent->s.eFlags |= EF_HEADLIGHTS;
+	       ent->s.eFlags |= EF_HEADLIGHTS;
        } else {
-               ent->s.eFlags &= ~EF_HEADLIGHTS;
+	       ent->s.eFlags &= ~EF_HEADLIGHTS;
        }
        ent->client->sess.headlights = (ent->client->ps.extra_eFlags & CF_HEADLIGHTS) ? qtrue : qfalse;
 }
@@ -2197,24 +2197,30 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp (cmd, "dropWeapon") == 0){
 		G_DropRearWeapon( ent );
 	}
+       else if (Q_stricmp (cmd, "drop") == 0){
+               if ( ent->client->ps.stats[STAT_HOLDABLE_ITEM] != 0 ) {
+                       gitem_t *item = &bg_itemlist[ ent->client->ps.stats[STAT_HOLDABLE_ITEM] ];
+                       G_DropHoldable( ent, item );
+               }
+       }
 	else if (Q_stricmp (cmd, "mapstats") == 0){
 		trap_Argv( 1, buffer, sizeof( buffer ) );
 		trap_Argv( 2, name, sizeof( name ) );
 
 		G_PrintMapStats( ent, atoi(buffer), name );
 	}
-        else if (Q_stricmp (cmd, "times") == 0) {
-                Cmd_Times_f (ent);
-                return;
-        }
-        else if (Q_stricmp (cmd, "headlights") == 0) {
-                Cmd_Headlight_Toggle_f (ent);
-                return;
-        }
-        else if (Q_stricmp (cmd, "saveBPoints") == 0) {
-                Cmd_SaveBPoints_f (ent);
-                return;
-        }
+	else if (Q_stricmp (cmd, "times") == 0) {
+		Cmd_Times_f (ent);
+		return;
+	}
+	else if (Q_stricmp (cmd, "headlights") == 0) {
+		Cmd_Headlight_Toggle_f (ent);
+		return;
+	}
+	else if (Q_stricmp (cmd, "saveBPoints") == 0) {
+		Cmd_SaveBPoints_f (ent);
+		return;
+	}
 	else if (Q_stricmp (cmd, "moveBPoint") == 0) {
 		Cmd_MoveBPoint_f (ent);
 		return;

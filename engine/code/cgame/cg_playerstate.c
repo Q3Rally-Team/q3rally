@@ -512,10 +512,13 @@ CG_TransitionPlayerState
 void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	// check for changing follow mode
 	if ( ps->clientNum != ops->clientNum ) {
-		cg.thisFrameTeleport = qtrue;
-		// make sure we don't get any unwanted transition effects
-		*ops = *ps;
-	}
+               cg.thisFrameTeleport = qtrue;
+               // make sure we don't get any unwanted transition effects
+               *ops = *ps;
+       }
+
+       cg.predictedPlayerState.stats[STAT_FUEL] = ps->stats[STAT_FUEL];
+       cg.car.fuel = ps->stats[STAT_FUEL];
 
 	// damage events (player is getting wounded)
 // STONELANCE using damagePitch and Yaw for view

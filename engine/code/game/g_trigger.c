@@ -124,7 +124,7 @@ void trigger_always_think( gentity_t *ent ) {
 }
 
 /*QUAKED trigger_always (.5 .5 .5) (-8 -8 -8) (8 8 8)
-This trigger will always fire.  It is activated by the world.
+This trigger will always fire.	It is activated by the world.
 */
 void SP_trigger_always (gentity_t *ent) {
 	// we must have some delay to make sure our use targets are present
@@ -292,7 +292,7 @@ void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace
 	}
 
 
-	dest = 	G_PickTarget( self->target );
+	dest =	G_PickTarget( self->target );
 	if (!dest) {
 		G_Printf ("Couldn't find teleporter destination\n");
 		return;
@@ -412,6 +412,59 @@ void SP_trigger_hurt( gentity_t *self ) {
 
 /*
 ==============================================================================
+
+trigger_fuel
+
+==============================================================================
+*/
+
+void Touch_Fuel( gentity_t *self, gentity_t *other, trace_t *trace ) {
+	float max;
+
+	if ( !other->client ) {
+		return;
+	}
+
+	max = ( self->count > 0 ) ? self->count : ( other->client->car.maxFuel > 0 ? other->client->car.maxFuel : CP_MAX_FUEL );
+
+        if ( other->client->car.fuel >= max ) {
+                return;
+        }
+
+	if ( self->speed <= 0 ) {
+		self->speed = 10;
+	}
+
+	other->client->car.fuel += self->speed * FRAMETIME / 1000.0f;
+
+	if ( other->client->car.fuel > max ) {
+		other->client->car.fuel = max;
+	}
+
+	other->client->ps.stats[STAT_FUEL] = (int)other->client->car.fuel;
+}
+
+/*QUAKED trigger_fuel (.5 .5 .5) ?
+Continuously refuels vehicles that touch it.
+"rate"	fuel units added per second (default 10)
+"max"	maximum fuel level to fill to (default vehicle max)
+*/
+void SP_trigger_fuel( gentity_t *self ) {
+    float max;
+
+    G_SpawnFloat( "rate", "10", &self->speed );
+    G_SpawnFloat( "max", "0", &max );
+    self->count = (int)max;
+
+    self->touch = Touch_Fuel;
+
+    InitTrigger( self );
+    trap_LinkEntity( self );
+}
+
+
+/*
+============================================================================== 
 
 timer
 

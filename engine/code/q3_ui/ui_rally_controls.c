@@ -113,7 +113,8 @@ typedef struct
 #define ID_JOYTHRESHOLD	46
 #define ID_SMOOTHMOUSE	47
 #define ID_AUTODROP		48
-#define ID_NEXTCAMERA	49
+#define ID_NEXTCAMERA   49
+#define ID_DROPITEM             50
 
 
 #define ANIM_IDLE		0
@@ -203,6 +204,7 @@ typedef struct
 	menuaction_s		showscores;
 	menuradiobutton_s	autoswitch;
 	menuaction_s		useitem;
+        menuaction_s            dropitem;
 	playerInfo_t		playerinfo;
 	qboolean			changesmade;
 	menuaction_s		chat;
@@ -240,6 +242,7 @@ static bind_t g_bindings[] =
 {
 	{"+scores",			  "show scores",		  ID_SHOWSCORES,	  ANIM_IDLE,		  K_TAB,			-1,		-1, -1},
 	{"+button2",		  "use item",			  ID_USEITEM,		  ANIM_IDLE,		  K_ENTER,		    -1,		-1, -1},
+        {"drop",                          "drop item",                   ID_DROPITEM,           ANIM_IDLE,              -1,                    -1,             -1, -1},
 	{"+forward", 		  "accelerate",		      ID_ACCEL,		      ANIM_WALK,		  'w',		        -1,		-1, -1},
 	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            -1,		-1, -1},
 	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
@@ -349,16 +352,17 @@ static menucommon_s *g_looking_controls[] = {
 };
 
 static menucommon_s *g_misc_controls[] = {
-	(menucommon_s *)&s_controls.showscores, 
+	(menucommon_s *)&s_controls.showscores,
 	(menucommon_s *)&s_controls.useitem,
+	(menucommon_s *)&s_controls.dropitem,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
 	(menucommon_s *)&s_controls.chat4,
 	(menucommon_s *)&s_controls.headlight,
 	(menucommon_s *)&s_controls.horn,
-    (menucommon_s *)&s_controls.startdemo,
-    (menucommon_s *)&s_controls.stopdemo,
+	(menucommon_s *)&s_controls.startdemo,
+	(menucommon_s *)&s_controls.stopdemo,
 	(menucommon_s *)&s_controls.nextcamera,
 	NULL,
 };
@@ -1665,6 +1669,12 @@ static void Controls_MenuInit( void )
 	s_controls.useitem.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.useitem.generic.id        = ID_USEITEM;
 
+        s_controls.dropitem.generic.type      = MTYPE_ACTION;
+        s_controls.dropitem.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+        s_controls.dropitem.generic.callback  = Controls_ActionEvent;
+        s_controls.dropitem.generic.ownerdraw = Controls_DrawKeyBinding;
+        s_controls.dropitem.generic.id        = ID_DROPITEM;
+
 	s_controls.showscores.generic.type	    = MTYPE_ACTION;
 	s_controls.showscores.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.showscores.generic.callback  = Controls_ActionEvent;
@@ -1878,6 +1888,7 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
+        Menu_AddItem( &s_controls.menu, &s_controls.dropitem );
 // STONELANCE
 //	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 // END

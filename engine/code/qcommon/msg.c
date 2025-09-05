@@ -735,7 +735,7 @@ void MSG_ReportChangeVectors_f( void ) {
 typedef struct {
 	char	*name;
 	int		offset;
-	int		bits;		// 0 = float
+	unsigned int            bits;		// 0 = float
 } netField_t;
 
 // using the stringizing operator to save typing...
@@ -1119,7 +1119,7 @@ MSG_WriteDeltaPlayerstate
 void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct playerState_s *to ) {
 	int				i;
 	playerState_t	dummy;
-	int				statsbits;
+	unsigned int    statsbits;
 	int				persistantbits;
 	int				ammobits;
 	int				powerupbits;
@@ -1270,7 +1270,7 @@ MSG_ReadDeltaPlayerstate
 */
 void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *to ) {
 	int			i, lc;
-	int			bits;
+	unsigned int            bits;
 	netField_t	*field;
 	int			numFields;
 	int			startBit, endBit;

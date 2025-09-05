@@ -4,6 +4,35 @@
 // holdable
 //
 
+models/items/fuelcan_box
+{
+    {
+        map models/items/envmapfuelcan.tga
+        rgbGen identity
+        tcMod rotate 12
+        tcMod turb 0 0.5 0 0.5
+        tcMod scroll 1 0.5
+    }
+    {
+        map models/items/fuelcanfluid.tga
+        blendfunc add
+        rgbGen identity
+        tcMod scroll 0.5 0
+        tcGen environment
+    }
+    {
+        map models/items/fuelcan_box.tga
+        blendfunc blend
+        rgbGen lightingDiffuse
+    }
+    {
+        map models/items/fuelcan-glow.tga
+        blendfunc gl_one_minus_dst_color gl_src_alpha
+        rgbGen wave noise 0 1 0 5
+    }
+}
+
+
 models/powerups/holdable/medkit_box
 {
 	{

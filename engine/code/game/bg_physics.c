@@ -433,6 +433,10 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 	float	halfWidth, halfLength, halfHeight;
 	float	forwardScale, rightScale, upScale;
 
+	qboolean keep = car->preserveFuel;
+	float fuel = car->fuel;
+	qboolean leak = car->fuelLeak;
+
 	// UPDATE: use memset?
 
 	VectorCopy(origin, car->sBody.r);
@@ -544,6 +548,10 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 
 	car->gear = 1;
 	car->rpm = CP_RPM_MIN;
+	car->fuel = keep ? fuel : CP_MAX_FUEL;
+	car->fuelLeak = keep ? leak : qfalse;
+	if ( pm->ps ) pm->ps->stats[STAT_FUEL] = (int)car->fuel;
+	car->preserveFuel = qfalse;
 
 //	car->aCOF = CP_AIR_COF;
 //	car->dfCOF = CP_FRAC_TO_DF;
@@ -2326,6 +2334,19 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 
 	// calculate forces
 	PM_CalculateForces(car, &car->sBody, car->sPoints, time);
+    
+	if ( car->fuel > 0.0f ) {
+		float fuelUse;
+		fuelUse = fabs(car->throttle) * (fabs(car->rpm) / CP_RPM_MAX) * CP_FUEL_CONSUMPTION * time;
+		car->fuel -= fuelUse;
+		if ( car->fuelLeak ) {
+			car->fuel -= CP_FUEL_LEAK_RATE * time;
+		}
+		if (car->fuel < 0.0f) {
+			car->fuel = 0.0f;
+		}
+	}
+	pm->ps->stats[STAT_FUEL] = (int)car->fuel;
 
 	//t2 = trap_Milliseconds();
 

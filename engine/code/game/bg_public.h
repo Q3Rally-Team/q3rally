@@ -312,7 +312,7 @@ void Pmove (pmove_t *pmove);
 
 
 // player_state->stats[] indexes
-// NOTE: may not have more than 16
+// NOTE: may not have more than 18
 typedef enum {
         STAT_HEALTH,
         STAT_HOLDABLE_ITEM,
@@ -333,7 +333,8 @@ typedef enum {
         STAT_NEXT_CHECKPOINT,
         STAT_POSITION,
         STAT_FRAC_TO_NEXT_CHECKPOINT,
-        STAT_DISTANCE_REMAIN
+        STAT_DISTANCE_REMAIN,
+        STAT_FUEL
 // END
 } statIndex_t;
 
@@ -411,6 +412,7 @@ typedef enum {
 // STONELANCE
         HI_TURBO,
 // END
+        HI_FUELCAN,
         HI_NUM_HOLDABLE
 } holdable_t;
 
@@ -791,7 +793,7 @@ typedef enum {
         IT_TEAM,
 // Q3Rally Code Start
         IT_RFWEAPON,
-        IT_SIGIL
+        IT_SIGIL,
 // Q3Rally Code END
 } itemType_t;
 
@@ -842,7 +844,7 @@ gitem_t *BG_FindItemForPowerup( powerup_t pw );
 gitem_t *BG_FindItemForHoldable( holdable_t pw );
 #define ITEM_INDEX(x) ((x)-bg_itemlist)
 
-qboolean        BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps );
+qboolean        BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps, float maxFuel );
 
 
 // g_dmflags->integer flags

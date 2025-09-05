@@ -546,10 +546,12 @@ static void CG_UseItem( centity_t *cent ) {
 		break;
 #endif
 // Q3Rally Code Start
-	case HI_TURBO:
-		break;
+        case HI_TURBO:
+                break;
+        case HI_FUELCAN:
+                break;
 // Q3Rally Code END
-	}
+        }
 
 }
 

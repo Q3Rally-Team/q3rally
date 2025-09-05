@@ -3776,6 +3776,9 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 
 	if(disconnect)
 		CL_Disconnect(qtrue);
+
+	// write config before we start clearing state
+	Com_WriteConfiguration();
 	
 	CL_ClearMemory(qtrue);
 	CL_Snd_Shutdown();

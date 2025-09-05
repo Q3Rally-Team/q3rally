@@ -3280,6 +3280,7 @@ static bind_t g_bindings[] =
 	{"tauntGauntlet", K_F5,			-1,		-1, -1},
 	{"scoresUp", K_KP_PGUP,			-1,		-1, -1},
 	{"scoresDown", K_KP_PGDN,			-1,		-1, -1},
+	{"drop", -1, -1, -1, -1},
 	{"messagemode",  -1,					-1,		-1, -1},
 	{"messagemode2", -1,						-1,		-1, -1},
 	{"messagemode3", -1,						-1,		-1, -1},

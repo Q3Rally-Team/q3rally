@@ -401,7 +401,9 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
 //	float	normalForce;
 
 	if (car->throttle < 0.00f)
-		return;
+                return;
+	if (car->fuel <= 0.0f)
+	return;
 
 	if (VectorLength(forward) == 0.0f){
 		if (pm->pDebug)

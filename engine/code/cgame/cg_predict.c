@@ -472,7 +472,7 @@ static void CG_TouchItem( centity_t *cent ) {
 		return;
 	}
 
-	if ( !BG_CanItemBeGrabbed( cgs.gametype, &cent->currentState, &cg.predictedPlayerState ) ) {
+	if ( !BG_CanItemBeGrabbed( cgs.gametype, &cent->currentState, &cg.predictedPlayerState, cg.car.maxFuel ) ) {
 		return;		// can't hold it
 	}
 
@@ -591,7 +591,8 @@ void CG_UpdateCarFromPS ( playerState_t *ps ) {
 		Com_Printf( "CG_UpdateCarFromPS\n" );
 
 	cg.car.rpm = ps->stats[STAT_RPM];
-	cg.car.gear = ps->stats[STAT_GEAR];
+    cg.car.gear = ps->stats[STAT_GEAR];
+    cg.car.fuel = ps->stats[STAT_FUEL];
 
 	VectorCopy(ps->origin, cg.car.sBody.r);
 	VectorCopy(ps->velocity, cg.car.sBody.v);

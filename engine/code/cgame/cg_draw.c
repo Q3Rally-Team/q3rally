@@ -851,13 +851,16 @@ static void CG_DrawRallyStatusBar( void ) {
 	// health background
 	   CG_FillRect( 210, 476 - 30, 90, 24, bg_color );
 
-	// armor background
-	if ( ps->stats[ STAT_ARMOR ] )
+       // armor background
+       if ( ps->stats[ STAT_ARMOR ] )
 
-        CG_FillRect( 305, 476 - 30, 90, 24, bg_color );
+       CG_FillRect( 305, 476 - 30, 90, 24, bg_color );
 
-	// rearammo background
-	weapon = 0;
+       // fuel gauge
+       CG_DrawFuelGauge( 20, 476 - 42, 90, 8 );
+
+       // rearammo background
+       weapon = 0;
 	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
 		if (ps->stats[STAT_WEAPONS] & ( 1 << i )){
 			if (ps->ammo[ i ]){

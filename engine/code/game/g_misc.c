@@ -115,6 +115,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	if (!noAngles) {
 		VectorCopy( angles, player->client->ps.viewangles );
 	}
+	player->client->car.preserveFuel = qtrue;
 	player->client->car.initializeOnNextMove = qtrue;
 // END
 

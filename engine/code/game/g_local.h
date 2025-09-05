@@ -577,6 +577,8 @@ void RespawnItem( gentity_t *ent );
 void UseHoldableItem( gentity_t *ent );
 void PrecacheItem (gitem_t *it);
 gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle );
+void G_DropHoldable( gentity_t *ent, gitem_t *item );
+void G_DropFuelCan( gentity_t *ent );
 gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity );
 void SetRespawn (gentity_t *ent, float delay);
 void G_SpawnItem (gentity_t *ent, gitem_t *item);
@@ -1014,6 +1016,7 @@ extern  vmCvar_t        g_derbyRamRadius;
 extern  vmCvar_t        g_derbyRamDamage;
 extern  vmCvar_t        g_derbyRamDamageScale;
 extern  vmCvar_t        g_derbyRamDamageMax;
+extern  vmCvar_t        g_fuelKillReward;
 
 // car variables
 extern	vmCvar_t	car_spring;

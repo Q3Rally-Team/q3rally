@@ -122,6 +122,7 @@ vmCvar_t        g_derbyRamDamage;
 vmCvar_t        g_derbyRamDamageScale;
 vmCvar_t        g_derbyRamDamageMax;
 vmCvar_t  g_humanplayers;
+vmCvar_t        g_fuelKillReward;
 
 // car variables
 vmCvar_t	car_spring;
@@ -247,6 +248,7 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_developer, "developer", "0", 0, 0, qfalse },
 	{ &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
+        { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
 
 	// car variables
 	// FIXME: should really be serverinfo so there are no client prediction problems
