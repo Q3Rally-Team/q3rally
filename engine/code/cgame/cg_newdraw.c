@@ -169,14 +169,14 @@ static void CG_DrawPlayerArmorIcon( rectDef_t *rect, qboolean draw2D ) {
 	}
 
 	if ( draw2D || ( !cg_draw3dIcons.integer && cg_drawIcons.integer) ) {
-		CG_DrawPic( rect->x, rect->y + rect->h/2 + 1, rect->w, rect->h, cgs.media.armorIcon );
+               CG_DrawPic( rect->x - 25, rect->y + rect->h/2 + 1, rect->w, rect->h, cgs.media.armorIcon );
 	} else if (cg_draw3dIcons.integer) {
 		VectorClear( angles );
 		origin[0] = 90;
 		origin[1] = 0;
 		origin[2] = -10;
 		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0f;
-		CG_Draw3DModel( rect->x, rect->y, rect->w, rect->h, cgs.media.armorModel, 0, origin, angles );
+               CG_Draw3DModel( rect->x - 25, rect->y, rect->w, rect->h, cgs.media.armorModel, 0, origin, angles );
 	}
 }
 
@@ -191,12 +191,12 @@ static void CG_DrawPlayerArmorValue(rectDef_t *rect, float scale, vec4_t color, 
 
 	if (shader) {
 		trap_R_SetColor( color );
-		CG_DrawPic(rect->x, rect->y, rect->w, rect->h, shader);
+               CG_DrawPic(rect->x - 25, rect->y, rect->w, rect->h, shader);
 		trap_R_SetColor( NULL );
 	} else {
 		Com_sprintf (num, sizeof(num), "%i", value);
 		value = CG_Text_Width(num, scale, 0);
-		CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
+               CG_Text_Paint(rect->x - 25 + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
 	}
 }
 
@@ -211,7 +211,7 @@ static void CG_DrawPlayerAmmoIcon( rectDef_t *rect, qboolean draw2D ) {
 		qhandle_t	icon;
 		icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
 		if ( icon ) {
-			CG_DrawPic( rect->x, rect->y, rect->w, rect->h, icon );
+                       CG_DrawPic( rect->x - 25, rect->y, rect->w, rect->h, icon );
 		}
 	} else if (cg_draw3dIcons.integer) {
 		if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
@@ -220,7 +220,7 @@ static void CG_DrawPlayerAmmoIcon( rectDef_t *rect, qboolean draw2D ) {
 			origin[1] = 0;
 			origin[2] = 0;
 			angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
-			CG_Draw3DModel( rect->x, rect->y, rect->w, rect->h, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
+                       CG_Draw3DModel( rect->x - 25, rect->y, rect->w, rect->h, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 		}
 	}
 }
@@ -239,12 +239,12 @@ static void CG_DrawPlayerAmmoValue(rectDef_t *rect, float scale, vec4_t color, q
 		if ( value > -1 ) {
 			if (shader) {
 		    trap_R_SetColor( color );
-				CG_DrawPic(rect->x, rect->y, rect->w, rect->h, shader);
+                               CG_DrawPic(rect->x - 25, rect->y, rect->w, rect->h, shader);
 			  trap_R_SetColor( NULL );
 			} else {
 				Com_sprintf (num, sizeof(num), "%i", value);
 				value = CG_Text_Width(num, scale, 0);
-				CG_Text_Paint(rect->x + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
+                               CG_Text_Paint(rect->x - 25 + (rect->w - value) / 2, rect->y + rect->h, scale, color, num, 0, 0, textStyle);
 			}
 		}
 	}
@@ -257,7 +257,7 @@ static void CG_DrawPlayerHead(rectDef_t *rect, qboolean draw2D) {
 	vec3_t		angles;
 	float		size, stretch;
 	float		frac;
-	float		x = rect->x;
+	float           x = rect->x - 25;
 
 	VectorClear( angles );
 
@@ -493,7 +493,7 @@ static void CG_DrawSelectedPlayerPowerup( rectDef_t *rect, qboolean draw2D ) {
 
   ci = cgs.clientinfo + sortedTeamPlayers[CG_GetSelectedPlayer()];
   if (ci) {
-    x = rect->x;
+    x = rect->x - 25;
     y = rect->y;
 
 		for (j = 0; j < PW_NUM_POWERUPS; j++) {
@@ -820,7 +820,7 @@ static void CG_DrawAreaPowerUp(rectDef_t *rect, int align, float special, float 
 	float	f;
 	rectDef_t r2;
 	float *inc;
-	r2.x = rect->x;
+    r2.x = rect->x - 25;
 	r2.y = rect->y;
 	r2.w = rect->w;
 	r2.h = rect->h;

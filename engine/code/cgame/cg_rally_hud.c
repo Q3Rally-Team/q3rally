@@ -194,7 +194,7 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
        }
 
        if ( !icon ) {
-               icon = trap_R_RegisterShaderNoMip( "icons/fuelcan" );
+               icon = trap_R_RegisterShaderNoMip( "icons/fuelcan2" );
        }
 
        fuel = cg.snap->ps.stats[STAT_FUEL];
@@ -208,6 +208,7 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
 
        frac = fuel / 100.0f;
        warnFrac = cg_fuelWarningLevel.value / 100.0f;
+       size = h * 2.0f;
 
        CG_DrawRect( x, y, w, h, 1, colorWhite );
        CG_FillRect( x + 1, y + 1, w - 2, h - 2, backColor );
@@ -224,12 +225,12 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
 
                // blink the low fuel icon
                if ( ( cg.time >> 8 ) & 1 ) {
-                       size = h * 2.0f;
                        CG_DrawPic( x - size - 4, y + ( h - size ) * 0.5f, size, size, icon );
                }
        } else {
                warned = qfalse;
                CG_FillRect( x + 1, y + 1, (w - 2) * frac, h - 2, fuelColor );
+               CG_DrawPic( x - size - 4, y + ( h - size ) * 0.5f, size, size, icon );
        }
 }
 
@@ -767,56 +768,82 @@ static float CG_DrawSpeed( float y ) {
         // use actual speed
         vel_speed = (int)fabs( Q3VelocityToRL( DotProduct(ps->velocity, forward) ) );
 
-       if ( cg_speedometerMode.integer ) {
-               char    speedStr[32];
-               char    rpmStr[32];
-               char    gearStr[16];
-               char    gearLabel[4];
-               int             maxLen, len;
-               float bgColor[4] = {0.0f, 0.0f, 0.0f, 0.25f};
+	if ( cg_speedometerMode.integer ) {
+		char		speedStr[32];
+		char		gearStr[16];
+		char		gearLabel[4];
+		int		maxLen, len;
+		float	bgColor[4] = {0.0f, 0.0f, 0.0f, 0.25f};
+		int		rpm;
+		int		segments;
+		float	segmentWidth;
+                 const float segmentHeight = 8.0f;
+                 const float segmentGap = 4.0f;
+                 const float gaugeHeight = 12.0f;
+                 float   iconOffset = gaugeHeight * 2 + 4;
+                 float   blockWidth, blockHeight, barWidth;
+                 int             i;
 
-               Com_sprintf( speedStr, sizeof( speedStr ), "%i %s", vel_speed, cg_metricUnits.integer ? "KPH" : "MPH" );
-               Com_sprintf( rpmStr,   sizeof( rpmStr ),   "%d RPM", cg.predictedPlayerState.stats[STAT_RPM] );
+		Com_sprintf( speedStr, sizeof( speedStr ), "%i %s", vel_speed, cg_metricUnits.integer ? "KPH" : "MPH" );
 
-               if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 ) {
-                       Q_strncpyz( gearLabel, "R", sizeof( gearLabel ) );
-               } else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 ) {
-                       Q_strncpyz( gearLabel, "N", sizeof( gearLabel ) );
-               } else {
-                       Com_sprintf( gearLabel, sizeof( gearLabel ), "%i", cg.predictedPlayerState.stats[STAT_GEAR] );
-               }
-               Com_sprintf( gearStr, sizeof( gearStr ), "GEAR %s", gearLabel );
+		if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 ) {
+			Q_strncpyz( gearLabel, "R", sizeof( gearLabel ) );
+		} else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 ) {
+			Q_strncpyz( gearLabel, "N", sizeof( gearLabel ) );
+		} else {
+			Com_sprintf( gearLabel, sizeof( gearLabel ), "%i", cg.predictedPlayerState.stats[STAT_GEAR] );
+		}
+		Com_sprintf( gearStr, sizeof( gearStr ), "GEAR %s", gearLabel );
 
-               maxLen = CG_DrawStrlen( speedStr );
-               len = CG_DrawStrlen( rpmStr );
-               if ( len > maxLen ) {
-                       maxLen = len;
-               }
-               len = CG_DrawStrlen( gearStr );
-               if ( len > maxLen ) {
-                       maxLen = len;
-               }
+		maxLen = CG_DrawStrlen( speedStr );
+		len = CG_DrawStrlen( gearStr );
+		if ( len > maxLen ) {
+			maxLen = len;
+		}
 
-               x -= 38 + ( maxLen * SMALLCHAR_WIDTH ) / 2;
+               rpm = cg.predictedPlayerState.stats[STAT_RPM];
+               segments = (CP_RPM_MAX + 999) / 1000;
 
-               y -= 40;
+                // determine total block dimensions
+                barWidth = maxLen * GIANTCHAR_WIDTH -15;
+                blockWidth = iconOffset + barWidth;
+                blockHeight = segmentHeight + 2 * GIANTCHAR_HEIGHT + gaugeHeight;
+
+               // anchor to bottom-right reference
+
+               x = 640 - blockWidth - 8;
+
+               y -= blockHeight;
+
                {
                        float rectX = x - 4, rectY = y - 4;
-                       float rectW = maxLen * SMALLCHAR_WIDTH + 8;
-                       float rectH = 3 * SMALLCHAR_HEIGHT + 8;
+                       float rectW = blockWidth + 8;
+                       float rectH = blockHeight + 8;
                        CG_FillRect( rectX, rectY, rectW, rectH, bgColor );
                }
-               CG_DrawSmallDigitalStringColor( x, y, speedStr, colorWhite );
-               y += SMALLCHAR_HEIGHT;
-               CG_DrawSmallDigitalStringColor( x, y, rpmStr, colorWhite );
-               y += SMALLCHAR_HEIGHT;
-               CG_DrawSmallDigitalStringColor( x, y, gearStr, colorWhite );
 
-               y = yorg;
+		segmentWidth = (maxLen * GIANTCHAR_WIDTH - (segments - 1) * segmentGap) / segments;
+		for ( i = 0; i < segments; i++ ) {
+			float segX = x + i * (segmentWidth + segmentGap);
+			if ( rpm >= (i + 1) * 1000 ) {
+				CG_FillRect( segX, y, segmentWidth, segmentHeight, colorWhite );
+			} else {
+				CG_DrawRect( segX, y, segmentWidth, segmentHeight, 1, colorWhite );
+			}
+		}
+
+		y += segmentHeight;
+		CG_DrawGiantDigitalStringColor( x, y, speedStr, colorWhite );
+		y += GIANTCHAR_HEIGHT;
+		CG_DrawGiantDigitalStringColor( x, y, gearStr, colorWhite );
+
+                y += GIANTCHAR_HEIGHT;
+                CG_DrawFuelGauge( x + iconOffset, y, barWidth, gaugeHeight );
+                y = yorg;
                y -= 44;
-               y -= 3 * SMALLCHAR_HEIGHT;
+               y -= blockHeight;
                return y;
-       }
+	}
 /*
 #ifdef Q3_VM
 	if (ps->stats[STAT_GEAR] == -1)
