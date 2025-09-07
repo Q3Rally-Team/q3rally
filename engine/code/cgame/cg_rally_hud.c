@@ -227,6 +227,19 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
                if ( ( cg.time >> 8 ) & 1 ) {
                        CG_DrawPic( x - size - 4, y + ( h - size ) * 0.5f, size, size, icon );
                }
+
+               // draw centered critical fuel warning text
+               {
+                       int textWidth;
+                       float textX;
+
+                       textWidth = BIGCHAR_WIDTH * CG_DrawStrlen( "Fuel Critical - Refuel Now!" );
+                       textX = ( SCREEN_WIDTH - textWidth ) / 2;
+
+                       CG_SetScreenPlacement( PLACE_CENTER, PLACE_CENTER );
+                       CG_DrawStringExt( textX, SCREEN_HEIGHT * 0.30f, "Fuel Critical - Refuel Now!", warnColor, qfalse, qtrue, BIGCHAR_WIDTH, (int)(BIGCHAR_WIDTH * 1.5f), 0 );
+                       CG_PopScreenPlacement();
+               }
        } else {
                warned = qfalse;
                CG_FillRect( x + 1, y + 1, (w - 2) * frac, h - 2, fuelColor );

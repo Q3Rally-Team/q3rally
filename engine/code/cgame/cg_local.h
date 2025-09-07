@@ -1000,6 +1000,9 @@ typedef struct {
 	qhandle_t	SMDirtShader;
 	qhandle_t	SMGrassShader;
 	qhandle_t	SMFleshShader;
+	qhandle_t	SMSandShader;
+	qhandle_t	SMSnowShader;
+	qhandle_t	SMIceShader;
 	qhandle_t	checkpointArrow;
 
 
@@ -1025,6 +1028,7 @@ typedef struct {
 	qhandle_t	teleportEffectShader;
     qhandle_t	dustPuffShader;
     qhandle_t   snowPuffShader;
+    qhandle_t   sandPuffShader;
 
 
 	// scoreboard headers

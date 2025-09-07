@@ -28,7 +28,6 @@ void CG_DrawCheckpointLinks(void)
 {
 	int			i, j;
 	centity_t	*cents[100];
-    centity_t	*cent, *cent2 = NULL, *cent3 = NULL;
 	qboolean	checkpointFound;
 	int			numCheckpoints = 0;
 	vec3_t		handle;

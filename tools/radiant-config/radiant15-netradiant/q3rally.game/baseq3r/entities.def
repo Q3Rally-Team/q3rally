@@ -3,7 +3,7 @@
 // Upgraded by Eutectic: eutectic@ritualistic.com
 // (visible models added by raYGunn - paths provided by Suicide 20)
 // (terrain information added to func_group entity by Paul Jaquays)
-// Q3Map2 entitys/keys added by ydnar
+// Q3Map2 entities/keys added by ydnar
 // Adapted for EntityPlus
 
 //=============================================================================
@@ -14,7 +14,7 @@
 
 /*QUAKED _decal (0 1.0 0) ?
 -------- KEYS --------
-"target" : the name of the entity targetted at for projection
+"target" : the name of the entity targeted at for projection
 -------- SPAWNFLAGS --------
 (none)
 -------- NOTES --------
@@ -29,7 +29,7 @@ Compiler-only entity that specifies a decal to be projected. Should contain 1 or
 -------- SPAWNFLAGS --------
 (none)
 -------- NOTES --------
-Compiler-only entity that specifies a the origin of a skybox (a wholly contained, seperate area of the map), similar to some games' portal skies. When compiled with Q3Map2, the skybox surfaces will be visible from any place where sky is normally visible. It will cast shadows on the normal parts of the map, and can be used with cloud layers and other effects.
+Compiler-only entity that specifies a the origin of a skybox (a wholly contained, separate area of the map), similar to some games' portal skies. When compiled with Q3Map2, the skybox surfaces will be visible from any place where sky is normally visible. It will cast shadows on the normal parts of the map, and can be used with cloud layers and other effects.
 */
 
 
@@ -154,7 +154,7 @@ target : picking up the item will trigger the entity this points to.
 target2 : picking up the item will trigger the entity this points to.
 targetname : a target_give entity can point to this for respawn freebies.
 targetname2 : a target_give entity can point to this for respawn freebies.
-notfree : when set to 1, when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 notsingle : when set to 1, entity will not spawn in Single Player mode.
 notbot : used to make an item invisible for bot attraction.
@@ -2091,6 +2091,98 @@ count : number of times this spawnpoint can be used to spawn a player. Omit or s
 
 //=============================================================================
 
+/*QUAKED rallyball_redplayer (1 .2 0) (-52 -26 -16) (52 26 16)
+Initial Red team spawning position for Rallyball games. This is where players spawn when they join the Red team.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_redspawn (1 .2 0) (-52 -26 -16) (52 26 16)
+Red team respawning position for Rallyball games. This is where Red team players respawn after they get fragged.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_blueplayer (0 .2 1) (-52 -26 -16) (52 26 16)
+Initial Blue team spawning position for Rallyball games. This is where players spawn when they join the Blue team.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_bluespawn (0 .2 1) (-52 -26 -16) (52 26 16)
+Blue team respawning position for Rallyball games. This is where Blue team players respawn after they get fragged.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_greenplayer (0 1 0) (-52 -26 -16) (52 26 16)
+Initial Green team spawning position for Rallyball games. This is where players spawn when they join the Green team.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_greenspawn (0 1 0) (-52 -26 -16) (52 26 16)
+Green team respawning position for Rallyball games. This is where Green team players respawn after they get fragged.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_yellowplayer (1 1 0) (-52 -26 -16) (52 26 16)
+Initial Yellow team spawning position for Rallyball games. This is where players spawn when they join the Yellow team.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+
+/*QUAKED rallyball_yellowspawn (1 1 0) (-52 -26 -16) (52 26 16)
+Yellow team respawning position for Rallyball games. This is where Yellow team players respawn after they get fragged.
+-------- KEYS --------
+target : this can point at a target_give entity for respawn freebies.
+target2 : this can point at a target_give entity for respawn freebies.
+count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
+
+//=============================================================================
+/*QUAKED rallyball_spawn (0 0.5 0.5) (-8 -8 -8) (8 8 8)
+Defines the spawn location for the rallyball.
+*/
+
+//=============================================================================
+
+/*QUAKED rallyball_ball_spawn (0 0.5 0.5) (-8 -8 -8) (8 8 8)
+Defines where the rallyball initially appears. Only one entity is needed.
+The optional "model" key sets a different model.
+*/
+
+//=============================================================================
+
+/*QUAKED rallyball_goal (0 0.5 0.5) (-16 -16 -16) (16 16 16)
+A static model marking a rallyball goal. Use in combination with a
+trigger_rallyball_goal brush. The optional "model" key specifies a
+different model.
+*/
+
+//=============================================================================
+
 TRIGGER_* ENTITIES
 
 //=============================================================================
@@ -2220,6 +2312,28 @@ notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 notsingle : when set to 1, entity will not spawn in Single Player mode.
 -------- NOTES --------
 To make a jump pad or launch ramp, place the target_position/info_notnull entity at the highest point of the jump and target it with this entity.*/
+
+//=============================================================================
+
+/*QUAKED trigger_fuel (.5 .5 .5) ?
+Brush trigger that continuously refuels vehicles that touch it.
+-------- KEYS --------
+rate : fuel units added per second (default 10)
+max : maximum fuel level to fill to (default vehicle maximum)
+-------- NOTES --------
+Place this around pit stops or areas where cars should be refueled.
+*/
+
+//=============================================================================
+
+/*QUAKED trigger_rallyball_goal (.5 .5 .5) ? RED_GOAL BLUE_GOAL GREEN_GOAL YELLOW_GOAL
+A trigger volume that scores for the specified team when the rallyball touches it.
+-------- SPAWNFLAGS --------
+RED_GOAL : scores for the red team
+BLUE_GOAL : scores for the blue team
+GREEN_GOAL : scores for the green team
+YELLOW_GOAL : scores for the yellow team
+*/
 
 //=============================================================================
 
@@ -2507,7 +2621,25 @@ Q3Rally Entities
 
 */
 
+/*QUAKED rally_start (0 .9 .1) ?
+
+Single lap start line. Sets the race to one lap and begins timing when crossed.
+"origin"        position of the player when they respawn
+"angle"         angle of player when they respawn after death
+
+*/
+
+/*QUAKED rally_finish (0 .9 .1) ?
+
+Race finish line for single lap tracks. Place after the last checkpoint.
+"origin"        position of the player when they respawn
+"angle"         angle of player when they respawn after death
+
+*/
+
 /*QUAKED rally_checkpoint (0 .9 .1) ?
+
+Used between rally_start and rally_finish to mark progress.
 
 "number"	number of the checkpoint, default is 1
 "origin"	position of the player when they respawn
@@ -2586,6 +2718,11 @@ disable_splash turns off splashes, improving framerates since there is not as mu
 */
 
 /*QUAKED rally_item_quad (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+
+/*QUAKED item_fuelcan (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+Refills vehicle fuel.
+model="models/items/fuelcan.md3"
 */
 
 

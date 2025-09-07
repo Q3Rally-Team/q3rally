@@ -242,18 +242,18 @@ models/mapobjects/jets/jet_as
 }
 models/weapons2/flamethrower/trail2
 {
-	{
-		map models/weapons2/flamethrower/trail2.tga
-		tcMod scroll 3.1 1
-                rgbgen wave triangle 1 2 0 7
-		blendfunc GL_ONE GL_ONE
-	}
         {
-		map models/weapons2/flamethrower/trail2.tga
-		tcMod scroll -1.7 1
-                rgbgen wave triangle 1 1.1 0 5.1
-		blendfunc GL_ONE GL_ONE
-	}
+                map models/weapons2/flamethrower/trail2.tga
+                tcMod scroll 3.1 1
+                rgbGen const ( 1 0.75 0 )
+                blendfunc GL_ONE GL_ONE
+        }
+        {
+                map models/weapons2/flamethrower/trail2.tga
+                tcMod scroll -1.7 1
+                rgbGen const ( 1 0.75 0 )
+                blendfunc GL_ONE GL_ONE
+        }
 }
 models/mapobjects/console/centercon
 
@@ -1303,13 +1303,15 @@ models/rearfire/flametrail03
         {
 		clampmap models/mapobjects/barrel/barrel2fx.tga
 		blendFunc GL_ONE GL_ONE
-               // rgbgen wave triangle 1 1.4 0 9.5
+                rgbGen const ( 1 0.75 0 )
+                // rgbgen wave triangle 1 1.4 0 9.5
                 tcMod rotate 200
 	}	
         {
 		clampmap models/mapobjects/barrel/barrel2fx.tga
 		blendFunc GL_ONE GL_ONE
-               // rgbgen wave triangle 1 1 0 8.7
+                rgbGen const ( 1 0.75 0 )
+                // rgbgen wave triangle 1 1 0 8.7
                 tcMod rotate -100
 	}	
 	
@@ -1338,7 +1340,7 @@ models/rearfire/flametrail02
 	{
 		map textures/sfx/flameball.tga
 		blendFunc GL_ONE GL_ONE
-		rgbGen wave sin .6 .2 0 .6	
+                rgbGen const ( 1 0.75 0 )
 	}
 
 }
@@ -1366,7 +1368,7 @@ models/rearfire/flametrail01
 	{
 		map textures/sfx/flameball.tga
 		blendFunc GL_ONE GL_ONE
-		rgbGen wave sin .6 .2 0 .6	
+                rgbGen const ( 1 0.75 0 )
 	}
 
 }

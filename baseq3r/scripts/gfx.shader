@@ -389,6 +389,18 @@ snowPuff
 	}
 }
 
+sandPuff
+{
+	cull none
+	entityMergable		// allow all the sprites to be merged together
+	{
+		map gfx/misc/sandpuff.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen		vertex
+		alphaGen	vertex
+	}
+}
+
 shotgunSmokePuff
 {
 	cull none
@@ -1766,11 +1778,38 @@ gfx/skidmarks/dirt
 gfx/skidmarks/flesh
 {
 	polygonOffset
-	{
-		map gfx/skidmarks/flesh.tga
-		blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
-		rgbGen exactVertex
-	}
+        {
+                map gfx/skidmarks/flesh.tga
+                blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
+                rgbGen exactVertex
+        }
+}
+gfx/skidmarks/sand
+{
+        polygonOffset
+        {
+                map gfx/skidmarks/sand.tga
+                blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
+                rgbGen exactVertex
+        }
+}
+gfx/skidmarks/snow
+{
+        polygonOffset
+        {
+                map gfx/skidmarks/snow.tga
+                blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
+                rgbGen exactVertex
+        }
+}
+gfx/skidmarks/ice
+{
+        polygonOffset
+        {
+                map gfx/skidmarks/ice.tga
+                blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
+                rgbGen exactVertex
+        }
 }
 gfx/damage/spark
 {

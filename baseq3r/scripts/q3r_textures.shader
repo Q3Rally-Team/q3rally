@@ -7021,8 +7021,9 @@ textures/jim/bigscreen
 
 textures/q3r_dirt_grass/sand
 {
-	surfaceparm SURF_WET
-	surfaceparm dust
+        surfaceparm SURF_WET
+        surfaceparm SURF_SAND
+        surfaceparm dust
 
 	{
         	map $lightmap
@@ -7295,11 +7296,63 @@ textures/dip_valley/wfsplash
 		tcMod scroll 7.8 0
 		tcMod scale 0.9 1
 	}
-	{
-		map textures/dip_valley/splash.tga
-		blendfunc gl_zero gl_dst_alpha
-		rgbGen identity
-		tcMod scroll 7.8 0
-		tcMod scale 0.2 1
-	}
+        {
+                map textures/dip_valley/splash.tga
+                blendfunc gl_zero gl_dst_alpha
+                rgbGen identity
+                tcMod scroll 7.8 0
+                tcMod scale 0.2 1
+        }
+}
+
+// ------------------------------------------------------------
+// 308.q3r_ground (ice01)
+// ------------------------------------------------------------
+
+textures/q3r_ground/ice01
+{
+        qer_editorimage textures/q3r_ground/ice01.tga
+        surfaceparm SURF_ICE
+        cull disable
+        {
+                map $lightmap
+                rgbGen identity
+        }
+        {
+                map textures/q3r_ground/ice01.tga
+                blendFunc GL_DST_COLOR GL_ZERO
+                rgbGen identity
+        }
+        {
+                map textures/reflect/reflect.jpg
+                blendFunc GL_ONE GL_ONE
+                tcGen environment
+                rgbGen identity
+        }
+}
+
+// ------------------------------------------------------------
+// 309.q3r_ground (ice02)
+// ------------------------------------------------------------
+
+textures/q3r_ground/ice02
+{
+        qer_editorimage textures/q3r_ground/ice02.tga
+        surfaceparm SURF_ICE
+        cull disable
+        {
+                map $lightmap
+                rgbGen identity
+        }
+        {
+                map textures/q3r_ground/ice02.tga
+                blendFunc GL_DST_COLOR GL_ZERO
+                rgbGen identity
+        }
+        {
+                map textures/reflect/reflect.jpg
+                blendFunc GL_ONE GL_ONE
+                tcGen environment
+                rgbGen identity
+        }
 }

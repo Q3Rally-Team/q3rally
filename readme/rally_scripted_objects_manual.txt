@@ -1,7 +1,7 @@
 1.Scripted Objects in deiner Map einsetzen
 
 - Scriptdatei anlegen
-  Erstelle eine Datei *.script, in der du das Objekt beschreibst. Der Block rally_scripted_object definiert Eigenschaften wie Modell, zerstˆrtes Modell,
+  Erstelle eine Datei *.script, in der du das Objekt beschreibst. Der Block rally_scripted_object definiert Eigenschaften wie Modell, zerst√∂rtes Modell,
   Masse oder Sounds.
   
   Beispiel:
@@ -29,23 +29,23 @@ rally_scripted_object {
 
 2.Entity im Editor platzieren
 
-- In Radiant (oder einem kompatiblen Editor) w‰hlst du die Entity rally_scripted_object
+- In Radiant (oder einem kompatiblen Editor) w√§hlst du die Entity rally_scripted_object
   Setze die Key/Value-Paare:
 
   script ? Pfad zur oben erstellten Scriptdatei (ohne .script)
-  Optional: angle/angles f¸r Ausrichtung, targetname f¸r Trigger usw.
+  Optional: angle/angles f√ºr Ausrichtung, targetname f√ºr Trigger usw.
   Der Spawn-Code mappt das Feld script direkt auf das Entity ({ "script", FOFS(script), F_STRING }),
-  und die Entity-Klasse wird ¸ber rally_scripted_object gebunden
+  und die Entity-Klasse wird √ºber rally_scripted_object gebunden
         
 3.Im Spiel
 
-- Beim Laden der Map liest das Spiel den Pfad aus script und l‰dt die zugehˆrige Datei.
-  Ohne g¸ltige Scriptangabe wird das Objekt verworfen (No Script file specified).
+- Beim Laden der Map liest das Spiel den Pfad aus script und l√§dt die zugeh√∂rige Datei.
+  Ohne g√ºltige Scriptangabe wird das Objekt verworfen (No Script file specified).
   Steht moveable 1, unterliegt das Objekt der Physik.
-  Wird health auf >0 gesetzt, kann es zerstˆrt werden; deadmodel und gibs definieren das Aussehen und die Bruchst¸cke.
+  Wird health auf >0 gesetzt, kann es zerst√∂rt werden; deadmodel und gibs definieren das Aussehen und die Bruchst√ºcke.
   Die definierten Sounds (hitsound, presound, postsound, destroysound) werden automatisch abgespielt.
   
-  Mit diesen Schritten lassen sich in Q3Rally interaktive, zerstˆrbare oder bewegliche Objekte in die Map integrieren.
+  Mit diesen Schritten lassen sich in Q3Rally interaktive, zerst√∂rbare oder bewegliche Objekte in die Map integrieren.
   
 1. Use scripted objects in your map
 
@@ -95,5 +95,37 @@ rally_scripted_object {
   The defined sounds (hitsound, presound, postsound, destroysound) are played automatically.
 
   With these steps, interactive, destructible, or moving objects can be integrated into the map in Q3Rally.
+
+4. Rallyball-Entities
+
+- rallyball_ball_spawn: Startposition der Rallyball. Beispiel:
+
+{
+ "classname" "rallyball_ball_spawn"
+ "origin" "0 0 64"
+}
+
+- rallyball_goal: Sichtbares Torobjekt. Beispiel:
+
+{
+ "classname" "rallyball_goal"
+ "origin" "128 0 64"
+}
+
+4. Rallyball entities
+
+- rallyball_ball_spawn: Spawn location for the rallyball. Example:
+
+{
+ "classname" "rallyball_ball_spawn"
+ "origin" "0 0 64"
+}
+
+- rallyball_goal: Visible goal object. Example:
+
+{
+ "classname" "rallyball_goal"
+ "origin" "128 0 64"
+}
   
   

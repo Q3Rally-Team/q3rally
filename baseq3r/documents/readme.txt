@@ -26,6 +26,12 @@ Mac OS X:			/Applications/q3rally/
 
 This is a beta version of Q3Rally. This represents not the complete release of Q3Rally. It is for you to see what we have and what you will expect when the whole game comes out.
 
+** Level Design **
+
+New ice textures are available in `textures/q3r_ground/`.
+Use `ice01` and `ice02` to mark icy surfaces so they receive
+appropriate physics and visual effects.
+
 ** Source **
 
 The Source for content and code is available at
