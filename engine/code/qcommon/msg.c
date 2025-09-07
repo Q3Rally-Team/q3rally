@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "q_shared.h"
 #include "qcommon.h"
+#include "../game/bg_public.h"
 
 static huffman_t		msgHuff;
 
@@ -1221,9 +1222,15 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 	if ( statsbits ) {
 		MSG_WriteBits( msg, 1, 1 );	// changed
 		MSG_WriteBits( msg, statsbits, MAX_STATS );
-		for (i=0 ; i<MAX_STATS ; i++)
-			if (statsbits & (1<<i) )
-				MSG_WriteShort (msg, to->stats[i]);
+		for (i=0 ; i<MAX_STATS ; i++) {
+			if (statsbits & (1<<i) ) {
+				if (i == STAT_WEAPONS) {
+					MSG_WriteLong (msg, to->stats[i]);
+				} else {
+					MSG_WriteShort (msg, to->stats[i]);
+				}
+			}
+		}
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1358,7 +1365,11 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_STATS);
 			for (i=0 ; i<MAX_STATS ; i++) {
 				if (bits & (1<<i) ) {
-					to->stats[i] = MSG_ReadShort(msg);
+					if (i == STAT_WEAPONS) {
+						to->stats[i] = MSG_ReadLong(msg);
+					} else {
+						to->stats[i] = MSG_ReadShort(msg);
+					}
 				}
 			}
 		}

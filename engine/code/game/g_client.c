@@ -1525,7 +1525,7 @@ void ClientSpawn(gentity_t *ent) {
 
 // dont give machinegun on spawn in races
 	if (!isRallyRace() && g_gametype.integer != GT_DERBY ){
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
+client->ps.stats[STAT_WEAPONS] = ( 1u << WP_MACHINEGUN );
 
 		if ( g_gametype.integer == GT_TEAM ) {
 			client->ps.ammo[WP_MACHINEGUN] = 50;
@@ -1535,16 +1535,16 @@ void ClientSpawn(gentity_t *ent) {
 	}
 
         if (!isRallyNonDMRace() && g_gametype.integer != GT_DERBY){
-                client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+client->ps.stats[STAT_WEAPONS] |= ( 1u << WP_GAUNTLET );
         }
 	else {
-		client->ps.stats[STAT_WEAPONS] &= ~( 1 << WP_GAUNTLET );
+client->ps.stats[STAT_WEAPONS] &= ~( 1u << WP_GAUNTLET );
 	}
 
         client->ps.ammo[WP_GAUNTLET] = -1;
 
         if ( g_gametype.integer == GT_DERBY ) {
-                client->ps.stats[STAT_WEAPONS] = ( 1 << WP_DERBY_RAM );
+client->ps.stats[STAT_WEAPONS] = ( 1u << WP_DERBY_RAM );
                 client->ps.weapon = WP_DERBY_RAM;
                 client->ps.ammo[WP_DERBY_RAM] = -1;
         }
@@ -1703,8 +1703,8 @@ void ClientSpawn(gentity_t *ent) {
 			// select the highest weapon number available, after any spawn given items have fired
 			client->ps.weapon = WP_NONE;
 
-			for (i = WP_NUM_WEAPONS - 1 ; i > 0 ; i--) {
-				if (client->ps.stats[STAT_WEAPONS] & (1 << i)) {
+for (i = WP_NUM_WEAPONS - 1 ; i > 0 ; i--) {
+if (client->ps.stats[STAT_WEAPONS] & (1u << i)) {
 					client->ps.weapon = i;
 					break;
 				}

@@ -319,7 +319,7 @@ typedef enum {
 #ifdef MISSIONPACK
         STAT_PERSISTANT_POWERUP,
 #endif
-        STAT_WEAPONS,                                   // 16 bit fields
+        STAT_WEAPONS,                                   // 32 bit field
         STAT_ARMOR,                            
         STAT_DEAD_YAW,                                  // look this direction when dead (FIXME: get rid of?)
         STAT_CLIENTS_READY,                             // bit mask of clients wishing to exit the intermission (FIXME: configstring?)

@@ -863,8 +863,8 @@ static void CG_DrawRallyStatusBar( void ) {
 
        // rearammo background
        weapon = 0;
-	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-		if (ps->stats[STAT_WEAPONS] & ( 1 << i )){
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (ps->stats[STAT_WEAPONS] & ( 1u << i )){
 			if (ps->ammo[ i ]){
 				weapon = i;
 				break;

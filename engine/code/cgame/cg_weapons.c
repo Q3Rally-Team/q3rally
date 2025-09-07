@@ -1443,7 +1443,7 @@ CG_DrawWeaponSelect
 */
 void CG_DrawWeaponSelect( void ) {
 	int		i;
-	int		bits;
+	uint32_t	bits;
 	int		count;
 	int		x, y, w;
 	char	*name;
@@ -1471,7 +1471,7 @@ void CG_DrawWeaponSelect( void ) {
 	cg.itemPickupTime = 0;
 
 	// count the number of weapons owned
-	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
+bits = cg.snap->ps.stats[ STAT_WEAPONS ];
 	count = 0;
 // Q3Rally Code Start
 //	for ( i = 1 ; i < MAX_WEAPONS ; i++ ) {
@@ -1480,7 +1480,7 @@ void CG_DrawWeaponSelect( void ) {
 		if ( i == WP_DERBY_RAM ) {
                        continue;
                }
-               if ( bits & ( 1 << i ) ) {
+if ( bits & ( 1u << i ) ) {
                        count++;
                }
        }
@@ -1504,7 +1504,7 @@ void CG_DrawWeaponSelect( void ) {
 		if ( i == WP_DERBY_RAM ) {
                        continue;
                }
-               if ( !( bits & ( 1 << i ) ) ) {
+if ( !( bits & ( 1u << i ) ) ) {
                        continue;
                }
 
@@ -1556,7 +1556,7 @@ static qboolean CG_WeaponSelectable( int i ) {
 	if ( !cg.snap->ps.ammo[i] ) {
                 return qfalse;
         }
-        if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1 << i ) ) ) {
+if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1u << i ) ) ) {
 		return qfalse;
 	}
 
@@ -1661,7 +1661,7 @@ void CG_Weapon_f( void ) {
 
 	cg.weaponSelectTime = cg.time;
 
-	if ( ! ( cg.snap->ps.stats[STAT_WEAPONS] & ( 1 << num ) ) ) {
+if ( ! ( cg.snap->ps.stats[STAT_WEAPONS] & ( 1u << num ) ) ) {
 		return;		// don't have the weapon
 	}
 

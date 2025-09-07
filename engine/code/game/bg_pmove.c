@@ -1582,7 +1582,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 		return;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 		return;
 	}
 	
@@ -1610,7 +1610,7 @@ static void PM_FinishWeaponChange( void ) {
 		weapon = WP_NONE;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 		weapon = WP_NONE;
 	}
 
@@ -2188,14 +2188,14 @@ void PM_RearWeapon( void ) {
 		return;
 	}
 
-	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-		if (pm->ps->stats[STAT_WEAPONS] & ( 1 << i ) && !pm->ps->ammo[ i ]){
-			pm->ps->stats[STAT_WEAPONS] &= ~( 1 << i );
-		}
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (pm->ps->stats[STAT_WEAPONS] & ( 1u << i ) && !pm->ps->ammo[ i ]){
+pm->ps->stats[STAT_WEAPONS] &= ~( 1u << i );
+}
 
-		if (pm->ps->stats[STAT_WEAPONS] & ( 1 << i ) && pm->ps->ammo[ i ])
-			break;
-	}
+if (pm->ps->stats[STAT_WEAPONS] & ( 1u << i ) && pm->ps->ammo[ i ])
+break;
+}
 
 	if (i < WP_NUM_WEAPONS){
 		weapon = i;

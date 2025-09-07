@@ -261,9 +261,9 @@ void G_DropRearWeapon( gentity_t *ent ) {
 	gitem_t		*item;
 	int			i;
 
-	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-		if (ent->client->ps.stats[STAT_WEAPONS] & ( 1 << i )){
-			ent->client->ps.stats[STAT_WEAPONS] &= ~( 1 << i );
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (ent->client->ps.stats[STAT_WEAPONS] & ( 1u << i )){
+ent->client->ps.stats[STAT_WEAPONS] &= ~( 1u << i );
 
 			if (ent->client->ps.ammo[ i ]){
 				item = BG_FindItemForWeapon( i );

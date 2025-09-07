@@ -287,7 +287,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	}
 
 	// add the weapon
-	other->client->ps.stats[STAT_WEAPONS] |= ( 1 << ent->item->giTag );
+other->client->ps.stats[STAT_WEAPONS] |= ( 1u << ent->item->giTag );
 
 	Add_Ammo( other, ent->item->giTag, quantity );
 
@@ -484,18 +484,18 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	// autoDrop old weapon
 
 	if ( ent->item->giType == IT_RFWEAPON && other->client->pers.autoDrop ){
-		for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-			if (ent->item->giTag == i) continue;
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (ent->item->giTag == i) continue;
 
-			if (other->client->ps.stats[STAT_WEAPONS] & ( 1 << i ) && !other->client->ps.ammo[ i ]){
-				other->client->ps.stats[STAT_WEAPONS] &= ~( 1 << i );
-			}
+if (other->client->ps.stats[STAT_WEAPONS] & ( 1u << i ) && !other->client->ps.ammo[ i ]){
+other->client->ps.stats[STAT_WEAPONS] &= ~( 1u << i );
+}
 
-			if (other->client->ps.stats[STAT_WEAPONS] & ( 1 << i )){
-				G_DropRearWeapon( other );
-				break;
-			}
-		}
+if (other->client->ps.stats[STAT_WEAPONS] & ( 1u << i )){
+G_DropRearWeapon( other );
+break;
+}
+}
 	}
 
 // END

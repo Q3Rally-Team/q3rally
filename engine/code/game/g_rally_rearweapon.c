@@ -232,14 +232,14 @@ Quadfactor-Test 16/03/2020   End
 	// set aiming directions
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 
-	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-		if (ent->client->ps.stats[STAT_WEAPONS] & ( 1 << i ) && !ent->client->ps.ammo[ i ]){
-			ent->client->ps.stats[STAT_WEAPONS] &= ~( 1 << i );
-		}
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (ent->client->ps.stats[STAT_WEAPONS] & ( 1u << i ) && !ent->client->ps.ammo[ i ]){
+ent->client->ps.stats[STAT_WEAPONS] &= ~( 1u << i );
+}
 
-		if (ent->client->ps.stats[STAT_WEAPONS] & ( 1 << i ) && ent->client->ps.ammo[ i ])
-			break;
-	}
+if (ent->client->ps.stats[STAT_WEAPONS] & ( 1u << i ) && ent->client->ps.ammo[ i ])
+break;
+}
 
 	if (i < WP_NUM_WEAPONS){
 		weapon = i;

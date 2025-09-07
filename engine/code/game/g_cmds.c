@@ -319,9 +319,9 @@ void Cmd_Give_f (gentity_t *ent)
 // END
 	{
 // STONELANCE
-		ent->client->ps.stats[STAT_WEAPONS] = (1 << RWP_SMOKE) - 1 - 
-			- ( 1 << WP_NONE );
-//		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - 
+		ent->client->ps.stats[STAT_WEAPONS] = (1u << RWP_SMOKE) - 1 -
+			( 1u << WP_NONE );
+//		ent->client->ps.stats[STAT_WEAPONS] = (1u << WP_NUM_WEAPONS) - 1 - 
 //			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
 // END
 		if (!give_all)

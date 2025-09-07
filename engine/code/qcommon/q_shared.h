@@ -166,7 +166,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../game/bg_lib.h"
 
 typedef int intptr_t;
-
+typedef unsigned int uint32_t;
 #else
 
 #include <assert.h>
@@ -1232,7 +1232,7 @@ typedef struct {
 #define	MAX_STATS				17
 #define	MAX_PERSISTANT			16
 #define	MAX_POWERUPS			16
-#define	MAX_WEAPONS				16		
+#define	MAX_WEAPONS		       	32		
 
 #define	MAX_PS_EVENTS			2
 

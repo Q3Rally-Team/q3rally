@@ -122,28 +122,18 @@ extern	float CP_GEAR_RATIOS[];
 #define	CP_AXLEGEAR			3.07f
 #define	CP_GEARR			-2.80f
 #define	CP_GEARN			0.00f
-/*
-#define	CP_GEAR1			2.82f
-#define	CP_GEAR2			1.78f
-#define	CP_GEAR3			1.27f
-#define	CP_GEAR4			0.92f
-#define	CP_GEAR5			0.60f
 
-#define	CP_GEAR1			3.02f
-#define	CP_GEAR2			2.01f
-#define	CP_GEAR3			1.34f
-#define	CP_GEAR4			0.89f
-#define	CP_GEAR5			0.60f
-*/
-#define	CP_GEAR1			2.75f
-#define	CP_GEAR2			1.67f
-#define	CP_GEAR3			1.19f
-#define	CP_GEAR4			0.82f
-#define	CP_GEAR5			0.49f
+// Six speed transmission gear ratios
+#define	CP_GEAR1			3.33f
+#define	CP_GEAR2			2.10f
+#define	CP_GEAR3			1.43f
+#define	CP_GEAR4			1.14f
+#define	CP_GEAR5			0.89f
+#define	CP_GEAR6			0.69f
 
 
 #define	CP_RPM_MAX	      6250
-#define	CP_RPM_MIN			  1000
+#define	CP_RPM_MIN			  750
 
 // #define	CP_HP_PEAK			191.0f
 // #define	CP_RPM_HP_PEAK		4600.0f

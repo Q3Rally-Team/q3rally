@@ -1064,8 +1064,8 @@ float CG_DrawLowerLeftHUD( float y ) {
 	int		i;
 
 	y += 36;
-	for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-		if (cg.snap->ps.stats[STAT_WEAPONS] & ( 1 << i )){
+for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
+if (cg.snap->ps.stats[STAT_WEAPONS] & ( 1u << i )){
 			if (cg.snap->ps.ammo[ i ]){
 				y -= 36;
 				break;

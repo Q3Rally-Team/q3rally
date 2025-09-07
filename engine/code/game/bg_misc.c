@@ -1448,13 +1448,13 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 
 			// FIXME: need this?
 /*
-			if (ps->stats[STAT_WEAPONS] & ( 1 << i ) && !ps->ammo[ i ]){
-				ps->stats[STAT_WEAPONS] &= ~( 1 << i );
-			}
+if (ps->stats[STAT_WEAPONS] & ( 1u << i ) && !ps->ammo[ i ]){
+ps->stats[STAT_WEAPONS] &= ~( 1u << i );
+}
 */
 
-			if (ps->stats[STAT_WEAPONS] & ( 1 << i ))
-				return qfalse;
+if (ps->stats[STAT_WEAPONS] & ( 1u << i ))
+return qfalse;
 		}
 		return qtrue;
 // END
