@@ -793,9 +793,12 @@ static float CG_DrawSpeed( float y ) {
                  const float segmentHeight = 8.0f;
                  const float segmentGap = 4.0f;
                  const float gaugeHeight = 12.0f;
-                 float   iconOffset = gaugeHeight * 2 + 4;
+                 const float rpmIconSize = gaugeHeight * 2;
+                const float rpmIconOffset = rpmIconSize + 4;
+                float   iconOffset = gaugeHeight * 2 + 4;
                  float   blockWidth, blockHeight, barWidth;
                  int             i;
+                int             speedWidth, gearWidth;
 
 		Com_sprintf( speedStr, sizeof( speedStr ), "%i %s", vel_speed, cg_metricUnits.integer ? "KPH" : "MPH" );
 
@@ -819,7 +822,7 @@ static float CG_DrawSpeed( float y ) {
 
                 // determine total block dimensions
                 barWidth = maxLen * GIANTCHAR_WIDTH -15;
-                blockWidth = iconOffset + barWidth;
+                blockWidth = max( iconOffset + barWidth, rpmIconOffset + maxLen * GIANTCHAR_WIDTH );
                 blockHeight = segmentHeight + 2 * GIANTCHAR_HEIGHT + gaugeHeight;
 
                // anchor to bottom-right reference
@@ -836,22 +839,32 @@ static float CG_DrawSpeed( float y ) {
                }
 
 		segmentWidth = (maxLen * GIANTCHAR_WIDTH - (segments - 1) * segmentGap) / segments;
-		for ( i = 0; i < segments; i++ ) {
-			float segX = x + i * (segmentWidth + segmentGap);
-			if ( rpm >= (i + 1) * 1000 ) {
-				CG_FillRect( segX, y, segmentWidth, segmentHeight, colorWhite );
-			} else {
-				CG_DrawRect( segX, y, segmentWidth, segmentHeight, 1, colorWhite );
+		{
+			static qhandle_t rpmIcon;
+			if ( !rpmIcon ) {
+				rpmIcon = trap_R_RegisterShaderNoMip( "icons/rpm" );
 			}
+			CG_DrawPic( x, y, rpmIconSize, rpmIconSize, rpmIcon );
 		}
+               for ( i = 0; i < segments; i++ ) {
+                       float segX = x + rpmIconOffset + i * (segmentWidth + segmentGap);
+                       if ( rpm >= (i + 1) * 1000 ) {
+                               CG_FillRect( segX, y, segmentWidth, segmentHeight, colorWhite );
+                       } else {
+                               CG_DrawRect( segX, y, segmentWidth, segmentHeight, 1, colorWhite );
+                       }
+               }
 
-		y += segmentHeight;
-		CG_DrawGiantDigitalStringColor( x, y, speedStr, colorWhite );
-		y += GIANTCHAR_HEIGHT;
-		CG_DrawGiantDigitalStringColor( x, y, gearStr, colorWhite );
+               speedWidth = CG_DrawStrlen( speedStr ) * GIANTCHAR_WIDTH;
+               gearWidth  = CG_DrawStrlen( gearStr )  * GIANTCHAR_WIDTH;
 
-                y += GIANTCHAR_HEIGHT;
-                CG_DrawFuelGauge( x + iconOffset, y, barWidth, gaugeHeight );
+               y += segmentHeight;
+               CG_DrawGiantDigitalStringColor( x + blockWidth - speedWidth, y, speedStr, colorWhite );
+               y += GIANTCHAR_HEIGHT;
+               CG_DrawGiantDigitalStringColor( x + blockWidth - gearWidth, y, gearStr, colorWhite );
+
+               y += GIANTCHAR_HEIGHT;
+               CG_DrawFuelGauge( x + iconOffset, y, barWidth, gaugeHeight );
                 y = yorg;
                y -= 44;
                y -= blockHeight;
@@ -871,81 +884,122 @@ static float CG_DrawSpeed( float y ) {
 #endif
 */
 
-	// draw speedometer here
-	x2 = x - 96;
-	y2 = y - 96;
-	CG_DrawPic( x2, y2, 96, 96, cg_metricUnits.integer ? cgs.media.gaugeMetric : cgs.media.gaugeImperial );
 	
+        {
+               const float gaugeSize = 96.0f;
+               const float fuelWidth = 90.0f;
+               const float fuelHeight = 8.0f;
+               const float gaugeSpacing = 4.0f;
+               const float rpmHeight = 8.0f;
+               const float rpmSpacing = 4.0f;
+               float blockWidth = gaugeSize;
+               float blockHeight = gaugeSize + gaugeSpacing + fuelHeight + rpmSpacing + rpmHeight;
+               float left, top;
+               int speedWidth;
+               float speedX, speedY;
+               float centerX, centerY;
+               int i;
 
-	// draw digital speed
-	x -= 48 + (CG_DrawStrlen(va("%i", vel_speed)) * SMALLCHAR_WIDTH) / 2;
-	y -= 35;
-	CG_DrawSmallDigitalStringColor( x, y, va("%i", vel_speed), colorWhite);
+                left = 640 - blockWidth - 8;
+                top = y - blockHeight;
 
-	// draw needle
+                CG_DrawPic( left, top, gaugeSize, gaugeSize,
+                            cg_metricUnits.integer ? cgs.media.gaugeMetric : cgs.media.gaugeImperial );
 
-	w = h = 96;
-	CG_AdjustFrom640( &x2, &y2, &w, &h );
+                speedWidth = CG_DrawStrlen( va("%i", vel_speed) ) * SMALLCHAR_WIDTH;
+                speedX = left + (gaugeSize - speedWidth) * 0.5f;
+                speedY = top + gaugeSize - 35;
+                CG_DrawSmallDigitalStringColor( speedX, speedY, va("%i", vel_speed), colorWhite );
 
-	memset( &refdef, 0, sizeof( refdef ) );
-	memset( &ent, 0, sizeof( ent ) );
+                x2 = left;
+                y2 = top;
+                w = h = gaugeSize;
+                CG_AdjustFrom640( &x2, &y2, &w, &h );
 
-	ent.hModel = trap_R_RegisterModel("gfx/hud/needle.md3");
-	ent.customShader = trap_R_RegisterShader("gfx/hud/needle01");
-	ent.renderfx = RF_NOSHADOW;		// no stencil shadows
+                memset( &refdef, 0, sizeof( refdef ) );
+                memset( &ent, 0, sizeof( ent ) );
 
-	trap_R_ModelBounds(ent.hModel, mins, maxs);
+                ent.hModel = trap_R_RegisterModel("gfx/hud/needle.md3");
+                ent.customShader = trap_R_RegisterShader("gfx/hud/needle01");
+                ent.renderfx = RF_NOSHADOW;
 
-	// origin[2] = -0.5 * ( mins[2] + maxs[2] );
-	origin[2] = 0;
-	origin[1] = 0.5 * ( mins[1] + maxs[1] );
-	origin[0] = ( maxs[2] - mins[2] ) / 0.268;
+                trap_R_ModelBounds( ent.hModel, mins, maxs );
 
-	VectorClear(angles);
-	angles[YAW] -= 90;
-	angles[PITCH] = -150.0f + (300.0f * vel_speed / 200.0f);
-	AnglesToAxis( angles, ent.axis );
-	VectorCopy(origin, ent.origin);
+                origin[2] = 0;
+                origin[1] = 0.5f * ( mins[1] + maxs[1] );
+                origin[0] = ( maxs[2] - mins[2] ) / 0.268f;
 
-	refdef.rdflags = RDF_NOWORLDMODEL;
+                VectorClear( angles );
+                angles[YAW] -= 90;
+                angles[PITCH] = -150.0f + (300.0f * vel_speed / 200.0f);
+                AnglesToAxis( angles, ent.axis );
+                VectorCopy( origin, ent.origin );
 
-	AxisClear( refdef.viewaxis );
+                refdef.rdflags = RDF_NOWORLDMODEL;
+                AxisClear( refdef.viewaxis );
+                refdef.fov_x = 30;
+                refdef.fov_y = 30;
+                refdef.x = x2;
+                refdef.y = y2;
+                refdef.width = w;
+                refdef.height = h;
+                refdef.time = cg.time;
 
-	refdef.fov_x = 30;
-	refdef.fov_y = 30;
+                trap_R_ClearScene();
+                trap_R_AddRefEntityToScene( &ent );
+                trap_R_RenderScene( &refdef );
 
-	refdef.x = x2;
-	refdef.y = y2;
-	refdef.width = w;
-	refdef.height = h;
+                centerX = left + gaugeSize * 0.5f - 12.0f;
+                centerY = top + gaugeSize * 0.5f - 12.0f;
+                CG_DrawPic( centerX, centerY, 24, 24,
+                            trap_R_RegisterShaderNoMip("gfx/hud/center01") );
 
-	refdef.time = cg.time;
+                if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
+                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4, "R", colorWhite );
+                else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 )
+                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4, "N", colorWhite );
+                else
+                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4,
+                                                        va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite );
 
-	trap_R_ClearScene();
-	trap_R_AddRefEntityToScene( &ent );
-	trap_R_RenderScene( &refdef );
+               CG_DrawFuelGauge( left + (blockWidth - fuelWidth) * 0.5f,
+                                 top + gaugeSize + gaugeSpacing,
+                                 fuelWidth, fuelHeight );
 
-	// draw center here
-	x = 630;
-	y = yorg;
+               {
+                       int rpm = cg.predictedPlayerState.stats[STAT_RPM];
+                       int segments = (CP_RPM_MAX + 999) / 1000;
+                       float segGap = 2.0f;
+                       float segWidth = (fuelWidth - (segments - 1) * segGap) / segments;
+                       float segX = left + (blockWidth - fuelWidth) * 0.5f;
+                       float segY = top + gaugeSize + gaugeSpacing + fuelHeight + rpmSpacing;
 
-	x -= 60;
-	y -= 60;
-	CG_DrawPic( x, y, 24, 24, trap_R_RegisterShaderNoMip("gfx/hud/center01"));
+                       float rpmIconSize, rpmIconX, rpmIconY;
 
-	// draw gear over center of gauge
-	if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "R", colorWhite);
-	else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 )
-		CG_DrawSmallDigitalStringColor( x+10, y+4, "N", colorWhite);
-	else
-		CG_DrawSmallDigitalStringColor( x+10, y+4, va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite);
+                       static qhandle_t rpmIcon;
+                       if ( !rpmIcon ) {
+                               rpmIcon = trap_R_RegisterShaderNoMip( "icons/rpm" );
+                       }
 
-	y -= 39;
+                       rpmIconSize = rpmHeight * (4.0f / 3.0f);
+                       rpmIconX = segX - rpmIconSize - 4;
+                       rpmIconY = segY + (rpmHeight - rpmIconSize) * 0.5f;
 
-	y -= SMALLCHAR_HEIGHT;
+                       CG_DrawPic( rpmIconX, rpmIconY, rpmIconSize, rpmIconSize, rpmIcon );
 
-	return y;
+                       for ( i = 0 ; i < segments ; i++ ) {
+                               float xPos = segX + i * (segWidth + segGap);
+                               if ( rpm >= (i + 1) * 1000 ) {
+                                       CG_FillRect( xPos, segY, segWidth, rpmHeight, colorWhite );
+                               } else {
+                                       CG_DrawRect( xPos, segY, segWidth, rpmHeight, 1, colorWhite );
+                               }
+                       }
+               }
+
+               y = yorg - 44 - blockHeight;
+               return y;
+       }
 }
 
 /*
