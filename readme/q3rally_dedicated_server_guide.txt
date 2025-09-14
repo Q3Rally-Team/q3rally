@@ -1,0 +1,44 @@
+Q3Rally Dedicated Server Setup Guide
+
+English
+
+1.  Download and install Q3Rally (latest release).
+
+2.  Create a configuration file (e.g., server.cfg) inside the baseq3r/
+    directory with your desired settings, such as:
+
+    set sv_hostname “My Q3Rally Server” set rconpassword “yourpassword”
+    set g_gametype 0 map rally_track1
+
+3.  Open a terminal/command prompt and navigate to your Q3Rally
+    installation folder.
+
+4.  Start the dedicated server using:
+
+    q3rally.x86_64.exe +set dedicated 1 +exec server.cfg
+
+    (On Linux: ./ioq3rallyded.x86_64 +set dedicated 1 +exec server.cfg)
+
+5.  Share your IP address with friends so they can join.
+
+Deutsch
+
+1.  Lade Q3Rally (aktuelle Version) herunter und installiere es.
+
+2.  Erstelle eine Konfigurationsdatei (z. B. server.cfg) im
+    baseq3r/-Ordner mit deinen gewünschten Einstellungen, z. B.:
+
+    set sv_hostname “Mein Q3Rally Server” set rconpassword
+    “deinpasswort” set g_gametype 0 map rally_track1
+
+3.  Öffne ein Terminal oder die Eingabeaufforderung und wechsle in den
+    Q3Rally-Installationsordner.
+
+4.  Starte den Dedicated Server mit:
+
+    q3rally.x86_64.exe +set dedicated 1 +exec server.cfg
+
+    (Unter Linux: ./ioq3rallyded.x86_64 +set dedicated 1 +exec
+    server.cfg)
+
+5.  Teile deine IP-Adresse mit Freunden, damit sie beitreten können.

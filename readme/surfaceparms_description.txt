@@ -1,0 +1,95 @@
+Surface Parms Mapping Guide / Oberflächen-Parameter Leitfaden
+
+What are Surface Parms?
+Surface parameters (surfaceparms) are per-texture flags defined inside shader scripts. When a map is compiled with q3map2 -custinfoparms, these flags are embedded into the BSP so the game can apply friction, skidmarks, particle effects or special rendering on a per-surface basis
+
+Usage
+Create/Edit a Shader – Add surfaceparm lines inside the texture block.
+
+textures/q3r_dirt_grass/sand {
+    surfaceparm SURF_WET
+    surfaceparm SURF_SAND
+    surfaceparm dust
+    …
+}
+```​:codex-file-citation[codex-file-citation]{line_range_start=7022 line_range_end=7026 path=baseq3r/scripts/q3r_textures.shader git_url="https://github.com/P3rlE/q3rally_tryout/blob/master/baseq3r/scripts/q3r_textures.shader#L7022-L7026"}​
+
+Compile with Custom Flags – Use q3map2 -meta -custinfoparms custinfoparms.txt map.map so the custom SURF_* definitions become part of the BSP.
+
+In Radiant – Apply the shader to brush faces or patches. The editor image (qer_editorimage) gives a preview.
+
+Common Surface Flags
+Flag / surfaceparm	Effect						Example textures
+
+SURF_ASPHALT		Standard road friction & skidmarks		textures/q3r_road/asphalt
+SURF_DIRT		Dusty brown skidmarks and particles		textures/q3r_dirt_grass/dirt01 etc.
+SURF_GRASS		Green-tinted skidmarks, grass debris		textures/q3r_dirt_grass/grass01
+SURF_GRAVEL		Similar to dirt but with coarse particles	textures/q3r_dirt_grass/gravel01
+SURF_SAND		Loose sand with dust puffs, low traction	textures/q3r_dirt_grass/sand
+SURF_SNOW		White skidmarks and snow spray			textures/q3r_ground/snowy01–04
+SURF_ICE		Very low friction, optional sheen		textures/q3r_ground/ice01
+SURF_WET		Splash effects when tires touch liquid		textures/q3r_liquids/q3r_water_01
+SURF_METAL		Metallic sparks on impact			metal grates, pipes
+SURF_SLICK		Extremely low friction, no skidmarks		textures/common/slick
+surfaceparm dust	Raises dust clouds on traversal			textures/common/terrain2
+
+All flags are defined in custinfoparms.txt and can be combined as needed.
+
+Was sind Surface Parms?
+Surface Parms sind pro Textur definierte Flags innerhalb der Shader-Skripte. Beim Kompilieren mit q3map2 -custinfoparms werden diese Flags in die BSP-Datei eingebettet, damit das Spiel Reibung, Reifenspuren, Partikeleffekte oder spezielle Renderings je Oberfläche anwenden kann.
+
+Anwendung
+Shader anlegen/bearbeiten – surfaceparm-Zeilen in den Texturblock einfügen.
+
+textures/q3r_dirt_grass/sand {
+    surfaceparm SURF_WET
+    surfaceparm SURF_SAND
+    surfaceparm dust
+    …
+}
+```​:codex-file-citation[codex-file-citation]{line_range_start=7022 line_range_end=7026 path=baseq3r/scripts/q3r_textures.shader git_url="https://github.com/P3rlE/q3rally_tryout/blob/master/baseq3r/scripts/q3r_textures.shader#L7022-L7026"}​
+
+Mit Custom Flags kompilieren – q3map2 -meta -custinfoparms custinfoparms.txt map.map ausführen, damit die SURF_*-Definitionen in die BSP gelangen.
+
+In Radiant – Shader auf Flächen anwenden; das Editor-Bild (qer_editorimage) liefert eine Vorschau.
+
+Häufige Surface Flags
+Flag / surfaceparm	Effekt							Beispiel-Texturen
+SURF_ASPHALT		Standard-Asphalt: normale Reibung & Reifenspuren	textures/q3r_road/asphalt
+SURF_DIRT		Braune Spuren & Staubwolken				textures/q3r_dirt_grass/dirt01 u. a.
+SURF_GRASS		Grüne Spuren, Graspartikel				textures/q3r_dirt_grass/grass01
+SURF_GRAVEL		Ähnlich Dirt, grobe Partikel				textures/q3r_dirt_grass/gravel01
+SURF_SAND		Lockerer Sand, Staub, wenig Haftung			textures/q3r_dirt_grass/sand
+SURF_SNOW		Weiße Spuren, Schneeaufwirbelungen			textures/q3r_ground/snowy01–04
+SURF_ICE		Sehr geringe Reibung, ggf. Glanz			textures/q3r_ground/ice01
+SURF_WET		Spritzwasser bei Reifen-Kontakt				textures/q3r_liquids/q3r_water_01
+SURF_METAL		Funken bei Kollisionen					Metall-Gitter, Rohre
+SURF_SLICK		Extrem rutschig, keine Spuren				textures/common/slick
+surfaceparm dust	Staubwolken beim Überfahren				textures/common/terrain2
+
+Alle Flags sind in custinfoparms.txt definiert und können kombiniert werden.
+
+
+# Surface Parm: dust / Oberflächen-Parameter: dust
+
+## English
+- **Trigger**  
+  Add `surfaceparm dust` to a terrain shader (e.g. `textures/common/terrain2`).
+
+- **BSP Flag**  
+  Compiling with `-custinfoparms` sets the BSP flag `SURF_DUST`.
+
+- **In-Game Effect**  
+  `CG_SurfaceEffects` detects the `SURF_DUST` flag at the wheel contact point  
+  and spawns dust clouds using `dustPuffShader` (`CreateSmokeCloudEntity`).
+
+## Deutsch
+- **Auslöser**  
+  `surfaceparm dust` in einem Terrain-Shader einfügen (z. B. `textures/common/terrain2`).
+
+- **BSP-Flag**  
+  Beim Kompilieren mit `-custinfoparms` wird das Flag `SURF_DUST` in der BSP gesetzt.
+
+- **Effekt im Spiel**  
+  `CG_SurfaceEffects` erkennt das `SURF_DUST`-Flag am Reifenaufsetzpunkt  
+  und erzeugt Staubwolken über den `dustPuffShader` (`CreateSmokeCloudEntity`).
