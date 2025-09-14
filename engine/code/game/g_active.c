@@ -1526,17 +1526,19 @@ void ClientThink_real( gentity_t *ent ) {
 	ClientEvents( ent, oldEventSequence );
 
 // STONELANCE - do damage from pmove
-	if (pm.damage.damage)
-	{
-		if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
-			pm.damage.damage *= g_damageScale.value;
-		if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
-			pm.damage.damage /= g_damageScale.value;
+        if (pm.damage.damage)
+        {
+                if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
+                        pm.damage.damage *= g_damageScale.value;
+                if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
+                        pm.damage.damage /= g_damageScale.value;
 
-		if( pm.damage.damage > 0 )
-		{
-			if (pm.damage.otherEnt >= 0){
-				G_Damage(ent, NULL, &g_entities[pm.damage.otherEnt], pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
+                pm.damage.damage *= ent->client->car.damageTolerance;
+
+                if( pm.damage.damage > 0 )
+                {
+                        if (pm.damage.otherEnt >= 0){
+                                G_Damage(ent, NULL, &g_entities[pm.damage.otherEnt], pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
 				VectorInverse(pm.damage.dir);
 				G_Damage(&g_entities[pm.damage.otherEnt], NULL, ent, pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
 			}

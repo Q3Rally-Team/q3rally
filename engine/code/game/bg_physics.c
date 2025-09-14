@@ -33,13 +33,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 float CP_CURRENT_GRAVITY;
 
 // not actually used now, use cvars instead
-float CP_SPRING_STRENGTH = 110 * (CP_FRAME_MASS / 350.0f) * CP_GRAVITY; // 110
 float CP_SHOCK_STRENGTH = 13 * CP_GRAVITY; // 12
 float CP_SWAYBAR_STRENGTH = 21 * CP_GRAVITY; // 20 * grav
 
 float CP_M_2_QU = CP_FT_2_QU / CP_FT_2_M; // 35.66
-float CP_WR_STRENGTH = 2400.0f * CP_WHEEL_MASS;
-float CP_WR_DAMP_STRENGTH = 140.0f * CP_WHEEL_MASS;
 
 
 static int	numTraces;
@@ -122,7 +119,10 @@ void PM_SetCoM( carBody_t *body, carPoint_t *points ){
 	int		i;
 
 	VectorClear(temp);
-	totalMass = CP_CAR_MASS;
+        totalMass = 0.0f;
+        for (i = 0; i < LAST_FRAME_POINT; i++){
+                totalMass += points[i].mass;
+        }
 
 	for (i = FIRST_FRAME_POINT; i < LAST_FRAME_POINT; i++){
 		VectorMA(temp, points[i].mass, points[i].r, temp);
@@ -439,6 +439,21 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 
 	// UPDATE: use memset?
 
+        if (!car->frameMass) car->frameMass = 300.0f;
+        if (!car->wheelMass) car->wheelMass = 50.0f;
+        if (!car->gearRatios[0]){
+                float defaults[6] = {3.33f, 2.10f, 1.43f, 1.14f, 0.89f, 0.69f};
+                memcpy(car->gearRatios, defaults, sizeof(defaults));
+        }
+        if (!car->axleGear) car->axleGear = 3.07f;
+        if (!car->rpmMax) car->rpmMax = CP_RPM_MAX;
+        if (!car->torquePeak) car->torquePeak = 400.0f;
+        if (!car->rpmTorquePeak) car->rpmTorquePeak = 2800.0f;
+        if (!car->hpPeak) car->hpPeak = 320.0f;
+        if (!car->rpmHpPeak) car->rpmHpPeak = 5000.0f;
+        if (!car->fuelConsumption) car->fuelConsumption = 1.0f;
+        if (!car->damageTolerance) car->damageTolerance = 1.0f;
+
 	VectorCopy(origin, car->sBody.r);
 	AnglesToOrientation(angles, car->sBody.t);
 //	AnglesToQuaternion(angles, car->sBody.q);
@@ -473,11 +488,11 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 	PM_InitializeWheel(&car->sBody, car->sPoints, RL_WHEEL, -1.0f, -1.0f);
 	PM_InitializeWheel(&car->sBody, car->sPoints, RR_WHEEL, -1.0f,  1.0f);
 
-	car->sBody.mass = 4 * CP_FRAME_MASS;
-	car->tBody.mass = 4 * CP_FRAME_MASS;
+	car->sBody.mass = 4 * car->frameMass;
+	car->tBody.mass = 4 * car->frameMass;
 
 	for (i = 0; i < FIRST_FRAME_POINT; i++){
-		car->sPoints[i].mass = CP_WHEEL_MASS;
+		car->sPoints[i].mass = car->wheelMass;
 		car->sPoints[i].elasticity = CP_WHEEL_ELASTICITY;
 		car->sPoints[i].scof = CP_SCOF;
 		car->sPoints[i].kcof = CP_KCOF;
@@ -485,7 +500,7 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 		car->sPoints[i].onGround = qfalse;
 		car->sPoints[i].onGroundTime = 0;
 		car->sPoints[i].radius = WHEEL_RADIUS;
-		car->tPoints[i].mass = CP_WHEEL_MASS;
+		car->tPoints[i].mass = car->wheelMass;
 		car->tPoints[i].elasticity = CP_WHEEL_ELASTICITY;
 		car->tPoints[i].scof = CP_SCOF;
 		car->tPoints[i].kcof = CP_KCOF;
@@ -541,7 +556,7 @@ void PM_InitializeVehicle( car_t *car, vec3_t origin, vec3_t angles, vec3_t velo
 	car->inverseBodyInertiaTensor[1][1] = pm->car_IT_yScale * 3.0f / (car->sBody.mass * (halfWidth * halfWidth + halfHeight * halfHeight));
 	car->inverseBodyInertiaTensor[2][2] = pm->car_IT_zScale * 3.0f / (car->sBody.mass * (halfWidth * halfWidth + halfLength * halfLength));
 
-	car->springStrength = CP_SPRING_STRENGTH;
+	car->springStrength = 110 * (car->frameMass / 350.0f) * CP_GRAVITY;
 	car->springMaxLength = CP_SPRING_MAXLEN;
 	car->springMinLength = CP_SPRING_MINLEN;
 //	car->shockStrength = CP_SHOCK_STRENGTH;
@@ -1202,7 +1217,7 @@ static int PM_Generate_FrameWheel_Forces(car_t *car, carPoint_t *points, int fra
 		compression = (car->springMaxLength - car->springMinLength) * (exp( compression / (car->springMaxLength - car->springMinLength)) - 1 ) / 1.718281828f;
 
 	if (compression < 0)
-		VectorScale(car->sBody.up, 3.0f * CP_SPRING_STRENGTH * compression, frame->forces[SPRING]);
+		VectorScale(car->sBody.up, 3.0f * car->springStrength * compression, frame->forces[SPRING]);
 	else
 		VectorScale(car->sBody.up, car->springStrength * compression, frame->forces[SPRING]);
 
@@ -1431,10 +1446,10 @@ static void PM_CalculateForces( car_t *car, carBody_t *body, carPoint_t *points,
 
 		if ( length > 2.0f ){
 			// k = 10000; // good at 90fps
-			k = pm->car_wheel * CP_WHEEL_MASS;
+			k = pm->car_wheel * car->wheelMass;
 
 //			b = 2 * sqrt(k * points[i].mass);
-			b = pm->car_wheel_damp * CP_WHEEL_MASS;
+			b = pm->car_wheel_damp * car->wheelMass;
 
 			VectorScale(diff, -k * length, force);
 
@@ -2311,9 +2326,9 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 	// set spring strengths for "jump" and "crouch"
 // FIXME: change this so it works in cgame and game
 #if GAME
-	car->springStrength = pm->car_spring * (CP_FRAME_MASS / 350.0f) * CP_GRAVITY;
+        car->springStrength = pm->car_spring * (car->frameMass / 350.0f) * CP_GRAVITY;
 #else
-	car->springStrength = CP_SPRING_STRENGTH;
+        car->springStrength = 110 * (car->frameMass / 350.0f) * CP_GRAVITY;
 #endif
 //	car->shockStrength = CP_SHOCK_STRENGTH;
 
@@ -2337,7 +2352,7 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
     
 	if ( car->fuel > 0.0f ) {
 		float fuelUse;
-		fuelUse = fabs(car->throttle) * (fabs(car->rpm) / CP_RPM_MAX) * CP_FUEL_CONSUMPTION * time;
+		fuelUse = fabs(car->throttle) * (fabs(car->rpm) / car->rpmMax) * car->fuelConsumption * time;
 		car->fuel -= fuelUse;
 		if ( car->fuelLeak ) {
 			car->fuel -= CP_FUEL_LEAK_RATE * time;

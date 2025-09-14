@@ -114,6 +114,8 @@ vmCvar_t	g_damageScale;
 vmCvar_t	g_vehicleDamageScale;
 vmCvar_t        g_vehicleDamageOffset;
 vmCvar_t	g_vehicleHealth;
+vmCvar_t	g_vehicleHpMaxRatio;
+vmCvar_t	g_vehicleHealthMaxRatio;
 vmCvar_t        g_derbyDamageFactor;
 vmCvar_t        g_derbyRammerDamageRatio;
 vmCvar_t        g_derbyIgnoreDamageScale;
@@ -273,6 +275,8 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_vehicleDamageScale, "g_vehicleDamageScale", "5.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageOffset, "g_vehicleDamageOffset", "0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleHealth, "g_vehicleHealth", "100", CVAR_ARCHIVE, 0, qfalse },
+        { &g_vehicleHpMaxRatio, "g_vehicleHpMaxRatio", "1.2", CVAR_ARCHIVE, 0, qfalse },
+        { &g_vehicleHealthMaxRatio, "g_vehicleHealthMaxRatio", "1.5", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyDamageFactor, "g_derbyDamageFactor", "1.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyIgnoreDamageScale, "g_derbyIgnoreDamageScale", "0", CVAR_ARCHIVE, 0, qfalse },

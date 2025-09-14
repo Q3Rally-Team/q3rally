@@ -524,6 +524,12 @@ typedef struct {
 	qboolean		oppositeRoll;
 
 	int				position;
+	// vehicle attributes
+	float			 frameMass;
+	float			 wheelMass;
+	float			 fuelConsumption;
+	float			 torque;
+        float                    damageTolerance;
 // Q3Rally Code END
 } clientInfo_t;
 
@@ -1455,6 +1461,12 @@ extern	vmCvar_t		cg_mmap_size;
 extern	vmCvar_t		cg_mmap_renderLevel;
 extern	vmCvar_t		cg_checkpointArrowMode;
 extern      vmCvar_t                cg_distanceFormat;
+extern  vmCvar_t                cg_vehicleMass;
+extern  vmCvar_t                cg_wheelMass;
+extern  vmCvar_t                cg_fuelConsumption;
+extern  vmCvar_t                cg_torque;
+extern	vmCvar_t		cg_damageTolerance;
+
 
 extern	vmCvar_t		cg_atmosphericLevel;
 extern	vmCvar_t		cg_developer;

@@ -184,6 +184,81 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 // END
 #endif
 
+static void CG_ParseVehicleFile( const char *filename, clientInfo_t *ci ) {
+    char    *text_p;
+    char    *token;
+    char    text[20000];
+    fileHandle_t f;
+    int     len;
+
+    // defaults
+    ci->frameMass = 300.0f;
+    ci->wheelMass = 50.0f;
+    ci->fuelConsumption = 1.0f;
+    ci->torque = 400.0f;
+    ci->damageTolerance = 1.0f;
+
+    len = trap_FS_FOpenFile( filename, &f, FS_READ );
+    if ( len <= 0 ) {
+        return;
+    }
+    if ( len >= sizeof( text ) - 1 ) {
+        trap_FS_FCloseFile( f );
+        return;
+    }
+    trap_FS_Read( text, len, f );
+    text[len] = 0;
+    trap_FS_FCloseFile( f );
+
+    text_p = text;
+    while ( 1 ) {
+        token = COM_Parse( &text_p );
+        if ( !token || !token[0] ) {
+            break;
+        }
+        if ( !Q_stricmp( token, "frameMass" ) ) {
+            token = COM_Parse( &text_p );
+            if ( token && token[0] ) {
+                ci->frameMass = atof( token );
+            }
+        } else if ( !Q_stricmp( token, "wheelMass" ) ) {
+            token = COM_Parse( &text_p );
+            if ( token && token[0] ) {
+                ci->wheelMass = atof( token );
+            }
+        } else if ( !Q_stricmp( token, "fuelConsumption" ) ) {
+            token = COM_Parse( &text_p );
+            if ( token && token[0] ) {
+                ci->fuelConsumption = atof( token );
+            }
+        } else if ( !Q_stricmp( token, "torque" ) ) {
+            token = COM_Parse( &text_p );
+            if ( token && token[0] ) {
+                ci->torque = atof( token );
+            }
+        } else if ( !Q_stricmp( token, "damageTolerance" ) ) {
+            token = COM_Parse( &text_p );
+            if ( token && token[0] ) {
+                ci->damageTolerance = atof( token );
+            }
+        }
+    }
+
+    if ( ci->clientNum == cg.clientNum ) {
+        trap_Cvar_Set( "cg_vehicleMass", va( "%f", ci->frameMass ) );
+        trap_Cvar_Set( "cg_wheelMass", va( "%f", ci->wheelMass ) );
+        trap_Cvar_Set( "cg_fuelConsumption", va( "%f", ci->fuelConsumption ) );
+        trap_SendConsoleCommand( va( "setu cg_fuelConsumption %f\n", ci->fuelConsumption ) );
+        trap_Cvar_Set( "cg_torque", va( "%f", ci->torque ) );
+        trap_Cvar_Set( "cg_damageTolerance", va( "%f", ci->damageTolerance ) );
+        cg.car.frameMass = ci->frameMass;
+        cg.car.wheelMass = ci->wheelMass;
+        cg.car.fuelConsumption = ci->fuelConsumption;
+        cg.car.torquePeak = ci->torque;
+        cg.car.damageTolerance = ci->damageTolerance;
+    }
+}
+
 // SKWID( removed function )
 /*
 static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
@@ -905,6 +980,8 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	}
 // END
 
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/vehicle.cfg", modelName );
+	CG_ParseVehicleFile( filename, ci );
 	return qtrue;
 }
 

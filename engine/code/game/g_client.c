@@ -875,6 +875,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
+	char	userinfo[MAX_INFO_STRING];
 // STONELANCE
 	char	rim[MAX_QPATH];
 	char	plate[MAX_QPATH];
@@ -889,7 +890,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	char	blueTeam[MAX_INFO_STRING];
     char    greenTeam[MAX_INFO_STRING];
     char    yellowTeam[MAX_INFO_STRING];
-	char	userinfo[MAX_INFO_STRING];
 
 	ent = g_entities + clientNum;
 	client = ent->client;
@@ -1033,13 +1033,34 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.controlMode = atoi( s );
 	}
 
-	s = Info_ValueForKey( userinfo, "cg_manualShift" );
-	if ( *s ) {
-		client->pers.manualShift = atoi( s );
-	}
+        s = Info_ValueForKey( userinfo, "cg_manualShift" );
+        if ( *s ) {
+                client->pers.manualShift = atoi( s );
+        }
 
-	// team task (0 = none, 1 = offence, 2 = defence)
-	teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
+        s = Info_ValueForKey( userinfo, "cg_vehicleMass" );
+        if ( *s ) {
+                client->car.frameMass = atof( s );
+        }
+        s = Info_ValueForKey( userinfo, "cg_wheelMass" );
+        if ( *s ) {
+                client->car.wheelMass = atof( s );
+        }
+        s = Info_ValueForKey( userinfo, "cg_fuelConsumption" );
+        if ( *s ) {
+                client->car.fuelConsumption = atof( s );
+        }
+        s = Info_ValueForKey( userinfo, "cg_torque" );
+        if ( *s ) {
+                client->car.torquePeak = atof( s );
+        }
+        s = Info_ValueForKey( userinfo, "cg_damageTolerance" );
+        if ( *s ) {
+                client->car.damageTolerance = atof( s );
+        }
+
+        // team task (0 = none, 1 = offence, 2 = defence)
+        teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
 	// team Leader (1 = leader, 0 is normal player)
 	teamLeader = client->sess.teamLeader;
 
@@ -1084,6 +1105,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
+	G_BalanceVehicleStats();
 }
 
 
@@ -1335,7 +1357,6 @@ void ClientSpawn(gentity_t *ent) {
 //	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
-	char	userinfo[MAX_INFO_STRING];
 // STONELANCE
 	int		savedFinishRaceTime;
 	int		savedDamageTaken;
@@ -1480,22 +1501,20 @@ void ClientSpawn(gentity_t *ent) {
 	for ( i = 0 ; i < MAX_PERSISTANT ; i++ ) {
 		client->ps.persistant[i] = persistant[i];
 	}
-	client->ps.eventSequence = eventSequence;
-	// increment the spawncount so the client will detect the respawn
+        client->ps.eventSequence = eventSequence;
+        ClientUserinfoChanged( index );
+        // increment the spawncount so the client will detect the respawn
 	client->ps.persistant[PERS_SPAWN_COUNT]++;
 	client->ps.persistant[PERS_TEAM] = client->sess.sessionTeam;
 
-	client->airOutTime = level.time + 12000;
+       client->airOutTime = level.time + 12000;
 
-	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	// set max health
-	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
-		client->pers.maxHealth = 100;
-	}
-	// clear entity values
-       client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
-       client->ps.eFlags = flags;
+       // set max health from vehicle setup
+       client->car.maxHealth = g_vehicleHealth.integer;
+       client->pers.maxHealth = client->car.maxHealth;
+       // clear entity values
+      client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+      client->ps.eFlags = flags;
        ent->s.eFlags &= ~EF_HEADLIGHTS;
        if ( client->sess.headlights ) {
                client->ps.extra_eFlags |= CF_HEADLIGHTS;
@@ -1550,7 +1569,7 @@ client->ps.stats[STAT_WEAPONS] = ( 1u << WP_DERBY_RAM );
         }
 
 	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+       ent->health = client->ps.stats[STAT_HEALTH] = client->car.maxHealth + 25;
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1728,12 +1747,14 @@ if (client->ps.stats[STAT_WEAPONS] & (1u << i)) {
 	ClientThink( ent-g_entities );
 	// run the presend to set anything else, follow spectators wait
 	// until all clients have been reconnected after map_restart
-	if ( ent->client->sess.spectatorState != SPECTATOR_FOLLOW ) {
-		ClientEndFrame( ent );
-	}
+        if ( ent->client->sess.spectatorState != SPECTATOR_FOLLOW ) {
+                ClientEndFrame( ent );
+        }
 
-	// clear entity state values
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+        G_BalanceVehicleStats();
+
+        // clear entity state values
+        BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
 }
 
 

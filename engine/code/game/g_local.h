@@ -807,6 +807,7 @@ void Cmd_RacePositions_f( void );
 void Cmd_Times_f( gentity_t *ent );
 gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
 gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
+void G_BalanceVehicleStats( void );
 
 //
 // g_rally_rearweapon.c
@@ -1009,6 +1010,8 @@ extern	vmCvar_t	g_damageScale;
 extern	vmCvar_t	g_vehicleDamageScale;
 extern  vmCvar_t        g_vehicleDamageOffset;
 extern	vmCvar_t	g_vehicleHealth;
+extern	vmCvar_t	g_vehicleHpMaxRatio;
+extern	vmCvar_t	g_vehicleHealthMaxRatio;
 extern  vmCvar_t        g_derbyDamageFactor;
 extern  vmCvar_t        g_derbyRammerDamageRatio;
 extern  vmCvar_t        g_derbyIgnoreDamageScale;

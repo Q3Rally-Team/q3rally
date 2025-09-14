@@ -546,3 +546,76 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 	return spot;
 }
 
+/*
+========================================================================
+G_BalanceVehicleStats
+
+Compares configured vehicle attributes for all active players and scales
+them down if they exceed the configured server limits.  The limits are
+defined as ratios relative to the weakest vehicle so that custom vehicle
+setups cannot gain an unfair advantage.
+========================================================================
+*/
+void G_BalanceVehicleStats( void ) {
+	int         i;
+	float       minHpPeak = 0.0f;
+	int         minHealth = 0;
+	qboolean    found = qfalse;
+
+	// determine the lowest values currently in use
+	for ( i = 0; i < level.maxclients; i++ ) {
+	    gentity_t *ent = &g_entities[ i ];
+
+	    if ( !ent->inuse || !ent->client ) {
+	        continue;
+	    }
+	    if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ||
+	         ent->client->sess.sessionTeam == TEAM_FREE ) {
+	        continue;
+	    }
+
+	    if ( !found || ent->client->car.hpPeak < minHpPeak ) {
+	        minHpPeak = ent->client->car.hpPeak;
+	    }
+	    if ( !found || ent->client->car.maxHealth < minHealth ) {
+	        minHealth = ent->client->car.maxHealth;
+	    }
+	    found = qtrue;
+	}
+
+	if ( !found ) {
+	    return; // nothing to balance
+	}
+
+	// calculate allowed maximums based on ratios
+	{
+	    float hpLimit = minHpPeak * g_vehicleHpMaxRatio.value;
+	    int   healthLimit = (int)( (float)minHealth * g_vehicleHealthMaxRatio.value );
+
+	    for ( i = 0; i < level.maxclients; i++ ) {
+	        gentity_t *ent = &g_entities[ i ];
+
+	        if ( !ent->inuse || !ent->client ) {
+	            continue;
+	        }
+	        if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ||
+	             ent->client->sess.sessionTeam == TEAM_FREE ) {
+	            continue;
+	        }
+
+	        if ( ent->client->car.hpPeak > hpLimit ) {
+	            ent->client->car.hpPeak = hpLimit;
+	        }
+
+	        if ( ent->client->car.maxHealth > healthLimit ) {
+	            ent->client->car.maxHealth = healthLimit;
+	            ent->client->pers.maxHealth = healthLimit;
+	            ent->client->ps.stats[STAT_MAX_HEALTH] = healthLimit;
+	            if ( ent->health > healthLimit ) {
+	                ent->health = healthLimit;
+	            }
+	        }
+	    }
+	}
+}
+

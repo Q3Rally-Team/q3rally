@@ -959,7 +959,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+max = attacker->client->car.maxHealth;
 #ifdef MISSIONPACK
 		if( bg_itemlist[attacker->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
 			max /= 2;
@@ -1169,7 +1169,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
 			if ( !targ->client->car.fuelLeak ) {
-				int leakThreshold = g_vehicleHealth.integer / 4;
+int leakThreshold = targ->client->car.maxHealth / 4;
 				if ( targ->health > 0 && targ->health <= leakThreshold ) {
 					targ->client->car.fuelLeak = qtrue;
 				}
