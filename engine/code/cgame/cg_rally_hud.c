@@ -561,6 +561,7 @@ static float CG_DrawDistanceToFinish( float y ) {
        char            s[64];
        int             x;
        float           dist;
+       const float     feetPerMile = 5280.0f;
 
        // for multi-lap races show distance to next checkpoint instead of finish
        if ( cgs.laplimit > 1 ) {
@@ -606,8 +607,20 @@ static float CG_DrawDistanceToFinish( float y ) {
 
                VectorSubtract( checkpointOrigin, cg.snap->ps.origin, diff );
 
-               dist = VectorLength( diff ) / CP_M_2_QU;
-               Com_sprintf( s, sizeof( s ), "CP: %dm", (int)dist );
+               dist = VectorLength( diff );
+
+               if ( cg_metricUnits.integer ) {
+                       dist /= CP_M_2_QU;
+                       Com_sprintf( s, sizeof( s ), "CP: %dm", (int)dist );
+               } else {
+                       dist /= CP_FT_2_QU;
+                       if ( dist >= feetPerMile ) {
+                               float miles = dist / feetPerMile;
+                               Com_sprintf( s, sizeof( s ), "CP: %.1fmi", miles );
+                       } else {
+                               Com_sprintf( s, sizeof( s ), "CP: %dft", (int)dist );
+                       }
+               }
        }
        else {
                dist = cg.snap->ps.stats[STAT_DISTANCE_REMAIN];
@@ -616,7 +629,18 @@ static float CG_DrawDistanceToFinish( float y ) {
                        float percent = dist / cgs.trackLength * 100.0f;
                        Com_sprintf( s, sizeof( s ), "DIST: %.1f%%", percent );
                } else {
-                       Com_sprintf( s, sizeof( s ), "DIST: %dm", (int)dist );
+                       if ( cg_metricUnits.integer ) {
+                               Com_sprintf( s, sizeof( s ), "DIST: %dm", (int)dist );
+                       } else {
+                               float distFeet = dist * 3.28084f;
+
+                               if ( distFeet >= feetPerMile ) {
+                                       float miles = distFeet / feetPerMile;
+                                       Com_sprintf( s, sizeof( s ), "DIST: %.1fmi", miles );
+                               } else {
+                                       Com_sprintf( s, sizeof( s ), "DIST: %dft", (int)distFeet );
+                               }
+                       }
                }
        }
 
