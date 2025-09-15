@@ -558,27 +558,76 @@ CG_DrawDistanceToFinish
 ======================
 */
 static float CG_DrawDistanceToFinish( float y ) {
-        char            s[64];
-        int             x;
-        float           dist;
+       char            s[64];
+       int             x;
+       float           dist;
 
-        dist = cg.snap->ps.stats[STAT_DISTANCE_REMAIN];
+       // for multi-lap races show distance to next checkpoint instead of finish
+       if ( cgs.laplimit > 1 ) {
+               int             nextCP;
+               centity_t       *checkpoint = NULL;
+               vec3_t          diff;
+               vec3_t          checkpointOrigin;
+               int             i;
 
-        if ( cg_distanceFormat.integer == 1 && cgs.trackLength > 0.0f ) {
-                float percent = dist / cgs.trackLength * 100.0f;
-                Com_sprintf( s, sizeof( s ), "DIST: %.1f%%", percent );
-        } else {
-                Com_sprintf( s, sizeof( s ), "DIST: %dm", (int)dist );
-        }
+               nextCP = cg.snap->ps.stats[STAT_NEXT_CHECKPOINT];
+               if ( nextCP <= 0 ) {
+                       return y;
+               }
 
-        x = 636 - 80;
-        CG_FillRect( x, y, 90, 18, bgColor );
-        x += 10;
-        y += 4;
-        CG_DrawTinyDigitalStringColor( x, y, s, colorWhite );
-        y += TINYCHAR_HEIGHT + 4;
+               for ( i = 0; i < MAX_GENTITIES; i++ ) {
+                       centity_t *cent = &cg_entities[i];
 
-        return y;
+                       if ( cent->currentState.eType != ET_CHECKPOINT ) {
+                               continue;
+                       }
+
+                       if ( cent->currentState.weapon != nextCP ) {
+                               continue;
+                       }
+
+                       checkpoint = cent;
+                       break;
+               }
+
+               if ( !checkpoint ) {
+                       return y;
+               }
+
+               VectorCopy( checkpoint->lerpOrigin, checkpointOrigin );
+
+               if ( checkpoint->currentState.solid == SOLID_BMODEL &&
+                        checkpoint->currentState.modelindex > 0 &&
+                        checkpoint->currentState.modelindex < MAX_MODELS ) {
+                       VectorAdd( checkpointOrigin,
+                               cgs.inlineModelMidpoints[ checkpoint->currentState.modelindex ],
+                               checkpointOrigin );
+               }
+
+               VectorSubtract( checkpointOrigin, cg.snap->ps.origin, diff );
+
+               dist = VectorLength( diff ) / CP_M_2_QU;
+               Com_sprintf( s, sizeof( s ), "CP: %dm", (int)dist );
+       }
+       else {
+               dist = cg.snap->ps.stats[STAT_DISTANCE_REMAIN];
+
+               if ( cg_distanceFormat.integer == 1 && cgs.trackLength > 0.0f ) {
+                       float percent = dist / cgs.trackLength * 100.0f;
+                       Com_sprintf( s, sizeof( s ), "DIST: %.1f%%", percent );
+               } else {
+                       Com_sprintf( s, sizeof( s ), "DIST: %dm", (int)dist );
+               }
+       }
+
+       x = 636 - 80;
+       CG_FillRect( x, y, 90, 18, bgColor );
+       x += 10;
+       y += 4;
+       CG_DrawTinyDigitalStringColor( x, y, s, colorWhite );
+       y += TINYCHAR_HEIGHT + 4;
+
+       return y;
 }
 
 /*

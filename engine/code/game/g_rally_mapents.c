@@ -273,36 +273,54 @@ void Think_StartFinish( gentity_t *self ){
                 }
         }
 
-        memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
-        memset( level.cpDist, 0, sizeof( level.cpDist ) );
-        ent = NULL;
-        while ( ( ent = G_Find( ent, FOFS(classname), "rally_checkpoint" ) ) != NULL ) {
-                if ( ent->number > 0 && ent->number <= level.numCheckpoints ) {
-                        level.checkpoints[ ent->number - 1 ] = ent;
-                }
-        }
+       memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
+       memset( level.cpDist, 0, sizeof( level.cpDist ) );
+       ent = NULL;
+       while ( ( ent = G_Find( ent, FOFS(classname), "rally_checkpoint" ) ) != NULL ) {
+               if ( ent->number > 0 && ent->number <= level.numCheckpoints ) {
+                       level.checkpoints[ ent->number - 1 ] = ent;
+               }
+       }
 
-        level.trackLength = 0.0f;
-        if ( level.numCheckpoints > 0 ) {
-                vec3_t last, first, delta;
-                int i;
+       {
+               qboolean missing = qfalse;
+               int i;
 
-                VectorCopy( level.checkpoints[0]->s.origin, first );
-                VectorCopy( first, last );
-                level.cpDist[0] = 0.0f;
-                for ( i = 1; i < level.numCheckpoints; i++ ) {
-                        VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
-                        level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
-                        VectorCopy( level.checkpoints[i]->s.origin, last );
-                }
-                VectorSubtract( last, first, delta );
-                level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
-        }
+               for ( i = 0; i < level.numCheckpoints; i++ ) {
+                       if ( !level.checkpoints[i] ) {
+                               missing = qtrue;
+                               if ( g_developer.integer ) {
+                                       Com_Printf( "rally_checkpoint %d not found\n", i + 1 );
+                               }
+                       }
+               }
 
-        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
+               level.trackLength = 0.0f;
+               if ( !missing && level.numCheckpoints > 0 ) {
+                       vec3_t last, first, delta;
 
-        self->number = level.numCheckpoints;
-        self->s.weapon = self->number;
+                       VectorCopy( level.checkpoints[0]->s.origin, first );
+                       VectorCopy( first, last );
+                       level.cpDist[0] = 0.0f;
+                       for ( i = 1; i < level.numCheckpoints; i++ ) {
+                               VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
+                               level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
+                               if ( g_developer.integer && level.cpDist[i] <= level.cpDist[i-1] ) {
+                                       Com_Printf( "Checkpoint distance %d is non-increasing\n", i + 1 );
+                               }
+                               VectorCopy( level.checkpoints[i]->s.origin, last );
+                       }
+                       VectorSubtract( last, first, delta );
+                       level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+               } else if ( g_developer.integer ) {
+                       Com_Printf( "Track length not calculated due to missing checkpoints\n" );
+               }
+       }
+
+       trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
+
+       self->number = level.numCheckpoints;
+       self->s.weapon = self->number;
 }
 
 void Think_Finish( gentity_t *self ){

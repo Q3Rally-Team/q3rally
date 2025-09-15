@@ -389,13 +389,14 @@ IN_DeactivateMouse
 */
 static void IN_DeactivateMouse( qboolean isFullscreen, qboolean showSystemCursor )
 {
-	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
-		return;
+        if( !SDL_WasInit( SDL_INIT_VIDEO ) )
+                return;
 
-	// Always show the cursor when the mouse is disabled,
-	// but not when fullscreen
-	if( !isFullscreen )
-		SDL_ShowCursor( showSystemCursor );
+        (void)showSystemCursor;
+
+        // Always hide the system cursor when the mouse is disabled
+        if( !isFullscreen )
+                SDL_ShowCursor( SDL_DISABLE );
 
 	if( !mouseAvailable )
 		return;
@@ -1335,26 +1336,26 @@ void IN_Frame( void )
 	// update isFullscreen since it might of changed since the last vid_restart
 	cls.glconfig.isFullscreen = Cvar_VariableIntegerValue( "r_fullscreen" ) != 0;
 
-	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
-	{
-		// Console is down in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
-	}
-	else if( !cls.glconfig.isFullscreen && loading )
-	{
-		// Loading in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
-	}
-	else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
-	{
-		// Window not got focus
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
-	}
-	else if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
-	}
-	else
-		IN_ActivateMouse( cls.glconfig.isFullscreen );
+        if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
+        {
+                // Console is down in windowed mode
+                IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
+        }
+        else if( !cls.glconfig.isFullscreen && loading )
+        {
+                // Loading in windowed mode
+                IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
+        }
+        else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
+        {
+                // Window not got focus
+                IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
+        }
+        else if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
+                IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
+        }
+        else
+                IN_ActivateMouse( cls.glconfig.isFullscreen );
 
 	IN_ProcessEvents( );
 
@@ -1404,7 +1405,7 @@ void IN_Init( void *windowData )
 	SDL_StartTextInput( );
 
 	mouseAvailable = ( in_mouse->value != 0 );
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
+        IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qfalse );
 
 	SDL_GetMouseState( &mouseLastX, &mouseLastY );
 
@@ -1425,7 +1426,7 @@ void IN_Shutdown( void )
 {
 	SDL_StopTextInput( );
 
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
+        IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qfalse );
 	mouseAvailable = qfalse;
 
 	IN_ShutdownJoystick( );
