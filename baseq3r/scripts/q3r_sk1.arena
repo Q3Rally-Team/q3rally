@@ -17,6 +17,9 @@ bots "Samuel Jim Sam Tobias Kuro"
 //PLAYER STARTS
 starts "8"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "34 sec"
 

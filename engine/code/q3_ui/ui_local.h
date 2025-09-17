@@ -344,7 +344,7 @@ typedef struct
 typedef enum
 {
 	MS_NUMSTARTS,
-//	MS_LAPS,
+	MS_LAPS,
 	MS_LAPTIME,
 	MS_NUMCHECKPOINTS,
 	MS_NUMOBSERVERSPOTS,

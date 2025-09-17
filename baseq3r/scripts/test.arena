@@ -1,36 +1,36 @@
 {
 //MAP FILE NAME
-map "q3r_citydom"
+map "test"
 
 //IN-GAME MAP NAME
-longname "Dominate the City"
+longname "Test"
 
 //AUTHOR OF THE MAP
 author "P3rlE"
 
 //GAME TYPE SUPPORTS
-type "q3r_dom"
+type "q3r_dm"
 
 //CUSTOM BOTS
-bots "Ivan Tanya Kuro Alexandra Bobby Samuel Jennifer"
+bots ""
 
 //PLAYER STARTS
-starts "8"
+starts "1"
 
 //LAPTIME
 laptime ""
 
 //CHECKPOINTS
-checkpoints "20"
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots "0"
+observerspots ""
 
 //WEAPONS
-weapons "All"
+weapons "RL,PG,SG"
 
 //POWERUPS
-powerups "All"
+powerups "1"
 
 //REVERSABLE
 reversable ""
@@ -39,8 +39,8 @@ reversable ""
 tracklengths ""
 
 //BOT SUPPORTS
-botsupport "Very Bad"
+botsupport "Good"
 
 //TEAMS
-teams "2"
+teams "All"
 }

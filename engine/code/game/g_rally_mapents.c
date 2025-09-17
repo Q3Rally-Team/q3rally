@@ -255,11 +255,26 @@ void Think_StartFinish( gentity_t *self ){
 
 	if( self->s.origin2[0] == 0.0f &&
 		self->s.origin2[1] == 0.0f &&
-		self->s.origin2[2] == 0.0f && 
-		( self->s.origin[0] != 0.0f || 
-		self->s.origin[1] != 0.0f || 
+		self->s.origin2[2] == 0.0f &&
+		( self->s.origin[0] != 0.0f ||
+		self->s.origin[1] != 0.0f ||
 		self->s.origin[2] != 0.0f ) )
 		VectorCopy( self->s.origin, self->s.origin2 );
+
+	if ( self->touch == Touch_Start ) {
+		VectorCopy( self->s.origin, level.startOrigin );
+		level.hasStart = qtrue;
+	}
+	else if ( self->touch == Touch_Finish ) {
+		VectorCopy( self->s.origin, level.finishOrigin );
+		level.hasFinish = qtrue;
+	}
+	else if ( self->touch == Touch_StartFinish ) {
+		VectorCopy( self->s.origin, level.startOrigin );
+		VectorCopy( self->s.origin, level.finishOrigin );
+		level.hasStart = qtrue;
+		level.hasFinish = qtrue;
+	}
 
 	checkpoints = 0;
 
@@ -298,34 +313,60 @@ void Think_StartFinish( gentity_t *self ){
                level.trackLength = 0.0f;
                if ( !missing && level.numCheckpoints > 0 ) {
                        vec3_t last, first, delta;
+                       float startDist;
+                       qboolean loopTrack;
 
                        VectorCopy( level.checkpoints[0]->s.origin, first );
                        VectorCopy( first, last );
-                       level.cpDist[0] = 0.0f;
+
+                       startDist = 0.0f;
+                       if ( level.hasStart ) {
+                               startDist = Distance( level.startOrigin, first );
+                               level.trackLength += startDist;
+                       }
+                       level.cpDist[0] = startDist;
                        for ( i = 1; i < level.numCheckpoints; i++ ) {
+                               float segmentLength;
+
                                VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
-                               level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
+                               segmentLength = VectorLength( delta );
+                               level.trackLength += segmentLength;
+                               level.cpDist[i] = level.cpDist[i-1] + segmentLength;
                                if ( g_developer.integer && level.cpDist[i] <= level.cpDist[i-1] ) {
                                        Com_Printf( "Checkpoint distance %d is non-increasing\n", i + 1 );
                                }
                                VectorCopy( level.checkpoints[i]->s.origin, last );
                        }
-                       VectorSubtract( last, first, delta );
-                       level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+
+                       loopTrack = ( !level.hasFinish ||
+                               ( level.hasStart && VectorCompare( level.startOrigin, level.finishOrigin ) ) );
+                       if ( level.hasFinish && !loopTrack ) {
+                               level.trackLength += Distance( last, level.finishOrigin );
+                       } else {
+                               VectorSubtract( last, first, delta );
+                               level.trackLength += VectorLength( delta );
+                       }
                } else if ( g_developer.integer ) {
                        Com_Printf( "Track length not calculated due to missing checkpoints\n" );
                }
        }
 
+       if ( level.hasFinish ) {
+               if ( level.numCheckpoints == 0 ) {
+                       level.trackLength = Distance( level.startOrigin, level.finishOrigin );
+               }
+       }
+
        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
 
-       self->number = level.numCheckpoints;
-       self->s.weapon = self->number;
+	self->number = level.numCheckpoints;
+	self->s.weapon = self->number;
 }
 
 void Think_Finish( gentity_t *self ){
 Think_StartFinish( self );
 self->number++;
+self->s.weapon = self->number;
 }
 
 
@@ -348,7 +389,7 @@ void SP_rally_startfinish( gentity_t *ent ) {
 
 	ent->touch = Touch_StartFinish;
 	ent->think = Think_StartFinish;
-	ent->nextthink = level.time + 100;
+	ent->nextthink = level.time + 300;
 	ent->s.frame = 0;
 
 	trap_LinkEntity (ent);
@@ -365,7 +406,7 @@ ent->s.eType = ET_CHECKPOINT;
 
 ent->touch = Touch_Start;
 ent->think = Think_StartFinish;
-ent->nextthink = level.time + 100;
+ent->nextthink = level.time + 300;
 ent->s.frame = 0;
 
 trap_LinkEntity (ent);
@@ -379,7 +420,7 @@ ent->s.eType = ET_CHECKPOINT;
 
 ent->touch = Touch_Finish;
 ent->think = Think_Finish;
-ent->nextthink = level.time + 100;
+ent->nextthink = level.time + 300;
 ent->s.frame = 0;
 
 trap_LinkEntity (ent);
@@ -476,6 +517,7 @@ void Think_Checkpoint( gentity_t *self ){
 //	spawnflag 1 enable messages, spawn flag 2 enable sound, 3 is enable both
 void SP_rally_checkpoint( gentity_t *ent ) {
 	trap_SetBrushModel( ent, ent->model );
+	G_SetOrigin( ent, ent->s.origin );
 
 // STONELANCE - April 23, 2002 temp for testing bezier curve stuff
 	ent->r.svFlags |= SVF_BROADCAST;

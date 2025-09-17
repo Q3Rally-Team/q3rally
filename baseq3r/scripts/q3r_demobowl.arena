@@ -18,13 +18,13 @@ bots "Jennifer Jim Vlad Zack"
 starts "17"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots " "
+observerspots ""
 
 //WEAPONS
 weapons "LG,RL,RG"
@@ -33,10 +33,10 @@ weapons "LG,RL,RG"
 powerups "0"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Good"

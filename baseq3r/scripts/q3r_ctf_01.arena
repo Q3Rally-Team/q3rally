@@ -18,13 +18,13 @@ bots "Chloe Jim Zack Paul Tobias Josh Tony"
 starts "8"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots " "
+observerspots ""
 
 //WEAPONS
 weapons "FT,PG,RL,SG,RG"
@@ -33,10 +33,10 @@ weapons "FT,PG,RL,SG,RG"
 powerups "8"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Very Bad"

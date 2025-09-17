@@ -18,10 +18,10 @@ bots "Sam Dean Minori Vlad Kuro Emma Bee"
 starts "15"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
 observerspots "5"
@@ -33,10 +33,10 @@ weapons "BFG,GL,FT,RL,LG"
 powerups "2"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Good"

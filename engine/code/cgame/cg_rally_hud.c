@@ -282,29 +282,34 @@ static float CG_DrawArrowToCheckpoint( float y ) {
 //	VectorSubtract(cent->currentState.origin, cg.predictedPlayerState.origin, dir);
 //	angle2 = vectoyaw(dir);
 
-	// find the distance from the edge of the bounding box
-	trap_R_ModelBounds( cgs.inlineDrawModel[cent->currentState.modelindex], mins, maxs );
+	if ( cent->currentState.modelindex == 0 ) {
+		VectorSubtract( cent->currentState.origin2, cg.predictedPlayerState.origin, v );
+		angle2 = vectoyaw( v );
+	} else {
+		// find the distance from the edge of the bounding box
+		trap_R_ModelBounds( cgs.inlineDrawModel[cent->currentState.modelindex], mins, maxs );
 
-	// if the checkpoint was one with no target then mins and maxs are relative to the origin
-	if( cent->currentState.frame == 0 )
-	{
-		VectorAdd( mins, cent->currentState.origin, mins );
-		VectorAdd( maxs, cent->currentState.origin, maxs );
-	}
-
-	for ( i = 0 ; i < 3 ; i++ ) {
-		if ( cg.predictedPlayerState.origin[i] < mins[i] ) {
-			v[i] = mins[i] - cg.predictedPlayerState.origin[i];
-		} else if ( cg.predictedPlayerState.origin[i] > maxs[i] ) {
-			v[i] = maxs[i] - cg.predictedPlayerState.origin[i];
-		} else {
-			v[i] = 0;
+		// if the checkpoint was one with no target then mins and maxs are relative to the origin
+		if( cent->currentState.frame == 0 )
+		{
+			VectorAdd( mins, cent->currentState.origin, mins );
+			VectorAdd( maxs, cent->currentState.origin, maxs );
 		}
+
+		for ( i = 0 ; i < 3 ; i++ ) {
+			if ( cg.predictedPlayerState.origin[i] < mins[i] ) {
+				v[i] = mins[i] - cg.predictedPlayerState.origin[i];
+			} else if ( cg.predictedPlayerState.origin[i] > maxs[i] ) {
+				v[i] = maxs[i] - cg.predictedPlayerState.origin[i];
+			} else {
+				v[i] = 0;
+			}
+		}
+		if( v[0] == 0 && v[1] == 0 && v[2] == 0 )
+			angle2 = cg.predictedPlayerState.viewangles[YAW];
+		else
+			angle2 = vectoyaw(v);
 	}
-	if( v[0] == 0 && v[1] == 0 && v[2] == 0 )
-		angle2 = cg.predictedPlayerState.viewangles[YAW];
-	else
-		angle2 = vectoyaw(v);
 
 	if (cg_checkpointArrowMode.integer == 1){
 		AngleVectors(cg.refdefViewAngles, forward, NULL, NULL);
@@ -532,6 +537,10 @@ static float CG_DrawLaps( float y ) {
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
+
+	if ( cgs.laplimit <= 1 ) {
+		return y;
+	}
 
 	curLap = cent->currentLap;
 	numLaps = cgs.laplimit;

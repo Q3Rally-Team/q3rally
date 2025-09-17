@@ -18,10 +18,10 @@ bots "Tony Steve Tanya Zack Jennifer Ivan Tobias"
 starts "8"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
 observerspots "1"
@@ -33,10 +33,10 @@ weapons "All"
 powerups "All"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Good"

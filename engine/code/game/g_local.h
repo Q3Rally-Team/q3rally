@@ -525,6 +525,10 @@ typedef struct {
         float                   cpDist[MAX_GENTITIES];
         gentity_t       *checkpoints[MAX_GENTITIES];
         float                   trackLength;
+        vec3_t                  startOrigin;
+        vec3_t                  finishOrigin;
+        qboolean                hasStart;
+        qboolean                hasFinish;
 
         int                     testModelID;
 // END

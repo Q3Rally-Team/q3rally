@@ -17,6 +17,9 @@ bots "Zack Samuel Carla Tobias Josh"
 //PLAYER STARTS
 starts "8"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "0 min 32 sec"
 

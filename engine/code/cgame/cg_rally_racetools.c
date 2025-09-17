@@ -30,15 +30,21 @@ void CG_NewLapTime( int client, int lap, int time ) {
 
 	cent = &cg_entities[client];
 
-	if ((time - cent->startLapTime) < cent->bestLapTime || cent->bestLapTime == 0){
-		// New bestlap
-		cent->bestLapTime = (time - cent->startLapTime);
-		cent->bestLap = cent->currentLap;
+	// Ignore the initial lap time that arrives when the race starts. During
+	// that update we have not actually completed a lap yet, so skip best lap
+	// bookkeeping and the accompanying message until we advance beyond the
+	// opening lap.
+	if ( lap > 1 || cent->currentLap > 1 ) {
+		if ((time - cent->startLapTime) < cent->bestLapTime || cent->bestLapTime == 0){
+			// New bestlap
+			cent->bestLapTime = (time - cent->startLapTime);
+			cent->bestLap = cent->currentLap;
 
-		if ( client == cg.snap->ps.clientNum ) {
-			t = getStringForTime( cent->bestLapTime );
+			if ( client == cg.snap->ps.clientNum ) {
+				t = getStringForTime( cent->bestLapTime );
 
-			Com_Printf("You got a personal record lap time of %s!\n", t);
+				Com_Printf("You got a personal record lap time of %s!\n", t);
+			}
 		}
 	}
 

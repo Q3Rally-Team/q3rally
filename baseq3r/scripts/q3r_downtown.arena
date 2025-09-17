@@ -17,6 +17,9 @@ bots "Tobias Josh Bee Paul Ivan"
 //PLAYER STARTS
 starts "8"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "1 min 04 sec"
 

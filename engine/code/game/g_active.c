@@ -1590,7 +1590,7 @@ void ClientThink_real( gentity_t *ent ) {
                                float dist, segs;
                                VectorSubtract( cp->s.origin, client->ps.origin, v );
                                dist = VectorLength( v );
-                               segs = level.cpDist[level.numCheckpoints-1] - level.cpDist[next-1];
+                               segs = level.trackLength - level.cpDist[next-1];
                                dist += segs;
                                if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
                                        int lapsRemaining = level.numberOfLaps - ent->currentLap;
@@ -1598,9 +1598,17 @@ void ClientThink_real( gentity_t *ent ) {
                                }
                                client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
                        }
+               } else if ( level.hasFinish ) {
+                       float dist = Distance( level.finishOrigin, client->ps.origin );
+                       client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
                } else {
                        client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
                }
+       } else if ( level.hasFinish ) {
+
+               float dist = Distance( level.finishOrigin, client->ps.origin );
+
+               client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
        } else {
                client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
        }

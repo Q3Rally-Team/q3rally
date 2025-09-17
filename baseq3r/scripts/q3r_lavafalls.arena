@@ -17,6 +17,9 @@ bots "Steve Paul Tanya Kuro Janine"
 //PLAYER STARTS
 starts "14"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "1 min 07 sec"
 

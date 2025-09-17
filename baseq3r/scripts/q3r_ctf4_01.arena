@@ -18,13 +18,13 @@ type "q3r_ctf4"
 starts "8"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots " "
+observerspots ""
 
 //WEAPONS
 weapons ""
@@ -33,10 +33,10 @@ weapons ""
 powerups ""
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport ""

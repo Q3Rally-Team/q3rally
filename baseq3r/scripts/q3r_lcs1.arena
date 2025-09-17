@@ -18,13 +18,13 @@ bots "Chloe Jim Zack Paul Tobias Josh Tony Steve Paul Tanya Kuro"
 starts "Too many"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots " "
+observerspots ""
 
 //WEAPONS
 weapons "All"
@@ -33,10 +33,10 @@ weapons "All"
 powerups "No"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Bad"

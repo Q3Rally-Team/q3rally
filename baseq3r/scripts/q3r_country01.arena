@@ -17,6 +17,9 @@ bots "Bee Dean Minori Zack Tanya"
 //PLAYER STARTS
 starts "9"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "55 sec"
 

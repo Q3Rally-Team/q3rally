@@ -17,6 +17,9 @@ bots "Ivan Tony Bee Tobias Steve"
 //PLAYER STARTS
 starts "12"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "28 sec"
 

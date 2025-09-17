@@ -17,6 +17,9 @@ bots "Zack Kuro Paul Minori Josh"
 //PLAYER STARTS
 starts "8"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "11 & 13 & 31 sec"
 

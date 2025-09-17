@@ -500,6 +500,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                              score_t *score, int rank, float fade, 
                              qboolean isCompact) {
     clientInfo_t *ci;
+    centity_t *cent;
     char buffer[32];
     int totalTime, lapTime, avatarSize, rowHeight;
     char *timeStr, *lapTimeStr;
@@ -522,6 +523,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
     readyColor[0] = 0.3f; readyColor[1] = 0.8f; readyColor[2] = 0.3f; readyColor[3] = fade;
     
     ci = &cgs.clientinfo[score->client];
+    cent = &cg_entities[score->client];
     rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
     avatarSize = rowHeight - 8;
     isRacingMode = CG_IsRacingGametype();
@@ -607,8 +609,14 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             } else {
-                if (cg_entities[score->client].finishRaceTime) {
-                    totalTime = cg_entities[score->client].finishRaceTime - score->time;
+                if (cent->finishRaceTime) {
+                    if (isRacingMode && cgs.laplimit <= 1 && cent->startLapTime > 0) {
+                        totalTime = cent->finishRaceTime - cent->startLapTime;
+                    } else {
+                        totalTime = cent->finishRaceTime - score->time;
+                    }
+                } else if (isRacingMode && cgs.laplimit <= 1 && cent->startLapTime > 0) {
+                    totalTime = cg.time - cent->startLapTime;
                 } else if (score->time) {
                     totalTime = cg.time - score->time;
                 } else {

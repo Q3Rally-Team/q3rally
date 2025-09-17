@@ -18,13 +18,13 @@ bots "Jim Bobby Sam Tobias"
 starts "4"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
-observerspots " "
+observerspots ""
 
 //WEAPONS
 weapons "RL,PG"
@@ -33,10 +33,10 @@ weapons "RL,PG"
 powerups "0"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Good"

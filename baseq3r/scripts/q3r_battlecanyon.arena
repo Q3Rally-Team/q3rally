@@ -18,10 +18,10 @@ bots "Kuro Tobias Vlad Samuel Chloe Tony"
 starts "8"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
-checkpoints " "
+checkpoints ""
 
 //OBSERVER SPOTS
 observerspots "1"
@@ -33,13 +33,13 @@ weapons "RL,PG,RG,SG,LG"
 powerups "2 & Mines"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
-botsupport " "
+botsupport ""
 
 //TEAMS
 teams "All"

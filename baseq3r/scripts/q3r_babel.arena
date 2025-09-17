@@ -18,7 +18,7 @@ bots "Dean Minori Vlad Emma Tobias Alexandra Sam"
 starts "16"
 
 //LAPTIME
-laptime " "
+laptime ""
 
 //CHECKPOINTS
 checkpoints "20"
@@ -33,10 +33,10 @@ weapons "SG,RG,PG,RL,BFG"
 powerups "0"
 
 //REVERSABLE
-reversable " "
+reversable ""
 
 //TRACK LENGTHS
-tracklengths " "
+tracklengths ""
 
 //BOT SUPPORTS
 botsupport "Bad"

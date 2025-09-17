@@ -17,6 +17,9 @@ bots "Tony Minori Carla Chloe Vlad"
 //PLAYER STARTS
 starts "16"
 
+//LAPS
+laps "3"
+
 //LAPTIME
 laptime "34 sec & 45 sec"
 
