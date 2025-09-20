@@ -26,6 +26,43 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // be a valid snapshot this frame
 
 #include "cg_local.h"
+
+#ifdef Q3_VM
+int CG_EliminationMsLeft( void ) {
+    int msLeft;
+
+    if ( cgs.eliminationMsRemaining <= 0 ) {
+        return 0;
+    }
+
+    if ( cgs.eliminationLastUpdateTime <= 0 ) {
+        return cgs.eliminationMsRemaining;
+    }
+
+    msLeft = cgs.eliminationMsRemaining - ( cg.time - cgs.eliminationLastUpdateTime );
+    if ( msLeft < 0 ) {
+        msLeft = 0;
+    }
+
+    return msLeft;
+}
+
+int CG_EliminationDisplayRound( void ) {
+    int round;
+
+    round = cgs.eliminationRound;
+    if ( round < 0 ) {
+        round = 0;
+    }
+
+    if ( cgs.eliminationActive && cgs.eliminationRemainingPlayers > 1 ) {
+        round++;
+    }
+
+    return round;
+}
+#endif
+
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"
 
@@ -58,6 +95,8 @@ static int CG_ValidOrder(const char *p) {
 	return -1;
 }
 #endif
+
+static void CG_ParseEliminationInfo( void );
 
 /*
 =================
@@ -210,6 +249,8 @@ void CG_ParseServerinfo( void ) {
 	trap_Cvar_Set("g_redTeam", cgs.redTeam);
 	Q_strncpyz( cgs.blueTeam, Info_ValueForKey( info, "g_blueTeam" ), sizeof(cgs.blueTeam) );
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
+
+	CG_ParseEliminationInfo();
 }
 
 /*
@@ -264,6 +305,50 @@ static void CG_ParseSigilStatus( void ) {
 	}
 }
 
+static void CG_ParseEliminationInfo( void ) {
+	const char *str;
+	int active = 0;
+	int remaining = 0;
+	int round = 0;
+	int msLeft = 0;
+	int parsed;
+
+	str = CG_ConfigString( CS_ELIMINATION_INFO );
+
+	if ( str && *str ) {
+		parsed = sscanf( str, "%i %i %i %i", &active, &remaining, &round, &msLeft );
+		if ( parsed < 4 ) {
+		active = 0;
+		remaining = 0;
+		round = 0;
+		msLeft = 0;
+		}
+	}
+
+	if ( active < 0 ) {
+		active = 0;
+	}
+	if ( remaining < 0 ) {
+		remaining = 0;
+	}
+	if ( round < 0 ) {
+		round = 0;
+	}
+	if ( msLeft < 0 ) {
+		msLeft = 0;
+	}
+
+	if ( cgs.gametype != GT_ELIMINATION ) {
+		active = 0;
+	}
+
+	cgs.eliminationActive = active;
+	cgs.eliminationRemainingPlayers = remaining;
+	cgs.eliminationRound = round;
+	cgs.eliminationMsRemaining = msLeft;
+	cgs.eliminationLastUpdateTime = active ? cg.time : 0;
+}
+
 /*
 ===============================================================
 CG_SetConfigValues
@@ -281,7 +366,8 @@ cgs.scores3 = atoi( CG_ConfigString( CS_SCORES3 ) );
 cgs.scores4 = atoi( CG_ConfigString( CS_SCORES4 ) );
 // END
 cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
-cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
+	cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
+	CG_ParseEliminationInfo();
 if( cgs.gametype == GT_CTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
 		cgs.redflag = s[0] - '0';
@@ -376,15 +462,17 @@ static void CG_ConfigStringModified( void ) {
 	} else if ( num == CS_SCORES2 ) {
 		cgs.scores2 = atoi( str );
 // Q3Rally Code Start
-	} else if ( num == CS_SCORES3 ) {
-		cgs.scores3 = atoi( str );
-	} else if ( num == CS_SCORES4 ) {
-		cgs.scores4 = atoi( str );
+        } else if ( num == CS_SCORES3 ) {
+                cgs.scores3 = atoi( str );
+        } else if ( num == CS_SCORES4 ) {
+                cgs.scores4 = atoi( str );
 // END
-	} else if ( num == CS_TRACKLENGTH ) {
-		cgs.trackLength = atof( str );
-	} else if ( num == CS_LEVEL_START_TIME ) {
-		cgs.levelStartTime = atoi( str );
+        } else if ( num == CS_ELIMINATION_INFO ) {
+                CG_ParseEliminationInfo();
+        } else if ( num == CS_TRACKLENGTH ) {
+                cgs.trackLength = atof( str );
+        } else if ( num == CS_LEVEL_START_TIME ) {
+                cgs.levelStartTime = atoi( str );
 	} else if ( num == CS_VOTE_TIME ) {
 		cgs.voteTime = atoi( str );
 		cgs.voteModified = qtrue;

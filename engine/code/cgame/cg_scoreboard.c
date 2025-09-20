@@ -90,9 +90,10 @@ Helper function to determine if current gametype is racing-based
 =================
 */
 static qboolean CG_IsRacingGametype(void) {
-    return (cgs.gametype == GT_RACING || 
+    return (cgs.gametype == GT_RACING ||
             cgs.gametype == GT_TEAM_RACING ||
-            cgs.gametype == GT_RACING_DM || 
+            cgs.gametype == GT_ELIMINATION ||
+            cgs.gametype == GT_RACING_DM ||
             cgs.gametype == GT_TEAM_RACING_DM);
 }
 
@@ -143,7 +144,10 @@ static void CG_InitScoreboardColumns(void) {
     switch (cgs.gametype) {
         case GT_RACING:
         case GT_TEAM_RACING:
-            /* Pure racing - only times matter */
+        case GT_ELIMINATION:
+            /* Pure racing - only positions and times matter */
+            showScore = qfalse;
+            showDeaths = qfalse;
             showTimes = qtrue;
             showLapTimes = qtrue;
             break;
@@ -238,7 +242,7 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_TOTALTIME].width = COL_TOTALTIME_WIDTH;
         
         /* Different header based on racing type */
-        if (cgs.gametype == GT_RACING || cgs.gametype == GT_TEAM_RACING) {
+        if (cgs.gametype == GT_RACING || cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_TEAM_RACING) {
             columns[SBCOL_TOTALTIME].header = "RACE TIME";
         } else {
             columns[SBCOL_TOTALTIME].header = "TOTAL";
@@ -699,36 +703,47 @@ Draw game information header with gametype-specific info
 =================
 */
 static void CG_DrawModernGameInfo(int y, float fade) {
-    char *gameInfo;
+    char mainInfo[128];
+    char eliminationInfo[128];
+    char combinedInfo[256];
+    char driversText[8];
+    char roundText[8];
     int x, w;
     int leadingTeam;
-    char *teamName;
+    const char *teamName;
     vec4_t titleColor;
     qboolean isRacing;
-    
+    int drivers;
+    int displayRound;
+    int msLeft;
+    qboolean showCountdown;
+
     /* Initialize title color */
     titleColor[0] = 1.0f; titleColor[1] = 1.0f; titleColor[2] = 1.0f; titleColor[3] = fade;
-    
+
     isRacing = CG_IsRacingGametype();
-    
+
+    mainInfo[0] = '\0';
+    eliminationInfo[0] = '\0';
+
     /* Draw current rank/status */
     if (!CG_IsTeamGametype()) {
         if (cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR) {
             if (isRacing) {
-                gameInfo = va("Position %s",
-                             CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1));
+                Com_sprintf(mainInfo, sizeof(mainInfo), "Position %s",
+                            CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1));
             } else {
-                gameInfo = va("%s place with %d frags",
-                             CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1),
-                             cg.snap->ps.persistant[PERS_SCORE]);
+                Com_sprintf(mainInfo, sizeof(mainInfo), "%s place with %d frags",
+                            CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1),
+                            cg.snap->ps.persistant[PERS_SCORE]);
             }
         } else {
-            gameInfo = "Spectating";
+            Q_strncpyz(mainInfo, "Spectating", sizeof(mainInfo));
         }
     } else {
         /* Team game info */
         leadingTeam = GetTeamAtRank(1);
-        
+
         switch (leadingTeam) {
             case TEAM_RED:    teamName = "Red Team"; break;
             case TEAM_BLUE:   teamName = "Blue Team"; break;
@@ -736,17 +751,66 @@ static void CG_DrawModernGameInfo(int y, float fade) {
             case TEAM_YELLOW: teamName = "Yellow Team"; break;
             default:          teamName = "Unknown Team"; break;
         }
-        
+
         if (TiedWinner()) {
-            gameInfo = va("Teams tied");
+            Q_strncpyz(mainInfo, "Teams tied", sizeof(mainInfo));
         } else {
-            gameInfo = va("%s in lead", teamName);
+            Com_sprintf(mainInfo, sizeof(mainInfo), "%s in lead", teamName);
         }
     }
-    
-    w = CG_DrawStrlen(gameInfo) * BIGCHAR_WIDTH;
+
+    if (cgs.gametype == GT_ELIMINATION) {
+        drivers = cgs.eliminationRemainingPlayers;
+        if (drivers < 0) {
+            drivers = 0;
+        }
+
+        displayRound = CG_EliminationDisplayRound();
+        msLeft = CG_EliminationMsLeft();
+        showCountdown = (cgs.eliminationActive && drivers > 1 && msLeft > 0);
+
+        if (drivers > 0) {
+            Com_sprintf(driversText, sizeof(driversText), "%i", drivers);
+        } else {
+            Q_strncpyz(driversText, "--", sizeof(driversText));
+        }
+
+        if (displayRound > 0) {
+            Com_sprintf(roundText, sizeof(roundText), "%i", displayRound);
+        } else {
+            Q_strncpyz(roundText, "--", sizeof(roundText));
+        }
+
+        if (showCountdown) {
+            int secondsLeft = (msLeft + 999) / 1000;
+            Com_sprintf(eliminationInfo, sizeof(eliminationInfo),
+                        "Drivers: %s  Round: %s  Elim in %is",
+                        driversText, roundText, secondsLeft);
+        } else {
+            Com_sprintf(eliminationInfo, sizeof(eliminationInfo),
+                        "Drivers: %s  Round: %s",
+                        driversText, roundText);
+        }
+    }
+
+    if (eliminationInfo[0]) {
+        if (mainInfo[0]) {
+            Com_sprintf(combinedInfo, sizeof(combinedInfo), "%s - %s",
+                        mainInfo, eliminationInfo);
+        } else {
+            Q_strncpyz(combinedInfo, eliminationInfo, sizeof(combinedInfo));
+        }
+    } else {
+        Q_strncpyz(combinedInfo, mainInfo, sizeof(combinedInfo));
+    }
+
+    if (!combinedInfo[0]) {
+        Q_strncpyz(combinedInfo, " ", sizeof(combinedInfo));
+    }
+
+    w = CG_DrawStrlen(combinedInfo) * BIGCHAR_WIDTH;
     x = (SCREEN_WIDTH - w) / 2;
-    CG_DrawBigStringColor(x, y, gameInfo, titleColor);
+    CG_DrawBigStringColor(x, y, combinedInfo, titleColor);
 }
 
 /*
@@ -820,7 +884,7 @@ qboolean CG_DrawModernScoreboard(void) {
         /* Different message based on gametype */
         if (cgs.gametype == GT_DERBY) {
             fragMsg = va("Wrecked by %s", cg.killerName);
-        } else if (cgs.gametype == GT_RACING || cgs.gametype == GT_TEAM_RACING) {
+        } else if (cgs.gametype == GT_RACING || cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_TEAM_RACING) {
             fragMsg = va("Crashed by %s", cg.killerName);
         } else {
             fragMsg = va("Eliminated by %s", cg.killerName);
@@ -970,6 +1034,7 @@ void CG_DrawScoreboardGameModeInfo(void) {
     switch (cgs.gametype) {
         case GT_RACING:           gametypeName = "Racing"; break;
         case GT_RACING_DM:        gametypeName = "Racing Deathmatch"; break;
+        case GT_ELIMINATION:      gametypeName = "Elimination"; break;
         case GT_DERBY:            gametypeName = "Demolition Derby"; break;
         case GT_DEATHMATCH:       gametypeName = "Deathmatch"; break;
         case GT_LCS:              gametypeName = "Last Car Standing"; break;
@@ -1019,6 +1084,7 @@ const char* CG_GetGametypeScoreLabel(void) {
         case GT_LCS:
             return "SCORE";
         case GT_RACING:
+        case GT_ELIMINATION:
         case GT_TEAM_RACING:
             return "TIME";
         case GT_RACING_DM:

@@ -219,6 +219,9 @@ static void CG_Obituary( entityState_t *ent ) {
 	case MOD_HIGH_FORCES:
 		message = "put a little too much stress on his car";
 		break;
+	case MOD_ELIMINATION:
+		message = "was eliminated";
+		break;
 // Q3Rally Code END
 	default:
 		message = NULL;

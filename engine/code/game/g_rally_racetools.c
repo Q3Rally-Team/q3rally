@@ -164,23 +164,59 @@ float GetDistanceToMarker( gentity_t *player, float markerNumber )
 {
 	gentity_t		*ent = NULL;
 	vec3_t			dist;
+	vec3_t			targetOrigin;
+	qboolean			haveTarget = qfalse;
+	int			markerId;
 
-	if ( !markerNumber )
+	if ( markerNumber <= 0.0f )
 		return 1<<30;
 
-	while ( (ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL )
-	{
-		if( ent->number == markerNumber )
-			break;
+	markerId = (int)markerNumber;
+
+	if ( markerId > level.numCheckpoints ) {
+		if ( level.finishLine && level.finishLine->inuse ) {
+			VectorCopy( level.finishLine->s.origin, targetOrigin );
+			haveTarget = qtrue;
+		} else if ( level.hasFinish ) {
+			VectorCopy( level.finishOrigin, targetOrigin );
+			haveTarget = qtrue;
+		}
+
+		if ( !haveTarget ) {
+			while ( ( ent = G_Find (ent, FOFS(classname), "rally_finish" ) ) != NULL ) {
+				if ( ent->number == markerId || ent->number == 0 ) {
+					level.finishLine = ent;
+					VectorCopy( ent->s.origin, level.finishOrigin );
+					level.hasFinish = qtrue;
+					VectorCopy( ent->s.origin, targetOrigin );
+					haveTarget = qtrue;
+					break;
+				}
+			}
+		}
+	} else if ( markerId > 0 && markerId <= level.numCheckpoints ) {
+		if ( level.checkpoints[ markerId - 1 ] && level.checkpoints[ markerId - 1 ]->inuse ) {
+			VectorCopy( level.checkpoints[ markerId - 1 ]->s.origin, targetOrigin );
+			haveTarget = qtrue;
+		}
+
+		if ( !haveTarget ) {
+			while ( ( ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL ) {
+				if ( ent->number == markerId ) {
+					VectorCopy( ent->s.origin, targetOrigin );
+					haveTarget = qtrue;
+					break;
+				}
+			}
+		}
 	}
 
-	if ( ent )
-	{
-		VectorSubtract(player->r.currentOrigin, ent->s.origin, dist);
-		return VectorLength(dist);
+	if ( haveTarget ) {
+		VectorSubtract( player->r.currentOrigin, targetOrigin, dist );
+		return VectorLength( dist );
 	}
-	else
-		return 1<<30;
+
+	return 1<<30;
 }
 
 /*
@@ -193,32 +229,70 @@ IsCarAhead
 qboolean IsCarAhead(gentity_t *one, gentity_t *two){
 	float		dist1, dist2;
 	int			time1, time2;
+	qboolean	eliminationMode;
+	qboolean	oneEliminated, twoEliminated;
+	qboolean	oneFinished, twoFinished;
 
-	if (one->client->finishRaceTime && two->client->finishRaceTime){
-		time1 = one->client->finishRaceTime - level.startRaceTime;
-		if (one->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
-			time1 -= (one->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
+	eliminationMode = ( g_gametype.integer == GT_ELIMINATION || g_gametype.integer == GT_LCS );
+	oneEliminated = qfalse;
+	twoEliminated = qfalse;
+
+	if ( eliminationMode ) {
+		if ( one->client->finishRaceTime && one->client->ps.stats[STAT_HEALTH] <= 0 ) {
+			oneEliminated = qtrue;
 		}
 
-		time2 = two->client->finishRaceTime - level.startRaceTime;
-		if (two->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
-			time2 -= (two->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
+		if ( two->client->finishRaceTime && two->client->ps.stats[STAT_HEALTH] <= 0 ) {
+			twoEliminated = qtrue;
 		}
 
-		if (time1 < time2){ // use frag modified times
-//			Com_Printf("Car 1 finished the race with less time than car 2\n");
-			return qtrue;
-		}
-		else {
-//			Com_Printf("Car 2 finished the race with less time than car 1\n");
+		if ( oneEliminated && !twoEliminated ) {
 			return qfalse;
 		}
+
+		if ( twoEliminated && !oneEliminated ) {
+			return qtrue;
+		}
+
+		if ( oneEliminated && twoEliminated ) {
+			if ( one->client->finishRaceTime > two->client->finishRaceTime ) {
+				return qtrue;
+			}
+
+			if ( two->client->finishRaceTime > one->client->finishRaceTime ) {
+				return qfalse;
+			}
+		}
 	}
-	else if (one->client->finishRaceTime){
+
+	oneFinished = ( one->client->finishRaceTime && ( !eliminationMode || !oneEliminated ) );
+	twoFinished = ( two->client->finishRaceTime && ( !eliminationMode || !twoEliminated ) );
+
+	if (oneFinished && twoFinished){
+			time1 = one->client->finishRaceTime - level.startRaceTime;
+			if (one->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
+					time1 -= (one->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
+			}
+
+			time2 = two->client->finishRaceTime - level.startRaceTime;
+			if (two->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
+					time2 -= (two->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
+			}
+
+			if (time1 < time2){ // use frag modified times
+//				Com_Printf("Car 1 finished the race with less time than car 2\n");
+				return qtrue;
+			}
+			else {
+//				Com_Printf("Car 2 finished the race with less time than car 1\n");
+				return qfalse;
+			}
+	}
+	else if (oneFinished){
 //		Com_Printf("Car 1 finished the race, car 2 hasn't\n");
 		return qtrue;
 	}
-	else if (two->client->finishRaceTime){
+	else if (twoFinished){
 //		Com_Printf("Car 2 finished the race, car 1 hasn't\n");
 		return qfalse;
 	}
@@ -238,6 +312,42 @@ qboolean IsCarAhead(gentity_t *one, gentity_t *two){
 //			Com_Printf("Car 1 is %f to marker %i and car 2 is %f\n", dist1, one->number, dist2);
 			return qfalse;
 		}
+
+		if ( dist1 == dist2 || ( dist1 == (float)( 1 << 30 ) && dist2 == (float)( 1 << 30 ) ) ) {
+			int last1 = one->client->lastCheckpointTime;
+			int last2 = two->client->lastCheckpointTime;
+
+			if ( last1 != last2 ) {
+				return ( last1 < last2 );
+			}
+
+			if ( last1 == 0 && last2 == 0 ) {
+				int remain1 = one->client->ps.stats[STAT_DISTANCE_REMAIN];
+				int remain2 = two->client->ps.stats[STAT_DISTANCE_REMAIN];
+
+				if ( remain1 != remain2 ) {
+					return ( remain1 < remain2 );
+				}
+
+				if ( level.hasFinish ) {
+					vec3_t delta1, delta2;
+					float finishDist1, finishDist2;
+
+					VectorSubtract( level.finishOrigin, one->r.currentOrigin, delta1 );
+					VectorSubtract( level.finishOrigin, two->r.currentOrigin, delta2 );
+					finishDist1 = VectorLength( delta1 );
+					finishDist2 = VectorLength( delta2 );
+
+					if ( finishDist1 > finishDist2 ) {
+						return qfalse;
+					}
+
+					if ( finishDist1 < finishDist2 ) {
+						return qtrue;
+					}
+				}
+			}
+		}
 	}
 
 	return qtrue;
@@ -256,6 +366,7 @@ void CalculatePlayerPositions( void )
 	gentity_t	*ent, *leader, *cur, *last;
 	int			position;
 	qboolean	positionChanged;
+	qboolean	eliminationMode;
 
 //	if (level.startRaceTime + FRAMETIME > level.time || level.startRaceTime == 0){
 //		return;
@@ -265,6 +376,7 @@ void CalculatePlayerPositions( void )
 	}
 
 	positionChanged = qfalse;
+	eliminationMode = ( g_gametype.integer == GT_ELIMINATION || g_gametype.integer == GT_LCS );
 	leader = ent = last = NULL;
 	while ( (ent = G_Find (ent, FOFS(classname), "player")) != NULL )
 	{
@@ -272,6 +384,11 @@ void CalculatePlayerPositions( void )
 //		if ( isRaceObserver(ent->s.number) ) continue;
 
 		ent->carBehind = NULL;
+
+		if ( eliminationMode && ent->client->finishRaceTime ) {
+			// eliminated drivers already have their knockout slot locked in
+			continue;
+		}
 
 		if ( leader == NULL )
 		{
@@ -376,6 +493,7 @@ void RallyStarter_Think( gentity_t *ent ){
 			level.startRaceTime = level.time;
 			trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 			CenterPrint_All("GO..");
+			G_StartEliminationMode();
 
 			G_FreeEntity( ent );
 			return;
@@ -435,6 +553,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		RaceCountdown("GO!", 0);
 
 		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.wav") );
+		G_StartEliminationMode();
 
 		if (g_gametype.integer != GT_DERBY)
 			ent->think = RallyRace_Think;

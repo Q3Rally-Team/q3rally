@@ -6,6 +6,21 @@ Q3Rally is a standalone game based on ioquake3.
 
 For compiling, see [engine/README.md](engine/README.md).
 
+## Elimination Mode
+
+Elimination races periodically remove the driver at the back of the pack until
+only one racer remains. After the start lights go green, the server waits the
+duration defined in `g_eliminationStartDelay` before scheduling the first
+elimination (default `30000`, i.e., 30 seconds). Once active, eliminations are
+triggered every `g_eliminationInterval` milliseconds (default `15000`, or 15
+seconds). Drivers receive an on-screen warning `g_eliminationWarning`
+milliseconds before each cut (default `5000`, or 5 seconds); set this to `0` if
+you want an immediate drop with no countdown.
+
+These CVars can be adjusted in your server configuration to tune pacing for
+public servers or competitive events. For a step-by-step server setup walkthrough
+see the [Q3Rally Dedicated Server Setup Guide](readme/q3rally_dedicated_server_guide.txt).
+
 ## Vehicle balancing
 
 Servers can enforce basic balancing rules for custom vehicles. Two cvars

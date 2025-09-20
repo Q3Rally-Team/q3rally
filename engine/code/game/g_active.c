@@ -1631,7 +1631,10 @@ void ClientThink_real( gentity_t *ent ) {
 			if ( g_forcerespawn.integer > 0 && 
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
 // STONELANCE
-				if ((g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS) || !ent->client->finishRaceTime)
+				if ( (g_gametype.integer != GT_DERBY
+					&& g_gametype.integer != GT_LCS
+					&& g_gametype.integer != GT_ELIMINATION)
+					|| !ent->client->finishRaceTime )
 // END
 				ClientRespawn( ent );
 				return;
@@ -1640,7 +1643,10 @@ void ClientThink_real( gentity_t *ent ) {
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 // STONELANCE
-				if ((g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS) || !ent->client->finishRaceTime)
+				if ( (g_gametype.integer != GT_DERBY
+					&& g_gametype.integer != GT_LCS
+					&& g_gametype.integer != GT_ELIMINATION)
+					|| !ent->client->finishRaceTime )
 // END
 				ClientRespawn( ent );
 			}

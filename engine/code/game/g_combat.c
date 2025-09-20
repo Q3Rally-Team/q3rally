@@ -366,9 +366,10 @@ char	*modNames[] = {
 	"MOD_MINE",
 	"MOD_POISON",
 	"MOD_FIRE",
-	"MOD_FLAME_THROWER",
+	"MOD_GRAPPLE",
+	"MOD_ELIMINATION",
+	"MOD_BREAKABLE_SPLASH"
 // Q3Rally Code END
-	"MOD_GRAPPLE"
 };
 
 #ifdef MISSIONPACK
@@ -530,11 +531,15 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->client->ps.pm_type = PM_DEAD;
 
 // STONELANCE
-	if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS) && level.startRaceTime){
+	if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime){
 		self->client->finishRaceTime = level.time;
 		trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
 	}
 // END
+
+	if ( g_gametype.integer == GT_ELIMINATION && level.startRaceTime ) {
+		G_RegisterEliminationDeath( self );
+	}
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -578,7 +583,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		attacker->client->lastkilled_client = self->s.number;
 
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			AddScore( attacker, self->r.currentOrigin, -1 );
+			if ( meansOfDeath != MOD_ELIMINATION ) {
+				AddScore( attacker, self->r.currentOrigin, -1 );
+			}
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
 
@@ -616,9 +623,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
                         attacker->client->ps.stats[STAT_FUEL] = (int)attacker->client->car.fuel;
 
                 }
-        } else {
-                AddScore( self, self->r.currentOrigin, -1 );
-        }
+	} else if ( meansOfDeath != MOD_ELIMINATION ) {
+		AddScore( self, self->r.currentOrigin, -1 );
+	}
 
 	// Add team bonuses
 	Team_FragBonuses(self, inflictor, attacker);

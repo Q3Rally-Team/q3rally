@@ -423,6 +423,10 @@ ent->think = Think_Finish;
 ent->nextthink = level.time + 300;
 ent->s.frame = 0;
 
+level.finishLine = ent;
+VectorCopy( ent->s.origin, level.finishOrigin );
+level.hasFinish = qtrue;
+
 trap_LinkEntity (ent);
 }
 

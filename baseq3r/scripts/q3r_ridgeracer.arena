@@ -9,7 +9,7 @@ longname "Ridge Racer"
 author "TheBigBuu & insellium"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm q3r_elimination"
 
 //CUSTOM BOTS
 bots "Zack Samuel Carla Tobias Josh"

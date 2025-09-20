@@ -190,6 +190,102 @@ void CG_DrawHUD_Positions(float x, float y){
 	}
 }
 
+static void CG_DrawHUD_EliminationStatus(float y)
+{
+        const float boxWidth = 196.0f;
+        const float baseX = 640.0f - boxWidth;
+        char text[64];
+        vec4_t countdownColor;
+        int drivers;
+        int displayRound;
+        int msLeft;
+        int secondsLeft;
+        qboolean showCountdown;
+        const float lineAdvance = TINYCHAR_HEIGHT + 8.0f;
+        const float tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
+
+	if ( cgs.gametype != GT_ELIMINATION ) {
+		return;
+	}
+
+	drivers = cgs.eliminationRemainingPlayers;
+	if ( drivers < 0 ) {
+		drivers = 0;
+	}
+
+        CG_FillRect(baseX, y, boxWidth, 18, bgColor);
+        {
+                const char *label = "DRIVERS LEFT:";
+                const float labelX = baseX + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                if ( drivers > 0 ) {
+                        Com_sprintf( text, sizeof( text ), "%i", drivers );
+                } else {
+                        Q_strncpyz( text, "--", sizeof( text ) );
+                }
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+        }
+
+        y += lineAdvance;
+
+        CG_FillRect(baseX, y, boxWidth, 18, bgColor);
+        displayRound = CG_EliminationDisplayRound();
+        {
+                const char *label = "ROUND:";
+                const float labelX = baseX + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                if ( displayRound > 0 ) {
+                        Com_sprintf( text, sizeof( text ), "%i", displayRound );
+                } else {
+                        Q_strncpyz( text, "--", sizeof( text ) );
+                }
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+        }
+
+        y += lineAdvance;
+
+        CG_FillRect(baseX, y, boxWidth, 18, bgColor);
+        showCountdown = ( cgs.eliminationActive && drivers > 1 );
+        if ( showCountdown ) {
+                const char *label = "ELIMINATION IN";
+                const float labelX = baseX + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                msLeft = CG_EliminationMsLeft();
+                secondsLeft = ( msLeft + 999 ) / 1000;
+                if ( secondsLeft < 0 ) {
+                        secondsLeft = 0;
+                }
+
+                Vector4Copy(colorWhite, countdownColor);
+                if ( secondsLeft <= 5 ) {
+                        Vector4Copy(colorRed, countdownColor);
+                } else if ( secondsLeft <= 10 ) {
+                        Vector4Copy(colorYellow, countdownColor);
+                }
+
+                Com_sprintf( text, sizeof( text ), "%i", secondsLeft );
+                CG_DrawTinyStringColor( labelX, y + 4, label, countdownColor );
+                CG_DrawTinyStringColor( valueX, y + 4, text, countdownColor );
+                CG_DrawTinyStringColor( valueX + CG_DrawStrlen( text ) * tinyCharWidth, y + 4, "S", countdownColor );
+        } else if ( cgs.eliminationActive && drivers <= 1 ) {
+                CG_DrawTinyStringColor( baseX + 10.0f, y + 4, "FINAL DRIVER!", colorWhite );
+        } else {
+                const char *label = "ELIMINATION IN";
+                const float labelX = baseX + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                Q_strncpyz( text, "--", sizeof( text ) );
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+                CG_DrawTinyStringColor( valueX + CG_DrawStrlen( text ) * tinyCharWidth, y + 4, " S", colorWhite );
+        }
+}
+
 /*
 ===============
 CG_DrawHUD_Laps
@@ -199,12 +295,23 @@ void CG_DrawHUD_Laps(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
-        if ( cgs.laplimit > 1 )
-                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
-        else
-                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i", cg_entities[cg.snap->ps.clientNum].currentLap), colorWhite);
+	{
+		const char *label = "LAP:";
+		char value[32];
+		const float labelX = x + 12.0f;
+		const float smallCharWidth = SMALLCHAR_WIDTH + 2.0f;
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * smallCharWidth;
+
+		CG_DrawSmallStringColor(labelX, y, label, colorWhite);
+		if ( cgs.laplimit > 1 )
+			Com_sprintf(value, sizeof(value), "%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit);
+		else
+			Com_sprintf(value, sizeof(value), "%i", cg_entities[cg.snap->ps.clientNum].currentLap);
+
+		CG_DrawSmallDigitalStringColor(valueX, y, value, colorWhite);
+	}
 }
+
 
 /*
 =======================
@@ -212,13 +319,17 @@ CG_DrawHUD_OpponentList
 =======================
 */
 void CG_DrawHUD_OpponentList(float x, float y){
-	centity_t	*cent, *other;
+	centity_t		*cent, *other;
 	char		player[64];
-	int			i, j, num;
+	int				i, j, num;
 	float		width, height;
 	int			startPos, endPos;
-	char		s[64];
+	int			maxPositions;
 	vec4_t		color;
+	const float	labelX = x + 12.0f;
+	const float	smallCharWidth = SMALLCHAR_WIDTH + 2.0f;
+	int			digits;
+	float		nameX;
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
@@ -230,10 +341,31 @@ void CG_DrawHUD_OpponentList(float x, float y){
 	width = 198;
 	height = 18;
 
+	maxPositions = cgs.numRacers > 0 ? cgs.numRacers : 1;
+
+	digits = 0;
+	while (maxPositions > 0) {
+		digits++;
+		maxPositions /= 10;
+	}
+
+	if (!digits) {
+		digits = 1;
+	}
+
+	nameX = labelX + (digits + 2) * smallCharWidth;
+
 	// draw your position
 	CG_FillRect(x, y, width, height, bgColor);
-	CG_DrawSmallDigitalStringColor(x, y, "POS:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 82, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
+	{
+		const char *label = "POS:";
+		char valueText[32];
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * smallCharWidth;
+
+		CG_DrawSmallStringColor(labelX, y, label, colorWhite);
+		Com_sprintf(valueText, sizeof(valueText), "%i/%i", cent->currentPosition, cgs.numRacers);
+		CG_DrawSmallDigitalStringColor(valueX, y, valueText, colorWhite);
+	}
 
 	y += 20;
 
@@ -284,12 +416,18 @@ void CG_DrawHUD_OpponentList(float x, float y){
 		CG_FillRect(x, y, width, height, color);
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
-		Com_sprintf(s, sizeof(s), " %i: %s", cgs.clientinfo[num].position, player);
-		CG_DrawSmallDigitalStringColor( x, y, s, colorWhite);
+		{
+			char prefix[16];
+
+			Com_sprintf(prefix, sizeof(prefix), "%*i:", digits, cgs.clientinfo[num].position);
+			CG_DrawSmallDigitalStringColor(labelX, y, prefix, colorWhite);
+			CG_DrawSmallStringColor(nameX, y, player, colorWhite);
+		}
 
 		y += 20;
 	}
 }
+
 
 /*
 =================
@@ -361,16 +499,16 @@ void CG_DrawHUD_DerbyList(float x, float y){
 	CG_FillRect(x, y, 120, 18, bgColor);
 
 	// name
-	CG_DrawTinyDigitalStringColor( x + 16, y, "P:", colorWhite);
+	CG_DrawTinyStringColor( x + 16, y, "P:", colorWhite);
 
 	// time
 //	CG_DrawTinyStringColor( x + 70, y, "TIME:", colorWhite);
 
 	// dmg dealt
-	CG_DrawTinyDigitalStringColor( x + 70, y, "DD:", colorWhite);
+	CG_DrawTinyStringColor( x + 70, y, "DD:", colorWhite);
 
 	// dmg taken
-	CG_DrawTinyDigitalStringColor( x + 100, y, "DT:", colorWhite);
+	CG_DrawTinyStringColor( x + 100, y, "DT:", colorWhite);
 
 	y += 20;
 
@@ -402,19 +540,19 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		time = getStringForTime(playTime);
 
 		// num
-		CG_DrawTinyDigitalStringColor( x + 2, y, va("%i", (i+1)), color);
+		CG_DrawTinyStringColor( x + 2, y, va("%i", (i+1)), color);
 
 		// name
-		CG_DrawTinyDigitalStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
+		CG_DrawTinyStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
 
 		// time
 //		CG_DrawTinyStringColor( x + 70, y, time, color);
 
 		// dmg dealt
-		CG_DrawTinyDigitalStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
+		CG_DrawTinyStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
 
 		// dmg taken
-		CG_DrawTinyDigitalStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
+		CG_DrawTinyStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
 
 		y += 20;
 	}
@@ -442,16 +580,20 @@ qboolean CG_DrawHUD( void ) {
 		trap_SendClientCommand( "score" );
 	}
 
-	switch(cgs.gametype){
-	default:
-	case GT_RACING:
-	case GT_TEAM_RACING:
-		CG_DrawHUD_Times(0, 112);
-		CG_DrawHUD_Positions(0, 228);
-		CG_DrawHUD_Laps(0, 304);
-		CG_DrawHUD_OpponentList(440, 130);
+        switch(cgs.gametype){
+        default:
+        case GT_RACING:
+        case GT_ELIMINATION:
+        case GT_TEAM_RACING:
+                CG_DrawHUD_Times(0, 112);
+                CG_DrawHUD_Positions(0, 228);
+                CG_DrawHUD_Laps(0, 304);
+                if (cgs.gametype == GT_ELIMINATION) {
+                        CG_DrawHUD_EliminationStatus(72);
+                }
+                CG_DrawHUD_OpponentList(440, 130);
 
-		break;
+                break;
 
 	case GT_RACING_DM:
 	case GT_TEAM_RACING_DM:

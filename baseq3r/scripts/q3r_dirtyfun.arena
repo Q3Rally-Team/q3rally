@@ -9,7 +9,7 @@ longname "Dirty Fun"
 author "Stecki & insellium"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing"
+type "q3r_racing q3r_team_racing q3r_elimination"
 
 //CUSTOM BOTS
 bots "Zack Kuro Paul Minori Josh"

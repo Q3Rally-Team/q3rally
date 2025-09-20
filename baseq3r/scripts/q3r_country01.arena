@@ -9,7 +9,7 @@ longname "Roll On Down The Line"
 author "Stecki"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing"
+type "q3r_racing q3r_team_racing q3r_elimination"
 
 //CUSTOM BOTS
 bots "Bee Dean Minori Zack Tanya"

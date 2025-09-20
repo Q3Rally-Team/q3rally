@@ -206,11 +206,12 @@ void TeamMain_MenuInit( void ) {
 // STONELANCE - removed gametype
 //	case GT_FFA:
 //	case GT_TOURNAMENT:
-	case GT_RACING:
-	case GT_RACING_DM:
-	case GT_DEATHMATCH:
-	case GT_DERBY:
-	case GT_LCS:
+        case GT_RACING:
+        case GT_RACING_DM:
+        case GT_ELIMINATION:
+        case GT_DEATHMATCH:
+        case GT_DERBY:
+        case GT_LCS:
 		s_teammain.joinred.generic.flags  |= QMF_GRAYED;
 		s_teammain.joinblue.generic.flags |= QMF_GRAYED;
 		s_teammain.joingreen.generic.flags  |= QMF_GRAYED;

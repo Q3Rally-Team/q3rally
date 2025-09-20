@@ -105,9 +105,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_REFLECTION_IMAGE             29
 #define CS_SIGILSTATUS                  30
 #define CS_TRACKLENGTH                  31
+#define CS_ELIMINATION_INFO             32
 // Q3Rally Code END
 
-#define CS_MODELS                               32
+#define CS_MODELS                               (CS_ELIMINATION_INFO+1)
 #define CS_SOUNDS                               (CS_MODELS+MAX_MODELS)
 // STONELANCE
 //#define       CS_PLAYERS                              (CS_SOUNDS+MAX_SOUNDS)
@@ -141,7 +142,8 @@ typedef enum {
         GT_RACING_DM,           // racing with weapons
         GT_SINGLE_PLAYER,       // single player tournament
         GT_DERBY,                       // demolition derby
-        GT_LCS,                       // last car standing
+        GT_LCS,                         // last car standing
+        GT_ELIMINATION,         // elimination race
         GT_DEATHMATCH,          // random destruction
 
         //-- team games go after this --
@@ -770,6 +772,7 @@ typedef enum {
         MOD_POISON,
         MOD_FIRE,
         MOD_GRAPPLE,
+        MOD_ELIMINATION,
         MOD_BREAKABLE_SPLASH
 } meansOfDeath_t;
 

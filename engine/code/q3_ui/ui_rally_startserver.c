@@ -89,23 +89,24 @@ static startserver_t s_startserver;
 
 static const char *gametype_items[] = {
 
-	"Racing",
-	"Racing Deathmatch",
-	"Demolition Derby",
-	"Last Car Standing",
-	"Deathmatch",
-	"Team Deathmatch",
-	"Team Racing",
-	"Team Racing Deathmatch",
-	"Capture the Flag",
-	"4-Team CTF",
+        "Racing",
+        "Racing Deathmatch",
+        "Elimination",
+        "Demolition Derby",
+        "Last Car Standing",
+        "Deathmatch",
+        "Team Deathmatch",
+        "Team Racing",
+        "Team Racing Deathmatch",
+        "Capture the Flag",
+        "4-Team CTF",
     "Domination",
-	0
+        0
 };
 
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
-static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_DERBY, GT_LCS, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION};
-static int gametype_remap2[] = {0, 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_ELIMINATION, GT_DERBY, GT_LCS, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION};
+static int gametype_remap2[] = {0, 1, 0, 3, 4, 2, 5, 6, 7, 8, 9, 10, 11};
 
 int		allowLength[3];
 int		reversable;
@@ -353,6 +354,7 @@ static const struct {
 } gametype_bitnames[] = {
         { "q3r_racing", GT_RACING },
         { "q3r_racing_dm", GT_RACING_DM },
+        { "q3r_elimination", GT_ELIMINATION },
         { "q3r_derby", GT_DERBY },
         { "q3r_lcs", GT_LCS },
         { "q3r_dm", GT_DEATHMATCH },
@@ -842,12 +844,16 @@ typedef struct {
 	menufield_s			timelimit;
 	menufield_s			fraglimit;
 	menufield_s			flaglimit;
+	menutext_s			laplimitNotice;
 	menuradiobutton_s	friendlyfire;
 	menufield_s			hostname;
     menulist_s          dominationSpawnStyle;
 	menuradiobutton_s   sigillocator;
 	menufield_s			dominationScoreInterval;
 	menufield_s			dominationCaptureDelay;
+	menufield_s			eliminationStartDelay;
+	menufield_s			eliminationInterval;
+	menufield_s			eliminationWarning;
 	menulist_s			trackLength;
 	menulist_s			reversed;
 	menuradiobutton_s	pure;
@@ -862,6 +868,7 @@ typedef struct {
 	qboolean			multiplayer;
 	int					gametype;
 	char				mapnamebuffer[32];
+	char				laplimitNoticeBuffer[64];
 	char				playerNameBuffers[PLAYER_SLOTS][16];
 
 	qboolean			newBot;
@@ -869,6 +876,7 @@ typedef struct {
 	char				newBotName[16];
 	qboolean			hasFraglimitField;
 	qboolean			pointToPoint;
+	qboolean			showLaplimitNotice;
 } serveroptions_t;
 
 static serveroptions_t s_serveroptions;
@@ -960,6 +968,9 @@ static void ServerOptions_Start( void ) {
     int     dominationSpawnStyle;
 	int		dominationScoreInterval;
 	int		dominationCaptureDelay;
+	int		eliminationStartDelay;
+	int		eliminationInterval;
+	int		eliminationWarning;
 	int     sigillocator;
 	int		maxclients;
 	int		dedicated;
@@ -973,7 +984,15 @@ static void ServerOptions_Start( void ) {
 	char	buf[64];
 
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
-	if( s_serveroptions.pointToPoint ) {
+	if( s_serveroptions.gametype == GT_ELIMINATION ) {
+		if( s_startserver.hasDefaultLaps && s_startserver.defaultLaps > 0 ) {
+			fraglimit = s_startserver.defaultLaps;
+		}
+		else {
+			fraglimit = 0;
+		}
+	}
+	else if( s_serveroptions.pointToPoint ) {
 		fraglimit = 1;
 	}
 	else {
@@ -982,6 +1001,9 @@ static void ServerOptions_Start( void ) {
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
 	dominationScoreInterval = atoi( s_serveroptions.dominationScoreInterval.field.buffer );
 	dominationCaptureDelay = atoi( s_serveroptions.dominationCaptureDelay.field.buffer );
+	eliminationStartDelay = atoi( s_serveroptions.eliminationStartDelay.field.buffer );
+	eliminationInterval = atoi( s_serveroptions.eliminationInterval.field.buffer );
+	eliminationWarning = atoi( s_serveroptions.eliminationWarning.field.buffer );
 	dedicated	 = s_serveroptions.dedicated.curvalue;
 	friendlyfire = s_serveroptions.friendlyfire.curvalue;
 	pure		 = s_serveroptions.pure.curvalue;
@@ -1004,12 +1026,20 @@ static void ServerOptions_Start( void ) {
 
 	switch( s_serveroptions.gametype ) {
 
-	case GT_RACING:
-	case GT_RACING_DM:
-	default:
-		trap_Cvar_SetValue( "ui_racing_laplimit", fraglimit );
-		trap_Cvar_SetValue( "ui_racing_timelimit", timelimit );
-		break;
+        case GT_ELIMINATION:
+                trap_Cvar_SetValue( "g_eliminationStartDelay", Com_Clamp( 0, 99999, eliminationStartDelay ) * 1000 );
+                trap_Cvar_SetValue( "g_eliminationInterval", Com_Clamp( 0, 99999, eliminationInterval ) * 1000 );
+                trap_Cvar_SetValue( "g_eliminationWarning", Com_Clamp( 0, 99999, eliminationWarning ) * 1000 );
+                trap_Cvar_SetValue( "ui_racing_laplimit", fraglimit );
+                trap_Cvar_SetValue( "ui_racing_timelimit", timelimit );
+                break;
+
+        case GT_RACING:
+        case GT_RACING_DM:
+        default:
+                trap_Cvar_SetValue( "ui_racing_laplimit", fraglimit );
+                trap_Cvar_SetValue( "ui_racing_timelimit", timelimit );
+                break;
 
 	case GT_TEAM_RACING:
 	case GT_TEAM_RACING_DM:
@@ -1452,15 +1482,25 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	switch( s_serveroptions.gametype ) {
 
-	case GT_RACING:
-		
-	case GT_RACING_DM:
-	default:
-		if( !s_serveroptions.pointToPoint ) {
-			Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_laplimit" ) ) );
-		}
-		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
-		break;
+        case GT_ELIMINATION:
+                Com_sprintf( s_serveroptions.eliminationStartDelay.field.buffer, 6, "%i", (int)Com_Clamp( 0, 99999, trap_Cvar_VariableValue( "g_eliminationStartDelay" ) ) / 1000 );
+                Com_sprintf( s_serveroptions.eliminationInterval.field.buffer, 6, "%i", (int)Com_Clamp( 0, 99999, trap_Cvar_VariableValue( "g_eliminationInterval" ) ) / 1000 );
+                Com_sprintf( s_serveroptions.eliminationWarning.field.buffer, 5, "%i", (int)Com_Clamp( 0, 99999, trap_Cvar_VariableValue( "g_eliminationWarning" ) ) / 1000 );
+                if( !s_serveroptions.pointToPoint ) {
+                        Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_laplimit" ) ) );
+                }
+                Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
+                break;
+
+        case GT_RACING:
+
+        case GT_RACING_DM:
+        default:
+                if( !s_serveroptions.pointToPoint ) {
+                        Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_laplimit" ) ) );
+                }
+                Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
+                break;
 
 	case GT_TEAM_RACING:
 	case GT_TEAM_RACING_DM:
@@ -1620,23 +1660,40 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	y = 272;
 
-	isRacing = ( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM );
+   isRacing = ( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM || s_serveroptions.gametype == GT_ELIMINATION || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM );
 	s_serveroptions.pointToPoint = ( isRacing && s_startserver.hasDefaultLaps && s_startserver.defaultLaps <= 1 );
 	s_serveroptions.hasFraglimitField = qfalse;
+	s_serveroptions.showLaplimitNotice = qfalse;
 
 	if( isRacing ) {
-		if( !s_serveroptions.pointToPoint ) {
-			s_serveroptions.fraglimit.generic.type		= MTYPE_FIELD;
-			s_serveroptions.fraglimit.generic.name		= "Laps:";
-			s_serveroptions.fraglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-			s_serveroptions.fraglimit.generic.x		= OPTIONS_X;
-			s_serveroptions.fraglimit.generic.y		= y;
-			s_serveroptions.fraglimit.generic.statusbar	= ServerOptions_StatusBar;
+		if( s_serveroptions.gametype == GT_ELIMINATION && !s_serveroptions.pointToPoint ) {
+			s_serveroptions.laplimitNotice.generic.type		= MTYPE_TEXT;
+			s_serveroptions.laplimitNotice.generic.flags	 = QMF_INACTIVE|QMF_SMALLFONT;
+			s_serveroptions.laplimitNotice.generic.x		= OPTIONS_X - 6 * SMALLCHAR_WIDTH;
+			s_serveroptions.laplimitNotice.generic.y		= y;
+			s_serveroptions.laplimitNotice.string		= s_serveroptions.laplimitNoticeBuffer;
+			s_serveroptions.laplimitNotice.style		= UI_LEFT|UI_SMALLFONT;
+			s_serveroptions.laplimitNotice.color		= text_color_disabled;
+			if ( s_startserver.hasDefaultLaps && s_startserver.defaultLaps > 0 ) {
+				Com_sprintf( s_serveroptions.laplimitNoticeBuffer, sizeof( s_serveroptions.laplimitNoticeBuffer ), "Laps: automatic (map default: %i)", s_startserver.defaultLaps );
+			} else {
+				Q_strncpyz( s_serveroptions.laplimitNoticeBuffer, "Laps: automatically calculated", sizeof( s_serveroptions.laplimitNoticeBuffer ) );
+			}
+			s_serveroptions.showLaplimitNotice		= qtrue;
+		}
+		else if( !s_serveroptions.pointToPoint ) {
+			s_serveroptions.fraglimit.generic.type		  = MTYPE_FIELD;
+			s_serveroptions.fraglimit.generic.name		  = "Laps:";
+			s_serveroptions.fraglimit.generic.flags		 = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+			s_serveroptions.fraglimit.generic.x		  = OPTIONS_X;
+			s_serveroptions.fraglimit.generic.y		  = y;
+			s_serveroptions.fraglimit.generic.statusbar	 = ServerOptions_StatusBar;
 			s_serveroptions.fraglimit.field.widthInChars = 3;
 			s_serveroptions.fraglimit.field.maxchars	 = 3;
-			s_serveroptions.hasFraglimitField		= qtrue;
+			s_serveroptions.hasFraglimitField		 = qtrue;
 		}
 	}
+
 	else if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_CTF4 && s_serveroptions.gametype != GT_DOMINATION ) {
 
 		s_serveroptions.fraglimit.generic.type		= MTYPE_FIELD;
@@ -1746,6 +1803,36 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.hostname.generic.y	        = y;
 		s_serveroptions.hostname.field.widthInChars = 18;
 		s_serveroptions.hostname.field.maxchars     = 64;
+	}
+
+	if (s_serveroptions.gametype == GT_ELIMINATION) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.eliminationStartDelay.generic.type       = MTYPE_FIELD;
+		s_serveroptions.eliminationStartDelay.generic.name       = "Start Delay (s):";
+		s_serveroptions.eliminationStartDelay.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.eliminationStartDelay.generic.x          = OPTIONS_X;
+		s_serveroptions.eliminationStartDelay.generic.y          = y;
+		s_serveroptions.eliminationStartDelay.field.widthInChars = 5;
+		s_serveroptions.eliminationStartDelay.field.maxchars     = 5;
+
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.eliminationInterval.generic.type       = MTYPE_FIELD;
+		s_serveroptions.eliminationInterval.generic.name       = "Elimination Interval (s):";
+		s_serveroptions.eliminationInterval.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.eliminationInterval.generic.x          = OPTIONS_X;
+		s_serveroptions.eliminationInterval.generic.y          = y;
+		s_serveroptions.eliminationInterval.field.widthInChars = 5;
+		s_serveroptions.eliminationInterval.field.maxchars     = 5;
+
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.eliminationWarning.generic.type       = MTYPE_FIELD;
+		s_serveroptions.eliminationWarning.generic.name       = "Warning Time (s):";
+		s_serveroptions.eliminationWarning.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.eliminationWarning.generic.x          = OPTIONS_X;
+		s_serveroptions.eliminationWarning.generic.y          = y;
+		s_serveroptions.eliminationWarning.field.widthInChars = 5;
+		s_serveroptions.eliminationWarning.field.maxchars     = 5;
+
 	}
 
 if (s_serveroptions.gametype == GT_DOMINATION) {
@@ -1873,8 +1960,11 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
-	else if( s_serveroptions.hasFraglimitField && s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS ) {
+   else if( s_serveroptions.hasFraglimitField && s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS && s_serveroptions.gametype != GT_ELIMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
+	}
+   else if( s_serveroptions.showLaplimitNotice ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.laplimitNotice );
 	}
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
@@ -1885,8 +1975,9 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
 
-	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
-		|| s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
+   if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
+           || s_serveroptions.gametype == GT_ELIMINATION
+           || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
 
 		if ( reversable )
@@ -1900,6 +1991,12 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	if( s_serveroptions.multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
+	}
+
+	if (s_serveroptions.gametype == GT_ELIMINATION) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationStartDelay );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationInterval );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationWarning );
 	}
 
 	if (s_serveroptions.gametype == GT_DOMINATION) {

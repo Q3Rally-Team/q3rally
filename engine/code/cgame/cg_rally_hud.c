@@ -433,13 +433,18 @@ static float CG_DrawTimes( float y ) {
 	centity_t		*cent;
 	int			lapTime;
 	int			totalTime;
-	int			x;
-	char		s[128];
-	char		*time;
+	const char		*time;
+	const float	boxX = 636.0f - 80.0f;
+	const float	boxWidth = 90.0f;
+	const float	boxHeight = 18.0f;
+	const float	labelOffsetX = 10.0f;
+	const float	labelOffsetY = 4.0f;
+	const float	lineAdvance = TINYCHAR_HEIGHT + 8.0f;
+	const float	tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
-	
+
 	if ( cent->finishRaceTime ){
 		lapTime = cent->finishRaceTime - cent->startLapTime;
 		totalTime = cent->finishRaceTime - cent->startRaceTime;
@@ -452,46 +457,44 @@ static float CG_DrawTimes( float y ) {
 	else {
 		lapTime = 0;
 		totalTime = 0;
-		
+
 	}
 
 //
 // Best Time
 //
-  
-        if ( cgs.laplimit > 1 && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
+
+	if ( cgs.laplimit > 1 && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
+		const char *label = "B:";
+		const float labelX = boxX + labelOffsetX;
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+		const float drawY = y + labelOffsetY;
+
 		time = getStringForTime( cent->bestLapTime );
-		
-		Com_sprintf(s, sizeof(s), "B: %s", time);
-//		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 80;
-		CG_FillRect ( x, y, 90, 18, bgColor );
-		x+= 10;		
-		y+= 4;
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
-		y += TINYCHAR_HEIGHT + 4;
+
+		CG_FillRect( boxX, y, boxWidth, boxHeight, bgColor );
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, time, colorWhite );
+		y += lineAdvance;
 	}
 
 //
 // Lap Time
 //
 
-	
+	if ( cgs.laplimit > 1 && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
+		const char *label = "L:";
+		const float labelX = boxX + labelOffsetX;
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+		const float drawY = y + labelOffsetY;
 
-        if ( cgs.laplimit > 1 && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS ){
-		time = getStringForTime(lapTime);
+		time = getStringForTime( lapTime );
 
-		Com_sprintf(s, sizeof(s), "L: %s", time);
-//		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
-        x = 636 - 80;
-        CG_FillRect( x, y, 90, 18, bgColor );
-        x+= 10;
-        y+= 4;
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
-		y += TINYCHAR_HEIGHT + 4;
+		CG_FillRect( boxX, y, boxWidth, boxHeight, bgColor );
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, time, colorWhite );
+		y += lineAdvance;
 	}
-
-	
 
 	//
 	// Total Time
@@ -499,25 +502,21 @@ static float CG_DrawTimes( float y ) {
 
 	time = getStringForTime(totalTime);
 
-	/*
-	Com_sprintf(s, sizeof(s), "TOTAL TIME: %s", time);
-	x = 630 - CG_DrawStrlen(s) * SMALLCHAR_WIDTH;
+	{
+		const char *label = "T:";
+		const float labelX = boxX + labelOffsetX;
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+		const float drawY = y + labelOffsetY;
 
-	CG_DrawSmallStringColor( x, y, s, colors[0]);
-	y += SMALLCHAR_HEIGHT;
-	*/
-
-	Com_sprintf(s, sizeof(s), "T: %s", time);
-
-	x = 636 - 80;
-	CG_FillRect( x, y, 90, 18, bgColor );
-	x += 10;
-	y += 4;
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
-	y += TINYCHAR_HEIGHT + 4;
+		CG_FillRect( boxX, y, boxWidth, boxHeight, bgColor );
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, time, colorWhite );
+		y += lineAdvance;
+	}
 
 	return y;
 }
+
 
 
 
@@ -529,11 +528,17 @@ CG_DrawLaps
 */
 static float CG_DrawLaps( float y ) {
 	centity_t		*cent;
-	//playerState_t	*ps;
+	//playerState_t *ps;
 	int			curLap;
 	int			numLaps;
-	char		s[64];
-	int			x;
+	char			value[32];
+	const float	boxX = 636.0f - 80.0f;
+	const float	boxWidth = 90.0f;
+	const float	boxHeight = 18.0f;
+	const float	labelOffsetX = 10.0f;
+	const float	labelOffsetY = 4.0f;
+	const float	lineAdvance = TINYCHAR_HEIGHT + 8.0f;
+	const float	tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
@@ -545,20 +550,26 @@ static float CG_DrawLaps( float y ) {
 	curLap = cent->currentLap;
 	numLaps = cgs.laplimit;
 
-        if ( numLaps > 1 )
-                Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
-        else
-                Com_sprintf(s, sizeof(s), "LAP: %i", curLap);
+	if ( numLaps > 1 )
+		Com_sprintf(value, sizeof(value), "%i/%i", curLap, numLaps);
+	else
+		Com_sprintf(value, sizeof(value), "%i", curLap);
 
-	x = 636 - 80;
-	CG_FillRect( x, y, 90, 18, bgColor );
-	x += 10;
-	y += 4;
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
-	y += TINYCHAR_HEIGHT + 4;
+	CG_FillRect( boxX, y, boxWidth, boxHeight, bgColor );
+	{
+		const char *label = "LAP:";
+		const float labelX = boxX + labelOffsetX;
+		const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+		const float drawY = y + labelOffsetY;
+
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, value, colorWhite );
+	}
+	y += lineAdvance;
 
 	return y;
 }
+
 
 
 /*
@@ -567,101 +578,127 @@ CG_DrawDistanceToFinish
 ======================
 */
 static float CG_DrawDistanceToFinish( float y ) {
-       char            s[64];
-       int             x;
-       float           dist;
-       const float     feetPerMile = 5280.0f;
+	float           dist;
+	const float     feetPerMile = 5280.0f;
+	const float     boxX = 636.0f - 80.0f;
+	const float     boxWidth = 90.0f;
+	const float     boxHeight = 18.0f;
+	const float     labelOffsetX = 10.0f;
+	const float     labelOffsetY = 4.0f;
+	const float     lineAdvance = TINYCHAR_HEIGHT + 8.0f;
+	const float     tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
+	char            numericValue[32];
+	const char      *unit = "";
+	const char      *label = "DIST:";
 
-       // for multi-lap races show distance to next checkpoint instead of finish
-       if ( cgs.laplimit > 1 ) {
-               int             nextCP;
-               centity_t       *checkpoint = NULL;
-               vec3_t          diff;
-               vec3_t          checkpointOrigin;
-               int             i;
+	// for multi-lap races show distance to next checkpoint instead of finish
+	if ( cgs.laplimit > 1 ) {
+		int             nextCP;
+		centity_t       *checkpoint = NULL;
+		vec3_t          diff;
+		vec3_t          checkpointOrigin;
+		int             i;
 
-               nextCP = cg.snap->ps.stats[STAT_NEXT_CHECKPOINT];
-               if ( nextCP <= 0 ) {
-                       return y;
-               }
+		nextCP = cg.snap->ps.stats[STAT_NEXT_CHECKPOINT];
+		if ( nextCP <= 0 ) {
+			return y;
+		}
 
-               for ( i = 0; i < MAX_GENTITIES; i++ ) {
-                       centity_t *cent = &cg_entities[i];
+		for ( i = 0; i < MAX_GENTITIES; i++ ) {
+			centity_t *cent = &cg_entities[i];
 
-                       if ( cent->currentState.eType != ET_CHECKPOINT ) {
-                               continue;
-                       }
+			if ( cent->currentState.eType != ET_CHECKPOINT ) {
+				continue;
+			}
 
-                       if ( cent->currentState.weapon != nextCP ) {
-                               continue;
-                       }
+			if ( cent->currentState.weapon != nextCP ) {
+				continue;
+			}
 
-                       checkpoint = cent;
-                       break;
-               }
+			checkpoint = cent;
+			break;
+		}
 
-               if ( !checkpoint ) {
-                       return y;
-               }
+		if ( !checkpoint ) {
+			return y;
+		}
 
-               VectorCopy( checkpoint->lerpOrigin, checkpointOrigin );
+		VectorCopy( checkpoint->lerpOrigin, checkpointOrigin );
 
-               if ( checkpoint->currentState.solid == SOLID_BMODEL &&
-                        checkpoint->currentState.modelindex > 0 &&
-                        checkpoint->currentState.modelindex < MAX_MODELS ) {
-                       VectorAdd( checkpointOrigin,
-                               cgs.inlineModelMidpoints[ checkpoint->currentState.modelindex ],
-                               checkpointOrigin );
-               }
+		if ( checkpoint->currentState.solid == SOLID_BMODEL &&
+				checkpoint->currentState.modelindex > 0 &&
+				checkpoint->currentState.modelindex < MAX_MODELS ) {
+			VectorAdd( checkpointOrigin,
+					cgs.inlineModelMidpoints[ checkpoint->currentState.modelindex ],
+					checkpointOrigin );
+		}
 
-               VectorSubtract( checkpointOrigin, cg.snap->ps.origin, diff );
+		VectorSubtract( checkpointOrigin, cg.snap->ps.origin, diff );
 
-               dist = VectorLength( diff );
+		dist = VectorLength( diff );
+		label = "CP:";
 
-               if ( cg_metricUnits.integer ) {
-                       dist /= CP_M_2_QU;
-                       Com_sprintf( s, sizeof( s ), "CP: %dm", (int)dist );
-               } else {
-                       dist /= CP_FT_2_QU;
-                       if ( dist >= feetPerMile ) {
-                               float miles = dist / feetPerMile;
-                               Com_sprintf( s, sizeof( s ), "CP: %.1fmi", miles );
-                       } else {
-                               Com_sprintf( s, sizeof( s ), "CP: %dft", (int)dist );
-                       }
-               }
-       }
-       else {
-               dist = cg.snap->ps.stats[STAT_DISTANCE_REMAIN];
+		if ( cg_metricUnits.integer ) {
+			dist /= CP_M_2_QU;
+			Com_sprintf( numericValue, sizeof( numericValue ), "%d", (int)dist );
+			unit = "m";
+		} else {
+			dist /= CP_FT_2_QU;
+			if ( dist >= feetPerMile ) {
+				float miles = dist / feetPerMile;
+				Com_sprintf( numericValue, sizeof( numericValue ), "%.1f", miles );
+				unit = "mi";
+			} else {
+				Com_sprintf( numericValue, sizeof( numericValue ), "%d", (int)dist );
+				unit = "ft";
+			}
+		}
+	}
+	else {
+		dist = cg.snap->ps.stats[STAT_DISTANCE_REMAIN];
+		label = "DIST:";
 
-               if ( cg_distanceFormat.integer == 1 && cgs.trackLength > 0.0f ) {
-                       float percent = dist / cgs.trackLength * 100.0f;
-                       Com_sprintf( s, sizeof( s ), "DIST: %.1f%%", percent );
-               } else {
-                       if ( cg_metricUnits.integer ) {
-                               Com_sprintf( s, sizeof( s ), "DIST: %dm", (int)dist );
-                       } else {
-                               float distFeet = dist * 3.28084f;
+		if ( cg_distanceFormat.integer == 1 && cgs.trackLength > 0.0f ) {
+			float percent = dist / cgs.trackLength * 100.0f;
+			Com_sprintf( numericValue, sizeof( numericValue ), "%.1f", percent );
+			unit = "%";
+		} else {
+			if ( cg_metricUnits.integer ) {
+				Com_sprintf( numericValue, sizeof( numericValue ), "%d", (int)dist );
+				unit = "m";
+			} else {
+				float distFeet = dist * 3.28084f;
 
-                               if ( distFeet >= feetPerMile ) {
-                                       float miles = distFeet / feetPerMile;
-                                       Com_sprintf( s, sizeof( s ), "DIST: %.1fmi", miles );
-                               } else {
-                                       Com_sprintf( s, sizeof( s ), "DIST: %dft", (int)distFeet );
-                               }
-                       }
-               }
-       }
+				if ( distFeet >= feetPerMile ) {
+					float miles = distFeet / feetPerMile;
+					Com_sprintf( numericValue, sizeof( numericValue ), "%.1f", miles );
+					unit = "mi";
+				} else {
+					Com_sprintf( numericValue, sizeof( numericValue ), "%d", (int)distFeet );
+					unit = "ft";
+				}
+			}
+		}
+	}
 
-       x = 636 - 80;
-       CG_FillRect( x, y, 90, 18, bgColor );
-       x += 10;
-       y += 4;
-       CG_DrawTinyDigitalStringColor( x, y, s, colorWhite );
-       y += TINYCHAR_HEIGHT + 4;
+	{
+		const float     labelX = boxX + labelOffsetX;
+		const float     valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+		const float     drawY = y + labelOffsetY;
 
-       return y;
+		CG_FillRect( boxX, y, boxWidth, boxHeight, bgColor );
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, numericValue, colorWhite );
+		if ( unit[0] != '\0' ) {
+			const float unitX = valueX + CG_DrawStrlen( numericValue ) * tinyCharWidth;
+			CG_DrawTinyStringColor( unitX, drawY, unit, colorWhite );
+		}
+		y += lineAdvance;
+	}
+
+	return y;
 }
+
 
 /*
 ======================
@@ -672,16 +709,17 @@ static float CG_DrawCurrentPosition( float y ) {
 	centity_t		*cent;
 	//playerState_t	*ps;
 	int			pos;
-	char		s[64];
 	float		x, width, height;
 	//float		foreground[4] = { 0, 0, 0.75, 1.0 };
+	const char	*label = "POS:";
+	const float	labelOffsetX = 10.0f;
+	const float	labelOffsetY = 4.0f;
+	const float	tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
 
 	pos = cent->currentPosition;
-
-	Com_sprintf(s, sizeof(s), "POS: ");
 
 	x = 636 - 80;
 	width = 90;
@@ -689,14 +727,14 @@ static float CG_DrawCurrentPosition( float y ) {
 
 	CG_FillRect( x, y, width, height, bgColor );
 
-	x += 10;
-	y += 4;
+	{
+		const float	labelX = x + labelOffsetX;
+		const float	drawY = y + labelOffsetY;
+		const float	valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
 
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
-
-	x += TINYCHAR_WIDTH * 5;
-
-	CG_DrawTinyDigitalStringColor( x, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
+		CG_DrawTinyStringColor( labelX, drawY, label, colorWhite );
+		CG_DrawTinyStringColor( valueX, drawY, va( "%i/%i", pos, cgs.numRacers ), colorWhite );
+	}
 
 	y += 20;
 
@@ -715,9 +753,15 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 	int			i, j, num;
 	float		x, width, height;
 	int			startPos, endPos;
-	char		s[64];
+	char		positionLabel[16];
 	float		background[4] = { 0, 0, 0, 0.5 };
 	float		selected[4] = { 0.75, 0.0, 0.0, 0.5 };
+	const float	numberOffsetX = 4.0f;
+	const float	columnSpacing = 4.0f;
+	const float	tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
+	float		numberX;
+	float		nameX;
+	char		maxPositionLabel[16];
 
 	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
@@ -729,6 +773,10 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 	x = 636 - 80;
 	width = 90;
 	height = TINYCHAR_HEIGHT;
+
+	numberX = x + numberOffsetX;
+	Com_sprintf( maxPositionLabel, sizeof( maxPositionLabel ), "%i-", cgs.numRacers );
+	nameX = numberX + CG_DrawStrlen( maxPositionLabel ) * tinyCharWidth + columnSpacing;
 
 	for (i = startPos; i <= endPos; i++){
 		num = -1;
@@ -751,8 +799,18 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 		}
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
-		Com_sprintf(s, sizeof(s), "%i-%s", cg_entities[num].currentPosition, player);
-		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+		if ( player[0] != '\0' ) {
+			Com_sprintf( positionLabel, sizeof( positionLabel ), "%i-", cg_entities[num].currentPosition );
+		}
+		else {
+			Com_sprintf( positionLabel, sizeof( positionLabel ), "%i", cg_entities[num].currentPosition );
+		}
+
+		CG_DrawTinyStringColor( numberX, y, positionLabel, colorWhite );
+
+		if ( player[0] != '\0' ) {
+			CG_DrawTinyStringColor( nameX, y, player, colorWhite );
+		}
 
 		y += TINYCHAR_HEIGHT;
 
@@ -1143,7 +1201,7 @@ CG_DrawGear
  static float CG_DrawGear( float y ) {
 	CG_DrawSmallDigitalStringColor( 560, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
 	y -= SMALLCHAR_HEIGHT;
-	CG_DrawTinyDigitalStringColor( 560, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
+	CG_DrawTinyStringColor( 560, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
 	y -= SMALLCHAR_HEIGHT;
 	return y;
 }
@@ -1161,6 +1219,102 @@ CG_DrawGear
 	VectorMA(pointOnPlane, -(planedist / viewdist) * DotProduct(dir, cg.refdef.viewaxis[2]), cg.refdef.viewaxis[2], pointOnPlane);
 */
 
+static float CG_DrawEliminationStatus( float y ) {
+        const float boxWidth = 176.0f;
+        const float x = 640.0f - boxWidth;
+        char text[64];
+        vec4_t countdownColor;
+        int drivers;
+        int displayRound;
+        int msLeft;
+        int secondsLeft;
+        qboolean showCountdown;
+        const float lineAdvance = TINYCHAR_HEIGHT + 8.0f;
+        const float tinyCharWidth = TINYCHAR_WIDTH + 2.0f;
+
+        if ( cgs.gametype != GT_ELIMINATION ) {
+                return y;
+        }
+
+        drivers = cgs.eliminationRemainingPlayers;
+        if ( drivers < 0 ) {
+                drivers = 0;
+        }
+
+        CG_FillRect( x, y, boxWidth, 18, bgColor );
+        {
+                const char *label = "DRIVERS LEFT:";
+                const float labelX = x + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                if ( drivers > 0 ) {
+                        Com_sprintf( text, sizeof( text ), "%i", drivers );
+                } else {
+                        Q_strncpyz( text, "--", sizeof( text ) );
+                }
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+        }
+        y += lineAdvance;
+
+        CG_FillRect( x, y, boxWidth, 18, bgColor );
+        displayRound = CG_EliminationDisplayRound();
+        {
+                const char *label = "ROUND:";
+                const float labelX = x + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                if ( displayRound > 0 ) {
+                        Com_sprintf( text, sizeof( text ), "%i", displayRound );
+                } else {
+                        Q_strncpyz( text, "--", sizeof( text ) );
+                }
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+        }
+        y += lineAdvance;
+
+        CG_FillRect( x, y, boxWidth, 18, bgColor );
+        showCountdown = ( cgs.eliminationActive && drivers > 1 );
+        if ( showCountdown ) {
+                const char *label = "ELIMINATION IN";
+                const float labelX = x + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                msLeft = CG_EliminationMsLeft();
+                secondsLeft = ( msLeft + 999 ) / 1000;
+                if ( secondsLeft < 0 ) {
+                        secondsLeft = 0;
+                }
+
+                Vector4Copy( colorWhite, countdownColor );
+                if ( secondsLeft <= 5 ) {
+                        Vector4Copy( colorRed, countdownColor );
+                } else if ( secondsLeft <= 10 ) {
+                        Vector4Copy( colorYellow, countdownColor );
+                }
+
+                Com_sprintf( text, sizeof( text ), "%i", secondsLeft );
+                CG_DrawTinyStringColor( labelX, y + 4, label, countdownColor );
+                CG_DrawTinyStringColor( valueX, y + 4, text, countdownColor );
+                CG_DrawTinyStringColor( valueX + CG_DrawStrlen( text ) * tinyCharWidth, y + 4, "S", countdownColor );
+        } else if ( cgs.eliminationActive && drivers <= 1 ) {
+                CG_DrawTinyStringColor( x + 10.0f, y + 4, "FINAL DRIVER!", colorWhite );
+        } else {
+                const char *label = "ELIMINATION IN";
+                const float labelX = x + 10.0f;
+                const float valueX = labelX + ( CG_DrawStrlen( label ) + 1 ) * tinyCharWidth;
+
+                CG_DrawTinyStringColor( labelX, y + 4, label, colorWhite );
+                Q_strncpyz( text, "--", sizeof( text ) );
+                CG_DrawTinyStringColor( valueX, y + 4, text, colorWhite );
+                CG_DrawTinyStringColor( valueX + CG_DrawStrlen( text ) * tinyCharWidth, y + 4, " S", colorWhite );
+        }
+        y += lineAdvance;
+
+        return y;
+}
+
 float CG_DrawUpperRightHUD( float y ) {
 	int		i;
 
@@ -1174,6 +1328,10 @@ float CG_DrawUpperRightHUD( float y ) {
 		cgs.numRacers++;
 	}
 
+	if ( cgs.gametype == GT_ELIMINATION ) {
+		y = CG_DrawEliminationStatus( y );
+	}
+
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team != TEAM_SPECTATOR){
 		if (isRallyRace()){
 			y = CG_DrawArrowToCheckpoint( y );
@@ -1183,16 +1341,16 @@ float CG_DrawUpperRightHUD( float y ) {
                         y = CG_DrawCurrentPosition( y );
 			y = CG_DrawCarAheadAndBehind( y );
 		}
-		else if (cgs.gametype == GT_DERBY || cgs.gametype == GT_LCS )
-			y = CG_DrawTimes( y );
+                else if (cgs.gametype == GT_DERBY || cgs.gametype == GT_LCS || cgs.gametype == GT_ELIMINATION )
+                        y = CG_DrawTimes( y );
 // 0.5
 //			CG_DrawHUD_DerbyList(44, 130);
 			
 	}
 
-	if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS){
-		y = CG_DrawScores( 636, y );
-	}
+        if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS && cgs.gametype != GT_ELIMINATION){
+                y = CG_DrawScores( 636, y );
+        }
 
 	return y;
 }

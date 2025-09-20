@@ -518,6 +518,15 @@ typedef struct {
 	int			winnerNumber;
 	qboolean	trackIsReversable;
 	int			numberOfLaps;
+	int			eliminationStartDelay;
+	int			eliminationInterval;
+	int			eliminationWarning;
+	int			eliminationNextTriggerTime;
+	int			eliminationWarningTime;
+	qboolean		eliminationWarningSent;
+	int			eliminationActive;
+	int			eliminationRemainingPlayers;
+	int			eliminationRound;
 
 	// map variables
 	int			numCheckpoints;
@@ -527,6 +536,7 @@ typedef struct {
         float                   trackLength;
         vec3_t                  startOrigin;
         vec3_t                  finishOrigin;
+        gentity_t       *finishLine;
         qboolean                hasStart;
         qboolean                hasFinish;
 
@@ -859,6 +869,11 @@ void QDECL G_DebugLogPrintf( const char *fmt, ... ) __attribute__ ((format (prin
 void SendScoreboardMessageToAllClients( void );
 void QDECL G_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void QDECL G_Error( const char *fmt, ... ) __attribute__ ((noreturn, format (printf, 1, 2)));
+void G_ResetEliminationState( void );
+void G_StartEliminationMode( void );
+void G_UpdateEliminationPlayerCount( void );
+void G_RegisterEliminationDeath( gentity_t *victim );
+
 
 //
 // g_client.c
@@ -1007,6 +1022,9 @@ extern  vmCvar_t	g_humanplayers;
 // STONELANCE
 extern	vmCvar_t	g_forceEngineStart;
 extern	vmCvar_t	g_finishRaceDelay;
+extern	vmCvar_t	g_eliminationStartDelay;
+extern	vmCvar_t	g_eliminationInterval;
+extern	vmCvar_t	g_eliminationWarning;
 extern	vmCvar_t	g_trackReversed;
 extern	vmCvar_t	g_trackLength;
 extern	vmCvar_t	g_developer;

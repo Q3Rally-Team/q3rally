@@ -1,6 +1,6 @@
 !!! --- Q3Rally Changelog --- !!!
 
-new in v0.5
+New and fixed since we are standalone (0.0.1.2)
 
 Fixed:
 
@@ -15,22 +15,6 @@ Fixed:
 - Wrong hud position of power-ups & flag in various screen aspect ratio
 - cg_autodrop in not working
 - minimap fits better in UI
-
-Added:
-
-- codebase synced with ioq3
-- individual car horns for all cars
-- Usable server map rotation configs
-- New intro
-- Make unique logos for 4 teams (Like UT99)
-- finished the flag status hud for domination
-- finished 4 Teams Domination
-- main menu music rotation
-
-new since v0.3b
-
-Fixed:
-
 - A bug in racing mode was fixed where it could be that after the race you lost your position
   in the ranking to a player who crossed the finish line after you
 - The power of the homing rockets has been reduced and the amount of ammunition
@@ -48,42 +32,6 @@ Fixed:
 - updated dirtyfun.jpg reflect file
 - fixed plasmagun alt fire
 - fixed q3r_babel map
-
-new since v0.3
-
-Added:
-
-- 2 Racing Maps moved from AddOn to Official
-- 1 Deathmatch Map moved from AddOn to Official
-- added the ability to play Domination with 4 Teams
-- codebase synced with latest ioq3
-
-new since v0.0.1.2
-
-Added:
-
-– new Domination game type
-– new car model
-– added new skins from Bloody Rally (thx insellium)
-– changed gauntlet to chainsaw
-– new unknownmap image
-– new icon for q3rally.exe files
-– different icons for client and server
-– widescreen preview in offline and online mode
-– new widesreen map images
-– new ammoboxes and ammosprites
-– new shotgun sound
-– new console background
-– minimap can now switched on/off in the q3roptions menu
-– start/stop demo recording key binding via menu
-– added more skins (PS2)
-– new skins for the camaro
-– two new domination maps
-– added discord button to main menu
-– added alt fire mode for railgun (telefrag gun)
-
-Fixed:
-
 – sync the code with ioquake3
 – some tweaks on Domination
 – change console background to something more readable
@@ -115,3 +63,43 @@ Fixed:
 – shotgun bullet bug fixed
 – fixed bug in bot path creation system
 – reworked readme files
+
+Added:
+
+- codebase synced with ioq3
+- individual car horns for all cars
+- Usable server map rotation configs
+- New intro
+- Make unique logos for 4 teams (Like UT99)
+- finished the flag status hud for domination
+- finished 4 Teams Domination
+- main menu music rotation
+- New Gamemode: Elimination
+  - Countdown-driven rounds decide when racers get knocked out
+  - Fresh HUD cues highlight elimination status and timer warnings
+  - Server-configurable elimination and grace timers keep matches flexible
+  - Includes fixes for scoreboard sorting and anti-respawn exploits
+
+- 2 Racing Maps moved from AddOn to Official
+- 1 Deathmatch Map moved from AddOn to Official
+- added the ability to play Domination with 4 Teams
+- codebase synced with latest ioq3
+– new Domination game type
+– new car model
+– added new skins from Bloody Rally (thx insellium)
+– changed gauntlet to chainsaw
+– new unknownmap image
+– new icon for q3rally.exe files
+– different icons for client and server
+– widescreen preview in offline and online mode
+– new widesreen map images
+– new ammoboxes and ammosprites
+– new shotgun sound
+– new console background
+– minimap can now switched on/off in the q3roptions menu
+– start/stop demo recording key binding via menu
+– added more skins (PS2)
+– new skins for the camaro
+– two new domination maps
+– added discord button to main menu
+– added alt fire mode for railgun (telefrag gun)

@@ -147,13 +147,14 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 			default:
 // STONELANCE - removed gametype
 //			case GT_FFA:
-			case GT_RACING:
-			case GT_RACING_DM:
-			case GT_DERBY:
-				if ( g_maxGameClients.integer > 0 && 
-					level.numNonSpectatorClients >= g_maxGameClients.integer ) {
-					sess->sessionTeam = TEAM_SPECTATOR;
-				}
+                        case GT_RACING:
+                        case GT_RACING_DM:
+                        case GT_ELIMINATION:
+                        case GT_DERBY:
+                                if ( g_maxGameClients.integer > 0 &&
+                                        level.numNonSpectatorClients >= g_maxGameClients.integer ) {
+                                        sess->sessionTeam = TEAM_SPECTATOR;
+                                }
 				else if (level.startRaceTime){
 					sess->sessionTeam = TEAM_SPECTATOR;
 				} else {

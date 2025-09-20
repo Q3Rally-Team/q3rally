@@ -4,20 +4,53 @@ English
 
 1.  Download and install Q3Rally (latest release).
 
-2.  Create a configuration file (e.g., server.cfg) inside the baseq3r/
-    directory with your desired settings, such as:
+2.  Create configuration files (e.g., racing_server.cfg or
+    elimination_server.cfg) inside the baseq3r/ directory with your
+    desired settings. For example:
 
-    set sv_hostname “My Q3Rally Server” set rconpassword “yourpassword”
-    set g_gametype 0 map rally_track1
+    racing_server.cfg (Racing):
+        set sv_hostname "My Q3Rally Racing Server"
+        set rconpassword "yourpassword"
+        set g_gametype "0"
+        set g_finishRaceDelay "30"
+        map q3r_country01
+
+    elimination_server.cfg (Elimination):
+        set sv_hostname "My Q3Rally Elimination Server"
+        set rconpassword "yourpassword"
+        set g_gametype "5"
+        // Elimination timers (values in milliseconds)
+        set g_eliminationStartDelay "30000"    // 30 seconds before the first elimination
+        set g_eliminationInterval "15000"      // 15 seconds between eliminations
+        set g_eliminationWarning "5000"        // warning 5 seconds beforehand
+        map q3r_downtown
+
+    g_gametype values:
+    - 0 – Racing
+    - 1 – Racing Deathmatch
+    - 2 – Single Player
+    - 3 – Demolition Derby
+    - 4 – Last Car Standing
+    - 5 – Elimination
+    - 6 – Deathmatch
+    - 7 – Team Deathmatch
+    - 8 – Team Racing
+    - 9 – Team Racing Deathmatch
+    - 10 – Capture the Flag
+    - 11 – Four-Team Capture the Flag
+    - 12 – Domination
 
 3.  Open a terminal/command prompt and navigate to your Q3Rally
     installation folder.
 
 4.  Start the dedicated server using:
 
-    q3rally.x86_64.exe +set dedicated 1 +exec server.cfg
+    q3rally.x86_64.exe +set dedicated 1 +exec racing_server.cfg
+    q3rally.x86_64.exe +set dedicated 1 +exec elimination_server.cfg
 
-    (On Linux: ./ioq3rallyded.x86_64 +set dedicated 1 +exec server.cfg)
+    (On Linux:
+    ./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg
+    ./ioq3rallyded.x86_64 +set dedicated 1 +exec elimination_server.cfg)
 
 5.  Share your IP address with friends so they can join.
 
@@ -25,20 +58,52 @@ Deutsch
 
 1.  Lade Q3Rally (aktuelle Version) herunter und installiere es.
 
-2.  Erstelle eine Konfigurationsdatei (z. B. server.cfg) im
-    baseq3r/-Ordner mit deinen gewünschten Einstellungen, z. B.:
+2.  Erstelle Konfigurationsdateien (z. B. racing_server.cfg oder
+    elimination_server.cfg) im baseq3r/-Ordner mit deinen gewünschten
+    Einstellungen. Zum Beispiel:
 
-    set sv_hostname “Mein Q3Rally Server” set rconpassword
-    “deinpasswort” set g_gametype 0 map rally_track1
+    racing_server.cfg (Rennen):
+        set sv_hostname "Mein Q3Rally Racing Server"
+        set rconpassword "deinpasswort"
+        set g_gametype "0"
+        set g_finishRaceDelay "30"
+        map q3r_country01
+
+    elimination_server.cfg (Elimination):
+        set sv_hostname "Mein Q3Rally Elimination Server"
+        set rconpassword "deinpasswort"
+        set g_gametype "5"
+        // Elimination-Timer (Werte in Millisekunden)
+        set g_eliminationStartDelay "30000"    // 30 Sekunden bis zur ersten Eliminierung
+        set g_eliminationInterval "15000"      // 15 Sekunden zwischen den Eliminierungen
+        set g_eliminationWarning "5000"        // Warnung 5 Sekunden im Voraus
+        map q3r_downtown
+
+    g_gametype-Werte:
+    - 0 – Racing (Rennen)
+    - 1 – Racing Deathmatch (Rennen mit Waffen)
+    - 2 – Single Player (Einzelspieler)
+    - 3 – Demolition Derby
+    - 4 – Last Car Standing (Letztes fahrendes Auto)
+    - 5 – Elimination (Ausscheidungsrennen)
+    - 6 – Deathmatch
+    - 7 – Team Deathmatch
+    - 8 – Team Racing (Teamrennen)
+    - 9 – Team Racing Deathmatch (Teamrennen mit Waffen)
+    - 10 – Capture the Flag (Flagge erobern)
+    - 11 – Four-Team Capture the Flag (Vier-Team-CTF)
+    - 12 – Domination
 
 3.  Öffne ein Terminal oder die Eingabeaufforderung und wechsle in den
     Q3Rally-Installationsordner.
 
 4.  Starte den Dedicated Server mit:
 
-    q3rally.x86_64.exe +set dedicated 1 +exec server.cfg
+    q3rally.x86_64.exe +set dedicated 1 +exec racing_server.cfg
+    q3rally.x86_64.exe +set dedicated 1 +exec elimination_server.cfg
 
-    (Unter Linux: ./ioq3rallyded.x86_64 +set dedicated 1 +exec
-    server.cfg)
+    (Unter Linux:
+    ./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg
+    ./ioq3rallyded.x86_64 +set dedicated 1 +exec elimination_server.cfg)
 
 5.  Teile deine IP-Adresse mit Freunden, damit sie beitreten können.

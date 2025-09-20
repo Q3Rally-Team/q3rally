@@ -106,6 +106,9 @@ vmCvar_t	g_proxMineTimeout;
 // STONELANCE
 vmCvar_t	g_forceEngineStart;
 vmCvar_t	g_finishRaceDelay;
+vmCvar_t	g_eliminationStartDelay;
+vmCvar_t	g_eliminationInterval;
+vmCvar_t	g_eliminationWarning;
 vmCvar_t	g_trackReversed;
 vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
@@ -247,6 +250,9 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_ARCHIVE, 0, qfalse },
 
 	{ &g_developer, "developer", "0", 0, 0, qfalse },
 	{ &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
@@ -301,6 +307,10 @@ void G_InitGame( int levelTime, int randomSeed, int restart );
 void G_RunFrame( int levelTime );
 void G_ShutdownGame( int restart );
 void CheckExitRules( void );
+static void G_RunEliminationTimers( void );
+static void G_UpdateEliminationInfoConfigString( void );
+static void G_SetEliminationSchedule( int referenceTime, int interval );
+static void G_HandleEliminationCvarChanges( int oldStartDelay, int oldInterval, qboolean startDelayChanged, qboolean intervalChanged, qboolean warningChanged );
 
 
 /*
@@ -473,7 +483,6 @@ void G_RemapTeamShaders( void ) {
 #endif
 }
 
-
 /*
 =================
 G_RegisterCvars
@@ -515,6 +524,56 @@ void G_RegisterCvars( void ) {
 	level.warmupModificationCount = g_warmup.modificationCount;
 }
 
+static void G_HandleEliminationCvarChanges( int oldStartDelay, int oldInterval, qboolean startDelayChanged, qboolean intervalChanged, qboolean warningChanged ) {
+	qboolean scheduleActive;
+	qboolean waitingForFirstElimination;
+	qboolean rescheduled = qfalse;
+	int referenceTime;
+	int effectiveOldStartDelay;
+	int effectiveOldInterval;
+
+	if ( !startDelayChanged && !intervalChanged && !warningChanged ) {
+		return;
+	}
+
+	scheduleActive = ( level.eliminationNextTriggerTime > 0 );
+
+	if ( !scheduleActive ) {
+		G_UpdateEliminationInfoConfigString();
+		return;
+	}
+
+	waitingForFirstElimination = ( !level.eliminationActive || level.eliminationRound <= 0 );
+	effectiveOldStartDelay = ( oldStartDelay < 0 ) ? 0 : oldStartDelay;
+	effectiveOldInterval = ( oldInterval < 0 ) ? 0 : oldInterval;
+
+	if ( waitingForFirstElimination ) {
+		if ( startDelayChanged || warningChanged ) {
+			referenceTime = level.eliminationNextTriggerTime - effectiveOldStartDelay;
+			if ( level.eliminationNextTriggerTime <= 0 ) {
+				referenceTime = level.time;
+			}
+
+			G_SetEliminationSchedule( referenceTime, level.eliminationStartDelay );
+			rescheduled = qtrue;
+		}
+	} else {
+		if ( intervalChanged || warningChanged ) {
+			referenceTime = level.eliminationNextTriggerTime - effectiveOldInterval;
+			if ( level.eliminationNextTriggerTime <= 0 ) {
+				referenceTime = level.time;
+			}
+
+			G_SetEliminationSchedule( referenceTime, level.eliminationInterval );
+			rescheduled = qtrue;
+		}
+	}
+
+	if ( !rescheduled ) {
+		G_UpdateEliminationInfoConfigString();
+	}
+}
+
 /*
 =================
 G_UpdateCvars
@@ -524,6 +583,11 @@ void G_UpdateCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 	qboolean remapped = qfalse;
+	int oldStartDelay = level.eliminationStartDelay;
+	int oldInterval = level.eliminationInterval;
+	qboolean startDelayChanged = qfalse;
+	qboolean intervalChanged = qfalse;
+	qboolean warningChanged = qfalse;
 
 	for ( i = 0, cv = gameCvarTable ; i < gameCvarTableSize ; i++, cv++ ) {
 		if ( cv->vmCvar ) {
@@ -533,8 +597,19 @@ void G_UpdateCvars( void ) {
 				cv->modificationCount = cv->vmCvar->modificationCount;
 
 				if ( cv->trackChange ) {
-					trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"", 
-						cv->cvarName, cv->vmCvar->string ) );
+					trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"",
+							cv->cvarName, cv->vmCvar->string ) );
+				}
+
+				if ( cv->vmCvar == &g_eliminationStartDelay ) {
+					level.eliminationStartDelay = cv->vmCvar->integer;
+					startDelayChanged = qtrue;
+				} else if ( cv->vmCvar == &g_eliminationInterval ) {
+					level.eliminationInterval = cv->vmCvar->integer;
+					intervalChanged = qtrue;
+				} else if ( cv->vmCvar == &g_eliminationWarning ) {
+					level.eliminationWarning = cv->vmCvar->integer;
+					warningChanged = qtrue;
 				}
 
 				if (cv->teamShader) {
@@ -542,6 +617,10 @@ void G_UpdateCvars( void ) {
 				}
 			}
 		}
+		}
+
+	if ( startDelayChanged || intervalChanged || warningChanged ) {
+		G_HandleEliminationCvarChanges( oldStartDelay, oldInterval, startDelayChanged, intervalChanged, warningChanged );
 	}
 
 	if (remapped) {
@@ -574,6 +653,14 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	memset( &level, 0, sizeof( level ) );
 	level.time = levelTime;
 	level.startTime = levelTime;
+
+	trap_Cvar_Update( &g_eliminationStartDelay );
+	trap_Cvar_Update( &g_eliminationInterval );
+	trap_Cvar_Update( &g_eliminationWarning );
+	level.eliminationStartDelay = trap_Cvar_VariableIntegerValue( "g_eliminationStartDelay" );
+	level.eliminationInterval = trap_Cvar_VariableIntegerValue( "g_eliminationInterval" );
+	level.eliminationWarning = trap_Cvar_VariableIntegerValue( "g_eliminationWarning" );
+	G_ResetEliminationState();
 
 	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
 
@@ -971,7 +1058,7 @@ int QDECL SortRanks( const void *a, const void *b ) {
 		else if ( cb->finishRaceTime ) {
 			return -1;
 		}
-		else {
+			else {
 			// if still alive sort by health
 			if ( ca->ps.stats[STAT_HEALTH] > cb->ps.stats[STAT_HEALTH] ) {
 				return -1;
@@ -1706,7 +1793,7 @@ void CheckExitRules( void ) {
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
-			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
+				trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
 		}
@@ -1731,15 +1818,19 @@ void CheckExitRules( void ) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
-			trap_SendServerCommand( -1, va("print \"%s won the demolition derby!\n\"", winner->pers.netname ));
-			trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\n\"");
+				trap_SendServerCommand( -1, va("print \"%s won the demolition derby!\n\"", winner->pers.netname ));
+				trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\n\"");
 		}
 
 		return;
 	}
 
-	if (g_gametype.integer == GT_LCS && level.startRaceTime && !level.finishRaceTime) {
+	if ((g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime && !level.finishRaceTime) {
 		gclient_t	*winner = NULL;
+
+		if ( g_gametype.integer == GT_ELIMINATION ) {
+			G_UpdateEliminationPlayerCount();
+		}
 
 		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
 			cl = level.clients + i;
@@ -1756,8 +1847,19 @@ void CheckExitRules( void ) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
-			trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
-			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
+			if ( g_gametype.integer == GT_LCS ) {
+				trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
+				trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
+			}
+			else {
+				level.eliminationActive = 0;
+				level.eliminationNextTriggerTime = 0;
+				level.eliminationWarningTime = 0;
+				level.eliminationWarningSent = qfalse;
+				G_UpdateEliminationPlayerCount();
+				trap_SendServerCommand( -1, va("print \"%s won the elimination race!\n\"", winner->pers.netname ));
+				trap_SendServerCommand( level.winnerNumber, "cp \"You won the elimination race!\n\"");
+			}
 		}
 
 		return;
@@ -1799,11 +1901,16 @@ void CheckExitRules( void ) {
 		return;
 	}
 	
-	if ( level.finishRaceTime && g_gametype.integer == GT_LCS
+	if ( level.finishRaceTime && (g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION)
 		&& level.finishRaceTime + 10000 < level.time ){
 		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
 		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
-		LogExit( "Last car standing finished." );
+		if ( g_gametype.integer == GT_LCS ) {
+			LogExit( "Last car standing finished." );
+		}
+		else {
+			LogExit( "Elimination finished." );
+		}
 		return;
 	}
 // END
@@ -1823,26 +1930,26 @@ void CheckExitRules( void ) {
 
 	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 // STONELANCE
 		if ( level.teamScores[TEAM_GREEN] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Green hit the fraglimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Green hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_YELLOW] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Yellow hit the fraglimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Yellow hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
@@ -1875,19 +1982,359 @@ void CheckExitRules( void ) {
 	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
 
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
+				trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}
 	}
 }
 
+
+
+static void G_UpdateEliminationInfoConfigString( void ) {
+        static int lastActive = -1;
+        static int lastRemaining = -1;
+        static int lastRound = -1;
+        static int lastMsLeft = -1;
+        int active;
+        int remaining;
+        int round;
+        int msLeft;
+
+        if ( g_gametype.integer != GT_ELIMINATION ) {
+                active = 0;
+                remaining = 0;
+                round = 0;
+                msLeft = 0;
+        } else {
+                active = ( level.eliminationActive && level.startRaceTime && !level.finishRaceTime ) ? 1 : 0;
+                remaining = level.eliminationRemainingPlayers;
+                if ( remaining < 0 ) {
+                        remaining = 0;
+                }
+                round = level.eliminationRound;
+                if ( round < 0 ) {
+                        round = 0;
+                }
+
+                if ( active && level.eliminationNextTriggerTime > level.time && remaining > 1 ) {
+                        msLeft = level.eliminationNextTriggerTime - level.time;
+                } else {
+                        msLeft = 0;
+                }
+
+                if ( msLeft < 0 ) {
+                        msLeft = 0;
+                }
+        }
+
+        if ( lastActive != active || lastRemaining != remaining || lastRound != round || lastMsLeft != msLeft ) {
+                trap_SetConfigstring( CS_ELIMINATION_INFO,
+                        va( "%i %i %i %i", active, remaining, round, msLeft ) );
+                lastActive = active;
+                lastRemaining = remaining;
+                lastRound = round;
+                lastMsLeft = msLeft;
+        }
+}
+
+static void G_SetEliminationSchedule( int referenceTime, int interval ) {
+        int nextTime;
+        int warningTime;
+
+        if ( interval < 0 ) {
+                interval = 0;
+        }
+
+        nextTime = referenceTime + interval;
+        level.eliminationNextTriggerTime = nextTime;
+        level.eliminationWarningSent = qfalse;
+
+        if ( level.eliminationWarning <= 0 ) {
+                level.eliminationWarningTime = referenceTime;
+        } else {
+                warningTime = nextTime - level.eliminationWarning;
+                if ( warningTime < referenceTime ) {
+                        warningTime = referenceTime;
+                }
+                if ( warningTime > nextTime ) {
+                        warningTime = nextTime;
+                }
+
+                level.eliminationWarningTime = warningTime;
+        }
+
+        G_UpdateEliminationInfoConfigString();
+}
+
+void G_ResetEliminationState( void ) {
+        level.eliminationActive = 0;
+        level.eliminationRound = 0;
+        level.eliminationRemainingPlayers = 0;
+        level.eliminationNextTriggerTime = 0;
+        level.eliminationWarningTime = 0;
+        level.eliminationWarningSent = qfalse;
+
+        if ( g_gametype.integer == GT_ELIMINATION ) {
+                G_SetEliminationSchedule( level.time, level.eliminationStartDelay );
+        }
+
+        G_UpdateEliminationInfoConfigString();
+}
+
+void G_StartEliminationMode( void ) {
+        if ( g_gametype.integer != GT_ELIMINATION ) {
+                return;
+        }
+
+        level.eliminationActive = 1;
+        level.eliminationRound = 0;
+        G_UpdateEliminationPlayerCount();
+        G_SetEliminationSchedule( level.startRaceTime ? level.startRaceTime : level.time, level.eliminationStartDelay );
+}
+
+void G_UpdateEliminationPlayerCount( void ) {
+        int i;
+        int count;
+
+        if ( g_gametype.integer != GT_ELIMINATION ) {
+                level.eliminationRemainingPlayers = 0;
+                G_UpdateEliminationInfoConfigString();
+                return;
+        }
+
+        count = 0;
+        for ( i = 0 ; i < level.maxclients ; i++ ) {
+                gclient_t *cl = level.clients + i;
+
+                if ( cl->pers.connected != CON_CONNECTED ) {
+                        continue;
+                }
+                if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) {
+                        continue;
+                }
+                if ( isRaceObserver( i ) ) {
+                        continue;
+                }
+                if ( level.startRaceTime ) {
+                        if ( cl->finishRaceTime ) {
+                                continue;
+                        }
+                        if ( cl->ps.stats[STAT_HEALTH] <= 0 ) {
+                                continue;
+                        }
+                }
+
+                count++;
+        }
+
+        level.eliminationRemainingPlayers = count;
+
+        G_UpdateEliminationInfoConfigString();
+}
+
+void G_RegisterEliminationDeath( gentity_t *victim ) {
+        if ( g_gametype.integer != GT_ELIMINATION ) {
+                return;
+        }
+
+        if ( !level.eliminationActive || !level.startRaceTime ) {
+                return;
+        }
+
+        if ( !victim || !victim->client ) {
+                return;
+        }
+
+        if ( victim->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                return;
+        }
+
+        if ( isRaceObserver( victim->s.number ) ) {
+                return;
+        }
+
+        level.eliminationRound++;
+        G_UpdateEliminationPlayerCount();
+
+        victim->client->ps.stats[STAT_POSITION] = level.eliminationRemainingPlayers + 1;
+        Cmd_RacePositions_f();
+        CalculateRanks();
+
+        if ( level.eliminationRemainingPlayers > 1 ) {
+                G_SetEliminationSchedule( level.time, level.eliminationInterval );
+        } else {
+                level.eliminationActive = 0;
+                level.eliminationNextTriggerTime = 0;
+                level.eliminationWarningTime = 0;
+                level.eliminationWarningSent = qfalse;
+
+                G_UpdateEliminationInfoConfigString();
+        }
+}
+
+static qboolean G_IsEliminationClientActive( gentity_t *ent ) {
+        gclient_t *cl;
+
+        if ( !ent ) {
+                return qfalse;
+        }
+
+        if ( !ent->inuse ) {
+                return qfalse;
+        }
+
+        if ( !ent->client ) {
+                return qfalse;
+        }
+
+        cl = ent->client;
+
+        if ( cl->pers.connected != CON_CONNECTED ) {
+                return qfalse;
+        }
+
+        if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) {
+                return qfalse;
+        }
+
+        if ( isRaceObserver( ent->s.number ) ) {
+                return qfalse;
+        }
+
+        if ( level.startRaceTime ) {
+                if ( cl->finishRaceTime ) {
+                        return qfalse;
+                }
+                if ( cl->ps.stats[STAT_HEALTH] <= 0 ) {
+                        return qfalse;
+                }
+        }
+
+        return qtrue;
+}
+
+static gentity_t *G_GetLastEliminationDriver( void ) {
+        gentity_t *last = NULL;
+        int lastPosition = -1;
+        int i;
+
+        for ( i = 0 ; i < level.maxclients ; i++ ) {
+                gentity_t *ent = &g_entities[i];
+                int position;
+
+                if ( !G_IsEliminationClientActive( ent ) ) {
+                        continue;
+                }
+
+                position = ent->client->ps.stats[STAT_POSITION];
+                if ( position <= 0 ) {
+                        continue;
+                }
+
+                if ( position > lastPosition ) {
+                        lastPosition = position;
+                        last = ent;
+                }
+        }
+
+        return last;
+}
+
+static void G_ForceEliminationDeath( gentity_t *victim ) {
+        if ( !victim || !victim->client ) {
+                return;
+        }
+
+        if ( victim->client->ps.pm_type == PM_DEAD ) {
+                return;
+        }
+
+        victim->flags &= ~FL_GODMODE;
+        victim->client->ps.stats[STAT_HEALTH] = victim->health = -999;
+	player_die( victim, NULL, NULL, 100000, MOD_ELIMINATION );
+}
+
+static void G_RunEliminationTimers( void ) {
+        gentity_t *target;
+        int msLeft;
+        int secondsLeft;
+
+        if ( g_gametype.integer != GT_ELIMINATION ) {
+                return;
+        }
+
+        if ( !level.eliminationActive ) {
+                return;
+        }
+
+        if ( !level.startRaceTime || level.finishRaceTime ) {
+                return;
+        }
+
+        if ( level.eliminationNextTriggerTime <= 0 ) {
+                return;
+        }
+
+        G_UpdateEliminationPlayerCount();
+
+        if ( level.eliminationRemainingPlayers <= 1 ) {
+                return;
+        }
+
+        if ( level.eliminationWarning > 0 && !level.eliminationWarningSent && level.eliminationWarningTime > 0 && level.time >= level.eliminationWarningTime ) {
+                target = G_GetLastEliminationDriver();
+
+                if ( target ) {
+                        msLeft = level.eliminationNextTriggerTime - level.time;
+                        if ( msLeft < 0 ) {
+                                msLeft = 0;
+                        }
+                        secondsLeft = ( msLeft + 999 ) / 1000;
+                        trap_SendServerCommand( target->s.number,
+                                va( "cp \"You are last!\nElimination in %i %s!\n\"",
+                                        secondsLeft,
+                                        ( secondsLeft == 1 ) ? "second" : "seconds" ) );
+                        trap_SendServerCommand( target->s.number,
+                                va( "print \"You are last! Elimination in %i %s!\n\"",
+                                        secondsLeft,
+                                        ( secondsLeft == 1 ) ? "second" : "seconds" ) );
+                        level.eliminationWarningSent = qtrue;
+                }
+        }
+
+        if ( level.time < level.eliminationNextTriggerTime ) {
+                return;
+        }
+
+        target = G_GetLastEliminationDriver();
+
+        if ( !target ) {
+                level.eliminationActive = 0;
+                level.eliminationNextTriggerTime = 0;
+                level.eliminationWarningTime = 0;
+                level.eliminationWarningSent = qfalse;
+                G_UpdateEliminationInfoConfigString();
+                return;
+        }
+
+        trap_SendServerCommand( -1,
+                va( "print \"%s was eliminated!\n\"", target->client->pers.netname ) );
+        trap_SendServerCommand( target->s.number, "cp \"You have been eliminated!\n\"" );
+        trap_SendServerCommand( target->s.number, "print \"You have been eliminated!\n\"" );
+
+        G_ForceEliminationDeath( target );
+
+        if ( level.eliminationActive && level.eliminationRemainingPlayers > 1 ) {
+                G_SetEliminationSchedule( level.time, level.eliminationInterval );
+        }
+}
 
 
 /*
@@ -2046,11 +2493,11 @@ void CheckVote( void ) {
 		// ATVI Q3 1.32 Patch #9, WNF
 		if ( level.voteYes > level.numVotingClients/2 ) {
 			// execute the command, then remove the vote
-			trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
+				trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
 			level.voteExecuteTime = level.time + 3000;
 		} else if ( level.voteNo >= level.numVotingClients/2 ) {
 			// same behavior as a timeout
-			trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
+				trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
 		} else {
 			// still waiting for a majority
 			return;
@@ -2163,7 +2610,7 @@ void CheckTeamVote( int team ) {
 	} else {
 		if ( level.teamVoteYes[cs_offset] > level.numteamVotingClients[cs_offset]/2 ) {
 			// execute the command, then remove the vote
-			trap_SendServerCommand( -1, "print \"Team vote passed.\n\"" );
+				trap_SendServerCommand( -1, "print \"Team vote passed.\n\"" );
 			//
 			if ( !Q_strncmp( "leader", level.teamVoteString[cs_offset], 6) ) {
 				//set the team leader
@@ -2174,7 +2621,7 @@ void CheckTeamVote( int team ) {
 			}
 		} else if ( level.teamVoteNo[cs_offset] >= level.numteamVotingClients[cs_offset]/2 ) {
 			// same behavior as a timeout
-			trap_SendServerCommand( -1, "print \"Team vote failed.\n\"" );
+				trap_SendServerCommand( -1, "print \"Team vote failed.\n\"" );
 		} else {
 			// still waiting for a majority
 			return;
@@ -2336,8 +2783,11 @@ void G_RunFrame( int levelTime ) {
 		}
 	}
 
-	// see if it is time to do a tournement restart
-	CheckTournament();
+        // update elimination scheduling
+        G_RunEliminationTimers();
+
+        // see if it is time to do a tournement restart
+        CheckTournament();
 
 	// see if it is time to end the level
 	CheckExitRules();

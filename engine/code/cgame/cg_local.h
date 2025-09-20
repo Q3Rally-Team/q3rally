@@ -1313,6 +1313,11 @@ typedef struct {
 // Q3Rally Code Start
 	int				numRacers;
         float                   trackLength;
+	int				eliminationActive;
+	int				eliminationRemainingPlayers;
+	int				eliminationRound;
+	int				eliminationMsRemaining;
+	int				eliminationLastUpdateTime;
 // Q3Rally Code END
 
 } cgs_t;
@@ -1485,6 +1490,45 @@ extern	vmCvar_t		cg_engineSounds;
 extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;
 // Q3Rally Code END
+
+#ifdef Q3_VM
+int CG_EliminationMsLeft( void );
+int CG_EliminationDisplayRound( void );
+#else
+static ID_INLINE int CG_EliminationMsLeft( void ) {
+    int msLeft;
+
+    if ( cgs.eliminationMsRemaining <= 0 ) {
+        return 0;
+    }
+
+    if ( cgs.eliminationLastUpdateTime <= 0 ) {
+        return cgs.eliminationMsRemaining;
+    }
+
+    msLeft = cgs.eliminationMsRemaining - ( cg.time - cgs.eliminationLastUpdateTime );
+    if ( msLeft < 0 ) {
+        msLeft = 0;
+    }
+
+    return msLeft;
+}
+
+static ID_INLINE int CG_EliminationDisplayRound( void ) {
+    int round;
+
+    round = cgs.eliminationRound;
+    if ( round < 0 ) {
+        round = 0;
+    }
+
+    if ( cgs.eliminationActive && cgs.eliminationRemainingPlayers > 1 ) {
+        round++;
+    }
+
+    return round;
+}
+#endif
 
 //
 // cg_main.c

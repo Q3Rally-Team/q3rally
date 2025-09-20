@@ -315,7 +315,7 @@ void Cmd_Give_f (gentity_t *ent)
 // STONELANCE
 //	if (give_all || Q_stricmp(name, "weapons") == 0)
 	if ((give_all || Q_stricmp(name, "weapons") == 0)
-		&& (g_gametype.integer != GT_RACING && g_gametype.integer  != GT_TEAM_RACING))
+		&& (g_gametype.integer != GT_RACING && g_gametype.integer  != GT_TEAM_RACING && g_gametype.integer != GT_ELIMINATION))
 // END
 	{
 // STONELANCE
