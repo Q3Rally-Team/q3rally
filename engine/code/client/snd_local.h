@@ -131,6 +131,7 @@ typedef struct
 	void (*StartLocalSound)( sfxHandle_t sfx, int channelNum );
 	void (*StartBackgroundTrack)( const char *intro, const char *loop );
 	void (*StopBackgroundTrack)( void );
+	void (*GetMusicState)( struct cgameMusicState_s *state );
 	void (*RawSamples)(int stream, int samples, int rate, int width, int channels, const byte *data, float volume, int entityNum);
 	void (*StopAllSounds)( void );
 	void (*ClearLoopingSounds)( qboolean killall );

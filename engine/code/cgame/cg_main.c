@@ -1525,6 +1525,13 @@ void CG_StartMusic( void ) {
 	Q_strncpyz( parm1, COM_Parse( &s ), sizeof( parm1 ) );
 	Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
 
+	cg.musicTitle[0] = '\0';
+	cg.musicDurationMs = 0;
+	cg.musicBannerExpire = 0;
+	cg.musicStartSample = -1;
+	cg.musicSampleRate = 0;
+	cg.musicTotalSamples = 0;
+
 	trap_S_StartBackgroundTrack( parm1, parm2 );
 }
 #ifdef MISSIONPACK

@@ -748,6 +748,14 @@ typedef struct {
 	int			soundTime;
 	qhandle_t	soundBuffer[MAX_SOUNDBUFFER];
 
+	// background music banner state
+	char		musicTitle[MAX_QPATH];
+	int			musicDurationMs;
+	int			musicBannerExpire;
+	int			musicStartSample;
+	int			musicSampleRate;
+	int			musicTotalSamples;
+
 	// warmup countdown
 	int			warmup;
 	int			warmupCount;
@@ -2088,6 +2096,7 @@ sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compress
 
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	    trap_S_StopBackgroundTrack( void );
+void	    trap_S_GetMusicState( cgameMusicState_t *state );
 
 
 void		trap_R_LoadWorldMap( const char *mapname );

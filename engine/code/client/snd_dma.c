@@ -41,6 +41,232 @@ snd_stream_t	*s_backgroundStream = NULL;
 static char		s_backgroundLoop[MAX_QPATH];
 //static char		s_backgroundMusic[MAX_QPATH]; //TTimo: unused
 
+#define JUKEBOX_BASE_PATH			"music/jukebox"
+#define JUKEBOX_EXTENSION			".ogg"
+#define JUKEBOX_FILELIST_BUFSIZE	(MAX_OSPATH * 64)
+#define JUKEBOX_MAX_TRACKS			128
+
+typedef struct {
+	qboolean	active;
+	int			startSample;
+	int			trackSamples;
+	int			trackRate;
+	int			currentTrack;
+	int			trackCount;
+	char		currentTrackPath[MAX_QPATH];
+	char		tracks[JUKEBOX_MAX_TRACKS][MAX_QPATH];
+} jukeboxState_t;
+
+static jukeboxState_t s_jukeboxState;
+static cgameMusicState_t s_musicState;
+
+extern int s_soundtime;
+
+static void S_MusicInfoReset( void );
+static void S_UpdateMusicStateForStream( const char *filename );
+static void S_BuildMusicTitleFromPath( const char *filePath, char *out, size_t outSize );
+
+static void Jukebox_Reset( void )
+{
+	Com_Memset( &s_jukeboxState, 0, sizeof( s_jukeboxState ) );
+	S_MusicInfoReset();
+}
+
+static void S_MusicInfoReset( void )
+{
+	Com_Memset( &s_musicState, 0, sizeof( s_musicState ) );
+}
+
+static void S_BuildMusicTitleFromPath( const char *filePath, char *out, size_t outSize )
+{
+	char temp[MAX_QPATH];
+	const char *base = filePath;
+	const char *slash;
+	const char *backslash;
+	char *p;
+
+	if( !out || !outSize ) {
+		return;
+	}
+
+	out[0] = '\0';
+
+	if( !filePath || !filePath[0] ) {
+		return;
+	}
+
+	slash = strrchr( filePath, '/' );
+	backslash = strrchr( filePath, '\\' );
+	if( backslash && ( !slash || backslash > slash ) ) {
+		slash = backslash;
+	}
+	if( slash && slash[1] ) {
+		base = slash + 1;
+	}
+
+	Q_strncpyz( temp, base, sizeof( temp ) );
+	COM_StripExtension( temp, temp, sizeof( temp ) );
+	for( p = temp; *p; ++p ) {
+		if( *p == '_' || *p == '-' ) {
+			*p = ' ';
+		}
+	}
+
+	Q_strncpyz( out, temp, outSize );
+	if( !out[0] ) {
+		Q_strncpyz( out, base, outSize );
+	}
+}
+
+static void S_UpdateMusicStateForStream( const char *filename )
+{
+	char sanitized[MAX_QPATH];
+
+	if( !filename || !filename[0] || !s_backgroundStream ) {
+		return;
+	}
+
+	s_musicState.valid = qtrue;
+	Q_strncpyz( s_musicState.trackPath, filename, sizeof( s_musicState.trackPath ) );
+
+	if( s_backgroundStream->commentTitle[0] ) {
+		Q_strncpyz( s_musicState.title, s_backgroundStream->commentTitle, sizeof( s_musicState.title ) );
+	} else {
+		S_BuildMusicTitleFromPath( filename, sanitized, sizeof( sanitized ) );
+		Q_strncpyz( s_musicState.title, sanitized, sizeof( s_musicState.title ) );
+	}
+
+	s_musicState.totalSamples = s_backgroundStream->info.samples;
+	s_musicState.sampleRate = s_backgroundStream->info.rate;
+	s_musicState.startSample = s_soundtime;
+}
+
+static qboolean Jukebox_PathIsUnderBase( const char *path )
+{
+	size_t	baseLen;
+
+	if( !path || !path[0] ) {
+		return qfalse;
+	}
+
+	baseLen = strlen( JUKEBOX_BASE_PATH );
+
+	if( Q_stricmpn( path, JUKEBOX_BASE_PATH, baseLen ) ) {
+		return qfalse;
+	}
+
+	if( path[baseLen] && path[baseLen] != '/' && path[baseLen] != '\\' ) {
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+static qboolean Jukebox_IsPlaylistTrack( const char *intro, const char *loop )
+{
+	if( Jukebox_PathIsUnderBase( loop ) ) {
+		return qtrue;
+	}
+
+	if( Jukebox_PathIsUnderBase( intro ) ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static qboolean Jukebox_LoadPlaylist( const char *currentTrack )
+{
+	char	fileList[JUKEBOX_FILELIST_BUFSIZE];
+	char	*fileName;
+	int		numTracks;
+	int		i;
+
+	s_jukeboxState.trackCount = 0;
+	s_jukeboxState.currentTrack = -1;
+	s_jukeboxState.currentTrackPath[0] = '\0';
+
+	numTracks = FS_GetFileList( JUKEBOX_BASE_PATH, JUKEBOX_EXTENSION, fileList, sizeof( fileList ) );
+	if( numTracks <= 0 ) {
+		return qfalse;
+	}
+
+	fileName = fileList;
+
+	for( i = 0; i < numTracks && s_jukeboxState.trackCount < JUKEBOX_MAX_TRACKS &&
+		fileName < fileList + sizeof( fileList ); i++ ) {
+		int len = strlen( fileName );
+
+		if( len > 0 ) {
+			Com_sprintf( s_jukeboxState.tracks[s_jukeboxState.trackCount],
+				sizeof( s_jukeboxState.tracks[s_jukeboxState.trackCount] ),
+				"%s/%s", JUKEBOX_BASE_PATH, fileName );
+
+			if( currentTrack && currentTrack[0] &&
+				!Q_stricmp( s_jukeboxState.tracks[s_jukeboxState.trackCount], currentTrack ) ) {
+				s_jukeboxState.currentTrack = s_jukeboxState.trackCount;
+			}
+
+			s_jukeboxState.trackCount++;
+		}
+
+		fileName += len + 1;
+	}
+
+	if( s_jukeboxState.trackCount <= 0 ) {
+		return qfalse;
+	}
+
+	if( s_jukeboxState.currentTrack < 0 ) {
+		s_jukeboxState.currentTrack = 0;
+	}
+
+	Q_strncpyz( s_jukeboxState.currentTrackPath,
+		s_jukeboxState.tracks[s_jukeboxState.currentTrack],
+		sizeof( s_jukeboxState.currentTrackPath ) );
+
+	return qtrue;
+}
+
+static qboolean Jukebox_Begin( const char *currentTrack )
+{
+	if( !currentTrack || !currentTrack[0] ) {
+		return qfalse;
+	}
+
+	Jukebox_Reset();
+
+	if( !Jukebox_LoadPlaylist( currentTrack ) ) {
+		return qfalse;
+	}
+
+	s_jukeboxState.active = qtrue;
+
+	return qtrue;
+}
+
+static void Jukebox_UpdateTrackInfo( void )
+{
+	if( !s_jukeboxState.active ) {
+		return;
+	}
+
+	s_jukeboxState.startSample = s_soundtime;
+	s_musicState.startSample = s_jukeboxState.startSample;
+
+	if( s_backgroundStream ) {
+		s_jukeboxState.trackSamples = s_backgroundStream->info.samples;
+		s_jukeboxState.trackRate = s_backgroundStream->info.rate;
+		s_musicState.totalSamples = s_jukeboxState.trackSamples;
+		s_musicState.sampleRate = s_jukeboxState.trackRate;
+	} else {
+		s_jukeboxState.trackSamples = 0;
+		s_jukeboxState.trackRate = 0;
+		s_musicState.totalSamples = 0;
+		s_musicState.sampleRate = 0;
+	}
+}
+
 
 // =======================================================================
 // Internal sound data & structures
@@ -1373,7 +1599,19 @@ background music functions
 S_StopBackgroundTrack
 ======================
 */
+void S_Base_GetMusicState( cgameMusicState_t *state )
+{
+	if( !state ) {
+		return;
+	}
+
+	Com_Memcpy( state, &s_musicState, sizeof( *state ) );
+	state->currentSample = s_soundtime;
+}
+
 void S_Base_StopBackgroundTrack( void ) {
+	Jukebox_Reset();
+
 	if(!s_backgroundStream)
 		return;
 	S_CodecCloseStream(s_backgroundStream);
@@ -1395,6 +1633,8 @@ static void S_OpenBackgroundStream( const char *filename ) {
 		s_backgroundStream = NULL;
 	}
 
+	S_MusicInfoReset();
+
 	// Open stream
 	s_backgroundStream = S_CodecOpenStream(filename);
 	if(!s_backgroundStream) {
@@ -1402,9 +1642,52 @@ static void S_OpenBackgroundStream( const char *filename ) {
 		return;
 	}
 
+	S_UpdateMusicStateForStream( filename );
+
 	if(s_backgroundStream->info.channels != 2 || s_backgroundStream->info.rate != 22050) {
 		Com_Printf(S_COLOR_YELLOW "WARNING: music file %s is not 22k stereo\n", filename );
 	}
+}
+
+static qboolean Jukebox_AdvanceTrack( void )
+{
+	int	attempt;
+
+	if( !s_jukeboxState.active ) {
+		return qfalse;
+	}
+
+	if( s_jukeboxState.trackCount <= 0 ) {
+		Jukebox_Reset();
+		return qfalse;
+	}
+
+	if( s_jukeboxState.currentTrack < 0 || s_jukeboxState.currentTrack >= s_jukeboxState.trackCount ) {
+		s_jukeboxState.currentTrack = 0;
+	}
+
+	for( attempt = 0; attempt < s_jukeboxState.trackCount; attempt++ ) {
+		int nextIndex = ( s_jukeboxState.currentTrack + 1 + attempt ) % s_jukeboxState.trackCount;
+		const char *nextPath = s_jukeboxState.tracks[nextIndex];
+
+		if( !nextPath[0] ) {
+			continue;
+		}
+
+		S_OpenBackgroundStream( nextPath );
+
+		if( s_backgroundStream ) {
+			s_jukeboxState.currentTrack = nextIndex;
+			Q_strncpyz( s_jukeboxState.currentTrackPath, nextPath, sizeof( s_jukeboxState.currentTrackPath ) );
+			s_backgroundLoop[0] = '\0';
+			Jukebox_UpdateTrackInfo();
+			return qtrue;
+		}
+	}
+
+	Jukebox_Reset();
+
+	return qfalse;
 }
 
 /*
@@ -1413,6 +1696,8 @@ S_StartBackgroundTrack
 ======================
 */
 void S_Base_StartBackgroundTrack( const char *intro, const char *loop ){
+	qboolean	playlistActive = qfalse;
+
 	if ( !intro ) {
 		intro = "";
 	}
@@ -1427,9 +1712,30 @@ void S_Base_StartBackgroundTrack( const char *intro, const char *loop ){
 		return;
 	}
 
-	Q_strncpyz( s_backgroundLoop, loop, sizeof( s_backgroundLoop ) );
+	if( Jukebox_IsPlaylistTrack( intro, loop ) ) {
+		if( Jukebox_Begin( loop ) ) {
+			playlistActive = qtrue;
+		}
+	}
+
+	if( playlistActive ) {
+		s_backgroundLoop[0] = '\0';
+	} else {
+		Jukebox_Reset();
+		Q_strncpyz( s_backgroundLoop, loop, sizeof( s_backgroundLoop ) );
+	}
 
 	S_OpenBackgroundStream( intro );
+	if(!s_backgroundStream) {
+		if( playlistActive ) {
+			Jukebox_Reset();
+		}
+		return;
+	}
+
+	if( playlistActive ) {
+		Jukebox_UpdateTrackInfo();
+	}
 }
 
 /*
@@ -1489,12 +1795,16 @@ void S_UpdateBackgroundTrack( void ) {
 		}
 		else
 		{
-			// loop
+			// loop or advance playlist
 			if(s_backgroundLoop[0])
 			{
 				S_OpenBackgroundStream( s_backgroundLoop );
 				if(!s_backgroundStream)
 					return;
+			}
+			else if( Jukebox_AdvanceTrack() )
+			{
+				continue;
 			}
 			else
 			{
@@ -1600,6 +1910,7 @@ qboolean S_Base_Init( soundInterface_t *si ) {
 	si->StartLocalSound = S_Base_StartLocalSound;
 	si->StartBackgroundTrack = S_Base_StartBackgroundTrack;
 	si->StopBackgroundTrack = S_Base_StopBackgroundTrack;
+	si->GetMusicState = S_Base_GetMusicState;
 	si->RawSamples = S_Base_RawSamples;
 	si->StopAllSounds = S_Base_StopAllSounds;
 	si->ClearLoopingSounds = S_Base_ClearLoopingSounds;

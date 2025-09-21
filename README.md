@@ -36,6 +36,12 @@ Allowing a ratio between `1.0`–`1.5` for horsepower and `1.0`–`2.0` for
 health keeps racing competitive while still permitting variety. Admins are
 free to tweak these cvars to fit their custom vehicle sets.
 
+## Jukebox soundtrack rotation
+
+Players can swap the level music for a rotating playlist by toggling the jukebox. Activate it with the `/jukebox` console command or bind the "Jukebox" action in the Controls menu to flip it on and off during a race. Once active, the game picks a random starting song and advances to the next track automatically whenever the current one finishes.
+
+Tracks are loaded from `music/jukebox` (e.g., `baseq3/music/jukebox`) and must be `.ogg` files. Up to 128 songs are indexed per session, and the sound system reports a warning if a track is not encoded as 22 kHz stereo. Turning the jukebox off restores the map's original soundtrack.
+
 ## Resources
 
 * [Q3Rally Website](http://www.q3rally.com)

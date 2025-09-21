@@ -112,16 +112,17 @@ typedef struct
 #define ID_CHAT2		31
 #define ID_CHAT3		32
 #define ID_CHAT4		33
+#define ID_JUKEBOX		34
 
 // all others
-#define ID_FREELOOK		34
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
+#define ID_FREELOOK		35
+#define ID_INVERTMOUSE	36
+#define ID_ALWAYSRUN	37
+#define ID_AUTOSWITCH	38
+#define ID_MOUSESPEED	39
+#define ID_JOYENABLE	40
+#define ID_JOYTHRESHOLD	41
+#define ID_SMOOTHMOUSE	42
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -200,6 +201,7 @@ typedef struct
 	menuaction_s		showscores;
 	menuradiobutton_s	autoswitch;
 	menuaction_s		useitem;
+	menuaction_s		jukebox;
 	playerInfo_t		playerinfo;
 	qboolean			changesmade;
 	menuaction_s		chat;
@@ -262,6 +264,7 @@ static bind_t g_bindings[] =
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
+	{"jukebox",		"toggle jukebox",	ID_JUKEBOX,		ANIM_IDLE,		-1,				-1,		-1, -1},
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
 
@@ -329,6 +332,7 @@ static menucommon_s *g_looking_controls[] = {
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
 	(menucommon_s *)&s_controls.useitem,
+	(menucommon_s *)&s_controls.jukebox,
 	(menucommon_s *)&s_controls.gesture,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
@@ -1456,6 +1460,11 @@ static void Controls_MenuInit( void )
 	s_controls.useitem.generic.callback  = Controls_ActionEvent;
 	s_controls.useitem.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.useitem.generic.id        = ID_USEITEM;
+	s_controls.jukebox.generic.type	    = MTYPE_ACTION;
+	s_controls.jukebox.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukebox.generic.callback  = Controls_ActionEvent;
+	s_controls.jukebox.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukebox.generic.id        = ID_JUKEBOX;
 
 	s_controls.showscores.generic.type	    = MTYPE_ACTION;
 	s_controls.showscores.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1612,6 +1621,7 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukebox );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );

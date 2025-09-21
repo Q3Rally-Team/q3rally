@@ -1964,10 +1964,11 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
 	}
    else if( s_serveroptions.showLaplimitNotice ) {
-		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.laplimitNotice );
-	}
+        Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.laplimitNotice );
+    }
 
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
+    // always add timelimit (not part of else-if)
+    Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
 
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.friendlyfire );
