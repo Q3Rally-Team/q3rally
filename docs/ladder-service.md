@@ -1,0 +1,91 @@
+# Ladder-Service Architektur
+
+## Überblick
+Dieser Entwurf beschreibt die serverseitige Fassade, die Matchdaten als `POST /api/v1/matches` an einen Ladder-Dienst überträgt. Die abzudeckenden Spielmodi orientieren sich an den vorhandenen `gametype_t`-Werten wie `GT_RACING`, `GT_TEAM_RACING_DM` oder `GT_DOMINATION`.【F:engine/code/game/bg_public.h†L141-L159】 Basis für alle Berichte sind die vorhandenen Zeitstempel des Levels (`level.startRaceTime`, `level.finishRaceTime`), die Renn- und Team-Metadaten sowie Spielerinformationen aus `gclient_t`, dem Levelzustand und dem Scoreboard.【F:engine/code/game/g_local.h†L500-L537】【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/cgame/cg_local.h†L400-L410】 Identitäten werden aus dem serverseitig bekannten `cl_guid`-Mechanismus abgeleitet.【F:engine/code/client/cl_main.c†L124-L133】【F:engine/code/client/cl_main.c†L3654-L3674】
+
+## Gemeinsame Nutzdatenstruktur
+* **Match-Metadaten**: `matchId`, `mode`, `startTime`, `endTime`, `duration`, `map`, `server` resultieren aus Level-Zustand und Konfigurations-Strings. Start- und Endzeiten stammen aus `level.startRaceTime` bzw. `level.finishRaceTime`; die Anzahl der Runden (`level.numberOfLaps`) ergänzt Rennmodi.【F:engine/code/game/g_local.h†L500-L537】
+* **Spielerobjekt**: Enthält `playerId` (Hash aus `cl_guid` + Anzeigename), `displayName`, `team`, Fahrzeug-/Skin-Informationen (`gclient_t.car` sowie `clientInfo_t.modelName`, `rimName`, etc.) und die pro Modus erhobenen Zähler und Zeiten.【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/cgame/cg_local.h†L419-L468】
+* **Scoreboard-Daten**: `score`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken` und `position` werden direkt aus `score_t` übernommen und je nach Modus in Kennzahlen übersetzt.【F:engine/code/cgame/cg_local.h†L400-L410】
+* **Team-Aggregate**: Teambezogene Werte greifen auf `level.teamScores` und `level.teamTimes` zurück, um Gesamtpunkte, Durchschnittszeiten und objektbasierte Werte aufzubereiten.【F:engine/code/game/g_local.h†L447-L520】
+
+## Felder pro `gametype_t`
+### GT_RACING & GT_RACING_DM
+* `raceStart`, `raceFinish`, `winnerTime`: direkt aus `level.startRaceTime`, `level.finishRaceTime` und dem Sieger-Client (`level.winnerNumber`).【F:engine/code/game/g_local.h†L500-L519】
+* `completedLaps`, `bestLap`, `totalTime`: über `gclient_t.finishRaceTime` relativ zu `level.startRaceTime`; während laufender Rennen wird `level.time - level.startRaceTime` verwendet.【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/game/g_rally_racetools.c†L104-L120】
+* `position`: aus dem Scoreboard-Feld `score_t.position` für finale Platzierungen.【F:engine/code/cgame/cg_local.h†L400-L410】
+* `damageDealt`/`damageTaken`: nur für `GT_RACING_DM`, direkt aus `score_t`.
+
+### GT_TEAM_RACING & GT_TEAM_RACING_DM
+* Teamzeiten basieren auf `level.teamTimes` und werden auf Teilnehmerzahl normalisiert.【F:engine/code/game/g_local.h†L447-L520】【F:engine/code/game/g_rally_racetools.c†L122-L146】
+* `teamScoreFraction` greift auf `level.teamScores` zu; Waffenvarianten übernehmen zusätzlich `damageDealt`/`damageTaken`.
+* Spielerfelder entsprechen den Einzelrennen, ergänzt um Teamzuordnung (`score_t.team`).【F:engine/code/cgame/cg_local.h†L400-L410】
+
+### GT_ELIMINATION & GT_LCS
+* `eliminationSchedule` enthält `level.eliminationStartDelay`, `level.eliminationInterval` und `level.eliminationWarning` für Client-/Auswerterabgleich.【F:engine/code/game/g_local.h†L521-L528】
+* `survivalTime` und `elimOrder` nutzen `gclient_t.finishRaceTime` sowie die aktuelle Spieleranzahl (`level.eliminationRemainingPlayers`).【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/game/g_local.h†L521-L528】
+* `lapsAtElim` errechnet sich aus `level.numberOfLaps` und dem letzten Checkpoint-Zeitstempel der Spieler (`gclient_t.lastCheckpointTime`).【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/game/g_local.h†L500-L523】
+
+### GT_DERBY
+* Nutzt dieselben Zeitfelder wie Rennen; zusätzlich werden Knockouts und Schadenseffizienz über `score_t.score`, `damageDealt`, `damageTaken` abgebildet.【F:engine/code/cgame/cg_local.h†L400-L410】
+* Das Sieger-Cooldown-Handling verwendet `level.finishRaceTime` analog zu den Rallye-Modi.【F:engine/code/game/g_local.h†L500-L519】
+
+### GT_DEATHMATCH & GT_TEAM
+* `frags` aus `score_t.score`, `deaths` über die Spielstatistiken der Clients (aus dem Gamecode zu ergänzen), `accuracy` und Serienzähler über `score_t.accuracy`, `impressiveCount`, `excellentCount` etc.【F:engine/code/cgame/cg_local.h†L400-L410】
+* Teamvarianten spiegeln `teamScoreFraction` mittels `level.teamScores` und nutzen `score_t.team` zur Zuordnung.【F:engine/code/game/g_local.h†L447-L456】【F:engine/code/cgame/cg_local.h†L400-L410】
+
+### GT_CTF & GT_CTF4
+* Flagspezifische Metriken entstammen den Scoreboard-Feldern `captures`, `assistCount`, `defendCount` und `carrier`-abhängigen Schadenswerten.【F:engine/code/cgame/cg_local.h†L400-L410】
+* Teamziele nutzen erneut `level.teamScores` und `score_t.team`.
+
+### GT_DOMINATION
+* Kontrollpunkte spiegeln sich im Team-Score; zusätzliche Tick-Zähler werden aus `level.teamScores`/`level.teamTimes` generiert, ergänzt um pro Spieler aufbereitete `score_t.score` und Schadenswerte.【F:engine/code/game/g_local.h†L447-L520】【F:engine/code/cgame/cg_local.h†L400-L410】
+
+### GT_SINGLE_PLAYER
+* Kombiniert Rennfelder (`finishRaceTime`, `numberOfLaps`) mit zusätzlichen Wiederholungszählern aus dem Spielscripting (z.B. `client->respawnTime`).【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/game/g_local.h†L500-L519】
+
+## JSON-Schema für `POST /api/v1/matches`
+Der Service akzeptiert pro Match ein Objekt mit folgenden Hauptelementen:
+
+```json
+{
+  "matchId": "srv-20240405-183011-42",
+  "mode": "GT_RACING",
+  "startTime": "2024-04-05T18:30:11Z",
+  "endTime": "2024-04-05T18:42:39Z",
+  "duration": "PT12M28S",
+  "map": "q3r_country01",
+  "server": { "name": "Q3Rally EU #1", "host": "203.0.113.10:27960", "build": "1.3.0" },
+  "settings": { "g_gametype": 141, "g_eliminationInterval": 15000 },
+  "players": [ { "playerId": "sha256:...", "team": "red", "totalTime": "PT12M02.250S", ... } ],
+  "teams": [ { "team": "red", "rawScore": 123, "normalizedScore": 0.64, ... } ],
+  "events": [ { "timestamp": "2024-04-05T18:33:15.210Z", "type": "lap_completed", ... } ]
+}
+```
+
+* Pflichtfelder: `matchId`, `mode`, `startTime`, `endTime`, `players[*].playerId`, `players[*].rawScore`, `settings.g_gametype`.
+* `settings` spiegelt relevante CVars wider (z.B. Eliminierungs-Intervalle, Rundenzahl) und basiert auf Level- sowie Server-Konfiguration.【F:engine/code/game/g_local.h†L500-L523】
+* `events` ist optional und folgt dem in der Telemetrie-Planung beschriebenen Schema für detaillierte Rennereignisse.【F:readme/telemetry_reporting_plan.md†L160-L209】
+
+## Konfiguration & CVars
+Der Ladder-Abgleich folgt dem Muster der bestehenden Rankings-Anbindung: Aktivierung und Status werden über CVars gesteuert (`sv_enableRankings`, `sv_rankingsActive`).【F:engine/code/server/sv_rankings.c†L74-L137】 Für den neuen Dienst stellt der Server drei CVars bereit:
+
+| CVar | Zweck | Flags |
+| --- | --- | --- |
+| `sv_ladderEnabled` | Aktiviert/Deaktiviert den HTTP-Reporter global. | `CVAR_ARCHIVE` |
+| `sv_ladderUrl` | Ziel-Endpoint für `POST /api/v1/matches`. | `CVAR_ARCHIVE` |
+| `sv_ladderApiKey` | Geheimnis für den `Authorization`-Header. | `CVAR_TEMP | CVAR_PROTECTED` |
+
+Die Implementierung folgt dem bestehenden Muster in `SV_Init`: Secrets werden analog zu `rconPassword` als temporäre, geschützte CVars behandelt, damit sie nicht in Status-Antworten landen.【F:engine/code/server/sv_main.c†L34-L43】【F:engine/code/server/sv_init.c†L673-L685】
+
+## HTTP-Fassade & Transport
+Die HTTP-Fassade lebt im Server (`engine/code/server/sv_ladder.c`), weil sie direkt auf Level- und Clientzustände zugreifen muss, die nur im dedizierten Serverprozess gepflegt werden (`level.startRaceTime`, `gclient_t.finishRaceTime`, `score_t`-Snapshots).【F:engine/code/game/g_local.h†L401-L523】【F:engine/code/cgame/cg_local.h†L400-L410】 Eine Platzierung im gemeinsamen Code (`qcommon`) würde zusätzliche Callbacks für Spielzustände erfordern und die Abhängigkeiten des Client-Builds auf den Ladder-Dienst erhöhen.
+
+Für die Kommunikation wird libcurl eingesetzt, das in der Build-Umgebung bereits optional vorgesehen ist (`USE_CURL`, `USE_CURL_DLOPEN`).【F:engine/docs/README.md†L147-L166】 Die Fassade initialisiert einen eigenen `CURLM`-Handle für asynchrone POSTs und setzt folgende Policies:
+
+* **Retry & Backoff**: Bei Transportfehlern oder HTTP ≥ 500 werden Requests in einem lokalen Spool (`telemetry/outbox`) abgelegt und mit exponentiellem Backoff (Start 5 s, Cap 5 min) erneut versendet.【F:readme/telemetry_reporting_plan.md†L175-L209】 Erfolgreiche Antworten löschen den Spool-Eintrag.
+* **Spool-Verzeichnis**: Das Verzeichnis liegt unterhalb von `fs_homepath` und enthält maximal `sv_telemetryMaxBatch` Elemente (übernimmt die bestehende Telemetrie-Planung und erleichtert Re-Use).【F:readme/telemetry_reporting_plan.md†L175-L209】
+* **TLS-Zertifikate**: Standardmäßig nutzt libcurl den System-Truststore; optional kann ein dedizierter CA-Pfad (`sv_ladderCaPath`, später) erlaubt werden. Zertifikatsfehler führen zu Fehlermeldungen und Triggern der Backoff-Logik, ohne das Match als zugestellt zu markieren.
+* **Auth**: `sv_ladderApiKey` wird als Bearer-Token im Header gesetzt. Analog zu `rconPassword` erfolgt keine Ausgabe in Logs auf Normal-Level.【F:engine/code/server/sv_init.c†L681-L685】
+
+Diese Architektur hält die Kopplung zum Spielcode gering, erlaubt operatorfreundliche Konfiguration per CVar und nutzt vorhandene Mechanismen für Resilienz und Sicherheit.

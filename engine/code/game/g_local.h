@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	INTERMISSION_DELAY_TIME	1000
 #define	SP_INTERMISSION_DELAY_TIME	5000
 
+
 // gentity->flags
 #define	FL_GODMODE				0x00000010
 #define	FL_NOTARGET				0x00000020
@@ -408,6 +409,20 @@ struct gclient_s {
 
 	// race variables
 	int			finishRaceTime;
+	int			ladderBestLapMs;
+	int			ladderTotalRaceMs;
+	int			ladderLastLapStartMs;
+	int			ladderLapCount;
+	int			ladderLapTimes[RACE_MAX_RECORDED_LAPS];
+	int			ladderKills;
+	int			ladderDeaths;
+	int			ladderZoneHoldMs;
+	int			ladderZoneLastUpdateMs;
+	int			ladderZoneActiveSigil;
+	int			ladderSurvivalMs;
+	int			ladderEliminationRound;
+	int			ladderEliminationPlayersRemaining;
+	float			ladderEliminationMetric;
 
 	int			horn_sound_time;
 
@@ -423,6 +438,8 @@ struct gclient_s {
 //
 #define	MAX_SPAWN_VARS			64
 #define	MAX_SPAWN_VARS_CHARS	4096
+
+
 
 typedef struct {
 	struct gclient_s	*clients;		// [maxclients]
@@ -443,6 +460,9 @@ typedef struct {
 	int			previousTime;			// so movers can back up when blocked
 
 	int			startTime;				// level.time the map was started
+	qtime_t		matchStartTime;
+	int			matchStartEpoch;
+
 
 	int			teamScores[TEAM_NUM_TEAMS];
 // STONELANCE
@@ -541,6 +561,7 @@ typedef struct {
         qboolean                hasFinish;
 
         int                     testModelID;
+        ladderMatchPayload_t    ladderPayload;
 // END
 } level_locals_t;
 
@@ -814,6 +835,17 @@ void G_PrintMapStats( gentity_t *player, qboolean generateArenaFile, char *longn
 //
 // g_rally_racetools.c
 //
+typedef struct {
+	int			clientNum;
+	int			position;
+	int			bestLapMs;
+	int			totalRaceMs;
+	int			lapsCompleted;
+	qboolean	finished;
+} raceResult_t;
+
+int G_GatherRaceResults( raceResult_t *results, int maxResults );
+
 int GetTeamAtRank( int rank );
 void CreateRallyStarter( void );
 void CalculatePlayerPositions( void );
@@ -1082,6 +1114,7 @@ void	trap_Cvar_Set( const char *var_name, const char *value );
 int		trap_Cvar_VariableIntegerValue( const char *var_name );
 float	trap_Cvar_VariableValue( const char *var_name );
 void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
+void	trap_LadderSubmit( const ladderMatchPayload_t *payload );
 void	trap_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *gameClients, int sizeofGameClient );
 void	trap_DropClient( int clientNum, const char *reason );
 void	trap_SendServerCommand( int clientNum, const char *text );

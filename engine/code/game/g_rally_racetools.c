@@ -23,6 +23,167 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+static void G_ResetRaceTimingForClients( int raceStartTime ) {
+	int i;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gclient_t *cl = &level.clients[i];
+
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+
+                cl->ladderBestLapMs = 0;
+                cl->ladderTotalRaceMs = 0;
+                cl->ladderLapCount = 0;
+                cl->ladderLastLapStartMs = raceStartTime;
+                Com_Memset( cl->ladderLapTimes, 0, sizeof( cl->ladderLapTimes ) );
+                cl->ladderSurvivalMs = 0;
+                cl->ladderEliminationRound = 0;
+                cl->ladderEliminationPlayersRemaining = 0;
+                cl->ladderEliminationMetric = 0.0f;
+	}
+}
+
+static int RaceResultCompare( const raceResult_t *a, const raceResult_t *b ) {
+	if ( a->finished && !b->finished ) {
+		return -1;
+	}
+	if ( !a->finished && b->finished ) {
+		return 1;
+	}
+
+	if ( a->lapsCompleted != b->lapsCompleted ) {
+		return ( a->lapsCompleted > b->lapsCompleted ) ? -1 : 1;
+	}
+
+	if ( a->totalRaceMs > 0 && b->totalRaceMs > 0 && a->totalRaceMs != b->totalRaceMs ) {
+		return ( a->totalRaceMs < b->totalRaceMs ) ? -1 : 1;
+	}
+
+	if ( a->position > 0 && b->position > 0 && a->position != b->position ) {
+		return ( a->position < b->position ) ? -1 : 1;
+	}
+
+	if ( a->bestLapMs > 0 && b->bestLapMs > 0 && a->bestLapMs != b->bestLapMs ) {
+		return ( a->bestLapMs < b->bestLapMs ) ? -1 : 1;
+	}
+
+	if ( a->totalRaceMs != b->totalRaceMs ) {
+		return ( a->totalRaceMs < b->totalRaceMs ) ? -1 : 1;
+	}
+
+	if ( a->bestLapMs != b->bestLapMs ) {
+		return ( a->bestLapMs < b->bestLapMs ) ? -1 : 1;
+	}
+
+	if ( a->position != b->position ) {
+		return ( a->position < b->position ) ? -1 : 1;
+	}
+
+	if ( a->clientNum != b->clientNum ) {
+		return ( a->clientNum < b->clientNum ) ? -1 : 1;
+	}
+
+	return 0;
+}
+
+static void G_SortRaceResults( raceResult_t *results, int count ) {
+	int i;
+
+	for ( i = 0; i < count - 1; i++ ) {
+		int best = i;
+		int j;
+
+		for ( j = i + 1; j < count; j++ ) {
+			if ( RaceResultCompare( &results[j], &results[best] ) < 0 ) {
+				best = j;
+			}
+		}
+
+		if ( best != i ) {
+			raceResult_t tmp = results[i];
+			results[i] = results[best];
+			results[best] = tmp;
+		}
+	}
+}
+
+int G_GatherRaceResults( raceResult_t *results, int maxResults ) {
+	raceResult_t collected[MAX_CLIENTS];
+	int collectedCount;
+	int i;
+
+	if ( !results || maxResults <= 0 ) {
+		return 0;
+	}
+
+	if ( !isRallyRace() ) {
+		return 0;
+	}
+
+	collectedCount = 0;
+	for ( i = 0; i < level.maxclients && collectedCount < MAX_CLIENTS; i++ ) {
+		gclient_t *cl = &level.clients[i];
+		gentity_t *ent = &g_entities[i];
+		raceResult_t *entry;
+
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( !ent->inuse || !ent->client ) {
+			continue;
+		}
+		if ( cl->sess.sessionTeam == TEAM_SPECTATOR || cl->sess.sessionTeam == TEAM_FREE ) {
+			continue;
+		}
+		if ( isRaceObserver( i ) ) {
+			continue;
+		}
+
+		entry = &collected[collectedCount++];
+		entry->clientNum = i;
+		entry->position = cl->ps.stats[STAT_POSITION];
+		entry->bestLapMs = cl->ladderBestLapMs;
+		entry->totalRaceMs = cl->ladderTotalRaceMs;
+		entry->lapsCompleted = cl->ladderLapCount;
+		entry->finished = ( cl->finishRaceTime > 0 );
+
+		if ( entry->finished ) {
+			if ( entry->totalRaceMs <= 0 && level.startRaceTime > 0 &&
+				cl->finishRaceTime >= level.startRaceTime ) {
+				entry->totalRaceMs = cl->finishRaceTime - level.startRaceTime;
+			}
+			if ( entry->lapsCompleted <= 0 ) {
+				if ( level.numberOfLaps > 0 ) {
+					entry->lapsCompleted = level.numberOfLaps;
+				} else {
+					entry->lapsCompleted = 1;
+				}
+			}
+		} else if ( entry->lapsCompleted <= 0 && ent->currentLap > 0 ) {
+			entry->lapsCompleted = ent->currentLap - 1;
+			if ( entry->lapsCompleted < 0 ) {
+				entry->lapsCompleted = 0;
+			}
+		}
+	}
+
+	G_SortRaceResults( collected, collectedCount );
+
+	if ( collectedCount > maxResults ) {
+		collectedCount = maxResults;
+	}
+
+	for ( i = 0; i < collectedCount; i++ ) {
+		results[i] = collected[i];
+		if ( results[i].position <= 0 ) {
+			results[i].position = i + 1;
+		}
+	}
+
+	return collectedCount;
+}
 
 int GetTeamAtRank( int rank ){
 	int		i, j, count;
@@ -491,6 +652,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		if (t == NULL){
 			// start race right away
 			level.startRaceTime = level.time;
+			G_ResetRaceTimingForClients( level.startRaceTime );
 			trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 			CenterPrint_All("GO..");
 			G_StartEliminationMode();
@@ -548,6 +710,7 @@ void RallyStarter_Think( gentity_t *ent ){
 
 	if ( level.time > ent->pain_debounce_time + 5000 ){
 		level.startRaceTime = level.time;
+		G_ResetRaceTimingForClients( level.startRaceTime );
 
 		trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 		RaceCountdown("GO!", 0);

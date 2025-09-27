@@ -991,6 +991,9 @@ int				trap_LAN_CompareServers( int source, int sortKey, int sortDir, int s1, in
 int				trap_MemoryRemaining( void );
 void			trap_GetCDKey( char *buf, int buflen );
 void			trap_SetCDKey( char *buf );
+void                    trap_RequestLadderData( const char *mode, const char *timeframe, const char *region );
+void                    trap_GetLadderStatus( uiLadderStatus_t *status );
+
 void			trap_R_RegisterFont(const char *pFontname, int pointSize, fontInfo_t *font);
 void			trap_S_StopBackgroundTrack( void );
 void			trap_S_StartBackgroundTrack( const char *intro, const char *loop);

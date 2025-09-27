@@ -34,6 +34,37 @@ typedef struct {
 	char			messageString[MAX_STRING_CHARS];
 } uiClientState_t;
 
+#ifndef UI_LADDER_TYPES_DEFINED
+#define UI_LADDER_TYPES_DEFINED
+
+#define UI_MAX_LADDER_ENTRIES		64
+#define UI_MAX_LADDER_TEXT		64
+
+typedef enum {
+	UI_LADDER_STATUS_EMPTY = 0,
+	UI_LADDER_STATUS_LOADING,
+	UI_LADDER_STATUS_READY,
+	UI_LADDER_STATUS_ERROR
+} uiLadderStatusCode_t;
+
+typedef struct {
+	int			rank;
+	char			player[UI_MAX_LADDER_TEXT];
+	char			mode[UI_MAX_LADDER_TEXT];
+	char			vehicle[UI_MAX_LADDER_TEXT];
+	char			region[UI_MAX_LADDER_TEXT];
+	char			metric[UI_MAX_LADDER_TEXT];
+} uiLadderEntry_t;
+
+typedef struct {
+	uiLadderStatusCode_t	status;
+	int			entryCount;
+	char			errorMessage[MAX_STRING_CHARS];
+	uiLadderEntry_t	entries[UI_MAX_LADDER_ENTRIES];
+} uiLadderStatus_t;
+
+#endif
+
 typedef enum {
 	UI_ERROR,
 	UI_PRINT,
@@ -124,6 +155,8 @@ typedef enum {
 	// 1.32
 	UI_FS_SEEK,
 	UI_SET_PBCLSTATUS,
+	UI_REQUEST_LADDERDATA,
+	UI_GET_LADDERSTATUS,
 
 	UI_MEMSET = 100,
 	UI_MEMCPY,

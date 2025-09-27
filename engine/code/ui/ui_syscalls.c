@@ -399,6 +399,14 @@ qboolean trap_VerifyCDKey( const char *key, const char *chksum) {
 	return syscall( UI_VERIFY_CDKEY, key, chksum);
 }
 
+void trap_RequestLadderData( const char *mode, const char *timeframe, const char *region ) {
+	syscall( UI_REQUEST_LADDERDATA, mode, timeframe, region );
+}
+
+void trap_GetLadderStatus( uiLadderStatus_t *status ) {
+	syscall( UI_GET_LADDERSTATUS, status );
+}
+
 void trap_SetPbClStatus( int status ) {
 	syscall( UI_SET_PBCLSTATUS, status );
 }

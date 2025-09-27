@@ -1289,6 +1289,15 @@ void ClientBegin( int clientNum ) {
 	client->pers.connected = CON_CONNECTED;
 	client->pers.enterTime = level.time;
 	client->pers.teamState.state = TEAM_BEGIN;
+	client->ladderKills = 0;
+	client->ladderDeaths = 0;
+	client->ladderZoneHoldMs = 0;
+	client->ladderZoneLastUpdateMs = 0;
+	client->ladderZoneActiveSigil = -1;
+	client->ladderSurvivalMs = 0;
+	client->ladderEliminationRound = 0;
+	client->ladderEliminationPlayersRemaining = 0;
+	client->ladderEliminationMetric = 0.0f;
 
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we
@@ -1313,6 +1322,17 @@ void ClientBegin( int clientNum ) {
 		ent->client->ps.stats[STAT_DAMAGE_DEALT] = 0;
 		ent->client->ps.stats[STAT_DAMAGE_TAKEN] = 0;
 		ent->client->ps.stats[STAT_NEXT_CHECKPOINT] = ent->number;
+		ent->client->ladderBestLapMs = 0;
+		ent->client->ladderTotalRaceMs = 0;
+		ent->client->ladderLastLapStartMs = 0;
+		ent->client->ladderLapCount = 0;
+		ent->client->ladderKills = 0;
+		ent->client->ladderDeaths = 0;
+		ent->client->ladderSurvivalMs = 0;
+		ent->client->ladderEliminationRound = 0;
+		ent->client->ladderEliminationPlayersRemaining = 0;
+		ent->client->ladderEliminationMetric = 0.0f;
+		Com_Memset( ent->client->ladderLapTimes, 0, sizeof( ent->client->ladderLapTimes ) );
 	}
 
 	ent->raceObserver = qfalse;
@@ -1363,6 +1383,18 @@ void ClientSpawn(gentity_t *ent) {
 	int		savedDamageTaken;
 	int		savedDamageDealt;
 	int		savedPosition;
+	int		savedLadderBestLap;
+	int		savedLadderTotalRace;
+	int		savedLadderLastLapStart;
+	int		savedLadderLapCount;
+	int		savedLadderLapTimes[RACE_MAX_RECORDED_LAPS];
+	int		savedLadderKills;
+	int		savedLadderDeaths;
+	int		savedLadderZoneHold;
+	int		savedLadderSurvival;
+	int		savedLadderEliminationRound;
+	int		savedLadderEliminationPlayersRemaining;
+	float		savedLadderEliminationMetric;
 	gentity_t	*savedCarPoints[4];
 	vec3_t	origin, forward;
 // END
@@ -1457,6 +1489,18 @@ void ClientSpawn(gentity_t *ent) {
 	savedDamageDealt = client->ps.stats[STAT_DAMAGE_DEALT];
 	savedDamageTaken = client->ps.stats[STAT_DAMAGE_TAKEN];
 	savedPosition = client->ps.stats[STAT_POSITION];
+	savedLadderBestLap = client->ladderBestLapMs;
+	savedLadderTotalRace = client->ladderTotalRaceMs;
+	savedLadderLastLapStart = client->ladderLastLapStartMs;
+	savedLadderLapCount = client->ladderLapCount;
+	savedLadderKills = client->ladderKills;
+	savedLadderDeaths = client->ladderDeaths;
+	savedLadderZoneHold = client->ladderZoneHoldMs;
+	savedLadderSurvival = client->ladderSurvivalMs;
+	savedLadderEliminationRound = client->ladderEliminationRound;
+	savedLadderEliminationPlayersRemaining = client->ladderEliminationPlayersRemaining;
+	savedLadderEliminationMetric = client->ladderEliminationMetric;
+	Com_Memcpy( savedLadderLapTimes, client->ladderLapTimes, sizeof( savedLadderLapTimes ) );
 // END
 //	savedAreaBits = client->areabits;
 	accuracy_hits = client->accuracy_hits;
@@ -1496,6 +1540,20 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[STAT_DAMAGE_TAKEN] = savedDamageTaken;
 	client->ps.stats[STAT_NEXT_CHECKPOINT] = ent->number;
 	client->ps.stats[STAT_POSITION] = savedPosition;
+	client->ladderBestLapMs = savedLadderBestLap;
+	client->ladderTotalRaceMs = savedLadderTotalRace;
+	client->ladderLastLapStartMs = savedLadderLastLapStart;
+	client->ladderLapCount = savedLadderLapCount;
+	client->ladderKills = savedLadderKills;
+	client->ladderDeaths = savedLadderDeaths;
+	client->ladderZoneHoldMs = savedLadderZoneHold;
+	client->ladderSurvivalMs = savedLadderSurvival;
+	client->ladderEliminationRound = savedLadderEliminationRound;
+	client->ladderEliminationPlayersRemaining = savedLadderEliminationPlayersRemaining;
+	client->ladderEliminationMetric = savedLadderEliminationMetric;
+	client->ladderZoneLastUpdateMs = 0;
+	client->ladderZoneActiveSigil = -1;
+	Com_Memcpy( client->ladderLapTimes, savedLadderLapTimes, sizeof( client->ladderLapTimes ) );
 // END
 //	client->areabits = savedAreaBits;
 	client->accuracy_hits = accuracy_hits;
@@ -1507,6 +1565,17 @@ void ClientSpawn(gentity_t *ent) {
 	}
         client->ps.eventSequence = eventSequence;
         ClientUserinfoChanged( index );
+	if ( client->ps.persistant[PERS_SPAWN_COUNT] == 0 ) {
+		client->ladderKills = 0;
+		client->ladderDeaths = 0;
+		client->ladderZoneHoldMs = 0;
+		client->ladderZoneLastUpdateMs = 0;
+		client->ladderZoneActiveSigil = -1;
+		client->ladderSurvivalMs = 0;
+		client->ladderEliminationRound = 0;
+		client->ladderEliminationPlayersRemaining = 0;
+		client->ladderEliminationMetric = 0.0f;
+	}
         // increment the spawncount so the client will detect the respawn
 	client->ps.persistant[PERS_SPAWN_COUNT]++;
 	client->ps.persistant[PERS_TEAM] = client->sess.sessionTeam;

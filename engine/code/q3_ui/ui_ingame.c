@@ -47,6 +47,7 @@ INGAME MENU
 #define ID_QUIT					17
 #define ID_RESUME				18
 #define ID_TEAMORDERS			19
+#define ID_LADDER				20
 
 
 typedef struct {
@@ -56,6 +57,7 @@ typedef struct {
 	menutext_s		team;
 	menutext_s		setup;
 	menutext_s		server;
+	menutext_s		ladder;
 	menutext_s		leave;
 	menutext_s		restart;
 	menutext_s		addbots;
@@ -135,6 +137,10 @@ void InGame_Event( void *ptr, int notification ) {
 		UI_ServerInfoMenu();
 		break;
 
+	case ID_LADDER:
+		UI_LadderMenu();
+		break;
+
 	case ID_ADDBOTS:
 		UI_AddBotsMenu();
 		break;
@@ -178,7 +184,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.frame.generic.x			= 320-233;//142;
 	s_ingame.frame.generic.y			= 240-166;//118;
 	s_ingame.frame.width				= 466;//359;
-	s_ingame.frame.height				= 332;//256;
+	s_ingame.frame.height				= 360;//256;
 
 	//y = 96;
 	y = 88;
@@ -265,6 +271,17 @@ void InGame_MenuInit( void ) {
 	s_ingame.server.style				= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
+	s_ingame.ladder.generic.type		= MTYPE_PTEXT;
+	s_ingame.ladder.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_ingame.ladder.generic.x			= 320;
+	s_ingame.ladder.generic.y			= y;
+	s_ingame.ladder.generic.id			= ID_LADDER;
+	s_ingame.ladder.generic.callback	= InGame_Event;
+	s_ingame.ladder.string				= "LADDER";
+	s_ingame.ladder.color				= color_red;
+	s_ingame.ladder.style				= UI_CENTER|UI_SMALLFONT;
+
+	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.restart.generic.type		= MTYPE_PTEXT;
 	s_ingame.restart.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_ingame.restart.generic.x			= 320;
@@ -318,6 +335,7 @@ void InGame_MenuInit( void ) {
 	Menu_AddItem( &s_ingame.menu, &s_ingame.teamorders );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.setup );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.server );
+	Menu_AddItem( &s_ingame.menu, &s_ingame.ladder );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.restart );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.resume );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.leave );

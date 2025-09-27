@@ -407,6 +407,7 @@ typedef struct {
 	int				damageDealt;
 	int				damageTaken;
 	int				position;
+	int				deaths;
 } score_t;
 
 // each client has an associated clientInfo_t
@@ -1332,12 +1333,48 @@ typedef struct {
 
 //==============================================================================
 
+#define MAX_LADDER_ENTRIES			 64
+#define MAX_LADDER_IDENTIFIER		 64
+
+typedef enum {
+	LADDER_STATUS_EMPTY = 0,
+	LADDER_STATUS_LOADING,
+	LADDER_STATUS_READY,
+	LADDER_STATUS_ERROR
+} cg_ladder_status_t;
+
+typedef enum {
+	LADDER_SOURCE_SERVER = 0,
+	LADDER_SOURCE_WEBSERVICE
+} cg_ladder_source_t;
+
+typedef struct {
+	cg_ladder_source_t		source;
+	int					sequence;
+	int					serverTime;
+	char			identifier[MAX_LADDER_IDENTIFIER];
+	char			payload[MAX_STRING_CHARS];
+} cg_ladder_entry_t;
+
+typedef struct {
+	cg_ladder_status_t		status;
+	qboolean			dirty;
+	int					lastUpdateTime;
+	char			errorMessage[MAX_STRING_CHARS];
+	int				numEntries;
+	cg_ladder_entry_t	entries[MAX_LADDER_ENTRIES];
+} cg_ladder_t;
+
+//==============================================================================
+
 extern	cgs_t			cgs;
 extern	cg_t			cg;
 extern	centity_t		cg_entities[MAX_GENTITIES];
 extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
+
+extern	cg_ladder_t		cg_ladder;
 
 extern	vmCvar_t		cg_centertime;
 extern	vmCvar_t		cg_runpitch;
@@ -1855,6 +1892,21 @@ qboolean CG_DrawOldScoreboard( void );
 // Q3Rally Code Start - removed
 // void CG_DrawTourneyScoreboard( void );
 // Q3Rally Code END
+
+//
+// cg_ladder.c
+//
+void CG_LadderInit( void );
+void CG_LadderClear( void );
+void CG_LadderBeginLoad( void );
+void CG_LadderMarkReady( void );
+void CG_LadderSetError( const char *message );
+void CG_LadderPushEntry( cg_ladder_source_t source, int sequence, const char *identifier, const char *payload, int serverTime );
+void CG_LadderHandleServerCommand( int sequence, const char *identifier, const char *payload, int serverTime );
+void CG_LadderHandleWebResponse( const char *identifier, const char *payload );
+const cg_ladder_t *CG_LadderState( void );
+qboolean CG_LadderIsLoading( void );
+qboolean CG_LadderHasError( void );
 
 //
 // cg_consolecmds.c

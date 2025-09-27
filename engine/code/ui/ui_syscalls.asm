@@ -88,6 +88,8 @@ equ trap_LAN_ServerIsVisible				-85
 equ trap_LAN_CompareServers					-86
 equ trap_FS_Seek		-87
 equ trap_SetPbClStatus -88
+equ trap_RequestLadderData -89
+equ trap_GetLadderStatus -90
 
 equ	memset						-101
 equ	memcpy						-102

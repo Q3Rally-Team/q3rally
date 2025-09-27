@@ -47,6 +47,9 @@
     <ClCompile Include="..\..\code\cgame\cg_info.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\code\cgame\cg_ladder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\code\cgame\cg_localents.c">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -1297,7 +1297,12 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		return qtrue;
 	}
 
-	return qfalse;
+	if ( Q_stricmp (cmd, "ui_ladder") == 0 ) {
+                UI_LadderMenu();
+                return qtrue;
+        }
+
+        return qfalse;
 }
 
 /*

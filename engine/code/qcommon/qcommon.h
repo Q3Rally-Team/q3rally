@@ -376,12 +376,16 @@ void	*VM_ArgPtr( intptr_t intValue );
 void	*VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue );
 
 #define	VMA(x) VM_ArgPtr(args[x])
+#ifndef Q3_VM
 static ID_INLINE float _vmf(intptr_t x)
 {
 	floatint_t fi;
 	fi.i = (int) x;
 	return fi.f;
 }
+#else
+#define	_vmf(x)	(*(const float *)&(x))
+#endif
 #define	VMF(x)	_vmf(args[x])
 
 

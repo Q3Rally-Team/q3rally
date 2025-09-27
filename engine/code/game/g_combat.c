@@ -531,15 +531,27 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->client->ps.pm_type = PM_DEAD;
 
 // STONELANCE
-	if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime){
-		self->client->finishRaceTime = level.time;
-		trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
-	}
+        if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime){
+                self->client->finishRaceTime = level.time;
+                trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
+        }
 // END
 
-	if ( g_gametype.integer == GT_ELIMINATION && level.startRaceTime ) {
-		G_RegisterEliminationDeath( self );
-	}
+        if ( self->client && level.startRaceTime ) {
+                int survivalMs = level.time - level.startRaceTime;
+
+                if ( survivalMs < 0 ) {
+                        survivalMs = 0;
+                }
+
+                if ( self->client->ladderSurvivalMs <= 0 || !level.finishRaceTime ) {
+                        self->client->ladderSurvivalMs = survivalMs;
+                }
+        }
+
+        if ( g_gametype.integer == GT_ELIMINATION && level.startRaceTime ) {
+                G_RegisterEliminationDeath( self );
+        }
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -578,6 +590,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->enemy = attacker;
 
 	self->client->ps.persistant[PERS_KILLED]++;
+	if ( self->client ) {
+		self->client->ladderDeaths++;
+	}
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
@@ -588,6 +603,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			}
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
+			attacker->client->ladderKills++;
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				

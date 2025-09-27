@@ -23,6 +23,36 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+static void G_RecordClientLapTime( gclient_t *client, int lapNumber, int lapTime ) {
+	if ( !client || lapNumber <= 0 || lapTime <= 0 ) {
+		return;
+	}
+
+	if ( client->ladderBestLapMs == 0 || lapTime < client->ladderBestLapMs ) {
+		client->ladderBestLapMs = lapTime;
+	}
+
+	if ( lapNumber > client->ladderLapCount ) {
+		client->ladderLapCount = lapNumber;
+	}
+
+	if ( lapNumber > 0 && lapNumber <= RACE_MAX_RECORDED_LAPS ) {
+		client->ladderLapTimes[ lapNumber - 1 ] = lapTime;
+	}
+}
+
+static void G_UpdateClientTotalRaceTime( gclient_t *client, int finishTime ) {
+	if ( !client ) {
+		return;
+	}
+
+	if ( level.startRaceTime > 0 && finishTime >= level.startRaceTime ) {
+		client->ladderTotalRaceMs = finishTime - level.startRaceTime;
+	} else {
+		client->ladderTotalRaceMs = 0;
+	}
+}
+
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
@@ -33,104 +63,122 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CHECKPOINT_MESSAGES		2
 
 
-void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
-if ( !other->client ) {
-return;
+void Touch_Start( gentity_t *self, gentity_t *other, trace_t *trace ) {
+	if ( !other->client ) {
+		return;
+	}
+
+	if ( other->client->lastCheckpointTime + 300 > level.time ) {
+		return;
+	}
+
+	if ( g_developer.integer )
+		G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
+
+	other->client->lastCheckpointTime = level.time;
+	other->number = 1;
+	other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
+	other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( 0.1f );
+
+	if ( level.startRaceTime && other->client->ladderLastLapStartMs <= 0 ) {
+		other->client->ladderLastLapStartMs = level.time;
+	}
+
+	trap_SendServerCommand( -1, va( "newLapTime %i %i %i", other->s.clientNum, 1, level.time ) );
+
+	Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/checkpoint.wav" ) );
 }
 
-if ( other->client->lastCheckpointTime + 300 > level.time ) {
-return;
+void Touch_Finish( gentity_t *self, gentity_t *other, trace_t *trace ) {
+	char *place;
+	int lapTime = 0;
+	int lapNumber;
+
+	if ( !other->client ) {
+		return;
+	}
+
+	if ( other->client->lastCheckpointTime + 300 > level.time ) {
+		return;
+	}
+
+	if ( g_developer.integer )
+		G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
+
+	if ( self->number != other->number ) {
+		return;
+	}
+
+	if ( level.startRaceTime && other->client->ladderLastLapStartMs > 0
+			&& level.time >= other->client->ladderLastLapStartMs ) {
+		lapTime = level.time - other->client->ladderLastLapStartMs;
+	}
+
+	lapNumber = other->currentLap > 0 ? other->currentLap : other->client->ladderLapCount + 1;
+	if ( lapTime > 0 ) {
+		G_RecordClientLapTime( other->client, lapNumber, lapTime );
+	}
+
+	other->client->lastCheckpointTime = level.time;
+	other->client->finishRaceTime = level.time;
+	other->s.weapon = WP_NONE;
+	other->takedamage = qfalse;
+
+	G_UpdateClientTotalRaceTime( other->client, level.time );
+
+	trap_SendServerCommand( -1, va( "raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime ) );
+
+	if ( !level.finishRaceTime ) {
+		other->client->ps.stats[STAT_POSITION] = 1;
+
+		level.winnerNumber = other->s.clientNum;
+		level.finishRaceTime = level.time;
+		trap_SendServerCommand( -1, va( "print \"%s won the race!\n\"", other->client->pers.netname ) );
+		trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"" );
+	} else {
+		switch ( other->client->ps.stats[STAT_POSITION] ) {
+		case 1:
+			place = "first";
+			break;
+		case 2:
+			place = "second";
+			break;
+		case 3:
+			place = "third";
+			break;
+		case 4:
+			place = "forth";
+			break;
+		case 5:
+			place = "fifth";
+			break;
+		case 6:
+			place = "sixth";
+			break;
+		case 7:
+			place = "seventh";
+			break;
+		case 8:
+			place = "eighth";
+			break;
+		default:
+			place = NULL;
+			Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
+			break;
+		}
+
+		if ( other->client->ps.stats[STAT_POSITION] <= 8 ) {
+			trap_SendServerCommand( -1, va( "print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ) );
+		} else {
+			trap_SendServerCommand( -1, va( "print \"%s finished the race!\n\"", other->client->pers.netname ) );
+		}
+	}
 }
 
-if ( g_developer.integer )
-G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
-
-other->client->lastCheckpointTime = level.time;
-other->number = 1;
-other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
-other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
-
-trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
-
-Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
-}
-
-void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
-char*place;
-
-if ( !other->client ) {
-return;
-}
-
-if ( other->client->lastCheckpointTime + 300 > level.time ) {
-return;
-}
-
-if ( g_developer.integer )
-G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
-
-if ( self->number != other->number ) {
-return;
-}
-
-other->client->lastCheckpointTime = level.time;
-other->client->finishRaceTime = level.time;
-other->s.weapon = WP_NONE;
-other->takedamage = qfalse;
-
-trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
-
-if ( !level.finishRaceTime ){
-other->client->ps.stats[STAT_POSITION] = 1;
-
-level.winnerNumber = other->s.clientNum;
-level.finishRaceTime = level.time;
-trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
-trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
-}
-else {
-switch ( other->client->ps.stats[STAT_POSITION] ){
-case 1:
-place = "first";
-break;
-case 2:
-place = "second";
-break;
-case 3:
-place = "third";
-break;
-case 4:
-place = "forth";
-break;
-case 5:
-place = "fifth";
-break;
-case 6:
-place = "sixth";
-break;
-case 7:
-place = "seventh";
-break;
-case 8:
-place = "eighth";
-break;
-default:
-place = NULL;
-Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
-break;
-}
-
-if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
-trap_SendServerCommand( -1, va("print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ));
-}
-else {
-trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
-}
-}
-}
-
-void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
+void Touch_StartFinish( gentity_t *self, gentity_t *other, trace_t *trace ) {
 	char	*place;
+	int lapTime = 0;
+	int completedLap;
 
 	if ( !other->client ) {
 		return;
@@ -141,34 +189,47 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 		return;
 	}
 
-	if (g_developer.integer)
+	if ( g_developer.integer )
 		G_Printf( "Client %i touched the startfinish line.  Checkpoint number %i\n", other->s.clientNum, self->number );
 
-	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
+	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ) {
 		return;
 	}
 
-	if (self->number == other->number){
+	if ( self->number == other->number ) {
+		completedLap = other->currentLap;
+		if ( level.startRaceTime && other->client->ladderLastLapStartMs > 0
+				&& level.time >= other->client->ladderLastLapStartMs
+				&& completedLap > 0 ) {
+			lapTime = level.time - other->client->ladderLastLapStartMs;
+			if ( lapTime > 0 ) {
+				G_RecordClientLapTime( other->client, completedLap, lapTime );
+			}
+		} else if ( other->client->ladderLastLapStartMs <= 0 ) {
+			other->client->ladderLastLapStartMs = level.time;
+		}
+
 		other->client->lastCheckpointTime = level.time;
 		other->currentLap++;
 		// increment lap
-		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
+		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ) {
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
 			other->takedamage = qfalse;
 
-			trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+			G_UpdateClientTotalRaceTime( other->client, level.time );
 
-			if (!level.finishRaceTime){
+			trap_SendServerCommand( -1, va( "raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime ) );
+
+			if ( !level.finishRaceTime ) {
 				other->client->ps.stats[STAT_POSITION] = 1; // make sure the player is first
 
 				level.winnerNumber = other->s.clientNum;
 				level.finishRaceTime = level.time;
-				trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
-				trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
-			}
-			else {
-				switch ( other->client->ps.stats[STAT_POSITION] ){
+				trap_SendServerCommand( -1, va( "print \"%s won the race!\n\"", other->client->pers.netname ) );
+				trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"" );
+			} else {
+				switch ( other->client->ps.stats[STAT_POSITION] ) {
 				case 1:
 					place = "first";
 					break;
@@ -199,33 +260,30 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 					break;
 				}
 
-				if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
-					trap_SendServerCommand( -1, va("print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ));
-				}
-				else {
-					trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
+				if ( other->client->ps.stats[STAT_POSITION] <= 8 ) {
+					trap_SendServerCommand( -1, va( "print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ) );
+				} else {
+					trap_SendServerCommand( -1, va( "print \"%s finished the race!\n\"", other->client->pers.netname ) );
 				}
 			}
-		}
-		else {
+		} else {
 			other->number = 1;
 			other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
-			other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
+			other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( 0.1f );
 //			Com_Printf( "resetting frac, sf\n" );
-                       trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time) );
+			trap_SendServerCommand( -1, va( "newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time ) );
+			other->client->ladderLastLapStartMs = level.time;
 		}
 
-		
-		if (other->currentLap == level.numberOfLaps ){
-			trap_SendServerCommand( other->s.number, "cp \"Final lap\n\"");
-			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/finallap.wav") );
-		}
-		else {
-			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
+
+		if ( other->currentLap == level.numberOfLaps ) {
+			trap_SendServerCommand( other->s.number, "cp \"Final lap\n\"" );
+			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/finallap.wav" ) );
+		} else {
+			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/checkpoint.wav" ) );
 		}
 	}
 }
-
 void Think_StartFinish( gentity_t *self ){
 	gentity_t		*ent;
 	int		checkpoints;

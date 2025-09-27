@@ -33,7 +33,124 @@ typedef struct domination_sigil_s
 {
   gentity_t       *entity;
   sigilStatus_t   status;
+  int             lastOwnerClientNums[MAX_CLIENTS];
+  int             lastCaptureTimestamp;
 } domination_sigil_t;
+
+#define SIGIL_HOLD_RADIUS        256.0f
+#define SIGIL_HOLD_RADIUS_SQ     (SIGIL_HOLD_RADIUS * SIGIL_HOLD_RADIUS)
+
+static void Sigil_ResetOwnerClients( domination_sigil_t *sigil ) {
+  int i;
+
+  if ( !sigil ) {
+    return;
+  }
+
+  for ( i = 0; i < MAX_CLIENTS; i++ ) {
+    sigil->lastOwnerClientNums[i] = -1;
+  }
+}
+
+static void Sigil_RecordOwnerClient( domination_sigil_t *sigil, int clientNum ) {
+  int i;
+
+  if ( !sigil ) {
+    return;
+  }
+
+  if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
+    return;
+  }
+
+  for ( i = 0; i < MAX_CLIENTS; i++ ) {
+    if ( sigil->lastOwnerClientNums[i] == clientNum ) {
+      return;
+    }
+
+    if ( sigil->lastOwnerClientNums[i] == -1 ) {
+      sigil->lastOwnerClientNums[i] = clientNum;
+      return;
+    }
+  }
+}
+
+static team_t Sigil_TeamFromPowerup( powerup_t powerup ) {
+  switch ( powerup ) {
+    case PW_SIGILRED:
+      return TEAM_RED;
+    case PW_SIGILBLUE:
+      return TEAM_BLUE;
+    case PW_SIGILGREEN:
+      return TEAM_GREEN;
+    case PW_SIGILYELLOW:
+      return TEAM_YELLOW;
+    default:
+      return TEAM_FREE;
+  }
+}
+
+static qboolean Sigil_PlayerInHoldRadius( gentity_t *sigilEnt, gentity_t *playerEnt ) {
+  vec3_t delta;
+
+  if ( !sigilEnt || !playerEnt ) {
+    return qfalse;
+  }
+
+  VectorSubtract( playerEnt->r.currentOrigin, sigilEnt->r.currentOrigin, delta );
+  return ( DotProduct( delta, delta ) <= SIGIL_HOLD_RADIUS_SQ );
+}
+
+static void Sigil_StopTrackingClientForSigil( int sigilNum, gclient_t *client, int currentTime ) {
+  if ( !client ) {
+    return;
+  }
+
+  if ( client->ladderZoneActiveSigil != sigilNum ) {
+    return;
+  }
+
+  if ( client->ladderZoneLastUpdateMs > 0 && currentTime > client->ladderZoneLastUpdateMs ) {
+    client->ladderZoneHoldMs += currentTime - client->ladderZoneLastUpdateMs;
+  }
+
+  client->ladderZoneActiveSigil = -1;
+  client->ladderZoneLastUpdateMs = 0;
+}
+
+static void Sigil_StopTrackingAllClients( int sigilNum, domination_sigil_t *sigil ) {
+  int i;
+
+  for ( i = 0; i < level.maxclients; i++ ) {
+    Sigil_StopTrackingClientForSigil( sigilNum, &level.clients[i], level.time );
+  }
+
+  Sigil_ResetOwnerClients( sigil );
+}
+
+static void Sigil_StartTrackingClient( int sigilNum, domination_sigil_t *sigil, gentity_t *playerEnt ) {
+  gclient_t *client;
+  int clientNum;
+
+  if ( !playerEnt || !playerEnt->client ) {
+    return;
+  }
+
+  client = playerEnt->client;
+  clientNum = playerEnt - g_entities;
+
+  if ( client->ladderZoneActiveSigil != sigilNum ) {
+    if ( client->ladderZoneActiveSigil >= 0 && client->ladderZoneActiveSigil < MAX_SIGILS ) {
+      Sigil_StopTrackingClientForSigil( client->ladderZoneActiveSigil, client, level.time );
+    }
+    client->ladderZoneActiveSigil = sigilNum;
+    client->ladderZoneLastUpdateMs = level.time;
+  } else if ( client->ladderZoneLastUpdateMs == 0 ) {
+    client->ladderZoneLastUpdateMs = level.time;
+  }
+
+  Sigil_RecordOwnerClient( sigil, clientNum );
+}
 
 // Q3Rally Code END
 
@@ -51,6 +168,18 @@ typedef struct teamgame_s {
 
 teamgame_t teamgame;
 
+static int Sigil_IndexForEntity( gentity_t *ent ) {
+  int sigilNum;
+
+  for ( sigilNum = 0; sigilNum < MAX_SIGILS; sigilNum++ ) {
+    if ( teamgame.sigil[sigilNum].entity == ent ) {
+      return sigilNum;
+    }
+  }
+
+  return -1;
+}
+
 gentity_t	*neutralObelisk;
 
 void Team_SetFlagStatus( int team, flagStatus_t status );
@@ -60,12 +189,17 @@ void Init_Sigils( void );
 // Q3Rally Code END
 
 void Team_InitGame( void ) {
-	int i;
+        int i;
 
-	memset(&teamgame, 0, sizeof teamgame);
+        memset(&teamgame, 0, sizeof teamgame);
 
-	switch( g_gametype.integer ) {
-	case GT_CTF:
+        for ( i = 0; i < MAX_SIGILS; i++ ) {
+                Sigil_ResetOwnerClients( &teamgame.sigil[i] );
+                teamgame.sigil[i].lastCaptureTimestamp = 0;
+        }
+
+        switch( g_gametype.integer ) {
+        case GT_CTF:
 		teamgame.flagStatus[TEAM_RED] = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
 		teamgame.flagStatus[TEAM_BLUE] = -1; // Invalid to force update
@@ -116,14 +250,15 @@ void Team_InitGame( void ) {
 // Q3Rally Code Start
 void Team_EndGame( void ) {
 	// stop adding score when intermission starts
-	if ( g_gametype.integer == GT_DOMINATION ) {
-		int i;
-		for ( i = 0; i < teamgame.numSigils; i++ ) {
-			if( teamgame.sigil[i].entity ) {
-				teamgame.sigil[i].entity->nextthink = 0;
-			}
-		}
-	}
+if ( g_gametype.integer == GT_DOMINATION ) {
+int i;
+for ( i = 0; i < teamgame.numSigils; i++ ) {
+if( teamgame.sigil[i].entity ) {
+Sigil_StopTrackingAllClients( i, &teamgame.sigil[i] );
+teamgame.sigil[i].entity->nextthink = 0;
+}
+}
+}
 }
 // Q3Rally Code END
 
@@ -288,7 +423,11 @@ void Init_Sigils( void ) {
             continue;
             
         if (!Q_stricmp(point->classname, "team_domination_sigil")) {
-            teamgame.sigil[teamgame.numSigils].entity = point;
+            domination_sigil_t *sigil = &teamgame.sigil[teamgame.numSigils];
+
+            sigil->entity = point;
+            sigil->lastCaptureTimestamp = 0;
+            Sigil_ResetOwnerClients( sigil );
             teamgame.numSigils++;
             if ( teamgame.numSigils == MAX_SIGILS )
                 return;
@@ -393,7 +532,13 @@ void ValidateSigilsInMap( gentity_t *ent )
           targ->r.svFlags = SVF_BROADCAST;
           targ->s.powerups = PW_SIGILWHITE;
           targ->count = 0;
-          teamgame.sigil[teamgame.numSigils].entity = targ;
+          {
+            domination_sigil_t *sigil = &teamgame.sigil[teamgame.numSigils];
+
+            sigil->entity = targ;
+            sigil->lastCaptureTimestamp = 0;
+            Sigil_ResetOwnerClients( sigil );
+          }
           teamgame.numSigils++;
       }
       // kill the entity that does the spawn conversions
@@ -1171,45 +1316,103 @@ Sigil_Think
 ===================
 */
 void Sigil_Think( gentity_t *ent ) {
-  team_t team;
+  int sigilNum;
+  domination_sigil_t *sigil;
+  team_t owningTeam;
+  int interval;
+  qboolean scored = qfalse;
+  int i;
 
-  switch( ent->s.powerups ) {
-    case PW_SIGILRED :
-      team = TEAM_RED;
-      break;
+  sigilNum = Sigil_IndexForEntity( ent );
+  if ( sigilNum < 0 ) {
+    ent->nextthink = level.time + FRAMETIME;
+    return;
+  }
 
-    case PW_SIGILBLUE :
-      team = TEAM_BLUE;
-      break;
+  sigil = &teamgame.sigil[sigilNum];
+  owningTeam = Sigil_TeamFromPowerup( ent->s.powerups );
 
-    case PW_SIGILGREEN :
-      team = TEAM_GREEN;
-      break;
+  if ( owningTeam >= TEAM_RED && owningTeam < TEAM_NUM_TEAMS ) {
+    Sigil_ResetOwnerClients( sigil );
 
-    case PW_SIGILYELLOW :
-      team = TEAM_YELLOW;
-      break;
+    for ( i = 0; i < level.maxclients; i++ ) {
+      gentity_t *playerEnt = &g_entities[i];
+      gclient_t *client = playerEnt->client;
 
-    default :
-      team = TEAM_RED;
+      if ( !playerEnt->inuse || !client ) {
+        Sigil_StopTrackingClientForSigil( sigilNum, client, level.time );
+        continue;
+      }
+
+      if ( client->pers.connected != CON_CONNECTED ) {
+        Sigil_StopTrackingClientForSigil( sigilNum, client, level.time );
+        continue;
+      }
+
+      if ( client->sess.sessionTeam != owningTeam || client->sess.sessionTeam == TEAM_SPECTATOR ) {
+        Sigil_StopTrackingClientForSigil( sigilNum, client, level.time );
+        continue;
+      }
+
+      if ( client->ps.pm_type == PM_DEAD || client->ps.pm_type == PM_SPECTATOR || playerEnt->health <= 0 ) {
+        Sigil_StopTrackingClientForSigil( sigilNum, client, level.time );
+        continue;
+      }
+
+      if ( Sigil_PlayerInHoldRadius( ent, playerEnt ) ) {
+        if ( client->ladderZoneActiveSigil != sigilNum ) {
+          Sigil_StartTrackingClient( sigilNum, sigil, playerEnt );
+        } else {
+          if ( client->ladderZoneLastUpdateMs > 0 && level.time > client->ladderZoneLastUpdateMs ) {
+            client->ladderZoneHoldMs += level.time - client->ladderZoneLastUpdateMs;
+          }
+          client->ladderZoneLastUpdateMs = level.time;
+          Sigil_RecordOwnerClient( sigil, i );
+        }
+      } else {
+        Sigil_StopTrackingClientForSigil( sigilNum, client, level.time );
+      }
+    }
+  } else {
+    Sigil_StopTrackingAllClients( sigilNum, sigil );
+  }
+
+  interval = g_dominationScoreInterval.integer;
+  if ( interval <= 0 ) {
+    interval = 1000;
+  }
+
+  if ( owningTeam >= TEAM_RED && owningTeam < TEAM_NUM_TEAMS ) {
+    if ( ent->timestamp == 0 ) {
+      ent->timestamp = level.time;
+    }
+
+    while ( level.time - ent->timestamp >= interval ) {
+      ent->timestamp += interval;
+      level.teamScores[owningTeam]++;
+      scored = qtrue;
+    }
+  } else {
+    ent->timestamp = level.time;
   }
 
   ent->count = 0;
-  level.teamScores[team]++;
-  ent->nextthink = level.time + g_dominationScoreInterval.integer;
+  ent->nextthink = level.time + FRAMETIME;
 
-  // refresh scoreboard
-  CalculateRanks();
+  if ( scored ) {
+    CalculateRanks();
+  }
 }
 
 
 void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t powerup) {
     Team_SetSigilStatus(sigilNum, status);
-    ent->nextthink = level.time - (level.time % 4000) + 4000;
     ent->think = Sigil_Think;
     ent->s.powerups = powerup;
     ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( powerup ) );
     ent->count = 1;
+    ent->timestamp = level.time;
+    ent->nextthink = level.time + FRAMETIME;
 }
 
 /*
@@ -1219,21 +1422,25 @@ Sigil_Touch
 */
 int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
     gclient_t *cl = other->client;
-    int sigilNum = 0;
+    domination_sigil_t *sigil;
+    int sigilNum;
     powerup_t powerup = PW_NONE;
     sigilStatus_t status = SIGIL_NONE;
-    
-    if (!cl)
-        return 0;
-        
-    if    (ent->count && ent->nextthink < level.time + g_dominationCaptureDelay.integer)    // protect against overflows by not counting
-        return 0;
-        
-    // find the index of the sigil reffered by ent
-    while ( sigilNum < MAX_SIGILS && teamgame.sigil[sigilNum].entity != ent )
-          sigilNum++;
+    team_t newTeam;
+    int i;
 
-    switch (cl->sess.sessionTeam) {
+    if ( !cl ) {
+        return 0;
+    }
+
+    sigilNum = Sigil_IndexForEntity( ent );
+    if ( sigilNum < 0 ) {
+        return 0;
+    }
+
+    sigil = &teamgame.sigil[sigilNum];
+
+    switch ( cl->sess.sessionTeam ) {
         case TEAM_RED:
             powerup = PW_SIGILRED;
             status = SIGIL_ISRED;
@@ -1254,12 +1461,52 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
             return 0;
     }
 
-    if (ent->s.powerups != powerup) {
-        CaptureSigil(ent, sigilNum, status, powerup);
+    newTeam = Sigil_TeamFromPowerup( powerup );
+
+    if ( ent->s.powerups != powerup ) {
+        if ( g_dominationCaptureDelay.integer > 0 && sigil->lastCaptureTimestamp > 0 &&
+             level.time < sigil->lastCaptureTimestamp + g_dominationCaptureDelay.integer ) {
+            return 0;
+        }
+
+        Sigil_StopTrackingAllClients( sigilNum, sigil );
+        CaptureSigil( ent, sigilNum, status, powerup );
+        sigil->lastCaptureTimestamp = level.time;
+
+        if ( newTeam >= TEAM_RED && newTeam < TEAM_NUM_TEAMS ) {
+            for ( i = 0; i < level.maxclients; i++ ) {
+                gentity_t *playerEnt = &g_entities[i];
+                gclient_t *playerClient = playerEnt->client;
+
+                if ( !playerEnt->inuse || !playerClient ) {
+                    continue;
+                }
+
+                if ( playerClient->pers.connected != CON_CONNECTED ) {
+                    continue;
+                }
+
+                if ( playerClient->sess.sessionTeam != newTeam || playerClient->sess.sessionTeam == TEAM_SPECTATOR ) {
+                    continue;
+                }
+
+                if ( playerClient->ps.pm_type == PM_DEAD || playerClient->ps.pm_type == PM_SPECTATOR || playerEnt->health <= 0 ) {
+                    continue;
+                }
+
+                if ( Sigil_PlayerInHoldRadius( ent, playerEnt ) ) {
+                    Sigil_StartTrackingClient( sigilNum, sigil, playerEnt );
+                }
+            }
+        }
+    } else if ( newTeam >= TEAM_RED && newTeam < TEAM_NUM_TEAMS ) {
+        if ( Sigil_PlayerInHoldRadius( ent, other ) ) {
+            Sigil_StartTrackingClient( sigilNum, sigil, other );
+        }
     }
 
     return 0;
-  }
+}
 
 // Q3Rally Code END
 /*

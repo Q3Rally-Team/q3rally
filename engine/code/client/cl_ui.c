@@ -28,6 +28,33 @@ extern	botlib_export_t	*botlib_export;
 
 vm_t *uivm;
 
+static uiLadderStatus_t cl_ladderStatus;
+
+static void CL_LadderResetStatus( void ) {
+	Com_Memset( &cl_ladderStatus, 0, sizeof( cl_ladderStatus ) );
+	cl_ladderStatus.status = UI_LADDER_STATUS_EMPTY;
+}
+
+static void CL_LadderBeginRequest( void ) {
+	CL_LadderResetStatus();
+	cl_ladderStatus.status = UI_LADDER_STATUS_LOADING;
+}
+
+static void CL_LadderSetError( const char *message ) {
+	cl_ladderStatus.status = UI_LADDER_STATUS_ERROR;
+	cl_ladderStatus.entryCount = 0;
+	Q_strncpyz( cl_ladderStatus.errorMessage, ( message && message[0] ) ? message : "Ladder service unavailable.", sizeof( cl_ladderStatus.errorMessage ) );
+}
+
+static void CL_LadderRequestData( const char *mode, const char *timeframe, const char *region ) {
+	(void)mode;
+	(void)timeframe;
+	(void)region;
+
+	CL_LadderBeginRequest();
+	CL_LadderSetError( "Ladder data is not available in this build." );
+}
+
 /*
 ====================
 GetClientState
@@ -992,6 +1019,16 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_SET_PBCLSTATUS:
 		return 0;	
 
+	case UI_REQUEST_LADDERDATA:
+		CL_LadderRequestData( (const char *)VMA(1), (const char *)VMA(2), (const char *)VMA(3) );
+		return 0;
+
+	case UI_GET_LADDERSTATUS:
+		if ( VMA(1) ) {
+			Com_Memcpy( VMA(1), &cl_ladderStatus, sizeof( cl_ladderStatus ) );
+		}
+		return 0;
+
 	case UI_R_REGISTERFONT:
 		re.RegisterFont( VMA(1), args[2], VMA(3));
 		return 0;
@@ -1088,6 +1125,7 @@ CL_ShutdownUI
 void CL_ShutdownUI( void ) {
 	Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_UI );
 	cls.uiStarted = qfalse;
+	CL_LadderResetStatus();
 	if ( !uivm ) {
 		return;
 	}
@@ -1106,6 +1144,8 @@ CL_InitUI
 void CL_InitUI( void ) {
 	int		v;
 	vmInterpret_t		interpret;
+
+	CL_LadderResetStatus();
 
 	// load the dll or bytecode
 	interpret = Cvar_VariableValue("vm_ui");

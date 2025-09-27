@@ -679,6 +679,12 @@ void SV_Init (void)
 	Cvar_Get ("nextmap", "", CVAR_TEMP );
 
 	sv_allowDownload = Cvar_Get ("sv_allowDownload", "0", CVAR_SERVERINFO);
+	sv_ladderEnabled = Cvar_Get ("sv_ladderEnabled", "0", CVAR_ARCHIVE);
+	Cvar_CheckRange( sv_ladderEnabled, 0, 1, qtrue );
+	sv_ladderUrl = Cvar_Get ("sv_ladderUrl", "", CVAR_ARCHIVE);
+	sv_ladderApiKey = Cvar_Get ("sv_ladderApiKey", "", CVAR_TEMP | CVAR_PROTECTED);
+	sv_telemetryMaxBatch = Cvar_Get ("sv_telemetryMaxBatch", "8", CVAR_ARCHIVE);
+	Cvar_CheckRange( sv_telemetryMaxBatch, 1, 64, qtrue );
 	Cvar_Get ("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE);
 	
 	sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, 0);
@@ -700,11 +706,13 @@ void SV_Init (void)
 	// initialize bot cvars so they are listed and can be set before loading the botlib
 	SV_BotInitCvars();
 
-	// init the botlib here because we need the pre-compiler in the UI
-	SV_BotInitBotLib();
-	
-	// Load saved bans
-	Cbuf_AddText("rehashbans\n");
+        // init the botlib here because we need the pre-compiler in the UI
+        SV_BotInitBotLib();
+
+        // Load saved bans
+        Cbuf_AddText("rehashbans\n");
+
+        SV_LadderInit();
 }
 
 
@@ -761,12 +769,13 @@ void SV_Shutdown( char *finalmsg ) {
 		SV_FinalMessage( finalmsg );
 	}
 
-	SV_RemoveOperatorCommands();
-	SV_MasterShutdown();
-	SV_ShutdownGameProgs();
+        SV_RemoveOperatorCommands();
+        SV_MasterShutdown();
+        SV_ShutdownGameProgs();
+        SV_LadderShutdown();
 
-	// free current level
-	SV_ClearServer();
+        // free current level
+        SV_ClearServer();
 
 	// free server static data
 	if(svs.clients)

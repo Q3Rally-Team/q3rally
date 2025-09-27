@@ -1162,10 +1162,11 @@ void ClientThink_real( gentity_t *ent ) {
     if( ent->rearBounds )
       trap_UnlinkEntity( ent->rearBounds ); 
 
-		trap_UnlinkEntity( client->carPoints[0] );
-		trap_UnlinkEntity( client->carPoints[1] );
-		trap_UnlinkEntity( client->carPoints[2] );
-		trap_UnlinkEntity( client->carPoints[3] );
+                for ( i = 0; i < 4; i++ ) {
+                        if ( client->carPoints[i] ) {
+                                trap_UnlinkEntity( client->carPoints[i] );
+                        }
+                }
 
 		return;
 	}

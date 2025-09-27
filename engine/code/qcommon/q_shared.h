@@ -165,8 +165,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../game/bg_lib.h"
 
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef signed short int16_t;
+typedef unsigned short uint16_t;
+typedef int int32_t;
 typedef int intptr_t;
 typedef unsigned int uint32_t;
+typedef struct q3vm_FILE FILE;
+typedef unsigned int uintptr_t;
 #else
 
 #include <assert.h>
