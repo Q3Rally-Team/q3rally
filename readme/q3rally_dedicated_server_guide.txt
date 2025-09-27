@@ -52,6 +52,14 @@ English
     ./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg
     ./ioq3rallyded.x86_64 +set dedicated 1 +exec elimination_server.cfg)
 
+    On Windows you can alternatively double-click one of the
+    `baseq3r/start_*.bat` helpers (for example
+    `baseq3r/start_racing_server.bat`) which automatically picks the
+    correct executable and launches the dedicated server with the matching
+    preset. Each multiplayer gametype has its own batch file. The
+    single-player gametype is local-only, so its batch file simply notes
+    that a dedicated server is unavailable.
+
 5.  Share your IP address with friends so they can join.
 
 Deutsch
@@ -105,5 +113,14 @@ Deutsch
     (Unter Linux:
     ./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg
     ./ioq3rallyded.x86_64 +set dedicated 1 +exec elimination_server.cfg)
+
+    Unter Windows kannst du alternativ eine der Helferdateien
+    `baseq3r/start_*.bat` (z. B.
+    `baseq3r/start_racing_server.bat`) doppelklicken. Die Skripte wählen
+    automatisch die richtige ausführbare Datei und starten den Dedicated
+    Server mit der passenden Voreinstellung. Für jeden Multiplayer
+    Gametype gibt es eine eigene Batchdatei. Der Single-Player-Gametype
+    ist nur lokal spielbar; seine Batchdatei weist darauf hin, dass kein
+    Dedicated Server verfügbar ist.
 
 5.  Teile deine IP-Adresse mit Freunden, damit sie beitreten können.
