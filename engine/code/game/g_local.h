@@ -968,6 +968,7 @@ qboolean G_BotConnect( int clientNum, qboolean restart );
 void Svcmd_AddBot_f( void );
 void Svcmd_BotList_f( void );
 void BotInterbreedEndMatch( void );
+int G_CountBotPlayers( int team );
 
 // ai_main.c
 #define MAX_FILEPATH			144

@@ -429,8 +429,16 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
              !SV_LadderJsonAppendString( builder, player->model ) ) {
                 return qfalse;
         }
+        if ( !SV_LadderJsonAppendKey( builder, "vehicle", &first ) ||
+             !SV_LadderJsonAppendString( builder, player->vehicle ) ) {
+                return qfalse;
+        }
         if ( !SV_LadderJsonAppendKey( builder, "team", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->team ) ) {
+                return qfalse;
+        }
+        if ( !SV_LadderJsonAppendKey( builder, "isBot", &first ) ||
+             !SV_LadderJsonAppendBoolean( builder, player->isBot ) ) {
                 return qfalse;
         }
         if ( !SV_LadderJsonAppendKey( builder, "score", &first ) ||

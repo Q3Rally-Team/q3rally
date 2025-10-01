@@ -1775,6 +1775,7 @@ void LogExit( const char *string ) {
 			Com_Memset( entry, 0, sizeof( *entry ) );
 			entry->clientNum = level.sortedClients[i];
 			entry->team = cl->sess.sessionTeam;
+			entry->isBot = ( g_entities[level.sortedClients[i]].r.svFlags & SVF_BOT ) ? qtrue : qfalse;
 			entry->score = cl->ps.persistant[PERS_SCORE];
 			entry->ping = ping;
 			entry->time = timePlayed;
@@ -1830,6 +1831,7 @@ void LogExit( const char *string ) {
 			}
 			if ( model ) {
 				Q_strncpyz( entry->model, model, sizeof( entry->model ) );
+				Q_strncpyz( entry->vehicle, model, sizeof( entry->vehicle ) );
 			}
 			G_LadderComputePlayerId( entry->guid, entry->cleanName, entry->playerId, sizeof( entry->playerId ) );
 		}

@@ -661,78 +661,6 @@ int TeamLeader( int team ) {
 }
 
 
-// STONELANCE
-team_t LowestTeamCount( int ignoreClientNum ){
-	int		counts[TEAM_NUM_TEAMS];
-
-	counts[TEAM_BLUE] = TeamCount( ignoreClientNum, TEAM_BLUE );
-	counts[TEAM_RED] = TeamCount( ignoreClientNum, TEAM_RED );
-	counts[TEAM_GREEN] = TeamCount( ignoreClientNum, TEAM_GREEN );
-	counts[TEAM_YELLOW] = TeamCount( ignoreClientNum, TEAM_YELLOW );
-
-	if ( counts[TEAM_BLUE] == counts[TEAM_RED]
-		&& counts[TEAM_BLUE] == counts[TEAM_GREEN]
-		&& counts[TEAM_BLUE] == counts[TEAM_YELLOW]) {
-		return 0;
-	}
-
-	if ( counts[TEAM_BLUE] <= counts[TEAM_RED]
-		&& counts[TEAM_BLUE] <= counts[TEAM_GREEN]
-		&& counts[TEAM_BLUE] <= counts[TEAM_YELLOW]) {
-		return TEAM_BLUE;
-	}
-	if ( counts[TEAM_RED] <= counts[TEAM_BLUE]
-		&& counts[TEAM_RED] <= counts[TEAM_GREEN]
-		&& counts[TEAM_RED] <= counts[TEAM_YELLOW]) {
-		return TEAM_RED;
-	}
-	if ( counts[TEAM_GREEN] <= counts[TEAM_RED]
-		&& counts[TEAM_GREEN] <= counts[TEAM_BLUE]
-		&& counts[TEAM_GREEN] <= counts[TEAM_YELLOW]) {
-		return TEAM_GREEN;
-	}
-	if ( counts[TEAM_YELLOW] <= counts[TEAM_RED]
-		&& counts[TEAM_YELLOW] <= counts[TEAM_GREEN]
-		&& counts[TEAM_YELLOW] <= counts[TEAM_YELLOW]) {
-		return TEAM_YELLOW;
-	}
-
-	return 0;
-}
-
-team_t LowestTeamScore( void ){
-	if ( level.teamScores[TEAM_BLUE] == level.teamScores[TEAM_RED]
-		&& level.teamScores[TEAM_BLUE] == level.teamScores[TEAM_GREEN]
-		&& level.teamScores[TEAM_BLUE] == level.teamScores[TEAM_YELLOW]) {
-		return 0;
-	}
-
-	if ( level.teamScores[TEAM_BLUE] <= level.teamScores[TEAM_RED]
-		&& level.teamScores[TEAM_BLUE] <= level.teamScores[TEAM_GREEN]
-		&& level.teamScores[TEAM_BLUE] <= level.teamScores[TEAM_YELLOW]) {
-		return TEAM_BLUE;
-	}
-	if ( level.teamScores[TEAM_RED] <= level.teamScores[TEAM_BLUE]
-		&& level.teamScores[TEAM_RED] <= level.teamScores[TEAM_GREEN]
-		&& level.teamScores[TEAM_RED] <= level.teamScores[TEAM_YELLOW]) {
-		return TEAM_RED;
-	}
-	if ( level.teamScores[TEAM_GREEN] <= level.teamScores[TEAM_RED]
-		&& level.teamScores[TEAM_GREEN] <= level.teamScores[TEAM_BLUE]
-		&& level.teamScores[TEAM_GREEN] <= level.teamScores[TEAM_YELLOW]) {
-		return TEAM_GREEN;
-	}
-	if ( level.teamScores[TEAM_YELLOW] <= level.teamScores[TEAM_RED]
-		&& level.teamScores[TEAM_YELLOW] <= level.teamScores[TEAM_GREEN]
-		&& level.teamScores[TEAM_YELLOW] <= level.teamScores[TEAM_YELLOW]) {
-		return TEAM_YELLOW;
-	}
-
-	return 0;
-}
-// END
-
-
 /*
 ================
 PickTeam
@@ -740,37 +668,73 @@ PickTeam
 ================
 */
 team_t PickTeam( int ignoreClientNum ) {
-// STONELANCE
-/*
-	int		counts[TEAM_NUM_TEAMS];
+	int i;
+	int min_players;
+	int counts[TEAM_NUM_TEAMS];
+	int num_teams;
+	int num_ties;
+	int tied_teams[TEAM_NUM_TEAMS];
+	int min_score;
+	int num_score_ties;
+	int score_tied_teams[TEAM_NUM_TEAMS];
 
-	counts[TEAM_BLUE] = TeamCount( ignoreClientNum, TEAM_BLUE );
-	counts[TEAM_RED] = TeamCount( ignoreClientNum, TEAM_RED );
+	num_teams = Team_GetCount();
+	num_ties = 0;
 
-	if ( counts[TEAM_BLUE] > counts[TEAM_RED] ) {
-		return TEAM_RED;
-	}
-	if ( counts[TEAM_RED] > counts[TEAM_BLUE] ) {
-		return TEAM_BLUE;
-	}
-	// equal team count, so join the team with the lowest score
-	if ( level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED] ) {
-		return TEAM_RED;
-	}
-*/
-	int		team;
-
-	if ( (team = LowestTeamCount(ignoreClientNum)) ){
-		return team;
+	if ( num_teams == 0 ) {
+		return TEAM_FREE;
 	}
 
-	// equal team count, so join the team with the lowest score
-	if ( (team = LowestTeamScore()) ){
-		return team;
+	// get the counts for each team
+	for ( i = TEAM_RED; i < TEAM_RED + num_teams; i++ ) {
+		counts[i] = TeamCount( ignoreClientNum, i );
 	}
-// END
 
-	return TEAM_BLUE;
+	// find the minimum player count
+	min_players = counts[TEAM_RED];
+	for ( i = TEAM_RED + 1; i < TEAM_RED + num_teams; i++ ) {
+		if ( counts[i] < min_players ) {
+			min_players = counts[i];
+		}
+	}
+
+	// find all teams with the minimum player count
+	for ( i = TEAM_RED; i < TEAM_RED + num_teams; i++ ) {
+		if ( counts[i] == min_players ) {
+			tied_teams[num_ties] = i;
+			num_ties++;
+		}
+	}
+
+	// if there's only one, we're done
+	if ( num_ties == 1 ) {
+		return tied_teams[0];
+	}
+
+	// multiple teams have the same low player count, so check scores
+	min_score = level.teamScores[tied_teams[0]];
+	for ( i = 1; i < num_ties; i++ ) {
+		if ( level.teamScores[tied_teams[i]] < min_score ) {
+			min_score = level.teamScores[tied_teams[i]];
+		}
+	}
+
+	// find all teams with the lowest score among the tied teams
+	num_score_ties = 0;
+	for ( i = 0; i < num_ties; i++ ) {
+		if ( level.teamScores[tied_teams[i]] == min_score ) {
+			score_tied_teams[num_score_ties] = tied_teams[i];
+			num_score_ties++;
+		}
+	}
+
+	// if there is only one, we're done
+	if ( num_score_ties == 1 ) {
+		return score_tied_teams[0];
+	}
+
+	// if we are still tied, pick one of the score-tied teams randomly
+	return score_tied_teams[rand() % num_score_ties];
 }
 
 /*

@@ -262,6 +262,110 @@ teamgame.sigil[i].entity->nextthink = 0;
 }
 // Q3Rally Code END
 
+/*
+================
+Team_GetCount
+================
+*/
+int Team_GetCount( void ) {
+	switch ( g_gametype.integer ) {
+		case GT_CTF:
+		case GT_TEAM:
+		case GT_TEAM_RACING:
+		case GT_TEAM_RACING_DM:
+			return 2;
+		case GT_CTF4:
+		case GT_DOMINATION:
+			return 4;
+		default:
+			return 0;
+	}
+}
+
+/*
+================
+G_PickTeamToKickFrom
+================
+*/
+team_t G_PickTeamToKickFrom( void ) {
+	int i;
+	int max_players;
+	int player_counts[TEAM_NUM_TEAMS];
+	int bot_counts[TEAM_NUM_TEAMS];
+	int num_teams;
+	int num_ties;
+	int tied_teams[TEAM_NUM_TEAMS];
+	int max_score;
+	int num_score_ties;
+	int score_tied_teams[TEAM_NUM_TEAMS];
+
+	num_teams = Team_GetCount();
+	num_ties = 0;
+
+	if ( num_teams == 0 ) {
+		return TEAM_FREE;
+	}
+
+	// get the counts for each team
+	for ( i = TEAM_RED; i < TEAM_RED + num_teams; i++ ) {
+		player_counts[i] = TeamCount( -1, i );
+		bot_counts[i] = G_CountBotPlayers( i );
+	}
+
+	// find the maximum player count on a team that has bots
+	max_players = -1;
+	for ( i = TEAM_RED; i < TEAM_RED + num_teams; i++ ) {
+		if ( bot_counts[i] > 0 ) {
+			if ( player_counts[i] > max_players ) {
+				max_players = player_counts[i];
+			}
+		}
+	}
+
+	// if no team has bots, we can't kick any
+	if ( max_players == -1 ) {
+		return TEAM_FREE;
+	}
+
+	// find all teams with the most players
+	for ( i = TEAM_RED; i < TEAM_RED + num_teams; i++ ) {
+		if ( player_counts[i] == max_players && bot_counts[i] > 0 ) {
+			tied_teams[num_ties] = i;
+			num_ties++;
+		}
+	}
+
+	// if there's only one, we're done
+	if ( num_ties == 1 ) {
+		return tied_teams[0];
+	}
+
+	// multiple teams have the same high player count, so check scores
+	max_score = -1;
+	for ( i = 0; i < num_ties; i++ ) {
+		if ( level.teamScores[tied_teams[i]] > max_score ) {
+			max_score = level.teamScores[tied_teams[i]];
+		}
+	}
+
+	// find all teams with the highest score among the tied teams
+	num_score_ties = 0;
+	for ( i = 0; i < num_ties; i++ ) {
+		if ( level.teamScores[tied_teams[i]] == max_score ) {
+			score_tied_teams[num_score_ties] = tied_teams[i];
+			num_score_ties++;
+		}
+	}
+
+	// if there is only one, we're done
+	if ( num_score_ties == 1 ) {
+		return score_tied_teams[0];
+	}
+
+	// if we are still tied, pick one of the score-tied teams randomly
+	return score_tied_teams[rand() % num_score_ties];
+}
+
 int OtherTeam(int team) {
 	if (team==TEAM_RED)
 		return TEAM_BLUE;

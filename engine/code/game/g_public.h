@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	LADDER_MAX_GUID			64
 #define	LADDER_MAX_PLAYER_NAME	64
 #define	LADDER_MAX_MODEL_NAME	64
+#define	LADDER_MAX_VEHICLE_NAME	64
 
 #ifndef RACE_MAX_RECORDED_LAPS
 #define RACE_MAX_RECORDED_LAPS	64
@@ -121,7 +122,9 @@ typedef struct {
 	char	name[LADDER_MAX_PLAYER_NAME];
 	char	cleanName[LADDER_MAX_PLAYER_NAME];
 	char	model[LADDER_MAX_MODEL_NAME];
+	char	vehicle[LADDER_MAX_VEHICLE_NAME];
 	int				team;
+	qboolean			isBot;
 	int				score;
 	int				ping;
 	int				time;

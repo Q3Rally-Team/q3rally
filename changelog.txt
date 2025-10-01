@@ -4,6 +4,7 @@ New and fixed since we are standalone (0.0.1.2)
 
 Fixed:
 
+- Bots now honour runtime `bot_enable` changes by initializing AI support without requiring a map restart.
 - Telefrag Gun doesn't work correctly
 - Flattened numbers & "Wrong way" is not on center
 - Gone is the Machinegun as a starting weapon
