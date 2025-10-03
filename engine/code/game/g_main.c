@@ -250,7 +250,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_trackLength, "g_trackLength", "0", CVAR_LATCH, 0, qfalse  },
 
 	{ &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
 	{ &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_ARCHIVE, 0, qfalse },
@@ -2029,6 +2029,7 @@ void CheckExitRules( void ) {
 	gclient_t	*cl;
 // STONELANCE
 	int			count;
+	gclient_t	*soleActiveClient = NULL;
 // END
 	// if at the intermission, wait for all non-bots to
 	// signal ready, then go to next level
@@ -2148,7 +2149,12 @@ void CheckExitRules( void ) {
 //		if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
 
 		count++;
-		break;
+		if ( count == 1 ) {
+			soleActiveClient = cl;
+		} else {
+			soleActiveClient = NULL;
+			break;
+		}
 	}
 
 	// if its a race and the race has started if no players left playing 
@@ -2157,6 +2163,18 @@ void CheckExitRules( void ) {
 		LogExit( "Race finished." );
 		return;
 	}
+
+        if ( isRallyRace() && level.startRaceTime && !level.finishRaceTime
+                        && count == 1 && soleActiveClient && soleActiveClient->fuelEmptySince ) {
+                int finishTime = level.time;
+
+                soleActiveClient->finishRaceTime = finishTime;
+                soleActiveClient->ps.stats[STAT_POSITION] = 1;
+                level.winnerNumber = soleActiveClient->ps.clientNum;
+                level.finishRaceTime = finishTime;
+                trap_SendServerCommand( -1, va( "raceFinishTime %i %i %i", soleActiveClient->ps.clientNum, finishTime, 1 ) );
+                return;
+        }
 
 	if ( level.finishRaceTime && isRallyRace() ){
 		// if everyone has finished the race, or the finishRaceDelay time is up, then exit
@@ -2170,7 +2188,7 @@ void CheckExitRules( void ) {
 	if ( level.finishRaceTime && g_gametype.integer == GT_DERBY
 		&& level.finishRaceTime + 10000 < level.time ){
 		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
-		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
+                trap_SendServerCommand( -1, va("raceFinishTime %i %i %i", level.winnerNumber, level.time, 0) );
 		LogExit( "Derby finished." );
 		return;
 	}
@@ -2178,7 +2196,7 @@ void CheckExitRules( void ) {
 	if ( level.finishRaceTime && (g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION)
 		&& level.finishRaceTime + 10000 < level.time ){
 		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
-		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
+                trap_SendServerCommand( -1, va("raceFinishTime %i %i %i", level.winnerNumber, level.time, 0) );
 		if ( g_gametype.integer == GT_LCS ) {
 			LogExit( "Last car standing finished." );
 		}

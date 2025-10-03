@@ -720,6 +720,9 @@ typedef struct {
 
 	char		countDownPrint[16];
 	int			countDownEnd;
+	int			raceFinishCountdownStart;
+	int			raceFinishCountdownEnd;
+	qboolean	raceFinishCountdownActive;
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
@@ -1252,6 +1255,7 @@ typedef struct {
 // Q3Rally Code END
 	int				capturelimit;
 	int				timelimit;
+	int				finishRaceDelay;
 	int				maxclients;
 	char			mapname[MAX_QPATH];
 	char			redTeam[MAX_QPATH];
@@ -1996,9 +2000,10 @@ qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
 // cg_rally_race_tools.c
 //
 void CG_NewLapTime( int client, int lap, int time );
-void CG_FinishedRace( int client, int time );
+void CG_FinishedRace( int client, int time, qboolean fuelDepleted );
 void CG_StartRace( int time );
 void CG_DrawRaceCountDown( void );
+void CG_DrawRaceFinishCountdown( void );
 void CG_RaceCountDown( const char *str, int secondsLeft );
 
 //

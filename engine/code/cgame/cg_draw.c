@@ -3429,6 +3429,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		CG_DrawCenterString();
 
 		CG_DrawRaceCountDown();
+		CG_DrawRaceFinishCountdown();
 
 	}
 }

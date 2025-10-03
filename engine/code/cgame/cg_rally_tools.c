@@ -819,7 +819,19 @@ isRaceObserver
 =================
 */
 qboolean isRaceObserver( int clientNum ){
-	return (cg_entities[clientNum].finishRaceTime && cg_entities[clientNum].finishRaceTime + RACE_OBSERVER_DELAY < cg.time);
+	int cutoffTime;
+
+	if ( clientNum == cg.clientNum && cg.raceFinishCountdownEnd ) {
+		return ( cg.time >= cg.raceFinishCountdownEnd );
+	}
+
+	if ( !cg_entities[clientNum].finishRaceTime ) {
+		return qfalse;
+	}
+
+	cutoffTime = cg_entities[clientNum].finishRaceTime + ( cgs.finishRaceDelay * 1000 );
+
+	return ( cg.time >= cutoffTime );
 }
 
 qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos ){

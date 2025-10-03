@@ -13,6 +13,7 @@ English
         set rconpassword "yourpassword"
         set g_gametype "0"
         set g_finishRaceDelay "30"
+        // When only one racer remains with an empty tank, the race auto-finishes after 30 seconds of inactivity.
         map q3r_country01
 
     elimination_server.cfg (Elimination):
@@ -75,6 +76,7 @@ Deutsch
         set rconpassword "deinpasswort"
         set g_gametype "0"
         set g_finishRaceDelay "30"
+        // Wenn nur noch ein Fahrer mit leerem Tank übrig ist, beendet der Server das Rennen nach 30 Sekunden Stillstand.
         map q3r_country01
 
     elimination_server.cfg (Elimination):

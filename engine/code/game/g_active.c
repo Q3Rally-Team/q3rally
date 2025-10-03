@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+#define FUEL_EMPTY_STOPPED_VEL_SQ   25.0f
+
 
 // STONELANCE
 /*
@@ -1142,7 +1144,9 @@ void ClientThink_real( gentity_t *ent ) {
 		ucmd->upmove = 0;
 	}
 
-	if ( ent->client->finishRaceTime && ent->client->finishRaceTime + RACE_OBSERVER_DELAY < level.time ){
+	if ( ent->client->finishRaceTime
+		&& level.finishRaceTime
+		&& level.time >= level.finishRaceTime + ( g_finishRaceDelay.integer * 1000 ) ){
 		gentity_t	*tent;
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
 		tent->s.clientNum = ent->s.clientNum;
@@ -1495,6 +1499,18 @@ void ClientThink_real( gentity_t *ent ) {
 // END
 
 	// save results of pmove
+	if ( client->car.fuel <= 0.0f ) {
+		if ( VectorLengthSquared( client->ps.velocity ) < FUEL_EMPTY_STOPPED_VEL_SQ ) {
+			if ( !client->fuelEmptySince ) {
+				client->fuelEmptySince = level.time;
+			}
+		} else {
+			client->fuelEmptySince = 0;
+		}
+	} else if ( client->fuelEmptySince ) {
+		client->fuelEmptySince = 0;
+	}
+
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}

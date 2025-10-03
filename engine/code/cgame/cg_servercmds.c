@@ -244,6 +244,14 @@ void CG_ParseServerinfo( void ) {
 // END
 	cgs.capturelimit = atoi( Info_ValueForKey( info, "capturelimit" ) );
 	cgs.timelimit = atoi( Info_ValueForKey( info, "timelimit" ) );
+	{
+		const char *finishDelay = Info_ValueForKey( info, "g_finishRaceDelay" );
+		if ( finishDelay && finishDelay[0] ) {
+			cgs.finishRaceDelay = atoi( finishDelay );
+		} else {
+			cgs.finishRaceDelay = 30;
+		}
+	}
 	cgs.maxclients = atoi( Info_ValueForKey( info, "sv_maxclients" ) );
 	mapname = Info_ValueForKey( info, "mapname" );
 	Com_sprintf( cgs.mapname, sizeof( cgs.mapname ), "maps/%s.bsp", mapname );
@@ -505,6 +513,11 @@ static void CG_ConfigStringModified( void ) {
 #endif
 	} else if ( num == CS_INTERMISSION ) {
 		cg.intermissionStarted = atoi( str );
+		if ( cg.intermissionStarted ) {
+			cg.raceFinishCountdownActive = qfalse;
+			cg.raceFinishCountdownStart = 0;
+			cg.raceFinishCountdownEnd = 0;
+		}
 	} else if ( num >= CS_MODELS && num < CS_MODELS+MAX_MODELS ) {
 		cgs.gameModels[ num-CS_MODELS ] = trap_R_RegisterModel( str );
 	} else if ( num >= CS_SOUNDS && num < CS_SOUNDS+MAX_SOUNDS ) {
@@ -1478,12 +1491,19 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( !strcmp( cmd, "raceFinishTime" ) ) {
-		i1 = atoi(CG_Argv(1));
-		i2 = atoi(CG_Argv(2));
-		CG_FinishedRace( i1, i2 );
-		return;
-	}
+        if ( !strcmp( cmd, "raceFinishTime" ) ) {
+                int fuelDepleted = 0;
+
+                i1 = atoi(CG_Argv(1));
+                i2 = atoi(CG_Argv(2));
+
+                if ( trap_Argc() >= 4 ) {
+                        fuelDepleted = atoi( CG_Argv(3) );
+                }
+
+                CG_FinishedRace( i1, i2, fuelDepleted ? qtrue : qfalse );
+                return;
+        }
 // END
 
 	CG_Printf( "Unknown client game command: %s\n", cmd );

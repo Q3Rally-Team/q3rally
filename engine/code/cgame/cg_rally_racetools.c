@@ -53,13 +53,19 @@ void CG_NewLapTime( int client, int lap, int time ) {
 	cent->startLapTime = time;
 }
 
-void CG_FinishedRace( int client, int time ) {
+void CG_FinishedRace( int client, int time, qboolean fuelDepleted ) {
 	centity_t	*cent;
 	char		*t;
 
 	cent = &cg_entities[client];
 
-	if ( client == cg.snap->ps.clientNum
+	if ( !cg.raceFinishCountdownActive ) {
+		cg.raceFinishCountdownActive = qtrue;
+		cg.raceFinishCountdownStart = time;
+		cg.raceFinishCountdownEnd = time + ( cgs.finishRaceDelay * 1000 );
+	}
+
+	if ( !fuelDepleted && client == cg.snap->ps.clientNum
 		&& ((time - cent->startLapTime) < cent->bestLapTime || cent->bestLapTime == 0) ){
 		// New bestlap
 		cent->bestLapTime = (time - cent->startLapTime);
@@ -76,6 +82,10 @@ void CG_FinishedRace( int client, int time ) {
 void CG_StartRace( int time ) {
 	int			i;
 	centity_t	*player;
+
+	cg.raceFinishCountdownActive = qfalse;
+	cg.raceFinishCountdownStart = 0;
+	cg.raceFinishCountdownEnd = 0;
 
 	for (i = 0; i < MAX_CLIENTS; i++){
 		player = &cg_entities[i];
@@ -114,6 +124,40 @@ void CG_DrawRaceCountDown( void ){
 	y = 240 - h/2;
 	CG_DrawStringExt( x, y, cg.countDownPrint, color, qfalse, qtrue, w, h, 0 );
 }
+void CG_DrawRaceFinishCountdown( void ) {
+	char			text[64];
+	int			seconds;
+	vec4_t		color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	int			w;
+	int			x;
+	int			y;
+
+	if ( !cg.raceFinishCountdownActive ) {
+		return;
+	}
+
+	if ( cg.time >= cg.raceFinishCountdownEnd ) {
+		cg.raceFinishCountdownActive = qfalse;
+		cg.raceFinishCountdownStart = 0;
+		cg.raceFinishCountdownEnd = 0;
+		return;
+	}
+
+	seconds = ( cg.raceFinishCountdownEnd - cg.time + 999 ) / 1000;
+	if ( seconds < 0 ) {
+		seconds = 0;
+	}
+
+	Com_sprintf( text, sizeof( text ), "Race ends in : %02d seconds", seconds );
+
+	w = CG_DrawStrlen( text ) * BIGCHAR_WIDTH;
+	x = 320 - w / 2;
+	y = 360;
+
+	CG_DrawBigStringColor( x, y, text, color );
+}
+
+
 
 void CG_RaceCountDown( const char *str, int secondsLeft ){
 	cg.centerPrintTime = 0;

@@ -70,6 +70,7 @@ Added:
 - codebase synced with ioq3
 - individual car horns for all cars
 - Usable server map rotation configs
+- Races now auto-finish if the sole remaining driver has been out of fuel and stationary for 30 seconds, preventing stalled sessions.
 - New intro
 - Make unique logos for 4 teams (Like UT99)
 - finished the flag status hud for domination
