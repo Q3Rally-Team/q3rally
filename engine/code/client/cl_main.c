@@ -2988,6 +2988,8 @@ void CL_Frame ( int msec ) {
 			return;
 		}
 	}
+
+	CL_LadderPumpRequest();
 #endif
 
 	if ( cls.cddialog ) {

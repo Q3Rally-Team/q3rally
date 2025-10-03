@@ -2011,7 +2011,8 @@ Q3OBJ = \
 \
   $(B)/client/q_math.o \
   $(B)/client/q_shared.o \
-  \
+  $(B)/client/json_shared.o \
+\
   $(B)/client/unzip.o \
   $(B)/client/ioapi.o \
   $(B)/client/puff.o \
@@ -2105,7 +2106,8 @@ Q3R2OBJ = \
   $(B)/renderergl2/tr_surface.o \
   $(B)/renderergl2/tr_vbo.o \
   $(B)/renderergl2/tr_world.o \
-  \
+  $(B)/renderergl2/json_shared.o \
+\
   $(B)/renderergl1/sdl_gamma.o \
   $(B)/renderergl1/sdl_glimp.o
 
@@ -2589,7 +2591,8 @@ Q3DOBJ = \
   \
   $(B)/ded/q_math.o \
   $(B)/ded/q_shared.o \
-  \
+  $(B)/ded/json_shared.o \
+\
   $(B)/ded/unzip.o \
   $(B)/ded/ioapi.o \
   $(B)/ded/vm.o \
@@ -3107,6 +3110,9 @@ $(B)/renderergl2/glsl/%.c: $(RGL2DIR)/glsl/%.glsl $(STRINGIFY)
 	$(DO_REF_STR)
 
 $(B)/renderergl2/glsl/%.o: $(B)/renderergl2/glsl/%.c
+	$(DO_REF_CC)
+
+$(B)/renderergl2/%.o: $(CMDIR)/%.c
 	$(DO_REF_CC)
 
 $(B)/renderergl2/%.o: $(RCOMMONDIR)/%.c

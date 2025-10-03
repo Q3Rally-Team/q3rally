@@ -907,6 +907,7 @@ void			trap_GetCDKey( char *buf, int buflen );
 void			trap_SetCDKey( char *buf );
 
 void			trap_RequestLadderData( const char *mode, const char *timeframe, const char *region );
+void			trap_CancelLadderRequest( void );
 void			trap_GetLadderStatus( uiLadderStatus_t *status );
 
 qboolean               trap_VerifyCDKey( const char *key, const char *chksum);

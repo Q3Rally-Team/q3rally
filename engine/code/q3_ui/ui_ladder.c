@@ -218,9 +218,9 @@ static void LadderMenu_BuildResults( const uiLadderStatus_t *status ) {
 }
 
 static void LadderMenu_RequestData( void ) {
+        trap_CancelLadderRequest();
         LadderMenu_ClearResults();
         LadderMenu_SetStatusText( "Loading ladder data...", text_color_normal );
-
         trap_RequestLadderData( LadderMenu_CurrentModeKey(),
                 LadderMenu_CurrentTimeframeKey(),
                 LadderMenu_CurrentRegionKey() );
@@ -285,6 +285,7 @@ static void LadderMenu_MenuEvent( void *ptr, int event ) {
 
         switch( ( (menucommon_s*)ptr )->id ) {
         case ID_BACK:
+                trap_CancelLadderRequest();
                 UI_PopMenu();
                 break;
 

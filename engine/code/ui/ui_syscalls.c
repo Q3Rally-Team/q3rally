@@ -400,11 +400,15 @@ qboolean trap_VerifyCDKey( const char *key, const char *chksum) {
 }
 
 void trap_RequestLadderData( const char *mode, const char *timeframe, const char *region ) {
-	syscall( UI_REQUEST_LADDERDATA, mode, timeframe, region );
+        syscall( UI_REQUEST_LADDERDATA, mode, timeframe, region );
+}
+
+void trap_CancelLadderRequest( void ) {
+        syscall( UI_CANCEL_LADDERREQUEST );
 }
 
 void trap_GetLadderStatus( uiLadderStatus_t *status ) {
-	syscall( UI_GET_LADDERSTATUS, status );
+        syscall( UI_GET_LADDERSTATUS, status );
 }
 
 void trap_SetPbClStatus( int status ) {

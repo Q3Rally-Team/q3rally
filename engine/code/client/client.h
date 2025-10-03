@@ -481,6 +481,8 @@ void CL_GetPingInfo( int n, char *buf, int buflen );
 void CL_ClearPing( int n );
 int CL_GetPingQueueCount( void );
 
+void CL_LadderPumpRequest( void );
+
 void CL_ShutdownRef( void );
 void CL_InitRef( void );
 qboolean CL_CDKeyValidate( const char *key, const char *checksum );
