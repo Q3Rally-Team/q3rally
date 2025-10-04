@@ -1,0 +1,73 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libsdl2-dev
+    - name: Compile
+      run: make release -j$(nproc) -C engine
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Linux
+        path: engine/build/*.zip
+  windows:
+    name: Windows
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile
+      run: |
+        choco install zip
+        # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
+        make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows
+        path: engine/build/*.zip
+  macos:
+    name: macOS
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile
+      run: make release -j$(sysctl -n hw.logicalcpu) -C engine
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: macOS
+        path: engine/build/*.zip
+  web:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        repository: emscripten-core/emsdk
+        path: emsdk
+    - name: Install Dependencies
+      run: |
+        cd emsdk
+        ./emsdk install 3.1.58
+        ./emsdk activate 3.1.58
+    - name: Compile
+      env:
+        ARCHIVE: 1
+      run: |
+        source emsdk/emsdk_env.sh
+        emmake make release -j$(nproc) -C engine
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Web
+        path: engine/build/*.zip
