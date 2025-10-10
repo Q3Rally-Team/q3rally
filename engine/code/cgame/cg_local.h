@@ -262,6 +262,15 @@ typedef struct centity_s {
 	qhandle_t		postSoundLoop;
 	qhandle_t		destroySound;
 
+	char		hitSoundName[MAX_QPATH];
+	char		preSoundLoopName[MAX_QPATH];
+	char		postSoundLoopName[MAX_QPATH];
+	char		destroySoundName[MAX_QPATH];
+
+	qhandle_t		activeScriptLoop;
+	int		scriptLastEvent;
+	qboolean		scriptDestroyPending;
+
 	qhandle_t		modelHandle;
 	qhandle_t		deadModelHandle;
 

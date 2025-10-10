@@ -233,18 +233,46 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 
 			continue;
 		}
-		else if ( !Q_stricmp( token, "hitsound" ) ){
-			COM_Parse( &text_p );
-		}
-		else if ( !Q_stricmp( token, "presound" ) ){
-			COM_Parse( &text_p );
-		}
-		else if ( !Q_stricmp( token, "postsound" ) ){
-			COM_Parse( &text_p );
-		}
-		else if ( !Q_stricmp( token, "destroysound" ) ){
-			COM_Parse( &text_p );
-		}
+               else if ( !Q_stricmp( token, "hitsound" ) ){
+                       token = COM_Parse( &text_p );
+                       if ( !token || !token[0] ) {
+                               break;
+                       }
+
+                       ent->hitSound = G_SoundIndex( token );
+
+                       continue;
+               }
+               else if ( !Q_stricmp( token, "presound" ) ){
+                       token = COM_Parse( &text_p );
+                       if ( !token || !token[0] ) {
+                               break;
+                       }
+
+                       ent->preSoundLoop = G_SoundIndex( token );
+
+                       continue;
+               }
+               else if ( !Q_stricmp( token, "postsound" ) ){
+                       token = COM_Parse( &text_p );
+                       if ( !token || !token[0] ) {
+                               break;
+                       }
+
+                       ent->postSoundLoop = G_SoundIndex( token );
+
+                       continue;
+               }
+               else if ( !Q_stricmp( token, "destroysound" ) ){
+                       token = COM_Parse( &text_p );
+                       if ( !token || !token[0] ) {
+                               break;
+                       }
+
+                       ent->destroySound = G_SoundIndex( token );
+
+                       continue;
+               }
 		else if ( !Q_stricmp( token, "gibs" ) ) {
 			/* skip gibs part of script (it is only used client side) */
 			token = COM_Parse( &text_p );
@@ -280,9 +308,19 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 }
 
 void G_ScriptedObject_Destroy( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ){
-	Com_Printf("Destroying scripted map object %s\n", self->classname);
+       Com_Printf("Destroying scripted map object %s\n", self->classname);
 
-	self->s.eFlags |= EF_DEAD;
+       if ( self->destroySound ) {
+               G_AddEvent( self, EV_GENERAL_SOUND, self->destroySound );
+       }
+
+       if ( self->postSoundLoop ) {
+               self->s.loopSound = self->postSoundLoop;
+       } else {
+               self->s.loopSound = 0;
+       }
+
+       self->s.eFlags |= EF_DEAD;
 }
 
 void G_ScriptedObject_Touch ( gentity_t *self, gentity_t *other, trace_t *trace ){
@@ -354,15 +392,13 @@ void G_ScriptedObject_Think ( gentity_t *self ){
 }
 
 void G_ScriptedObject_Pain ( gentity_t *self, gentity_t *attacker, int damage ){
-	/* Optional: Hit sound and frame animation based on health */
-	/*
-	if (self->number > 0){
-		self->s.frame = self->number - ((self->maxHealth / (float)self->number) * self->health);
-	}
-	*/
+       if ( self->hitSound ) {
+               G_AddEvent( self, EV_GENERAL_SOUND, self->hitSound );
+       }
 
-	/* Debug output for pain events */
-	/* Com_Printf("Scripted map object %s was hit\n", self->classname); */
+       if ( self->preSoundLoop ) {
+               self->s.loopSound = self->preSoundLoop;
+       }
 }
 
 void SP_rally_scripted_object( gentity_t *ent ){
@@ -402,11 +438,9 @@ void SP_rally_scripted_object( gentity_t *ent ){
 	/* Initialize velocity tracking */
 	VectorSet( ent->lastNonZeroVelocity, 0, 0, 0 );
 
-	/* Optional: Set looping sound if defined in script */
-	/*
-	if (ent->preSoundLoop)
-		ent->s.loopSound = ent->preSoundLoop;
-	*/
+       if ( ent->preSoundLoop ) {
+               ent->s.loopSound = ent->preSoundLoop;
+       }
 
 	/* Drop object to ground level */
 	DropToFloor(ent);

@@ -24,6 +24,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+#ifndef INT_MAX
+#define INT_MAX 0x7fffffff
+#endif
+
+#ifndef INT_MIN
+#define INT_MIN (-0x7fffffff - 1)
+#endif
+
 extern vmCvar_t g_dominationScoreInterval;
 extern vmCvar_t g_dominationCaptureDelay;
 
@@ -443,30 +451,103 @@ AddTeamScore
  for gametype GT_TEAM the level.teamScores is updated in AddScore in g_combat.c
 ==============
 */
+
+static int G_TeamLeadSoundForTeam( team_t team ) {
+	switch ( team ) {
+	case TEAM_RED:
+	case TEAM_GREEN:
+		return GTS_REDTEAM_TOOK_LEAD;
+	case TEAM_BLUE:
+	case TEAM_YELLOW:
+		return GTS_BLUETEAM_TOOK_LEAD;
+	default:
+		return GTS_REDTEAM_TOOK_LEAD;
+	}
+}
+
+static int G_TeamScoredSoundForTeam( team_t team ) {
+	switch ( team ) {
+	case TEAM_RED:
+	case TEAM_GREEN:
+		return GTS_REDTEAM_SCORED;
+	case TEAM_BLUE:
+	case TEAM_YELLOW:
+		return GTS_BLUETEAM_SCORED;
+	default:
+		return GTS_REDTEAM_SCORED;
+	}
+}
+
+static void G_AnnounceFourTeamScore( team_t team, qboolean tookLead, qboolean tiedForLead ) {
+	const char	*color = TeamColorString( team );
+	const char	*name = TeamName( team );
+	const char	*message;
+
+	if ( tiedForLead ) {
+		message = va( "%s%s^7 team ties for the lead!", color, name );
+	} else if ( tookLead ) {
+		message = va( "%s%s^7 team takes the lead!", color, name );
+	} else {
+		message = va( "%s%s^7 team scores!", color, name );
+	}
+
+	trap_SendServerCommand( -1, va( "print \"%s\\n\"", message ) );
+}
+
 void AddTeamScore(vec3_t origin, int team, int score) {
 	gentity_t	*te;
 
 	te = G_TempEntity(origin, EV_GLOBAL_TEAM_SOUND );
 	te->r.svFlags |= SVF_BROADCAST;
 
-// STONELANCE - FIXME: update this function for 4 teams
-	if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
-		int other_team_score = 0;
-		int other_team = 0;
+	if ( g_gametype.integer == GT_CTF4 ) {
+		int		previousScore;
+		int		highestOtherScore;
+		int		other;
+		qboolean	tiedForLead = qfalse;
+		qboolean	tookLead = qfalse;
 
-		if ( g_gametype.integer == GT_CTF ) {
-			other_team = (team == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
-			other_team_score = level.teamScores[other_team];
-		} else { // GT_CTF4
-			// In 4-team CTF, we need to decide what "taking the lead" means.
-			// For now, I will just play the scored sound.
-			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_SCORED;
-			else if (team == TEAM_BLUE) te->s.eventParm = GTS_BLUETEAM_SCORED;
-			else if (team == TEAM_GREEN) te->s.eventParm = GTS_REDTEAM_SCORED; // FIXME: need green sound
-			else if (team == TEAM_YELLOW) te->s.eventParm = GTS_BLUETEAM_SCORED; // FIXME: need yellow sound
-			level.teamScores[ team ] += score;
-			return;
+		previousScore = level.teamScores[ team ];
+		highestOtherScore = INT_MIN;
+
+		for ( other = TEAM_RED; other <= TEAM_YELLOW; other++ ) {
+			if ( other == team ) {
+				continue;
+			}
+
+			if ( level.teamScores[ other ] > highestOtherScore ) {
+				highestOtherScore = level.teamScores[ other ];
+			}
 		}
+
+		level.teamScores[ team ] += score;
+
+		if ( highestOtherScore == INT_MIN ) {
+			highestOtherScore = 0;
+		}
+
+                if ( score > 0 && level.teamScores[ team ] == highestOtherScore ) {
+                        tiedForLead = qtrue;
+                        te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                } else if ( level.teamScores[ team ] > highestOtherScore && previousScore <= highestOtherScore ) {
+                        tookLead = qtrue;
+                        te->s.eventParm = G_TeamLeadSoundForTeam( team );
+                } else {
+                        te->s.eventParm = G_TeamScoredSoundForTeam( team );
+                }
+
+                if ( score > 0 ) {
+                        G_AnnounceFourTeamScore( team, tookLead, tiedForLead );
+                }
+                return;
+        }
+
+	if ( g_gametype.integer == GT_CTF ) {
+		int other_team;
+		int other_team_score;
+
+		other_team = (team == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
+		other_team_score = level.teamScores[other_team];
 
 		if ( level.teamScores[ team ] + score == other_team_score ) {
 			//teams are tied sound
@@ -484,6 +565,7 @@ void AddTeamScore(vec3_t origin, int team, int score) {
 			else te->s.eventParm = GTS_BLUETEAM_SCORED;
 		}
 	}
+
 	level.teamScores[ team ] += score;
 }
 
@@ -644,6 +726,7 @@ void ValidateSigilsInMap( gentity_t *ent )
             Sigil_ResetOwnerClients( sigil );
           }
           teamgame.numSigils++;
+          Team_SetSigilStatus( teamgame.numSigils - 1, SIGIL_ISWHITE );
       }
       // kill the entity that does the spawn conversions
       G_FreeEntity(ent);
