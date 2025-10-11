@@ -73,6 +73,163 @@ typedef struct {
 
 
 static mainmenu_t s_main;
+static char     s_updateLastStatus[32];
+#define UPDATE_DIALOG_MAX_LINES   20
+#define UPDATE_DIALOG_MAX_WIDTH   440
+#define UPDATE_DIALOG_STYLE       (UI_CENTER|UI_INVERSE|UI_SMALLFONT)
+
+static char     s_updateDialogLineBuffer[UPDATE_DIALOG_MAX_LINES][MAX_STRING_CHARS];
+static const char *s_updateDialogLines[UPDATE_DIALOG_MAX_LINES + 1];
+static int      s_updateDialogLineCount;
+
+static void UI_MaybeShowUpdateDialog( void );
+static void UI_UpdateDialogReset( void );
+static void UI_UpdateDialogAddLine( const char *text );
+static void UI_UpdateDialogAddWrappedText( const char *text );
+
+static void UI_UpdateDialogReset( void ) {
+        int i;
+
+        s_updateDialogLineCount = 0;
+        for ( i = 0; i < UPDATE_DIALOG_MAX_LINES + 1; ++i ) {
+                s_updateDialogLines[i] = NULL;
+        }
+}
+
+static qboolean UI_UpdateDialogPushLine( const char *text ) {
+        if ( s_updateDialogLineCount >= UPDATE_DIALOG_MAX_LINES ) {
+                return qfalse;
+        }
+
+        Q_strncpyz( s_updateDialogLineBuffer[s_updateDialogLineCount], text, sizeof( s_updateDialogLineBuffer[0] ) );
+        s_updateDialogLines[s_updateDialogLineCount] = s_updateDialogLineBuffer[s_updateDialogLineCount];
+        s_updateDialogLineCount++;
+        s_updateDialogLines[s_updateDialogLineCount] = NULL;
+
+        if ( text[0] && s_updateDialogLineCount < UPDATE_DIALOG_MAX_LINES ) {
+                s_updateDialogLineBuffer[s_updateDialogLineCount][0] = '\0';
+                s_updateDialogLines[s_updateDialogLineCount] = s_updateDialogLineBuffer[s_updateDialogLineCount];
+                s_updateDialogLineCount++;
+                s_updateDialogLines[s_updateDialogLineCount] = NULL;
+        }
+
+        return qtrue;
+}
+
+static void UI_UpdateDialogAddLine( const char *text ) {
+        (void)UI_UpdateDialogPushLine( text );
+}
+
+static void UI_UpdateDialogWrapSegment( const char *segment, float sizeScale, int maxWidth ) {
+        char            current[MAX_STRING_CHARS];
+        const char      *cursor;
+
+        current[0] = '\0';
+        cursor = segment;
+
+        while ( *cursor ) {
+                const char *wordEnd;
+                int         wordLen;
+                char        word[MAX_STRING_CHARS];
+                char        candidate[MAX_STRING_CHARS];
+                int         width;
+
+                while ( *cursor == ' ' ) {
+                        cursor++;
+                }
+
+                if ( !*cursor ) {
+                        break;
+                }
+
+                wordEnd = cursor;
+                while ( *wordEnd && *wordEnd != ' ' ) {
+                        wordEnd++;
+                }
+
+                wordLen = wordEnd - cursor;
+                if ( wordLen >= (int)sizeof( word ) ) {
+                        wordLen = sizeof( word ) - 1;
+                }
+
+                Com_Memcpy( word, cursor, wordLen );
+                word[wordLen] = '\0';
+
+                if ( current[0] ) {
+                        Com_sprintf( candidate, sizeof( candidate ), "%s %s", current, word );
+                } else {
+                        Q_strncpyz( candidate, word, sizeof( candidate ) );
+                }
+
+                width = UI_ProportionalStringWidth( candidate ) * sizeScale;
+
+                if ( width > maxWidth && current[0] ) {
+                        if ( !UI_UpdateDialogPushLine( current ) ) {
+                                return;
+                        }
+                        Q_strncpyz( current, word, sizeof( current ) );
+                } else if ( width > maxWidth ) {
+                        if ( !UI_UpdateDialogPushLine( word ) ) {
+                                return;
+                        }
+                        current[0] = '\0';
+                } else {
+                        Q_strncpyz( current, candidate, sizeof( current ) );
+                }
+
+                cursor = wordEnd;
+        }
+
+        if ( current[0] ) {
+                (void)UI_UpdateDialogPushLine( current );
+        }
+}
+
+static void UI_UpdateDialogAddWrappedText( const char *text ) {
+        const float     sizeScale = UI_ProportionalSizeScale( UPDATE_DIALOG_STYLE );
+        const int       maxWidth = UPDATE_DIALOG_MAX_WIDTH;
+        const char      *segmentStart;
+
+        if ( !text || !text[0] ) {
+                return;
+        }
+
+        segmentStart = text;
+        while ( *segmentStart && s_updateDialogLineCount < UPDATE_DIALOG_MAX_LINES ) {
+                const char *newline = strchr( segmentStart, '\n' );
+                int         segmentLen;
+                char        segment[MAX_STRING_CHARS];
+
+                if ( newline ) {
+                        segmentLen = newline - segmentStart;
+                } else {
+                        segmentLen = strlen( segmentStart );
+                }
+
+                if ( segmentLen <= 0 ) {
+                        if ( !UI_UpdateDialogPushLine( "" ) ) {
+                                break;
+                        }
+                } else {
+                        if ( segmentLen >= (int)sizeof( segment ) ) {
+                                segmentLen = sizeof( segment ) - 1;
+                        }
+
+                        Com_Memcpy( segment, segmentStart, segmentLen );
+                        segment[segmentLen] = '\0';
+                        UI_UpdateDialogWrapSegment( segment, sizeScale, maxWidth );
+                        if ( s_updateDialogLineCount >= UPDATE_DIALOG_MAX_LINES ) {
+                                break;
+                        }
+                }
+
+                if ( !newline ) {
+                        break;
+                }
+
+                segmentStart = newline + 1;
+        }
+}
 
 /*
 =================
@@ -161,8 +318,69 @@ void MainMenu_Update( void ){
 
         trap_Cvar_VariableStringBuffer( "rim", s_main.rimskin, sizeof( s_main.rimskin ) );
         trap_Cvar_VariableStringBuffer( "head", s_main.headskin, sizeof( s_main.headskin ) );
-       
+
         MainMenu_UpdateModel();
+}
+
+static void UI_MaybeShowUpdateDialog( void ) {
+        char status[32];
+        char latest[64];
+        char url[MAX_STRING_CHARS];
+        char message[MAX_STRING_CHARS];
+        char lineBuffer[MAX_STRING_CHARS];
+
+        trap_Cvar_VariableStringBuffer( "cl_updateStatus", status, sizeof( status ) );
+
+        if ( Q_stricmp( status, s_updateLastStatus ) == 0 ) {
+                return;
+        }
+
+        Q_strncpyz( s_updateLastStatus, status, sizeof( s_updateLastStatus ) );
+
+        if ( Q_stricmp( status, "outdated" ) != 0 && Q_stricmp( status, "error" ) != 0 ) {
+                return;
+        }
+
+        UI_UpdateDialogReset();
+
+        trap_Cvar_VariableStringBuffer( "cl_updateMessage", message, sizeof( message ) );
+        trap_Cvar_VariableStringBuffer( "cl_updateUrl", url, sizeof( url ) );
+
+        if ( Q_stricmp( status, "error" ) == 0 ) {
+                UI_UpdateDialogAddLine( "Update check failed" );
+
+                if ( message[0] ) {
+                        UI_UpdateDialogAddWrappedText( message );
+                } else {
+                        UI_UpdateDialogAddWrappedText( "The update service returned an invalid response." );
+                }
+
+                if ( url[0] ) {
+                        Com_sprintf( lineBuffer, sizeof( lineBuffer ), "Details: %s", url );
+                        UI_UpdateDialogAddWrappedText( lineBuffer );
+                }
+
+                UI_Message( s_updateDialogLines );
+                return;
+        }
+
+        trap_Cvar_VariableStringBuffer( "cl_updateLatest", latest, sizeof( latest ) );
+
+        Com_sprintf( lineBuffer, sizeof( lineBuffer ), "New version available: %s", latest[0] ? latest : "unknown" );
+        UI_UpdateDialogAddLine( lineBuffer );
+
+        if ( message[0] ) {
+                UI_UpdateDialogAddWrappedText( message );
+        }
+
+        if ( url[0] ) {
+                Com_sprintf( lineBuffer, sizeof( lineBuffer ), "Download: %s", url );
+                UI_UpdateDialogAddWrappedText( lineBuffer );
+        }
+
+        UI_UpdateDialogAddWrappedText( "Please update to get the latest improvements!" );
+
+        UI_Message( s_updateDialogLines );
 }
 
 /*
@@ -301,6 +519,8 @@ static void Main_MenuDraw( void ) {
 
         Menu_Draw( &s_main.menu );
 
+        UI_MaybeShowUpdateDialog();
+
         if (uis.demoversion) {
 
                 UI_DrawProportionalString( 320, 432, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, text_color_normal );
@@ -380,6 +600,12 @@ void UI_MainMenu( void ) {
         char musicFiles[256][MAX_QPATH];
         char musicCommand[MAX_QPATH];
 
+        trap_Cvar_Register( NULL, "cl_updateStatus", "idle", CVAR_ROM );
+        trap_Cvar_Register( NULL, "cl_updateLatest", "", CVAR_ROM );
+        trap_Cvar_Register( NULL, "cl_updateUrl", "", CVAR_ROM );
+        trap_Cvar_Register( NULL, "cl_updateMessage", "", CVAR_ROM );
+
+        s_updateLastStatus[0] = '\0';
 
         numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
 
@@ -468,6 +694,7 @@ void UI_MainMenu( void ) {
 
         UI_PushMenu ( &s_main.menu );
 
+        UI_MaybeShowUpdateDialog();
 
         uis.transitionIn = uis.realtime;
 

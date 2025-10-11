@@ -1501,7 +1501,8 @@ void CL_OpenURL_f( void ) {
     const char *url = Cmd_Argv(1);
 
 #ifdef _WIN32
-    if ( (int)ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL ) <= 32 ) {
+    HINSTANCE shellResult = ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL );
+    if ( (INT_PTR)shellResult <= 32 ) {
         Com_Printf( "Could not open URL %s\n", url );
     }
 #elif defined( __APPLE__ )
@@ -2991,6 +2992,7 @@ void CL_Frame ( int msec ) {
 
 	CL_LadderPumpRequest();
 #endif
+	CL_UpdatePumpRequest();
 
 	if ( cls.cddialog ) {
 		// bring up the cd error dialog if needed

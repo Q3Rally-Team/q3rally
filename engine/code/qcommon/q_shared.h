@@ -70,7 +70,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-//#define PRODUCT_VERSION "v0.6 (r723)"
 #define PRODUCT_VERSION "v0.6"
 #endif
 
@@ -580,7 +579,7 @@ static ID_INLINE float Q_fabs(float x) {
     asm("fabs %0,%1" : "=f" (abs_x) : "f" (x));
     return abs_x;
 }
-#else
+
 #define Q_fabs __fabsf
 #endif
 

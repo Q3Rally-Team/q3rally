@@ -482,6 +482,9 @@ void CL_ClearPing( int n );
 int CL_GetPingQueueCount( void );
 
 void CL_LadderPumpRequest( void );
+void CL_UpdatePumpRequest( void );
+void CL_UpdateRequestLatest( void );
+void CL_UpdateShutdown( void );
 
 void CL_ShutdownRef( void );
 void CL_InitRef( void );

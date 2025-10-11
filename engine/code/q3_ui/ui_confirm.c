@@ -33,7 +33,7 @@ CONFIRMATION MENU
 #include "ui_local.h"
 
 
-#define ART_CONFIRM_FRAME	"menu/art/cut_frame"
+#define ART_CONFIRM_FRAME	"menu/art/cut_frame_2"
 
 #define ID_CONFIRM_NO		10
 #define ID_CONFIRM_YES		11
@@ -50,8 +50,14 @@ typedef struct {
 	void			(*draw)( void );
 	void			(*action)( qboolean result );
 	
-	int style;
-	const char **lines;
+        int style;
+        const char **lines;
+        int frameX;
+        int frameY;
+        int frameWidth;
+        int frameHeight;
+        int contentTop;
+        int lineHeight;
 } confirmMenu_t;
 
 
@@ -120,22 +126,60 @@ MessaheMenu_Draw
 =================
 */
 static void MessageMenu_Draw( void ) {
-	int i,y;
-	
-	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
-	
-	y = 188;
-	for(i=0; s_confirm.lines[i]; i++)
-	{
-		UI_DrawProportionalString( 320, y, s_confirm.lines[i], s_confirm.style, color_red );
-		y += 18;
-	}
+        int frameX;
+        int frameY;
+        int frameWidth;
+        int frameHeight;
+        int y;
+        int lineHeight;
+        int i;
 
-	Menu_Draw( &s_confirm.menu );
+        frameX = s_confirm.frameX ? s_confirm.frameX : 142;
+        frameY = s_confirm.frameY ? s_confirm.frameY : 66;
+        frameWidth = s_confirm.frameWidth ? s_confirm.frameWidth : 359;
+        frameHeight = s_confirm.frameHeight ? s_confirm.frameHeight : 270;
+        lineHeight = s_confirm.lineHeight ? s_confirm.lineHeight : 18;
 
-	if( s_confirm.draw ) {
-		s_confirm.draw();
-	}
+        {
+                const int extraTop = 10;
+                const int extraBottom = 10;
+                int topExtension = extraTop;
+                int drawFrameY;
+                int drawFrameHeight;
+
+                if ( frameY < topExtension ) {
+                        topExtension = frameY;
+                }
+
+                drawFrameY = frameY - topExtension;
+                drawFrameHeight = frameHeight + topExtension + extraBottom;
+
+                UI_DrawNamedPic( frameX, drawFrameY, frameWidth, drawFrameHeight, ART_CONFIRM_FRAME );
+        }
+
+        // keep the logical frame metrics unchanged so text/button placement stays put
+
+        if ( s_confirm.contentTop ) {
+                y = s_confirm.contentTop;
+        } else {
+                y = frameY + 30 - ( lineHeight / 2 ) + 14;
+                if ( y < frameY + 16 ) {
+                        y = frameY + 16;
+                }
+        }
+
+        if ( s_confirm.lines ) {
+                for ( i = 0; s_confirm.lines[i]; i++ ) {
+                        UI_DrawProportionalString( SCREEN_WIDTH / 2, y, s_confirm.lines[i], s_confirm.style, text_color_normal );
+                        y += lineHeight;
+                }
+        }
+
+        Menu_Draw( &s_confirm.menu );
+
+        if( s_confirm.draw ) {
+                s_confirm.draw();
+        }
 }
 
 /*
@@ -265,43 +309,117 @@ hacked over from Confirm stuff
 */
 void UI_Message( const char **lines ) {
 	uiClientState_t	cstate;
-	int n1, l1;
-	
+	int	n1;
+	int	l1;
+	float	sizeScale;
+	int	lineCount;
+	int	maxWidth;
+	int	lineHeight;
+	int	frameWidth;
+	int	frameHeight;
+	int	frameX;
+	int	frameY;
+	int	contentTop;
+	int	buttonY;
+
 	// zero set all our globals
-	memset( &s_confirm, 0, sizeof(s_confirm) );
+	memset( &s_confirm, 0, sizeof( s_confirm ) );
 
 	ConfirmMenu_Cache();
 
 	n1 = UI_ProportionalStringWidth( "OK" );
 	l1 = 320 - ( n1 / 2 );
-	
+
 	s_confirm.lines = lines;
 	s_confirm.style = UI_CENTER|UI_INVERSE|UI_SMALLFONT;
 
-	s_confirm.menu.draw       = MessageMenu_Draw;
-	s_confirm.menu.key        = ConfirmMenu_Key;
+	s_confirm.menu.draw	= MessageMenu_Draw;
+	s_confirm.menu.key	= ConfirmMenu_Key;
 	s_confirm.menu.wrapAround = qtrue;
-	
+	s_confirm.menu.transparent = qtrue;
+
 	trap_GetClientState( &cstate );
 	if ( cstate.connState >= CA_CONNECTED ) {
 		s_confirm.menu.fullscreen = qfalse;
-	}
-	else {
+	} else {
 		s_confirm.menu.fullscreen = qtrue;
 	}
 
-	s_confirm.yes.generic.type		= MTYPE_PTEXT;      
-	s_confirm.yes.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
+	sizeScale = UI_ProportionalSizeScale( s_confirm.style );
+	lineCount = 0;
+	maxWidth = 0;
+
+	if ( lines ) {
+		while ( lines[lineCount] ) {
+			int width = UI_ProportionalStringWidth( lines[lineCount] ) * sizeScale;
+			if ( width > maxWidth ) {
+				maxWidth = width;
+			}
+			lineCount++;
+		}
+	}
+
+	lineHeight = (int)( 22 * sizeScale );
+	if ( lineHeight < 18 ) {
+		lineHeight = 18;
+	}
+
+        frameY = 66;
+	{
+		const int minFrameWidth = 420;
+		const int frameSidePadding = 180;
+		const int minFrameHeight = 300;
+                const int frameTopPadding = 96;
+                const int frameBottomPadding = 132;
+                int contentHeight = lineCount * lineHeight;
+
+		frameWidth = maxWidth + frameSidePadding;
+		if ( frameWidth < minFrameWidth ) {
+			frameWidth = minFrameWidth;
+		}
+		if ( frameWidth > SCREEN_WIDTH - 40 ) {
+			frameWidth = SCREEN_WIDTH - 40;
+		}
+
+		frameHeight = frameTopPadding + contentHeight + frameBottomPadding;
+		if ( frameHeight < minFrameHeight ) {
+			frameHeight = minFrameHeight;
+		}
+		if ( frameHeight > SCREEN_HEIGHT - 80 ) {
+			frameHeight = SCREEN_HEIGHT - 80;
+		}
+
+		frameX = (SCREEN_WIDTH - frameWidth) / 2;
+                contentTop = frameY + frameTopPadding - ( lineHeight / 2 ) - 40 + 14;
+                if ( contentTop < frameY + 16 ) {
+                        contentTop = frameY + 16;
+                }
+                buttonY = frameY + frameHeight - 68 - 14;
+        }
+
+	if ( buttonY > SCREEN_HEIGHT - 48 ) {
+		buttonY = SCREEN_HEIGHT - 48;
+	}
+
+	s_confirm.frameX = frameX;
+	s_confirm.frameY = frameY;
+	s_confirm.frameWidth = frameWidth;
+	s_confirm.frameHeight = frameHeight;
+	s_confirm.contentTop = contentTop;
+	s_confirm.lineHeight = lineHeight;
+
+	s_confirm.yes.generic.type		= MTYPE_PTEXT;
+	s_confirm.yes.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_confirm.yes.generic.callback	= ConfirmMenu_Event;
 	s_confirm.yes.generic.id		= ID_CONFIRM_YES;
-	s_confirm.yes.generic.x			= l1;
-	s_confirm.yes.generic.y			= 280;
-	s_confirm.yes.string			= "OK";
-	s_confirm.yes.color				= color_red;
-	s_confirm.yes.style				= UI_LEFT;
+	s_confirm.yes.generic.x		= l1;
+	s_confirm.yes.generic.y		= buttonY;
+	s_confirm.yes.string		= "OK";
+	s_confirm.yes.color		= text_color_normal;
+	s_confirm.yes.style		= UI_LEFT;
 
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );
-	
+
 	UI_PushMenu( &s_confirm.menu );
 
 	Menu_SetCursorToItem( &s_confirm.menu, &s_confirm.yes );
