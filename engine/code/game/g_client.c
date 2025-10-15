@@ -406,22 +406,21 @@ After sitting around for five seconds, fall into the ground and disappear
 =============
 */
 void BodySink( gentity_t *ent ) {
+	if (ent->frontBounds)
+	{
+		G_FreeEntity(ent->frontBounds);
+		ent->frontBounds = NULL;
+	}
+	if (ent->rearBounds)
+	{
+		G_FreeEntity(ent->rearBounds);
+		ent->rearBounds = NULL;
+	}
 	if ( level.time - ent->timestamp > 6500 ) {
-// STONELANCE
-		if ( ent->frontBounds ){
-			G_FreeEntity( ent->frontBounds );
-			ent->frontBounds = NULL;
-		}
-		if ( ent->rearBounds ){
-			G_FreeEntity( ent->rearBounds );
-			ent->rearBounds = NULL;
-		}
-// END
-
 		// the body ques are never actually freed, they are just unlinked
 		trap_UnlinkEntity( ent );
 		ent->physicsObject = qfalse;
-		return;	
+		return;
 	}
 	ent->nextthink = level.time + 100;
 	ent->s.pos.trBase[2] -= 1;
@@ -953,7 +952,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 */
 
-// STONELANCE
 	// rim
 	Q_strncpyz( rim, Info_ValueForKey (userinfo, "rim"), sizeof( rim ) );
 
@@ -1735,6 +1733,32 @@ client->ps.stats[STAT_WEAPONS] = ( 1u << WP_DERBY_RAM );
 	client->ps.legsAnim = LEGS_IDLE;
 */
 // END
+
+	// During map restarts (warmup countdown or freshly loaded match) we can
+	// inherit an intermission state from the previous run. Clients that spawn
+	// while this flag is set never leave the intermission view and will keep
+	// re-triggering respawns, gradually exhausting the entity pool.  Treat the
+	// intermission as stale when we're early in a non-single-player match or
+	// when the warmup timer is still active.
+	if ( level.intermissiontime && g_gametype.integer != GT_SINGLE_PLAYER ) {
+		qboolean staleIntermission = qfalse;
+
+		if ( level.warmupTime != 0 ) {
+			staleIntermission = qtrue;
+		} else if ( level.time - level.startTime < 5000 && level.intermissionQueued == 0 ) {
+			// The match has only just (re)started and there is no queued exit,
+			// so treat the lingering flag as bogus.
+			staleIntermission = qtrue;
+		}
+
+		if ( staleIntermission ) {
+			level.intermissiontime = 0;
+			level.intermissionQueued = 0;
+			level.readyToExit = qfalse;
+			level.exitTime = 0;
+			trap_SetConfigstring( CS_INTERMISSION, "" );
+		}
+	}
 
 	if (!level.intermissiontime) {
 		if (ent->client->sess.sessionTeam != TEAM_SPECTATOR) {

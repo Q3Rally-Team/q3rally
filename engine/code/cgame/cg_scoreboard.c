@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define COL_NAME_WIDTH          180
 #define COL_SCORE_WIDTH         80   /* For frags/points */
 #define COL_DEATHS_WIDTH        60   /* For deaths */
+#define COL_DAMAGE_WIDTH        80   /* For damage columns */
 #define COL_LAPTIME_WIDTH       100  /* Best lap time */
 #define COL_TOTALTIME_WIDTH     120  /* Total time */
 #define COL_PING_WIDTH          60   /* Ping */
@@ -74,6 +75,8 @@ typedef enum {
     SBCOL_AVATAR,
     SBCOL_NAME,
     SBCOL_SCORE,      /* Frags/Points */
+    SBCOL_DAMAGE_DEALT, /* Damage dealt */
+    SBCOL_DAMAGE_TAKEN, /* Damage received */
     SBCOL_DEATHS,     /* Deaths */
     SBCOL_LAPTIME,    /* Best lap time */
     SBCOL_TOTALTIME,  /* Total/Race time */
@@ -191,6 +194,7 @@ static void CG_InitScoreboardColumns(void) {
     int currentX;
     int totalContentWidth;
     qboolean showScore, showDeaths, showTimes, showLapTimes;
+    qboolean showDamageDealt, showDamageTaken;
     qboolean isRacing, isTeam;
     
     /* Clear all columns first */
@@ -208,6 +212,8 @@ static void CG_InitScoreboardColumns(void) {
     showDeaths = qfalse;
     showTimes = qfalse;
     showLapTimes = qfalse;
+    showDamageDealt = qfalse;
+    showDamageTaken = qfalse;
     
     switch (cgs.gametype) {
         case GT_RACING:
@@ -240,8 +246,14 @@ static void CG_InitScoreboardColumns(void) {
             break;
             
         case GT_DERBY:
+            /* Demolition derby - highlight inflicted and received damage */
+            showScore = qtrue;
+            showDamageDealt = qtrue;
+            showDamageTaken = qtrue;
+            break;
+
         case GT_LCS:
-            /* Destruction modes - score and survival matter */
+            /* Last Car Standing retains elimination counts */
             showScore = qtrue;
             showDeaths = qtrue;
             break;
@@ -277,12 +289,14 @@ static void CG_InitScoreboardColumns(void) {
     if (showScore) {
         columns[SBCOL_SCORE].type = SBCOL_SCORE;
         columns[SBCOL_SCORE].width = COL_SCORE_WIDTH;
-        
+
         /* Different header based on gametype */
         if (cgs.gametype == GT_CTF) {
             columns[SBCOL_SCORE].header = "CAPS";
         } else if (cgs.gametype == GT_DOMINATION) {
             columns[SBCOL_SCORE].header = "POINTS";
+        } else if (cgs.gametype == GT_DERBY) {
+            columns[SBCOL_SCORE].header = "WRECKS";
         } else if (isTeam && !isRacing) {
             columns[SBCOL_SCORE].header = "SCORE";
         } else {
@@ -290,11 +304,25 @@ static void CG_InitScoreboardColumns(void) {
         }
         columns[SBCOL_SCORE].visible = qtrue;
     }
-    
+
+    if (showDamageDealt) {
+        columns[SBCOL_DAMAGE_DEALT].type = SBCOL_DAMAGE_DEALT;
+        columns[SBCOL_DAMAGE_DEALT].width = COL_DAMAGE_WIDTH;
+        columns[SBCOL_DAMAGE_DEALT].header = "DD";
+        columns[SBCOL_DAMAGE_DEALT].visible = qtrue;
+    }
+
+    if (showDamageTaken) {
+        columns[SBCOL_DAMAGE_TAKEN].type = SBCOL_DAMAGE_TAKEN;
+        columns[SBCOL_DAMAGE_TAKEN].width = COL_DAMAGE_WIDTH;
+        columns[SBCOL_DAMAGE_TAKEN].header = "DT";
+        columns[SBCOL_DAMAGE_TAKEN].visible = qtrue;
+    }
+
     if (showDeaths) {
         columns[SBCOL_DEATHS].type = SBCOL_DEATHS;
         columns[SBCOL_DEATHS].width = COL_DEATHS_WIDTH;
-        columns[SBCOL_DEATHS].header = "DMG";
+        columns[SBCOL_DEATHS].header = "DEATHS";
         columns[SBCOL_DEATHS].visible = qtrue;
     }
     
@@ -464,6 +492,8 @@ static void CG_DrawModernHeader(int y) {
         switch (columns[i].type) {
             case SBCOL_RANK:
             case SBCOL_SCORE:
+            case SBCOL_DAMAGE_DEALT:
+            case SBCOL_DAMAGE_TAKEN:
             case SBCOL_DEATHS:
             case SBCOL_LAPTIME:
             case SBCOL_TOTALTIME:
@@ -1987,16 +2017,33 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             }
             break;
             
-        case SBCOL_DEATHS:
+        case SBCOL_DAMAGE_DEALT:
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             } else {
-                /* Use damageDealt as damage indicator for Q3Rally */
+                Com_sprintf(buffer, sizeof(buffer), "%d", score->damageDealt);
+                CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            }
+            break;
+
+        case SBCOL_DAMAGE_TAKEN:
+            if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+            } else {
                 Com_sprintf(buffer, sizeof(buffer), "%d", score->damageTaken);
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             }
             break;
-            
+
+        case SBCOL_DEATHS:
+            if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+            } else {
+                Com_sprintf(buffer, sizeof(buffer), "%d", score->deaths);
+                CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            }
+            break;
+
         case SBCOL_LAPTIME:
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
@@ -2134,6 +2181,10 @@ static void CG_DrawModernGameInfo(int y, float fade) {
             if (isRacing) {
                 Com_sprintf(mainInfo, sizeof(mainInfo), "Position %s",
                             CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1));
+            } else if (cgs.gametype == GT_DERBY) {
+                Com_sprintf(mainInfo, sizeof(mainInfo), "%s place with %d wrecks",
+                            CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1),
+                            cg.snap->ps.persistant[PERS_SCORE]);
             } else {
                 Com_sprintf(mainInfo, sizeof(mainInfo), "%s place with %d frags",
                             CG_PlaceString(cg.snap->ps.persistant[PERS_RANK] + 1),
@@ -2555,6 +2606,9 @@ Get appropriate damage label for current gametype
 =================
 */
 const char* CG_GetGametypeDeathLabel(void) {
-    /* Always return DMG for consistency */
-    return "DMG";
+    if (cgs.gametype == GT_DERBY) {
+        return "TAKEN";
+    }
+
+    return "DEATHS";
 }

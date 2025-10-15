@@ -173,6 +173,33 @@ void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 		kick = 10;
 	}
 	cg.damageValue = kick;
+
+	if ( cgs.gametype == GT_DERBY && damage >= DERBY_HUD_FLASH_THRESHOLD ) {
+		int clampedDamage = damage;
+		const int range = DERBY_HUD_FLASH_MAX_DAMAGE - DERBY_HUD_FLASH_THRESHOLD;
+
+		if ( clampedDamage > DERBY_HUD_FLASH_MAX_DAMAGE ) {
+			clampedDamage = DERBY_HUD_FLASH_MAX_DAMAGE;
+		}
+		if ( clampedDamage < DERBY_HUD_FLASH_THRESHOLD ) {
+			clampedDamage = DERBY_HUD_FLASH_THRESHOLD;
+		}
+
+		if ( range > 0 ) {
+			float normalized = (float)( clampedDamage - DERBY_HUD_FLASH_THRESHOLD ) / (float)range;
+
+			cg.derbyHUDFlashStrength = 0.35f + 0.35f * normalized;
+		} else {
+			cg.derbyHUDFlashStrength = 0.35f;
+		}
+
+		if ( cg.derbyHUDFlashStrength > 1.0f ) {
+			cg.derbyHUDFlashStrength = 1.0f;
+		}
+
+		cg.derbyHUDFlashEndTime = cg.time + DERBY_HUD_FLASH_DURATION;
+	}
+
 	cg.v_dmg_time = cg.time + DAMAGE_TIME;
 	cg.damageTime = cg.snap->serverTime;
 }

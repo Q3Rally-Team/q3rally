@@ -211,6 +211,8 @@ void Weapon_DerbyRam( gentity_t *ent ) {
         float radius;
         float speed;
         float damage;
+        float baseDamage;
+        float maxDamage;
 
         if ( !ent->client ) {
                 return;
@@ -223,8 +225,30 @@ void Weapon_DerbyRam( gentity_t *ent ) {
         }
 
         speed = VectorLength( ent->s.pos.trDelta );
-        damage = speed * g_derbyRamDamageScale.value;
-        damage = Com_Clamp( 1.0f, g_derbyRamDamageMax.value, damage );
+        baseDamage = g_derbyRamDamage.value;
+        maxDamage = g_derbyRamDamageMax.value;
+
+        if ( baseDamage < 0.0f ) {
+                baseDamage = 0.0f;
+        }
+
+        damage = baseDamage + ( speed * g_derbyRamDamageScale.value );
+
+        if ( maxDamage > 0.0f ) {
+                float minClamp;
+
+                minClamp = ( baseDamage > 0.0f ) ? baseDamage : 1.0f;
+
+                if ( maxDamage < minClamp ) {
+                        maxDamage = minClamp;
+                }
+
+                damage = Com_Clamp( minClamp, maxDamage, damage );
+        } else if ( baseDamage > 0.0f && damage < baseDamage ) {
+                damage = baseDamage;
+        } else if ( damage < 1.0f ) {
+                damage = 1.0f;
+        }
 
         G_RadiusDamage( ent->r.currentOrigin, ent, damage, radius, ent, MOD_VEHICLE_COLLISION );
 }

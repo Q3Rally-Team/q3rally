@@ -285,12 +285,12 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_vehicleHpMaxRatio, "g_vehicleHpMaxRatio", "1.2", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleHealthMaxRatio, "g_vehicleHealthMaxRatio", "1.5", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyDamageFactor, "g_derbyDamageFactor", "1.0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.0", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.6", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyIgnoreDamageScale, "g_derbyIgnoreDamageScale", "0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamRadius, "g_derbyRamRadius", "0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamage, "g_derbyRamDamage", "100", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRamDamage, "g_derbyRamDamage", "15", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageScale, "g_derbyRamDamageScale", "0.05", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "50", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "120", CVAR_ARCHIVE, 0, qfalse },
         // END
 
 	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse},

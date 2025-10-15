@@ -59,11 +59,11 @@ void CG_FinishedRace( int client, int time, qboolean fuelDepleted ) {
 
 	cent = &cg_entities[client];
 
-	if ( !cg.raceFinishCountdownActive ) {
-		cg.raceFinishCountdownActive = qtrue;
-		cg.raceFinishCountdownStart = time;
-		cg.raceFinishCountdownEnd = time + ( cgs.finishRaceDelay * 1000 );
-	}
+        if ( isRallyRace() && !cg.raceFinishCountdownActive ) {
+                cg.raceFinishCountdownActive = qtrue;
+                cg.raceFinishCountdownStart = time;
+                cg.raceFinishCountdownEnd = time + ( cgs.finishRaceDelay * 1000 );
+        }
 
 	if ( !fuelDepleted && client == cg.snap->ps.clientNum
 		&& ((time - cent->startLapTime) < cent->bestLapTime || cent->bestLapTime == 0) ){

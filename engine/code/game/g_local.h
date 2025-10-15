@@ -470,7 +470,7 @@ typedef struct {
 	int			teamTimes[TEAM_NUM_TEAMS];
 // END
 	int			lastTeamLocationTime;		// last time of client team location update
-
+    int			lastTeamLeaderElection;		// last time a team leader was requested
 	qboolean	newSession;				// don't use any old session data, because
 										// we changed gametype
 

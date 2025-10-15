@@ -40,6 +40,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	DAMAGE_DEFLECT_TIME	100
 #define	DAMAGE_RETURN_TIME	400
 #define DAMAGE_TIME			500
+#define DERBY_HUD_FLASH_THRESHOLD	25
+#define DERBY_HUD_FLASH_MAX_DAMAGE	100
+#define DERBY_HUD_FLASH_DURATION	250
 #define	LAND_DEFLECT_TIME	150
 #define	LAND_RETURN_TIME	300
 #define	STEP_TIME			200
@@ -786,6 +789,8 @@ typedef struct {
 	// blend blobs
 	float		damageTime;
 	float		damageX, damageY, damageValue;
+	int		derbyHUDFlashEndTime;
+	float		derbyHUDFlashStrength;
 
 	// status bar head
 	float		headYaw;
