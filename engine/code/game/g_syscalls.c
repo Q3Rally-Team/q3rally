@@ -88,6 +88,10 @@ int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
 	return syscall( G_FS_SEEK, f, offset, origin );
 }
 
+void trap_LadderSubmit( const ladderMatchPayload_t *payload ) {
+        syscall( G_LADDER_SUBMIT, payload );
+}
+
 void	trap_SendConsoleCommand( int exec_when, const char *text ) {
 	syscall( G_SEND_CONSOLE_COMMAND, exec_when, text );
 }
@@ -112,13 +116,9 @@ void trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int buf
 	syscall( G_CVAR_VARIABLE_STRING_BUFFER, var_name, buffer, bufsize );
 }
 
-void trap_LadderSubmit( const ladderMatchPayload_t *payload ) {
-	syscall( G_LADDER_SUBMIT, payload );
-}
-
 
 void trap_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t,
-                                                 playerState_t *clients, int sizeofGClient ) {
+						 playerState_t *clients, int sizeofGClient ) {
 	syscall( G_LOCATE_GAME_DATA, gEnts, numGEntities, sizeofGEntity_t, clients, sizeofGClient );
 }
 

@@ -125,15 +125,15 @@ MULTIPLAYER MENU (SERVER BROWSER)
 */
 #define GAMES_RACING                    1
 #define GAMES_RACING_DM                 2
-#define GAMES_ELIMINATION               3
-#define GAMES_DERBY                             4
-#define GAMES_LCS                            5
-#define GAMES_DEATHMATCH                6
-#define GAMES_TEAM_RACING               7
-#define GAMES_TEAM_RACING_DM    8
-#define GAMES_TEAMPLAY                  9
-#define GAMES_CTF                               10
-#define GAMES_DOMINATION                11
+#define GAMES_DERBY                             3
+#define GAMES_LCS                            4
+#define GAMES_DEATHMATCH                5
+#define GAMES_TEAM_RACING               6
+#define GAMES_TEAM_RACING_DM    7
+#define GAMES_TEAMPLAY                  8
+#define GAMES_CTF                               9
+#define GAMES_DOMINATION                10
+#define GAMES_NUM_GAMES                 11
 // END
 
 static const char *master_items[] = {
@@ -159,7 +159,6 @@ static const char *servertype_items[] = {
 */
         "Racing",
         "Racing Deathmatch",
-        "Elimination",
         "Demolition Derby",
         "Last Car Standing",
         "Deathmatch",
@@ -172,8 +171,6 @@ static const char *servertype_items[] = {
         0
 };
 
-#define GAMES_NUM_GAMES                 (ARRAY_LEN( servertype_items ) - 1)
-
 static const char *sortkey_items[] = {
         "Server Name",
         "Map Name",
@@ -185,19 +182,31 @@ static const char *sortkey_items[] = {
 
 static char* gamenames[] = {
 // STONELANCE
+/*
+        "DM ",  // deathmatch
+        "1v1",  // tournament
+        "SP ",  // single player
+        "Team DM",      // team deathmatch
+        "CTF",  // capture the flag
+        "One Flag CTF",         // one flag ctf
+        "OverLoad",                             // Overload
+        "Harvester",                    // Harvester
+        "Rocket Arena 3",       // Rocket Arena 3
+        "Q3F",                                          // Q3F
+        "Urban Terror",         // Urban Terror
+        "OSP",                                          // Orange Smoothie Productions
+*/
         "Race",
         "Race DM",
-        "Time Trial",
+        "SP ",
         "Derby",
         "LCS",
-        "Elimination",
         "DM ",
-        "Team DM",      // team deathmatch
         "TRace",
         "TRace DM",
+        "Team DM",      // team deathmatch
         "CTF",  // capture the flag
-        "CTF4",
-        "Domination", // domination
+        "Domination",   // domination
 // END
         "???",                  // unknown
         0
@@ -486,10 +495,6 @@ int ArenaServers_GametypeForGames(int games) {
 
         case GAMES_RACING_DM:
                 gametype = GT_RACING_DM;
-                break;
-
-        case GAMES_ELIMINATION:
-                gametype = GT_ELIMINATION;
                 break;
 
         case GAMES_DERBY:

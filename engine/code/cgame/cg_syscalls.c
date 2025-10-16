@@ -416,10 +416,6 @@ void	trap_S_StopBackgroundTrack( void ) {
 	syscall( CG_S_STOPBACKGROUNDTRACK );
 }
 
-void	trap_S_GetMusicState( cgameMusicState_t *state ) {
-	syscall( CG_S_GETMUSICSTATE, state );
-}
-
 int trap_RealTime(qtime_t *qtime) {
 	return syscall( CG_REAL_TIME, qtime );
 }

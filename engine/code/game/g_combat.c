@@ -366,10 +366,9 @@ char	*modNames[] = {
 	"MOD_MINE",
 	"MOD_POISON",
 	"MOD_FIRE",
-	"MOD_GRAPPLE",
-	"MOD_ELIMINATION",
-	"MOD_BREAKABLE_SPLASH"
+	"MOD_FLAME_THROWER",
 // Q3Rally Code END
+	"MOD_GRAPPLE"
 };
 
 #ifdef MISSIONPACK
@@ -531,27 +530,11 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->client->ps.pm_type = PM_DEAD;
 
 // STONELANCE
-        if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime){
-                self->client->finishRaceTime = level.time;
-                trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
-        }
+	if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS) && level.startRaceTime){
+		self->client->finishRaceTime = level.time;
+		trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
+	}
 // END
-
-        if ( self->client && level.startRaceTime ) {
-                int survivalMs = level.time - level.startRaceTime;
-
-                if ( survivalMs < 0 ) {
-                        survivalMs = 0;
-                }
-
-                if ( self->client->ladderSurvivalMs <= 0 || !level.finishRaceTime ) {
-                        self->client->ladderSurvivalMs = survivalMs;
-                }
-        }
-
-        if ( g_gametype.integer == GT_ELIMINATION && level.startRaceTime ) {
-                G_RegisterEliminationDeath( self );
-        }
 
 	if ( attacker ) {
 		killer = attacker->s.number;
@@ -590,20 +573,14 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->enemy = attacker;
 
 	self->client->ps.persistant[PERS_KILLED]++;
-	if ( self->client ) {
-		self->client->ladderDeaths++;
-	}
 
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
 
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			if ( meansOfDeath != MOD_ELIMINATION ) {
-				AddScore( attacker, self->r.currentOrigin, -1 );
-			}
+			AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
-			attacker->client->ladderKills++;
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				
@@ -639,9 +616,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
                         attacker->client->ps.stats[STAT_FUEL] = (int)attacker->client->car.fuel;
 
                 }
-	} else if ( meansOfDeath != MOD_ELIMINATION ) {
-		AddScore( self, self->r.currentOrigin, -1 );
-	}
+        } else {
+                AddScore( self, self->r.currentOrigin, -1 );
+        }
 
 	// Add team bonuses
 	Team_FragBonuses(self, inflictor, attacker);
@@ -982,7 +959,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-max = attacker->client->car.maxHealth;
+
+max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+
 #ifdef MISSIONPACK
 		if( bg_itemlist[attacker->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
 			max /= 2;
@@ -1192,7 +1171,9 @@ max = attacker->client->car.maxHealth;
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
 			if ( !targ->client->car.fuelLeak ) {
-int leakThreshold = targ->client->car.maxHealth / 4;
+
+				int leakThreshold = g_vehicleHealth.integer / 4;
+
 				if ( targ->health > 0 && targ->health <= leakThreshold ) {
 					targ->client->car.fuelLeak = qtrue;
 				}

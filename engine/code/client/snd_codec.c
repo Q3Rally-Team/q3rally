@@ -217,8 +217,6 @@ snd_stream_t *S_CodecUtilOpen(const char *filename, snd_codec_t *codec)
 		return NULL;
 	}
 
-	Com_Memset( stream, 0, sizeof( *stream ) );
-
 	// Copy over, return
 	stream->codec = codec;
 	stream->file = hnd;

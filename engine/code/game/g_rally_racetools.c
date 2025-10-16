@@ -23,167 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-static void G_ResetRaceTimingForClients( int raceStartTime ) {
-	int i;
-
-	for ( i = 0; i < level.maxclients; i++ ) {
-		gclient_t *cl = &level.clients[i];
-
-		if ( cl->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
-
-                cl->ladderBestLapMs = 0;
-                cl->ladderTotalRaceMs = 0;
-                cl->ladderLapCount = 0;
-                cl->ladderLastLapStartMs = raceStartTime;
-                Com_Memset( cl->ladderLapTimes, 0, sizeof( cl->ladderLapTimes ) );
-                cl->ladderSurvivalMs = 0;
-                cl->ladderEliminationRound = 0;
-                cl->ladderEliminationPlayersRemaining = 0;
-                cl->ladderEliminationMetric = 0.0f;
-	}
-}
-
-static int RaceResultCompare( const raceResult_t *a, const raceResult_t *b ) {
-	if ( a->finished && !b->finished ) {
-		return -1;
-	}
-	if ( !a->finished && b->finished ) {
-		return 1;
-	}
-
-	if ( a->lapsCompleted != b->lapsCompleted ) {
-		return ( a->lapsCompleted > b->lapsCompleted ) ? -1 : 1;
-	}
-
-	if ( a->totalRaceMs > 0 && b->totalRaceMs > 0 && a->totalRaceMs != b->totalRaceMs ) {
-		return ( a->totalRaceMs < b->totalRaceMs ) ? -1 : 1;
-	}
-
-	if ( a->position > 0 && b->position > 0 && a->position != b->position ) {
-		return ( a->position < b->position ) ? -1 : 1;
-	}
-
-	if ( a->bestLapMs > 0 && b->bestLapMs > 0 && a->bestLapMs != b->bestLapMs ) {
-		return ( a->bestLapMs < b->bestLapMs ) ? -1 : 1;
-	}
-
-	if ( a->totalRaceMs != b->totalRaceMs ) {
-		return ( a->totalRaceMs < b->totalRaceMs ) ? -1 : 1;
-	}
-
-	if ( a->bestLapMs != b->bestLapMs ) {
-		return ( a->bestLapMs < b->bestLapMs ) ? -1 : 1;
-	}
-
-	if ( a->position != b->position ) {
-		return ( a->position < b->position ) ? -1 : 1;
-	}
-
-	if ( a->clientNum != b->clientNum ) {
-		return ( a->clientNum < b->clientNum ) ? -1 : 1;
-	}
-
-	return 0;
-}
-
-static void G_SortRaceResults( raceResult_t *results, int count ) {
-	int i;
-
-	for ( i = 0; i < count - 1; i++ ) {
-		int best = i;
-		int j;
-
-		for ( j = i + 1; j < count; j++ ) {
-			if ( RaceResultCompare( &results[j], &results[best] ) < 0 ) {
-				best = j;
-			}
-		}
-
-		if ( best != i ) {
-			raceResult_t tmp = results[i];
-			results[i] = results[best];
-			results[best] = tmp;
-		}
-	}
-}
-
-int G_GatherRaceResults( raceResult_t *results, int maxResults ) {
-	raceResult_t collected[MAX_CLIENTS];
-	int collectedCount;
-	int i;
-
-	if ( !results || maxResults <= 0 ) {
-		return 0;
-	}
-
-	if ( !isRallyRace() ) {
-		return 0;
-	}
-
-	collectedCount = 0;
-	for ( i = 0; i < level.maxclients && collectedCount < MAX_CLIENTS; i++ ) {
-		gclient_t *cl = &level.clients[i];
-		gentity_t *ent = &g_entities[i];
-		raceResult_t *entry;
-
-		if ( cl->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
-		if ( !ent->inuse || !ent->client ) {
-			continue;
-		}
-		if ( cl->sess.sessionTeam == TEAM_SPECTATOR || cl->sess.sessionTeam == TEAM_FREE ) {
-			continue;
-		}
-		if ( isRaceObserver( i ) ) {
-			continue;
-		}
-
-		entry = &collected[collectedCount++];
-		entry->clientNum = i;
-		entry->position = cl->ps.stats[STAT_POSITION];
-		entry->bestLapMs = cl->ladderBestLapMs;
-		entry->totalRaceMs = cl->ladderTotalRaceMs;
-		entry->lapsCompleted = cl->ladderLapCount;
-		entry->finished = ( cl->finishRaceTime > 0 );
-
-		if ( entry->finished ) {
-			if ( entry->totalRaceMs <= 0 && level.startRaceTime > 0 &&
-				cl->finishRaceTime >= level.startRaceTime ) {
-				entry->totalRaceMs = cl->finishRaceTime - level.startRaceTime;
-			}
-			if ( entry->lapsCompleted <= 0 ) {
-				if ( level.numberOfLaps > 0 ) {
-					entry->lapsCompleted = level.numberOfLaps;
-				} else {
-					entry->lapsCompleted = 1;
-				}
-			}
-		} else if ( entry->lapsCompleted <= 0 && ent->currentLap > 0 ) {
-			entry->lapsCompleted = ent->currentLap - 1;
-			if ( entry->lapsCompleted < 0 ) {
-				entry->lapsCompleted = 0;
-			}
-		}
-	}
-
-	G_SortRaceResults( collected, collectedCount );
-
-	if ( collectedCount > maxResults ) {
-		collectedCount = maxResults;
-	}
-
-	for ( i = 0; i < collectedCount; i++ ) {
-		results[i] = collected[i];
-		if ( results[i].position <= 0 ) {
-			results[i].position = i + 1;
-		}
-	}
-
-	return collectedCount;
-}
 
 int GetTeamAtRank( int rank ){
 	int		i, j, count;
@@ -325,59 +164,23 @@ float GetDistanceToMarker( gentity_t *player, float markerNumber )
 {
 	gentity_t		*ent = NULL;
 	vec3_t			dist;
-	vec3_t			targetOrigin;
-	qboolean			haveTarget = qfalse;
-	int			markerId;
 
-	if ( markerNumber <= 0.0f )
+	if ( !markerNumber )
 		return 1<<30;
 
-	markerId = (int)markerNumber;
-
-	if ( markerId > level.numCheckpoints ) {
-		if ( level.finishLine && level.finishLine->inuse ) {
-			VectorCopy( level.finishLine->s.origin, targetOrigin );
-			haveTarget = qtrue;
-		} else if ( level.hasFinish ) {
-			VectorCopy( level.finishOrigin, targetOrigin );
-			haveTarget = qtrue;
-		}
-
-		if ( !haveTarget ) {
-			while ( ( ent = G_Find (ent, FOFS(classname), "rally_finish" ) ) != NULL ) {
-				if ( ent->number == markerId || ent->number == 0 ) {
-					level.finishLine = ent;
-					VectorCopy( ent->s.origin, level.finishOrigin );
-					level.hasFinish = qtrue;
-					VectorCopy( ent->s.origin, targetOrigin );
-					haveTarget = qtrue;
-					break;
-				}
-			}
-		}
-	} else if ( markerId > 0 && markerId <= level.numCheckpoints ) {
-		if ( level.checkpoints[ markerId - 1 ] && level.checkpoints[ markerId - 1 ]->inuse ) {
-			VectorCopy( level.checkpoints[ markerId - 1 ]->s.origin, targetOrigin );
-			haveTarget = qtrue;
-		}
-
-		if ( !haveTarget ) {
-			while ( ( ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL ) {
-				if ( ent->number == markerId ) {
-					VectorCopy( ent->s.origin, targetOrigin );
-					haveTarget = qtrue;
-					break;
-				}
-			}
-		}
+	while ( (ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL )
+	{
+		if( ent->number == markerNumber )
+			break;
 	}
 
-	if ( haveTarget ) {
-		VectorSubtract( player->r.currentOrigin, targetOrigin, dist );
-		return VectorLength( dist );
+	if ( ent )
+	{
+		VectorSubtract(player->r.currentOrigin, ent->s.origin, dist);
+		return VectorLength(dist);
 	}
-
-	return 1<<30;
+	else
+		return 1<<30;
 }
 
 /*
@@ -390,70 +193,32 @@ IsCarAhead
 qboolean IsCarAhead(gentity_t *one, gentity_t *two){
 	float		dist1, dist2;
 	int			time1, time2;
-	qboolean	eliminationMode;
-	qboolean	oneEliminated, twoEliminated;
-	qboolean	oneFinished, twoFinished;
 
-	eliminationMode = ( g_gametype.integer == GT_ELIMINATION || g_gametype.integer == GT_LCS );
-	oneEliminated = qfalse;
-	twoEliminated = qfalse;
-
-	if ( eliminationMode ) {
-		if ( one->client->finishRaceTime && one->client->ps.stats[STAT_HEALTH] <= 0 ) {
-			oneEliminated = qtrue;
+	if (one->client->finishRaceTime && two->client->finishRaceTime){
+		time1 = one->client->finishRaceTime - level.startRaceTime;
+		if (one->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
+			time1 -= (one->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
 		}
 
-		if ( two->client->finishRaceTime && two->client->ps.stats[STAT_HEALTH] <= 0 ) {
-			twoEliminated = qtrue;
+		time2 = two->client->finishRaceTime - level.startRaceTime;
+		if (two->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
+			time2 -= (two->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
 		}
 
-		if ( oneEliminated && !twoEliminated ) {
-			return qfalse;
-		}
-
-		if ( twoEliminated && !oneEliminated ) {
+		if (time1 < time2){ // use frag modified times
+//			Com_Printf("Car 1 finished the race with less time than car 2\n");
 			return qtrue;
 		}
-
-		if ( oneEliminated && twoEliminated ) {
-			if ( one->client->finishRaceTime > two->client->finishRaceTime ) {
-				return qtrue;
-			}
-
-			if ( two->client->finishRaceTime > one->client->finishRaceTime ) {
-				return qfalse;
-			}
+		else {
+//			Com_Printf("Car 2 finished the race with less time than car 1\n");
+			return qfalse;
 		}
 	}
-
-	oneFinished = ( one->client->finishRaceTime && ( !eliminationMode || !oneEliminated ) );
-	twoFinished = ( two->client->finishRaceTime && ( !eliminationMode || !twoEliminated ) );
-
-	if (oneFinished && twoFinished){
-			time1 = one->client->finishRaceTime - level.startRaceTime;
-			if (one->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
-					time1 -= (one->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
-			}
-
-			time2 = two->client->finishRaceTime - level.startRaceTime;
-			if (two->client->ps.persistant[PERS_SCORE] > 0 && !isRallyNonDMRace()){
-					time2 -= (two->client->ps.persistant[PERS_SCORE] * TIME_BONUS_PER_FRAG);
-			}
-
-			if (time1 < time2){ // use frag modified times
-//				Com_Printf("Car 1 finished the race with less time than car 2\n");
-				return qtrue;
-			}
-			else {
-//				Com_Printf("Car 2 finished the race with less time than car 1\n");
-				return qfalse;
-			}
-	}
-	else if (oneFinished){
+	else if (one->client->finishRaceTime){
 //		Com_Printf("Car 1 finished the race, car 2 hasn't\n");
 		return qtrue;
 	}
-	else if (twoFinished){
+	else if (two->client->finishRaceTime){
 //		Com_Printf("Car 2 finished the race, car 1 hasn't\n");
 		return qfalse;
 	}
@@ -473,42 +238,6 @@ qboolean IsCarAhead(gentity_t *one, gentity_t *two){
 //			Com_Printf("Car 1 is %f to marker %i and car 2 is %f\n", dist1, one->number, dist2);
 			return qfalse;
 		}
-
-		if ( dist1 == dist2 || ( dist1 == (float)( 1 << 30 ) && dist2 == (float)( 1 << 30 ) ) ) {
-			int last1 = one->client->lastCheckpointTime;
-			int last2 = two->client->lastCheckpointTime;
-
-			if ( last1 != last2 ) {
-				return ( last1 < last2 );
-			}
-
-			if ( last1 == 0 && last2 == 0 ) {
-				int remain1 = one->client->ps.stats[STAT_DISTANCE_REMAIN];
-				int remain2 = two->client->ps.stats[STAT_DISTANCE_REMAIN];
-
-				if ( remain1 != remain2 ) {
-					return ( remain1 < remain2 );
-				}
-
-				if ( level.hasFinish ) {
-					vec3_t delta1, delta2;
-					float finishDist1, finishDist2;
-
-					VectorSubtract( level.finishOrigin, one->r.currentOrigin, delta1 );
-					VectorSubtract( level.finishOrigin, two->r.currentOrigin, delta2 );
-					finishDist1 = VectorLength( delta1 );
-					finishDist2 = VectorLength( delta2 );
-
-					if ( finishDist1 > finishDist2 ) {
-						return qfalse;
-					}
-
-					if ( finishDist1 < finishDist2 ) {
-						return qtrue;
-					}
-				}
-			}
-		}
 	}
 
 	return qtrue;
@@ -527,7 +256,6 @@ void CalculatePlayerPositions( void )
 	gentity_t	*ent, *leader, *cur, *last;
 	int			position;
 	qboolean	positionChanged;
-	qboolean	eliminationMode;
 
 //	if (level.startRaceTime + FRAMETIME > level.time || level.startRaceTime == 0){
 //		return;
@@ -537,7 +265,6 @@ void CalculatePlayerPositions( void )
 	}
 
 	positionChanged = qfalse;
-	eliminationMode = ( g_gametype.integer == GT_ELIMINATION || g_gametype.integer == GT_LCS );
 	leader = ent = last = NULL;
 	while ( (ent = G_Find (ent, FOFS(classname), "player")) != NULL )
 	{
@@ -545,11 +272,6 @@ void CalculatePlayerPositions( void )
 //		if ( isRaceObserver(ent->s.number) ) continue;
 
 		ent->carBehind = NULL;
-
-		if ( eliminationMode && ent->client->finishRaceTime ) {
-			// eliminated drivers already have their knockout slot locked in
-			continue;
-		}
 
 		if ( leader == NULL )
 		{
@@ -652,10 +374,8 @@ void RallyStarter_Think( gentity_t *ent ){
 		if (t == NULL){
 			// start race right away
 			level.startRaceTime = level.time;
-			G_ResetRaceTimingForClients( level.startRaceTime );
 			trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 			CenterPrint_All("GO..");
-			G_StartEliminationMode();
 
 			G_FreeEntity( ent );
 			return;
@@ -710,13 +430,11 @@ void RallyStarter_Think( gentity_t *ent ){
 
 	if ( level.time > ent->pain_debounce_time + 5000 ){
 		level.startRaceTime = level.time;
-		G_ResetRaceTimingForClients( level.startRaceTime );
 
 		trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 		RaceCountdown("GO!", 0);
 
 		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.wav") );
-		G_StartEliminationMode();
 
 		if (g_gametype.integer != GT_DERBY)
 			ent->think = RallyRace_Think;
@@ -826,78 +544,5 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 	VectorCopy (spot->s.angles, angles);
 
 	return spot;
-}
-
-/*
-========================================================================
-G_BalanceVehicleStats
-
-Compares configured vehicle attributes for all active players and scales
-them down if they exceed the configured server limits.  The limits are
-defined as ratios relative to the weakest vehicle so that custom vehicle
-setups cannot gain an unfair advantage.
-========================================================================
-*/
-void G_BalanceVehicleStats( void ) {
-	int         i;
-	float       minHpPeak = 0.0f;
-	int         minHealth = 0;
-	qboolean    found = qfalse;
-
-	// determine the lowest values currently in use
-	for ( i = 0; i < level.maxclients; i++ ) {
-	    gentity_t *ent = &g_entities[ i ];
-
-	    if ( !ent->inuse || !ent->client ) {
-	        continue;
-	    }
-	    if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ||
-	         ent->client->sess.sessionTeam == TEAM_FREE ) {
-	        continue;
-	    }
-
-	    if ( !found || ent->client->car.hpPeak < minHpPeak ) {
-	        minHpPeak = ent->client->car.hpPeak;
-	    }
-	    if ( !found || ent->client->car.maxHealth < minHealth ) {
-	        minHealth = ent->client->car.maxHealth;
-	    }
-	    found = qtrue;
-	}
-
-	if ( !found ) {
-	    return; // nothing to balance
-	}
-
-	// calculate allowed maximums based on ratios
-	{
-	    float hpLimit = minHpPeak * g_vehicleHpMaxRatio.value;
-	    int   healthLimit = (int)( (float)minHealth * g_vehicleHealthMaxRatio.value );
-
-	    for ( i = 0; i < level.maxclients; i++ ) {
-	        gentity_t *ent = &g_entities[ i ];
-
-	        if ( !ent->inuse || !ent->client ) {
-	            continue;
-	        }
-	        if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ||
-	             ent->client->sess.sessionTeam == TEAM_FREE ) {
-	            continue;
-	        }
-
-	        if ( ent->client->car.hpPeak > hpLimit ) {
-	            ent->client->car.hpPeak = hpLimit;
-	        }
-
-	        if ( ent->client->car.maxHealth > healthLimit ) {
-	            ent->client->car.maxHealth = healthLimit;
-	            ent->client->pers.maxHealth = healthLimit;
-	            ent->client->ps.stats[STAT_MAX_HEALTH] = healthLimit;
-	            if ( ent->health > healthLimit ) {
-	                ent->health = healthLimit;
-	            }
-	        }
-	    }
-	}
 }
 

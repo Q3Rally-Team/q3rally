@@ -337,9 +337,6 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FS_GetFileList( VMA(1), VMA(2), VMA(3), args[4] );
 	case G_FS_SEEK:
 		return FS_Seek( args[1], args[2], args[3] );
-        case G_LADDER_SUBMIT:
-                SV_LadderSubmit( (const ladderMatchPayload_t *) VMA(1) );
-                return 0;
 
 	case G_LOCATE_GAME_DATA:
 		SV_LocateGameData( VMA(1), args[2], args[3], VMA(4), args[5] );
@@ -390,12 +387,15 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_GET_USERINFO:
 		SV_GetUserinfo( args[1], VMA(2), args[3] );
 		return 0;
-	case G_GET_SERVERINFO:
-		SV_GetServerinfo( VMA(1), args[2] );
-		return 0;
-	case G_ADJUST_AREA_PORTAL_STATE:
-		SV_AdjustAreaPortalState( VMA(1), args[2] );
-		return 0;
+        case G_GET_SERVERINFO:
+                SV_GetServerinfo( VMA(1), args[2] );
+                return 0;
+        case G_LADDER_SUBMIT:
+                SV_LadderSubmit( VMA(1) );
+                return 0;
+        case G_ADJUST_AREA_PORTAL_STATE:
+                SV_AdjustAreaPortalState( VMA(1), args[2] );
+                return 0;
 	case G_AREAS_CONNECTED:
 		return CM_AreasConnected( args[1], args[2] );
 

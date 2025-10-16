@@ -94,18 +94,6 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 
 //	Com_Printf("Attempting to load script %s\n", filename);
 
-	cent->hitSound = 0;
-	cent->preSoundLoop = 0;
-	cent->postSoundLoop = 0;
-	cent->destroySound = 0;
-	cent->activeScriptLoop = 0;
-	cent->scriptDestroyPending = qfalse;
-	cent->scriptLastEvent = cent->currentState.event;
-	cent->hitSoundName[0] = '\0';
-	cent->preSoundLoopName[0] = '\0';
-	cent->postSoundLoopName[0] = '\0';
-	cent->destroySoundName[0] = '\0';
-
 	// load the file
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
 
@@ -132,14 +120,10 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 		return qfalse;
 	}
 
-	model[0] = 0;
-	deadmodel[0] = 0;
+       model[0] = 0;
+       deadmodel[0] = 0;
 
-	// Models can be referenced directly by path or via a section that contains a "model" token.
-	cent->modelHandle = 0;
-	cent->deadModelHandle = 0;
-
-	cent->numGibModels = 0;
+       cent->numGibModels = 0;
        cent->gibsSpawned = qfalse;
        memset( cent->gibModels, 0, sizeof( cent->gibModels ) );
        memset( cent->gibSounds, 0, sizeof( cent->gibSounds ) );
@@ -245,50 +229,46 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 
 			continue;
 		}
-                else if ( !Q_stricmp( token, "hitsound" ) ){
-                        token = COM_Parse( &text_p );
-                        if ( !token ) {
-                                break;
-                        }
-
-                        cent->hitSound = trap_S_RegisterSound( token, qfalse );
-                        Q_strncpyz( cent->hitSoundName, token, sizeof( cent->hitSoundName ) );
-
-                        continue;
-                }
-                else if ( !Q_stricmp( token, "presound" ) ){
-                        token = COM_Parse( &text_p );
-                        if ( !token ) {
-                                break;
-                        }
-
-                        cent->preSoundLoop = trap_S_RegisterSound( token, qfalse );
-                        Q_strncpyz( cent->preSoundLoopName, token, sizeof( cent->preSoundLoopName ) );
-
-                        continue;
-                }
-                else if ( !Q_stricmp( token, "postsound" ) ){
-                        token = COM_Parse( &text_p );
+		else if ( !Q_stricmp( token, "hitsound" ) ){
+			token = COM_Parse( &text_p );
 			if ( !token ) {
 				break;
-                        }
+			}
 
-                        cent->postSoundLoop = trap_S_RegisterSound( token, qfalse );
-                        Q_strncpyz( cent->postSoundLoopName, token, sizeof( cent->postSoundLoopName ) );
+			cent->hitSound = trap_S_RegisterSound( token, qfalse );
 
-                        continue;
-                }
-                else if ( !Q_stricmp( token, "destroysound" ) ){
-                        token = COM_Parse( &text_p );
+			continue;
+		}
+		else if ( !Q_stricmp( token, "presound" ) ){
+			token = COM_Parse( &text_p );
 			if ( !token ) {
 				break;
-                        }
+			}
 
-                        cent->destroySound = trap_S_RegisterSound( token, qfalse );
-                        Q_strncpyz( cent->destroySoundName, token, sizeof( cent->destroySoundName ) );
+			cent->preSoundLoop = trap_S_RegisterSound( token, qfalse );
 
-                        continue;
-                }
+			continue;
+		}
+		else if ( !Q_stricmp( token, "postsound" ) ){
+			token = COM_Parse( &text_p );
+			if ( !token ) {
+				break;
+			}
+
+			cent->postSoundLoop = trap_S_RegisterSound( token, qfalse );
+
+			continue;
+		}
+		else if ( !Q_stricmp( token, "destroysound" ) ){
+			token = COM_Parse( &text_p );
+			if ( !token ) {
+				break;
+			}
+
+			cent->destroySound = trap_S_RegisterSound( token, qfalse );
+
+			continue;
+		}
                else if ( !Q_stricmp( token, "gibs" ) ) {
                        token = COM_Parse( &text_p );
                        if ( !token ) {
@@ -345,51 +325,21 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 	}
 
 	if ( model[0] ){
-		qboolean foundModelPath = qfalse;
-
 		// reset the pointer
 		text_p = text;
 
 		if ( !SeekToSection( &text_p, model ) ){
 //			Com_Printf( "'%s' section not found in script file, assuming it was an actual filename\n", model );
 
-			cent->modelHandle = trap_R_RegisterModel( model );
+			cent->modelHandle = trap_R_RegisterModel( deadmodel );
 		}
 		else {
-			while ( 1 ) {
-				token = COM_Parse( &text_p );
-
-				if ( !token || token[0] == 0 ) {
-					break;
-				}
-
-				if ( !Q_stricmp( token, "{" ) ) {
-					continue;
-				}
-
-				if ( !Q_stricmp( token, "}" ) ) {
-					break;
-				}
-
-				if ( !Q_stricmp( token, "model" ) ) {
-					token = COM_Parse( &text_p );
-					if ( token && token[0] ) {
-						cent->modelHandle = trap_R_RegisterModel( token );
-						foundModelPath = qtrue;
-					}
-					break;
-				}
-			}
-
-			if ( !foundModelPath ) {
-				cent->modelHandle = trap_R_RegisterModel( model );
-			}
+			Com_Printf( "Loading model info for '%s'\n", model );
+			// load model info
 		}
 	}
 
 	if ( deadmodel[0] ){
-		qboolean foundDeadModelPath = qfalse;
-
 		// reset the pointer
 		text_p = text;
 
@@ -399,34 +349,8 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 			cent->deadModelHandle = trap_R_RegisterModel( deadmodel );
 		}
 		else {
-			while ( 1 ) {
-				token = COM_Parse( &text_p );
-
-				if ( !token || token[0] == 0 ) {
-					break;
-				}
-
-				if ( !Q_stricmp( token, "{" ) ) {
-					continue;
-				}
-
-				if ( !Q_stricmp( token, "}" ) ) {
-					break;
-				}
-
-				if ( !Q_stricmp( token, "model" ) ) {
-					token = COM_Parse( &text_p );
-					if ( token && token[0] ) {
-						cent->deadModelHandle = trap_R_RegisterModel( token );
-						foundDeadModelPath = qtrue;
-					}
-					break;
-				}
-			}
-
-			if ( !foundDeadModelPath ) {
-				cent->deadModelHandle = trap_R_RegisterModel( deadmodel );
-			}
+			Com_Printf( "Loading deadmodel info for '%s'\n", deadmodel );
+			// load deadmodel info
 		}
 	}
 
@@ -474,54 +398,10 @@ void CG_Scripted_Object( centity_t *cent ){
                         return;
                 }
 
-                if ( CG_ParseScriptedObject( cent, scriptName ) )
-                        cent->scriptLoadTime = cg.time;
-                else
-                        return;
-        }
-
-        if ( cent->scriptLastEvent != s1->event ) {
-                int eventType = s1->event & ~EV_EVENT_BITS;
-
-                if ( eventType == EV_GENERAL_SOUND ) {
-                        const char *eventSound = CG_ConfigString( CS_SOUNDS + s1->eventParm );
-
-                        if ( eventSound && eventSound[0] ) {
-                                if ( cent->destroySoundName[0] && !Q_stricmp( eventSound, cent->destroySoundName ) ) {
-                                        cent->scriptDestroyPending = qtrue;
-                                } else if ( cent->hitSoundName[0] && !Q_stricmp( eventSound, cent->hitSoundName ) ) {
-                                        cent->scriptDestroyPending = qfalse;
-                                }
-                        }
-                }
-
-                cent->scriptLastEvent = s1->event;
-        }
-
-        if ( s1->eFlags & EF_DEAD ) {
-                cent->scriptDestroyPending = qfalse;
-        }
-
-        {
-                qhandle_t desiredLoop = 0;
-
-                if ( ( s1->eFlags & EF_DEAD ) || cent->scriptDestroyPending ) {
-                        if ( cent->postSoundLoop ) {
-                                desiredLoop = cent->postSoundLoop;
-                        }
-                } else if ( cent->preSoundLoop ) {
-                        desiredLoop = cent->preSoundLoop;
-                }
-
-                if ( desiredLoop != cent->activeScriptLoop ) {
-                        if ( desiredLoop ) {
-                                trap_S_AddLoopingSound( s1->number, cent->lerpOrigin, vec3_origin, desiredLoop );
-                        } else if ( cent->activeScriptLoop ) {
-                                trap_S_StopLoopingSound( s1->number );
-                        }
-
-                        cent->activeScriptLoop = desiredLoop;
-                }
+		if ( CG_ParseScriptedObject( cent, scriptName ) )
+			cent->scriptLoadTime = cg.time;
+		else
+			return;
         }
 
        if ( (cent->currentState.eFlags & EF_DEAD) && !cent->gibsSpawned ) {

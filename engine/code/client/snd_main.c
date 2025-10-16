@@ -36,16 +36,6 @@ cvar_t *s_muteWhenUnfocused;
 
 static soundInterface_t si;
 
-#define JUKEBOX_BASE_PATH               "music/jukebox"
-#define JUKEBOX_EXTENSION               ".ogg"
-#define JUKEBOX_FILELIST_BUFSIZE        (MAX_OSPATH * 64)
-
-static qboolean jukeboxActive = qfalse;
-static qboolean jukeboxHasOriginal = qfalse;
-static char jukeboxOriginalIntro[MAX_QPATH];
-static char jukeboxOriginalLoop[MAX_QPATH];
-static int jukeboxRandomSeed = 0;
-
 /*
 =================
 S_ValidateInterface
@@ -131,19 +121,6 @@ void S_StopBackgroundTrack( void )
 {
 	if( si.StopBackgroundTrack ) {
 		si.StopBackgroundTrack( );
-	}
-}
-
-void S_GetMusicState( cgameMusicState_t *state )
-{
-	if( !state ) {
-		return;
-	}
-
-	if( si.GetMusicState ) {
-		si.GetMusicState( state );
-	} else {
-		Com_Memset( state, 0, sizeof( *state ) );
 	}
 }
 
@@ -491,114 +468,10 @@ S_Music_f
 */
 void S_StopMusic_f( void )
 {
-        if( !si.StopBackgroundTrack )
-                return;
+	if(!si.StopBackgroundTrack)
+		return;
 
-        si.StopBackgroundTrack();
-}
-
-static void Jukebox_SaveOriginalTrack( void )
-{
-        char    *configString;
-        char    *parsePtr;
-        char    *token;
-        int     offset;
-
-        jukeboxOriginalIntro[0] = '\0';
-        jukeboxOriginalLoop[0] = '\0';
-
-        offset = cl.gameState.stringOffsets[CS_MUSIC];
-        if( offset ) {
-                configString = cl.gameState.stringData + offset;
-
-                if( configString && configString[0] ) {
-                        parsePtr = configString;
-
-                        token = COM_Parse( &parsePtr );
-                        if( token && token[0] ) {
-                                Q_strncpyz( jukeboxOriginalIntro, token, sizeof( jukeboxOriginalIntro ) );
-                        }
-
-                        token = COM_Parse( &parsePtr );
-                        if( token && token[0] ) {
-                                Q_strncpyz( jukeboxOriginalLoop, token, sizeof( jukeboxOriginalLoop ) );
-                        }
-                }
-        }
-
-        jukeboxHasOriginal = qtrue;
-}
-
-static void Jukebox_Toggle_f( void )
-{
-        char    fileList[JUKEBOX_FILELIST_BUFSIZE];
-        char    *fileName;
-        char    trackPath[MAX_OSPATH];
-        int             numTracks;
-        int             selection;
-        int             i;
-
-        if( !si.StartBackgroundTrack ) {
-                return;
-        }
-
-        if( jukeboxActive ) {
-                S_StopBackgroundTrack();
-
-                if( jukeboxHasOriginal && jukeboxOriginalIntro[0] ) {
-                        const char *loop = jukeboxOriginalLoop[0] ? jukeboxOriginalLoop : NULL;
-                        S_StartBackgroundTrack( jukeboxOriginalIntro, loop );
-                } else if( jukeboxHasOriginal && jukeboxOriginalLoop[0] ) {
-                        S_StartBackgroundTrack( jukeboxOriginalLoop, NULL );
-                }
-
-                jukeboxActive = qfalse;
-                jukeboxHasOriginal = qfalse;
-                jukeboxOriginalIntro[0] = '\0';
-                jukeboxOriginalLoop[0] = '\0';
-                return;
-        }
-
-        numTracks = FS_GetFileList( JUKEBOX_BASE_PATH, JUKEBOX_EXTENSION, fileList, sizeof( fileList ) );
-        if( numTracks <= 0 ) {
-                Com_Printf( "Jukebox: no tracks found in %s\n", JUKEBOX_BASE_PATH );
-                return;
-        }
-
-        if( !jukeboxHasOriginal ) {
-                Jukebox_SaveOriginalTrack();
-        }
-
-        if( jukeboxRandomSeed == 0 ) {
-                jukeboxRandomSeed = Sys_Milliseconds();
-        }
-
-        selection = (int)( Q_random( &jukeboxRandomSeed ) * numTracks );
-        if( selection >= numTracks ) {
-                selection = numTracks - 1;
-        }
-
-        fileName = fileList;
-        for( i = 0; i < selection; i++ ) {
-                int len = strlen( fileName );
-
-                if( len <= 0 ) {
-                        break;
-                }
-
-                fileName += len + 1;
-        }
-
-        if( !fileName[0] ) {
-                fileName = fileList;
-        }
-
-        Com_sprintf( trackPath, sizeof( trackPath ), "%s/%s", JUKEBOX_BASE_PATH, fileName );
-        S_StartBackgroundTrack( trackPath, trackPath );
-
-        Com_Printf( "Jukebox: playing %s\n", trackPath );
-
-        jukeboxActive = qtrue;
+	si.StopBackgroundTrack();
 }
 
 
@@ -633,8 +506,7 @@ void S_Init( void )
 
 		Cmd_AddCommand( "play", S_Play_f );
 		Cmd_AddCommand( "music", S_Music_f );
-                Cmd_AddCommand( "stopmusic", S_StopMusic_f );
-                Cmd_AddCommand( "jukebox", Jukebox_Toggle_f );
+		Cmd_AddCommand( "stopmusic", S_StopMusic_f );
 		Cmd_AddCommand( "s_list", S_SoundList );
 		Cmd_AddCommand( "s_stop", S_StopAllSounds );
 		Cmd_AddCommand( "s_info", S_SoundInfo );
@@ -681,18 +553,11 @@ void S_Shutdown( void )
 
 	Cmd_RemoveCommand( "play" );
 	Cmd_RemoveCommand( "music");
-        Cmd_RemoveCommand( "stopmusic");
-        Cmd_RemoveCommand( "jukebox" );
-        Cmd_RemoveCommand( "s_list" );
-        Cmd_RemoveCommand( "s_stop" );
-        Cmd_RemoveCommand( "s_info" );
+	Cmd_RemoveCommand( "stopmusic");
+	Cmd_RemoveCommand( "s_list" );
+	Cmd_RemoveCommand( "s_stop" );
+	Cmd_RemoveCommand( "s_info" );
 
-        jukeboxActive = qfalse;
-        jukeboxHasOriginal = qfalse;
-        jukeboxOriginalIntro[0] = '\0';
-        jukeboxOriginalLoop[0] = '\0';
-        jukeboxRandomSeed = 0;
-
-        S_CodecShutdown( );
+	S_CodecShutdown( );
 }
 

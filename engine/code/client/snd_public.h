@@ -21,8 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
-struct cgameMusicState_s;
-
 void S_Init( void );
 void S_Shutdown( void );
 
@@ -32,7 +30,6 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum );
 
 void S_StartBackgroundTrack( const char *intro, const char *loop );
 void S_StopBackgroundTrack( void );
-void S_GetMusicState( struct cgameMusicState_s *state );
 
 // cinematics and voice-over-network will send raw samples
 // 1.0 volume will be direct output of source samples

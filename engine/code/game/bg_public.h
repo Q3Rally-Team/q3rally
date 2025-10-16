@@ -22,8 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 // bg_public.h -- definitions shared by both the server game and client game modules
-#ifndef BG_PUBLIC_H
-#define BG_PUBLIC_H
 
 // STONELANCE
 #include "bg_physics.h"
@@ -107,10 +105,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_REFLECTION_IMAGE             29
 #define CS_SIGILSTATUS                  30
 #define CS_TRACKLENGTH                  31
-#define CS_ELIMINATION_INFO             32
 // Q3Rally Code END
 
-#define CS_MODELS                               (CS_ELIMINATION_INFO+1)
+#define CS_MODELS                               32
 #define CS_SOUNDS                               (CS_MODELS+MAX_MODELS)
 // STONELANCE
 //#define       CS_PLAYERS                              (CS_SOUNDS+MAX_SOUNDS)
@@ -144,8 +141,7 @@ typedef enum {
         GT_RACING_DM,           // racing with weapons
         GT_SINGLE_PLAYER,       // single player tournament
         GT_DERBY,                       // demolition derby
-        GT_LCS,                         // last car standing
-        GT_ELIMINATION,         // elimination race
+        GT_LCS,                       // last car standing
         GT_DEATHMATCH,          // random destruction
 
         //-- team games go after this --
@@ -774,7 +770,6 @@ typedef enum {
         MOD_POISON,
         MOD_FIRE,
         MOD_GRAPPLE,
-        MOD_ELIMINATION,
         MOD_BREAKABLE_SPLASH
 } meansOfDeath_t;
 
@@ -952,4 +947,3 @@ qboolean        BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, in
 #define KAMI_BOOMSPHERE_MAXRADIUS               720
 #define KAMI_SHOCKWAVE2_MAXRADIUS               704
 
-#endif /* BG_PUBLIC_H */

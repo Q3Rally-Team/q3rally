@@ -802,14 +802,12 @@ float Q3DistanceToRL( float length ) {
 qboolean isRallyRace( void ){
 	return (cgs.gametype == GT_RACING
 		|| cgs.gametype == GT_RACING_DM
-		|| cgs.gametype == GT_ELIMINATION
 		|| cgs.gametype == GT_TEAM_RACING
 		|| cgs.gametype == GT_TEAM_RACING_DM);
 }
 
 qboolean isRallyNonDMRace( void ){
 	return (cgs.gametype == GT_RACING
-		|| cgs.gametype == GT_ELIMINATION
 		|| cgs.gametype == GT_TEAM_RACING);
 }
 
@@ -819,19 +817,7 @@ isRaceObserver
 =================
 */
 qboolean isRaceObserver( int clientNum ){
-	int cutoffTime;
-
-	if ( clientNum == cg.clientNum && cg.raceFinishCountdownEnd ) {
-		return ( cg.time >= cg.raceFinishCountdownEnd );
-	}
-
-	if ( !cg_entities[clientNum].finishRaceTime ) {
-		return qfalse;
-	}
-
-	cutoffTime = cg_entities[clientNum].finishRaceTime + ( cgs.finishRaceDelay * 1000 );
-
-	return ( cg.time >= cutoffTime );
+	return (cg_entities[clientNum].finishRaceTime && cg_entities[clientNum].finishRaceTime + RACE_OBSERVER_DELAY < cg.time);
 }
 
 qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos ){

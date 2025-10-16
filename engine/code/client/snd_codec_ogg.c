@@ -322,16 +322,6 @@ snd_stream_t *S_OGG_CodecOpenStream(const char *filename)
 	// We use the generic pointer in stream for the OGG codec control structure
 	stream->ptr = vf;
 
-	{
-		vorbis_comment *comment = ov_comment( vf, -1 );
-		if( comment ) {
-			char *title = vorbis_comment_query( comment, "TITLE", 0 );
-			if( title && title[0] ) {
-				Q_strncpyz( stream->commentTitle, title, sizeof( stream->commentTitle ) );
-			}
-		}
-	}
-
 	return stream;
 }
 

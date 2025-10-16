@@ -77,8 +77,6 @@ void Team_DroppedFlagThink(gentity_t *ent);
 void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker);
 void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker);
 void Team_InitGame(void);
-int Team_GetCount( void );
-team_t G_PickTeamToKickFrom( void );
 // Q3Rally Code Start
 void Team_EndGame(void);
 // Q3Rally Code END

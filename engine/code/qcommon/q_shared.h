@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.6"
+#define PRODUCT_VERSION "v0.6b"
 #endif
 
 
@@ -164,15 +164,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../game/bg_lib.h"
 
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef signed short int16_t;
-typedef unsigned short uint16_t;
-typedef int int32_t;
 typedef int intptr_t;
 typedef unsigned int uint32_t;
-typedef struct q3vm_FILE FILE;
-typedef unsigned int uintptr_t;
 #else
 
 #include <assert.h>
@@ -579,7 +572,7 @@ static ID_INLINE float Q_fabs(float x) {
     asm("fabs %0,%1" : "=f" (abs_x) : "f" (x));
     return abs_x;
 }
-
+#else
 #define Q_fabs __fabsf
 #endif
 

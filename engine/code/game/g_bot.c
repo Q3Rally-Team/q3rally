@@ -248,7 +248,7 @@ int G_CountBotPlayersByName( const char *name, int team ) {
 	num = 0;
 	for ( i=0 ; i< g_maxclients.integer ; i++ ) {
 		cl = level.clients + i;
-		if ( cl->pers.connected != CON_CONNECTED ) {
+		if ( cl->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
 		if ( !(g_entities[i].r.svFlags & SVF_BOT) ) {
@@ -327,8 +327,6 @@ void G_AddRandomBot( int team ) {
 	skill = trap_Cvar_VariableValue( "g_spSkill" );
 	if (team == TEAM_RED) teamstr = "red";
 	else if (team == TEAM_BLUE) teamstr = "blue";
-	else if (team == TEAM_GREEN) teamstr = "green";
-	else if (team == TEAM_YELLOW) teamstr = "yellow";
 	else teamstr = "free";
 	trap_SendConsoleCommand( EXEC_INSERT, va("addbot random %f %s %i\n", skill, teamstr, 0) );
 }
@@ -399,7 +397,7 @@ int G_CountBotPlayers( int team ) {
 	num = 0;
 	for ( i=0 ; i< g_maxclients.integer ; i++ ) {
 		cl = level.clients + i;
-		if ( cl->pers.connected != CON_CONNECTED ) {
+		if ( cl->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
 		if ( !(g_entities[i].r.svFlags & SVF_BOT) ) {
@@ -433,20 +431,35 @@ void G_CheckMinimumPlayers( void ) {
 	minplayers = bot_minplayers.integer;
 	if (minplayers <= 0) return;
 
-	humanplayers = G_CountHumanPlayers( -1 );
-	botplayers = G_CountBotPlayers( -1 );
-
 	if (g_gametype.integer >= GT_TEAM) {
-		if ( humanplayers + botplayers < minplayers ) {
-			G_AddRandomBot( PickTeam(-1) );
-		} else if ( humanplayers + botplayers > minplayers && botplayers ) {
-			G_RemoveRandomBot( G_PickTeamToKickFrom() );
+		if (minplayers >= g_maxclients.integer / 2) {
+			minplayers = (g_maxclients.integer / 2) -1;
+		}
+
+		humanplayers = G_CountHumanPlayers( TEAM_RED );
+		botplayers = G_CountBotPlayers(	TEAM_RED );
+		//
+		if (humanplayers + botplayers < minplayers) {
+			G_AddRandomBot( TEAM_RED );
+		} else if (humanplayers + botplayers > minplayers && botplayers) {
+			G_RemoveRandomBot( TEAM_RED );
+		}
+		//
+		humanplayers = G_CountHumanPlayers( TEAM_BLUE );
+		botplayers = G_CountBotPlayers( TEAM_BLUE );
+		//
+		if (humanplayers + botplayers < minplayers) {
+			G_AddRandomBot( TEAM_BLUE );
+		} else if (humanplayers + botplayers > minplayers && botplayers) {
+			G_RemoveRandomBot( TEAM_BLUE );
 		}
 	} else {	// FFA or other non-team gametypes
 		if (minplayers >= g_maxclients.integer) {
 			minplayers = g_maxclients.integer-1;
 		}
-
+		humanplayers = G_CountHumanPlayers( TEAM_FREE );
+		botplayers = G_CountBotPlayers( TEAM_FREE );
+		//
 		if (humanplayers + botplayers < minplayers) {
 			G_AddRandomBot( TEAM_FREE );
 		} else if (humanplayers + botplayers > minplayers && botplayers) {

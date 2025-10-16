@@ -477,17 +477,11 @@ void AAS_DumpBSPData(void)
 //===========================================================================
 int AAS_LoadBSPFile(void)
 {
-	char *entityData;
 	AAS_DumpBSPData();
-	entityData = botimport.BSPEntityData();
-	if (!entityData || !entityData[0]) {
-		botimport.Print(PRT_ERROR, "AAS_LoadBSPFile: missing entity data\n");
-		return BLERR_MISSINGENTITYDATA;
-	}
-	bspworld.entdatasize = strlen(entityData) + 1;
+	bspworld.entdatasize = strlen(botimport.BSPEntityData()) + 1;
 	bspworld.dentdata = (char *) GetClearedHunkMemory(bspworld.entdatasize);
-	Com_Memcpy(bspworld.dentdata, entityData, bspworld.entdatasize);
+	Com_Memcpy(bspworld.dentdata, botimport.BSPEntityData(), bspworld.entdatasize);
 	AAS_ParseBSPEntities();
 	bspworld.loaded = qtrue;
 	return BLERR_NOERROR;
-}
+} //end of the function AAS_LoadBSPFile

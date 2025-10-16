@@ -23,36 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-static void G_RecordClientLapTime( gclient_t *client, int lapNumber, int lapTime ) {
-	if ( !client || lapNumber <= 0 || lapTime <= 0 ) {
-		return;
-	}
-
-	if ( client->ladderBestLapMs == 0 || lapTime < client->ladderBestLapMs ) {
-		client->ladderBestLapMs = lapTime;
-	}
-
-	if ( lapNumber > client->ladderLapCount ) {
-		client->ladderLapCount = lapNumber;
-	}
-
-	if ( lapNumber > 0 && lapNumber <= RACE_MAX_RECORDED_LAPS ) {
-		client->ladderLapTimes[ lapNumber - 1 ] = lapTime;
-	}
-}
-
-static void G_UpdateClientTotalRaceTime( gclient_t *client, int finishTime ) {
-	if ( !client ) {
-		return;
-	}
-
-	if ( level.startRaceTime > 0 && finishTime >= level.startRaceTime ) {
-		client->ladderTotalRaceMs = finishTime - level.startRaceTime;
-	} else {
-		client->ladderTotalRaceMs = 0;
-	}
-}
-
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
@@ -63,122 +33,104 @@ static void G_UpdateClientTotalRaceTime( gclient_t *client, int finishTime ) {
 #define CHECKPOINT_MESSAGES		2
 
 
-void Touch_Start( gentity_t *self, gentity_t *other, trace_t *trace ) {
-	if ( !other->client ) {
-		return;
-	}
-
-	if ( other->client->lastCheckpointTime + 300 > level.time ) {
-		return;
-	}
-
-	if ( g_developer.integer )
-		G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
-
-	other->client->lastCheckpointTime = level.time;
-	other->number = 1;
-	other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
-	other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( 0.1f );
-
-	if ( level.startRaceTime && other->client->ladderLastLapStartMs <= 0 ) {
-		other->client->ladderLastLapStartMs = level.time;
-	}
-
-	trap_SendServerCommand( -1, va( "newLapTime %i %i %i", other->s.clientNum, 1, level.time ) );
-
-	Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/checkpoint.wav" ) );
+void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
+if ( !other->client ) {
+return;
 }
 
-void Touch_Finish( gentity_t *self, gentity_t *other, trace_t *trace ) {
-	char *place;
-	int lapTime = 0;
-	int lapNumber;
-
-	if ( !other->client ) {
-		return;
-	}
-
-	if ( other->client->lastCheckpointTime + 300 > level.time ) {
-		return;
-	}
-
-	if ( g_developer.integer )
-		G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
-
-	if ( self->number != other->number ) {
-		return;
-	}
-
-	if ( level.startRaceTime && other->client->ladderLastLapStartMs > 0
-			&& level.time >= other->client->ladderLastLapStartMs ) {
-		lapTime = level.time - other->client->ladderLastLapStartMs;
-	}
-
-	lapNumber = other->currentLap > 0 ? other->currentLap : other->client->ladderLapCount + 1;
-	if ( lapTime > 0 ) {
-		G_RecordClientLapTime( other->client, lapNumber, lapTime );
-	}
-
-	other->client->lastCheckpointTime = level.time;
-	other->client->finishRaceTime = level.time;
-	other->s.weapon = WP_NONE;
-	other->takedamage = qfalse;
-
-	G_UpdateClientTotalRaceTime( other->client, level.time );
-
-	trap_SendServerCommand( -1, va( "raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime ) );
-
-	if ( !level.finishRaceTime ) {
-		other->client->ps.stats[STAT_POSITION] = 1;
-
-		level.winnerNumber = other->s.clientNum;
-		level.finishRaceTime = level.time;
-		trap_SendServerCommand( -1, va( "print \"%s won the race!\n\"", other->client->pers.netname ) );
-		trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"" );
-	} else {
-		switch ( other->client->ps.stats[STAT_POSITION] ) {
-		case 1:
-			place = "first";
-			break;
-		case 2:
-			place = "second";
-			break;
-		case 3:
-			place = "third";
-			break;
-		case 4:
-			place = "forth";
-			break;
-		case 5:
-			place = "fifth";
-			break;
-		case 6:
-			place = "sixth";
-			break;
-		case 7:
-			place = "seventh";
-			break;
-		case 8:
-			place = "eighth";
-			break;
-		default:
-			place = NULL;
-			Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
-			break;
-		}
-
-		if ( other->client->ps.stats[STAT_POSITION] <= 8 ) {
-			trap_SendServerCommand( -1, va( "print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ) );
-		} else {
-			trap_SendServerCommand( -1, va( "print \"%s finished the race!\n\"", other->client->pers.netname ) );
-		}
-	}
+if ( other->client->lastCheckpointTime + 300 > level.time ) {
+return;
 }
 
-void Touch_StartFinish( gentity_t *self, gentity_t *other, trace_t *trace ) {
+if ( g_developer.integer )
+G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
+
+other->client->lastCheckpointTime = level.time;
+other->number = 1;
+other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
+other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
+
+trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
+
+Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
+}
+
+void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
+char*place;
+
+if ( !other->client ) {
+return;
+}
+
+if ( other->client->lastCheckpointTime + 300 > level.time ) {
+return;
+}
+
+if ( g_developer.integer )
+G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
+
+if ( self->number != other->number ) {
+return;
+}
+
+other->client->lastCheckpointTime = level.time;
+other->client->finishRaceTime = level.time;
+other->s.weapon = WP_NONE;
+other->takedamage = qfalse;
+
+trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+
+if ( !level.finishRaceTime ){
+other->client->ps.stats[STAT_POSITION] = 1;
+
+level.winnerNumber = other->s.clientNum;
+level.finishRaceTime = level.time;
+trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
+trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+}
+else {
+switch ( other->client->ps.stats[STAT_POSITION] ){
+case 1:
+place = "first";
+break;
+case 2:
+place = "second";
+break;
+case 3:
+place = "third";
+break;
+case 4:
+place = "forth";
+break;
+case 5:
+place = "fifth";
+break;
+case 6:
+place = "sixth";
+break;
+case 7:
+place = "seventh";
+break;
+case 8:
+place = "eighth";
+break;
+default:
+place = NULL;
+Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
+break;
+}
+
+if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
+trap_SendServerCommand( -1, va("print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ));
+}
+else {
+trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
+}
+}
+}
+
+void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	char	*place;
-	int lapTime = 0;
-	int completedLap;
 
 	if ( !other->client ) {
 		return;
@@ -189,47 +141,34 @@ void Touch_StartFinish( gentity_t *self, gentity_t *other, trace_t *trace ) {
 		return;
 	}
 
-	if ( g_developer.integer )
+	if (g_developer.integer)
 		G_Printf( "Client %i touched the startfinish line.  Checkpoint number %i\n", other->s.clientNum, self->number );
 
-	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ) {
+	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
 		return;
 	}
 
-	if ( self->number == other->number ) {
-		completedLap = other->currentLap;
-		if ( level.startRaceTime && other->client->ladderLastLapStartMs > 0
-				&& level.time >= other->client->ladderLastLapStartMs
-				&& completedLap > 0 ) {
-			lapTime = level.time - other->client->ladderLastLapStartMs;
-			if ( lapTime > 0 ) {
-				G_RecordClientLapTime( other->client, completedLap, lapTime );
-			}
-		} else if ( other->client->ladderLastLapStartMs <= 0 ) {
-			other->client->ladderLastLapStartMs = level.time;
-		}
-
+	if (self->number == other->number){
 		other->client->lastCheckpointTime = level.time;
 		other->currentLap++;
 		// increment lap
-		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ) {
+		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
 			other->takedamage = qfalse;
 
-			G_UpdateClientTotalRaceTime( other->client, level.time );
+			trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
 
-			trap_SendServerCommand( -1, va( "raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime ) );
-
-			if ( !level.finishRaceTime ) {
+			if (!level.finishRaceTime){
 				other->client->ps.stats[STAT_POSITION] = 1; // make sure the player is first
 
 				level.winnerNumber = other->s.clientNum;
 				level.finishRaceTime = level.time;
-				trap_SendServerCommand( -1, va( "print \"%s won the race!\n\"", other->client->pers.netname ) );
-				trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"" );
-			} else {
-				switch ( other->client->ps.stats[STAT_POSITION] ) {
+				trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
+				trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+			}
+			else {
+				switch ( other->client->ps.stats[STAT_POSITION] ){
 				case 1:
 					place = "first";
 					break;
@@ -260,30 +199,33 @@ void Touch_StartFinish( gentity_t *self, gentity_t *other, trace_t *trace ) {
 					break;
 				}
 
-				if ( other->client->ps.stats[STAT_POSITION] <= 8 ) {
-					trap_SendServerCommand( -1, va( "print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ) );
-				} else {
-					trap_SendServerCommand( -1, va( "print \"%s finished the race!\n\"", other->client->pers.netname ) );
+				if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
+					trap_SendServerCommand( -1, va("print \"%s finished the race in %s place!\n\"", other->client->pers.netname, place ));
+				}
+				else {
+					trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
 				}
 			}
-		} else {
+		}
+		else {
 			other->number = 1;
 			other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
-			other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( 0.1f );
+			other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
 //			Com_Printf( "resetting frac, sf\n" );
-			trap_SendServerCommand( -1, va( "newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time ) );
-			other->client->ladderLastLapStartMs = level.time;
+                       trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, other->currentLap, level.time) );
 		}
 
-
-		if ( other->currentLap == level.numberOfLaps ) {
-			trap_SendServerCommand( other->s.number, "cp \"Final lap\n\"" );
-			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/finallap.wav" ) );
-		} else {
-			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex( "sound/rally/race/checkpoint.wav" ) );
+		
+		if (other->currentLap == level.numberOfLaps ){
+			trap_SendServerCommand( other->s.number, "cp \"Final lap\n\"");
+			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/finallap.wav") );
+		}
+		else {
+			Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
 		}
 	}
 }
+
 void Think_StartFinish( gentity_t *self ){
 	gentity_t		*ent;
 	int		checkpoints;
@@ -313,26 +255,11 @@ void Think_StartFinish( gentity_t *self ){
 
 	if( self->s.origin2[0] == 0.0f &&
 		self->s.origin2[1] == 0.0f &&
-		self->s.origin2[2] == 0.0f &&
-		( self->s.origin[0] != 0.0f ||
-		self->s.origin[1] != 0.0f ||
+		self->s.origin2[2] == 0.0f && 
+		( self->s.origin[0] != 0.0f || 
+		self->s.origin[1] != 0.0f || 
 		self->s.origin[2] != 0.0f ) )
 		VectorCopy( self->s.origin, self->s.origin2 );
-
-	if ( self->touch == Touch_Start ) {
-		VectorCopy( self->s.origin, level.startOrigin );
-		level.hasStart = qtrue;
-	}
-	else if ( self->touch == Touch_Finish ) {
-		VectorCopy( self->s.origin, level.finishOrigin );
-		level.hasFinish = qtrue;
-	}
-	else if ( self->touch == Touch_StartFinish ) {
-		VectorCopy( self->s.origin, level.startOrigin );
-		VectorCopy( self->s.origin, level.finishOrigin );
-		level.hasStart = qtrue;
-		level.hasFinish = qtrue;
-	}
 
 	checkpoints = 0;
 
@@ -346,85 +273,41 @@ void Think_StartFinish( gentity_t *self ){
                 }
         }
 
-       memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
-       memset( level.cpDist, 0, sizeof( level.cpDist ) );
-       ent = NULL;
-       while ( ( ent = G_Find( ent, FOFS(classname), "rally_checkpoint" ) ) != NULL ) {
-               if ( ent->number > 0 && ent->number <= level.numCheckpoints ) {
-                       level.checkpoints[ ent->number - 1 ] = ent;
-               }
-       }
+        memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
+        memset( level.cpDist, 0, sizeof( level.cpDist ) );
+        ent = NULL;
+        while ( ( ent = G_Find( ent, FOFS(classname), "rally_checkpoint" ) ) != NULL ) {
+                if ( ent->number > 0 && ent->number <= level.numCheckpoints ) {
+                        level.checkpoints[ ent->number - 1 ] = ent;
+                }
+        }
 
-       {
-               qboolean missing = qfalse;
-               int i;
+        level.trackLength = 0.0f;
+        if ( level.numCheckpoints > 0 ) {
+                vec3_t last, first, delta;
+                int i;
 
-               for ( i = 0; i < level.numCheckpoints; i++ ) {
-                       if ( !level.checkpoints[i] ) {
-                               missing = qtrue;
-                               if ( g_developer.integer ) {
-                                       Com_Printf( "rally_checkpoint %d not found\n", i + 1 );
-                               }
-                       }
-               }
+                VectorCopy( level.checkpoints[0]->s.origin, first );
+                VectorCopy( first, last );
+                level.cpDist[0] = 0.0f;
+                for ( i = 1; i < level.numCheckpoints; i++ ) {
+                        VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
+                        level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
+                        VectorCopy( level.checkpoints[i]->s.origin, last );
+                }
+                VectorSubtract( last, first, delta );
+                level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+        }
 
-               level.trackLength = 0.0f;
-               if ( !missing && level.numCheckpoints > 0 ) {
-                       vec3_t last, first, delta;
-                       float startDist;
-                       qboolean loopTrack;
+        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
 
-                       VectorCopy( level.checkpoints[0]->s.origin, first );
-                       VectorCopy( first, last );
-
-                       startDist = 0.0f;
-                       if ( level.hasStart ) {
-                               startDist = Distance( level.startOrigin, first );
-                               level.trackLength += startDist;
-                       }
-                       level.cpDist[0] = startDist;
-                       for ( i = 1; i < level.numCheckpoints; i++ ) {
-                               float segmentLength;
-
-                               VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
-                               segmentLength = VectorLength( delta );
-                               level.trackLength += segmentLength;
-                               level.cpDist[i] = level.cpDist[i-1] + segmentLength;
-                               if ( g_developer.integer && level.cpDist[i] <= level.cpDist[i-1] ) {
-                                       Com_Printf( "Checkpoint distance %d is non-increasing\n", i + 1 );
-                               }
-                               VectorCopy( level.checkpoints[i]->s.origin, last );
-                       }
-
-                       loopTrack = ( !level.hasFinish ||
-                               ( level.hasStart && VectorCompare( level.startOrigin, level.finishOrigin ) ) );
-                       if ( level.hasFinish && !loopTrack ) {
-                               level.trackLength += Distance( last, level.finishOrigin );
-                       } else {
-                               VectorSubtract( last, first, delta );
-                               level.trackLength += VectorLength( delta );
-                       }
-               } else if ( g_developer.integer ) {
-                       Com_Printf( "Track length not calculated due to missing checkpoints\n" );
-               }
-       }
-
-       if ( level.hasFinish ) {
-               if ( level.numCheckpoints == 0 ) {
-                       level.trackLength = Distance( level.startOrigin, level.finishOrigin );
-               }
-       }
-
-       trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
-
-	self->number = level.numCheckpoints;
-	self->s.weapon = self->number;
+        self->number = level.numCheckpoints;
+        self->s.weapon = self->number;
 }
 
 void Think_Finish( gentity_t *self ){
 Think_StartFinish( self );
 self->number++;
-self->s.weapon = self->number;
 }
 
 
@@ -447,7 +330,7 @@ void SP_rally_startfinish( gentity_t *ent ) {
 
 	ent->touch = Touch_StartFinish;
 	ent->think = Think_StartFinish;
-	ent->nextthink = level.time + 300;
+	ent->nextthink = level.time + 100;
 	ent->s.frame = 0;
 
 	trap_LinkEntity (ent);
@@ -464,7 +347,7 @@ ent->s.eType = ET_CHECKPOINT;
 
 ent->touch = Touch_Start;
 ent->think = Think_StartFinish;
-ent->nextthink = level.time + 300;
+ent->nextthink = level.time + 100;
 ent->s.frame = 0;
 
 trap_LinkEntity (ent);
@@ -478,12 +361,8 @@ ent->s.eType = ET_CHECKPOINT;
 
 ent->touch = Touch_Finish;
 ent->think = Think_Finish;
-ent->nextthink = level.time + 300;
+ent->nextthink = level.time + 100;
 ent->s.frame = 0;
-
-level.finishLine = ent;
-VectorCopy( ent->s.origin, level.finishOrigin );
-level.hasFinish = qtrue;
 
 trap_LinkEntity (ent);
 }
@@ -579,7 +458,6 @@ void Think_Checkpoint( gentity_t *self ){
 //	spawnflag 1 enable messages, spawn flag 2 enable sound, 3 is enable both
 void SP_rally_checkpoint( gentity_t *ent ) {
 	trap_SetBrushModel( ent, ent->model );
-	G_SetOrigin( ent, ent->s.origin );
 
 // STONELANCE - April 23, 2002 temp for testing bezier curve stuff
 	ent->r.svFlags |= SVF_BROADCAST;

@@ -324,6 +324,21 @@ static qboolean SV_LadderJsonAppendBoolean( ladderJsonBuilder_t *builder, qboole
         return SV_LadderJsonAppendRaw( builder, "false", 5 );
 }
 
+static const char *SV_LadderTeamName( int team ) {
+        switch ( team ) {
+        case TEAM_RED:
+                return "red";
+        case TEAM_BLUE:
+                return "blue";
+        case TEAM_SPECTATOR:
+                return "spectator";
+        default:
+                break;
+        }
+
+        return "free";
+}
+
 static qboolean SV_LadderJsonAppendKey( ladderJsonBuilder_t *builder, const char *key, qboolean *first ) {
         if ( !SV_LadderJsonEnsure( builder, 1 ) ) {
                 return qfalse;
@@ -400,6 +415,7 @@ static qboolean SV_LadderJsonAppendLapArray( ladderJsonBuilder_t *builder, const
 
 static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const ladderPlayerPayload_t *player ) {
         qboolean first = qtrue;
+        const char *teamName = SV_LadderTeamName( player->team );
 
         if ( !SV_LadderJsonAppendChar( builder, '{' ) ) {
                 return qfalse;
@@ -425,6 +441,10 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
              !SV_LadderJsonAppendString( builder, player->cleanName ) ) {
                 return qfalse;
         }
+        if ( !SV_LadderJsonAppendKey( builder, "displayName", &first ) ||
+             !SV_LadderJsonAppendString( builder, player->cleanName ) ) {
+                return qfalse;
+        }
         if ( !SV_LadderJsonAppendKey( builder, "model", &first ) ||
              !SV_LadderJsonAppendString( builder, player->model ) ) {
                 return qfalse;
@@ -437,11 +457,19 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
              !SV_LadderJsonAppendInt( builder, player->team ) ) {
                 return qfalse;
         }
+        if ( !SV_LadderJsonAppendKey( builder, "teamName", &first ) ||
+             !SV_LadderJsonAppendString( builder, teamName ) ) {
+                return qfalse;
+        }
         if ( !SV_LadderJsonAppendKey( builder, "isBot", &first ) ||
              !SV_LadderJsonAppendBoolean( builder, player->isBot ) ) {
                 return qfalse;
         }
         if ( !SV_LadderJsonAppendKey( builder, "score", &first ) ||
+             !SV_LadderJsonAppendInt( builder, player->score ) ) {
+                return qfalse;
+        }
+        if ( !SV_LadderJsonAppendKey( builder, "rawScore", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->score ) ) {
                 return qfalse;
         }
@@ -1680,12 +1708,15 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
 }
 
 void SV_LadderFrame( void ) {
-        if ( !sv_ladder.initialized ) {
+        if ( !sv_ladderEnabled || !sv_ladderEnabled->integer ) {
                 return;
         }
 
-        if ( !sv_ladderEnabled || !sv_ladderEnabled->integer ) {
-                return;
+        if ( !sv_ladder.initialized ) {
+                SV_LadderInit();
+                if ( !sv_ladder.initialized ) {
+                        return;
+                }
         }
 
 #ifdef USE_CURL

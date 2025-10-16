@@ -30,9 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "bg_local.h"
 
-static float PM_CalcTorqueSlope( car_t *car ) {
-        return (float)(car->rpmHpPeak * M_PI * car->torquePeak - 16500 * car->hpPeak) / (float)(car->rpmHpPeak * M_PI * (car->rpmHpPeak*car->rpmHpPeak - 2 * car->rpmHpPeak * car->rpmTorquePeak + car->rpmTorquePeak*car->rpmTorquePeak));
-}
+static float CP_TORQUE_SLOPE = (float)(CP_RPM_HP_PEAK * M_PI * CP_TORQUE_PEAK - 16500 * CP_HP_PEAK) / (float)(CP_RPM_HP_PEAK * M_PI * (CP_RPM_HP_PEAK*CP_RPM_HP_PEAK - 2 * CP_RPM_HP_PEAK * CP_RPM_TORQUE_PEAK + CP_RPM_TORQUE_PEAK*CP_RPM_TORQUE_PEAK));
+static float CP_GEAR_RATIOS[] = {CP_GEAR1, CP_GEAR2, CP_GEAR3, CP_GEAR4, CP_GEAR5, CP_GEAR6};
 
 
 #if 0
@@ -49,10 +48,10 @@ static float PM_RPMtoWheelSpeed( car_t *car ){
 	else if (car->gear == 0)
 		ratio = CP_GEARN;
 	else
-		ratio = car->gearRatios[car->gear-1];
+		ratio = CP_GEAR_RATIOS[car->gear-1];
 
-//	return (-(car->rpm-CP_RPM_MIN) * M_PI / 30) / (ratio * car->axleGear);
-	return (-(car->rpm) * M_PI / 30) / (ratio * car->axleGear);
+//	return (-(car->rpm-CP_RPM_MIN) * M_PI / 30) / (ratio * CP_AXLEGEAR);
+	return (-(car->rpm) * M_PI / 30) / (ratio * CP_AXLEGEAR);
 }
 #endif
 
@@ -71,7 +70,7 @@ static float PM_WheelSpeedtoRPM( car_t *car, carPoint_t *points ){
 	else if (car->gear == 0)
 		ratio = CP_GEARN;
 	else
-		ratio = car->gearRatios[car->gear-1];
+		ratio = CP_GEAR_RATIOS[car->gear-1];
 
 	w = 0;
 	if (car->gear >= 0){
@@ -85,8 +84,8 @@ static float PM_WheelSpeedtoRPM( car_t *car, carPoint_t *points ){
 		}
 	}
 
-//	return (-w / M_PI * 30) * (ratio * car->axleGear) + CP_RPM_MIN;
-	return (-w / M_PI * 30) * (ratio * car->axleGear);
+//	return (-w / M_PI * 30) * (ratio * CP_AXLEGEAR) + CP_RPM_MIN;
+	return (-w / M_PI * 30) * (ratio * CP_AXLEGEAR);
 }
 
 
@@ -99,13 +98,13 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points){
 	float	rpmTemp;
 	float	shiftDownRPM, shiftUpRPM;
 
-	shiftDownRPM = CP_RPM_MIN + (car->rpmMax - CP_RPM_MIN) * (0.4f + 0.2f * car->throttle);
-	shiftUpRPM = CP_RPM_MIN + (car->rpmMax - CP_RPM_MIN) * (0.8f + 0.2f * car->throttle);
+	shiftDownRPM = CP_RPM_MIN + (CP_RPM_MAX - CP_RPM_MIN) * (0.4f + 0.2f * car->throttle);
+	shiftUpRPM = CP_RPM_MIN + (CP_RPM_MAX - CP_RPM_MIN) * (0.8f + 0.2f * car->throttle);
 
 //  Com_Printf("shiftDownRPM: %f shiftUpRPM: %f\n", shiftDownRPM, shiftUpRPM);
 
-	if ( shiftUpRPM > car->rpmMax )
-		shiftUpRPM = car->rpmMax;
+	if ( shiftUpRPM > CP_RPM_MAX )
+		shiftUpRPM = CP_RPM_MAX;
 
 	if (car->gear > 0){
 		rpmTemp = PM_WheelSpeedtoRPM(car, points);
@@ -123,16 +122,16 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points){
 				break;
 
 			rpmTemp = PM_WheelSpeedtoRPM(car, points);
-			if (rpmTemp > car->rpmMax)
-				rpmTemp = car->rpmMax;
+			if (rpmTemp > CP_RPM_MAX)
+				rpmTemp = CP_RPM_MAX;
 		}
 
 //		Com_Printf("2 Gear: %i RPM temp: %f\n", car->gear, rpmTemp);
 
 		while ( rpmTemp > shiftUpRPM ){
 			if ( !points[2].onGround || !points[3].onGround || points[2].slipping || points[3].slipping ){
-				if ( rpmTemp > car->rpmMax ){
-					rpmTemp = car->rpmMax;
+				if ( rpmTemp > CP_RPM_MAX ){
+					rpmTemp = CP_RPM_MAX;
 					break;
 				}
 				else if ( rpmTemp > shiftUpRPM )
@@ -143,8 +142,8 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points){
 				if ( points[2].onGround && points[3].onGround && !points[2].slipping && !points[3].slipping )
 					car->gear++;
 			}
-			else if ( rpmTemp > car->rpmMax ){
-				rpmTemp = car->rpmMax;
+			else if ( rpmTemp > CP_RPM_MAX ){
+				rpmTemp = CP_RPM_MAX;
 				break;
 			}
 
@@ -162,8 +161,8 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points){
 		rpmTemp = PM_WheelSpeedtoRPM(car, points);
 		if (rpmTemp < CP_RPM_MIN)
 			rpmTemp = CP_RPM_MIN;
-		if (rpmTemp > car->rpmMax)
-			rpmTemp = car->rpmMax;
+		if (rpmTemp > CP_RPM_MAX)
+			rpmTemp = CP_RPM_MAX;
 
 		car->rpm = rpmTemp;
 	}
@@ -411,7 +410,7 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
 		return;
 	}
 
-	if (car->rpm >= car->rpmMax){
+	if (car->rpm >= CP_RPM_MAX){
 		// just add enough torque to stay at constant speed
 		return;
 //		points[i].w = PM_RPMtoWheelSpeed(car);
@@ -419,8 +418,8 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
 	}
 
 
-	relrpm = (car->rpm - car->rpmTorquePeak);
-	torque = car->throttle * ((-1.0f * PM_CalcTorqueSlope(car) * relrpm * relrpm) + car->torquePeak); // ft.lb
+	relrpm = (car->rpm - CP_RPM_TORQUE_PEAK);
+	torque = car->throttle * ((-1.0f * CP_TORQUE_SLOPE * relrpm * relrpm) + CP_TORQUE_PEAK); // ft.lb
 //	power = torque * car->rpm / (30 * 550 / M_PI); // hp
 
 	if (car->gear < 0)
@@ -428,13 +427,13 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
 	else if (car->gear == 0)
 		ratio = CP_GEARN;
 	else
-		ratio = car->gearRatios[car->gear-1];
+		ratio = CP_GEAR_RATIOS[car->gear-1];
 
 	friction = 0;
 	if (fabs(car->throttle < 0.01f) && car->gear)
 		friction = (CP_M_2_QU * CP_M_2_QU * (car->rpm - CP_RPM_MIN) / 10.0f / ratio);// frictional torque
 
-	ratio *= car->axleGear;
+	ratio *= CP_AXLEGEAR;
 
 	torque *= 1.355818f; // Nm = kg*m^2/s^2
 	torque *= -ratio;
@@ -473,7 +472,7 @@ static void PM_TireBrakingForces( car_t *car, carPoint_t *points, int i, vec3_t 
 		return;
 	}
 
-	normalForce = CP_CURRENT_GRAVITY * (car->frameMass + car->wheelMass);
+	normalForce = CP_CURRENT_GRAVITY * (CP_FRAME_MASS + CP_WHEEL_MASS);
 	torque = throttle * normalForce * CP_SCOF * 0.6f * WHEEL_RADIUS;
 
 	if (points[i].w < 0.0f)

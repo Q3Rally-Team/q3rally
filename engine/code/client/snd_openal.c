@@ -2004,16 +2004,6 @@ static void S_AL_CloseMusicFiles(void)
 	}
 }
 
-static
-void S_AL_GetMusicState( cgameMusicState_t *state )
-{
-	if( !state ) {
-		return;
-	}
-
-	Com_Memset( state, 0, sizeof( *state ) );
-}
-
 /*
 =================
 S_AL_StopBackgroundTrack
@@ -2731,7 +2721,6 @@ qboolean S_AL_Init( soundInterface_t *si )
 	si->StartLocalSound = S_AL_StartLocalSound;
 	si->StartBackgroundTrack = S_AL_StartBackgroundTrack;
 	si->StopBackgroundTrack = S_AL_StopBackgroundTrack;
-	si->GetMusicState = S_AL_GetMusicState;
 	si->RawSamples = S_AL_RawSamples;
 	si->StopAllSounds = S_AL_StopAllSounds;
 	si->ClearLoopingSounds = S_AL_ClearLoopingSounds;

@@ -25,22 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // g_public.h -- game module information visible to server
 
 #define	GAME_API_VERSION	8
-#include "bg_public.h"
-
-#define	LADDER_MAX_MATCH_ID		64
-#define	LADDER_MAX_MODE_NAME		32
-#define	LADDER_MAX_SERVER_NAME		128
-#define	LADDER_MAX_SERVER_HOST		96
-#define	LADDER_MAX_SERVER_BUILD	32
-#define	LADDER_MAX_PLAYER_ID		72
-#define	LADDER_MAX_GUID			64
-#define	LADDER_MAX_PLAYER_NAME	64
-#define	LADDER_MAX_MODEL_NAME	64
-#define	LADDER_MAX_VEHICLE_NAME	64
-
-#ifndef RACE_MAX_RECORDED_LAPS
-#define RACE_MAX_RECORDED_LAPS	64
-#endif
 
 // entity->svFlags
 // the server does not know how to interpret most of the values
@@ -113,82 +97,6 @@ typedef struct {
 	entityState_t	s;				// communicated by server to clients
 	entityShared_t	r;				// shared by both the server system and game
 } sharedEntity_t;
-
-
-typedef struct {
-	int				clientNum;
-	char	playerId[LADDER_MAX_PLAYER_ID];
-	char	guid[LADDER_MAX_GUID];
-	char	name[LADDER_MAX_PLAYER_NAME];
-	char	cleanName[LADDER_MAX_PLAYER_NAME];
-	char	model[LADDER_MAX_MODEL_NAME];
-	char	vehicle[LADDER_MAX_VEHICLE_NAME];
-	int				team;
-	qboolean			isBot;
-	int				score;
-	int				ping;
-	int				time;
-	int				scoreFlags;
-	int				powerUps;
-	int				accuracy;
-	int				impressiveCount;
-	int				impressiveTelefragCount;
-	int				excellentCount;
-	int				gauntletCount;
-	int				defendCount;
-	int				assistCount;
-	int				perfect;
-	int				captures;
-	int				damageDealt;
-	int				damageTaken;
-	int				position;
-	int				bestLapMs;
-	int				totalRaceMs;
-	int				lapCount;
-	int				lapTimes[RACE_MAX_RECORDED_LAPS];
-	int				kills;
-	int				deaths;
-	int				zoneHoldMs;
-	int				zoneActiveSigil;
-	int				survivalMs;
-	int				eliminationRound;
-	int				eliminationPlayersRemaining;
-	float				eliminationMetric;
-	int				finishRaceTime;
-	float				kdRatio;
-} ladderPlayerPayload_t;
-
-typedef struct {
-	qboolean	valid;
-	int				gametype;
-	char	matchId[LADDER_MAX_MATCH_ID];
-	char	mode[LADDER_MAX_MODE_NAME];
-	char	mapName[MAX_QPATH];
-	char	serverName[LADDER_MAX_SERVER_NAME];
-	char	serverHost[LADDER_MAX_SERVER_HOST];
-	char	serverBuild[LADDER_MAX_SERVER_BUILD];
-	char	startTimeIso[32];
-	char	endTimeIso[32];
-	char	durationIso[32];
-	int				startEpoch;
-	int				endEpoch;
-	int				durationSeconds;
-	int				levelStartTime;
-	int				levelEndTime;
-	int				raceStartTime;
-	int				raceEndTime;
-	int				finishRaceTime;
-	int				winnerClientNum;
-	int				numberOfLaps;
-	qboolean	trackReversed;
-	int				eliminationStartDelay;
-	int				eliminationInterval;
-	int				eliminationWarning;
-	int				teamScores[TEAM_NUM_TEAMS];
-	int				teamTimes[TEAM_NUM_TEAMS];
-	int				playerCount;
-	ladderPlayerPayload_t	players[MAX_CLIENTS];
-} ladderMatchPayload_t;
 
 
 
@@ -320,11 +228,11 @@ typedef enum {
 	G_TRACECAPSULE,	// ( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
 	G_ENTITY_CONTACTCAPSULE,	// ( const vec3_t mins, const vec3_t maxs, const gentity_t *ent );
 	
-	// 1.32
-	G_FS_SEEK,
-	G_LADDER_SUBMIT,
+        // 1.32
+        G_FS_SEEK,
+        G_LADDER_SUBMIT,
 
-	BOTLIB_SETUP = 200,				// ( void );
+        BOTLIB_SETUP = 200,				// ( void );
 	BOTLIB_SHUTDOWN,				// ( void );
 	BOTLIB_LIBVAR_SET,
 	BOTLIB_LIBVAR_GET,

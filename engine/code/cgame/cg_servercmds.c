@@ -26,43 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // be a valid snapshot this frame
 
 #include "cg_local.h"
-
-#ifdef Q3_VM
-int CG_EliminationMsLeft( void ) {
-    int msLeft;
-
-    if ( cgs.eliminationMsRemaining <= 0 ) {
-        return 0;
-    }
-
-    if ( cgs.eliminationLastUpdateTime <= 0 ) {
-        return cgs.eliminationMsRemaining;
-    }
-
-    msLeft = cgs.eliminationMsRemaining - ( cg.time - cgs.eliminationLastUpdateTime );
-    if ( msLeft < 0 ) {
-        msLeft = 0;
-    }
-
-    return msLeft;
-}
-
-int CG_EliminationDisplayRound( void ) {
-    int round;
-
-    round = cgs.eliminationRound;
-    if ( round < 0 ) {
-        round = 0;
-    }
-
-    if ( cgs.eliminationActive && cgs.eliminationRemainingPlayers > 1 ) {
-        round++;
-    }
-
-    return round;
-}
-#endif
-
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"
 
@@ -96,8 +59,6 @@ static int CG_ValidOrder(const char *p) {
 }
 #endif
 
-static void CG_ParseEliminationInfo( void );
-
 /*
 =================
 CG_ParseScores
@@ -122,28 +83,27 @@ static void CG_ParseScores( void ) {
 	memset( cg.scores, 0, sizeof( cg.scores ) );
 	for ( i = 0 ; i < cg.numScores ; i++ ) {
 		//
-// STONELANCE changed i * 14 to i * 19, added scoreboard fields
-		cg.scores[i].client = atoi( CG_Argv( i * 19 + 6 ) );
-		cg.scores[i].score = atoi( CG_Argv( i * 19 + 7 ) );
-		cg.scores[i].ping = atoi( CG_Argv( i * 19 + 8 ) );
-		cg.scores[i].time = atoi( CG_Argv( i * 19 + 9 ) );
-		cg.scores[i].scoreFlags = atoi( CG_Argv( i * 19 + 10 ) );
-		powerups = atoi( CG_Argv( i * 19 + 11 ) );
-		cg.scores[i].accuracy = atoi(CG_Argv(i * 19 + 12));
-		cg.scores[i].impressiveCount = atoi(CG_Argv(i * 19 + 13));
-		cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 19 + 14));
-		cg.scores[i].excellentCount = atoi(CG_Argv(i * 19 + 15));
-		cg.scores[i].guantletCount = atoi(CG_Argv(i * 19 + 16));
-		cg.scores[i].defendCount = atoi(CG_Argv(i * 19 + 17));
-		cg.scores[i].assistCount = atoi(CG_Argv(i * 19 + 18));
-		cg.scores[i].perfect = atoi(CG_Argv(i * 19 + 19));
-		cg.scores[i].captures = atoi(CG_Argv(i * 19 + 20));
+// STONELANCE changed i * 14 to i * 18, added 4
+		cg.scores[i].client = atoi( CG_Argv( i * 18 + 6 ) );
+		cg.scores[i].score = atoi( CG_Argv( i * 18 + 7 ) );
+		cg.scores[i].ping = atoi( CG_Argv( i * 18 + 8 ) );
+		cg.scores[i].time = atoi( CG_Argv( i * 18 + 9 ) );
+		cg.scores[i].scoreFlags = atoi( CG_Argv( i * 18 + 10 ) );
+		powerups = atoi( CG_Argv( i * 18 + 11 ) );
+		cg.scores[i].accuracy = atoi(CG_Argv(i * 18 + 12));
+		cg.scores[i].impressiveCount = atoi(CG_Argv(i * 18 + 13));
+		cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 18 + 14));
+		cg.scores[i].excellentCount = atoi(CG_Argv(i * 18 + 15));
+		cg.scores[i].guantletCount = atoi(CG_Argv(i * 18 + 16));
+		cg.scores[i].defendCount = atoi(CG_Argv(i * 18 + 17));
+		cg.scores[i].assistCount = atoi(CG_Argv(i * 18 + 18));
+		cg.scores[i].perfect = atoi(CG_Argv(i * 18 + 19));
+		cg.scores[i].captures = atoi(CG_Argv(i * 18 + 20));
 // END
-// STONELANCE add additional score parts
-                cg.scores[i].damageDealt = atoi(CG_Argv(i * 19 + 21));
-                cg.scores[i].damageTaken = atoi(CG_Argv(i * 19 + 22));
-                cg.scores[i].position = atoi(CG_Argv(i * 19 + 23));
-                cg.scores[i].deaths = atoi(CG_Argv(i * 19 + 24));
+// STONELANCE add two more score parts
+		cg.scores[i].damageDealt = atoi(CG_Argv(i * 18 + 21));
+		cg.scores[i].damageTaken = atoi(CG_Argv(i * 18 + 22));
+		cg.scores[i].position = atoi(CG_Argv(i * 18 + 23));
 // END
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
@@ -164,10 +124,9 @@ static void CG_ParseScores( void ) {
 		cg.scores[i].score = 0;
 		cg.scores[i].ping = 0;
 		cg.scores[i].time = 0;
-                cg.scores[i].scoreFlags = -1;
-                cg.scores[i].position = -1;
-                cg.scores[i].deaths = 0;
-                powerups = 0;
+		cg.scores[i].scoreFlags = -1;
+		cg.scores[i].position = -1;
+		powerups = 0;
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
 			cg.scores[i].client = 0;
@@ -244,14 +203,6 @@ void CG_ParseServerinfo( void ) {
 // END
 	cgs.capturelimit = atoi( Info_ValueForKey( info, "capturelimit" ) );
 	cgs.timelimit = atoi( Info_ValueForKey( info, "timelimit" ) );
-	{
-		const char *finishDelay = Info_ValueForKey( info, "g_finishRaceDelay" );
-		if ( finishDelay && finishDelay[0] ) {
-			cgs.finishRaceDelay = atoi( finishDelay );
-		} else {
-			cgs.finishRaceDelay = 30;
-		}
-	}
 	cgs.maxclients = atoi( Info_ValueForKey( info, "sv_maxclients" ) );
 	mapname = Info_ValueForKey( info, "mapname" );
 	Com_sprintf( cgs.mapname, sizeof( cgs.mapname ), "maps/%s.bsp", mapname );
@@ -259,8 +210,6 @@ void CG_ParseServerinfo( void ) {
 	trap_Cvar_Set("g_redTeam", cgs.redTeam);
 	Q_strncpyz( cgs.blueTeam, Info_ValueForKey( info, "g_blueTeam" ), sizeof(cgs.blueTeam) );
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
-
-	CG_ParseEliminationInfo();
 }
 
 /*
@@ -315,50 +264,6 @@ static void CG_ParseSigilStatus( void ) {
 	}
 }
 
-static void CG_ParseEliminationInfo( void ) {
-	const char *str;
-	int active = 0;
-	int remaining = 0;
-	int round = 0;
-	int msLeft = 0;
-	int parsed;
-
-	str = CG_ConfigString( CS_ELIMINATION_INFO );
-
-	if ( str && *str ) {
-		parsed = sscanf( str, "%i %i %i %i", &active, &remaining, &round, &msLeft );
-		if ( parsed < 4 ) {
-		active = 0;
-		remaining = 0;
-		round = 0;
-		msLeft = 0;
-		}
-	}
-
-	if ( active < 0 ) {
-		active = 0;
-	}
-	if ( remaining < 0 ) {
-		remaining = 0;
-	}
-	if ( round < 0 ) {
-		round = 0;
-	}
-	if ( msLeft < 0 ) {
-		msLeft = 0;
-	}
-
-	if ( cgs.gametype != GT_ELIMINATION ) {
-		active = 0;
-	}
-
-	cgs.eliminationActive = active;
-	cgs.eliminationRemainingPlayers = remaining;
-	cgs.eliminationRound = round;
-	cgs.eliminationMsRemaining = msLeft;
-	cgs.eliminationLastUpdateTime = active ? cg.time : 0;
-}
-
 /*
 ===============================================================
 CG_SetConfigValues
@@ -376,8 +281,7 @@ cgs.scores3 = atoi( CG_ConfigString( CS_SCORES3 ) );
 cgs.scores4 = atoi( CG_ConfigString( CS_SCORES4 ) );
 // END
 cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
-	cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
-	CG_ParseEliminationInfo();
+cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
 if( cgs.gametype == GT_CTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
 		cgs.redflag = s[0] - '0';
@@ -472,17 +376,15 @@ static void CG_ConfigStringModified( void ) {
 	} else if ( num == CS_SCORES2 ) {
 		cgs.scores2 = atoi( str );
 // Q3Rally Code Start
-        } else if ( num == CS_SCORES3 ) {
-                cgs.scores3 = atoi( str );
-        } else if ( num == CS_SCORES4 ) {
-                cgs.scores4 = atoi( str );
+	} else if ( num == CS_SCORES3 ) {
+		cgs.scores3 = atoi( str );
+	} else if ( num == CS_SCORES4 ) {
+		cgs.scores4 = atoi( str );
 // END
-        } else if ( num == CS_ELIMINATION_INFO ) {
-                CG_ParseEliminationInfo();
-        } else if ( num == CS_TRACKLENGTH ) {
-                cgs.trackLength = atof( str );
-        } else if ( num == CS_LEVEL_START_TIME ) {
-                cgs.levelStartTime = atoi( str );
+	} else if ( num == CS_TRACKLENGTH ) {
+		cgs.trackLength = atof( str );
+	} else if ( num == CS_LEVEL_START_TIME ) {
+		cgs.levelStartTime = atoi( str );
 	} else if ( num == CS_VOTE_TIME ) {
 		cgs.voteTime = atoi( str );
 		cgs.voteModified = qtrue;
@@ -513,11 +415,6 @@ static void CG_ConfigStringModified( void ) {
 #endif
 	} else if ( num == CS_INTERMISSION ) {
 		cg.intermissionStarted = atoi( str );
-		if ( cg.intermissionStarted ) {
-			cg.raceFinishCountdownActive = qfalse;
-			cg.raceFinishCountdownStart = 0;
-			cg.raceFinishCountdownEnd = 0;
-		}
 	} else if ( num >= CS_MODELS && num < CS_MODELS+MAX_MODELS ) {
 		cgs.gameModels[ num-CS_MODELS ] = trap_R_RegisterModel( str );
 	} else if ( num >= CS_SOUNDS && num < CS_SOUNDS+MAX_SOUNDS ) {
@@ -1353,77 +1250,6 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( !strcmp( cmd, "ladder_begin" ) ) {
-		CG_LadderBeginLoad();
-		return;
-	}
-
-	if ( !strcmp( cmd, "ladder_entry" ) ) {
-		int argc = trap_Argc();
-
-		if ( argc >= 2 ) {
-			int sequence = atoi( CG_Argv( 1 ) );
-			const char *identifier = "";
-			int payloadStart = 2;
-			char payload[MAX_STRING_CHARS];
-
-			if ( argc >= 3 ) {
-				identifier = CG_Argv( 2 );
-				payloadStart = 3;
-			}
-
-			payload[0] = '\0';
-			if ( payloadStart < argc ) {
-				int i;
-
-				for ( i = payloadStart ; i < argc ; i++ ) {
-					const char *arg = CG_Argv( i );
-
-					if ( payload[0] ) {
-						Q_strcat( payload, sizeof( payload ), " " );
-					}
-
-					Q_strcat( payload, sizeof( payload ), arg );
-				}
-			}
-
-			CG_LadderHandleServerCommand( sequence,
-					identifier,
-					payload,
-					( cg.snap ) ? cg.snap->serverTime : 0 );
-		}
-
-		return;
-	}
-
-	if ( !strcmp( cmd, "ladder_complete" ) ) {
-		CG_LadderMarkReady();
-		return;
-	}
-
-	if ( !strcmp( cmd, "ladder_error" ) ) {
-		char message[MAX_STRING_CHARS];
-		int argc = trap_Argc();
-
-		message[0] = '\0';
-		if ( argc >= 2 ) {
-			int i;
-
-			for ( i = 1 ; i < argc ; i++ ) {
-				const char *arg = CG_Argv( i );
-
-				if ( message[0] ) {
-					Q_strcat( message, sizeof( message ), " " );
-				}
-
-				Q_strcat( message, sizeof( message ), arg );
-			}
-		}
-
-		CG_LadderSetError( message );
-		return;
-	}
-
 	if ( !strcmp( cmd, "map_restart" ) ) {
 		CG_MapRestart();
 		return;
@@ -1491,19 +1317,12 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-        if ( !strcmp( cmd, "raceFinishTime" ) ) {
-                int fuelDepleted = 0;
-
-                i1 = atoi(CG_Argv(1));
-                i2 = atoi(CG_Argv(2));
-
-                if ( trap_Argc() >= 4 ) {
-                        fuelDepleted = atoi( CG_Argv(3) );
-                }
-
-                CG_FinishedRace( i1, i2, fuelDepleted ? qtrue : qfalse );
-                return;
-        }
+	if ( !strcmp( cmd, "raceFinishTime" ) ) {
+		i1 = atoi(CG_Argv(1));
+		i2 = atoi(CG_Argv(2));
+		CG_FinishedRace( i1, i2 );
+		return;
+	}
 // END
 
 	CG_Printf( "Unknown client game command: %s\n", cmd );

@@ -29,9 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //NOTE: include the ui_public.h from the new UI
 #include "../ui/ui_public.h"
 #include "../ui/ui_shared.h"
-// Use the extended API so the engine can verify ladder syscall support
+//redefine to old API version
 #undef UI_API_VERSION
-#define UI_API_VERSION	6
+#define UI_API_VERSION	4
 #include "../client/keycodes.h"
 #include "../game/bg_public.h"
 
@@ -344,7 +344,7 @@ typedef struct
 typedef enum
 {
 	MS_NUMSTARTS,
-	MS_LAPS,
+//	MS_LAPS,
 	MS_LAPTIME,
 	MS_NUMCHECKPOINTS,
 	MS_NUMOBSERVERSPOTS,
@@ -906,10 +906,6 @@ int				trap_MemoryRemaining( void );
 void			trap_GetCDKey( char *buf, int buflen );
 void			trap_SetCDKey( char *buf );
 
-void			trap_RequestLadderData( const char *mode, const char *timeframe, const char *region );
-void			trap_CancelLadderRequest( void );
-void			trap_GetLadderStatus( uiLadderStatus_t *status );
-
 qboolean               trap_VerifyCDKey( const char *key, const char *chksum);
 
 void			trap_SetPbClStatus( int status );
@@ -957,8 +953,6 @@ void UI_DisplayOptionsMenu( void );
 void UI_SoundOptionsMenu_Cache( void );
 void UI_SoundOptionsMenu( void );
 
-void UI_LadderMenu_Cache( void );
-void UI_LadderMenu( void );
 
 // STONELANCE
 //

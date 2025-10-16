@@ -630,7 +630,6 @@ void Rally_Sound( gentity_t *ent, int event, int channel, int soundIndex ) {
 	gentity_t	*te;
 
 	te = G_TempEntity( ent->r.currentOrigin, event );
-	te->r.svFlags |= SVF_BROADCAST;
 	te->s.eventParm = soundIndex;
 }
 // END

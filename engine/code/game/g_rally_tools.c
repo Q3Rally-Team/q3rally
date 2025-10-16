@@ -280,25 +280,23 @@ void CenterPrint_All( const char *s ){
 }
 
 qboolean isRallyRace( void ){
-		if(g_gametype.integer == GT_RACING
-				|| g_gametype.integer == GT_RACING_DM
-				|| g_gametype.integer == GT_ELIMINATION
-				|| g_gametype.integer == GT_TEAM_RACING
-				|| g_gametype.integer == GT_TEAM_RACING_DM){
-				return qtrue;
-		}
+	if(g_gametype.integer == GT_RACING
+		|| g_gametype.integer == GT_RACING_DM
+		|| g_gametype.integer == GT_TEAM_RACING
+		|| g_gametype.integer == GT_TEAM_RACING_DM){
+		return qtrue;
+	}
 
-		return qfalse;
+	return qfalse;
 }
 
 qboolean isRallyNonDMRace( void ){
-		if(g_gametype.integer == GT_RACING
-				|| g_gametype.integer == GT_ELIMINATION
-				|| g_gametype.integer == GT_TEAM_RACING){
-				return qtrue;
-		}
+	if(g_gametype.integer == GT_RACING
+		|| g_gametype.integer == GT_TEAM_RACING){
+		return qtrue;
+	}
 
-		return qfalse;
+	return qfalse;
 }
 
 /*
@@ -412,14 +410,12 @@ starts "10"
 */
 	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
 
-        if ( isRallyRace() )
-                Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_racing q3r_team_racing q3r_racing_dm q3r_elimination q3r_team_racing_dm\"\nstarts \"%i\"\nlaps \"%i\"\nlength \"%.3f miles\"\ncheckpoints \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, level.numberOfLaps, numSpawnPoints, numLaps, trackLength, numCheckpoints, numObserverSpots, numWeapons, numPowerups);
-        else if ( g_gametype.integer == GT_DERBY )
-                Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_derby\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
-        else if ( g_gametype.integer == GT_LCS )
-                Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_lcs\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
-        else if ( g_gametype.integer == GT_ELIMINATION )
-                Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_elimination\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
+	if ( isRallyRace() )
+		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm\"\nstarts \"%i\"\nlaps \"%i\"\nlength \"%.3f miles\"\ncheckpoints \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, level.numberOfLaps, numSpawnPoints, numLaps, trackLength, numCheckpoints, numObserverSpots, numWeapons, numPowerups);
+	else if ( g_gametype.integer == GT_DERBY )
+		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_derby\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
+	else if ( g_gametype.integer == GT_LCS )
+		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_lcs\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
 	else if ( g_gametype.integer == GT_CTF )
 		Com_sprintf( string, sizeof(string), "{\nmap \"%s\"\nlongname \"%s\"\nfraglimit %i\ntype \"q3r_ctf\"\nstarts \"%i\"\nobserverspots \"%i\"\nweapons \"%i\"\npowerups \"%i\"\n}\n", Info_ValueForKey( serverinfo, "mapname" ), longname, g_fraglimit.integer, numSpawnPoints, numObserverSpots, numWeapons, numPowerups);
 	else if ( g_gametype.integer == GT_DEATHMATCH || g_gametype.integer == GT_TEAM )

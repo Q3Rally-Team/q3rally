@@ -653,10 +653,6 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		S_StopBackgroundTrack();
 		return 0;
 
-	case CG_S_GETMUSICSTATE:
-		S_GetMusicState( VMA(1) );
-		return 0;
-
 	case CG_REAL_TIME:
 		return Com_RealTime( VMA(1) );
 	case CG_SNAPVECTOR:

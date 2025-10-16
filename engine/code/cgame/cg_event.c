@@ -219,9 +219,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	case MOD_HIGH_FORCES:
 		message = "put a little too much stress on his car";
 		break;
-	case MOD_ELIMINATION:
-		message = "was eliminated";
-		break;
 // Q3Rally Code END
 	default:
 		message = NULL;
@@ -978,7 +975,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					break;
 				}
 #endif
-			} else if ( item->pickup_sound && item->pickup_sound[0] ) {
+			} else {
 				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	trap_S_RegisterSound( item->pickup_sound, qfalse ) );
 			}
 

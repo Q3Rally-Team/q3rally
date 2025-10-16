@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
+#include "../game/bg_ladder.h"
 
 //=============================================================================
 
@@ -270,10 +271,6 @@ extern	cvar_t	*sv_zombietime;
 extern	cvar_t	*sv_rconPassword;
 extern	cvar_t	*sv_privatePassword;
 extern	cvar_t	*sv_allowDownload;
-extern	cvar_t	*sv_ladderEnabled;
-extern	cvar_t	*sv_ladderUrl;
-extern	cvar_t	*sv_ladderApiKey;
-extern	cvar_t	*sv_telemetryMaxBatch;
 extern	cvar_t	*sv_maxclients;
 
 extern	cvar_t	*sv_privateClients;
@@ -299,6 +296,10 @@ extern	cvar_t	*sv_lanForceRate;
 extern	cvar_t	*sv_strictAuth;
 #endif
 extern	cvar_t	*sv_banFile;
+extern  cvar_t  *sv_ladderEnabled;
+extern  cvar_t  *sv_ladderUrl;
+extern  cvar_t  *sv_ladderApiKey;
+extern  cvar_t  *sv_telemetryMaxBatch;
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];
 extern	int serverBansCount;
@@ -345,7 +346,12 @@ void SV_RemoveOperatorCommands (void);
 
 
 void SV_MasterShutdown (void);
-int SV_RateMsec(client_t *client);
+int SV_RateMsec( client_t *client );
+
+void SV_LadderInit( void );
+void SV_LadderShutdown( void );
+void SV_LadderSubmit( const ladderMatchPayload_t *payload );
+void SV_LadderFrame( void );
 
 
 
@@ -417,10 +423,6 @@ void		SV_InitGameProgs ( void );
 void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
-void	SV_LadderInit( void );
-void	SV_LadderShutdown( void );
-void	SV_LadderSubmit( const ladderMatchPayload_t *payload );
-void	SV_LadderFrame( void );
 
 //
 // sv_bot.c

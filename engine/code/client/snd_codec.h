@@ -47,7 +47,6 @@ typedef struct snd_stream_s
 	int length;
 	int pos;
 	void *ptr;
-	char commentTitle[MAX_QPATH];
 } snd_stream_t;
 
 // Codec functions

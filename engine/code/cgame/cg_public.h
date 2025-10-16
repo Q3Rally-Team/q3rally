@@ -54,16 +54,6 @@ typedef struct {
 	int				serverCommandSequence;	// snapshot becomes current
 } snapshot_t;
 
-typedef struct cgameMusicState_s {
-	qboolean		valid;
-	char			trackPath[MAX_QPATH];
-	char			title[MAX_QPATH];
-	int			totalSamples;
-	int			sampleRate;
-	int			startSample;
-	int			currentSample;
-} cgameMusicState_t;
-
 enum {
   CGAME_EVENT_NONE,
   CGAME_EVENT_TEAMMENU,
@@ -176,7 +166,6 @@ typedef enum {
 	CG_R_INPVS,
 	// 1.32
 	CG_FS_SEEK,
-	CG_S_GETMUSICSTATE,
 
 /*
 	CG_LOADCAMERA,

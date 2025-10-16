@@ -270,7 +270,6 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
         if( hit->client != NULL || ( hit->r.svFlags & SVF_BOT ) ) {
             vec3_t invNormal;
             float vSelf, vHit, closing, totalDamage, damageSelfF, damageHitF;
-            float ramDamageRatio;
             int damageSelf, damageHit;
 
             /* store normal velocities before collision response */
@@ -293,9 +292,8 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
                     totalDamage *= g_derbyDamageFactor.value;
                     damageSelfF = totalDamage * ( vHit / closing );
                     damageHitF  = totalDamage * ( vSelf / closing );
-                    ramDamageRatio = Com_Clamp( 0.0f, 2.0f, g_derbyRammerDamageRatio.value );
-                    damageHitF  *= ramDamageRatio;
-                    damageSelfF *= 2.0f - ramDamageRatio;
+                    damageHitF  *= g_derbyRammerDamageRatio.value;
+                    damageSelfF *= 2.0f - g_derbyRammerDamageRatio.value;
                     damageSelf = (int)max( 1.0f, damageSelfF );
                     damageHit = (int)max( 1.0f, damageHitF );
 

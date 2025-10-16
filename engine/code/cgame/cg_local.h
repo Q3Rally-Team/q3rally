@@ -40,9 +40,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	DAMAGE_DEFLECT_TIME	100
 #define	DAMAGE_RETURN_TIME	400
 #define DAMAGE_TIME			500
-#define DERBY_HUD_FLASH_THRESHOLD	25
-#define DERBY_HUD_FLASH_MAX_DAMAGE	100
-#define DERBY_HUD_FLASH_DURATION	250
 #define	LAND_DEFLECT_TIME	150
 #define	LAND_RETURN_TIME	300
 #define	STEP_TIME			200
@@ -265,15 +262,6 @@ typedef struct centity_s {
 	qhandle_t		postSoundLoop;
 	qhandle_t		destroySound;
 
-	char		hitSoundName[MAX_QPATH];
-	char		preSoundLoopName[MAX_QPATH];
-	char		postSoundLoopName[MAX_QPATH];
-	char		destroySoundName[MAX_QPATH];
-
-	qhandle_t		activeScriptLoop;
-	int		scriptLastEvent;
-	qboolean		scriptDestroyPending;
-
 	qhandle_t		modelHandle;
 	qhandle_t		deadModelHandle;
 
@@ -419,7 +407,6 @@ typedef struct {
 	int				damageDealt;
 	int				damageTaken;
 	int				position;
-	int				deaths;
 } score_t;
 
 // each client has an associated clientInfo_t
@@ -537,12 +524,7 @@ typedef struct {
 	qboolean		oppositeRoll;
 
 	int				position;
-	// vehicle attributes
-	float			 frameMass;
-	float			 wheelMass;
-	float			 fuelConsumption;
-	float			 torque;
-        float                    damageTolerance;
+
 // Q3Rally Code END
 } clientInfo_t;
 
@@ -732,9 +714,6 @@ typedef struct {
 
 	char		countDownPrint[16];
 	int			countDownEnd;
-	int			raceFinishCountdownStart;
-	int			raceFinishCountdownEnd;
-	qboolean	raceFinishCountdownActive;
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
@@ -764,14 +743,6 @@ typedef struct {
 	int			soundTime;
 	qhandle_t	soundBuffer[MAX_SOUNDBUFFER];
 
-	// background music banner state
-	char		musicTitle[MAX_QPATH];
-	int			musicDurationMs;
-	int			musicBannerExpire;
-	int			musicStartSample;
-	int			musicSampleRate;
-	int			musicTotalSamples;
-
 	// warmup countdown
 	int			warmup;
 	int			warmupCount;
@@ -789,8 +760,6 @@ typedef struct {
 	// blend blobs
 	float		damageTime;
 	float		damageX, damageY, damageValue;
-	int		derbyHUDFlashEndTime;
-	float		derbyHUDFlashStrength;
 
 	// status bar head
 	float		headYaw;
@@ -1269,7 +1238,6 @@ typedef struct {
 // Q3Rally Code END
 	int				capturelimit;
 	int				timelimit;
-	int				finishRaceDelay;
 	int				maxclients;
 	char			mapname[MAX_QPATH];
 	char			redTeam[MAX_QPATH];
@@ -1340,48 +1308,9 @@ typedef struct {
 // Q3Rally Code Start
 	int				numRacers;
         float                   trackLength;
-	int				eliminationActive;
-	int				eliminationRemainingPlayers;
-	int				eliminationRound;
-	int				eliminationMsRemaining;
-	int				eliminationLastUpdateTime;
 // Q3Rally Code END
 
 } cgs_t;
-
-//==============================================================================
-
-#define MAX_LADDER_ENTRIES			 64
-#define MAX_LADDER_IDENTIFIER		 64
-
-typedef enum {
-	LADDER_STATUS_EMPTY = 0,
-	LADDER_STATUS_LOADING,
-	LADDER_STATUS_READY,
-	LADDER_STATUS_ERROR
-} cg_ladder_status_t;
-
-typedef enum {
-	LADDER_SOURCE_SERVER = 0,
-	LADDER_SOURCE_WEBSERVICE
-} cg_ladder_source_t;
-
-typedef struct {
-	cg_ladder_source_t		source;
-	int					sequence;
-	int					serverTime;
-	char			identifier[MAX_LADDER_IDENTIFIER];
-	char			payload[MAX_STRING_CHARS];
-} cg_ladder_entry_t;
-
-typedef struct {
-	cg_ladder_status_t		status;
-	qboolean			dirty;
-	int					lastUpdateTime;
-	char			errorMessage[MAX_STRING_CHARS];
-	int				numEntries;
-	cg_ladder_entry_t	entries[MAX_LADDER_ENTRIES];
-} cg_ladder_t;
 
 //==============================================================================
 
@@ -1391,8 +1320,6 @@ extern	centity_t		cg_entities[MAX_GENTITIES];
 extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
-
-extern	cg_ladder_t		cg_ladder;
 
 extern	vmCvar_t		cg_centertime;
 extern	vmCvar_t		cg_runpitch;
@@ -1529,11 +1456,6 @@ extern	vmCvar_t		cg_mmap_size;
 extern	vmCvar_t		cg_mmap_renderLevel;
 extern	vmCvar_t		cg_checkpointArrowMode;
 extern      vmCvar_t                cg_distanceFormat;
-extern  vmCvar_t                cg_vehicleMass;
-extern  vmCvar_t                cg_wheelMass;
-extern  vmCvar_t                cg_fuelConsumption;
-extern  vmCvar_t                cg_torque;
-extern	vmCvar_t		cg_damageTolerance;
 
 
 extern	vmCvar_t		cg_atmosphericLevel;
@@ -1553,45 +1475,6 @@ extern	vmCvar_t		cg_engineSounds;
 extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;
 // Q3Rally Code END
-
-#ifdef Q3_VM
-int CG_EliminationMsLeft( void );
-int CG_EliminationDisplayRound( void );
-#else
-static ID_INLINE int CG_EliminationMsLeft( void ) {
-    int msLeft;
-
-    if ( cgs.eliminationMsRemaining <= 0 ) {
-        return 0;
-    }
-
-    if ( cgs.eliminationLastUpdateTime <= 0 ) {
-        return cgs.eliminationMsRemaining;
-    }
-
-    msLeft = cgs.eliminationMsRemaining - ( cg.time - cgs.eliminationLastUpdateTime );
-    if ( msLeft < 0 ) {
-        msLeft = 0;
-    }
-
-    return msLeft;
-}
-
-static ID_INLINE int CG_EliminationDisplayRound( void ) {
-    int round;
-
-    round = cgs.eliminationRound;
-    if ( round < 0 ) {
-        round = 0;
-    }
-
-    if ( cgs.eliminationActive && cgs.eliminationRemainingPlayers > 1 ) {
-        round++;
-    }
-
-    return round;
-}
-#endif
 
 //
 // cg_main.c
@@ -1912,21 +1795,6 @@ qboolean CG_DrawOldScoreboard( void );
 // Q3Rally Code END
 
 //
-// cg_ladder.c
-//
-void CG_LadderInit( void );
-void CG_LadderClear( void );
-void CG_LadderBeginLoad( void );
-void CG_LadderMarkReady( void );
-void CG_LadderSetError( const char *message );
-void CG_LadderPushEntry( cg_ladder_source_t source, int sequence, const char *identifier, const char *payload, int serverTime );
-void CG_LadderHandleServerCommand( int sequence, const char *identifier, const char *payload, int serverTime );
-void CG_LadderHandleWebResponse( const char *identifier, const char *payload );
-const cg_ladder_t *CG_LadderState( void );
-qboolean CG_LadderIsLoading( void );
-qboolean CG_LadderHasError( void );
-
-//
 // cg_consolecmds.c
 //
 qboolean CG_ConsoleCommand( void );
@@ -2014,10 +1882,9 @@ qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
 // cg_rally_race_tools.c
 //
 void CG_NewLapTime( int client, int lap, int time );
-void CG_FinishedRace( int client, int time, qboolean fuelDepleted );
+void CG_FinishedRace( int client, int time );
 void CG_StartRace( int time );
 void CG_DrawRaceCountDown( void );
-void CG_DrawRaceFinishCountdown( void );
 void CG_RaceCountDown( const char *str, int secondsLeft );
 
 //
@@ -2167,7 +2034,6 @@ sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compress
 
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	    trap_S_StopBackgroundTrack( void );
-void	    trap_S_GetMusicState( cgameMusicState_t *state );
 
 
 void		trap_R_LoadWorldMap( const char *mapname );

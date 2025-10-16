@@ -1212,7 +1212,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
                 return;
         }
 
-        if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY && cgs.gametype != GT_ELIMINATION){
+        if (!isRallyNonDMRace() && cgs.gametype != GT_DERBY){
                 CG_RegisterWeapon( weaponNum );
         }
 

@@ -39,9 +39,6 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="0.6" date="2025-10-04" type="stable">
-      <url>https://github.com/Q3Rally-Team/q3rally/releases/tag/v0.6</url>
-    </release>
     <release version="0.4" date="2022-03-04" type="stable">
       <url>https://github.com/Q3Rally-Team/q3rally/releases/tag/v0.4</url>
     </release>

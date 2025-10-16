@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-#define FUEL_EMPTY_STOPPED_VEL_SQ   25.0f
-
 
 // STONELANCE
 /*
@@ -1144,9 +1142,7 @@ void ClientThink_real( gentity_t *ent ) {
 		ucmd->upmove = 0;
 	}
 
-	if ( ent->client->finishRaceTime
-		&& level.finishRaceTime
-		&& level.time >= level.finishRaceTime + ( g_finishRaceDelay.integer * 1000 ) ){
+	if ( ent->client->finishRaceTime && ent->client->finishRaceTime + RACE_OBSERVER_DELAY < level.time ){
 		gentity_t	*tent;
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
 		tent->s.clientNum = ent->s.clientNum;
@@ -1166,11 +1162,10 @@ void ClientThink_real( gentity_t *ent ) {
     if( ent->rearBounds )
       trap_UnlinkEntity( ent->rearBounds ); 
 
-                for ( i = 0; i < 4; i++ ) {
-                        if ( client->carPoints[i] ) {
-                                trap_UnlinkEntity( client->carPoints[i] );
-                        }
-                }
+		trap_UnlinkEntity( client->carPoints[0] );
+		trap_UnlinkEntity( client->carPoints[1] );
+		trap_UnlinkEntity( client->carPoints[2] );
+		trap_UnlinkEntity( client->carPoints[3] );
 
 		return;
 	}
@@ -1499,18 +1494,6 @@ void ClientThink_real( gentity_t *ent ) {
 // END
 
 	// save results of pmove
-	if ( client->car.fuel <= 0.0f ) {
-		if ( VectorLengthSquared( client->ps.velocity ) < FUEL_EMPTY_STOPPED_VEL_SQ ) {
-			if ( !client->fuelEmptySince ) {
-				client->fuelEmptySince = level.time;
-			}
-		} else {
-			client->fuelEmptySince = 0;
-		}
-	} else if ( client->fuelEmptySince ) {
-		client->fuelEmptySince = 0;
-	}
-
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
@@ -1543,19 +1526,19 @@ void ClientThink_real( gentity_t *ent ) {
 	ClientEvents( ent, oldEventSequence );
 
 // STONELANCE - do damage from pmove
+
         if (pm.damage.damage)
-        {
-                if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
-                        pm.damage.damage *= g_damageScale.value;
-                if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
-                        pm.damage.damage /= g_damageScale.value;
 
-                pm.damage.damage *= ent->client->car.damageTolerance;
+	{
+		if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
+			pm.damage.damage *= g_damageScale.value;
+		if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
+			pm.damage.damage /= g_damageScale.value;
 
-                if( pm.damage.damage > 0 )
-                {
-                        if (pm.damage.otherEnt >= 0){
-                                G_Damage(ent, NULL, &g_entities[pm.damage.otherEnt], pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
+		if( pm.damage.damage > 0 )
+		{
+			if (pm.damage.otherEnt >= 0){
+				G_Damage(ent, NULL, &g_entities[pm.damage.otherEnt], pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
 				VectorInverse(pm.damage.dir);
 				G_Damage(&g_entities[pm.damage.otherEnt], NULL, ent, pm.damage.dir, pm.damage.origin, pm.damage.damage, pm.damage.dflags, pm.damage.mod);
 			}
@@ -1580,55 +1563,29 @@ void ClientThink_real( gentity_t *ent ) {
 	// touch other objects
 	ClientImpacts( ent, &pm );
 
-       if ( level.trackLength > 0.0f && level.numCheckpoints > 0 ) {
-               int next = client->ps.stats[STAT_NEXT_CHECKPOINT];
-
-               if ( next <= 0 ) {
-                       // STAT_NEXT_CHECKPOINT should never be zero.  If it is,
-                       // fall back to the entity's notion of the next checkpoint
-                       // (default to 1) so distance remaining calculations do not
-                       // break.
-                       if ( ent->number > 0 ) {
-                               next = ent->number;
-                       } else {
-                               next = 1;
-                       }
-                       client->ps.stats[STAT_NEXT_CHECKPOINT] = next;
-                       if ( g_developer.integer ) {
-                               G_Printf( "Client %i STAT_NEXT_CHECKPOINT was 0, forcing to %i\n",
-                                       ent->s.clientNum, next );
-                       }
-               }
-
-               if ( next > 0 && next <= level.numCheckpoints ) {
-                       gentity_t *cp = level.checkpoints[next-1];
-                       if ( cp ) {
-                               vec3_t v;
-                               float dist, segs;
-                               VectorSubtract( cp->s.origin, client->ps.origin, v );
-                               dist = VectorLength( v );
-                               segs = level.trackLength - level.cpDist[next-1];
-                               dist += segs;
-                               if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
-                                       int lapsRemaining = level.numberOfLaps - ent->currentLap;
-                                       dist += lapsRemaining * level.trackLength;
-                               }
-                               client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
-                       }
-               } else if ( level.hasFinish ) {
-                       float dist = Distance( level.finishOrigin, client->ps.origin );
-                       client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
-               } else {
-                       client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
-               }
-       } else if ( level.hasFinish ) {
-
-               float dist = Distance( level.finishOrigin, client->ps.origin );
-
-               client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
-       } else {
-               client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
-       }
+        if ( level.trackLength > 0.0f && level.numCheckpoints > 0 ) {
+                int next = client->ps.stats[STAT_NEXT_CHECKPOINT];
+                if ( next > 0 && next <= level.numCheckpoints ) {
+                        gentity_t *cp = level.checkpoints[next-1];
+                        if ( cp ) {
+                                vec3_t v;
+                                float dist, segs;
+                                VectorSubtract( cp->s.origin, client->ps.origin, v );
+                                dist = VectorLength( v );
+                                segs = level.cpDist[level.numCheckpoints-1] - level.cpDist[next-1];
+                                dist += segs;
+                                if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
+                                        int lapsRemaining = level.numberOfLaps - ent->currentLap;
+                                        dist += lapsRemaining * level.trackLength;
+                                }
+                                client->ps.stats[STAT_DISTANCE_REMAIN] = (int)( dist / CP_M_2_QU );
+                        }
+                } else {
+                        client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
+                }
+        } else {
+                client->ps.stats[STAT_DISTANCE_REMAIN] = 0;
+        }
 
 	// save results of triggers and client events
 	if (ent->client->ps.eventSequence != oldEventSequence) {
@@ -1648,10 +1605,7 @@ void ClientThink_real( gentity_t *ent ) {
 			if ( g_forcerespawn.integer > 0 && 
 				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
 // STONELANCE
-				if ( (g_gametype.integer != GT_DERBY
-					&& g_gametype.integer != GT_LCS
-					&& g_gametype.integer != GT_ELIMINATION)
-					|| !ent->client->finishRaceTime )
+				if ((g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS) || !ent->client->finishRaceTime)
 // END
 				ClientRespawn( ent );
 				return;
@@ -1660,10 +1614,7 @@ void ClientThink_real( gentity_t *ent ) {
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 // STONELANCE
-				if ( (g_gametype.integer != GT_DERBY
-					&& g_gametype.integer != GT_LCS
-					&& g_gametype.integer != GT_ELIMINATION)
-					|| !ent->client->finishRaceTime )
+				if ((g_gametype.integer != GT_DERBY && g_gametype.integer != GT_LCS) || !ent->client->finishRaceTime)
 // END
 				ClientRespawn( ent );
 			}

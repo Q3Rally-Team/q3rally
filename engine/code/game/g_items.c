@@ -130,46 +130,76 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 #ifdef MISSIONPACK
 int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 
+int		clientNum;
+	char	userinfo[MAX_INFO_STRING];
+	float	handicap;
+
+
 	int		max;
 
 	other->client->ps.stats[STAT_PERSISTANT_POWERUP] = ent->item - bg_itemlist;
-        other->client->persistantPowerup = ent;
+	other->client->persistantPowerup = ent;
 
-        switch( ent->item->giTag ) {
-        case PW_GUARD:
-                max = 2 * other->client->car.maxHealth;
+	switch( ent->item->giTag ) {
+	case PW_GUARD:
+		clientNum = other->client->ps.clientNum;
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+		if( handicap<=0.0f || handicap>100.0f) {
+			handicap = 100.0f;
+		}
+		max = (int)(2 *	 handicap);
 
-                other->health = max;
-                other->client->ps.stats[STAT_HEALTH] = max;
-                other->client->car.maxHealth = max;
-                other->client->ps.stats[STAT_MAX_HEALTH] = max;
-                other->client->ps.stats[STAT_ARMOR] = max;
-                other->client->pers.maxHealth = other->client->car.maxHealth;
+		other->health = max;
+		other->client->ps.stats[STAT_HEALTH] = max;
+		other->client->ps.stats[STAT_MAX_HEALTH] = max;
+		other->client->ps.stats[STAT_ARMOR] = max;
+		other->client->pers.maxHealth = max;
 
-                break;
+		break;
 
-        case PW_SCOUT:
-                other->client->pers.maxHealth = other->client->car.maxHealth;
-                other->client->ps.stats[STAT_MAX_HEALTH] = other->client->pers.maxHealth;
-                other->client->ps.stats[STAT_ARMOR] = 0;
-                break;
+	case PW_SCOUT:
+		clientNum = other->client->ps.clientNum;
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+		if( handicap<=0.0f || handicap>100.0f) {
+			handicap = 100.0f;
+		}
+		other->client->pers.maxHealth = handicap;
+		other->client->ps.stats[STAT_ARMOR] = 0;
+		break;
 
-        case PW_DOUBLER:
-                other->client->pers.maxHealth = other->client->car.maxHealth;
-                other->client->ps.stats[STAT_MAX_HEALTH] = other->client->pers.maxHealth;
-                break;
-        case PW_AMMOREGEN:
-                other->client->pers.maxHealth = other->client->car.maxHealth;
-                other->client->ps.stats[STAT_MAX_HEALTH] = other->client->pers.maxHealth;
-                memset(other->client->ammoTimes, 0, sizeof(other->client->ammoTimes));
-                break;
-        default:
-                other->client->pers.maxHealth = other->client->car.maxHealth;
-                other->client->ps.stats[STAT_MAX_HEALTH] = other->client->pers.maxHealth;
-                break;
-        }
+	case PW_DOUBLER:
+		clientNum = other->client->ps.clientNum;
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+		if( handicap<=0.0f || handicap>100.0f) {
+			handicap = 100.0f;
+		}
+		other->client->pers.maxHealth = handicap;
+		break;
+	case PW_AMMOREGEN:
+		clientNum = other->client->ps.clientNum;
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+		if( handicap<=0.0f || handicap>100.0f) {
+			handicap = 100.0f;
+		}
+		other->client->pers.maxHealth = handicap;
+		memset(other->client->ammoTimes, 0, sizeof(other->client->ammoTimes));
+		break;
+	default:
+		clientNum = other->client->ps.clientNum;
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+		if( handicap<=0.0f || handicap>100.0f) {
+			handicap = 100.0f;
+		}
+		other->client->pers.maxHealth = handicap;
+		break;
+	}
 
-        return -1;
+	return -1;
 }
 
 //======================================================================
@@ -288,16 +318,20 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 	// small and mega healths will go over the max
 #ifdef MISSIONPACK
+
         if( bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-                max = other->client->car.maxHealth;
-        }
-        else
+
+		max = other->client->ps.stats[STAT_MAX_HEALTH];
+	}
+	else
 #endif
+
         if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-                max = other->client->car.maxHealth;
-        } else {
-                max = other->client->car.maxHealth * 2;
-        }
+
+		max = other->client->ps.stats[STAT_MAX_HEALTH];
+	} else {
+		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+	}
 
 	if ( ent->count ) {
 		quantity = ent->count;
@@ -311,10 +345,12 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		other->health = max;
 	}
 	other->client->ps.stats[STAT_HEALTH] = other->health;
+
         if ( other->client->car.fuelLeak &&
-                other->health > other->client->car.maxHealth / 2 ) {
-                other->client->car.fuelLeak = qfalse;
-        }
+
+		other->health > g_vehicleHealth.integer / 2 ) {
+		other->client->car.fuelLeak = qfalse;
+	}
 
 
 	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
@@ -332,21 +368,25 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
 
+
         if( other->client && bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-                upperBound = other->client->car.maxHealth;
-        }
-        else {
-                upperBound = other->client->car.maxHealth * 2;
-        }
+
+		upperBound = other->client->ps.stats[STAT_MAX_HEALTH];
+	}
+	else {
+		upperBound = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+	}
 
 	if ( other->client->ps.stats[STAT_ARMOR] > upperBound ) {
 		other->client->ps.stats[STAT_ARMOR] = upperBound;
 	}
 #else
+
         other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-        if ( other->client->ps.stats[STAT_ARMOR] > other->client->car.maxHealth * 2 ) {
-                other->client->ps.stats[STAT_ARMOR] = other->client->car.maxHealth * 2;
-        }
+
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+	}
 #endif
 
 	return RESPAWN_ARMOR;

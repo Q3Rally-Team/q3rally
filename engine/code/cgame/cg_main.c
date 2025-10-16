@@ -257,11 +257,6 @@ vmCvar_t	cg_minSkidLength;
 vmCvar_t	cg_drawRearView;
 vmCvar_t        cg_checkpointArrowMode;
 vmCvar_t        cg_distanceFormat;
-vmCvar_t        cg_vehicleMass;
-vmCvar_t        cg_wheelMass;
-vmCvar_t        cg_fuelConsumption;
-vmCvar_t        cg_torque;
-vmCvar_t        cg_damageTolerance;
 vmCvar_t        cg_drawMMap;	//TBB - minimap cvar
 vmCvar_t	cg_mmap_fov;
 vmCvar_t	cg_mmap_size;
@@ -376,11 +371,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
         { &cg_distanceFormat, "cg_distanceFormat", "0", CVAR_ARCHIVE },
-        { &cg_vehicleMass, "cg_vehicleMass", "0", CVAR_USERINFO | CVAR_ROM },
-        { &cg_wheelMass, "cg_wheelMass", "0", CVAR_USERINFO | CVAR_ROM },
-        { &cg_fuelConsumption, "cg_fuelConsumption", "0", CVAR_USERINFO | CVAR_ROM },
-        { &cg_torque, "cg_torque", "0", CVAR_USERINFO | CVAR_ROM },
-        { &cg_damageTolerance, "cg_damageTolerance", "1", CVAR_USERINFO | CVAR_ROM },
 
         { &cg_developer, "developer", "0", 0 },
 
@@ -1525,13 +1515,6 @@ void CG_StartMusic( void ) {
 	Q_strncpyz( parm1, COM_Parse( &s ), sizeof( parm1 ) );
 	Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
 
-	cg.musicTitle[0] = '\0';
-	cg.musicDurationMs = 0;
-	cg.musicBannerExpire = 0;
-	cg.musicStartSample = -1;
-	cg.musicSampleRate = 0;
-	cg.musicTotalSamples = 0;
-
 	trap_S_StartBackgroundTrack( parm1, parm2 );
 }
 #ifdef MISSIONPACK
@@ -2226,8 +2209,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_RegisterCvars();
 
 	CG_InitConsoleCommands();
-
-	CG_LadderInit();
 
 	cg.weaponSelect = WP_MACHINEGUN;
 

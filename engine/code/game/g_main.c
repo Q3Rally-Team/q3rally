@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
-#include "../qcommon/qcommon.h"
 
 level_locals_t	level;
 
@@ -38,7 +37,14 @@ typedef struct {
 } cvarTable_t;
 
 gentity_t		g_entities[MAX_GENTITIES];
-gclient_t		g_clients[MAX_CLIENTS];
+gclient_t               g_clients[MAX_CLIENTS];
+
+static void G_LadderBuildMatchId( int randomSeed );
+static const char *G_LadderModeForGametype( int gametype );
+static void G_LadderFormatIsoTime( const qtime_t *qt, char *buffer, size_t size );
+static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum );
+static void G_LadderSubmitMatchReport( const char *reason );
+static ladderMatchPayload_t s_ladderMatchPayload;
 
 vmCvar_t	g_gametype;
 vmCvar_t	g_dmflags;
@@ -107,9 +113,6 @@ vmCvar_t	g_proxMineTimeout;
 // STONELANCE
 vmCvar_t	g_forceEngineStart;
 vmCvar_t	g_finishRaceDelay;
-vmCvar_t	g_eliminationStartDelay;
-vmCvar_t	g_eliminationInterval;
-vmCvar_t	g_eliminationWarning;
 vmCvar_t	g_trackReversed;
 vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
@@ -118,8 +121,6 @@ vmCvar_t	g_damageScale;
 vmCvar_t	g_vehicleDamageScale;
 vmCvar_t        g_vehicleDamageOffset;
 vmCvar_t	g_vehicleHealth;
-vmCvar_t	g_vehicleHpMaxRatio;
-vmCvar_t	g_vehicleHealthMaxRatio;
 vmCvar_t        g_derbyDamageFactor;
 vmCvar_t        g_derbyRammerDamageRatio;
 vmCvar_t        g_derbyIgnoreDamageScale;
@@ -250,10 +251,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_trackLength, "g_trackLength", "0", CVAR_LATCH, 0, qfalse  },
 
 	{ &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
-	{ &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
 
 	{ &g_developer, "developer", "0", 0, 0, qfalse },
 	{ &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
@@ -282,15 +280,13 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_vehicleDamageScale, "g_vehicleDamageScale", "5.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageOffset, "g_vehicleDamageOffset", "0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleHealth, "g_vehicleHealth", "100", CVAR_ARCHIVE, 0, qfalse },
-        { &g_vehicleHpMaxRatio, "g_vehicleHpMaxRatio", "1.2", CVAR_ARCHIVE, 0, qfalse },
-        { &g_vehicleHealthMaxRatio, "g_vehicleHealthMaxRatio", "1.5", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyDamageFactor, "g_derbyDamageFactor", "1.0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.6", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyIgnoreDamageScale, "g_derbyIgnoreDamageScale", "0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamRadius, "g_derbyRamRadius", "0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamage, "g_derbyRamDamage", "15", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRamDamage, "g_derbyRamDamage", "100", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageScale, "g_derbyRamDamageScale", "0.05", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "120", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "50", CVAR_ARCHIVE, 0, qfalse },
         // END
 
 	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse},
@@ -308,10 +304,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart );
 void G_RunFrame( int levelTime );
 void G_ShutdownGame( int restart );
 void CheckExitRules( void );
-static void G_RunEliminationTimers( void );
-static void G_UpdateEliminationInfoConfigString( void );
-static void G_SetEliminationSchedule( int referenceTime, int interval );
-static void G_HandleEliminationCvarChanges( int oldStartDelay, int oldInterval, qboolean startDelayChanged, qboolean intervalChanged, qboolean warningChanged );
 
 
 /*
@@ -484,6 +476,7 @@ void G_RemapTeamShaders( void ) {
 #endif
 }
 
+
 /*
 =================
 G_RegisterCvars
@@ -525,56 +518,6 @@ void G_RegisterCvars( void ) {
 	level.warmupModificationCount = g_warmup.modificationCount;
 }
 
-static void G_HandleEliminationCvarChanges( int oldStartDelay, int oldInterval, qboolean startDelayChanged, qboolean intervalChanged, qboolean warningChanged ) {
-	qboolean scheduleActive;
-	qboolean waitingForFirstElimination;
-	qboolean rescheduled = qfalse;
-	int referenceTime;
-	int effectiveOldStartDelay;
-	int effectiveOldInterval;
-
-	if ( !startDelayChanged && !intervalChanged && !warningChanged ) {
-		return;
-	}
-
-	scheduleActive = ( level.eliminationNextTriggerTime > 0 );
-
-	if ( !scheduleActive ) {
-		G_UpdateEliminationInfoConfigString();
-		return;
-	}
-
-	waitingForFirstElimination = ( !level.eliminationActive || level.eliminationRound <= 0 );
-	effectiveOldStartDelay = ( oldStartDelay < 0 ) ? 0 : oldStartDelay;
-	effectiveOldInterval = ( oldInterval < 0 ) ? 0 : oldInterval;
-
-	if ( waitingForFirstElimination ) {
-		if ( startDelayChanged || warningChanged ) {
-			referenceTime = level.eliminationNextTriggerTime - effectiveOldStartDelay;
-			if ( level.eliminationNextTriggerTime <= 0 ) {
-				referenceTime = level.time;
-			}
-
-			G_SetEliminationSchedule( referenceTime, level.eliminationStartDelay );
-			rescheduled = qtrue;
-		}
-	} else {
-		if ( intervalChanged || warningChanged ) {
-			referenceTime = level.eliminationNextTriggerTime - effectiveOldInterval;
-			if ( level.eliminationNextTriggerTime <= 0 ) {
-				referenceTime = level.time;
-			}
-
-			G_SetEliminationSchedule( referenceTime, level.eliminationInterval );
-			rescheduled = qtrue;
-		}
-	}
-
-	if ( !rescheduled ) {
-		G_UpdateEliminationInfoConfigString();
-	}
-}
-
 /*
 =================
 G_UpdateCvars
@@ -584,11 +527,6 @@ void G_UpdateCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 	qboolean remapped = qfalse;
-	int oldStartDelay = level.eliminationStartDelay;
-	int oldInterval = level.eliminationInterval;
-	qboolean startDelayChanged = qfalse;
-	qboolean intervalChanged = qfalse;
-	qboolean warningChanged = qfalse;
 
 	for ( i = 0, cv = gameCvarTable ; i < gameCvarTableSize ; i++, cv++ ) {
 		if ( cv->vmCvar ) {
@@ -598,19 +536,8 @@ void G_UpdateCvars( void ) {
 				cv->modificationCount = cv->vmCvar->modificationCount;
 
 				if ( cv->trackChange ) {
-					trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"",
-							cv->cvarName, cv->vmCvar->string ) );
-				}
-
-				if ( cv->vmCvar == &g_eliminationStartDelay ) {
-					level.eliminationStartDelay = cv->vmCvar->integer;
-					startDelayChanged = qtrue;
-				} else if ( cv->vmCvar == &g_eliminationInterval ) {
-					level.eliminationInterval = cv->vmCvar->integer;
-					intervalChanged = qtrue;
-				} else if ( cv->vmCvar == &g_eliminationWarning ) {
-					level.eliminationWarning = cv->vmCvar->integer;
-					warningChanged = qtrue;
+					trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"", 
+						cv->cvarName, cv->vmCvar->string ) );
 				}
 
 				if (cv->teamShader) {
@@ -618,16 +545,332 @@ void G_UpdateCvars( void ) {
 				}
 			}
 		}
-		}
-
-	if ( startDelayChanged || intervalChanged || warningChanged ) {
-		G_HandleEliminationCvarChanges( oldStartDelay, oldInterval, startDelayChanged, intervalChanged, warningChanged );
 	}
 
 	if (remapped) {
 		G_RemapTeamShaders();
 	}
 }
+
+static void G_LadderBuildMatchId( int randomSeed ) {
+        unsigned int seed = (unsigned int)randomSeed;
+        unsigned int hash = 0;
+        char serverinfo[MAX_INFO_STRING];
+        const char *value;
+
+        trap_GetServerinfo( serverinfo, sizeof( serverinfo ) );
+
+        value = Info_ValueForKey( serverinfo, "mapname" );
+        if ( value && value[0] ) {
+                const unsigned char *cursor = (const unsigned char *)value;
+                while ( *cursor ) {
+                        hash = ( hash * 33u ) ^ *cursor++;
+                }
+        }
+
+        value = Info_ValueForKey( serverinfo, "sv_hostname" );
+        if ( value && value[0] ) {
+                const unsigned char *cursor = (const unsigned char *)value;
+                while ( *cursor ) {
+                        hash = ( hash * 33u ) ^ *cursor++;
+                }
+        }
+
+        if ( !level.ladderStartEpoch ) {
+                qtime_t qt;
+                level.ladderStartEpoch = trap_RealTime( &qt );
+                level.ladderStartTime = qt;
+        }
+
+        if ( !hash ) {
+                hash = seed ^ (unsigned int)level.time ^ (unsigned int)level.startTime;
+        }
+
+        Com_sprintf( level.ladderMatchId, sizeof( level.ladderMatchId ),
+                "%08X-%08X-%08X", (unsigned int)level.ladderStartEpoch, seed, hash );
+}
+
+static void G_LadderFormatIsoTime( const qtime_t *qt, char *buffer, size_t size ) {
+        if ( !buffer || size <= 0 ) {
+                return;
+        }
+
+        if ( !qt ) {
+                buffer[0] = '\0';
+                return;
+        }
+
+        Com_sprintf( buffer, size, "%04i-%02i-%02iT%02i:%02i:%02i",
+                qt->tm_year + 1900, qt->tm_mon + 1, qt->tm_mday,
+                qt->tm_hour, qt->tm_min, qt->tm_sec );
+}
+
+static const char *G_LadderModeForGametype( int gametype ) {
+        switch ( gametype ) {
+        case GT_RACING:
+                return "GT_RACING";
+        case GT_RACING_DM:
+                return "GT_RACING_DM";
+        case GT_SINGLE_PLAYER:
+                return "GT_SINGLE_PLAYER";
+        case GT_DERBY:
+                return "GT_DERBY";
+        case GT_LCS:
+                return "GT_LCS";
+        case GT_DEATHMATCH:
+                return "GT_DEATHMATCH";
+        case GT_TEAM:
+                return "GT_TEAM";
+        case GT_TEAM_RACING:
+                return "GT_TEAM_RACING";
+        case GT_TEAM_RACING_DM:
+                return "GT_TEAM_RACING_DM";
+        case GT_CTF:
+                return "GT_CTF";
+        case GT_CTF4:
+                return "GT_CTF4";
+        case GT_DOMINATION:
+                return "GT_DOMINATION";
+        default:
+                break;
+        }
+
+        return "GT_UNKNOWN";
+}
+
+static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum ) {
+        gclient_t *client;
+        gentity_t *ent;
+        ladderPlayerPayload_t *player;
+        char userinfo[MAX_INFO_STRING];
+        const char *value;
+        int slot;
+        int i;
+        int deaths;
+
+        if ( !payload ) {
+                return qfalse;
+        }
+
+        if ( clientNum < 0 || clientNum >= level.maxclients ) {
+                return qfalse;
+        }
+
+        client = &level.clients[ clientNum ];
+        ent = &g_entities[ clientNum ];
+
+        if ( client->pers.connected != CON_CONNECTED ) {
+                return qfalse;
+        }
+
+        if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                return qfalse;
+        }
+
+        if ( payload->playerCount < 0 || payload->playerCount >= MAX_CLIENTS ) {
+                return qfalse;
+        }
+
+        slot = payload->playerCount;
+        player = &payload->players[ slot ];
+        Com_Memset( player, 0, sizeof( *player ) );
+
+        player->clientNum = clientNum;
+
+        trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
+
+        value = Info_ValueForKey( userinfo, "cl_guid" );
+        if ( value && value[0] ) {
+                Q_strncpyz( player->guid, value, sizeof( player->guid ) );
+        }
+
+        value = Info_ValueForKey( userinfo, "ip" );
+        if ( value && value[0] ) {
+                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+                if ( !player->guid[0] ) {
+                        Q_strncpyz( player->guid, value, sizeof( player->guid ) );
+                }
+        }
+
+        value = Info_ValueForKey( userinfo, "name" );
+        if ( !value || !value[0] ) {
+                value = client->pers.netname;
+        }
+        if ( value && value[0] ) {
+                Q_strncpyz( player->name, value, sizeof( player->name ) );
+        }
+        Q_strncpyz( player->cleanName, player->name, sizeof( player->cleanName ) );
+        Q_CleanStr( player->cleanName );
+
+        if ( !player->playerId[0] ) {
+                Q_strncpyz( player->playerId, player->cleanName, sizeof( player->playerId ) );
+        }
+        if ( !player->playerId[0] ) {
+                Com_sprintf( player->playerId, sizeof( player->playerId ), "client-%i", clientNum );
+        }
+
+        value = Info_ValueForKey( userinfo, "model" );
+        if ( value && value[0] ) {
+                Q_strncpyz( player->model, value, sizeof( player->model ) );
+        }
+
+        value = Info_ValueForKey( userinfo, "chassis" );
+        if ( value && value[0] ) {
+                Q_strncpyz( player->vehicle, value, sizeof( player->vehicle ) );
+        } else {
+                value = Info_ValueForKey( userinfo, "vehicle" );
+                if ( value && value[0] ) {
+                        Q_strncpyz( player->vehicle, value, sizeof( player->vehicle ) );
+                }
+        }
+
+        player->team = client->sess.sessionTeam;
+        player->isBot = ( ent->r.svFlags & SVF_BOT ) ? qtrue : qfalse;
+        player->score = client->ps.persistant[PERS_SCORE];
+        player->ping = client->ps.ping;
+        player->time = level.time - client->pers.enterTime;
+        if ( player->time < 0 ) {
+                player->time = 0;
+        }
+
+        player->scoreFlags = client->ps.persistant[PERS_PLAYEREVENTS];
+
+        for ( i = 0; i < MIN( PW_NUM_POWERUPS, MAX_POWERUPS ); ++i ) {
+                if ( client->ps.powerups[i] > level.time ) {
+                        player->powerUps |= ( 1 << i );
+                }
+        }
+
+        if ( client->accuracy_shots > 0 ) {
+                player->accuracy = ( client->accuracy_hits * 100 ) / client->accuracy_shots;
+        }
+
+        player->impressiveCount = client->ps.persistant[PERS_IMPRESSIVE_COUNT];
+        player->impressiveTelefragCount = client->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT];
+        player->excellentCount = client->ps.persistant[PERS_EXCELLENT_COUNT];
+        player->gauntletCount = client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT];
+        player->defendCount = client->ps.persistant[PERS_DEFEND_COUNT];
+        player->assistCount = client->ps.persistant[PERS_ASSIST_COUNT];
+        player->captures = client->ps.persistant[PERS_CAPTURES];
+
+        player->damageDealt = client->ps.stats[STAT_DAMAGE_DEALT];
+        player->damageTaken = client->ps.stats[STAT_DAMAGE_TAKEN];
+        player->position = client->ps.stats[STAT_POSITION];
+
+        if ( level.startRaceTime > 0 && client->finishRaceTime > level.startRaceTime ) {
+                player->totalRaceMs = client->finishRaceTime - level.startRaceTime;
+        } else if ( level.startRaceTime > 0 && level.time > level.startRaceTime ) {
+                player->totalRaceMs = level.time - level.startRaceTime;
+        }
+        player->finishRaceTime = client->finishRaceTime;
+        player->lapCount = ent->currentLap;
+
+        player->kills = client->ps.persistant[PERS_SCORE];
+        deaths = client->ps.persistant[PERS_KILLED];
+        player->deaths = deaths;
+        if ( player->kills > 0 && deaths == 0 ) {
+                player->perfect = qtrue;
+        }
+        if ( deaths > 0 ) {
+                player->kdRatio = (float)player->kills / (float)deaths;
+        } else if ( player->kills > 0 ) {
+                player->kdRatio = (float)player->kills;
+        }
+
+        player->zoneActiveSigil = -1;
+
+        payload->playerCount++;
+        return qtrue;
+}
+
+static void G_LadderSubmitMatchReport( const char *reason ) {
+        ladderMatchPayload_t *payload = &s_ladderMatchPayload;
+        qtime_t endTime;
+        int endEpoch;
+        char serverinfo[MAX_INFO_STRING];
+        const char *value;
+        char buffer[MAX_INFO_STRING];
+        int i;
+
+        if ( trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) == 0 ) {
+                return;
+        }
+
+        Com_Memset( payload, 0, sizeof( *payload ) );
+
+        if ( level.ladderMatchId[0] ) {
+                Q_strncpyz( payload->matchId, level.ladderMatchId, sizeof( payload->matchId ) );
+        }
+
+        payload->valid = qtrue;
+        payload->gametype = g_gametype.integer;
+        Q_strncpyz( payload->mode, G_LadderModeForGametype( g_gametype.integer ), sizeof( payload->mode ) );
+
+        trap_GetServerinfo( serverinfo, sizeof( serverinfo ) );
+        value = Info_ValueForKey( serverinfo, "mapname" );
+        if ( value && value[0] ) {
+                Q_strncpyz( payload->mapName, value, sizeof( payload->mapName ) );
+        }
+
+        G_LadderFormatIsoTime( &level.ladderStartTime, payload->startTimeIso, sizeof( payload->startTimeIso ) );
+        payload->startEpoch = level.ladderStartEpoch;
+
+        endEpoch = trap_RealTime( &endTime );
+        G_LadderFormatIsoTime( &endTime, payload->endTimeIso, sizeof( payload->endTimeIso ) );
+        payload->endEpoch = endEpoch;
+
+        if ( payload->startEpoch > 0 && payload->endEpoch >= payload->startEpoch ) {
+                payload->durationSeconds = payload->endEpoch - payload->startEpoch;
+        }
+        Com_sprintf( payload->durationIso, sizeof( payload->durationIso ), "PT%iS", payload->durationSeconds );
+
+        trap_Cvar_VariableStringBuffer( "sv_hostname", payload->serverName, sizeof( payload->serverName ) );
+        trap_Cvar_VariableStringBuffer( "net_ip", payload->serverHost, sizeof( payload->serverHost ) );
+        if ( payload->serverHost[0] ) {
+                trap_Cvar_VariableStringBuffer( "net_port", buffer, sizeof( buffer ) );
+                if ( buffer[0] ) {
+                        Q_strcat( payload->serverHost, sizeof( payload->serverHost ), ":" );
+                        Q_strcat( payload->serverHost, sizeof( payload->serverHost ), buffer );
+                }
+        } else {
+                trap_Cvar_VariableStringBuffer( "sv_fqdn", payload->serverHost, sizeof( payload->serverHost ) );
+                if ( !payload->serverHost[0] ) {
+                        Q_strncpyz( payload->serverHost, payload->serverName, sizeof( payload->serverHost ) );
+                }
+        }
+        trap_Cvar_VariableStringBuffer( "version", payload->serverBuild, sizeof( payload->serverBuild ) );
+
+        payload->levelStartTime = level.startTime;
+        payload->levelEndTime = level.time;
+        payload->raceStartTime = level.startRaceTime;
+        payload->raceEndTime = level.finishRaceTime;
+        payload->finishRaceTime = level.finishRaceTime;
+        payload->winnerClientNum = level.winnerNumber;
+        payload->numberOfLaps = level.numberOfLaps;
+        payload->trackReversed = g_trackReversed.integer ? qtrue : qfalse;
+
+        for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
+                payload->teamScores[i] = level.teamScores[i];
+                payload->teamTimes[i] = level.teamTimes[i];
+        }
+
+        for ( i = 0; i < level.maxclients; ++i ) {
+                G_LadderPopulatePlayer( payload, i );
+        }
+
+        if ( reason && reason[0] ) {
+                Com_Printf( "Ladder: submitting '%s' with reason '%s' (%d players)\n",
+                        payload->matchId[0] ? payload->matchId : "<unknown>", reason, payload->playerCount );
+        } else {
+                Com_Printf( "Ladder: submitting '%s' (%d players)\n",
+                        payload->matchId[0] ? payload->matchId : "<unknown>", payload->playerCount );
+        }
+
+        if ( payload->playerCount > 0 || reason ) {
+                trap_LadderSubmit( payload );
+        }
+}
+
 
 /*
 ============
@@ -652,18 +895,10 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// set some level globals
 	memset( &level, 0, sizeof( level ) );
-	level.time = levelTime;
-	level.startTime = levelTime;
-	Com_Memset( &level.matchStartTime, 0, sizeof( level.matchStartTime ) );
-	level.matchStartEpoch = trap_RealTime( &level.matchStartTime );
-
-	trap_Cvar_Update( &g_eliminationStartDelay );
-	trap_Cvar_Update( &g_eliminationInterval );
-	trap_Cvar_Update( &g_eliminationWarning );
-	level.eliminationStartDelay = trap_Cvar_VariableIntegerValue( "g_eliminationStartDelay" );
-	level.eliminationInterval = trap_Cvar_VariableIntegerValue( "g_eliminationInterval" );
-	level.eliminationWarning = trap_Cvar_VariableIntegerValue( "g_eliminationWarning" );
-	G_ResetEliminationState();
+        level.time = levelTime;
+        level.startTime = levelTime;
+        level.ladderStartEpoch = trap_RealTime( &level.ladderStartTime );
+        G_LadderBuildMatchId( randomSeed );
 
 	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
 
@@ -1061,7 +1296,7 @@ int QDECL SortRanks( const void *a, const void *b ) {
 		else if ( cb->finishRaceTime ) {
 			return -1;
 		}
-			else {
+		else {
 			// if still alive sort by health
 			if ( ca->ps.stats[STAT_HEALTH] > cb->ps.stats[STAT_HEALTH] ) {
 				return -1;
@@ -1516,127 +1751,6 @@ void QDECL G_DebugLogPrintf( const char *fmt, ... ) {
 // END
 
 
-static void G_LadderStripColors( const char *in, char *out, int outSize ) {
-	int len = 0;
-
-	if ( !in || !out || outSize <= 0 ) {
-		return;
-	}
-
-	while ( *in && len < outSize - 1 ) {
-		if ( *in == '^' && in[1] ) {
-			in += 2;
-			continue;
-		}
-
-		if ( (unsigned char)*in < 32 ) {
-			in++;
-			continue;
-		}
-
-		out[len++] = *in++;
-	}
-
-	out[len] = '\0';
-}
-
-static const char *G_LadderGametypeString( int gametype ) {
-	switch ( gametype ) {
-	case GT_RACING: return "GT_RACING";
-	case GT_RACING_DM: return "GT_RACING_DM";
-	case GT_SINGLE_PLAYER: return "GT_SINGLE_PLAYER";
-	case GT_DERBY: return "GT_DERBY";
-	case GT_LCS: return "GT_LCS";
-	case GT_ELIMINATION: return "GT_ELIMINATION";
-	case GT_DEATHMATCH: return "GT_DEATHMATCH";
-	case GT_TEAM: return "GT_TEAM";
-	case GT_TEAM_RACING: return "GT_TEAM_RACING";
-	case GT_TEAM_RACING_DM: return "GT_TEAM_RACING_DM";
-	case GT_CTF: return "GT_CTF";
-	case GT_CTF4: return "GT_CTF4";
-	case GT_DOMINATION: return "GT_DOMINATION";
-	default: return "GT_UNKNOWN";
-	}
-}
-
-static void G_LadderFormatIso8601( const qtime_t *qt, char *out, size_t outSize ) {
-	if ( !out || outSize < 2 ) {
-		return;
-	}
-
-	if ( !qt ) {
-		out[0] = '\0';
-		return;
-	}
-
-	Com_sprintf( out, outSize, "%04i-%02i-%02iT%02i:%02i:%02iZ",
-		qt->tm_year + 1900, qt->tm_mon + 1, qt->tm_mday,
-		qt->tm_hour, qt->tm_min, qt->tm_sec );
-}
-
-static void G_LadderFormatDurationIso( int seconds, char *out, size_t outSize ) {
-	int hours;
-	int minutes;
-
-	if ( !out || outSize < 2 ) {
-		return;
-	}
-
-	if ( seconds < 0 ) {
-		seconds = 0;
-	}
-
-	hours = seconds / 3600;
-	seconds %= 3600;
-	minutes = seconds / 60;
-	seconds %= 60;
-
-	if ( hours > 0 ) {
-		Com_sprintf( out, outSize, "PT%iH%02iM%02iS", hours, minutes, seconds );
-	} else if ( minutes > 0 ) {
-		Com_sprintf( out, outSize, "PT%iM%02iS", minutes, seconds );
-	} else {
-		Com_sprintf( out, outSize, "PT%iS", seconds );
-	}
-}
-
-static void G_LadderBuildMatchId( char *out, size_t outSize, int serverId, const qtime_t *startTime, int startTimeMs ) {
-	if ( !out || outSize < 2 ) {
-		return;
-	}
-
-	if ( !startTime ) {
-		Q_strncpyz( out, "srv-unknown", outSize );
-		return;
-	}
-
-	Com_sprintf( out, outSize, "srv-%i-%04i%02i%02i-%02i%02i%02i-%03i",
-		serverId,
-		startTime->tm_year + 1900, startTime->tm_mon + 1, startTime->tm_mday,
-		startTime->tm_hour, startTime->tm_min, startTime->tm_sec,
-		startTimeMs % 1000 );
-}
-
-static void G_LadderComputePlayerId( const char *guid, const char *cleanName, char *out, size_t outSize ) {
-	char combined[128];
-	unsigned int hash;
-
-	combined[0] = '\0';
-	if ( guid && guid[0] ) {
-		Q_strncpyz( combined, guid, sizeof( combined ) );
-	}
-	Q_strcat( combined, sizeof( combined ), "|" );
-	if ( cleanName && cleanName[0] ) {
-		Q_strcat( combined, sizeof( combined ), cleanName );
-	}
-	if ( !combined[0] ) {
-		Q_strncpyz( combined, "anonymous", sizeof( combined ) );
-	}
-
-	hash = Com_BlockChecksum( combined, strlen( combined ) );
-	Com_sprintf( out, outSize, "cksum:%08x", hash );
-}
-
 /*
 ================
 LogExit
@@ -1651,17 +1765,15 @@ void LogExit( const char *string ) {
 	qboolean won = qtrue;
 	team_t team = TEAM_RED;
 #endif
-	qboolean ladderEnabled = trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) != 0;
-	ladderMatchPayload_t *ladder = &level.ladderPayload;
-	qtime_t endTime;
-	int endEpoch = 0;
-
 	G_LogPrintf( "Exit: %s\n", string );
 
 	level.intermissionQueued = level.time;
 
+	// this will keep the clients from playing any voice sounds
+	// that will get cut off when the queued intermission starts
 	trap_SetConfigstring( CS_INTERMISSION, "1" );
 
+	// don't send more than 32 scores (FIXME?)
 	numSorted = level.numConnectedClients;
 	if ( numSorted > 32 ) {
 		numSorted = 32;
@@ -1669,85 +1781,16 @@ void LogExit( const char *string ) {
 
 	if ( g_gametype.integer >= GT_TEAM ) {
 // STONELANCE
+//		G_LogPrintf( "red:%i  blue:%i\n",
+//			level.teamScores[TEAM_RED], level.teamScores[TEAM_BLUE] );
 		G_LogPrintf( "red:%i  blue:%i  green:%i  yellow:%i\n",
 			level.teamScores[TEAM_RED], level.teamScores[TEAM_BLUE],
-			level.teamScores[TEAM_GREEN], level.teamScores[TEAM_YELLOW] );
+			level.teamScores[TEAM_GREEN], level.teamScores[TEAM_YELLOW]);
 // END
 	}
 
-	if ( ladderEnabled ) {
-		char serverinfo[MAX_INFO_STRING];
-		char ipBuffer[MAX_CVAR_VALUE_STRING];
-		char portBuffer[MAX_CVAR_VALUE_STRING];
-		const char *value;
-
-		Com_Memset( ladder, 0, sizeof( *ladder ) );
-		ladder->valid = qtrue;
-		ladder->gametype = g_gametype.integer;
-		Q_strncpyz( ladder->mode, G_LadderGametypeString( ladder->gametype ), sizeof( ladder->mode ) );
-
-		trap_GetServerinfo( serverinfo, sizeof( serverinfo ) );
-		value = Info_ValueForKey( serverinfo, "mapname" );
-		if ( value ) {
-			Q_strncpyz( ladder->mapName, value, sizeof( ladder->mapName ) );
-		}
-
-		value = Info_ValueForKey( serverinfo, "sv_hostname" );
-		if ( value ) {
-			G_LadderStripColors( value, ladder->serverName, sizeof( ladder->serverName ) );
-			if ( !ladder->serverName[0] ) {
-				Q_strncpyz( ladder->serverName, value, sizeof( ladder->serverName ) );
-			}
-		}
-
-		trap_Cvar_VariableStringBuffer( "net_ip", ipBuffer, sizeof( ipBuffer ) );
-		trap_Cvar_VariableStringBuffer( "net_port", portBuffer, sizeof( portBuffer ) );
-		if ( !portBuffer[0] ) {
-			Q_strncpyz( portBuffer, "27960", sizeof( portBuffer ) );
-		}
-
-		if ( ipBuffer[0] && Q_stricmp( ipBuffer, "0.0.0.0" ) ) {
-			Com_sprintf( ladder->serverHost, sizeof( ladder->serverHost ), "%s:%s", ipBuffer, portBuffer );
-		} else if ( ladder->serverName[0] ) {
-			Q_strncpyz( ladder->serverHost, ladder->serverName, sizeof( ladder->serverHost ) );
-		} else {
-			Q_strncpyz( ladder->serverHost, "localhost", sizeof( ladder->serverHost ) );
-		}
-
-		Q_strncpyz( ladder->serverBuild, Q3_VERSION, sizeof( ladder->serverBuild ) );
-		ladder->numberOfLaps = level.numberOfLaps;
-		ladder->trackReversed = trap_Cvar_VariableIntegerValue( "g_trackReversed" ) ? qtrue : qfalse;
-		ladder->eliminationStartDelay = level.eliminationStartDelay;
-		ladder->eliminationInterval = level.eliminationInterval;
-		ladder->eliminationWarning = level.eliminationWarning;
-		ladder->levelStartTime = level.startTime;
-		ladder->levelEndTime = level.time;
-		ladder->raceStartTime = level.startRaceTime;
-		ladder->raceEndTime = level.finishRaceTime ? level.finishRaceTime : level.time;
-		ladder->finishRaceTime = level.finishRaceTime;
-		ladder->winnerClientNum = level.winnerNumber;
-		Com_Memcpy( ladder->teamScores, level.teamScores, sizeof( ladder->teamScores ) );
-		Com_Memcpy( ladder->teamTimes, level.teamTimes, sizeof( ladder->teamTimes ) );
-
-		G_LadderFormatIso8601( &level.matchStartTime, ladder->startTimeIso, sizeof( ladder->startTimeIso ) );
-		ladder->startEpoch = level.matchStartEpoch;
-		endEpoch = trap_RealTime( &endTime );
-		ladder->endEpoch = endEpoch;
-		G_LadderFormatIso8601( &endTime, ladder->endTimeIso, sizeof( ladder->endTimeIso ) );
-		ladder->durationSeconds = endEpoch - level.matchStartEpoch;
-		if ( ladder->durationSeconds < 0 ) {
-			ladder->durationSeconds = 0;
-		}
-		G_LadderFormatDurationIso( ladder->durationSeconds, ladder->durationIso, sizeof( ladder->durationIso ) );
-		G_LadderBuildMatchId( ladder->matchId, sizeof( ladder->matchId ),
-			trap_Cvar_VariableIntegerValue( "sv_serverid" ), &level.matchStartTime, level.startTime );
-	} else {
-		Com_Memset( ladder, 0, sizeof( *ladder ) );
-	}
-
-	for ( i = 0 ; i < numSorted ; i++ ) {
-		int ping;
-		int timePlayed;
+	for (i=0 ; i < numSorted ; i++) {
+		int		ping;
 
 		cl = &level.clients[level.sortedClients[i]];
 
@@ -1759,84 +1802,8 @@ void LogExit( const char *string ) {
 		}
 
 		ping = cl->ps.ping < 999 ? cl->ps.ping : 999;
-		timePlayed = level.time - cl->pers.enterTime;
-		if ( timePlayed < 0 ) {
-			timePlayed = 0;
-		}
 
-		if ( ladderEnabled && ladder->playerCount < MAX_CLIENTS ) {
-			ladderPlayerPayload_t *entry = &ladder->players[ladder->playerCount++];
-			char userinfo[MAX_INFO_STRING];
-			char cleanName[LADDER_MAX_PLAYER_NAME];
-			const char *guid;
-			const char *name;
-			const char *model;
-
-			Com_Memset( entry, 0, sizeof( *entry ) );
-			entry->clientNum = level.sortedClients[i];
-			entry->team = cl->sess.sessionTeam;
-			entry->isBot = ( g_entities[level.sortedClients[i]].r.svFlags & SVF_BOT ) ? qtrue : qfalse;
-			entry->score = cl->ps.persistant[PERS_SCORE];
-			entry->ping = ping;
-			entry->time = timePlayed;
-			entry->powerUps = g_entities[level.sortedClients[i]].s.powerups;
-			entry->accuracy = cl->accuracy_shots ? ( cl->accuracy_hits * 100 / cl->accuracy_shots ) : 0;
-			entry->impressiveCount = cl->ps.persistant[PERS_IMPRESSIVE_COUNT];
-			entry->impressiveTelefragCount = cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT];
-			entry->excellentCount = cl->ps.persistant[PERS_EXCELLENT_COUNT];
-			entry->gauntletCount = cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT];
-			entry->defendCount = cl->ps.persistant[PERS_DEFEND_COUNT];
-			entry->assistCount = cl->ps.persistant[PERS_ASSIST_COUNT];
-			entry->perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 );
-			entry->captures = cl->ps.persistant[PERS_CAPTURES];
-			entry->damageDealt = cl->ps.stats[STAT_DAMAGE_DEALT];
-			entry->damageTaken = cl->ps.stats[STAT_DAMAGE_TAKEN];
-			entry->position = cl->ps.stats[STAT_POSITION];
-			entry->kills = cl->ladderKills;
-			entry->deaths = cl->ladderDeaths;
-			entry->kdRatio = ( cl->ladderDeaths > 0 ) ? (float)cl->ladderKills / (float)cl->ladderDeaths : (float)cl->ladderKills;
-			entry->survivalMs = cl->ladderSurvivalMs;
-			entry->zoneHoldMs = cl->ladderZoneHoldMs;
-			entry->zoneActiveSigil = cl->ladderZoneActiveSigil;
-			entry->eliminationRound = cl->ladderEliminationRound;
-			entry->eliminationPlayersRemaining = cl->ladderEliminationPlayersRemaining;
-			entry->eliminationMetric = cl->ladderEliminationMetric;
-			entry->bestLapMs = cl->ladderBestLapMs;
-			entry->totalRaceMs = cl->ladderTotalRaceMs;
-			entry->lapCount = cl->ladderLapCount;
-			entry->finishRaceTime = cl->finishRaceTime;
-			if ( entry->lapCount < 0 ) {
-				entry->lapCount = 0;
-			} else if ( entry->lapCount > RACE_MAX_RECORDED_LAPS ) {
-				entry->lapCount = RACE_MAX_RECORDED_LAPS;
-			}
-			Com_Memcpy( entry->lapTimes, cl->ladderLapTimes, sizeof( entry->lapTimes ) );
-
-			trap_GetUserinfo( level.sortedClients[i], userinfo, sizeof( userinfo ) );
-			guid = Info_ValueForKey( userinfo, "cl_guid" );
-			name = Info_ValueForKey( userinfo, "name" );
-			model = Info_ValueForKey( userinfo, "model" );
-
-			if ( name ) {
-				Q_strncpyz( entry->name, name, sizeof( entry->name ) );
-				G_LadderStripColors( name, cleanName, sizeof( cleanName ) );
-				Q_strncpyz( entry->cleanName, cleanName, sizeof( entry->cleanName ) );
-			} else {
-				entry->name[0] = '\0';
-				entry->cleanName[0] = '\0';
-			}
-
-			if ( guid ) {
-				Q_strncpyz( entry->guid, guid, sizeof( entry->guid ) );
-			}
-			if ( model ) {
-				Q_strncpyz( entry->model, model, sizeof( entry->model ) );
-				Q_strncpyz( entry->vehicle, model, sizeof( entry->vehicle ) );
-			}
-			G_LadderComputePlayerId( entry->guid, entry->cleanName, entry->playerId, sizeof( entry->playerId ) );
-		}
-
-		G_LogPrintf( "score: %i  ping: %i  client: %i %s\n", cl->ps.persistant[PERS_SCORE], ping, level.sortedClients[i], cl->pers.netname );
+		G_LogPrintf( "score: %i  ping: %i  client: %i %s\n", cl->ps.persistant[PERS_SCORE], ping, level.sortedClients[i],	cl->pers.netname );
 #ifdef MISSIONPACK
 		if (g_singlePlayer.integer && !(g_entities[cl - level.clients].r.svFlags & SVF_BOT)) {
 			team = cl->sess.sessionTeam;
@@ -1847,15 +1814,14 @@ void LogExit( const char *string ) {
 			}
 		}
 #endif
-	}
 
-	if ( ladderEnabled ) {
-		trap_LadderSubmit( ladder );
-	}
+        }
+
+        G_LadderSubmitMatchReport( string );
 
 #ifdef MISSIONPACK
-	if (g_singlePlayer.integer) {
-		if (g_gametype.integer >= GT_TEAM) {
+        if (g_singlePlayer.integer) {
+                if (g_gametype.integer >= GT_TEAM) {
 			if (team == TEAM_BLUE) {
 				won = level.teamScores[TEAM_BLUE] > level.teamScores[TEAM_RED];
 			} else {
@@ -1866,8 +1832,8 @@ void LogExit( const char *string ) {
 	}
 #endif
 
-}
 
+}
 
 
 /*
@@ -2029,7 +1995,6 @@ void CheckExitRules( void ) {
 	gclient_t	*cl;
 // STONELANCE
 	int			count;
-	gclient_t	*soleActiveClient = NULL;
 // END
 	// if at the intermission, wait for all non-bots to
 	// signal ready, then go to next level
@@ -2068,7 +2033,7 @@ void CheckExitRules( void ) {
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
-				trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
+			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
 		}
@@ -2093,19 +2058,15 @@ void CheckExitRules( void ) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
-				trap_SendServerCommand( -1, va("print \"%s won the demolition derby!\n\"", winner->pers.netname ));
-				trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\n\"");
+			trap_SendServerCommand( -1, va("print \"%s won the demolition derby!\n\"", winner->pers.netname ));
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\n\"");
 		}
 
 		return;
 	}
 
-	if ((g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime && !level.finishRaceTime) {
+	if (g_gametype.integer == GT_LCS && level.startRaceTime && !level.finishRaceTime) {
 		gclient_t	*winner = NULL;
-
-		if ( g_gametype.integer == GT_ELIMINATION ) {
-			G_UpdateEliminationPlayerCount();
-		}
 
 		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
 			cl = level.clients + i;
@@ -2122,19 +2083,8 @@ void CheckExitRules( void ) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
-			if ( g_gametype.integer == GT_LCS ) {
-				trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
-				trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
-			}
-			else {
-				level.eliminationActive = 0;
-				level.eliminationNextTriggerTime = 0;
-				level.eliminationWarningTime = 0;
-				level.eliminationWarningSent = qfalse;
-				G_UpdateEliminationPlayerCount();
-				trap_SendServerCommand( -1, va("print \"%s won the elimination race!\n\"", winner->pers.netname ));
-				trap_SendServerCommand( level.winnerNumber, "cp \"You won the elimination race!\n\"");
-			}
+			trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
 		}
 
 		return;
@@ -2149,12 +2099,7 @@ void CheckExitRules( void ) {
 //		if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
 
 		count++;
-		if ( count == 1 ) {
-			soleActiveClient = cl;
-		} else {
-			soleActiveClient = NULL;
-			break;
-		}
+		break;
 	}
 
 	// if its a race and the race has started if no players left playing 
@@ -2163,18 +2108,6 @@ void CheckExitRules( void ) {
 		LogExit( "Race finished." );
 		return;
 	}
-
-        if ( isRallyRace() && level.startRaceTime && !level.finishRaceTime
-                        && count == 1 && soleActiveClient && soleActiveClient->fuelEmptySince ) {
-                int finishTime = level.time;
-
-                soleActiveClient->finishRaceTime = finishTime;
-                soleActiveClient->ps.stats[STAT_POSITION] = 1;
-                level.winnerNumber = soleActiveClient->ps.clientNum;
-                level.finishRaceTime = finishTime;
-                trap_SendServerCommand( -1, va( "raceFinishTime %i %i %i", soleActiveClient->ps.clientNum, finishTime, 1 ) );
-                return;
-        }
 
 	if ( level.finishRaceTime && isRallyRace() ){
 		// if everyone has finished the race, or the finishRaceDelay time is up, then exit
@@ -2188,21 +2121,16 @@ void CheckExitRules( void ) {
 	if ( level.finishRaceTime && g_gametype.integer == GT_DERBY
 		&& level.finishRaceTime + 10000 < level.time ){
 		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
-                trap_SendServerCommand( -1, va("raceFinishTime %i %i %i", level.winnerNumber, level.time, 0) );
+		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
 		LogExit( "Derby finished." );
 		return;
 	}
 	
-	if ( level.finishRaceTime && (g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION)
+	if ( level.finishRaceTime && g_gametype.integer == GT_LCS
 		&& level.finishRaceTime + 10000 < level.time ){
 		g_entities[ level.winnerNumber ].client->finishRaceTime = level.time;
-                trap_SendServerCommand( -1, va("raceFinishTime %i %i %i", level.winnerNumber, level.time, 0) );
-		if ( g_gametype.integer == GT_LCS ) {
-			LogExit( "Last car standing finished." );
-		}
-		else {
-			LogExit( "Elimination finished." );
-		}
+		trap_SendServerCommand( -1, va("raceFinishTime %i %i", level.winnerNumber, level.time) );
+		LogExit( "Last car standing finished." );
 		return;
 	}
 // END
@@ -2222,26 +2150,26 @@ void CheckExitRules( void ) {
 
 	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 // STONELANCE
 		if ( level.teamScores[TEAM_GREEN] >= g_fraglimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Green hit the fraglimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Green hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_YELLOW] >= g_fraglimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Yellow hit the fraglimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Yellow hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
 			return;
 		}
@@ -2274,378 +2202,19 @@ void CheckExitRules( void ) {
 	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
 
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
-				trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
+			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
 			return;
 		}
 	}
 }
 
-
-
-static void G_UpdateEliminationInfoConfigString( void ) {
-        static int lastActive = -1;
-        static int lastRemaining = -1;
-        static int lastRound = -1;
-        static int lastMsLeft = -1;
-        int active;
-        int remaining;
-        int round;
-        int msLeft;
-
-        if ( g_gametype.integer != GT_ELIMINATION ) {
-                active = 0;
-                remaining = 0;
-                round = 0;
-                msLeft = 0;
-        } else {
-                active = ( level.eliminationActive && level.startRaceTime && !level.finishRaceTime ) ? 1 : 0;
-                remaining = level.eliminationRemainingPlayers;
-                if ( remaining < 0 ) {
-                        remaining = 0;
-                }
-                round = level.eliminationRound;
-                if ( round < 0 ) {
-                        round = 0;
-                }
-
-                if ( active && level.eliminationNextTriggerTime > level.time && remaining > 1 ) {
-                        msLeft = level.eliminationNextTriggerTime - level.time;
-                } else {
-                        msLeft = 0;
-                }
-
-                if ( msLeft < 0 ) {
-                        msLeft = 0;
-                }
-        }
-
-        if ( lastActive != active || lastRemaining != remaining || lastRound != round || lastMsLeft != msLeft ) {
-                trap_SetConfigstring( CS_ELIMINATION_INFO,
-                        va( "%i %i %i %i", active, remaining, round, msLeft ) );
-                lastActive = active;
-                lastRemaining = remaining;
-                lastRound = round;
-                lastMsLeft = msLeft;
-        }
-}
-
-static void G_SetEliminationSchedule( int referenceTime, int interval ) {
-        int nextTime;
-        int warningTime;
-
-        if ( interval < 0 ) {
-                interval = 0;
-        }
-
-        nextTime = referenceTime + interval;
-        level.eliminationNextTriggerTime = nextTime;
-        level.eliminationWarningSent = qfalse;
-
-        if ( level.eliminationWarning <= 0 ) {
-                level.eliminationWarningTime = referenceTime;
-        } else {
-                warningTime = nextTime - level.eliminationWarning;
-                if ( warningTime < referenceTime ) {
-                        warningTime = referenceTime;
-                }
-                if ( warningTime > nextTime ) {
-                        warningTime = nextTime;
-                }
-
-                level.eliminationWarningTime = warningTime;
-        }
-
-        G_UpdateEliminationInfoConfigString();
-}
-
-void G_ResetEliminationState( void ) {
-        level.eliminationActive = 0;
-        level.eliminationRound = 0;
-        level.eliminationRemainingPlayers = 0;
-        level.eliminationNextTriggerTime = 0;
-        level.eliminationWarningTime = 0;
-        level.eliminationWarningSent = qfalse;
-
-        if ( g_gametype.integer == GT_ELIMINATION ) {
-                G_SetEliminationSchedule( level.time, level.eliminationStartDelay );
-        }
-
-        G_UpdateEliminationInfoConfigString();
-}
-
-void G_StartEliminationMode( void ) {
-        if ( g_gametype.integer != GT_ELIMINATION ) {
-                return;
-        }
-
-        level.eliminationActive = 1;
-        level.eliminationRound = 0;
-        G_UpdateEliminationPlayerCount();
-        G_SetEliminationSchedule( level.startRaceTime ? level.startRaceTime : level.time, level.eliminationStartDelay );
-}
-
-void G_UpdateEliminationPlayerCount( void ) {
-        int i;
-        int count;
-
-        if ( g_gametype.integer != GT_ELIMINATION ) {
-                level.eliminationRemainingPlayers = 0;
-                G_UpdateEliminationInfoConfigString();
-                return;
-        }
-
-        count = 0;
-        for ( i = 0 ; i < level.maxclients ; i++ ) {
-                gclient_t *cl = level.clients + i;
-
-                if ( cl->pers.connected != CON_CONNECTED ) {
-                        continue;
-                }
-                if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) {
-                        continue;
-                }
-                if ( isRaceObserver( i ) ) {
-                        continue;
-                }
-                if ( level.startRaceTime ) {
-                        if ( cl->finishRaceTime ) {
-                                continue;
-                        }
-                        if ( cl->ps.stats[STAT_HEALTH] <= 0 ) {
-                                continue;
-                        }
-                }
-
-                count++;
-        }
-
-        level.eliminationRemainingPlayers = count;
-
-        G_UpdateEliminationInfoConfigString();
-}
-
-void G_RegisterEliminationDeath( gentity_t *victim ) {
-        if ( g_gametype.integer != GT_ELIMINATION ) {
-                return;
-        }
-
-        if ( !level.eliminationActive || !level.startRaceTime ) {
-                return;
-        }
-
-        if ( !victim || !victim->client ) {
-                return;
-        }
-
-        if ( victim->client->sess.sessionTeam == TEAM_SPECTATOR ) {
-                return;
-        }
-
-        if ( isRaceObserver( victim->s.number ) ) {
-                return;
-        }
-
-        level.eliminationRound++;
-        G_UpdateEliminationPlayerCount();
-
-        {
-                int placement;
-
-                victim->client->ladderEliminationRound = level.eliminationRound;
-                victim->client->ladderEliminationPlayersRemaining = level.eliminationRemainingPlayers;
-
-                placement = level.eliminationRemainingPlayers + 1;
-                if ( placement < 1 ) {
-                        placement = 1;
-                }
-
-                victim->client->ps.stats[STAT_POSITION] = placement;
-
-                victim->client->ladderEliminationMetric = (float)placement;
-                if ( victim->client->ladderSurvivalMs > 0 ) {
-                        // use survival time as a fractional tie breaker so that identical
-                        // placements can still be ordered by longevity within the round
-                        victim->client->ladderEliminationMetric += (float)victim->client->ladderSurvivalMs / 1000000.0f;
-                }
-        }
-        Cmd_RacePositions_f();
-        CalculateRanks();
-
-        if ( level.eliminationRemainingPlayers > 1 ) {
-                G_SetEliminationSchedule( level.time, level.eliminationInterval );
-        } else {
-                level.eliminationActive = 0;
-                level.eliminationNextTriggerTime = 0;
-                level.eliminationWarningTime = 0;
-                level.eliminationWarningSent = qfalse;
-
-                G_UpdateEliminationInfoConfigString();
-        }
-}
-
-static qboolean G_IsEliminationClientActive( gentity_t *ent ) {
-        gclient_t *cl;
-
-        if ( !ent ) {
-                return qfalse;
-        }
-
-        if ( !ent->inuse ) {
-                return qfalse;
-        }
-
-        if ( !ent->client ) {
-                return qfalse;
-        }
-
-        cl = ent->client;
-
-        if ( cl->pers.connected != CON_CONNECTED ) {
-                return qfalse;
-        }
-
-        if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) {
-                return qfalse;
-        }
-
-        if ( isRaceObserver( ent->s.number ) ) {
-                return qfalse;
-        }
-
-        if ( level.startRaceTime ) {
-                if ( cl->finishRaceTime ) {
-                        return qfalse;
-                }
-                if ( cl->ps.stats[STAT_HEALTH] <= 0 ) {
-                        return qfalse;
-                }
-        }
-
-        return qtrue;
-}
-
-static gentity_t *G_GetLastEliminationDriver( void ) {
-        gentity_t *last = NULL;
-        int lastPosition = -1;
-        int i;
-
-        for ( i = 0 ; i < level.maxclients ; i++ ) {
-                gentity_t *ent = &g_entities[i];
-                int position;
-
-                if ( !G_IsEliminationClientActive( ent ) ) {
-                        continue;
-                }
-
-                position = ent->client->ps.stats[STAT_POSITION];
-                if ( position <= 0 ) {
-                        continue;
-                }
-
-                if ( position > lastPosition ) {
-                        lastPosition = position;
-                        last = ent;
-                }
-        }
-
-        return last;
-}
-
-static void G_ForceEliminationDeath( gentity_t *victim ) {
-        if ( !victim || !victim->client ) {
-                return;
-        }
-
-        if ( victim->client->ps.pm_type == PM_DEAD ) {
-                return;
-        }
-
-        victim->flags &= ~FL_GODMODE;
-        victim->client->ps.stats[STAT_HEALTH] = victim->health = -999;
-	player_die( victim, NULL, NULL, 100000, MOD_ELIMINATION );
-}
-
-static void G_RunEliminationTimers( void ) {
-        gentity_t *target;
-        int msLeft;
-        int secondsLeft;
-
-        if ( g_gametype.integer != GT_ELIMINATION ) {
-                return;
-        }
-
-        if ( !level.eliminationActive ) {
-                return;
-        }
-
-        if ( !level.startRaceTime || level.finishRaceTime ) {
-                return;
-        }
-
-        if ( level.eliminationNextTriggerTime <= 0 ) {
-                return;
-        }
-
-        G_UpdateEliminationPlayerCount();
-
-        if ( level.eliminationRemainingPlayers <= 1 ) {
-                return;
-        }
-
-        if ( level.eliminationWarning > 0 && !level.eliminationWarningSent && level.eliminationWarningTime > 0 && level.time >= level.eliminationWarningTime ) {
-                target = G_GetLastEliminationDriver();
-
-                if ( target ) {
-                        msLeft = level.eliminationNextTriggerTime - level.time;
-                        if ( msLeft < 0 ) {
-                                msLeft = 0;
-                        }
-                        secondsLeft = ( msLeft + 999 ) / 1000;
-                        trap_SendServerCommand( target->s.number,
-                                va( "cp \"You are last!\nElimination in %i %s!\n\"",
-                                        secondsLeft,
-                                        ( secondsLeft == 1 ) ? "second" : "seconds" ) );
-                        trap_SendServerCommand( target->s.number,
-                                va( "print \"You are last! Elimination in %i %s!\n\"",
-                                        secondsLeft,
-                                        ( secondsLeft == 1 ) ? "second" : "seconds" ) );
-                        level.eliminationWarningSent = qtrue;
-                }
-        }
-
-        if ( level.time < level.eliminationNextTriggerTime ) {
-                return;
-        }
-
-        target = G_GetLastEliminationDriver();
-
-        if ( !target ) {
-                level.eliminationActive = 0;
-                level.eliminationNextTriggerTime = 0;
-                level.eliminationWarningTime = 0;
-                level.eliminationWarningSent = qfalse;
-                G_UpdateEliminationInfoConfigString();
-                return;
-        }
-
-        trap_SendServerCommand( -1,
-                va( "print \"%s was eliminated!\n\"", target->client->pers.netname ) );
-        trap_SendServerCommand( target->s.number, "cp \"You have been eliminated!\n\"" );
-        trap_SendServerCommand( target->s.number, "print \"You have been eliminated!\n\"" );
-
-        G_ForceEliminationDeath( target );
-
-        if ( level.eliminationActive && level.eliminationRemainingPlayers > 1 ) {
-                G_SetEliminationSchedule( level.time, level.eliminationInterval );
-        }
-}
 
 
 /*
@@ -2804,11 +2373,11 @@ void CheckVote( void ) {
 		// ATVI Q3 1.32 Patch #9, WNF
 		if ( level.voteYes > level.numVotingClients/2 ) {
 			// execute the command, then remove the vote
-				trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
+			trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
 			level.voteExecuteTime = level.time + 3000;
 		} else if ( level.voteNo >= level.numVotingClients/2 ) {
 			// same behavior as a timeout
-				trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
+			trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
 		} else {
 			// still waiting for a majority
 			return;
@@ -2921,7 +2490,7 @@ void CheckTeamVote( int team ) {
 	} else {
 		if ( level.teamVoteYes[cs_offset] > level.numteamVotingClients[cs_offset]/2 ) {
 			// execute the command, then remove the vote
-				trap_SendServerCommand( -1, "print \"Team vote passed.\n\"" );
+			trap_SendServerCommand( -1, "print \"Team vote passed.\n\"" );
 			//
 			if ( !Q_strncmp( "leader", level.teamVoteString[cs_offset], 6) ) {
 				//set the team leader
@@ -2932,7 +2501,7 @@ void CheckTeamVote( int team ) {
 			}
 		} else if ( level.teamVoteNo[cs_offset] >= level.numteamVotingClients[cs_offset]/2 ) {
 			// same behavior as a timeout
-				trap_SendServerCommand( -1, "print \"Team vote failed.\n\"" );
+			trap_SendServerCommand( -1, "print \"Team vote failed.\n\"" );
 		} else {
 			// still waiting for a majority
 			return;
@@ -3094,11 +2663,8 @@ void G_RunFrame( int levelTime ) {
 		}
 	}
 
-        // update elimination scheduling
-        G_RunEliminationTimers();
-
-        // see if it is time to do a tournement restart
-        CheckTournament();
+	// see if it is time to do a tournement restart
+	CheckTournament();
 
 	// see if it is time to end the level
 	CheckExitRules();

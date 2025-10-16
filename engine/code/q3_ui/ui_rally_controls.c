@@ -115,7 +115,6 @@ typedef struct
 #define ID_AUTODROP		48
 #define ID_NEXTCAMERA   49
 #define ID_DROPITEM             50
-#define ID_JUKEBOX              51
 
 
 #define ANIM_IDLE		0
@@ -206,7 +205,6 @@ typedef struct
 	menuradiobutton_s	autoswitch;
 	menuaction_s		useitem;
         menuaction_s            dropitem;
-        menuaction_s            jukebox;
 	playerInfo_t		playerinfo;
 	qboolean			changesmade;
 	menuaction_s		chat;
@@ -279,7 +277,6 @@ static bind_t g_bindings[] =
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"jukebox",		"toggle jukebox",	ID_JUKEBOX,	ANIM_IDLE,		-1,				-1,		-1, -1},
 	{"dropWeapon", 		"drop rear weapon",	ID_DROP_REAR,	ANIM_DROPREAR,	'r',			-1,		-1, -1},
     {"headlights", 		"lights",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
     {"record",          "start demo record",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
@@ -358,7 +355,6 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores,
 	(menucommon_s *)&s_controls.useitem,
 	(menucommon_s *)&s_controls.dropitem,
-	(menucommon_s *)&s_controls.jukebox,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
@@ -1679,12 +1675,6 @@ static void Controls_MenuInit( void )
         s_controls.dropitem.generic.ownerdraw = Controls_DrawKeyBinding;
         s_controls.dropitem.generic.id        = ID_DROPITEM;
 
-        s_controls.jukebox.generic.type      = MTYPE_ACTION;
-        s_controls.jukebox.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-        s_controls.jukebox.generic.callback  = Controls_ActionEvent;
-        s_controls.jukebox.generic.ownerdraw = Controls_DrawKeyBinding;
-        s_controls.jukebox.generic.id        = ID_JUKEBOX;
-
 	s_controls.showscores.generic.type	    = MTYPE_ACTION;
 	s_controls.showscores.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.showscores.generic.callback  = Controls_ActionEvent;
@@ -1899,7 +1889,6 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
         Menu_AddItem( &s_controls.menu, &s_controls.dropitem );
-        Menu_AddItem( &s_controls.menu, &s_controls.jukebox );
 // STONELANCE
 //	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 // END
