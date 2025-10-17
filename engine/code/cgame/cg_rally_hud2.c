@@ -59,35 +59,35 @@ void CG_DrawHUD_Times(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12, y, "TIMES", colorWhite);
+	CG_DrawSmallStringColor(x + 12, y, "TIMES", colorWhite);
 
 	y += 20;
 
         if ( cgs.laplimit > 1 ){
                 // draw lap time
-                CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
+                CG_DrawSmallStringColor(x + 12, y, "LAP:", colorWhite);
                 time = getStringForTime( lapTime );
-                CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+                CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
 
                 y += 20;
 
                 // draw last lap time
-                CG_DrawSmallDigitalStringColor(x + 12, y, "LAST:", colorWhite);
+                CG_DrawSmallStringColor(x + 12, y, "LAST:", colorWhite);
                 if ( lastTime ){
                         time = getStringForTime( lastTime );
-                        CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+                        CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
                 }
                 else {
-                        CG_DrawSmallDigitalStringColor(x + 102, y, "N/A", colorWhite);
+                        CG_DrawSmallStringColor(x + 102, y, "N/A", colorWhite);
                 }
 
                 y += 20;
         }
 
 	// draw total time
-	CG_DrawSmallDigitalStringColor(x + 12, y, "TOTAL:", colorWhite);
+	CG_DrawSmallStringColor(x + 12, y, "TOTAL:", colorWhite);
 	time = getStringForTime( totalTime );
-	CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+	CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
 
 	y += 20;
 
@@ -143,9 +143,9 @@ void CG_DrawHUD_Times(float x, float y){
 		// average team time
 		teamTime /= count;
 
-		CG_DrawSmallDigitalStringColor(x + 12, y, "TEAM:", colorWhite);
+		CG_DrawSmallStringColor(x + 12, y, "TEAM:", colorWhite);
 		time = getStringForTime(teamTime);
-		CG_DrawSmallDigitalStringColor(x + 102, y, time, colorWhite);
+		CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
 	}
 }
 
@@ -173,20 +173,20 @@ void CG_DrawHUD_Positions(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12, y, "POSITION", colorWhite);
+	CG_DrawSmallStringColor(x + 12, y, "POSITION", colorWhite);
 
 	y += 20;
 
 	// draw your position
-	CG_DrawSmallDigitalStringColor(x + 12, y, "YOU:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentPosition, cgs.numRacers), colorWhite);
+	CG_DrawSmallStringColor(x + 12, y, "YOU:", colorWhite);
+	CG_DrawSmallStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentPosition, cgs.numRacers), colorWhite);
 
 	y += 20;
 
 	// draw team position
 	if (cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM){
-		CG_DrawSmallDigitalStringColor(x + 12, y, "TEAM:", colorWhite);
-		CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", team_rank, num_teams), colorWhite);
+		CG_DrawSmallStringColor(x + 12, y, "TEAM:", colorWhite);
+		CG_DrawSmallStringColor(x + 102, y, va("%i/%i", team_rank, num_teams), colorWhite);
 	}
 }
 
@@ -199,11 +199,11 @@ void CG_DrawHUD_Laps(float x, float y){
 
 	// draw heading
 	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallDigitalStringColor(x + 12, y, "LAP:", colorWhite);
+	CG_DrawSmallStringColor(x + 12, y, "LAP:", colorWhite);
         if ( cgs.laplimit > 1 )
-                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
+                CG_DrawSmallStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
         else
-                CG_DrawSmallDigitalStringColor(x + 102, y, va("%i", cg_entities[cg.snap->ps.clientNum].currentLap), colorWhite);
+                CG_DrawSmallStringColor(x + 102, y, va("%i", cg_entities[cg.snap->ps.clientNum].currentLap), colorWhite);
 }
 
 /*
@@ -244,18 +244,18 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 	// draw your position
 	CG_FillRect(x, y, width, height, bgColor);
-	CG_DrawSmallDigitalStringColor(x, y, "POS:", colorWhite);
-	CG_DrawSmallDigitalStringColor(x + 82, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
+	CG_DrawSmallStringColor(x, y, "POS:", colorWhite);
+	CG_DrawSmallStringColor(x + 82, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
 
 	y += 20;
 
 	CG_FillRect(x, y, width, height, bgColor);
 	if ( playersRemaining > 0 ) {
-		CG_DrawSmallDigitalStringColor(x, y, "PLAYERS REMAINING:", colorWhite);
-		CG_DrawSmallDigitalStringColor(x + 150, y, va("%i", playersRemaining), colorWhite);
+		CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorWhite);
+		CG_DrawSmallStringColor(x + 150, y, va("%i", playersRemaining), colorWhite);
 	} else {
-		CG_DrawSmallDigitalStringColor(x, y, "PLAYERS REMAINING:", colorMdGrey);
-		CG_DrawSmallDigitalStringColor(x + 150, y, "--", colorMdGrey);
+		CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorMdGrey);
+		CG_DrawSmallStringColor(x + 150, y, "--", colorMdGrey);
 	}
 
 	y += 20;
@@ -318,7 +318,7 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
 		Com_sprintf(s, sizeof(s), " %i: %s", cgs.clientinfo[num].position, player);
-		CG_DrawSmallDigitalStringColor( x, y, s, colorWhite);
+		CG_DrawSmallStringColor( x, y, s, colorWhite);
 
 		y += 20;
 	}
@@ -341,8 +341,8 @@ void CG_DrawHUD_Scores(float x, float y){
 	s = va("%i", cgs.clientinfo[cg.snap->ps.clientNum].score);
 	w = CG_DrawStrlen( s ) * GIANTCHAR_WIDTH;
 	CG_FillRect(x, y, 96, 72, bgColor);
-	CG_DrawSmallDigitalStringColor( x + 20, y + 6, "FRAGS:", colorWhite);
-	CG_DrawGiantDigitalStringColor( x + 48 - w/2, y + 26, s, colorWhite);
+	CG_DrawSmallStringColor( x + 20, y + 6, "FRAGS:", colorWhite);
+        CG_DrawStringExt( x + 48 - w/2, y + 26, s, colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
 
 	y += 72;
 
@@ -368,8 +368,8 @@ void CG_DrawHUD_Scores(float x, float y){
 		s = va( "%i", score );
 		w = CG_DrawStrlen( s ) * GIANTCHAR_WIDTH;
 		CG_FillRect(x, y, 96, 78, bgColor);
-		CG_DrawSmallDigitalStringColor( x + 24, y + 6, "TEAM:", colorWhite);
-		CG_DrawGiantDigitalStringColor( x + 48 - w/2, y + 26, s, colorWhite);
+		CG_DrawSmallStringColor( x + 24, y + 6, "TEAM:", colorWhite);
+                CG_DrawStringExt( x + 48 - w/2, y + 26, s, colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
 
 		y += 78;
 	}
@@ -395,16 +395,16 @@ void CG_DrawHUD_DerbyList(float x, float y){
 	CG_FillRect(x, y, 120, 18, bgColor);
 
 	// name
-	CG_DrawTinyDigitalStringColor( x + 16, y, "P:", colorWhite);
+	CG_DrawTinyStringColor( x + 16, y, "P:", colorWhite);
 
 	// time
 //	CG_DrawTinyStringColor( x + 70, y, "TIME:", colorWhite);
 
 	// dmg dealt
-	CG_DrawTinyDigitalStringColor( x + 70, y, "DD:", colorWhite);
+	CG_DrawTinyStringColor( x + 70, y, "DD:", colorWhite);
 
 	// dmg taken
-	CG_DrawTinyDigitalStringColor( x + 100, y, "DT:", colorWhite);
+	CG_DrawTinyStringColor( x + 100, y, "DT:", colorWhite);
 
 	y += 20;
 
@@ -436,19 +436,19 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		time = getStringForTime(playTime);
 
 		// num
-		CG_DrawTinyDigitalStringColor( x + 2, y, va("%i", (i+1)), color);
+		CG_DrawTinyStringColor( x + 2, y, va("%i", (i+1)), color);
 
 		// name
-		CG_DrawTinyDigitalStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
+		CG_DrawTinyStringColor( x + 16, y, cgs.clientinfo[cg.scores[i].client].name, color);
 
 		// time
 //		CG_DrawTinyStringColor( x + 70, y, time, color);
 
 		// dmg dealt
-		CG_DrawTinyDigitalStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
+		CG_DrawTinyStringColor( x + 75, y, va("%i", cg.scores[i].damageDealt), color);
 
 		// dmg taken
-		CG_DrawTinyDigitalStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
+		CG_DrawTinyStringColor( x + 105, y, va("%i", cg.scores[i].damageTaken), color);
 
 		y += 20;
 	}

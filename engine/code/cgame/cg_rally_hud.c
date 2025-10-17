@@ -518,7 +518,7 @@ static float CG_DrawTimes( float y ) {
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
 	x = HUD_RIGHT_EDGE - columnWidth;
 		CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-		CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
 		y += rowHeight;
 	}
 
@@ -533,7 +533,7 @@ static float CG_DrawTimes( float y ) {
 //		x = 600 - CG_DrawStrlen(s) * TINYCHAR_WIDTH;
 	x = HUD_RIGHT_EDGE - columnWidth;
 		CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-		CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
 		y += rowHeight;
 	}
 
@@ -555,7 +555,7 @@ static float CG_DrawTimes( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -589,7 +589,7 @@ static float CG_DrawLaps( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -618,7 +618,7 @@ static float CG_DrawDistanceToFinish( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -653,8 +653,8 @@ static void CG_DrawCurrentPosition( float y ) {
 	textX = baseX + HUD_TEXT_INSET;
 	textY = y + 4;
 
-	CG_DrawTinyDigitalStringColor( textX, textY, "POS:", colorWhite );
-	CG_DrawTinyDigitalStringColor( textX + TINYCHAR_WIDTH * 5, textY, va("%i/%i", pos, cgs.numRacers), colorWhite );
+	CG_DrawTinyStringColor( textX, textY, "POS:", colorWhite );
+	CG_DrawTinyStringColor( textX + TINYCHAR_WIDTH * 5, textY, va("%i/%i", pos, cgs.numRacers), colorWhite );
 
 	textY += rowHeight;
         if ( remaining > 0 ) {
@@ -662,7 +662,7 @@ static void CG_DrawCurrentPosition( float y ) {
         } else {
                 Com_sprintf( s, sizeof( s ), "PLAYERS LEFT: --" );
         }
-        CG_DrawTinyDigitalStringColor( textX, textY, s, colorWhite );
+        CG_DrawTinyStringColor( textX, textY, s, colorWhite );
 }
 
 /*
@@ -745,7 +745,7 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 			}
 			Com_sprintf(s, sizeof(s), "%i-%s", rowPosition, player);
 		}
-                CG_DrawTinyDigitalStringColor( x + HUD_TEXT_INSET, y, s, colorWhite);
+                CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y, s, colorWhite);
 
 		y += TINYCHAR_HEIGHT;
 
@@ -934,9 +934,9 @@ static float CG_DrawSpeed( float y ) {
                gearWidth  = CG_DrawStrlen( gearStr )  * GIANTCHAR_WIDTH;
 
                y += segmentHeight;
-               CG_DrawGiantDigitalStringColor( x + blockWidth - speedWidth, y, speedStr, colorWhite );
+               CG_DrawStringExt( x + blockWidth - speedWidth, y, speedStr, colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
                y += GIANTCHAR_HEIGHT;
-               CG_DrawGiantDigitalStringColor( x + blockWidth - gearWidth, y, gearStr, colorWhite );
+               CG_DrawStringExt( x + blockWidth - gearWidth, y, gearStr, colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
 
                y += GIANTCHAR_HEIGHT;
                CG_DrawFuelGauge( x + iconOffset, y, barWidth, gaugeHeight );
@@ -984,7 +984,7 @@ static float CG_DrawSpeed( float y ) {
                 speedWidth = CG_DrawStrlen( va("%i", vel_speed) ) * SMALLCHAR_WIDTH;
                 speedX = left + (gaugeSize - speedWidth) * 0.5f;
                 speedY = top + gaugeSize - 35;
-                CG_DrawSmallDigitalStringColor( speedX, speedY, va("%i", vel_speed), colorWhite );
+                CG_DrawSmallStringColor( speedX, speedY, va("%i", vel_speed), colorWhite );
 
                 x2 = left;
                 y2 = top;
@@ -1030,11 +1030,11 @@ static float CG_DrawSpeed( float y ) {
                             trap_R_RegisterShaderNoMip("gfx/hud/center01") );
 
                 if ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
-                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4, "R", colorWhite );
+                        CG_DrawSmallStringColor( centerX + 10, centerY + 4, "R", colorWhite );
                 else if ( cg.predictedPlayerState.stats[STAT_GEAR] == 0 )
-                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4, "N", colorWhite );
+                        CG_DrawSmallStringColor( centerX + 10, centerY + 4, "N", colorWhite );
                 else
-                        CG_DrawSmallDigitalStringColor( centerX + 10, centerY + 4,
+                        CG_DrawSmallStringColor( centerX + 10, centerY + 4,
                                                         va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite );
 
                CG_DrawFuelGauge( left + (blockWidth - fuelWidth) * 0.5f,
@@ -1134,9 +1134,9 @@ CG_DrawGear
 ===========
 */
  static float CG_DrawGear( float y ) {
-	CG_DrawSmallDigitalStringColor( 560, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
+	CG_DrawSmallStringColor( 560, y, va("Gear: %d", cg.predictedPlayerState.stats[STAT_GEAR]), colors[0]);
 	y -= SMALLCHAR_HEIGHT;
-	CG_DrawTinyDigitalStringColor( 560, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
+	CG_DrawTinyStringColor( 560, y, va("RPM: %d", cg.predictedPlayerState.stats[STAT_RPM]), colorWhite);
 	y -= SMALLCHAR_HEIGHT;
 	return y;
 }
