@@ -822,8 +822,9 @@ typedef struct {
 	menufield_s			dominationScoreInterval;
 	menufield_s			dominationCaptureDelay;
 	menulist_s			trackLength;
-	menulist_s			reversed;
-	menuradiobutton_s	pure;
+	menulist_s                      reversed;
+        menuradiobutton_s       pure;
+        menuradiobutton_s       eliminationWeapons;
 	menulist_s			botSkill;
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
@@ -939,6 +940,7 @@ static void ServerOptions_Start( void ) {
 	int		pure;
 	int		trackLength;
 	int		reversed;
+	int		eliminationWeapons;
 	int		skill;
 	int		n;
 	char	buf[64];
@@ -956,6 +958,7 @@ static void ServerOptions_Start( void ) {
     sigillocator = s_serveroptions.sigillocator.curvalue; // dtf
 	trackLength  = s_serveroptions.trackLength.curvalue;
 	reversed     = s_serveroptions.reversed.curvalue;
+	eliminationWeapons = s_serveroptions.eliminationWeapons.curvalue;
 
 	//set maxclients
 	for( n = 0, maxclients = 0; n < PLAYER_SLOTS; n++ ) {
@@ -972,6 +975,7 @@ static void ServerOptions_Start( void ) {
 
 	case GT_RACING:
 	case GT_RACING_DM:
+	case GT_ELIMINATION:
 	default:
 		trap_Cvar_SetValue( "ui_racing_laplimit", fraglimit );
 		trap_Cvar_SetValue( "ui_racing_timelimit", timelimit );
@@ -1034,7 +1038,11 @@ static void ServerOptions_Start( void ) {
 	trap_Cvar_SetValue( "g_trackReversed", Com_Clamp( 0, reversed, 1 ) );
 	trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLength, 2 ) );
 	trap_Cvar_SetValue( "ui_racing_trackreversed", Com_Clamp( 0, reversed, 1 ) );
-	trap_Cvar_Set("sv_hostname", s_serveroptions.hostname.field.buffer );
+	if ( s_serveroptions.gametype == GT_ELIMINATION ) {
+		trap_Cvar_SetValue( "ui_elimination_weapons", eliminationWeapons );
+		trap_Cvar_SetValue( "g_eliminationWeapons", eliminationWeapons );
+	}
+	trap_Cvar_Set( "sv_hostname", s_serveroptions.hostname.field.buffer );
 
 	// the wait commands will allow the dedicated to take effect
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", s_startserver.maplist[s_startserver.currentmap] ) );
@@ -1416,6 +1424,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	case GT_RACING:
 		
 	case GT_RACING_DM:
+	case GT_ELIMINATION:
 	default:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_laplimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
@@ -1463,6 +1472,12 @@ static void ServerOptions_SetMenuItems( void ) {
 		Com_sprintf( s_serveroptions.dominationCaptureDelay.field.buffer, 5, "%i", (int)Com_Clamp( 0, 9999, trap_Cvar_VariableValue( "g_dominationCaptureDelay" ) ) / 1000 );
 		break;
 
+	}
+
+	if ( s_serveroptions.gametype == GT_ELIMINATION ) {
+		s_serveroptions.eliminationWeapons.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_elimination_weapons" ) );
+	} else {
+		s_serveroptions.eliminationWeapons.curvalue = 0;
 	}
 
 	Q_strncpyz( s_serveroptions.hostname.field.buffer, UI_Cvar_VariableString( "sv_hostname" ), sizeof( s_serveroptions.hostname.field.buffer ) );
@@ -1641,6 +1656,15 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	if ( trap_Cvar_VariableValue( "fs_unpure" ) ) {
 		// ZTM: Don't let users think they can modify sv_pure, it won't work.
 		s_serveroptions.pure.generic.flags |= QMF_GRAYED;
+	}
+
+	if ( s_serveroptions.gametype == GT_ELIMINATION ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.eliminationWeapons.generic.type = MTYPE_RADIOBUTTON;
+		s_serveroptions.eliminationWeapons.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.eliminationWeapons.generic.x = OPTIONS_X;
+		s_serveroptions.eliminationWeapons.generic.y = y;
+		s_serveroptions.eliminationWeapons.generic.name = "Enable Weapons:";
 	}
 
 	n = 0;
@@ -1835,6 +1859,10 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	}
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
+
+	if( s_serveroptions.gametype == GT_ELIMINATION ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationWeapons );
+	}
 
 	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
 		|| s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {

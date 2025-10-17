@@ -942,10 +942,12 @@ void ClearRegisteredItems( void ) {
 
 	// players always start with the base weapon
 // STONELANCE dont start with machinegun in race
-	if (!isRallyRace() && g_gametype.integer != GT_DERBY){
+	if ( (!isRallyRace() || ( g_gametype.integer == GT_ELIMINATION && g_eliminationWeapons.integer ))
+		&& g_gametype.integer != GT_DERBY){
 		RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
 	}
-	if (!isRallyNonDMRace() && g_gametype.integer != GT_DERBY){
+	if ( (!isRallyNonDMRace() || ( g_gametype.integer == GT_ELIMINATION && g_eliminationWeapons.integer ))
+		&& g_gametype.integer != GT_DERBY){
 		RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
 	}
 //	RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );

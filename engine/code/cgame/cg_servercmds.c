@@ -210,6 +210,7 @@ void CG_ParseServerinfo( void ) {
 	trap_Cvar_Set("g_redTeam", cgs.redTeam);
 	Q_strncpyz( cgs.blueTeam, Info_ValueForKey( info, "g_blueTeam" ), sizeof(cgs.blueTeam) );
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
+	cgs.eliminationWeapons = atoi( Info_ValueForKey( info, "g_eliminationWeapons" ) );
 }
 
 /*

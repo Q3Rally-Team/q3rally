@@ -969,6 +969,7 @@ extern	vmCvar_t	g_laplimit;
 extern	vmCvar_t	g_eliminationStartDelay;
 extern	vmCvar_t	g_eliminationInterval;
 extern	vmCvar_t	g_eliminationWarning;
+extern	vmCvar_t	g_eliminationWeapons;
 // END
 extern	vmCvar_t	g_timelimit;
 extern	vmCvar_t	g_capturelimit;

@@ -54,6 +54,7 @@ vmCvar_t	g_laplimit;
 vmCvar_t	g_eliminationStartDelay;
 vmCvar_t	g_eliminationInterval;
 vmCvar_t	g_eliminationWarning;
+vmCvar_t	g_eliminationWeapons;
 // END
 vmCvar_t	g_timelimit;
 vmCvar_t	g_capturelimit;
@@ -180,6 +181,7 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
         { &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
         { &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+{ &g_eliminationWeapons, "g_eliminationWeapons", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 // END
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },

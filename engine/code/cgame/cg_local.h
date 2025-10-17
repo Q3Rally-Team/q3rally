@@ -1247,6 +1247,7 @@ typedef struct {
 	char			mapname[MAX_QPATH];
 	char			redTeam[MAX_QPATH];
 	char			blueTeam[MAX_QPATH];
+	int				eliminationWeapons;
 
 	int				voteTime;
 	int				voteYes;

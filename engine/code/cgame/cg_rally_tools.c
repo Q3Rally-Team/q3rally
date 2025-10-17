@@ -810,7 +810,7 @@ qboolean isRallyRace( void ){
 qboolean isRallyNonDMRace( void ){
         return (cgs.gametype == GT_RACING
                 || cgs.gametype == GT_TEAM_RACING
-                || cgs.gametype == GT_ELIMINATION);
+                || (cgs.gametype == GT_ELIMINATION && !cgs.eliminationWeapons));
 }
 
 /*
