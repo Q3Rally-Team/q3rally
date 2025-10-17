@@ -588,37 +588,39 @@ CG_DrawCurrentPosition
 */
 static float CG_DrawCurrentPosition( float y ) {
 	centity_t		*cent;
-	//playerState_t	*ps;
 	int			pos;
+	int			remaining;
 	char		s[64];
-	float		x, width, height;
-	//float		foreground[4] = { 0, 0, 0.75, 1.0 };
+	float		baseX, textX, textY;
+	float		width, height;
 
-	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
 
 	pos = cent->currentPosition;
+	remaining = CG_GetPlayersRemaining( NULL );
 
-	Com_sprintf(s, sizeof(s), "POS: ");
 
-	x = 636 - 80;
-	width = 90;
-	height = 18;
+	baseX = 636 - 140;
+	width = 140;
+	height = 36;
 
-	CG_FillRect( x, y, width, height, bgColor );
+	CG_FillRect( baseX, y, width, height, bgColor );
 
-	x += 10;
-	y += 4;
+	textX = baseX + 10;
+	textY = y + 4;
 
-	CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
+	CG_DrawTinyDigitalStringColor( textX, textY, "POS:", colorWhite );
+	CG_DrawTinyDigitalStringColor( textX + TINYCHAR_WIDTH * 5, textY, va("%i/%i", pos, cgs.numRacers), colorWhite );
 
-	x += TINYCHAR_WIDTH * 5;
+	textY += TINYCHAR_HEIGHT + 4;
+	if ( remaining > 0 ) {
+		Com_sprintf( s, sizeof( s ), "PLAYERS REMAINING: %i", remaining );
+	} else {
+		Com_sprintf( s, sizeof( s ), "PLAYERS REMAINING: --" );
+	}
+	CG_DrawTinyDigitalStringColor( textX, textY, s, colorWhite );
 
-	CG_DrawTinyDigitalStringColor( x, y, va("%i/%i", pos, cgs.numRacers), colorWhite);
-
-	y += 20;
-
-	return y;
+	return y + height + 2;
 }
 
 
@@ -636,16 +638,28 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 	char		s[64];
 	float		background[4] = { 0, 0, 0, 0.5 };
 	float		selected[4] = { 0.75, 0.0, 0.0, 0.5 };
+	float		lastPlaceColor[4] = { 0.8f, 0.2f, 0.2f, 0.4f };
+	int			playersRemaining;
+	int			lastClient;
+	int			lastPosition;
 
-	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
+
+	playersRemaining = CG_GetPlayersRemaining( &lastClient );
+	lastPosition = 0;
+	if ( lastClient >= 0 ) {
+		lastPosition = cg_entities[lastClient].currentPosition;
+		if ( lastPosition <= 0 ) {
+			lastPosition = cgs.clientinfo[lastClient].position;
+		}
+	}
 
 	startPos = cent->currentPosition - 4 < 1 ? 1 : cent->currentPosition - 4;
 	endPos = startPos + 8 > cgs.numRacers ? cgs.numRacers : startPos + 8;
 	startPos = endPos - 8 < 1 ? 1 : endPos - 8;
 
-	x = 636 - 80;
-	width = 90;
+	x = 636 - 140;
+	width = 140;
 	height = TINYCHAR_HEIGHT;
 
 	for (i = startPos; i <= endPos; i++){
@@ -661,15 +675,30 @@ static float CG_DrawCarAheadAndBehind( float y ) {
 
 		if (num < 0 || num > cgs.maxclients) continue;
 
+		CG_FillRect( x, y, width, height, background );
+
+		if ( playersRemaining > 1 && lastPosition > 0 ) {
+			int rowPosition = cg_entities[num].currentPosition;
+			if ( rowPosition <= 0 ) {
+				rowPosition = cgs.clientinfo[num].position;
+			}
+			if ( rowPosition == lastPosition ) {
+				CG_FillRect( x, y, width, height, lastPlaceColor );
+			}
+		}
+
 		if (num == cent->currentState.clientNum){
 			CG_FillRect( x, y, width, height, selected );
 		}
-		else {
-			CG_FillRect( x, y, width, height, background );
-		}
 
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
-		Com_sprintf(s, sizeof(s), "%i-%s", cg_entities[num].currentPosition, player);
+		{
+			int rowPosition = cg_entities[num].currentPosition;
+			if ( rowPosition <= 0 ) {
+				rowPosition = cgs.clientinfo[num].position;
+			}
+			Com_sprintf(s, sizeof(s), "%i-%s", rowPosition, player);
+		}
 		CG_DrawTinyDigitalStringColor( x, y, s, colorWhite);
 
 		y += TINYCHAR_HEIGHT;

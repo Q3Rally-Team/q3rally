@@ -409,6 +409,9 @@ struct gclient_s {
 
 	// race variables
 	int			finishRaceTime;
+	int			eliminationRound;
+	int			eliminationPlayersRemaining;
+	float		eliminationMetric;
 
 	int			horn_sound_time;
 
@@ -518,6 +521,10 @@ typedef struct {
 	int			finishRaceTime;
 	int			winnerNumber;
 	qboolean	trackIsReversable;
+	int			eliminationRound;
+	int			eliminationPlayersRemaining;
+	int			eliminationInitialPlayers;
+	qboolean	eliminationSetupComplete;
 	int			numberOfLaps;
 
 	// map variables
@@ -959,6 +966,9 @@ extern	vmCvar_t	g_dmflags;
 extern	vmCvar_t	g_fraglimit;
 // STONELANCE
 extern	vmCvar_t	g_laplimit;
+extern	vmCvar_t	g_eliminationStartDelay;
+extern	vmCvar_t	g_eliminationInterval;
+extern	vmCvar_t	g_eliminationWarning;
 // END
 extern	vmCvar_t	g_timelimit;
 extern	vmCvar_t	g_capturelimit;

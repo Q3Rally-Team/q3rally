@@ -290,12 +290,15 @@ void CG_DrawInformation( void ) {
 	case GT_DERBY:
 		s = "Demolition Derby";
 		break;
-	case GT_LCS:
-		s = "Last Car Standing";
-		break;
-	case GT_TEAM_RACING:
-		s = "Team Racing";
-		break;
+        case GT_LCS:
+                s = "Last Car Standing";
+                break;
+        case GT_ELIMINATION:
+                s = "Elimination";
+                break;
+        case GT_TEAM_RACING:
+                s = "Team Racing";
+                break;
 	case GT_TEAM_RACING_DM:
 		s = "Team Racing Deathmatch";
 		break;

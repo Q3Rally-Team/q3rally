@@ -1811,9 +1811,35 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_RWP_SMOKE] = bs->cur_ps.ammo[RWP_SMOKE];
 	bs->inventory[INVENTORY_RWP_OIL] = bs->cur_ps.ammo[RWP_OIL];
 	bs->inventory[INVENTORY_RWP_MINE] = bs->cur_ps.ammo[RWP_MINE];
-	bs->inventory[INVENTORY_RWP_FLAME] = bs->cur_ps.ammo[RWP_FLAME];
-	bs->inventory[INVENTORY_RWP_BIO] = bs->cur_ps.ammo[RWP_BIO];
-	BotCheckItemPickup(bs, oldinventory);
+    bs->inventory[INVENTORY_RWP_FLAME] = bs->cur_ps.ammo[RWP_FLAME];
+    bs->inventory[INVENTORY_RWP_BIO] = bs->cur_ps.ammo[RWP_BIO];
+    // race progress for smarter pickups
+    bs->inventory[INVENTORY_RACE_POSITION] = bs->cur_ps.stats[STAT_POSITION];
+    bs->inventory[INVENTORY_RACE_NEXT_CHECKPOINT] = bs->cur_ps.stats[STAT_NEXT_CHECKPOINT];
+    bs->inventory[INVENTORY_RACE_FRAC_TO_NEXT] = bs->cur_ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT];
+    bs->inventory[INVENTORY_RACE_DISTANCE_REMAIN] = bs->cur_ps.stats[STAT_DISTANCE_REMAIN];
+    if ( g_gametype.integer == GT_ELIMINATION ) {
+            bs->inventory[INVENTORY_ELIMINATION_ROUND] = level.eliminationRound;
+            bs->inventory[INVENTORY_ELIMINATION_REMAINING] = level.eliminationPlayersRemaining;
+            {
+                    int position = bs->cur_ps.stats[STAT_POSITION];
+                    int remaining = level.eliminationPlayersRemaining;
+                    int risk = 0;
+
+                    if ( remaining > 0 && position >= remaining ) {
+                            risk = 2; // currently last place
+                    } else if ( remaining > 0 && position + 1 >= remaining ) {
+                            risk = 1; // one position away from elimination
+                    }
+                    bs->inventory[INVENTORY_ELIMINATION_RISK] = risk;
+            }
+    }
+    else {
+            bs->inventory[INVENTORY_ELIMINATION_ROUND] = 0;
+            bs->inventory[INVENTORY_ELIMINATION_REMAINING] = 0;
+            bs->inventory[INVENTORY_ELIMINATION_RISK] = 0;
+    }
+    BotCheckItemPickup(bs, oldinventory);
 }
 
 /*

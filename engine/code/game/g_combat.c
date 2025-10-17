@@ -530,10 +530,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->client->ps.pm_type = PM_DEAD;
 
 // STONELANCE
-	if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS) && level.startRaceTime){
-		self->client->finishRaceTime = level.time;
-		trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
-	}
+        if ((g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_ELIMINATION) && level.startRaceTime){
+                self->client->finishRaceTime = level.time;
+                trap_SendServerCommand( -1, va("raceFinishTime %i %i", self->s.number, self->client->finishRaceTime) );
+        }
 // END
 
 	if ( attacker ) {

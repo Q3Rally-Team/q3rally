@@ -218,10 +218,22 @@ void CG_DrawHUD_OpponentList(float x, float y){
 	float		width, height;
 	int			startPos, endPos;
 	char		s[64];
-	vec4_t		color;
+	vec4_t	color;
+	float		lastPlaceColor[4] = { 0.8f, 0.2f, 0.2f, 0.4f };
+	int			playersRemaining;
+	int			lastClient;
+	int			lastPosition;
 
-	//ps = &cg.snap->ps;
 	cent = &cg_entities[cg.snap->ps.clientNum];
+
+	playersRemaining = CG_GetPlayersRemaining( &lastClient );
+	lastPosition = 0;
+	if ( lastClient >= 0 ) {
+		lastPosition = cg_entities[lastClient].currentPosition;
+		if ( lastPosition <= 0 ) {
+			lastPosition = cgs.clientinfo[lastClient].position;
+		}
+	}
 
 	startPos = cent->currentPosition - 4 < 1 ? 1 : cent->currentPosition - 4;
 	endPos = startPos + 8 > cgs.numRacers ? cgs.numRacers : startPos + 8;
@@ -234,6 +246,17 @@ void CG_DrawHUD_OpponentList(float x, float y){
 	CG_FillRect(x, y, width, height, bgColor);
 	CG_DrawSmallDigitalStringColor(x, y, "POS:", colorWhite);
 	CG_DrawSmallDigitalStringColor(x + 82, y, va("%i/%i", cent->currentPosition, cgs.numRacers), colorWhite);
+
+	y += 20;
+
+	CG_FillRect(x, y, width, height, bgColor);
+	if ( playersRemaining > 0 ) {
+		CG_DrawSmallDigitalStringColor(x, y, "PLAYERS REMAINING:", colorWhite);
+		CG_DrawSmallDigitalStringColor(x + 150, y, va("%i", playersRemaining), colorWhite);
+	} else {
+		CG_DrawSmallDigitalStringColor(x, y, "PLAYERS REMAINING:", colorMdGrey);
+		CG_DrawSmallDigitalStringColor(x + 150, y, "--", colorMdGrey);
+	}
 
 	y += 20;
 
@@ -283,6 +306,16 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 		CG_FillRect(x, y, width, height, color);
 
+		if ( playersRemaining > 1 && lastPosition > 0 ) {
+			int rowPosition = cgs.clientinfo[num].position;
+			if ( rowPosition == 0 ) {
+				rowPosition = cg_entities[num].currentPosition;
+			}
+			if ( rowPosition == lastPosition ) {
+				CG_FillRect( x, y, width, height, lastPlaceColor );
+			}
+		}
+
 		Q_strncpyz(player, cgs.clientinfo[num].name, 16 );
 		Com_sprintf(s, sizeof(s), " %i: %s", cgs.clientinfo[num].position, player);
 		CG_DrawSmallDigitalStringColor( x, y, s, colorWhite);
@@ -290,6 +323,7 @@ void CG_DrawHUD_OpponentList(float x, float y){
 		y += 20;
 	}
 }
+
 
 /*
 =================
@@ -444,11 +478,12 @@ qboolean CG_DrawHUD( void ) {
 
 	switch(cgs.gametype){
 	default:
-	case GT_RACING:
-	case GT_TEAM_RACING:
-		CG_DrawHUD_Times(0, 112);
-		CG_DrawHUD_Positions(0, 228);
-		CG_DrawHUD_Laps(0, 304);
+        case GT_RACING:
+        case GT_TEAM_RACING:
+        case GT_ELIMINATION:
+                CG_DrawHUD_Times(0, 112);
+                CG_DrawHUD_Positions(0, 228);
+                CG_DrawHUD_Laps(0, 304);
 		CG_DrawHUD_OpponentList(440, 130);
 
 		break;

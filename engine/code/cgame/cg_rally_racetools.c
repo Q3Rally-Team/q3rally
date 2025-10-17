@@ -65,6 +65,14 @@ void CG_FinishedRace( int client, int time ) {
 	}
 
 	cent->finishRaceTime = time;
+
+	if ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) {
+		int lastClient;
+		int remaining;
+
+		remaining = CG_GetPlayersRemaining( &lastClient );
+		CG_CheckEliminationWarning( remaining );
+	}
 }
 
 void CG_StartRace( int time ) {
@@ -84,6 +92,10 @@ void CG_StartRace( int time ) {
 			player->lastStartLapTime = 0;
 		}
 	}
+
+	cg.eliminationWarningActive = qfalse;
+	cg.eliminationWarningTime = 0;
+	cg.eliminationPlayersRemaining = CG_GetPlayersRemaining( NULL );
 }
 
 void CG_DrawRaceCountDown( void ){

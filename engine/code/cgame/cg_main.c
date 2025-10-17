@@ -861,7 +861,9 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.scrape[1] = trap_S_RegisterSound ("sound/rally/car/scrape_2.wav", qfalse );
 	cgs.media.death[0] = trap_S_RegisterSound ("sound/rally/car/death_1.wav", qfalse );
 	cgs.media.death[1] = trap_S_RegisterSound ("sound/rally/car/death_2.wav", qfalse );
+	cgs.media.eliminationEliminatedSound = cgs.media.death[0];
 	cgs.media.drown = trap_S_RegisterSound ("sound/rally/car/drown.wav", qfalse );
+	cgs.media.eliminationWarningSound = trap_S_RegisterSound ("sound/rally/race/finallap.ogg", qtrue );
 
 // Q3Rally Code Start
 /*

@@ -695,6 +695,9 @@ typedef struct {
 	qboolean	showScores;
 	qboolean	scoreBoardShowing;
 	int			scoreFadeTime;
+	int			eliminationPlayersRemaining;
+	int			eliminationWarningTime;
+	qboolean	eliminationWarningActive;
 	char		killerName[MAX_NAME_LENGTH];
 	char			spectatorList[MAX_STRING_CHARS];		// list of names
 	int				spectatorLen;												// length of list
@@ -1204,6 +1207,8 @@ typedef struct {
 
 	sfxHandle_t	death[2];
 	sfxHandle_t	drown;
+	sfxHandle_t	eliminationWarningSound;
+	sfxHandle_t	eliminationEliminatedSound;
 // Q3Rally Code END
 
 } cgMedia_t;
@@ -1874,6 +1879,9 @@ float Q3DistanceToRL(float length);
 qboolean isRallyRace( void );
 qboolean isRallyNonDMRace( void );
 qboolean isRaceObserver( int clientNum );
+int CG_GetPlayersRemaining( int *lastClientNum );
+void CG_CheckEliminationWarning( int playersRemaining );
+qboolean CG_IsActiveCompetitor( int clientNum );
 
 qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
 

@@ -1288,6 +1288,9 @@ void ClientBegin( int clientNum ) {
 		ent->number = 1;
 		ent->currentLap = 1;
 		ent->client->finishRaceTime = 0;
+		ent->client->eliminationRound = 0;
+		ent->client->eliminationPlayersRemaining = 0;
+		ent->client->eliminationMetric = 0.0f;
 		ent->updateTime = level.time + 1000;
 		ent->client->ps.stats[STAT_DAMAGE_DEALT] = 0;
 		ent->client->ps.stats[STAT_DAMAGE_TAKEN] = 0;

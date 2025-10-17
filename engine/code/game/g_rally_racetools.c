@@ -23,6 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+#ifdef UNIT_TEST
+#define TESTABLE_STATIC
+#else
+#define TESTABLE_STATIC static
+#endif
+
 
 int GetTeamAtRank( int rank ){
 	int		i, j, count;
@@ -358,6 +364,39 @@ void RaceCountdown( char *s, int secondsLeft ){
 	trap_SendServerCommand( -1, va("rc \"%s\" %d", s, secondsLeft) );
 }
 
+TESTABLE_STATIC void G_RallyConfigureElimination( int participantCount ) {
+	if ( g_gametype.integer != GT_ELIMINATION ) {
+		return;
+	}
+
+	if ( participantCount < 1 ) {
+		participantCount = 1;
+	}
+
+	if ( level.eliminationSetupComplete ) {
+		level.eliminationPlayersRemaining = participantCount;
+		return;
+	}
+
+	level.eliminationInitialPlayers = participantCount;
+	level.eliminationPlayersRemaining = participantCount;
+	level.eliminationRound = 0;
+	level.eliminationSetupComplete = qtrue;
+
+	if ( participantCount < 1 ) {
+		participantCount = 1;
+	}
+
+	{
+		int laps = participantCount - 1;
+		if ( laps < 1 ) {
+			laps = 1;
+		}
+		level.numberOfLaps = laps;
+		trap_Cvar_Set( "laplimit", va( "%d", level.numberOfLaps ) );
+	}
+}
+
 void RallyStarter_Think( gentity_t *ent ){
 	gentity_t		*player, *t;
 	int				i, count;
@@ -412,9 +451,11 @@ void RallyStarter_Think( gentity_t *ent ){
 		}
 		else if ( start && count ){
 			ent->number = 3;
+			G_RallyConfigureElimination( count );
 		}
 		else if ( level.time >= level.startTime + (g_forceEngineStart.integer * 1000) ) {
 			ent->number = 3; // force race start
+			G_RallyConfigureElimination( count );
 		}
 		else if (ent->number == 0 && level.time > level.startTime + (g_forceEngineStart.integer * 1000) - 10000){
 			CenterPrint_All( va("Forced engine start in %i...", 10 - ((level.time - (level.startTime + (g_forceEngineStart.integer * 1000) - 10000)) / 1000)) );

@@ -800,15 +800,17 @@ float Q3DistanceToRL( float length ) {
 }
 
 qboolean isRallyRace( void ){
-	return (cgs.gametype == GT_RACING
-		|| cgs.gametype == GT_RACING_DM
-		|| cgs.gametype == GT_TEAM_RACING
-		|| cgs.gametype == GT_TEAM_RACING_DM);
+        return (cgs.gametype == GT_RACING
+                || cgs.gametype == GT_RACING_DM
+                || cgs.gametype == GT_TEAM_RACING
+                || cgs.gametype == GT_TEAM_RACING_DM
+                || cgs.gametype == GT_ELIMINATION);
 }
 
 qboolean isRallyNonDMRace( void ){
-	return (cgs.gametype == GT_RACING
-		|| cgs.gametype == GT_TEAM_RACING);
+        return (cgs.gametype == GT_RACING
+                || cgs.gametype == GT_TEAM_RACING
+                || cgs.gametype == GT_ELIMINATION);
 }
 
 /*
@@ -818,6 +820,134 @@ isRaceObserver
 */
 qboolean isRaceObserver( int clientNum ){
 	return (cg_entities[clientNum].finishRaceTime && cg_entities[clientNum].finishRaceTime + RACE_OBSERVER_DELAY < cg.time);
+}
+
+qboolean CG_IsActiveCompetitor( int clientNum ) {
+	clientInfo_t *ci;
+	centity_t *cent;
+	qboolean eliminationMode;
+	qboolean raceMode;
+
+	if ( clientNum < 0 || clientNum >= cgs.maxclients ) {
+		return qfalse;
+	}
+
+	ci = &cgs.clientinfo[clientNum];
+	cent = &cg_entities[clientNum];
+
+	if ( !ci->infoValid ) {
+		return qfalse;
+	}
+
+	if ( ci->team == TEAM_SPECTATOR ) {
+		return qfalse;
+	}
+
+	if ( isRaceObserver( clientNum ) ) {
+		return qfalse;
+	}
+
+	eliminationMode = ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS );
+	raceMode = ( isRallyRace() || cgs.gametype == GT_DERBY || eliminationMode );
+
+	if ( raceMode && !eliminationMode ) {
+		if ( cent->finishRaceTime ) {
+			return qfalse;
+		}
+	}
+
+	return qtrue;
+}
+
+int CG_GetPlayersRemaining( int *lastClientNum ) {
+	int i;
+	int count;
+	int lastClient;
+	int lastPos;
+	int pos;
+
+	count = 0;
+	lastClient = -1;
+	lastPos = -1;
+
+	for ( i = 0; i < cgs.maxclients; i++ ) {
+		if ( !CG_IsActiveCompetitor( i ) ) {
+			continue;
+		}
+
+		count++;
+
+		pos = cg_entities[i].currentPosition;
+		if ( pos <= 0 ) {
+			pos = cgs.clientinfo[i].position;
+		}
+		if ( pos <= 0 ) {
+			pos = count;
+		}
+
+		if ( pos > lastPos || ( pos == lastPos && i > lastClient ) ) {
+			lastPos = pos;
+			lastClient = i;
+		}
+	}
+
+	if ( lastClientNum ) {
+		*lastClientNum = lastClient;
+	}
+
+	if ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) {
+		cg.eliminationPlayersRemaining = count;
+	}
+
+	return count;
+}
+
+void CG_CheckEliminationWarning( int playersRemaining ) {
+	int clientNum;
+	int myPos;
+
+	if ( !( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
+		cg.eliminationWarningActive = qfalse;
+		return;
+	}
+
+	if ( !cg.snap ) {
+		return;
+	}
+
+	clientNum = cg.snap->ps.clientNum;
+
+	if ( !CG_IsActiveCompetitor( clientNum ) ) {
+		cg.eliminationWarningActive = qfalse;
+		return;
+	}
+
+	if ( playersRemaining <= 1 ) {
+		cg.eliminationWarningActive = qfalse;
+		return;
+	}
+
+	myPos = cg_entities[clientNum].currentPosition;
+	if ( myPos <= 0 ) {
+		myPos = cgs.clientinfo[clientNum].position;
+	}
+	if ( myPos <= 0 ) {
+		myPos = playersRemaining;
+	}
+
+	if ( myPos == playersRemaining ) {
+		if ( !cg.eliminationWarningActive ) {
+			cg.eliminationWarningActive = qtrue;
+			cg.eliminationWarningTime = cg.time;
+			if ( cgs.media.eliminationWarningSound ) {
+				trap_S_StartLocalSound( cgs.media.eliminationWarningSound, CHAN_ANNOUNCER );
+			}
+		} else {
+			cg.eliminationWarningTime = cg.time;
+		}
+	} else {
+		cg.eliminationWarningActive = qfalse;
+	}
 }
 
 qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos ){

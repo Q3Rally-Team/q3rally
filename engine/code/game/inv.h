@@ -83,6 +83,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define INVENTORY_RWP_MINE                54
 #define INVENTORY_RWP_FLAME               55
 #define INVENTORY_RWP_BIO                 56
+//race telemetry
+#define INVENTORY_RACE_POSITION           57
+#define INVENTORY_RACE_NEXT_CHECKPOINT    58
+#define INVENTORY_RACE_FRAC_TO_NEXT       59
+#define INVENTORY_RACE_DISTANCE_REMAIN    60
+//elimination helpers
+#define INVENTORY_ELIMINATION_ROUND       61
+#define INVENTORY_ELIMINATION_REMAINING   62
+#define INVENTORY_ELIMINATION_RISK        63
 //enemy stuff
 #define ENEMY_HORIZONTAL_DIST		          200
 #define ENEMY_HEIGHT				              201

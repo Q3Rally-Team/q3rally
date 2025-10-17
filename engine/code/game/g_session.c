@@ -161,12 +161,13 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 				}
 				break;
 				
-			case GT_LCS:
-				if ( g_maxGameClients.integer > 0 && 
-					level.numNonSpectatorClients >= g_maxGameClients.integer ) {
-					sess->sessionTeam = TEAM_SPECTATOR;
-				}
-				else if (level.startRaceTime){
+                        case GT_LCS:
+                        case GT_ELIMINATION:
+                                if ( g_maxGameClients.integer > 0 &&
+                                        level.numNonSpectatorClients >= g_maxGameClients.integer ) {
+                                        sess->sessionTeam = TEAM_SPECTATOR;
+                                }
+                                else if (level.startRaceTime){
 					sess->sessionTeam = TEAM_SPECTATOR;
 				} else {
 					sess->sessionTeam = TEAM_FREE;

@@ -51,6 +51,9 @@ vmCvar_t	g_dmflags;
 vmCvar_t	g_fraglimit;
 // STONELANCE
 vmCvar_t	g_laplimit;
+vmCvar_t	g_eliminationStartDelay;
+vmCvar_t	g_eliminationInterval;
+vmCvar_t	g_eliminationWarning;
 // END
 vmCvar_t	g_timelimit;
 vmCvar_t	g_capturelimit;
@@ -174,6 +177,9 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_fraglimit, "fraglimit", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 // STONELANCE
 	{ &g_laplimit, "laplimit", "5", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+        { &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+        { &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+        { &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 // END
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
@@ -617,6 +623,8 @@ static const char *G_LadderModeForGametype( int gametype ) {
                 return "GT_DERBY";
         case GT_LCS:
                 return "GT_LCS";
+        case GT_ELIMINATION:
+                return "GT_ELIMINATION";
         case GT_DEATHMATCH:
                 return "GT_DEATHMATCH";
         case GT_TEAM:
@@ -635,7 +643,7 @@ static const char *G_LadderModeForGametype( int gametype ) {
                 break;
         }
 
-        return "GT_UNKNOWN";
+        return "GT_ELIMINATION";
 }
 
 static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum ) {
@@ -757,6 +765,17 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
         player->damageTaken = client->ps.stats[STAT_DAMAGE_TAKEN];
         player->position = client->ps.stats[STAT_POSITION];
 
+        if ( level.startRaceTime > 0 ) {
+                if ( client->finishRaceTime > level.startRaceTime ) {
+                        player->survivalMs = client->finishRaceTime - level.startRaceTime;
+                } else if ( level.finishRaceTime > level.startRaceTime ) {
+                        player->survivalMs = level.finishRaceTime - level.startRaceTime;
+                }
+        }
+        player->eliminationRound = client->eliminationRound;
+        player->eliminationPlayersRemaining = client->eliminationPlayersRemaining;
+        player->eliminationMetric = client->eliminationMetric;
+
         if ( level.startRaceTime > 0 && client->finishRaceTime > level.startRaceTime ) {
                 player->totalRaceMs = client->finishRaceTime - level.startRaceTime;
         } else if ( level.startRaceTime > 0 && level.time > level.startRaceTime ) {
@@ -848,6 +867,9 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         payload->winnerClientNum = level.winnerNumber;
         payload->numberOfLaps = level.numberOfLaps;
         payload->trackReversed = g_trackReversed.integer ? qtrue : qfalse;
+        payload->eliminationStartDelay = g_eliminationStartDelay.integer;
+        payload->eliminationInterval = g_eliminationInterval.integer;
+        payload->eliminationWarning = g_eliminationWarning.integer;
 
         for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
                 payload->teamScores[i] = level.teamScores[i];

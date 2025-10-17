@@ -1178,10 +1178,26 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( !strcmp( cmd, "cp" ) ) {
-		CG_CenterPrint( CG_Argv(1), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
-		return;
-	}
+        if ( !strcmp( cmd, "cp" ) ) {
+                const char *message;
+
+                message = CG_Argv(1);
+                CG_CenterPrint( message, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+
+                if ( message && ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
+                        if ( strstr( message, "You have been eliminated!" ) ) {
+                                cg.eliminationWarningActive = qfalse;
+                                cg.eliminationWarningTime = 0;
+                                if ( cgs.media.eliminationEliminatedSound ) {
+                                        trap_S_StartLocalSound( cgs.media.eliminationEliminatedSound, CHAN_ANNOUNCER );
+                                }
+                        } else if ( strstr( message, "You won the elimination!" ) ) {
+                                cg.eliminationWarningActive = qfalse;
+                        }
+                }
+
+                return;
+        }
 
 	if ( !strcmp( cmd, "cs" ) ) {
 		CG_ConfigStringModified();
@@ -1189,7 +1205,61 @@ static void CG_ServerCommand( void ) {
 	}
 
 	if ( !strcmp( cmd, "print" ) ) {
-		CG_Printf( "%s", CG_Argv(1) );
+		const char *message;
+
+		message = CG_Argv(1);
+		CG_Printf( "%s", message );
+
+		if ( message && ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
+			const char *elimText;
+
+			elimText = strstr( message, "has been eliminated!" );
+			if ( elimText ) {
+				const char *remainingText;
+				int remaining;
+				char eliminatedName[MAX_NAME_LENGTH];
+				char localName[MAX_NAME_LENGTH];
+				qboolean isLocal = qfalse;
+				int nameLength;
+
+				remainingText = strchr( message, '(' );
+				if ( remainingText ) {
+					remaining = atoi( remainingText + 1 );
+					if ( remaining < 0 ) {
+						remaining = 0;
+					}
+					cg.eliminationPlayersRemaining = remaining;
+				}
+
+				if ( cg.eliminationPlayersRemaining <= 0 ) {
+					cg.eliminationPlayersRemaining = CG_GetPlayersRemaining( NULL );
+				}
+
+				CG_CheckEliminationWarning( cg.eliminationPlayersRemaining );
+
+				nameLength = elimText - message;
+				if ( nameLength >= MAX_NAME_LENGTH ) {
+					nameLength = MAX_NAME_LENGTH - 1;
+				}
+				Q_strncpyz( eliminatedName, message, nameLength + 1 );
+				Q_CleanStr( eliminatedName );
+
+				if ( cg.snap ) {
+					Q_strncpyz( localName, cgs.clientinfo[cg.snap->ps.clientNum].name, sizeof(localName) );
+					Q_CleanStr( localName );
+					if ( Q_stricmp( eliminatedName, localName ) == 0 ) {
+						isLocal = qtrue;
+					}
+				}
+
+				if ( !isLocal && cgs.media.eliminationEliminatedSound ) {
+					trap_S_StartLocalSound( cgs.media.eliminationEliminatedSound, CHAN_ANNOUNCER );
+				}
+			} else if ( strstr( message, "won the elimination!" ) ) {
+				cg.eliminationPlayersRemaining = 1;
+				cg.eliminationWarningActive = qfalse;
+			}
+		}
 #ifdef MISSIONPACK
 		cmd = CG_Argv(1);			// yes, this is obviously a hack, but so is the way we hear about
 									// votes passing or failing
