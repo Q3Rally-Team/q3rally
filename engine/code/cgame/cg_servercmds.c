@@ -1185,7 +1185,7 @@ static void CG_ServerCommand( void ) {
                 CG_CenterPrint( message, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 
                 if ( message && ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
-                        if ( strstr( message, "You have been eliminated!" ) ) {
+                        if ( strstr( message, "You have been eliminated" ) ) {
                                 cg.eliminationWarningActive = qfalse;
                                 cg.eliminationWarningTime = 0;
                                 if ( cgs.media.eliminationEliminatedSound ) {
@@ -1210,15 +1210,15 @@ static void CG_ServerCommand( void ) {
 		message = CG_Argv(1);
 		CG_Printf( "%s", message );
 
-		if ( message && ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
-			const char *elimText;
+                if ( message && ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) ) {
+                        const char *elimText;
 
-			elimText = strstr( message, "has been eliminated!" );
-			if ( elimText ) {
-				const char *remainingText;
-				int remaining;
-				char eliminatedName[MAX_NAME_LENGTH];
-				char localName[MAX_NAME_LENGTH];
+                        elimText = strstr( message, "has been eliminated" );
+                        if ( elimText ) {
+                                const char *remainingText;
+                                int remaining;
+                                char eliminatedName[MAX_NAME_LENGTH];
+                                char localName[MAX_NAME_LENGTH];
 				qboolean isLocal = qfalse;
 				int nameLength;
 

@@ -23,6 +23,48 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+static void G_TriggerEliminationExplosion( gentity_t *ent ) {
+        gentity_t       *tent;
+
+        if ( !ent ) {
+                return;
+        }
+
+        tent = G_TempEntity( ent->r.currentOrigin, EV_EXPLOSION );
+        if ( tent ) {
+                tent->r.svFlags |= SVF_BROADCAST;
+        }
+
+#ifdef MISSIONPACK
+        tent = G_TempEntity( ent->r.currentOrigin, EV_OBELISKEXPLODE );
+        if ( tent ) {
+                tent->s.eventParm = ent->s.number;
+                tent->r.svFlags |= SVF_BROADCAST;
+        }
+#endif
+
+        tent = G_TempEntity( ent->r.currentOrigin, EV_GENERAL_SOUND );
+        if ( tent ) {
+                tent->s.eventParm = G_SoundIndex( "sound/world/explode1.wav" );
+                tent->r.svFlags |= SVF_BROADCAST;
+        }
+}
+
+static void G_CompleteElimination( gentity_t *ent ) {
+        if ( !ent || !ent->client || !ent->inuse ) {
+                return;
+        }
+
+        ent->think = NULL;
+        ent->nextthink = 0;
+
+        if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                return;
+        }
+
+        SetTeam( ent, "racerSpectator" );
+}
+
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
@@ -126,11 +168,27 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
         last->client->finishRaceTime = level.time;
         trap_SendServerCommand( -1, va( "raceFinishTime %i %i", last->s.clientNum, last->client->finishRaceTime ) );
         last->client->ps.stats[STAT_POSITION] = activeCount;
-        trap_SendServerCommand( -1, va( "print \"%s has been eliminated! (%i drivers left)\n\"",
+        trap_SendServerCommand( -1, va( "print \"%s was eliminated (%i drivers left)\n\"",
                 last->client->pers.netname, activeCount - 1 ) );
-        trap_SendServerCommand( last->s.clientNum, "cp \"You have been eliminated!\n\"" );
+        trap_SendServerCommand( last->s.clientNum, "cp \"You were eliminated\n\"" );
 
-        SetTeam( last, "racerSpectator" );
+        // Trigger a big explosion before moving the player to the scoreboard.
+        G_TempEntity( last->client->ps.origin, EV_EXPLOSION );
+
+        // Trigger a big explosion before moving the player to the scoreboard.
+        G_TempEntity( last->client->ps.origin, EV_EXPLOSION );
+
+        // Trigger a big explosion before moving the player to the scoreboard.
+        G_TriggerEliminationExplosion( last );
+
+        // Trigger a big explosion before moving the player to the scoreboard.
+        G_TriggerEliminationExplosion( last );
+
+        // Keep the player frozen until they are moved to the scoreboard.
+        VectorClear( last->client->ps.velocity );
+        last->client->ps.pm_type = PM_FREEZE;
+        last->think = G_CompleteElimination;
+        last->nextthink = level.time + 5000;
 
         level.eliminationPlayersRemaining = activeCount - 1;
         if ( level.eliminationPlayersRemaining < 0 ) {
