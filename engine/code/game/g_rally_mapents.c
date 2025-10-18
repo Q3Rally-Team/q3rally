@@ -80,6 +80,7 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
         gentity_t       *last;
         gentity_t       *winner;
         int                     activeCount;
+        int                     unfinishedCount;
         int                     i;
 
         if ( g_gametype.integer != GT_ELIMINATION ) {
@@ -90,7 +91,7 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
                 return;
         }
 
-        if ( completedLap <= 0 || completedLap <= level.eliminationRound ) {
+        if ( completedLap <= 0 || completedLap < level.eliminationRound ) {
                 return;
         }
 
@@ -121,6 +122,7 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
 
         last = NULL;
         activeCount = 0;
+        unfinishedCount = 0;
         for ( i = 0; i < level.maxclients; ++i ) {
                 ent = &g_entities[i];
                 if ( !ent->inuse || !ent->client ) {
@@ -138,28 +140,37 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
 
                 activeCount++;
 
-                if ( !last ) {
-                        last = ent;
-                        continue;
-                }
+                if ( ent->currentLap <= completedLap ) {
+                        unfinishedCount++;
 
-                if ( ent->client->ps.stats[STAT_POSITION] > last->client->ps.stats[STAT_POSITION] ) {
-                        last = ent;
-                        continue;
-                }
+                        if ( !last ) {
+                                last = ent;
+                                continue;
+                        }
 
-                if ( ent->client->ps.stats[STAT_POSITION] == last->client->ps.stats[STAT_POSITION]
-                        && ent->s.clientNum > last->s.clientNum ) {
-                        last = ent;
+                        if ( ent->client->ps.stats[STAT_POSITION] > last->client->ps.stats[STAT_POSITION] ) {
+                                last = ent;
+                                continue;
+                        }
+
+                        if ( ent->client->ps.stats[STAT_POSITION] == last->client->ps.stats[STAT_POSITION]
+                                && ent->s.clientNum > last->s.clientNum ) {
+                                last = ent;
+                        }
                 }
         }
 
-        level.eliminationRound = completedLap;
         level.eliminationPlayersRemaining = activeCount;
 
         if ( activeCount <= 1 || !last ) {
                 return;
         }
+
+        if ( unfinishedCount != 1 ) {
+                return;
+        }
+
+        level.eliminationRound = completedLap;
 
         last->client->eliminationRound = level.eliminationRound;
         last->client->eliminationPlayersRemaining = activeCount;

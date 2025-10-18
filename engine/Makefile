@@ -2711,6 +2711,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_atmospheric.o \
   $(B)/$(BASEGAME)/cgame/cg_consolecmds.o \
   $(B)/$(BASEGAME)/cgame/cg_draw.o \
+  $(B)/$(BASEGAME)/cgame/cg_jukebox.o \
   $(B)/$(BASEGAME)/cgame/cg_drawtools.o \
   $(B)/$(BASEGAME)/cgame/cg_effects.o \
   $(B)/$(BASEGAME)/cgame/cg_ents.o \

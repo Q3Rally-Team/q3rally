@@ -119,9 +119,9 @@ S_StopBackgroundTrack
 */
 void S_StopBackgroundTrack( void )
 {
-	if( si.StopBackgroundTrack ) {
-		si.StopBackgroundTrack( );
-	}
+        if( si.StopBackgroundTrack ) {
+                si.StopBackgroundTrack( );
+        }
 }
 
 /*

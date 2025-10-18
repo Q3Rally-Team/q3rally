@@ -82,3 +82,8 @@ void S_StartLocalSound( sfxHandle_t sfxHandle, int channelNum ) {
 
 void S_ClearSoundBuffer( void ) {
 }
+
+int S_GetStreamLength( const char *filename ) {
+        (void)filename;
+        return 0;
+}

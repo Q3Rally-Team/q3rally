@@ -112,16 +112,19 @@ typedef struct
 #define ID_CHAT2		31
 #define ID_CHAT3		32
 #define ID_CHAT4		33
+#define ID_JUKEBOX_PLAY	34
+#define ID_JUKEBOX_NEXT	35
+#define ID_JUKEBOX_PREV	36
 
 // all others
-#define ID_FREELOOK		34
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
+#define ID_FREELOOK		37
+#define ID_INVERTMOUSE	38
+#define ID_ALWAYSRUN	39
+#define ID_AUTOSWITCH	40
+#define ID_MOUSESPEED	41
+#define ID_JOYENABLE	42
+#define ID_JOYTHRESHOLD	43
+#define ID_SMOOTHMOUSE	44
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -200,6 +203,9 @@ typedef struct
 	menuaction_s		showscores;
 	menuradiobutton_s	autoswitch;
 	menuaction_s		useitem;
+	menuaction_s		jukeboxPlay;
+	menuaction_s		jukeboxNext;
+	menuaction_s		jukeboxPrev;
 	playerInfo_t		playerinfo;
 	qboolean			changesmade;
 	menuaction_s		chat;
@@ -230,6 +236,9 @@ static bind_t g_bindings[] =
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
+        {"jukebox_play",		"jukebox play/stop",	ID_JUKEBOX_PLAY,	ANIM_IDLE,		-1,		-1, -1},
+        {"jukebox_next",		"jukebox next track",	ID_JUKEBOX_NEXT,	ANIM_IDLE,		-1,		-1, -1},
+        {"jukebox_prev",		"jukebox previous track", ID_JUKEBOX_PREV,	ANIM_IDLE,		-1,		-1, -1},
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -329,6 +338,9 @@ static menucommon_s *g_looking_controls[] = {
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
 	(menucommon_s *)&s_controls.useitem,
+	(menucommon_s *)&s_controls.jukeboxPlay,
+	(menucommon_s *)&s_controls.jukeboxNext,
+	(menucommon_s *)&s_controls.jukeboxPrev,
 	(menucommon_s *)&s_controls.gesture,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
@@ -1457,6 +1469,24 @@ static void Controls_MenuInit( void )
 	s_controls.useitem.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.useitem.generic.id        = ID_USEITEM;
 
+	s_controls.jukeboxPlay.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxPlay.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxPlay.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxPlay.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxPlay.generic.id        = ID_JUKEBOX_PLAY;
+
+	s_controls.jukeboxNext.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxNext.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxNext.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxNext.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxNext.generic.id        = ID_JUKEBOX_NEXT;
+
+	s_controls.jukeboxPrev.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxPrev.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxPrev.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxPrev.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxPrev.generic.id        = ID_JUKEBOX_PREV;
+
 	s_controls.showscores.generic.type	    = MTYPE_ACTION;
 	s_controls.showscores.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.showscores.generic.callback  = Controls_ActionEvent;
@@ -1612,6 +1642,9 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPlay );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxNext );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPrev );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );

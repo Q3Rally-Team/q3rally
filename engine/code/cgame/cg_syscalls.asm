@@ -91,6 +91,8 @@ equ trap_GetEntityToken					-88
 equ	trap_R_AddPolysToScene				-89
 equ trap_R_inPVS						-90
 equ trap_FS_Seek			-91
+equ	trap_FS_GetFileList					-92
+equ	trap_S_GetStreamLength				-93
 
 equ	memset						-101
 equ	memcpy						-102

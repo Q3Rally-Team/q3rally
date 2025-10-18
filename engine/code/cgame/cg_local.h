@@ -1639,6 +1639,16 @@ void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec
 void CG_PredictPlayerState( void );
 void CG_LoadDeferredPlayers( void );
 
+//
+// cg_jukebox.c
+//
+void CG_JukeboxInit( void );
+void CG_JukeboxFrame( void );
+void CG_JukeboxDraw( float x, float y, float w, float h );
+void CG_JukeboxToggle_f( void );
+void CG_JukeboxNext_f( void );
+void CG_JukeboxPrev_f( void );
+
 
 //
 // cg_events.c
@@ -1967,6 +1977,7 @@ int			trap_FS_FOpenFile( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void		trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void		trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void		trap_FS_FCloseFile( fileHandle_t f );
+int			trap_FS_GetFileList( const char *path, const char *extension, char *listbuf, int bufsize );
 int			trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 
 // add commands to the local console as if they were typed in
@@ -2043,6 +2054,7 @@ sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compress
 
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	    trap_S_StopBackgroundTrack( void );
+int		trap_S_GetStreamLength( const char *filename );
 
 
 void		trap_R_LoadWorldMap( const char *mapname );

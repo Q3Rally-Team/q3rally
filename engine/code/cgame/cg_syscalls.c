@@ -101,6 +101,9 @@ void	trap_FS_Write( const void *buffer, int len, fileHandle_t f ) {
 void	trap_FS_FCloseFile( fileHandle_t f ) {
 	syscall( CG_FS_FCLOSEFILE, f );
 }
+int	trap_FS_GetFileList( const char *path, const char *extension, char *listbuf, int bufsize ) {
+	return syscall( CG_FS_GETFILELIST, path, extension, listbuf, bufsize );
+}
 
 int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
 	return syscall( CG_FS_SEEK, f, offset, origin );
@@ -243,6 +246,9 @@ sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compress
 
 void	trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
 	syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop );
+}
+int	trap_S_GetStreamLength( const char *filename ) {
+	return syscall( CG_S_GETSTREAMLENGTH, filename );
 }
 
 void	trap_R_LoadWorldMap( const char *mapname ) {

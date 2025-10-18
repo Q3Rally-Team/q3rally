@@ -115,6 +115,9 @@ typedef struct
 #define ID_AUTODROP		48
 #define ID_NEXTCAMERA   49
 #define ID_DROPITEM             50
+#define ID_JUKEBOX_PLAY         51
+#define ID_JUKEBOX_NEXT         52
+#define ID_JUKEBOX_PREV         53
 
 
 #define ANIM_IDLE		0
@@ -215,6 +218,9 @@ typedef struct
 	menuaction_s		headlight;
 	menuaction_s		horn;
 	menuaction_s		nextcamera;
+	menuaction_s		jukeboxPlay;
+	menuaction_s		jukeboxNext;
+	menuaction_s		jukeboxPrev;
     menuaction_s        startdemo;
     menuaction_s        stopdemo;
 
@@ -282,6 +288,9 @@ static bind_t g_bindings[] =
     {"record",          "start demo record",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
     {"stoprecord",      "stop demo record",             ID_STOPDEMO,    ANIM_STOPDEMO,  'u',            -1,     -1, -1},
 	{"nextcamera",		"next camera",		  ID_NEXTCAMERA,	  ANIM_IDLE,		  'c',			-1,		-1, -1},
+	{"jukebox_play",		"jukebox play/stop",	ID_JUKEBOX_PLAY,		ANIM_IDLE,			-1,			-1, -1},
+	{"jukebox_next",		"jukebox next track",	ID_JUKEBOX_NEXT,	ANIM_IDLE,			-1,			-1, -1},
+	{"jukebox_prev",		"jukebox previous track", ID_JUKEBOX_PREV,	ANIM_IDLE,			-1,			-1, -1},
 
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
@@ -355,6 +364,9 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores,
 	(menucommon_s *)&s_controls.useitem,
 	(menucommon_s *)&s_controls.dropitem,
+	(menucommon_s *)&s_controls.jukeboxPlay,
+	(menucommon_s *)&s_controls.jukeboxNext,
+	(menucommon_s *)&s_controls.jukeboxPrev,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
@@ -1779,7 +1791,25 @@ static void Controls_MenuInit( void )
 	s_controls.nextcamera.generic.callback   = Controls_ActionEvent;
 	s_controls.nextcamera.generic.ownerdraw  = Controls_DrawKeyBinding;
 	s_controls.nextcamera.generic.id         = ID_NEXTCAMERA;
-    
+
+	s_controls.jukeboxPlay.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxPlay.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxPlay.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxPlay.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxPlay.generic.id        = ID_JUKEBOX_PLAY;
+
+	s_controls.jukeboxNext.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxNext.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxNext.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxNext.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxNext.generic.id        = ID_JUKEBOX_NEXT;
+
+	s_controls.jukeboxPrev.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxPrev.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxPrev.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxPrev.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxPrev.generic.id        = ID_JUKEBOX_PREV;
+
     s_controls.startdemo.generic.type      = MTYPE_ACTION;
     s_controls.startdemo.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
     s_controls.startdemo.generic.callback  = Controls_ActionEvent;
@@ -1889,6 +1919,9 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
         Menu_AddItem( &s_controls.menu, &s_controls.dropitem );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPlay );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxNext );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPrev );
 // STONELANCE
 //	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 // END

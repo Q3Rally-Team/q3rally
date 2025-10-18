@@ -2336,6 +2336,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_SetConfigValues();
 
 	CG_StartMusic();
+	CG_JukeboxInit();
 
 // Q3Rally Code Start
 	size = trap_MemoryRemaining();

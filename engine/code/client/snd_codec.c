@@ -174,17 +174,43 @@ S_CodecOpenStream
 */
 snd_stream_t *S_CodecOpenStream(const char *filename)
 {
-	return S_CodecGetSound(filename, NULL);
+        return S_CodecGetSound(filename, NULL);
 }
 
 void S_CodecCloseStream(snd_stream_t *stream)
 {
-	stream->codec->close(stream);
+        stream->codec->close(stream);
+}
+
+int S_GetStreamLength( const char *filename )
+{
+        snd_stream_t *stream;
+        int length = 0;
+
+        if ( !filename || !*filename ) {
+                return 0;
+        }
+
+        stream = S_CodecOpenStream( filename );
+        if ( !stream ) {
+                return 0;
+        }
+
+        if ( stream->info.rate > 0 && stream->info.samples > 0 ) {
+                double totalSeconds = (double)stream->info.samples / (double)stream->info.rate;
+                if ( totalSeconds > 0.0 ) {
+                        length = (int)( totalSeconds * 1000.0 + 0.5 );
+                }
+        }
+
+        S_CodecCloseStream( stream );
+
+        return length;
 }
 
 int S_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer)
 {
-	return stream->codec->read(stream, bytes, buffer);
+        return stream->codec->read(stream, bytes, buffer);
 }
 
 //=======================================================================

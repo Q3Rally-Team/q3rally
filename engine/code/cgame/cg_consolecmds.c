@@ -717,6 +717,9 @@ static consoleCommand_t	commands[] = {
 	{ "moveBPoint", CG_MoveBezierPoint_f },
 	{ "moveBHandle", CG_MoveBezierHandle_f },
 	{ "saveBPoints", CG_SaveBezierPoints_f },
+	{ "jukebox_play", CG_JukeboxToggle_f },
+	{ "jukebox_next", CG_JukeboxNext_f },
+	{ "jukebox_prev", CG_JukeboxPrev_f },
 // Q3Rally Code End
 	{ "startOrbit", CG_StartOrbit_f },
 	{ "nextcamera", CG_NextCameraAngle_f },

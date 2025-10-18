@@ -166,6 +166,8 @@ typedef enum {
 	CG_R_INPVS,
 	// 1.32
 	CG_FS_SEEK,
+        CG_FS_GETFILELIST,
+        CG_S_GETSTREAMLENGTH,
 
 /*
 	CG_LOADCAMERA,
