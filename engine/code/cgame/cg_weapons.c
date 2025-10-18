@@ -1519,7 +1519,7 @@ if ( !( bits & ( 1u << i ) ) ) {
 		}
 
 		// no ammo cross on top
-		if ( !cg.snap->ps.ammo[ i ] ) {
+		if ( i != WP_GAUNTLET && !cg.snap->ps.ammo[ i ] ) {
 			CG_DrawPic( x, y, iconSize, iconSize, cgs.media.noammoShader );
 		}
 
@@ -1553,7 +1553,7 @@ static qboolean CG_WeaponSelectable( int i ) {
         if ( i == WP_DERBY_RAM )
                 return qfalse;
 // END
-	if ( !cg.snap->ps.ammo[i] ) {
+	if ( i != WP_GAUNTLET && !cg.snap->ps.ammo[i] ) {
                 return qfalse;
         }
 if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1u << i ) ) ) {

@@ -1435,7 +1435,17 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: index out of range" );
 	}
 
-	item = &bg_itemlist[ent->modelindex];
+        item = &bg_itemlist[ent->modelindex];
+
+        if ( gametype == GT_ELIMINATION ) {
+                if ( item->giType == IT_AMMO ) {
+                        return qfalse;
+                }
+
+                if ( item->giType == IT_WEAPON || item->giType == IT_RFWEAPON ) {
+                        return qfalse;
+                }
+        }
 
 	switch( item->giType ) {
 	case IT_WEAPON:
