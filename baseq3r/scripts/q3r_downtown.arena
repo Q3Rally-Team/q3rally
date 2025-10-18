@@ -11,6 +11,9 @@ author "OliverV"
 //GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing q3r_elimination"
 
+//ELIMINATION READY
+elimination "1"
+
 //CUSTOM BOTS
 bots "Tobias Josh Bee Paul Ivan"
 

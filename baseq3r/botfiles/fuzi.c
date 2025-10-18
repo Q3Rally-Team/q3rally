@@ -27,6 +27,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define HEALTH				20
 #define POWERUP				20
 #define WEAPON				20
+#define TURW_HAVE				60
+#define TURW_LEAD				150
+#define TURW_NEUTRAL			190
+#define TURW_CHASE				230
+#define TURW_RISK				320
+#define HAW_PUSH				90
+#define HAW_RISK				150
 
 //breaks compatibility with the existing q3a bots, sorry.
 #define FP(x)	(x < 0 ? 1 : x)
@@ -566,10 +573,34 @@ weight "rally_item_turbo"
 {
 	switch(INVENTORY_TURBO)
 	{
-	case 1: return PS(TELW);
-	default: return 0; 
-	} 
-} 
+	case 1:
+	{
+		switch(INVENTORY_ELIMINATION_RISK)
+		{
+		case 2: return PS(TURW_RISK);
+		case 1: return PS(TURW_CHASE);
+		default: return PS(TURW_HAVE);
+		}
+	}
+	default:
+	{
+		switch(INVENTORY_ELIMINATION_RISK)
+		{
+		case 2: return PS(TURW_RISK);
+		case 1: return PS(TURW_CHASE);
+		default:
+		{
+			switch(INVENTORY_RACE_POSITION)
+			{
+			case 1: return PS(TURW_LEAD);
+			case 2: return PS(TURW_CHASE);
+			default: return PS(TURW_NEUTRAL);
+			}
+		}
+		}
+	}
+	}
+}
 
 weight "holdable_kamikaze"
 {
@@ -610,8 +641,20 @@ weight "rally_item_env"
 
 weight "rally_item_haste"
 {
-	return PS(HAW);
-} 
+	switch(INVENTORY_ELIMINATION_RISK)
+	{
+	case 2: return PS(HAW_RISK);
+	case 1: return PS(HAW_PUSH);
+	default:
+	{
+		switch(INVENTORY_RACE_POSITION)
+		{
+		case 1: return PS(HAW);
+		default: return PS(HAW_PUSH);
+		}
+	}
+	}
+}
 
 weight "rally_item_invis"
 {

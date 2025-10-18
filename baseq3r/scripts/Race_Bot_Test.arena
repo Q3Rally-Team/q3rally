@@ -11,6 +11,9 @@ author "P3rlE"
 //GAME TYPE SUPPORTS
 type "q3r_racing q3r_team_racing q3r_elimination"
 
+//ELIMINATION READY
+elimination "1"
+
 //CUSTOM BOTS
 bots "Samuel"
 

@@ -9,7 +9,10 @@ longname "Desert Valley"
 author "Dipso"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm"
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm q3r_elimination"
+
+//ELIMINATION READY
+elimination "1"
 
 //CUSTOM BOTS
 bots "Ivan Tony Bee Tobias Steve"
