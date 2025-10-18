@@ -134,6 +134,7 @@ vmCvar_t        g_derbyRamDamageScale;
 vmCvar_t        g_derbyRamDamageMax;
 vmCvar_t  g_humanplayers;
 vmCvar_t        g_fuelKillReward;
+vmCvar_t        g_useFuel;
 
 // car variables
 vmCvar_t	car_spring;
@@ -258,14 +259,15 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_trackReversed, "g_trackReversed", "0", CVAR_LATCH, 0, qfalse  },
 	{ &g_trackLength, "g_trackLength", "0", CVAR_LATCH, 0, qfalse  },
 
-	{ &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
+        { &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
+        { &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
 
-	{ &g_developer, "developer", "0", 0, 0, qfalse },
-	{ &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
+        { &g_developer, "developer", "0", 0, 0, qfalse },
+        { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
         { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
+        { &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
 
-	// car variables
+        // car variables
 	// FIXME: should really be serverinfo so there are no client prediction problems
 	{ &car_spring, "car_spring", "120", 0, 0, qfalse },
 	{ &car_shock_up, "car_shock_up", "12", 0, 0, qfalse },

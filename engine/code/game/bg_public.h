@@ -281,6 +281,8 @@ typedef struct {
         qboolean        manualShift;
         collisionDamage_t       damage;
 
+        qboolean        useFuel;
+
         qboolean        (*frictionFunc)( const carPoint_t *point, float *sCOF, float *kCOF );
 
         float           car_spring;

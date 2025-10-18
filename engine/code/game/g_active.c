@@ -1328,12 +1328,13 @@ void ClientThink_real( gentity_t *ent ) {
 	pm.car_IT_zScale = car_IT_zScale.value;
 	pm.car_body_elasticity = car_body_elasticity.value;
 
-	pm.car_air_cof = car_air_cof.value;
-	pm.car_air_frac_to_df = car_air_frac_to_df.value;
-	pm.car_friction_scale = car_friction_scale.value;
+        pm.car_air_cof = car_air_cof.value;
+        pm.car_air_frac_to_df = car_air_frac_to_df.value;
+        pm.car_friction_scale = car_friction_scale.value;
+        pm.useFuel = g_useFuel.integer ? qtrue : qfalse;
 // END
 
-	VectorCopy( client->ps.origin, client->oldOrigin );
+        VectorCopy( client->ps.origin, client->oldOrigin );
 
 #ifdef MISSIONPACK
 		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {

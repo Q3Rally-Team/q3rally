@@ -276,6 +276,7 @@ vmCvar_t	cg_mainViewRenderLevel;
 vmCvar_t	cg_debugpredict;
 
 vmCvar_t	cg_engineSounds;
+vmCvar_t	cg_useFuel;
 
 vmCvar_t        cg_fuelWarningLevel;
 vmCvar_t	cg_drawBotPaths;
@@ -388,7 +389,8 @@ static cvarTable_t cvarTable[] = {
 
 	{ &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
-       { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
+        { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
+        { &cg_useFuel, "g_useFuel", "1", CVAR_SERVERINFO },
 
         { &cg_fuelWarningLevel, "cg_fuelWarningLevel", "10", CVAR_ARCHIVE },
 	{ &cg_drawBotPaths, "cg_drawBotPaths", "0", 0 },

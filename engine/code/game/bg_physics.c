@@ -2339,12 +2339,12 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 	// calculate forces
 	PM_CalculateForces(car, &car->sBody, car->sPoints, time);
     
-	if ( car->fuel > 0.0f ) {
-		float fuelUse;
-		fuelUse = fabs(car->throttle) * (fabs(car->rpm) / CP_RPM_MAX) * CP_FUEL_CONSUMPTION * time;
-		car->fuel -= fuelUse;
-		if ( car->fuelLeak ) {
-			car->fuel -= CP_FUEL_LEAK_RATE * time;
+        if ( pm->useFuel && car->fuel > 0.0f ) {
+                float fuelUse;
+                fuelUse = fabs(car->throttle) * (fabs(car->rpm) / CP_RPM_MAX) * CP_FUEL_CONSUMPTION * time;
+                car->fuel -= fuelUse;
+                if ( car->fuelLeak ) {
+                        car->fuel -= CP_FUEL_LEAK_RATE * time;
 		}
 		if (car->fuel < 0.0f) {
 			car->fuel = 0.0f;

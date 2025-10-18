@@ -1477,6 +1477,7 @@ extern	vmCvar_t		cg_mainViewRenderLevel;
 extern	vmCvar_t		cg_debugpredict;
 
 extern	vmCvar_t		cg_engineSounds;
+extern  vmCvar_t                cg_useFuel;
 
 extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;

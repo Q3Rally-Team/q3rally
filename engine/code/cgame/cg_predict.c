@@ -925,6 +925,7 @@ void CG_PredictPlayerState( void ) {
 	cg_pmove.car_air_cof = CP_AIR_COF;
 	cg_pmove.car_air_frac_to_df = CP_FRAC_TO_DF;
 	cg_pmove.car_friction_scale = 1.1f;
+	cg_pmove.useFuel = cg_useFuel.integer ? qtrue : qfalse;
 
 //	for ( cmdNum = current - CMD_BACKUP + 1 ; cmdNum <= current ; cmdNum++ ) {
 	count = 0;
