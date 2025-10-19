@@ -727,6 +727,7 @@ static void CG_DrawModernGameInfo(int y, float fade,
     char *teamName;
     vec4_t titleColor;
     qboolean isRacing;
+    qboolean isEliminationMode;
     clientInfo_t *lastPlaceInfo;
     char remainingText[64];
     int remainingY;
@@ -735,6 +736,8 @@ static void CG_DrawModernGameInfo(int y, float fade,
     titleColor[0] = 1.0f; titleColor[1] = 1.0f; titleColor[2] = 1.0f; titleColor[3] = fade;
     
     isRacing = CG_IsRacingGametype();
+    isEliminationMode = (cgs.gametype == GT_ELIMINATION ||
+                         cgs.gametype == GT_LCS);
     
     /* Draw current rank/status */
     if (!CG_IsTeamGametype()) {
@@ -773,7 +776,7 @@ static void CG_DrawModernGameInfo(int y, float fade,
     x = (SCREEN_WIDTH - w) / 2;
     CG_DrawBigStringColor(x, y, gameInfo, titleColor);
 
-    if (isRacing && playersRemaining > 0) {
+    if (isEliminationMode && playersRemaining > 0) {
         remainingY = y + BIGCHAR_HEIGHT + 4;
 
         Com_sprintf(remainingText, sizeof(remainingText),

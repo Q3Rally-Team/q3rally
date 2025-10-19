@@ -249,16 +249,18 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 	y += 20;
 
-	CG_FillRect(x, y, width, height, bgColor);
-	if ( playersRemaining > 0 ) {
-		CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorWhite);
-		CG_DrawSmallStringColor(x + 150, y, va("%i", playersRemaining), colorWhite);
-	} else {
-		CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorMdGrey);
-		CG_DrawSmallStringColor(x + 150, y, "--", colorMdGrey);
-	}
+	if ( cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS ) {
+		CG_FillRect(x, y, width, height, bgColor);
+		if ( playersRemaining > 0 ) {
+			CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorWhite);
+			CG_DrawSmallStringColor(x + 150, y, va("%i", playersRemaining), colorWhite);
+		} else {
+			CG_DrawSmallStringColor(x, y, "PLAYERS REMAINING:", colorMdGrey);
+			CG_DrawSmallStringColor(x + 150, y, "--", colorMdGrey);
+		}
 
-	y += 20;
+		y += 20;
+	}
 
 	for (i = startPos; i <= endPos; i++){
 		num = -1;
@@ -306,7 +308,8 @@ void CG_DrawHUD_OpponentList(float x, float y){
 
 		CG_FillRect(x, y, width, height, color);
 
-		if ( playersRemaining > 1 && lastPosition > 0 ) {
+		if ( (cgs.gametype == GT_ELIMINATION || cgs.gametype == GT_LCS)
+				&& playersRemaining > 1 && lastPosition > 0 ) {
 			int rowPosition = cgs.clientinfo[num].position;
 			if ( rowPosition == 0 ) {
 				rowPosition = cg_entities[num].currentPosition;
@@ -478,12 +481,18 @@ qboolean CG_DrawHUD( void ) {
 
 	switch(cgs.gametype){
 	default:
-        case GT_RACING:
-        case GT_TEAM_RACING:
-        case GT_ELIMINATION:
-                CG_DrawHUD_Times(0, 112);
-                CG_DrawHUD_Positions(0, 228);
-                CG_DrawHUD_Laps(0, 304);
+	case GT_RACING:
+	case GT_TEAM_RACING:
+		CG_DrawHUD_Times(0, 112);
+		CG_DrawHUD_Positions(0, 228);
+		CG_DrawHUD_Laps(0, 304);
+
+		break;
+
+	case GT_ELIMINATION:
+		CG_DrawHUD_Times(0, 112);
+		CG_DrawHUD_Positions(0, 228);
+		CG_DrawHUD_Laps(0, 304);
 		CG_DrawHUD_OpponentList(440, 130);
 
 		break;
@@ -493,7 +502,6 @@ qboolean CG_DrawHUD( void ) {
 		CG_DrawHUD_Times(0, 112);
 		CG_DrawHUD_Positions(0, 228);
 		CG_DrawHUD_Laps(0, 304);
-		CG_DrawHUD_OpponentList(440, 130);
 		CG_DrawHUD_Scores(264, 130);
 
 		break;
@@ -501,14 +509,16 @@ qboolean CG_DrawHUD( void ) {
 	case GT_DEATHMATCH:
 	case GT_TEAM:
 	case GT_CTF:
-    case GT_DOMINATION:
+	case GT_DOMINATION:
 		CG_DrawHUD_Scores(264, 130);
 
 		break;
 
 	case GT_DERBY:
+		break;
+
 	case GT_LCS:
-//		CG_DrawHUD_DerbyList(44, 130);
+		CG_DrawHUD_OpponentList(440, 130);
 
 		break;
 	}
