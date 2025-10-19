@@ -428,6 +428,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\\..\\code\\client\\cl_update.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\code\client\cl_cgame.c"
 				>
 				<FileConfiguration

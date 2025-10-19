@@ -510,6 +510,19 @@ qboolean	ConsoleCommand( void ) {
 		return qtrue;
 	}
 
+	if ( Q_stricmp( cmd, "derbyCollisionLog" ) == 0 ) {
+		if ( trap_Argc() > 1 ) {
+			char arg[MAX_TOKEN_CHARS];
+
+			trap_Argv( 1, arg, sizeof( arg ) );
+			trap_Cvar_Set( "g_derbyCollisionLog", arg );
+			trap_Cvar_Update( &g_derbyCollisionLog );
+		}
+
+		G_Printf( "g_derbyCollisionLog = %d\n", g_derbyCollisionLog.integer );
+		return qtrue;
+	}
+
 	if (Q_stricmp (cmd, "listip") == 0) {
 		trap_SendConsoleCommand( EXEC_NOW, "g_banIPs\n" );
 		return qtrue;

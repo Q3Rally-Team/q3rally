@@ -23,6 +23,141 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+/* thresholds for the absolute dot products when categorising collision faces */
+#define RALLY_IMPACT_FRONT_THRESHOLD   0.75f
+#define RALLY_IMPACT_SIDE_THRESHOLD    0.35f
+#define DERBY_IMPACT_FORWARD_THRESHOLD 0.75f
+#define DERBY_IMPACT_SIDE_THRESHOLD    0.35f
+
+typedef enum {
+    RALLY_IMPACT_FRONT,
+    RALLY_IMPACT_SIDE,
+    RALLY_IMPACT_REAR
+} rallyImpactType_t;
+
+/*
+static rallyImpactType_t G_RallyObject_ClassifyImpact( const vec3_t normal, const vec3_t forward, const vec3_t right ) {
+    float forwardDot, absForward, rightDot, absRight;
+
+    forwardDot = DotProduct( normal, forward );
+    absForward = Q_fabs( forwardDot );
+    if( absForward >= RALLY_IMPACT_FRONT_THRESHOLD ) {
+        if( forwardDot <= 0.0f ) {
+            return RALLY_IMPACT_FRONT;
+        }
+        return RALLY_IMPACT_REAR;
+    }
+
+    rightDot = DotProduct( normal, right );
+    absRight = Q_fabs( rightDot );
+    if( absRight >= RALLY_IMPACT_SIDE_THRESHOLD ) {
+        return RALLY_IMPACT_SIDE;
+    }
+
+    // default to the shallowest classification 
+    if( forwardDot > 0.0f ) {
+        return RALLY_IMPACT_REAR;
+    }
+
+    return RALLY_IMPACT_FRONT;
+}
+*/
+
+/*
+static const char *G_RallyObject_ImpactName( rallyImpactType_t impact ) {
+    switch( impact ) {
+    case RALLY_IMPACT_FRONT:
+        return "front";
+    case RALLY_IMPACT_SIDE:
+        return "side";
+    case RALLY_IMPACT_REAR:
+        return "rear";
+    }
+
+    return "unknown";
+}
+*/
+
+/*
+static float G_RallyObject_ImpactWeight( rallyImpactType_t impact ) {
+    switch( impact ) {
+    case RALLY_IMPACT_FRONT:
+        return g_derbyCollisionFrontWeight.value;
+    case RALLY_IMPACT_SIDE:
+        return g_derbyCollisionSideWeight.value;
+    case RALLY_IMPACT_REAR:
+        return g_derbyCollisionRearWeight.value;
+    }
+
+    return 1.0f;
+}
+*/
+
+/*
+static void G_RallyObject_DeriveImpactWeight( float forwardDot, float rightDot,
+        float frontWeight, float sideWeight, float rearWeight,
+        float *outWeight, const char **outName ) {
+    if( outWeight == NULL || outName == NULL ) {
+        return;
+    }
+
+    if( Q_fabs( forwardDot ) >= RALLY_IMPACT_FRONT_THRESHOLD ) {
+        if( forwardDot <= 0.0f ) {
+            *outWeight = frontWeight;
+            *outName = "front";
+        }
+        else {
+            *outWeight = rearWeight;
+            *outName = "rear";
+        }
+        return;
+    }
+
+    if( Q_fabs( rightDot ) >= RALLY_IMPACT_SIDE_THRESHOLD ) {
+        *outWeight = sideWeight;
+        *outName = "side";
+        return;
+    }
+
+    if( forwardDot > 0.0f ) {
+        *outWeight = rearWeight;
+        *outName = "rear";
+    }
+    else {
+        *outWeight = frontWeight;
+        *outName = "front";
+    }
+}
+*/
+
+
+static float G_RallyObject_SelectImpactWeight( float forwardDot, float rightDot,
+        float frontWeight, float sideWeight, float rearWeight, const char **outName ) {
+    const char *label = "front";
+    float weight = frontWeight;
+
+    if( Q_fabs( forwardDot ) >= RALLY_IMPACT_FRONT_THRESHOLD ) {
+        if( forwardDot > 0.0f ) {
+            label = "rear";
+            weight = rearWeight;
+        }
+    }
+    else if( Q_fabs( rightDot ) >= RALLY_IMPACT_SIDE_THRESHOLD ) {
+        label = "side";
+        weight = sideWeight;
+    }
+    else if( forwardDot > 0.0f ) {
+        label = "rear";
+        weight = rearWeight;
+    }
+
+    if( outName != NULL ) {
+        *outName = label;
+    }
+
+    return weight;
+}
+
 /*
  * Generic physics routines for moveable rally objects.
  * These routines originally lived in g_rally_scripted_objects.c but are
@@ -269,31 +404,100 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
 
         if( hit->client != NULL || ( hit->r.svFlags & SVF_BOT ) ) {
             vec3_t invNormal;
+            vec3_t forwardSelf, rightSelf;
+            vec3_t forwardHit, rightHit;
+            float forwardSelfDot, rightSelfDot;
+            float forwardHitDot, rightHitDot;
+            float weightSelf, weightHit;
+            const char *impactSelfName, *impactHitName;
+            float weightedSelf, weightedHit;
             float vSelf, vHit, closing, totalDamage, damageSelfF, damageHitF;
             int damageSelf, damageHit;
 
+            AngleVectors( self->s.apos.trBase, forwardSelf, rightSelf, NULL );
+            AngleVectors( hit->s.apos.trBase, forwardHit, rightHit, NULL );
+
             /* store normal velocities before collision response */
             vSelf = DotProduct( self->s.pos.trDelta, tr.plane.normal );
-            vHit = -DotProduct( hit->s.pos.trDelta, tr.plane.normal );
+            if( vSelf < 0.0f ) {
+                vSelf = -vSelf;
+            }
+            else {
+                vSelf = 0.0f;
+            }
+
+            vHit = DotProduct( hit->s.pos.trDelta, tr.plane.normal );
+            if( vHit < 0.0f ) {
+                vHit = 0.0f;
+            }
 
             if( G_RallyObject_ApplyCollision( self, tr.endpos, tr.plane.normal, self->elasticity ) ) {
                 VectorScale( tr.plane.normal, -1.0f, invNormal );
                 G_RallyObject_ApplyCollision( hit, tr.endpos, invNormal, self->elasticity );
 
-                if( vSelf < 0.0f ) {
-                    vSelf = 0.0f;
-                }
-                if( vHit < 0.0f ) {
-                    vHit = 0.0f;
-                }
+                forwardSelfDot = DotProduct( tr.plane.normal, forwardSelf );
+                rightSelfDot = DotProduct( tr.plane.normal, rightSelf );
+                forwardHitDot = DotProduct( invNormal, forwardHit );
+                rightHitDot = DotProduct( invNormal, rightHit );
+
+                weightSelf = G_RallyObject_SelectImpactWeight( forwardSelfDot, rightSelfDot,
+                    g_derbyCollisionFrontWeight.value,
+                    g_derbyCollisionSideWeight.value,
+                    g_derbyCollisionRearWeight.value,
+                    &impactSelfName );
+
+                weightHit = G_RallyObject_SelectImpactWeight( forwardHitDot, rightHitDot,
+                    g_derbyCollisionFrontWeight.value,
+                    g_derbyCollisionSideWeight.value,
+                    g_derbyCollisionRearWeight.value,
+                    &impactHitName );
+
                 closing = vSelf + vHit;
                 if( closing > 0.0f ) {
                     totalDamage = ( closing + g_vehicleDamageOffset.value ) * g_vehicleDamageScale.value;
                     totalDamage *= g_derbyDamageFactor.value;
                     damageSelfF = totalDamage * ( vHit / closing );
-                    damageHitF  = totalDamage * ( vSelf / closing );
+                    damageHitF  = totalDamage - damageSelfF;
+
                     damageHitF  *= g_derbyRammerDamageRatio.value;
                     damageSelfF *= 2.0f - g_derbyRammerDamageRatio.value;
+
+                    damageSelfF *= weightSelf;
+                    damageHitF  *= weightHit;
+
+                    weightedSelf = damageSelfF;
+                    weightedHit  = damageHitF;
+
+                    {
+                        float scaledTotal;
+
+                        scaledTotal = damageSelfF + damageHitF;
+                        if( scaledTotal > 0.0f ) {
+                            float rescale;
+
+                            rescale = totalDamage / scaledTotal;
+                            damageSelfF *= rescale;
+                            damageHitF  *= rescale;
+                        }
+                    }
+
+                    if( g_derbyCollisionLog.integer ) {
+                        G_LogPrintf( "derby collision: self=%i(%s) hit=%i(%s) nF=%.2f/%.2f nS=%.2f/%.2f weights=%.2f/%.2f base=%.1f/%.1f final=%.1f/%.1f\n",
+                            self->s.number,
+                            impactSelfName,
+                            hit->s.number,
+                            impactHitName,
+                            forwardSelfDot,
+                            forwardHitDot,
+                            rightSelfDot,
+                            rightHitDot,
+                            weightSelf,
+                            weightHit,
+                            weightedSelf,
+                            weightedHit,
+                            damageSelfF,
+                            damageHitF );
+                    }
                     damageSelf = (int)max( 1.0f, damageSelfF );
                     damageHit = (int)max( 1.0f, damageHitF );
 

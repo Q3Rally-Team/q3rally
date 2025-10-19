@@ -51,6 +51,8 @@ typedef struct {
     int tipIndex;                /* index into loading tips */
     qboolean cacheExecuted;      /* whether current stage's cache has been executed */
     qboolean finalPhase;         /* whether we're in the final display phase */
+    qboolean requireUpdateAck;   /* remote version newer than local */
+    qboolean updateAcked;        /* player confirmed the update notice */
 } gfxloading_t;
 
 static gfxloading_t s_gfxloading;
@@ -193,6 +195,9 @@ static void UI_GFX_Loading_MenuDraw(void) {
     int currentTime;
     int totalStages = ARRAY_LEN(stages);
     const char *stageName;
+    int textY;
+    char buf[256];
+    char updateState[32];
 
     /* Draw base menu (background, etc.) */
     Menu_Draw(&s_gfxloading.menu);
@@ -264,23 +269,104 @@ static void UI_GFX_Loading_MenuDraw(void) {
     UI_DrawRect(bar_x, bar_y, bar_w, bar_h, colorWhite);
 
     /* Draw percentage text with better formatting */
-    UI_DrawString(320, bar_y + bar_h + 16,
+    textY = bar_y + bar_h + 16;
+    UI_DrawString(320, textY,
                   va("Loading Progress: %.1f%%", s_gfxloading.smoothProgress * 100.0f),
                   UI_CENTER | UI_SMALLFONT, text_color_normal);
+    textY += 24;
+
+    /* Display version check status if available */
+    trap_Cvar_VariableStringBuffer("cl_updateState", updateState, sizeof(updateState));
+
+    if (!Q_stricmp(updateState, "outdated")) {
+        char remoteVersion[64];
+        char remoteDate[64];
+
+        if (!s_gfxloading.requireUpdateAck) {
+            s_gfxloading.requireUpdateAck = qtrue;
+            s_gfxloading.updateAcked = qfalse;
+        }
+
+        trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
+        trap_Cvar_VariableStringBuffer("cl_updateDate", remoteDate, sizeof(remoteDate));
+
+        UI_DrawString(320, textY,
+                      "A new Q3Rally version is available!",
+                      UI_CENTER | UI_SMALLFONT, colorRed);
+        textY += 20;
+
+        if (remoteVersion[0]) {
+            if (remoteDate[0]) {
+                Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: %s (%s)",
+                            PRODUCT_VERSION, remoteVersion, remoteDate);
+            } else {
+                Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: %s",
+                            PRODUCT_VERSION, remoteVersion);
+            }
+        } else {
+            Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: unknown",
+                        PRODUCT_VERSION);
+        }
+
+        UI_DrawString(320, textY, buf,
+                      UI_CENTER | UI_SMALLFONT, colorYellow);
+        textY += 24;
+
+        if (!s_gfxloading.updateAcked) {
+            UI_DrawString(320, textY,
+                          "Click to acknowledge and continue",
+                          UI_CENTER | UI_SMALLFONT, colorYellow);
+            textY += 24;
+        }
+    } else if (!Q_stricmp(updateState, "failed")) {
+        char errorMsg[128];
+
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked = qfalse;
+
+        trap_Cvar_VariableStringBuffer("cl_updateError", errorMsg, sizeof(errorMsg));
+        if (!errorMsg[0]) {
+            Q_strncpyz(errorMsg, "Unable to check for updates", sizeof(errorMsg));
+        }
+
+        UI_DrawString(320, textY, errorMsg,
+                      UI_CENTER | UI_SMALLFONT, colorYellow);
+        textY += 24;
+    } else {
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked = qfalse;
+    }
 
     /* Draw random driving tip */
-    UI_DrawString(320, bar_y + bar_h + 46, loadingTips[s_gfxloading.tipIndex],
+    UI_DrawString(320, textY, loadingTips[s_gfxloading.tipIndex],
                   UI_CENTER | UI_SMALLFONT, text_color_normal);
 
     /* Handle transition when loading is complete */
     if (s_gfxloading.finalPhase) {
         currentTime = trap_Milliseconds();
-        if (currentTime - s_gfxloading.finalDisplayStartTime >= FINAL_DISPLAY_TIME && 
+        if (currentTime - s_gfxloading.finalDisplayStartTime >= FINAL_DISPLAY_TIME &&
             s_gfxloading.smoothProgress >= 0.98f) {
+            if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
+                return;
+            }
             UI_PopMenu();
             UI_MainMenu();
         }
     }
+}
+
+static sfxHandle_t UI_GFX_Loading_Key(int key) {
+    if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
+        if (key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 ||
+            key == K_ENTER || key == K_KP_ENTER) {
+            s_gfxloading.updateAcked = qtrue;
+            trap_S_StartLocalSound(menu_out_sound, CHAN_LOCAL_SOUND);
+            return menu_out_sound;
+        }
+        return 0;
+    }
+
+    return Menu_DefaultKey(&s_gfxloading.menu, key);
 }
 
 /*
@@ -299,6 +385,7 @@ void UI_GFX_Loading(void) {
     /* Setup menu structure */
     s_gfxloading.menu.draw = UI_GFX_Loading_MenuDraw;
     s_gfxloading.menu.fullscreen = qtrue;
+    s_gfxloading.menu.key = UI_GFX_Loading_Key;
 
     /* Reset menu stack */
     uis.menusp = 0;
@@ -316,5 +403,7 @@ void UI_GFX_Loading(void) {
     s_gfxloading.finalPhase = qfalse;
     s_gfxloading.finalDisplayStartTime = 0;
     s_gfxloading.tipIndex = UI_RandomInt( ARRAY_LEN(loadingTips) );
+    s_gfxloading.requireUpdateAck = qfalse;
+    s_gfxloading.updateAcked = qfalse;
 }
 

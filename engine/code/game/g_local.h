@@ -1032,6 +1032,10 @@ extern  vmCvar_t        g_derbyRamRadius;
 extern  vmCvar_t        g_derbyRamDamage;
 extern  vmCvar_t        g_derbyRamDamageScale;
 extern  vmCvar_t        g_derbyRamDamageMax;
+extern  vmCvar_t        g_derbyCollisionFrontWeight;
+extern  vmCvar_t        g_derbyCollisionSideWeight;
+extern  vmCvar_t        g_derbyCollisionRearWeight;
+extern  vmCvar_t        g_derbyCollisionLog;
 extern  vmCvar_t        g_fuelKillReward;
 extern  vmCvar_t        g_useFuel;
 

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cl_main.c  -- client main loop
 
 #include "client.h"
+#include "cl_update.h"
 #include <limits.h>
 
 #include "../sys/sys_local.h"
@@ -1216,7 +1217,8 @@ void CL_ShutdownAll(qboolean shutdownRef)
 		CL_StopRecord_f();
 
 #ifdef USE_CURL
-	CL_cURL_Shutdown();
+        CL_UpdateVersionCheck_Shutdown();
+        CL_cURL_Shutdown();
 #endif
 	// clear sounds
 	S_DisableSounds();
@@ -2972,9 +2974,9 @@ void CL_Frame ( int msec ) {
 	}
 
 #ifdef USE_CURL
-	if(clc.downloadCURLM) {
-		CL_cURL_PerformDownload();
-		// we can't process frames normally when in disconnected
+        if(clc.downloadCURLM) {
+                CL_cURL_PerformDownload();
+                // we can't process frames normally when in disconnected
 		// download mode since the ui vm expects clc.state to be
 		// CA_CONNECTED
 		if(clc.cURLDisconnected) {
@@ -2986,9 +2988,11 @@ void CL_Frame ( int msec ) {
 			Con_RunConsole();
 			cls.framecount++;
 			return;
-		}
-	}
+                }
+        }
 #endif
+
+        CL_UpdateVersionCheck_Frame();
 
 	if ( cls.cddialog ) {
 		// bring up the cd error dialog if needed
@@ -3645,7 +3649,9 @@ void CL_Init( void ) {
 	Cvar_CheckRange(j_side_axis, 0, MAX_JOYSTICK_AXIS-1, qtrue);
 	Cvar_CheckRange(j_up_axis, 0, MAX_JOYSTICK_AXIS-1, qtrue);
 
-	cl_motdString = Cvar_Get( "cl_motdString", "", CVAR_ROM );
+        cl_motdString = Cvar_Get( "cl_motdString", "", CVAR_ROM );
+
+        CL_UpdateVersionCheck_Register();
 
 	Cvar_Get( "cl_maxPing", "800", CVAR_ARCHIVE );
 
@@ -3729,12 +3735,14 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );
 	Cmd_AddCommand ("model", CL_SetModel_f );
 	Cmd_AddCommand ("video", CL_Video_f );
-	Cmd_AddCommand ("stopvideo", CL_StopVideo_f );
+        Cmd_AddCommand ("stopvideo", CL_StopVideo_f );
 	if( !com_dedicated->integer ) {
 		Cmd_AddCommand ("sayto", CL_Sayto_f );
 		Cmd_SetCommandCompletionFunc( "sayto", CL_CompletePlayerName );
 	}
-	CL_InitRef();
+        CL_InitRef();
+
+        CL_UpdateVersionCheck_Begin();
 
 	SCR_Init ();
 

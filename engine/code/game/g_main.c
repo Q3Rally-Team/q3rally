@@ -132,6 +132,10 @@ vmCvar_t        g_derbyRamRadius;
 vmCvar_t        g_derbyRamDamage;
 vmCvar_t        g_derbyRamDamageScale;
 vmCvar_t        g_derbyRamDamageMax;
+vmCvar_t        g_derbyCollisionFrontWeight;
+vmCvar_t        g_derbyCollisionSideWeight;
+vmCvar_t        g_derbyCollisionRearWeight;
+vmCvar_t        g_derbyCollisionLog;
 vmCvar_t  g_humanplayers;
 vmCvar_t        g_fuelKillReward;
 vmCvar_t        g_useFuel;
@@ -297,9 +301,13 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_derbyRamDamage, "g_derbyRamDamage", "100", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageScale, "g_derbyRamDamageScale", "0.05", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "50", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionFrontWeight, "g_derbyCollisionFrontWeight", "0.2", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionSideWeight, "g_derbyCollisionSideWeight", "0.5", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionRearWeight, "g_derbyCollisionRearWeight", "0.8", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionLog, "g_derbyCollisionLog", "0", 0, 0, qfalse },
         // END
 
-	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse},
+        { &g_rankings, "g_rankings", "0", 0, 0, qfalse},
 	{ &g_localTeamPref, "g_localTeamPref", "", 0, 0, qfalse },
 
 	{ &g_dominationScoreInterval, "g_dominationScoreInterval", "10000", CVAR_ARCHIVE, 0, qfalse },

@@ -192,11 +192,11 @@ void CG_DrawInformation( void ) {
 			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 	}
 
-	// draw info string information
+        // draw info string information
 
-	y = 180-32;
+        y = 180-32;
 
-	// don't print server lines if playing a local game
+        // don't print server lines if playing a local game
 	trap_Cvar_VariableStringBuffer( "sv_running", buf, sizeof( buf ) );
 	if ( !atoi( buf ) ) {
 		// server hostname
@@ -223,13 +223,13 @@ void CG_DrawInformation( void ) {
 		}
 
 		// some extra space after hostname and motd
-		y += 10;
-	}
+                y += 10;
+        }
 
-	// map-specific message (long map name)
-	s = CG_ConfigString( CS_MESSAGE );
-	if ( s[0] ) {
-		UI_DrawProportionalString( 320, y, s,
+        // map-specific message (long map name)
+        s = CG_ConfigString( CS_MESSAGE );
+        if ( s[0] ) {
+                UI_DrawProportionalString( 320, y, s,
 			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 		y += PROP_HEIGHT;
 	}
