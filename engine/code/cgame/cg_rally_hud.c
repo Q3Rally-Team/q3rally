@@ -875,8 +875,9 @@ static float CG_DrawSpeed( float y ) {
                  const float segmentHeight = 8.0f;
                  const float segmentGap = 4.0f;
                  const float gaugeHeight = 12.0f;
-                 const float rpmIconSize = gaugeHeight * 2;
+                const float rpmIconSize = gaugeHeight * 2;
                 const float rpmIconOffset = rpmIconSize + 4;
+                const float rpmIconNudge = 3.0f;
                 float   iconOffset = gaugeHeight * 2 + 4;
                  float   blockWidth, blockHeight, barWidth;
                  int             i;
@@ -926,7 +927,7 @@ static float CG_DrawSpeed( float y ) {
 			if ( !rpmIcon ) {
 				rpmIcon = trap_R_RegisterShaderNoMip( "icons/rpm" );
 			}
-			CG_DrawPic( x, y, rpmIconSize, rpmIconSize, rpmIcon );
+                        CG_DrawPic( x - rpmIconNudge, y, rpmIconSize, rpmIconSize, rpmIcon );
 		}
                for ( i = 0; i < segments; i++ ) {
                        float segX = x + rpmIconOffset + i * (segmentWidth + segmentGap);
@@ -1057,6 +1058,7 @@ static float CG_DrawSpeed( float y ) {
                        float segY = top + gaugeSize + gaugeSpacing + fuelHeight + rpmSpacing;
 
                        float rpmIconSize, rpmIconX, rpmIconY;
+                       const float rpmIconNudge = 3.0f;
 
                        static qhandle_t rpmIcon;
                        if ( !rpmIcon ) {
@@ -1064,7 +1066,7 @@ static float CG_DrawSpeed( float y ) {
                        }
 
                        rpmIconSize = rpmHeight * (4.0f / 3.0f);
-                       rpmIconX = segX - rpmIconSize - 4;
+                       rpmIconX = segX - rpmIconSize - 4 - rpmIconNudge;
                        rpmIconY = segY + (rpmHeight - rpmIconSize) * 0.5f;
 
                        CG_DrawPic( rpmIconX, rpmIconY, rpmIconSize, rpmIconSize, rpmIcon );
