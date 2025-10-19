@@ -331,7 +331,11 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 		if ( !SeekToSection( &text_p, model ) ){
 //			Com_Printf( "'%s' section not found in script file, assuming it was an actual filename\n", model );
 
-			cent->modelHandle = trap_R_RegisterModel( deadmodel );
+			cent->modelHandle = trap_R_RegisterModel( model );
+			if ( !cent->modelHandle ) {
+				Com_Printf( "Failed to register model '%s' referenced in script '%s'\n", model, filename );
+				return qfalse;
+			}
 		}
 		else {
 			Com_Printf( "Loading model info for '%s'\n", model );
