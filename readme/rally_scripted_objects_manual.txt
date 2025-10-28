@@ -27,6 +27,8 @@ rally_scripted_object {
     }
 }
 
+Hinweis: Die Werte von model und deadmodel können entweder direkt einen Modellpfad (z. B. "models/mapobjects/hydrant/hydrant") angeben oder auf einen benannten Abschnitt im selben Script verweisen, der wiederum ein model-Token mit dem tatsächlichen Pfad enthält. Im zweiten Fall wird der Pfad automatisch aus diesem Abschnitt geladen.
+
 2.Entity im Editor platzieren
 
 - In Radiant (oder einem kompatiblen Editor) wählst du die Entity rally_scripted_object
@@ -75,6 +77,8 @@ rally_scripted_object {
         "models/mapobjects/hydrant/piece4" 4
     }
 }
+
+Note: The values of model and deadmodel can either point directly to a model path (for example "models/mapobjects/hydrant/hydrant") or reference a named section in the same script that contains a model token with the actual path. In the latter case the path is automatically loaded from that section.
 
 2.Place entity in editor
 

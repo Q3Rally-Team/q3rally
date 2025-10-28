@@ -51,7 +51,7 @@ ifndef BUILD_AUTOUPDATER  # DON'T build unless you mean to!
 endif
 
 # ioquake3 git commit that this is based on
-IOQ3_REVISION = c9697a01
+# IOQ3_REVISION = c9697a01
 
 #############################################################################
 #
@@ -123,7 +123,7 @@ endif
 export CROSS_COMPILING
 
 ifndef VERSION
-VERSION=v0.5
+VERSION=v0.6c
 endif
 
 ifndef CLIENTBIN

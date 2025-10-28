@@ -1,5 +1,7 @@
 # Q3Rally Telemetry Reporting Plan
 
+## English
+
 This document captures the planned telemetry payloads and delivery mechanics for automated match reporting. It targets the dedicated server build described in this repository and focuses on race-centric modes introduced by Q3Rally alongside the inherited arena game types.
 
 ## 1. Metrics by Game Mode
@@ -198,20 +200,223 @@ New CVars follow the same pattern as existing server control options (see `sv_en
 ### 3.2 Config File
 
 * Extend `server_example.cfg` with commented defaults and recommend storing secrets in separate `telemetry_secrets.cfg`, included via `exec telemetry_secrets.cfg`
-* Deployment documentation links this file and notes file permissions (readable only by server user)
 
-### 3.3 Activation Procedure
+---
 
-1. Admin enters target URL and API key in `telemetry_secrets.cfg`
-2. Enables telemetry with `seta sv_telemetryEnabled "1"` and optionally `sv_telemetryEvents`
-3. Server initializes outbox at startup, generates namespaces (`sv_telemetryNamespace`), and begins POSTs starting with next match
-4. Health monitor in-game (new command `telemetryStatus`) lists last response codes
+## Deutsch
 
-### 3.4 Security Aspects
+Dieses Dokument beschreibt die geplanten Telemetrie-Payloads und die Auslieferungsmechanismen für die automatische Match-Berichterstattung. Es richtet sich an den in diesem Repository dokumentierten Dedicated-Server-Build und legt den Schwerpunkt auf die von Q3Rally eingeführten rennzentrierten Modi sowie die übernommenen Arena-Spieltypen.
 
-* `sv_telemetryApiKey` is implemented as a latched, write-only CVar, like `rconPassword`, so it is not leaked via `serverinfo` or status responses
-* Logging minimized: success messages only on debug level, errors (with HTTP status) on warning level
-* Optional IP allowlist (`sv_telemetryAllowedIPs`) can be added later
+## 1. Kennzahlen pro Spielmodus
+
+Alle Payloads teilen sich eine gemeinsame Spielerobjekt-Struktur:
+
+```json
+{
+  "playerId": "sha256:...",   // Hash aus cl_guid + Name
+  "displayName": "Player",
+  "team": "red" | "blue" | null,
+  "car": "carmodel/skin",
+  "normalizedScore": 0.0,
+  "rawScore": 0,
+  "damageDealt": { "raw": 1234, "normalized": 0.52 },
+  "damageTaken": { "raw": 800, "normalized": 0.33 },
+  "timeAlive": "PT12M3.542S"
+}
+```
+
+* **Spieleridentifikation:** Verwende das serverseitige `cl_guid` (siehe `cl_main.c`), salze es mit dem Server-Namespace und hashe es mit SHA-256, um personenbezogene Daten aus der Übertragung herauszuhalten.
+* **Zeitformat:** Stelle absolute Zeitpunkte als RFC-3339-UTC-Strings und Dauern als ISO-8601-Dauern (`PTmmMss.mmmS`) dar. Die Spiel-Logik verwaltet Rennzeiten bereits in Millisekunden; die Umwandlung erfolgt unmittelbar vor der Serialisierung.
+* **Normalisierung:** Mappe Rohwerte auf Floats `0,0–1,0` pro Match-Kontext (z. B. Division durch Sitzungsmaximum oder konfigurierte Obergrenze). Wo die Engine bereits Prozentwerte liefert (`accuracy`), erfolgt die Normalisierung durch Division durch `100`.
+
+### 1.1 Racing (GT_RACING, GT_RACING_DM)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `completedLaps` | Anzahl absolvierter Runden | Division durch `track.totalLaps` aus den Level-Infos |
+| `bestLap` | Schnellste Rundenzeit | Dauer als ISO 8601 sowie `normalizedBestLap = bestLapMs / sessionBestLapMs` |
+| `totalTime` | Gesamtzeit bis zur Zielflagge | Dauer; `normalizedTotalTime = winnerTimeMs / playerTimeMs` (>= 1,0 wird auf 1,0 gekappt) |
+| `position` | Platzierung laut Scoreboard | `normalizedPosition = 1 - ((position-1)/(gridSize-1))` |
+| `startReaction` | Zeit zwischen grünem Licht und Start | Normalisierung gegen `g_eliminationStartDelay`, sofern gesetzt |
+| `boostUsage` | Prozentual genutzte Boost-Zeit | Rohwert / `g_maxBoostMs` (neue Server-CVar, siehe Abschnitt 3) |
+
+Für `GT_RACING_DM` werden `damageDealt` und `damageTaken` zusätzlich aus dem Scoreboard übernommen.
+
+### 1.2 Team Racing (GT_TEAM_RACING, GT_TEAM_RACING_DM)
+
+Zusätzlich zu den individuellen Rennmetriken:
+
+* `teamScoreFraction` = Team-Gesamt-`score` / Summe aller Team-Scores
+* `teamDamageShare` = Anteil des Team-Schadens (`playerDamage / teamDamage`)
+* `relaySegments` = Anzahl der Staffelstab-Übergaben (für mögliche Relay-Modi bei aktivem `g_teamRelay`)
+
+### 1.3 Elimination & Last Car Standing (GT_ELIMINATION, GT_LCS)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `survivalTime` | Dauer bis zur Eliminierung | Dauer + Anteil relativ zur längsten Überlebenszeit |
+| `elimOrder` | Reihenfolge der Eliminierung | `normalizedElimOrder = 1 - ((elimOrder-1)/(gridSize-1))` |
+| `lapsAtElim` | Runden bei der Eliminierung | Bruchteil von `track.totalLaps` |
+| `warningResponses` | Reaktionszeit auf Eliminierungswarnungen | Durchschnittliche Verzögerung / `g_eliminationWarning` |
+
+### 1.4 Demolition Derby (GT_DERBY)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `knockouts` | Anzahl ausgeschalteter Gegner | Division durch `maxOpponents` |
+| `ringOuts` | Selbst verursachte Eliminierungen | Invers normalisiert: `1 - min(selfRingOuts, limit)/limit` |
+| `armorIntegrity` | Durchschnittliche Rest-HP | Mittelwert / `maxHealth` (aus der Fahrzeugdefinition) |
+| `damageEfficiency` | `damageDealt / damageTaken`, auf 0–1 skaliert via `tanh` |
+
+### 1.5 Deathmatch & Team Deathmatch (GT_DEATHMATCH, GT_TEAM)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `frags` | Kills | Division durch höchste Fragzahl des Matches |
+| `deaths` | Tode | `1 - (deaths / maxDeaths)` |
+| `accuracy` | Treffergenauigkeit | `cg.scores[i].accuracy / 100` |
+| `streaks` | Längste Kill-Serie | Division durch `fraglimit` (oder Sitzungsmaximum) |
+| `powerupUptime` | Zeit mit aktiven Power-Ups | Dauer / Matchdauer |
+
+Team-Varianten ergänzen `teamScoreFraction` und `teamDamageShare` wie beim Team-Racing.
+
+### 1.6 Capture the Flag & Varianten (GT_CTF, GT_CTF4)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `captures` | Eroberte Flaggen | Division durch `capturelimit` oder Match-Maximum |
+| `returns` | Zurückgebrachte Flaggen | Division durch höchste Zahl im Match |
+| `carrierKills` | Kills am Flaggen-Träger | Division durch Sitzungsmaximum |
+| `escortTime` | Zeit in der Nähe des eigenen Trägers | Dauer / Matchdauer |
+| `assistCount` | Scoreboard-`assistCount` geteilt durch Sitzungsmaximum |
+
+### 1.7 Domination (GT_DOMINATION)
+
+| Kennzahl | Beschreibung | Normalisierung |
+| --- | --- | --- |
+| `controlTicks` | Kontrollierte Zeitslots | Division durch Gesamtanzahl der Slots |
+| `contestedEvents` | Anzahl erzwungener Neutralisierungen | Division durch Sitzungsmaximum |
+| `objectiveDamage` | Schaden an Kontrollpunkten | Schaden / höchster Punkt-Schaden |
+
+### 1.8 Single Player (GT_SINGLE_PLAYER)
+
+Der Einzelspielermodus nutzt die Rennmetriken sowie `aiDifficulty` und `retryCount` (Anzahl der Neustarts).
+
+## 2. Web-API-Design
+
+### 2.1 Transport & Authentifizierung
+
+* **Protokoll:** HTTPS mit TLS 1.2+
+* **Methode:** `POST /v1/matches` für Match-Endberichte; optional `POST /v1/pings` für Heartbeats
+* **Authentifizierung:** Statischer API-Schlüssel über den Header `Authorization: Bearer <key>`. Wiedergabeschutz mittels `X-Q3R-Timestamp` (Unix-ms) und HMAC-Signatur im Header `X-Q3R-Signature` (`HMAC-SHA256` über den Body)
+
+### 2.2 Request-Schema (`/v1/matches`)
+
+```json
+{
+  "matchId": "srv-20240405-183011-42",
+  "server": {
+    "name": "Q3Rally EU #1",
+    "host": "203.0.113.10:27960",
+    "build": "1.3.0",
+    "map": "q3r_country01"
+  },
+  "mode": "GT_RACING",
+  "startTime": "2024-04-05T18:30:11Z",
+  "endTime": "2024-04-05T18:42:39Z",
+  "duration": "PT12M28S",
+  "settings": {
+    "g_gametype": 141,
+    "g_eliminationInterval": 15000,
+    "g_vehicleHpMaxRatio": 1.2
+  },
+  "players": [ { ...player metrics... } ],
+  "teams": [
+    {
+      "team": "red",
+      "rawScore": 123,
+      "normalizedScore": 0.64,
+      "damageDealt": 4200,
+      "objectives": {
+        "captures": 2,
+        "controlTicks": 35
+      }
+    }
+  ],
+  "events": [
+    {
+      "timestamp": "2024-04-05T18:33:15.210Z",
+      "type": "lap_completed",
+      "playerId": "sha256:...",
+      "lap": 2,
+      "lapTime": "PT1M12.250S"
+    }
+  ]
+}
+```
+
+* `mode` entspricht dem `gametype_t`-Enum im Code (z. B. `GT_RACING`).
+* `settings` spiegelt relevante CVars wider, damit Analysten die Spielparameter nachvollziehen können (z. B. `g_eliminationInterval`).
+* `events` ist optional und kann nur dann aktiviert werden, wenn ein feingranulares Tracking gewünscht ist (konfigurierbarer Schalter `sv_telemetryEvents`).
+
+### 2.3 Response-Schema
+
+```json
+{
+  "matchId": "srv-20240405-183011-42",
+  "status": "accepted",
+  "ingestedAt": "2024-04-05T18:42:40Z",
+  "nextPollAfter": 0,
+  "warnings": [
+    { "code": "metrics/unknown", "detail": "Field settings.g_vehicleHpMaxRatio ignored" }
+  ]
+}
+```
+
+* `status`-Werte: `accepted`, `queued`, `rejected`
+* Bei `rejected` enthält die Antwort `errors` mit Feldpfaden
+* HTTP-Status 202 für `queued`, 200 für `accepted`, 400 für Schemafehler, 401/403 für Auth-Probleme, 429 für Ratenbegrenzung
+
+### 2.4 Fehler- und Retry-Strategie
+
+* Der Server speichert die letzten 10 Payloads in einem lokalen Spool (`telemetry/outbox`).
+* Bei HTTP-5xx oder Netzwerkfehlern: exponentieller Backoff (Start 5 s, Kappung 5 min) und erneuter POST-Versuch.
+* Ein `202 queued` erfordert optionales Polling über `GET /v1/matches/{matchId}` – standardmäßig deaktiviert.
+
+## 3. Serverkonfiguration
+
+### 3.1 Neue CVars
+
+| CVar | Standard | Beschreibung |
+| --- | --- | --- |
+| `sv_telemetryEnabled` | `0` | Globaler Schalter – nur bei `1` werden Payloads erzeugt und versendet |
+| `sv_telemetryUrl` | `` | HTTPS-Endpoint (z. B. `https://telemetry.example.com/v1/matches`) |
+| `sv_telemetryApiKey` | `` | Secret für den `Authorization`-Header; als gelatchte CVar gespeichert (nicht in `serverinfo`) |
+| `sv_telemetryTimeoutMs` | `5000` | Netzwerk-Timeout für POSTs |
+| `sv_telemetryEvents` | `0` | Aktiviert das optionale `events`-Array |
+| `sv_telemetryMaxBatch` | `8` | Anzahl der Match-Reports im Spool |
+| `sv_telemetryNamespace` | `"default"` | Salt für Spieler-Hashes, um GUID-Kollisionen zwischen Communities zu vermeiden |
+| `sv_telemetryMaxBoostMs` | `15000` | Obergrenze zur Normalisierung von Boost-Zeiten (verwendet in Rennmetriken) |
+
+Neue CVars folgen demselben Muster wie bestehende Server-Optionen (siehe `sv_enableRankings` & `sv_rankingsActive`).
+
+### 3.2 Konfigurationsdatei
+
+* Erweitere `server_example.cfg` um kommentierte Defaults und empfehle, Secrets in eine separate `telemetry_secrets.cfg` auszulagern, die per `exec telemetry_secrets.cfg` eingebunden wird.
+* Die Deployment-Dokumentation verweist auf diese Datei und weist auf Dateiberechtigungen hin (nur für den Servernutzer lesbar)
+
+### 3.3 Aktivierungsablauf
+
+1. Administrator trägt Ziel-URL und API-Schlüssel in `telemetry_secrets.cfg` ein
+2. Telemetrie wird mit `seta sv_telemetryEnabled "1"` und optional `sv_telemetryEvents` aktiviert
+3. Der Server initialisiert beim Start das Outbox-Verzeichnis, setzt Namespaces (`sv_telemetryNamespace`) und beginnt mit dem Versand ab dem nächsten Match
+4. Die neue In-Game-Abfrage `telemetryStatus` zeigt die letzten Antwortcodes
+
+### 3.4 Sicherheitsaspekte
+
+* `sv_telemetryApiKey` ist wie `rconPassword` als latched, schreibgeschützte CVar umgesetzt und erscheint weder in `serverinfo` noch in Status-Antworten
+* Logging ist minimal: Erfolgsmeldungen nur auf Debug-Level, Fehler (mit HTTP-Status) auf Warn-Level
+* Eine optionale IP-Allowlist (`sv_telemetryAllowedIPs`) kann später ergänzt werden
 
 ---
 

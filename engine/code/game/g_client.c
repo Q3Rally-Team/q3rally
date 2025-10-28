@@ -40,6 +40,19 @@ static vec3_t	playerMaxs = {CAR_WIDTH/2, CAR_WIDTH/2, CAR_WIDTH/2};
 //static vec3_t	playerMaxs = {CAR_LENGTH/2, CAR_WIDTH/2, CAR_HEIGHT/2};
 // END
 
+void G_ResetClientLapData( gclient_t *client ) {
+        if ( !client ) {
+                return;
+        }
+
+        client->lapStartTime = 0;
+        client->bestLapMs = 0;
+        client->lapTimeCount = 0;
+        client->recordedLapCount = 0;
+        Com_Memset( client->lapTimes, 0, sizeof( client->lapTimes ) );
+        Com_Memset( client->recordedLaps, 0, sizeof( client->recordedLaps ) );
+}
+
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) initial
 potential spawning position for deathmatch games.
 The first time a player enters the game, they will be at an 'initial' spot.
@@ -1252,12 +1265,13 @@ void ClientBegin( int clientNum ) {
 	}
 //	trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 
-	client->buttons = 0;
-	client->oldbuttons = 0;
-	client->lastCheckpointTime = 0;
+        client->buttons = 0;
+        client->oldbuttons = 0;
+        client->lastCheckpointTime = 0;
+        G_ResetClientLapData( client );
 // END
 
-	if ( ent->r.linked ) {
+        if ( ent->r.linked ) {
 		trap_UnlinkEntity( ent );
 	}
 	G_InitGentity( ent );
@@ -1351,6 +1365,10 @@ void ClientSpawn(gentity_t *ent) {
 
 	index = ent - g_entities;
 	client = ent->client;
+
+	if ( !level.startRaceTime ) {
+		G_ResetClientLapData( client );
+	}
 
 	VectorClear(spawn_origin);
 

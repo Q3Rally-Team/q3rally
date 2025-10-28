@@ -794,7 +794,21 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                 player->totalRaceMs = level.time - level.startRaceTime;
         }
         player->finishRaceTime = client->finishRaceTime;
-        player->lapCount = ent->currentLap;
+        player->bestLapMs = client->bestLapMs;
+
+        {
+                int lapCount = client->recordedLapCount;
+                if ( lapCount < 0 ) {
+                        lapCount = 0;
+                }
+                if ( lapCount > LADDER_MAX_LAP_TIMES ) {
+                        lapCount = LADDER_MAX_LAP_TIMES;
+                }
+                for ( i = 0; i < lapCount; ++i ) {
+                        player->lapTimes[i] = client->recordedLaps[i];
+                }
+                player->lapCount = lapCount;
+        }
 
         player->kills = client->ps.persistant[PERS_SCORE];
         deaths = client->ps.persistant[PERS_KILLED];
@@ -2607,6 +2621,13 @@ void G_RunFrame( int levelTime ) {
 		level.startRaceTime = 0;
 		level.finishRaceTime = 0;
 		level.winnerNumber = -1;
+		for ( i = 0; i < level.maxclients; ++i ) {
+			gclient_t *client = &level.clients[i];
+			if ( client->pers.connected != CON_CONNECTED ) {
+				continue;
+			}
+			G_ResetClientLapData( client );
+		}
 // END
 		return;
 	}

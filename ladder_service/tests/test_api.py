@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
+import sys
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
 
 from ladder_service.ladder_service import main
 from ladder_service.ladder_service.db import session_scope
@@ -39,6 +44,7 @@ MATCH_TEMPLATE = {
     "startTime": datetime(2024, 4, 5, 18, 30, 11, tzinfo=timezone.utc).isoformat(),
     "endTime": datetime(2024, 4, 5, 18, 42, 39, tzinfo=timezone.utc).isoformat(),
     "duration": "PT12M28S",
+    "startEpoch": 1712332211,
     "map": "q3r_country01",
     "server": {"name": "Q3Rally EU #1", "host": "203.0.113.10:27960", "build": "1.3.0"},
     "settings": {"g_gametype": 141},
@@ -47,7 +53,7 @@ MATCH_TEMPLATE = {
             "playerId": "sha256:abc",
             "displayName": "PlayerOne",
             "team": "red",
-            "rawScore": 123,
+            "score": 123,
         }
     ],
 }
@@ -65,6 +71,9 @@ def test_get_match() -> None:
     data = response.json()
     assert data["matchId"] == MATCH_TEMPLATE["matchId"]
     assert "createdAt" in data
+    assert data["startEpoch"] == MATCH_TEMPLATE["startEpoch"]
+    assert data["players"][0]["rawScore"] == MATCH_TEMPLATE["players"][0]["score"]
+    assert data["players"][0]["score"] == MATCH_TEMPLATE["players"][0]["score"]
 
 
 def test_list_matches() -> None:
@@ -72,6 +81,45 @@ def test_list_matches() -> None:
     assert response.status_code == 200
     data = response.json()
     assert len(data["matches"]) >= 1
+
+
+def test_list_matches_filter_mode() -> None:
+    alt_match = {
+        **MATCH_TEMPLATE,
+        "matchId": "srv-20240405-183011-43",
+        "mode": "ARCADE_RACING",
+    }
+    created = client.post("/api/v1/matches", json=alt_match)
+    assert created.status_code == 201, created.text
+
+    response = client.get("/api/v1/matches?mode=GT_RACING")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["matches"], "Expected at least one GT_RACING match in response"
+    for match in data["matches"]:
+        assert match["mode"] == "GT_RACING"
+        assert match["matchId"] != alt_match["matchId"]
+
+    cleanup = client.delete(f"/api/v1/matches/{alt_match['matchId']}")
+    assert cleanup.status_code == 204
+
+
+def test_list_matches_supports_team_race_dm_mode() -> None:
+    match = {
+        **MATCH_TEMPLATE,
+        "matchId": "srv-20240405-183011-44",
+        "mode": "GT_TEAM_RACING_DM",
+    }
+    created = client.post("/api/v1/matches", json=match)
+    assert created.status_code == 201, created.text
+
+    response = client.get("/api/v1/matches?mode=GT_TEAM_RACING_DM")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert any(entry["matchId"] == match["matchId"] for entry in data["matches"])
+
+    cleanup = client.delete(f"/api/v1/matches/{match['matchId']}")
+    assert cleanup.status_code == 204
 
 
 def test_delete_match() -> None:

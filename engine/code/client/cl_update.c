@@ -110,6 +110,9 @@ static void CL_UpdateVersionCheck_Fail(const char *message) {
 static void CL_UpdateVersionCheck_ParseBuffer(void) {
     char *versionLine = cl_updateContext.buffer;
     char *dateLine = NULL;
+    char *displayVersion;
+    const char *localVersion;
+    const char *remoteVersion;
     char *cursor;
 
     cl_updateContext.buffer[cl_updateContext.bufferLength] = '\0';
@@ -132,12 +135,36 @@ static void CL_UpdateVersionCheck_ParseBuffer(void) {
 
     if (versionLine && *versionLine) {
         size_t len;
+
+        if ((unsigned char)versionLine[0] == 0xEF &&
+            (unsigned char)versionLine[1] == 0xBB &&
+            (unsigned char)versionLine[2] == 0xBF) {
+            versionLine += 3;
+        }
+
         while (*versionLine && isspace((unsigned char)*versionLine)) {
             versionLine++;
         }
+
         len = strlen(versionLine);
         while (len > 0 && isspace((unsigned char)versionLine[len - 1])) {
             versionLine[--len] = '\0';
+        }
+
+        if (len >= 2 &&
+            ((versionLine[0] == '"' && versionLine[len - 1] == '"') ||
+             (versionLine[0] == '\'' && versionLine[len - 1] == '\''))) {
+            versionLine[len - 1] = '\0';
+            versionLine++;
+
+            while (*versionLine && isspace((unsigned char)*versionLine)) {
+                versionLine++;
+            }
+
+            len = strlen(versionLine);
+            while (len > 0 && isspace((unsigned char)versionLine[len - 1])) {
+                versionLine[--len] = '\0';
+            }
         }
     }
 
@@ -156,11 +183,25 @@ static void CL_UpdateVersionCheck_ParseBuffer(void) {
         }
     }
 
-    CL_UpdateVersionCheck_SetRemote(versionLine);
+    displayVersion = versionLine;
+    CL_UpdateVersionCheck_SetRemote(displayVersion);
     CL_UpdateVersionCheck_SetDate(dateLine ? dateLine : "");
     CL_UpdateVersionCheck_SetError("");
 
-    if (!Q_stricmp(versionLine, PRODUCT_VERSION)) {
+    remoteVersion = displayVersion;
+    localVersion = PRODUCT_VERSION;
+
+    if ((remoteVersion[0] == 'v' || remoteVersion[0] == 'V') &&
+        isalnum((unsigned char)remoteVersion[1])) {
+        remoteVersion++;
+    }
+
+    if ((localVersion[0] == 'v' || localVersion[0] == 'V') &&
+        isalnum((unsigned char)localVersion[1])) {
+        localVersion++;
+    }
+
+    if (!Q_stricmp(remoteVersion, localVersion)) {
         CL_UpdateVersionCheck_SetState("current");
     } else {
         CL_UpdateVersionCheck_SetState("outdated");

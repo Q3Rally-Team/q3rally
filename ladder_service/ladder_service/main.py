@@ -86,7 +86,7 @@ def list_matches(
 
     query = select(Match).order_by(Match.start_time.desc()).offset(offset).limit(limit)
     if mode:
-        query = query.filter(Match.mode == mode)
+        query = query.where(Match.mode == mode)
 
     rows = session.execute(query).scalars().all()
     matches = [json.loads(row.payload) for row in rows]

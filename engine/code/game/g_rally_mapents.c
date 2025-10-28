@@ -23,6 +23,78 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
+	gclient_t *client;
+	int splitDuration;
+	int i;
+
+	if ( !ent ) {
+		return;
+	}
+
+	client = ent->client;
+	if ( !client ) {
+		return;
+	}
+
+	if ( client->lastCheckpointTime <= 0 || timestamp <= client->lastCheckpointTime ) {
+		return;
+	}
+
+	splitDuration = timestamp - client->lastCheckpointTime;
+	if ( splitDuration < 0 ) {
+		splitDuration = 0;
+	}
+
+	if ( client->lapTimeCount >= LADDER_MAX_LAP_TIMES ) {
+		for ( i = 1; i < LADDER_MAX_LAP_TIMES; ++i ) {
+			client->lapTimes[i - 1] = client->lapTimes[i];
+		}
+		client->lapTimeCount = LADDER_MAX_LAP_TIMES - 1;
+	}
+
+	client->lapTimes[ client->lapTimeCount ] = splitDuration;
+	client->lapTimeCount++;
+}
+
+static void G_RallyCompleteLap( gentity_t *ent, int timestamp ) {
+	gclient_t *client;
+	int lapDuration;
+	int i;
+
+	if ( !ent ) {
+		return;
+	}
+
+	client = ent->client;
+	if ( !client ) {
+		return;
+	}
+
+	if ( client->lapStartTime > 0 && timestamp > client->lapStartTime ) {
+		lapDuration = timestamp - client->lapStartTime;
+		if ( lapDuration < 0 ) {
+			lapDuration = 0;
+		}
+
+		if ( client->recordedLapCount >= LADDER_MAX_LAP_TIMES ) {
+			for ( i = 1; i < LADDER_MAX_LAP_TIMES; ++i ) {
+				client->recordedLaps[i - 1] = client->recordedLaps[i];
+			}
+			client->recordedLapCount = LADDER_MAX_LAP_TIMES - 1;
+		}
+
+		client->recordedLaps[ client->recordedLapCount ] = lapDuration;
+		client->recordedLapCount++;
+
+		if ( client->bestLapMs == 0 || lapDuration < client->bestLapMs ) {
+			client->bestLapMs = lapDuration;
+		}
+	}
+
+	client->lapStartTime = timestamp;
+}
+
 static void G_TriggerEliminationExplosion( gentity_t *ent ) {
         gentity_t       *tent;
 
@@ -256,56 +328,60 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
 }
 
 void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
-if ( !other->client ) {
-return;
-}
+        if ( !other->client ) {
+                return;
+        }
 
-if ( other->client->lastCheckpointTime + 300 > level.time ) {
-return;
-}
+        if ( other->client->lastCheckpointTime + 300 > level.time ) {
+                return;
+        }
 
-if ( g_developer.integer )
-G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
+        if ( g_developer.integer )
+                G_Printf( "Client %i touched the start line.\n", other->s.clientNum );
 
-other->client->lastCheckpointTime = level.time;
-other->number = 1;
-other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
-other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
+        G_RallyRecordSplitTime( other, level.time );
+        other->client->lapStartTime = level.time;
+        other->client->lastCheckpointTime = level.time;
+        other->number = 1;
+        other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
+        other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
 
-trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
+        trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
 
-Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
+        Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.wav") );
 }
 
 void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
-char*place;
+        char*place;
 
-if ( !other->client ) {
-return;
-}
+        if ( !other->client ) {
+                return;
+        }
 
-if ( other->client->lastCheckpointTime + 300 > level.time ) {
-return;
-}
+        if ( other->client->lastCheckpointTime + 300 > level.time ) {
+                return;
+        }
 
-if ( g_developer.integer )
-G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
+        if ( g_developer.integer )
+                G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
 
-if ( self->number != other->number ) {
-return;
-}
+        if ( self->number != other->number ) {
+                return;
+        }
 
-other->client->lastCheckpointTime = level.time;
-other->client->finishRaceTime = level.time;
-other->s.weapon = WP_NONE;
-other->takedamage = qfalse;
+        G_RallyRecordSplitTime( other, level.time );
+        G_RallyCompleteLap( other, level.time );
+        other->client->lastCheckpointTime = level.time;
+        other->client->finishRaceTime = level.time;
+        other->s.weapon = WP_NONE;
+        other->takedamage = qfalse;
 
-trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+        trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
 
-if ( !level.finishRaceTime ){
-other->client->ps.stats[STAT_POSITION] = 1;
+        if ( !level.finishRaceTime ){
+                other->client->ps.stats[STAT_POSITION] = 1;
 
-level.winnerNumber = other->s.clientNum;
+                level.winnerNumber = other->s.clientNum;
 level.finishRaceTime = level.time;
 trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
 trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
@@ -371,6 +447,8 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	}
 
 	if (self->number == other->number){
+		G_RallyRecordSplitTime( other, level.time );
+		G_RallyCompleteLap( other, level.time );
 		other->client->lastCheckpointTime = level.time;
 		other->currentLap++;
 		if ( g_gametype.integer == GT_ELIMINATION ) {
@@ -615,6 +693,7 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 		G_Printf( "Client %i touched checkpoint number %i\n", other->s.clientNum, self->number );
 
 	if (self->number == other->number){
+		G_RallyRecordSplitTime( other, level.time );
 		other->client->lastCheckpointTime = level.time;
 		other->number++;	// FIXME: get rid of number? use s.weapon instead?
 		other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
