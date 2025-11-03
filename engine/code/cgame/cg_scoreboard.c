@@ -601,7 +601,8 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             } else {
                 lapTime = cg_entities[score->client].bestLapTime;
                 if (lapTime > 0) {
-                    lapTimeStr = getStringForTime(lapTime);
+//                    lapTimeStr = getStringForTime(lapTime);
+                      lapTimeStr = getStringForTimePrecise(lapTime);
                     CG_DrawModernText(x, y, lapTimeStr, 1, width, textColor, qfalse);
                 } else {
                     CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
@@ -622,7 +623,8 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                 }
                 
                 if (totalTime > 0) {
-                    timeStr = getStringForTime(totalTime);
+//                    timeStr = getStringForTime(totalTime);
+                      timeStr = getStringForTimePrecise(totalTime);
                     CG_DrawModernText(x, y, timeStr, 1, width, textColor, qfalse);
                 } else {
                     CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);

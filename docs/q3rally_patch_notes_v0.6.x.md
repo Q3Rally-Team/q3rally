@@ -19,7 +19,7 @@
 
 6. **Fix / Improvement:** Soundnamen unmittelbar nach Registrierung in `centity` persistiert; Loop-Logik schaltet `scriptDestroyPending` korrekt und wechselt Pre-/Post-Loop.  
 
-7. **Feature / Gameplay:** CTF4-Scoring verbessert (`AddTeamScore` mit Sound-Mapping, Tie/Lead über alle Gegner, farbige Chat-Ansagen); Scoring-Referenz aktualisiert.  
+7. **Feature / Gameplay:** CTF4-Scoring verbessert (`AddTeamScore` mit Sound-Mapping für alle vier Teams, neuen Green-/Yellow-Signalwegen, Tie/Lead-Checks über alle Gegner, farbigen Chat-/Centerprint-Ansagen); Scoring-Referenz aktualisiert. Die benötigten WAVs (`voc_green_scores.wav`, `voc_yellow_scores.wav`, `voc_green_leads.wav`, `voc_yellow_leads.wav`) sind dokumentiert und müssen separat in `baseq3` abgelegt werden.【F:engine/code/game/g_team.c†L447-L559】【F:engine/code/cgame/cg_main.c†L737-L760】【F:engine/code/cgame/cg_event.c†L1367-L1395】【F:baseq3/sound/teamplay/README.md†L1-L9】
 
 8. **Fix / Domination:** Drittes Sigil wird sofort als neutral registriert (Configstring-Update) → korrekter HUD-Status.  
 
@@ -55,7 +55,7 @@
 
 6. **Fix / Improvement:** Persisted parsed sound tokens into `centity` buffers immediately after registration; loop logic now toggles `scriptDestroyPending` correctly and switches pre/post looping audio as intended.  
 
-7. **Feature / Gameplay:** Improved **CTF4 team scoring** — `AddTeamScore` now includes sound mapping, tie/lead detection across all opponents, and color-coded chat broadcasts. Updated scoring documentation accordingly.  
+7. **Feature / Gameplay:** Improved **CTF4 team scoring** — `AddTeamScore` now bundles four-team sound routing (including green/yellow score cues), tie/lead detection against every opponent, and colorized chat/center-screen announcements. Updated scoring documentation accordingly; ship the documented `voc_green_scores.wav` / `voc_yellow_scores.wav` / `voc_green_leads.wav` / `voc_yellow_leads.wav` announcer assets alongside your `baseq3` data.【F:engine/code/game/g_team.c†L447-L559】【F:engine/code/cgame/cg_main.c†L737-L760】【F:engine/code/cgame/cg_event.c†L1367-L1395】【F:baseq3/sound/teamplay/README.md†L1-L9】
 
 8. **Fix / Domination:** The automatically generated **third domination sigil** now registers as neutral immediately, ensuring clients receive the correct HUD state.  
 

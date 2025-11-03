@@ -210,42 +210,113 @@ void AddTeamScore(vec3_t origin, int team, int score) {
 	te = G_TempEntity(origin, EV_GLOBAL_TEAM_SOUND );
 	te->r.svFlags |= SVF_BROADCAST;
 
-// STONELANCE - FIXME: update this function for 4 teams
-	if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
-		int other_team_score = 0;
-		int other_team = 0;
+        if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
+                int previousScore = level.teamScores[team];
+                int newScore = previousScore + score;
 
-		if ( g_gametype.integer == GT_CTF ) {
-			other_team = (team == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
-			other_team_score = level.teamScores[other_team];
-		} else { // GT_CTF4
-			// In 4-team CTF, we need to decide what "taking the lead" means.
-			// For now, I will just play the scored sound.
-			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_SCORED;
-			else if (team == TEAM_BLUE) te->s.eventParm = GTS_BLUETEAM_SCORED;
-			else if (team == TEAM_GREEN) te->s.eventParm = GTS_REDTEAM_SCORED; // FIXME: need green sound
-			else if (team == TEAM_YELLOW) te->s.eventParm = GTS_BLUETEAM_SCORED; // FIXME: need yellow sound
-			level.teamScores[ team ] += score;
-			return;
-		}
+                if ( g_gametype.integer == GT_CTF4 ) {
+                        int maxOtherBefore = 0;
+                        qboolean haveOpponent = qfalse;
+                        int i;
 
-		if ( level.teamScores[ team ] + score == other_team_score ) {
-			//teams are tied sound
-			te->s.eventParm = GTS_TEAMS_ARE_TIED;
-		}
-		else if ( level.teamScores[ team ] <= other_team_score &&
-					level.teamScores[ team ] + score > other_team_score ) {
-			// team took the lead sound
-			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
-			else te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
-		}
-		else {
-			// team scored sound
-			if (team == TEAM_RED) te->s.eventParm = GTS_REDTEAM_SCORED;
-			else te->s.eventParm = GTS_BLUETEAM_SCORED;
-		}
-	}
-	level.teamScores[ team ] += score;
+                        for ( i = TEAM_RED; i < TEAM_NUM_TEAMS; ++i ) {
+                                if ( i == TEAM_FREE || i == TEAM_SPECTATOR || i == team ) {
+                                        continue;
+                                }
+
+                                if ( !haveOpponent || level.teamScores[i] > maxOtherBefore ) {
+                                        maxOtherBefore = level.teamScores[i];
+                                        haveOpponent = qtrue;
+                                }
+                        }
+
+                        if ( !haveOpponent ) {
+                                maxOtherBefore = 0;
+                        }
+
+                        {
+                                qboolean wasLeading = haveOpponent ? (previousScore > maxOtherBefore) : qfalse;
+                                qboolean wasTiedForLead = haveOpponent ? (previousScore == maxOtherBefore) : qfalse;
+                                int scoreEvent;
+                                char statusBuffer[64] = { 0 };
+                                const char *statusSuffix = "";
+
+                                if (team == TEAM_RED) {
+                                        scoreEvent = GTS_REDTEAM_SCORED;
+                                } else if (team == TEAM_BLUE) {
+                                        scoreEvent = GTS_BLUETEAM_SCORED;
+                                } else if (team == TEAM_GREEN) {
+                                        scoreEvent = GTS_GREENTEAM_SCORED;
+                                } else if (team == TEAM_YELLOW) {
+                                        scoreEvent = GTS_YELLOWTEAM_SCORED;
+                                } else {
+                                        scoreEvent = GTS_TEAMS_ARE_TIED;
+                                }
+
+                                if (haveOpponent && newScore == maxOtherBefore) {
+                                        te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                                } else if (haveOpponent && newScore > maxOtherBefore && !wasLeading) {
+                                        if (team == TEAM_RED) {
+                                                te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
+                                        } else if (team == TEAM_BLUE) {
+                                                te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
+                                        } else if (team == TEAM_GREEN) {
+                                                te->s.eventParm = GTS_GREENTEAM_TOOK_LEAD;
+                                        } else if (team == TEAM_YELLOW) {
+                                                te->s.eventParm = GTS_YELLOWTEAM_TOOK_LEAD;
+                                        } else {
+                                                te->s.eventParm = scoreEvent;
+                                        }
+                                } else {
+                                        te->s.eventParm = scoreEvent;
+                                }
+
+                                level.teamScores[team] = newScore;
+
+                                if (haveOpponent && newScore > maxOtherBefore && !wasLeading) {
+                                        Com_sprintf(statusBuffer, sizeof(statusBuffer), " %stakes the lead!^7", TeamColorString(team));
+                                        statusSuffix = statusBuffer;
+                                } else if (haveOpponent && newScore == maxOtherBefore && !wasTiedForLead) {
+                                        Q_strncpyz(statusBuffer, " ^7tie for the lead.", sizeof(statusBuffer));
+                                        statusSuffix = statusBuffer;
+                                }
+
+                                CenterPrint_All( va("%s%s^7 scores! ^7(%i)%s", TeamColorString(team), TeamName(team), newScore, statusSuffix) );
+                                PrintMsg( NULL, "%s%s^7 scores! ^7(%i)%s\n", TeamColorString(team), TeamName(team), newScore, statusSuffix );
+                        }
+
+                        return;
+                }
+
+                {
+                        int other_team_score;
+                        int other_team = (team == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
+                        other_team_score = level.teamScores[other_team];
+
+                        if ( newScore == other_team_score ) {
+                                te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                        }
+                        else if ( previousScore <= other_team_score && newScore > other_team_score ) {
+                                if (team == TEAM_RED) {
+                                        te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
+                                } else {
+                                        te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
+                                }
+                        }
+                        else {
+                                if (team == TEAM_RED) {
+                                        te->s.eventParm = GTS_REDTEAM_SCORED;
+                                } else {
+                                        te->s.eventParm = GTS_BLUETEAM_SCORED;
+                                }
+                        }
+
+                        level.teamScores[team] = newScore;
+                        return;
+                }
+        }
+
+        level.teamScores[ team ] += score;
 }
 
 /*
@@ -443,6 +514,12 @@ void Team_CheckDroppedItem( gentity_t *dropped ) {
 	}
 	else if( dropped->item->giTag == PW_BLUEFLAG ) {
 		Team_SetFlagStatus( TEAM_BLUE, FLAG_DROPPED );
+	}
+	else if( dropped->item->giTag == PW_GREENFLAG ) {
+		Team_SetFlagStatus( TEAM_GREEN, FLAG_DROPPED );
+	}
+	else if( dropped->item->giTag == PW_YELLOWFLAG ) {
+		Team_SetFlagStatus( TEAM_YELLOW, FLAG_DROPPED );
 	}
 	else if( dropped->item->giTag == PW_NEUTRALFLAG ) {
 		Team_SetFlagStatus( TEAM_FREE, FLAG_DROPPED );
@@ -812,14 +889,25 @@ void Team_ReturnFlagSound( gentity_t *ent, int team ) {
 		return;
 	}
 
-	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
-	if( team == TEAM_BLUE ) {
-		te->s.eventParm = GTS_RED_RETURN;
-	}
-	else {
-		te->s.eventParm = GTS_BLUE_RETURN;
-	}
-	te->r.svFlags |= SVF_BROADCAST;
+        te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
+        switch ( team ) {
+        case TEAM_BLUE:
+                te->s.eventParm = GTS_RED_RETURN;
+                break;
+        case TEAM_RED:
+                te->s.eventParm = GTS_BLUE_RETURN;
+                break;
+        case TEAM_GREEN:
+                te->s.eventParm = GTS_GREEN_RETURN;
+                break;
+        case TEAM_YELLOW:
+                te->s.eventParm = GTS_YELLOW_RETURN;
+                break;
+        default:
+                te->s.eventParm = GTS_BLUE_RETURN;
+                break;
+        }
+        te->r.svFlags |= SVF_BROADCAST;
 }
 
 void Team_TakeFlagSound( gentity_t *ent, int team ) {
@@ -839,14 +927,25 @@ void Team_TakeFlagSound( gentity_t *ent, int team ) {
 	}
 	teamgame.flagTakenTime[team] = level.time;
 
-	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
-	if( team == TEAM_BLUE ) {
-		te->s.eventParm = GTS_RED_TAKEN;
-	}
-	else {
-		te->s.eventParm = GTS_BLUE_TAKEN;
-	}
-	te->r.svFlags |= SVF_BROADCAST;
+        te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
+        switch ( team ) {
+        case TEAM_BLUE:
+                te->s.eventParm = GTS_RED_TAKEN;
+                break;
+        case TEAM_RED:
+                te->s.eventParm = GTS_BLUE_TAKEN;
+                break;
+        case TEAM_GREEN:
+                te->s.eventParm = GTS_GREEN_TAKEN;
+                break;
+        case TEAM_YELLOW:
+                te->s.eventParm = GTS_YELLOW_TAKEN;
+                break;
+        default:
+                te->s.eventParm = GTS_BLUE_TAKEN;
+                break;
+        }
+        te->r.svFlags |= SVF_BROADCAST;
 }
 
 void Team_CaptureFlagSound( gentity_t *ent, int team ) {
@@ -857,14 +956,25 @@ void Team_CaptureFlagSound( gentity_t *ent, int team ) {
 		return;
 	}
 
-	te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
-	if( team == TEAM_BLUE ) {
-		te->s.eventParm = GTS_BLUE_CAPTURE;
-	}
-	else {
-		te->s.eventParm = GTS_RED_CAPTURE;
-	}
-	te->r.svFlags |= SVF_BROADCAST;
+        te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
+        switch ( team ) {
+        case TEAM_BLUE:
+                te->s.eventParm = GTS_BLUE_CAPTURE;
+                break;
+        case TEAM_RED:
+                te->s.eventParm = GTS_RED_CAPTURE;
+                break;
+        case TEAM_GREEN:
+                te->s.eventParm = GTS_GREEN_CAPTURE;
+                break;
+        case TEAM_YELLOW:
+                te->s.eventParm = GTS_YELLOW_CAPTURE;
+                break;
+        default:
+                te->s.eventParm = GTS_RED_CAPTURE;
+                break;
+        }
+        te->r.svFlags |= SVF_BROADCAST;
 }
 
 void Team_ReturnFlag( int team ) {

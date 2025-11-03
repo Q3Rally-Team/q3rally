@@ -1126,11 +1126,15 @@ typedef struct {
 
 	// teamplay sounds
 	sfxHandle_t captureAwardSound;
-	sfxHandle_t redScoredSound;
-	sfxHandle_t blueScoredSound;
-	sfxHandle_t redLeadsSound;
-	sfxHandle_t blueLeadsSound;
-	sfxHandle_t teamsTiedSound;
+        sfxHandle_t redScoredSound;
+        sfxHandle_t blueScoredSound;
+        sfxHandle_t greenScoredSound;
+        sfxHandle_t yellowScoredSound;
+        sfxHandle_t redLeadsSound;
+        sfxHandle_t blueLeadsSound;
+        sfxHandle_t greenLeadsSound;
+        sfxHandle_t yellowLeadsSound;
+        sfxHandle_t teamsTiedSound;
 
 	sfxHandle_t	captureYourTeamSound;
 	sfxHandle_t	captureOpponentSound;
@@ -1139,10 +1143,12 @@ typedef struct {
 	sfxHandle_t	takenYourTeamSound;
 	sfxHandle_t	takenOpponentSound;
 
-	sfxHandle_t redFlagReturnedSound;
-	sfxHandle_t blueFlagReturnedSound;
+sfxHandle_t redFlagReturnedSound;
+sfxHandle_t blueFlagReturnedSound;
+sfxHandle_t greenFlagReturnedSound;
+sfxHandle_t yellowFlagReturnedSound;
 #ifdef MISSIONPACK
-	sfxHandle_t neutralFlagReturnedSound;
+sfxHandle_t neutralFlagReturnedSound;
 #endif
 	sfxHandle_t	enemyTookYourFlagSound;
 	sfxHandle_t yourTeamTookEnemyFlagSound;

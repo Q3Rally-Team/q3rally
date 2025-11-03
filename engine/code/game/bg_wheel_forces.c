@@ -472,7 +472,11 @@ static void PM_TireBrakingForces( car_t *car, carPoint_t *points, int i, vec3_t 
 		return;
 	}
 
-	normalForce = CP_CURRENT_GRAVITY * (CP_FRAME_MASS + CP_WHEEL_MASS);
+	normalForce = VectorLength(points[i].forces[NORMAL]);
+
+	if (normalForce < 0.01f) {
+		normalForce = CP_CURRENT_GRAVITY * CP_WHEEL_MASS * 0.1f;
+	}
 	torque = throttle * normalForce * CP_SCOF * 0.6f * WHEEL_RADIUS;
 
 	if (points[i].w < 0.0f)

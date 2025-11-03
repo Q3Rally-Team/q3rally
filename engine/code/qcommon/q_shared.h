@@ -70,7 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define BASETA				"missionpack"
 
 #ifndef PRODUCT_VERSION
-#define PRODUCT_VERSION "v0.6c"
+#define PRODUCT_VERSION "v0.7"
 #endif
 
 
@@ -972,6 +972,7 @@ void	QDECL Com_Printf( const char *msg, ... ) __attribute__ ((format (printf, 1,
 
 // STONELANCE
 char *getStringForTime( int time );
+char *getStringForTimePrecise( int time );
 char *getStringForTimeDuration( int startTime, int finishTime);
 // END
 

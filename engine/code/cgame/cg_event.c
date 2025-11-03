@@ -1277,34 +1277,62 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		{
 			DEBUGNAME("EV_GLOBAL_TEAM_SOUND");
 			switch( es->eventParm ) {
-				case GTS_RED_CAPTURE: // CTF: red team captured the blue flag, 1FCTF: red team captured the neutral flag
-					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
-						CG_AddBufferedSound( cgs.media.captureYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.captureOpponentSound );
-					break;
-				case GTS_BLUE_CAPTURE: // CTF: blue team captured the red flag, 1FCTF: blue team captured the neutral flag
-					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
-						CG_AddBufferedSound( cgs.media.captureYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.captureOpponentSound );
-					break;
-				case GTS_RED_RETURN: // CTF: blue flag returned, 1FCTF: never used
-					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
-						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.returnOpponentSound );
-					//
-					CG_AddBufferedSound( cgs.media.blueFlagReturnedSound );
-					break;
-				case GTS_BLUE_RETURN: // CTF red flag returned, 1FCTF: neutral flag returned
-					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
-						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.returnOpponentSound );
-					//
-					CG_AddBufferedSound( cgs.media.redFlagReturnedSound );
-					break;
+                                case GTS_RED_CAPTURE: // CTF: red team captured the blue flag, 1FCTF: red team captured the neutral flag
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
+                                                CG_AddBufferedSound( cgs.media.captureYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.captureOpponentSound );
+                                        break;
+                                case GTS_BLUE_CAPTURE: // CTF: blue team captured the red flag, 1FCTF: blue team captured the neutral flag
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
+                                                CG_AddBufferedSound( cgs.media.captureYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.captureOpponentSound );
+                                        break;
+                                case GTS_GREEN_CAPTURE:
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_GREEN )
+                                                CG_AddBufferedSound( cgs.media.captureYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.captureOpponentSound );
+                                        break;
+                                case GTS_YELLOW_CAPTURE:
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_YELLOW )
+                                                CG_AddBufferedSound( cgs.media.captureYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.captureOpponentSound );
+                                        break;
+                                case GTS_RED_RETURN: // CTF: blue flag returned, 1FCTF: never used
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
+                                                CG_AddBufferedSound( cgs.media.returnYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.returnOpponentSound );
+                                        //
+                                        CG_AddBufferedSound( cgs.media.blueFlagReturnedSound );
+                                        break;
+                                case GTS_BLUE_RETURN: // CTF red flag returned, 1FCTF: neutral flag returned
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
+                                                CG_AddBufferedSound( cgs.media.returnYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.returnOpponentSound );
+                                        //
+                                        CG_AddBufferedSound( cgs.media.redFlagReturnedSound );
+                                        break;
+                                case GTS_GREEN_RETURN:
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_GREEN )
+                                                CG_AddBufferedSound( cgs.media.returnYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.returnOpponentSound );
+                                        //
+                                        CG_AddBufferedSound( cgs.media.greenFlagReturnedSound );
+                                        break;
+                                case GTS_YELLOW_RETURN:
+                                        if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_YELLOW )
+                                                CG_AddBufferedSound( cgs.media.returnYourTeamSound );
+                                        else
+                                                CG_AddBufferedSound( cgs.media.returnOpponentSound );
+                                        //
+                                        CG_AddBufferedSound( cgs.media.yellowFlagReturnedSound );
+                                        break;
 
 				case GTS_RED_TAKEN: // CTF: red team took blue flag, 1FCTF: blue team took the neutral flag
 					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
@@ -1329,29 +1357,51 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						}
 					}
 					break;
-				case GTS_BLUE_TAKEN: // CTF: blue team took the red flag, 1FCTF red team took the neutral flag
-					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
-					if (cg.snap->ps.powerups[PW_REDFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
-					}
-					else {
-						if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED) {
+                                case GTS_BLUE_TAKEN: // CTF: blue team took the red flag, 1FCTF red team took the neutral flag
+                                        // if this player picked up the flag then a sound is played in CG_CheckLocalSounds
+                                        if (cg.snap->ps.powerups[PW_REDFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
+                                        }
+                                        else {
+                                                if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED) {
 #ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF)
-								CG_AddBufferedSound( cgs.media.yourTeamTookTheFlagSound );
-							else
+                                                        if (cgs.gametype == GT_1FCTF)
+                                                                CG_AddBufferedSound( cgs.media.yourTeamTookTheFlagSound );
+                                                        else
 #endif
-							CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
-						}
-						else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE) {
+                                                        CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
+                                                }
+                                                else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE) {
 #ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF)
-								CG_AddBufferedSound( cgs.media.enemyTookTheFlagSound );
-							else
+                                                        if (cgs.gametype == GT_1FCTF)
+                                                                CG_AddBufferedSound( cgs.media.enemyTookTheFlagSound );
+                                                        else
 #endif
-							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
-						}
-					}
-					break;
+                                                        CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
+                                                }
+                                        }
+                                        break;
+                                case GTS_GREEN_TAKEN:
+                                        if (cg.snap->ps.powerups[PW_GREENFLAG]) {
+                                        }
+                                        else {
+                                                if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_GREEN) {
+                                                        CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
+                                                } else {
+                                                        CG_AddBufferedSound( cgs.media.takenOpponentSound );
+                                                }
+                                        }
+                                        break;
+                                case GTS_YELLOW_TAKEN:
+                                        if (cg.snap->ps.powerups[PW_YELLOWFLAG]) {
+                                        }
+                                        else {
+                                                if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_YELLOW) {
+                                                        CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
+                                                } else {
+                                                        CG_AddBufferedSound( cgs.media.takenOpponentSound );
+                                                }
+                                        }
+                                        break;
 #ifdef MISSIONPACK
 				case GTS_REDOBELISK_ATTACKED: // Overload: red obelisk is being attacked
 					if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED) {
@@ -1365,21 +1415,33 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					break;
 #endif
 
-				case GTS_REDTEAM_SCORED:
-					CG_AddBufferedSound(cgs.media.redScoredSound);
-					break;
-				case GTS_BLUETEAM_SCORED:
-					CG_AddBufferedSound(cgs.media.blueScoredSound);
-					break;
-				case GTS_REDTEAM_TOOK_LEAD:
-					CG_AddBufferedSound(cgs.media.redLeadsSound);
-					break;
-				case GTS_BLUETEAM_TOOK_LEAD:
-					CG_AddBufferedSound(cgs.media.blueLeadsSound);
-					break;
-				case GTS_TEAMS_ARE_TIED:
-					CG_AddBufferedSound( cgs.media.teamsTiedSound );
-					break;
+                                case GTS_REDTEAM_SCORED:
+                                        CG_AddBufferedSound(cgs.media.redScoredSound);
+                                        break;
+                                case GTS_BLUETEAM_SCORED:
+                                        CG_AddBufferedSound(cgs.media.blueScoredSound);
+                                        break;
+                                case GTS_GREENTEAM_SCORED:
+                                        CG_AddBufferedSound(cgs.media.greenScoredSound);
+                                        break;
+                                case GTS_YELLOWTEAM_SCORED:
+                                        CG_AddBufferedSound(cgs.media.yellowScoredSound);
+                                        break;
+                                case GTS_REDTEAM_TOOK_LEAD:
+                                        CG_AddBufferedSound(cgs.media.redLeadsSound);
+                                        break;
+                                case GTS_BLUETEAM_TOOK_LEAD:
+                                        CG_AddBufferedSound(cgs.media.blueLeadsSound);
+                                        break;
+                                case GTS_GREENTEAM_TOOK_LEAD:
+                                        CG_AddBufferedSound(cgs.media.greenLeadsSound);
+                                        break;
+                                case GTS_YELLOWTEAM_TOOK_LEAD:
+                                        CG_AddBufferedSound(cgs.media.yellowLeadsSound);
+                                        break;
+                                case GTS_TEAMS_ARE_TIED:
+                                        CG_AddBufferedSound( cgs.media.teamsTiedSound );
+                                        break;
 #ifdef MISSIONPACK
 				case GTS_KAMIKAZE:
 					trap_S_StartLocalSound(cgs.media.kamikazeFarSound, CHAN_ANNOUNCER);

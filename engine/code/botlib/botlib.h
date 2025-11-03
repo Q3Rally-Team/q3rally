@@ -77,6 +77,7 @@ struct weaponinfo_s;
 #define BLERR_CANNOTLOADITEMCONFIG		10	//cannot load item config
 #define BLERR_CANNOTLOADWEAPONWEIGHTS	11	//cannot load weapon weights
 #define BLERR_CANNOTLOADWEAPONCONFIG	12	//cannot load weapon config
+#define BLERR_MISSINGENTITYDATA	13	//BSP entity data missing or empty
 
 //action flags
 #define ACTION_ATTACK			0x00000001

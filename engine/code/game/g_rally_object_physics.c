@@ -433,7 +433,16 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
 
             if( G_RallyObject_ApplyCollision( self, tr.endpos, tr.plane.normal, self->elasticity ) ) {
                 VectorScale( tr.plane.normal, -1.0f, invNormal );
-                G_RallyObject_ApplyCollision( hit, tr.endpos, invNormal, self->elasticity );
+                {
+                    float hitElasticity;
+
+                    hitElasticity = hit->elasticity;
+                    if( hitElasticity == 0.0f ) {
+                        hitElasticity = self->elasticity;
+                    }
+
+                    G_RallyObject_ApplyCollision( hit, tr.endpos, invNormal, hitElasticity );
+                }
 
                 forwardSelfDot = DotProduct( tr.plane.normal, forwardSelf );
                 rightSelfDot = DotProduct( tr.plane.normal, rightSelf );

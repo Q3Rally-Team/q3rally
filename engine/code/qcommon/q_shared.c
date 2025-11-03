@@ -126,6 +126,26 @@ char *getStringForTime( int time ){
 	return str;
 }
 
+char *getStringForTimePrecise( int time ){
+	char		*str;
+	int			minutes, seconds, msec;
+	char		sec[3], ms[4];
+
+	minutes = time / 60000;
+	seconds = (time % 60000) / 1000;
+	msec = time % 1000;
+
+	if (seconds < 10)
+		Com_sprintf(sec, sizeof(sec), "0%i", seconds);
+	else
+		Com_sprintf(sec, sizeof(sec), "%i", seconds);
+
+	Com_sprintf(ms, sizeof(ms), "%03i", msec);
+
+	str = va("%i:%s:%s", minutes, sec, ms);
+
+	return str;
+}
 
 char *getStringForTimeDuration( int startTime, int finishTime){
 	int delta;
