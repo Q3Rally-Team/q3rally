@@ -9,7 +9,24 @@
 #define ID_PROFILE_SELECT    203
 #define ID_PROFILE_NAME      204
 
-static vec4_t overlayBackgroundColor = { 0.0f, 0.0f, 0.0f, 0.85f };
+#define PROFILE_OVERLAY_SCREEN_WIDTH   640
+#define PROFILE_OVERLAY_SCREEN_HEIGHT  480
+#define PROFILE_OVERLAY_TOP_MARGIN     10
+#define PROFILE_OVERLAY_BOTTOM_MARGIN  10
+#define PROFILE_OVERLAY_AVAILABLE_HEIGHT \
+    (PROFILE_OVERLAY_SCREEN_HEIGHT - PROFILE_OVERLAY_TOP_MARGIN - PROFILE_OVERLAY_BOTTOM_MARGIN)
+
+#define PROFILE_OVERLAY_TITLE_OFFSET            0
+#define PROFILE_OVERLAY_LIST_OFFSET             82
+#define PROFILE_OVERLAY_NAMEFIELD_OFFSET       218
+#define PROFILE_OVERLAY_BUTTON_ROW_OFFSET      266
+#define PROFILE_OVERLAY_STATUS_OFFSET          330
+#define PROFILE_OVERLAY_GUIDE_PRIMARY_OFFSET   354
+#define PROFILE_OVERLAY_GUIDE_SECONDARY_OFFSET 374
+#define PROFILE_OVERLAY_GUIDE_EMPTY_OFFSET     360
+#define PROFILE_OVERLAY_CONTENT_SPAN           PROFILE_OVERLAY_GUIDE_SECONDARY_OFFSET
+
+static vec4_t overlayBackgroundColor = { 0.2f, 0.2f, 0.2f, 0.8f };
 static vec4_t statusNormalColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 static vec4_t statusErrorColor  = { 1.0f, 0.3f, 0.3f, 1.0f };
 static vec4_t statusInfoColor   = { 1.0f, 0.8f, 0.3f, 1.0f };
@@ -27,6 +44,7 @@ typedef struct {
     char            profileNames[MAX_PROFILE_FILES][PROFILE_MAX_NAME];
     const char     *listItems[MAX_PROFILE_FILES + 1];
     int             profileCount;
+    int             contentBaseY;
 
     char            statusLine[128];
     vec4_t          statusColor;
@@ -39,6 +57,7 @@ static void UI_ProfileOverlay_Draw( void );
 static sfxHandle_t UI_ProfileOverlay_Key( int key );
 static void UI_ProfileOverlay_FocusNameField( void );
 static void UI_ProfileOverlay_DrawNameField( void *self );
+static void UI_ProfileOverlay_EnsureSelectionVisible( void );
 
 static void UI_ProfileOverlay_SetStatus( const char *text, const vec4_t color ) {
     if ( text ) {
@@ -245,6 +264,61 @@ static qboolean UI_Profile_WriteDefaultFile( const char *name ) {
     return qtrue;
 }
 
+static void UI_ProfileOverlay_EnsureSelectionVisible( void ) {
+    int viewSize;
+    int count;
+
+    count = s_profileOverlay.profileCount;
+    if ( count <= 0 ) {
+        s_profileOverlay.list.top = 0;
+        s_profileOverlay.list.curvalue = 0;
+        s_profileOverlay.list.oldvalue = 0;
+        return;
+    }
+
+    if ( s_profileOverlay.list.curvalue < 0 ) {
+        s_profileOverlay.list.curvalue = 0;
+    } else if ( s_profileOverlay.list.curvalue >= count ) {
+        s_profileOverlay.list.curvalue = count - 1;
+    }
+
+    viewSize = s_profileOverlay.list.height;
+    if ( viewSize <= 0 ) {
+        viewSize = 1;
+    }
+    if ( viewSize > count ) {
+        viewSize = count;
+    }
+
+    if ( s_profileOverlay.list.top < 0 ) {
+        s_profileOverlay.list.top = 0;
+    }
+    if ( s_profileOverlay.list.top > count - viewSize ) {
+        s_profileOverlay.list.top = count - viewSize;
+    }
+    if ( s_profileOverlay.list.top < 0 ) {
+        s_profileOverlay.list.top = 0;
+    }
+
+    if ( s_profileOverlay.list.curvalue < s_profileOverlay.list.top ) {
+        s_profileOverlay.list.top = s_profileOverlay.list.curvalue;
+    } else if ( s_profileOverlay.list.curvalue >= s_profileOverlay.list.top + viewSize ) {
+        s_profileOverlay.list.top = s_profileOverlay.list.curvalue - ( viewSize - 1 );
+    }
+
+    if ( s_profileOverlay.list.top < 0 ) {
+        s_profileOverlay.list.top = 0;
+    }
+    if ( s_profileOverlay.list.top > count - viewSize ) {
+        s_profileOverlay.list.top = count - viewSize;
+        if ( s_profileOverlay.list.top < 0 ) {
+            s_profileOverlay.list.top = 0;
+        }
+    }
+
+    s_profileOverlay.list.oldvalue = s_profileOverlay.list.curvalue;
+}
+
 static void UI_ProfileOverlay_LoadProfiles( void ) {
     char fileBuffer[4096];
     char activeName[PROFILE_MAX_NAME];
@@ -296,6 +370,7 @@ static void UI_ProfileOverlay_LoadProfiles( void ) {
     s_profileOverlay.listItems[s_profileOverlay.profileCount] = NULL;
 
     s_profileOverlay.list.generic.flags &= ~QMF_GRAYED;
+    s_profileOverlay.list.generic.flags &= ~QMF_HIDDEN;
     s_profileOverlay.deleteButton.generic.flags &= ~QMF_GRAYED;
     s_profileOverlay.selectButton.generic.flags &= ~QMF_GRAYED;
 
@@ -303,6 +378,8 @@ static void UI_ProfileOverlay_LoadProfiles( void ) {
         s_profileOverlay.list.itemnames = emptyProfileList;
         s_profileOverlay.list.numitems = 1;
         s_profileOverlay.list.curvalue = 0;
+        s_profileOverlay.list.top = 0;
+        s_profileOverlay.list.oldvalue = 0;
         s_profileOverlay.list.generic.flags |= QMF_GRAYED;
         s_profileOverlay.deleteButton.generic.flags |= QMF_GRAYED;
         s_profileOverlay.selectButton.generic.flags |= QMF_GRAYED;
@@ -327,6 +404,7 @@ static void UI_ProfileOverlay_LoadProfiles( void ) {
         }
     }
     s_profileOverlay.list.curvalue = index;
+    UI_ProfileOverlay_EnsureSelectionVisible();
     s_profileOverlay.forcingSelection = qfalse;
     UI_ProfileOverlay_SetStatus( "Select a profile to continue", statusNormalColor );
 }
@@ -346,28 +424,35 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->menu.draw = UI_ProfileOverlay_Draw;
     overlay->menu.key = UI_ProfileOverlay_Key;
 
+    overlay->contentBaseY = PROFILE_OVERLAY_TOP_MARGIN +
+        (PROFILE_OVERLAY_AVAILABLE_HEIGHT - PROFILE_OVERLAY_CONTENT_SPAN) / 2;
+
     overlay->title.generic.type = MTYPE_BTEXT;
     overlay->title.generic.flags = QMF_INACTIVE;
     overlay->title.generic.x = 320;
-    overlay->title.generic.y = 78;
+    overlay->title.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_TITLE_OFFSET;
     overlay->title.string = "PROFILE SELECTION";
     overlay->title.color = text_color_normal;
     overlay->title.style = UI_CENTER | UI_BIGFONT;
 
-    overlay->list.generic.type = MTYPE_SPINCONTROL;
-    overlay->list.generic.flags = QMF_CENTER_JUSTIFY;
+    overlay->list.generic.type = MTYPE_SCROLLLIST;
+    overlay->list.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_SMALLFONT;
     overlay->list.generic.id = ID_PROFILE_LIST;
     overlay->list.generic.callback = UI_ProfileOverlay_MenuEvent;
     overlay->list.generic.x = 320;
-    overlay->list.generic.y = 154;
+    overlay->list.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_LIST_OFFSET;
     overlay->list.curvalue = 0;
     overlay->list.itemnames = overlay->listItems;
+    overlay->list.width = 24;
+    overlay->list.height = 6;
+    overlay->list.columns = 1;
+    overlay->list.separation = 0;
 
     overlay->nameField.generic.type = MTYPE_FIELD;
     overlay->nameField.generic.id = ID_PROFILE_NAME;
     overlay->nameField.generic.flags = QMF_SMALLFONT | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
     overlay->nameField.generic.x = 320;
-    overlay->nameField.generic.y = 210;
+    overlay->nameField.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_NAMEFIELD_OFFSET;
     overlay->nameField.generic.name = "NEW PROFILE";
     overlay->nameField.generic.callback = NULL;
     overlay->nameField.generic.ownerdraw = UI_ProfileOverlay_DrawNameField;
@@ -385,8 +470,8 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->createButton.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     overlay->createButton.generic.id = ID_PROFILE_CREATE;
     overlay->createButton.generic.callback = UI_ProfileOverlay_MenuEvent;
-    overlay->createButton.generic.x = 320;
-    overlay->createButton.generic.y = 250;
+    overlay->createButton.generic.x = 200;
+    overlay->createButton.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_BUTTON_ROW_OFFSET;
     overlay->createButton.string = "CREATE";
     overlay->createButton.style = UI_CENTER | UI_SMALLFONT;
     overlay->createButton.color = text_color_normal;
@@ -396,7 +481,7 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->deleteButton.generic.id = ID_PROFILE_DELETE;
     overlay->deleteButton.generic.callback = UI_ProfileOverlay_MenuEvent;
     overlay->deleteButton.generic.x = 320;
-    overlay->deleteButton.generic.y = 280;
+    overlay->deleteButton.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_BUTTON_ROW_OFFSET;
     overlay->deleteButton.string = "DELETE";
     overlay->deleteButton.style = UI_CENTER | UI_SMALLFONT;
     overlay->deleteButton.color = text_color_normal;
@@ -405,8 +490,8 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->selectButton.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     overlay->selectButton.generic.id = ID_PROFILE_SELECT;
     overlay->selectButton.generic.callback = UI_ProfileOverlay_MenuEvent;
-    overlay->selectButton.generic.x = 320;
-    overlay->selectButton.generic.y = 310;
+    overlay->selectButton.generic.x = 440;
+    overlay->selectButton.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_BUTTON_ROW_OFFSET;
     overlay->selectButton.string = "SELECT";
     overlay->selectButton.style = UI_CENTER | UI_SMALLFONT;
     overlay->selectButton.color = text_color_normal;
@@ -430,6 +515,9 @@ static void UI_ProfileOverlay_MenuEvent( void *ptr, int event ) {
 
     item = (menucommon_s *)ptr;
     switch ( item->id ) {
+        case ID_PROFILE_LIST:
+            UI_ProfileOverlay_HandleSelect();
+            break;
         case ID_PROFILE_CREATE:
             UI_ProfileOverlay_HandleCreate();
             break;
@@ -479,6 +567,7 @@ static qboolean UI_ProfileOverlay_HandleCreate( void ) {
     for ( i = 0; i < s_profileOverlay.profileCount; ++i ) {
         if ( !Q_stricmp( s_profileOverlay.profileNames[i], name ) ) {
             s_profileOverlay.list.curvalue = i;
+            UI_ProfileOverlay_EnsureSelectionVisible();
             break;
         }
     }
@@ -549,16 +638,41 @@ static qboolean UI_ProfileOverlay_HandleSelect( void ) {
 
 static void UI_ProfileOverlay_Draw( void ) {
     trap_R_SetColor( overlayBackgroundColor );
-    UI_FillRect( 0, 0, 640, 480, overlayBackgroundColor );
+    UI_FillRect( 0,
+                 PROFILE_OVERLAY_TOP_MARGIN,
+                 PROFILE_OVERLAY_SCREEN_WIDTH,
+                 PROFILE_OVERLAY_SCREEN_HEIGHT - PROFILE_OVERLAY_TOP_MARGIN - PROFILE_OVERLAY_BOTTOM_MARGIN,
+                 overlayBackgroundColor );
     trap_R_SetColor( NULL );
 
     Menu_Draw( &s_profileOverlay.menu );
 
     if ( s_profileOverlay.statusLine[0] ) {
-        UI_DrawProportionalString( 320, 370, s_profileOverlay.statusLine, UI_CENTER | UI_SMALLFONT, s_profileOverlay.statusColor );
+        UI_DrawProportionalString( 320,
+                                   s_profileOverlay.contentBaseY + PROFILE_OVERLAY_STATUS_OFFSET,
+                                   s_profileOverlay.statusLine,
+                                   UI_CENTER | UI_SMALLFONT,
+                                   s_profileOverlay.statusColor );
     }
 
-    UI_DrawProportionalString( 320, 410, "Enter a name and press CREATE", UI_CENTER | UI_SMALLFONT, text_color_normal );
+    if ( s_profileOverlay.profileCount > 0 ) {
+        UI_DrawProportionalString( 320,
+                                   s_profileOverlay.contentBaseY + PROFILE_OVERLAY_GUIDE_PRIMARY_OFFSET,
+                                   "Highlight a profile and press ENTER or SELECT",
+                                   UI_CENTER | UI_SMALLFONT,
+                                   text_color_normal );
+        UI_DrawProportionalString( 320,
+                                   s_profileOverlay.contentBaseY + PROFILE_OVERLAY_GUIDE_SECONDARY_OFFSET,
+                                   "Enter a name and press CREATE below to add another",
+                                   UI_CENTER | UI_SMALLFONT,
+                                   text_color_normal );
+    } else {
+        UI_DrawProportionalString( 320,
+                                   s_profileOverlay.contentBaseY + PROFILE_OVERLAY_GUIDE_EMPTY_OFFSET,
+                                   "Enter a name and press CREATE below",
+                                   UI_CENTER | UI_SMALLFONT,
+                                   text_color_normal );
+    }
 }
 
 static void UI_ProfileOverlay_DrawNameField( void *self ) {
