@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "g_local.h"
+#include "g_profile.h"
 #include "../botlib/be_aas.h"
 
 extern vmCvar_t g_dominationSpawnStyle;
@@ -1620,10 +1621,12 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 	if ( client->sess.sessionTeam != TEAM_SPECTATOR && !isRaceObserver( ent->s.number ) ) {
        client->car.initializeOnNextMove = qtrue;
 
-	client->car.maxFuel = CP_MAX_FUEL;
-	client->car.fuel = client->car.maxFuel;
-	client->car.fuelLeak = qfalse;
-	client->ps.stats[STAT_FUEL] = client->car.maxFuel;
+        client->car.maxFuel = CP_MAX_FUEL;
+        client->car.fuel = client->car.maxFuel;
+        client->car.fuelLeak = qfalse;
+        client->ps.stats[STAT_FUEL] = client->car.maxFuel;
+
+        G_Profile_TrackClientSpawn( client );
 
 	if ( !ent->frontBounds )
 		ent->frontBounds = G_Spawn();

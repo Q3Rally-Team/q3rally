@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
+#include "g_profile.h"
 
 
 // STONELANCE
@@ -1508,7 +1509,9 @@ void ClientThink_real( gentity_t *ent ) {
 	else {
 		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	}
-	SendPendingPredictableEvents( &ent->client->ps );
+        SendPendingPredictableEvents( &ent->client->ps );
+
+        G_Profile_UpdateClientFrame( ent );
 
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;		// for grapple

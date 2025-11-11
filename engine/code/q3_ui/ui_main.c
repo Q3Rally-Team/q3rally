@@ -220,6 +220,7 @@ vmCvar_t	ui_rim;
 vmCvar_t	ui_plate;
 // END
 
+vmCvar_t	ui_profileActive;
 vmCvar_t	ui_cdkeychecked;
 vmCvar_t	ui_ioq3;
 
@@ -327,7 +328,8 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_plate, "plate", "usa_california", CVAR_USERINFO|CVAR_ARCHIVE },
 // END
 
-	{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM },
+	{ &ui_profileActive, "profile_active", "", CVAR_ARCHIVE },
+{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM },
 	{ &ui_ioq3, "ui_ioq3", "1", CVAR_ROM }
 };
 

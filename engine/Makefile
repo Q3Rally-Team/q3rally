@@ -2829,6 +2829,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_mem.o \
   $(B)/$(BASEGAME)/game/g_misc.o \
   $(B)/$(BASEGAME)/game/g_missile.o \
+  $(B)/$(BASEGAME)/game/g_profile.o \
   $(B)/$(BASEGAME)/game/g_mover.o \
   $(B)/$(BASEGAME)/game/g_rally_hazard.o \
   $(B)/$(BASEGAME)/game/g_rally_mapents.o \
@@ -2889,6 +2890,7 @@ MPGOBJ_ = \
   $(B)/$(MISSIONPACK)/game/g_mem.o \
   $(B)/$(MISSIONPACK)/game/g_misc.o \
   $(B)/$(MISSIONPACK)/game/g_missile.o \
+  $(B)/$(MISSIONPACK)/game/g_profile.o \
   $(B)/$(MISSIONPACK)/game/g_mover.o \
   $(B)/$(MISSIONPACK)/game/g_session.o \
   $(B)/$(MISSIONPACK)/game/g_spawn.o \
@@ -2954,6 +2956,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_rally_credits.o \
   $(B)/$(BASEGAME)/ui/ui_rally_favorites.o \
   $(B)/$(BASEGAME)/ui/ui_rally_gfxloading.o \
+  $(B)/$(BASEGAME)/ui/ui_rally_profiles.o \
   $(B)/$(BASEGAME)/ui/ui_rally_options.o \
   $(B)/$(BASEGAME)/ui/ui_rally_servers.o \
   $(B)/$(BASEGAME)/ui/ui_rally_startserver.o \

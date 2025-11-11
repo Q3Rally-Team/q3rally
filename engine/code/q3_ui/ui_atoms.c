@@ -1385,6 +1385,8 @@ void UI_Init( void ) {
 	// initialize the menu system
 	Menu_Cache();
 
+	UI_ProfileOverlay_InitSession();
+
 	uis.activemenu = NULL;
 	uis.menusp     = 0;
 }

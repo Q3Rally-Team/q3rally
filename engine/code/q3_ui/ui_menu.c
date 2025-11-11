@@ -311,6 +311,8 @@ static void Main_MenuDraw( void ) {
                 UI_DrawString( 365, 460, Q3_VERSION " | 2002 - 2025 | www.q3rally.com | It's damn fast baby!", UI_CENTER|UI_SMALLFONT, text_color_normal );
 
         }
+
+        UI_ProfileOverlay_MaybeShow();
 }
 
 

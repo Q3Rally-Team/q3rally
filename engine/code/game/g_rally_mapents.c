@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "g_local.h"
+#include "g_profile.h"
 
 static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 	gclient_t *client;
@@ -87,9 +88,10 @@ static void G_RallyCompleteLap( gentity_t *ent, int timestamp ) {
 		client->recordedLaps[ client->recordedLapCount ] = lapDuration;
 		client->recordedLapCount++;
 
-		if ( client->bestLapMs == 0 || lapDuration < client->bestLapMs ) {
-			client->bestLapMs = lapDuration;
-		}
+                if ( client->bestLapMs == 0 || lapDuration < client->bestLapMs ) {
+                        client->bestLapMs = lapDuration;
+                        G_Profile_RecordBestLap( client, lapDuration );
+                }
 	}
 
 	client->lapStartTime = timestamp;

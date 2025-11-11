@@ -66,6 +66,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_PLATE		21
 // END
 
+#define ID_TAB_VEHICLE		30
+#define ID_TAB_STATS		31
+#define ID_TAB_ACHIEVEMENTS	32
+
+#define TAB_VEHICLE		0
+#define TAB_STATS		1
+#define TAB_ACHIEVEMENTS	2
+
 #define MAX_NAMELENGTH	20
 // STONELANCE
 #define NUM_FAVORITES		4
@@ -73,10 +81,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // END
 
 
+static vec4_t achievementUnlockedColor = { 0.6f, 1.0f, 0.6f, 1.0f };
+static vec4_t achievementLockedColor = { 0.7f, 0.7f, 0.7f, 1.0f };
+
+static const double s_distanceAchievements[] = { 10.0, 100.0, 1000.0 };
+static const int s_killAchievements[] = { 10, 100, 1000 };
+static const int s_winAchievements[] = { 1, 10, 25 };
+static const int s_flagAchievements[] = { 1, 10, 50 };
+
 typedef struct {
 	menuframework_s		menu;
 
 	menutext_s			banner;
+	menutext_s			tabVehicle;
+	menutext_s			tabStats;
+	menutext_s			tabAchievements;
 // STONELANCE
 /*
 	menubitmap_s		framel;
@@ -122,6 +141,7 @@ typedef struct {
 	playerInfo_t		playerinfo;
 	int					current_fx;
 	char				playerModel[MAX_QPATH];
+	int					currentTab;
 } playersettings_t;
 
 static playersettings_t	s_playersettings;
@@ -354,12 +374,27 @@ static void PlayerSettings_DrawCustomize( void *self ) {
 	UI_DrawProportionalString( item->generic.x, item->generic.y + 20, "THIS CAR >", style, color );
 }
 
+static void PlayerSettings_SetWidgetVisible( menucommon_s *item, qboolean visible ) {
+	if ( !item ) {
+		return;
+	}
+
+	if ( visible ) {
+		item->flags &= ~QMF_HIDDEN;
+	} else {
+		item->flags |= QMF_HIDDEN;
+	}
+}
+
 
 /*
 =================
 PlayerSettings_DrawBackShaders
 =================
 */
+static void PlayerSettings_DrawStatsTab( void );
+static void PlayerSettings_DrawAchievementsTab( void );
+
 static void PlayerSettings_DrawBackShaders( void ) {
 	vec4_t	color;
 
@@ -370,8 +405,181 @@ static void PlayerSettings_DrawBackShaders( void ) {
 	UI_FillRect( 124, 138, 392, 32, menu_back_color);
 
 	Menu_Draw( &s_playersettings.menu );
+
+	if ( s_playersettings.currentTab == TAB_STATS ) {
+		PlayerSettings_DrawStatsTab();
+	} else if ( s_playersettings.currentTab == TAB_ACHIEVEMENTS ) {
+		PlayerSettings_DrawAchievementsTab();
+	}
 }
 
+static void PlayerSettings_DrawStatsTab( void ) {
+	const profile_stats_t *stats;
+	const char *profileName;
+	char buffer[64];
+	int y;
+
+	UI_DrawProportionalString( 320, 150, "PROFILE STATS", UI_CENTER | UI_SMALLFONT, text_color_highlight );
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		UI_DrawProportionalString( 320, 208, "No active profile selected.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		UI_DrawProportionalString( 320, 236, "Create or select a profile from the main menu.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		return;
+	}
+
+	stats = UI_Profile_GetActiveStats();
+	if ( !stats ) {
+		UI_DrawProportionalString( 320, 220, "Unable to read profile statistics.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		return;
+	}
+
+	profileName = UI_Profile_GetActiveName();
+	if ( !profileName || !profileName[0] ) {
+		profileName = "Active Profile";
+	}
+
+	Com_sprintf( buffer, sizeof( buffer ), "Active profile: %s", profileName );
+	UI_DrawProportionalString( 320, 176, buffer, UI_CENTER | UI_SMALLFONT, text_color_normal );
+
+	y = 210;
+
+	Com_sprintf( buffer, sizeof( buffer ), "Distance driven: %.2f km", stats->distanceKm );
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	y += 22;
+
+	Com_sprintf( buffer, sizeof( buffer ), "Fuel used: %.1f L", stats->fuelUsed );
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	y += 22;
+
+	if ( stats->bestLapMs > 0 ) {
+		int minutes = stats->bestLapMs / 60000;
+		int seconds = ( stats->bestLapMs % 60000 ) / 1000;
+		int millis = stats->bestLapMs % 1000;
+		Com_sprintf( buffer, sizeof( buffer ), "Best lap: %02d:%02d.%03d", minutes, seconds, millis );
+	} else {
+		Q_strncpyz( buffer, "Best lap: --", sizeof( buffer ) );
+	}
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	y += 22;
+
+	Com_sprintf( buffer, sizeof( buffer ), "Kills / Deaths: %d / %d", stats->kills, stats->deaths );
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	y += 22;
+
+	Com_sprintf( buffer, sizeof( buffer ), "Wins / Losses: %d / %d", stats->wins, stats->losses );
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	y += 22;
+
+	Com_sprintf( buffer, sizeof( buffer ), "Flags captured: %d", stats->flagCaptures );
+	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+}
+
+static void PlayerSettings_DrawAchievementSectionDouble( int *y, const char *title, const double *thresholds, int count, double progress, const char *unit ) {
+	int i;
+	char buffer[64];
+
+	UI_DrawProportionalString( 140, *y, title, UI_LEFT | UI_SMALLFONT, text_color_highlight );
+	*y += 20;
+
+	for ( i = 0; i < count; ++i ) {
+		qboolean unlocked = ( progress >= thresholds[i] );
+		Com_sprintf( buffer, sizeof( buffer ), "%s %.0f %s", unlocked ? "[X]" : "[ ]", thresholds[i], unit );
+		UI_DrawProportionalString( 160, *y, buffer, UI_LEFT | UI_SMALLFONT, unlocked ? achievementUnlockedColor : achievementLockedColor );
+		*y += 18;
+	}
+
+	*y += 10;
+}
+
+static void PlayerSettings_DrawAchievementSectionInt( int *y, const char *title, const int *thresholds, int count, int progress, const char *suffix ) {
+	int i;
+	char buffer[64];
+
+	UI_DrawProportionalString( 140, *y, title, UI_LEFT | UI_SMALLFONT, text_color_highlight );
+	*y += 20;
+
+	for ( i = 0; i < count; ++i ) {
+		qboolean unlocked = ( progress >= thresholds[i] );
+		Com_sprintf( buffer, sizeof( buffer ), "%s %d %s", unlocked ? "[X]" : "[ ]", thresholds[i], suffix );
+		UI_DrawProportionalString( 160, *y, buffer, UI_LEFT | UI_SMALLFONT, unlocked ? achievementUnlockedColor : achievementLockedColor );
+		*y += 18;
+	}
+
+	*y += 10;
+}
+
+static void PlayerSettings_DrawAchievementsTab( void ) {
+	const profile_stats_t *stats;
+	int y;
+
+	UI_DrawProportionalString( 320, 150, "ACHIEVEMENTS", UI_CENTER | UI_SMALLFONT, text_color_highlight );
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		UI_DrawProportionalString( 320, 208, "No active profile selected.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		UI_DrawProportionalString( 320, 236, "Create or select a profile from the main menu.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		return;
+	}
+
+	stats = UI_Profile_GetActiveStats();
+	if ( !stats ) {
+		UI_DrawProportionalString( 320, 220, "Unable to read profile statistics.", UI_CENTER | UI_SMALLFONT, text_color_normal );
+		return;
+	}
+
+	y = 190;
+
+	PlayerSettings_DrawAchievementSectionDouble( &y, "Distance Driven", s_distanceAchievements, ARRAY_LEN( s_distanceAchievements ), stats->distanceKm, "km" );
+	PlayerSettings_DrawAchievementSectionInt( &y, "Kills", s_killAchievements, ARRAY_LEN( s_killAchievements ), stats->kills, "kills" );
+        PlayerSettings_DrawAchievementSectionInt( &y, "Races Won", s_winAchievements, ARRAY_LEN( s_winAchievements ), stats->wins, "wins" );
+        PlayerSettings_DrawAchievementSectionInt( &y, "Flags Captured", s_flagAchievements, ARRAY_LEN( s_flagAchievements ), stats->flagCaptures, "flags" );
+}
+
+static void PlayerSettings_SetTab( int tab ) {
+	int i;
+	qboolean showVehicle;
+
+	if ( tab < TAB_VEHICLE || tab > TAB_ACHIEVEMENTS ) {
+		tab = TAB_VEHICLE;
+	}
+
+	s_playersettings.currentTab = tab;
+
+	showVehicle = ( tab == TAB_VEHICLE );
+
+	PlayerSettings_SetWidgetVisible( &s_playersettings.name.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.handicap.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.effects.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.favorites.generic, showVehicle );
+
+	for ( i = 0; i < NUM_FAVORITES; ++i ) {
+		PlayerSettings_SetWidgetVisible( &s_playersettings.ports[i].generic, showVehicle );
+		PlayerSettings_SetWidgetVisible( &s_playersettings.favpicbuttons[i].generic, showVehicle );
+		PlayerSettings_SetWidgetVisible( &s_playersettings.favpics[i].generic, showVehicle );
+	}
+
+	PlayerSettings_SetWidgetVisible( &s_playersettings.player.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.left.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.right.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.modelname.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.customize.generic, showVehicle );
+	PlayerSettings_SetWidgetVisible( &s_playersettings.plate.generic, showVehicle );
+
+	s_playersettings.tabVehicle.color = ( tab == TAB_VEHICLE ) ? text_color_highlight : uis.text_color;
+	s_playersettings.tabStats.color = ( tab == TAB_STATS ) ? text_color_highlight : uis.text_color;
+	s_playersettings.tabAchievements.color = ( tab == TAB_ACHIEVEMENTS ) ? text_color_highlight : uis.text_color;
+
+	switch ( tab ) {
+	case TAB_STATS:
+		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabStats );
+		break;
+	case TAB_ACHIEVEMENTS:
+		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabAchievements );
+		break;
+	default:
+		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabVehicle );
+		break;
+	}
+}
 
 /*
 =================
@@ -537,7 +745,6 @@ PlayerSettings_SaveChanges
 */
 static void PlayerSettings_SaveChanges( void ) {
 	// name
-	trap_Cvar_Set( "name", s_playersettings.name.field.buffer );
 
 // STONELANCE
 	if (s_playersettings.modelChanged){
@@ -700,6 +907,18 @@ static void PlayerSettings_MenuEvent( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
+	case ID_TAB_VEHICLE:
+		PlayerSettings_SetTab( TAB_VEHICLE );
+		break;
+
+	case ID_TAB_STATS:
+		PlayerSettings_SetTab( TAB_STATS );
+		break;
+
+	case ID_TAB_ACHIEVEMENTS:
+		PlayerSettings_SetTab( TAB_ACHIEVEMENTS );
+		break;
+
 	case ID_HANDICAP:
 		trap_Cvar_Set( "handicap", va( "%i", 100 - 25 * s_playersettings.handicap.curvalue ) );
 		break;
@@ -882,6 +1101,36 @@ static void PlayerSettings_MenuInit( void ) {
 // END
 	s_playersettings.banner.style         = UI_CENTER;
 
+	s_playersettings.tabVehicle.generic.type = MTYPE_PTEXT;
+	s_playersettings.tabVehicle.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_playersettings.tabVehicle.generic.id = ID_TAB_VEHICLE;
+	s_playersettings.tabVehicle.generic.callback = PlayerSettings_MenuEvent;
+	s_playersettings.tabVehicle.generic.x = 200;
+	s_playersettings.tabVehicle.generic.y = 104;
+	s_playersettings.tabVehicle.string = "VEHICLE";
+	s_playersettings.tabVehicle.style = UI_CENTER | UI_SMALLFONT;
+	s_playersettings.tabVehicle.color = text_color_normal;
+
+	s_playersettings.tabStats.generic.type = MTYPE_PTEXT;
+	s_playersettings.tabStats.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_playersettings.tabStats.generic.id = ID_TAB_STATS;
+	s_playersettings.tabStats.generic.callback = PlayerSettings_MenuEvent;
+	s_playersettings.tabStats.generic.x = 320;
+	s_playersettings.tabStats.generic.y = 104;
+	s_playersettings.tabStats.string = "STATS";
+	s_playersettings.tabStats.style = UI_CENTER | UI_SMALLFONT;
+	s_playersettings.tabStats.color = text_color_normal;
+
+	s_playersettings.tabAchievements.generic.type = MTYPE_PTEXT;
+	s_playersettings.tabAchievements.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_playersettings.tabAchievements.generic.id = ID_TAB_ACHIEVEMENTS;
+	s_playersettings.tabAchievements.generic.callback = PlayerSettings_MenuEvent;
+	s_playersettings.tabAchievements.generic.x = 440;
+	s_playersettings.tabAchievements.generic.y = 104;
+	s_playersettings.tabAchievements.string = "ACHIEVEMENTS";
+	s_playersettings.tabAchievements.style = UI_CENTER | UI_SMALLFONT;
+	s_playersettings.tabAchievements.color = text_color_normal;
+
 // STONELANCE
 /*
 	s_playersettings.framel.generic.type  = MTYPE_BITMAP;
@@ -924,6 +1173,7 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.name.generic.top			= y;
 	s_playersettings.name.generic.right			= 30 + 203;
 	s_playersettings.name.generic.bottom		= y + 36;
+	s_playersettings.name.generic.flags |= QMF_INACTIVE | QMF_GRAYED;
 
 //	y += 3 * PROP_HEIGHT;
 // END
@@ -1139,6 +1389,9 @@ static void PlayerSettings_MenuInit( void ) {
 // END
 
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.banner );
+	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabVehicle );
+	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabStats );
+	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabAchievements );
 // STONELANCE
 /*
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.framel );
@@ -1180,6 +1433,7 @@ static void PlayerSettings_MenuInit( void ) {
 //	Menu_AddItem( &s_playersettings.menu, &s_playersettings.item_null );
 // END
 
+	PlayerSettings_SetTab( TAB_VEHICLE );
 	PlayerSettings_SetMenuItems();
 
 // STONELANCE

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // g_combat.c
 
 #include "g_local.h"
+#include "g_profile.h"
 
 
 /*
@@ -575,13 +576,18 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	self->enemy = attacker;
 
-	self->client->ps.persistant[PERS_KILLED]++;
+        self->client->ps.persistant[PERS_KILLED]++;
+        G_Profile_RecordDeath( self->client );
 
-	if (attacker && attacker->client) {
-		attacker->client->lastkilled_client = self->s.number;
+        if (attacker && attacker->client) {
+                attacker->client->lastkilled_client = self->s.number;
 
-		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			AddScore( attacker, self->r.currentOrigin, -1 );
+                if ( attacker != self ) {
+                        G_Profile_RecordKill( attacker->client, self->client );
+                }
+
+                if ( attacker == self || OnSameTeam (self, attacker ) ) {
+                        AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
 

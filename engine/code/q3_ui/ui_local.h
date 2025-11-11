@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define UI_API_VERSION	4
 #include "../client/keycodes.h"
 #include "../game/bg_public.h"
+#include "../game/profile_shared.h"
 
 typedef void (*voidfunc_f)(void);
 
@@ -779,6 +780,11 @@ typedef struct {
 	vec4_t				text_color;
 	float				tFrac;
 // END
+	qboolean		profileOverlayShown;
+	char			activeProfile[PROFILE_MAX_NAME];
+	profile_stats_t	activeProfileStats;
+	qboolean		activeProfileStatsValid;
+	int			activeProfileLastRead;
 } uiStatic_t;
 
 extern void			UI_Init( void );
@@ -817,6 +823,15 @@ extern void			UI_Refresh( int time );
 extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
 extern uiStatic_t	uis;
+extern vmCvar_t	ui_profileActive;
+
+void UI_ProfileOverlay_InitSession( void );
+void UI_ProfileOverlay_MaybeShow( void );
+void UI_ProfileOverlay_ClearState( void );
+void UI_Profile_MarkStatsDirty( void );
+const char *UI_Profile_GetActiveName( void );
+const profile_stats_t *UI_Profile_GetActiveStats( void );
+qboolean UI_Profile_HasActiveProfile( void );
 
 //
 // ui_spLevel.c

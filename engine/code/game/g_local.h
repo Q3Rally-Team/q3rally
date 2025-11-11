@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "bg_ladder.h"
 #include "g_public.h"
+#include "profile_shared.h"
 
 //==================================================================
 
@@ -423,6 +424,10 @@ struct gclient_s {
 	int			recordedLaps[LADDER_MAX_LAP_TIMES];
 	int			recordedLapCount;
 // END
+
+	vec3_t		profileLastOrigin;
+	qboolean	profileHasLastOrigin;
+	float		profileLastFuel;
 
 	char		*areabits;
 };

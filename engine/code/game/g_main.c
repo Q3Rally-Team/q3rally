@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "g_local.h"
+#include "g_profile.h"
 
 level_locals_t	level;
 
@@ -1015,7 +1016,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 		G_CheckTeamItems();
 	}
 
-	SaveRegisteredItems();
+        SaveRegisteredItems();
+
+        G_Profile_Init();
 
 	G_Printf ("-----------------------------------\n");
 
@@ -1072,8 +1075,10 @@ void G_ShutdownGame( int restart ) {
 		level.logFile = 0;
 	}
 
-	// write all the client session data so we can get it back
-	G_WriteSessionData();
+        // write all the client session data so we can get it back
+        G_WriteSessionData();
+
+        G_Profile_Shutdown();
 
 	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
 		BotAIShutdown( restart );
@@ -1248,16 +1253,18 @@ void AdjustTournamentScores( void ) {
 	int			clientNum;
 
 	clientNum = level.sortedClients[0];
-	if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
-		level.clients[ clientNum ].sess.wins++;
-		ClientUserinfoChanged( clientNum );
-	}
+        if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
+                level.clients[ clientNum ].sess.wins++;
+                G_Profile_RecordWin( &level.clients[ clientNum ] );
+                ClientUserinfoChanged( clientNum );
+        }
 
-	clientNum = level.sortedClients[1];
-	if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
-		level.clients[ clientNum ].sess.losses++;
-		ClientUserinfoChanged( clientNum );
-	}
+        clientNum = level.sortedClients[1];
+        if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
+                level.clients[ clientNum ].sess.losses++;
+                G_Profile_RecordLoss( &level.clients[ clientNum ] );
+                ClientUserinfoChanged( clientNum );
+        }
 
 }
 
