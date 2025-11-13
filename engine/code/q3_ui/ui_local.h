@@ -827,6 +827,7 @@ extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
 extern uiStatic_t	uis;
 extern vmCvar_t	ui_profileActive;
+extern vmCvar_t	ui_profileOverlaySeen;
 
 void UI_ProfileOverlay_InitSession( void );
 void UI_ProfileOverlay_MaybeShow( void );

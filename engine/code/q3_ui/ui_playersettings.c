@@ -107,6 +107,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_ACHIEVEMENT_VALUE_BASELINE	PLAYERSETTINGS_PROFILE_VALUE_BASELINE
 #define PLAYERSETTINGS_ACHIEVEMENT_TIER_GAP		16.0f
 
+#define PLAYERSETTINGS_STATS_ROW_HEIGHT		40
+#define PLAYERSETTINGS_STATS_ROW_GAP		4
+#define PLAYERSETTINGS_STATS_VALUE_OFFSET		260
+#define PLAYERSETTINGS_STATS_VALUE_BASELINE		PLAYERSETTINGS_PROFILE_VALUE_BASELINE
+
 #define PLAYERSETTINGS_MAX_ACHIEVEMENT_TIERS		8
 #define PLAYERSETTINGS_ACHIEVEMENT_HEADER_ROW		0
 #define PLAYERSETTINGS_ACHIEVEMENT_SPACER_ROW		1
@@ -190,6 +195,17 @@ typedef enum {
         PROFILE_ROW_EFFECTS,
         PROFILE_ROW_COUNT
 } profileRow_t;
+
+typedef enum {
+        STATS_ROW_DISTANCE = 0,
+        STATS_ROW_FUEL,
+        STATS_ROW_BEST_LAP,
+        STATS_ROW_KILLS,
+        STATS_ROW_WINS,
+        STATS_ROW_FLAGS_CAPTURED,
+        STATS_ROW_FLAG_ASSISTS,
+        STATS_ROW_COUNT
+} statsRow_t;
 
 typedef struct {
 	menuframework_s		menu;
@@ -1018,6 +1034,138 @@ static void PlayerSettings_DrawProfilePanelBackground( void ) {
 }
 
 
+static void PlayerSettings_GetStatsRowBounds( int row, int *top, int *bottom ) {
+	int rowTop;
+	int rowBottom;
+
+	if ( row < 0 ) {
+		row = 0;
+	}
+	if ( row >= STATS_ROW_COUNT ) {
+		row = STATS_ROW_COUNT - 1;
+	}
+
+	rowTop = PLAYERSETTINGS_PROFILE_PANEL_TOP + PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN + 2 +
+		 row * ( PLAYERSETTINGS_STATS_ROW_HEIGHT + PLAYERSETTINGS_STATS_ROW_GAP );
+	rowBottom = rowTop + PLAYERSETTINGS_STATS_ROW_HEIGHT;
+
+	if ( top ) {
+		*top = rowTop;
+	}
+	if ( bottom ) {
+		*bottom = rowBottom;
+	}
+}
+
+
+static void PlayerSettings_DrawStatsPanelBackground( void ) {
+	vec4_t panelColor;
+	vec4_t rowColor;
+	vec4_t borderColor;
+	int panelTop;
+	int panelBottom;
+	int i;
+
+	panelTop = PLAYERSETTINGS_PROFILE_PANEL_TOP;
+	PlayerSettings_GetStatsRowBounds( STATS_ROW_COUNT - 1, NULL, &panelBottom );
+	panelBottom += PLAYERSETTINGS_PROFILE_PANEL_BOTTOM_EXTRA;
+	if ( panelBottom <= panelTop ) {
+		panelBottom = panelTop + PLAYERSETTINGS_STATS_ROW_HEIGHT * STATS_ROW_COUNT;
+	}
+	if ( panelBottom > 440 ) {
+		panelBottom = 440;
+	}
+
+	Vector4Copy( profilePanelFillColor, panelColor );
+	panelColor[3] *= uis.tFrac;
+	UI_FillRect( PLAYERSETTINGS_PROFILE_PANEL_LEFT, panelTop, PLAYERSETTINGS_PROFILE_PANEL_WIDTH, panelBottom - panelTop, panelColor );
+
+	Vector4Copy( profileRowBorderColor, borderColor );
+	borderColor[3] *= uis.tFrac;
+
+	for ( i = 0; i < STATS_ROW_COUNT; ++i ) {
+		int rowTop;
+		int rowBottom;
+
+		PlayerSettings_GetStatsRowBounds( i, &rowTop, &rowBottom );
+
+		if ( rowTop < panelTop + PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN ) {
+			rowTop = panelTop + PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN;
+		}
+		if ( rowBottom > panelBottom - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN ) {
+			rowBottom = panelBottom - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN;
+		}
+		if ( rowBottom <= rowTop ) {
+			continue;
+		}
+
+		Vector4Copy( ( i & 1 ) ? profileRowOddFillColor : profileRowEvenFillColor, rowColor );
+		rowColor[3] *= uis.tFrac;
+
+		UI_FillRect(
+			PLAYERSETTINGS_PROFILE_FIELD_LEFT,
+			rowTop,
+			PLAYERSETTINGS_PROFILE_PANEL_WIDTH - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN * 2,
+			rowBottom - rowTop,
+			rowColor );
+
+		UI_DrawRect(
+			PLAYERSETTINGS_PROFILE_FIELD_LEFT,
+			rowTop,
+			PLAYERSETTINGS_PROFILE_PANEL_WIDTH - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN * 2,
+			rowBottom - rowTop,
+			borderColor );
+	}
+}
+
+
+static void PlayerSettings_DrawStatsLabelValueWithColors( int row, const char *label, const vec4_t labelColor, const char *value, const vec4_t valueColor ) {
+	int rowTop;
+	int y;
+	int labelX;
+	int valueX;
+	vec4_t mutableLabelColor;
+	vec4_t mutableValueColor;
+
+        labelX = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_LABEL_OFFSET;
+        valueX = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_STATS_VALUE_OFFSET;
+
+	PlayerSettings_GetStatsRowBounds( row, &rowTop, NULL );
+	y = rowTop + PLAYERSETTINGS_STATS_VALUE_BASELINE;
+
+	Vector4Copy( labelColor, mutableLabelColor );
+	Vector4Copy( valueColor, mutableValueColor );
+
+	if ( label && label[0] ) {
+		UI_DrawProportionalString( labelX, y, label, UI_LEFT | UI_SMALLFONT, mutableLabelColor );
+	}
+
+	if ( value && value[0] ) {
+		UI_DrawProportionalString( valueX, y, value, UI_LEFT | UI_SMALLFONT, mutableValueColor );
+	}
+}
+
+
+static void PlayerSettings_DrawStatsLabelValue( int row, const char *label, const char *value ) {
+	PlayerSettings_DrawStatsLabelValueWithColors( row, label, text_color_highlight, value, text_color_normal );
+}
+
+
+static void PlayerSettings_DrawStatsMessage( int row, const char *message ) {
+	int rowTop;
+	int y;
+	int x;
+
+	x = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_LABEL_OFFSET;
+
+	PlayerSettings_GetStatsRowBounds( row, &rowTop, NULL );
+	y = rowTop + PLAYERSETTINGS_STATS_VALUE_BASELINE;
+
+	UI_DrawProportionalString( x, y, message, UI_LEFT | UI_SMALLFONT, text_color_normal );
+}
+
+
+
 /*
 =================
 PlayerSettings_DrawBackShaders
@@ -1043,6 +1191,8 @@ static void PlayerSettings_DrawBackShaders( void ) {
 		PlayerSettings_DrawProfilePanelBackground();
 	} else if ( s_playersettings.currentTab == TAB_VEHICLE ) {
 		UI_FillRect( 124, 138, 392, 32, panelColor );
+	} else if ( s_playersettings.currentTab == TAB_STATS ) {
+		PlayerSettings_DrawStatsPanelBackground();
 	} else if ( s_playersettings.currentTab == TAB_ACHIEVEMENTS ) {
 		PlayerSettings_DrawAchievementsPanelBackground();
 	}
@@ -1057,68 +1207,48 @@ static void PlayerSettings_DrawBackShaders( void ) {
 }
 
 static void PlayerSettings_DrawStatsTab( void ) {
-	const profile_stats_t *stats;
-	const char *profileName;
-	char buffer[64];
-	int y;
+        const profile_stats_t *stats;
+        char buffer[64];
 
-	UI_DrawProportionalString( 320, 150, "PROFILE STATS", UI_CENTER | UI_SMALLFONT, text_color_highlight );
+        if ( !UI_Profile_HasActiveProfile() ) {
+                PlayerSettings_DrawStatsMessage( STATS_ROW_DISTANCE, "No active profile selected." );
+                PlayerSettings_DrawStatsMessage( STATS_ROW_FUEL, "Create or select a profile from the main menu." );
+                return;
+        }
 
-	if ( !UI_Profile_HasActiveProfile() ) {
-		UI_DrawProportionalString( 320, 208, "No active profile selected.", UI_CENTER | UI_SMALLFONT, text_color_normal );
-		UI_DrawProportionalString( 320, 236, "Create or select a profile from the main menu.", UI_CENTER | UI_SMALLFONT, text_color_normal );
-		return;
-	}
+        stats = UI_Profile_GetActiveStats();
+        if ( !stats ) {
+                PlayerSettings_DrawStatsMessage( STATS_ROW_DISTANCE, "Unable to read profile statistics." );
+                return;
+        }
 
-	stats = UI_Profile_GetActiveStats();
-	if ( !stats ) {
-		UI_DrawProportionalString( 320, 220, "Unable to read profile statistics.", UI_CENTER | UI_SMALLFONT, text_color_normal );
-		return;
-	}
+        Com_sprintf( buffer, sizeof( buffer ), "%.2f km", stats->distanceKm );
+        PlayerSettings_DrawStatsLabelValue( STATS_ROW_DISTANCE, "Distance Driven", buffer );
 
-	profileName = UI_Profile_GetActiveName();
-	if ( !profileName || !profileName[0] ) {
-		profileName = "Active Profile";
-	}
-
-	Com_sprintf( buffer, sizeof( buffer ), "Active profile: %s", profileName );
-	UI_DrawProportionalString( 320, 176, buffer, UI_CENTER | UI_SMALLFONT, text_color_normal );
-
-	y = 210;
-
-	Com_sprintf( buffer, sizeof( buffer ), "Distance driven: %.2f km", stats->distanceKm );
-	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-	y += 22;
-
-	Com_sprintf( buffer, sizeof( buffer ), "Fuel used: %.1f L", stats->fuelUsed );
-	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-	y += 22;
+	Com_sprintf( buffer, sizeof( buffer ), "%.1f L", stats->fuelUsed );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_FUEL, "Fuel Used", buffer );
 
 	if ( stats->bestLapMs > 0 ) {
 		int minutes = stats->bestLapMs / 60000;
 		int seconds = ( stats->bestLapMs % 60000 ) / 1000;
 		int millis = stats->bestLapMs % 1000;
-		Com_sprintf( buffer, sizeof( buffer ), "Best lap: %02d:%02d.%03d", minutes, seconds, millis );
+		Com_sprintf( buffer, sizeof( buffer ), "%02d:%02d.%03d", minutes, seconds, millis );
 	} else {
-		Q_strncpyz( buffer, "Best lap: --", sizeof( buffer ) );
+		Q_strncpyz( buffer, "--", sizeof( buffer ) );
 	}
-	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-	y += 22;
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_BEST_LAP, "Best Lap", buffer );
 
-	Com_sprintf( buffer, sizeof( buffer ), "Kills / Deaths: %d / %d", stats->kills, stats->deaths );
-	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-	y += 22;
+	Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->kills, stats->deaths );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_KILLS, "Kills / Deaths", buffer );
 
-	Com_sprintf( buffer, sizeof( buffer ), "Wins / Losses: %d / %d", stats->wins, stats->losses );
-	UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-	y += 22;
+	Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->wins, stats->losses );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_WINS, "Wins / Losses", buffer );
 
-        Com_sprintf( buffer, sizeof( buffer ), "Flags captured: %d", stats->flagCaptures );
-        UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
-        y += 22;
+	Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagCaptures );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAGS_CAPTURED, "Flags Captured", buffer );
 
-        Com_sprintf( buffer, sizeof( buffer ), "Flag assists: %d", stats->flagAssists );
-        UI_DrawProportionalString( 140, y, buffer, UI_LEFT | UI_SMALLFONT, text_color_normal );
+	Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagAssists );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAG_ASSISTS, "Flag Assists", buffer );
 }
 
 static void PlayerSettings_GetAchievementRowBounds( int row, int *top, int *bottom ) {

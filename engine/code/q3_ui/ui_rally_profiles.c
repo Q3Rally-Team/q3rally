@@ -53,6 +53,7 @@ typedef struct {
 } profileOverlay_t;
 
 static profileOverlay_t s_profileOverlay;
+static qboolean s_profileOverlaySessionInitialized = qfalse;
 
 static void UI_ProfileOverlay_Draw( void );
 static sfxHandle_t UI_ProfileOverlay_Key( int key );
@@ -909,7 +910,9 @@ static sfxHandle_t UI_ProfileOverlay_Key( int key ) {
 }
 
 void UI_ProfileOverlay_InitSession( void ) {
-    uis.profileOverlayShown = qfalse;
+    trap_Cvar_Update( &ui_profileOverlaySeen );
+
+    uis.profileOverlayShown = ( ui_profileOverlaySeen.integer != 0 );
     uis.activeProfile[0] = '\0';
     uis.activeProfileStatsValid = qfalse;
     uis.activeProfileLastRead = 0;
@@ -934,6 +937,8 @@ void UI_ProfileOverlay_MaybeShow( void ) {
     }
 
     UI_ProfileOverlay_SetupMenu();
+    trap_Cvar_Set( "ui_profileOverlaySeen", "1" );
+    trap_Cvar_Update( &ui_profileOverlaySeen );
     uis.profileOverlayShown = qtrue;
     UI_PushMenu( &s_profileOverlay.menu );
 
