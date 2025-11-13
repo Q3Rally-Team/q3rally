@@ -785,6 +785,9 @@ typedef struct {
 	profile_stats_t	activeProfileStats;
 	qboolean		activeProfileStatsValid;
 	int			activeProfileLastRead;
+	profile_info_t	activeProfileInfo;
+	qboolean		activeProfileInfoValid;
+	int			activeProfileInfoLastRead;
 } uiStatic_t;
 
 extern void			UI_Init( void );
@@ -831,6 +834,8 @@ void UI_ProfileOverlay_ClearState( void );
 void UI_Profile_MarkStatsDirty( void );
 const char *UI_Profile_GetActiveName( void );
 const profile_stats_t *UI_Profile_GetActiveStats( void );
+const profile_info_t *UI_Profile_GetActiveInfo( void );
+qboolean UI_Profile_SaveActiveInfo( const profile_info_t *info );
 qboolean UI_Profile_HasActiveProfile( void );
 
 //

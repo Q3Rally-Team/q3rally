@@ -24,7 +24,8 @@
 #define PROFILE_OVERLAY_GUIDE_PRIMARY_OFFSET   354
 #define PROFILE_OVERLAY_GUIDE_SECONDARY_OFFSET 374
 #define PROFILE_OVERLAY_GUIDE_EMPTY_OFFSET     360
-#define PROFILE_OVERLAY_CONTENT_SPAN           PROFILE_OVERLAY_GUIDE_SECONDARY_OFFSET
+#define PROFILE_OVERLAY_GUIDE_HINT_OFFSET      410
+#define PROFILE_OVERLAY_CONTENT_SPAN           PROFILE_OVERLAY_GUIDE_HINT_OFFSET
 
 static vec4_t overlayBackgroundColor = { 0.2f, 0.2f, 0.2f, 0.8f };
 static vec4_t statusNormalColor = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -188,13 +189,116 @@ static int UI_Profile_ParseInt( const char *buffer, const char *key, int default
     return atoi( cursor );
 }
 
-static qboolean UI_Profile_ReadStats( const char *name, profile_stats_t *out ) {
+static void UI_Profile_ParseString( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue ) {
+    char pattern[64];
+    const char *cursor;
+    const char *start;
+    int length;
+
+    if ( !out || outSize <= 0 ) {
+        return;
+    }
+
+    out[0] = '\0';
+    if ( defaultValue ) {
+        Q_strncpyz( out, defaultValue, outSize );
+    }
+
+    if ( !buffer || !key ) {
+        return;
+    }
+
+    Com_sprintf( pattern, sizeof( pattern ), "\"%s\"", key );
+    cursor = strstr( buffer, pattern );
+    if ( !cursor ) {
+        return;
+    }
+
+    cursor = strchr( cursor, ':' );
+    if ( !cursor ) {
+        return;
+    }
+    cursor++;
+
+    while ( *cursor == ' ' || *cursor == '\t' ) {
+        cursor++;
+    }
+
+    if ( *cursor != '"' ) {
+        return;
+    }
+
+    cursor++;
+    start = cursor;
+
+    while ( *cursor && *cursor != '"' ) {
+        if ( *cursor == '\\' && cursor[1] ) {
+            cursor += 2;
+            continue;
+        }
+        cursor++;
+    }
+
+    length = cursor - start;
+    if ( length >= outSize ) {
+        length = outSize - 1;
+    }
+
+    Com_Memcpy( out, start, length );
+    out[length] = '\0';
+
+    // unescape in-place
+    {
+        char *dst = out;
+        char *src = out;
+
+        while ( *src ) {
+            if ( *src == '\\' && src[1] ) {
+                src++;
+            }
+            *dst++ = *src++;
+        }
+        *dst = '\0';
+    }
+}
+
+static void UI_Profile_FormatJsonString( char *out, int outSize, const char *value ) {
+    const char *src;
+    char *dst;
+
+    if ( !out || outSize <= 0 ) {
+        return;
+    }
+
+    if ( !value ) {
+        value = "";
+    }
+
+    dst = out;
+    src = value;
+
+    while ( *src && ( dst - out ) < outSize - 1 ) {
+        if ( (*src == '"' || *src == '\\') && ( dst - out ) < outSize - 2 ) {
+            *dst++ = '\\';
+        }
+
+        if ( ( dst - out ) >= outSize - 1 ) {
+            break;
+        }
+
+        *dst++ = *src++;
+    }
+
+    *dst = '\0';
+}
+
+static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
     char buffer[1024];
     int length;
 
-    if ( !name || !name[0] || !out ) {
+    if ( !name || !name[0] ) {
         return qfalse;
     }
 
@@ -215,22 +319,38 @@ static qboolean UI_Profile_ReadStats( const char *name, profile_stats_t *out ) {
     buffer[length] = '\0';
     trap_FS_FCloseFile( file );
 
-    out->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
-    out->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
-    out->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
-    out->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
-    out->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
-    out->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
-    out->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
-    out->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
+    if ( outStats ) {
+        outStats->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
+        outStats->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
+        outStats->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
+        outStats->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
+        outStats->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
+        outStats->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
+        outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
+        outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
+        outStats->flagAssists = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
+    }
+
+    if ( outInfo ) {
+        UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
+        UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
+        UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
+        UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
+    }
 
     return qtrue;
 }
 
-static qboolean UI_Profile_WriteDefaultFile( const char *name ) {
+static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[512];
+    char buffer[768];
+    char gender[PROFILE_MAX_GENDER * 2];
+    char birthDate[PROFILE_MAX_BIRTHDATE * 2];
+    char avatar[PROFILE_MAX_AVATAR * 2];
+    char country[PROFILE_MAX_COUNTRY * 2];
+    profile_stats_t zeroStats;
+    profile_info_t emptyInfo;
     int length;
 
     if ( !name || !name[0] ) {
@@ -238,21 +358,57 @@ static qboolean UI_Profile_WriteDefaultFile( const char *name ) {
     }
 
     Com_sprintf( path, sizeof( path ), "profiles/%s.json", name );
+
+    if ( !info ) {
+        Com_Memset( &emptyInfo, 0, sizeof( emptyInfo ) );
+        info = &emptyInfo;
+    }
+
+    if ( !stats ) {
+        Com_Memset( &zeroStats, 0, sizeof( zeroStats ) );
+        stats = &zeroStats;
+    }
+
+    UI_Profile_FormatJsonString( gender, sizeof( gender ), info->gender );
+    UI_Profile_FormatJsonString( birthDate, sizeof( birthDate ), info->birthDate );
+    UI_Profile_FormatJsonString( avatar, sizeof( avatar ), info->avatar );
+    UI_Profile_FormatJsonString( country, sizeof( country ), info->country );
+
     length = Com_sprintf( buffer, sizeof( buffer ),
         "{\n"
         "\t\"name\": \"%s\",\n"
+        "\t\"info\": {\n"
+        "\t\t\"gender\": \"%s\",\n"
+        "\t\t\"birthDate\": \"%s\",\n"
+        "\t\t\"avatar\": \"%s\",\n"
+        "\t\t\"country\": \"%s\"\n"
+        "\t},\n"
         "\t\"stats\": {\n"
-        "\t\t\"distanceKm\": 0.0,\n"
-        "\t\t\"fuelUsed\": 0.0,\n"
-        "\t\t\"bestLapMs\": 0,\n"
-        "\t\t\"kills\": 0,\n"
-        "\t\t\"deaths\": 0,\n"
-        "\t\t\"wins\": 0,\n"
-        "\t\t\"losses\": 0,\n"
-        "\t\t\"flagCaptures\": 0\n"
+        "\t\t\"distanceKm\": %.6f,\n"
+        "\t\t\"fuelUsed\": %.3f,\n"
+        "\t\t\"bestLapMs\": %d,\n"
+        "\t\t\"kills\": %d,\n"
+        "\t\t\"deaths\": %d,\n"
+        "\t\t\"wins\": %d,\n"
+        "\t\t\"losses\": %d,\n"
+        "\t\t\"flagCaptures\": %d,\n"
+        "\t\t\"flagAssists\": %d\n"
         "\t}\n"
         "}\n",
-        name );
+        name,
+        gender,
+        birthDate,
+        avatar,
+        country,
+        stats->distanceKm,
+        stats->fuelUsed,
+        stats->bestLapMs,
+        stats->kills,
+        stats->deaths,
+        stats->wins,
+        stats->losses,
+        stats->flagCaptures,
+        stats->flagAssists );
 
     trap_FS_FOpenFile( path, &file, FS_WRITE );
     if ( file < 0 ) {
@@ -262,6 +418,20 @@ static qboolean UI_Profile_WriteDefaultFile( const char *name ) {
     trap_FS_Write( buffer, length, file );
     trap_FS_FCloseFile( file );
     return qtrue;
+}
+
+static qboolean UI_Profile_WriteDefaultFile( const char *name ) {
+    profile_info_t info;
+    profile_stats_t stats;
+
+    if ( !name || !name[0] ) {
+        return qfalse;
+    }
+
+    Com_Memset( &info, 0, sizeof( info ) );
+    Com_Memset( &stats, 0, sizeof( stats ) );
+
+    return UI_Profile_WriteFile( name, &info, &stats );
 }
 
 static void UI_ProfileOverlay_EnsureSelectionVisible( void ) {
@@ -673,6 +843,11 @@ static void UI_ProfileOverlay_Draw( void ) {
                                    UI_CENTER | UI_SMALLFONT,
                                    text_color_normal );
     }
+    UI_DrawProportionalString( 320,
+                                   s_profileOverlay.contentBaseY + PROFILE_OVERLAY_GUIDE_HINT_OFFSET,
+                                   "Edit profile details later under CONFIG -> PLAYER -> PROFILE",
+                                   UI_CENTER | UI_SMALLFONT,
+                                   text_color_normal );
 }
 
 static void UI_ProfileOverlay_DrawNameField( void *self ) {
@@ -738,6 +913,8 @@ void UI_ProfileOverlay_InitSession( void ) {
     uis.activeProfile[0] = '\0';
     uis.activeProfileStatsValid = qfalse;
     uis.activeProfileLastRead = 0;
+    uis.activeProfileInfoValid = qfalse;
+    uis.activeProfileInfoLastRead = 0;
 
     trap_Cvar_Update( &ui_profileActive );
     if ( ui_profileActive.string && ui_profileActive.string[0] ) {
@@ -777,6 +954,7 @@ static void UI_ProfileOverlay_FocusNameField( void ) {
 
 void UI_Profile_MarkStatsDirty( void ) {
     uis.activeProfileStatsValid = qfalse;
+    uis.activeProfileInfoValid = qfalse;
 }
 
 const char *UI_Profile_GetActiveName( void ) {
@@ -787,19 +965,74 @@ qboolean UI_Profile_HasActiveProfile( void ) {
     return ( qboolean )( uis.activeProfile[0] != '\0' );
 }
 
-const profile_stats_t *UI_Profile_GetActiveStats( void ) {
+static qboolean UI_Profile_EnsureDataFresh( void ) {
+    profile_stats_t stats;
+    profile_info_t info;
+
     if ( !uis.activeProfile[0] ) {
+        return qfalse;
+    }
+
+    if ( !uis.activeProfileStatsValid || !uis.activeProfileInfoValid ||
+         uis.realtime - uis.activeProfileLastRead > 1000 ||
+         uis.realtime - uis.activeProfileInfoLastRead > 1000 ) {
+        if ( !UI_Profile_ReadData( uis.activeProfile, &info, &stats ) ) {
+            return qfalse;
+        }
+
+        uis.activeProfileStats = stats;
+        uis.activeProfileInfo = info;
+        uis.activeProfileStatsValid = qtrue;
+        uis.activeProfileInfoValid = qtrue;
+        uis.activeProfileLastRead = uis.realtime;
+        uis.activeProfileInfoLastRead = uis.realtime;
+    }
+
+    return qtrue;
+}
+
+const profile_stats_t *UI_Profile_GetActiveStats( void ) {
+    if ( !UI_Profile_EnsureDataFresh() ) {
         return NULL;
     }
 
-    if ( !uis.activeProfileStatsValid || uis.realtime - uis.activeProfileLastRead > 1000 ) {
-        if ( UI_Profile_ReadStats( uis.activeProfile, &uis.activeProfileStats ) ) {
-            uis.activeProfileStatsValid = qtrue;
-            uis.activeProfileLastRead = uis.realtime;
-        } else {
-            return NULL;
-        }
+    return &uis.activeProfileStats;
+}
+
+const profile_info_t *UI_Profile_GetActiveInfo( void ) {
+    if ( !UI_Profile_EnsureDataFresh() ) {
+        return NULL;
     }
 
-    return &uis.activeProfileStats;
+    return &uis.activeProfileInfo;
+}
+
+qboolean UI_Profile_SaveActiveInfo( const profile_info_t *info ) {
+    profile_stats_t statsCopy;
+    profile_info_t infoCopy;
+    const profile_stats_t *stats;
+
+    if ( !UI_Profile_HasActiveProfile() || !info ) {
+        return qfalse;
+    }
+
+    stats = UI_Profile_GetActiveStats();
+    if ( stats ) {
+        statsCopy = *stats;
+    } else {
+        Com_Memset( &statsCopy, 0, sizeof( statsCopy ) );
+    }
+
+    infoCopy = *info;
+
+    if ( !UI_Profile_WriteFile( uis.activeProfile, &infoCopy, &statsCopy ) ) {
+        return qfalse;
+    }
+
+    uis.activeProfileInfo = infoCopy;
+    uis.activeProfileInfoValid = qtrue;
+    uis.activeProfileInfoLastRead = uis.realtime;
+    uis.activeProfileLastRead = uis.realtime;
+
+    return qtrue;
 }

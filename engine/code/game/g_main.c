@@ -1246,26 +1246,94 @@ void RemoveTournamentWinner( void ) {
 
 /*
 =======================
-AdjustTournamentScores
+G_RecordMatchOutcome
 =======================
 */
-void AdjustTournamentScores( void ) {
-	int			clientNum;
+static void G_RecordMatchOutcome( void ) {
+        int                     clientNum;
+        int                     winner;
+        qboolean                teamGame;
 
-	clientNum = level.sortedClients[0];
-        if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
-                level.clients[ clientNum ].sess.wins++;
-                G_Profile_RecordWin( &level.clients[ clientNum ] );
-                ClientUserinfoChanged( clientNum );
+        if ( level.numPlayingClients <= 0 ) {
+                return;
         }
 
-        clientNum = level.sortedClients[1];
-        if ( level.clients[ clientNum ].pers.connected == CON_CONNECTED ) {
-                level.clients[ clientNum ].sess.losses++;
-                G_Profile_RecordLoss( &level.clients[ clientNum ] );
-                ClientUserinfoChanged( clientNum );
+        teamGame = ( g_gametype.integer >= GT_TEAM );
+
+        if ( teamGame ) {
+                int winningTeam = GetTeamAtRank( 1 );
+
+                if ( winningTeam < TEAM_RED || winningTeam >= TEAM_RED + 4 ) {
+                        return;
+                }
+
+                for ( clientNum = 0; clientNum < level.maxclients; ++clientNum ) {
+                        gclient_t *client = &level.clients[ clientNum ];
+
+                        if ( client->pers.connected != CON_CONNECTED ) {
+                                continue;
+                        }
+
+                        if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                                continue;
+                        }
+
+                        if ( client->sess.sessionTeam == winningTeam ) {
+                                client->sess.wins++;
+                                G_Profile_RecordWin( client );
+                        } else {
+                                client->sess.losses++;
+                                G_Profile_RecordLoss( client );
+                        }
+
+                        ClientUserinfoChanged( clientNum );
+                }
+
+                return;
         }
 
+        winner = -1;
+        for ( clientNum = 0; clientNum < level.numConnectedClients; ++clientNum ) {
+                int sortedClientNum = level.sortedClients[ clientNum ];
+                gclient_t *client = &level.clients[ sortedClientNum ];
+
+                if ( client->pers.connected != CON_CONNECTED ) {
+                        continue;
+                }
+
+                if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                        continue;
+                }
+
+                winner = sortedClientNum;
+                break;
+        }
+
+        if ( winner < 0 ) {
+                return;
+        }
+
+        for ( clientNum = 0; clientNum < level.maxclients; ++clientNum ) {
+                gclient_t *client = &level.clients[ clientNum ];
+
+                if ( client->pers.connected != CON_CONNECTED ) {
+                        continue;
+                }
+
+                if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+                        continue;
+                }
+
+                if ( clientNum == winner ) {
+                        client->sess.wins++;
+                        G_Profile_RecordWin( client );
+                } else {
+                        client->sess.losses++;
+                        G_Profile_RecordLoss( client );
+                }
+
+                ClientUserinfoChanged( clientNum );
+        }
 }
 
 /*
@@ -1617,16 +1685,10 @@ void BeginIntermission( void ) {
 		return;		// already active
 	}
 
-	// if in tournement mode, change the wins / losses
-// STONELANCE - removed gametype
-/*
-	if ( g_gametype.integer == GT_TOURNAMENT ) {
-		AdjustTournamentScores();
-	}
-*/
-// END
+        // update wins / losses for the completed match
+        G_RecordMatchOutcome();
 
-	level.intermissiontime = level.time;
+        level.intermissiontime = level.time;
 	// move all clients to the intermission point
 	for (i=0 ; i< level.maxclients ; i++) {
 		client = g_entities + i;
