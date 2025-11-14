@@ -59,6 +59,11 @@ qboolean isRaceObserver( int clientNum )
 
 #define ID_BACK                 40
 
+#define Q3ROPTIONS_TAB_TOP           64
+#define Q3ROPTIONS_TAB_HEIGHT        32
+#define Q3ROPTIONS_BACK_BUTTON_LEFT  24
+#define Q3ROPTIONS_BACK_BUTTON_Y     ( Q3ROPTIONS_TAB_TOP + Q3ROPTIONS_TAB_HEIGHT + 14 )
+
 typedef struct {
 	menuframework_s	menu;
 
@@ -708,8 +713,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.back.generic.type			= MTYPE_PTEXT;
 	s_q3roptions.back.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_q3roptions.back.generic.x				= 20;
-	s_q3roptions.back.generic.y				= 480 - 50;
+	s_q3roptions.back.generic.x				= 25;
+	s_q3roptions.back.generic.y				= 480 - 40;
 	s_q3roptions.back.generic.id			= ID_BACK;
 	s_q3roptions.back.generic.callback		= Q3ROptions_MenuEvent; 
 	s_q3roptions.back.string				= "< BACK";

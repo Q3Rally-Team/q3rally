@@ -101,6 +101,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_PROFILE_FIELD_HEIGHT	36
 #define PLAYERSETTINGS_PROFILE_ROW_HEIGHT		44
 
+#define PLAYERSETTINGS_BACK_BUTTON_LEFT			PLAYERSETTINGS_PROFILE_FIELD_LEFT
+#define PLAYERSETTINGS_BACK_BUTTON_Y			( PLAYERSETTINGS_TAB_TOP + PLAYERSETTINGS_TAB_HEIGHT + 14 )
+
 #define PLAYERSETTINGS_ACHIEVEMENT_ROW_HEIGHT   40
 //#define PLAYERSETTINGS_ACHIEVEMENT_ROW_HEIGHT		PLAYERSETTINGS_PROFILE_ROW_HEIGHT
 #define PLAYERSETTINGS_ACHIEVEMENT_TITLE_OFFSET		0
@@ -142,6 +145,8 @@ static vec4_t profilePanelFillColor = { 0.03f, 0.03f, 0.03f, 0.80f };
 static vec4_t profileRowEvenFillColor = { 0.10f, 0.10f, 0.10f, 0.60f };
 static vec4_t profileRowOddFillColor = { 0.14f, 0.14f, 0.14f, 0.60f };
 static vec4_t profileRowBorderColor = { 0.35f, 0.35f, 0.35f, 0.85f };
+static vec4_t avatarImageBackgroundColor = { 0.05f, 0.05f, 0.05f, 0.80f };
+static vec4_t avatarImageMissingColor = { 0.6f, 0.2f, 0.2f, 1.0f };
 
 static const double s_distanceAchievements[] = { 10.0, 100.0, 1000.0, 10000.0 };
 static const int s_killAchievements[] = { 10, 100, 1000, 2500 };
@@ -269,6 +274,11 @@ typedef struct {
 	char				playerModel[MAX_QPATH];
 	int					currentTab;
 	profile_info_t	profileInfo;
+	qhandle_t	avatarShader;
+	qboolean	avatarShaderInitialized;
+	char		avatarShaderName[MAX_QPATH];
+	char		avatarProfileName[PROFILE_MAX_NAME];
+	char		avatarDisplayPath[MAX_OSPATH];
 } playersettings_t;
 
 static playersettings_t	s_playersettings;
@@ -627,11 +637,213 @@ static void PlayerSettings_DrawProfileField( void *self ) {
 }
 
 
-/*
-=================
-PlayerSettings_DrawHandicap
-=================
-*/
+static void PlayerSettings_SetAvatarProfileName( const char *profileName ) {
+	if ( !profileName ) {
+		profileName = "";
+	}
+
+	if ( !Q_stricmp( profileName, s_playersettings.avatarProfileName ) ) {
+		return;
+	}
+
+	Q_strncpyz( s_playersettings.avatarProfileName, profileName, sizeof( s_playersettings.avatarProfileName ) );
+
+	if ( profileName[0] ) {
+		Com_sprintf( s_playersettings.profileInfo.avatar, sizeof( s_playersettings.profileInfo.avatar ), "gfx/avatars/%s", profileName );
+		Com_sprintf( s_playersettings.avatarDisplayPath, sizeof( s_playersettings.avatarDisplayPath ), "baseq3r/gfx/avatars/%s.tga", profileName );
+	} else {
+		s_playersettings.profileInfo.avatar[0] = '\0';
+		s_playersettings.avatarDisplayPath[0] = '\0';
+	}
+
+	s_playersettings.avatarShader = 0;
+	s_playersettings.avatarShaderInitialized = qfalse;
+	s_playersettings.avatarShaderName[0] = '\0';
+}
+
+
+static void PlayerSettings_EnsureAvatarShader( void ) {
+	const char *shaderName;
+
+	PlayerSettings_SetAvatarProfileName( UI_Profile_GetActiveName() );
+
+	shaderName = s_playersettings.profileInfo.avatar;
+
+	if ( !shaderName[0] ) {
+		if ( s_playersettings.avatarShaderInitialized || s_playersettings.avatarShaderName[0] || s_playersettings.avatarShader ) {
+			s_playersettings.avatarShader = 0;
+			s_playersettings.avatarShaderInitialized = qfalse;
+			s_playersettings.avatarShaderName[0] = '\0';
+		}
+		return;
+	}
+
+	if ( s_playersettings.avatarShaderInitialized && !Q_stricmp( shaderName, s_playersettings.avatarShaderName ) ) {
+		return;
+	}
+
+	Q_strncpyz( s_playersettings.avatarShaderName, shaderName, sizeof( s_playersettings.avatarShaderName ) );
+	s_playersettings.avatarShader = trap_R_RegisterShaderNoMip( shaderName );
+	s_playersettings.avatarShaderInitialized = qtrue;
+}
+
+
+static void PlayerSettings_DrawClippedSmallString( int x, int y, int maxX, const char *text, int style, float *color ) {
+	int drawX;
+	char c;
+
+	if ( maxX <= x ) {
+		return;
+	}
+
+	drawX = x;
+	while ( ( c = *text ) != 0 ) {
+		if ( drawX + SMALLCHAR_WIDTH > maxX ) {
+			break;
+		}
+		UI_DrawChar( drawX, y, c, style, color );
+		++text;
+		drawX += SMALLCHAR_WIDTH;
+	}
+}
+
+
+static void PlayerSettings_DrawAvatarImage( void *self ) {
+	menufield_s *f = (menufield_s *)self;
+	qboolean inactive;
+	qboolean disabled;
+	qboolean focus;
+	int style;
+	float *color;
+	int basex;
+	int y;
+	int rowHeight;
+	int imageSize;
+	int rightEdge;
+	int imageX;
+	int imageY;
+	int textRight;
+	int textLineY;
+	int secondaryStyle;
+	float *secondaryColor;
+	vec4_t background;
+	vec4_t border;
+	const char *line1;
+	const char *line2;
+	char derivedPath[MAX_OSPATH];
+	char combinedLine[MAX_OSPATH + 64];
+
+	inactive = ( qboolean )( f->generic.flags & QMF_INACTIVE );
+	disabled = ( qboolean )( f->generic.flags & QMF_GRAYED );
+	focus = !inactive && ( f->generic.parent->cursor == f->generic.menuPosition );
+
+	style = UI_LEFT | UI_SMALLFONT;
+	color = disabled ? text_color_disabled : uis.text_color;
+	if ( focus ) {
+		style |= UI_PULSE;
+		color = text_color_highlight;
+	}
+
+	UI_DrawProportionalString( f->generic.x + PLAYERSETTINGS_PROFILE_LABEL_OFFSET, f->generic.y, f->generic.name ? f->generic.name : "", style, color );
+
+	PlayerSettings_EnsureAvatarShader();
+
+	basex = f->generic.x + PLAYERSETTINGS_PROFILE_VALUE_OFFSET;
+	y = f->generic.y;
+	rowHeight = f->generic.bottom - f->generic.top;
+	rightEdge = f->generic.right - 8;
+	if ( rightEdge < basex ) {
+		rightEdge = basex;
+	}
+	imageSize = rowHeight - 8;
+	if ( imageSize < 0 ) {
+		imageSize = 0;
+	}
+	if ( imageSize > 96 ) {
+		imageSize = 96;
+	}
+	if ( imageSize > rightEdge - basex ) {
+		imageSize = rightEdge - basex;
+	}
+	if ( imageSize < 0 ) {
+		imageSize = 0;
+	}
+
+	if ( imageSize > 0 ) {
+		imageX = rightEdge - imageSize;
+		if ( imageX < basex ) {
+			imageX = basex;
+		}
+		textRight = imageX - 8;
+	} else {
+		imageX = rightEdge;
+		textRight = rightEdge;
+	}
+	if ( textRight < basex ) {
+		textRight = basex;
+	}
+	imageY = f->generic.top + ( rowHeight - imageSize ) / 2;
+
+	Vector4Copy( avatarImageBackgroundColor, background );
+	if ( disabled ) {
+		background[3] *= 0.6f;
+	}
+	background[3] *= uis.tFrac;
+
+	Vector4Copy( profileRowBorderColor, border );
+	border[3] *= uis.tFrac;
+
+	if ( imageSize > 0 ) {
+		UI_FillRect( imageX, imageY, imageSize, imageSize, background );
+
+		if ( s_playersettings.avatarShader ) {
+			trap_R_SetColor( NULL );
+			UI_DrawHandlePic( imageX, imageY, imageSize, imageSize, s_playersettings.avatarShader );
+		} else if ( s_playersettings.profileInfo.avatar[0] ) {
+			UI_DrawProportionalString( imageX + imageSize / 2, imageY + imageSize / 2 - 6, "Missing", UI_CENTER | UI_SMALLFONT, avatarImageMissingColor );
+		} else {
+			UI_DrawProportionalString( imageX + imageSize / 2, imageY + imageSize / 2 - 6, "No Avatar", UI_CENTER | UI_SMALLFONT, text_color_disabled );
+		}
+
+		UI_DrawRect( imageX, imageY, imageSize, imageSize, border );
+	}
+
+	style = UI_LEFT | UI_SMALLFONT;
+	color = disabled ? text_color_disabled : g_color_table[ColorIndex( COLOR_WHITE )];
+	if ( focus ) {
+		style |= UI_PULSE;
+		color = text_color_highlight;
+	}
+
+	textLineY = y + PLAYERSETTINGS_PROFILE_VALUE_BASELINE;
+	if ( s_playersettings.avatarProfileName[0] ) {
+		const char *avatarPath;
+		if ( s_playersettings.avatarDisplayPath[0] ) {
+			avatarPath = s_playersettings.avatarDisplayPath;
+		} else {
+			Com_sprintf( derivedPath, sizeof( derivedPath ), "baseq3r/gfx/avatars/%s.tga", s_playersettings.avatarProfileName );
+			avatarPath = derivedPath;
+		}
+
+		Com_sprintf( combinedLine, sizeof( combinedLine ), "Avatar file: %s", avatarPath );
+		line1 = combinedLine;
+		line2 = "";
+	} else {
+		Com_sprintf( combinedLine, sizeof( combinedLine ), "No active profile. Create or select a profile to display an avatar." );
+		line1 = combinedLine;
+		line2 = "";
+	}
+
+	PlayerSettings_DrawClippedSmallString( basex, textLineY, textRight, line1, style, color );
+
+	secondaryStyle = UI_LEFT | UI_SMALLFONT;
+	secondaryColor = disabled ? text_color_disabled : text_color_normal;
+	if ( line2[0] ) {
+		PlayerSettings_DrawClippedSmallString( basex, textLineY + SMALLCHAR_HEIGHT + 2, textRight, line2, secondaryStyle, secondaryColor );
+	}
+}
+
+
 static void PlayerSettings_DrawHandicap( void *self ) {
 	menulist_s		*item;
 	qboolean		focus;
@@ -1759,7 +1971,11 @@ static void PlayerSettings_SaveChanges( void ) {
 			Com_sprintf( info.birthDate, sizeof( info.birthDate ), "%04d-%02d-%02d", birthYear, birthMonth, birthDay );
 		}
 
-		Q_strncpyz( info.avatar, s_playersettings.avatar.field.buffer, sizeof( info.avatar ) );
+		if ( s_playersettings.avatarProfileName[0] ) {
+			Com_sprintf( info.avatar, sizeof( info.avatar ), "gfx/avatars/%s", s_playersettings.avatarProfileName );
+		} else {
+			info.avatar[0] = '\0';
+		}
 		Q_strncpyz( info.country, s_playersettings.country.field.buffer, sizeof( info.country ) );
 		UI_Profile_SaveActiveInfo( &info );
 	}
@@ -1839,14 +2055,17 @@ static void PlayerSettings_SetMenuItems( void ) {
 		}
 		PlayerSettings_UpdateBirthDateDayItems();
 
-		Q_strncpyz( s_playersettings.avatar.field.buffer, s_playersettings.profileInfo.avatar, sizeof( s_playersettings.avatar.field.buffer ) );
+		s_playersettings.avatar.field.buffer[0] = '\0';
+		PlayerSettings_SetAvatarProfileName( UI_Profile_GetActiveName() );
+		PlayerSettings_EnsureAvatarShader();
 		Q_strncpyz( s_playersettings.country.field.buffer, s_playersettings.profileInfo.country, sizeof( s_playersettings.country.field.buffer ) );
 
 		s_playersettings.gender.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
 		s_playersettings.birthDay.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
 		s_playersettings.birthMonth.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
 		s_playersettings.birthYear.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
-		s_playersettings.avatar.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
+		s_playersettings.avatar.generic.flags &= ~QMF_GRAYED;
+		s_playersettings.avatar.generic.flags |= QMF_INACTIVE;
 		s_playersettings.country.generic.flags &= ~( QMF_GRAYED | QMF_INACTIVE );
 		s_playersettings.birthDateLabel.color = uis.text_color;
 	} else {
@@ -1857,6 +2076,8 @@ static void PlayerSettings_SetMenuItems( void ) {
 		s_playersettings.birthDay.curvalue = 0;
 		PlayerSettings_UpdateBirthDateDayItems();
 		s_playersettings.avatar.field.buffer[0] = '\0';
+		PlayerSettings_SetAvatarProfileName( "" );
+		PlayerSettings_EnsureAvatarShader();
 		s_playersettings.country.field.buffer[0] = '\0';
 
 		s_playersettings.gender.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
@@ -2345,7 +2566,7 @@ static void PlayerSettings_MenuInit( void ) {
 
 	s_playersettings.avatar.generic.type = MTYPE_FIELD;
 	s_playersettings.avatar.generic.flags = QMF_NODEFAULTINIT;
-	s_playersettings.avatar.generic.ownerdraw = PlayerSettings_DrawProfileField;
+	s_playersettings.avatar.generic.ownerdraw = PlayerSettings_DrawAvatarImage;
 	s_playersettings.avatar.generic.name = "Avatar";
 	s_playersettings.avatar.field.widthInChars = PROFILE_MAX_AVATAR - 1;
 	s_playersettings.avatar.field.maxchars = PROFILE_MAX_AVATAR - 1;
@@ -2559,8 +2780,8 @@ static void PlayerSettings_MenuInit( void ) {
 
 	s_playersettings.back.generic.type				= MTYPE_PTEXT;
 	s_playersettings.back.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_playersettings.back.generic.x					= 20;
-	s_playersettings.back.generic.y					= 480 - 50;
+	s_playersettings.back.generic.x					= 25;
+	s_playersettings.back.generic.y					= 480 - 40;
 	s_playersettings.back.generic.id				= ID_BACK;
 	s_playersettings.back.generic.callback			= PlayerSettings_MenuEvent; 
 	s_playersettings.back.string					= "< BACK";
