@@ -702,21 +702,20 @@ float UI_ProportionalSizeScale( int style ) {
 }
 
 
-/*
-=================
-UI_DrawProportionalString
-=================
-*/
-void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color ) {
+static void UI_DrawProportionalString_Internal( int x, int y, const char* str, int style, vec4_t color, float overrideScale ) {
 	vec4_t	drawcolor;
 	int		width;
 	float	sizeScale;
 
-	if( !str ) {
+	if ( !str ) {
 		return;
 	}
 
-	sizeScale = UI_ProportionalSizeScale( style );
+	if ( overrideScale > 0.0f ) {
+		sizeScale = overrideScale;
+	} else {
+		sizeScale = UI_ProportionalSizeScale( style );
+	}
 
 	switch( style & UI_FORMATMASK ) {
 		case UI_CENTER:
@@ -741,18 +740,18 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	}
 
 	if ( style & UI_INVERSE ) {
-		drawcolor[0] = color[0] * 0.7;
-		drawcolor[1] = color[1] * 0.7;
-		drawcolor[2] = color[2] * 0.7;
+		drawcolor[0] = color[0] * 0.7f;
+		drawcolor[1] = color[1] * 0.7f;
+		drawcolor[2] = color[2] * 0.7f;
 		drawcolor[3] = color[3];
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetProp );
 		return;
 	}
 
 	if ( style & UI_PULSE ) {
-		drawcolor[0] = color[0] * 0.7;
-		drawcolor[1] = color[1] * 0.7;
-		drawcolor[2] = color[2] * 0.7;
+		drawcolor[0] = color[0] * 0.7f;
+		drawcolor[1] = color[1] * 0.7f;
+		drawcolor[2] = color[2] * 0.7f;
 		drawcolor[3] = color[3];
 		UI_DrawProportionalString2( x, y, str, color, sizeScale, uis.charsetProp );
 
@@ -766,12 +765,30 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 		drawcolor[1] = text_color_highlight[1];
 		drawcolor[2] = text_color_highlight[2];
 // END
-		drawcolor[3] = 0.5 + 0.5 * sin( uis.realtime / PULSE_DIVISOR );
+		drawcolor[3] = 0.5f + 0.5f * sin( uis.realtime / PULSE_DIVISOR );
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetPropGlow );
 		return;
 	}
 
 	UI_DrawProportionalString2( x, y, str, color, sizeScale, uis.charsetProp );
+}
+
+/*
+=================
+UI_DrawProportionalString
+=================
+*/
+void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color ) {
+	UI_DrawProportionalString_Internal( x, y, str, style, color, 0.0f );
+}
+
+/*
+=================
+UI_DrawScaledProportionalString
+=================
+*/
+void UI_DrawScaledProportionalString( int x, int y, const char* str, int style, vec4_t color, float scale ) {
+	UI_DrawProportionalString_Internal( x, y, str, style, color, scale );
 }
 
 /*
