@@ -58,8 +58,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ART_MEDAL_FLAGS_UNLOCKED        "menu/achievements/medal_flags_unlocked"
 #define ART_MEDAL_ASSISTS_LOCKED        "menu/achievements/medal_assists_locked"
 #define ART_MEDAL_ASSISTS_UNLOCKED      "menu/achievements/medal_assists_unlocked"
-#define ART_MEDAL_FUEL_LOCKED           ART_MEDAL_DRIVEN_LOCKED
-#define ART_MEDAL_FUEL_UNLOCKED         ART_MEDAL_DRIVEN_UNLOCKED
+#define ART_MEDAL_FUEL_LOCKED           "menu/achievements/medal_fuel_locked"
+#define ART_MEDAL_FUEL_UNLOCKED         "menu/achievements/medal_fuel_unlocked"
 
 #define ID_NAME			10
 #define ID_HANDICAP		11
@@ -88,12 +88,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_BIRTH_YEAR		43
 
 #define TAB_PROFILE		0
-#define TAB_VEHICLE		1
-#define TAB_STATS		2
-#define TAB_ACHIEVEMENTS	3
+#define TAB_STATS		1
+#define TAB_ACHIEVEMENTS	2
+#define TAB_VEHICLE		3
 
 #define PLAYERSETTINGS_TAB_COUNT		4
-#define PLAYERSETTINGS_TAB_WIDTH		120
+#define PLAYERSETTINGS_TAB_WIDTH		136
 #define PLAYERSETTINGS_TAB_GAP		12
 #define PLAYERSETTINGS_TAB_TOP		64
 #define PLAYERSETTINGS_TAB_HEIGHT	32
@@ -1230,12 +1230,12 @@ static int PlayerSettings_TabFromId( int id ) {
         switch ( id ) {
         case ID_TAB_PROFILE:
                 return TAB_PROFILE;
-        case ID_TAB_VEHICLE:
-                return TAB_VEHICLE;
         case ID_TAB_STATS:
                 return TAB_STATS;
         case ID_TAB_ACHIEVEMENTS:
                 return TAB_ACHIEVEMENTS;
+        case ID_TAB_VEHICLE:
+                return TAB_VEHICLE;
         default:
                 break;
 	}
@@ -2315,7 +2315,7 @@ static void PlayerSettings_SetTab( int tab ) {
 	qboolean showProfile;
 	qboolean showVehicle;
 
-	if ( tab < TAB_PROFILE || tab > TAB_ACHIEVEMENTS ) {
+	if ( tab < TAB_PROFILE || tab >= PLAYERSETTINGS_TAB_COUNT ) {
 		tab = TAB_PROFILE;
 	}
 
@@ -2367,8 +2367,11 @@ static void PlayerSettings_SetTab( int tab ) {
 	case TAB_ACHIEVEMENTS:
 		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabAchievements );
 		break;
-	default:
+	case TAB_VEHICLE:
 		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabVehicle );
+		break;
+	default:
+		Menu_SetCursorToItem( &s_playersettings.menu, &s_playersettings.tabProfile );
 		break;
 	}
 }
@@ -3031,7 +3034,7 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.tabVehicle.generic.callback = PlayerSettings_MenuEvent;
 	s_playersettings.tabVehicle.generic.ownerdraw = PlayerSettings_DrawTabItem;
 	PlayerSettings_ConfigureTab( &s_playersettings.tabVehicle, TAB_VEHICLE );
-	s_playersettings.tabVehicle.string = "CAR";
+	s_playersettings.tabVehicle.string = "CARS";
 	s_playersettings.tabVehicle.style = UI_CENTER | UI_SMALLFONT;
 	s_playersettings.tabVehicle.color = uis.text_color;
 
@@ -3051,7 +3054,7 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.tabAchievements.generic.callback = PlayerSettings_MenuEvent;
 	s_playersettings.tabAchievements.generic.ownerdraw = PlayerSettings_DrawTabItem;
 	PlayerSettings_ConfigureTab( &s_playersettings.tabAchievements, TAB_ACHIEVEMENTS );
-	s_playersettings.tabAchievements.string = "ACHIEV.";
+	s_playersettings.tabAchievements.string = "ACHIEVEMENTS";
 	s_playersettings.tabAchievements.style = UI_CENTER | UI_SMALLFONT;
 	s_playersettings.tabAchievements.color = uis.text_color;
 
@@ -3431,9 +3434,9 @@ static void PlayerSettings_MenuInit( void ) {
 
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.banner );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabProfile );
-	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabVehicle );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabStats );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabAchievements );
+	Menu_AddItem( &s_playersettings.menu, &s_playersettings.tabVehicle );
 // STONELANCE
 /*
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.framel );
