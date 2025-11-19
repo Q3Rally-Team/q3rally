@@ -119,7 +119,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_MAX_ACHIEVEMENT_TIERS            8
 #define PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE            2
 #define PLAYERSETTINGS_ACHIEVEMENTS_PER_PAGE            4
-#define PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE           50.0f
+#define PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE           60.0f
 #define PLAYERSETTINGS_ACHIEVEMENT_ROW_GAP              16
 #define PLAYERSETTINGS_ACHIEVEMENT_TITLE_OFFSET         6
 #define PLAYERSETTINGS_ACHIEVEMENT_HEADER_LINE_HEIGHT   32.0f
@@ -127,8 +127,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_ACHIEVEMENT_ENTRY_VERTICAL_GAP   24.0f
 #define PLAYERSETTINGS_ACHIEVEMENT_COLUMN_GAP           32.0f
 #define PLAYERSETTINGS_ACHIEVEMENT_TEXT_GAP             24.0f
-#define PLAYERSETTINGS_ACHIEVEMENT_TEXT_LINE_HEIGHT     12.0f
-#define PLAYERSETTINGS_ACHIEVEMENT_TEXT_SCALE_MULTIPLIER        0.5f
+#define PLAYERSETTINGS_ACHIEVEMENT_TEXT_LINE_HEIGHT     20.0f
+#define PLAYERSETTINGS_ACHIEVEMENT_TEXT_SCALE_MULTIPLIER        0.52f
 #define PLAYERSETTINGS_ACHIEVEMENT_ENTRY_ROWS_PER_PAGE  (( PLAYERSETTINGS_ACHIEVEMENTS_PER_PAGE + PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE - 1 ) / PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE )
 #define PLAYERSETTINGS_ACHIEVEMENT_ROW_HEIGHT           ( PLAYERSETTINGS_ACHIEVEMENT_HEADER_LINE_HEIGHT + PLAYERSETTINGS_ACHIEVEMENT_HEADER_GAP + PLAYERSETTINGS_ACHIEVEMENT_ENTRY_ROWS_PER_PAGE * PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE + ( PLAYERSETTINGS_ACHIEVEMENT_ENTRY_ROWS_PER_PAGE - 1 ) * PLAYERSETTINGS_ACHIEVEMENT_ENTRY_VERTICAL_GAP )
 #define PLAYERSETTINGS_ACHIEVEMENT_VALUE_BASELINE       PLAYERSETTINGS_PROFILE_VALUE_BASELINE
@@ -1454,14 +1454,14 @@ static float PlayerSettings_GetPanelBottomForContent( float contentHeight ) {
 	float panelTop;
 	float panelBottom;
 
-	panelTop = PLAYERSETTINGS_PROFILE_PANEL_TOP;
-	panelBottom = panelTop + PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN + 2 + contentHeight + PLAYERSETTINGS_PROFILE_PANEL_BOTTOM_EXTRA;
-	if ( panelBottom < panelTop ) {
-		panelBottom = panelTop;
-	}
-	if ( panelBottom > 440.0f ) {
-		panelBottom = 440.0f;
-	}
+panelTop = PLAYERSETTINGS_PROFILE_PANEL_TOP;
+panelBottom = panelTop + PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN + 2 + contentHeight + PLAYERSETTINGS_PROFILE_PANEL_BOTTOM_EXTRA;
+if ( panelBottom < panelTop ) {
+panelBottom = panelTop;
+}
+if ( panelBottom > 440.0f ) {
+panelBottom = 440.0f;
+}
 
 	return panelBottom;
 }
@@ -2274,7 +2274,7 @@ static void PlayerSettings_GetAchievementRowBounds( int row, int *top, int *bott
 	contentTop = PlayerSettings_GetScrollContentTop();
 	offset = paginationInfo ? paginationInfo->rowOffset : s_playersettings.achievementsPaginationInfo.rowOffset;
 	rowTop = contentTop + row * spacing - offset;
-	rowBottom = rowTop + PLAYERSETTINGS_ACHIEVEMENT_ROW_HEIGHT;
+	rowBottom = rowTop + PLAYERSETTINGS_ACHIEVEMENT_ROW_HEIGHT + 40;
 
 	if ( top ) {
 		*top = (int)rowTop;
@@ -2419,7 +2419,7 @@ static int PlayerSettings_DrawAchievementSection( int row, const char *title, co
                 UI_DrawProportionalString( titleX, titleY, title, UI_LEFT | UI_SMALLFONT, text_color_highlight );
         }
 
-        areaLeft = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_VALUE_OFFSET + PLAYERSETTINGS_ACHIEVEMENT_CONTENT_MARGIN;
+        areaLeft = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_VALUE_OFFSET + PLAYERSETTINGS_ACHIEVEMENT_CONTENT_MARGIN - 15;
         areaRight = PLAYERSETTINGS_PROFILE_ROW_RIGHT - PLAYERSETTINGS_ACHIEVEMENT_CONTENT_MARGIN;
         if ( areaRight <= areaLeft ) {
                 areaRight = areaLeft + 1.0f;
