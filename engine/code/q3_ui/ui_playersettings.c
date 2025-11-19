@@ -2532,14 +2532,15 @@ const profile_stats_t *stats;
 int unlockedAchievements;
 int displayTotalAchievements;
 char progressBuffer[32];
-        char headerBuffer[64];
-        int headerTop;
-        int headerBottom;
-        int headerY;
-        int row;
-        float viewportTop;
-        float viewportBottom;
-	const playersettingsPaginationInfo_t *paginationInfo;
+char headerBuffer[64];
+int headerTop;
+int headerBottom;
+int headerY;
+int descriptionY;
+int row;
+float viewportTop;
+float viewportBottom;
+const playersettingsPaginationInfo_t *paginationInfo;
 
 paginationInfo = PlayerSettings_UpdateAchievementsPaginationInfo();
 PlayerSettings_ClampAchievementTierPage();
@@ -2600,6 +2601,13 @@ headerY,
 headerBuffer,
 UI_LEFT | UI_SMALLFONT,
 text_color_highlight );
+descriptionY = headerY + PLAYERSETTINGS_ACHIEVEMENT_HEADER_LINE_HEIGHT;
+UI_DrawProportionalString(
+PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_LABEL_OFFSET,
+descriptionY,
+"Complete challenges to unlock new medals.",
+UI_LEFT | UI_SMALLFONT,
+text_color_normal );
 }
 }
 
