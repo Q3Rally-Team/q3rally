@@ -276,9 +276,7 @@ static void PlayerSettings_DrawStatsLabelValue( int row, const char *label, cons
 static void PlayerSettings_DrawStatsMessage( int row, const char *message );
 static void PlayerSettings_DrawAchievementsPanelBackground( void );
 static void PlayerSettings_DrawAchievementsTab( void );
-static void PlayerSettings_DrawAchievementTierPaginationControls( void );
 static void PlayerSettings_ClampAchievementTierPage( void );
-static qboolean PlayerSettings_HandleAchievementTierPaginationClick( void );
 static void PlayerSettings_GetAchievementRowBounds( int row, int *top, int *bottom );
 static const playersettingsPaginationInfo_t *PlayerSettings_UpdateStatsPaginationInfo( void );
 static const playersettingsPaginationInfo_t *PlayerSettings_UpdateAchievementsPaginationInfo( void );
@@ -1822,34 +1820,6 @@ static qboolean PlayerSettings_HandlePaginationClick(
 	return PlayerSettings_HandlePaginationCommand( state, info, delta );
 }
 
-static qboolean PlayerSettings_HandleAchievementTierPaginationClick( void ) {
-	int totalPages;
-	playersettingsRect_t *prevRect;
-	playersettingsRect_t *nextRect;
-
-	totalPages = PlayerSettings_GetAchievementTotalPageCount();
-	if ( totalPages <= 1 ) {
-		return qfalse;
-	}
-
-	prevRect = &s_playersettings.achievementsTierPrevPageButton;
-	nextRect = &s_playersettings.achievementsTierNextPageButton;
-
-	if ( s_playersettings.achievementsTierPagination.currentPage > 0
-		&& PlayerSettings_RectContainsCursor( prevRect ) ) {
-		--s_playersettings.achievementsTierPagination.currentPage;
-		return qtrue;
-	}
-
-	if ( s_playersettings.achievementsTierPagination.currentPage < totalPages - 1
-		&& PlayerSettings_RectContainsCursor( nextRect ) ) {
-		++s_playersettings.achievementsTierPagination.currentPage;
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
 static void PlayerSettings_DrawPaginationButton( const char *label, const playersettingsRect_t *rect, qboolean enabled, qboolean hovered ) {
 	vec4_t fillColor;
 	vec4_t borderColor;
@@ -1978,83 +1948,6 @@ static void PlayerSettings_DrawAchievementsPaginationControls( void ) {
 		PLAYERSETTINGS_ACHIEVEMENTS_PAGINATION_RESERVED_HEIGHT,
 		&s_playersettings.achievementsPrevPageButton,
 		&s_playersettings.achievementsNextPageButton );
-}
-
-static void PlayerSettings_DrawAchievementTierPaginationControls( void ) {
-	playersettingsRect_t *prevRect;
-	playersettingsRect_t *nextRect;
-	float viewportTop;
-	float viewportBottom;
-	float buttonY;
-	float rightEdge;
-	char pageBuffer[32];
-	int headerTop;
-	int headerBottom;
-	int totalPages;
-	qboolean prevEnabled;
-	qboolean nextEnabled;
-	qboolean prevHover;
-	qboolean nextHover;
-
-	prevRect = &s_playersettings.achievementsTierPrevPageButton;
-	nextRect = &s_playersettings.achievementsTierNextPageButton;
-	PlayerSettings_ClearRect( prevRect );
-	PlayerSettings_ClearRect( nextRect );
-
-	totalPages = PlayerSettings_GetAchievementTotalPageCount();
-	if ( totalPages <= 1 ) {
-		return;
-	}
-
-	PlayerSettings_GetAchievementRowBounds( PLAYERSETTINGS_ACHIEVEMENT_HEADER_ROW, &headerTop, &headerBottom );
-	PlayerSettings_GetPaginatedViewportBounds(
-		PlayerSettings_GetAchievementsContentHeight(),
-		PLAYERSETTINGS_ACHIEVEMENTS_PAGINATION_RESERVED_HEIGHT,
-		&viewportTop,
-		&viewportBottom );
-
-	PlayerSettings_ClampAchievementTierPage();
-
-	buttonY = headerTop + PLAYERSETTINGS_ACHIEVEMENT_TITLE_OFFSET
-		+ ( PLAYERSETTINGS_ACHIEVEMENT_HEADER_LINE_HEIGHT - PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT ) * 0.5f;
-	if ( buttonY < viewportTop ) {
-		buttonY = viewportTop;
-	}
-	if ( buttonY + PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT > viewportBottom ) {
-		buttonY = viewportBottom - PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT;
-		if ( buttonY < viewportTop ) {
-			buttonY = viewportTop;
-		}
-	}
-	rightEdge = PLAYERSETTINGS_PROFILE_ROW_RIGHT - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN;
-
-	prevRect->w = PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_WIDTH;
-	prevRect->h = PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT;
-	nextRect->w = PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_WIDTH;
-	nextRect->h = PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT;
-
-	nextRect->x = rightEdge - nextRect->w;
-	nextRect->y = buttonY;
-	prevRect->x = nextRect->x - PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_GAP - prevRect->w;
-	prevRect->y = buttonY;
-
-	prevHover = PlayerSettings_RectContainsCursor( prevRect );
-	nextHover = PlayerSettings_RectContainsCursor( nextRect );
-	prevEnabled = ( s_playersettings.achievementsTierPagination.currentPage > 0 );
-	nextEnabled = ( s_playersettings.achievementsTierPagination.currentPage < totalPages - 1 );
-
-	PlayerSettings_DrawPaginationButton( "<", prevRect, prevEnabled, prevHover );
-	PlayerSettings_DrawPaginationButton( ">", nextRect, nextEnabled, nextHover );
-
-	Com_sprintf( pageBuffer, sizeof( pageBuffer ), "%d/%d",
-		s_playersettings.achievementsTierPagination.currentPage + 1,
-		totalPages );
-	UI_DrawString(
-		(int)( prevRect->x - PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_GAP ),
-		(int)( buttonY + ( PLAYERSETTINGS_ACHIEVEMENT_TIER_BUTTON_HEIGHT - SMALLCHAR_HEIGHT ) * 0.5f ),
-		pageBuffer,
-		UI_RIGHT | UI_SMALLFONT,
-		text_color_highlight );
 }
 
 static void PlayerSettings_GetStatsRowBounds( int row, int *top, int *bottom ) {
@@ -2708,8 +2601,6 @@ headerBuffer,
 UI_LEFT | UI_SMALLFONT,
 text_color_highlight );
 }
-
-PlayerSettings_DrawAchievementTierPaginationControls();
 }
 
 static void PlayerSettings_SetTab( int tab ) {
@@ -3017,9 +2908,6 @@ const playersettingsPaginationInfo_t *info;
 
 info = PlayerSettings_UpdateAchievementsPaginationInfo();
 if ( key == K_MOUSE1 ) {
-if ( PlayerSettings_HandleAchievementTierPaginationClick() ) {
-return menu_move_sound;
-}
 if ( PlayerSettings_HandlePaginationClick( &s_playersettings.achievementsPagination, info, &s_playersettings.achievementsPrevPageButton, &s_playersettings.achievementsNextPageButton ) ) {
 return menu_move_sound;
 }
