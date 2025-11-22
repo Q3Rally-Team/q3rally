@@ -1244,6 +1244,27 @@ void RemoveTournamentWinner( void ) {
 	SetTeam( &g_entities[ clientNum ], "s" );
 }
 
+static void G_Profile_RecordMatchAchievements( gclient_t *client ) {
+        int accuracy;
+
+        if ( !client ) {
+                return;
+        }
+
+        if ( client->accuracy_shots > 0 ) {
+                accuracy = ( client->accuracy_hits * 100 ) / client->accuracy_shots;
+                G_Profile_RecordAccuracy( client, accuracy );
+        }
+
+        if ( isRallyNonDMRace() ) {
+                return;
+        }
+
+        if ( client->ps.persistant[PERS_KILLED] <= 0 ) {
+                G_Profile_RecordPerfect( client );
+        }
+}
+
 /*
 =======================
 G_RecordMatchOutcome
@@ -1285,6 +1306,8 @@ static void G_RecordMatchOutcome( void ) {
                                 client->sess.losses++;
                                 G_Profile_RecordLoss( client );
                         }
+
+                        G_Profile_RecordMatchAchievements( client );
 
                         ClientUserinfoChanged( clientNum );
                 }
@@ -1331,6 +1354,8 @@ static void G_RecordMatchOutcome( void ) {
                         client->sess.losses++;
                         G_Profile_RecordLoss( client );
                 }
+
+                G_Profile_RecordMatchAchievements( client );
 
                 ClientUserinfoChanged( clientNum );
         }

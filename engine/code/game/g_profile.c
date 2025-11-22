@@ -13,6 +13,18 @@ static struct {
     int             nextAutosaveTime;
 } s_profileState;
 
+static qboolean G_Profile_ShouldTrackClient( const gclient_t *client ) {
+    if ( !s_profileState.loaded ) {
+        return qfalse;
+    }
+
+    if ( !client ) {
+        return qfalse;
+    }
+
+    return client->pers.localClient ? qtrue : qfalse;
+}
+
 typedef struct {
     char name[PROFILE_MAX_VEHICLE];
     int  timeMs;
@@ -326,6 +338,10 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.losses = G_Profile_ParseInt( buffer, "losses", 0 );
     s_profileState.stats.flagCaptures = G_Profile_ParseInt( buffer, "flagCaptures", 0 );
     s_profileState.stats.flagAssists = G_Profile_ParseInt( buffer, "flagAssists", 0 );
+    s_profileState.stats.accuracyAwards = G_Profile_ParseInt( buffer, "accuracyAwards", 0 );
+    s_profileState.stats.excellentAwards = G_Profile_ParseInt( buffer, "excellentAwards", 0 );
+    s_profileState.stats.impressiveAwards = G_Profile_ParseInt( buffer, "impressiveAwards", 0 );
+    s_profileState.stats.perfectAwards = G_Profile_ParseInt( buffer, "perfectAwards", 0 );
     s_profileState.stats.topSpeedKph = G_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
     s_profileState.stats.damageDealt = G_Profile_ParseInt( buffer, "damageDealt", 0 );
     s_profileState.stats.damageTaken = G_Profile_ParseInt( buffer, "damageTaken", 0 );
@@ -503,6 +519,10 @@ static void G_Profile_WriteToDisk( void ) {
         "\t\t\"losses\": %d,\n"
         "\t\t\"flagCaptures\": %d,\n"
         "\t\t\"flagAssists\": %d,\n"
+        "\t\t\"accuracyAwards\": %d,\n"
+        "\t\t\"excellentAwards\": %d,\n"
+        "\t\t\"impressiveAwards\": %d,\n"
+        "\t\t\"perfectAwards\": %d,\n"
         "\t\t\"topSpeedKph\": %.2f,\n"
         "\t\t\"damageDealt\": %d,\n"
         "\t\t\"damageTaken\": %d,\n"
@@ -525,6 +545,10 @@ static void G_Profile_WriteToDisk( void ) {
         s_profileState.stats.losses,
         s_profileState.stats.flagCaptures,
         s_profileState.stats.flagAssists,
+        s_profileState.stats.accuracyAwards,
+        s_profileState.stats.excellentAwards,
+        s_profileState.stats.impressiveAwards,
+        s_profileState.stats.perfectAwards,
         s_profileState.stats.topSpeedKph,
         s_profileState.stats.damageDealt,
         s_profileState.stats.damageTaken,
@@ -799,6 +823,46 @@ void G_Profile_RecordBestLap( gclient_t *client, int lapTime ) {
         s_profileState.stats.bestLapMs = lapTime;
         s_profileState.dirty = qtrue;
     }
+}
+
+void G_Profile_RecordExcellent( gclient_t *client ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    s_profileState.stats.excellentAwards++;
+    s_profileState.dirty = qtrue;
+}
+
+void G_Profile_RecordImpressive( gclient_t *client ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    s_profileState.stats.impressiveAwards++;
+    s_profileState.dirty = qtrue;
+}
+
+void G_Profile_RecordAccuracy( gclient_t *client, int accuracyPercent ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( accuracyPercent < 75 ) {
+        return;
+    }
+
+    s_profileState.stats.accuracyAwards++;
+    s_profileState.dirty = qtrue;
+}
+
+void G_Profile_RecordPerfect( gclient_t *client ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    s_profileState.stats.perfectAwards++;
+    s_profileState.dirty = qtrue;
 }
 
 

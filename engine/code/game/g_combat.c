@@ -607,9 +607,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 			// check for two kills in a short amount of time
 			// if this is close enough to the last kill, give a reward sound
-			if ( level.time - attacker->client->lastKillTime < CARNAGE_REWARD_TIME ) {
-				// play excellent on player
-				attacker->client->ps.persistant[PERS_EXCELLENT_COUNT]++;
+                        if ( level.time - attacker->client->lastKillTime < CARNAGE_REWARD_TIME ) {
+                                // play excellent on player
+                                attacker->client->ps.persistant[PERS_EXCELLENT_COUNT]++;
+                                G_Profile_RecordExcellent( attacker->client );
 
 				// add the sprite over the player's head
 				attacker->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );

@@ -18,5 +18,9 @@ void G_Profile_RecordFlagAssist( struct gclient_s *client );
 void G_Profile_RecordWin( struct gclient_s *client );
 void G_Profile_RecordLoss( struct gclient_s *client );
 void G_Profile_RecordBestLap( struct gclient_s *client, int lapTime );
+void G_Profile_RecordExcellent( struct gclient_s *client );
+void G_Profile_RecordImpressive( struct gclient_s *client );
+void G_Profile_RecordAccuracy( struct gclient_s *client, int accuracyPercent );
+void G_Profile_RecordPerfect( struct gclient_s *client );
 
 #endif /* G_PROFILE_H */

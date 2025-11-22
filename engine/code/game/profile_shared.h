@@ -20,6 +20,10 @@ typedef struct {
     int losses;
     int flagCaptures;
     int flagAssists;
+    int accuracyAwards;
+    int excellentAwards;
+    int impressiveAwards;
+    int perfectAwards;
     double topSpeedKph;
     int damageDealt;
     int damageTaken;

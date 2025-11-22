@@ -330,6 +330,10 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
             outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
             outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
             outStats->flagAssists = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
+            outStats->accuracyAwards = UI_Profile_ParseInt( buffer, "accuracyAwards", 0 );
+            outStats->excellentAwards = UI_Profile_ParseInt( buffer, "excellentAwards", 0 );
+            outStats->impressiveAwards = UI_Profile_ParseInt( buffer, "impressiveAwards", 0 );
+            outStats->perfectAwards = UI_Profile_ParseInt( buffer, "perfectAwards", 0 );
             outStats->topSpeedKph = UI_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
             outStats->damageDealt = UI_Profile_ParseInt( buffer, "damageDealt", 0 );
             outStats->damageTaken = UI_Profile_ParseInt( buffer, "damageTaken", 0 );
@@ -399,6 +403,10 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"losses\": %d,\n"
         "\t\t\"flagCaptures\": %d,\n"
         "\t\t\"flagAssists\": %d,\n"
+        "\t\t\"accuracyAwards\": %d,\n"
+        "\t\t\"excellentAwards\": %d,\n"
+        "\t\t\"impressiveAwards\": %d,\n"
+        "\t\t\"perfectAwards\": %d,\n"
         "\t\t\"topSpeedKph\": %.2f,\n"
         "\t\t\"damageDealt\": %d,\n"
         "\t\t\"damageTaken\": %d,\n"
@@ -420,6 +428,10 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         stats->losses,
         stats->flagCaptures,
         stats->flagAssists,
+        stats->accuracyAwards,
+        stats->excellentAwards,
+        stats->impressiveAwards,
+        stats->perfectAwards,
         stats->topSpeedKph,
         stats->damageDealt,
         stats->damageTaken,

@@ -60,6 +60,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ART_MEDAL_ASSISTS_UNLOCKED      "menu/achievements/medal_assists_unlocked"
 #define ART_MEDAL_FUEL_LOCKED           "menu/achievements/medal_fuel_locked"
 #define ART_MEDAL_FUEL_UNLOCKED         "menu/achievements/medal_fuel_unlocked"
+#define ART_MEDAL_ACCURACY_LOCKED       "menu/achievements/medal_accuracy_locked"
+#define ART_MEDAL_ACCURACY_UNLOCKED     "menu/achievements/medal_accuracy_unlocked"
+#define ART_MEDAL_EXCELLENT_LOCKED      "menu/achievements/medal_excellent_locked"
+#define ART_MEDAL_EXCELLENT_UNLOCKED    "menu/achievements/medal_excellent_unlocked"
+#define ART_MEDAL_IMPRESSIVE_LOCKED     "menu/achievements/medal_impressive_locked"
+#define ART_MEDAL_IMPRESSIVE_UNLOCKED   "menu/achievements/medal_impressive_unlocked"
+#define ART_MEDAL_PERFECT_LOCKED        "menu/achievements/medal_perfect_locked"
+#define ART_MEDAL_PERFECT_UNLOCKED      "menu/achievements/medal_perfect_unlocked"
 
 #define ID_NAME			10
 #define ID_HANDICAP		11
@@ -138,7 +146,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_STATS_VALUE_OFFSET		260
 #define PLAYERSETTINGS_STATS_VALUE_BASELINE		PLAYERSETTINGS_PROFILE_VALUE_BASELINE
 
-#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT       6
+#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT       10
 #define PLAYERSETTINGS_ACHIEVEMENT_HEADER_ROW           0
 #define PLAYERSETTINGS_ACHIEVEMENT_FIRST_SECTION_ROW    1
 #define PLAYERSETTINGS_ACHIEVEMENT_SECTION_COUNT        ( PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT * 2 )
@@ -242,6 +250,50 @@ static const playersettingsAchievementTierDef_t s_fuelAchievementTiers[] = {
         { 5000.0, "Galaxy Guzzler", "Atomize 5,000 L in total." }
 };
 
+static const playersettingsAchievementTierDef_t s_accuracyAchievementTiers[] = {
+        { 1.0, "Sharpshooter", "Finish a match with 75% accuracy." },
+        { 5.0, "Deadeye", "Post 75% accuracy in 5 matches." },
+        { 10.0, "Pinpoint", "Hit the 75% mark in 10 matches." },
+        { 20.0, "Bullseye", "Hold 75% accuracy across 20 matches." },
+        { 35.0, "Laser Focus", "Reach 75% accuracy in 35 matches." },
+        { 50.0, "Hawkeye", "Log 50 high-accuracy matches." },
+        { 75.0, "True Aim", "Strike 75% accuracy in 75 matches." },
+        { 100.0, "Mark V Master", "Break 100 matches with 75% accuracy." }
+};
+
+static const playersettingsAchievementTierDef_t s_excellentAchievementTiers[] = {
+        { 1.0, "Quick Combo", "Earn a double kill medal." },
+        { 5.0, "Chain Reaction", "Score 5 Excellent medals." },
+        { 10.0, "Volley Driver", "Rack up 10 Excellent medals." },
+        { 20.0, "Momentum Maker", "Stack 20 double kills." },
+        { 35.0, "Blitz Conductor", "Collect 35 Excellent medals." },
+        { 50.0, "Overdrive Duellist", "Secure 50 Excellent medals." },
+        { 75.0, "Carnage Maestro", "Reach 75 Excellent medals." },
+        { 100.0, "Legendary Combo", "Achieve 100 Excellent medals." }
+};
+
+static const playersettingsAchievementTierDef_t s_impressiveAchievementTiers[] = {
+        { 1.0, "Rail Pair", "Land 2 rail hits in a row." },
+        { 5.0, "Polished Aim", "Earn 5 Impressive medals." },
+        { 10.0, "Steel Focus", "Earn 10 Impressive medals." },
+        { 20.0, "Ion Sight", "Collect 20 Impressive medals." },
+        { 35.0, "Rail Virtuoso", "Collect 35 Impressive medals." },
+        { 50.0, "Beam Savant", "Earn 50 Impressive medals." },
+        { 75.0, "Arc Maestro", "Secure 75 Impressive medals." },
+        { 100.0, "Impeccable", "Reach 100 Impressive medals." }
+};
+
+static const playersettingsAchievementTierDef_t s_perfectAchievementTiers[] = {
+        { 1.0, "Unscathed", "Finish a match without dying." },
+        { 3.0, "Untouched", "Win 3 matches without dying." },
+        { 5.0, "Flawless", "Win 5 matches without dying." },
+        { 10.0, "Immaculate", "Finish 10 matches death-free." },
+        { 20.0, "Ghost Driver", "Complete 20 matches without a death." },
+        { 35.0, "Untouchable", "Survive 35 matches without falling." },
+        { 50.0, "Perfect Storm", "End 50 matches without dying." },
+        { 75.0, "Mythic Survivor", "Reach 75 perfect finishes." }
+};
+
 typedef enum {
         PLAYERSETTINGS_ACHIEVEMENT_ICON_DRIVEN = 0,
         PLAYERSETTINGS_ACHIEVEMENT_ICON_KILLS,
@@ -249,6 +301,10 @@ typedef enum {
         PLAYERSETTINGS_ACHIEVEMENT_ICON_FLAGS,
         PLAYERSETTINGS_ACHIEVEMENT_ICON_FLAG_ASSISTS,
         PLAYERSETTINGS_ACHIEVEMENT_ICON_FUEL,
+        PLAYERSETTINGS_ACHIEVEMENT_ICON_ACCURACY,
+        PLAYERSETTINGS_ACHIEVEMENT_ICON_EXCELLENT,
+        PLAYERSETTINGS_ACHIEVEMENT_ICON_IMPRESSIVE,
+        PLAYERSETTINGS_ACHIEVEMENT_ICON_PERFECT,
         PLAYERSETTINGS_ACHIEVEMENT_ICON_COUNT
 } playersettingsAchievementIcon_t;
 
@@ -287,7 +343,11 @@ static const char *const s_achievementMedalLockedPaths[PLAYERSETTINGS_ACHIEVEMEN
         ART_MEDAL_WINS_LOCKED,
         ART_MEDAL_FLAGS_LOCKED,
         ART_MEDAL_ASSISTS_LOCKED,
-        ART_MEDAL_FUEL_LOCKED
+        ART_MEDAL_FUEL_LOCKED,
+        ART_MEDAL_ACCURACY_LOCKED,
+        ART_MEDAL_EXCELLENT_LOCKED,
+        ART_MEDAL_IMPRESSIVE_LOCKED,
+        ART_MEDAL_PERFECT_LOCKED
 };
 static const char *const s_achievementMedalUnlockedPaths[PLAYERSETTINGS_ACHIEVEMENT_ICON_COUNT] = {
         ART_MEDAL_DRIVEN_UNLOCKED,
@@ -295,7 +355,11 @@ static const char *const s_achievementMedalUnlockedPaths[PLAYERSETTINGS_ACHIEVEM
         ART_MEDAL_WINS_UNLOCKED,
         ART_MEDAL_FLAGS_UNLOCKED,
         ART_MEDAL_ASSISTS_UNLOCKED,
-        ART_MEDAL_FUEL_UNLOCKED
+        ART_MEDAL_FUEL_UNLOCKED,
+        ART_MEDAL_ACCURACY_UNLOCKED,
+        ART_MEDAL_EXCELLENT_UNLOCKED,
+        ART_MEDAL_IMPRESSIVE_UNLOCKED,
+        ART_MEDAL_PERFECT_UNLOCKED
 };
 
 static qhandle_t PlayerSettings_RegisterAchievementMedal( const char *basePath ) {
@@ -325,7 +389,7 @@ static qhandle_t PlayerSettings_RegisterAchievementMedal( const char *basePath )
         return 0;
 }
 
-#define PLAYERSETTINGS_DISPLAY_ACHIEVEMENT_TOTAL        48
+#define PLAYERSETTINGS_DISPLAY_ACHIEVEMENT_TOTAL        80
 #define PLAYERSETTINGS_PAGINATION_BUTTON_WIDTH          96.0f
 #define PLAYERSETTINGS_PAGINATION_BUTTON_HEIGHT         24.0f
 #define PLAYERSETTINGS_PAGINATION_BUTTON_GAP            80.0f
@@ -1562,7 +1626,11 @@ static int PlayerSettings_GetAchievementMaxTierCount( void ) {
                 ARRAY_LEN( s_winAchievementTiers ),
                 ARRAY_LEN( s_flagCaptureAchievementTiers ),
                 ARRAY_LEN( s_flagAssistAchievementTiers ),
-                ARRAY_LEN( s_fuelAchievementTiers )
+                ARRAY_LEN( s_fuelAchievementTiers ),
+                ARRAY_LEN( s_accuracyAchievementTiers ),
+                ARRAY_LEN( s_excellentAchievementTiers ),
+                ARRAY_LEN( s_impressiveAchievementTiers ),
+                ARRAY_LEN( s_perfectAchievementTiers )
         };
         int maxCount;
         int i;
@@ -2134,7 +2202,7 @@ PlayerSettings_UpdateStatsPaginationInfo();
                 if ( slash ) {
                         *slash = '\0';
                 }
-                // Großbuchstabe am Anfang
+                // GroÃŸbuchstabe am Anfang
                 if ( vehicleName[0] >= 'a' && vehicleName[0] <= 'z' ) {
                         vehicleName[0] = vehicleName[0] - 'a' + 'A';
                 }
@@ -2612,6 +2680,15 @@ PlayerSettings_ClampAchievementTierPage();
         unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Flag Assists (2/2)", &s_flagAssistAchievementTiers[4], 4, (double)stats->flagAssists, PLAYERSETTINGS_ACHIEVEMENT_ICON_FLAG_ASSISTS, paginationInfo );
         unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Fuel Consumed (1/2)", s_fuelAchievementTiers, 4, stats->fuelUsed, PLAYERSETTINGS_ACHIEVEMENT_ICON_FUEL, paginationInfo );
         unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Fuel Consumed (2/2)", &s_fuelAchievementTiers[4], 4, stats->fuelUsed, PLAYERSETTINGS_ACHIEVEMENT_ICON_FUEL, paginationInfo );
+
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Accuracy (1/2)", s_accuracyAchievementTiers, 4, (double)stats->accuracyAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_ACCURACY, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Accuracy (2/2)", &s_accuracyAchievementTiers[4], 4, (double)stats->accuracyAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_ACCURACY, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Excellent (1/2)", s_excellentAchievementTiers, 4, (double)stats->excellentAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_EXCELLENT, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Excellent (2/2)", &s_excellentAchievementTiers[4], 4, (double)stats->excellentAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_EXCELLENT, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Impressive (1/2)", s_impressiveAchievementTiers, 4, (double)stats->impressiveAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_IMPRESSIVE, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Impressive (2/2)", &s_impressiveAchievementTiers[4], 4, (double)stats->impressiveAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_IMPRESSIVE, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Perfect (1/2)", s_perfectAchievementTiers, 4, (double)stats->perfectAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_PERFECT, paginationInfo );
+        unlockedAchievements += PlayerSettings_DrawAchievementSection( row++, "Perfect (2/2)", &s_perfectAchievementTiers[4], 4, (double)stats->perfectAwards, PLAYERSETTINGS_ACHIEVEMENT_ICON_PERFECT, paginationInfo );
 
         if ( unlockedAchievements > displayTotalAchievements ) {
                 unlockedAchievements = displayTotalAchievements;
