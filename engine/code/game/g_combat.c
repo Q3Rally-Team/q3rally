@@ -1127,11 +1127,15 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 	if ( damage < 1 ) {
 		damage = 1;
 	}
-	take = damage;
+        take = damage;
 
-	// save some from armor
-	asave = CheckArmor (targ, take, dflags);
-	take -= asave;
+        // save some from armor
+        asave = CheckArmor (targ, take, dflags);
+        take -= asave;
+
+        if ( targ->client || ( attacker && attacker->client ) ) {
+                G_Profile_RecordDamage( attacker ? attacker->client : NULL, targ->client, damage );
+        }
 
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,

@@ -53,7 +53,7 @@ typedef struct {
 } profileOverlay_t;
 
 static profileOverlay_t s_profileOverlay;
-static qboolean s_profileOverlaySessionInitialized = qfalse;
+//static qboolean s_profileOverlaySessionInitialized = qfalse;
 
 static void UI_ProfileOverlay_Draw( void );
 static sfxHandle_t UI_ProfileOverlay_Key( int key );
@@ -296,7 +296,7 @@ static void UI_Profile_FormatJsonString( char *out, int outSize, const char *val
 static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[1024];
+    char buffer[2048];
     int length;
 
     if ( !name || !name[0] ) {
@@ -320,17 +320,22 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
     buffer[length] = '\0';
     trap_FS_FCloseFile( file );
 
-    if ( outStats ) {
-        outStats->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
-        outStats->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
-        outStats->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
-        outStats->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
-        outStats->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
-        outStats->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
-        outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
-        outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
-        outStats->flagAssists = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
-    }
+        if ( outStats ) {
+            outStats->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
+            outStats->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
+            outStats->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
+            outStats->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
+            outStats->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
+            outStats->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
+            outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
+            outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
+            outStats->flagAssists = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
+            outStats->topSpeedKph = UI_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
+            outStats->damageDealt = UI_Profile_ParseInt( buffer, "damageDealt", 0 );
+            outStats->damageTaken = UI_Profile_ParseInt( buffer, "damageTaken", 0 );
+            UI_Profile_ParseString( buffer, "mostUsedVehicle", outStats->mostUsedVehicle, sizeof( outStats->mostUsedVehicle ), "" );
+            outStats->mostUsedVehicleTimeMs = UI_Profile_ParseInt( buffer, "mostUsedVehicleTimeMs", 0 );
+        }
 
     if ( outInfo ) {
         UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
@@ -345,7 +350,7 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
 static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[768];
+    char buffer[1024];
     char gender[PROFILE_MAX_GENDER * 2];
     char birthDate[PROFILE_MAX_BIRTHDATE * 2];
     char avatar[PROFILE_MAX_AVATAR * 2];
@@ -393,7 +398,12 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"wins\": %d,\n"
         "\t\t\"losses\": %d,\n"
         "\t\t\"flagCaptures\": %d,\n"
-        "\t\t\"flagAssists\": %d\n"
+        "\t\t\"flagAssists\": %d,\n"
+        "\t\t\"topSpeedKph\": %.2f,\n"
+        "\t\t\"damageDealt\": %d,\n"
+        "\t\t\"damageTaken\": %d,\n"
+        "\t\t\"mostUsedVehicle\": \"%s\",\n"
+        "\t\t\"mostUsedVehicleTimeMs\": %d\n"
         "\t}\n"
         "}\n",
         name,
@@ -409,7 +419,12 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         stats->wins,
         stats->losses,
         stats->flagCaptures,
-        stats->flagAssists );
+        stats->flagAssists,
+        stats->topSpeedKph,
+        stats->damageDealt,
+        stats->damageTaken,
+        stats->mostUsedVehicle,
+        stats->mostUsedVehicleTimeMs );
 
     trap_FS_FOpenFile( path, &file, FS_WRITE );
     if ( file < 0 ) {

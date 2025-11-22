@@ -8,6 +8,7 @@
 #define PROFILE_MAX_BIRTHDATE 16
 #define PROFILE_MAX_AVATAR 64
 #define PROFILE_MAX_COUNTRY 32
+#define PROFILE_MAX_VEHICLE 64
 
 typedef struct {
     double distanceKm;
@@ -19,6 +20,11 @@ typedef struct {
     int losses;
     int flagCaptures;
     int flagAssists;
+    double topSpeedKph;
+    int damageDealt;
+    int damageTaken;
+    char mostUsedVehicle[PROFILE_MAX_VEHICLE];
+    int mostUsedVehicleTimeMs;
 } profile_stats_t;
 
 typedef struct {
