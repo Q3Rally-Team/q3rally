@@ -2837,6 +2837,56 @@ static void PlayerSettings_DrawPlayer( void *self ) {
 
 
 // STONELANCE (new function)
+static int PlayerSettings_FavoriteIndex( const char *favorite ) {
+	if ( !favorite || Q_strncmp( favorite, "favoritecar", 11 ) ) {
+		return -1;
+	}
+
+	return atoi( favorite + 11 ) - 1;
+}
+
+static qboolean PlayerSettings_TryProfileFavorite( const char *favorite, char *modelName, char *skinName, char *rimName, char *headName ) {
+	const profile_info_t *profileInfo = UI_Profile_GetActiveInfo();
+	int favoriteIndex;
+
+	if ( !profileInfo ) {
+		profileInfo = &s_playersettings.profileInfo;
+	}
+
+	favoriteIndex = PlayerSettings_FavoriteIndex( favorite );
+	if ( !profileInfo || favoriteIndex < 0 || favoriteIndex >= PROFILE_MAX_FAVORITE_CARS ) {
+		return qfalse;
+	}
+
+	if ( profileInfo->favoriteCars[favoriteIndex].model[0] && profileInfo->favoriteCars[favoriteIndex].skin[0] ) {
+		if ( modelName ) {
+			Q_strncpyz( modelName, profileInfo->favoriteCars[favoriteIndex].model, MAX_QPATH );
+		}
+		if ( skinName ) {
+			Q_strncpyz( skinName, profileInfo->favoriteCars[favoriteIndex].skin, MAX_QPATH );
+		}
+		if ( rimName ) {
+			Q_strncpyz( rimName, profileInfo->favoriteCars[favoriteIndex].rim, MAX_QPATH );
+		}
+		if ( headName ) {
+			Q_strncpyz( headName, profileInfo->favoriteCars[favoriteIndex].head, MAX_QPATH );
+		}
+
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static qboolean PlayerSettings_GetFavoriteValues( const char *favorite, char *modelName, char *skinName, char *rimName, char *headName ) {
+	if ( PlayerSettings_TryProfileFavorite( favorite, modelName, skinName, rimName, headName ) ) {
+		return qfalse;
+	}
+
+	return GetValuesFromFavorite( favorite, modelName, skinName, rimName, headName );
+}
+
+// STONELANCE (new function)
 /*
 =================
 LoadFavorite
@@ -2851,7 +2901,7 @@ static void LoadFavorite( const char *favorite ) {
 	int			i;
 	qboolean	carFound;
 
-	GetValuesFromFavorite(favorite, modelName, skinName, rimName, headName);
+PlayerSettings_GetFavoriteValues( favorite, modelName, skinName, rimName, headName );
 
 	// find model in our list
 	carFound = qfalse;
@@ -2901,30 +2951,98 @@ PlayerSettings_UpdateFavorites
 =================
 */
 static void PlayerSettings_UpdateFavorites( void ) {
-	int			i;
-	char		buf[MAX_QPATH];
-	char		modelName[MAX_QPATH];
-	char		skinName[MAX_QPATH];
+	int				i;
+	char			buf[MAX_QPATH];
+	char			modelName[MAX_QPATH];
+	char			skinName[MAX_QPATH];
+	char			rimName[MAX_QPATH];
+	char			headName[MAX_QPATH];
 	qboolean	error;
-	
-	for (i=0; i < NUM_FAVORITES; i++){
-		Com_sprintf(buf, sizeof(buf), "favoritecar%i", (i+1));
-		error = GetValuesFromFavorite(buf, modelName, skinName, NULL, NULL);
+	const profile_info_t *info = UI_Profile_GetActiveInfo();
+	const profile_info_t *profileInfo = info ? info : &s_playersettings.profileInfo;
 
-		if (!error){
-			Com_sprintf(s_playersettings.favIcons[i], sizeof(s_playersettings.favIcons[i]), "models/players/%s/icon_%s", modelName, skinName);
-			s_playersettings.favpics[i].generic.name = s_playersettings.favIcons[i];
-			s_playersettings.favpicbuttons[i].generic.flags &= ~QMF_INACTIVE;
-		}
-		else{
-			s_playersettings.favpics[i].generic.name = NULL;
-			s_playersettings.favpicbuttons[i].generic.flags |= QMF_INACTIVE;
-		}
+	for ( i = 0; i < NUM_FAVORITES; i++ ) {
+		const char *favoriteModel = NULL;
+                const char *favoriteSkin = NULL;
+
+if ( profileInfo && profileInfo->favoriteCars[i].model[0] && profileInfo->favoriteCars[i].skin[0] ) {
+favoriteModel = profileInfo->favoriteCars[i].model;
+favoriteSkin = profileInfo->favoriteCars[i].skin;
+} else {
+Com_sprintf( buf, sizeof( buf ), "favoritecar%i", ( i + 1 ) );
+error = PlayerSettings_GetFavoriteValues( buf, modelName, skinName, rimName, headName );
+if ( !error ) {
+favoriteModel = modelName;
+favoriteSkin = skinName;
+}
+}
+
+                if ( favoriteModel && favoriteSkin ) {
+                        Com_sprintf( s_playersettings.favIcons[i], sizeof( s_playersettings.favIcons[i] ), "models/players/%s/icon_%s", favoriteModel, favoriteSkin );
+                        s_playersettings.favpics[i].generic.name = s_playersettings.favIcons[i];
+                        s_playersettings.favpicbuttons[i].generic.flags &= ~QMF_INACTIVE;
+                } else {
+                        s_playersettings.favpics[i].generic.name = NULL;
+                        s_playersettings.favpicbuttons[i].generic.flags |= QMF_INACTIVE;
+}
 
 		s_playersettings.favpics[i].shader = 0;
 	}
 }
 
+
+
+static void PlayerSettings_CopyFavoritesToProfile( profile_info_t *info ) {
+	int i;
+
+	if ( !info ) {
+		return;
+	}
+
+	for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+		char cvarName[16];
+		char modelName[MAX_QPATH];
+		char skinName[MAX_QPATH];
+		char rimName[MAX_QPATH];
+		char headName[MAX_QPATH];
+
+Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+if ( !PlayerSettings_GetFavoriteValues( cvarName, modelName, skinName, rimName, headName ) ) {
+			Q_strncpyz( info->favoriteCars[i].model, modelName, sizeof( info->favoriteCars[i].model ) );
+			Q_strncpyz( info->favoriteCars[i].skin, skinName, sizeof( info->favoriteCars[i].skin ) );
+			Q_strncpyz( info->favoriteCars[i].rim, rimName, sizeof( info->favoriteCars[i].rim ) );
+			Q_strncpyz( info->favoriteCars[i].head, headName, sizeof( info->favoriteCars[i].head ) );
+		} else {
+			Com_Memset( &info->favoriteCars[i], 0, sizeof( info->favoriteCars[i] ) );
+		}
+	}
+}
+
+static void PlayerSettings_ApplyProfileFavorites( const profile_info_t *info ) {
+	int i;
+
+	if ( !info ) {
+		return;
+	}
+
+	for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+		char cvarName[16];
+		char favoriteValue[MAX_QPATH * 4];
+
+		Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+
+		if ( info->favoriteCars[i].model[0] && info->favoriteCars[i].skin[0] ) {
+			Com_sprintf( favoriteValue, sizeof( favoriteValue ), "%s/%s/%s/%s",
+			             info->favoriteCars[i].model,
+			             info->favoriteCars[i].skin,
+			             info->favoriteCars[i].rim,
+			             info->favoriteCars[i].head );
+			trap_Cvar_Set( cvarName, favoriteValue );
+		} else {
+			trap_Cvar_Set( cvarName, "" );
+		}
+	}
+}
 /*
 =================
 PlayerSettings_Update
@@ -2979,14 +3097,15 @@ static void PlayerSettings_SaveChanges( void ) {
 			Com_sprintf( info.birthDate, sizeof( info.birthDate ), "%04d-%02d-%02d", birthYear, birthMonth, birthDay );
 		}
 
-		if ( s_playersettings.avatarProfileName[0] ) {
-			Com_sprintf( info.avatar, sizeof( info.avatar ), "gfx/avatars/%s", s_playersettings.avatarProfileName );
-		} else {
-			info.avatar[0] = '\0';
-		}
-		Q_strncpyz( info.country, s_playersettings.country.field.buffer, sizeof( info.country ) );
-		UI_Profile_SaveActiveInfo( &info );
-	}
+                if ( s_playersettings.avatarProfileName[0] ) {
+                        Com_sprintf( info.avatar, sizeof( info.avatar ), "gfx/avatars/%s", s_playersettings.avatarProfileName );
+                } else {
+                        info.avatar[0] = '\0';
+                }
+                Q_strncpyz( info.country, s_playersettings.country.field.buffer, sizeof( info.country ) );
+                PlayerSettings_CopyFavoritesToProfile( &info );
+                UI_Profile_SaveActiveInfo( &info );
+        }
 
 	// handicap
 	trap_Cvar_SetValue( "handicap", 100 - s_playersettings.handicap.curvalue * 5 );
@@ -3115,14 +3234,16 @@ static void PlayerSettings_SetMenuItems( void ) {
 		s_playersettings.birthDay.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
 		s_playersettings.birthMonth.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
 		s_playersettings.birthYear.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
-		s_playersettings.avatar.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
-		s_playersettings.country.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
-		s_playersettings.birthDateLabel.color = text_color_disabled;
-	}
+                s_playersettings.avatar.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
+                s_playersettings.country.generic.flags |= QMF_GRAYED | QMF_INACTIVE;
+                s_playersettings.birthDateLabel.color = text_color_disabled;
+        }
+
+        PlayerSettings_ApplyProfileFavorites( &s_playersettings.profileInfo );
 
 
-	// effects color
-	c = trap_Cvar_VariableValue( "color1" ) - 1;
+        // effects color
+        c = trap_Cvar_VariableValue( "color1" ) - 1;
 	if( c < 0 || c > 6 ) {
 		c = 6;
 	}

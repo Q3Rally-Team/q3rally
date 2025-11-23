@@ -60,6 +60,205 @@ static sfxHandle_t UI_ProfileOverlay_Key( int key );
 static void UI_ProfileOverlay_FocusNameField( void );
 static void UI_ProfileOverlay_DrawNameField( void *self );
 static void UI_ProfileOverlay_EnsureSelectionVisible( void );
+static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats );
+static void UI_Profile_ParseString( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue );
+static qboolean UI_Profile_FavoritesEmpty( const profile_info_t *info ) {
+    int i;
+
+    if ( !info ) {
+        return qtrue;
+    }
+
+    for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+        if ( info->favoriteCars[i].model[0] && info->favoriteCars[i].skin[0] ) {
+            return qfalse;
+        }
+    }
+
+    return qtrue;
+}
+
+static qboolean UI_Profile_ParseFavoriteCvar( int index, profile_favorite_car_t *outFavorite ) {
+    char cvarName[16];
+    char favoriteValue[MAX_CVAR_VALUE_STRING];
+    char *cursor;
+    char *slash;
+
+    if ( !outFavorite ) {
+        return qfalse;
+    }
+
+    Com_Memset( outFavorite, 0, sizeof( *outFavorite ) );
+
+    Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", index + 1 );
+    trap_Cvar_VariableStringBuffer( cvarName, favoriteValue, sizeof( favoriteValue ) );
+
+    if ( !favoriteValue[0] ) {
+        return qfalse;
+    }
+
+    cursor = favoriteValue;
+
+    slash = strchr( cursor, '/' );
+    if ( !slash ) {
+        return qfalse;
+    }
+    *slash = '\0';
+    Q_strncpyz( outFavorite->model, cursor, sizeof( outFavorite->model ) );
+    cursor = slash + 1;
+
+    slash = strchr( cursor, '/' );
+    if ( !slash ) {
+        return qfalse;
+    }
+    *slash = '\0';
+    Q_strncpyz( outFavorite->skin, cursor, sizeof( outFavorite->skin ) );
+    cursor = slash + 1;
+
+    slash = strchr( cursor, '/' );
+    if ( slash ) {
+        *slash = '\0';
+        Q_strncpyz( outFavorite->rim, cursor, sizeof( outFavorite->rim ) );
+        Q_strncpyz( outFavorite->head, slash + 1, sizeof( outFavorite->head ) );
+    } else {
+        Q_strncpyz( outFavorite->rim, cursor, sizeof( outFavorite->rim ) );
+    }
+
+    return (qboolean)( outFavorite->model[0] && outFavorite->skin[0] );
+}
+
+static qboolean UI_Profile_MigrateFavoriteCvars( const char *profileName, profile_info_t *info, const profile_stats_t *stats ) {
+    int i;
+    qboolean cvarFound = qfalse;
+    qboolean migrated = qfalse;
+
+    if ( !profileName || !profileName[0] || !info || UI_Profile_FavoritesEmpty( info ) == qfalse ) {
+        return qfalse;
+    }
+
+    for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+        char cvarName[16];
+        char favoriteValue[MAX_CVAR_VALUE_STRING];
+
+        Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+        trap_Cvar_VariableStringBuffer( cvarName, favoriteValue, sizeof( favoriteValue ) );
+
+        if ( favoriteValue[0] ) {
+            cvarFound = qtrue;
+            break;
+        }
+    }
+
+    if ( !cvarFound ) {
+        return qfalse;
+    }
+
+    for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+        profile_favorite_car_t migratedFavorite;
+
+        if ( UI_Profile_ParseFavoriteCvar( i, &migratedFavorite ) ) {
+            info->favoriteCars[i] = migratedFavorite;
+            migrated = qtrue;
+        } else {
+            Com_Memset( &info->favoriteCars[i], 0, sizeof( info->favoriteCars[i] ) );
+        }
+    }
+
+    if ( migrated ) {
+        UI_Profile_WriteFile( profileName, info, stats );
+
+        for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+            char cvarName[16];
+
+            Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+            trap_Cvar_Set( cvarName, "" );
+        }
+    }
+
+    return migrated;
+}
+static int UI_Profile_ParseFavoriteCars( const char *buffer, profile_info_t *info ) {
+    const char *favoritesStart;
+    const char *cursor;
+    int parsedFavorites = 0;
+
+    if ( !buffer || !info ) {
+        return 0;
+    }
+
+    favoritesStart = strstr( buffer, "\"favoriteCars\"" );
+    if ( !favoritesStart ) {
+        return 0;
+    }
+
+    favoritesStart = strchr( favoritesStart, '[' );
+    if ( !favoritesStart ) {
+        return 0;
+    }
+
+    cursor = favoritesStart + 1;
+
+    while ( *cursor && *cursor != ']' && parsedFavorites < PROFILE_MAX_FAVORITE_CARS ) {
+        const char *objectStart = strchr( cursor, '{' );
+        const char *objectEnd;
+        char objectBuffer[512];
+        int objectLength;
+
+        if ( !objectStart ) {
+            break;
+        }
+
+        objectEnd = strchr( objectStart, '}' );
+        if ( !objectEnd || objectEnd <= objectStart ) {
+            break;
+        }
+
+        objectLength = objectEnd - objectStart + 1;
+        if ( objectLength >= (int)sizeof( objectBuffer ) ) {
+            objectLength = sizeof( objectBuffer ) - 1;
+        }
+
+        Com_Memcpy( objectBuffer, objectStart, objectLength );
+        objectBuffer[objectLength] = '\0';
+
+        UI_Profile_ParseString( objectBuffer, "model", info->favoriteCars[parsedFavorites].model, sizeof( info->favoriteCars[parsedFavorites].model ), "" );
+        UI_Profile_ParseString( objectBuffer, "skin", info->favoriteCars[parsedFavorites].skin, sizeof( info->favoriteCars[parsedFavorites].skin ), "" );
+        UI_Profile_ParseString( objectBuffer, "rim", info->favoriteCars[parsedFavorites].rim, sizeof( info->favoriteCars[parsedFavorites].rim ), "" );
+        UI_Profile_ParseString( objectBuffer, "head", info->favoriteCars[parsedFavorites].head, sizeof( info->favoriteCars[parsedFavorites].head ), "" );
+
+        parsedFavorites++;
+        cursor = objectEnd + 1;
+    }
+
+    return parsedFavorites;
+}
+
+static void UI_Profile_SetFavoriteCvars( const profile_info_t *info ) {
+    int i;
+
+    if ( !info ) {
+        return;
+    }
+
+    for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+        char cvarName[16];
+
+        Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+
+        if ( info->favoriteCars[i].model[0] && info->favoriteCars[i].skin[0] ) {
+            char favoriteValue[MAX_QPATH * 4];
+
+            Com_sprintf( favoriteValue, sizeof( favoriteValue ), "%s/%s/%s/%s",
+                         info->favoriteCars[i].model,
+                         info->favoriteCars[i].skin,
+                         info->favoriteCars[i].rim,
+                         info->favoriteCars[i].head );
+            trap_Cvar_Set( cvarName, favoriteValue );
+        } else {
+            trap_Cvar_Set( cvarName, "" );
+        }
+    }
+}
 
 static void UI_ProfileOverlay_SetStatus( const char *text, const vec4_t color ) {
     if ( text ) {
@@ -321,6 +520,7 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
     trap_FS_FCloseFile( file );
 
         if ( outStats ) {
+        Com_Memset( outStats, 0, sizeof( *outStats ) );
             outStats->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
             outStats->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
             outStats->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
@@ -342,10 +542,12 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
         }
 
     if ( outInfo ) {
+        Com_Memset( outInfo, 0, sizeof( *outInfo ) );
         UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
         UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
         UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
+        UI_Profile_ParseFavoriteCars( buffer, outInfo );
     }
 
     return qtrue;
@@ -359,9 +561,12 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
     char birthDate[PROFILE_MAX_BIRTHDATE * 2];
     char avatar[PROFILE_MAX_AVATAR * 2];
     char country[PROFILE_MAX_COUNTRY * 2];
+    char favoriteCarsJson[1024];
+    char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
     profile_stats_t zeroStats;
     profile_info_t emptyInfo;
     int length;
+    int favoriteIndex;
 
     if ( !name || !name[0] ) {
         return qfalse;
@@ -384,6 +589,31 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
     UI_Profile_FormatJsonString( avatar, sizeof( avatar ), info->avatar );
     UI_Profile_FormatJsonString( country, sizeof( country ), info->country );
 
+    length = 0;
+    length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "[\n" );
+    for ( favoriteIndex = 0; favoriteIndex < PROFILE_MAX_FAVORITE_CARS; ++favoriteIndex ) {
+        if ( favoriteIndex > 0 ) {
+            length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, ",\n" );
+        }
+
+        UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].model );
+        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+                               "\t\t\t{\"model\": \"%s\", ", favoriteField );
+
+        UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].skin );
+        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+                               "\"skin\": \"%s\", ", favoriteField );
+
+        UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].rim );
+        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+                               "\"rim\": \"%s\", ", favoriteField );
+
+        UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].head );
+        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+                               "\"head\": \"%s\"}", favoriteField );
+    }
+    Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "\n\t\t]" );
+
     length = Com_sprintf( buffer, sizeof( buffer ),
         "{\n"
         "\t\"name\": \"%s\",\n"
@@ -391,7 +621,8 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"gender\": \"%s\",\n"
         "\t\t\"birthDate\": \"%s\",\n"
         "\t\t\"avatar\": \"%s\",\n"
-        "\t\t\"country\": \"%s\"\n"
+        "\t\t\"country\": \"%s\",\n"
+        "\t\t\"favoriteCars\": %s\n"
         "\t},\n"
         "\t\"stats\": {\n"
         "\t\t\"distanceKm\": %.6f,\n"
@@ -419,6 +650,7 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         birthDate,
         avatar,
         country,
+        favoriteCarsJson,
         stats->distanceKm,
         stats->fuelUsed,
         stats->bestLapMs,
@@ -1012,12 +1244,16 @@ static qboolean UI_Profile_EnsureDataFresh( void ) {
             return qfalse;
         }
 
+        UI_Profile_MigrateFavoriteCvars( uis.activeProfile, &info, &stats );
+
         uis.activeProfileStats = stats;
         uis.activeProfileInfo = info;
         uis.activeProfileStatsValid = qtrue;
         uis.activeProfileInfoValid = qtrue;
         uis.activeProfileLastRead = uis.realtime;
         uis.activeProfileInfoLastRead = uis.realtime;
+
+        UI_Profile_SetFavoriteCvars( &uis.activeProfileInfo );
     }
 
     return qtrue;

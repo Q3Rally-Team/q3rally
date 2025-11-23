@@ -13,6 +13,8 @@ static struct {
     int             nextAutosaveTime;
 } s_profileState;
 
+static void G_Profile_ParseString( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue );
+
 static qboolean G_Profile_ShouldTrackClient( const gclient_t *client ) {
     if ( !s_profileState.loaded ) {
         return qfalse;
@@ -32,6 +34,69 @@ typedef struct {
 
 #define PROFILE_MAX_TRACKED_VEHICLES 8
 static profile_vehicle_usage_t s_profileVehicleUsage[PROFILE_MAX_TRACKED_VEHICLES];
+static const char *G_Profile_FindSectionEnd( const char *start, char endChar ) {
+    const char *end = strchr( start, endChar );
+    return end ? end : start;
+}
+
+static int G_Profile_ParseFavoriteCars( const char *buffer, profile_info_t *info ) {
+    const char *favoritesStart;
+    const char *cursor;
+    int parsedFavorites = 0;
+
+    if ( !buffer || !info ) {
+        return 0;
+    }
+
+    favoritesStart = strstr( buffer, "\"favoriteCars\"" );
+    if ( !favoritesStart ) {
+        return 0;
+    }
+
+    favoritesStart = strchr( favoritesStart, '[' );
+    if ( !favoritesStart ) {
+        return 0;
+    }
+
+    cursor = favoritesStart + 1;
+
+    while ( *cursor && *cursor != ']' && parsedFavorites < PROFILE_MAX_FAVORITE_CARS ) {
+        const char *objectStart = strchr( cursor, '{' );
+        const char *objectEnd;
+        char objectBuffer[512];
+        int objectLength;
+        profile_info_t tempInfo;
+
+        if ( !objectStart ) {
+            break;
+        }
+
+        objectEnd = G_Profile_FindSectionEnd( objectStart, '}' );
+        if ( !objectEnd || objectEnd <= objectStart ) {
+            break;
+        }
+        objectLength = objectEnd - objectStart + 1;
+        if ( objectLength >= (int)sizeof( objectBuffer ) ) {
+            objectLength = sizeof( objectBuffer ) - 1;
+        }
+
+        Com_Memcpy( objectBuffer, objectStart, objectLength );
+        objectBuffer[objectLength] = '\0';
+
+        Com_Memset( &tempInfo.favoriteCars[parsedFavorites], 0, sizeof( tempInfo.favoriteCars[parsedFavorites] ) );
+        G_Profile_ParseString( objectBuffer, "model", tempInfo.favoriteCars[parsedFavorites].model, sizeof( tempInfo.favoriteCars[parsedFavorites].model ), "" );
+        G_Profile_ParseString( objectBuffer, "skin", tempInfo.favoriteCars[parsedFavorites].skin, sizeof( tempInfo.favoriteCars[parsedFavorites].skin ), "" );
+        G_Profile_ParseString( objectBuffer, "rim", tempInfo.favoriteCars[parsedFavorites].rim, sizeof( tempInfo.favoriteCars[parsedFavorites].rim ), "" );
+        G_Profile_ParseString( objectBuffer, "head", tempInfo.favoriteCars[parsedFavorites].head, sizeof( tempInfo.favoriteCars[parsedFavorites].head ), "" );
+
+        info->favoriteCars[parsedFavorites] = tempInfo.favoriteCars[parsedFavorites];
+        parsedFavorites++;
+
+        cursor = objectEnd + 1;
+    }
+
+    return parsedFavorites;
+}
 
 static qboolean G_Profile_IsValidName( const char *name ) {
     int i;
@@ -352,6 +417,7 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     G_Profile_ParseString( buffer, "birthDate", s_profileState.info.birthDate, sizeof( s_profileState.info.birthDate ), "" );
     G_Profile_ParseString( buffer, "avatar", s_profileState.info.avatar, sizeof( s_profileState.info.avatar ), "" );
     G_Profile_ParseString( buffer, "country", s_profileState.info.country, sizeof( s_profileState.info.country ), "" );
+    G_Profile_ParseFavoriteCars( buffer, &s_profileState.info );
 
     // Lade Vehicle-Array aus JSON
     vehiclesStart = strstr( buffer, "\"vehicles\"" );
@@ -434,6 +500,8 @@ static void G_Profile_WriteToDisk( void ) {
     char avatar[PROFILE_MAX_AVATAR * 2];
     char country[PROFILE_MAX_COUNTRY * 2];
     char vehicleJson[1024];
+    char favoriteCarsJson[1024];
+    char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
     fileHandle_t readFile;
     char readBuffer[1024];
     int readLength;
@@ -472,6 +540,34 @@ static void G_Profile_WriteToDisk( void ) {
     G_Profile_FormatJsonString( avatar, sizeof( avatar ), s_profileState.info.avatar );
     G_Profile_FormatJsonString( country, sizeof( country ), s_profileState.info.country );
 
+    // Build favorite cars JSON
+    vehicleJsonPos = 0;
+    vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos, "[\n" );
+
+    for ( i = 0; i < PROFILE_MAX_FAVORITE_CARS; ++i ) {
+        if ( i > 0 ) {
+            vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos, ",\n" );
+        }
+
+        G_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), s_profileState.info.favoriteCars[i].model );
+        vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos,
+                                      "\t\t\t{\"model\": \"%s\", ", favoriteField );
+
+        G_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), s_profileState.info.favoriteCars[i].skin );
+        vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos,
+                                      "\"skin\": \"%s\", ", favoriteField );
+
+        G_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), s_profileState.info.favoriteCars[i].rim );
+        vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos,
+                                      "\"rim\": \"%s\", ", favoriteField );
+
+        G_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), s_profileState.info.favoriteCars[i].head );
+        vehicleJsonPos += Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos,
+                                      "\"head\": \"%s\"}", favoriteField );
+    }
+
+    Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos, "\n\t\t]" );
+
     // Baue Fahrzeug-Array für JSON - manuell ohne Q_strcat
     vehicleJsonPos = 0;
     vehicleJsonPos += Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, "[\n" );
@@ -507,7 +603,8 @@ static void G_Profile_WriteToDisk( void ) {
         "\t\t\"gender\": \"%s\",\n"
         "\t\t\"birthDate\": \"%s\",\n"
         "\t\t\"avatar\": \"%s\",\n"
-        "\t\t\"country\": \"%s\"\n"
+        "\t\t\"country\": \"%s\",\n"
+        "\t\t\"favoriteCars\": %s\n"
         "\t},\n"
         "\t\"stats\": {\n"
         "\t\t\"distanceKm\": %.6f,\n"
@@ -536,6 +633,7 @@ static void G_Profile_WriteToDisk( void ) {
         birthDate,
         avatar,
         country,
+        favoriteCarsJson,
         s_profileState.stats.distanceKm,
         s_profileState.stats.fuelUsed,
         s_profileState.stats.bestLapMs,
