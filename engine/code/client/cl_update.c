@@ -99,10 +99,10 @@ static void CL_UpdateVersionCheck_CleanupHandles(void) {
     cl_updateContext.running = qfalse;
 }
 
-static void CL_UpdateVersionCheck_Fail(const char *message) {
+static void CL_UpdateVersionCheck_Fail(const char *state, const char *message) {
     CL_UpdateVersionCheck_SetRemote("");
     CL_UpdateVersionCheck_SetDate("");
-    CL_UpdateVersionCheck_SetState("failed");
+    CL_UpdateVersionCheck_SetState(state && *state ? state : "failed");
     CL_UpdateVersionCheck_SetError(message && *message ? message : "Download failed");
     CL_UpdateVersionCheck_CleanupHandles();
 }
@@ -169,7 +169,7 @@ static void CL_UpdateVersionCheck_ParseBuffer(void) {
     }
 
     if (!versionLine || !*versionLine) {
-        CL_UpdateVersionCheck_Fail("Invalid version file");
+        CL_UpdateVersionCheck_Fail("failed", "Invalid version file");
         return;
     }
 
@@ -241,20 +241,17 @@ void CL_UpdateVersionCheck_Begin(void) {
     cl_updateContext.attempted = qtrue;
 
 #ifndef USE_CURL
-    CL_UpdateVersionCheck_SetState("unavailable");
-    CL_UpdateVersionCheck_SetError("cURL support not compiled");
+    CL_UpdateVersionCheck_Fail("unavailable", "cURL support not compiled");
     return;
 #else
     if (!CL_cURL_Init()) {
-        CL_UpdateVersionCheck_SetState("failed");
-        CL_UpdateVersionCheck_SetError("cURL initialization failed");
+        CL_UpdateVersionCheck_Fail("failed", "cURL initialization failed");
         return;
     }
 
     cl_updateContext.easyHandle = qcurl_easy_init();
     if (!cl_updateContext.easyHandle) {
-        CL_UpdateVersionCheck_SetState("failed");
-        CL_UpdateVersionCheck_SetError("Failed to create cURL easy handle");
+        CL_UpdateVersionCheck_Fail("failed", "Failed to create cURL easy handle");
         return;
     }
 
@@ -262,8 +259,7 @@ void CL_UpdateVersionCheck_Begin(void) {
     if (!cl_updateContext.multiHandle) {
         qcurl_easy_cleanup(cl_updateContext.easyHandle);
         cl_updateContext.easyHandle = NULL;
-        CL_UpdateVersionCheck_SetState("failed");
-        CL_UpdateVersionCheck_SetError("Failed to create cURL multi handle");
+        CL_UpdateVersionCheck_Fail("failed", "Failed to create cURL multi handle");
         return;
     }
 
@@ -282,9 +278,7 @@ void CL_UpdateVersionCheck_Begin(void) {
 #endif
 
     if (qcurl_multi_add_handle(cl_updateContext.multiHandle, cl_updateContext.easyHandle) != CURLM_OK) {
-        CL_UpdateVersionCheck_SetState("failed");
-        CL_UpdateVersionCheck_SetError("Failed to queue version request");
-        CL_UpdateVersionCheck_CleanupHandles();
+        CL_UpdateVersionCheck_Fail("failed", "Failed to queue version request");
         return;
     }
 
@@ -312,7 +306,7 @@ void CL_UpdateVersionCheck_Frame(void) {
     } while (multiResult == CURLM_CALL_MULTI_PERFORM);
 
     if (multiResult != CURLM_OK) {
-        CL_UpdateVersionCheck_Fail(qcurl_multi_strerror(multiResult));
+        CL_UpdateVersionCheck_Fail("failed", qcurl_multi_strerror(multiResult));
         return;
     }
 
@@ -331,7 +325,20 @@ void CL_UpdateVersionCheck_Frame(void) {
                     CL_UpdateVersionCheck_CleanupHandles();
                 } else {
                     const char *err = cl_updateContext.errorText[0] ? cl_updateContext.errorText : qcurl_easy_strerror(msg->data.result);
-                    CL_UpdateVersionCheck_Fail(err);
+                    const char *state = "failed";
+
+                    switch (msg->data.result) {
+                        case CURLE_COULDNT_CONNECT:
+                        case CURLE_OPERATION_TIMEDOUT:
+                        case CURLE_COULDNT_RESOLVE_HOST:
+                        case CURLE_COULDNT_RESOLVE_PROXY:
+                            state = "offline";
+                            break;
+                        default:
+                            break;
+                    }
+
+                    CL_UpdateVersionCheck_Fail(state, err);
                 }
             }
         }

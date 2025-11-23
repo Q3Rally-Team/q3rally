@@ -318,6 +318,20 @@ static void UI_GFX_Loading_MenuDraw(void) {
                           UI_CENTER | UI_SMALLFONT, colorYellow);
             textY += 24;
         }
+    } else if (!Q_stricmp(updateState, "offline")) {
+        char errorMsg[128];
+
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked = qfalse;
+
+        trap_Cvar_VariableStringBuffer("cl_updateError", errorMsg, sizeof(errorMsg));
+        if (!errorMsg[0]) {
+            Q_strncpyz(errorMsg, "Update server offline - version check unavailable", sizeof(errorMsg));
+        }
+
+        UI_DrawString(320, textY, errorMsg,
+                      UI_CENTER | UI_SMALLFONT, colorYellow);
+        textY += 24;
     } else if (!Q_stricmp(updateState, "failed")) {
         char errorMsg[128];
 
