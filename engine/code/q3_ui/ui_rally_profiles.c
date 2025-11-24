@@ -543,6 +543,7 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
 
     if ( outInfo ) {
         Com_Memset( outInfo, 0, sizeof( *outInfo ) );
+        UI_Profile_ParseString( buffer, "name", outInfo->name, sizeof( outInfo->name ), name );
         UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
         UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
@@ -645,7 +646,7 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"mostUsedVehicleTimeMs\": %d\n"
         "\t}\n"
         "}\n",
-        name,
+        info->name[0] ? info->name : name,
         gender,
         birthDate,
         avatar,

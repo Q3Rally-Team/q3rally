@@ -41,6 +41,7 @@ typedef struct {
 } profile_favorite_car_t;
 
 typedef struct {
+    char name[PROFILE_MAX_NAME];
     char gender[PROFILE_MAX_GENDER];
     char birthDate[PROFILE_MAX_BIRTHDATE];
     char avatar[PROFILE_MAX_AVATAR];

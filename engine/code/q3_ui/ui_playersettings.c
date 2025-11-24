@@ -3177,20 +3177,28 @@ static void PlayerSettings_SetMenuItems( void ) {
 	trap_Cvar_VariableStringBuffer( "model", s_playersettings.modelskin, sizeof( s_playersettings.modelskin ) );
 // END
 
-	// name
-	Q_strncpyz( s_playersettings.name.field.buffer, UI_Cvar_VariableString("name"), sizeof(s_playersettings.name.field.buffer) );
+        // name
+        Q_strncpyz( s_playersettings.name.field.buffer,
+                    UI_Cvar_VariableString( "name" ),
+                    sizeof( s_playersettings.name.field.buffer ) );
 
-	if ( UI_Profile_HasActiveProfile() ) {
-		const profile_info_t *info = UI_Profile_GetActiveInfo();
-		int parsedYear = 0;
-		int parsedMonth = 0;
-		int parsedDay = 0;
+        if ( UI_Profile_HasActiveProfile() ) {
+                const profile_info_t *info = UI_Profile_GetActiveInfo();
+                int parsedYear = 0;
+                int parsedMonth = 0;
+                int parsedDay = 0;
 
-		if ( info ) {
-			s_playersettings.profileInfo = *info;
-		} else {
-			Com_Memset( &s_playersettings.profileInfo, 0, sizeof( s_playersettings.profileInfo ) );
-		}
+                if ( info ) {
+                        s_playersettings.profileInfo = *info;
+
+                        if ( s_playersettings.profileInfo.name[0] ) {
+                                Q_strncpyz( s_playersettings.name.field.buffer,
+                                            s_playersettings.profileInfo.name,
+                                            sizeof( s_playersettings.name.field.buffer ) );
+                        }
+                } else {
+                        Com_Memset( &s_playersettings.profileInfo, 0, sizeof( s_playersettings.profileInfo ) );
+                }
 
 		s_playersettings.gender.curvalue = PlayerSettings_FindGenderIndex( s_playersettings.profileInfo.gender );
 
