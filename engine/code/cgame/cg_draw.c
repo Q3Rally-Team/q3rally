@@ -2215,9 +2215,9 @@ static void CG_DrawAchievementNotifications( void ) {
     int elapsed;
     float alpha;
     float x, y;
-    float width = 440.0f;
-    float height = 104.0f;
-    float iconSize = 64.0f;
+    float width = 260.0f;
+    float height = 60.0f;
+    float iconSize = 36.0f;
     vec4_t bgColor = { 0.0f, 0.0f, 0.0f, 0.45f };
     vec4_t borderColor = { 1.0f, 1.0f, 1.0f, 0.25f };
     vec4_t lockedColor = { 0.7f, 0.7f, 0.7f, 1.0f };
@@ -2259,26 +2259,27 @@ static void CG_DrawAchievementNotifications( void ) {
     unlockedColor[3] *= alpha;
     textColor[3] *= alpha;
 
-    x = ( SCREEN_WIDTH - width ) * 0.5f;
-    y = 96.0f;
+    // Position the achievement notification inside the rearview mirror frame
+    x = 170.0f + ( 300.0f - width ) * 0.5f;
+    y = 10.0f + ( 75.0f - height ) * 0.5f;
 
     CG_FillRect( x, y, width, height, bgColor );
     CG_DrawRect( x, y, width, height, 1.0f, borderColor );
 
     icon = ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? cgs.media.achievementMedalLocked[category->icon] : cgs.media.achievementMedalUnlocked[category->icon];
     if ( icon ) {
-        CG_DrawPic( x + 12.0f, y + ( height - iconSize ) * 0.5f, iconSize, iconSize, icon );
+        CG_DrawPic( x + 10.0f, y + ( height - iconSize ) * 0.5f, iconSize, iconSize, icon );
     }
 
-    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 18.0f ), tier->name,
+    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 12.0f ), tier->name,
                       ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? lockedColor : unlockedColor,
-                      qfalse, qtrue, SMALLCHAR_WIDTH * 2, SMALLCHAR_HEIGHT * 2, 0 );
+                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
 
-    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 52.0f ), tier->description,
+    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 30.0f ), tier->description,
                       textColor, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
 
-    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 72.0f ), category->title,
-                      textColor, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 44.0f ), category->title,
+                      textColor, qfalse, qtrue, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
 
     trap_R_SetColor( NULL );
 }

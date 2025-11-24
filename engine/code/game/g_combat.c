@@ -42,7 +42,7 @@ void ScorePlum( gentity_t *ent, vec3_t origin, int score ) {
 	//
 	plum->s.otherEntityNum = ent->s.number;
 	plum->s.time = score;
-}
+        }
 
 /*
 ============
@@ -79,7 +79,7 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 // END
 
 	CalculateRanks();
-}
+        }
 
 /*
 =================
@@ -144,7 +144,7 @@ if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 			}
 		}
 	}
-}
+        }
 
 #ifdef MISSIONPACK
 
@@ -197,7 +197,7 @@ void TossClientCubes( gentity_t *self ) {
 	drop->nextthink = level.time + g_cubeTimeout.integer * 1000;
 	drop->think = G_FreeEntity;
 	drop->spawnflags = self->client->sess.sessionTeam;
-}
+        }
 
 
 /*
@@ -225,7 +225,7 @@ void TossClientPersistantPowerups( gentity_t *ent ) {
 
 	ent->client->ps.stats[STAT_PERSISTANT_POWERUP] = 0;
 	ent->client->persistantPowerup = NULL;
-}
+        }
 #endif
 
 
@@ -247,7 +247,7 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	}
 
 	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
-}
+        }
 
 /*
 ==================
@@ -300,7 +300,7 @@ void GibEntity( gentity_t *self, int killer ) {
 	}
 */
 // END
-}
+        }
 
 /*
 ==================
@@ -317,7 +317,7 @@ void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int d
 	}
 
 	GibEntity( self, 0 );
-}
+        }
 
 
 // these are just for logging, the client prints its own messages
@@ -370,7 +370,7 @@ char	*modNames[] = {
 	"MOD_FLAME_THROWER",
 // Q3Rally Code END
 	"MOD_GRAPPLE"
-};
+        };
 
 #ifdef MISSIONPACK
 /*
@@ -381,7 +381,7 @@ Kamikaze_DeathActivate
 void Kamikaze_DeathActivate( gentity_t *ent ) {
 	G_StartKamikaze(ent);
 	G_FreeEntity(ent);
-}
+        }
 
 /*
 ==================
@@ -399,7 +399,7 @@ void Kamikaze_DeathTimer( gentity_t *self ) {
 	ent->nextthink = level.time + 5 * 1000;
 
 	ent->activator = self;
-}
+        }
 
 #endif
 
@@ -451,7 +451,7 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 			}
 		}
 	}
-}
+        }
 
 /*
 ==================
@@ -484,7 +484,7 @@ void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
 			}
 		}
 	}
-}
+        }
 
 /*
 ==================
@@ -773,7 +773,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	trap_LinkEntity (self);
 
-}
+        }
 
 
 /*
@@ -810,7 +810,7 @@ int CheckArmor (gentity_t *ent, int damage, int dflags)
 	client->ps.stats[STAT_ARMOR] -= save;
 
 	return save;
-}
+        }
 
 /*
 ================
@@ -847,7 +847,7 @@ int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t di
 		return 1;
 	}
 	return 0;
-}
+        }
 
 #ifdef MISSIONPACK
 /*
@@ -886,7 +886,7 @@ int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t i
 	else {
 		return qfalse;
 	}
-}
+        }
 #endif
 /*
 ============
@@ -1135,7 +1135,10 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
         take -= asave;
 
         if ( targ->client || ( attacker && attacker->client ) ) {
-                G_Profile_RecordDamage( attacker ? attacker->client : NULL, targ->client, damage );
+                // Record only the actual damage that made it past armor, so profile stats
+                // match the in-game damage counters instead of using the raw pre-armor
+                // value.
+                G_Profile_RecordDamage( attacker ? attacker->client : NULL, targ->client, take );
         }
 
 	if ( g_debugDamage.integer ) {
@@ -1192,7 +1195,7 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 					targ->client->car.fuelLeak = qtrue;
 				}
 			}
-}
+        }
 			
 		if ( targ->health <= 0 ) {
 // STONELANCE
@@ -1234,7 +1237,7 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 
 	}
 
-}
+        }
 
 
 /*
@@ -1338,7 +1341,7 @@ qboolean CanDamage (gentity_t *targ, vec3_t origin) {
 		return qtrue;
 
 	return qfalse;
-}
+        }
 
 
 /*
@@ -1456,7 +1459,7 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 	}
 
 	return hitClient;
-}
+        }
 
 
 // STONELANCE
@@ -1568,5 +1571,5 @@ qboolean G_RadiusDamage_NoKnockBack ( vec3_t origin, gentity_t *attacker, float 
 	}
 
 	return hitClient;
-}
+        }
 // END
