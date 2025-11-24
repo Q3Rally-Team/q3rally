@@ -1098,10 +1098,8 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
 // Q3Rally Code Start
 //	to->headSkin = from->headSkin;
 
-	to->plateModel = from->plateModel;
-	to->plateShader = from->plateShader;
-
-	to->clientNum = from->clientNum;
+        to->plateModel = from->plateModel;
+        to->plateShader = from->plateShader;
 // END
 	to->modelIcon = from->modelIcon;
 

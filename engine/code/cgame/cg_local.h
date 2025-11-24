@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/q_shared.h"
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_public.h"
+#include "../game/bg_achievements.h"
 #include "cg_public.h"
 
 
@@ -53,10 +54,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
 #define	ATTACKER_HEAD_TIME	10000
 #define	REWARD_TIME			3000
+#define ACHIEVEMENT_DISPLAY_TIME        3600
+#define ACHIEVEMENT_LOCKED_TIME         650
+#define ACHIEVEMENT_FADE_TIME           400
+#define ACHIEVEMENT_MAX_QUEUE           4
 
 #define	PULSE_SCALE			1.5			// amount to scale up the icons when activating
 
 #define	MAX_STEP_CHANGE		32
+
+typedef struct {
+    bgAchievementCategory_t category;
+    int tierIndex;
+    int startTime;
+} cgAchievementAnnouncement_t;
+
 
 #define	MAX_VERTS_ON_POLY	10
 // Q3Rally Code Start
@@ -739,6 +751,8 @@ typedef struct {
 	int			rewardCount[MAX_REWARDSTACK];
 	qhandle_t	rewardShader[MAX_REWARDSTACK];
 	qhandle_t	rewardSound[MAX_REWARDSTACK];
+        cgAchievementAnnouncement_t achievementQueue[ACHIEVEMENT_MAX_QUEUE];
+        int                     achievementQueueCount;
 
 	// sound buffer mainly for announcer sounds
 	int			soundBufferIn;
@@ -1049,6 +1063,8 @@ typedef struct {
 	qhandle_t	medalDefend;
 	qhandle_t	medalAssist;
 	qhandle_t	medalCapture;
+        qhandle_t       achievementMedalLocked[BG_ACHIEVEMENT_ICON_COUNT];
+        qhandle_t       achievementMedalUnlocked[BG_ACHIEVEMENT_ICON_COUNT];
 	qhandle_t	headLightGlow;
 	qhandle_t	brakeLightGlow;
 	qhandle_t	reverseLightGlow;
@@ -1215,6 +1231,7 @@ sfxHandle_t neutralFlagReturnedSound;
 	sfxHandle_t	drown;
 	sfxHandle_t	eliminationWarningSound;
 	sfxHandle_t	eliminationEliminatedSound;
+        sfxHandle_t     achievementUnlockSound;
 // Q3Rally Code END
 
 } cgMedia_t;

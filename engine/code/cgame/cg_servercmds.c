@@ -1157,6 +1157,58 @@ static void CG_ParsePositions( void ) {
 // END
 
 
+static void CG_AddAchievementAnnouncement( bgAchievementCategory_t category, int tierIndex ) {
+	cgAchievementAnnouncement_t *slot;
+	int queueCount;
+
+	if ( category < 0 || category >= BG_ACHIEVEMENT_CATEGORY_COUNT ) {
+		return;
+	}
+
+	queueCount = cg.achievementQueueCount;
+	if ( queueCount >= ACHIEVEMENT_MAX_QUEUE ) {
+		int i;
+		queueCount = ACHIEVEMENT_MAX_QUEUE - 1;
+
+		for ( i = 0; i < queueCount; ++i ) {
+			cg.achievementQueue[i] = cg.achievementQueue[i + 1];
+		}
+	}
+
+	slot = &cg.achievementQueue[queueCount];
+	slot->category = category;
+	slot->tierIndex = tierIndex;
+	slot->startTime = cg.time;
+	cg.achievementQueueCount = queueCount + 1;
+
+	if ( cgs.media.achievementUnlockSound ) {
+		trap_S_StartLocalSound( cgs.media.achievementUnlockSound, CHAN_LOCAL_SOUND );
+	}
+}
+
+static void CG_ParseAchievementUnlock( void ) {
+	int categoryIndex;
+	int tierIndex;
+
+	if ( trap_Argc() < 3 ) {
+		return;
+	}
+
+	categoryIndex = atoi( CG_Argv( 1 ) );
+	tierIndex = atoi( CG_Argv( 2 ) );
+
+	if ( categoryIndex < 0 || categoryIndex >= BG_ACHIEVEMENT_CATEGORY_COUNT ) {
+		return;
+	}
+
+	if ( !BG_AchievementGetTier( categoryIndex, tierIndex ) ) {
+		return;
+	}
+
+	CG_AddAchievementAnnouncement( (bgAchievementCategory_t) categoryIndex, tierIndex );
+}
+
+
 /*
 =================
 CG_ServerCommand
@@ -1176,6 +1228,11 @@ static void CG_ServerCommand( void ) {
 
 	if ( !cmd[0] ) {
 		// server claimed the command
+		return;
+	}
+
+	if ( !strcmp( cmd, "achv" ) ) {
+		CG_ParseAchievementUnlock();
 		return;
 	}
 

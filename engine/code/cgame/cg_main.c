@@ -831,10 +831,14 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.hitSoundHighArmor = trap_S_RegisterSound( "sound/feedback/hithi.wav", qfalse );
 	cgs.media.hitSoundLowArmor = trap_S_RegisterSound( "sound/feedback/hitlo.wav", qfalse );
 #endif
-	cgs.media.impressiveSound = trap_S_RegisterSound( "sound/feedback/impressive.ogg", qtrue );
-    cgs.media.impressiveTelefragSound = trap_S_RegisterSound( "sound/feedback/telefragged.ogg", qtrue );
-	cgs.media.excellentSound = trap_S_RegisterSound( "sound/feedback/excellent.wav", qtrue );
-	cgs.media.deniedSound = trap_S_RegisterSound( "sound/feedback/denied.wav", qtrue );
+        cgs.media.impressiveSound = trap_S_RegisterSound( "sound/feedback/impressive.ogg", qtrue );
+cgs.media.impressiveTelefragSound = trap_S_RegisterSound( "sound/feedback/telefragged.ogg", qtrue );
+        cgs.media.excellentSound = trap_S_RegisterSound( "sound/feedback/excellent.wav", qtrue );
+        cgs.media.achievementUnlockSound = trap_S_RegisterSound( "sound/feedback/achieve.wav", qtrue );
+        if ( !cgs.media.achievementUnlockSound ) {
+            cgs.media.achievementUnlockSound = cgs.media.impressiveSound;
+        }
+        cgs.media.deniedSound = trap_S_RegisterSound( "sound/feedback/denied.wav", qtrue );
 	cgs.media.humiliationSound = trap_S_RegisterSound( "sound/feedback/humiliation.wav", qtrue );
 	cgs.media.assistSound = trap_S_RegisterSound( "sound/feedback/assist.wav", qtrue );
 	cgs.media.defendSound = trap_S_RegisterSound( "sound/feedback/defense.wav", qtrue );
@@ -1337,11 +1341,16 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.medalImpressive = trap_R_RegisterShaderNoMip( "medal_impressive" );
     cgs.media.medalImpressiveTelefrag = trap_R_RegisterShaderNoMip ( "medal_telefragged" );
-	cgs.media.medalExcellent = trap_R_RegisterShaderNoMip( "medal_excellent" );
-	cgs.media.medalGauntlet = trap_R_RegisterShaderNoMip( "medal_gauntlet" );
-	cgs.media.medalDefend = trap_R_RegisterShaderNoMip( "medal_defend" );
-	cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
-	cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
+        cgs.media.medalExcellent = trap_R_RegisterShaderNoMip( "medal_excellent" );
+        cgs.media.medalGauntlet = trap_R_RegisterShaderNoMip( "medal_gauntlet" );
+        cgs.media.medalDefend = trap_R_RegisterShaderNoMip( "medal_defend" );
+        cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
+        cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
+
+        for ( i = 0; i < BG_ACHIEVEMENT_ICON_COUNT; ++i ) {
+            cgs.media.achievementMedalLocked[i] = trap_R_RegisterShaderNoMip( bg_achievementMedalLockedPaths[i] );
+            cgs.media.achievementMedalUnlocked[i] = trap_R_RegisterShaderNoMip( bg_achievementMedalUnlockedPaths[i] );
+        }
 
 
 	memset( cg_items, 0, sizeof( cg_items ) );

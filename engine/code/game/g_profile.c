@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "g_profile.h"
+#include "bg_achievements.h"
 
 #define PROFILE_AUTOSAVE_INTERVAL 30000
 #define PROFILE_DISPLAY_L_PER_100KM 9.0f
@@ -11,9 +12,11 @@ static struct {
     profile_stats_t stats;
     profile_info_t  info;
     int             nextAutosaveTime;
+    int             achievementsUnlocked[BG_ACHIEVEMENT_CATEGORY_COUNT];
 } s_profileState;
 
 static void G_Profile_ParseString( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue );
+static void G_Profile_RecomputeAchievementState( void );
 
 static qboolean G_Profile_ShouldTrackClient( const gclient_t *client ) {
     if ( !s_profileState.loaded ) {
@@ -96,6 +99,83 @@ static int G_Profile_ParseFavoriteCars( const char *buffer, profile_info_t *info
     }
 
     return parsedFavorites;
+}
+
+static double G_Profile_GetAchievementProgressForCategory( bgAchievementCategory_t category ) {
+    switch ( category ) {
+    case BG_ACHIEVEMENT_DISTANCE:
+        return s_profileState.stats.distanceKm;
+    case BG_ACHIEVEMENT_KILLS:
+        return s_profileState.stats.kills;
+    case BG_ACHIEVEMENT_WINS:
+        return s_profileState.stats.wins;
+    case BG_ACHIEVEMENT_FLAG_CAPTURES:
+        return s_profileState.stats.flagCaptures;
+    case BG_ACHIEVEMENT_FLAG_ASSISTS:
+        return s_profileState.stats.flagAssists;
+    case BG_ACHIEVEMENT_FUEL:
+        return s_profileState.stats.fuelUsed;
+    case BG_ACHIEVEMENT_ACCURACY:
+        return s_profileState.stats.accuracyAwards;
+    case BG_ACHIEVEMENT_EXCELLENT:
+        return s_profileState.stats.excellentAwards;
+    case BG_ACHIEVEMENT_IMPRESSIVE:
+        return s_profileState.stats.impressiveAwards;
+    case BG_ACHIEVEMENT_PERFECT:
+        return s_profileState.stats.perfectAwards;
+    default:
+        break;
+    }
+
+    return 0.0;
+}
+
+static void G_Profile_SendAchievementUnlock( gclient_t *client, bgAchievementCategory_t category, int tierIndex ) {
+    int clientNum;
+    const bgAchievementCategoryDef_t *categoryDef;
+
+    if ( !client || !client->pers.localClient ) {
+        return;
+    }
+
+    categoryDef = BG_AchievementGetCategory( category );
+    if ( !categoryDef || tierIndex < 0 || tierIndex >= categoryDef->tierCount ) {
+        return;
+    }
+
+    clientNum = client - level.clients;
+    trap_SendServerCommand( clientNum, va( "achv %d %d", category, tierIndex ) );
+}
+
+static void G_Profile_CheckAchievementProgress( gclient_t *client, bgAchievementCategory_t category ) {
+    const bgAchievementCategoryDef_t *categoryDef;
+    int unlocked;
+
+    if ( !s_profileState.loaded || category < 0 || category >= BG_ACHIEVEMENT_CATEGORY_COUNT ) {
+        return;
+    }
+
+    categoryDef = BG_AchievementGetCategory( category );
+    unlocked = BG_AchievementUnlockedTiers( categoryDef, G_Profile_GetAchievementProgressForCategory( category ) );
+
+    if ( unlocked > s_profileState.achievementsUnlocked[category] ) {
+        int tier;
+
+        for ( tier = s_profileState.achievementsUnlocked[category]; tier < unlocked; ++tier ) {
+            G_Profile_SendAchievementUnlock( client, category, tier );
+        }
+
+        s_profileState.achievementsUnlocked[category] = unlocked;
+    }
+}
+
+static void G_Profile_RecomputeAchievementState( void ) {
+    int i;
+
+    for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
+        const bgAchievementCategoryDef_t *category = BG_AchievementGetCategory( i );
+        s_profileState.achievementsUnlocked[i] = BG_AchievementUnlockedTiers( category, G_Profile_GetAchievementProgressForCategory( i ) );
+    }
 }
 
 static qboolean G_Profile_IsValidName( const char *name ) {
@@ -705,6 +785,8 @@ void G_Profile_Init( void ) {
         G_Profile_WriteToDisk();
     }
 
+    G_Profile_RecomputeAchievementState();
+
     s_profileState.loaded = qtrue;
     s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
 }
@@ -772,6 +854,10 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
         return;
     }
 
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
     // Zeit-Tracking: Messe tatsächlich vergangene Zeit seit letztem Frame
     currentTime = level.time;
     
@@ -808,6 +894,9 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
 
     G_Profile_UpdateVehicleUsage( ent, frameMsec );
 
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_DISTANCE );
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_FUEL );
+
     // Geschwindigkeits-Tracking
     speedQu = VectorLength( client->ps.velocity );
     speedKph = ( speedQu / CP_M_2_QU ) * 3.6;
@@ -837,6 +926,8 @@ void G_Profile_RecordKill( gclient_t *attacker, gclient_t *victim ) {
 
     s_profileState.stats.kills++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( attacker, BG_ACHIEVEMENT_KILLS );
 }
 
 void G_Profile_RecordDeath( gclient_t *victim ) {
@@ -863,6 +954,8 @@ void G_Profile_RecordFlagCapture( gclient_t *client ) {
 
     s_profileState.stats.flagCaptures++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_FLAG_CAPTURES );
 }
 
 void G_Profile_RecordFlagAssist( gclient_t *client ) {
@@ -876,6 +969,8 @@ void G_Profile_RecordFlagAssist( gclient_t *client ) {
 
     s_profileState.stats.flagAssists++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_FLAG_ASSISTS );
 }
 
 void G_Profile_RecordWin( gclient_t *client ) {
@@ -889,6 +984,8 @@ void G_Profile_RecordWin( gclient_t *client ) {
 
     s_profileState.stats.wins++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_WINS );
 }
 
 void G_Profile_RecordLoss( gclient_t *client ) {
@@ -930,6 +1027,8 @@ void G_Profile_RecordExcellent( gclient_t *client ) {
 
     s_profileState.stats.excellentAwards++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_EXCELLENT );
 }
 
 void G_Profile_RecordImpressive( gclient_t *client ) {
@@ -939,6 +1038,8 @@ void G_Profile_RecordImpressive( gclient_t *client ) {
 
     s_profileState.stats.impressiveAwards++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_IMPRESSIVE );
 }
 
 void G_Profile_RecordAccuracy( gclient_t *client, int accuracyPercent ) {
@@ -952,6 +1053,8 @@ void G_Profile_RecordAccuracy( gclient_t *client, int accuracyPercent ) {
 
     s_profileState.stats.accuracyAwards++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_ACCURACY );
 }
 
 void G_Profile_RecordPerfect( gclient_t *client ) {
@@ -961,6 +1064,8 @@ void G_Profile_RecordPerfect( gclient_t *client ) {
 
     s_profileState.stats.perfectAwards++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_PERFECT );
 }
 
 

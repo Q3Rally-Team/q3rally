@@ -2193,6 +2193,96 @@ static void CG_DrawReward( void ) {
 }
 
 
+static void CG_ShiftAchievementQueue( void ) {
+    int i;
+
+    if ( cg.achievementQueueCount <= 0 ) {
+        cg.achievementQueueCount = 0;
+        return;
+    }
+
+    for ( i = 1; i < cg.achievementQueueCount; ++i ) {
+        cg.achievementQueue[i - 1] = cg.achievementQueue[i];
+    }
+
+    cg.achievementQueueCount--;
+}
+
+static void CG_DrawAchievementNotifications( void ) {
+    const bgAchievementCategoryDef_t *category;
+    const bgAchievementTierDef_t *tier;
+    cgAchievementAnnouncement_t *announcement;
+    int elapsed;
+    float alpha;
+    float x, y;
+    float width = 440.0f;
+    float height = 104.0f;
+    float iconSize = 64.0f;
+    vec4_t bgColor = { 0.0f, 0.0f, 0.0f, 0.45f };
+    vec4_t borderColor = { 1.0f, 1.0f, 1.0f, 0.25f };
+    vec4_t lockedColor = { 0.7f, 0.7f, 0.7f, 1.0f };
+    vec4_t unlockedColor = { 0.6f, 1.0f, 0.6f, 1.0f };
+    vec4_t textColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+    qhandle_t icon;
+
+    if ( cg.achievementQueueCount <= 0 ) {
+        return;
+    }
+
+    announcement = &cg.achievementQueue[0];
+    category = BG_AchievementGetCategory( announcement->category );
+    tier = BG_AchievementGetTier( announcement->category, announcement->tierIndex );
+
+    if ( !category || !tier ) {
+        CG_ShiftAchievementQueue();
+        return;
+    }
+
+    elapsed = cg.time - announcement->startTime;
+    if ( elapsed >= ACHIEVEMENT_DISPLAY_TIME ) {
+        CG_ShiftAchievementQueue();
+        return;
+    }
+
+    alpha = 1.0f;
+    if ( elapsed > ACHIEVEMENT_DISPLAY_TIME - ACHIEVEMENT_FADE_TIME ) {
+        alpha = (float)( ACHIEVEMENT_DISPLAY_TIME - elapsed ) / ACHIEVEMENT_FADE_TIME;
+    }
+
+    if ( alpha < 0.0f ) {
+        alpha = 0.0f;
+    }
+
+    bgColor[3] *= alpha;
+    borderColor[3] *= alpha;
+    lockedColor[3] *= alpha;
+    unlockedColor[3] *= alpha;
+    textColor[3] *= alpha;
+
+    x = ( SCREEN_WIDTH - width ) * 0.5f;
+    y = 96.0f;
+
+    CG_FillRect( x, y, width, height, bgColor );
+    CG_DrawRect( x, y, width, height, 1.0f, borderColor );
+
+    icon = ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? cgs.media.achievementMedalLocked[category->icon] : cgs.media.achievementMedalUnlocked[category->icon];
+    if ( icon ) {
+        CG_DrawPic( x + 12.0f, y + ( height - iconSize ) * 0.5f, iconSize, iconSize, icon );
+    }
+
+    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 18.0f ), tier->name,
+                      ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? lockedColor : unlockedColor,
+                      qfalse, qtrue, SMALLCHAR_WIDTH * 2, SMALLCHAR_HEIGHT * 2, 0 );
+
+    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 52.0f ), tier->description,
+                      textColor, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+
+    CG_DrawStringExt( (int)( x + iconSize + 24.0f ), (int)( y + 72.0f ), category->title,
+                      textColor, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+
+    trap_R_SetColor( NULL );
+}
+
 /*
 =========
 LAGOMETER
@@ -3240,9 +3330,10 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 #else
 	
 #endif
-			CG_DrawReward();
-		}
-	}
+                        CG_DrawReward();
+                        CG_DrawAchievementNotifications();
+                }
+        }
 
 	if ( cgs.gametype >= GT_TEAM ) {
 #ifndef MISSIONPACK

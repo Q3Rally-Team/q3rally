@@ -1255,6 +1255,12 @@ static qboolean UI_Profile_EnsureDataFresh( void ) {
         uis.activeProfileInfoLastRead = uis.realtime;
 
         UI_Profile_SetFavoriteCvars( &uis.activeProfileInfo );
+
+        if ( uis.activeProfileInfo.name[0] ) {
+            trap_Cvar_Set( "name", uis.activeProfileInfo.name );
+        } else if ( uis.activeProfile[0] ) {
+            trap_Cvar_Set( "name", uis.activeProfile );
+        }
     }
 
     return qtrue;
