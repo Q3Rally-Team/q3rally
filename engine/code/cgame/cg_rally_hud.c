@@ -582,10 +582,15 @@ static float CG_DrawLaps( float y ) {
 	curLap = cent->currentLap;
 	numLaps = cgs.laplimit;
 
-	if ( numLaps > 1 )
-		Com_sprintf(s, sizeof(s), "LAP: %i/%i", curLap, numLaps);
-	else
-		Com_sprintf(s, sizeof(s), "LAP: %i", curLap);
+        if ( cgs.gametype == GT_SPRINT ) {
+                Q_strncpyz( s, "SPRINT", sizeof( s ) );
+        }
+        else if ( numLaps > 1 ) {
+                Com_sprintf( s, sizeof( s ), "LAP: %i/%i", curLap, numLaps );
+        }
+        else {
+                Com_sprintf( s, sizeof( s ), "LAP: %i", curLap );
+        }
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );

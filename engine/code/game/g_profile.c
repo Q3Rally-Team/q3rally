@@ -109,6 +109,8 @@ static double G_Profile_GetAchievementProgressForCategory( bgAchievementCategory
         return s_profileState.stats.kills;
     case BG_ACHIEVEMENT_WINS:
         return s_profileState.stats.wins;
+    case BG_ACHIEVEMENT_SPRINT_WINS:
+        return s_profileState.stats.sprintWins;
     case BG_ACHIEVEMENT_FLAG_CAPTURES:
         return s_profileState.stats.flagCaptures;
     case BG_ACHIEVEMENT_FLAG_ASSISTS:
@@ -480,6 +482,7 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.kills = G_Profile_ParseInt( buffer, "kills", 0 );
     s_profileState.stats.deaths = G_Profile_ParseInt( buffer, "deaths", 0 );
     s_profileState.stats.wins = G_Profile_ParseInt( buffer, "wins", 0 );
+    s_profileState.stats.sprintWins = G_Profile_ParseInt( buffer, "sprintWins", 0 );
     s_profileState.stats.losses = G_Profile_ParseInt( buffer, "losses", 0 );
     s_profileState.stats.flagCaptures = G_Profile_ParseInt( buffer, "flagCaptures", 0 );
     s_profileState.stats.flagAssists = G_Profile_ParseInt( buffer, "flagAssists", 0 );
@@ -693,6 +696,7 @@ static void G_Profile_WriteToDisk( void ) {
         "\t\t\"kills\": %d,\n"
         "\t\t\"deaths\": %d,\n"
         "\t\t\"wins\": %d,\n"
+        "\t\t\"sprintWins\": %d,\n"
         "\t\t\"losses\": %d,\n"
         "\t\t\"flagCaptures\": %d,\n"
         "\t\t\"flagAssists\": %d,\n"
@@ -720,6 +724,7 @@ static void G_Profile_WriteToDisk( void ) {
         s_profileState.stats.kills,
         s_profileState.stats.deaths,
         s_profileState.stats.wins,
+        s_profileState.stats.sprintWins,
         s_profileState.stats.losses,
         s_profileState.stats.flagCaptures,
         s_profileState.stats.flagAssists,
@@ -986,6 +991,11 @@ void G_Profile_RecordWin( gclient_t *client ) {
     s_profileState.dirty = qtrue;
 
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_WINS );
+
+    if ( g_gametype.integer == GT_SPRINT ) {
+        s_profileState.stats.sprintWins++;
+        G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_SPRINT_WINS );
+    }
 }
 
 void G_Profile_RecordLoss( gclient_t *client ) {

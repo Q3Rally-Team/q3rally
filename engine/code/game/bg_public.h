@@ -142,6 +142,7 @@ typedef enum {
 */
         GT_RACING,                      // racing
         GT_RACING_DM,           // racing with weapons
+        GT_SPRINT,                      // point-to-point racing
         GT_SINGLE_PLAYER,       // single player tournament
         GT_DERBY,                       // demolition derby
         GT_LCS,                       // last car standing

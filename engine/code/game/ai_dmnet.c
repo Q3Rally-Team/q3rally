@@ -1120,7 +1120,7 @@ int BotLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) {
 
 // Q3Rally Code Start
 /*
-	if ( gametype == GT_RACING || gametype == GT_RACING_DM )
+   if ( gametype == GT_RACING || gametype == GT_RACING_DM || gametype == GT_SPRINT )
 	{
 		gentity_t	*ent = NULL;
 		while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL) {
@@ -1996,7 +1996,7 @@ int AINode_Seek_LTG(bot_state_t *bs)
 	//if there is an enemy
 // Q3Rally Code Start
 //	if (BotFindEnemy(bs, -1)) {
-	if ( BotFindEnemy(bs, -1) && gametype != GT_RACING && gametype != GT_TEAM_RACING ) {
+   if ( BotFindEnemy(bs, -1) && gametype != GT_RACING && gametype != GT_SPRINT && gametype != GT_TEAM_RACING ) {
 // END
 		if (BotWantsToRetreat(bs)) {
 			//keep the current long term goal and retreat
@@ -2139,7 +2139,7 @@ AIEnter_Battle_Fight
 */
 void AIEnter_Battle_Fight(bot_state_t *bs, char *s) {
 // Q3Rally Code Start
-	if ( gametype == GT_RACING || gametype == GT_TEAM_RACING )
+   if ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_TEAM_RACING )
 		return;
 // END
 
@@ -2340,7 +2340,7 @@ AIEnter_Battle_Chase
 */
 void AIEnter_Battle_Chase(bot_state_t *bs, char *s) {
 // Q3Rally Code Start
-	if ( gametype == GT_RACING || gametype == GT_TEAM_RACING )
+   if ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_TEAM_RACING )
 		return;
 // END
 
@@ -2495,7 +2495,7 @@ AIEnter_Battle_Retreat
 */
 void AIEnter_Battle_Retreat(bot_state_t *bs, char *s) {
 // STONELANCE
-	if ( gametype == GT_RACING || gametype == GT_TEAM_RACING )
+   if ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_TEAM_RACING )
 		return;
 // END
 
@@ -2699,7 +2699,7 @@ AIEnter_Battle_NBG
 */
 void AIEnter_Battle_NBG(bot_state_t *bs, char *s) {
 // STONELANCE
-	if ( gametype == GT_RACING || gametype == GT_TEAM_RACING )
+   if ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_TEAM_RACING )
 		return;
 // END
 

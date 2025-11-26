@@ -493,7 +493,7 @@ int ArenaServers_GametypeForGames(int games) {
                 break;
 */
         case GAMES_RACING:
-                gametype = GT_RACING;
+                gametype = -2;
                 break;
 
         case GAMES_RACING_DM:
@@ -725,7 +725,12 @@ static void ArenaServers_UpdateMenu( void ) {
                 }
 
                 gametype = ArenaServers_GametypeForGames(g_gametype);
-                if( gametype != -1 && servernodeptr->gametype != gametype ) {
+                if ( gametype == -2 ) {
+                        if ( servernodeptr->gametype != GT_RACING && servernodeptr->gametype != GT_SPRINT ) {
+                                continue;
+                        }
+                }
+                else if( gametype != -1 && servernodeptr->gametype != gametype ) {
                         continue;
                 }
 
@@ -1255,7 +1260,7 @@ static void ArenaServers_StartRefresh( void )
                 gametype = ArenaServers_GametypeForGames(g_arenaservers.gametype.curvalue);
 
                 // Add requested gametype to args for dpmaster
-                if (gametype != -1) {
+                if (gametype != -1 && gametype != -2) {
                         Com_sprintf( myargs, sizeof (myargs), " gametype=%i", gametype );
                 } else {
                         myargs[0] = '\0';

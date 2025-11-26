@@ -23,14 +23,25 @@ const bgAchievementTierDef_t bg_killAchievementTiers[] = {
 };
 
 const bgAchievementTierDef_t bg_winAchievementTiers[] = {
-        { 1.0, "Checkered Debut", "Win your very first race." },
-        { 3.0, "Podium Regular", "Collect 3 total victories." },
-        { 5.0, "Sprint Specialist", "Take home 5 wins." },
-        { 10.0, "Championship Hopeful", "Secure 10 race wins." },
-        { 20.0, "Series Star", "Reach 20 gold finishes." },
-        { 30.0, "Circuit Royalty", "Earn 30 overall wins." },
-        { 40.0, "Dynasty Driver", "Stack up 40 victories." },
-        { 50.0, "Hall of Fame", "Celebrate 50 race wins." }
+    { 1.0, "Checkered Debut", "Win your very first race." },
+    { 3.0, "Podium Regular", "Collect 3 total victories." },
+    { 10.0, "Championship Hopeful", "Secure 10 race wins." },
+    { 20.0, "Series Star", "Reach 20 gold finishes." },
+    { 30.0, "Circuit Royalty", "Earn 30 overall wins." },
+    { 40.0, "Dynasty Driver", "Stack up 40 victories." },
+    { 50.0, "Hall of Fame", "Celebrate 50 race wins." },
+    { 100.0, "Centennial Champion", "Claim 100 career victories." }
+};
+
+const bgAchievementTierDef_t bg_sprintWinAchievementTiers[] = {
+    { 1.0, "Sprint Rookie", "Win your first sprint race." },
+    { 3.0, "Quick Podiums", "Collect 3 sprint victories." },
+    { 10.0, "Sprint Specialist", "Win 10 sprint races." },
+    { 20.0, "Speed Series Star", "Reach 20 sprint wins." },
+    { 30.0, "Dash Dominator", "Earn 30 sprint victories." },
+    { 40.0, "Momentum Master", "Stack up 40 sprint wins." },
+    { 50.0, "Sprint Hall of Fame", "Celebrate 50 sprint wins." },
+    { 100.0, "Sprint Century", "Bring home 100 sprint victories." }
 };
 
 const bgAchievementTierDef_t bg_flagCaptureAchievementTiers[] = {
@@ -140,6 +151,7 @@ const bgAchievementCategoryDef_t bg_achievementCategories[BG_ACHIEVEMENT_CATEGOR
     { "Distance Driven", bg_distanceAchievementTiers, ARRAY_LEN( bg_distanceAchievementTiers ), BG_ACHIEVEMENT_ICON_DRIVEN },
     { "Kills", bg_killAchievementTiers, ARRAY_LEN( bg_killAchievementTiers ), BG_ACHIEVEMENT_ICON_KILLS },
     { "Races Won", bg_winAchievementTiers, ARRAY_LEN( bg_winAchievementTiers ), BG_ACHIEVEMENT_ICON_WINS },
+    { "Sprint Wins", bg_sprintWinAchievementTiers, ARRAY_LEN( bg_sprintWinAchievementTiers ), BG_ACHIEVEMENT_ICON_WINS },
     { "Flags Captured", bg_flagCaptureAchievementTiers, ARRAY_LEN( bg_flagCaptureAchievementTiers ), BG_ACHIEVEMENT_ICON_FLAGS },
     { "Flag Assists", bg_flagAssistAchievementTiers, ARRAY_LEN( bg_flagAssistAchievementTiers ), BG_ACHIEVEMENT_ICON_FLAG_ASSISTS },
     { "Fuel Consumed", bg_fuelAchievementTiers, ARRAY_LEN( bg_fuelAchievementTiers ), BG_ACHIEVEMENT_ICON_FUEL },

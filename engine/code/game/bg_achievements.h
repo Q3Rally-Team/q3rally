@@ -35,6 +35,7 @@ typedef enum {
     BG_ACHIEVEMENT_DISTANCE = 0,
     BG_ACHIEVEMENT_KILLS,
     BG_ACHIEVEMENT_WINS,
+    BG_ACHIEVEMENT_SPRINT_WINS,
     BG_ACHIEVEMENT_FLAG_CAPTURES,
     BG_ACHIEVEMENT_FLAG_ASSISTS,
     BG_ACHIEVEMENT_FUEL,
@@ -51,6 +52,7 @@ typedef enum {
 extern const bgAchievementTierDef_t bg_distanceAchievementTiers[];
 extern const bgAchievementTierDef_t bg_killAchievementTiers[];
 extern const bgAchievementTierDef_t bg_winAchievementTiers[];
+extern const bgAchievementTierDef_t bg_sprintWinAchievementTiers[];
 extern const bgAchievementTierDef_t bg_flagCaptureAchievementTiers[];
 extern const bgAchievementTierDef_t bg_flagAssistAchievementTiers[];
 extern const bgAchievementTierDef_t bg_fuelAchievementTiers[];

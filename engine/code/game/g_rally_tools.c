@@ -280,23 +280,25 @@ void CenterPrint_All( const char *s ){
 }
 
 qboolean isRallyRace( void ){
-	if ( g_gametype.integer == GT_RACING
-		|| g_gametype.integer == GT_RACING_DM
-		|| g_gametype.integer == GT_TEAM_RACING
-		|| g_gametype.integer == GT_TEAM_RACING_DM
-		|| g_gametype.integer == GT_ELIMINATION ){
-		return qtrue;
-	}
+        if ( g_gametype.integer == GT_RACING
+                || g_gametype.integer == GT_RACING_DM
+                || g_gametype.integer == GT_SPRINT
+                || g_gametype.integer == GT_TEAM_RACING
+                || g_gametype.integer == GT_TEAM_RACING_DM
+                || g_gametype.integer == GT_ELIMINATION ){
+                return qtrue;
+        }
 
 	return qfalse;
 }
 
 qboolean isRallyNonDMRace( void ){
-	if ( g_gametype.integer == GT_RACING
-		|| g_gametype.integer == GT_TEAM_RACING
-		|| ( g_gametype.integer == GT_ELIMINATION && !g_eliminationWeapons.integer ) ){
-		return qtrue;
-	}
+        if ( g_gametype.integer == GT_RACING
+                || g_gametype.integer == GT_SPRINT
+                || g_gametype.integer == GT_TEAM_RACING
+                || ( g_gametype.integer == GT_ELIMINATION && !g_eliminationWeapons.integer ) ){
+                return qtrue;
+        }
 
 	return qfalse;
 }

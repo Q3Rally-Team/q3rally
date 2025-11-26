@@ -197,9 +197,15 @@ CG_DrawHUD_Laps
 */
 void CG_DrawHUD_Laps(float x, float y){
 
-	// draw heading
-	CG_FillRect(x, y, 170, 18, bgColor);
-	CG_DrawSmallStringColor(x + 12, y, "LAP:", colorWhite);
+        // draw heading
+        CG_FillRect(x, y, 170, 18, bgColor);
+        if ( cgs.gametype == GT_SPRINT ) {
+                CG_DrawSmallStringColor(x + 12, y, "SPRINT:", colorWhite);
+                CG_DrawSmallStringColor(x + 102, y, "POINT-TO-POINT", colorWhite);
+                return;
+        }
+
+        CG_DrawSmallStringColor(x + 12, y, "LAP:", colorWhite);
         if ( cgs.laplimit > 1 )
                 CG_DrawSmallStringColor(x + 102, y, va("%i/%i", cg_entities[cg.snap->ps.clientNum].currentLap, cgs.laplimit), colorWhite);
         else
@@ -479,13 +485,14 @@ qboolean CG_DrawHUD( void ) {
 		trap_SendClientCommand( "score" );
 	}
 
-	switch(cgs.gametype){
-	default:
-	case GT_RACING:
-	case GT_TEAM_RACING:
-		CG_DrawHUD_Times(0, 112);
-		CG_DrawHUD_Positions(0, 228);
-		CG_DrawHUD_Laps(0, 304);
+        switch(cgs.gametype){
+        default:
+        case GT_RACING:
+        case GT_SPRINT:
+        case GT_TEAM_RACING:
+                CG_DrawHUD_Times(0, 112);
+                CG_DrawHUD_Positions(0, 228);
+                CG_DrawHUD_Laps(0, 304);
 
 		break;
 

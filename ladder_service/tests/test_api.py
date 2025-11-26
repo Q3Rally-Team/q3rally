@@ -122,6 +122,26 @@ def test_list_matches_supports_team_race_dm_mode() -> None:
     assert cleanup.status_code == 204
 
 
+def test_create_match_accepts_sprint_mode() -> None:
+    match = {
+        **MATCH_TEMPLATE,
+        "matchId": "srv-20240405-183011-45",
+        "mode": "sprint",
+        "settings": {"g_gametype": 145},
+    }
+
+    response = client.post("/api/v1/matches", json=match)
+    assert response.status_code == 201, response.text
+
+    stored = client.get(f"/api/v1/matches/{match['matchId']}")
+    assert stored.status_code == 200, stored.text
+    payload = stored.json()
+    assert payload["mode"] == "GT_SPRINT"
+
+    cleanup = client.delete(f"/api/v1/matches/{match['matchId']}")
+    assert cleanup.status_code == 204
+
+
 def test_delete_match() -> None:
     response = client.delete(f"/api/v1/matches/{MATCH_TEMPLATE['matchId']}")
     assert response.status_code == 204

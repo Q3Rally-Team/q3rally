@@ -905,6 +905,7 @@ try {
     const MODE_CONFIG = [
       { key: 'gt_racing', type: 'race' },
       { key: 'gt_racing_dm', type: 'race' },
+      { key: 'gt_sprint', type: 'race' },
       { key: 'gt_derby', type: 'objective' },
       { key: 'gt_lcs', type: 'objective' },
       { key: 'gt_elimination', type: 'objective' },
@@ -1249,6 +1250,7 @@ try {
       de: {
         gt_racing: 'Rennen',
         gt_racing_dm: 'Deathmatch Rennen',
+        gt_sprint: 'Sprint',
         gt_derby: 'Demolition Derby',
         gt_lcs: 'Last Car Standing',
         gt_elimination: 'Elimination',
@@ -1263,6 +1265,7 @@ try {
       en: {
         gt_racing: 'Racing',
         gt_racing_dm: 'Racing Deathmatch',
+        gt_sprint: 'Sprint',
         gt_derby: 'Demolition Derby',
         gt_lcs: 'Last Car Standing',
         gt_elimination: 'Elimination',
@@ -1276,7 +1279,7 @@ try {
       }
     };
 
-    const RACE_MODE_KEYS = new Set(['gt_racing', 'gt_racing_dm', 'gt_team_racing', 'gt_team_racing_dm']);
+    const RACE_MODE_KEYS = new Set(['gt_racing', 'gt_racing_dm', 'gt_sprint', 'gt_team_racing', 'gt_team_racing_dm']);
     const DEATHMATCH_MODE_KEYS = new Set(['gt_deathmatch', 'gt_team']);
     const OBJECTIVE_MODE_KEYS = new Set(['gt_ctf', 'gt_ctf4', 'gt_elimination', 'gt_domination', 'gt_derby', 'gt_lcs']);
 

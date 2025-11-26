@@ -149,6 +149,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 //			case GT_FFA:
 			case GT_RACING:
 			case GT_RACING_DM:
+			case GT_SPRINT:
 			case GT_DERBY:
 				if ( g_maxGameClients.integer > 0 && 
 					level.numNonSpectatorClients >= g_maxGameClients.integer ) {

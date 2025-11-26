@@ -9,7 +9,7 @@ longname "A 2 B Test"
 author "P3rlE"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing"
+type "q3r_sprint"
 
 //CUSTOM BOTS
 bots ""

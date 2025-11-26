@@ -802,6 +802,7 @@ float Q3DistanceToRL( float length ) {
 qboolean isRallyRace( void ){
         return (cgs.gametype == GT_RACING
                 || cgs.gametype == GT_RACING_DM
+                || cgs.gametype == GT_SPRINT
                 || cgs.gametype == GT_TEAM_RACING
                 || cgs.gametype == GT_TEAM_RACING_DM
                 || cgs.gametype == GT_ELIMINATION);
@@ -809,6 +810,7 @@ qboolean isRallyRace( void ){
 
 qboolean isRallyNonDMRace( void ){
         return (cgs.gametype == GT_RACING
+                || cgs.gametype == GT_SPRINT
                 || cgs.gametype == GT_TEAM_RACING
                 || (cgs.gametype == GT_ELIMINATION && !cgs.eliminationWeapons));
 }

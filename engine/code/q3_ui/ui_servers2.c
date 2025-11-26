@@ -566,7 +566,7 @@ static void ArenaServers_UpdateMenu( void ) {
 			break;
 */
 		case GAMES_RACING:
-			if( servernodeptr->gametype != GT_RACING ) {
+			if( servernodeptr->gametype != GT_RACING && servernodeptr->gametype != GT_SPRINT ) {
 				continue;
 			}
 			break;

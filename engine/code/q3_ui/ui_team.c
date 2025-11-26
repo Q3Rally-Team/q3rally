@@ -208,6 +208,7 @@ void TeamMain_MenuInit( void ) {
 //	case GT_TOURNAMENT:
 	case GT_RACING:
 	case GT_RACING_DM:
+	case GT_SPRINT:
 	case GT_DEATHMATCH:
 	case GT_DERBY:
 	case GT_LCS:

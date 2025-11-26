@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, HttpUrl, root_validator, validator
 Gametype = Literal[
     "GT_RACING",
     "GT_RACING_DM",
+    "GT_SPRINT",
     "GT_TEAM_RACING",
     "GT_TEAM_RACING_DM",
     "GT_ELIMINATION",
