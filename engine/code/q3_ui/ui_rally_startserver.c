@@ -948,7 +948,7 @@ static void ServerOptions_Start( void ) {
 	char	buf[64];
 
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
-	fraglimit	 = atoi( s_serveroptions.fraglimit.field.buffer );
+	fraglimit	 = ( s_serveroptions.gametype == GT_SPRINT ) ? 1 : atoi( s_serveroptions.fraglimit.field.buffer );
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
 	dominationScoreInterval = atoi( s_serveroptions.dominationScoreInterval.field.buffer );
 	dominationCaptureDelay = atoi( s_serveroptions.dominationCaptureDelay.field.buffer );
@@ -1424,12 +1424,16 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	switch( s_serveroptions.gametype ) {
 
-case GT_RACING:
+	case GT_SPRINT:
+		Q_strncpyz( s_serveroptions.fraglimit.field.buffer, "1", sizeof( s_serveroptions.fraglimit.field.buffer ) );
+		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
+		break;
 
-case GT_RACING_DM:
-case GT_SPRINT:
-case GT_ELIMINATION:
-default:
+	case GT_RACING:
+
+	case GT_RACING_DM:
+	case GT_ELIMINATION:
+	default:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_laplimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_racing_timelimit" ) ) );
 		break;
@@ -1564,6 +1568,7 @@ ServerOptions_MenuInit
 static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	int		y;
 	int		n;
+	qboolean	limitFieldAdded;
 //	static char cirname[64];
 	
 
@@ -1592,47 +1597,55 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.mappic.height				= 96;
 	s_serveroptions.mappic.errorpic				= GAMESERVER_UNKNOWNMAP;
 	s_serveroptions.mappic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
-
 	y = 272;
 
-if( s_serveroptions.gametype == GT_RACING ||
-s_serveroptions.gametype == GT_RACING_DM ||
-s_serveroptions.gametype == GT_SPRINT ||
-s_serveroptions.gametype == GT_TEAM_RACING ||
-s_serveroptions.gametype == GT_TEAM_RACING_DM) {
+	limitFieldAdded = qfalse;
 
-		s_serveroptions.fraglimit.generic.type       = MTYPE_FIELD;
-		s_serveroptions.fraglimit.generic.name       = "Laps:";
-		s_serveroptions.fraglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-		s_serveroptions.fraglimit.generic.x	         = OPTIONS_X;
-		s_serveroptions.fraglimit.generic.y	         = y;
-		s_serveroptions.fraglimit.generic.statusbar  = ServerOptions_StatusBar;
-		s_serveroptions.fraglimit.field.widthInChars = 3;
-		s_serveroptions.fraglimit.field.maxchars     = 3;
-	}
-		else if( s_serveroptions.gametype != GT_CTF && s_serveroptions.gametype != GT_CTF4 && s_serveroptions.gametype != GT_DOMINATION ) {
-
-		s_serveroptions.fraglimit.generic.type       = MTYPE_FIELD;
-		s_serveroptions.fraglimit.generic.name       = "Frag Limit:";
-		s_serveroptions.fraglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-		s_serveroptions.fraglimit.generic.x	         = OPTIONS_X;
-		s_serveroptions.fraglimit.generic.y	         = y;
-		s_serveroptions.fraglimit.generic.statusbar  = ServerOptions_StatusBar;
-		s_serveroptions.fraglimit.field.widthInChars = 3;
-		s_serveroptions.fraglimit.field.maxchars     = 3;
-	}
-	else {
-		s_serveroptions.flaglimit.generic.type       = MTYPE_FIELD;
-		s_serveroptions.flaglimit.generic.name       = "Capture Limit:";
-		s_serveroptions.flaglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-		s_serveroptions.flaglimit.generic.x	         = OPTIONS_X;
-		s_serveroptions.flaglimit.generic.y	         = y;
-		s_serveroptions.flaglimit.generic.statusbar  = ServerOptions_StatusBar;
+	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
+		s_serveroptions.flaglimit.generic.type		= MTYPE_FIELD;
+		s_serveroptions.flaglimit.generic.name		= "Capture Limit:";
+		s_serveroptions.flaglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.flaglimit.generic.x			= OPTIONS_X;
+		s_serveroptions.flaglimit.generic.y			= y;
+		s_serveroptions.flaglimit.generic.statusbar	= ServerOptions_StatusBar;
 		s_serveroptions.flaglimit.field.widthInChars = 3;
-		s_serveroptions.flaglimit.field.maxchars     = 3;
+		s_serveroptions.flaglimit.field.maxchars	= 3;
+
+		limitFieldAdded = qtrue;
+	}
+	else if( s_serveroptions.gametype == GT_RACING ||
+			s_serveroptions.gametype == GT_RACING_DM ||
+			s_serveroptions.gametype == GT_TEAM_RACING ||
+			s_serveroptions.gametype == GT_TEAM_RACING_DM ) {
+
+		s_serveroptions.fraglimit.generic.type		= MTYPE_FIELD;
+		s_serveroptions.fraglimit.generic.name		= "Laps:";
+		s_serveroptions.fraglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.fraglimit.generic.x			= OPTIONS_X;
+		s_serveroptions.fraglimit.generic.y			= y;
+		s_serveroptions.fraglimit.generic.statusbar	= ServerOptions_StatusBar;
+		s_serveroptions.fraglimit.field.widthInChars = 3;
+		s_serveroptions.fraglimit.field.maxchars	= 3;
+
+		limitFieldAdded = qtrue;
+	}
+	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS && s_serveroptions.gametype != GT_SPRINT ) {
+
+		s_serveroptions.fraglimit.generic.type		= MTYPE_FIELD;
+		s_serveroptions.fraglimit.generic.name		= "Frag Limit:";
+		s_serveroptions.fraglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.fraglimit.generic.x			= OPTIONS_X;
+		s_serveroptions.fraglimit.generic.y			= y;
+		s_serveroptions.fraglimit.generic.statusbar	= ServerOptions_StatusBar;
+		s_serveroptions.fraglimit.field.widthInChars = 3;
+		s_serveroptions.fraglimit.field.maxchars	= 3;
+
+		limitFieldAdded = qtrue;
 	}
 
-	y += BIGCHAR_HEIGHT+2;
+	if ( limitFieldAdded ) {
+		y += BIGCHAR_HEIGHT+2;
+	}
 	s_serveroptions.timelimit.generic.type       = MTYPE_FIELD;
 	s_serveroptions.timelimit.generic.name       = "Time Limit:";
 	s_serveroptions.timelimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1853,7 +1866,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
-	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS ) {
+	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS && s_serveroptions.gametype != GT_SPRINT ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
 	}
 
