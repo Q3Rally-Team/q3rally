@@ -52,6 +52,7 @@ vmCvar_t	g_dmflags;
 vmCvar_t	g_fraglimit;
 // STONELANCE
 vmCvar_t	g_laplimit;
+vmCvar_t	g_timeTrialLaps;
 vmCvar_t	g_eliminationStartDelay;
 vmCvar_t	g_eliminationInterval;
 vmCvar_t	g_eliminationWarning;
@@ -118,9 +119,12 @@ vmCvar_t	g_proxMineTimeout;
 // STONELANCE
 vmCvar_t	g_forceEngineStart;
 vmCvar_t	g_finishRaceDelay;
+vmCvar_t	g_timeTrialFinishDelay;
 vmCvar_t	g_trackReversed;
 vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
+vmCvar_t	g_rallyReadyCheck;
+vmCvar_t	g_rallyIgnoreBots;
 
 vmCvar_t	g_damageScale;
 vmCvar_t	g_vehicleDamageScale;
@@ -184,6 +188,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_fraglimit, "fraglimit", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 // STONELANCE
 	{ &g_laplimit, "laplimit", "5", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
+	{ &g_timeTrialLaps, "g_timeTrialLaps", "3", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
         { &g_eliminationStartDelay, "g_eliminationStartDelay", "30000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
         { &g_eliminationInterval, "g_eliminationInterval", "15000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
         { &g_eliminationWarning, "g_eliminationWarning", "5000", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
@@ -264,13 +269,16 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_trackReversed, "g_trackReversed", "0", CVAR_LATCH, 0, qfalse  },
 	{ &g_trackLength, "g_trackLength", "0", CVAR_LATCH, 0, qfalse  },
 
-        { &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
-        { &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
+{ &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
+{ &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
+{ &g_timeTrialFinishDelay, "g_timeTrialFinishDelay", "10", CVAR_ARCHIVE, 0, qfalse },
 
-        { &g_developer, "developer", "0", 0, 0, qfalse },
-        { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
-        { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
-        { &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
+{ &g_developer, "developer", "0", 0, 0, qfalse },
+{ &g_rallyReadyCheck, "g_rallyReadyCheck", "1", CVAR_ARCHIVE, 0, qfalse },
+{ &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
+{ &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
+{ &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
+{ &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
 
         // car variables
 	// FIXME: should really be serverinfo so there are no client prediction problems
@@ -950,6 +958,18 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_RegisterCvars();
 
+	if ( g_gametype.integer == GT_SINGLE_PLAYER ) {
+		if ( g_timeTrialLaps.integer > 0 ) {
+			trap_Cvar_Set( "laplimit", va( "%i", g_timeTrialLaps.integer ) );
+			trap_Cvar_Update( &g_laplimit );
+		}
+
+		if ( g_timeTrialFinishDelay.integer > 0 ) {
+			trap_Cvar_Set( "g_finishRaceDelay", va( "%i", g_timeTrialFinishDelay.integer ) );
+			trap_Cvar_Update( &g_finishRaceDelay );
+		}
+	}
+
 	G_ProcessIPBans();
 
 	G_InitMemory();
@@ -984,6 +1004,13 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	}
 
 	G_InitWorldSession();
+
+	{
+		char mapname[MAX_QPATH];
+
+		trap_Cvar_VariableStringBuffer( "mapname", mapname, sizeof( mapname ) );
+		G_Ghost_InitForMap( mapname );
+	}
 
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof(g_entities[0]) );
@@ -2260,12 +2287,12 @@ void CheckExitRules( void ) {
 
 	// if its a race and the race has started if no players left playing 
 	//			or everyone is a spectator then end the race.
-	if ( isRallyRace() && level.startRaceTime && !count ){
+	if ( (isRallyRace() || g_gametype.integer == GT_SINGLE_PLAYER) && level.startRaceTime && !count ){
 		LogExit( "Race finished." );
 		return;
 	}
 
-	if ( level.finishRaceTime && isRallyRace() ){
+	if ( level.finishRaceTime && (isRallyRace() || g_gametype.integer == GT_SINGLE_PLAYER) ){
 		// if everyone has finished the race, or the finishRaceDelay time is up, then exit
 		if ( (level.finishRaceTime + (g_finishRaceDelay.integer * 1000) < level.time)
 			|| !count ) {
@@ -2293,7 +2320,7 @@ void CheckExitRules( void ) {
 
 // STONELANCE
 	// dont check frags or captures during a race or derby
-	if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS ){
+	if ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_SINGLE_PLAYER ){
 		return;
 	}
 // END

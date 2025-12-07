@@ -406,6 +406,8 @@ void RallyStarter_Think( gentity_t *ent ){
 	gentity_t		*player, *t;
 	int				i, count;
 	qboolean	start;
+	qboolean	enforceReady;
+	qboolean	ignoreBots;
 
 	if (level.startRaceTime){
 		return;
@@ -428,6 +430,9 @@ void RallyStarter_Think( gentity_t *ent ){
 	ent->nextthink = level.time + 1000;
 	t = NULL;
 
+	enforceReady = g_gametype.integer != GT_SINGLE_PLAYER && g_rallyReadyCheck.integer;
+	ignoreBots = g_rallyIgnoreBots.integer;
+
 	if ( ent->number == 0 ){
 
 		if( level.time - level.startTime < 7500 )
@@ -439,11 +444,18 @@ void RallyStarter_Think( gentity_t *ent ){
 			if (!player->inuse) continue;
 			if (!player->client) continue;
 			if (player->client->sess.sessionTeam == TEAM_SPECTATOR) continue;
-			// bots are always ready
+
+			if ( (player->r.svFlags & SVF_BOT) && ignoreBots ) {
+				continue;
+			}
 
 			count++;
 
 			if (player->r.svFlags & SVF_BOT) continue;
+
+			if ( !enforceReady ){
+				continue;
+			}
 
 			if ( !player->ready ){
 				start = qfalse;

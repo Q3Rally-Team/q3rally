@@ -111,6 +111,7 @@ int		allowLength[3];
 int		reversable;
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
+static void ServerOptions_InitBotNames( void );
 
 char *UI_GetStatKey(int num){
 	switch(num){
@@ -805,6 +806,7 @@ SERVER OPTIONS MENU *****
 #define ID_BACK					14
 #define ID_TRACK_LENGTH			15
 #define ID_TRACK_REVERSED		16
+#define ID_GHOST_ONLY		17
 #define PLAYER_SLOTS			12
 
 
@@ -827,6 +829,7 @@ typedef struct {
 	menulist_s                      reversed;
         menuradiobutton_s       pure;
         menuradiobutton_s       eliminationWeapons;
+        menuradiobutton_s       ghostOnly;
 	menulist_s			botSkill;
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
@@ -839,6 +842,9 @@ typedef struct {
 	int					gametype;
 	char				mapnamebuffer[32];
 	char				playerNameBuffers[PLAYER_SLOTS][16];
+
+	int					ghostPlaybackRestore;
+	qboolean			ghostPlaybackStored;
 
 	qboolean			newBot;
 	int					newBotIndex;
@@ -1037,39 +1043,50 @@ default:
 	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
-	trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLength, 2 ) );
-	trap_Cvar_SetValue( "g_trackReversed", Com_Clamp( 0, reversed, 1 ) );
-	trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLength, 2 ) );
-	trap_Cvar_SetValue( "ui_racing_trackreversed", Com_Clamp( 0, reversed, 1 ) );
-	if ( s_serveroptions.gametype == GT_ELIMINATION ) {
-		trap_Cvar_SetValue( "ui_elimination_weapons", eliminationWeapons );
-		trap_Cvar_SetValue( "g_eliminationWeapons", eliminationWeapons );
-	}
+        trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLength, 2 ) );
+        trap_Cvar_SetValue( "g_trackReversed", Com_Clamp( 0, reversed, 1 ) );
+        trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLength, 2 ) );
+        trap_Cvar_SetValue( "ui_racing_trackreversed", Com_Clamp( 0, reversed, 1 ) );
+        trap_Cvar_SetValue( "ui_ghostonly", s_serveroptions.ghostOnly.curvalue );
+        if ( s_serveroptions.ghostOnly.curvalue ) {
+                int playbackValue;
+
+                playbackValue = s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1;
+                trap_Cvar_SetValue( "ui_ghostPlayback", playbackValue );
+        } else if ( s_serveroptions.ghostPlaybackStored ) {
+                trap_Cvar_SetValue( "ui_ghostPlayback", s_serveroptions.ghostPlaybackRestore );
+        }
+        if ( s_serveroptions.gametype == GT_ELIMINATION ) {
+                trap_Cvar_SetValue( "ui_elimination_weapons", eliminationWeapons );
+                trap_Cvar_SetValue( "g_eliminationWeapons", eliminationWeapons );
+        }
 	trap_Cvar_Set( "sv_hostname", s_serveroptions.hostname.field.buffer );
 
 	// the wait commands will allow the dedicated to take effect
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", s_startserver.maplist[s_startserver.currentmap] ) );
 
 	// add bots
-	trap_Cmd_ExecuteText( EXEC_APPEND, "wait 3\n" );
-	for( n = 1; n < PLAYER_SLOTS; n++ ) {
-		if( s_serveroptions.playerType[n].curvalue != 1 ) {
-			continue;
+	if( !s_serveroptions.ghostOnly.curvalue ) {
+		trap_Cmd_ExecuteText( EXEC_APPEND, "wait 3\n" );
+		for( n = 1; n < PLAYER_SLOTS; n++ ) {
+			if( s_serveroptions.playerType[n].curvalue != 1 ) {
+				continue;
+			}
+			if( s_serveroptions.playerNameBuffers[n][0] == 0 ) {
+				continue;
+			}
+			if( s_serveroptions.playerNameBuffers[n][0] == '-' ) {
+				continue;
+			}
+			if( s_serveroptions.gametype >= GT_TEAM ) {
+				Com_sprintf( buf, sizeof(buf), "addbot %s %i %s\n", s_serveroptions.playerNameBuffers[n], skill,
+					playerTeam_list[s_serveroptions.playerTeam[n].curvalue] );
+			}
+			else {
+				Com_sprintf( buf, sizeof(buf), "addbot %s %i\n", s_serveroptions.playerNameBuffers[n], skill );
+			}
+			trap_Cmd_ExecuteText( EXEC_APPEND, buf );
 		}
-		if( s_serveroptions.playerNameBuffers[n][0] == 0 ) {
-			continue;
-		}
-		if( s_serveroptions.playerNameBuffers[n][0] == '-' ) {
-			continue;
-		}
-		if( s_serveroptions.gametype >= GT_TEAM ) {
-			Com_sprintf( buf, sizeof(buf), "addbot %s %i %s\n", s_serveroptions.playerNameBuffers[n], skill,
-				playerTeam_list[s_serveroptions.playerTeam[n].curvalue] );
-		}
-		else {
-			Com_sprintf( buf, sizeof(buf), "addbot %s %i\n", s_serveroptions.playerNameBuffers[n], skill );
-		}
-		trap_Cmd_ExecuteText( EXEC_APPEND, buf );
 	}
 
 	// set player's team
@@ -1085,51 +1102,63 @@ ServerOptions_InitPlayerItems
 =================
 */
 static void ServerOptions_InitPlayerItems( void ) {
-	int		n;
-	int		v;
+        int             n;
+        int             v;
 
-	// init types
-	if( s_serveroptions.multiplayer ) {
-		v = 0;	// open
-	}
-	else {
-		v = 1;	// bot
-	}
-	
-	for( n = 0; n < PLAYER_SLOTS; n++ ) {
-		s_serveroptions.playerType[n].curvalue = v;
-	}
+        // init types
+        if( s_serveroptions.multiplayer ) {
+                v = 0;  // open
+        }
+        else {
+                v = 1;  // bot
+        }
 
-	if( s_serveroptions.multiplayer && (s_serveroptions.gametype < GT_TEAM) ) {
-		for( n = 8; n < PLAYER_SLOTS; n++ ) {
-			s_serveroptions.playerType[n].curvalue = 2;
-		}
-	}
+        for( n = 0; n < PLAYER_SLOTS; n++ ) {
+                s_serveroptions.playerType[n].curvalue = v;
+        }
 
-	// if not a dedicated server, first slot is reserved for the human on the server
-	if( s_serveroptions.dedicated.curvalue == 0 ) {
-		// human
-		s_serveroptions.playerType[0].generic.flags |= QMF_INACTIVE;
-		s_serveroptions.playerType[0].curvalue = 0;
-		trap_Cvar_VariableStringBuffer( "name", s_serveroptions.playerNameBuffers[0], sizeof(s_serveroptions.playerNameBuffers[0]) );
-		Q_CleanStr( s_serveroptions.playerNameBuffers[0] );
-	}
+        if( s_serveroptions.multiplayer && (s_serveroptions.gametype < GT_TEAM) ) {
+                for( n = 8; n < PLAYER_SLOTS; n++ ) {
+                        s_serveroptions.playerType[n].curvalue = 2;
+                }
+        }
 
-	// init teams
-	if( s_serveroptions.gametype >= GT_TEAM ) {
-		for( n = 0; n < (PLAYER_SLOTS / 3); n++ ) {
-			s_serveroptions.playerTeam[n].curvalue = 0;
-		}
-		for( ; n < PLAYER_SLOTS; n++ ) {
-			s_serveroptions.playerTeam[n].curvalue = 1;
-		}
-	}
-	else {
-		for( n = 0; n < PLAYER_SLOTS; n++ ) {
-			s_serveroptions.playerTeam[n].generic.flags |= (QMF_INACTIVE|QMF_HIDDEN);
-		}
-	}
+        // if not a dedicated server, first slot is reserved for the human on the server
+        if( s_serveroptions.dedicated.curvalue == 0 ) {
+                // human
+                s_serveroptions.playerType[0].generic.flags |= QMF_INACTIVE;
+                s_serveroptions.playerType[0].curvalue = 0;
+                trap_Cvar_VariableStringBuffer( "name", s_serveroptions.playerNameBuffers[0], sizeof(s_serveroptions.playerNameBuffers[0]) );
+                Q_CleanStr( s_serveroptions.playerNameBuffers[0] );
+        }
+
+        // init teams
+        if( s_serveroptions.gametype >= GT_TEAM ) {
+                for( n = 0; n < (PLAYER_SLOTS / 3); n++ ) {
+                        s_serveroptions.playerTeam[n].curvalue = 0;
+                }
+                for( ; n < PLAYER_SLOTS; n++ ) {
+                        s_serveroptions.playerTeam[n].curvalue = 1;
+                }
+        }
+        else {
+                for( n = 0; n < PLAYER_SLOTS; n++ ) {
+                        s_serveroptions.playerTeam[n].generic.flags |= (QMF_INACTIVE|QMF_HIDDEN);
+                }
+        }
+
+        if( s_serveroptions.ghostOnly.curvalue ) {
+                int startIndex;
+
+                startIndex = (s_serveroptions.dedicated.curvalue == 0) ? 1 : 0;
+
+                for( n = startIndex; n < PLAYER_SLOTS; n++ ) {
+                        s_serveroptions.playerType[n].curvalue = 0;
+                        Q_strncpyz( s_serveroptions.playerNameBuffers[n], "----", sizeof( s_serveroptions.playerNameBuffers[n] ) );
+                }
+        }
 }
+
 
 
 /*
@@ -1183,33 +1212,59 @@ ServerOptions_Event
 =================
 */
 static void ServerOptions_Event( void* ptr, int event ) {
-	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_PLAYER_TYPE:
-		if( event != QM_ACTIVATED ) {
-			break;
-		}
-		ServerOptions_SetPlayerItems();
-		break;
+        switch( ((menucommon_s*)ptr)->id ) {
+        case ID_PLAYER_TYPE:
+                if( event != QM_ACTIVATED ) {
+                        break;
+                }
+                ServerOptions_SetPlayerItems();
+                break;
 
-	case ID_MAXCLIENTS:
-	case ID_DEDICATED:
-		ServerOptions_SetPlayerItems();
-		break;
+        case ID_MAXCLIENTS:
+        case ID_DEDICATED:
+                ServerOptions_SetPlayerItems();
+                break;
 
-	case ID_GO:
-		if( event != QM_ACTIVATED ) {
-			break;
-		}
-		ServerOptions_Start();
-		break;
+        case ID_GHOST_ONLY:
+                if( event != QM_ACTIVATED ) {
+                        break;
+                }
 
-	case ID_BACK:
-		if( event != QM_ACTIVATED ) {
-			break;
-		}
-		UI_PopMenu();
-		break;
-	}
+                trap_Cvar_SetValue( "ui_ghostonly", s_serveroptions.ghostOnly.curvalue );
+                if( s_serveroptions.ghostOnly.curvalue ) {
+                        if ( !s_serveroptions.ghostPlaybackStored ) {
+                                s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_ghostPlayback" ) );
+                                s_serveroptions.ghostPlaybackStored = qtrue;
+                        }
+                        trap_Cvar_SetValue( "ui_ghostPlayback", s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1 );
+                        ServerOptions_InitPlayerItems();
+                }
+                else {
+                        int restorePlayback;
+
+                        restorePlayback = s_serveroptions.ghostPlaybackStored ? s_serveroptions.ghostPlaybackRestore : 0;
+                        trap_Cvar_SetValue( "ui_ghostPlayback", restorePlayback );
+                        s_serveroptions.ghostPlaybackStored = qfalse;
+                        ServerOptions_InitPlayerItems();
+                        ServerOptions_InitBotNames();
+                }
+                ServerOptions_SetPlayerItems();
+                break;
+
+        case ID_GO:
+                if( event != QM_ACTIVATED ) {
+                        break;
+                }
+                ServerOptions_Start();
+                break;
+
+        case ID_BACK:
+                if( event != QM_ACTIVATED ) {
+                        break;
+                }
+                UI_PopMenu();
+                break;
+        }
 }
 
 
@@ -1322,13 +1377,25 @@ ServerOptions_InitBotNames
 ===============
 */
 static void ServerOptions_InitBotNames( void ) {
-	int			count;
-	int			n;
-	const char	*arenaInfo;
-	const char	*botInfo;
-	char		*p;
-	char		*bot;
-	char		bots[MAX_INFO_STRING];
+        int                     count;
+        int                     n;
+        const char      *arenaInfo;
+        const char      *botInfo;
+        char            *p;
+        char            *bot;
+        char            bots[MAX_INFO_STRING];
+        int                     startIndex;
+
+        startIndex = (s_serveroptions.dedicated.curvalue == 0) ? 1 : 0;
+
+        if( s_serveroptions.ghostOnly.curvalue ) {
+                for( n = startIndex; n < PLAYER_SLOTS; n++ ) {
+                        s_serveroptions.playerType[n].curvalue = 0;
+                        Q_strncpyz( s_serveroptions.playerNameBuffers[n], "----", sizeof( s_serveroptions.playerNameBuffers[n] ) );
+                }
+
+                return;
+        }
 
     if( s_serveroptions.gametype > GT_DOMINATION ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "Bobby", 16 );
@@ -1492,6 +1559,9 @@ static void ServerOptions_SetMenuItems( void ) {
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
 	s_serveroptions.trackLength.curvalue = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_racing_tracklength" ) );
 	s_serveroptions.reversed.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_racing_trackreversed" ) );
+	s_serveroptions.ghostOnly.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ghostonly" ) );
+		s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_ghostPlayback" ) );
+		s_serveroptions.ghostPlaybackStored = qtrue;
 
 	// set the map pic
 	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
@@ -1676,20 +1746,29 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.pure.generic.flags |= QMF_GRAYED;
 	}
 
-	if ( s_serveroptions.gametype == GT_ELIMINATION ) {
-		y += BIGCHAR_HEIGHT+2;
-		s_serveroptions.eliminationWeapons.generic.type = MTYPE_RADIOBUTTON;
-		s_serveroptions.eliminationWeapons.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-		s_serveroptions.eliminationWeapons.generic.x = OPTIONS_X;
-		s_serveroptions.eliminationWeapons.generic.y = y;
-		s_serveroptions.eliminationWeapons.generic.name = "Enable Weapons:";
-	}
+        if ( s_serveroptions.gametype == GT_ELIMINATION ) {
+                y += BIGCHAR_HEIGHT+2;
+                s_serveroptions.eliminationWeapons.generic.type = MTYPE_RADIOBUTTON;
+                s_serveroptions.eliminationWeapons.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+                s_serveroptions.eliminationWeapons.generic.x = OPTIONS_X;
+                s_serveroptions.eliminationWeapons.generic.y = y;
+                s_serveroptions.eliminationWeapons.generic.name = "Enable Weapons:";
+        }
 
-	n = 0;
-	if ( allowLength[0] ){
-		track_length_list[n] = "Short";
-		n++;
-	}
+        y += BIGCHAR_HEIGHT+2;
+        s_serveroptions.ghostOnly.generic.type                  = MTYPE_RADIOBUTTON;
+        s_serveroptions.ghostOnly.generic.flags         = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+        s_serveroptions.ghostOnly.generic.x                     = OPTIONS_X;
+        s_serveroptions.ghostOnly.generic.y                     = y;
+        s_serveroptions.ghostOnly.generic.name          = "Ghost Only:";
+        s_serveroptions.ghostOnly.generic.id                    = ID_GHOST_ONLY;
+        s_serveroptions.ghostOnly.generic.callback      = ServerOptions_Event;
+
+        n = 0;
+        if ( allowLength[0] ){
+                track_length_list[n] = "Short";
+                n++;
+        }
 	if ( allowLength[1] ){
 		track_length_list[n] = "Medium";
 		n++;
@@ -1783,6 +1862,8 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	s_serveroptions.botSkill.generic.y				= y;
 	s_serveroptions.botSkill.itemnames				= botSkill_list;
 	s_serveroptions.botSkill.curvalue				= 1;
+
+	y += SMALLCHAR_HEIGHT + 2;
 
 	y += ( 2 * SMALLCHAR_HEIGHT );
 	s_serveroptions.player0.generic.type			= MTYPE_TEXT;
@@ -1878,18 +1959,19 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.pure );
 
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.ghostOnly );
+
 	if( s_serveroptions.gametype == GT_ELIMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationWeapons );
 	}
 
-if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
-|| s_serveroptions.gametype == GT_SPRINT || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
+	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM
+	|| s_serveroptions.gametype == GT_SPRINT || s_serveroptions.gametype == GT_TEAM_RACING || s_serveroptions.gametype == GT_TEAM_RACING_DM) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.trackLength );
 
 		if ( reversable )
 			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.reversed );
 	}
-
 
 	if( s_serveroptions.multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.dedicated );

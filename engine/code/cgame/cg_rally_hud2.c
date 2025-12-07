@@ -84,15 +84,29 @@ void CG_DrawHUD_Times(float x, float y){
                 y += 20;
         }
 
-	// draw total time
-	CG_DrawSmallStringColor(x + 12, y, "TOTAL:", colorWhite);
-	time = getStringForTime( totalTime );
-	CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
+        // draw total time
+        CG_DrawSmallStringColor(x + 12, y, "TOTAL:", colorWhite);
+        time = getStringForTime( totalTime );
+        CG_DrawSmallStringColor(x + 102, y, time, colorWhite);
 
-	y += 20;
+        y += 20;
 
-	// draw team time
-	if (cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM){
+        // draw ghost playback state
+        CG_DrawSmallStringColor(x + 12, y, "GHOST:", colorWhite);
+        if ( cg_ghostPlayback.integer == 1 && cg.ghostPlayback.valid ) {
+                const char *best = cg.personalGhostBestTime > 0 ? getStringForTime( cg.personalGhostBestTime ) : "ready";
+                CG_DrawSmallStringColor(x + 102, y, va( "On (%s)", best ), colorWhite);
+        } else if ( cg_ghostPlayback.integer == 2 && cg.baseGhostAvailable ) {
+                const char *best = cg.baseGhostBestTime > 0 ? getStringForTime( cg.baseGhostBestTime ) : "ready";
+                CG_DrawSmallStringColor(x + 102, y, va( "Base (%s)", best ), colorWhite);
+        } else {
+                CG_DrawSmallStringColor(x + 102, y, "Off", colorWhite);
+        }
+
+        y += 20;
+
+        // draw team time
+        if (cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM){
 		// get new scores for accurate team dm times
 		if (cg.scoresRequestTime + 2000 < cg.time){
 			cg.scoresRequestTime = cg.time;

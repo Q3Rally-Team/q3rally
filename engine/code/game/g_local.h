@@ -248,10 +248,16 @@ struct gentity_s {
 
 
 typedef enum {
-	CON_DISCONNECTED,
-	CON_CONNECTING,
-	CON_CONNECTED
+        CON_DISCONNECTED,
+        CON_CONNECTING,
+        CON_CONNECTED
 } clientConnected_t;
+
+typedef struct ghostRecord_s {
+        char    vehicleClass[MAX_QPATH];
+        char    path[MAX_QPATH];
+        int     bestTimeMs;
+} ghostRecord_t;
 
 typedef enum {
 	SPECTATOR_NOT,
@@ -328,6 +334,7 @@ typedef struct {
 	int			controlMode;		// control mode
     int         autoDrop;           // autodrop
 	qboolean	manualShift;		// shift manually?
+	char			vehicleClass[MAX_QPATH];
 // END
 } clientPersistant_t;
 
@@ -428,9 +435,9 @@ struct gclient_s {
 	vec3_t		profileLastOrigin;
 	qboolean	profileHasLastOrigin;
 
-	int			profileLastTime;        // NEU: für Zeit-Tracking unabhängig von Framerate
+	int			profileLastTime;        // NEU: fÃ¼r Zeit-Tracking unabhÃ¤ngig von Framerate
 
-	// profileLastCmdTime wird nicht mehr benötigt - kann entfernt werden
+	// profileLastCmdTime wird nicht mehr benÃ¶tigt - kann entfernt werden
 	// int		profileLastCmdTime;
 	// qboolean	profileHasLastCmdTime;
 
@@ -824,6 +831,9 @@ qboolean isRallyRace( void );
 qboolean isRallyNonDMRace( void );
 qboolean isRaceObserver( int clientNum );
 void G_PrintMapStats( gentity_t *player, qboolean generateArenaFile, char *longname );
+void G_Ghost_InitForMap( const char *mapname );
+const ghostRecord_t *G_Ghost_FindForVehicle( const char *vehicleClass );
+void G_Ghost_AnnounceForClient( gentity_t *ent );
 
 //
 // g_rally_racetools.c
@@ -983,6 +993,7 @@ extern	vmCvar_t	g_dmflags;
 extern	vmCvar_t	g_fraglimit;
 // STONELANCE
 extern	vmCvar_t	g_laplimit;
+extern	vmCvar_t	g_timeTrialLaps;
 extern	vmCvar_t	g_eliminationStartDelay;
 extern	vmCvar_t	g_eliminationInterval;
 extern	vmCvar_t	g_eliminationWarning;
@@ -1035,9 +1046,12 @@ extern  vmCvar_t	g_humanplayers;
 // STONELANCE
 extern	vmCvar_t	g_forceEngineStart;
 extern	vmCvar_t	g_finishRaceDelay;
+extern	vmCvar_t	g_timeTrialFinishDelay;
 extern	vmCvar_t	g_trackReversed;
 extern	vmCvar_t	g_trackLength;
 extern	vmCvar_t	g_developer;
+extern	vmCvar_t	g_rallyReadyCheck;
+extern	vmCvar_t	g_rallyIgnoreBots;
 extern	vmCvar_t	g_damageScale;
 extern	vmCvar_t	g_vehicleDamageScale;
 extern  vmCvar_t        g_vehicleDamageOffset;

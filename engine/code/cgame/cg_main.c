@@ -276,6 +276,8 @@ vmCvar_t	cg_mainViewRenderLevel;
 vmCvar_t	cg_debugpredict;
 
 vmCvar_t	cg_engineSounds;
+vmCvar_t	cg_ghostPlayback;
+vmCvar_t	cg_ghostDebug;
 vmCvar_t	cg_useFuel;
 
 vmCvar_t        cg_fuelWarningLevel;
@@ -385,11 +387,13 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_autodrop, "cg_autodrop", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
 
-	{ &cg_tightCamTracking, "cg_tightCamTracking", "0", CVAR_ARCHIVE },
+        { &cg_tightCamTracking, "cg_tightCamTracking", "0", CVAR_ARCHIVE },
 
-	{ &cg_debugpredict, "cg_debugpredict", "0", 0 },
+        { &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
         { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
+        { &cg_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
+	{ &cg_ghostDebug, "cg_ghostDebug", "0", CVAR_TEMP },
         { &cg_useFuel, "g_useFuel", "1", CVAR_SERVERINFO },
 
         { &cg_fuelWarningLevel, "cg_fuelWarningLevel", "10", CVAR_ARCHIVE },

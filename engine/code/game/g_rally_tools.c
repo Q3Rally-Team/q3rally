@@ -285,7 +285,8 @@ qboolean isRallyRace( void ){
                 || g_gametype.integer == GT_SPRINT
                 || g_gametype.integer == GT_TEAM_RACING
                 || g_gametype.integer == GT_TEAM_RACING_DM
-                || g_gametype.integer == GT_ELIMINATION ){
+                || g_gametype.integer == GT_ELIMINATION
+                || g_gametype.integer == GT_SINGLE_PLAYER ){
                 return qtrue;
         }
 
@@ -296,6 +297,7 @@ qboolean isRallyNonDMRace( void ){
         if ( g_gametype.integer == GT_RACING
                 || g_gametype.integer == GT_SPRINT
                 || g_gametype.integer == GT_TEAM_RACING
+                || g_gametype.integer == GT_SINGLE_PLAYER
                 || ( g_gametype.integer == GT_ELIMINATION && !g_eliminationWeapons.integer ) ){
                 return qtrue;
         }

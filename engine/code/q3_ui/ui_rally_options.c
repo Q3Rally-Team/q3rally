@@ -56,6 +56,7 @@ qboolean isRaceObserver( int clientNum )
 #define ID_MVRL_SMOKE           32
 #define ID_MVRL_MARKS           33
 #define ID_MVRL_SPARKS          34
+#define ID_GHOST_PLAYBACK       35
 
 #define ID_BACK                 40
 
@@ -99,6 +100,7 @@ typedef struct {
 	menutext_s		mvrl_heading;
 
 	menuradiobutton_s	engineSounds;
+	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
         menuradiobutton_s       drawMinimap;
 
@@ -133,10 +135,17 @@ static const char *q3roptions_cp_arrow_mode[] = {
 };
 
 static const char *q3roptions_atmospheric[] = {
-	"None",
-	"Low",
-	"High",
-	0
+        "None",
+        "Low",
+        "High",
+        0
+};
+
+static const char *q3roptions_ghostPlayback[] = {
+        "Off",
+        "Personal ghost",
+        "Base ghost",
+        0
 };
 
 
@@ -214,6 +223,10 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 
 	case ID_ENGINE_SOUNDS:
 		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
+		break;
+
+	case ID_GHOST_PLAYBACK:
+		trap_Cvar_SetValue( "cg_ghostPlayback", s_q3roptions.ghostPlayback.curvalue );
 		break;
 
 	case ID_FUEL_CONSUMPTION:
@@ -416,6 +429,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.mmap_fov.curvalue = ui_mmap_fov.value;
 
 	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer;
+	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
 	s_q3roptions.drawMinimap.curvalue = ui_drawMinimap.integer;
 
@@ -541,6 +555,16 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.engineSounds.generic.id			= ID_ENGINE_SOUNDS;
 	s_q3roptions.engineSounds.generic.callback		= Q3ROptions_MenuEvent;
 	s_q3roptions.engineSounds.generic.statusbar		= Q3ROptions_StatusBar;
+	s_q3roptions.ghostPlayback.generic.type			= MTYPE_SPINCONTROL;
+	s_q3roptions.ghostPlayback.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_q3roptions.ghostPlayback.generic.x				= 500;
+	s_q3roptions.ghostPlayback.generic.y				= 90 + 70;
+	s_q3roptions.ghostPlayback.generic.name			= "Ghost Playback:";
+	s_q3roptions.ghostPlayback.generic.id			= ID_GHOST_PLAYBACK;
+	s_q3roptions.ghostPlayback.generic.callback		= Q3ROptions_MenuEvent;
+	s_q3roptions.ghostPlayback.generic.statusbar		= Q3ROptions_StatusBar;
+	s_q3roptions.ghostPlayback.itemnames			= q3roptions_ghostPlayback;
+
 
 	s_q3roptions.drawMinimap.generic.type           = MTYPE_RADIOBUTTON;
 	s_q3roptions.drawMinimap.generic.flags          = QMF_SMALLFONT;
@@ -738,6 +762,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rearView );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
+    Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ghostPlayback );
         Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.drawMinimap );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );

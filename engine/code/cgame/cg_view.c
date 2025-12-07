@@ -1055,11 +1055,13 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;
 
-	// update cg.predictedPlayerState
-	CG_PredictPlayerState();
+        // update cg.predictedPlayerState
+        CG_PredictPlayerState();
+
+        CG_RecordGhostFrame();
 
 // Q3Rally Code Start - FIXME: remove for incar views
-	if( !cg_thirdPerson.integer )
+        if( !cg_thirdPerson.integer )
 		trap_Cvar_Set( "cg_thirdPerson", "1" );
 // END
 
@@ -1077,6 +1079,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// build the render lists
 	if ( !cg.hyperspace ) {
+		CG_AddGhostEntity();
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
 		CG_AddMarks();
 		CG_AddParticles ();

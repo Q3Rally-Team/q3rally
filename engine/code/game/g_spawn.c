@@ -802,7 +802,7 @@ void SP_worldspawn( void ) {
 	}
 
 // STONELANCE
-	if (isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS){
+	if (isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS || g_gametype.integer == GT_SINGLE_PLAYER){
 		CreateRallyStarter();
 
 		thinker = G_Spawn();

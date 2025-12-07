@@ -1047,10 +1047,24 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.controlMode = atoi( s );
 	}
 
-	s = Info_ValueForKey( userinfo, "cg_manualShift" );
-	if ( *s ) {
-		client->pers.manualShift = atoi( s );
-	}
+        s = Info_ValueForKey( userinfo, "cg_manualShift" );
+        if ( *s ) {
+                client->pers.manualShift = atoi( s );
+        }
+
+        s = Info_ValueForKey( userinfo, "chassis" );
+        if ( !s || !s[0] ) {
+                s = Info_ValueForKey( userinfo, "vehicle" );
+        }
+        if ( !s || !s[0] ) {
+                s = Info_ValueForKey( userinfo, "model" );
+        }
+
+        if ( s && *s ) {
+                Q_strncpyz( client->pers.vehicleClass, s, sizeof( client->pers.vehicleClass ) );
+        } else {
+                client->pers.vehicleClass[0] = '\0';
+        }
 
 
         // team task (0 = none, 1 = offence, 2 = defence)
@@ -1095,10 +1109,14 @@ void ClientUserinfoChanged( int clientNum ) {
 // END
 	}
 
-	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
+        trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 
-	// this is not the userinfo, more like the configstring actually
-	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
+        // this is not the userinfo, more like the configstring actually
+        G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
+
+        if ( client->pers.connected == CON_CONNECTED ) {
+                G_Ghost_AnnounceForClient( ent );
+        }
 }
 
 
@@ -1264,6 +1282,11 @@ void ClientBegin( int clientNum ) {
 		SetTeam(ent, "racerSpectator");
 		return;
 	}
+
+	if ( (ent->r.svFlags & SVF_BOT) && g_rallyIgnoreBots.integer && isRallyRace() ) {
+		SetTeam(ent, "spectator");
+		return;
+	}
 //	trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 
         client->buttons = 0;
@@ -1324,10 +1347,12 @@ void ClientBegin( int clientNum ) {
 	}
 */
 // END
-	G_LogPrintf( "ClientBegin: %i\n", clientNum );
+        G_LogPrintf( "ClientBegin: %i\n", clientNum );
 
-	// count current clients and rank for scoreboard
-	CalculateRanks();
+        G_Ghost_AnnounceForClient( ent );
+
+        // count current clients and rank for scoreboard
+        CalculateRanks();
 }
 
 /*

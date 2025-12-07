@@ -247,6 +247,8 @@ typedef struct centity_s {
 	int				lastStartLapTime;
 	int				bestLapTime;
 
+	int				bestLapStartTime;
+
 	int				positionChangeTime;
 	int				currentPosition;
 	int				currentLap;
@@ -360,11 +362,33 @@ typedef enum {
 } leTrailType_t;		// defines bounce behavior and trail on fragment local entities
 
 typedef enum {
-	PT_GRAVITY,
-	PT_LINEAR_UP,
-	PT_LINEAR_DOWN,
-	PT_LINEAR_BOTH
+        PT_GRAVITY,
+        PT_LINEAR_UP,
+        PT_LINEAR_DOWN,
+        PT_LINEAR_BOTH
 } particleType_t;
+
+// ghost playback ---------------------------------------------------------------
+#define MAX_GHOST_FRAMES 16384
+
+typedef struct ghostFrame_s {
+        int                     timeOffset;
+        vec3_t          origin;
+        vec3_t          angles;
+        vec3_t          velocity;
+        int                     buttons;
+        int                     forwardmove;
+        int                     upmove;
+} ghostFrame_t;
+
+typedef struct ghostRecording_s {
+        ghostFrame_t    frames[MAX_GHOST_FRAMES];
+        int                     startIndex;
+        int                     writeIndex;
+        int                     frameCount;
+        int                     duration;
+        qboolean        valid;
+} ghostRecording_t;
 
 typedef struct localEntity_s {
 	struct localEntity_s	*prev, *next;
@@ -813,6 +837,21 @@ typedef struct {
 	qboolean	newSnap;
 //	int			lastPhysicsCommand;
 	int			currentBezierPoint;
+
+	// ghost playback/recording
+	ghostRecording_t	ghostRecording;
+	ghostRecording_t	ghostPlayback;
+	ghostRecording_t	baseGhost;
+	qboolean	ghostRecordingActive;
+	int			ghostRecordingStartTime;
+	qboolean	baseGhostAvailable;
+	int			baseGhostBestTime;
+	char			baseGhostVehicle[MAX_QPATH];
+	char			baseGhostPath[MAX_QPATH];
+	qboolean	personalGhostAvailable;
+	int			personalGhostBestTime;
+	char			personalGhostVehicle[MAX_QPATH];
+	char			personalGhostPath[MAX_QPATH];
 } cg_t;
 
 
@@ -1500,6 +1539,8 @@ extern	vmCvar_t		cg_mainViewRenderLevel;
 extern	vmCvar_t		cg_debugpredict;
 
 extern	vmCvar_t		cg_engineSounds;
+extern	vmCvar_t		cg_ghostPlayback;
+extern	vmCvar_t		cg_ghostDebug;
 extern  vmCvar_t                cg_useFuel;
 
 extern  vmCvar_t                cg_fuelWarningLevel;
@@ -1927,6 +1968,14 @@ qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
 void CG_NewLapTime( int client, int lap, int time );
 void CG_FinishedRace( int client, int time );
 void CG_StartRace( int time );
+void CG_BeginGhostRecording( int startTime );
+void CG_EndGhostRecording( int finishTime );
+void CG_RecordGhostFrame( void );
+void CG_AddGhostEntity( void );
+void CG_ResetBaseGhost( void );
+qboolean CG_LoadGhostFromFile( const char *path, const char *expectedMap, const char *expectedVehicle, int declaredBestTime );
+void CG_LoadPersonalGhost( void );
+void CG_AttemptSavePersonalGhost( int finishTime );
 void CG_DrawRaceCountDown( void );
 void CG_RaceCountDown( const char *str, int secondsLeft );
 

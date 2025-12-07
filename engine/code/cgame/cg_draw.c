@@ -1694,6 +1694,34 @@ float CG_DrawScores( float x, float y ) {
 
 	y1 = y + 18;
 
+	if ( cgs.gametype == GT_SINGLE_PLAYER ) {
+		const char	*totalString;
+		const char	*bestLapString;
+		int		finishTime;
+		int		runningTime;
+		centity_t	*cent;
+
+		cent = &cg_entities[cg.clientNum];
+		finishTime = cent->finishRaceTime ? cent->finishRaceTime : cg.time;
+		runningTime = ( cent->startRaceTime && finishTime > cent->startRaceTime ) ? finishTime - cent->startRaceTime : 0;
+
+		CG_FillRect( x - 80, y, 96, 18, bgColor );
+
+		totalString = runningTime > 0 ? getStringForTimePrecise( runningTime ) : "--:--.--";
+		bestLapString = cent->bestLapTime > 0 ? getStringForTimePrecise( cent->bestLapTime ) : "--:--.--";
+
+		s = va( "TIME %s", totalString );
+		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
+		x -= w;
+		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
+
+		s = va( "BEST %s", bestLapString );
+		w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
+		x -= w;
+		CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
+
+		return y;
+	}
 
 	// draw from the right side to left
 	if ( cgs.gametype >= GT_TEAM ) {

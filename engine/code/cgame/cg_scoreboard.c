@@ -97,7 +97,8 @@ static qboolean CG_IsRacingGametype(void) {
             cgs.gametype == GT_TEAM_RACING_DM ||
             cgs.gametype == GT_ELIMINATION ||
             cgs.gametype == GT_LCS ||
-            cgs.gametype == GT_DERBY);
+            cgs.gametype == GT_DERBY ||
+            cgs.gametype == GT_SINGLE_PLAYER);
 }
 
 /*
@@ -148,6 +149,7 @@ static void CG_InitScoreboardColumns(void) {
         case GT_RACING:
         case GT_SPRINT:
         case GT_TEAM_RACING:
+        case GT_SINGLE_PLAYER:
             /* Pure racing - only times matter */
             showTimes = qtrue;
             showLapTimes = qtrue;
@@ -246,7 +248,7 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_TOTALTIME].width = COL_TOTALTIME_WIDTH;
         
         /* Different header based on racing type */
-        if (cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING) {
+        if (cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_SINGLE_PLAYER) {
             columns[SBCOL_TOTALTIME].header = "RACE TIME";
         } else {
             columns[SBCOL_TOTALTIME].header = "TOTAL";

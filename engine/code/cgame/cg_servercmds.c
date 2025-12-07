@@ -563,7 +563,20 @@ static void CG_MapRestart( void ) {
 
 	cgs.voteTime = 0;
 
-	cg.mapRestart = qtrue;
+        cg.mapRestart = qtrue;
+
+	cg.ghostRecordingActive = qfalse;
+	cg.ghostRecording.valid = qfalse;
+	cg.ghostPlayback.valid = qfalse;
+	cg.baseGhost.valid = qfalse;
+	cg.baseGhostAvailable = qfalse;
+	cg.baseGhostBestTime = 0;
+        cg.baseGhostVehicle[0] = '\0';
+        cg.baseGhostPath[0] = '\0';
+        cg.personalGhostAvailable = qfalse;
+        cg.personalGhostBestTime = 0;
+        cg.personalGhostVehicle[0] = '\0';
+        cg.personalGhostPath[0] = '\0';
 
 	CG_StartMusic();
 
@@ -1187,8 +1200,8 @@ static void CG_AddAchievementAnnouncement( bgAchievementCategory_t category, int
 }
 
 static void CG_ParseAchievementUnlock( void ) {
-	int categoryIndex;
-	int tierIndex;
+        int categoryIndex;
+        int tierIndex;
 
 	if ( trap_Argc() < 3 ) {
 		return;
@@ -1205,7 +1218,34 @@ static void CG_ParseAchievementUnlock( void ) {
 		return;
 	}
 
-	CG_AddAchievementAnnouncement( (bgAchievementCategory_t) categoryIndex, tierIndex );
+        CG_AddAchievementAnnouncement( (bgAchievementCategory_t) categoryIndex, tierIndex );
+}
+
+static void CG_ParseGhostMeta( void ) {
+        const char *vehicle;
+        const char *path;
+        int bestTime;
+        char mapname[MAX_QPATH];
+
+        if ( trap_Argc() < 4 ) {
+                CG_ResetBaseGhost();
+                return;
+        }
+
+        vehicle = CG_Argv( 1 );
+        bestTime = atoi( CG_Argv( 2 ) );
+        path = CG_Argv( 3 );
+
+        COM_StripExtension( COM_SkipPath( cgs.mapname ), mapname, sizeof( mapname ) );
+
+        if ( !vehicle[0] || !path || !path[0] ) {
+                CG_ResetBaseGhost();
+                return;
+        }
+
+        if ( CG_LoadGhostFromFile( path, mapname, vehicle, bestTime ) ) {
+                CG_Printf( "Loaded base ghost for %s (%s) in %d ms\n", mapname, vehicle, cg.baseGhostBestTime );
+        }
 }
 
 
@@ -1231,10 +1271,15 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( !strcmp( cmd, "achv" ) ) {
-		CG_ParseAchievementUnlock();
-		return;
-	}
+        if ( !strcmp( cmd, "achv" ) ) {
+                CG_ParseAchievementUnlock();
+                return;
+        }
+
+        if ( !strcmp( cmd, "ghostmeta" ) ) {
+                CG_ParseGhostMeta();
+                return;
+        }
 
         if ( !strcmp( cmd, "cp" ) ) {
                 const char *message;

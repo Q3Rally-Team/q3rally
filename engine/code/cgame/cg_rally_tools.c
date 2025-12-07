@@ -805,13 +805,15 @@ qboolean isRallyRace( void ){
                 || cgs.gametype == GT_SPRINT
                 || cgs.gametype == GT_TEAM_RACING
                 || cgs.gametype == GT_TEAM_RACING_DM
-                || cgs.gametype == GT_ELIMINATION);
+                || cgs.gametype == GT_ELIMINATION
+                || cgs.gametype == GT_SINGLE_PLAYER);
 }
 
 qboolean isRallyNonDMRace( void ){
         return (cgs.gametype == GT_RACING
                 || cgs.gametype == GT_SPRINT
                 || cgs.gametype == GT_TEAM_RACING
+                || cgs.gametype == GT_SINGLE_PLAYER
                 || (cgs.gametype == GT_ELIMINATION && !cgs.eliminationWeapons));
 }
 
