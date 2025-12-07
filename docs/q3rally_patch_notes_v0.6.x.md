@@ -36,6 +36,8 @@
     - Racing-Gamemode-Review: Grid-Overflow-Item als erledigt markiert; neue Warnung beschrieben und verbleibendes Fallback-Spawn-Risiko vermerkt.  
 
 
+14. **UX / Ghosts:** Neues `cg_ghostAlpha`-CVar (0–255, Standard 160), das die Transparenz von Geisterfahrzeug und Rädern steuert (jetzt über einen dedizierten Shader direkt sichtbar).
+
 ## 🇬🇧 English
 
 1. **Fix / Core Gameplay:** Temporarily removed **individual vehicle configs** as they completely broke the spawn logic in team gamemodes.  
@@ -68,3 +70,5 @@
 12. **Fix / Racing Logic:** Added epsilon-based tolerance and sentinel-aware comparison to race position logic. Near ties now defer to checkpoint splits instead of floating-point jitter. Updated review to mark tie-breaker complete.  
 
 13. **UX / Racing:** Added a **CenterPrint/chat notification** when start-grid selection falls back to deathmatch spawns, alerting players that all grid slots are occupied. Updated review entry to mark grid overflow resolved and note remaining fallback risks.  
+
+14. **UX / Ghosts:** Added `cg_ghostAlpha` CVar (0–255, default 160) to let players tune ghost car and wheel transparency (now driven through a dedicated shader for immediate effect).

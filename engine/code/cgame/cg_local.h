@@ -1045,6 +1045,7 @@ typedef struct {
 	qhandle_t	redQuadShader;
 	qhandle_t	quadWeaponShader;
 	qhandle_t	invisShader;
+	qhandle_t	ghostShader;
 	qhandle_t	regenShader;
 	qhandle_t	battleSuitShader;
 	qhandle_t	hasteShader;
@@ -1541,6 +1542,7 @@ extern	vmCvar_t		cg_debugpredict;
 extern	vmCvar_t		cg_engineSounds;
 extern	vmCvar_t		cg_ghostPlayback;
 extern	vmCvar_t		cg_ghostDebug;
+extern	vmCvar_t		cg_ghostAlpha;
 extern  vmCvar_t                cg_useFuel;
 
 extern  vmCvar_t                cg_fuelWarningLevel;

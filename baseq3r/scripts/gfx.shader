@@ -1950,3 +1950,14 @@ textures/sfx/beam_dusty2
       //	}
 }
 
+
+// Ghost vehicle blend (driven by entity vertex alpha)
+gfx/ghost/vehicle
+{
+	{
+		map $whiteimage
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen lightingDiffuse
+		alphaGen vertex
+	}
+}
