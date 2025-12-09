@@ -1,4 +1,5 @@
 
+//@$& layerdef "0" -1 0 0 0
 // entity 0
 {
 "classname" "worldspawn"
@@ -12397,7 +12398,7 @@ brushDef
 // entity 39
 {
 "classname" "rally_item_turbo"
-"origin" "720 -464 304"
+"origin" "752 -496 304"
 }
 // entity 40
 {
@@ -12465,10 +12466,10 @@ brushDef
 {
 ( -384 -792 192 ) ( -384 -792 0 ) ( -384 -488 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
 ( 512 -488 192 ) ( 512 -488 0 ) ( 512 -792 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
-( 512 -792 192 ) ( 512 -792 0 ) ( -384 -792 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
-( -384 -488 192 ) ( -384 -488 0 ) ( 512 -488 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
+( 472 -460 192 ) ( 472 -460 0 ) ( -424 -460 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
+( -392 -428 192 ) ( -392 -428 0 ) ( 504 -428 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
 ( -384 -488 0 ) ( -384 -792 0 ) ( 512 -792 0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
-( -384 -792 192 ) ( -384 -488 192 ) ( 512 -488 192 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
+( -384 -776 260 ) ( -384 -472 260 ) ( 512 -472 260 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/startfinish 0 0 0
 }
 }
 }
@@ -12828,7 +12829,7 @@ brushDef
 // entity 81
 {
 "classname" "info_player_start"
-"origin" "144 -873.375 32"
+"origin" "144 -921.375 32"
 "angle" "90"
 "number" "12"
 }
@@ -12843,7 +12844,7 @@ brushDef
 {
 "classname" "info_player_start"
 "angle" "90"
-"origin" "64 -873.375 32"
+"origin" "64 -897.375 32"
 "number" "10"
 }
 // entity 84
@@ -12857,20 +12858,20 @@ brushDef
 {
 "classname" "info_player_start"
 "angle" "90"
-"origin" "144 -504 32"
+"origin" "144 -552 32"
 "number" "3"
 }
 // entity 86
 {
 "classname" "info_player_start"
-"origin" "64 -504 32"
+"origin" "64 -528 32"
 "angle" "90"
 "number" "1"
 }
 // entity 87
 {
 "classname" "info_player_start"
-"origin" "144 -750.25 32"
+"origin" "144 -798.25 32"
 "angle" "90"
 "number" "9"
 }
@@ -12878,13 +12879,13 @@ brushDef
 {
 "classname" "info_player_start"
 "angle" "90"
-"origin" "64 -750.25 32"
+"origin" "64 -774.25 32"
 "number" "7"
 }
 // entity 89
 {
 "classname" "info_player_start"
-"origin" "144 -627.125 32"
+"origin" "144 -675.125 32"
 "angle" "90"
 "number" "6"
 }
@@ -12899,7 +12900,7 @@ brushDef
 {
 "classname" "info_player_start"
 "angle" "90"
-"origin" "64 -627.125 32"
+"origin" "64 -651.125 32"
 "number" "4"
 }
 // entity 92
@@ -13014,8 +13015,23 @@ brushDef
 ( -1448 -1536 48 ) ( -1536 -1536 48 ) ( -1448 -1536 44 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
 ( -1216 -1536 48 ) ( -1216 -1536 44 ) ( -1216 -1600 48 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
 ( -1536 -1600 0 ) ( -1448 -1600 0 ) ( -1536 -1536 0 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
-( -1536 -1600 44 ) ( -1536 -1600 48 ) ( -1448 -1600 44 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
+( -1536 -1632 44 ) ( -1536 -1632 48 ) ( -1448 -1632 44 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
 ( -1536 -1600 44 ) ( -1536 -1536 44 ) ( -1536 -1600 48 ) ( ( 0.03125 0 -0 ) ( -0 0.03125 0 ) ) common/trigger 0 0 0
 }
 }
+}
+// entity 108
+{
+"classname" "item_fuelcan"
+"origin" "-232 -544 304"
+}
+// entity 109
+{
+"classname" "item_fuelcan"
+"origin" "-232 -736 304"
+}
+// entity 110
+{
+"classname" "item_fuelcan"
+"origin" "-208 -2328 16"
 }
