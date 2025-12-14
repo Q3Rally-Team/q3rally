@@ -575,32 +575,105 @@ SelectGridPositionSpawn
 
 ============
 */
+static gentity_t overflowSpot;
+
+#define OVERFLOW_GRID_COLUMNS			4
+#define OVERFLOW_GRID_SPACING			192.0f
+
+TESTABLE_STATIC gentity_t *SelectOverflowGridPosition( gentity_t *baseSpot, int overflowIndex, gentity_t *ent, vec3_t origin, vec3_t angles ) {
+	vec3_t			forward, right;
+	int				attempts = 0;
+	int				currentIndex = overflowIndex;
+
+	AngleVectors( baseSpot->s.angles, forward, right, NULL );
+
+	while ( attempts < 16 ) {
+		vec3_t placement;
+		float row;
+		float column;
+
+		row = (float)( currentIndex / OVERFLOW_GRID_COLUMNS );
+		column = (float)( currentIndex % OVERFLOW_GRID_COLUMNS );
+
+		VectorCopy( baseSpot->s.origin, placement );
+		VectorMA( placement, -(( row + 1.0f ) * OVERFLOW_GRID_SPACING), forward, placement );
+		VectorMA( placement, ( column - ( ( OVERFLOW_GRID_COLUMNS - 1 ) * 0.5f ) ) * OVERFLOW_GRID_SPACING, right, placement );
+
+		VectorCopy( placement, overflowSpot.s.origin );
+		VectorCopy( baseSpot->s.angles, overflowSpot.s.angles );
+
+		if ( !SpotWouldTelefrag( &overflowSpot ) ) {
+			VectorCopy( overflowSpot.s.origin, origin );
+			origin[2] += 9;
+			VectorCopy( overflowSpot.s.angles, angles );
+
+			if ( ent && ent->client ) {
+				trap_SendServerCommand( ent - g_entities, va( "cp \"Grid overflow slot %d assigned\"", currentIndex + 1 ) );
+			}
+
+			return &overflowSpot;
+		}
+
+		attempts++;
+		currentIndex++;
+	}
+
+	return NULL;
+}
+
 gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot ) {
-	gentity_t	*spot;
-	int			gridPosition;
+	gentity_t		*spot;
+	gentity_t		*firstGridSpot;
+	int				gridPosition;
 
 	spot = NULL;
+	firstGridSpot = NULL;
 	gridPosition = 1;
-	while ((spot = G_Find (spot, FOFS(classname), "info_player_start")) != NULL) {
-		if ( (spot->number == gridPosition || !spot->number) && !SpotWouldTelefrag( spot )) {
+	while ( gridPosition <= level.maxclients ) {
+		gentity_t *matchedSpot = NULL;
+		spot = NULL;
+
+		while ((spot = G_Find (spot, FOFS(classname), "info_player_start")) != NULL) {
+			if ( !firstGridSpot ) {
+				firstGridSpot = spot;
+			}
+
+			if ( ( spot->number == gridPosition || ( !spot->number && gridPosition == 1 ) ) ) {
+				matchedSpot = spot;
+				if ( !SpotWouldTelefrag( spot ) ) {
+					VectorCopy (spot->s.origin, origin);
+					origin[2] += 9;
+					VectorCopy (spot->s.angles, angles);
+
+					return spot;
+				}
+
+				break;
+			}
+		}
+
+		if ( !matchedSpot && firstGridSpot ) {
 			break;
 		}
-		else if (spot->number == gridPosition){
-			spot = NULL; // found spawn but someone is already there so restart search
+
+		if ( matchedSpot && SpotWouldTelefrag( matchedSpot ) ) {
+			// try the next numbered grid position
+			gridPosition++;
+			continue;
+		}
+
+		if ( !matchedSpot ) {
 			gridPosition++;
 		}
 	}
 
-	if ( !spot || SpotWouldTelefrag( spot ) ) {
-		// FIXME: put into spectator mode instead?
-		G_Printf("Warning: No info_player_start found for race spawn, trying info_player_deathmatch\n");
-		return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
+	if ( firstGridSpot ) {
+		gentity_t *overflow = SelectOverflowGridPosition( firstGridSpot, gridPosition - 1, ent, origin, angles );
+		if ( overflow ) {
+			return overflow;
+		}
 	}
 
-	VectorCopy (spot->s.origin, origin);
-	origin[2] += 9;
-	VectorCopy (spot->s.angles, angles);
-
-	return spot;
+	G_Printf("Warning: No info_player_start found for race spawn, using default spawn\n");
+	return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
 }
-
