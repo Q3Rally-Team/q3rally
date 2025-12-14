@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_public.h"
 #include "bg_ladder.h"
 #include "g_public.h"
-#include "profile_shared.h"
 
 //==================================================================
 
@@ -334,7 +333,8 @@ typedef struct {
 	int			controlMode;		// control mode
     int         autoDrop;           // autodrop
 	qboolean	manualShift;		// shift manually?
-	char			vehicleClass[MAX_QPATH];
+	char                    vehicleClass[MAX_QPATH];
+        qboolean        profileRacePlacementPenalized; // profile penalty for poor race placement already applied
 // END
 } clientPersistant_t;
 

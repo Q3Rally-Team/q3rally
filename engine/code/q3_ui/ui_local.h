@@ -838,6 +838,7 @@ void UI_Profile_MarkStatsDirty( void );
 const char *UI_Profile_GetActiveName( void );
 const profile_stats_t *UI_Profile_GetActiveStats( void );
 const profile_info_t *UI_Profile_GetActiveInfo( void );
+qboolean UI_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank );
 qboolean UI_Profile_SaveActiveInfo( const profile_info_t *info );
 qboolean UI_Profile_HasActiveProfile( void );
 

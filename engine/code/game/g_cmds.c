@@ -23,6 +23,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "g_local.h"
 #include "g_profile.h"
+#include "profile_shared.h"
+
+#define SCOREBOARD_RANK_ENTRY( name, minimumScore ) { name, minimumScore },
+static const profile_rank_def_t g_scoreboardRankTable[] = {
+        PROFILE_RANK_TABLE( SCOREBOARD_RANK_ENTRY )
+};
+#undef SCOREBOARD_RANK_ENTRY
+#define SCOREBOARD_RANK_COUNT ( sizeof( g_scoreboardRankTable ) / sizeof( g_scoreboardRankTable[0] ) )
+
+static int G_GetScoreboardRankTier( int playerScore ) {
+        profile_stats_t stats;
+        profile_rank_t rank;
+
+        Com_Memset( &stats, 0, sizeof( stats ) );
+        stats.playerScore = playerScore;
+
+        if ( Profile_GetRankForScore( &stats, g_scoreboardRankTable, SCOREBOARD_RANK_COUNT, &rank ) ) {
+                return rank.index;
+        }
+
+        return -1;
+}
 
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"			// for the voice chats
@@ -40,7 +62,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 	int			stringlength;
 	int			i, j;
 	gclient_t	*cl;
-	int			numSorted, scoreFlags, accuracy, perfect;
+	int			numSorted, scoreFlags, accuracy, perfect, rankTier;
 
 	// don't send scores to bots, they don't parse it
 	if ( ent->r.svFlags & SVF_BOT ) {
@@ -84,23 +106,27 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		}
 		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
 
+		rankTier = G_GetScoreboardRankTier( cl->ps.persistant[PERS_SCORE] );
+		
+		// STONELANCE changed to 19 fields to include rank tier
 		Com_sprintf (entry, sizeof(entry),
-
-			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
-			cl->ps.persistant[PERS_SCORE], ping, time,
-			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
-			cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
-	    cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
-			cl->ps.persistant[PERS_EXCELLENT_COUNT],
-			cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
-			cl->ps.persistant[PERS_DEFEND_COUNT], 
-			cl->ps.persistant[PERS_ASSIST_COUNT], 
-			perfect,
-			cl->ps.persistant[PERS_CAPTURES],
-			cl->ps.stats[STAT_DAMAGE_DEALT],
-			cl->ps.stats[STAT_DAMAGE_TAKEN],
-			cl->ps.stats[STAT_POSITION]
-			);
+		
+		" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
+		cl->ps.persistant[PERS_SCORE], ping, time,
+		scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy,
+		cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
+		cl->ps.persistant[PERS_IMPRESSIVETELEFRAG_COUNT],
+		cl->ps.persistant[PERS_EXCELLENT_COUNT],
+		cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT],
+		cl->ps.persistant[PERS_DEFEND_COUNT],
+		cl->ps.persistant[PERS_ASSIST_COUNT],
+		perfect,
+		cl->ps.persistant[PERS_CAPTURES],
+		cl->ps.stats[STAT_DAMAGE_DEALT],
+		cl->ps.stats[STAT_DAMAGE_TAKEN],
+		cl->ps.stats[STAT_POSITION],
+		rankTier
+		);
 
 
 		j = strlen(entry);

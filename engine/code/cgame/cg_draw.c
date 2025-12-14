@@ -2236,6 +2236,21 @@ static void CG_ShiftAchievementQueue( void ) {
     cg.achievementQueueCount--;
 }
 
+static void CG_ShiftRankQueue( void ) {
+    int i;
+
+    if ( cg.rankQueueCount <= 0 ) {
+        cg.rankQueueCount = 0;
+        return;
+    }
+
+    for ( i = 1; i < cg.rankQueueCount; ++i ) {
+        cg.rankQueue[i - 1] = cg.rankQueue[i];
+    }
+
+    cg.rankQueueCount--;
+}
+
 static void CG_DrawAchievementNotifications( void ) {
     const bgAchievementCategoryDef_t *category;
     const bgAchievementTierDef_t *tier;
@@ -2308,6 +2323,73 @@ static void CG_DrawAchievementNotifications( void ) {
 
     CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 44.0f ), category->title,
                       textColor, qfalse, qtrue, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+
+    trap_R_SetColor( NULL );
+}
+
+static void CG_DrawRankNotifications( void ) {
+    cgRankAnnouncement_t *announcement;
+    int elapsed;
+    float alpha;
+    float x, y;
+    float width = 260.0f;
+    float height = 60.0f;
+    vec4_t bgColor = { 0.0f, 0.0f, 0.0f, 0.45f };
+    vec4_t borderColor = { 1.0f, 1.0f, 1.0f, 0.25f };
+    vec4_t highlightColor = { 0.6f, 1.0f, 0.6f, 1.0f };
+    vec4_t demotionColor = { 1.0f, 0.4f, 0.4f, 1.0f };
+    vec4_t textColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    if ( cg.rankQueueCount <= 0 ) {
+        return;
+    }
+
+    announcement = &cg.rankQueue[0];
+
+    if ( !announcement->name[0] ) {
+        CG_ShiftRankQueue();
+        return;
+    }
+
+    elapsed = cg.time - announcement->startTime;
+    if ( elapsed >= RANK_DISPLAY_TIME ) {
+        CG_ShiftRankQueue();
+        return;
+    }
+
+    alpha = 1.0f;
+    if ( elapsed > RANK_DISPLAY_TIME - RANK_FADE_TIME ) {
+        alpha = (float)( RANK_DISPLAY_TIME - elapsed ) / RANK_FADE_TIME;
+    }
+
+    if ( alpha < 0.0f ) {
+        alpha = 0.0f;
+    }
+
+    bgColor[3] *= alpha;
+    borderColor[3] *= alpha;
+    highlightColor[3] *= alpha;
+    demotionColor[3] *= alpha;
+    textColor[3] *= alpha;
+
+    x = 170.0f + ( 300.0f - width ) * 0.5f;
+    y = 10.0f + ( 75.0f - height ) * 0.5f;
+
+    CG_FillRect( x, y, width, height, bgColor );
+    CG_DrawRect( x, y, width, height, 1.0f, borderColor );
+
+    CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 10.0f ), announcement->rankUp ? "Rank Up!" : "Rank Down!",
+                      announcement->rankUp ? highlightColor : demotionColor,
+                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+
+    CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 26.0f ), announcement->name,
+                      announcement->rankUp ? highlightColor : demotionColor,
+                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+
+    if ( announcement->nextName[0] && Q_stricmp( announcement->nextName, announcement->name ) ) {
+        CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 42.0f ), va( "Next: %s", announcement->nextName ),
+                          textColor, qfalse, qtrue, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+    }
 
     trap_R_SetColor( NULL );
 }
@@ -3355,12 +3437,13 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 			CG_DrawWeaponSelect();
 
 #ifndef MISSIONPACK
-			CG_DrawHoldableItem();
+                        CG_DrawHoldableItem();
 #else
-	
+
 #endif
                         CG_DrawReward();
                         CG_DrawAchievementNotifications();
+                        CG_DrawRankNotifications();
                 }
         }
 

@@ -1,3 +1,5 @@
+#define PROFILE_SHARED_IMPLEMENTATION
+#include "../game/profile_shared.h"
 #include "ui_local.h"
 
 #define MAX_PROFILE_FILES   64
@@ -32,6 +34,13 @@ static vec4_t statusNormalColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 static vec4_t statusErrorColor  = { 1.0f, 0.3f, 0.3f, 1.0f };
 static vec4_t statusInfoColor   = { 1.0f, 0.8f, 0.3f, 1.0f };
 
+#define UI_PROFILE_RANK_ENTRY( name, threshold ) { name, threshold },
+static const profile_rank_def_t s_uiProfileRanks[] = {
+    PROFILE_RANK_TABLE( UI_PROFILE_RANK_ENTRY )
+};
+#undef UI_PROFILE_RANK_ENTRY
+#define UI_PROFILE_RANK_COUNT ( sizeof( s_uiProfileRanks ) / sizeof( s_uiProfileRanks[0] ) )
+
 static const char *emptyProfileList[] = { "No profiles", NULL };
 
 typedef struct {
@@ -62,6 +71,7 @@ static void UI_ProfileOverlay_DrawNameField( void *self );
 static void UI_ProfileOverlay_EnsureSelectionVisible( void );
 static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats );
 static void UI_Profile_ParseString( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue );
+qboolean UI_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank );
 static qboolean UI_Profile_FavoritesEmpty( const profile_info_t *info ) {
     int i;
 
@@ -76,6 +86,10 @@ static qboolean UI_Profile_FavoritesEmpty( const profile_info_t *info ) {
     }
 
     return qtrue;
+}
+
+qboolean UI_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank ) {
+    return Profile_GetRankForScore( stats, s_uiProfileRanks, UI_PROFILE_RANK_COUNT, outRank );
 }
 
 static qboolean UI_Profile_ParseFavoriteCvar( int index, profile_favorite_car_t *outFavorite ) {
@@ -550,6 +564,8 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
         UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
         UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
+        outInfo->currentRank = UI_Profile_ParseInt( buffer, "currentRank", 0 );
+        outInfo->highestRank = UI_Profile_ParseInt( buffer, "highestRank", 0 );
         UI_Profile_ParseFavoriteCars( buffer, outInfo );
     }
 
@@ -625,6 +641,8 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"birthDate\": \"%s\",\n"
         "\t\t\"avatar\": \"%s\",\n"
         "\t\t\"country\": \"%s\",\n"
+        "\t\t\"currentRank\": %d,\n"
+        "\t\t\"highestRank\": %d,\n"
         "\t\t\"favoriteCars\": %s\n"
         "\t},\n"
         "\t\"stats\": {\n"
@@ -655,6 +673,8 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         birthDate,
         avatar,
         country,
+        info->currentRank,
+        info->highestRank,
         favoriteCarsJson,
         stats->distanceKm,
         stats->fuelUsed,

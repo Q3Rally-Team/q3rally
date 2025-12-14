@@ -8,8 +8,10 @@ This design defines the server-side façade that submits match data to a ladder 
 ### Shared payload structure
 * **Match metadata:** `matchId`, `mode`, `startTime`, `endTime`, `duration`, `map`, and `server` are taken from the level state and configuration strings. The start and end times come from `level.startRaceTime` and `level.finishRaceTime`; `level.numberOfLaps` augments race-oriented modes.【F:engine/code/game/g_local.h†L500-L537】
 * **Player object:** Contains `playerId` (hash of `cl_guid` + display name), `displayName`, `team`, vehicle/skin data (`gclient_t.car` and `clientInfo_t.modelName`, `rimName`, etc.), and the counters and timers tracked per mode.【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/cgame/cg_local.h†L419-L468】
-* **Scoreboard data:** `score`, `playerScore`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken`, and `position` map directly from `score_t` and are translated into KPIs per mode.【F:engine/code/cgame/cg_local.h†L400-L410】
+* **Scoreboard data:** `score`, `playerScore`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken`, `position`, plus the derived `rankTier`/`rankName` computed from the shared profile rank table map directly from `score_t` and are translated into KPIs per mode.【F:engine/code/cgame/cg_local.h†L436-L446】
 * **Team aggregates:** Team-level metrics rely on `level.teamScores` and `level.teamTimes` to compute totals, averages, and objective-focused values.【F:engine/code/game/g_local.h†L447-L520】
+
+Scoreboard snapshots sent through the `scores` server command mirror the ladder payload and now attach `rankTier`, enabling HUD overlays to render the human-readable `rankName` with the same evaluator used by the HTTP reporter.【F:engine/code/game/g_cmds.c†L103-L130】【F:engine/code/cgame/cg_servercmds.c†L80-L139】
 
 ### Fields per `gametype_t`
 #### GT_RACING & GT_RACING_DM
@@ -102,8 +104,10 @@ Dieser Entwurf beschreibt die serverseitige Fassade, die Matchdaten als `POST /a
 ### Gemeinsame Nutzdatenstruktur
 * **Match-Metadaten**: `matchId`, `mode`, `startTime`, `endTime`, `duration`, `map`, `server` resultieren aus Level-Zustand und Konfigurations-Strings. Start- und Endzeiten stammen aus `level.startRaceTime` bzw. `level.finishRaceTime`; die Anzahl der Runden (`level.numberOfLaps`) ergänzt Rennmodi.【F:engine/code/game/g_local.h†L500-L537】
 * **Spielerobjekt**: Enthält `playerId` (Hash aus `cl_guid` + Anzeigename), `displayName`, `team`, Fahrzeug-/Skin-Informationen (`gclient_t.car` sowie `clientInfo_t.modelName`, `rimName`, etc.) und die pro Modus erhobenen Zähler und Zeiten.【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/cgame/cg_local.h†L419-L468】
-* **Scoreboard-Daten**: `score`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken` und `position` werden direkt aus `score_t` übernommen und je nach Modus in Kennzahlen übersetzt.【F:engine/code/cgame/cg_local.h†L400-L410】
+* **Scoreboard-Daten**: `score`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken` und `position` werden direkt aus `score_t` übernommen und je nach Modus in Kennzahlen übersetzt.【F:engine/code/cgame/cg_local.h†L436-L445】
 * **Team-Aggregate**: Teambezogene Werte greifen auf `level.teamScores` und `level.teamTimes` zurück, um Gesamtpunkte, Durchschnittszeiten und objektbasierte Werte aufzubereiten.【F:engine/code/game/g_local.h†L447-L520】
+
+Die Scoreboard-Nachricht (`scores`) trägt ebenfalls `rankTier`, sodass Zuschauer und Teammitglieder den zugehörigen `rankName` clientseitig aus der gemeinsamen Rangtabelle ableiten können – identisch zu den Ladder-Uploads.【F:engine/code/game/g_cmds.c†L103-L130】【F:engine/code/cgame/cg_servercmds.c†L80-L139】
 
 ### Felder pro `gametype_t`
 #### GT_RACING & GT_RACING_DM

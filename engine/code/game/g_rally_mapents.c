@@ -78,21 +78,23 @@ static void G_RallyCompleteLap( gentity_t *ent, int timestamp ) {
 			lapDuration = 0;
 		}
 
-		if ( client->recordedLapCount >= LADDER_MAX_LAP_TIMES ) {
-			for ( i = 1; i < LADDER_MAX_LAP_TIMES; ++i ) {
-				client->recordedLaps[i - 1] = client->recordedLaps[i];
-			}
-			client->recordedLapCount = LADDER_MAX_LAP_TIMES - 1;
-		}
+                if ( client->recordedLapCount >= LADDER_MAX_LAP_TIMES ) {
+                        for ( i = 1; i < LADDER_MAX_LAP_TIMES; ++i ) {
+                                client->recordedLaps[i - 1] = client->recordedLaps[i];
+                        }
+                        client->recordedLapCount = LADDER_MAX_LAP_TIMES - 1;
+                }
 
-		client->recordedLaps[ client->recordedLapCount ] = lapDuration;
-		client->recordedLapCount++;
+                client->recordedLaps[ client->recordedLapCount ] = lapDuration;
+                client->recordedLapCount++;
+
+                G_Profile_RecordLapComplete( client, client->ps.stats[STAT_POSITION] == 1 );
 
                 if ( client->bestLapMs == 0 || lapDuration < client->bestLapMs ) {
                         client->bestLapMs = lapDuration;
                         G_Profile_RecordBestLap( client, lapDuration );
                 }
-	}
+        }
 
 	client->lapStartTime = timestamp;
 }
@@ -427,6 +429,8 @@ else {
 trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->client->pers.netname ));
 }
 }
+
+        G_Profile_RecordRacePlacement( other->client, other->client->ps.stats[STAT_POSITION] );
 }
 
 void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){

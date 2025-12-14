@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_public.h"
 #include "../game/bg_achievements.h"
+#include "../game/profile_shared.h"
 #include "cg_public.h"
 
 
@@ -58,6 +59,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ACHIEVEMENT_LOCKED_TIME         650
 #define ACHIEVEMENT_FADE_TIME           400
 #define ACHIEVEMENT_MAX_QUEUE           4
+#define RANK_DISPLAY_TIME               3600
+#define RANK_FADE_TIME                  400
+#define RANK_MAX_QUEUE                  4
 
 #define	PULSE_SCALE			1.5			// amount to scale up the icons when activating
 
@@ -68,6 +72,14 @@ typedef struct {
     int tierIndex;
     int startTime;
 } cgAchievementAnnouncement_t;
+
+typedef struct {
+    int rankIndex;
+    char name[PROFILE_MAX_NAME];
+    char nextName[PROFILE_MAX_NAME];
+    qboolean rankUp;
+    int startTime;
+} cgRankAnnouncement_t;
 
 
 #define	MAX_VERTS_ON_POLY	10
@@ -443,6 +455,7 @@ typedef struct {
 	int				damageDealt;
 	int				damageTaken;
 	int				position;
+	int				rankTier;
 } score_t;
 
 // each client has an associated clientInfo_t
@@ -777,6 +790,8 @@ typedef struct {
 	qhandle_t	rewardSound[MAX_REWARDSTACK];
         cgAchievementAnnouncement_t achievementQueue[ACHIEVEMENT_MAX_QUEUE];
         int                     achievementQueueCount;
+        cgRankAnnouncement_t    rankQueue[RANK_MAX_QUEUE];
+        int                     rankQueueCount;
 
 	// sound buffer mainly for announcer sounds
 	int			soundBufferIn;

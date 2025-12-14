@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // sv_ladder.c -- ladder upload interface
 
 #include "server.h"
+#define PROFILE_SHARED_IMPLEMENTATION
+#include "../game/profile_shared.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -143,6 +145,26 @@ static int SV_LadderClampQueueLimit( int value ) {
                 return LADDER_SPOOL_LIMIT_MAX;
         }
         return value;
+}
+
+#define LADDER_RANK_ENTRY( name, minimumScore ) { name, minimumScore },
+static const profile_rank_def_t sv_ladderRankTable[] = {
+        PROFILE_RANK_TABLE( LADDER_RANK_ENTRY )
+};
+#undef LADDER_RANK_ENTRY
+#define SV_LADDER_RANK_COUNT ( sizeof( sv_ladderRankTable ) / sizeof( sv_ladderRankTable[0] ) )
+
+static qboolean SV_LadderGetRankForScore( int playerScore, profile_rank_t *outRank ) {
+        profile_stats_t stats;
+
+        if ( !outRank ) {
+                return qfalse;
+        }
+
+        Com_Memset( &stats, 0, sizeof( stats ) );
+        stats.playerScore = playerScore;
+
+        return Profile_GetRankForScore( &stats, sv_ladderRankTable, SV_LADDER_RANK_COUNT, outRank );
 }
 
 static void SV_LadderRefreshQueueLimit( void ) {
@@ -476,6 +498,20 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
         if ( !SV_LadderJsonAppendKey( builder, "playerScore", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->score ) ) {
                 return qfalse;
+        }
+        {
+                profile_rank_t rank;
+
+                if ( SV_LadderGetRankForScore( player->score, &rank ) ) {
+                        if ( !SV_LadderJsonAppendKey( builder, "rankTier", &first ) ||
+                             !SV_LadderJsonAppendInt( builder, rank.index ) ) {
+                                return qfalse;
+                        }
+                        if ( !SV_LadderJsonAppendKey( builder, "rankName", &first ) ||
+                             !SV_LadderJsonAppendString( builder, rank.current ? rank.current->name : "" ) ) {
+                                return qfalse;
+                        }
+                }
         }
         if ( !SV_LadderJsonAppendKey( builder, "ping", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->ping ) ) {

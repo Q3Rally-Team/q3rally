@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // be a valid snapshot this frame
 
 #include "cg_local.h"
+#include "../game/profile_shared.h"
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"
 
@@ -49,15 +50,31 @@ static const orderTask_t validOrders[] = {
 static const int numValidOrders = ARRAY_LEN(validOrders);
 
 static int CG_ValidOrder(const char *p) {
-	int i;
-	for (i = 0; i < numValidOrders; i++) {
-		if (Q_stricmp(p, validOrders[i].order) == 0) {
-			return validOrders[i].taskNum;
-		}
-	}
-	return -1;
+        int i;
+        for (i = 0; i < numValidOrders; i++) {
+                if (Q_stricmp(p, validOrders[i].order) == 0) {
+                        return validOrders[i].taskNum;
+                }
+        }
+        return -1;
 }
 #endif
+
+#define CG_PROFILE_RANK_ENTRY( name, threshold ) { name, threshold },
+static const profile_rank_def_t cgProfileRanks[] = {
+        PROFILE_RANK_TABLE( CG_PROFILE_RANK_ENTRY )
+};
+#undef CG_PROFILE_RANK_ENTRY
+
+#define CG_PROFILE_RANK_COUNT ( sizeof( cgProfileRanks ) / sizeof( cgProfileRanks[0] ) )
+
+static const profile_rank_def_t *CG_GetRankDef( int index ) {
+        if ( index < 0 || index >= CG_PROFILE_RANK_COUNT ) {
+                return NULL;
+        }
+
+        return &cgProfileRanks[index];
+}
 
 /*
 =================
@@ -82,28 +99,29 @@ static void CG_ParseScores( void ) {
 
 	memset( cg.scores, 0, sizeof( cg.scores ) );
 	for ( i = 0 ; i < cg.numScores ; i++ ) {
-		//
-// STONELANCE changed i * 14 to i * 18, added 4
-		cg.scores[i].client = atoi( CG_Argv( i * 18 + 6 ) );
-		cg.scores[i].score = atoi( CG_Argv( i * 18 + 7 ) );
-		cg.scores[i].ping = atoi( CG_Argv( i * 18 + 8 ) );
-		cg.scores[i].time = atoi( CG_Argv( i * 18 + 9 ) );
-		cg.scores[i].scoreFlags = atoi( CG_Argv( i * 18 + 10 ) );
-		powerups = atoi( CG_Argv( i * 18 + 11 ) );
-		cg.scores[i].accuracy = atoi(CG_Argv(i * 18 + 12));
-		cg.scores[i].impressiveCount = atoi(CG_Argv(i * 18 + 13));
-		cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 18 + 14));
-		cg.scores[i].excellentCount = atoi(CG_Argv(i * 18 + 15));
-		cg.scores[i].guantletCount = atoi(CG_Argv(i * 18 + 16));
-		cg.scores[i].defendCount = atoi(CG_Argv(i * 18 + 17));
-		cg.scores[i].assistCount = atoi(CG_Argv(i * 18 + 18));
-		cg.scores[i].perfect = atoi(CG_Argv(i * 18 + 19));
-		cg.scores[i].captures = atoi(CG_Argv(i * 18 + 20));
+//
+// STONELANCE changed i * 14 to i * 18, added 4 (now 19 for rank tier)
+cg.scores[i].client = atoi( CG_Argv( i * 19 + 6 ) );
+cg.scores[i].score = atoi( CG_Argv( i * 19 + 7 ) );
+cg.scores[i].ping = atoi( CG_Argv( i * 19 + 8 ) );
+cg.scores[i].time = atoi( CG_Argv( i * 19 + 9 ) );
+cg.scores[i].scoreFlags = atoi( CG_Argv( i * 19 + 10 ) );
+powerups = atoi( CG_Argv( i * 19 + 11 ) );
+cg.scores[i].accuracy = atoi(CG_Argv(i * 19 + 12));
+cg.scores[i].impressiveCount = atoi(CG_Argv(i * 19 + 13));
+cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 19 + 14));
+cg.scores[i].excellentCount = atoi(CG_Argv(i * 19 + 15));
+cg.scores[i].guantletCount = atoi(CG_Argv(i * 19 + 16));
+cg.scores[i].defendCount = atoi(CG_Argv(i * 19 + 17));
+cg.scores[i].assistCount = atoi(CG_Argv(i * 19 + 18));
+cg.scores[i].perfect = atoi(CG_Argv(i * 19 + 19));
+cg.scores[i].captures = atoi(CG_Argv(i * 19 + 20));
 // END
 // STONELANCE add two more score parts
-		cg.scores[i].damageDealt = atoi(CG_Argv(i * 18 + 21));
-		cg.scores[i].damageTaken = atoi(CG_Argv(i * 18 + 22));
-		cg.scores[i].position = atoi(CG_Argv(i * 18 + 23));
+cg.scores[i].damageDealt = atoi(CG_Argv(i * 19 + 21));
+cg.scores[i].damageTaken = atoi(CG_Argv(i * 19 + 22));
+cg.scores[i].position = atoi(CG_Argv(i * 19 + 23));
+cg.scores[i].rankTier = atoi(CG_Argv(i * 19 + 24));
 // END
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
@@ -111,14 +129,14 @@ static void CG_ParseScores( void ) {
 		}
 		cgs.clientinfo[ cg.scores[i].client ].score = cg.scores[i].score;
 		cgs.clientinfo[ cg.scores[i].client ].powerups = powerups;
-// Q3Rally Code Start
+		// Q3Rally Code Start
 		cgs.clientinfo[ cg.scores[i].client ].position = cg.scores[i].position;
-// END
+		// END
 
 		cg.scores[i].team = cgs.clientinfo[cg.scores[i].client].team;
 	}
 
-// Q3Rally Code Start
+	// Q3Rally Code Start
 	for ( ; i < MAX_CLIENTS ; i++ ) {
 		cg.scores[i].client = -1;
 		cg.scores[i].score = 0;
@@ -126,16 +144,17 @@ static void CG_ParseScores( void ) {
 		cg.scores[i].time = 0;
 		cg.scores[i].scoreFlags = -1;
 		cg.scores[i].position = -1;
+		cg.scores[i].rankTier = -1;
 		powerups = 0;
 
-		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
-			cg.scores[i].client = 0;
+			if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
+				cg.scores[i].client = 0;
+			}
+			cgs.clientinfo[ cg.scores[i].client ].score = cg.scores[i].score;
+			cgs.clientinfo[ cg.scores[i].client ].powerups = powerups;
+			cgs.clientinfo[ cg.scores[i].client ].position = cg.scores[i].position;
 		}
-		cgs.clientinfo[ cg.scores[i].client ].score = cg.scores[i].score;
-		cgs.clientinfo[ cg.scores[i].client ].powerups = powerups;
-		cgs.clientinfo[ cg.scores[i].client ].position = cg.scores[i].position;
-	}
-// END
+	// END
 
 #ifdef MISSIONPACK
 	CG_SetScoreSelection(NULL);
@@ -1171,8 +1190,8 @@ static void CG_ParsePositions( void ) {
 
 
 static void CG_AddAchievementAnnouncement( bgAchievementCategory_t category, int tierIndex ) {
-	cgAchievementAnnouncement_t *slot;
-	int queueCount;
+        cgAchievementAnnouncement_t *slot;
+        int queueCount;
 
 	if ( category < 0 || category >= BG_ACHIEVEMENT_CATEGORY_COUNT ) {
 		return;
@@ -1219,6 +1238,101 @@ static void CG_ParseAchievementUnlock( void ) {
 	}
 
         CG_AddAchievementAnnouncement( (bgAchievementCategory_t) categoryIndex, tierIndex );
+}
+
+static void CG_AddRankAnnouncement( int rankIndex, const char *name, const char *nextName, qboolean rankUp ) {
+                cgRankAnnouncement_t *slot;
+                int queueCount;
+
+		if ( rankIndex < 0 ) {
+			return;
+		}
+
+		queueCount = cg.rankQueueCount;
+		if ( queueCount >= RANK_MAX_QUEUE ) {
+			int i;
+			queueCount = RANK_MAX_QUEUE - 1;
+
+			for ( i = 0; i < queueCount; ++i ) {
+				cg.rankQueue[i] = cg.rankQueue[i + 1];
+			}
+		}
+
+                slot = &cg.rankQueue[queueCount];
+                slot->rankIndex = rankIndex;
+                Q_strncpyz( slot->name, name ? name : "", sizeof( slot->name ) );
+                Q_strncpyz( slot->nextName, nextName ? nextName : "", sizeof( slot->nextName ) );
+                slot->rankUp = rankUp;
+                slot->startTime = cg.time;
+                cg.rankQueueCount = queueCount + 1;
+
+		if ( cgs.media.achievementUnlockSound ) {
+			trap_S_StartLocalSound( cgs.media.achievementUnlockSound, CHAN_LOCAL_SOUND );
+		}
+}
+
+static void CG_ParseRankUp( void ) {
+                int rankIndex;
+                const char *name;
+                const char *nextName = "";
+                const profile_rank_def_t *rankDef;
+                const profile_rank_def_t *nextDef;
+
+                if ( trap_Argc() < 3 ) {
+                        return;
+                }
+
+                rankIndex = atoi( CG_Argv( 1 ) );
+
+                name = CG_Argv( 2 );
+                if ( trap_Argc() >= 4 ) {
+                        nextName = CG_Argv( 3 );
+                }
+
+                rankDef = CG_GetRankDef( rankIndex );
+                nextDef = CG_GetRankDef( rankIndex + 1 );
+
+                if ( rankDef && rankDef->name ) {
+                        name = rankDef->name;
+                }
+
+                if ( nextDef && nextDef->name ) {
+                        nextName = nextDef->name;
+                }
+
+                CG_AddRankAnnouncement( rankIndex, name, nextName, qtrue );
+}
+
+static void CG_ParseRankDown( void ) {
+                int rankIndex;
+                const char *name;
+                const char *nextName = "";
+                const profile_rank_def_t *rankDef;
+                const profile_rank_def_t *nextDef;
+
+                if ( trap_Argc() < 3 ) {
+                        return;
+                }
+
+                rankIndex = atoi( CG_Argv( 1 ) );
+
+                name = CG_Argv( 2 );
+                if ( trap_Argc() >= 4 ) {
+                        nextName = CG_Argv( 3 );
+                }
+
+                rankDef = CG_GetRankDef( rankIndex );
+                nextDef = CG_GetRankDef( rankIndex + 1 );
+
+                if ( rankDef && rankDef->name ) {
+                        name = rankDef->name;
+                }
+
+                if ( nextDef && nextDef->name ) {
+                        nextName = nextDef->name;
+                }
+
+                CG_AddRankAnnouncement( rankIndex, name, nextName, qfalse );
 }
 
 static void CG_ParseGhostMeta( void ) {
@@ -1273,6 +1387,16 @@ static void CG_ServerCommand( void ) {
 
         if ( !strcmp( cmd, "achv" ) ) {
                 CG_ParseAchievementUnlock();
+                return;
+        }
+
+        if ( !strcmp( cmd, "rankup" ) ) {
+                CG_ParseRankUp();
+                return;
+        }
+
+        if ( !strcmp( cmd, "rankdown" ) ) {
+                CG_ParseRankDown();
                 return;
         }
 
