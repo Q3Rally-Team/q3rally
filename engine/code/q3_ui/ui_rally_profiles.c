@@ -527,6 +527,7 @@ static qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, 
             outStats->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
             outStats->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
             outStats->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
+            outStats->playerScore = UI_Profile_ParseInt( buffer, "playerScore", 0 );
             outStats->sprintWins = UI_Profile_ParseInt( buffer, "sprintWins", 0 );
             outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
             outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
@@ -633,6 +634,7 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         "\t\t\"kills\": %d,\n"
         "\t\t\"deaths\": %d,\n"
         "\t\t\"wins\": %d,\n"
+        "\t\t\"playerScore\": %d,\n"
         "\t\t\"sprintWins\": %d,\n"
         "\t\t\"losses\": %d,\n"
         "\t\t\"flagCaptures\": %d,\n"
@@ -660,6 +662,7 @@ static qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *in
         stats->kills,
         stats->deaths,
         stats->wins,
+        stats->playerScore,
         stats->sprintWins,
         stats->losses,
         stats->flagCaptures,

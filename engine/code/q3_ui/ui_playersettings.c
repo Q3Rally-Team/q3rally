@@ -468,6 +468,7 @@ typedef enum {
         STATS_ROW_DAMAGE_DEALT,
         STATS_ROW_DAMAGE_TAKEN,
         STATS_ROW_WINS,
+        STATS_ROW_PLAYER_SCORE,
         STATS_ROW_FLAGS_CAPTURED,
         STATS_ROW_FLAG_ASSISTS,
         STATS_ROW_VEHICLE,
@@ -2199,11 +2200,14 @@ PlayerSettings_UpdateStatsPaginationInfo();
         Com_sprintf( buffer, sizeof( buffer ), "%d", stats->damageTaken );
         PlayerSettings_DrawStatsLabelValue( STATS_ROW_DAMAGE_TAKEN, "Damage Taken", buffer );
 
-        Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->wins, stats->losses );
-        PlayerSettings_DrawStatsLabelValue( STATS_ROW_WINS, "Wins / Losses", buffer );
+	Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->wins, stats->losses );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_WINS, "Wins / Losses", buffer );
 
-        Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagCaptures );
-        PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAGS_CAPTURED, "Flags Captured", buffer );
+	Com_sprintf( buffer, sizeof( buffer ), "%d", stats->playerScore );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_PLAYER_SCORE, "Player Score", buffer );
+
+	Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagCaptures );
+	PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAGS_CAPTURED, "Flags Captured", buffer );
 
         Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagAssists );
         PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAG_ASSISTS, "Flag Assists", buffer );
@@ -2998,7 +3002,7 @@ if ( profileInfo && profileInfo->favoriteCars[i].model[0] && profileInfo->favori
 favoriteModel = profileInfo->favoriteCars[i].model;
 favoriteSkin = profileInfo->favoriteCars[i].skin;
 } else {
-Com_sprintf( buf, sizeof( buf ), "favoritecar%i", ( i + 1 ) );
+	Com_sprintf( buf, sizeof( buf ), "favoritecar%i", ( i + 1 ) );
 error = PlayerSettings_GetFavoriteValues( buf, modelName, skinName, rimName, headName );
 if ( !error ) {
 favoriteModel = modelName;
@@ -3035,7 +3039,7 @@ static void PlayerSettings_CopyFavoritesToProfile( profile_info_t *info ) {
 		char rimName[MAX_QPATH];
 		char headName[MAX_QPATH];
 
-Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
+	Com_sprintf( cvarName, sizeof( cvarName ), "favoritecar%d", i + 1 );
 if ( !PlayerSettings_GetFavoriteValues( cvarName, modelName, skinName, rimName, headName ) ) {
 			Q_strncpyz( info->favoriteCars[i].model, modelName, sizeof( info->favoriteCars[i].model ) );
 			Q_strncpyz( info->favoriteCars[i].skin, skinName, sizeof( info->favoriteCars[i].skin ) );

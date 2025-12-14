@@ -19,6 +19,7 @@ typedef struct {
     int kills;
     int deaths;
     int wins;
+    int playerScore;
     int sprintWins;
     int losses;
     int flagCaptures;

@@ -473,6 +473,10 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
              !SV_LadderJsonAppendInt( builder, player->score ) ) {
                 return qfalse;
         }
+        if ( !SV_LadderJsonAppendKey( builder, "playerScore", &first ) ||
+             !SV_LadderJsonAppendInt( builder, player->score ) ) {
+                return qfalse;
+        }
         if ( !SV_LadderJsonAppendKey( builder, "ping", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->ping ) ) {
                 return qfalse;

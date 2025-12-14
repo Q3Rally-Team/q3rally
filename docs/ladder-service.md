@@ -8,7 +8,7 @@ This design defines the server-side façade that submits match data to a ladder 
 ### Shared payload structure
 * **Match metadata:** `matchId`, `mode`, `startTime`, `endTime`, `duration`, `map`, and `server` are taken from the level state and configuration strings. The start and end times come from `level.startRaceTime` and `level.finishRaceTime`; `level.numberOfLaps` augments race-oriented modes.【F:engine/code/game/g_local.h†L500-L537】
 * **Player object:** Contains `playerId` (hash of `cl_guid` + display name), `displayName`, `team`, vehicle/skin data (`gclient_t.car` and `clientInfo_t.modelName`, `rimName`, etc.), and the counters and timers tracked per mode.【F:engine/code/game/g_local.h†L401-L417】【F:engine/code/cgame/cg_local.h†L419-L468】
-* **Scoreboard data:** `score`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken`, and `position` map directly from `score_t` and are translated into KPIs per mode.【F:engine/code/cgame/cg_local.h†L400-L410】
+* **Scoreboard data:** `score`, `playerScore`, `ping`, `time`, `accuracy`, `impressiveCount`, `assistCount`, `captures`, `damageDealt`, `damageTaken`, and `position` map directly from `score_t` and are translated into KPIs per mode.【F:engine/code/cgame/cg_local.h†L400-L410】
 * **Team aggregates:** Team-level metrics rely on `level.teamScores` and `level.teamTimes` to compute totals, averages, and objective-focused values.【F:engine/code/game/g_local.h†L447-L520】
 
 ### Fields per `gametype_t`
