@@ -3,6 +3,10 @@
 #include "g_profile.h"
 #include "bg_achievements.h"
 
+#ifdef Q3_VM
+#include "bg_lib.h"
+#endif
+
 #define PROFILE_AUTOSAVE_INTERVAL 30000
 #define PROFILE_DISPLAY_L_PER_100KM 9.0f
 #define PROFILE_SCORE_FRAG 2
@@ -22,6 +26,10 @@ static const profile_rank_def_t s_profileRankTable[] = {
 #undef PROFILE_RANK_ENTRY
 
 #define PROFILE_RANK_COUNT ( sizeof( s_profileRankTable ) / sizeof( s_profileRankTable[0] ) )
+
+#define PROFILE_VEHICLE_JSON_ENTRY_SIZE ( PROFILE_MAX_VEHICLE + 32 )
+#define PROFILE_VEHICLE_JSON_BUFFER_SIZE ( PROFILE_MAX_TRACKED_VEHICLES * PROFILE_VEHICLE_JSON_ENTRY_SIZE + 32 )
+#define PROFILE_FILE_BUFFER_SIZE 16384
 
 static struct {
     qboolean        loaded;
@@ -71,11 +79,39 @@ typedef struct {
     int  timeMs;
 } profile_vehicle_usage_t;
 
-#define PROFILE_MAX_TRACKED_VEHICLES 8
+#define PROFILE_MAX_TRACKED_VEHICLES 64
 static profile_vehicle_usage_t s_profileVehicleUsage[PROFILE_MAX_TRACKED_VEHICLES];
 static const char *G_Profile_FindSectionEnd( const char *start, char endChar ) {
     const char *end = strchr( start, endChar );
     return end ? end : start;
+}
+
+static char G_Profile_ToLowerASCII( char c ) {
+    return ( c >= 'A' && c <= 'Z' ) ? ( c + ( 'a' - 'A' ) ) : c;
+}
+
+static void G_Profile_NormalizeVehicleName( const char *vehicle, char *out, int outSize ) {
+    int i;
+
+    if ( !out || outSize <= 0 ) {
+        return;
+    }
+
+    out[0] = '\0';
+
+    if ( !vehicle ) {
+        return;
+    }
+
+    for ( i = 0; i < outSize - 1 && vehicle[i]; ++i ) {
+        if ( vehicle[i] == '/' ) {
+            break;
+        }
+
+        out[i] = G_Profile_ToLowerASCII( vehicle[i] );
+    }
+
+    out[i] = '\0';
 }
 
 qboolean Profile_GetRankForScore( const profile_stats_t *stats,
@@ -175,6 +211,22 @@ static void G_Profile_MaybeAutosave( void ) {
     if ( s_profileState.dirty && level.time >= s_profileState.nextAutosaveTime ) {
         G_Profile_WriteToDisk();
     }
+}
+
+void G_Profile_FlushIfDirty( void ) {
+    if ( !s_profileState.loaded ) {
+        return;
+    }
+
+    if ( s_profileState.dirty ) {
+        G_Profile_WriteToDisk();
+    } else {
+        s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
+    }
+}
+
+qboolean G_Profile_IsDirty( void ) {
+    return s_profileState.loaded && s_profileState.dirty;
 }
 
 qboolean G_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank ) {
@@ -485,35 +537,81 @@ static profile_vehicle_usage_t *G_Profile_FindVehicleUsage( const char *vehicle,
         return empty;
     }
 
+    if ( allowCreate ) {
+        Com_Printf( "G_Profile: Vehicle list is full (%d entries), ignoring '%s'\n",
+                   PROFILE_MAX_TRACKED_VEHICLES,
+                   vehicle );
+    }
+
     return NULL;
 }
 
 static void G_Profile_AddVehicleTime( const char *vehicle, int timeMs ) {
+    char normalized[PROFILE_MAX_VEHICLE];
     profile_vehicle_usage_t *usage;
+    qboolean isNewVehicle;
 
     if ( timeMs <= 0 ) {
         return;
     }
 
-    usage = G_Profile_FindVehicleUsage( vehicle, qtrue );
+    G_Profile_NormalizeVehicleName( vehicle, normalized, sizeof( normalized ) );
+    if ( !normalized[0] ) {
+        return;
+    }
+
+    usage = G_Profile_FindVehicleUsage( normalized, qtrue );
     if ( !usage ) {
         Com_Printf( "G_Profile: Failed to find/create vehicle usage for '%s'\n", vehicle );
         return;
     }
 
+    isNewVehicle = ( usage->timeMs == 0 );
     usage->timeMs += timeMs;
-    
-    Com_Printf( "G_Profile: Vehicle '%s' now has %d ms (added %d ms)\n", 
+    s_profileState.dirty = qtrue;
+
+    Com_Printf( "G_Profile: Vehicle '%s' now has %d ms (added %d ms)\n",
                usage->name, usage->timeMs, timeMs );
-    
+
     if ( usage->timeMs > s_profileState.stats.mostUsedVehicleTimeMs ) {
         s_profileState.stats.mostUsedVehicleTimeMs = usage->timeMs;
         Q_strncpyz( s_profileState.stats.mostUsedVehicle, usage->name, sizeof( s_profileState.stats.mostUsedVehicle ) );
-        s_profileState.dirty = qtrue;
-        
-        Com_Printf( "G_Profile: NEW most used vehicle: '%s' with %d ms\n", 
+
+        Com_Printf( "G_Profile: NEW most used vehicle: '%s' with %d ms\n",
                    s_profileState.stats.mostUsedVehicle,
                    s_profileState.stats.mostUsedVehicleTimeMs );
+    }
+
+    if ( isNewVehicle ) {
+        s_profileState.nextAutosaveTime = level.time;
+    }
+
+    G_Profile_MaybeAutosave();
+}
+
+static void G_Profile_RecomputeMostUsedVehicle( void ) {
+    int i;
+    int bestTimeMs = 0;
+    char bestVehicle[PROFILE_MAX_VEHICLE];
+
+    bestVehicle[0] = '\0';
+
+    for ( i = 0; i < PROFILE_MAX_TRACKED_VEHICLES; ++i ) {
+        if ( !s_profileVehicleUsage[i].name[0] ) {
+            continue;
+        }
+
+        if ( s_profileVehicleUsage[i].timeMs > bestTimeMs ) {
+            bestTimeMs = s_profileVehicleUsage[i].timeMs;
+            Q_strncpyz( bestVehicle, s_profileVehicleUsage[i].name, sizeof( bestVehicle ) );
+        }
+    }
+
+    if ( bestTimeMs != s_profileState.stats.mostUsedVehicleTimeMs ||
+         Q_stricmp( s_profileState.stats.mostUsedVehicle, bestVehicle ) ) {
+        s_profileState.stats.mostUsedVehicleTimeMs = bestTimeMs;
+        Q_strncpyz( s_profileState.stats.mostUsedVehicle, bestVehicle, sizeof( s_profileState.stats.mostUsedVehicle ) );
+        s_profileState.dirty = qtrue;
     }
 }
 
@@ -544,7 +642,7 @@ static void G_Profile_UpdateVehicleUsage( gentity_t *ent, int frameMsec ) {
 static qboolean G_Profile_LoadFromDisk( void ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[2048];
+    char buffer[PROFILE_FILE_BUFFER_SIZE];
     int length;
     const char *vehiclesStart;
     const char *cursor;
@@ -564,6 +662,9 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     }
 
     if ( length >= (int)sizeof( buffer ) ) {
+        Com_Printf( "G_Profile: Truncating profile read to %d bytes (file is %d bytes)\n",
+                    (int)sizeof( buffer ) - 1,
+                    length );
         length = sizeof( buffer ) - 1;
     }
 
@@ -611,15 +712,23 @@ static qboolean G_Profile_LoadFromDisk( void ) {
         if ( vehiclesStart ) {
             int vehicleIndex = 0;
             cursor = vehiclesStart + 1;
-            
-            while ( *cursor && *cursor != ']' && vehicleIndex < PROFILE_MAX_TRACKED_VEHICLES ) {
+
+            while ( *cursor && *cursor != ']' ) {
                 const char *nameStart;
                 const char *nameEnd;
                 const char *timeStr;
                 char vehicleName[PROFILE_MAX_VEHICLE];
+                char normalizedName[PROFILE_MAX_VEHICLE];
                 int vehicleTime;
                 int nameLength;
-                
+                profile_vehicle_usage_t *usage;
+
+                if ( vehicleIndex >= PROFILE_MAX_TRACKED_VEHICLES ) {
+                    Com_Printf( "G_Profile: Skipping vehicle entries beyond limit of %d\n",
+                               PROFILE_MAX_TRACKED_VEHICLES );
+                    break;
+                }
+
                 // Finde "name"
                 cursor = strstr( cursor, "\"name\"" );
                 if ( !cursor ) break;
@@ -648,30 +757,51 @@ static qboolean G_Profile_LoadFromDisk( void ) {
                 cursor = strchr( cursor, ':' );
                 if ( !cursor ) break;
                 cursor++;
-                
+
                 while ( *cursor == ' ' || *cursor == '\t' ) cursor++;
                 timeStr = cursor;
                 vehicleTime = atoi( timeStr );
-                
-                // Speichere im Array
-                Q_strncpyz( s_profileVehicleUsage[vehicleIndex].name, vehicleName, sizeof( s_profileVehicleUsage[vehicleIndex].name ) );
-                s_profileVehicleUsage[vehicleIndex].timeMs = vehicleTime;
-                
-                vehicleIndex++;
-                
+
+                G_Profile_NormalizeVehicleName( vehicleName, normalizedName, sizeof( normalizedName ) );
+                if ( !normalizedName[0] ) {
+                    // Nächstes Objekt
+                    cursor = strchr( cursor, '}' );
+                    if ( !cursor ) break;
+                    cursor++;
+                    vehicleIndex++;
+                    continue;
+                }
+
+                usage = G_Profile_FindVehicleUsage( normalizedName, qtrue );
+                if ( usage ) {
+                    usage->timeMs += vehicleTime;
+                }
+
                 // Nächstes Objekt
                 cursor = strchr( cursor, '}' );
                 if ( !cursor ) break;
                 cursor++;
+
+                vehicleIndex++;
             }
         }
     }
 
     // Falls keine Vehicle-Liste vorhanden (Legacy), lade das mostUsedVehicle-Feld
     if ( s_profileState.stats.mostUsedVehicle[0] && s_profileVehicleUsage[0].name[0] == '\0' ) {
-        Q_strncpyz( s_profileVehicleUsage[0].name, s_profileState.stats.mostUsedVehicle, sizeof( s_profileVehicleUsage[0].name ) );
-        s_profileVehicleUsage[0].timeMs = s_profileState.stats.mostUsedVehicleTimeMs;
+        char normalizedName[PROFILE_MAX_VEHICLE];
+        profile_vehicle_usage_t *usage;
+
+        G_Profile_NormalizeVehicleName( s_profileState.stats.mostUsedVehicle, normalizedName, sizeof( normalizedName ) );
+        if ( normalizedName[0] ) {
+            usage = G_Profile_FindVehicleUsage( normalizedName, qtrue );
+            if ( usage ) {
+                usage->timeMs = s_profileState.stats.mostUsedVehicleTimeMs;
+            }
+        }
     }
+
+    G_Profile_RecomputeMostUsedVehicle();
 
     G_Profile_UpdateRankState();
 
@@ -681,16 +811,16 @@ static qboolean G_Profile_LoadFromDisk( void ) {
 static void G_Profile_WriteToDisk( void ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[4096];
+    static char buffer[PROFILE_FILE_BUFFER_SIZE];
+    static char vehicleJson[PROFILE_VEHICLE_JSON_BUFFER_SIZE];
+    static char favoriteCarsJson[1024];
+    static char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
+    static char readBuffer[PROFILE_FILE_BUFFER_SIZE];
     char gender[PROFILE_MAX_GENDER * 2];
     char birthDate[PROFILE_MAX_BIRTHDATE * 2];
     char avatar[PROFILE_MAX_AVATAR * 2];
     char country[PROFILE_MAX_COUNTRY * 2];
-    char vehicleJson[1024];
-    char favoriteCarsJson[1024];
-    char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
     fileHandle_t readFile;
-    char readBuffer[1024];
     int readLength;
     int length;
     int i;
@@ -758,25 +888,51 @@ static void G_Profile_WriteToDisk( void ) {
     Com_sprintf( favoriteCarsJson + vehicleJsonPos, sizeof( favoriteCarsJson ) - vehicleJsonPos, "\n\t\t]" );
 
     // Baue Fahrzeug-Array für JSON - manuell ohne Q_strcat
-    vehicleJsonPos = 0;
-    vehicleJsonPos += Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, "[\n" );
-    
+    vehicleJsonPos = Com_sprintf( vehicleJson, sizeof( vehicleJson ), "[\n" );
+    if ( vehicleJsonPos < 0 ) {
+        vehicleJsonPos = 0;
+    }
+
     for ( i = 0; i < PROFILE_MAX_TRACKED_VEHICLES; ++i ) {
+        int available;
+        int written;
+
         if ( !s_profileVehicleUsage[i].name[0] ) {
             continue;
         }
-        
+
+        if ( vehicleJsonPos >= (int)sizeof( vehicleJson ) - 1 ) {
+            Com_Printf( "G_Profile: Vehicle JSON buffer full, truncating list at %d entries\n", i );
+            break;
+        }
+
         // Füge Komma hinzu, wenn nicht das erste Element
         if ( vehicleJsonPos > 2 ) {  // mehr als nur "[\n"
-            vehicleJsonPos += Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, ",\n" );
+            available = sizeof( vehicleJson ) - vehicleJsonPos;
+            written = Com_sprintf( vehicleJson + vehicleJsonPos, available, ",\n" );
+            if ( written < 0 || written >= available ) {
+                Com_Printf( "G_Profile: Failed to append vehicle separator, truncating output\n" );
+                vehicleJsonPos = sizeof( vehicleJson ) - 1;
+                break;
+            }
+            vehicleJsonPos += written;
         }
-        
-        vehicleJsonPos += Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, 
-                                      "\t\t\t{\"name\": \"%s\", \"timeMs\": %d}", 
-                                      s_profileVehicleUsage[i].name, 
-                                      s_profileVehicleUsage[i].timeMs );
+
+        available = sizeof( vehicleJson ) - vehicleJsonPos;
+        written = Com_sprintf( vehicleJson + vehicleJsonPos,
+                               available,
+                               "\t\t\t{\"name\": \"%s\", \"timeMs\": %d}",
+                               s_profileVehicleUsage[i].name,
+                               s_profileVehicleUsage[i].timeMs );
+        if ( written < 0 || written >= available ) {
+            Com_Printf( "G_Profile: Truncated vehicle entry for '%s'\n", s_profileVehicleUsage[i].name );
+            vehicleJsonPos = sizeof( vehicleJson ) - 1;
+            break;
+        }
+
+        vehicleJsonPos += written;
     }
-    
+
     Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, "\n\t\t]" );
 
     // Debug-Ausgabe
@@ -856,6 +1012,13 @@ static void G_Profile_WriteToDisk( void ) {
         return;
     }
 
+    if ( length >= (int)sizeof( buffer ) ) {
+        Com_Printf( "G_Profile: Profile JSON truncated to %d bytes (needed %d)\n",
+                    (int)sizeof( buffer ) - 1,
+                    length );
+        length = sizeof( buffer ) - 1;
+    }
+
     // Debug-Ausgabe des gesamten Buffers
     Com_Printf( "G_Profile: Writing profile file:\n%s\n", buffer );
 
@@ -913,9 +1076,7 @@ void G_Profile_Shutdown( void ) {
         return;
     }
 
-    if ( s_profileState.dirty ) {
-        G_Profile_WriteToDisk();
-    }
+    G_Profile_FlushIfDirty();
 
     G_Profile_ClearState();
 }

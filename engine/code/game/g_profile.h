@@ -9,6 +9,8 @@ struct gentity_s;
 
 void G_Profile_Init( void );
 void G_Profile_Shutdown( void );
+void G_Profile_FlushIfDirty( void );
+qboolean G_Profile_IsDirty( void );
 void G_Profile_TrackClientSpawn( struct gclient_s *client );
 void G_Profile_UpdateClientFrame( struct gentity_s *ent );
 void G_Profile_RecordDamage( struct gclient_s *attacker, struct gclient_s *victim, int damage );
