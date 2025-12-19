@@ -106,7 +106,11 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		}
 		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
 
-		rankTier = G_GetScoreboardRankTier( cl->ps.persistant[PERS_SCORE] );
+		if ( cl->pers.localClient ) {
+			rankTier = G_GetScoreboardRankTier( G_Profile_GetPlayerScore() );
+		} else {
+			rankTier = G_GetScoreboardRankTier( cl->ps.persistant[PERS_SCORE] );
+		}
 		
 		// STONELANCE changed to 19 fields to include rank tier
 		Com_sprintf (entry, sizeof(entry),
@@ -2262,4 +2266,3 @@ void ClientCommand( int clientNum ) {
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
 }
-

@@ -821,6 +821,10 @@ qboolean CG_DrawModernScoreboard(void) {
     int lastPlaceClient;
     int lastPlacePosition;
     qboolean isRacingGametype;
+    int topMargin, bottomMargin, headerHeight, availableHeight;
+    int rowSpacing, maxRows, baseMaxClients;
+    int maxRowsStandard;
+    qboolean showOverflowRow;
 
     
     CG_SetScreenPlacement(PLACE_CENTER, PLACE_CENTER);
@@ -916,9 +920,57 @@ qboolean CG_DrawModernScoreboard(void) {
     y += BIGCHAR_HEIGHT + 24;
     
     /* Determine layout mode */
-    isCompact = (cg.numScores > MAX_SCOREBOARD_CLIENTS) || CG_IsTeamGametype();
-    maxClients = isCompact ? MAX_COMPACT_CLIENTS : MAX_SCOREBOARD_CLIENTS;
+    topMargin = y;
+    bottomMargin = 32;
+    headerHeight = MODERN_SB_HEADER_HEIGHT + 4;
+    rowSpacing = 2;
+    availableHeight = SCREEN_HEIGHT - topMargin - bottomMargin - headerHeight;
+    if (availableHeight < MODERN_SB_COMPACT_HEIGHT) {
+        availableHeight = MODERN_SB_COMPACT_HEIGHT;
+    }
+
+    maxRowsStandard = availableHeight / (MODERN_SB_ROW_HEIGHT + rowSpacing);
+    isCompact = (cg.numScores > MAX_SCOREBOARD_CLIENTS) ||
+                CG_IsTeamGametype() ||
+                (cg.numScores > maxRowsStandard);
+
     rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
+    maxRows = availableHeight / (rowHeight + rowSpacing);
+
+    if (isCompact && cg.numScores > maxRows && cg.numScores > 0) {
+        int adjustedHeight;
+        int minRowHeight = 14;
+
+        adjustedHeight = (availableHeight / cg.numScores) - rowSpacing;
+        if (adjustedHeight < minRowHeight) {
+            adjustedHeight = minRowHeight;
+        }
+        if (adjustedHeight < rowHeight) {
+            rowHeight = adjustedHeight;
+            maxRows = availableHeight / (rowHeight + rowSpacing);
+        }
+    }
+
+    if (maxRows < 1) {
+        maxRows = 1;
+    }
+
+    baseMaxClients = isCompact ? MAX_COMPACT_CLIENTS : MAX_SCOREBOARD_CLIENTS;
+    maxClients = baseMaxClients;
+    if (maxClients > maxRows) {
+        maxClients = maxRows;
+    }
+    if (maxClients < 1) {
+        maxClients = 1;
+    }
+
+    showOverflowRow = qfalse;
+    if (cg.numScores > maxClients && maxClients > 1) {
+        maxClients--;
+        showOverflowRow = qtrue;
+    } else if (cg.numScores > maxClients && maxRows > maxClients) {
+        showOverflowRow = qtrue;
+    }
     
     /* Draw header */
     CG_DrawModernHeader(y);
@@ -966,7 +1018,7 @@ qboolean CG_DrawModernScoreboard(void) {
                 CG_DrawModernPlayerRow(y, score, teamClients + 1, isCompact, fade,
                                        lastPlaceClient, lastPlacePosition,
                                        playersRemaining);
-                y += rowHeight + 2;
+                y += rowHeight + rowSpacing;
                 drawnClients++;
                 teamClients++;
             }
@@ -988,7 +1040,7 @@ qboolean CG_DrawModernScoreboard(void) {
             CG_DrawModernPlayerRow(y, score, 0, isCompact, fade,
                                    lastPlaceClient, lastPlacePosition,
                                    playersRemaining);
-            y += rowHeight + 2;
+            y += rowHeight + rowSpacing;
             drawnClients++;
         }
     } else {
@@ -1000,9 +1052,24 @@ qboolean CG_DrawModernScoreboard(void) {
             CG_DrawModernPlayerRow(y, score, i + 1, isCompact, fade,
                                    lastPlaceClient, lastPlacePosition,
                                    playersRemaining);
-            y += rowHeight + 2;
+            y += rowHeight + rowSpacing;
             drawnClients++;
         }
+    }
+
+    if (showOverflowRow && drawnClients < maxRows) {
+        vec4_t overflowColor;
+        int textY;
+
+        overflowColor[0] = 0.8f; overflowColor[1] = 0.8f;
+        overflowColor[2] = 0.8f; overflowColor[3] = fade;
+        textY = y + (rowHeight - SMALLCHAR_HEIGHT) / 2;
+
+        CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, rowHeight,
+                                MODERN_SB_ALPHA * fade, qfalse);
+        CG_DrawModernText(scoreboardX, textY, "Weitere Spieler...",
+                          1, currentScoreboardWidth, overflowColor, qfalse);
+        y += rowHeight + rowSpacing;
     }
     
     /* Draw local client at bottom if not shown */

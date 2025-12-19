@@ -582,9 +582,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
         if (attacker && attacker->client) {
                 attacker->client->lastkilled_client = self->s.number;
 
-                if ( attacker != self ) {
-                        G_Profile_RecordKill( attacker->client, self->client );
-                }
+                G_Profile_RecordKill( attacker->client, self->client );
 
                 if ( attacker == self || OnSameTeam (self, attacker ) ) {
                         AddScore( attacker, self->r.currentOrigin, -1 );

@@ -1370,6 +1370,7 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
 
     if (ent->s.powerups != powerup) {
         CaptureSigil(ent, sigilNum, status, powerup);
+        G_Profile_RecordDominationCapture( cl );
     }
 
     return 0;

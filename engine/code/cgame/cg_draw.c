@@ -2251,6 +2251,28 @@ static void CG_ShiftRankQueue( void ) {
     cg.rankQueueCount--;
 }
 
+static qboolean CG_IsAchievementNotificationActive( void ) {
+    const cgAchievementAnnouncement_t *announcement;
+    const bgAchievementCategoryDef_t *category;
+    const bgAchievementTierDef_t *tier;
+    int elapsed;
+
+    if ( cg.achievementQueueCount <= 0 ) {
+        return qfalse;
+    }
+
+    announcement = &cg.achievementQueue[0];
+    category = BG_AchievementGetCategory( announcement->category );
+    tier = BG_AchievementGetTier( announcement->category, announcement->tierIndex );
+
+    if ( !category || !tier ) {
+        return qfalse;
+    }
+
+    elapsed = cg.time - announcement->startTime;
+    return ( elapsed < ACHIEVEMENT_DISPLAY_TIME );
+}
+
 static void CG_DrawAchievementNotifications( void ) {
     const bgAchievementCategoryDef_t *category;
     const bgAchievementTierDef_t *tier;
@@ -3443,7 +3465,9 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 #endif
                         CG_DrawReward();
                         CG_DrawAchievementNotifications();
-                        CG_DrawRankNotifications();
+                        if ( !CG_IsAchievementNotificationActive() ) {
+                            CG_DrawRankNotifications();
+                        }
                 }
         }
 
@@ -3533,6 +3557,5 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	// draw status bar and other floating elements
  	CG_Draw2D(stereoView);
 }
-
 
 

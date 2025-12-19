@@ -10,9 +10,11 @@
 #define PROFILE_AUTOSAVE_INTERVAL 30000
 #define PROFILE_DISPLAY_L_PER_100KM 9.0f
 #define PROFILE_SCORE_FRAG 2
+#define PROFILE_SCORE_DEATH -2
 #define PROFILE_SCORE_SUICIDE -5
-#define PROFILE_SCORE_FLAG_CAPTURE 10
-#define PROFILE_SCORE_FLAG_ASSIST 5
+#define PROFILE_SCORE_FLAG_CAPTURE 5
+#define PROFILE_SCORE_FLAG_ASSIST 2
+#define PROFILE_SCORE_DOMINATION_CAPTURE 5
 #define PROFILE_SCORE_LAP 2
 #define PROFILE_SCORE_LEAD_LAP 2
 #define PROFILE_SCORE_RACE_WIN 10
@@ -231,6 +233,14 @@ qboolean G_Profile_IsDirty( void ) {
 
 qboolean G_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank ) {
     return Profile_GetRankForScore( stats, s_profileRankTable, PROFILE_RANK_COUNT, outRank );
+}
+
+int G_Profile_GetPlayerScore( void ) {
+    if ( !s_profileState.loaded ) {
+        return 0;
+    }
+
+    return s_profileState.stats.playerScore;
 }
 
 static void G_Profile_UpdateRankState( void ) {
@@ -584,9 +594,10 @@ static void G_Profile_AddVehicleTime( const char *vehicle, int timeMs ) {
 
     if ( isNewVehicle ) {
         s_profileState.nextAutosaveTime = level.time;
+        G_Profile_FlushIfDirty();
+    } else {
+        G_Profile_MaybeAutosave();
     }
-
-    G_Profile_MaybeAutosave();
 }
 
 static void G_Profile_RecomputeMostUsedVehicle( void ) {
@@ -1260,6 +1271,8 @@ void G_Profile_RecordDeath( gclient_t *victim ) {
 
     s_profileState.stats.deaths++;
     s_profileState.dirty = qtrue;
+
+    G_Profile_AddScore( PROFILE_SCORE_DEATH );
 }
 
 void G_Profile_RecordFlagCapture( gclient_t *client ) {
@@ -1296,8 +1309,12 @@ void G_Profile_RecordFlagAssist( gclient_t *client ) {
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_FLAG_ASSISTS );
 }
 
-void G_Profile_RecordLapComplete( gclient_t *client, qboolean isLeader ) {
+void G_Profile_RecordLapComplete( gclient_t *client, qboolean isLeader, qboolean allowRankProgress ) {
     if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( !allowRankProgress ) {
         return;
     }
 
@@ -1378,6 +1395,14 @@ void G_Profile_RecordLoss( gclient_t *client ) {
     }
 }
 
+void G_Profile_RecordDominationCapture( gclient_t *client ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    G_Profile_AddScore( PROFILE_SCORE_DOMINATION_CAPTURE );
+}
+
 void G_Profile_RecordBestLap( gclient_t *client, int lapTime ) {
     if ( !s_profileState.loaded ) {
         return;
@@ -1444,7 +1469,3 @@ void G_Profile_RecordPerfect( gclient_t *client ) {
 
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_PERFECT );
 }
-
-
-
-

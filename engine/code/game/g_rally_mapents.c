@@ -58,10 +58,10 @@ static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 	client->lapTimeCount++;
 }
 
-static void G_RallyCompleteLap( gentity_t *ent, int timestamp ) {
-	gclient_t *client;
-	int lapDuration;
-	int i;
+static void G_RallyCompleteLap( gentity_t *ent, int timestamp, qboolean allowRankProgress ) {
+        gclient_t *client;
+        int lapDuration;
+        int i;
 
 	if ( !ent ) {
 		return;
@@ -88,7 +88,7 @@ static void G_RallyCompleteLap( gentity_t *ent, int timestamp ) {
                 client->recordedLaps[ client->recordedLapCount ] = lapDuration;
                 client->recordedLapCount++;
 
-                G_Profile_RecordLapComplete( client, client->ps.stats[STAT_POSITION] == 1 );
+                G_Profile_RecordLapComplete( client, client->ps.stats[STAT_POSITION] == 1, allowRankProgress );
 
                 if ( client->bestLapMs == 0 || lapDuration < client->bestLapMs ) {
                         client->bestLapMs = lapDuration;
@@ -374,7 +374,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         }
 
         G_RallyRecordSplitTime( other, level.time );
-        G_RallyCompleteLap( other, level.time );
+        G_RallyCompleteLap( other, level.time, qtrue );
         other->client->lastCheckpointTime = level.time;
         other->client->finishRaceTime = level.time;
         other->s.weapon = WP_NONE;
@@ -452,15 +452,18 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 		return;
 	}
 
-	if (self->number == other->number){
-		G_RallyRecordSplitTime( other, level.time );
-		G_RallyCompleteLap( other, level.time );
-		other->client->lastCheckpointTime = level.time;
-		other->currentLap++;
-		if ( g_gametype.integer == GT_ELIMINATION ) {
-			G_EliminationProcessLap( other, other->currentLap - 1 );
-		}
-		// increment lap
+        if (self->number == other->number){
+                G_RallyRecordSplitTime( other, level.time );
+                {
+                        qboolean allowRankProgress = ( level.numberOfLaps > 0 && other->currentLap >= level.numberOfLaps );
+                        G_RallyCompleteLap( other, level.time, allowRankProgress );
+                }
+                other->client->lastCheckpointTime = level.time;
+                other->currentLap++;
+                if ( g_gametype.integer == GT_ELIMINATION ) {
+                        G_EliminationProcessLap( other, other->currentLap - 1 );
+                }
+                // increment lap
 		if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
