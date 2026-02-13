@@ -250,6 +250,12 @@ void	trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
 int	trap_S_GetStreamLength( const char *filename ) {
 	return syscall( CG_S_GETSTREAMLENGTH, filename );
 }
+qboolean trap_S_GetStreamMetadata( const char *filename,
+			       char *title, int titleSize,
+			       char *artist, int artistSize,
+			       char *album, int albumSize ) {
+	return syscall( CG_S_GETSTREAMMETADATA, filename, title, titleSize, artist, artistSize, album, albumSize );
+}
 
 void	trap_R_LoadWorldMap( const char *mapname ) {
 	syscall( CG_R_LOADWORLDMAP, mapname );

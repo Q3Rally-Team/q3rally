@@ -93,6 +93,7 @@ equ trap_R_inPVS						-90
 equ trap_FS_Seek			-91
 equ	trap_FS_GetFileList					-92
 equ	trap_S_GetStreamLength				-93
+equ	trap_S_GetStreamMetadata			-94
 
 equ	memset						-101
 equ	memcpy						-102

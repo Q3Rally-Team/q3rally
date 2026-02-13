@@ -223,6 +223,12 @@ vmCvar_t	ui_plate;
 
 vmCvar_t	ui_profileActive;
 vmCvar_t	ui_profileOverlaySeen;
+vmCvar_t	ui_menuBackOverride;
+vmCvar_t	ui_menuBackUrl;
+vmCvar_t	ui_menuBackEnable;
+vmCvar_t	ui_menuBackRefreshSec;
+vmCvar_t	ui_menuBackPath;
+vmCvar_t	ui_menuBackState;
 vmCvar_t	ui_cdkeychecked;
 vmCvar_t	ui_ioq3;
 
@@ -333,6 +339,12 @@ static cvarTable_t		cvarTable[] = {
 
 	{ &ui_profileActive, "profile_active", "", CVAR_ARCHIVE },
 	{ &ui_profileOverlaySeen, "ui_profileOverlaySeen", "0", CVAR_TEMP },
+	{ &ui_menuBackOverride, "ui_menuBackOverride", "", CVAR_ARCHIVE },
+	{ &ui_menuBackUrl, "ui_menuBackUrl", "https://ladder.q3rally.com/background/bg.png", CVAR_ARCHIVE },
+	{ &ui_menuBackEnable, "ui_menuBackEnable", "1", CVAR_ARCHIVE },
+	{ &ui_menuBackRefreshSec, "ui_menuBackRefreshSec", "0", CVAR_ARCHIVE },
+	{ &ui_menuBackPath, "ui_menuBackPath", "", CVAR_TEMP },
+	{ &ui_menuBackState, "ui_menuBackState", "idle", CVAR_TEMP },
 	{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM },
 	{ &ui_ioq3, "ui_ioq3", "1", CVAR_ROM }
 };

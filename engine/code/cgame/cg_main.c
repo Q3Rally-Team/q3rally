@@ -283,6 +283,8 @@ vmCvar_t	cg_useFuel;
 
 vmCvar_t        cg_fuelWarningLevel;
 vmCvar_t	cg_drawBotPaths;
+vmCvar_t	cg_jukeboxShuffle;
+vmCvar_t	cg_jukeboxRepeatMode;
 
 
 // Q3Rally Code END
@@ -375,6 +377,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
         { &cg_distanceFormat, "cg_distanceFormat", "0", CVAR_ARCHIVE },
+	{ &cg_jukeboxShuffle, "cg_jukeboxShuffle", "0", CVAR_ARCHIVE },
+	{ &cg_jukeboxRepeatMode, "cg_jukeboxRepeatMode", "off", CVAR_ARCHIVE },
 
         { &cg_developer, "developer", "0", 0 },
 

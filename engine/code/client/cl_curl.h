@@ -55,6 +55,8 @@ extern void (*qcurl_easy_cleanup)(CURL *curl);
 extern CURLcode (*qcurl_easy_getinfo)(CURL *curl, CURLINFO info, ...);
 extern void (*qcurl_easy_reset)(CURL *curl);
 extern const char *(*qcurl_easy_strerror)(CURLcode);
+extern struct curl_slist *(*qcurl_slist_append)(struct curl_slist *list, const char *string);
+extern void (*qcurl_slist_free_all)(struct curl_slist *list);
 
 extern CURLM* (*qcurl_multi_init)(void);
 extern CURLMcode (*qcurl_multi_add_handle)(CURLM *multi_handle,
@@ -83,6 +85,8 @@ extern const char *(*qcurl_multi_strerror)(CURLMcode);
 #define qcurl_easy_duphandle curl_easy_duphandle
 #define qcurl_easy_reset curl_easy_reset
 #define qcurl_easy_strerror curl_easy_strerror
+#define qcurl_slist_append curl_slist_append
+#define qcurl_slist_free_all curl_slist_free_all
 
 #define qcurl_multi_init curl_multi_init
 #define qcurl_multi_add_handle curl_multi_add_handle

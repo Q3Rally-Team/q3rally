@@ -168,6 +168,7 @@ typedef enum {
 	CG_FS_SEEK,
         CG_FS_GETFILELIST,
         CG_S_GETSTREAMLENGTH,
+        CG_S_GETSTREAMMETADATA,
 
 /*
 	CG_LOADCAMERA,

@@ -48,6 +48,9 @@
     <ClCompile Include="..\..\code\client\cl_avi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\code\client\cl_bgasset.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\code\client\cl_update.c">
       <Filter>Source Files</Filter>
     </ClCompile>

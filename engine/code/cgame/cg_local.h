@@ -1562,6 +1562,8 @@ extern  vmCvar_t                cg_useFuel;
 
 extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;
+extern	vmCvar_t		cg_jukeboxShuffle;
+extern	vmCvar_t		cg_jukeboxRepeatMode;
 // Q3Rally Code END
 
 //
@@ -1730,6 +1732,9 @@ void CG_JukeboxDraw( float x, float y, float w, float h );
 void CG_JukeboxToggle_f( void );
 void CG_JukeboxNext_f( void );
 void CG_JukeboxPrev_f( void );
+void CG_JukeboxRescan_f( void );
+void CG_JukeboxShuffleToggle_f( void );
+void CG_JukeboxRepeatCycle_f( void );
 
 
 //
@@ -2145,6 +2150,10 @@ sfxHandle_t     trap_S_RegisterSoundDebug( const char *sample, qboolean compress
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	    trap_S_StopBackgroundTrack( void );
 int		trap_S_GetStreamLength( const char *filename );
+qboolean	trap_S_GetStreamMetadata( const char *filename,
+			      char *title, int titleSize,
+			      char *artist, int artistSize,
+			      char *album, int albumSize );
 
 
 void		trap_R_LoadWorldMap( const char *mapname );
@@ -2260,6 +2269,5 @@ void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
-
 
 

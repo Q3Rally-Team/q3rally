@@ -183,3 +183,24 @@
 
 **Tip / Hinweis:** Legt zusätzliche `.ogg`-Dateien mit dem Präfix `menumusic` im Ordner `baseq3r/music/` ab, um die Rotation um eigene Songs zu erweitern.【F:engine/code/q3_ui/ui_menu.c†L368-L390】
 
+**Jukebox-Konsolenbefehle (Ingame):**
+
+- `jukebox_play` – Startet/stoppt die Ingame-Jukebox.
+- `jukebox_next` – Springt zum nächsten Track.
+- `jukebox_prev` – Springt zum vorherigen Track.
+- `jukebox_rescan` – Scannt `music/jukebox` neu und aktualisiert die Trackliste.
+
+## 9. Menu Background via URL / Menü-Hintergrund per URL
+
+**DE:** Der Menü-Hintergrund kann optional aus einer entfernten Bilddatei geladen werden. Die UI nutzt dabei lokale Cache-Dateien und fällt bei Fehlern automatisch auf den Standardhintergrund zurück. Aktivierung und Intervall sind vollständig deaktivierbar.
+**EN:** The menu background can optionally be fetched from a remote image. The UI uses cached local files and automatically falls back to the default background on errors. The feature is fully disableable and supports an optional refresh interval.
+
+**Cvars / Konsolenvariablen:**
+
+- `ui_menuBackEnable` (0/1, Standard: 1) – Schaltet den URL-basierten Menü-Hintergrund ein oder aus.
+- `ui_menuBackUrl` (String, Standard: `https://ladder.q3rally.com/background/bg.png`) – HTTP(S)-Adresse der Bilddatei.
+- `ui_menuBackRefreshSec` (Sekunden, Standard: 0) – Aktualisierungsintervall; `0` deaktiviert automatische Refreshs.
+
+**Konsolensteuerung / Console control:**
+
+- `ui_menuBackRefresh` – Erzwingt einen sofortigen Download-Versuch für die aktuelle `ui_menuBackUrl`.

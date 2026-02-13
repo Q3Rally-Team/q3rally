@@ -730,6 +730,7 @@ typedef struct {
 	qboolean			debug;
 	qhandle_t			whiteShader;
 	qhandle_t			menuBackShader;
+	qhandle_t			menuBackShaderDefault;
 	qhandle_t			menuBackNoLogoShader;
 	qhandle_t			charset;
 	qhandle_t			charsetProp;
@@ -818,6 +819,7 @@ extern qboolean 	UI_CursorInRect (int x, int y, int width, int height);
 extern void			UI_AdjustFrom640( float *x, float *y, float *w, float *h );
 extern void			UI_DrawTextBox (int x, int y, int width, int lines);
 extern qboolean		UI_IsFullscreen( void );
+extern void			UI_UpdateMenuBackShader( qboolean force );
 extern void			UI_SetActiveMenu( uiMenuCommand_t menu );
 extern void			UI_PushMenu ( menuframework_s *menu );
 extern void			UI_PopMenu (void);
@@ -830,6 +832,12 @@ extern qboolean		m_entersound;
 extern uiStatic_t	uis;
 extern vmCvar_t	ui_profileActive;
 extern vmCvar_t	ui_profileOverlaySeen;
+extern vmCvar_t	ui_menuBackOverride;
+extern vmCvar_t	ui_menuBackUrl;
+extern vmCvar_t	ui_menuBackEnable;
+extern vmCvar_t	ui_menuBackRefreshSec;
+extern vmCvar_t	ui_menuBackPath;
+extern vmCvar_t	ui_menuBackState;
 
 void UI_ProfileOverlay_InitSession( void );
 void UI_ProfileOverlay_MaybeShow( void );

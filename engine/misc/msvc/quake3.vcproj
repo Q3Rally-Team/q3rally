@@ -428,6 +428,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\\..\\code\\client\\cl_bgasset.c"
+				>
+			</File>
+			<File
 				RelativePath="..\\..\\code\\client\\cl_update.c"
 				>
 			</File>

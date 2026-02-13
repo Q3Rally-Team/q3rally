@@ -213,6 +213,47 @@ int S_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer)
         return stream->codec->read(stream, bytes, buffer);
 }
 
+qboolean S_CodecGetMetadata( const char *filename,
+                             char *title, int titleSize,
+                             char *artist, int artistSize,
+                             char *album, int albumSize )
+{
+        const char      *ext;
+
+        if ( title && titleSize > 0 ) {
+                title[0] = '\0';
+        }
+        if ( artist && artistSize > 0 ) {
+                artist[0] = '\0';
+        }
+        if ( album && albumSize > 0 ) {
+                album[0] = '\0';
+        }
+
+        if ( !filename || !*filename ) {
+                return qfalse;
+        }
+
+        ext = COM_GetExtension( filename );
+#ifdef USE_CODEC_VORBIS
+        if ( ext && !Q_stricmp( ext, "ogg" ) ) {
+                return S_OGG_CodecGetMetadata( filename, title, titleSize, artist, artistSize, album, albumSize );
+        }
+#else
+        (void)ext;
+#endif
+
+        return qfalse;
+}
+
+qboolean S_GetStreamMetadata( const char *filename,
+                              char *title, int titleSize,
+                              char *artist, int artistSize,
+                              char *album, int albumSize )
+{
+        return S_CodecGetMetadata( filename, title, titleSize, artist, artistSize, album, albumSize );
+}
+
 //=======================================================================
 // Util functions (used by codecs)
 

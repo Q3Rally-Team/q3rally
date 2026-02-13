@@ -87,3 +87,14 @@ int S_GetStreamLength( const char *filename ) {
         (void)filename;
         return 0;
 }
+
+qboolean S_GetStreamMetadata( const char *filename,
+                              char *title, int titleSize,
+                              char *artist, int artistSize,
+                              char *album, int albumSize ) {
+        (void)filename;
+        if ( title && titleSize > 0 ) title[0] = '\0';
+        if ( artist && artistSize > 0 ) artist[0] = '\0';
+        if ( album && albumSize > 0 ) album[0] = '\0';
+        return qfalse;
+}

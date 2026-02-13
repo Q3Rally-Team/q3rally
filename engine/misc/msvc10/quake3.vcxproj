@@ -595,6 +595,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\code\client\cl_avi.c" />
+<ClCompile Include="..\..\code\client\cl_bgasset.c" />
 <ClCompile Include="..\..\code\client\cl_update.c" />
     <ClCompile Include="..\..\code\client\cl_cgame.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug TA|Win32'">Disabled</Optimization>

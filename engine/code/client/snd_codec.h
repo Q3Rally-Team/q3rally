@@ -74,6 +74,10 @@ void *S_CodecLoad(const char *filename, snd_info_t *info);
 snd_stream_t *S_CodecOpenStream(const char *filename);
 void S_CodecCloseStream(snd_stream_t *stream);
 int S_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer);
+qboolean S_CodecGetMetadata( const char *filename,
+			      char *title, int titleSize,
+			      char *artist, int artistSize,
+			      char *album, int albumSize );
 
 // Util functions (used by codecs)
 snd_stream_t *S_CodecUtilOpen(const char *filename, snd_codec_t *codec);
@@ -93,6 +97,10 @@ void *S_OGG_CodecLoad(const char *filename, snd_info_t *info);
 snd_stream_t *S_OGG_CodecOpenStream(const char *filename);
 void S_OGG_CodecCloseStream(snd_stream_t *stream);
 int S_OGG_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer);
+qboolean S_OGG_CodecGetMetadata( const char *filename,
+			      char *title, int titleSize,
+			      char *artist, int artistSize,
+			      char *album, int albumSize );
 #endif // USE_CODEC_VORBIS
 
 // Ogg Opus codec

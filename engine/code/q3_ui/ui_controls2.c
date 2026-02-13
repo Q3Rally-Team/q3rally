@@ -115,16 +115,19 @@ typedef struct
 #define ID_JUKEBOX_PLAY	34
 #define ID_JUKEBOX_NEXT	35
 #define ID_JUKEBOX_PREV	36
+#define ID_JUKEBOX_RESCAN	37
+#define ID_JUKEBOX_SHUFFLE	38
+#define ID_JUKEBOX_REPEAT	39
 
 // all others
-#define ID_FREELOOK		37
-#define ID_INVERTMOUSE	38
-#define ID_ALWAYSRUN	39
-#define ID_AUTOSWITCH	40
-#define ID_MOUSESPEED	41
-#define ID_JOYENABLE	42
-#define ID_JOYTHRESHOLD	43
-#define ID_SMOOTHMOUSE	44
+#define ID_FREELOOK		40
+#define ID_INVERTMOUSE	41
+#define ID_ALWAYSRUN	42
+#define ID_AUTOSWITCH	43
+#define ID_MOUSESPEED	44
+#define ID_JOYENABLE	45
+#define ID_JOYTHRESHOLD	46
+#define ID_SMOOTHMOUSE	47
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -206,6 +209,9 @@ typedef struct
 	menuaction_s		jukeboxPlay;
 	menuaction_s		jukeboxNext;
 	menuaction_s		jukeboxPrev;
+	menuaction_s		jukeboxRescan;
+	menuaction_s		jukeboxShuffle;
+	menuaction_s		jukeboxRepeat;
 	playerInfo_t		playerinfo;
 	qboolean			changesmade;
 	menuaction_s		chat;
@@ -239,6 +245,9 @@ static bind_t g_bindings[] =
         {"jukebox_play",		"jukebox play/stop",	ID_JUKEBOX_PLAY,	ANIM_IDLE,		-1,		-1, -1},
         {"jukebox_next",		"jukebox next track",	ID_JUKEBOX_NEXT,	ANIM_IDLE,		-1,		-1, -1},
         {"jukebox_prev",		"jukebox previous track", ID_JUKEBOX_PREV,	ANIM_IDLE,		-1,		-1, -1},
+        {"jukebox_rescan",		"jukebox rescan tracks", ID_JUKEBOX_RESCAN,	ANIM_IDLE,		-1,		-1, -1},
+        {"jukebox_shuffle_toggle",	"jukebox shuffle toggle", ID_JUKEBOX_SHUFFLE,	ANIM_IDLE,		-1,		-1, -1},
+        {"jukebox_repeat_cycle",	"jukebox repeat mode",	ID_JUKEBOX_REPEAT,	ANIM_IDLE,		-1,		-1, -1},
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -341,6 +350,9 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.jukeboxPlay,
 	(menucommon_s *)&s_controls.jukeboxNext,
 	(menucommon_s *)&s_controls.jukeboxPrev,
+	(menucommon_s *)&s_controls.jukeboxRescan,
+	(menucommon_s *)&s_controls.jukeboxShuffle,
+	(menucommon_s *)&s_controls.jukeboxRepeat,
 	(menucommon_s *)&s_controls.gesture,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
@@ -1487,6 +1499,24 @@ static void Controls_MenuInit( void )
 	s_controls.jukeboxPrev.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.jukeboxPrev.generic.id        = ID_JUKEBOX_PREV;
 
+	s_controls.jukeboxRescan.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxRescan.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxRescan.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxRescan.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxRescan.generic.id        = ID_JUKEBOX_RESCAN;
+
+	s_controls.jukeboxShuffle.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxShuffle.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxShuffle.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxShuffle.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxShuffle.generic.id        = ID_JUKEBOX_SHUFFLE;
+
+	s_controls.jukeboxRepeat.generic.type      = MTYPE_ACTION;
+	s_controls.jukeboxRepeat.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.jukeboxRepeat.generic.callback  = Controls_ActionEvent;
+	s_controls.jukeboxRepeat.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.jukeboxRepeat.generic.id        = ID_JUKEBOX_REPEAT;
+
 	s_controls.showscores.generic.type	    = MTYPE_ACTION;
 	s_controls.showscores.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.showscores.generic.callback  = Controls_ActionEvent;
@@ -1645,6 +1675,9 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPlay );
 	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxNext );
 	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxPrev );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxRescan );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxShuffle );
+	Menu_AddItem( &s_controls.menu, &s_controls.jukeboxRepeat );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );

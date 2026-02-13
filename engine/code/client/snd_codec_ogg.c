@@ -472,4 +472,69 @@ void *S_OGG_CodecLoad(const char *filename, snd_info_t *info)
 	return buffer;
 }
 
+
+static qboolean S_OGG_CopyComment( const vorbis_comment *comment, const char *tag, char *out, int outSize )
+{
+	char *value;
+
+	if ( !comment || !tag || !*tag || !out || outSize <= 0 ) {
+		return qfalse;
+	}
+
+	value = vorbis_comment_query( (vorbis_comment *)comment, (char *)tag, 0 );
+	if ( !value || !*value ) {
+		return qfalse;
+	}
+
+	Q_strncpyz( out, value, outSize );
+	return qtrue;
+}
+
+qboolean S_OGG_CodecGetMetadata( const char *filename,
+			      char *title, int titleSize,
+			      char *artist, int artistSize,
+			      char *album, int albumSize )
+{
+	snd_stream_t *stream;
+	OggVorbis_File *vf;
+	vorbis_comment *comment;
+	qboolean found = qfalse;
+
+	if ( title && titleSize > 0 ) {
+		title[0] = '\0';
+	}
+	if ( artist && artistSize > 0 ) {
+		artist[0] = '\0';
+	}
+	if ( album && albumSize > 0 ) {
+		album[0] = '\0';
+	}
+
+	if ( !filename || !*filename ) {
+		return qfalse;
+	}
+
+	stream = S_OGG_CodecOpenStream( filename );
+	if ( !stream ) {
+		return qfalse;
+	}
+
+	vf = (OggVorbis_File *)stream->ptr;
+	comment = ov_comment( vf, 0 );
+	if ( comment ) {
+		if ( S_OGG_CopyComment( comment, "TITLE", title, titleSize ) ) {
+			found = qtrue;
+		}
+		if ( S_OGG_CopyComment( comment, "ARTIST", artist, artistSize ) ) {
+			found = qtrue;
+		}
+		if ( S_OGG_CopyComment( comment, "ALBUM", album, albumSize ) ) {
+			found = qtrue;
+		}
+	}
+
+	S_OGG_CodecCloseStream( stream );
+	return found;
+}
+
 #endif // USE_CODEC_VORBIS

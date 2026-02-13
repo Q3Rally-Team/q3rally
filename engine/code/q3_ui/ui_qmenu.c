@@ -2302,6 +2302,9 @@ void Menu_Cache( void )
 		uis.menuBackShader	= trap_R_RegisterShaderNoMip( shader );
 	}
 
+	uis.menuBackShaderDefault = uis.menuBackShader;
+	UI_UpdateMenuBackShader( qtrue );
+
 	uis.menuBackNoLogoShader = trap_R_RegisterShaderNoMip( "menubacknologo2" );
 // END
 

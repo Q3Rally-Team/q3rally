@@ -38,6 +38,8 @@ CURLcode (*qcurl_easy_getinfo)(CURL *curl, CURLINFO info, ...);
 CURL* (*qcurl_easy_duphandle)(CURL *curl);
 void (*qcurl_easy_reset)(CURL *curl);
 const char *(*qcurl_easy_strerror)(CURLcode);
+struct curl_slist *(*qcurl_slist_append)(struct curl_slist *list, const char *string);
+void (*qcurl_slist_free_all)(struct curl_slist *list);
 
 CURLM* (*qcurl_multi_init)(void);
 CURLMcode (*qcurl_multi_add_handle)(CURLM *multi_handle,
@@ -116,6 +118,8 @@ qboolean CL_cURL_Init()
 	qcurl_easy_duphandle = GPA("curl_easy_duphandle");
 	qcurl_easy_reset = GPA("curl_easy_reset");
 	qcurl_easy_strerror = GPA("curl_easy_strerror");
+	qcurl_slist_append = GPA("curl_slist_append");
+	qcurl_slist_free_all = GPA("curl_slist_free_all");
 	
 	qcurl_multi_init = GPA("curl_multi_init");
 	qcurl_multi_add_handle = GPA("curl_multi_add_handle");
@@ -162,6 +166,8 @@ void CL_cURL_Shutdown( void )
 	qcurl_easy_getinfo = NULL;
 	qcurl_easy_duphandle = NULL;
 	qcurl_easy_reset = NULL;
+	qcurl_slist_append = NULL;
+	qcurl_slist_free_all = NULL;
 
 	qcurl_multi_init = NULL;
 	qcurl_multi_add_handle = NULL;

@@ -535,6 +535,8 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return 0;
 	case CG_S_GETSTREAMLENGTH:
 		return S_GetStreamLength( VMA(1) );
+	case CG_S_GETSTREAMMETADATA:
+		return S_GetStreamMetadata( VMA(1), VMA(2), args[3], VMA(4), args[5], VMA(6), args[7] );
 	case CG_R_LOADWORLDMAP:
 		re.LoadWorld( VMA(1) );
 		return 0; 
