@@ -3,71 +3,127 @@ on: [push, pull_request]
 
 jobs:
   linux:
-    name: Linux
+    name: Linux (${{ matrix.arch }})
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, i386]
     steps:
-    - uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install libsdl2-dev
-    - name: Compile
-      run: make release -j$(nproc) -C engine
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Linux
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsdl2-dev
+
+      - name: Install Dependencies (i386)
+        if: matrix.arch == 'i386'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-multilib g++-multilib \
+            libsdl2-dev:i386
+
+      - name: Compile (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: make release -j$(nproc) -C engine
+        env:
+          ARCHIVE: 1
+
+      - name: Compile (i386)
+        if: matrix.arch == 'i386'
+        run: make release -j$(nproc) -C engine
+        env:
+          ARCHIVE: 1
+          CFLAGS: -m32
+          CXXFLAGS: -m32
+          LDFLAGS: -m32
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Linux-${{ matrix.arch }}
+          path: engine/build/*.zip
+
   windows:
-    name: Windows
+    name: Windows (${{ matrix.arch }})
     runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, i686]
+    defaults:
+      run:
+        shell: pwsh
     steps:
-    - uses: actions/checkout@v4
-    - name: Compile
-      run: |
-        choco install zip
-        # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
-        make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Windows
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          choco install -y zip make mingw
+
+      - name: Compile (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
+          make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
+        env:
+          ARCHIVE: 1
+
+      - name: Compile (i686 / 32-bit)
+        if: matrix.arch == 'i686'
+        run: |
+          # Ensure MinGW is on PATH (Chocolatey mingw provides both 32/64; we force 32-bit toolchain)
+          $mingw = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
+          echo $mingw | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          # Force 32-bit compiler + flags; adjust variables if your Makefile uses different ones
+          make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1 `
+            CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-g++ `
+            CFLAGS="-m32" CXXFLAGS="-m32" LDFLAGS="-m32"
+        env:
+          ARCHIVE: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-${{ matrix.arch }}
+          path: engine/build/*.zip
+
   macos:
     name: macOS
     runs-on: macos-15
     steps:
-    - uses: actions/checkout@v4
-    - name: Compile
-      run: make release -j$(sysctl -n hw.logicalcpu) -C engine
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: macOS
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+      - name: Compile
+        run: make release -j$(sysctl -n hw.logicalcpu) -C engine
+        env:
+          ARCHIVE: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macOS
+          path: engine/build/*.zip
+
   web:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
-      with:
-        repository: emscripten-core/emsdk
-        path: emsdk
-    - name: Install Dependencies
-      run: |
-        cd emsdk
-        ./emsdk install 3.1.58
-        ./emsdk activate 3.1.58
-    - name: Compile
-      env:
-        ARCHIVE: 1
-      run: |
-        source emsdk/emsdk_env.sh
-        emmake make release -j$(nproc) -C engine
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Web
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: emscripten-core/emsdk
+          path: emsdk
+      - name: Install Dependencies
+        run: |
+          cd emsdk
+          ./emsdk install 3.1.58
+          ./emsdk activate 3.1.58
+      - name: Compile
+        env:
+          ARCHIVE: 1
+        run: |
+          source emsdk/emsdk_env.sh
+          emmake make release -j$(nproc) -C engine
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Web
+          path: engine/build/*.zip
