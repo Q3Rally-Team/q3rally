@@ -37,7 +37,7 @@ jobs:
         path: engine/build/*.zip
   macos:
     name: macOS
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
     - name: Compile
