@@ -6,68 +6,101 @@ jobs:
     name: Linux
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install libsdl2-dev
-    - name: Compile
-      run: make release -j$(nproc) -C engine
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Linux
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsdl2-dev
+
+      - name: Clean
+        run: make clean -C engine || true
+
+      - name: Compile
+        run: make release -j$(nproc) -C engine
+        env:
+          ARCHIVE: 1
+          TERM: xterm
+          CFLAGS: -m64
+          CXXFLAGS: -m64
+          LDFLAGS: -m64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Linux
+          path: engine/build/*.zip
+
   windows:
     name: Windows
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
     steps:
-    - uses: actions/checkout@v4
-    - name: Compile
-      run: |
-        choco install zip
-        # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
-        make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Windows
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          choco install -y zip make mingw
+
+      - name: Clean
+        run: |
+          make clean -C engine 2>$null
+          if ($LASTEXITCODE -ne 0) { exit 0 }
+
+      - name: Compile
+        run: |
+          # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
+          make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
+        env:
+          ARCHIVE: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows
+          path: engine/build/*.zip
+
   macos:
     name: macOS
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v4
-    - name: Compile
-      run: make release -j$(sysctl -n hw.logicalcpu) -C engine
-      env:
-        ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
-      with:
-        name: macOS
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - name: Compile
+        run: make release -j$(sysctl -n hw.logicalcpu) -C engine
+        env:
+          ARCHIVE: 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macOS
+          path: engine/build/*.zip
+
   web:
+    name: Web
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
-      with:
-        repository: emscripten-core/emsdk
-        path: emsdk
-    - name: Install Dependencies
-      run: |
-        cd emsdk
-        ./emsdk install 3.1.58
-        ./emsdk activate 3.1.58
-    - name: Compile
-      env:
-        ARCHIVE: 1
-      run: |
-        source emsdk/emsdk_env.sh
-        emmake make release -j$(nproc) -C engine
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Web
-        path: engine/build/*.zip
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: emscripten-core/emsdk
+          path: emsdk
+
+      - name: Install Dependencies
+        run: |
+          cd emsdk
+          ./emsdk install 3.1.58
+          ./emsdk activate 3.1.58
+
+      - name: Compile
+        env:
+          ARCHIVE: 1
+        run: |
+          source emsdk/emsdk_env.sh
+          emmake make release -j$(nproc) -C engine
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Web
+          path: engine/build/*.zip
