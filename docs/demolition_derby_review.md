@@ -13,7 +13,7 @@
 2. **Scoreboard-Text für Derby anpassen:** Für GT_DERBY einen alternativen Status-String verwenden („…mit %d Punkten/Wrecks“) und optional eine zweite Schadensspalte für ausgeteilten Schaden ergänzen. Dadurch spiegelt das HUD besser die tatsächliche Leistung wider.【F:engine/code/cgame/cg_scoreboard.c†L2174-L2187】【F:engine/code/cgame/cg_scoreboard.c†L2016-L2040】
 3. **Visualisierung der Trefferwirkung verbessern:** Spieler-Feedback könnte durch Effekte (z. B. zunehmende Rauchentwicklung bei geringer HP oder Bildschirmrütteln bei heftigen Treffern) erweitert werden. Die Strukturen für Schadensverarbeitung und Events sind bereits vorhanden (`Weapon_DerbyRam`, `G_RadiusDamage`) und ließen sich dafür nutzen.【F:engine/code/game/g_weapon.c†L210-L247】【F:engine/code/game/g_combat.c†L1351-L1436】
 
-## Umsetzungsstatus (Oktober 2025)
+## Umsetzungsstatus (Oktober 2026)
 
 - [x] Ram-Schaden berücksichtigt jetzt den Basiswert `g_derbyRamDamage`; Standardwerte wurden auf einen sinnvollen Wertebereich abgestimmt.【F:engine/code/game/g_weapon.c†L210-L247】【F:engine/code/game/g_main.c†L291-L293】
 - [x] Scoreboard zeigt im Derby "wrecks" an und trennt verursachten von erlittenem Schaden in eigenen Spalten.【F:engine/code/cgame/cg_scoreboard.c†L2174-L2187】【F:engine/code/cgame/cg_scoreboard.c†L289-L324】【F:engine/code/cgame/cg_scoreboard.c†L2016-L2040】

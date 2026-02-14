@@ -186,6 +186,14 @@ void G_SpawnItem (gentity_t *ent, gitem_t *item) {
     (void)item;
 }
 
+void G_Profile_RecordFlagCapture(gclient_t *client) {
+    (void)client;
+}
+
+void G_Profile_RecordFlagAssist(gclient_t *client) {
+    (void)client;
+}
+
 void CalculateRanks( void ) {}
 
 qboolean SpotWouldTelefrag( gentity_t *spot ) {

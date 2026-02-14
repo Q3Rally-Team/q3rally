@@ -11,6 +11,8 @@ gentity_t g_entities[MAX_GENTITIES];
 gclient_t levelClients[MAX_CLIENTS];
 vmCvar_t g_gametype;
 vmCvar_t g_forceEngineStart;
+vmCvar_t g_rallyReadyCheck;
+vmCvar_t g_rallyIgnoreBots;
 
 // Additional globals referenced elsewhere
 vmCvar_t g_eliminationStartDelay;
@@ -26,6 +28,8 @@ static qboolean rallyMode = qtrue;
 
 static const char *centerPrintLog[16];
 static int centerPrintCount;
+static vec3_t mockPlayerMins = {-16.0f, -16.0f, -24.0f};
+static vec3_t mockPlayerMaxs = {16.0f, 16.0f, 40.0f};
 
 static char vaBuffer[4][256];
 static int vaIndex;
@@ -95,9 +99,17 @@ gentity_t *SelectSpawnPoint(vec3_t avoidPoint, vec3_t origin, vec3_t angles, qbo
     return NULL;
 }
 
-qboolean SpotWouldTelefrag(gentity_t *spot) {
-    (void)spot;
-    return qfalse;
+void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up ) {
+    (void)angles;
+    if ( forward ) {
+        VectorSet( forward, 1.0f, 0.0f, 0.0f );
+    }
+    if ( right ) {
+        VectorSet( right, 0.0f, 1.0f, 0.0f );
+    }
+    if ( up ) {
+        VectorSet( up, 0.0f, 0.0f, 1.0f );
+    }
 }
 
 void G_Printf(const char *fmt, ...) {
@@ -121,21 +133,54 @@ static gentity_t checkpoint;
 
 gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match) {
     (void)fieldofs;
+    int start = 0;
+
     if (match && strcmp(match, "rally_checkpoint") == 0) {
         return &checkpoint;
     }
-    if (match && strcmp(match, "player") == 0) {
-        int start = 0;
-        if (from) {
-            start = (int)(from - g_entities) + 1;
+
+    if (from) {
+        start = (int)(from - g_entities) + 1;
+    }
+
+    for (int i = start; i < MAX_GENTITIES; ++i) {
+        gentity_t *candidate = &g_entities[i];
+        if (!candidate->inuse) {
+            continue;
         }
-        for (int i = start; i < MAX_CLIENTS; ++i) {
-            if (g_entities[i].inuse && g_entities[i].classname && strcmp(g_entities[i].classname, "player") == 0) {
-                return &g_entities[i];
-            }
+        if (candidate->classname && match && strcmp(candidate->classname, match) == 0) {
+            return candidate;
         }
     }
+
     return NULL;
+}
+
+qboolean SpotWouldTelefrag(gentity_t *spot) {
+    vec3_t mins;
+    vec3_t maxs;
+    VectorAdd( spot->s.origin, mockPlayerMins, mins );
+    VectorAdd( spot->s.origin, mockPlayerMaxs, maxs );
+
+    for (int i = 0; i < MAX_GENTITIES; ++i) {
+        gentity_t *other = &g_entities[i];
+        if (!other->inuse || !other->client) {
+            continue;
+        }
+
+        vec3_t otherMins;
+        vec3_t otherMaxs;
+        VectorAdd( other->s.origin, mockPlayerMins, otherMins );
+        VectorAdd( other->s.origin, mockPlayerMaxs, otherMaxs );
+
+        if (mins[0] <= otherMaxs[0] && maxs[0] >= otherMins[0]
+            && mins[1] <= otherMaxs[1] && maxs[1] >= otherMins[1]
+            && mins[2] <= otherMaxs[2] && maxs[2] >= otherMins[2]) {
+            return qtrue;
+        }
+    }
+
+    return qfalse;
 }
 
 void reset_environment(void) {
@@ -149,9 +194,13 @@ void reset_environment(void) {
     lastSoundIndex = 0;
     rallyMode = qtrue;
     checkpoint.number = 1;
+    checkpoint.classname = "rally_checkpoint";
+    checkpoint.inuse = qtrue;
     level.clients = levelClients;
     level.maxclients = MAX_CLIENTS;
     level.gentities = g_entities;
+    g_rallyReadyCheck.integer = 1;
+    g_rallyIgnoreBots.integer = 0;
 }
 
 void test_elimination_configuration_initial_setup(void) {
@@ -229,10 +278,111 @@ void test_race_countdown_sequence(void) {
     assert(lastSoundIndex != 0);
 }
 
+void test_single_player_skips_ready_check(void) {
+    reset_environment();
+    g_gametype.integer = GT_SINGLE_PLAYER;
+    g_forceEngineStart.integer = 30;
+    g_rallyReadyCheck.integer = 0;
+
+    gentity_t starter = {0};
+    starter.think = RallyStarter_Think;
+    starter.number = 0;
+    starter.classname = "rally_starter";
+
+    g_entities[0].inuse = qtrue;
+    g_entities[0].client = &levelClients[0];
+    g_entities[0].classname = "player";
+    g_entities[0].ready = qfalse;
+    g_entities[0].client->sess.sessionTeam = TEAM_RED;
+
+    level.time = 8000;
+    level.startTime = 0;
+
+    RallyStarter_Think(&starter);
+
+    assert(starter.number == 3);
+    assert(starter.pain_debounce_time == level.time);
+}
+
+void test_ignoring_bots_prevents_ready_count(void) {
+    reset_environment();
+    g_gametype.integer = GT_RACING;
+    g_forceEngineStart.integer = 30;
+    g_rallyIgnoreBots.integer = 1;
+
+    gentity_t starter = {0};
+    starter.think = RallyStarter_Think;
+    starter.number = 0;
+    starter.classname = "rally_starter";
+
+    g_entities[0].inuse = qtrue;
+    g_entities[0].client = &levelClients[0];
+    g_entities[0].classname = "player";
+    g_entities[0].ready = qtrue;
+    g_entities[0].r.svFlags |= SVF_BOT;
+    g_entities[0].client->sess.sessionTeam = TEAM_RED;
+
+    level.time = 8000;
+    level.startTime = 0;
+
+    RallyStarter_Think(&starter);
+
+    assert(starter.number == 0);
+    assert(starter.pain_debounce_time == 0);
+}
+
+void test_overflow_grid_spawn_adds_spacing_and_message(void) {
+    reset_environment();
+    g_gametype.integer = GT_RACING;
+
+    // Define two grid spots that are both occupied to force overflow placement
+    g_entities[1].inuse = qtrue;
+    g_entities[1].classname = "info_player_start";
+    g_entities[1].number = 1;
+    VectorSet(g_entities[1].s.origin, 0.0f, 0.0f, 0.0f);
+    VectorSet(g_entities[1].s.angles, 0.0f, 0.0f, 0.0f);
+
+    g_entities[2].inuse = qtrue;
+    g_entities[2].classname = "info_player_start";
+    g_entities[2].number = 2;
+    VectorSet(g_entities[2].s.origin, 0.0f, 192.0f, 0.0f);
+    VectorSet(g_entities[2].s.angles, 0.0f, 0.0f, 0.0f);
+
+    g_entities[3].inuse = qtrue;
+    g_entities[3].classname = "player";
+    g_entities[3].client = &levelClients[3];
+    VectorSet(g_entities[3].s.origin, 0.0f, 0.0f, 0.0f);
+
+    g_entities[4].inuse = qtrue;
+    g_entities[4].classname = "player";
+    g_entities[4].client = &levelClients[4];
+    VectorSet(g_entities[4].s.origin, 0.0f, 192.0f, 0.0f);
+
+    g_entities[5].inuse = qtrue;
+    g_entities[5].classname = "player";
+    g_entities[5].client = &levelClients[5];
+
+    vec3_t origin;
+    vec3_t angles;
+    gentity_t *selected = SelectGridPositionSpawn(&g_entities[5], origin, angles, qfalse);
+
+    assert(selected != &g_entities[1]);
+    assert(selected != &g_entities[2]);
+    assert(SpotWouldTelefrag(selected) == qfalse);
+    assert(commandLogCount >= 1);
+    assert(strstr(commandLog[0], "Grid overflow slot") != NULL);
+
+    // The overflow slot should not overlap the blocked grid entries
+    assert(origin[0] != g_entities[1].s.origin[0] || origin[1] != g_entities[1].s.origin[1]);
+}
+
 int main(void) {
     test_elimination_configuration_initial_setup();
     test_elimination_configuration_minimum_laps();
     test_race_countdown_sequence();
+    test_single_player_skips_ready_check();
+    test_ignoring_bots_prevents_ready_count();
+    test_overflow_grid_spawn_adds_spacing_and_message();
     printf("ok\n");
     return 0;
 }
@@ -248,4 +398,8 @@ gentity_t *G_Spawn(void) {
     static gentity_t dummy;
     memset(&dummy, 0, sizeof(dummy));
     return &dummy;
+}
+
+void G_UpdatePlayerAchievementProgress(int clientNum, int achievementId, float progress) {
+    // Mock implementation for testing
 }

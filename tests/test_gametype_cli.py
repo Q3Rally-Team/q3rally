@@ -33,7 +33,7 @@ def test_cli_outputs_expected_lines():
         str(script),
         "team-racing"
     ], check=True, capture_output=True, text=True)
-    assert result.stdout.strip() == "team_racing 8"
+    assert result.stdout.strip() == "team_racing 9"
 
     list_result = subprocess.run([
         "python3",
@@ -42,4 +42,5 @@ def test_cli_outputs_expected_lines():
     ], check=True, capture_output=True, text=True)
     lines = [line.strip() for line in list_result.stdout.splitlines() if line.strip()]
     assert lines[0].startswith("0 - racing")
+    assert any(line.startswith("2 - sprint") for line in lines)
     assert lines[-1].endswith("domination")

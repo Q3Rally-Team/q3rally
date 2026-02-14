@@ -1,6 +1,6 @@
 /*
 ===========================================================================
-Copyright (C) 2025 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2026 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 

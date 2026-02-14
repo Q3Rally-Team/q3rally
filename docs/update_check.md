@@ -16,7 +16,7 @@ Beim ersten Start mit der neuen Version prüft der Client, ob in der bestehenden
 
 ### Erwartete Serverantwort
 
-Der Client erwartet eine Textdatei, deren erste Zeile die Versionsnummer enthält (z. B. `v0.6`). Vor- und nachgelagerte Leerzeichen sowie Leerzeilen werden entfernt; optional umschließende Anführungszeichen werden ebenfalls gestrichen, bevor die Version ausgewertet wird. Ein führendes `v`/`V` ist optional – die Vergleichslogik berücksichtigt beide Varianten automatisch. Weitere Inhalte der Datei werden ignoriert.【F:engine/code/client/cl_ui.c†L589-L818】
+Der Client erwartet eine Textdatei, deren erste Zeile die Versionsnummer enthält (z. B. `v0.7`). Vor- und nachgelagerte Leerzeichen sowie Leerzeilen werden entfernt; optional umschließende Anführungszeichen werden ebenfalls gestrichen, bevor die Version ausgewertet wird. Ein führendes `v`/`V` ist optional – die Vergleichslogik berücksichtigt beide Varianten automatisch. Weitere Inhalte der Datei werden ignoriert.【F:engine/code/client/cl_ui.c†L589-L818】
 
 Damit der Check funktioniert, muss der Server einen per HTTPS erreichbaren GET-Endpunkt bereitstellen, der diese Textdatei ausliefert. Eine statische Datei reicht völlig aus – sie muss lediglich aktualisiert werden, sobald eine neue Version veröffentlicht wird.
 

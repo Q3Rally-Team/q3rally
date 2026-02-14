@@ -10,6 +10,7 @@ COMPILE_ARGS = [
     "-I" + str(REPO_ROOT / "engine" / "code" / "game"),
     "-I" + str(REPO_ROOT / "engine" / "code"),
     "-I" + str(REPO_ROOT / "engine" / "code" / "qcommon"),
+    "-I" + str(REPO_ROOT / "engine" / "code" / "q3_ui"),
     "-DARCH_STRING=\"test\"",
     "-DOS_STRING=\"linux\"",
     "-DID_INLINE=inline",

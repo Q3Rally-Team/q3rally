@@ -2726,6 +2726,17 @@ model="models/items/fuelcan.md3"
 */
 
 
+/*QUAKED rally_scripted_object (1 .5 0) (-4 -4 0) (4 4 64)
+An interactive prop driven by a .script definition.
+
+"script"       (required) path to the scripted object file without the .script extension
+"angle/angles" orientation of the spawned model
+"targetname"   allows triggers to reference this object
+
+model="models/mapobjects/pylons/pylon03.md3"
+*/
+
+
 //ROADSIDE OBJECTS
 
 /*QUAKED rally_misc_cone (1 .5 0) (-6 -6 -7) (6 6 7)
