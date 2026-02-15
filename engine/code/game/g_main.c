@@ -281,22 +281,24 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
 
         // car variables
-	{ &car_spring, "car_spring", "120", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_shock_up, "car_shock_up", "12", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_shock_down, "car_shock_down", "11", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_swaybar, "car_swaybar", "20", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_wheel, "car_wheel", "2400", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_wheel_damp, "car_wheel_damp", "140", CVAR_SERVERINFO, 0, qfalse },
+	// vehicle handling values are latched so they stay deterministic during an active match;
+	// all values are also published via serverinfo for cgame prediction setup.
+	{ &car_spring, "car_spring", "120", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_shock_up, "car_shock_up", "12", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_shock_down, "car_shock_down", "11", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_swaybar, "car_swaybar", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_wheel, "car_wheel", "2400", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_wheel_damp, "car_wheel_damp", "140", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 
-	{ &car_frontweight_dist, "car_frontweight_dist", "0.5", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_IT_xScale, "car_IT_xScale", "1.0", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_IT_yScale, "car_IT_yScale", "1.0", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_IT_zScale, "car_IT_zScale", "1.0", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_body_elasticity, "car_body_elasticity", "0.05", CVAR_SERVERINFO, 0, qfalse },
+	{ &car_frontweight_dist, "car_frontweight_dist", "0.5", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_IT_xScale, "car_IT_xScale", "1.0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_IT_yScale, "car_IT_yScale", "1.0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_IT_zScale, "car_IT_zScale", "1.0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_body_elasticity, "car_body_elasticity", "0.05", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 
-	{ &car_air_cof, "car_air_cof", "0.31", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_air_frac_to_df, "car_air_frac_to_df", "0.5", CVAR_SERVERINFO, 0, qfalse },
-	{ &car_friction_scale, "car_friction_scale", "1.1", CVAR_SERVERINFO, 0, qfalse },
+	{ &car_air_cof, "car_air_cof", "0.31", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_air_frac_to_df, "car_air_frac_to_df", "0.5", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &car_friction_scale, "car_friction_scale", "1.1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 
         { &g_damageScale, "g_damageScale", "0.3", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageScale, "g_vehicleDamageScale", "5.0", CVAR_ARCHIVE, 0, qfalse },
