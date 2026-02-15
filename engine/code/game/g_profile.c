@@ -33,6 +33,10 @@ static const profile_rank_def_t s_profileRankTable[] = {
 #define PROFILE_VEHICLE_JSON_BUFFER_SIZE ( PROFILE_MAX_TRACKED_VEHICLES * PROFILE_VEHICLE_JSON_ENTRY_SIZE + 32 )
 #define PROFILE_FILE_BUFFER_SIZE 16384
 
+static void QDECL G_PROFILE_LOG( const char *fmt, ... ) {
+    (void)fmt;
+}
+
 static struct {
     qboolean        loaded;
     qboolean        dirty;
@@ -548,7 +552,7 @@ static profile_vehicle_usage_t *G_Profile_FindVehicleUsage( const char *vehicle,
     }
 
     if ( allowCreate ) {
-        Com_Printf( "G_Profile: Vehicle list is full (%d entries), ignoring '%s'\n",
+        G_PROFILE_LOG( "G_Profile: Vehicle list is full (%d entries), ignoring '%s'\n",
                    PROFILE_MAX_TRACKED_VEHICLES,
                    vehicle );
     }
@@ -572,7 +576,7 @@ static void G_Profile_AddVehicleTime( const char *vehicle, int timeMs ) {
 
     usage = G_Profile_FindVehicleUsage( normalized, qtrue );
     if ( !usage ) {
-        Com_Printf( "G_Profile: Failed to find/create vehicle usage for '%s'\n", vehicle );
+        G_PROFILE_LOG( "G_Profile: Failed to find/create vehicle usage for '%s'\n", vehicle );
         return;
     }
 
@@ -580,14 +584,14 @@ static void G_Profile_AddVehicleTime( const char *vehicle, int timeMs ) {
     usage->timeMs += timeMs;
     s_profileState.dirty = qtrue;
 
-    Com_Printf( "G_Profile: Vehicle '%s' now has %d ms (added %d ms)\n",
+    G_PROFILE_LOG( "G_Profile: Vehicle '%s' now has %d ms (added %d ms)\n",
                usage->name, usage->timeMs, timeMs );
 
     if ( usage->timeMs > s_profileState.stats.mostUsedVehicleTimeMs ) {
         s_profileState.stats.mostUsedVehicleTimeMs = usage->timeMs;
         Q_strncpyz( s_profileState.stats.mostUsedVehicle, usage->name, sizeof( s_profileState.stats.mostUsedVehicle ) );
 
-        Com_Printf( "G_Profile: NEW most used vehicle: '%s' with %d ms\n",
+        G_PROFILE_LOG( "G_Profile: NEW most used vehicle: '%s' with %d ms\n",
                    s_profileState.stats.mostUsedVehicle,
                    s_profileState.stats.mostUsedVehicleTimeMs );
     }
@@ -673,7 +677,7 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     }
 
     if ( length >= (int)sizeof( buffer ) ) {
-        Com_Printf( "G_Profile: Truncating profile read to %d bytes (file is %d bytes)\n",
+        G_PROFILE_LOG( "G_Profile: Truncating profile read to %d bytes (file is %d bytes)\n",
                     (int)sizeof( buffer ) - 1,
                     length );
         length = sizeof( buffer ) - 1;
@@ -735,7 +739,7 @@ static qboolean G_Profile_LoadFromDisk( void ) {
                 profile_vehicle_usage_t *usage;
 
                 if ( vehicleIndex >= PROFILE_MAX_TRACKED_VEHICLES ) {
-                    Com_Printf( "G_Profile: Skipping vehicle entries beyond limit of %d\n",
+                    G_PROFILE_LOG( "G_Profile: Skipping vehicle entries beyond limit of %d\n",
                                PROFILE_MAX_TRACKED_VEHICLES );
                     break;
                 }
@@ -913,7 +917,7 @@ static void G_Profile_WriteToDisk( void ) {
         }
 
         if ( vehicleJsonPos >= (int)sizeof( vehicleJson ) - 1 ) {
-            Com_Printf( "G_Profile: Vehicle JSON buffer full, truncating list at %d entries\n", i );
+            G_PROFILE_LOG( "G_Profile: Vehicle JSON buffer full, truncating list at %d entries\n", i );
             break;
         }
 
@@ -922,7 +926,7 @@ static void G_Profile_WriteToDisk( void ) {
             available = sizeof( vehicleJson ) - vehicleJsonPos;
             written = Com_sprintf( vehicleJson + vehicleJsonPos, available, ",\n" );
             if ( written < 0 || written >= available ) {
-                Com_Printf( "G_Profile: Failed to append vehicle separator, truncating output\n" );
+                G_PROFILE_LOG( "G_Profile: Failed to append vehicle separator, truncating output\n" );
                 vehicleJsonPos = sizeof( vehicleJson ) - 1;
                 break;
             }
@@ -936,7 +940,7 @@ static void G_Profile_WriteToDisk( void ) {
                                s_profileVehicleUsage[i].name,
                                s_profileVehicleUsage[i].timeMs );
         if ( written < 0 || written >= available ) {
-            Com_Printf( "G_Profile: Truncated vehicle entry for '%s'\n", s_profileVehicleUsage[i].name );
+            G_PROFILE_LOG( "G_Profile: Truncated vehicle entry for '%s'\n", s_profileVehicleUsage[i].name );
             vehicleJsonPos = sizeof( vehicleJson ) - 1;
             break;
         }
@@ -947,8 +951,8 @@ static void G_Profile_WriteToDisk( void ) {
     Com_sprintf( vehicleJson + vehicleJsonPos, sizeof( vehicleJson ) - vehicleJsonPos, "\n\t\t]" );
 
     // Debug-Ausgabe
-    Com_Printf( "G_Profile: Writing vehicles array:\n%s\n", vehicleJson );
-    Com_Printf( "G_Profile: mostUsedVehicle='%s', timeMs=%d\n", 
+    G_PROFILE_LOG( "G_Profile: Writing vehicles array:\n%s\n", vehicleJson );
+    G_PROFILE_LOG( "G_Profile: mostUsedVehicle='%s', timeMs=%d\n", 
                s_profileState.stats.mostUsedVehicle, 
                s_profileState.stats.mostUsedVehicleTimeMs );
 
@@ -1019,30 +1023,30 @@ static void G_Profile_WriteToDisk( void ) {
         vehicleJson );
 
     if ( length < 0 ) {
-        Com_Printf( "G_Profile: Com_sprintf failed\n" );
+        G_PROFILE_LOG( "G_Profile: Com_sprintf failed\n" );
         return;
     }
 
     if ( length >= (int)sizeof( buffer ) ) {
-        Com_Printf( "G_Profile: Profile JSON truncated to %d bytes (needed %d)\n",
+        G_PROFILE_LOG( "G_Profile: Profile JSON truncated to %d bytes (needed %d)\n",
                     (int)sizeof( buffer ) - 1,
                     length );
         length = sizeof( buffer ) - 1;
     }
 
     // Debug-Ausgabe des gesamten Buffers
-    Com_Printf( "G_Profile: Writing profile file:\n%s\n", buffer );
+    G_PROFILE_LOG( "G_Profile: Writing profile file:\n%s\n", buffer );
 
     trap_FS_FOpenFile( path, &file, FS_WRITE );
     if ( file <= 0 ) {
-        Com_Printf( "G_Profile: Failed to open %s for writing\n", path );
+        G_PROFILE_LOG( "G_Profile: Failed to open %s for writing\n", path );
         return;
     }
 
     trap_FS_Write( buffer, length, file );
     trap_FS_FCloseFile( file );
 
-    Com_Printf( "G_Profile: Successfully wrote %d bytes to %s\n", length, path );
+    G_PROFILE_LOG( "G_Profile: Successfully wrote %d bytes to %s\n", length, path );
 
     s_profileState.dirty = qfalse;
     s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
@@ -1064,7 +1068,7 @@ void G_Profile_Init( void ) {
     }
 
     if ( !G_Profile_IsValidName( activeName ) ) {
-        Com_Printf( "G_Profile: Ignoring invalid profile name '%s'\n", activeName );
+        G_PROFILE_LOG( "G_Profile: Ignoring invalid profile name '%s'\n", activeName );
         return;
     }
 

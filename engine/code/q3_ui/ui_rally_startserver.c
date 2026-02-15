@@ -1069,9 +1069,9 @@ default:
 			int playbackValue;
 
 			playbackValue = s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1;
-			trap_Cvar_SetValue( "ui_ghostPlayback", playbackValue );
+			trap_Cvar_SetValue( "cg_ghostPlayback", playbackValue );
 		} else if ( s_serveroptions.ghostPlaybackStored ) {
-			trap_Cvar_SetValue( "ui_ghostPlayback", s_serveroptions.ghostPlaybackRestore );
+			trap_Cvar_SetValue( "cg_ghostPlayback", s_serveroptions.ghostPlaybackRestore );
 		}
 	} else {
 		trap_Cvar_SetValue( "ui_ghostonly", 0 );
@@ -1253,17 +1253,17 @@ static void ServerOptions_Event( void* ptr, int event ) {
 		trap_Cvar_SetValue( "ui_ghostonly", s_serveroptions.ghostOnly.curvalue );
 		if( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) && s_serveroptions.ghostOnly.curvalue ) {
 			if ( !s_serveroptions.ghostPlaybackStored ) {
-				s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_ghostPlayback" ) );
+				s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
 				s_serveroptions.ghostPlaybackStored = qtrue;
 			}
-			trap_Cvar_SetValue( "ui_ghostPlayback", s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1 );
+			trap_Cvar_SetValue( "cg_ghostPlayback", s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1 );
 			ServerOptions_InitPlayerItems();
 		}
 		else {
 			int restorePlayback;
 
 			restorePlayback = s_serveroptions.ghostPlaybackStored ? s_serveroptions.ghostPlaybackRestore : 0;
-			trap_Cvar_SetValue( "ui_ghostPlayback", restorePlayback );
+			trap_Cvar_SetValue( "cg_ghostPlayback", restorePlayback );
 			s_serveroptions.ghostPlaybackStored = qfalse;
 			ServerOptions_InitPlayerItems();
 			ServerOptions_InitBotNames();
@@ -1581,7 +1581,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	s_serveroptions.reversed.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_racing_trackreversed" ) );
 	if ( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) ) {
 		s_serveroptions.ghostOnly.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ghostonly" ) );
-		s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_ghostPlayback" ) );
+		s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
 		s_serveroptions.ghostPlaybackStored = qtrue;
 	} else {
 		s_serveroptions.ghostOnly.curvalue = 0;

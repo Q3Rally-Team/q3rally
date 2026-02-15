@@ -558,7 +558,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.ghostPlayback.generic.type			= MTYPE_SPINCONTROL;
 	s_q3roptions.ghostPlayback.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_q3roptions.ghostPlayback.generic.x				= 500;
-	s_q3roptions.ghostPlayback.generic.y				= 90 + 70;
+	s_q3roptions.ghostPlayback.generic.y				= 90 + 85;
 	s_q3roptions.ghostPlayback.generic.name			= "Ghost Playback:";
 	s_q3roptions.ghostPlayback.generic.id			= ID_GHOST_PLAYBACK;
 	s_q3roptions.ghostPlayback.generic.callback		= Q3ROptions_MenuEvent;
@@ -569,7 +569,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.drawMinimap.generic.type           = MTYPE_RADIOBUTTON;
 	s_q3roptions.drawMinimap.generic.flags          = QMF_SMALLFONT;
 	s_q3roptions.drawMinimap.generic.x              = 500;
-	s_q3roptions.drawMinimap.generic.y              = 90 + 80;
+	s_q3roptions.drawMinimap.generic.y              = 90 + 105;
 	s_q3roptions.drawMinimap.generic.name           = "Minimap:";
 	s_q3roptions.drawMinimap.generic.id             = ID_DRAW_MINIMAP;
 	s_q3roptions.drawMinimap.generic.callback       = Q3ROptions_MenuEvent;

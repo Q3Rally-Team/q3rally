@@ -527,6 +527,10 @@ static void CG_ForceModelChange( void ) {
 }
 
 static void CG_DisableGhostPlaybackOutsideRacing( void ) {
+	if ( !cg.snap ) {
+		return;
+	}
+
 	if ( isRallyRace() ) {
 		return;
 	}
@@ -2437,5 +2441,3 @@ void CG_KeyEvent(int key, qboolean down) {
 void CG_MouseEvent(int x, int y) {
 }
 #endif
-
-

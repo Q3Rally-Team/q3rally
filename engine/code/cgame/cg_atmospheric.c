@@ -53,9 +53,21 @@ typedef struct cg_atmosphericParticle_s {
 	vec3_t pos, delta, deltaNormalized, colour, surfacenormal;
 	float height, minz, weight;
 	qboolean active;
+	int id;
+	int zoneId;
 	int contents, surface, nextDropTime;
 	qhandle_t *effectshader;
 } cg_atmosphericParticle_t;
+
+typedef struct cg_atmosphericProfile_s {
+	float budgetScale;
+	float maxDistance;
+	float conePadding;
+	float minFps;
+	float optimalFps;
+	float fovBaseline;
+	qboolean splash;
+} cg_atmosphericProfile_t;
 
 typedef struct cg_atmosphericEffect_s {
 	cg_atmosphericParticle_t particles[MAX_ATMOSPHERIC_PARTICLES];
@@ -79,6 +91,114 @@ typedef struct cg_atmosphericEffect_s {
 } cg_atmosphericEffect_t;
 
 static cg_atmosphericEffect_t cg_atmFxList[NUM_ATMOSPHERIC_TYPES];
+
+static const cg_atmosphericProfile_t cg_atmProfiles[] = {
+	{ 0.45f, 1400.0f, 3.0f, 35.0f, 90.0f, 90.0f, qfalse },
+	{ 0.75f, 2200.0f, 5.0f, 28.0f, 90.0f, 90.0f, qtrue },
+	{ 1.00f, 3000.0f, 8.0f, 20.0f, 120.0f, 90.0f, qtrue }
+};
+
+static const cg_atmosphericProfile_t *CG_AtmosphericProfile( void )
+{
+	int profile = cg_atmosphericLevel.integer - 1;
+
+	if ( profile < 0 ) {
+		profile = 0;
+	} else if ( profile >= ARRAY_LEN( cg_atmProfiles ) ) {
+		profile = ARRAY_LEN( cg_atmProfiles ) - 1;
+	}
+
+	return &cg_atmProfiles[profile];
+}
+
+static qboolean CG_AtmosphericInViewCone( const vec3_t point, float conePadding )
+{
+	vec3_t distance;
+	float yaw, halfFov;
+
+	VectorSubtract( point, cg.refdef.vieworg, distance );
+	yaw = vectoyaw( distance );
+	halfFov = (cg.refdef.fov_x * 0.5f) + conePadding;
+
+	return fabs( AngleDifference( cg.refdefViewAngles[YAW], yaw ) ) <= halfFov;
+}
+
+static int CG_AtmosphericResolveZone( int type, vec3_t point )
+{
+	entityState_t *s1;
+	vec3_t mins, maxs;
+	int i;
+
+	for ( i = 0; i < MAX_GENTITIES; i++ ) {
+		s1 = &cg_entities[i].currentState;
+
+		if ( s1->eType != ET_WEATHER || s1->weapon != type ) {
+			continue;
+		}
+
+		if ( s1->solid == SOLID_BMODEL ) {
+			trap_R_ModelBounds( cgs.inlineDrawModel[s1->modelindex], mins, maxs );
+		} else {
+			trap_R_ModelBounds( cgs.gameModels[s1->modelindex], mins, maxs );
+		}
+
+		if ( CG_InsideBox( mins, maxs, point ) ) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+static float CG_AtmosphericDeterministic01( int zoneId, int particleId, int salt )
+{
+	unsigned int seed;
+
+	seed = (unsigned int)( zoneId + 1 ) * 73856093u;
+	seed ^= (unsigned int)( particleId + 1 ) * 19349663u;
+	seed ^= (unsigned int)( cg.time / 100 ) * 83492791u;
+	seed ^= (unsigned int)salt * 2654435761u;
+
+	return (float)( seed & 0x00ffffff ) / (float)0x01000000;
+}
+
+static float CG_AtmosphericDeterministicCRandom( int zoneId, int particleId, int salt )
+{
+	return (2.0f * CG_AtmosphericDeterministic01( zoneId, particleId, salt )) - 1.0f;
+}
+
+static int CG_AtmosphericBudget( cg_atmosphericEffect_t *cg_atmFx )
+{
+	const cg_atmosphericProfile_t *profile;
+	float fps, fpsScale, fovScale;
+	float budget;
+
+	profile = CG_AtmosphericProfile();
+	fps = ( cg.frametime > 0 ) ? ( 1000.0f / cg.frametime ) : profile->optimalFps;
+	fpsScale = fps / profile->optimalFps;
+	if ( fpsScale < ( profile->minFps / profile->optimalFps ) ) {
+		fpsScale = profile->minFps / profile->optimalFps;
+	} else if ( fpsScale > 1.15f ) {
+		fpsScale = 1.15f;
+	}
+
+	fovScale = profile->fovBaseline / cg.refdef.fov_x;
+	if ( fovScale < 0.7f ) {
+		fovScale = 0.7f;
+	} else if ( fovScale > 1.2f ) {
+		fovScale = 1.2f;
+	}
+
+	budget = cg_atmFx->numDrops * profile->budgetScale * fpsScale * fovScale;
+	if ( budget < 8 ) {
+		budget = 8;
+	}
+	if ( budget > cg_atmFx->numDrops ) {
+		budget = cg_atmFx->numDrops;
+	}
+
+	return (int)budget;
+}
 
 /*
 **  Render utility functions
@@ -149,13 +269,14 @@ static qboolean CG_RainParticleCheckVisible( int type, cg_atmosphericParticle_t 
 	float		moved;
 	vec3_t		distance;
 // Q3Rally Code Start
-	float			angle, dist, viewyaw, yaw, r;
-	entityState_t	*s1;
-	vec3_t			mins, maxs;
-	int				i;
+	float			angle, dist;
+	float			maxDistance;
+	const cg_atmosphericProfile_t	*profile;
 	cg_atmosphericEffect_t	*cg_atmFx;
 
 	cg_atmFx = &cg_atmFxList[type];
+	profile = CG_AtmosphericProfile();
+	maxDistance = profile->maxDistance;
 // END
 
 	if( !particle || !particle->active )
@@ -172,42 +293,29 @@ static qboolean CG_RainParticleCheckVisible( int type, cg_atmosphericParticle_t 
 //		return( particle->active = qfalse );
 	VectorSubtract( particle->pos, cg.refdef.vieworg, distance );
 
-	viewyaw = cg.refdefViewAngles[YAW];
-//	if (viewyaw < 0)
-//		viewyaw += 360.0f;
-	yaw = vectoyaw(distance);
-
-	if( sqrt( distance[0] * distance[0] + distance[1] * distance[1] ) > MAX_ATMOSPHERIC_DISTANCE
-		|| fabs(AngleDifference(viewyaw, yaw)) > (cg.refdef.fov_x / 2.0f + 5)
+	if( sqrt( distance[0] * distance[0] + distance[1] * distance[1] ) > maxDistance
+		|| !CG_AtmosphericInViewCone( particle->pos, profile->conePadding )
 	){
-
-		angle = (viewyaw + crandom() * cg.refdef.fov_x / 2.0f) * M_PI / 180.0f;
-		r = random();
-		dist = 20 + (MAX_ATMOSPHERIC_DISTANCE-20) * (r * r); // ^2: more dense closer
+		angle = (cg.refdefViewAngles[YAW] + CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 17 ) * cg.refdef.fov_x * 0.5f) * M_PI / 180.0f;
+		dist = 20 + (maxDistance - 20) * (CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 31 ) * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 37 ));
 
 //		Com_Printf("viewyaw %f, old yaw %f, diff %f, new yaw %f\n", viewyaw, yaw, AngleDifference(viewyaw, yaw), angle / M_PI * 180.0f);
 
 		particle->pos[0] = cg.refdef.vieworg[0] + cos(angle) * dist;
 		particle->pos[1] = cg.refdef.vieworg[1] + sin(angle) * dist;
+		particle->zoneId = CG_AtmosphericResolveZone( type, particle->pos );
 	}
 
 	if ( CG_PointContents( particle->pos, ENTITYNUM_NONE ) == CONTENTS_SOLID ){
 		return( qfalse );
 	}
 
-	for (i = 0; i < MAX_GENTITIES; i++){
-		s1 = &cg_entities[i].currentState;
+	if ( particle->zoneId < 0 ) {
+		particle->zoneId = CG_AtmosphericResolveZone( type, particle->pos );
+	}
 
-		if ( s1->eType != ET_WEATHER ) continue; // entity is not a weather entity
-		if ( s1->weapon != type ) continue; // entity is not the right type of weather entity
-
-		if ( s1->solid == SOLID_BMODEL )
-			trap_R_ModelBounds(cgs.inlineDrawModel[s1->modelindex], mins, maxs);
-		else
-			trap_R_ModelBounds(cgs.gameModels[s1->modelindex], mins, maxs);
-
-		if ( CG_InsideBox( mins, maxs, particle->pos ) )
-			return qtrue;
+	if ( particle->zoneId >= 0 ) {
+		return qtrue;
 	}
 
 //	return( qtrue );
@@ -224,21 +332,18 @@ static qboolean CG_RainParticleGenerate( int type, cg_atmosphericParticle_t *par
 	trace_t		tr;
 
 // Q3Rally Code Start
-	float			r;
-	entityState_t	*s1;
-	vec3_t			mins, maxs;
-	int				i;
+	int				zoneId;
+	const cg_atmosphericProfile_t	*profile;
 	cg_atmosphericEffect_t	*cg_atmFx;
-	qboolean		visible;
 
 	cg_atmFx = &cg_atmFxList[type];
 
 //	angle = random() * 2*M_PI;
 //	distance = 20 + MAX_ATMOSPHERIC_DISTANCE * random();
 
-	angle = (cg.refdefViewAngles[YAW] + crandom() * cg.refdef.fov_x / 2.0f) * M_PI / 180.0f;
-	r = random();
-	distance = 20 + MAX_ATMOSPHERIC_DISTANCE * (r * r); // ^2: more dense closer
+	profile = CG_AtmosphericProfile();
+	angle = (cg.refdefViewAngles[YAW] + CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 1 ) * cg.refdef.fov_x * 0.5f) * M_PI / 180.0f;
+	distance = 20 + profile->maxDistance * (CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 2 ) * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 3 ));
 // END
 
 // Q3Rally Code Start
@@ -251,24 +356,10 @@ static qboolean CG_RainParticleGenerate( int type, cg_atmosphericParticle_t *par
 	testend[2] = testpoint[2] + MAX_ATMOSPHERIC_HEIGHT;
 
 // Q3Rally Code Start
-	visible = qfalse;
-	for (i = 0; i < MAX_GENTITIES; i++){
-		s1 = &cg_entities[i].currentState;
-
-		if ( s1->eType != ET_WEATHER ) continue; // entity is not a weather entity
-		if ( s1->weapon != type ) continue; // entity is not the right type of weather entity
-
-		if ( s1->solid == SOLID_BMODEL )
-			trap_R_ModelBounds(cgs.inlineDrawModel[s1->modelindex], mins, maxs);
-		else
-			trap_R_ModelBounds(cgs.gameModels[s1->modelindex], mins, maxs);
-
-		if ( CG_InsideBox( mins, maxs, testpoint ) )
-			visible = qtrue;
-	}
-
-	if (!visible)
+	zoneId = CG_AtmosphericResolveZone( type, testpoint );
+	if ( zoneId < 0 )
 		return qfalse;
+	particle->zoneId = zoneId;
 // END
 
 	while( 1 )
@@ -294,7 +385,7 @@ static qboolean CG_RainParticleGenerate( int type, cg_atmosphericParticle_t *par
 //	if drawing snow start drawing it a little lower because it falls too slowly
 	VectorCopy(tr.endpos, testpoint);
 	testpoint[2] -= 10;
-	testend[2] = origz + (tr.fraction * MAX_ATMOSPHERIC_HEIGHT * (random() * 0.8f + 0.2f)) - 10;
+	testend[2] = origz + (tr.fraction * MAX_ATMOSPHERIC_HEIGHT * (CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 4 ) * 0.8f + 0.2f)) - 10;
 
 	CG_Trace( &tr, testpoint, NULL, NULL, testend, ENTITYNUM_NONE, MASK_SOLID|MASK_WATER );
 	if ( tr.fraction != 1 ){
@@ -303,14 +394,14 @@ static qboolean CG_RainParticleGenerate( int type, cg_atmosphericParticle_t *par
 // END
 
 	particle->active = qtrue;
-	particle->colour[0] = 0.6 + 0.2 * random();
-	particle->colour[1] = 0.6 + 0.2 * random();
-  	particle->colour[2] = 0.6 + 0.2 * random();
+	particle->colour[0] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 5 );
+	particle->colour[1] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 6 );
+  	particle->colour[2] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 7 );
 	VectorCopy( tr.endpos, particle->pos );
 	VectorCopy( currvec, particle->delta );
-	particle->delta[2] += crandom() * 100;
+	particle->delta[2] += CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 8 ) * 100;
 	VectorNormalize2( particle->delta, particle->deltaNormalized );
-	particle->height = ATMOSPHERIC_RAIN_HEIGHT + crandom() * 100;
+	particle->height = ATMOSPHERIC_RAIN_HEIGHT + CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 9 ) * 100;
 	particle->weight = currweight;
 	particle->effectshader = &cg_atmFx->effectshaders[0];
 
@@ -337,8 +428,10 @@ static void CG_RainParticleRender( int type, cg_atmosphericParticle_t *particle 
 	float			len, frac;
 	vec3_t			start, finish;
 	cg_atmosphericEffect_t	*cg_atmFx;
+	const cg_atmosphericProfile_t	*profile;
 
 	cg_atmFx = &cg_atmFxList[type];
+	profile = CG_AtmosphericProfile();
 
 	if( !particle->active )
 		return;
@@ -353,7 +446,7 @@ static void CG_RainParticleRender( int type, cg_atmosphericParticle_t *particle 
 
 // Q3Rally Code Start - replaced with a single cvar
 //		if( !cg_lowEffects.integer )
-		if( cg_atmosphericLevel.integer == 2 )
+		if( profile->splash )
 // END
 		{
 			frac = (ATMOSPHERIC_CUTHEIGHT - particle->minz + start[2]) / (float) ATMOSPHERIC_CUTHEIGHT;
@@ -433,21 +526,18 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 	trace_t		tr;
 
 // Q3Rally Code Start
-	float			r;
-	entityState_t	*s1;
-	vec3_t			mins, maxs;
-	int				i;
+	int				zoneId;
+	const cg_atmosphericProfile_t	*profile;
 	cg_atmosphericEffect_t	*cg_atmFx;
-	qboolean		visible;
 
 	cg_atmFx = &cg_atmFxList[type];
 
 //	angle = random() * 2*M_PI;
 //	distance = 20 + MAX_ATMOSPHERIC_DISTANCE * random();
 
-	angle = (cg.refdefViewAngles[YAW] + crandom() * cg.refdef.fov_x / 2.0f) * M_PI / 180.0f;
-	r = random();
-	distance = 20 + MAX_ATMOSPHERIC_DISTANCE * (r * r); // ^2: more dense closer
+	profile = CG_AtmosphericProfile();
+	angle = (cg.refdefViewAngles[YAW] + CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 11 ) * cg.refdef.fov_x * 0.5f) * M_PI / 180.0f;
+	distance = 20 + profile->maxDistance * (CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 12 ) * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 13 ));
 // END
 	
 
@@ -461,24 +551,10 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 	testend[2] = testpoint[2] + MAX_ATMOSPHERIC_HEIGHT;
 
 // Q3Rally Code Start
-	visible = qfalse;
-	for (i = 0; i < MAX_GENTITIES; i++){
-		s1 = &cg_entities[i].currentState;
-
-		if ( s1->eType != ET_WEATHER ) continue; // entity is not a weather entity
-		if ( s1->weapon != type ) continue; // entity is not the right type of weather entity
-
-		if ( s1->solid == SOLID_BMODEL )
-			trap_R_ModelBounds(cgs.inlineDrawModel[s1->modelindex], mins, maxs);
-		else
-			trap_R_ModelBounds(cgs.gameModels[s1->modelindex], mins, maxs);
-
-		if ( CG_InsideBox( mins, maxs, testpoint ) )
-			visible = qtrue;
-	}
-
-	if (!visible)
+	zoneId = CG_AtmosphericResolveZone( type, testpoint );
+	if ( zoneId < 0 )
 		return qfalse;
+	particle->zoneId = zoneId;
 // END
 
 	while( 1 )
@@ -505,7 +581,7 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 //	if drawing snow start drawing it a little lower because it falls too slowly
 	VectorCopy(tr.endpos, testpoint);
 	testpoint[2] -= 10;
-	testend[2] = origz + (tr.fraction * MAX_ATMOSPHERIC_HEIGHT * (random() * 0.8f + 0.2f)) - 10;
+	testend[2] = origz + (tr.fraction * MAX_ATMOSPHERIC_HEIGHT * (CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 14 ) * 0.8f + 0.2f)) - 10;
 
 	CG_Trace( &tr, testpoint, NULL, NULL, testend, ENTITYNUM_NONE, MASK_SOLID|MASK_WATER );
 	if ( tr.fraction != 1 ){
@@ -514,16 +590,16 @@ static qboolean CG_SnowParticleGenerate( int type, cg_atmosphericParticle_t *par
 // END
 
 	particle->active = qtrue;
-	particle->colour[0] = 0.6 + 0.2 * random();
-	particle->colour[1] = 0.6 + 0.2 * random();
-	particle->colour[2] = 0.6 + 0.2 * random();
+	particle->colour[0] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 15 );
+	particle->colour[1] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 16 );
+	particle->colour[2] = 0.6f + 0.2f * CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 17 );
 	VectorCopy( tr.endpos, particle->pos );
 	VectorCopy( currvec, particle->delta );
-	particle->delta[2] += crandom() * 25;
+	particle->delta[2] += CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 18 ) * 25;
 	VectorNormalize2( particle->delta, particle->deltaNormalized );
-	particle->height = ATMOSPHERIC_SNOW_HEIGHT + crandom() * 8;
+	particle->height = ATMOSPHERIC_SNOW_HEIGHT + CG_AtmosphericDeterministicCRandom( particle->zoneId, particle->id, 19 ) * 8;
 	particle->weight = particle->height * 0.5f;
-	particle->effectshader = &cg_atmFx->effectshaders[ (int) (random() * cg_atmFx->numEffectShaders) ];
+	particle->effectshader = &cg_atmFx->effectshaders[ (int)(CG_AtmosphericDeterministic01( particle->zoneId, particle->id, 20 ) * cg_atmFx->numEffectShaders) % cg_atmFx->numEffectShaders ];
 
 	distance =  	((float)(tr.endpos[2] - MIN_ATMOSPHERIC_HEIGHT)) / -particle->delta[2];
 	VectorMA( tr.endpos, distance, particle->delta, testend );
@@ -910,6 +986,8 @@ void CG_Atmospheric_SetParticles( int type, int numParticles, qboolean diableSpl
 	}
 
 	for( count = 0; count < cg_atmFx->numDrops; count++ ){
+		cg_atmFx->particles[count].id = count;
+		cg_atmFx->particles[count].zoneId = -1;
 		if (cg_atmFx->particles[count].active) continue;
 		cg_atmFx->particles[count].nextDropTime = ATMOSPHERIC_DROPDELAY + (rand() % ATMOSPHERIC_DROPDELAY);
 	}
@@ -932,25 +1010,40 @@ void CG_AddAtmosphericEffects()
 	float currweight;
 	cg_atmosphericEffect_t	*cg_atmFx;
 	int		i;
+	const cg_atmosphericProfile_t	*profile;
 
 // Q3Rally Code Start
 	if ( !cg_atmosphericLevel.integer )
 		return;
+
+	profile = CG_AtmosphericProfile();
 // END
 
 	for (i = 0; i < NUM_ATMOSPHERIC_TYPES; i++){
 		cg_atmFx = &cg_atmFxList[i];
 		if( cg_atmFx->numDrops <= 0 || cg_atmFx->numEffectShaders == 0 ) continue;
 
-// Q3Rally Code Start - changed to one cvar
-//		max = cg_lowEffects.integer ? (cg_atmFx->numDrops >> 1) : cg_atmFx->numDrops;
-		max = (cg_atmosphericLevel.integer == 1) ? (cg_atmFx->numDrops >> 1) : cg_atmFx->numDrops;
+// Q3Rally Code Start - adaptive budget
+		max = CG_AtmosphericBudget( cg_atmFx );
 // END
 		if( CG_EffectGustCurrent( cg_atmFx, currvec, &currweight, &currnum ) )
 			CG_EffectGust( cg_atmFx );  	  	  	// Recalculate gust parameters
+		if ( currnum > max ) {
+			currnum = max;
+		}
 		for( curr = 0; curr < max; curr++ )
 		{
+			vec3_t toParticle;
+			float distXY;
+
 			particle = &cg_atmFx->particles[curr];
+			if ( particle->active ) {
+				VectorSubtract( particle->pos, cg.refdef.vieworg, toParticle );
+				distXY = sqrt( toParticle[0] * toParticle[0] + toParticle[1] * toParticle[1] );
+				if ( distXY > profile->maxDistance || !CG_AtmosphericInViewCone( particle->pos, profile->conePadding ) ) {
+					particle->active = qfalse;
+				}
+			}
 			if( !cg_atmFx->ParticleCheckVisible( i, particle ) )
 			{
 				// Effect has terminated / fallen from screen view
