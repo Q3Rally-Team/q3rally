@@ -230,6 +230,76 @@ void CG_ParseServerinfo( void ) {
 	Q_strncpyz( cgs.blueTeam, Info_ValueForKey( info, "g_blueTeam" ), sizeof(cgs.blueTeam) );
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
 	cgs.eliminationWeapons = atoi( Info_ValueForKey( info, "g_eliminationWeapons" ) );
+
+	cgs.car_spring = atof( Info_ValueForKey( info, "car_spring" ) );
+	if ( cgs.car_spring <= 0.0f ) {
+		cgs.car_spring = 120.0f;
+	}
+
+	cgs.car_shock_up = atof( Info_ValueForKey( info, "car_shock_up" ) );
+	if ( cgs.car_shock_up <= 0.0f ) {
+		cgs.car_shock_up = 12.0f;
+	}
+
+	cgs.car_shock_down = atof( Info_ValueForKey( info, "car_shock_down" ) );
+	if ( cgs.car_shock_down <= 0.0f ) {
+		cgs.car_shock_down = 11.0f;
+	}
+
+	cgs.car_swaybar = atof( Info_ValueForKey( info, "car_swaybar" ) );
+	if ( cgs.car_swaybar <= 0.0f ) {
+		cgs.car_swaybar = 20.0f;
+	}
+
+	cgs.car_wheel = atof( Info_ValueForKey( info, "car_wheel" ) );
+	if ( cgs.car_wheel <= 0.0f ) {
+		cgs.car_wheel = 2400.0f;
+	}
+
+	cgs.car_wheel_damp = atof( Info_ValueForKey( info, "car_wheel_damp" ) );
+	if ( cgs.car_wheel_damp <= 0.0f ) {
+		cgs.car_wheel_damp = 140.0f;
+	}
+
+	cgs.car_frontweight_dist = atof( Info_ValueForKey( info, "car_frontweight_dist" ) );
+	if ( cgs.car_frontweight_dist <= 0.0f || cgs.car_frontweight_dist >= 1.0f ) {
+		cgs.car_frontweight_dist = 0.5f;
+	}
+
+	cgs.car_IT_xScale = atof( Info_ValueForKey( info, "car_IT_xScale" ) );
+	if ( cgs.car_IT_xScale <= 0.0f ) {
+		cgs.car_IT_xScale = 1.0f;
+	}
+
+	cgs.car_IT_yScale = atof( Info_ValueForKey( info, "car_IT_yScale" ) );
+	if ( cgs.car_IT_yScale <= 0.0f ) {
+		cgs.car_IT_yScale = 1.0f;
+	}
+
+	cgs.car_IT_zScale = atof( Info_ValueForKey( info, "car_IT_zScale" ) );
+	if ( cgs.car_IT_zScale <= 0.0f ) {
+		cgs.car_IT_zScale = 1.0f;
+	}
+
+	cgs.car_body_elasticity = atof( Info_ValueForKey( info, "car_body_elasticity" ) );
+	if ( cgs.car_body_elasticity <= 0.0f ) {
+		cgs.car_body_elasticity = 0.05f;
+	}
+
+	cgs.car_air_cof = atof( Info_ValueForKey( info, "car_air_cof" ) );
+	if ( cgs.car_air_cof <= 0.0f ) {
+		cgs.car_air_cof = 0.31f;
+	}
+
+	cgs.car_air_frac_to_df = atof( Info_ValueForKey( info, "car_air_frac_to_df" ) );
+	if ( cgs.car_air_frac_to_df <= 0.0f ) {
+		cgs.car_air_frac_to_df = 0.5f;
+	}
+
+	cgs.car_friction_scale = atof( Info_ValueForKey( info, "car_friction_scale" ) );
+	if ( cgs.car_friction_scale <= 0.0f ) {
+		cgs.car_friction_scale = 1.1f;
+	}
 }
 
 /*

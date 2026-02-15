@@ -410,8 +410,6 @@ void CG_DrawHUD_DerbyList(float x, float y){
 	int			i;
 	vec4_t		color;
 	centity_t	*cent;
-	char		*time;
-	float		playTime;
 
 	// draw heading
     x = 636 - 120;
@@ -448,15 +446,6 @@ void CG_DrawHUD_DerbyList(float x, float y){
 		else if (cent->currentState.eFlags & EF_DEAD || cgs.clientinfo[cg.scores[i].client].team == TEAM_SPECTATOR){
 			Vector4Copy(colorMdGrey, color);
 		}
-
-		playTime = 0;
-		if (cent->finishRaceTime){
-			playTime = cent->finishRaceTime - cent->startLapTime;
-		}
-		else if (cent->startRaceTime){
-			playTime = cg.time - cent->startLapTime;
-		}
-		time = getStringForTime(playTime);
 
 		// num
 		CG_DrawTinyStringColor( x + 2, y, va("%i", (i+1)), color);

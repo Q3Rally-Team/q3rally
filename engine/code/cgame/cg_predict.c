@@ -909,22 +909,22 @@ void CG_PredictPlayerState( void ) {
 	cg_pmove.controlMode = cgs.clientinfo[cg.predictedPlayerState.clientNum].controlMode;
 	cg_pmove.manualShift = cgs.clientinfo[cg.predictedPlayerState.clientNum].manualShift;
 
-	cg_pmove.car_spring = 120;
-	cg_pmove.car_shock_up = 12;
-	cg_pmove.car_shock_down = 11;
-	cg_pmove.car_swaybar = 20;
-	cg_pmove.car_wheel = 2400;
-	cg_pmove.car_wheel_damp = 140;
+	cg_pmove.car_spring = cgs.car_spring > 0.0f ? cgs.car_spring : 120.0f;
+	cg_pmove.car_shock_up = cgs.car_shock_up > 0.0f ? cgs.car_shock_up : 12.0f;
+	cg_pmove.car_shock_down = cgs.car_shock_down > 0.0f ? cgs.car_shock_down : 11.0f;
+	cg_pmove.car_swaybar = cgs.car_swaybar > 0.0f ? cgs.car_swaybar : 20.0f;
+	cg_pmove.car_wheel = cgs.car_wheel > 0.0f ? cgs.car_wheel : 2400.0f;
+	cg_pmove.car_wheel_damp = cgs.car_wheel_damp > 0.0f ? cgs.car_wheel_damp : 140.0f;
 
-	cg_pmove.car_frontweight_dist = 0.5f;
-	cg_pmove.car_IT_xScale = 1.0f;
-	cg_pmove.car_IT_yScale = 1.0f;
-	cg_pmove.car_IT_zScale = 1.0f;
-	cg_pmove.car_body_elasticity = CP_BODY_ELASTICITY;
+	cg_pmove.car_frontweight_dist = ( cgs.car_frontweight_dist > 0.0f && cgs.car_frontweight_dist < 1.0f ) ? cgs.car_frontweight_dist : 0.5f;
+	cg_pmove.car_IT_xScale = cgs.car_IT_xScale > 0.0f ? cgs.car_IT_xScale : 1.0f;
+	cg_pmove.car_IT_yScale = cgs.car_IT_yScale > 0.0f ? cgs.car_IT_yScale : 1.0f;
+	cg_pmove.car_IT_zScale = cgs.car_IT_zScale > 0.0f ? cgs.car_IT_zScale : 1.0f;
+	cg_pmove.car_body_elasticity = cgs.car_body_elasticity > 0.0f ? cgs.car_body_elasticity : CP_BODY_ELASTICITY;
 
-	cg_pmove.car_air_cof = CP_AIR_COF;
-	cg_pmove.car_air_frac_to_df = CP_FRAC_TO_DF;
-	cg_pmove.car_friction_scale = 1.1f;
+	cg_pmove.car_air_cof = cgs.car_air_cof > 0.0f ? cgs.car_air_cof : CP_AIR_COF;
+	cg_pmove.car_air_frac_to_df = cgs.car_air_frac_to_df > 0.0f ? cgs.car_air_frac_to_df : CP_FRAC_TO_DF;
+	cg_pmove.car_friction_scale = cgs.car_friction_scale > 0.0f ? cgs.car_friction_scale : 1.1f;
 	cg_pmove.useFuel = cg_useFuel.integer ? qtrue : qfalse;
 
 //	for ( cmdNum = current - CMD_BACKUP + 1 ; cmdNum <= current ; cmdNum++ ) {

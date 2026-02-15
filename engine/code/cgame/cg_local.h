@@ -1327,6 +1327,21 @@ typedef struct {
 	char			blueTeam[MAX_QPATH];
 	int				eliminationWeapons;
 
+	float			car_spring;
+	float			car_shock_up;
+	float			car_shock_down;
+	float			car_swaybar;
+	float			car_wheel;
+	float			car_wheel_damp;
+	float			car_frontweight_dist;
+	float			car_IT_xScale;
+	float			car_IT_yScale;
+	float			car_IT_zScale;
+	float			car_body_elasticity;
+	float			car_air_cof;
+	float			car_air_frac_to_df;
+	float			car_friction_scale;
+
 	int				voteTime;
 	int				voteYes;
 	int				voteNo;
