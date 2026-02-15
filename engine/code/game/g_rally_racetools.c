@@ -520,8 +520,11 @@ void RallyStarter_Think( gentity_t *ent ){
 	}
 }
 
+static int CountRaceGridStarts( void );
+
 void CreateRallyStarter( void ) {
 	gentity_t		*ent;
+	int			gridStarts;
 
 	ent = G_Spawn();
 
@@ -529,6 +532,11 @@ void CreateRallyStarter( void ) {
 	ent->nextthink = level.time + 2000;
 	ent->number = 0;
 	ent->classname = "rally_starter";
+
+	gridStarts = CountRaceGridStarts();
+	if ( gridStarts < level.maxclients ) {
+		G_Printf( "Warning: Map has %i info_player_start entities, but sv_maxClients is %i; temporary grid slots may be required\n", gridStarts, level.maxclients );
+	}
 }
 
 
@@ -576,31 +584,71 @@ SelectGridPositionSpawn
 ============
 */
 static gentity_t overflowSpot;
+static qboolean missingGridStartsNotified;
 
 #define OVERFLOW_GRID_COLUMNS			4
 #define OVERFLOW_GRID_SPACING			192.0f
 
+static int CountRaceGridStarts( void ) {
+	gentity_t *spot;
+	int count;
+
+	spot = NULL;
+	count = 0;
+	while ( ( spot = G_Find( spot, FOFS(classname), "info_player_start" ) ) != NULL ) {
+		count++;
+	}
+
+	return count;
+}
+
+static void BuildTemporaryGridSlot( vec3_t baseOrigin, vec3_t baseAngles, int slotIndex, vec3_t outOrigin, vec3_t outAngles ) {
+	vec3_t forward, right;
+	float row;
+	float column;
+
+	AngleVectors( baseAngles, forward, right, NULL );
+	row = (float)( slotIndex / OVERFLOW_GRID_COLUMNS );
+	column = (float)( slotIndex % OVERFLOW_GRID_COLUMNS );
+
+	VectorCopy( baseOrigin, outOrigin );
+	VectorMA( outOrigin, -(( row + 1.0f ) * OVERFLOW_GRID_SPACING), forward, outOrigin );
+	VectorMA( outOrigin, ( column - ( ( OVERFLOW_GRID_COLUMNS - 1 ) * 0.5f ) ) * OVERFLOW_GRID_SPACING, right, outOrigin );
+
+	VectorCopy( baseAngles, outAngles );
+}
+
+static qboolean FindTemporaryGridAnchor( vec3_t baseOrigin, vec3_t baseAngles ) {
+	gentity_t *spot;
+
+	spot = G_Find( NULL, FOFS(classname), "info_player_start" );
+	if ( spot ) {
+		VectorCopy( spot->s.origin, baseOrigin );
+		VectorCopy( spot->s.angles, baseAngles );
+		return qtrue;
+	}
+
+	spot = G_Find( NULL, FOFS(classname), "rally_checkpoint" );
+	if ( spot ) {
+		VectorCopy( spot->s.origin, baseOrigin );
+		VectorCopy( spot->s.angles, baseAngles );
+		return qfalse;
+	}
+
+	VectorClear( baseOrigin );
+	VectorClear( baseAngles );
+	return qfalse;
+}
+
 TESTABLE_STATIC gentity_t *SelectOverflowGridPosition( gentity_t *baseSpot, int overflowIndex, gentity_t *ent, vec3_t origin, vec3_t angles ) {
-	vec3_t			forward, right;
+	vec3_t			tempOrigin, tempAngles;
 	int				attempts = 0;
 	int				currentIndex = overflowIndex;
 
-	AngleVectors( baseSpot->s.angles, forward, right, NULL );
-
 	while ( attempts < 16 ) {
-		vec3_t placement;
-		float row;
-		float column;
-
-		row = (float)( currentIndex / OVERFLOW_GRID_COLUMNS );
-		column = (float)( currentIndex % OVERFLOW_GRID_COLUMNS );
-
-		VectorCopy( baseSpot->s.origin, placement );
-		VectorMA( placement, -(( row + 1.0f ) * OVERFLOW_GRID_SPACING), forward, placement );
-		VectorMA( placement, ( column - ( ( OVERFLOW_GRID_COLUMNS - 1 ) * 0.5f ) ) * OVERFLOW_GRID_SPACING, right, placement );
-
-		VectorCopy( placement, overflowSpot.s.origin );
-		VectorCopy( baseSpot->s.angles, overflowSpot.s.angles );
+		BuildTemporaryGridSlot( baseSpot->s.origin, baseSpot->s.angles, currentIndex, tempOrigin, tempAngles );
+		VectorCopy( tempOrigin, overflowSpot.s.origin );
+		VectorCopy( tempAngles, overflowSpot.s.angles );
 
 		if ( !SpotWouldTelefrag( &overflowSpot ) ) {
 			VectorCopy( overflowSpot.s.origin, origin );
@@ -624,10 +672,15 @@ TESTABLE_STATIC gentity_t *SelectOverflowGridPosition( gentity_t *baseSpot, int 
 gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot ) {
 	gentity_t		*spot;
 	gentity_t		*firstGridSpot;
+	vec3_t			anchorOrigin;
+	vec3_t			anchorAngles;
+	qboolean		hasNumberedGridSpots;
 	int				gridPosition;
+	int				fallbackIndex;
 
 	spot = NULL;
 	firstGridSpot = NULL;
+	hasNumberedGridSpots = qfalse;
 	gridPosition = 1;
 	while ( gridPosition <= level.maxclients ) {
 		gentity_t *matchedSpot = NULL;
@@ -636,6 +689,9 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 		while ((spot = G_Find (spot, FOFS(classname), "info_player_start")) != NULL) {
 			if ( !firstGridSpot ) {
 				firstGridSpot = spot;
+			}
+			if ( spot->number ) {
+				hasNumberedGridSpots = qtrue;
 			}
 
 			if ( ( spot->number == gridPosition || ( !spot->number && gridPosition == 1 ) ) ) {
@@ -667,13 +723,39 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 		}
 	}
 
+	fallbackIndex = gridPosition - 1;
 	if ( firstGridSpot ) {
-		gentity_t *overflow = SelectOverflowGridPosition( firstGridSpot, gridPosition - 1, ent, origin, angles );
+		gentity_t *overflow = SelectOverflowGridPosition( firstGridSpot, fallbackIndex, ent, origin, angles );
 		if ( overflow ) {
 			return overflow;
 		}
+		fallbackIndex += 16;
 	}
 
-	G_Printf("Warning: No info_player_start found for race spawn, using default spawn\n");
+	if ( !missingGridStartsNotified ) {
+		missingGridStartsNotified = qtrue;
+		G_Printf("Warning: Missing info_player_start for race grid; assigning temporary safe grid slots (telefrag protection active)\n");
+		CenterPrint_All("Operator notice: missing info_player_start, using temporary safe grid slots");
+	}
+
+	if ( !FindTemporaryGridAnchor( anchorOrigin, anchorAngles ) ) {
+		if ( !hasNumberedGridSpots ) {
+			G_Printf("Warning: Race map has no numbered info_player_start entities for full grid coverage\n");
+		}
+	}
+
+	for ( gridPosition = fallbackIndex; gridPosition < fallbackIndex + 256; gridPosition++ ) {
+		BuildTemporaryGridSlot( anchorOrigin, anchorAngles, gridPosition, overflowSpot.s.origin, overflowSpot.s.angles );
+		if ( SpotWouldTelefrag( &overflowSpot ) ) {
+			continue;
+		}
+
+		VectorCopy( overflowSpot.s.origin, origin );
+		origin[2] += 9;
+		VectorCopy( overflowSpot.s.angles, angles );
+		return &overflowSpot;
+	}
+
+	G_Printf("Warning: Unable to find telefrag-safe temporary race grid slot, using emergency spawn fallback\n");
 	return SelectSpawnPoint( vec3_origin, origin, angles, isbot );
 }
