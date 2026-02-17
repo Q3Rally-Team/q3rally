@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define COL_SCORE_WIDTH         80   /* For frags/points */
 #define COL_DEATHS_WIDTH        60   /* For deaths */
 #define COL_LAPTIME_WIDTH       100  /* Best lap time */
+#define COL_DELTA_WIDTH         90   /* Local ghost split delta */
 #define COL_TOTALTIME_WIDTH     120  /* Total time */
 #define COL_PING_WIDTH          60   /* Ping */
 #define COL_STATUS_WIDTH        80   /* Status (Ready, etc) */
@@ -61,6 +62,7 @@ typedef enum {
     SBCOL_SCORE,      /* Frags/Points */
     SBCOL_DEATHS,     /* Deaths */
     SBCOL_LAPTIME,    /* Best lap time */
+    SBCOL_DELTA,      /* Local ghost split delta */
     SBCOL_TOTALTIME,  /* Total/Race time */
     SBCOL_PING,       /* Network ping */
     SBCOL_STATUS,     /* Ready status, etc */
@@ -126,7 +128,7 @@ static void CG_InitScoreboardColumns(void) {
     int i;
     int currentX;
     int totalContentWidth;
-    qboolean showScore, showDeaths, showTimes, showLapTimes;
+    qboolean showScore, showDeaths, showTimes, showLapTimes, showDelta;
     qboolean isRacing, isTeam;
     
     /* Clear all columns first */
@@ -144,6 +146,7 @@ static void CG_InitScoreboardColumns(void) {
     showDeaths = qfalse;
     showTimes = qfalse;
     showLapTimes = qfalse;
+    showDelta = qfalse;
     
     switch (cgs.gametype) {
         case GT_RACING:
@@ -153,6 +156,7 @@ static void CG_InitScoreboardColumns(void) {
             /* Pure racing - only times matter */
             showTimes = qtrue;
             showLapTimes = qtrue;
+            showDelta = qtrue;
             break;
             
         case GT_DEATHMATCH:
@@ -171,6 +175,7 @@ static void CG_InitScoreboardColumns(void) {
             showScore = qtrue;
             showTimes = qtrue;
             showLapTimes = qtrue;
+            showDelta = qtrue;
             /* No deaths in racing modes typically */
             break;
             
@@ -241,6 +246,13 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_LAPTIME].width = COL_LAPTIME_WIDTH;
         columns[SBCOL_LAPTIME].header = "BEST";
         columns[SBCOL_LAPTIME].visible = qtrue;
+    }
+
+    if (showDelta) {
+        columns[SBCOL_DELTA].type = SBCOL_DELTA;
+        columns[SBCOL_DELTA].width = COL_DELTA_WIDTH;
+        columns[SBCOL_DELTA].header = "DELTA";
+        columns[SBCOL_DELTA].visible = qtrue;
     }
     
     if (showTimes) {
@@ -404,6 +416,7 @@ static void CG_DrawModernHeader(int y) {
             case SBCOL_SCORE:
             case SBCOL_DEATHS:
             case SBCOL_LAPTIME:
+            case SBCOL_DELTA:
             case SBCOL_TOTALTIME:
             case SBCOL_STATUS:
                 /* Center-aligned columns */
@@ -512,6 +525,8 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
     clientInfo_t *ci;
     char buffer[32];
     int totalTime, lapTime, avatarSize, rowHeight;
+    int deltaMs, absMs;
+    char sign;
     char *timeStr, *lapTimeStr;
     vec4_t textColor;
     vec4_t rankColor;
@@ -611,6 +626,20 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                 } else {
                     CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
                 }
+            }
+            break;
+
+        case SBCOL_DELTA:
+            if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+            } else if (score->client == cg.snap->ps.clientNum && cg.ghostSplitDeltaValid) {
+                deltaMs = cg.ghostSplitDeltaMs;
+                sign = deltaMs < 0 ? '-' : '+';
+                absMs = deltaMs < 0 ? -deltaMs : deltaMs;
+                Com_sprintf(buffer, sizeof(buffer), "%c%d.%03d", sign, absMs / 1000, absMs % 1000);
+                CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            } else {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             }
             break;
             

@@ -806,6 +806,145 @@ void CG_AddGhostEntity( void ) {
 }
 
 
+
+static qboolean CG_PointInsideCheckpointBounds( const centity_t *checkpoint, const vec3_t point ) {
+        vec3_t mins, maxs;
+        int i;
+
+        if ( !checkpoint || checkpoint->currentState.eType != ET_CHECKPOINT ) {
+                return qfalse;
+        }
+
+        trap_R_ModelBounds( cgs.inlineDrawModel[checkpoint->currentState.modelindex], mins, maxs );
+
+        if ( checkpoint->currentState.frame == 0 ) {
+                VectorAdd( mins, checkpoint->currentState.origin, mins );
+                VectorAdd( maxs, checkpoint->currentState.origin, maxs );
+        }
+
+        for ( i = 0; i < 3; i++ ) {
+                if ( point[i] < mins[i] || point[i] > maxs[i] ) {
+                        return qfalse;
+                }
+        }
+
+        return qtrue;
+}
+
+static centity_t *CG_FindCheckpointEntity( int checkpointNumber ) {
+        int i;
+
+        for ( i = 0; i < MAX_GENTITIES; i++ ) {
+                centity_t *cent = &cg_entities[i];
+
+                if ( cent->currentState.eType != ET_CHECKPOINT ) {
+                        continue;
+                }
+
+                if ( cent->currentState.weapon == checkpointNumber ) {
+                        return cent;
+                }
+        }
+
+        return NULL;
+}
+
+static qboolean CG_GetGhostCheckpointSplitMs( ghostRecording_t *recording, int checkpointNumber, int *splitMsOut ) {
+        int i;
+        centity_t *checkpoint;
+
+        if ( !recording || !recording->valid || recording->frameCount <= 0 || !splitMsOut ) {
+                return qfalse;
+        }
+
+        checkpoint = CG_FindCheckpointEntity( checkpointNumber );
+        if ( !checkpoint ) {
+                return qfalse;
+        }
+
+        for ( i = 0; i < recording->frameCount; i++ ) {
+                int index = ( recording->startIndex + i ) % MAX_GHOST_FRAMES;
+                ghostFrame_t *frame = &recording->frames[index];
+
+                if ( CG_PointInsideCheckpointBounds( checkpoint, frame->origin ) ) {
+                        *splitMsOut = frame->timeOffset;
+                        return qtrue;
+                }
+        }
+
+        return qfalse;
+}
+
+void CG_UpdateGhostSplitDelta( void ) {
+        centity_t *cent;
+        int nextCheckpoint;
+        int startLapTime;
+        int crossedCheckpoint;
+        ghostRecording_t *recording;
+        int ghostSplitMs;
+        int localElapsed;
+        int deltaMs;
+
+        if ( !cg.snap || cg.snap->ps.clientNum >= MAX_CLIENTS ) {
+                return;
+        }
+
+        cent = &cg_entities[cg.snap->ps.clientNum];
+        nextCheckpoint = cg.snap->ps.stats[STAT_NEXT_CHECKPOINT];
+        startLapTime = cent->startLapTime;
+
+        if ( !startLapTime || cent->finishRaceTime || nextCheckpoint <= 0 ) {
+                cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+                cg.ghostSplitLastLapStartTime = startLapTime;
+                return;
+        }
+
+        if ( cg.ghostSplitLastLapStartTime != startLapTime || cg.ghostSplitLastNextCheckpoint <= 0 ) {
+                cg.ghostSplitLastLapStartTime = startLapTime;
+                cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+                return;
+        }
+
+        if ( nextCheckpoint == cg.ghostSplitLastNextCheckpoint ) {
+                return;
+        }
+
+        if ( nextCheckpoint < cg.ghostSplitLastNextCheckpoint ) {
+                cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+                return;
+        }
+
+        crossedCheckpoint = nextCheckpoint - 1;
+
+        recording = CG_GetActiveGhostRecording();
+        if ( !recording || !recording->valid ) {
+                cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+                return;
+        }
+
+        if ( !CG_GetGhostCheckpointSplitMs( recording, crossedCheckpoint, &ghostSplitMs ) ) {
+                cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+                return;
+        }
+
+        localElapsed = cg.time - startLapTime;
+        if ( localElapsed < 0 ) {
+                localElapsed = 0;
+        }
+
+        deltaMs = localElapsed - ghostSplitMs;
+        cg.ghostSplitDeltaMs = deltaMs;
+        cg.ghostSplitDeltaTime = cg.time;
+        cg.ghostSplitDeltaValid = qtrue;
+
+        trap_Cvar_Update( &cg_ghostSplitAudio );
+        if ( cg_ghostSplitAudio.integer && deltaMs < 0 && cgs.media.excellentSound ) {
+                trap_S_StartLocalSound( cgs.media.excellentSound, CHAN_ANNOUNCER );
+        }
+
+        cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
+}
+
 void CG_NewLapTime( int client, int lap, int time ) {
 	centity_t	*cent;
 	char		*t;
@@ -883,6 +1022,12 @@ void CG_StartRace( int time ) {
 
         CG_LoadPersonalGhost();
         CG_BeginGhostRecording( time );
+
+        cg.ghostSplitLastNextCheckpoint = 0;
+        cg.ghostSplitLastLapStartTime = 0;
+        cg.ghostSplitDeltaMs = 0;
+        cg.ghostSplitDeltaTime = 0;
+        cg.ghostSplitDeltaValid = qfalse;
 
         cg.eliminationWarningActive = qfalse;
         cg.eliminationWarningTime = 0;

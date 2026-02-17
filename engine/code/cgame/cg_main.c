@@ -270,6 +270,7 @@ vmCvar_t	cg_atmosphericLevel;
 vmCvar_t	cg_fpsLimit;
 vmCvar_t	cg_autodrop;
 vmCvar_t	cg_drawPositionSprites;
+vmCvar_t	cg_elimTimeline;
 vmCvar_t	cg_tightCamTracking;
 vmCvar_t	cg_rearViewRenderLevel;
 vmCvar_t	cg_mainViewRenderLevel;
@@ -279,6 +280,7 @@ vmCvar_t	cg_engineSounds;
 vmCvar_t	cg_ghostPlayback;
 vmCvar_t	cg_ghostDebug;
 vmCvar_t	cg_ghostAlpha;
+vmCvar_t	cg_ghostSplitAudio;
 vmCvar_t	cg_useFuel;
 
 vmCvar_t        cg_fuelWarningLevel;
@@ -391,6 +393,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_fpsLimit, "cg_fpsLimit", "60", CVAR_ARCHIVE },
 	{ &cg_autodrop, "cg_autodrop", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
+	{ &cg_elimTimeline, "cg_elimTimeline", "1", CVAR_ARCHIVE },
 
         { &cg_tightCamTracking, "cg_tightCamTracking", "0", CVAR_ARCHIVE },
 
@@ -400,6 +403,7 @@ static cvarTable_t cvarTable[] = {
         { &cg_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
 	{ &cg_ghostAlpha, "cg_ghostAlpha", "160", CVAR_ARCHIVE },
 	{ &cg_ghostDebug, "cg_ghostDebug", "0", CVAR_TEMP },
+	{ &cg_ghostSplitAudio, "cg_ghostSplitAudio", "1", CVAR_ARCHIVE },
         { &cg_useFuel, "g_useFuel", "1", CVAR_SERVERINFO },
 
         { &cg_fuelWarningLevel, "cg_fuelWarningLevel", "10", CVAR_ARCHIVE },

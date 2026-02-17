@@ -67,7 +67,17 @@ static float CG_GetEliminationColumnWidth( void ) {
             maxWidth = candidate;
         }
 
+        candidate = insetWidth + charWidth * CG_DrawStrlen( "D: +00.000" );
+        if ( candidate > maxWidth ) {
+            maxWidth = candidate;
+        }
+
         candidate = insetWidth + charWidth * CG_DrawStrlen( "PLAYERS LEFT: 000" );
+        if ( candidate > maxWidth ) {
+            maxWidth = candidate;
+        }
+
+        candidate = insetWidth + charWidth * CG_DrawStrlen( "R99 LEFT63 Name (99)" );
         if ( candidate > maxWidth ) {
             maxWidth = candidate;
         }
@@ -561,6 +571,51 @@ static float CG_DrawTimes( float y ) {
 	return y;
 }
 
+
+static float CG_DrawGhostSplitDelta( float y ) {
+	char		s[64];
+	float		x;
+	int		deltaMs;
+	int		absMs;
+	int		seconds;
+	int		millis;
+	vec4_t		deltaColor;
+	const float		columnWidth = CG_GetEliminationColumnWidth();
+	const float		rowHeight = HUD_ROW_HEIGHT;
+
+	if ( !cg.ghostSplitDeltaValid ) {
+		return y;
+	}
+
+	if ( cg.ghostSplitDeltaTime <= 0 || cg.time - cg.ghostSplitDeltaTime > 4000 ) {
+		if ( !cg.snap || !cg_entities[cg.snap->ps.clientNum].finishRaceTime ) {
+			return y;
+		}
+
+	}
+
+	deltaMs = cg.ghostSplitDeltaMs;
+	absMs = deltaMs < 0 ? -deltaMs : deltaMs;
+	seconds = absMs / 1000;
+	millis = absMs % 1000;
+
+	Com_sprintf( s, sizeof( s ), "D: %c%d.%03d", deltaMs < 0 ? '-' : '+', seconds, millis );
+	if ( deltaMs < 0 ) {
+		Vector4Copy( colorGreen, deltaColor );
+	} else if ( deltaMs > 0 ) {
+		Vector4Copy( colorRed, deltaColor );
+	} else {
+		Vector4Copy( colorWhite, deltaColor );
+	}
+
+	x = HUD_RIGHT_EDGE - columnWidth;
+	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
+	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, deltaColor );
+	y += rowHeight;
+
+	return y;
+}
+
 /*
 ================
 CG_DrawLaps
@@ -674,6 +729,63 @@ static void CG_DrawCurrentPosition( float y ) {
                 }
                 CG_DrawTinyStringColor( textX, textY, s, colorWhite );
         }
+}
+
+/*
+========================
+CG_DrawEliminationTimeline
+========================
+*/
+static float CG_DrawEliminationTimeline( float y ) {
+        int i;
+        float x;
+        char line[64];
+        const float columnWidth = CG_GetEliminationColumnWidth();
+        const float rowHeight = HUD_ROW_HEIGHT;
+
+        if ( !cg_elimTimeline.integer ) {
+                return y;
+        }
+
+        if ( cgs.gametype != GT_ELIMINATION && cgs.gametype != GT_LCS ) {
+                return y;
+        }
+
+        if ( cg.elimTimelineCount <= 0 ) {
+                return y;
+        }
+
+        x = HUD_RIGHT_EDGE - columnWidth;
+
+        for ( i = cg.elimTimelineCount - 1; i >= 0; --i ) {
+                const cgElimTimelineEvent_t *event;
+                const char *name;
+                int elapsedSeconds;
+
+                event = &cg.elimTimelineEvents[i];
+                if ( event->clientNum < 0 || event->clientNum >= MAX_CLIENTS ) {
+                        continue;
+                }
+
+                name = cgs.clientinfo[event->clientNum].name;
+                if ( !name || !name[0] ) {
+                        name = va( "#%d", event->clientNum );
+                }
+
+                elapsedSeconds = 0;
+                if ( event->timestamp > 0 && cg.time > event->timestamp ) {
+                        elapsedSeconds = ( cg.time - event->timestamp ) / 1000;
+                }
+
+                Com_sprintf( line, sizeof( line ), "R%02d LEFT%02d %s (%is)",
+                        event->round, event->remaining, name, elapsedSeconds );
+
+                CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
+                CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, line, colorWhite );
+                y += rowHeight;
+        }
+
+        return y;
 }
 
 /*
@@ -1190,9 +1302,12 @@ float CG_DrawUpperRightHUD( float y ) {
                         timesStart = y;
                         timesY = y;
 
+                        CG_UpdateGhostSplitDelta();
                         timesY = CG_DrawTimes( timesY );
+                        timesY = CG_DrawGhostSplitDelta( timesY );
                         timesY = CG_DrawLaps( timesY );
                         timesY = CG_DrawDistanceToFinish( timesY );
+                        timesY = CG_DrawEliminationTimeline( timesY );
 
                         CG_DrawCurrentPosition( timesStart );
 

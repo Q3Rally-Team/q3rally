@@ -141,6 +141,22 @@ static void G_CompleteElimination( gentity_t *ent ) {
         SetTeam( ent, "racerSpectator" );
 }
 
+static void G_SendEliminationTimelineEvent( int clientNum, int round, int remaining ) {
+        if ( clientNum < 0 || clientNum >= level.maxclients ) {
+                return;
+        }
+
+        if ( round < 0 ) {
+                round = 0;
+        }
+
+        if ( remaining < 0 ) {
+                remaining = 0;
+        }
+
+        trap_SendServerCommand( -1, va( "elim_event %i %i %i %i", clientNum, round, remaining, level.time ) );
+}
+
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
 // *********************** Race Entities ************************
@@ -149,6 +165,29 @@ static void G_CompleteElimination( gentity_t *ent ) {
 
 #define CHECKPOINT_SOUNDS		1
 #define CHECKPOINT_MESSAGES		2
+
+static const char *G_RallyPlaceString( int position ) {
+	switch ( position ) {
+	case 1:
+		return "first";
+	case 2:
+		return "second";
+	case 3:
+		return "third";
+	case 4:
+		return "fourth";
+	case 5:
+		return "fifth";
+	case 6:
+		return "sixth";
+	case 7:
+		return "seventh";
+	case 8:
+		return "eighth";
+	default:
+		return NULL;
+	}
+}
 
 
 static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
@@ -258,15 +297,8 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
         trap_SendServerCommand( -1, va( "print \"%s was eliminated (%i drivers left)\n\"",
                 last->client->pers.netname, activeCount - 1 ) );
         trap_SendServerCommand( last->s.clientNum, "cp \"You were eliminated\n\"" );
-
-        // Trigger a big explosion before moving the player to the scoreboard.
-        G_TempEntity( last->client->ps.origin, EV_EXPLOSION );
-
-        // Trigger a big explosion before moving the player to the scoreboard.
-        G_TempEntity( last->client->ps.origin, EV_EXPLOSION );
-
-        // Trigger a big explosion before moving the player to the scoreboard.
-        G_TriggerEliminationExplosion( last );
+        trap_SendServerCommand( -1, va( "elim_status %i %i %i", last->s.clientNum, activeCount - 1, 1 ) );
+        G_SendEliminationTimelineEvent( last->s.clientNum, level.eliminationRound, activeCount - 1 );
 
         // Trigger a big explosion before moving the player to the scoreboard.
         G_TriggerEliminationExplosion( last );
@@ -326,6 +358,8 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
                                 trap_SendServerCommand( -1, va( "print \"%s won the elimination!\n\"",
                                         winner->client->pers.netname ) );
                                 trap_SendServerCommand( winner->s.clientNum, "cp \"You won the elimination!\n\"" );
+                                trap_SendServerCommand( -1, va( "elim_status %i %i %i", winner->s.clientNum, 1, 2 ) );
+                                G_SendEliminationTimelineEvent( winner->s.clientNum, level.eliminationRound + 1, 1 );
                         }
                 }
         }
@@ -356,7 +390,7 @@ void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
 }
 
 void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
-        char*place;
+        const char *place;
 
         if ( !other->client ) {
                 return;
@@ -391,35 +425,10 @@ trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pe
 trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
 }
 else {
-switch ( other->client->ps.stats[STAT_POSITION] ){
-case 1:
-place = "first";
-break;
-case 2:
-place = "second";
-break;
-case 3:
-place = "third";
-break;
-case 4:
-place = "forth";
-break;
-case 5:
-place = "fifth";
-break;
-case 6:
-place = "sixth";
-break;
-case 7:
-place = "seventh";
-break;
-case 8:
-place = "eighth";
-break;
-default:
-place = NULL;
+place = G_RallyPlaceString( other->client->ps.stats[STAT_POSITION] );
+
+if ( !place ) {
 Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
-break;
 }
 
 if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
@@ -434,7 +443,7 @@ trap_SendServerCommand( -1, va("print \"%s finished the race!\n\"", other->clien
 }
 
 void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
-	char	*place;
+	const char	*place;
 
 	if ( !other->client ) {
 		return;
@@ -485,35 +494,10 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 				}
 			}
 			else {
-				switch ( other->client->ps.stats[STAT_POSITION] ){
-				case 1:
-					place = "first";
-					break;
-				case 2:
-					place = "second";
-					break;
-				case 3:
-					place = "third";
-					break;
-				case 4:
-					place = "forth";
-					break;
-				case 5:
-					place = "fifth";
-					break;
-				case 6:
-					place = "sixth";
-					break;
-				case 7:
-					place = "seventh";
-					break;
-				case 8:
-					place = "eighth";
-					break;
-				default:
-					place = NULL;
+				place = G_RallyPlaceString( other->client->ps.stats[STAT_POSITION] );
+
+				if ( !place ) {
 					Com_Printf( "Unknown placing: %i\n", other->client->ps.stats[STAT_POSITION] );
-					break;
 				}
 
 				if ( other->client->ps.stats[STAT_POSITION] <= 8 ){
@@ -823,4 +807,3 @@ void SP_rally_weather_snow( gentity_t *ent ){
 
 	trap_LinkEntity (ent);
 }
-
