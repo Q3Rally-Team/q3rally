@@ -209,6 +209,7 @@ vmCvar_t	ui_engineSounds;
 vmCvar_t	ui_ghostPlayback;
 vmCvar_t	ui_useFuel;
 vmCvar_t    ui_drawMinimap;
+vmCvar_t	ui_controls_showDeveloper;
 vmCvar_t	ui_tightCamTracking;
 vmCvar_t	ui_rearViewRenderLevel;
 vmCvar_t	ui_mainViewRenderLevel;
@@ -325,6 +326,7 @@ static cvarTable_t		cvarTable[] = {
         { &ui_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
         { &ui_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO },
     { &ui_drawMinimap, "cg_drawMMap", "0", CVAR_ARCHIVE },
+	{ &ui_controls_showDeveloper, "ui_controls_showDeveloper", "0", CVAR_ARCHIVE },
 	{ &ui_tightCamTracking, "cg_tightCamTracking", "1", CVAR_ARCHIVE },
 	{ &ui_rearViewRenderLevel, "cg_rearViewRenderLevel", "31", CVAR_ARCHIVE },
 	{ &ui_mainViewRenderLevel, "cg_mainViewRenderLevel", "31", CVAR_ARCHIVE },

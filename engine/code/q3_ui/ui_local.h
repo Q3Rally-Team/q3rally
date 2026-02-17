@@ -153,6 +153,7 @@ extern vmCvar_t	ui_engineSounds;
 extern vmCvar_t	ui_ghostPlayback;
 extern vmCvar_t	ui_useFuel;
 extern vmCvar_t ui_drawMinimap;
+extern vmCvar_t ui_controls_showDeveloper;
 extern vmCvar_t	ui_tightCamTracking;
 extern vmCvar_t	ui_rearViewRenderLevel;
 extern vmCvar_t	ui_mainViewRenderLevel;

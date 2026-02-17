@@ -52,16 +52,21 @@ typedef struct
 #define C_LOOKING		1
 #define C_WEAPONS		2
 #define C_MISC			3
-#define C_MAX			4
+#define C_DEVELOPER	4
+#define C_MAX			5
 
 #define ID_MOVEMENT		100
 #define ID_LOOKING		101
 #define ID_WEAPONS		102
 #define ID_MISC			103
-#define ID_DEFAULTS		104
-#define ID_BACK			105
-#define ID_SAVEANDEXIT	106
-#define ID_EXIT			107
+#define ID_DEVELOPER	104
+#define ID_DEFAULTS		105
+#define ID_BACK			106
+#define ID_SAVEANDEXIT	107
+#define ID_EXIT			108
+#define ID_EXITCONFIRM_SAVE	109
+#define ID_EXITCONFIRM_DISCARD	110
+#define ID_EXITCONFIRM_CANCEL	111
 
 // bindable actions
 #define ID_SHOWSCORES	0
@@ -121,6 +126,22 @@ typedef struct
 #define ID_JUKEBOX_RESCAN       54
 #define ID_JUKEBOX_SHUFFLE      55
 #define ID_JUKEBOX_REPEAT       56
+#define ID_MOVE_BPOINT_X_POS	57
+#define ID_MOVE_BPOINT_X_NEG	58
+#define ID_MOVE_BPOINT_Y_POS	59
+#define ID_MOVE_BPOINT_Y_NEG	60
+#define ID_MOVE_BPOINT_Z_POS	61
+#define ID_MOVE_BPOINT_Z_NEG	62
+#define ID_MOVE_BHANDLE_X_POS	63
+#define ID_MOVE_BHANDLE_X_NEG	64
+#define ID_MOVE_BHANDLE_Y_POS	65
+#define ID_MOVE_BHANDLE_Y_NEG	66
+#define ID_MOVE_BHANDLE_Z_POS	67
+#define ID_MOVE_BHANDLE_Z_NEG	68
+#define ID_PREV_BPOINT		69
+#define ID_NEXT_BPOINT		70
+#define ID_TOGGLE_BOT_PATHS	71
+#define ID_SAVE_BPOINTS	72
 
 
 #define ANIM_IDLE		0
@@ -167,6 +188,9 @@ typedef struct
 	menutext_s			looking;
 	menutext_s			weapons;
 	menutext_s			misc;
+	menutext_s			developer;
+	menutext_s			searchLabel;
+	menufield_s		search;
     
 	menuaction_s		accel;
 	menuaction_s		brake;
@@ -229,6 +253,22 @@ typedef struct
 	menuaction_s		jukeboxRepeat;
     menuaction_s        startdemo;
     menuaction_s        stopdemo;
+	menuaction_s		moveBPointXPos;
+	menuaction_s		moveBPointXNeg;
+	menuaction_s		moveBPointYPos;
+	menuaction_s		moveBPointYNeg;
+	menuaction_s		moveBPointZPos;
+	menuaction_s		moveBPointZNeg;
+	menuaction_s		moveBHandleXPos;
+	menuaction_s		moveBHandleXNeg;
+	menuaction_s		moveBHandleYPos;
+	menuaction_s		moveBHandleYNeg;
+	menuaction_s		moveBHandleZPos;
+	menuaction_s		moveBHandleZNeg;
+	menuaction_s		prevBPoint;
+	menuaction_s		nextBPoint;
+	menuaction_s		toggleBotPaths;
+	menuaction_s		saveBPoints;
 
 	menuradiobutton_s	joyenable;
 	menuslider_s		joythreshold;
@@ -243,33 +283,48 @@ typedef struct
 	qboolean			playerChat;
 
 	menutext_s			back;
-	menutext_s			name;
 } controls_t; 	
 
 static controls_t s_controls;
 
+typedef struct {
+	menuframework_s	menu;
+	menutext_s		save;
+	menutext_s		discard;
+	menutext_s		cancel;
+} controlsExitConfirm_t;
+
+static controlsExitConfirm_t s_controlsExitConfirm;
+static int s_rebindConfirmTargetId = -1;
+static int s_rebindConfirmKey = -1;
+static char s_rebindConfirmQuestion[128];
+static char s_controlsSearchText[64];
+static menucommon_s* s_globalSearchControls[128];
+static int s_globalSearchControlCount;
+
 // static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
 
+// Keep default controls conflict-free and aligned with common racing key layouts.
 static bind_t g_bindings[] = 
 {
 	{"+scores",			  "show scores",		  ID_SHOWSCORES,	  ANIM_IDLE,		  K_TAB,			-1,		-1, -1},
 	{"+button2",		  "use item",			  ID_USEITEM,		  ANIM_IDLE,		  K_ENTER,		    -1,		-1, -1},
-        {"drop",                          "drop item",                   ID_DROPITEM,           ANIM_IDLE,              -1,                    -1,             -1, -1},
-	{"+forward", 		  "accelerate",		      ID_ACCEL,		      ANIM_WALK,		  'w',		        -1,		-1, -1},
-	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            -1,		-1, -1},
-	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
+        {"drop",                          "drop item",                   ID_DROPITEM,           ANIM_IDLE,              'g',                   -1,             -1, -1},
+	{"+forward", 		  "accelerate",		      ID_ACCEL,		      ANIM_WALK,		  'w',		        K_UPARROW,		-1, -1},
+	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            K_DOWNARROW,		-1, -1},
+	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		K_CTRL,		-1, -1},
 	{"+speed", 			"turbo",			ID_TURBO,		ANIM_TURBO,		K_SHIFT,		-1,		-1,	-1},
 	{"+moveup",			"up",				ID_MOVEUP,		ANIM_JUMP,		'x',			-1,		-1, -1},
 	{"+movedown",		"down",				ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
 	{"+hud", 			"show HUD",			ID_SHOWHUD2,	0,				'q',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	'a',	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	'd',	-1,		-1, -1},
+	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	'a',	K_LEFTARROW,		-1, -1},
+	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	'd',	K_RIGHTARROW,		-1, -1},
 	{"+button12", 		"rear attack",		ID_REARATTACK,	ANIM_REARATTACK, K_KP_INS,		-1,		-1, -1},
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
 	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END,			-1,		-1, -1},
-	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		-1,				-1,		-1, -1},
+	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		K_MOUSE3,			-1,		-1, -1},
 	{"weapon 1",		"chainsaw",			ID_WEAPON1,		ANIM_WEAPON1,	'1',			-1,		-1, -1},
 	{"weapon 2",		"machinegun",		ID_WEAPON2,		ANIM_WEAPON2,	'2',			-1,		-1, -1},
 	{"weapon 3",		"shotgun",			ID_WEAPON3,		ANIM_WEAPON3,	'3',			-1,		-1, -1},
@@ -286,20 +341,37 @@ static bind_t g_bindings[] =
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
 	{"+button3", 		"horn",				ID_HORN,		ANIM_HORN,		'h',			-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
-	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
+	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		'y',				-1,		-1, -1},
+	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		'i',				-1,		-1, -1},
+	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		'o',				-1,		-1, -1},
 	{"dropWeapon", 		"drop rear weapon",	ID_DROP_REAR,	ANIM_DROPREAR,	'r',			-1,		-1, -1},
     {"headlights", 		"lights",	ID_HEADLIGHT,	ANIM_HEADLIGHT,	'l',		    -1,		-1, -1},
     {"record",          "start demo record",            ID_STARTDEMO,   ANIM_STARTDEMO, 'z',            -1,     -1, -1},
     {"stoprecord",      "stop demo record",             ID_STOPDEMO,    ANIM_STOPDEMO,  'u',            -1,     -1, -1},
-	{"nextcamera",		"next camera",		  ID_NEXTCAMERA,	  ANIM_IDLE,		  'c',			-1,		-1, -1},
-	{"jukebox_play",		"jukebox play/stop",	ID_JUKEBOX_PLAY,		ANIM_IDLE,			-1,			-1, -1},
-	{"jukebox_next",		"jukebox next track",	ID_JUKEBOX_NEXT,	ANIM_IDLE,			-1,			-1, -1},
-	{"jukebox_prev",		"jukebox previous track", ID_JUKEBOX_PREV,	ANIM_IDLE,			-1,			-1, -1},
-	{"jukebox_rescan",		"jukebox rescan tracks", ID_JUKEBOX_RESCAN,	ANIM_IDLE,			-1,			-1, -1},
-	{"jukebox_shuffle_toggle",	"jukebox shuffle toggle", ID_JUKEBOX_SHUFFLE,	ANIM_IDLE,			-1,			-1, -1},
-	{"jukebox_repeat_cycle",	"jukebox repeat mode",	ID_JUKEBOX_REPEAT,	ANIM_IDLE,			-1,			-1, -1},
+	{"nextcamera",		"next camera",		  ID_NEXTCAMERA,	  ANIM_IDLE,		  'v',			-1,		-1, -1},
+	{"jukebox_play",		"jukebox play/stop",	ID_JUKEBOX_PLAY,		ANIM_IDLE,			K_F5,			-1, -1},
+	{"jukebox_next",		"jukebox next track",	ID_JUKEBOX_NEXT,	ANIM_IDLE,			K_F6,			-1, -1},
+	{"jukebox_prev",		"jukebox previous track", ID_JUKEBOX_PREV,	ANIM_IDLE,			K_F7,			-1, -1},
+	{"jukebox_rescan",		"jukebox rescan tracks", ID_JUKEBOX_RESCAN,	ANIM_IDLE,			K_F8,			-1, -1},
+	{"jukebox_shuffle_toggle",	"jukebox shuffle toggle", ID_JUKEBOX_SHUFFLE,	ANIM_IDLE,			K_F9,			-1, -1},
+	{"jukebox_repeat_cycle",	"jukebox repeat mode",	ID_JUKEBOX_REPEAT,	ANIM_IDLE,			K_F10,			-1, -1},
+
+	{"toggle cg_drawBotPaths",	"toggle bot paths",	ID_TOGGLE_BOT_PATHS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint 10 0 0",	"move bezier point +x",	ID_MOVE_BPOINT_X_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint -10 0 0",	"move bezier point -x",	ID_MOVE_BPOINT_X_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint 0 10 0",	"move bezier point +y",	ID_MOVE_BPOINT_Y_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint 0 -10 0",	"move bezier point -y",	ID_MOVE_BPOINT_Y_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint 0 0 10",	"move bezier point +z",	ID_MOVE_BPOINT_Z_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBPoint 0 0 -10",	"move bezier point -z",	ID_MOVE_BPOINT_Z_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle 10 0 0",	"move bezier handle +x",	ID_MOVE_BHANDLE_X_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle -10 0 0",	"move bezier handle -x",	ID_MOVE_BHANDLE_X_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle 0 10 0",	"move bezier handle +y",	ID_MOVE_BHANDLE_Y_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle 0 -10 0",	"move bezier handle -y",	ID_MOVE_BHANDLE_Y_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle 0 0 10",	"move bezier handle +z",	ID_MOVE_BHANDLE_Z_POS,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"moveBHandle 0 0 -10",	"move bezier handle -z",	ID_MOVE_BHANDLE_Z_NEG,	ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"prevBPoint",		"previous bezier point",	ID_PREV_BPOINT,		ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"nextBPoint",		"next bezier point",	ID_NEXT_BPOINT,		ANIM_IDLE,	-1,			-1,		-1, -1},
+	{"saveBPoints",		"save bezier points",	ID_SAVE_BPOINTS,		ANIM_IDLE,	-1,			-1,		-1, -1},
 
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
@@ -391,12 +463,192 @@ static menucommon_s *g_misc_controls[] = {
 	NULL,
 };
 
+static menucommon_s *g_developer_controls[] = {
+	(menucommon_s *)&s_controls.toggleBotPaths,
+	(menucommon_s *)&s_controls.moveBPointXPos,
+	(menucommon_s *)&s_controls.moveBPointXNeg,
+	(menucommon_s *)&s_controls.moveBPointYPos,
+	(menucommon_s *)&s_controls.moveBPointYNeg,
+	(menucommon_s *)&s_controls.moveBPointZPos,
+	(menucommon_s *)&s_controls.moveBPointZNeg,
+	(menucommon_s *)&s_controls.moveBHandleXPos,
+	(menucommon_s *)&s_controls.moveBHandleXNeg,
+	(menucommon_s *)&s_controls.moveBHandleYPos,
+	(menucommon_s *)&s_controls.moveBHandleYNeg,
+	(menucommon_s *)&s_controls.moveBHandleZPos,
+	(menucommon_s *)&s_controls.moveBHandleZNeg,
+	(menucommon_s *)&s_controls.prevBPoint,
+	(menucommon_s *)&s_controls.nextBPoint,
+	(menucommon_s *)&s_controls.saveBPoints,
+	NULL,
+};
+
 static menucommon_s **g_controls[] = {
 	g_movement_controls,
 	g_looking_controls,
 	g_weapons_controls,
 	g_misc_controls,
+	g_developer_controls,
 };
+
+static qboolean Controls_SearchActive( void )
+{
+	return s_controlsSearchText[0] != '\0';
+}
+
+static qboolean Controls_ShowDeveloper( void )
+{
+	return trap_Cvar_VariableValue( "ui_controls_showDeveloper" ) != 0;
+}
+
+static void Controls_SearchFieldSyncFromState( void )
+{
+	Q_strncpyz( s_controls.search.field.buffer, s_controlsSearchText, sizeof( s_controls.search.field.buffer ) );
+	s_controls.search.field.cursor = strlen( s_controls.search.field.buffer );
+}
+
+static bind_t* Controls_FindBindingById( int id )
+{
+	int i;
+
+	for ( i = 0; g_bindings[i].command; i++ ) {
+		if ( g_bindings[i].id == id ) {
+			return &g_bindings[i];
+		}
+	}
+
+	return NULL;
+}
+
+static char Controls_ToLowerAscii( char c )
+{
+	if ( c >= 'A' && c <= 'Z' ) {
+		return c + ('a' - 'A');
+	}
+
+	return c;
+}
+
+static qboolean Controls_StringContainsCaseInsensitive( const char* haystack, const char* needle )
+{
+	int i;
+	int needleLen;
+
+	if ( !needle || !needle[0] ) {
+		return qtrue;
+	}
+
+	if ( !haystack || !haystack[0] ) {
+		return qfalse;
+	}
+
+	needleLen = strlen( needle );
+
+	for ( i = 0; haystack[i]; i++ ) {
+		int j;
+		for ( j = 0; j < needleLen; j++ ) {
+			char hc = haystack[i + j];
+			char nc = needle[j];
+			if ( !hc ) {
+				break;
+			}
+			if ( Controls_ToLowerAscii( hc ) != Controls_ToLowerAscii( nc ) ) {
+				break;
+			}
+		}
+
+		if ( j == needleLen ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+static const char* Controls_SectionTagForAction( int id )
+{
+	int i;
+	menucommon_s** controls;
+	menucommon_s* control;
+
+	controls = g_movement_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "MOVEMENT";
+		}
+	}
+
+	controls = g_looking_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "LOOKING";
+		}
+	}
+
+	controls = g_weapons_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "WEAPONS";
+		}
+	}
+
+	controls = g_misc_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "MISC";
+		}
+	}
+
+	controls = g_developer_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "DEVELOPER";
+		}
+	}
+
+	return "UNKNOWN";
+}
+
+static void Controls_BuildGlobalSearchList( void )
+{
+	int i;
+	int j;
+	menucommon_s** controls;
+	menucommon_s* control;
+
+	s_globalSearchControlCount = 0;
+
+	for ( i = 0; i < C_MAX; i++ ) {
+		if ( i == C_DEVELOPER && !Controls_ShowDeveloper() ) {
+			continue;
+		}
+
+		controls = g_controls[i];
+		for ( j = 0; (control = controls[j]); j++ ) {
+			bind_t* binding = Controls_FindBindingById( control->id );
+
+			qboolean match = qfalse;
+
+			if ( binding && Controls_StringContainsCaseInsensitive( binding->label, s_controlsSearchText ) ) {
+				match = qtrue;
+			} else if ( control->name && Controls_StringContainsCaseInsensitive( control->name, s_controlsSearchText ) ) {
+				match = qtrue;
+			}
+
+			if ( match && s_globalSearchControlCount < (int)ARRAY_LEN( s_globalSearchControls ) ) {
+				s_globalSearchControls[s_globalSearchControlCount++] = control;
+
+            }
+
+			if ( binding && Controls_StringContainsCaseInsensitive( binding->label, s_controlsSearchText ) ) {
+				if ( s_globalSearchControlCount < (int)ARRAY_LEN( s_globalSearchControls ) ) {
+					s_globalSearchControls[s_globalSearchControlCount++] = control;
+				}
+
+			}
+		}
+	}
+}
 
 /*
 =================
@@ -622,6 +874,19 @@ static void Controls_Update( void ) {
 	int		y;
 	menucommon_s	**controls;
 	menucommon_s	*control;
+	qboolean	searchActive;
+
+	searchActive = Controls_SearchActive();
+
+	if ( s_controls.section == C_DEVELOPER && !Controls_ShowDeveloper() ) {
+		s_controls.section = C_LOOKING;
+	}
+
+	if ( Controls_ShowDeveloper() ) {
+		s_controls.developer.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+	} else {
+		s_controls.developer.generic.flags |= (QMF_HIDDEN|QMF_INACTIVE);
+	}
 
 	// disable all controls in all groups
 	for( i = 0; i < C_MAX; i++ ) {
@@ -631,30 +896,39 @@ static void Controls_Update( void ) {
 		}
 	}
 
-	controls = g_controls[s_controls.section];
+	if ( searchActive ) {
+		Controls_BuildGlobalSearchList();
+		for ( j = 0; j < s_globalSearchControlCount; j++ ) {
+			s_globalSearchControls[j]->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
+		}
+		y = ( SCREEN_HEIGHT - s_globalSearchControlCount * SMALLCHAR_HEIGHT ) / 2;
+		for ( j = 0; j < s_globalSearchControlCount; j++, y += SMALLCHAR_HEIGHT ) {
+			control = s_globalSearchControls[j];
+			control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
+			control->y      = y;
+			control->left   = control->x - 19*SMALLCHAR_WIDTH;
+			control->right  = control->x + 21*SMALLCHAR_WIDTH;
+			control->top    = y;
+			control->bottom = y + SMALLCHAR_HEIGHT;
+		}
+	} else {
+		controls = g_controls[s_controls.section];
 
-	// enable controls in active group (and count number of items for vertical centering)
-	for( j = 0;	(control = controls[j]); j++ ) {
-		control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
-	}
+		// enable controls in active group (and count number of items for vertical centering)
+		for( j = 0;	(control = controls[j]); j++ ) {
+			control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
+		}
 
-	// position controls
-	y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
-	for( j = 0;	(control = controls[j]); j++, y += SMALLCHAR_HEIGHT ) {
-// STONELANCE
-/*
-		control->x      = 320;
-		control->y      = y;
-		control->left   = 320 - 19*SMALLCHAR_WIDTH;
-		control->right  = 320 + 21*SMALLCHAR_WIDTH;
-*/
-		control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
-		control->y      = y;
-		control->left   = control->x - 19*SMALLCHAR_WIDTH;
-		control->right  = control->x + 21*SMALLCHAR_WIDTH;
-// END
-		control->top    = y;
-		control->bottom = y + SMALLCHAR_HEIGHT;
+		// position controls
+		y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
+		for( j = 0;	(control = controls[j]); j++, y += SMALLCHAR_HEIGHT ) {
+			control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
+			control->y      = y;
+			control->left   = control->x - 19*SMALLCHAR_WIDTH;
+			control->right  = control->x + 21*SMALLCHAR_WIDTH;
+			control->top    = y;
+			control->bottom = y + SMALLCHAR_HEIGHT;
+		}
 	}
 
 	if( s_controls.waitingforkey ) {
@@ -665,9 +939,6 @@ static void Controls_Update( void ) {
 
 		// enable action item
 		((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->flags &= ~QMF_GRAYED;
-
-		// don't gray out player's name
-		s_controls.name.generic.flags &= ~QMF_GRAYED;
 
 		return;
 	}
@@ -682,11 +953,13 @@ static void Controls_Update( void ) {
 	s_controls.movement.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.weapons.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.misc.generic.flags     &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.developer.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 
 	s_controls.looking.generic.flags  |= QMF_PULSEIFFOCUS;
 	s_controls.movement.generic.flags |= QMF_PULSEIFFOCUS;
 	s_controls.weapons.generic.flags  |= QMF_PULSEIFFOCUS;
 	s_controls.misc.generic.flags     |= QMF_PULSEIFFOCUS;
+	s_controls.developer.generic.flags |= QMF_PULSEIFFOCUS;
 
 	// set buttons
 	switch( s_controls.section ) {
@@ -709,7 +982,14 @@ static void Controls_Update( void ) {
 		s_controls.misc.generic.flags &= ~QMF_PULSEIFFOCUS;
 		s_controls.misc.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
+
+	case C_DEVELOPER:
+		s_controls.developer.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.developer.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+		break;
 	}
+
+	Menu_AdjustCursor( &s_controls.menu, 1 );
 }
 
 
@@ -726,8 +1006,10 @@ static void Controls_DrawKeyBinding( void *self )
 	int				b1;
 	int				b2;
 	qboolean		c;
-	char			name[32];
+	char			name[96];
 	char			name2[32];
+	char			label[96];
+	qboolean		hasSecondaryBind;
 
 	a = (menuaction_s*) self;
 
@@ -735,6 +1017,7 @@ static void Controls_DrawKeyBinding( void *self )
 	y = a->generic.y;
 
 	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
+	hasSecondaryBind = qfalse;
 
 	// find the binding
 	for (b1 = 0; g_bindings[b1].command; b1++) {
@@ -745,6 +1028,7 @@ static void Controls_DrawKeyBinding( void *self )
 
 	if (!g_bindings[b1].command) {
 		strcpy(name, "<OUT OF RANGE>");
+		strcpy(label, "<OUT OF RANGE>");
 	} else {
 		b2 = g_bindings[b1].bind1;
 		if (b2 == -1) {
@@ -755,11 +1039,17 @@ static void Controls_DrawKeyBinding( void *self )
 
 			b2 = g_bindings[b1].bind2;
 			if (b2 != -1) {
+				hasSecondaryBind = qtrue;
 				trap_Key_KeynumToStringBuf( b2, name2, 32 );
 				Q_strupr(name2);
-				strcat( name, " or " );
-				strcat( name, name2 );
+				Com_sprintf( name, sizeof( name ), "%s / %s", name, name2 );
 			}
+		}
+
+		if ( Controls_SearchActive() ) {
+			Com_sprintf( label, sizeof( label ), "[%s] %s", Controls_SectionTagForAction( a->generic.id ), g_bindings[b1].label );
+		} else {
+			Q_strncpyz( label, g_bindings[b1].label, sizeof( label ) );
 		}
 	}
 
@@ -767,39 +1057,44 @@ static void Controls_DrawKeyBinding( void *self )
 	{
 		UI_FillRect( a->generic.left, a->generic.top, a->generic.right-a->generic.left+1, a->generic.bottom-a->generic.top+1, listbar_color ); 
 
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
+		UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
 		UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT|UI_PULSE, text_color_highlight );
 
 		if (s_controls.waitingforkey)
 		{
 			UI_DrawChar( x, y, '=', UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Waiting for new key ... ESCAPE to cancel", UI_SMALLFONT|UI_CENTER|UI_PULSE, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "Waiting for new key ... Escape = cancel", UI_SMALLFONT|UI_CENTER|UI_PULSE, colorWhite );
 		}
 		else
 		{
 			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.55, SCREEN_HEIGHT * 0.82, "Press ENTER or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.55, SCREEN_HEIGHT * 0.86, "Press BACKSPACE to clear", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "You can assign two keys per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.88, "Enter/Click = rebind", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.92, "Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
+			if ( hasSecondaryBind ) {
+				UI_DrawString( x + SMALLCHAR_WIDTH + (strlen( name ) + 1) * SMALLCHAR_WIDTH, y, "Primary/Secondary", UI_LEFT|UI_SMALLFONT, text_color_highlight );
+			}
+		}
+		UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.95, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
+		if ( Controls_SearchActive() ) {
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.98, va("Search: %s", s_controlsSearchText), UI_SMALLFONT|UI_CENTER, colorWhite );
 		}
 	}
 	else
 	{
 		if (a->generic.flags & QMF_GRAYED)
 		{
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_disabled );
+			UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_disabled );
 			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_disabled );
 		}
 		else
 		{
-// STONELANCE
-//			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, controls_binding_color );
-//			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, controls_binding_color );
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, g_bindings[b1].label, UI_RIGHT|UI_SMALLFONT, text_color_normal );
+			UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_normal );
 			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_normal );
-// END
 		}
 	}
 }
+
 
 /*
 =================
@@ -808,7 +1103,13 @@ Controls_StatusBar
 */
 static void Controls_StatusBar( void *self )
 {
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Use Arrow Keys or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "You can assign two keys per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.86, "Enter/Click = rebind | Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.90, "Use Arrow Keys or Click to change options", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.94, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
+	if ( Controls_SearchActive() ) {
+		UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.98, va("Search: %s", s_controlsSearchText), UI_SMALLFONT|UI_CENTER, colorWhite );
+	}
 }
 
 
@@ -994,6 +1295,220 @@ static void RallyControls_SetDefaults( void )
 // END
 }
 
+static bind_t* Controls_FindConflictingBinding( int key, int currentId )
+{
+	bind_t *bindptr;
+	int i;
+
+	bindptr = g_bindings;
+	for ( i = 0; ; i++, bindptr++ )
+	{
+		if ( !bindptr->label )
+			break;
+
+		if ( bindptr->id == currentId )
+			continue;
+
+		if ( bindptr->bind1 == key || bindptr->bind2 == key )
+			return bindptr;
+	}
+
+	return NULL;
+}
+
+static qboolean Controls_ApplyBindingChange( int id, int key )
+{
+	int i;
+	qboolean found;
+	bind_t *bindptr;
+
+	found = qfalse;
+	s_controls.changesmade = qtrue;
+
+	if ( key != -1 )
+	{
+		// remove from any other bind
+		bindptr = g_bindings;
+		for ( i = 0; ; i++, bindptr++ )
+		{
+			if ( !bindptr->label )
+				break;
+
+			if ( bindptr->bind2 == key )
+				bindptr->bind2 = -1;
+
+			if ( bindptr->bind1 == key )
+			{
+				bindptr->bind1 = bindptr->bind2;
+				bindptr->bind2 = -1;
+			}
+		}
+	}
+
+	// assign key to local store
+	bindptr = g_bindings;
+	for ( i = 0; ; i++, bindptr++ )
+	{
+		if ( !bindptr->label )
+			break;
+
+		if ( bindptr->id == id )
+		{
+			found = qtrue;
+			if ( key == -1 )
+			{
+				if ( bindptr->bind1 != -1 ) {
+					trap_Key_SetBinding( bindptr->bind1, "" );
+					bindptr->bind1 = -1;
+				}
+				if ( bindptr->bind2 != -1 ) {
+					trap_Key_SetBinding( bindptr->bind2, "" );
+					bindptr->bind2 = -1;
+				}
+			}
+			else if ( bindptr->bind1 == -1 ) {
+				bindptr->bind1 = key;
+			}
+			else if ( bindptr->bind1 != key && bindptr->bind2 == -1 ) {
+				bindptr->bind2 = key;
+			}
+			else
+			{
+				trap_Key_SetBinding( bindptr->bind1, "" );
+				trap_Key_SetBinding( bindptr->bind2, "" );
+				bindptr->bind1 = key;
+				bindptr->bind2 = -1;
+			}
+			break;
+		}
+	}
+
+	s_controls.waitingforkey = qfalse;
+
+	if ( found )
+		Controls_Update();
+
+	return found;
+}
+
+static void Controls_RebindConflict_Action( qboolean result )
+{
+	if ( result ) {
+		Controls_ApplyBindingChange( s_rebindConfirmTargetId, s_rebindConfirmKey );
+	} else {
+		s_controls.waitingforkey = qfalse;
+		Controls_Update();
+	}
+
+	s_rebindConfirmTargetId = -1;
+	s_rebindConfirmKey = -1;
+}
+
+static void Controls_RebindConflict_Draw( void )
+{
+	UI_DrawString( SCREEN_WIDTH / 2, 210, s_rebindConfirmQuestion, UI_CENTER|UI_SMALLFONT, text_color_normal );
+}
+
+static void Controls_ExitConfirm_MenuEvent( void* ptr, int event )
+{
+	if ( event != QM_ACTIVATED ) {
+		return;
+	}
+
+	if ( uis.activemenu != &s_controlsExitConfirm.menu ) {
+		return;
+	}
+
+	switch ( ((menucommon_s*)ptr)->id ) {
+		case ID_EXITCONFIRM_SAVE:
+			RallyControls_SetConfig();
+			s_controls.changesmade = qfalse;
+			UI_PopMenu();
+			UI_PopMenu();
+			break;
+
+		case ID_EXITCONFIRM_DISCARD:
+			RallyControls_GetConfig();
+			s_controls.changesmade = qfalse;
+			UI_PopMenu();
+			UI_PopMenu();
+			break;
+
+		case ID_EXITCONFIRM_CANCEL:
+		default:
+			UI_PopMenu();
+			break;
+	}
+}
+
+static sfxHandle_t Controls_ExitConfirm_MenuKey( int key )
+{
+	if ( key == K_ESCAPE || key == K_MOUSE2 ) {
+		Controls_ExitConfirm_MenuEvent( &s_controlsExitConfirm.cancel, QM_ACTIVATED );
+		return menu_out_sound;
+	}
+
+	return Menu_DefaultKey( &s_controlsExitConfirm.menu, key );
+}
+
+static void Controls_ExitConfirm_Draw( void )
+{
+	vec4_t compactBoxColor = { 0.0f, 0.0f, 0.0f, 0.50f };
+
+	UI_FillRect( 148, 176, 344, 156, compactBoxColor );
+	UI_DrawString( SCREEN_WIDTH / 2, 202, "Save changes?", UI_CENTER|UI_SMALLFONT, text_color_normal );
+
+	Menu_Draw( &s_controlsExitConfirm.menu );
+}
+
+static void Controls_ExitConfirmMenu( void )
+{
+	memset( &s_controlsExitConfirm, 0, sizeof( s_controlsExitConfirm ) );
+
+	s_controlsExitConfirm.menu.draw = Controls_ExitConfirm_Draw;
+	s_controlsExitConfirm.menu.key = Controls_ExitConfirm_MenuKey;
+	s_controlsExitConfirm.menu.wrapAround = qtrue;
+	s_controlsExitConfirm.menu.fullscreen = qtrue;
+	s_controlsExitConfirm.menu.transparent = qtrue;
+
+	s_controlsExitConfirm.save.generic.type = MTYPE_PTEXT;
+	s_controlsExitConfirm.save.generic.flags = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controlsExitConfirm.save.generic.id = ID_EXITCONFIRM_SAVE;
+	s_controlsExitConfirm.save.generic.x = SCREEN_WIDTH / 2;
+	s_controlsExitConfirm.save.generic.y = 252;
+	s_controlsExitConfirm.save.generic.callback = Controls_ExitConfirm_MenuEvent;
+	s_controlsExitConfirm.save.string = "Save";
+	s_controlsExitConfirm.save.style = UI_CENTER|UI_SMALLFONT;
+	s_controlsExitConfirm.save.color = text_color_normal;
+
+	s_controlsExitConfirm.discard.generic.type = MTYPE_PTEXT;
+	s_controlsExitConfirm.discard.generic.flags = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controlsExitConfirm.discard.generic.id = ID_EXITCONFIRM_DISCARD;
+	s_controlsExitConfirm.discard.generic.x = SCREEN_WIDTH / 2;
+	s_controlsExitConfirm.discard.generic.y = 272;
+	s_controlsExitConfirm.discard.generic.callback = Controls_ExitConfirm_MenuEvent;
+	s_controlsExitConfirm.discard.string = "Discard";
+	s_controlsExitConfirm.discard.style = UI_CENTER|UI_SMALLFONT;
+	s_controlsExitConfirm.discard.color = text_color_normal;
+
+	s_controlsExitConfirm.cancel.generic.type = MTYPE_PTEXT;
+	s_controlsExitConfirm.cancel.generic.flags = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controlsExitConfirm.cancel.generic.id = ID_EXITCONFIRM_CANCEL;
+	s_controlsExitConfirm.cancel.generic.x = SCREEN_WIDTH / 2;
+	s_controlsExitConfirm.cancel.generic.y = 292;
+	s_controlsExitConfirm.cancel.generic.callback = Controls_ExitConfirm_MenuEvent;
+	s_controlsExitConfirm.cancel.string = "Cancel";
+	s_controlsExitConfirm.cancel.style = UI_CENTER|UI_SMALLFONT;
+	s_controlsExitConfirm.cancel.color = text_color_normal;
+
+	Menu_AddItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.save );
+	Menu_AddItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.discard );
+	Menu_AddItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.cancel );
+
+	UI_PushMenu( &s_controlsExitConfirm.menu );
+	Menu_SetCursorToItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.cancel );
+}
+
 /*
 =================
 Controls_MenuKey
@@ -1002,10 +1517,32 @@ Controls_MenuKey
 static sfxHandle_t Controls_MenuKey( int key )
 {
 	int			id;
-	int			i;
+	int			ch;
 	qboolean	found;
 	bind_t*		bindptr;
 	found = qfalse;
+
+	if ( !s_controls.waitingforkey && ( key & K_CHAR_FLAG ) ) {
+		ch = key & ~K_CHAR_FLAG;
+		if ( ch == 8 ) {
+			int len = strlen( s_controlsSearchText );
+			if ( len > 0 ) {
+				s_controlsSearchText[len - 1] = '\0';
+				Controls_SearchFieldSyncFromState();
+				Controls_Update();
+				return menu_move_sound;
+			}
+		} else if ( ch >= 32 && ch < 127 ) {
+			int len = strlen( s_controlsSearchText );
+			if ( len < (int)sizeof( s_controlsSearchText ) - 1 ) {
+				s_controlsSearchText[len] = (char)ch;
+				s_controlsSearchText[len + 1] = '\0';
+				Controls_SearchFieldSyncFromState();
+				Controls_Update();
+				return menu_move_sound;
+			}
+		}
+	}
 
 	if (!s_controls.waitingforkey)
 	{
@@ -1019,8 +1556,10 @@ static sfxHandle_t Controls_MenuKey( int key )
 		
 			case K_MOUSE2:
 			case K_ESCAPE:
-				if (s_controls.changesmade)
-                                        RallyControls_SetConfig();
+				if (s_controls.changesmade) {
+					Controls_ExitConfirmMenu();
+					return menu_move_sound;
+				}
 				goto ignorekey;	
 
 			default:
@@ -1044,72 +1583,24 @@ static sfxHandle_t Controls_MenuKey( int key )
 		}
 	}
 
-	s_controls.changesmade = qtrue;
-	
-	if (key != -1)
+	id      = ((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->id;
+
+	if ( key != -1 )
 	{
-		// remove from any other bind
-		bindptr = g_bindings;
-		for (i=0; ;i++,bindptr++)
-		{
-			if (!bindptr->label)	
-				break;
-
-			if (bindptr->bind2 == key)
-				bindptr->bind2 = -1;
-
-			if (bindptr->bind1 == key)
-			{
-				bindptr->bind1 = bindptr->bind2;	
-				bindptr->bind2 = -1;
-			}
+		bindptr = Controls_FindConflictingBinding( key, id );
+		if ( bindptr ) {
+			s_rebindConfirmTargetId = id;
+			s_rebindConfirmKey = key;
+			Com_sprintf( s_rebindConfirmQuestion, sizeof( s_rebindConfirmQuestion ), "Key is already bound to %s. Replace?", bindptr->label );
+			UI_ConfirmMenu_Style( "", UI_CENTER|UI_SMALLFONT, Controls_RebindConflict_Draw, Controls_RebindConflict_Action );
+			return menu_move_sound;
 		}
 	}
 
-	// assign key to local store
-	id      = ((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->id;
-	bindptr = g_bindings;
-	for (i=0; ;i++,bindptr++)
-	{
-		if (!bindptr->label)	
-			break;
-		
-		if (bindptr->id == id)
-		{
-			found = qtrue;
-			if (key == -1)
-			{
-				if( bindptr->bind1 != -1 ) {
-					trap_Key_SetBinding( bindptr->bind1, "" );
-					bindptr->bind1 = -1;
-				}
-				if( bindptr->bind2 != -1 ) {
-					trap_Key_SetBinding( bindptr->bind2, "" );
-					bindptr->bind2 = -1;
-				}
-			}
-			else if (bindptr->bind1 == -1) {
-				bindptr->bind1 = key;
-			}
-			else if (bindptr->bind1 != key && bindptr->bind2 == -1) {
-				bindptr->bind2 = key;
-			}
-			else
-			{
-				trap_Key_SetBinding( bindptr->bind1, "" );
-				trap_Key_SetBinding( bindptr->bind2, "" );
-				bindptr->bind1 = key;
-				bindptr->bind2 = -1;
-			}						
-			break;
-		}
-	}				
-		
-	s_controls.waitingforkey = qfalse;
+	found = Controls_ApplyBindingChange( id, key );
 
 	if (found)
 	{	
-		Controls_Update();
 		return (menu_out_sound);
 	}
 
@@ -1183,6 +1674,14 @@ static void Controls_MenuEvent( void* ptr, int event )
 			}
 			break;
 
+		case ID_DEVELOPER:
+			if (event == QM_ACTIVATED && Controls_ShowDeveloper())
+			{
+				s_controls.section = C_DEVELOPER;
+				Controls_Update();
+			}
+			break;
+
 		case ID_DEFAULTS:
 			if (event == QM_ACTIVATED)
 			{
@@ -1193,9 +1692,11 @@ static void Controls_MenuEvent( void* ptr, int event )
 		case ID_BACK:
 			if (event == QM_ACTIVATED)
 			{
-				if (s_controls.changesmade)
-                                        RallyControls_SetConfig();
-				UI_PopMenu();
+				if (s_controls.changesmade) {
+					Controls_ExitConfirmMenu();
+				} else {
+					UI_PopMenu();
+				}
 			}
 			break;
 
@@ -1309,10 +1810,12 @@ static void Controls_MenuInit( void )
 // STONELANCE
 	int			x;
 // END
-	static char playername[32];
 
 	// zero set all our globals
 	memset( &s_controls, 0 ,sizeof(controls_t) );
+	s_controlsSearchText[0] = '\0';
+	s_globalSearchControlCount = 0;
+	Controls_SearchFieldSyncFromState();
 
 	Controls_Cache();
 
@@ -1413,6 +1916,16 @@ static void Controls_MenuInit( void )
 //	s_controls.misc.color			= color_red;
 	s_controls.misc.color			= text_color_normal;
 // END
+
+	s_controls.developer.generic.type	 = MTYPE_PTEXT;
+	s_controls.developer.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controls.developer.generic.id	     = ID_DEVELOPER;
+	s_controls.developer.generic.callback = Controls_MenuEvent;
+	s_controls.developer.generic.x	    = x;
+	s_controls.developer.generic.y		 = 240 + 2 * PROP_HEIGHT;
+	s_controls.developer.string			= "DEVELOPER";
+	s_controls.developer.style			= UI_RIGHT;
+	s_controls.developer.color			= text_color_normal;
 
 // STONELANCE
 /*
@@ -1851,6 +2364,102 @@ static void Controls_MenuInit( void )
     s_controls.stopdemo.generic.callback  = Controls_ActionEvent;
     s_controls.stopdemo.generic.ownerdraw = Controls_DrawKeyBinding;
     s_controls.stopdemo.generic.id        = ID_STOPDEMO;
+
+	s_controls.moveBPointXPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointXPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointXPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointXPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointXPos.generic.id        = ID_MOVE_BPOINT_X_POS;
+
+	s_controls.moveBPointXNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointXNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointXNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointXNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointXNeg.generic.id        = ID_MOVE_BPOINT_X_NEG;
+
+	s_controls.moveBPointYPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointYPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointYPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointYPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointYPos.generic.id        = ID_MOVE_BPOINT_Y_POS;
+
+	s_controls.moveBPointYNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointYNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointYNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointYNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointYNeg.generic.id        = ID_MOVE_BPOINT_Y_NEG;
+
+	s_controls.moveBPointZPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointZPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointZPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointZPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointZPos.generic.id        = ID_MOVE_BPOINT_Z_POS;
+
+	s_controls.moveBPointZNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBPointZNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBPointZNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBPointZNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBPointZNeg.generic.id        = ID_MOVE_BPOINT_Z_NEG;
+
+	s_controls.moveBHandleXPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleXPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleXPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleXPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleXPos.generic.id        = ID_MOVE_BHANDLE_X_POS;
+
+	s_controls.moveBHandleXNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleXNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleXNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleXNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleXNeg.generic.id        = ID_MOVE_BHANDLE_X_NEG;
+
+	s_controls.moveBHandleYPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleYPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleYPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleYPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleYPos.generic.id        = ID_MOVE_BHANDLE_Y_POS;
+
+	s_controls.moveBHandleYNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleYNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleYNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleYNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleYNeg.generic.id        = ID_MOVE_BHANDLE_Y_NEG;
+
+	s_controls.moveBHandleZPos.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleZPos.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleZPos.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleZPos.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleZPos.generic.id        = ID_MOVE_BHANDLE_Z_POS;
+
+	s_controls.moveBHandleZNeg.generic.type      = MTYPE_ACTION;
+	s_controls.moveBHandleZNeg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.moveBHandleZNeg.generic.callback  = Controls_ActionEvent;
+	s_controls.moveBHandleZNeg.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.moveBHandleZNeg.generic.id        = ID_MOVE_BHANDLE_Z_NEG;
+
+	s_controls.prevBPoint.generic.type      = MTYPE_ACTION;
+	s_controls.prevBPoint.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.prevBPoint.generic.callback  = Controls_ActionEvent;
+	s_controls.prevBPoint.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.prevBPoint.generic.id        = ID_PREV_BPOINT;
+
+	s_controls.nextBPoint.generic.type      = MTYPE_ACTION;
+	s_controls.nextBPoint.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.nextBPoint.generic.callback  = Controls_ActionEvent;
+	s_controls.nextBPoint.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.nextBPoint.generic.id        = ID_NEXT_BPOINT;
+
+	s_controls.toggleBotPaths.generic.type      = MTYPE_ACTION;
+	s_controls.toggleBotPaths.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.toggleBotPaths.generic.callback  = Controls_ActionEvent;
+	s_controls.toggleBotPaths.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.toggleBotPaths.generic.id        = ID_TOGGLE_BOT_PATHS;
+
+	s_controls.saveBPoints.generic.type      = MTYPE_ACTION;
+	s_controls.saveBPoints.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.saveBPoints.generic.callback  = Controls_ActionEvent;
+	s_controls.saveBPoints.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.saveBPoints.generic.id        = ID_SAVE_BPOINTS;
     
 // END
 
@@ -1872,13 +2481,30 @@ static void Controls_MenuInit( void )
 	s_controls.joythreshold.maxvalue		  = 0.75;
 	s_controls.joythreshold.generic.statusbar = Controls_StatusBar;
 
-	s_controls.name.generic.type	= MTYPE_PTEXT;
-	s_controls.name.generic.flags	= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_controls.name.generic.x		= 320;
-	s_controls.name.generic.y		= 440;
-	s_controls.name.string			= playername;
-	s_controls.name.style			= UI_CENTER;
-	s_controls.name.color			= text_color_normal;
+	{
+		int weaponsCount = 0;
+		while ( g_weapons_controls[weaponsCount] ) {
+			weaponsCount++;
+		}
+
+
+		s_controls.searchLabel.generic.type		= MTYPE_PTEXT;
+		s_controls.searchLabel.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_INACTIVE;
+		s_controls.searchLabel.generic.x			= x;
+		s_controls.searchLabel.generic.y			= ( SCREEN_HEIGHT - weaponsCount * SMALLCHAR_HEIGHT ) / 2;
+		s_controls.searchLabel.string				= "SEARCH";
+		s_controls.searchLabel.style				= UI_RIGHT;
+		s_controls.searchLabel.color				= text_color_normal;
+
+		s_controls.search.generic.type			= MTYPE_FIELD;
+		s_controls.search.generic.flags			= QMF_SMALLFONT;
+		s_controls.search.generic.x				= x + 6;
+		s_controls.search.generic.y				= s_controls.searchLabel.generic.y + 6;
+		s_controls.search.field.widthInChars	= 24;
+		s_controls.search.field.maxchars		= sizeof( s_controlsSearchText ) - 1;
+		Controls_SearchFieldSyncFromState();
+	}
+
 
 	Menu_AddItem( &s_controls.menu, &s_controls.banner );
 // STONELANCE
@@ -1886,12 +2512,14 @@ static void Controls_MenuInit( void )
 //	Menu_AddItem( &s_controls.menu, &s_controls.framer );
 // END
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
-	Menu_AddItem( &s_controls.menu, &s_controls.name );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.looking );
 	Menu_AddItem( &s_controls.menu, &s_controls.movement );
 	Menu_AddItem( &s_controls.menu, &s_controls.weapons );
 	Menu_AddItem( &s_controls.menu, &s_controls.misc );
+	Menu_AddItem( &s_controls.menu, &s_controls.developer );
+	Menu_AddItem( &s_controls.menu, &s_controls.searchLabel );
+	Menu_AddItem( &s_controls.menu, &s_controls.search );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.sensitivity );
 	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
@@ -1968,13 +2596,27 @@ static void Controls_MenuInit( void )
     Menu_AddItem( &s_controls.menu, &s_controls.stopdemo );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextcamera );
 	Menu_AddItem( &s_controls.menu, &s_controls.horn );
+	Menu_AddItem( &s_controls.menu, &s_controls.toggleBotPaths );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointXPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointXNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointYPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointYNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointZPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBPointZNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleXPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleXNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleYPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleYNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleZPos );
+	Menu_AddItem( &s_controls.menu, &s_controls.moveBHandleZNeg );
+	Menu_AddItem( &s_controls.menu, &s_controls.prevBPoint );
+	Menu_AddItem( &s_controls.menu, &s_controls.nextBPoint );
+	Menu_AddItem( &s_controls.menu, &s_controls.saveBPoints );
 
 // END
 
 	Menu_AddItem( &s_controls.menu, &s_controls.back );
 
-	trap_Cvar_VariableStringBuffer( "name", s_controls.name.string, 16 );
-	Q_CleanStr( s_controls.name.string );
 
 	// initialize the configurable cvars
         Controls_InitCvars();

@@ -144,20 +144,29 @@ ConfirmMenu_Draw
 =================
 */
 static void ConfirmMenu_Draw( void ) {
-	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
+	vec4_t compactBoxColor = { 0.0f, 0.0f, 0.0f, 0.50f };
+
+	if ( s_confirm.question && s_confirm.question[0] ) {
+		UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
+	}
+	else {
+		UI_FillRect( 168, 188, 304, 104, compactBoxColor );
+	}
 
 	// BAGPUSS CHANGED TO TEXT_COLOR_NORMAL
 //	UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, color_red );
 //	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, color_red );
-	UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, text_color_normal );
-	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, text_color_normal );
+	if ( s_confirm.question && s_confirm.question[0] ) {
+		UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, text_color_normal );
+		UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, text_color_normal );
+	}
 	// END
-
-	Menu_Draw( &s_confirm.menu );
 
 	if( s_confirm.draw ) {
 		s_confirm.draw();
 	}
+
+	Menu_Draw( &s_confirm.menu );
 }
 
 
@@ -226,6 +235,9 @@ void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void )
 	s_confirm.yes.color				= text_color_normal;
 // END
 	s_confirm.yes.style				= UI_LEFT;
+	if ( !question || !question[0] ) {
+		s_confirm.yes.style |= UI_SMALLFONT;
+	}
 
 	s_confirm.no.generic.type		= MTYPE_PTEXT;      
 	s_confirm.no.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
@@ -239,6 +251,9 @@ void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void )
 	s_confirm.no.color			    = text_color_normal;
 // END
 	s_confirm.no.style			    = UI_LEFT;
+	if ( !question || !question[0] ) {
+		s_confirm.no.style |= UI_SMALLFONT;
+	}
 
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );             
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.no );
