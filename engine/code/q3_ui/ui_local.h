@@ -841,6 +841,7 @@ extern vmCvar_t	ui_menuBackPath;
 extern vmCvar_t	ui_menuBackState;
 
 void UI_ProfileOverlay_InitSession( void );
+void UI_ProfileOverlay_Open( qboolean forceSelection );
 void UI_ProfileOverlay_MaybeShow( void );
 void UI_ProfileOverlay_ClearState( void );
 void UI_Profile_MarkStatsDirty( void );

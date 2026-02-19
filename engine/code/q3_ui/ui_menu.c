@@ -38,6 +38,7 @@ MAIN MENU
 #define ID_SETUP                        12
 #define ID_DEMOS                        13
 #define ID_CINEMATICS                   14
+#define ID_PROFILE_ACTION               15
 
 #define ID_MODS                         16
 #define ID_GARAGE                       17
@@ -60,6 +61,11 @@ typedef struct {
         menutext_s              mods;
         menutext_s              garage;
         menutext_s              exit;
+        menutext_s              profileAction;
+        menutext_s              profileInfoLine1;
+        menutext_s              profileInfoLine2;
+        char                    profileRankLine[64];
+        char                    profilePointsLine[64];
 
         menutext_s              banner;
         menubitmap_s            carlogo;
@@ -73,6 +79,30 @@ typedef struct {
 
 
 static mainmenu_t s_main;
+static vec4_t s_profileActionColor;
+
+static void MainMenu_UpdateProfileTexts( void ) {
+        const profile_stats_t *activeProfileStats;
+        profile_rank_t activeRank;
+        const char *activeProfileName;
+        qboolean hasActiveProfile;
+
+        activeProfileName = UI_Profile_GetActiveName();
+        hasActiveProfile = UI_Profile_HasActiveProfile();
+        s_main.profileAction.string = ( hasActiveProfile && activeProfileName && activeProfileName[0] ) ? (char *)activeProfileName : "CREATE";
+
+        activeProfileStats = UI_Profile_GetActiveStats();
+        if ( activeProfileStats && UI_Profile_GetRank( activeProfileStats, &activeRank ) && activeRank.current && activeRank.current->name ) {
+                Com_sprintf( s_main.profileRankLine, sizeof( s_main.profileRankLine ), "RANK: %s", activeRank.current->name );
+                Com_sprintf( s_main.profilePointsLine, sizeof( s_main.profilePointsLine ), "POINTS: %d", activeProfileStats->playerScore );
+        } else {
+                Q_strncpyz( s_main.profileRankLine, "RANK: -", sizeof( s_main.profileRankLine ) );
+                Q_strncpyz( s_main.profilePointsLine, "POINTS: 0", sizeof( s_main.profilePointsLine ) );
+        }
+
+        s_main.profileInfoLine1.string = s_main.profileRankLine;
+        s_main.profileInfoLine2.string = s_main.profilePointsLine;
+}
 
 /*
 =================
@@ -207,6 +237,10 @@ void Main_MenuEvent (void* ptr, int event) {
                 uis.transitionOut = uis.realtime;
                 break;
 
+        case ID_PROFILE_ACTION:
+                UI_ProfileOverlay_Open( qfalse );
+                break;
+
         case ID_EXIT:
                 UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
                 break;
@@ -259,6 +293,8 @@ MainMenu_RunTransition
 ===============
 */
 void MainMenu_RunTransition( float frac ) {
+        vec4_t profileActionColor;
+
         uis.text_color[0] = text_color_normal[0];
         uis.text_color[1] = text_color_normal[1];
         uis.text_color[2] = text_color_normal[2];
@@ -275,6 +311,15 @@ void MainMenu_RunTransition( float frac ) {
         s_main.mods.color = uis.text_color;
         s_main.exit.color = uis.text_color;
 
+        s_profileActionColor[0] = color_red[0];
+        s_profileActionColor[1] = color_red[1];
+        s_profileActionColor[2] = color_red[2];
+        s_profileActionColor[3] = color_red[3] * frac;
+        s_main.profileAction.color = s_profileActionColor;
+
+        s_main.profileInfoLine1.color = uis.text_color;
+        s_main.profileInfoLine2.color = uis.text_color;
+
         s_main.carlogo.generic.x = (int)(640 - 440 * frac);
 }
 
@@ -285,6 +330,8 @@ MainMenu_Prepare
 */
 void MainMenu_Prepare( void ) {
 
+        UI_Profile_MarkStatsDirty();
+        MainMenu_UpdateProfileTexts();
         MainMenu_Update();
 
 }
@@ -296,6 +343,8 @@ Main_MenuDraw
 ===============
 */
 static void Main_MenuDraw( void ) {
+
+        MainMenu_UpdateProfileTexts();
 
         // standard menu drawing
 
@@ -312,7 +361,6 @@ static void Main_MenuDraw( void ) {
 
         }
 
-        UI_ProfileOverlay_MaybeShow();
 }
 
 
@@ -365,6 +413,22 @@ static void InitMenuText(menutext_s *item, int id, char *label, int x, int y) {
 }
 
 /*
+=================
+InitMenuTextInfo
+=================
+*/
+static void InitMenuTextInfo(menutext_s *item, char *label, int x, int y) {
+
+        item->generic.type = MTYPE_PTEXT;
+        item->generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+        item->generic.x = x;
+        item->generic.y = y;
+        item->style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+        item->string = label;
+        item->color = text_color_normal;
+}
+
+/*
 ===============
 UI_MainMenu
 
@@ -377,10 +441,13 @@ void UI_MainMenu( void ) {
 	
 	int x;
 	int y;
+        int profileY;
+        int profileInfoY;
         int numMusicFiles;
         int selectedMusic;
         char musicFiles[256][MAX_QPATH];
         char musicCommand[MAX_QPATH];
+        int menuSpacing;
 
 
         numMusicFiles = UI_BuildFileList("music", "ogg", "menumusic", qtrue, qfalse, qfalse, 0, musicFiles);
@@ -422,25 +489,26 @@ void UI_MainMenu( void ) {
         s_main.banner.style                             = UI_CENTER|UI_DROPSHADOW;
 
         x = 175;
-        y = 100;
+        y = 75;
+        menuSpacing = MAIN_MENU_VERTICAL_SPACING - 5;
 
         
 	InitMenuText(&s_main.singleplayer, ID_SINGLEPLAYER, "OFFLINE", x - 10, y + 12);
 
 
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y += menuSpacing;
 	InitMenuText(&s_main.multiplayer, ID_MULTIPLAYER, "ONLINE", x - 10, y + 12);
 
 
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y += menuSpacing;
 	InitMenuText(&s_main.setup, ID_SETUP, "CONFIG", x - 10, y + 12);
 
 
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y += menuSpacing;
 	InitMenuText(&s_main.garage, ID_GARAGE, "THE GARAGE", x - 10, y + 12);
         
         
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y += menuSpacing;
 	InitMenuText(&s_main.demos, ID_DEMOS, "DEMOS", x - 10, y + 12);
 
 
@@ -452,8 +520,21 @@ void UI_MainMenu( void ) {
         s_main.carlogo.width                            = 480;
         s_main.carlogo.height                           = 480;
         
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y += menuSpacing;
 	InitMenuText(&s_main.exit, ID_EXIT, "QUIT", x - 10, y + 12);
+
+
+        y += menuSpacing;
+        profileY = y + 22;
+        profileInfoY = y + 16;
+        InitMenuText(&s_main.profileAction, ID_PROFILE_ACTION, "CREATE", x - 10, profileY);
+        s_main.profileAction.generic.flags = QMF_RIGHT_JUSTIFY;
+
+        Q_strncpyz( s_main.profileRankLine, "RANK: -", sizeof( s_main.profileRankLine ) );
+        Q_strncpyz( s_main.profilePointsLine, "POINTS: 0", sizeof( s_main.profilePointsLine ) );
+        InitMenuTextInfo(&s_main.profileInfoLine1, s_main.profileRankLine, x + 20, profileInfoY);
+        InitMenuTextInfo(&s_main.profileInfoLine2, s_main.profilePointsLine, x + 20, profileInfoY + 16);
+        MainMenu_UpdateProfileTexts();
 
 
         Menu_AddItem( &s_main.menu,     &s_main.banner );
@@ -464,13 +545,19 @@ void UI_MainMenu( void ) {
         Menu_AddItem( &s_main.menu,     &s_main.garage );
         Menu_AddItem( &s_main.menu,     &s_main.demos );
         Menu_AddItem( &s_main.menu,     &s_main.exit );            
+        Menu_AddItem( &s_main.menu,     &s_main.profileAction );
+        Menu_AddItem( &s_main.menu,     &s_main.profileInfoLine1 );
+        Menu_AddItem( &s_main.menu,     &s_main.profileInfoLine2 );
 
         trap_Key_SetCatcher( KEYCATCH_UI );
         uis.menusp = 0;
 
         UI_PushMenu ( &s_main.menu );
 
+        UI_ProfileOverlay_MaybeShow();
 
-        uis.transitionIn = uis.realtime;
+        if ( uis.activemenu == &s_main.menu ) {
+                uis.transitionIn = uis.realtime;
+        }
 
 }

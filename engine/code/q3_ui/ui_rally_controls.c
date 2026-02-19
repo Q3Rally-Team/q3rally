@@ -496,6 +496,15 @@ static qboolean Controls_SearchActive( void )
 	return s_controlsSearchText[0] != '\0';
 }
 
+static qboolean Controls_SearchFieldHasFocus( void )
+{
+	if ( !s_controls.menu.items || s_controls.menu.cursor < 0 || s_controls.menu.cursor >= s_controls.menu.nitems ) {
+		return qfalse;
+	}
+
+	return s_controls.menu.items[s_controls.menu.cursor] == (void *)&s_controls.search;
+}
+
 static qboolean Controls_ShowDeveloper( void )
 {
 	return trap_Cvar_VariableValue( "ui_controls_showDeveloper" ) != 0;
@@ -1522,7 +1531,7 @@ static sfxHandle_t Controls_MenuKey( int key )
 	bind_t*		bindptr;
 	found = qfalse;
 
-	if ( !s_controls.waitingforkey && ( key & K_CHAR_FLAG ) ) {
+	if ( !s_controls.waitingforkey && Controls_SearchFieldHasFocus() && ( key & K_CHAR_FLAG ) ) {
 		ch = key & ~K_CHAR_FLAG;
 		if ( ch == 8 ) {
 			int len = strlen( s_controlsSearchText );
@@ -1569,7 +1578,7 @@ static sfxHandle_t Controls_MenuKey( int key )
 	else
 	{
 		if (key & K_CHAR_FLAG)
-			goto ignorekey;
+			return 0;
 
 		switch (key)
 		{
