@@ -950,7 +950,47 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( !Q_stricmp( targ->classname, "func_breakable" ) ) {
+			int oldHealth;
+			int oldStage;
+			int newStage;
+
+			qboolean allowDamage = qtrue;
+
+			if ( targ->breakableDamageFilter ) {
+				allowDamage = qfalse;
+
+				if ( (targ->breakableDamageFilter & 1) && attacker && attacker->client ) {
+					allowDamage = qtrue;
+				}
+
+				if ( (targ->breakableDamageFilter & 2) &&
+					( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH || mod == MOD_PLASMA_SPLASH ||
+					  mod == MOD_BFG_SPLASH || mod == MOD_MINE_SPLASH || mod == MOD_BREAKABLE_SPLASH ) ) {
+					allowDamage = qtrue;
+				}
+
+				if ( (targ->breakableDamageFilter & 4) &&
+					( mod == MOD_VEHICLE_COLLISION || mod == MOD_WORLD_COLLISION || mod == MOD_HIGH_FORCES ) ) {
+					allowDamage = qtrue;
+				}
+			}
+
+			if ( !allowDamage ) {
+				return;
+			}
+
+			oldHealth = targ->health;
 			targ->health -= damage;
+
+			if ( targ->breakableStages > 0 && targ->breakableMaxHealth > 0 && oldHealth > 0 && targ->health > 0 ) {
+				oldStage = ( oldHealth * targ->breakableStages ) / targ->breakableMaxHealth;
+				newStage = ( targ->health * targ->breakableStages ) / targ->breakableMaxHealth;
+
+				if ( newStage < oldStage ) {
+					Breakable_EmitStageEffects( targ );
+				}
+			}
+
 			if (targ->health <= 0)
 				Break_Breakable (targ, attacker);
 		} else if ( targ->use && (targ->moverState == MOVER_POS1

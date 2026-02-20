@@ -98,6 +98,7 @@ field_t fields[] = {
 	{"spawnflags", FOFS(spawnflags), F_INT},
 	{"speed", FOFS(speed), F_FLOAT},
 	{"target", FOFS(target), F_STRING},
+	{"target2", FOFS(target2), F_STRING},
 	{"targetname", FOFS(targetname), F_STRING},
 	{"message", FOFS(message), F_STRING},
 	{"team", FOFS(team), F_STRING},
@@ -859,4 +860,3 @@ if (g_gametype.integer == GT_DOMINATION)
     
 	level.spawning = qfalse;			// any future calls to G_Spawn*() will be errors
 }
-

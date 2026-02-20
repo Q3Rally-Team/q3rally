@@ -271,6 +271,40 @@ void G_UseTargets( gentity_t *ent, gentity_t *activator ) {
 	}
 }
 
+/*
+=================
+G_UseTargets2
+
+Same as G_UseTargets but resolves the optional target2 key.
+=================
+*/
+void G_UseTargets2( gentity_t *ent, gentity_t *activator ) {
+	gentity_t		*t;
+
+	if ( !ent ) {
+		return;
+	}
+
+	if ( !ent->target2 ) {
+		return;
+	}
+
+	t = NULL;
+	while ( (t = G_Find (t, FOFS(targetname), ent->target2)) != NULL ) {
+		if ( t == ent ) {
+			G_Printf ("WARNING: Entity used itself (target2).\n");
+		} else {
+			if ( t->use ) {
+				t->use (t, ent, activator);
+			}
+		}
+		if ( !ent->inuse ) {
+			G_Printf("entity was removed while using targets (target2)\n");
+			return;
+		}
+	}
+}
+
 
 /*
 =============

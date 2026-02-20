@@ -1070,11 +1070,12 @@ default:
 
 			playbackValue = s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1;
 			trap_Cvar_SetValue( "cg_ghostPlayback", playbackValue );
-		} else if ( s_serveroptions.ghostPlaybackStored ) {
-			trap_Cvar_SetValue( "cg_ghostPlayback", s_serveroptions.ghostPlaybackRestore );
+		} else {
+			trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 		}
 	} else {
 		trap_Cvar_SetValue( "ui_ghostonly", 0 );
+		trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 	}
         if ( s_serveroptions.gametype == GT_ELIMINATION ) {
                 trap_Cvar_SetValue( "ui_elimination_weapons", eliminationWeapons );
@@ -1252,19 +1253,11 @@ static void ServerOptions_Event( void* ptr, int event ) {
 
 		trap_Cvar_SetValue( "ui_ghostonly", s_serveroptions.ghostOnly.curvalue );
 		if( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) && s_serveroptions.ghostOnly.curvalue ) {
-			if ( !s_serveroptions.ghostPlaybackStored ) {
-				s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
-				s_serveroptions.ghostPlaybackStored = qtrue;
-			}
 			trap_Cvar_SetValue( "cg_ghostPlayback", s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1 );
 			ServerOptions_InitPlayerItems();
 		}
 		else {
-			int restorePlayback;
-
-			restorePlayback = s_serveroptions.ghostPlaybackStored ? s_serveroptions.ghostPlaybackRestore : 0;
-			trap_Cvar_SetValue( "cg_ghostPlayback", restorePlayback );
-			s_serveroptions.ghostPlaybackStored = qfalse;
+			trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 			ServerOptions_InitPlayerItems();
 			ServerOptions_InitBotNames();
 		}
@@ -1582,7 +1575,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	if ( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) ) {
 		s_serveroptions.ghostOnly.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ghostonly" ) );
 		s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
-		s_serveroptions.ghostPlaybackStored = qtrue;
+		s_serveroptions.ghostPlaybackStored = qfalse;
 	} else {
 		s_serveroptions.ghostOnly.curvalue = 0;
 		s_serveroptions.ghostPlaybackRestore = 0;

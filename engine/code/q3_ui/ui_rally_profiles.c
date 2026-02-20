@@ -13,25 +13,24 @@
 
 #define PROFILE_OVERLAY_SCREEN_WIDTH     640
 #define PROFILE_OVERLAY_SCREEN_HEIGHT    480
-#define PROFILE_OVERLAY_PANEL_WIDTH      456
-#define PROFILE_OVERLAY_PANEL_HEIGHT     352
+#define PROFILE_OVERLAY_PANEL_WIDTH      420
+#define PROFILE_OVERLAY_PANEL_HEIGHT     320
 #define PROFILE_OVERLAY_PANEL_X          ( ( PROFILE_OVERLAY_SCREEN_WIDTH - PROFILE_OVERLAY_PANEL_WIDTH ) / 2 )
 #define PROFILE_OVERLAY_PANEL_Y          ( ( PROFILE_OVERLAY_SCREEN_HEIGHT - PROFILE_OVERLAY_PANEL_HEIGHT ) / 2 )
 
-#define PROFILE_OVERLAY_TITLE_OFFSET            -6
-#define PROFILE_OVERLAY_SECTION_OFFSET          56
-#define PROFILE_OVERLAY_LIST_OFFSET             94
-#define PROFILE_OVERLAY_NAMEFIELD_OFFSET        94
-#define PROFILE_OVERLAY_CREATE_BUTTON_OFFSET    216
-#define PROFILE_OVERLAY_LIST_ACTION_OFFSET      216
-#define PROFILE_OVERLAY_DELETE_BUTTON_OFFSET    238
-#define PROFILE_OVERLAY_STATUS_OFFSET           306
+#define PROFILE_OVERLAY_TITLE_OFFSET            -10
+#define PROFILE_OVERLAY_SECTION_OFFSET          46
+#define PROFILE_OVERLAY_LIST_OFFSET             82
+#define PROFILE_OVERLAY_NAMEFIELD_OFFSET        82
+#define PROFILE_OVERLAY_CREATE_BUTTON_OFFSET    190
+#define PROFILE_OVERLAY_LIST_ACTION_OFFSET      190
+#define PROFILE_OVERLAY_DELETE_BUTTON_OFFSET    214
+#define PROFILE_OVERLAY_STATUS_OFFSET           276
 #define PROFILE_OVERLAY_CONTENT_SPAN            PROFILE_OVERLAY_STATUS_OFFSET
 #define PROFILE_OVERLAY_STATUS_TIMEOUT_MS       1800
 
-static vec4_t overlayBackdropColor = { 0.0f, 0.0f, 0.0f, 0.18f };
-static vec4_t overlayBackgroundColor = { 0.11f, 0.11f, 0.11f, 0.78f };
-static vec4_t overlayBorderColor = { 1.0f, 1.0f, 1.0f, 0.20f };
+static vec4_t overlayBackgroundColor = { 0.11f, 0.11f, 0.11f, 0.60f };
+static vec4_t overlayBorderColor = { 1.0f, 1.0f, 1.0f, 0.28f };
 static vec4_t statusNormalColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 static vec4_t statusErrorColor  = { 1.0f, 0.3f, 0.3f, 1.0f };
 static vec4_t statusInfoColor   = { 1.0f, 0.8f, 0.3f, 1.0f };
@@ -984,7 +983,7 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->title.generic.flags = QMF_INACTIVE;
     overlay->title.generic.x = 320;
     overlay->title.generic.y = overlay->contentBaseY + PROFILE_OVERLAY_TITLE_OFFSET;
-    overlay->title.string = "PROFILE SELECT / CREATE MENU";
+    overlay->title.string = "PROFILES";
     overlay->title.color = text_color_normal;
     overlay->title.style = UI_CENTER | UI_SMALLFONT;
 
@@ -1194,13 +1193,6 @@ static qboolean UI_ProfileOverlay_HandleSelect( void ) {
 }
 
 static void UI_ProfileOverlay_Draw( void ) {
-    trap_R_SetColor( overlayBackdropColor );
-    UI_FillRect( 0,
-                 0,
-                 PROFILE_OVERLAY_SCREEN_WIDTH,
-                 PROFILE_OVERLAY_SCREEN_HEIGHT,
-                 overlayBackdropColor );
-
     trap_R_SetColor( overlayBackgroundColor );
     UI_FillRect( PROFILE_OVERLAY_PANEL_X,
                  PROFILE_OVERLAY_PANEL_Y,
@@ -1235,7 +1227,7 @@ static void UI_ProfileOverlay_Draw( void ) {
                                text_color_normal );
     UI_DrawProportionalString( 412,
                                s_profileOverlay.contentBaseY + PROFILE_OVERLAY_SECTION_OFFSET,
-                               "CREATE NEW",
+                               "NEW PROFILE",
                                UI_CENTER | UI_SMALLFONT,
                                text_color_normal );
 

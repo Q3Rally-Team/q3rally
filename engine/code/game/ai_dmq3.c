@@ -4295,10 +4295,10 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 		return 0;
 	}
 	//if it is a door
-	//Check if the bot steps over some breakable glass , possible use your weapon on it
-    if (!strcmp(classname, "func_breakglass")) {
-       return ent;
-    }
+	//Check if the bot steps over breakable geometry, possible use your weapon on it
+	if ( !strcmp( classname, "func_breakglass" ) || !strcmp( classname, "func_breakable" ) ) {
+		return ent;
+	}
 	if (!strcmp(classname, "func_door")) {
 		if (trap_AAS_FloatForBSPEpairKey(ent, "health", &health)) {
 			//if the door has health then the door must be shot to open

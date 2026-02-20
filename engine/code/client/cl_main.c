@@ -3582,8 +3582,8 @@ void CL_Init( void ) {
 
 	rconAddress = Cvar_Get ("rconAddress", "", 0);
 
-	cl_yawspeed = Cvar_Get ("cl_yawspeed", "140", CVAR_ARCHIVE);
-	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "140", CVAR_ARCHIVE);
+	cl_yawspeed = Cvar_Get ("cl_yawspeed", "110", CVAR_ARCHIVE);
+	cl_pitchspeed = Cvar_Get ("cl_pitchspeed", "110", CVAR_ARCHIVE);
 	cl_anglespeedkey = Cvar_Get ("cl_anglespeedkey", "1.5", 0);
 
 	cl_maxpackets = Cvar_Get ("cl_maxpackets", "30", CVAR_ARCHIVE );
@@ -3634,10 +3634,10 @@ void CL_Init( void ) {
 	m_filter = Cvar_Get ("m_filter", "0", CVAR_ARCHIVE);
 #endif
 
-	j_pitch =        Cvar_Get ("j_pitch",        "0.022", CVAR_ARCHIVE);
-	j_yaw =          Cvar_Get ("j_yaw",          "-0.022", CVAR_ARCHIVE);
-	j_forward =      Cvar_Get ("j_forward",      "-0.25", CVAR_ARCHIVE);
-	j_side =         Cvar_Get ("j_side",         "0.25", CVAR_ARCHIVE);
+	j_pitch =        Cvar_Get ("j_pitch",        "0.017", CVAR_ARCHIVE);
+	j_yaw =          Cvar_Get ("j_yaw",          "-0.017", CVAR_ARCHIVE);
+	j_forward =      Cvar_Get ("j_forward",      "-0.20", CVAR_ARCHIVE);
+	j_side =         Cvar_Get ("j_side",         "0.20", CVAR_ARCHIVE);
 	j_up =           Cvar_Get ("j_up",           "0", CVAR_ARCHIVE);
 
 	j_pitch_axis =   Cvar_Get ("j_pitch_axis",   "3", CVAR_ARCHIVE);

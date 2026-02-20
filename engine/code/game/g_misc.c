@@ -571,49 +571,55 @@ void DropPortalSource( gentity_t *player ) {
   trap_LinkEntity (ent);
  }
 
+/*
+=================
+Break_MaterialBrush
+
+Shared helper for breakglass/breakwood/breakmetal brush entities.
+=================
+*/
+static void Break_MaterialBrush( gentity_t *ent, vec3_t point, int mod, int breakEvent ) {
+	gentity_t   *tent;
+	vec3_t      size;
+	vec3_t      center;
+	qboolean    splashdmg;
+
+	// Get the center of the brush
+	VectorSubtract( ent->r.maxs, ent->r.mins, size );
+	VectorScale( size, 0.5, size );
+	VectorAdd( ent->r.mins, size, center );
+
+	if ( ent->health > 0 ) {
+		return;
+	}
+
+	G_FreeEntity( ent );
+
+	switch ( mod ) {
+		case MOD_GAUNTLET:
+			splashdmg = qfalse;
+			break;
+		default:
+			splashdmg = qtrue;
+			break;
+	}
+
+	// Emit break event for cgame
+	if ( splashdmg ) {
+		tent = G_TempEntity( center, breakEvent );
+	} else {
+		tent = G_TempEntity( point, breakEvent );
+	}
+	tent->s.eventParm = 0;
+}
+
  /*
  =================
  G_BreakGlass
  =================
  */
  void G_BreakGlass(gentity_t *ent, vec3_t point, int mod) {
-	gentity_t   *tent;
-    vec3_t      size;
-	vec3_t      center;
-    qboolean    splashdmg;
-    
-	// Lanz: Cleaned up compiler errors.
-
-    // Get the center of the glass
-    VectorSubtract(ent->r.maxs, ent->r.mins, size);
-    VectorScale(size, 0.5, size);
-    VectorAdd(ent->r.mins, size, center);
- 
-    // if the health of our glass brush is at 0 we'll break it
-    if( ent->health <= 0 ) {
-		G_FreeEntity( ent );
-   
-		switch( mod ) {
-			case MOD_GAUNTLET:
-				splashdmg = qfalse;
-				break;
-			default:
-				splashdmg = qtrue;
-				break;
-		}
-
-        // Now we call our EVs(Events) so that cgame can work on it
-        switch( splashdmg ){
-			case qtrue:
-				tent = G_TempEntity( center, EV_BREAK_GLASS );
-				tent->s.eventParm = 0;
-				break;
-			case qfalse:
-				tent = G_TempEntity( point, EV_BREAK_GLASS );
-				tent->s.eventParm = 0;
-				break;
-		}
-     }
+	Break_MaterialBrush( ent, point, mod, EV_BREAK_GLASS );
  }
   /*QUAKED func_breakwood (1 0 0) (-16 -16 -16) (16 16 16)
     we have breakable wood  
@@ -648,43 +654,7 @@ void DropPortalSource( gentity_t *player ) {
  =================
  */
 void G_BREAKWOOD(gentity_t *ent, vec3_t point, int mod) {
-	gentity_t   *tent;
-    vec3_t      size;
-    vec3_t      center;
-    qboolean    splashdmg;
-    
-	// Lanz: cleaned up compiler errors.
-
-    // Get the center of the BOX
-    VectorSubtract(ent->r.maxs, ent->r.mins, size);
-    VectorScale(size, 0.5, size);
-    VectorAdd(ent->r.mins, size, center);
- 
-    // if the health of our wood brush is at 0 we'll move it
-    if( ent->health <= 0 ) {
-		G_FreeEntity( ent );
-   
-		switch( mod ) {
-			case MOD_GAUNTLET:
-				splashdmg = qfalse;
-				break;
-			default:
-				splashdmg = qtrue;
-				break;
-		}
-        
-		// Now we call our EVs(Events) so that cgame can work on it
-        switch( splashdmg ){
-			case qtrue:
-				tent = G_TempEntity( center, EV_BREAKWOOD );
-				tent->s.eventParm = 0;
-				break;
-			case qfalse:
-				tent = G_TempEntity( point, EV_BREAKWOOD );
-				tent->s.eventParm = 0;
-				break;
-		}
-     }
+	Break_MaterialBrush( ent, point, mod, EV_BREAKWOOD );
  }
 
 /*QUAKED func_breakmetal (1 0 0) (-16 -16 -16) (16 16 16)
@@ -720,41 +690,5 @@ void G_BREAKWOOD(gentity_t *ent, vec3_t point, int mod) {
  =================
  */
  void G_BREAKMETAL(gentity_t *ent, vec3_t point, int mod) {
-	gentity_t   *tent;
-    vec3_t      size;
-	vec3_t      center;
-    qboolean    splashdmg;
-    
-	// Lanz: Cleaned up compiler errors.
-
-    // Get the center of the metal
-    VectorSubtract(ent->r.maxs, ent->r.mins, size);
-    VectorScale(size, 0.5, size);
-    VectorAdd(ent->r.mins, size, center);
- 
-    // if the health of our metal brush is at 0 we'll break it
-    if( ent->health <= 0 ) {
-		G_FreeEntity( ent );
-   
-		switch( mod ) {
-			case MOD_GAUNTLET:
-				splashdmg = qfalse;
-				break;
-			default:
-				splashdmg = qtrue;
-				break;
-		}
-
-        // Now we call our EVs(Events) so that cgame can work on it
-        switch( splashdmg ){
-			case qtrue:
-				tent = G_TempEntity( center, EV_BREAKMETAL );
-				tent->s.eventParm = 0;
-				break;
-			case qfalse:
-				tent = G_TempEntity( point, EV_BREAKMETAL );
-				tent->s.eventParm = 0;
-				break;
-		}
-	}
+	Break_MaterialBrush( ent, point, mod, EV_BREAKMETAL );
 }
