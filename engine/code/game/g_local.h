@@ -263,6 +263,22 @@ typedef struct ghostRecord_s {
         int     bestTimeMs;
 } ghostRecord_t;
 
+#define MAX_GHOST_BOT_WAYPOINTS 4096
+
+typedef struct ghostWaypoint_s {
+	vec3_t	origin;
+	int	timeOffset;
+} ghostWaypoint_t;
+
+typedef struct ghostBotRoute_s {
+	char	path[MAX_QPATH];
+	char	vehicleClass[MAX_QPATH];
+	int	bestTimeMs;
+	int	numWaypoints;
+	qboolean valid;
+	ghostWaypoint_t waypoints[MAX_GHOST_BOT_WAYPOINTS];
+} ghostBotRoute_t;
+
 typedef enum {
 	SPECTATOR_NOT,
 	SPECTATOR_FREE,
@@ -839,8 +855,9 @@ qboolean isRallyNonDMRace( void );
 qboolean isRaceObserver( int clientNum );
 void G_PrintMapStats( gentity_t *player, qboolean generateArenaFile, char *longname );
 void G_Ghost_InitForMap( const char *mapname );
-const ghostRecord_t *G_Ghost_FindForVehicle( const char *vehicleClass );
+const ghostRecord_t *G_Ghost_FindBestRecord( void );
 void G_Ghost_AnnounceForClient( gentity_t *ent );
+qboolean G_Ghost_GetBotRoute( const ghostBotRoute_t **outRoute );
 
 //
 // g_rally_racetools.c

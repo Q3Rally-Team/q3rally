@@ -121,7 +121,6 @@ void CG_ResetBaseGhost( void ) {
 
 void CG_LoadPersonalGhost( void ) {
         char mapname[MAX_QPATH];
-        char vehicle[MAX_QPATH];
         char path[MAX_QPATH];
 
         if ( !cg.snap || cg.snap->ps.clientNum >= MAX_CLIENTS ) {
@@ -139,14 +138,10 @@ void CG_LoadPersonalGhost( void ) {
                 return;
         }
 
-        Q_strncpyz( vehicle, cgs.clientinfo[cg.snap->ps.clientNum].modelName, sizeof( vehicle ) );
-        if ( !vehicle[0] ) {
-                return;
-        }
 
-        Com_sprintf( path, sizeof( path ), "ghosts/%s_%s.ghost", mapname, vehicle );
+        Com_sprintf( path, sizeof( path ), "ghosts/%s.ghost", mapname );
 
-        if ( CG_LoadGhostFile( path, mapname, vehicle, 0, &cg.ghostPlayback, &cg.personalGhostBestTime, cg.personalGhostVehicle, sizeof( cg.personalGhostVehicle ), cg.personalGhostPath, sizeof( cg.personalGhostPath ) ) ) {
+        if ( CG_LoadGhostFile( path, mapname, NULL, 0, &cg.ghostPlayback, &cg.personalGhostBestTime, cg.personalGhostVehicle, sizeof( cg.personalGhostVehicle ), cg.personalGhostPath, sizeof( cg.personalGhostPath ) ) ) {
                 cg.personalGhostAvailable = qtrue;
         }
 }
@@ -640,7 +635,7 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         lapRecording.duration = lapRecording.frames[lapRecording.frameCount - 1].timeOffset;
         lapRecording.valid = qtrue;
 
-        Com_sprintf( path, sizeof( path ), "ghosts/%s_%s.ghost", mapname, vehicle );
+        Com_sprintf( path, sizeof( path ), "ghosts/%s.ghost", mapname );
 
         if ( trap_FS_FOpenFile( path, &file, FS_WRITE ) < 0 ) {
                 CG_Printf( "CG_Ghost: failed to save %s\n", path );

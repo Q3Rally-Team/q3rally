@@ -3025,6 +3025,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	float		f, dist, speed, actualSpeed, dot, curvature;
 	//float		accel, a_normal;
 	int			throttleChange;
+	const ghostBotRoute_t *ghostRoute;
 
 	if (BotIsObserver(bs)) {
 		BotClearActivateGoalStack(bs);
@@ -3048,6 +3049,154 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	lastCheckpoint = (nextCheckpoint - 1);
 	if( lastCheckpoint < 1 )
 		lastCheckpoint = level.numCheckpoints;
+
+	if ( G_Ghost_GetBotRoute( &ghostRoute ) && ghostRoute ) {
+		int bestIndex = -1;
+		float bestDistSq = 0.0f;
+		int i;
+
+		for ( i = 0; i < ghostRoute->numWaypoints; ++i ) {
+			vec3_t deltaToWaypoint;
+			float distSq;
+			VectorSubtract( ghostRoute->waypoints[i].origin, bs->cur_ps.origin, deltaToWaypoint );
+			distSq = VectorLengthSquared( deltaToWaypoint );
+			if ( bestIndex < 0 || distSq < bestDistSq ) {
+				bestIndex = i;
+				bestDistSq = distSq;
+			}
+		}
+
+		if ( bestIndex >= 0 ) {
+			int lookAheadIndex = bestIndex + 12;
+			int speedStartIndex;
+			int speedEndIndex;
+			float smoothedSpeed = 0.0f;
+			int smoothedSegments = 0;
+			float curvatureScore = 0.0f;
+			int curvatureSamples = 0;
+			if ( lookAheadIndex >= ghostRoute->numWaypoints ) {
+				lookAheadIndex = ghostRoute->numWaypoints - 1;
+			}
+			VectorSubtract( ghostRoute->waypoints[lookAheadIndex].origin, bs->cur_ps.origin, dir );
+			dir[2] = 0;
+			actualSpeed = VectorLength( bs->cur_ps.velocity );
+
+			speedStartIndex = bestIndex;
+			speedEndIndex = bestIndex + 10;
+			if ( speedEndIndex >= ghostRoute->numWaypoints - 1 ) {
+				speedEndIndex = ghostRoute->numWaypoints - 2;
+			}
+
+			for ( i = speedStartIndex; i <= speedEndIndex; ++i ) {
+				vec3_t seg;
+				float dt;
+				float segSpeed;
+
+				VectorSubtract( ghostRoute->waypoints[i + 1].origin, ghostRoute->waypoints[i].origin, seg );
+				dt = (float)( ghostRoute->waypoints[i + 1].timeOffset - ghostRoute->waypoints[i].timeOffset );
+				if ( dt <= 0.0f ) {
+					continue;
+				}
+
+				segSpeed = 1000.0f * VectorLength( seg ) / dt;
+				smoothedSpeed += segSpeed;
+				smoothedSegments++;
+			}
+
+			if ( smoothedSegments > 0 ) {
+				speed = smoothedSpeed / smoothedSegments;
+			} else {
+				speed = actualSpeed;
+			}
+
+			if ( speedEndIndex - speedStartIndex >= 2 ) {
+				for ( i = speedStartIndex; i + 2 <= speedEndIndex + 1; ++i ) {
+					vec3_t segA, segB;
+					float lenA, lenB;
+					float segDot;
+
+					VectorSubtract( ghostRoute->waypoints[i + 1].origin, ghostRoute->waypoints[i].origin, segA );
+					VectorSubtract( ghostRoute->waypoints[i + 2].origin, ghostRoute->waypoints[i + 1].origin, segB );
+					lenA = VectorLength( segA );
+					lenB = VectorLength( segB );
+
+					if ( lenA < 1.0f || lenB < 1.0f ) {
+						continue;
+					}
+
+					segDot = DotProduct( segA, segB ) / ( lenA * lenB );
+					if ( segDot > 1.0f ) {
+						segDot = 1.0f;
+					} else if ( segDot < -1.0f ) {
+						segDot = -1.0f;
+					}
+
+					curvatureScore += ( 1.0f - segDot );
+					curvatureSamples++;
+				}
+
+				if ( curvatureSamples > 0 ) {
+					float avgCurvature = curvatureScore / curvatureSamples;
+					float speedScale = 1.0f - avgCurvature * 0.30f;
+
+					if ( speedScale < 0.55f ) {
+						speedScale = 0.55f;
+					}
+					speed *= speedScale;
+				}
+			}
+
+			/*
+			 * Additional damping to reduce throttle oscillation:
+			 * - low-pass filter target speed across think ticks
+			 * - clamp max per-tick speed target delta
+			 * - hysteresis around throttle changes
+			 */
+			if ( !bs->ghostTargetSpeedValid ) {
+				bs->ghostTargetSpeedFiltered = speed;
+				bs->ghostTargetSpeedValid = qtrue;
+			} else {
+				float maxDeltaPerTick = 220.0f * ( bs->thinktime > 0.0f ? bs->thinktime : 0.1f );
+				float filteredTarget = bs->ghostTargetSpeedFiltered + ( speed - bs->ghostTargetSpeedFiltered ) * 0.25f;
+				float delta = filteredTarget - bs->ghostTargetSpeedFiltered;
+
+				if ( delta > maxDeltaPerTick ) {
+					filteredTarget = bs->ghostTargetSpeedFiltered + maxDeltaPerTick;
+				} else if ( delta < -maxDeltaPerTick ) {
+					filteredTarget = bs->ghostTargetSpeedFiltered - maxDeltaPerTick;
+				}
+
+				bs->ghostTargetSpeedFiltered = filteredTarget;
+			}
+			speed = bs->ghostTargetSpeedFiltered;
+
+			vectoangles( dir, angles );
+			{
+				float speedError = speed - actualSpeed;
+
+				if ( speedError > 80.0f ) {
+					throttleChange = 1;
+				} else if ( speedError < -140.0f ) {
+					throttleChange = -1;
+				} else {
+					throttleChange = 0;
+				}
+			}
+
+			throttleChange = Bot_CheckForObstacles( bs, angles, throttleChange );
+			VectorCopy( angles, bs->ideal_viewangles );
+
+			if( throttleChange > 0 )
+				trap_EA_MoveForward( bs->client );
+			else if( throttleChange < 0 )
+				trap_EA_MoveBack( bs->client );
+
+			return qtrue;
+		}
+	}
+
+	/* Ghost guidance not active this tick, reset speed filter state. */
+	bs->ghostTargetSpeedValid = qfalse;
 
 	while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL)
 	{
@@ -3144,5 +3293,4 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	return qtrue;
 }
 // END
-
 

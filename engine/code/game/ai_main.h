@@ -275,6 +275,9 @@ typedef struct bot_state_s
 	bot_waypoint_t *patrolpoints;					//patrol points
 	bot_waypoint_t *curpatrolpoint;					//current patrol point the bot is going for
 	int patrolflags;								//patrol flags
+
+	float ghostTargetSpeedFiltered;				//smoothed target speed for ghost racing line
+	int ghostTargetSpeedValid;					//whether ghostTargetSpeedFiltered is initialized
 } bot_state_t;
 
 //resets the whole bot state
