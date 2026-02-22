@@ -131,9 +131,10 @@ static weaponconfig_t *weaponconfig;
 // global gametype variable declared in be_ai_goal.c
 extern int g_gametype;
 
-// Q3Rally specific game type not defined in botlib headers
+// Q3Rally specific game type not defined in botlib headers.
+// Keep this value aligned with gametype_t in game/bg_public.h.
 #ifndef GT_DERBY
-#define GT_DERBY 3
+#define GT_DERBY 4
 #endif
 
 //========================================================================
@@ -540,4 +541,3 @@ void BotShutdownWeaponAI(void)
 		} //end if
 	} //end for
 } //end of the function BotShutdownWeaponAI
-

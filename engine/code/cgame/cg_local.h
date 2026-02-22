@@ -826,6 +826,11 @@ typedef struct {
 	// blend blobs
 	float		damageTime;
 	float		damageX, damageY, damageValue;
+	int			derbyHitFxTime;
+	int			derbyHitFxLevel;
+	int			derbyHitFxDamage;
+	int			derbyHitFxDir;		/* 0=front 1=left 2=right 3=rear */
+	int			derbyLastDamageTaken;	/* previous STAT_DAMAGE_TAKEN for delta detection */
 
 	// status bar head
 	float		headYaw;
@@ -1092,6 +1097,9 @@ typedef struct {
 	qhandle_t	SMSnowShader;
 	qhandle_t	SMIceShader;
 	qhandle_t	checkpointArrow;
+	qhandle_t	derbyHudPanelShader;
+	qhandle_t	derbyHudVehicleShader;
+	qhandle_t	derbyHudWarningShader;
 
 
 	// weapon effect models
@@ -1596,6 +1604,15 @@ extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;
 extern	vmCvar_t		cg_jukeboxShuffle;
 extern	vmCvar_t		cg_jukeboxRepeatMode;
+extern	vmCvar_t		cg_derbyHitFxEnable;
+extern	vmCvar_t		cg_derbyHitShakeScale;
+extern	vmCvar_t		cg_derbyHitSoundEnable;
+extern	vmCvar_t		cg_derbyHitOverlayScale;
+extern	vmCvar_t		cg_derbyHitOverlayTime;
+extern	vmCvar_t		cg_derbyVehicleHudX;
+extern	vmCvar_t		cg_derbyVehicleHudY;
+extern	vmCvar_t		cg_derbyVehicleHudScale;
+extern	vmCvar_t		cg_derbyVehicleHudRoof;
 // Q3Rally Code END
 
 //
@@ -2304,4 +2321,3 @@ void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
-

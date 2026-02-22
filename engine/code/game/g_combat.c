@@ -115,8 +115,9 @@ if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 */
 
 //	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
-	if ( weapon >= WP_MACHINEGUN && 
+	if ( weapon >= WP_MACHINEGUN &&
 // END
+		weapon != WP_DERBY_RAM &&
 		self->client->ps.ammo[ weapon ] ) {
 		// find the item type for this weapon
 		item = BG_FindItemForWeapon( weapon );
@@ -128,7 +129,7 @@ if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 	// drop all the powerups if not in teamplay
 	if ( g_gametype.integer != GT_TEAM ) {
 		angle = 45;
-		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
+		for ( i = 1 ; i < PW_NUM_POWERUPS && i < MAX_POWERUPS ; i++ ) {
 			if ( self->client->ps.powerups[ i ] > level.time ) {
 				item = BG_FindItemForPowerup( i );
 				if ( !item ) {

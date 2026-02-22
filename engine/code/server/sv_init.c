@@ -418,6 +418,19 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 	// clear the whole hunk because we're (re)loading the server
 	Hunk_Clear();
 
+#ifndef DEDICATED
+	// Immediately rebuild the renderer after Hunk_Clear and before qagame is
+	// loaded. CL_ShutdownAll above called re.Shutdown() and cleared
+	// cls.rendererStarted. Without this rebuild, CL_StartHunkUsers in
+	// CL_DownloadsComplete (called when the loopback client connects) will
+	// call CL_InitRenderer() while qagame is already on the hunk, causing a
+	// second RE_Shutdown + R_Init that clears cl.gameState on the client side.
+	// That empties CS_GAME_VERSION and produces "Client/Server game mismatch".
+	if ( !com_dedicated->integer ) {
+		CL_StartHunkUsers( qtrue );
+	}
+#endif
+
 	// clear collision map data
 	CM_ClearMap();
 

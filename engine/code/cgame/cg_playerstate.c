@@ -24,6 +24,67 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
+
+typedef enum {
+	DERBY_HIT_LIGHT = 0,
+	DERBY_HIT_MEDIUM,
+	DERBY_HIT_HEAVY
+} derbyHitIntensity_t;
+
+#define DERBY_HIT_MEDIUM_THRESHOLD 12
+#define DERBY_HIT_HEAVY_THRESHOLD 25
+
+static derbyHitIntensity_t CG_DerbyHitIntensityForDamage( int damage ) {
+	if ( damage > DERBY_HIT_HEAVY_THRESHOLD ) {
+		return DERBY_HIT_HEAVY;
+	}
+	if ( damage > DERBY_HIT_MEDIUM_THRESHOLD ) {
+		return DERBY_HIT_MEDIUM;
+	}
+	return DERBY_HIT_LIGHT;
+}
+
+static void CG_ApplyDerbyHitImpact( int damage ) {
+	float shakeScale;
+	derbyHitIntensity_t intensity;
+
+	if ( cgs.gametype != GT_DERBY || !cg_derbyHitFxEnable.integer ) {
+		return;
+	}
+
+	intensity = CG_DerbyHitIntensityForDamage( damage );
+	cg.derbyHitFxTime = cg.time;
+	cg.derbyHitFxDamage = damage;
+	cg.derbyHitFxLevel = intensity;
+
+	shakeScale = cg_derbyHitShakeScale.value;
+	if ( shakeScale < 0.0f ) {
+		shakeScale = 0.0f;
+	}
+
+	if ( shakeScale > 0.0f ) {
+
+		static const float kickByIntensity[] = { 4.0f, 7.5f, 11.0f };
+
+		float kick = kickByIntensity[intensity] * shakeScale;
+		cg.v_dmg_roll += crandom() * kick;
+		cg.v_dmg_pitch -= kick;
+		cg.v_dmg_time = cg.time + DAMAGE_TIME;
+	}
+
+	if ( cg_derbyHitSoundEnable.integer ) {
+		if ( intensity == DERBY_HIT_HEAVY ) {
+
+			trap_S_StartLocalSound( cgs.media.damage75[(int)(random() * 2)], CHAN_LOCAL_SOUND );
+		} else if ( intensity == DERBY_HIT_MEDIUM ) {
+			trap_S_StartLocalSound( cgs.media.damage50[(int)(random() * 2)], CHAN_LOCAL_SOUND );
+		} else {
+			trap_S_StartLocalSound( cgs.media.damage25[(int)(random() * 2)], CHAN_LOCAL_SOUND );
+		}
+
+	}
+}
+
 /*
 ==============
 CG_CheckAmmo
@@ -521,14 +582,10 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
        cg.car.fuel = ps->stats[STAT_FUEL];
 
 	// damage events (player is getting wounded)
-// STONELANCE using damagePitch and Yaw for view
-/*
 	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
-//		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
-		CG_DamageFeedback( 0, 0, ps->damageCount );
+
+		CG_ApplyDerbyHitImpact( ps->damageCount );
 	}
-*/
-// END
 
 	// respawning
 	if ( ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT] ) {

@@ -2031,6 +2031,11 @@ static void CG_DrawLowerLeft( void ) {
 		y = CG_DrawTeamOverlay( y, qfalse, qfalse );
 	} 
 
+	/* Derby: vehicle state panel sits at bottom-left (y=376);
+	   move pickup overlay above it so they don't overlap. */
+	if ( cgs.gametype == GT_DERBY && y > 376 ) {
+		y = 376;
+	}
 
 	CG_DrawPickupItem( y );
 }
@@ -3143,7 +3148,6 @@ static qboolean CG_DrawScoreboard( void ) {
 }
 
 /*
-===================
 CG_DrawIntermission
 ===================
 */

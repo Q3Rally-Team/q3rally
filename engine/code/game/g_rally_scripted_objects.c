@@ -305,8 +305,6 @@ void G_ScriptedObject_Touch ( gentity_t *self, gentity_t *other, trace_t *trace 
 }
 
 void G_ScriptedObject_Think ( gentity_t *self ){
-	float time = ( level.time - self->updateTime ) / 1000.0f;
-
 	/* Apply gravity as default force */
 	VectorSet( self->netForce, 0, 0, -CP_CURRENT_GRAVITY * self->mass );
 	VectorClear( self->netMoment );

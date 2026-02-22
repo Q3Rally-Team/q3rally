@@ -1505,7 +1505,7 @@ void CL_OpenURL_f( void ) {
     const char *url = Cmd_Argv(1);
 
 #ifdef _WIN32
-    if ( (int)ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL ) <= 32 ) {
+    if ( (INT_PTR)ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL ) <= 32 ) {
         Com_Printf( "Could not open URL %s\n", url );
     }
 #elif defined( __APPLE__ )

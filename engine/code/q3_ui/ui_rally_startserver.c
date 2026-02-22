@@ -842,8 +842,8 @@ typedef struct {
 	menulist_s			trackLength;
 	menulist_s                      reversed;
         menuradiobutton_s       pure;
-        menuradiobutton_s       eliminationWeapons;
-        menuradiobutton_s       ghostOnly;
+	menuradiobutton_s       eliminationWeapons;
+	menuradiobutton_s       ghostOnly;
 	menulist_s			botSkill;
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
@@ -863,6 +863,7 @@ typedef struct {
 	qboolean			newBot;
 	int					newBotIndex;
 	char				newBotName[16];
+
 } serveroptions_t;
 
 static serveroptions_t s_serveroptions;
@@ -1077,6 +1078,7 @@ default:
 		trap_Cvar_SetValue( "ui_ghostonly", 0 );
 		trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 	}
+
         if ( s_serveroptions.gametype == GT_ELIMINATION ) {
                 trap_Cvar_SetValue( "ui_elimination_weapons", eliminationWeapons );
                 trap_Cvar_SetValue( "g_eliminationWeapons", eliminationWeapons );
@@ -1263,6 +1265,7 @@ static void ServerOptions_Event( void* ptr, int event ) {
 		}
                 ServerOptions_SetPlayerItems();
                 break;
+
 
         case ID_GO:
                 if( event != QM_ACTIVATED ) {
@@ -1585,6 +1588,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	// set the map pic
 	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
 	s_serveroptions.mappic.generic.name = picname;
+
 
 
 	// set the map name
