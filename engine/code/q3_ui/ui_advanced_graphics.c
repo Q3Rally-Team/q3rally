@@ -39,9 +39,25 @@ ADVANCED GRAPHICS OPTIONS MENU
 #define ID_HDR                      14
 #define ID_POSTPROCESS              15
 #define ID_BACK                     16
+#define ID_TONEMAP                  18
+#define ID_AUTOEXPOSURE             19
+#define ID_SSAO                     20
+#define ID_SUNRAYS                  21
+#define ID_DYNAMIC_REFLECTIONS      22
+#define ID_PRESET                   23
+
+#define ADV_PRESET_CUSTOM           0
+#define ADV_PRESET_LOW              1
+#define ADV_PRESET_MIDDLE           2
+#define ADV_PRESET_HIGH             3
+#define ADV_PRESET_ULTRA            4
 
 static const char *enabled_items[] = {
 	"Off", "On", NULL
+};
+
+static const char *preset_items[] = {
+	"Custom", "Low", "Middle", "High", "Ultra", NULL
 };
 
 typedef struct {
@@ -54,13 +70,118 @@ typedef struct {
 	menutext_s      sound;
 	menutext_s      network;
 
+	menulist_s      preset;
 	menulist_s      hdr;
 	menulist_s      postprocess;
+	menulist_s      tonemap;
+	menulist_s      autoexposure;
+	menulist_s      ssao;
+	menulist_s      sunrays;
+	menulist_s      dynamic_reflections;
 
 	menutext_s      back;
 } advancedGraphicsOptionsInfo_t;
 
 static advancedGraphicsOptionsInfo_t advancedGraphicsOptionsInfo;
+
+static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
+	if (advancedGraphicsOptionsInfo.hdr.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.postprocess.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.tonemap.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.autoexposure.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_LOW;
+		return;
+	}
+
+	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_MIDDLE;
+		return;
+	}
+
+	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_HIGH;
+		return;
+	}
+
+	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.sunrays.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 1) {
+		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_ULTRA;
+		return;
+	}
+
+	advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_CUSTOM;
+}
+
+static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
+	switch (preset) {
+	case ADV_PRESET_LOW:
+		advancedGraphicsOptionsInfo.hdr.curvalue = 0;
+		advancedGraphicsOptionsInfo.postprocess.curvalue = 0;
+		advancedGraphicsOptionsInfo.tonemap.curvalue = 0;
+		advancedGraphicsOptionsInfo.autoexposure.curvalue = 0;
+		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		break;
+	case ADV_PRESET_MIDDLE:
+		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
+		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
+		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
+		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
+		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		break;
+	case ADV_PRESET_HIGH:
+		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
+		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
+		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
+		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
+		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
+		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		break;
+	case ADV_PRESET_ULTRA:
+		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
+		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
+		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
+		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
+		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
+		advancedGraphicsOptionsInfo.sunrays.curvalue = 1;
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 1;
+		break;
+	default:
+		return;
+	}
+
+	trap_Cvar_SetValue( "r_hdr", advancedGraphicsOptionsInfo.hdr.curvalue );
+	trap_Cvar_SetValue( "r_postProcess", advancedGraphicsOptionsInfo.postprocess.curvalue );
+	trap_Cvar_SetValue( "r_toneMap", advancedGraphicsOptionsInfo.tonemap.curvalue );
+	trap_Cvar_SetValue( "r_autoExposure", advancedGraphicsOptionsInfo.autoexposure.curvalue );
+	trap_Cvar_SetValue( "r_ssao", advancedGraphicsOptionsInfo.ssao.curvalue );
+	trap_Cvar_SetValue( "r_drawSunRays", advancedGraphicsOptionsInfo.sunrays.curvalue );
+	trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
+}
 
 static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
 	if( event != QM_ACTIVATED ) {
@@ -91,12 +212,43 @@ static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
 		UI_NetworkOptionsMenu();
 		break;
 
+	case ID_PRESET:
+		UI_AdvancedGraphicsOptionsMenu_ApplyPreset( advancedGraphicsOptionsInfo.preset.curvalue );
+		break;
+
 	case ID_HDR:
 		trap_Cvar_SetValue( "r_hdr", advancedGraphicsOptionsInfo.hdr.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
 		break;
 
 	case ID_POSTPROCESS:
 		trap_Cvar_SetValue( "r_postProcess", advancedGraphicsOptionsInfo.postprocess.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_TONEMAP:
+		trap_Cvar_SetValue( "r_toneMap", advancedGraphicsOptionsInfo.tonemap.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_AUTOEXPOSURE:
+		trap_Cvar_SetValue( "r_autoExposure", advancedGraphicsOptionsInfo.autoexposure.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_SSAO:
+		trap_Cvar_SetValue( "r_ssao", advancedGraphicsOptionsInfo.ssao.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_SUNRAYS:
+		trap_Cvar_SetValue( "r_drawSunRays", advancedGraphicsOptionsInfo.sunrays.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_DYNAMIC_REFLECTIONS:
+		trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
 		break;
 
 	case ID_BACK:
@@ -183,7 +335,17 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.network.style               = UI_RIGHT;
 	advancedGraphicsOptionsInfo.network.color               = text_color_normal;
 
-	y = 240 - 1 * (BIGCHAR_HEIGHT + 2);
+	y = 240 - 3 * (BIGCHAR_HEIGHT + 2);
+	advancedGraphicsOptionsInfo.preset.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.preset.generic.name      = "Quality Preset:";
+	advancedGraphicsOptionsInfo.preset.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.preset.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.preset.generic.id        = ID_PRESET;
+	advancedGraphicsOptionsInfo.preset.generic.x         = 400;
+	advancedGraphicsOptionsInfo.preset.generic.y         = y;
+	advancedGraphicsOptionsInfo.preset.itemnames         = preset_items;
+
+	y += BIGCHAR_HEIGHT + 2;
 	advancedGraphicsOptionsInfo.hdr.generic.type      = MTYPE_SPINCONTROL;
 	advancedGraphicsOptionsInfo.hdr.generic.name      = "HDR:";
 	advancedGraphicsOptionsInfo.hdr.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -205,6 +367,62 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.postprocess.itemnames         = enabled_items;
 	advancedGraphicsOptionsInfo.postprocess.curvalue          = trap_Cvar_VariableValue( "r_postProcess" ) != 0;
 
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.tonemap.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.tonemap.generic.name      = "Tone Mapping:";
+	advancedGraphicsOptionsInfo.tonemap.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.tonemap.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.tonemap.generic.id        = ID_TONEMAP;
+	advancedGraphicsOptionsInfo.tonemap.generic.x         = 400;
+	advancedGraphicsOptionsInfo.tonemap.generic.y         = y;
+	advancedGraphicsOptionsInfo.tonemap.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.tonemap.curvalue          = trap_Cvar_VariableValue( "r_toneMap" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.autoexposure.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.autoexposure.generic.name      = "Auto Exposure:";
+	advancedGraphicsOptionsInfo.autoexposure.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.autoexposure.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.autoexposure.generic.id        = ID_AUTOEXPOSURE;
+	advancedGraphicsOptionsInfo.autoexposure.generic.x         = 400;
+	advancedGraphicsOptionsInfo.autoexposure.generic.y         = y;
+	advancedGraphicsOptionsInfo.autoexposure.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.autoexposure.curvalue          = trap_Cvar_VariableValue( "r_autoExposure" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.ssao.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.ssao.generic.name      = "SSAO:";
+	advancedGraphicsOptionsInfo.ssao.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.ssao.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.ssao.generic.id        = ID_SSAO;
+	advancedGraphicsOptionsInfo.ssao.generic.x         = 400;
+	advancedGraphicsOptionsInfo.ssao.generic.y         = y;
+	advancedGraphicsOptionsInfo.ssao.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.ssao.curvalue          = trap_Cvar_VariableValue( "r_ssao" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.sunrays.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.sunrays.generic.name      = "Sun Rays:";
+	advancedGraphicsOptionsInfo.sunrays.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.sunrays.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.sunrays.generic.id        = ID_SUNRAYS;
+	advancedGraphicsOptionsInfo.sunrays.generic.x         = 400;
+	advancedGraphicsOptionsInfo.sunrays.generic.y         = y;
+	advancedGraphicsOptionsInfo.sunrays.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.sunrays.curvalue          = trap_Cvar_VariableValue( "r_drawSunRays" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.name      = "Dynamic Reflections:";
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.id        = ID_DYNAMIC_REFLECTIONS;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.x         = 400;
+	advancedGraphicsOptionsInfo.dynamic_reflections.generic.y         = y;
+	advancedGraphicsOptionsInfo.dynamic_reflections.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.dynamic_reflections.curvalue          = trap_Cvar_VariableValue( "r_dynamicReflections" ) != 0;
+	UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+
 	advancedGraphicsOptionsInfo.back.generic.type         = MTYPE_PTEXT;
 	advancedGraphicsOptionsInfo.back.generic.flags        = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	advancedGraphicsOptionsInfo.back.generic.x            = 20;
@@ -221,8 +439,14 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.display );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sound );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.network );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.preset );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.hdr );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.postprocess );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.tonemap );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.autoexposure );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.ssao );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunrays );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.dynamic_reflections );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.back );
 }
 
