@@ -45,6 +45,14 @@ ADVANCED GRAPHICS OPTIONS MENU
 #define ID_SUNRAYS                  21
 #define ID_DYNAMIC_REFLECTIONS      22
 #define ID_PRESET                   23
+#define ID_SUNSHADOWS               24
+#define ID_SHADOWQUALITY            25
+#define ID_SHADOWBLUR               26
+#define ID_SHADOWCASCADE_NEAR       27
+#define ID_SHADOWCASCADE_FAR        28
+#define ID_SHADOWCASCADE_BIAS       29
+#define ID_PSHADOWDIST              30
+#define ID_SUNLIGHTMODE             31
 
 #define ADV_PRESET_CUSTOM           0
 #define ADV_PRESET_LOW              1
@@ -58,6 +66,30 @@ static const char *enabled_items[] = {
 
 static const char *preset_items[] = {
 	"Custom", "Low", "Middle", "High", "Ultra", NULL
+};
+
+static const char *shadow_quality_items[] = {
+	"Low", "Medium", "High", NULL
+};
+
+static const char *shadow_cascade_near_items[] = {
+	"4", "8", "16", NULL
+};
+
+static const char *shadow_cascade_far_items[] = {
+	"512", "1024", "2048", NULL
+};
+
+static const char *shadow_cascade_bias_items[] = {
+	"0.0", "0.25", "0.5", "1.0", NULL
+};
+
+static const char *pshadow_dist_items[] = {
+	"64", "128", "256", NULL
+};
+
+static const char *sunlight_mode_items[] = {
+	"Off", "Mode 1", "Mode 2", NULL
 };
 
 typedef struct {
@@ -78,11 +110,44 @@ typedef struct {
 	menulist_s      ssao;
 	menulist_s      sunrays;
 	menulist_s      dynamic_reflections;
+	menulist_s      sunshadows;
+	menulist_s      shadowquality;
+	menulist_s      shadowblur;
+	menulist_s      shadowcascade_near;
+	menulist_s      shadowcascade_far;
+	menulist_s      shadowcascade_bias;
+	menulist_s      pshadowdist;
+	menulist_s      sunlightmode;
 
 	menutext_s      back;
 } advancedGraphicsOptionsInfo_t;
 
 static advancedGraphicsOptionsInfo_t advancedGraphicsOptionsInfo;
+
+static void UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars( void ) {
+	static const int shadowFilterValues[] = { 0, 1, 2 };
+	static const int shadowMapSizeValues[] = { 512, 1024, 2048 };
+	static const int shadowCascadeNearValues[] = { 4, 8, 16 };
+	static const int shadowCascadeFarValues[] = { 512, 1024, 2048 };
+	static const float shadowCascadeBiasValues[] = { 0.0f, 0.25f, 0.5f, 1.0f };
+	static const int pshadowDistValues[] = { 64, 128, 256 };
+	int qualityIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowquality.curvalue );
+	int cascadeNearIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowcascade_near.curvalue );
+	int cascadeFarIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowcascade_far.curvalue );
+	int cascadeBiasIndex = Com_Clamp( 0, 3, advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue );
+	int pshadowDistIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.pshadowdist.curvalue );
+	int sunlightMode = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.sunlightmode.curvalue );
+
+	trap_Cvar_SetValue( "r_sunShadows", advancedGraphicsOptionsInfo.sunshadows.curvalue );
+	trap_Cvar_SetValue( "r_shadowFilter", shadowFilterValues[qualityIndex] );
+	trap_Cvar_SetValue( "r_shadowMapSize", shadowMapSizeValues[qualityIndex] );
+	trap_Cvar_SetValue( "r_shadowBlur", advancedGraphicsOptionsInfo.shadowblur.curvalue != 0 );
+	trap_Cvar_SetValue( "r_shadowCascadeZNear", shadowCascadeNearValues[cascadeNearIndex] );
+	trap_Cvar_SetValue( "r_shadowCascadeZFar", shadowCascadeFarValues[cascadeFarIndex] );
+	trap_Cvar_SetValue( "r_shadowCascadeZBias", shadowCascadeBiasValues[cascadeBiasIndex] );
+	trap_Cvar_SetValue( "r_pshadowDist", pshadowDistValues[pshadowDistIndex] );
+	trap_Cvar_SetValue( "r_sunlightMode", sunlightMode );
+}
 
 static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
 	if (advancedGraphicsOptionsInfo.hdr.curvalue == 0 &&
@@ -91,7 +156,15 @@ static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
 		advancedGraphicsOptionsInfo.autoexposure.curvalue == 0 &&
 		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
 		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunshadows.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowquality.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 0) {
 		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_LOW;
 		return;
 	}
@@ -102,7 +175,15 @@ static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
 		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
 		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
 		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunshadows.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowquality.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 0) {
 		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_MIDDLE;
 		return;
 	}
@@ -113,7 +194,15 @@ static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
 		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
 		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
 		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0) {
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.sunshadows.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowquality.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 1) {
 		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_HIGH;
 		return;
 	}
@@ -124,7 +213,15 @@ static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
 		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
 		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
 		advancedGraphicsOptionsInfo.sunrays.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 1) {
+		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.sunshadows.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowquality.curvalue == 2 &&
+		advancedGraphicsOptionsInfo.shadowblur.curvalue == 1 &&
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 2 &&
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 2 &&
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 2 &&
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 2 &&
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 2) {
 		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_ULTRA;
 		return;
 	}
@@ -142,6 +239,14 @@ static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
 		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
 		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
 		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunshadows.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 0;
 		break;
 	case ADV_PRESET_MIDDLE:
 		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
@@ -151,6 +256,14 @@ static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
 		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
 		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
 		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunshadows.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 0;
 		break;
 	case ADV_PRESET_HIGH:
 		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
@@ -160,6 +273,14 @@ static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
 		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
 		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
 		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
+		advancedGraphicsOptionsInfo.sunshadows.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowquality.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 1;
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 1;
 		break;
 	case ADV_PRESET_ULTRA:
 		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
@@ -169,6 +290,14 @@ static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
 		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
 		advancedGraphicsOptionsInfo.sunrays.curvalue = 1;
 		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 1;
+		advancedGraphicsOptionsInfo.sunshadows.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowquality.curvalue = 2;
+		advancedGraphicsOptionsInfo.shadowblur.curvalue = 1;
+		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 2;
+		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 2;
+		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 2;
+		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 2;
+		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 2;
 		break;
 	default:
 		return;
@@ -181,6 +310,7 @@ static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
 	trap_Cvar_SetValue( "r_ssao", advancedGraphicsOptionsInfo.ssao.curvalue );
 	trap_Cvar_SetValue( "r_drawSunRays", advancedGraphicsOptionsInfo.sunrays.curvalue );
 	trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
+	UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
 }
 
 static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
@@ -248,6 +378,26 @@ static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
 
 	case ID_DYNAMIC_REFLECTIONS:
 		trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_SUNSHADOWS:
+		trap_Cvar_SetValue( "r_sunShadows", advancedGraphicsOptionsInfo.sunshadows.curvalue );
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_SHADOWQUALITY:
+		UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
+		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
+		break;
+
+	case ID_SHADOWBLUR:
+	case ID_SHADOWCASCADE_NEAR:
+	case ID_SHADOWCASCADE_FAR:
+	case ID_SHADOWCASCADE_BIAS:
+	case ID_PSHADOWDIST:
+	case ID_SUNLIGHTMODE:
+		UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
 		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
 		break;
 
@@ -335,7 +485,7 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.network.style               = UI_RIGHT;
 	advancedGraphicsOptionsInfo.network.color               = text_color_normal;
 
-	y = 240 - 3 * (BIGCHAR_HEIGHT + 2);
+	y = 240 - 7 * (BIGCHAR_HEIGHT + 2);
 	advancedGraphicsOptionsInfo.preset.generic.type      = MTYPE_SPINCONTROL;
 	advancedGraphicsOptionsInfo.preset.generic.name      = "Quality Preset:";
 	advancedGraphicsOptionsInfo.preset.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -345,7 +495,8 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.preset.generic.y         = y;
 	advancedGraphicsOptionsInfo.preset.itemnames         = preset_items;
 
-	y += BIGCHAR_HEIGHT + 2;
+	// extra spacing below preset so it reads as a separate group header
+	y += 2 * (BIGCHAR_HEIGHT + 2);
 	advancedGraphicsOptionsInfo.hdr.generic.type      = MTYPE_SPINCONTROL;
 	advancedGraphicsOptionsInfo.hdr.generic.name      = "HDR:";
 	advancedGraphicsOptionsInfo.hdr.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -421,6 +572,136 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.dynamic_reflections.generic.y         = y;
 	advancedGraphicsOptionsInfo.dynamic_reflections.itemnames         = enabled_items;
 	advancedGraphicsOptionsInfo.dynamic_reflections.curvalue          = trap_Cvar_VariableValue( "r_dynamicReflections" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.sunshadows.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.sunshadows.generic.name      = "Sun Shadows:";
+	advancedGraphicsOptionsInfo.sunshadows.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.sunshadows.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.sunshadows.generic.id        = ID_SUNSHADOWS;
+	advancedGraphicsOptionsInfo.sunshadows.generic.x         = 400;
+	advancedGraphicsOptionsInfo.sunshadows.generic.y         = y;
+	advancedGraphicsOptionsInfo.sunshadows.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.sunshadows.curvalue          = trap_Cvar_VariableValue( "r_sunShadows" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.shadowquality.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.shadowquality.generic.name      = "Shadow Quality:";
+	advancedGraphicsOptionsInfo.shadowquality.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.shadowquality.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.shadowquality.generic.id        = ID_SHADOWQUALITY;
+	advancedGraphicsOptionsInfo.shadowquality.generic.x         = 400;
+	advancedGraphicsOptionsInfo.shadowquality.generic.y         = y;
+	advancedGraphicsOptionsInfo.shadowquality.itemnames         = shadow_quality_items;
+	{
+		int shadowMapSize = (int)trap_Cvar_VariableValue( "r_shadowMapSize" );
+		if ( shadowMapSize >= 2048 )
+			advancedGraphicsOptionsInfo.shadowquality.curvalue = 2;
+		else if ( shadowMapSize >= 1024 )
+			advancedGraphicsOptionsInfo.shadowquality.curvalue = 1;
+		else
+			advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
+	}
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.shadowblur.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.shadowblur.generic.name      = "Shadow Blur:";
+	advancedGraphicsOptionsInfo.shadowblur.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.shadowblur.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.shadowblur.generic.id        = ID_SHADOWBLUR;
+	advancedGraphicsOptionsInfo.shadowblur.generic.x         = 400;
+	advancedGraphicsOptionsInfo.shadowblur.generic.y         = y;
+	advancedGraphicsOptionsInfo.shadowblur.itemnames         = enabled_items;
+	advancedGraphicsOptionsInfo.shadowblur.curvalue          = trap_Cvar_VariableValue( "r_shadowBlur" ) != 0;
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.name      = "Shadow Cascade Near:";
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.id        = ID_SHADOWCASCADE_NEAR;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.x         = 400;
+	advancedGraphicsOptionsInfo.shadowcascade_near.generic.y         = y;
+	advancedGraphicsOptionsInfo.shadowcascade_near.itemnames         = shadow_cascade_near_items;
+	{
+		int nearValue = (int)trap_Cvar_VariableValue( "r_shadowCascadeZNear" );
+		if ( nearValue >= 16 )
+			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 2;
+		else if ( nearValue >= 8 )
+			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 1;
+		else
+			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
+	}
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.name      = "Shadow Cascade Far:";
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.id        = ID_SHADOWCASCADE_FAR;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.x         = 400;
+	advancedGraphicsOptionsInfo.shadowcascade_far.generic.y         = y;
+	advancedGraphicsOptionsInfo.shadowcascade_far.itemnames         = shadow_cascade_far_items;
+	{
+		int farValue = (int)trap_Cvar_VariableValue( "r_shadowCascadeZFar" );
+		if ( farValue >= 2048 )
+			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 2;
+		else if ( farValue >= 1024 )
+			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 1;
+		else
+			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
+	}
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.name      = "Shadow Cascade Bias:";
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.id        = ID_SHADOWCASCADE_BIAS;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.x         = 400;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.y         = y;
+	advancedGraphicsOptionsInfo.shadowcascade_bias.itemnames         = shadow_cascade_bias_items;
+	{
+		float biasValue = trap_Cvar_VariableValue( "r_shadowCascadeZBias" );
+		if ( biasValue >= 0.75f )
+			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 3;
+		else if ( biasValue >= 0.375f )
+			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 2;
+		else if ( biasValue >= 0.125f )
+			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 1;
+		else
+			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
+	}
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.name      = "Projected Shadow Dist:";
+	advancedGraphicsOptionsInfo.pshadowdist.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.id        = ID_PSHADOWDIST;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.x         = 400;
+	advancedGraphicsOptionsInfo.pshadowdist.generic.y         = y;
+	advancedGraphicsOptionsInfo.pshadowdist.itemnames         = pshadow_dist_items;
+	{
+		int pshadowDist = (int)trap_Cvar_VariableValue( "r_pshadowDist" );
+		if ( pshadowDist >= 256 )
+			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 2;
+		else if ( pshadowDist >= 128 )
+			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 1;
+		else
+			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
+	}
+
+	y += BIGCHAR_HEIGHT + 2;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.type      = MTYPE_SPINCONTROL;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.name      = "Sunlight Mode:";
+	advancedGraphicsOptionsInfo.sunlightmode.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.id        = ID_SUNLIGHTMODE;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.x         = 400;
+	advancedGraphicsOptionsInfo.sunlightmode.generic.y         = y;
+	advancedGraphicsOptionsInfo.sunlightmode.itemnames         = sunlight_mode_items;
+	advancedGraphicsOptionsInfo.sunlightmode.curvalue          = Com_Clamp( 0, 2, (int)trap_Cvar_VariableValue( "r_sunlightMode" ) );
 	UI_AdvancedGraphicsOptionsMenu_SyncPreset();
 
 	advancedGraphicsOptionsInfo.back.generic.type         = MTYPE_PTEXT;
@@ -447,6 +728,14 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.ssao );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunrays );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.dynamic_reflections );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunshadows );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowquality );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowblur );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_near );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_far );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_bias );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.pshadowdist );
+	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunlightmode );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.back );
 }
 

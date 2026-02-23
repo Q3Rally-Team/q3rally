@@ -316,8 +316,6 @@ GRAPHICS OPTIONS MENU
 
 #define ID_ANISOTROPY	112
 #define ID_MSAA			113
-#define ID_SUNSHADOWS	114
-#define ID_SHADOWQUALITY	115
 
 typedef struct {
 	menuframework_s	menu;
@@ -350,8 +348,6 @@ typedef struct {
 	menulist_s  	filter;
 	menulist_s		anisotropy;
 	menulist_s		msaa;
-	menulist_s		sunshadows;
-	menulist_s		shadowquality;
 	menutext_s		driverinfo;
 
 // STONELANCE
@@ -374,8 +370,6 @@ typedef struct
 	int filter;
 	int anisotropy;
 	int msaa;
-	int sunshadows;
-	int shadowquality;
 	int driver;
 	qboolean extensions;
 } InitialVideoOptions_s;
@@ -386,22 +380,22 @@ static graphicsoptions_t		s_graphicsoptions;
 static InitialVideoOptions_s s_ivo_templates[] =
 {
 	{
-		6, qtrue, 3, 0, 2, 2, 2, 1, 0, 0, 1, 1, 0, qtrue
+		6, qtrue, 3, 0, 2, 2, 2, 1, 0, 0, 0, qtrue
 	},
 	{
-		4, qtrue, 2, 0, 2, 2, 1, 1, 0, 0, 1, 1, 0, qtrue	// JDC: this was tq 3
+		4, qtrue, 2, 0, 2, 2, 1, 1, 0, 0, 0, qtrue	// JDC: this was tq 3
 	},
 	{
-		3, qtrue, 2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, qtrue
+		3, qtrue, 2, 0, 0, 0, 1, 0, 0, 0, 0, qtrue
 	},
 	{
-		2, qtrue, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, qtrue
+		2, qtrue, 1, 0, 1, 0, 0, 0, 0, 0, 0, qtrue
 	},
 	{
-		2, qtrue, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, qtrue
+		2, qtrue, 1, 1, 1, 0, 0, 0, 0, 0, 0, qtrue
 	},
 	{
-		3, qtrue, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, qtrue
+		3, qtrue, 1, 0, 0, 0, 1, 0, 0, 0, 0, qtrue
 	}
 };
 
@@ -567,8 +561,6 @@ static void GraphicsOptions_GetInitialVideo( void )
 	s_ivo.filter      = s_graphicsoptions.filter.curvalue;
 	s_ivo.anisotropy  = s_graphicsoptions.anisotropy.curvalue;
 	s_ivo.msaa        = s_graphicsoptions.msaa.curvalue;
-	s_ivo.sunshadows  = s_graphicsoptions.sunshadows.curvalue;
-	s_ivo.shadowquality = s_graphicsoptions.shadowquality.curvalue;
 	s_ivo.texturebits = s_graphicsoptions.texturebits.curvalue;
 }
 
@@ -647,10 +639,6 @@ static void GraphicsOptions_CheckConfig( void )
 			continue;
 		if ( s_ivo_templates[i].msaa != s_graphicsoptions.msaa.curvalue )
 			continue;
-		if ( s_ivo_templates[i].sunshadows != s_graphicsoptions.sunshadows.curvalue )
-			continue;
-		if ( s_ivo_templates[i].shadowquality != s_graphicsoptions.shadowquality.curvalue )
-			continue;
 //		if ( s_ivo_templates[i].texturebits != s_graphicsoptions.texturebits.curvalue )
 //			continue;
 		s_graphicsoptions.list.curvalue = i;
@@ -697,23 +685,13 @@ static void GraphicsOptions_UpdateMenuItems( void )
 		}
 		s_graphicsoptions.anisotropy.curvalue = 0;
 		s_graphicsoptions.msaa.curvalue = 0;
-		s_graphicsoptions.sunshadows.curvalue = 0;
 		s_graphicsoptions.anisotropy.generic.flags |= QMF_GRAYED;
 		s_graphicsoptions.msaa.generic.flags |= QMF_GRAYED;
-		s_graphicsoptions.sunshadows.generic.flags |= QMF_GRAYED;
-		s_graphicsoptions.shadowquality.generic.flags |= QMF_GRAYED;
 	}
 	else
 	{
 		s_graphicsoptions.anisotropy.generic.flags &= ~QMF_GRAYED;
 		s_graphicsoptions.msaa.generic.flags &= ~QMF_GRAYED;
-		s_graphicsoptions.sunshadows.generic.flags &= ~QMF_GRAYED;
-		s_graphicsoptions.shadowquality.generic.flags &= ~QMF_GRAYED;
-	}
-
-	if ( s_graphicsoptions.sunshadows.curvalue == 0 )
-	{
-		s_graphicsoptions.shadowquality.generic.flags |= QMF_GRAYED;
 	}
 
 	s_graphicsoptions.apply.generic.flags |= QMF_HIDDEN|QMF_INACTIVE;
@@ -763,14 +741,6 @@ static void GraphicsOptions_UpdateMenuItems( void )
 		s_graphicsoptions.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.msaa != s_graphicsoptions.msaa.curvalue )
-	{
-		s_graphicsoptions.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
-	}
-	if ( s_ivo.sunshadows != s_graphicsoptions.sunshadows.curvalue )
-	{
-		s_graphicsoptions.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
-	}
-	if ( s_ivo.shadowquality != s_graphicsoptions.shadowquality.curvalue )
 	{
 		s_graphicsoptions.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
@@ -903,21 +873,6 @@ static void GraphicsOptions_ApplyChanges( void *unused, int notification )
 		{
 			trap_Cvar_SetValue( "r_ext_framebuffer_multisample", msaaValues[msaaIndex] );
 		}
-	}
-
-	trap_Cvar_SetValue( "r_sunShadows", s_graphicsoptions.sunshadows.curvalue );
-	if ( s_graphicsoptions.sunshadows.curvalue )
-	{
-		static const int shadowFilterValues[] = { 0, 1, 2 };
-		static const int shadowMapSizeValues[] = { 512, 1024, 2048 };
-		int shadowIndex = s_graphicsoptions.shadowquality.curvalue;
-		if ( shadowIndex < 0 )
-			shadowIndex = 0;
-		if ( shadowIndex > 2 )
-			shadowIndex = 2;
-
-		trap_Cvar_SetValue( "r_shadowFilter", shadowFilterValues[shadowIndex] );
-		trap_Cvar_SetValue( "r_shadowMapSize", shadowMapSizeValues[shadowIndex] );
 	}
 
 	trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
@@ -1135,17 +1090,6 @@ static void GraphicsOptions_SetMenuItems( void )
 			s_graphicsoptions.msaa.curvalue = 0;
 	}
 
-	s_graphicsoptions.sunshadows.curvalue = trap_Cvar_VariableValue( "r_sunShadows" ) != 0;
-	{
-		int shadowMapSize = (int)trap_Cvar_VariableValue( "r_shadowMapSize" );
-		if ( shadowMapSize >= 2048 )
-			s_graphicsoptions.shadowquality.curvalue = 2;
-		else if ( shadowMapSize >= 1024 )
-			s_graphicsoptions.shadowquality.curvalue = 1;
-		else
-			s_graphicsoptions.shadowquality.curvalue = 0;
-	}
-
 	if ( trap_Cvar_VariableValue( "r_lodBias" ) > 0 )
 	{
 		if ( trap_Cvar_VariableValue( "r_subdivisions" ) >= 20 )
@@ -1271,7 +1215,6 @@ void GraphicsOptions_MenuInit( void )
 		"On",
 		NULL
 	};
-
 	int y;
 
 	// zero set all our globals
@@ -1511,26 +1454,6 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.msaa.itemnames		 = msaa_names;
 	y += BIGCHAR_HEIGHT+2;
 
-	s_graphicsoptions.sunshadows.generic.type		 = MTYPE_SPINCONTROL;
-	s_graphicsoptions.sunshadows.generic.name		 = "Sun Shadows:";
-	s_graphicsoptions.sunshadows.generic.flags		 = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_graphicsoptions.sunshadows.generic.x		 = 400;
-	s_graphicsoptions.sunshadows.generic.y		 = y;
-	s_graphicsoptions.sunshadows.generic.id		 = ID_SUNSHADOWS;
-	s_graphicsoptions.sunshadows.generic.callback	 = GraphicsOptions_Event;
-	s_graphicsoptions.sunshadows.itemnames		 = enabled_names;
-	y += BIGCHAR_HEIGHT+2;
-
-	s_graphicsoptions.shadowquality.generic.type		 = MTYPE_SPINCONTROL;
-	s_graphicsoptions.shadowquality.generic.name		 = "Shadow Quality:";
-	s_graphicsoptions.shadowquality.generic.flags		 = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_graphicsoptions.shadowquality.generic.x		 = 400;
-	s_graphicsoptions.shadowquality.generic.y		 = y;
-	s_graphicsoptions.shadowquality.generic.id		 = ID_SHADOWQUALITY;
-	s_graphicsoptions.shadowquality.generic.callback	 = GraphicsOptions_Event;
-	s_graphicsoptions.shadowquality.itemnames		 = quality_names;
-	y += BIGCHAR_HEIGHT+2;
-
 	y += BIGCHAR_HEIGHT + 8;
 
 	s_graphicsoptions.driverinfo.generic.type     = MTYPE_PTEXT;
@@ -1618,8 +1541,6 @@ void GraphicsOptions_MenuInit( void )
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.filter );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.anisotropy );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.msaa );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.sunshadows );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.shadowquality );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driverinfo );
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.back );
