@@ -308,15 +308,16 @@ GRAPHICS OPTIONS MENU
 #define ID_MODE			104
 #define ID_DRIVERINFO	105
 #define ID_GRAPHICS		106
-#define ID_DISPLAY		107
-#define ID_SOUND		108
-#define ID_NETWORK		109
-#define ID_RATIO		110
+#define ID_ADVANCED_GRAPHICS	107
+#define ID_DISPLAY		108
+#define ID_SOUND		109
+#define ID_NETWORK		110
+#define ID_RATIO		111
 
-#define ID_ANISOTROPY	111
-#define ID_MSAA			112
-#define ID_SUNSHADOWS	113
-#define ID_SHADOWQUALITY	114
+#define ID_ANISOTROPY	112
+#define ID_MSAA			113
+#define ID_SUNSHADOWS	114
+#define ID_SHADOWQUALITY	115
 
 typedef struct {
 	menuframework_s	menu;
@@ -330,6 +331,7 @@ typedef struct {
 // END
 
 	menutext_s		graphics;
+	menutext_s		advanced_graphics;
 	menutext_s		display;
 	menutext_s		sound;
 	menutext_s		network;
@@ -980,6 +982,11 @@ static void GraphicsOptions_Event( void* ptr, int event ) {
 	case ID_GRAPHICS:
 		break;
 
+	case ID_ADVANCED_GRAPHICS:
+		UI_PopMenu();
+		UI_AdvancedGraphicsOptionsMenu();
+		break;
+
 	case ID_DISPLAY:
 		UI_PopMenu();
 		UI_DisplayOptionsMenu();
@@ -1319,12 +1326,23 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.graphics.color			= text_color_normal;
 // END
 
+
+	s_graphicsoptions.advanced_graphics.generic.type		= MTYPE_PTEXT;
+	s_graphicsoptions.advanced_graphics.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_graphicsoptions.advanced_graphics.generic.id		= ID_ADVANCED_GRAPHICS;
+	s_graphicsoptions.advanced_graphics.generic.callback	= GraphicsOptions_Event;
+	s_graphicsoptions.advanced_graphics.generic.x			= 216;
+	s_graphicsoptions.advanced_graphics.generic.y			= 240 - PROP_HEIGHT;
+	s_graphicsoptions.advanced_graphics.string			= "ADVANCED GRAPHICS";
+	s_graphicsoptions.advanced_graphics.style			= UI_RIGHT;
+	s_graphicsoptions.advanced_graphics.color			= text_color_normal;
+
 	s_graphicsoptions.display.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_graphicsoptions.display.generic.id		= ID_DISPLAY;
 	s_graphicsoptions.display.generic.callback	= GraphicsOptions_Event;
 	s_graphicsoptions.display.generic.x			= 216;
-	s_graphicsoptions.display.generic.y			= 240 - PROP_HEIGHT;
+	s_graphicsoptions.display.generic.y			= 240;
 	s_graphicsoptions.display.string			= "DISPLAY";
 	s_graphicsoptions.display.style				= UI_RIGHT;
 // BAGPUSS
@@ -1337,7 +1355,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.sound.generic.id			= ID_SOUND;
 	s_graphicsoptions.sound.generic.callback	= GraphicsOptions_Event;
 	s_graphicsoptions.sound.generic.x			= 216;
-	s_graphicsoptions.sound.generic.y			= 240;
+	s_graphicsoptions.sound.generic.y			= 240 + PROP_HEIGHT;
 	s_graphicsoptions.sound.string				= "SOUND";
 	s_graphicsoptions.sound.style				= UI_RIGHT;
 // BAGPUSS
@@ -1350,7 +1368,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.network.generic.id		= ID_NETWORK;
 	s_graphicsoptions.network.generic.callback	= GraphicsOptions_Event;
 	s_graphicsoptions.network.generic.x			= 216;
-	s_graphicsoptions.network.generic.y			= 240 + PROP_HEIGHT;
+	s_graphicsoptions.network.generic.y			= 240 + 2 * PROP_HEIGHT;
 	s_graphicsoptions.network.string			= "NETWORK";
 	s_graphicsoptions.network.style				= UI_RIGHT;
 // BAGPUSS
@@ -1581,6 +1599,7 @@ void GraphicsOptions_MenuInit( void )
 // END
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.graphics );
+	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.advanced_graphics );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.display );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.sound );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.network );

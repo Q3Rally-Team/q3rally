@@ -2936,6 +2936,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/bg_misc.o \
   $(B)/$(BASEGAME)/ui/bg_lib.o \
   $(B)/$(BASEGAME)/ui/ui_addbots.o \
+  $(B)/$(BASEGAME)/ui/ui_advanced_graphics.o \
   $(B)/$(BASEGAME)/ui/ui_atoms.o \
   $(B)/$(BASEGAME)/ui/ui_cdkey.o \
   $(B)/$(BASEGAME)/ui/ui_cinematics.o \

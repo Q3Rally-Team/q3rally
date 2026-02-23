@@ -42,6 +42,7 @@ NETWORK OPTIONS MENU
 // END
 
 #define ID_GRAPHICS			10
+#define ID_ADVANCED_GRAPHICS	17
 #define ID_DISPLAY			11
 #define ID_SOUND			12
 #define ID_NETWORK			13
@@ -70,6 +71,7 @@ typedef struct {
 // END
 
 	menutext_s		graphics;
+	menutext_s		advanced_graphics;
 	menutext_s		display;
 	menutext_s		sound;
 	menutext_s		network;
@@ -99,6 +101,11 @@ static void UI_NetworkOptionsMenu_Event( void* ptr, int event ) {
 	case ID_GRAPHICS:
 		UI_PopMenu();
 		UI_GraphicsOptionsMenu();
+		break;
+
+	case ID_ADVANCED_GRAPHICS:
+		UI_PopMenu();
+		UI_AdvancedGraphicsOptionsMenu();
 		break;
 
 	case ID_DISPLAY:
@@ -195,12 +202,23 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.graphics.color				= text_color_normal;
 // END
 
+
+	networkOptionsInfo.advanced_graphics.generic.type			= MTYPE_PTEXT;
+	networkOptionsInfo.advanced_graphics.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	networkOptionsInfo.advanced_graphics.generic.id			= ID_ADVANCED_GRAPHICS;
+	networkOptionsInfo.advanced_graphics.generic.callback		= UI_NetworkOptionsMenu_Event;
+	networkOptionsInfo.advanced_graphics.generic.x				= 216;
+	networkOptionsInfo.advanced_graphics.generic.y				= 240 - PROP_HEIGHT;
+	networkOptionsInfo.advanced_graphics.string					= "ADVANCED GRAPHICS";
+	networkOptionsInfo.advanced_graphics.style					= UI_RIGHT;
+	networkOptionsInfo.advanced_graphics.color					= text_color_normal;
+
 	networkOptionsInfo.display.generic.type			= MTYPE_PTEXT;
 	networkOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	networkOptionsInfo.display.generic.id			= ID_DISPLAY;
 	networkOptionsInfo.display.generic.callback		= UI_NetworkOptionsMenu_Event;
 	networkOptionsInfo.display.generic.x			= 216;
-	networkOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
+	networkOptionsInfo.display.generic.y			= 240;
 	networkOptionsInfo.display.string				= "DISPLAY";
 	networkOptionsInfo.display.style				= UI_RIGHT;
 // BAGPUSS
@@ -213,7 +231,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.sound.generic.id				= ID_SOUND;
 	networkOptionsInfo.sound.generic.callback		= UI_NetworkOptionsMenu_Event;
 	networkOptionsInfo.sound.generic.x				= 216;
-	networkOptionsInfo.sound.generic.y				= 240;
+	networkOptionsInfo.sound.generic.y				= 240 + PROP_HEIGHT;
 	networkOptionsInfo.sound.string					= "SOUND";
 	networkOptionsInfo.sound.style					= UI_RIGHT;
 	networkOptionsInfo.sound.color					= color_red;
@@ -227,7 +245,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.network.generic.id			= ID_NETWORK;
 	networkOptionsInfo.network.generic.callback		= UI_NetworkOptionsMenu_Event;
 	networkOptionsInfo.network.generic.x			= 216;
-	networkOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
+	networkOptionsInfo.network.generic.y			= 240 + 2 * PROP_HEIGHT;
 	networkOptionsInfo.network.string				= "NETWORK";
 	networkOptionsInfo.network.style				= UI_RIGHT;
 // BAGPUSS
@@ -277,6 +295,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 */
 // END
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.graphics );
+	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.advanced_graphics );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.display );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.sound );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.network );

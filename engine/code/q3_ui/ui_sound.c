@@ -44,6 +44,7 @@ SOUND OPTIONS MENU
 // END
 
 #define ID_GRAPHICS			10
+#define ID_ADVANCED_GRAPHICS	21
 #define ID_DISPLAY			11
 #define ID_SOUND			12
 #define ID_NETWORK			13
@@ -80,6 +81,7 @@ typedef struct {
 // END
 
 	menutext_s			graphics;
+	menutext_s			advanced_graphics;
 	menutext_s			display;
 	menutext_s			sound;
 	menutext_s			network;
@@ -120,6 +122,11 @@ static void UI_SoundOptionsMenu_Event( void* ptr, int event ) {
 	case ID_GRAPHICS:
 		UI_PopMenu();
 		UI_GraphicsOptionsMenu();
+		break;
+
+	case ID_ADVANCED_GRAPHICS:
+		UI_PopMenu();
+		UI_AdvancedGraphicsOptionsMenu();
 		break;
 
 	case ID_DISPLAY:
@@ -298,12 +305,23 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.graphics.color				= text_color_normal;
 // END
 
+
+	soundOptionsInfo.advanced_graphics.generic.type		= MTYPE_PTEXT;
+	soundOptionsInfo.advanced_graphics.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	soundOptionsInfo.advanced_graphics.generic.id			= ID_ADVANCED_GRAPHICS;
+	soundOptionsInfo.advanced_graphics.generic.callback	= UI_SoundOptionsMenu_Event;
+	soundOptionsInfo.advanced_graphics.generic.x			= 216;
+	soundOptionsInfo.advanced_graphics.generic.y			= 240 - PROP_HEIGHT;
+	soundOptionsInfo.advanced_graphics.string				= "ADVANCED GRAPHICS";
+	soundOptionsInfo.advanced_graphics.style				= UI_RIGHT;
+	soundOptionsInfo.advanced_graphics.color				= text_color_normal;
+
 	soundOptionsInfo.display.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	soundOptionsInfo.display.generic.id			= ID_DISPLAY;
 	soundOptionsInfo.display.generic.callback	= UI_SoundOptionsMenu_Event;
 	soundOptionsInfo.display.generic.x			= 216;
-	soundOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
+	soundOptionsInfo.display.generic.y			= 240;
 	soundOptionsInfo.display.string				= "DISPLAY";
 	soundOptionsInfo.display.style				= UI_RIGHT;
 // BAGPUSS
@@ -316,7 +334,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.sound.generic.id			= ID_SOUND;
 	soundOptionsInfo.sound.generic.callback		= UI_SoundOptionsMenu_Event;
 	soundOptionsInfo.sound.generic.x			= 216;
-	soundOptionsInfo.sound.generic.y			= 240;
+	soundOptionsInfo.sound.generic.y			= 240 + PROP_HEIGHT;
 	soundOptionsInfo.sound.string				= "SOUND";
 	soundOptionsInfo.sound.style				= UI_RIGHT;
 // BAGPUSS
@@ -329,7 +347,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.network.generic.id			= ID_NETWORK;
 	soundOptionsInfo.network.generic.callback	= UI_SoundOptionsMenu_Event;
 	soundOptionsInfo.network.generic.x			= 216;
-	soundOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
+	soundOptionsInfo.network.generic.y			= 240 + 2 * PROP_HEIGHT;
 	soundOptionsInfo.network.string				= "NETWORK";
 	soundOptionsInfo.network.style				= UI_RIGHT;
 // BAGPUSS
@@ -442,6 +460,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 */
 // END
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.graphics );
+	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.advanced_graphics );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.display );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.sound );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.network );

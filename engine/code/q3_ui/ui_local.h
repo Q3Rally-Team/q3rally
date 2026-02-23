@@ -977,6 +977,12 @@ void UI_SaveConfigMenu_Cache( void );
 void UI_SaveConfigMenu( void );
 
 //
+// ui_advanced_graphics.c
+//
+void UI_AdvancedGraphicsOptionsMenu_Cache( void );
+void UI_AdvancedGraphicsOptionsMenu( void );
+
+//
 // ui_display.c
 //
 void UI_DisplayOptionsMenu_Cache( void );
