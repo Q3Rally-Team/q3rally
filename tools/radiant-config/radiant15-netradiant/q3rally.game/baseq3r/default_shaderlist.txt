@@ -19,6 +19,7 @@ mapobjects
 plates
 powerups
 q3r_textures
+reflect
 skies
 sprites
 weapons

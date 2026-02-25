@@ -1,10 +1,8 @@
-// Quake3 Arena entity definition file for Q3Radiant
-// Based on draft by Suicide 20 7.30.99 and inolen 9-3-99
-// Upgraded by Eutectic: eutectic@ritualistic.com
-// (visible models added by raYGunn - paths provided by Suicide 20)
-// (terrain information added to func_group entity by Paul Jaquays)
+// Q3Rally entity definition file for NetRadiant
+// Based on Quake3 Arena entity definitions
+// Adapted for Q3Rally by the Q3Rally team
 // Q3Map2 entities/keys added by ydnar
-// Adapted for EntityPlus
+// Surface flags: SLICK, GRASS, ASPHALT, WET, SNOW, GRAVEL, ICE, DIRT, SAND
 
 //=============================================================================
 
