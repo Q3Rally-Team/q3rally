@@ -224,7 +224,7 @@ void Weapon_DerbyRam( gentity_t *ent ) {
         }
 
         speed = VectorLength( ent->s.pos.trDelta );
-        damage = speed * g_derbyRamDamageScale.value;
+        damage = g_derbyRamDamage.value + speed * g_derbyRamDamageScale.value;
         damage = Com_Clamp( 1.0f, g_derbyRamDamageMax.value, damage );
 
         G_RadiusDamage( ent->r.currentOrigin, ent, damage, radius, ent, MOD_VEHICLE_COLLISION );

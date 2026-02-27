@@ -26,110 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* thresholds for the absolute dot products when categorising collision faces */
 #define RALLY_IMPACT_FRONT_THRESHOLD   0.75f
 #define RALLY_IMPACT_SIDE_THRESHOLD    0.35f
-#define DERBY_IMPACT_FORWARD_THRESHOLD 0.75f
-#define DERBY_IMPACT_SIDE_THRESHOLD    0.35f
-
-typedef enum {
-    RALLY_IMPACT_FRONT,
-    RALLY_IMPACT_SIDE,
-    RALLY_IMPACT_REAR
-} rallyImpactType_t;
-
-/*
-static rallyImpactType_t G_RallyObject_ClassifyImpact( const vec3_t normal, const vec3_t forward, const vec3_t right ) {
-    float forwardDot, absForward, rightDot, absRight;
-
-    forwardDot = DotProduct( normal, forward );
-    absForward = Q_fabs( forwardDot );
-    if( absForward >= RALLY_IMPACT_FRONT_THRESHOLD ) {
-        if( forwardDot <= 0.0f ) {
-            return RALLY_IMPACT_FRONT;
-        }
-        return RALLY_IMPACT_REAR;
-    }
-
-    rightDot = DotProduct( normal, right );
-    absRight = Q_fabs( rightDot );
-    if( absRight >= RALLY_IMPACT_SIDE_THRESHOLD ) {
-        return RALLY_IMPACT_SIDE;
-    }
-
-    // default to the shallowest classification 
-    if( forwardDot > 0.0f ) {
-        return RALLY_IMPACT_REAR;
-    }
-
-    return RALLY_IMPACT_FRONT;
-}
-*/
-
-/*
-static const char *G_RallyObject_ImpactName( rallyImpactType_t impact ) {
-    switch( impact ) {
-    case RALLY_IMPACT_FRONT:
-        return "front";
-    case RALLY_IMPACT_SIDE:
-        return "side";
-    case RALLY_IMPACT_REAR:
-        return "rear";
-    }
-
-    return "unknown";
-}
-*/
-
-/*
-static float G_RallyObject_ImpactWeight( rallyImpactType_t impact ) {
-    switch( impact ) {
-    case RALLY_IMPACT_FRONT:
-        return g_derbyCollisionFrontWeight.value;
-    case RALLY_IMPACT_SIDE:
-        return g_derbyCollisionSideWeight.value;
-    case RALLY_IMPACT_REAR:
-        return g_derbyCollisionRearWeight.value;
-    }
-
-    return 1.0f;
-}
-*/
-
-/*
-static void G_RallyObject_DeriveImpactWeight( float forwardDot, float rightDot,
-        float frontWeight, float sideWeight, float rearWeight,
-        float *outWeight, const char **outName ) {
-    if( outWeight == NULL || outName == NULL ) {
-        return;
-    }
-
-    if( Q_fabs( forwardDot ) >= RALLY_IMPACT_FRONT_THRESHOLD ) {
-        if( forwardDot <= 0.0f ) {
-            *outWeight = frontWeight;
-            *outName = "front";
-        }
-        else {
-            *outWeight = rearWeight;
-            *outName = "rear";
-        }
-        return;
-    }
-
-    if( Q_fabs( rightDot ) >= RALLY_IMPACT_SIDE_THRESHOLD ) {
-        *outWeight = sideWeight;
-        *outName = "side";
-        return;
-    }
-
-    if( forwardDot > 0.0f ) {
-        *outWeight = rearWeight;
-        *outName = "rear";
-    }
-    else {
-        *outWeight = frontWeight;
-        *outName = "front";
-    }
-}
-*/
-
 
 static float G_RallyObject_SelectImpactWeight( float forwardDot, float rightDot,
         float frontWeight, float sideWeight, float rearWeight, const char **outName ) {
@@ -156,6 +52,46 @@ static float G_RallyObject_SelectImpactWeight( float forwardDot, float rightDot,
     }
 
     return weight;
+}
+
+static float G_RallyObject_ClampRammerDamageRatio( void ) {
+    return Com_Clamp( 0.0f, 2.0f, g_derbyRammerDamageRatio.value );
+}
+
+static void G_RallyObject_ComputeDerbyCollisionDamage( float closingSpeed, float normalVelSelf,
+        float derbyScale, float *damageSelfOut, float *damageHitOut ) {
+    float totalDamage;
+    float damageSelf;
+    float damageHit;
+    float rammerRatio;
+
+    if( damageSelfOut == NULL || damageHitOut == NULL ) {
+        return;
+    }
+
+    if( closingSpeed <= 0.0f ) {
+        *damageSelfOut = 0.0f;
+        *damageHitOut = 0.0f;
+        return;
+    }
+
+    totalDamage = ( closingSpeed + g_vehicleDamageOffset.value ) * g_vehicleDamageScale.value;
+    totalDamage *= derbyScale;
+    if( totalDamage <= 0.0f ) {
+        *damageSelfOut = 0.0f;
+        *damageHitOut = 0.0f;
+        return;
+    }
+
+    damageSelf = totalDamage * ( normalVelSelf / closingSpeed );
+    damageHit = totalDamage - damageSelf;
+
+    rammerRatio = G_RallyObject_ClampRammerDamageRatio();
+    damageHit *= rammerRatio;
+    damageSelf *= 2.0f - rammerRatio;
+
+    *damageSelfOut = max( 0.0f, damageSelf );
+    *damageHitOut = max( 0.0f, damageHit );
 }
 
 /*
@@ -463,14 +399,10 @@ void G_RallyObject_TracePhysics( gentity_t *self, float time )
 
                 closing = vSelf + vHit;
                 if( closing > 0.0f ) {
-                    totalDamage = ( closing + g_vehicleDamageOffset.value ) * g_vehicleDamageScale.value;
-                    totalDamage *= g_derbyDamageFactor.value;
-                    damageSelfF = totalDamage * ( vHit / closing );
-                    damageHitF  = totalDamage - damageSelfF;
+                    G_RallyObject_ComputeDerbyCollisionDamage( closing, vHit,
+                        g_derbyDamageFactor.value, &damageSelfF, &damageHitF );
 
-                    damageHitF  *= g_derbyRammerDamageRatio.value;
-                    damageSelfF *= 2.0f - g_derbyRammerDamageRatio.value;
-
+                    totalDamage = damageSelfF + damageHitF;
                     damageSelfF *= weightSelf;
                     damageHitF  *= weightHit;
 

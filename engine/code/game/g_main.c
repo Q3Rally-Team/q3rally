@@ -45,6 +45,7 @@ static const char *G_LadderModeForGametype( int gametype );
 static void G_LadderFormatIsoTime( const qtime_t *qt, char *buffer, size_t size );
 static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum );
 static void G_LadderSubmitMatchReport( const char *reason );
+static void G_ValidateDerbyDamageCvars( void );
 static ladderMatchPayload_t s_ladderMatchPayload;
 
 vmCvar_t	g_gametype;
@@ -311,9 +312,9 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_derbyRamDamage, "g_derbyRamDamage", "100", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageScale, "g_derbyRamDamageScale", "0.05", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "50", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyCollisionFrontWeight, "g_derbyCollisionFrontWeight", "0.2", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyCollisionSideWeight, "g_derbyCollisionSideWeight", "0.5", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyCollisionRearWeight, "g_derbyCollisionRearWeight", "0.8", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionFrontWeight, "g_derbyCollisionFrontWeight", "1.0", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionSideWeight, "g_derbyCollisionSideWeight", "0.65", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyCollisionRearWeight, "g_derbyCollisionRearWeight", "0.35", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyCollisionLog, "g_derbyCollisionLog", "0", 0, 0, qfalse },
         // END
 
@@ -544,6 +545,8 @@ void G_RegisterCvars( void ) {
 	}
 
 	level.warmupModificationCount = g_warmup.modificationCount;
+
+        G_ValidateDerbyDamageCvars();
 }
 
 /*
@@ -551,6 +554,53 @@ void G_RegisterCvars( void ) {
 G_UpdateCvars
 =================
 */
+static void G_ValidateDerbyDamageCvars( void ) {
+        float clamped;
+
+        clamped = Com_Clamp( 0.0f, 2.0f, g_derbyRammerDamageRatio.value );
+        if ( clamped != g_derbyRammerDamageRatio.value ) {
+                trap_Cvar_Set( "g_derbyRammerDamageRatio", va( "%.3f", clamped ) );
+                trap_Cvar_Update( &g_derbyRammerDamageRatio );
+        }
+
+        if ( g_derbyRamDamage.value < 0.0f ) {
+                trap_Cvar_Set( "g_derbyRamDamage", "0" );
+                trap_Cvar_Update( &g_derbyRamDamage );
+        }
+
+        if ( g_derbyRamDamageScale.value < 0.0f ) {
+                trap_Cvar_Set( "g_derbyRamDamageScale", "0" );
+                trap_Cvar_Update( &g_derbyRamDamageScale );
+        }
+
+        if ( g_derbyRamDamageMax.value < 1.0f ) {
+                trap_Cvar_Set( "g_derbyRamDamageMax", "1" );
+                trap_Cvar_Update( &g_derbyRamDamageMax );
+        }
+
+        if ( g_derbyDamageFactor.value < 0.0f ) {
+                trap_Cvar_Set( "g_derbyDamageFactor", "0" );
+                trap_Cvar_Update( &g_derbyDamageFactor );
+        }
+        clamped = Com_Clamp( 0.0f, 2.0f, g_derbyCollisionFrontWeight.value );
+        if ( clamped != g_derbyCollisionFrontWeight.value ) {
+                trap_Cvar_Set( "g_derbyCollisionFrontWeight", va( "%.3f", clamped ) );
+                trap_Cvar_Update( &g_derbyCollisionFrontWeight );
+        }
+
+        clamped = Com_Clamp( 0.0f, 2.0f, g_derbyCollisionSideWeight.value );
+        if ( clamped != g_derbyCollisionSideWeight.value ) {
+                trap_Cvar_Set( "g_derbyCollisionSideWeight", va( "%.3f", clamped ) );
+                trap_Cvar_Update( &g_derbyCollisionSideWeight );
+        }
+
+        clamped = Com_Clamp( 0.0f, 2.0f, g_derbyCollisionRearWeight.value );
+        if ( clamped != g_derbyCollisionRearWeight.value ) {
+                trap_Cvar_Set( "g_derbyCollisionRearWeight", va( "%.3f", clamped ) );
+                trap_Cvar_Update( &g_derbyCollisionRearWeight );
+        }
+}
+
 void G_UpdateCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
@@ -578,6 +628,8 @@ void G_UpdateCvars( void ) {
 	if (remapped) {
 		G_RemapTeamShaders();
 	}
+
+        G_ValidateDerbyDamageCvars();
 }
 
 static void G_LadderBuildMatchId( int randomSeed ) {

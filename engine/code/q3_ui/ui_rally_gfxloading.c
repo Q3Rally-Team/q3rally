@@ -27,47 +27,101 @@ Q3Rally Graphics Loading Screen - Enhanced Version
 
 Handles step-by-step UI caching with visual feedback and artificial delay
 for improved user experience and better visual feedback.
+
+Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons.
+"Update Now" opens the Q3Rally download page in the system browser.
 ===========================================================================
 */
 
 #include "ui_local.h"
 
-static const int MIN_STAGE_TIME = 450;      /* minimum milliseconds per stage */
-static const int FINAL_DISPLAY_TIME = 1200; /* time to display 100% before transition */
+/* -------------------------------------------------------------------------
+   Constants
+   ------------------------------------------------------------------------- */
+
+#define MIN_STAGE_TIME      450     /* minimum milliseconds per stage */
+#define FINAL_DISPLAY_TIME  1200    /* time to display 100% before transition */
+
+#define Q3RALLY_DOWNLOAD_URL "https://www.q3rally.com/download-test/"
+
+/* Layout constants - all positions in 640x480 virtual screen space */
+#define SCREEN_CX       320     /* horizontal center */
+
+/* Header block */
+#define HDR_TITLE_Y      36
+#define HDR_VERSION_Y    72
+
+/* Progress block */
+#define BAR_X           160
+#define BAR_Y           200
+#define BAR_W           320
+#define BAR_H            20
+#define CAR_ICON_W       48
+#define CAR_ICON_H       48
+#define BAR_STAGE_Y     (BAR_Y - 22)        /* stage label above the bar */
+#define BAR_PCT_Y       (BAR_Y + BAR_H + 10)/* percentage below the bar  */
+
+/* Update notice block (below progress) */
+#define UPD_BASE_Y      (BAR_PCT_Y + 30)
+
+/* Tip block (near bottom) */
+#define TIP_LABEL_Y     390
+#define TIP_TEXT_Y      408
+
+/* Separator line Y positions */
+#define SEP_TOP_Y        90
+#define SEP_BOT_Y       380
+
+/* -------------------------------------------------------------------------
+   Update-dialog button state
+   ------------------------------------------------------------------------- */
+
+typedef enum {
+    UPD_BTN_NONE = -1,
+    UPD_BTN_NOW  =  0,
+    UPD_BTN_SKIP =  1
+} updBtn_t;
+
+/* -------------------------------------------------------------------------
+   Main state struct - declared early so stage functions can reference it
+   ------------------------------------------------------------------------- */
+
+typedef struct {
+    menuframework_s menu;
+    playerInfo_t    playerinfo;            /* used for interpolation only */
+    int             currentCache;          /* current cache step */
+    float           loadPercent;           /* raw loading percent [0.0 - 1.0] */
+    float           smoothProgress;        /* smoothly interpolated value for visuals */
+    int             stageStartTime;        /* when current stage started */
+    int             finalDisplayStartTime; /* when 100% display phase started */
+    qhandle_t       carShader;             /* icon for progress indicator */
+    int             tipIndex;              /* index into loading tips */
+    qboolean        cacheExecuted;         /* whether current stage's cache has been executed */
+    qboolean        finalPhase;            /* whether we're in the final display phase */
+
+    /* update notice */
+    qboolean        requireUpdateAck;      /* remote version newer than local */
+    qboolean        updateAcked;           /* player confirmed the update notice */
+    updBtn_t        hoveredBtn;            /* which button the mouse is over */
+} gfxloading_t;
+
+static gfxloading_t s_gfxloading;
+
+/* -------------------------------------------------------------------------
+   Stage definitions - placed after s_gfxloading so GFXStage_PlayerData
+   can reference it without a forward declaration.
+   ------------------------------------------------------------------------- */
 
 typedef struct {
     void (*exec)(void);
 } gfx_stage_t;
 
-typedef struct {
-    menuframework_s menu;
-    playerInfo_t playerinfo;     /* used for interpolation only */
-    int currentCache;            /* current cache step */
-    float loadPercent;           /* raw loading percent [0.0 - 1.0] */
-    float smoothProgress;        /* smoothly interpolated value for visuals */
-    int stageStartTime;          /* when current stage started */
-    int finalDisplayStartTime;   /* when 100% display phase started */
-    qhandle_t carShader;         /* icon for progress indicator */
-    int tipIndex;                /* index into loading tips */
-    qboolean cacheExecuted;      /* whether current stage's cache has been executed */
-    qboolean finalPhase;         /* whether we're in the final display phase */
-    qboolean requireUpdateAck;   /* remote version newer than local */
-    qboolean updateAcked;        /* player confirmed the update notice */
-} gfxloading_t;
-
-static gfxloading_t s_gfxloading;
-
-/*
-======================
-Stage Implementations
-======================
-*/
-static void GFXStage_Init(void) {}
-static void GFXStage_SetupMenu(void) { UI_SetupMenu_Cache(); }
-static void GFXStage_PlayerModel(void) { PlayerModel_Cache(); }
+static void GFXStage_Init(void)           {}
+static void GFXStage_SetupMenu(void)      { UI_SetupMenu_Cache(); }
+static void GFXStage_PlayerModel(void)    { PlayerModel_Cache(); }
 static void GFXStage_PlayerSettings(void) { PlayerSettings_Cache(); }
-static void GFXStage_Controls(void) { Controls_Cache(); }
-static void GFXStage_ArenaServers(void) { ArenaServers_Cache(); }
+static void GFXStage_Controls(void)       { Controls_Cache(); }
+static void GFXStage_ArenaServers(void)   { ArenaServers_Cache(); }
 static void GFXStage_PlayerData(void) {
     char model[MAX_QPATH];
     char rim[MAX_QPATH];
@@ -75,12 +129,12 @@ static void GFXStage_PlayerData(void) {
     char plate[MAX_QPATH];
 
     trap_Cvar_VariableStringBuffer("model", model, sizeof(model));
-    trap_Cvar_VariableStringBuffer("rim", rim, sizeof(rim));
-    trap_Cvar_VariableStringBuffer("head", head, sizeof(head));
+    trap_Cvar_VariableStringBuffer("rim",   rim,   sizeof(rim));
+    trap_Cvar_VariableStringBuffer("head",  head,  sizeof(head));
     trap_Cvar_VariableStringBuffer("plate", plate, sizeof(plate));
     UI_PlayerInfo_SetModel(&s_gfxloading.playerinfo, model, rim, head, plate);
 }
-static void GFXStage_StartServer(void) { StartServer_Cache(); }
+static void GFXStage_StartServer(void)    { StartServer_Cache(); }
 
 static const char * const stageNames[] = {
     "Initializing System...",
@@ -95,187 +149,243 @@ static const char * const stageNames[] = {
 };
 
 static const gfx_stage_t stages[] = {
-    {GFXStage_Init},
-    {GFXStage_SetupMenu},
-    {GFXStage_PlayerModel},
-    {GFXStage_PlayerSettings},
-    {GFXStage_Controls},
-    {GFXStage_ArenaServers},
-    {GFXStage_PlayerData},
-    {GFXStage_StartServer},
+    { GFXStage_Init           },
+    { GFXStage_SetupMenu      },
+    { GFXStage_PlayerModel    },
+    { GFXStage_PlayerSettings },
+    { GFXStage_Controls       },
+    { GFXStage_ArenaServers   },
+    { GFXStage_PlayerData     },
+    { GFXStage_StartServer    },
 };
 
-/*
-============================
-UI_GFX_Loading_ExecuteStage
-============================
-Executes the actual caching operations for the current stage.
-This is separated from the timing logic to allow for artificial delays.
-*/
-static void UI_GFX_Loading_ExecuteStage(void) {
-    int totalStages = ARRAY_LEN(stages);
+/* -------------------------------------------------------------------------
+   Loading tips  (23 total: 5 original + 18 new)
+   ------------------------------------------------------------------------- */
 
-    if (s_gfxloading.cacheExecuted) {
-        return; /* stage already executed */
-    }
-
-    if (s_gfxloading.currentCache < totalStages && stages[s_gfxloading.currentCache].exec) {
-        stages[s_gfxloading.currentCache].exec();
-    }
-
-    s_gfxloading.cacheExecuted = qtrue;
-}
-
-/*
-============================
-UI_GFX_Loading_UpdateProgress
-============================
-Updates the loading progress based on timing and stage completion.
-Handles artificial delays and smooth progress transitions.
-*/
-static void UI_GFX_Loading_UpdateProgress(void) {
-    int currentTime = trap_Milliseconds();
-    int stageElapsedTime;
-    int totalStages = ARRAY_LEN(stages);
-    float stageProgress;
-
-    /* Execute the current stage's caching operations early */
-    UI_GFX_Loading_ExecuteStage();
-
-    stageElapsedTime = currentTime - s_gfxloading.stageStartTime;
-
-    /* Check if minimum stage time has passed */
-    if (stageElapsedTime >= MIN_STAGE_TIME && s_gfxloading.currentCache < totalStages) {
-        /* Move to next stage */
-        s_gfxloading.loadPercent = (float)(s_gfxloading.currentCache + 1) / (float)totalStages;
-        s_gfxloading.currentCache++;
-        s_gfxloading.stageStartTime = currentTime;
-        s_gfxloading.cacheExecuted = qfalse;
-
-        /* Check if we've reached 100% */
-        if (s_gfxloading.loadPercent >= 1.0f) {
-            s_gfxloading.loadPercent = 1.0f;
-            s_gfxloading.finalPhase = qtrue;
-            s_gfxloading.finalDisplayStartTime = currentTime;
-        }
-    } else if (s_gfxloading.currentCache < totalStages) {
-        /* Calculate partial progress within current stage for smoother animation */
-        stageProgress = (float)stageElapsedTime / (float)MIN_STAGE_TIME;
-        if (stageProgress > 1.0f) stageProgress = 1.0f;
-
-        /* Interpolate between current and next stage */
-        s_gfxloading.loadPercent = ((float)s_gfxloading.currentCache + stageProgress) / (float)totalStages;
-    }
-
-    /* Ensure we don't exceed 100% */
-    if (s_gfxloading.loadPercent > 1.0f) {
-        s_gfxloading.loadPercent = 1.0f;
-    }
-}
-
-/* Helpful tips displayed during loading */
 static const char *loadingTips[] = {
+    /* --- original 5 --- */
     "Use the handbrake to drift through tight corners.",
     "Keep your speed up when hitting jumps.",
     "Ramming opponents can knock them off the track.",
     "Collect power-ups to gain an edge on rivals.",
     "Watch for shortcuts to shave off lap times.",
+
+    /* --- driving technique --- */
+    "Tap the brakes before a corner, not during - you'll carry more speed.",
+    "Handbrake turns work best at medium speed - too fast and you'll spin out.",
+    "Countersteering after a drift keeps your car pointed the right way.",
+    "Drafting behind opponents reduces drag - slingshot past them on straights.",
+    "Land jumps with a flat car to avoid losing control on impact.",
+
+    /* --- tactics & racing --- */
+    "The inside line isn't always fastest - sometimes the outside gives better exit speed.",
+    "Ramming from the side is more effective than from behind.",
+    "Save your power-ups for the last lap - that's when they matter most.",
+    "Watch the minimap: knowing where rivals are is half the battle.",
+    "Block the racing line on the final straight to deny an overtake.",
+
+    /* --- tracks & shortcuts --- */
+    "Every track has at least one shortcut - explore before you race.",
+    "Wet surfaces reduce grip earlier than you'd expect - brake sooner.",
+    "Jumps are faster if you hit the ramp dead center.",
+    "Cutting corners too aggressively can launch you off the track entirely.",
+
+    /* --- general / fun --- */
+    "First place isn't safe until you cross the finish line.",
+    "A well-placed ram can knock two opponents off course at once.",
+    "Sometimes slowing down slightly lets you set up a much faster corner exit.",
+    "Practice a track in free roam before racing - knowing the layout pays off.",
 };
 
-/*
-=======================
-UI_GFX_Loading_MenuDraw
-=======================
-Draws the graphics loading menu and updates progress with enhanced visual feedback.
-*/
-static void UI_GFX_Loading_MenuDraw(void) {
-    float blendRate;
-    int bar_x, bar_y, bar_w, bar_h;
-    int stage_index;
-    int currentTime;
-    int totalStages = ARRAY_LEN(stages);
-    const char *stageName;
-    int textY;
-    char buf[256];
-    char updateState[32];
+/* -------------------------------------------------------------------------
+   Helper: draw a thin horizontal separator line
+   ------------------------------------------------------------------------- */
 
-    /* Draw base menu (background, etc.) */
+static void DrawSeparator(int y) {
+    vec4_t sepColor;
+    sepColor[0] = 0.4f; sepColor[1] = 0.4f; sepColor[2] = 0.4f; sepColor[3] = 0.6f;
+    UI_FillRect(80, y, 480, 1, sepColor);
+}
+
+/* -------------------------------------------------------------------------
+   Helper: draw a styled button, returns qtrue if mouse is inside.
+   Hit test uses uis.cursorx / uis.cursory (standard Q3 UI cursor state).
+   ------------------------------------------------------------------------- */
+
+static qboolean DrawButton(int cx, int y, int w, int h,
+                            const char *label, qboolean highlighted) {
+    vec4_t bgColor, borderColor, textColor, shadow;
+    int    x = cx - w / 2;
+
+    if (highlighted) {
+        bgColor[0]     = 0.85f; bgColor[1]     = 0.55f; bgColor[2]     = 0.0f;  bgColor[3]     = 1.0f;
+        borderColor[0] = 1.0f;  borderColor[1] = 0.75f; borderColor[2] = 0.2f;  borderColor[3] = 1.0f;
+        textColor[0]   = 1.0f;  textColor[1]   = 1.0f;  textColor[2]   = 1.0f;  textColor[3]   = 1.0f;
+    } else {
+        bgColor[0]     = 0.15f; bgColor[1]     = 0.15f; bgColor[2]     = 0.15f; bgColor[3]     = 0.85f;
+        borderColor[0] = 0.5f;  borderColor[1] = 0.5f;  borderColor[2] = 0.5f;  borderColor[3] = 1.0f;
+        textColor[0]   = 0.75f; textColor[1]   = 0.75f; textColor[2]   = 0.75f; textColor[3]   = 1.0f;
+    }
+
+    shadow[0] = 0.0f; shadow[1] = 0.0f; shadow[2] = 0.0f; shadow[3] = 0.5f;
+    UI_FillRect(x + 3, y + 3, w, h, shadow);
+    UI_FillRect(x, y, w, h, bgColor);
+    UI_DrawRect(x, y, w, h, borderColor);
+
+    UI_DrawString(cx, y + (h - SMALLCHAR_HEIGHT) / 2,
+                  label, UI_CENTER | UI_SMALLFONT, textColor);
+
+    return (uis.cursorx >= x && uis.cursorx <= x + w &&
+            uis.cursory >= y && uis.cursory <= y + h) ? qtrue : qfalse;
+}
+
+/* -------------------------------------------------------------------------
+   Stage execution
+   ------------------------------------------------------------------------- */
+
+static void UI_GFX_Loading_ExecuteStage(void) {
+    int totalStages = ARRAY_LEN(stages);
+
+    if (s_gfxloading.cacheExecuted) {
+        return;
+    }
+    if (s_gfxloading.currentCache < totalStages && stages[s_gfxloading.currentCache].exec) {
+        stages[s_gfxloading.currentCache].exec();
+    }
+    s_gfxloading.cacheExecuted = qtrue;
+}
+
+/* -------------------------------------------------------------------------
+   Progress update (timing + smooth interpolation)
+   ------------------------------------------------------------------------- */
+
+static void UI_GFX_Loading_UpdateProgress(void) {
+    int   currentTime  = trap_Milliseconds();
+    int   stageElapsed = currentTime - s_gfxloading.stageStartTime;
+    int   totalStages  = ARRAY_LEN(stages);
+    float stageProgress;
+
+    UI_GFX_Loading_ExecuteStage();
+
+    if (stageElapsed >= MIN_STAGE_TIME && s_gfxloading.currentCache < totalStages) {
+        s_gfxloading.loadPercent = (float)(s_gfxloading.currentCache + 1) / (float)totalStages;
+        s_gfxloading.currentCache++;
+        s_gfxloading.stageStartTime = currentTime;
+        s_gfxloading.cacheExecuted  = qfalse;
+
+        if (s_gfxloading.loadPercent >= 1.0f) {
+            s_gfxloading.loadPercent           = 1.0f;
+            s_gfxloading.finalPhase            = qtrue;
+            s_gfxloading.finalDisplayStartTime = currentTime;
+        }
+    } else if (s_gfxloading.currentCache < totalStages) {
+        stageProgress = (float)stageElapsed / (float)MIN_STAGE_TIME;
+        if (stageProgress > 1.0f) stageProgress = 1.0f;
+        s_gfxloading.loadPercent =
+            ((float)s_gfxloading.currentCache + stageProgress) / (float)totalStages;
+    }
+
+    if (s_gfxloading.loadPercent > 1.0f) {
+        s_gfxloading.loadPercent = 1.0f;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   Main draw function
+   ------------------------------------------------------------------------- */
+
+static void UI_GFX_Loading_MenuDraw(void) {
+    int         totalStages = ARRAY_LEN(stages);
+    int         stage_index;
+    const char *stageName;
+    int         textY;
+    char        buf[256];
+    char        updateState[32];
+    int         currentTime;
+    vec4_t      color;
+
     Menu_Draw(&s_gfxloading.menu);
 
-    /* Update loading progress with timing */
     UI_GFX_Loading_UpdateProgress();
 
-    /* Smooth interpolation toward target percentage */
-    blendRate = 0.08f;  /* lower = smoother, adjusted for better visual feel */
-    s_gfxloading.smoothProgress += (s_gfxloading.loadPercent - s_gfxloading.smoothProgress) * blendRate;
+    s_gfxloading.smoothProgress +=
+        (s_gfxloading.loadPercent - s_gfxloading.smoothProgress) * 0.08f;
 
-    /* Draw loading header */
-    UI_DrawProportionalString(320, 160, "Q3Rally - Loading Graphics", UI_CENTER | UI_BIGFONT, text_color_normal);
+    /* -----------------------------------------------------------------------
+       HEADER
+       ----------------------------------------------------------------------- */
 
-    /* Draw current stage message */
+    color[0] = 1.0f; color[1] = 0.65f; color[2] = 0.0f; color[3] = 1.0f;
+    UI_DrawProportionalString(SCREEN_CX, HDR_TITLE_Y,
+                              "Q3Rally", UI_CENTER | UI_BIGFONT, color);
+
+    color[0] = 0.65f; color[1] = 0.65f; color[2] = 0.65f; color[3] = 1.0f;
+    UI_DrawString(SCREEN_CX, HDR_VERSION_Y,
+                  va("Version %s - Loading Resources", PRODUCT_VERSION),
+                  UI_CENTER | UI_SMALLFONT, color);
+
+    DrawSeparator(SEP_TOP_Y);
+
+    /* -----------------------------------------------------------------------
+       PROGRESS BAR
+       ----------------------------------------------------------------------- */
+
     stage_index = s_gfxloading.currentCache;
-    if (stage_index >= totalStages) {
-        stageName = stageNames[totalStages];
-    } else {
-        stageName = stageNames[stage_index];
-    }
-    UI_DrawString(320, 200, stageName, UI_CENTER | UI_SMALLFONT, text_color_highlight);
+    stageName   = stageNames[(stage_index < totalStages) ? stage_index : totalStages];
+    color[0] = 0.9f; color[1] = 0.9f; color[2] = 0.9f; color[3] = 1.0f;
+    UI_DrawString(SCREEN_CX, BAR_STAGE_Y, stageName, UI_CENTER | UI_SMALLFONT, color);
 
-    /* Draw progress bar with enhanced visuals */
-    bar_x = 200;
-    bar_y = 240 + 50;
-    bar_w = 240;
-    bar_h = 24;
+    /* shadow frame */
+    color[0] = 0.0f; color[1] = 0.0f; color[2] = 0.0f; color[3] = 1.0f;
+    UI_FillRect(BAR_X - 2, BAR_Y - 2, BAR_W + 4, BAR_H + 4, color);
 
-    /* Outer frame with shadow effect */
-    UI_FillRect(bar_x - 3, bar_y - 3, bar_w + 6, bar_h + 6, colorBlack);
-    UI_FillRect(bar_x - 2, bar_y - 2, bar_w + 4, bar_h + 4, menu_back_color);
-    
-    /* Progress bar background */
-    UI_FillRect(bar_x, bar_y, bar_w, bar_h, colorDkGrey);
-    
-    /* Actual progress fill */
+    /* track */
+    color[0] = 0.12f; color[1] = 0.12f; color[2] = 0.12f; color[3] = 1.0f;
+    UI_FillRect(BAR_X, BAR_Y, BAR_W, BAR_H, color);
+
+    /* fill - red to green */
     if (s_gfxloading.smoothProgress > 0.0f) {
-        vec4_t startColor = {1.0f, 0.0f, 0.0f, 1.0f};
-        vec4_t endColor = {0.0f, 1.0f, 0.0f, 1.0f};
-        vec4_t progressColor;
-        int    i;
+        vec4_t fillColor;
+        int    fillW = (int)(BAR_W * s_gfxloading.smoothProgress);
 
-        for (i = 0; i < 4; i++) {
-            progressColor[i] = startColor[i] + (endColor[i] - startColor[i]) * s_gfxloading.smoothProgress;
-        }
+        fillColor[0] = 0.85f + (0.1f  - 0.85f) * s_gfxloading.smoothProgress;
+        fillColor[1] = 0.15f + (0.85f - 0.15f) * s_gfxloading.smoothProgress;
+        fillColor[2] = 0.05f + (0.2f  - 0.05f) * s_gfxloading.smoothProgress;
+        fillColor[3] = 1.0f;
 
-        trap_R_SetColor(progressColor);
-        UI_FillRect(bar_x, bar_y, (int)(bar_w * s_gfxloading.smoothProgress), bar_h, progressColor);
-        trap_R_SetColor(NULL);
+        UI_FillRect(BAR_X, BAR_Y, fillW, BAR_H, fillColor);
     }
 
-    /* Moving car icon */
-    {
-        const int iconWidth = 64;
-        const int iconHeight = 64;
-        float progress = s_gfxloading.smoothProgress;
-        int car_x;
+    /* border */
+    color[0] = 0.55f; color[1] = 0.55f; color[2] = 0.55f; color[3] = 1.0f;
+    UI_DrawRect(BAR_X, BAR_Y, BAR_W, BAR_H, color);
 
-        /* Clamp progress to [0,1] to keep icon on bar */
+    /* car icon */
+    {
+        float progress = s_gfxloading.smoothProgress;
+        int   car_x;
+
         if (progress < 0.0f) progress = 0.0f;
         if (progress > 1.0f) progress = 1.0f;
 
-        car_x = bar_x + (int)(bar_w * progress) - iconWidth / 2;
-        UI_DrawHandlePic(car_x, bar_y - iconHeight, iconWidth, iconHeight, s_gfxloading.carShader);
+        car_x = BAR_X + (int)(BAR_W * progress) - CAR_ICON_W / 2;
+        UI_DrawHandlePic(car_x, BAR_Y - CAR_ICON_H,
+                         CAR_ICON_W, CAR_ICON_H, s_gfxloading.carShader);
     }
 
-    /* Progress bar border */
-    UI_DrawRect(bar_x, bar_y, bar_w, bar_h, colorWhite);
+    /* percentage */
+    color[0] = 0.75f; color[1] = 0.75f; color[2] = 0.75f; color[3] = 1.0f;
+    UI_DrawString(SCREEN_CX, BAR_PCT_Y,
+                  va("%.0f%%", s_gfxloading.smoothProgress * 100.0f),
+                  UI_CENTER | UI_SMALLFONT, color);
 
-    /* Draw percentage text with better formatting */
-    textY = bar_y + bar_h + 16;
-    UI_DrawString(320, textY,
-                  va("Loading Progress: %.1f%%", s_gfxloading.smoothProgress * 100.0f),
-                  UI_CENTER | UI_SMALLFONT, text_color_normal);
-    textY += 24;
+    /* -----------------------------------------------------------------------
+       UPDATE NOTICE
+       ----------------------------------------------------------------------- */
 
-    /* Display version check status if available */
+    textY = UPD_BASE_Y;
+
     trap_Cvar_VariableStringBuffer("cl_updateState", updateState, sizeof(updateState));
 
     if (!Q_stricmp(updateState, "outdated")) {
@@ -284,78 +394,103 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
         if (!s_gfxloading.requireUpdateAck) {
             s_gfxloading.requireUpdateAck = qtrue;
-            s_gfxloading.updateAcked = qfalse;
+            s_gfxloading.updateAcked      = qfalse;
+            s_gfxloading.hoveredBtn       = UPD_BTN_NONE;
         }
 
         trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
-        trap_Cvar_VariableStringBuffer("cl_updateDate", remoteDate, sizeof(remoteDate));
+        trap_Cvar_VariableStringBuffer("cl_updateDate",   remoteDate,   sizeof(remoteDate));
 
-        UI_DrawString(320, textY,
-                      "A new Q3Rally version is available!",
-                      UI_CENTER | UI_SMALLFONT, colorRed);
-        textY += 20;
+        color[0] = 1.0f; color[1] = 0.35f; color[2] = 0.1f; color[3] = 1.0f;
+        UI_DrawString(SCREEN_CX, textY,
+                      "A new version of Q3Rally is available!",
+                      UI_CENTER | UI_SMALLFONT, color);
+        textY += 22;
 
         if (remoteVersion[0]) {
             if (remoteDate[0]) {
-                Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: %s (%s)",
+                Com_sprintf(buf, sizeof(buf),
+                            "Installed: %s     Latest: %s  (%s)",
                             PRODUCT_VERSION, remoteVersion, remoteDate);
             } else {
-                Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: %s",
+                Com_sprintf(buf, sizeof(buf),
+                            "Installed: %s     Latest: %s",
                             PRODUCT_VERSION, remoteVersion);
             }
         } else {
-            Com_sprintf(buf, sizeof(buf), "Installed: %s   Latest: unknown",
-                        PRODUCT_VERSION);
+            Com_sprintf(buf, sizeof(buf),
+                        "Installed: %s     Latest: unknown", PRODUCT_VERSION);
         }
 
-        UI_DrawString(320, textY, buf,
-                      UI_CENTER | UI_SMALLFONT, colorYellow);
-        textY += 24;
+        color[0] = 0.85f; color[1] = 0.85f; color[2] = 0.2f; color[3] = 1.0f;
+        UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_SMALLFONT, color);
+        textY += 28;
 
         if (!s_gfxloading.updateAcked) {
-            UI_DrawString(320, textY,
-                          "Click to acknowledge and continue",
-                          UI_CENTER | UI_SMALLFONT, colorYellow);
+            qboolean hoverNow  = DrawButton(SCREEN_CX - 70, textY, 120, 28,
+                                             "Update Now", qtrue);
+            qboolean hoverSkip = DrawButton(SCREEN_CX + 70, textY,  80, 28,
+                                             "Skip",       qfalse);
+
+            if (hoverNow)       s_gfxloading.hoveredBtn = UPD_BTN_NOW;
+            else if (hoverSkip) s_gfxloading.hoveredBtn = UPD_BTN_SKIP;
+            else                s_gfxloading.hoveredBtn = UPD_BTN_NONE;
+
+            textY += 40;
+        } else {
+            color[0] = 0.5f; color[1] = 0.85f; color[2] = 0.5f; color[3] = 1.0f;
+            UI_DrawString(SCREEN_CX, textY, "Update acknowledged - continuing...",
+                          UI_CENTER | UI_SMALLFONT, color);
             textY += 24;
         }
-    } else if (!Q_stricmp(updateState, "offline")) {
+
+    } else if (!Q_stricmp(updateState, "offline") ||
+               !Q_stricmp(updateState, "failed")) {
         char errorMsg[128];
 
         s_gfxloading.requireUpdateAck = qfalse;
-        s_gfxloading.updateAcked = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
 
         trap_Cvar_VariableStringBuffer("cl_updateError", errorMsg, sizeof(errorMsg));
         if (!errorMsg[0]) {
-            Q_strncpyz(errorMsg, "Update server offline - version check unavailable", sizeof(errorMsg));
+            if (!Q_stricmp(updateState, "offline")) {
+                Q_strncpyz(errorMsg,
+                           "Update server offline - version check unavailable",
+                           sizeof(errorMsg));
+            } else {
+                Q_strncpyz(errorMsg, "Unable to check for updates", sizeof(errorMsg));
+            }
         }
 
-        UI_DrawString(320, textY, errorMsg,
-                      UI_CENTER | UI_SMALLFONT, colorYellow);
+        color[0] = 0.7f; color[1] = 0.7f; color[2] = 0.3f; color[3] = 1.0f;
+        UI_DrawString(SCREEN_CX, textY, errorMsg,
+                      UI_CENTER | UI_SMALLFONT, color);
         textY += 24;
-    } else if (!Q_stricmp(updateState, "failed")) {
-        char errorMsg[128];
 
-        s_gfxloading.requireUpdateAck = qfalse;
-        s_gfxloading.updateAcked = qfalse;
-
-        trap_Cvar_VariableStringBuffer("cl_updateError", errorMsg, sizeof(errorMsg));
-        if (!errorMsg[0]) {
-            Q_strncpyz(errorMsg, "Unable to check for updates", sizeof(errorMsg));
-        }
-
-        UI_DrawString(320, textY, errorMsg,
-                      UI_CENTER | UI_SMALLFONT, colorYellow);
-        textY += 24;
     } else {
         s_gfxloading.requireUpdateAck = qfalse;
-        s_gfxloading.updateAcked = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
     }
 
-    /* Draw random driving tip */
-    UI_DrawString(320, textY, loadingTips[s_gfxloading.tipIndex],
-                  UI_CENTER | UI_SMALLFONT, text_color_normal);
+    /* -----------------------------------------------------------------------
+       TIP
+       ----------------------------------------------------------------------- */
 
-    /* Handle transition when loading is complete */
+    DrawSeparator(SEP_BOT_Y);
+
+    color[0] = 0.55f; color[1] = 0.55f; color[2] = 0.55f; color[3] = 1.0f;
+    UI_DrawString(SCREEN_CX, TIP_LABEL_Y, "TIP",
+                  UI_CENTER | UI_SMALLFONT, color);
+
+    color[0] = 0.85f; color[1] = 0.85f; color[2] = 0.85f; color[3] = 1.0f;
+    UI_DrawString(SCREEN_CX, TIP_TEXT_Y,
+                  loadingTips[s_gfxloading.tipIndex],
+                  UI_CENTER | UI_SMALLFONT, color);
+
+    /* -----------------------------------------------------------------------
+       TRANSITION
+       ----------------------------------------------------------------------- */
+
     if (s_gfxloading.finalPhase) {
         currentTime = trap_Milliseconds();
         if (currentTime - s_gfxloading.finalDisplayStartTime >= FINAL_DISPLAY_TIME &&
@@ -369,13 +504,25 @@ static void UI_GFX_Loading_MenuDraw(void) {
     }
 }
 
+/* -------------------------------------------------------------------------
+   Key / mouse handler
+   ------------------------------------------------------------------------- */
+
 static sfxHandle_t UI_GFX_Loading_Key(int key) {
     if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
-        if (key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3 ||
-            key == K_ENTER || key == K_KP_ENTER) {
-            s_gfxloading.updateAcked = qtrue;
-            trap_S_StartLocalSound(menu_out_sound, CHAN_LOCAL_SOUND);
-            return menu_out_sound;
+        if (key == K_MOUSE1) {
+            switch (s_gfxloading.hoveredBtn) {
+                case UPD_BTN_NOW:
+                    trap_Cmd_ExecuteText(EXEC_APPEND,
+                                        "openURL \"" Q3RALLY_DOWNLOAD_URL "\"\n");
+                    /* fall through - also ack so the game continues */
+                case UPD_BTN_SKIP:
+                    s_gfxloading.updateAcked = qtrue;
+                    trap_S_StartLocalSound(menu_out_sound, CHAN_LOCAL_SOUND);
+                    return menu_out_sound;
+                default:
+                    return 0;
+            }
         }
         return 0;
     }
@@ -383,41 +530,33 @@ static sfxHandle_t UI_GFX_Loading_Key(int key) {
     return Menu_DefaultKey(&s_gfxloading.menu, key);
 }
 
-/*
-===============
-UI_GFX_Loading
-===============
-Initializes and shows the enhanced graphics loading screen.
-*/
+/* -------------------------------------------------------------------------
+   Public entry point
+   ------------------------------------------------------------------------- */
+
 void UI_GFX_Loading(void) {
-    /* Clear all fields */
     memset(&s_gfxloading, 0, sizeof(gfxloading_t));
 
-    /* Load progress icon */
     s_gfxloading.carShader = trap_R_RegisterShaderNoMip("menu/art/loading_car");
 
-    /* Setup menu structure */
-    s_gfxloading.menu.draw = UI_GFX_Loading_MenuDraw;
+    s_gfxloading.menu.draw       = UI_GFX_Loading_MenuDraw;
     s_gfxloading.menu.fullscreen = qtrue;
-    s_gfxloading.menu.key = UI_GFX_Loading_Key;
+    s_gfxloading.menu.key        = UI_GFX_Loading_Key;
 
-    /* Reset menu stack */
     uis.menusp = 0;
 
-    /* Push menu and disable enter sound */
     UI_PushMenu(&s_gfxloading.menu);
     m_entersound = qfalse;
 
-    /* Initialize loading state */
-    s_gfxloading.currentCache = 0;
-    s_gfxloading.loadPercent = 0.0f;
-    s_gfxloading.smoothProgress = 0.0f;
-    s_gfxloading.stageStartTime = trap_Milliseconds();
-    s_gfxloading.cacheExecuted = qfalse;
-    s_gfxloading.finalPhase = qfalse;
+    s_gfxloading.currentCache          = 0;
+    s_gfxloading.loadPercent           = 0.0f;
+    s_gfxloading.smoothProgress        = 0.0f;
+    s_gfxloading.stageStartTime        = trap_Milliseconds();
+    s_gfxloading.cacheExecuted         = qfalse;
+    s_gfxloading.finalPhase            = qfalse;
     s_gfxloading.finalDisplayStartTime = 0;
-    s_gfxloading.tipIndex = UI_RandomInt( ARRAY_LEN(loadingTips) );
-    s_gfxloading.requireUpdateAck = qfalse;
-    s_gfxloading.updateAcked = qfalse;
+    s_gfxloading.tipIndex              = UI_RandomInt(ARRAY_LEN(loadingTips));
+    s_gfxloading.requireUpdateAck      = qfalse;
+    s_gfxloading.updateAcked           = qfalse;
+    s_gfxloading.hoveredBtn            = UPD_BTN_NONE;
 }
-

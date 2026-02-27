@@ -1534,10 +1534,13 @@ void ClientThink_real( gentity_t *ent ) {
         if (pm.damage.damage)
 
 	{
-		if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) )
-			pm.damage.damage *= g_damageScale.value;
-		if ( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer && g_damageScale.value )
-			pm.damage.damage /= g_damageScale.value;
+		if( !(pm.damage.dflags & DAMAGE_NO_PROTECTION) ) {
+			/* Derby can opt out from the global damage scale to keep its
+			 * collision tuning independent from race/DM presets. */
+			if ( !( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer ) ) {
+				pm.damage.damage *= g_damageScale.value;
+			}
+		}
 
 		if( pm.damage.damage > 0 )
 		{
@@ -1976,5 +1979,4 @@ void ClientEndFrame( gentity_t *ent ) {
 //	i = trap_AAS_PointReachabilityAreaIndex( ent->client->ps.origin );
 //	ent->client->areabits[i >> 3] |= 1 << (i & 7);
 }
-
 
