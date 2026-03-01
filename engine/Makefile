@@ -1968,6 +1968,7 @@ Q3OBJ = \
   $(B)/client/cl_ui.o \
   $(B)/client/cl_avi.o \
   $(B)/client/cl_update.o \
+  $(B)/client/cl_downloads.o \
   \
   $(B)/client/cm_load.o \
   $(B)/client/cm_patch.o \
@@ -2968,6 +2969,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_rally_servers.o \
   $(B)/$(BASEGAME)/ui/ui_rally_startserver.o \
   $(B)/$(BASEGAME)/ui/ui_rally_tools.o \
+  $(B)/$(BASEGAME)/ui/ui_rally_downloads.o \
   $(B)/$(BASEGAME)/ui/ui_removebots.o \
   $(B)/$(BASEGAME)/ui/ui_saveconfig.o \
   $(B)/$(BASEGAME)/ui/ui_serverinfo.o \

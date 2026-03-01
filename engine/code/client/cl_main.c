@@ -1222,6 +1222,9 @@ void CL_ShutdownAll(qboolean shutdownRef)
 	CL_BGAsset_Shutdown();
 	CL_cURL_Shutdown();
 #endif
+	// Q3RALLY DOWNLOADS START
+	CL_DL_Shutdown();
+	// Q3RALLY DOWNLOADS END
 	// clear sounds
 	S_DisableSounds();
 	// shutdown CGame
@@ -2996,6 +2999,9 @@ void CL_Frame ( int msec ) {
 
         CL_UpdateVersionCheck_Frame();
 	CL_BGAsset_Frame();
+	// Q3RALLY DOWNLOADS START
+	CL_DL_Frame();
+	// Q3RALLY DOWNLOADS END
 
 	if ( cls.cddialog ) {
 		// bring up the cd error dialog if needed
@@ -3758,6 +3764,10 @@ void CL_Init( void ) {
 	CL_GenerateQKey();
 	Cvar_Get( "cl_guid", "", CVAR_USERINFO | CVAR_ROM );
 	CL_UpdateGUID( NULL, 0 );
+
+	// Q3RALLY DOWNLOADS START
+	CL_DL_Init();
+	// Q3RALLY DOWNLOADS END
 
 	Com_Printf( "----- Client Initialization Complete -----\n" );
 }

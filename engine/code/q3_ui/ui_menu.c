@@ -43,6 +43,9 @@ MAIN MENU
 #define ID_MODS                         16
 #define ID_GARAGE                       17
 #define ID_EXIT                         18
+// Q3RALLY DOWNLOADS START
+#define ID_DOWNLOADS                    19
+// Q3RALLY DOWNLOADS END
 
 #define MAIN_BANNER_MODEL               "models/mapobjects/q3rtitle/q3rtitle.md3"
 #define MAIN_MENU_VERTICAL_SPACING      50
@@ -60,6 +63,9 @@ typedef struct {
         menutext_s              cinematics;
         menutext_s              mods;
         menutext_s              garage;
+        // Q3RALLY DOWNLOADS START
+        menutext_s              downloads;
+        // Q3RALLY DOWNLOADS END
         menutext_s              exit;
         menutext_s              profileAction;
         menutext_s              profileInfoLine1;
@@ -233,6 +239,9 @@ void Main_MenuEvent (void* ptr, int event) {
         case ID_DEMOS:
         case ID_CINEMATICS:
         case ID_MODS:
+        // Q3RALLY DOWNLOADS START
+        case ID_DOWNLOADS:
+        // Q3RALLY DOWNLOADS END
                 s_main.menu.transitionMenu = ((menucommon_s*)ptr)->id;
                 uis.transitionOut = uis.realtime;
                 break;
@@ -283,6 +292,12 @@ void MainMenu_ChangeMenu( int menuId ){
         case ID_MODS:
                 UI_ModsMenu();
                 break;
+
+        // Q3RALLY DOWNLOADS START
+        case ID_DOWNLOADS:
+                UI_Rally_DownloadsMenu();
+                break;
+        // Q3RALLY DOWNLOADS END
         }
 }
 
@@ -309,6 +324,9 @@ void MainMenu_RunTransition( float frac ) {
         s_main.cinematics.color = uis.text_color;
         s_main.demos.color = uis.text_color;
         s_main.mods.color = uis.text_color;
+        // Q3RALLY DOWNLOADS START
+        s_main.downloads.color = uis.text_color;
+        // Q3RALLY DOWNLOADS END
         s_main.exit.color = uis.text_color;
 
         s_profileActionColor[0] = color_red[0];
@@ -490,7 +508,10 @@ void UI_MainMenu( void ) {
 
         x = 175;
         y = 75;
-        menuSpacing = MAIN_MENU_VERTICAL_SPACING - 5;
+        // Q3RALLY DOWNLOADS: reduced from (MAIN_MENU_VERTICAL_SPACING - 5) = 45
+        // to 40 to evenly fit the extra DOWNLOADS item without crowding.
+        // 6 gaps x 40px = 240px from y=75 -> last item at y=315, profile block ~355.
+        menuSpacing = MAIN_MENU_VERTICAL_SPACING - 10;
 
         
 	InitMenuText(&s_main.singleplayer, ID_SINGLEPLAYER, "OFFLINE", x - 10, y + 12);
@@ -511,6 +532,10 @@ void UI_MainMenu( void ) {
 	y += menuSpacing;
 	InitMenuText(&s_main.demos, ID_DEMOS, "DEMOS", x - 10, y + 12);
 
+        // Q3RALLY DOWNLOADS START
+        y += menuSpacing;
+        InitMenuText(&s_main.downloads, ID_DOWNLOADS, "DOWNLOADS", x - 10, y + 12);
+        // Q3RALLY DOWNLOADS END
 
         s_main.carlogo.generic.type                     = MTYPE_BITMAP;
         s_main.carlogo.generic.flags                    = QMF_INACTIVE;
@@ -544,6 +569,9 @@ void UI_MainMenu( void ) {
         Menu_AddItem( &s_main.menu,     &s_main.setup );
         Menu_AddItem( &s_main.menu,     &s_main.garage );
         Menu_AddItem( &s_main.menu,     &s_main.demos );
+        // Q3RALLY DOWNLOADS START
+        Menu_AddItem( &s_main.menu,     &s_main.downloads );
+        // Q3RALLY DOWNLOADS END
         Menu_AddItem( &s_main.menu,     &s_main.exit );            
         Menu_AddItem( &s_main.menu,     &s_main.profileAction );
         Menu_AddItem( &s_main.menu,     &s_main.profileInfoLine1 );

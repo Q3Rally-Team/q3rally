@@ -233,6 +233,13 @@ vmCvar_t	ui_menuBackState;
 vmCvar_t	ui_cdkeychecked;
 vmCvar_t	ui_ioq3;
 
+// Q3RALLY DOWNLOADS START
+vmCvar_t	ui_dl_state;
+vmCvar_t	ui_dl_progress;
+vmCvar_t	ui_dl_filename;
+vmCvar_t	ui_dl_error;
+// Q3RALLY DOWNLOADS END
+
 static cvarTable_t		cvarTable[] = {
 
 	{ &ui_racing_laplimit, "ui_racing_laplimit", "3", CVAR_ARCHIVE },
@@ -348,7 +355,17 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_menuBackPath, "ui_menuBackPath", "", CVAR_TEMP },
 	{ &ui_menuBackState, "ui_menuBackState", "idle", CVAR_TEMP },
 	{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM },
-	{ &ui_ioq3, "ui_ioq3", "1", CVAR_ROM }
+	{ &ui_ioq3, "ui_ioq3", "1", CVAR_ROM },
+
+	// Q3RALLY DOWNLOADS START
+	// CVAR_TEMP: owned and written by the native engine, read-only from QVM side.
+	// ui_dl_action is intentionally absent here - it is write-only from QVM
+	// via trap_Cvar_Set() and consumed + cleared by the native download manager.
+	{ &ui_dl_state,    "ui_dl_state",    "0", CVAR_TEMP },
+	{ &ui_dl_progress, "ui_dl_progress", "0", CVAR_TEMP },
+	{ &ui_dl_filename, "ui_dl_filename", "",  CVAR_TEMP },
+	{ &ui_dl_error,    "ui_dl_error",    "",  CVAR_TEMP },
+	// Q3RALLY DOWNLOADS END
 };
 
 static int cvarTableSize = ARRAY_LEN( cvarTable );

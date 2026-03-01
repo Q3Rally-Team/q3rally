@@ -657,3 +657,12 @@ qboolean CL_VideoRecording( void );
 //
 void CL_WriteDemoMessage ( msg_t *msg, int headerBytes );
 
+
+//
+// cl_downloads.c
+// Q3RALLY DOWNLOADS START
+//
+void CL_DL_Init( void );
+void CL_DL_Shutdown( void );
+void CL_DL_Frame( void );
+// Q3RALLY DOWNLOADS END

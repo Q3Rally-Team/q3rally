@@ -452,6 +452,13 @@ extern void UI_GFX_Loading( void );
 //
 extern void UI_Rally_CreditMenu( void );
 
+// Q3RALLY DOWNLOADS START
+//
+// ui_rally_downloads.c
+//
+extern void UI_Rally_DownloadsMenu( void );
+// Q3RALLY DOWNLOADS END
+
 //
 // ui_rally_filelist.c
 //
@@ -839,6 +846,13 @@ extern vmCvar_t	ui_menuBackEnable;
 extern vmCvar_t	ui_menuBackRefreshSec;
 extern vmCvar_t	ui_menuBackPath;
 extern vmCvar_t	ui_menuBackState;
+
+// Q3RALLY DOWNLOADS START
+extern vmCvar_t	ui_dl_state;
+extern vmCvar_t	ui_dl_progress;
+extern vmCvar_t	ui_dl_filename;
+extern vmCvar_t	ui_dl_error;
+// Q3RALLY DOWNLOADS END
 
 void UI_ProfileOverlay_InitSession( void );
 void UI_ProfileOverlay_Open( qboolean forceSelection );
