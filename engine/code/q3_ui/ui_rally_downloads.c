@@ -888,7 +888,7 @@ static sfxHandle_t DownloadsMenu_Key( int key ) {
 
 static void InitDLTabButton( menutext_s *item, int id, char *label, int x, int y ) {
     item->generic.type     = MTYPE_PTEXT;
-    item->generic.flags    = QMF_PULSEIFFOCUS;
+    item->generic.flags    = QMF_PULSEIFFOCUS | QMF_CENTER_JUSTIFY;
     item->generic.id       = id;
     item->generic.callback = DownloadsMenu_Event;
     item->generic.x        = x;
