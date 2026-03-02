@@ -1168,6 +1168,15 @@ void ClientThink_real( gentity_t *ent ) {
 		trap_UnlinkEntity( client->carPoints[2] );
 		trap_UnlinkEntity( client->carPoints[3] );
 
+// STONELANCE - NULL out carPoints after unlinking so the SPECTATOR_FOLLOW
+// observer copy loop in ClientEndFrame cannot memcpy into a freed/NULL entity.
+// Without this, the memcpy destination is NULL causing a crash.
+		client->carPoints[0] = NULL;
+		client->carPoints[1] = NULL;
+		client->carPoints[2] = NULL;
+		client->carPoints[3] = NULL;
+// END
+
 		return;
 	}
 /*
@@ -1752,8 +1761,16 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 // STONELANCE
 				// FIXME: could this fuck some shit up with entity numbers or anything like that?
 				// TODO: optimize this so it only copies the fields that change and not everything
+				// Guard: raceObservers have NULLed carPoints. Skip memcpy if either ptr
+				// is NULL or outside the valid g_entities range.
 				for( i = 0; i < 4; i++ )
 				{
+					if ( cl->carPoints[i] == NULL ) continue;
+					if ( cl->carPoints[i] < g_entities ||
+					     cl->carPoints[i] >= g_entities + MAX_GENTITIES ) continue;
+					if ( ent->client->carPoints[i] == NULL ) continue;
+					if ( ent->client->carPoints[i] < g_entities ||
+					     ent->client->carPoints[i] >= g_entities + MAX_GENTITIES ) continue;
 					memcpy( ent->client->carPoints[i], cl->carPoints[i], sizeof(gentity_t) );
 					ent->client->carPoints[i]->r.singleClient = ent->s.number;
 				}
@@ -1769,7 +1786,15 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 				ent->client->sess.spectatorState = SPECTATOR_FREE;
 			}
 
-			ClientBegin( ent->client - level.clients );
+// STONELANCE - raceObservers cannot safely respawn via ClientBegin due to
+// detached vehicle sub-entity pointers. Keep them in follow mode instead.
+			if ( isRaceObserver( ent->s.number ) ) {
+				ent->client->ps.pm_flags &= ~PMF_FOLLOW;
+				ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
+			} else {
+				ClientBegin( ent->client - level.clients );
+			}
+
 		}
 	}
 // STONELANCE
@@ -1847,7 +1872,18 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 				ent->client->sess.spectatorState = SPECTATOR_FREE;
 			}
 
-			ClientBegin( ent->client - level.clients );
+// STONELANCE - raceObservers must never call ClientBegin: their vehicle
+// sub-entities (frontBounds, rearBounds, carPoints) are unlinked but their
+// pointers still exist. ClientBegin->ClientSpawn->trap_LinkEntity with stale
+// sub-entity pointers causes SV_SvEntityForGentity: bad gEnt.
+// Fall back to SPECTATOR_FOLLOW instead, which is safe.
+			if ( isRaceObserver( ent->s.number ) ) {
+				ent->client->ps.pm_flags &= ~PMF_OBSERVE;
+				ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
+			} else {
+				ClientBegin( ent->client - level.clients );
+			}
+// END
 		}
 	}
 // END
@@ -1979,4 +2015,3 @@ void ClientEndFrame( gentity_t *ent ) {
 //	i = trap_AAS_PointReachabilityAreaIndex( ent->client->ps.origin );
 //	ent->client->areabits[i >> 3] |= 1 << (i & 7);
 }
-
