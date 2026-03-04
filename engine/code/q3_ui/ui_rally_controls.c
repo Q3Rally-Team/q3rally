@@ -498,7 +498,7 @@ static qboolean Controls_SearchActive( void )
 
 static qboolean Controls_SearchFieldHasFocus( void )
 {
-	if ( !s_controls.menu.items || s_controls.menu.cursor < 0 || s_controls.menu.cursor >= s_controls.menu.nitems ) {
+	if ( s_controls.menu.nitems <= 0 || s_controls.menu.cursor < 0 || s_controls.menu.cursor >= s_controls.menu.nitems ) {
 		return qfalse;
 	}
 
@@ -1168,7 +1168,7 @@ static void Controls_GetKeyAssignment (char *command, int *twokeys)
 	twokeys[0] = twokeys[1] = -1;
 	count = 0;
 
-	for ( j = 0; j < 256; j++ )
+	for ( j = 0; j < MAX_KEYS; j++ )
 	{
 		trap_Key_GetBindingBuf( j, b, 256 );
 		if ( *b == 0 ) {
@@ -1452,7 +1452,7 @@ static void Controls_ExitConfirm_MenuEvent( void* ptr, int event )
 
 static sfxHandle_t Controls_ExitConfirm_MenuKey( int key )
 {
-	if ( key == K_ESCAPE || key == K_MOUSE2 ) {
+	if ( key == K_ESCAPE || key == K_MOUSE2 || key == K_PAD0_B ) {
 		Controls_ExitConfirm_MenuEvent( &s_controlsExitConfirm.cancel, QM_ACTIVATED );
 		return menu_out_sound;
 	}
@@ -1555,42 +1555,44 @@ static sfxHandle_t Controls_MenuKey( int key )
 
 	if (!s_controls.waitingforkey)
 	{
-		switch (key)
-		{
+			switch (key)
+			{
 			case K_BACKSPACE:
 			case K_DEL:
 			case K_KP_DEL:
 				key = -1;
 				break;
 		
-			case K_MOUSE2:
-			case K_ESCAPE:
-				if (s_controls.changesmade) {
-					Controls_ExitConfirmMenu();
-					return menu_move_sound;
-				}
-				goto ignorekey;	
+				case K_MOUSE2:
+				case K_ESCAPE:
+				case K_PAD0_B:
+					if (s_controls.changesmade) {
+						Controls_ExitConfirmMenu();
+						return menu_move_sound;
+					}
+					goto ignorekey;
 
 			default:
 				goto ignorekey;
 		}
 	}
 	else
-	{
-		if (key & K_CHAR_FLAG)
-			return 0;
-
-		switch (key)
 		{
-			case K_ESCAPE:
-				s_controls.waitingforkey = qfalse;
-				Controls_Update();
-				return (menu_out_sound);
-	
-			case '`':
-				goto ignorekey;
+			if (key & K_CHAR_FLAG)
+				return 0;
+
+			switch (key)
+			{
+				case K_ESCAPE:
+				case K_PAD0_B:
+					s_controls.waitingforkey = qfalse;
+					Controls_Update();
+					return (menu_out_sound);
+
+				case '`':
+					goto ignorekey;
+			}
 		}
-	}
 
 	id      = ((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->id;
 

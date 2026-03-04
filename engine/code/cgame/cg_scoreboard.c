@@ -632,7 +632,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
         case SBCOL_DELTA:
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
-            } else if (score->client == cg.snap->ps.clientNum && cg.ghostSplitDeltaValid) {
+            } else if (cg.snap && score->client == cg.snap->ps.clientNum && cg.ghostSplitDeltaValid) {
                 deltaMs = cg.ghostSplitDeltaMs;
                 sign = deltaMs < 0 ? '-' : '+';
                 absMs = deltaMs < 0 ? -deltaMs : deltaMs;
@@ -666,7 +666,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             break;
             
         case SBCOL_STATUS:
-            if (cg.snap->ps.stats[STAT_CLIENTS_READY] & (1 << score->client)) {
+            if (cg.snap && (cg.snap->ps.stats[STAT_CLIENTS_READY] & (1 << score->client))) {
                 CG_DrawModernText(x, y, "READY", 1, width, readyColor, qfalse);
             } else if (ci->team != TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "WAIT", 1, width, textColor, qfalse);

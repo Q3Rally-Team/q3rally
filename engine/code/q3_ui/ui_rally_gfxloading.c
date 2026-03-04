@@ -510,7 +510,17 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
 static sfxHandle_t UI_GFX_Loading_Key(int key) {
     if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
-        if (key == K_MOUSE1) {
+        if (key == K_ESCAPE || key == K_MOUSE2 || key == K_PAD0_B) {
+            s_gfxloading.updateAcked = qtrue;
+            trap_S_StartLocalSound(menu_out_sound, CHAN_LOCAL_SOUND);
+            return menu_out_sound;
+        }
+
+        if (key == K_MOUSE1 || key == K_ENTER || key == K_KP_ENTER || key == K_JOY1 || key == K_PAD0_A) {
+            if (s_gfxloading.hoveredBtn == UPD_BTN_NONE) {
+                s_gfxloading.hoveredBtn = UPD_BTN_SKIP;
+            }
+
             switch (s_gfxloading.hoveredBtn) {
                 case UPD_BTN_NOW:
                     trap_Cmd_ExecuteText(EXEC_APPEND,

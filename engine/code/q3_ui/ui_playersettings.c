@@ -2948,7 +2948,7 @@ static qboolean PlayerSettings_TryProfileFavorite( const char *favorite, char *m
 
 static qboolean PlayerSettings_GetFavoriteValues( const char *favorite, char *modelName, char *skinName, char *rimName, char *headName ) {
 	if ( PlayerSettings_TryProfileFavorite( favorite, modelName, skinName, rimName, headName ) ) {
-		return qfalse;
+		return qtrue; /* profile favorite found - success */
 	}
 
 	return GetValuesFromFavorite( favorite, modelName, skinName, rimName, headName );
@@ -3519,10 +3519,10 @@ static void PlayerSettings_MenuEvent( void* ptr, int event ) {
 // STONELANCE
 /*
 =================
-PlayerSettigns_ChangeMenu
+PlayerSettings_ChangeMenu
 =================
 */
-void PlayerSettigns_ChangeMenu( int menuID ){
+void PlayerSettings_ChangeMenu( int menuID ){
 
 	switch(menuID){
 	case ID_CUSTOMIZE:
@@ -3609,7 +3609,7 @@ static void PlayerSettings_MenuInit( void ) {
 // STONELANCE
 	s_playersettings.menu.draw		 = PlayerSettings_DrawBackShaders;
 	s_playersettings.menu.transition = PlayerSettings_RunTransition;
-	s_playersettings.menu.changeMenu = PlayerSettigns_ChangeMenu;
+	s_playersettings.menu.changeMenu = PlayerSettings_ChangeMenu;
 // END
 
 	s_playersettings.banner.generic.type  = MTYPE_BTEXT;
@@ -3996,9 +3996,13 @@ static void PlayerSettings_MenuInit( void ) {
 	}
 
 	s_playersettings.plate.generic.type				= MTYPE_PTEXT;
-	s_playersettings.plate.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_playersettings.plate.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_NODEFAULTINIT;
 	s_playersettings.plate.generic.x				= 640 - 140;
 	s_playersettings.plate.generic.y				= 378;
+	s_playersettings.plate.generic.left			    = s_playersettings.plate.generic.x - 20;
+	s_playersettings.plate.generic.top				= s_playersettings.plate.generic.y + 6;
+	s_playersettings.plate.generic.right			= s_playersettings.plate.generic.x + 120;
+	s_playersettings.plate.generic.bottom			= s_playersettings.plate.generic.y + PROP_HEIGHT + 10;
 	s_playersettings.plate.generic.id				= ID_PLATE;
 	s_playersettings.plate.generic.callback			= PlayerSettings_MenuEvent; 
 	s_playersettings.plate.string					= "CHANGE PLATE";
@@ -4316,13 +4320,12 @@ static void PlateSelection_SetMenuItems( void ) {
 		if (!Q_stricmp( s_plateSelection.plateSkin, s_plateSelection.plateList[i] )){
 			// found pic, set selection here
 			s_plateSelection.list.curvalue = i;
+			/* Set top so the selected item is visible, then clamp to valid range */
+			s_plateSelection.list.top = i;
 			if (s_plateSelection.list.top + s_plateSelection.list.height > s_plateSelection.numPlates)
 				s_plateSelection.list.top = s_plateSelection.numPlates - s_plateSelection.list.height;
-
 			if (s_plateSelection.list.top < 0)
 				s_plateSelection.list.top = 0;
-			else
-				s_plateSelection.list.top = i;
 
 			return;
 		}
@@ -4375,7 +4378,7 @@ static void PlateSelection_MenuInit( void ) {
 	s_plateSelection.list.height				= 11;
 	s_plateSelection.list.itemnames				= (const char **)s_plateSelection.items;
 	s_plateSelection.list.numitems				= s_plateSelection.numPlates;
-	for( i = 0; i < MAX_PLATEMODELS; i++ ) {
+	for( i = 0; i < s_plateSelection.numPlates; i++ ) {
 		s_plateSelection.items[i] = s_plateSelection.plateList[i];
 	}
 

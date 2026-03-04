@@ -3539,6 +3539,23 @@ qboolean Display_KeyBindPending(void) {
 	return g_waitingForKey;
 }
 
+static qboolean Controls_IsMenuSelectKey( int key ) {
+	if ( key == K_ENTER || key == K_KP_ENTER ||
+		 key == K_JOY1 || key == K_JOY2 || key == K_JOY3 || key == K_JOY4 ) {
+		return qtrue;
+	}
+
+	if ( key >= K_PAD0_A && key <= K_PAD0_DPAD_RIGHT ) {
+		return qtrue;
+	}
+
+	if ( key >= K_PAD0_MISC1 && key <= K_PAD0_TOUCHPAD ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 qboolean Item_Bind_HandleKey(itemDef_t *item, int key, qboolean down) {
 	int			id;
 	int			i;
@@ -3546,7 +3563,7 @@ qboolean Item_Bind_HandleKey(itemDef_t *item, int key, qboolean down) {
 	if (!g_waitingForKey)
 	{
 		if (down && ((key == K_MOUSE1 && Rect_ContainsPoint(&item->window.rect, DC->cursorx, DC->cursory))
-				|| key == K_ENTER || key == K_KP_ENTER || key == K_JOY1 || key == K_JOY2 || key == K_JOY3 || key == K_JOY4)) {
+				|| Controls_IsMenuSelectKey( key ))) {
 			g_waitingForKey = qtrue;
 			g_bindItem = item;
 		}
@@ -6057,4 +6074,3 @@ static qboolean Menu_OverActiveItem(menuDef_t *menu, float x, float y) {
 	}
 	return qfalse;
 }
-

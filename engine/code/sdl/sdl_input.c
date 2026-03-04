@@ -53,6 +53,7 @@ static cvar_t *in_mouse             = NULL;
 static cvar_t *in_nograb;
 
 static cvar_t *in_joystick          = NULL;
+static cvar_t *in_joystickAutoEnable = NULL;
 static cvar_t *in_joystickThreshold = NULL;
 static cvar_t *in_joystickNo        = NULL;
 static cvar_t *in_joystickUseAnalog = NULL;
@@ -614,6 +615,12 @@ static void IN_InitJoystick( void )
 
 	// Update cvar on in_restart or controller add/remove.
 	Cvar_Set( "in_availableJoysticks", buf );
+
+	if ( !in_joystick->integer && total > 0 && in_joystickAutoEnable->integer ) {
+		Com_Printf( "Auto-enabling joystick input (detected %d device%s).\n", total, total == 1 ? "" : "s" );
+		Cvar_Set( "in_joystick", "1" );
+		in_joystick = Cvar_Get( "in_joystick", "1", CVAR_ARCHIVE|CVAR_LATCH );
+	}
 
 	if( !in_joystick->integer ) {
 		Com_DPrintf( "Joystick is not active.\n" );
@@ -1395,6 +1402,7 @@ void IN_Init( void *windowData )
 	in_nograb = Cvar_Get( "in_nograb", "0", CVAR_ARCHIVE );
 
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE|CVAR_LATCH );
+	in_joystickAutoEnable = Cvar_Get( "in_joystickAutoEnable", "1", CVAR_ARCHIVE );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
 
 #if defined(PROTOCOL_HANDLER) && defined(__APPLE__)

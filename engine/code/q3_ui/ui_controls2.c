@@ -790,7 +790,7 @@ static void Controls_GetKeyAssignment (char *command, int *twokeys)
 	twokeys[0] = twokeys[1] = -1;
 	count = 0;
 
-	for ( j = 0; j < 256; j++ )
+	for ( j = 0; j < MAX_KEYS; j++ )
 	{
 		trap_Key_GetBindingBuf( j, b, 256 );
 		if ( *b == 0 ) {

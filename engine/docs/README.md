@@ -308,6 +308,8 @@ set using command line arguments:
                                       (startup only)
 
   in_joystickNo                     - select which joystick to use
+  in_joystickAutoEnable             - auto-enable joystick input when at
+                                      least one joystick/gamepad is detected
   in_availableJoysticks             - list of available Joysticks
   in_keyboardDebug                  - print keyboard debug info
 
@@ -590,5 +592,4 @@ Significant contributions from
   * Vincent S. Cojot <vincent at cojot dot name>
   * optical <alex@rigbo.se>
   * Aaron Gyes <floam@aaron.gy>
-
 

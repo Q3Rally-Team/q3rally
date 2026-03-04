@@ -496,6 +496,7 @@ static sfxHandle_t RadioButton_Key( menuradiobutton_s *rb, int key )
 		case K_JOY2:
 		case K_JOY3:
 		case K_JOY4:
+		case K_PAD0_A:
 		case K_ENTER:
 		case K_KP_ENTER:
 		case K_KP_LEFTARROW:
@@ -1086,6 +1087,7 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 
 		case K_KP_UPARROW:
 		case K_UPARROW:
+		case K_PAD0_DPAD_UP:
 			if (l->generic.flags & QMF_HASMOUSEFOCUS)
 			{
 				// clicked up
@@ -1106,6 +1108,7 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
+		case K_PAD0_DPAD_DOWN:
 			if (l->generic.flags & QMF_HASMOUSEFOCUS)
 			{
 				// clicked down
@@ -1509,6 +1512,8 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 
 		case K_KP_UPARROW:
 		case K_UPARROW:
+		case K_PAD0_DPAD_UP:
+		case K_PAD0_LEFTSTICK_UP:
 			if( l->curvalue == 0 ) {
 				return menu_buzz_sound;
 			}
@@ -1533,6 +1538,8 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
+		case K_PAD0_DPAD_DOWN:
+		case K_PAD0_LEFTSTICK_DOWN:
 			if( l->curvalue == l->numitems - 1 ) {
 				return menu_buzz_sound;
 			}
@@ -1557,6 +1564,8 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
+		case K_PAD0_DPAD_LEFT:
+		case K_PAD0_LEFTSTICK_LEFT:
 			if( l->columns == 1 ) {
 				return menu_null_sound;
 			}
@@ -1580,6 +1589,8 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
+		case K_PAD0_DPAD_RIGHT:
+		case K_PAD0_LEFTSTICK_RIGHT:
 			if( l->columns == 1 ) {
 				return menu_null_sound;
 			}
@@ -2089,6 +2100,15 @@ sfxHandle_t Menu_ActivateItem( menuframework_s *s, menucommon_s* item ) {
 	return 0;
 }
 
+static qboolean Menu_IsGamepadSelectKey( int key )
+{
+	if ( key == K_PAD0_A || key == K_PAD0_START ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 /*
 =================
 Menu_DefaultKey
@@ -2105,7 +2125,8 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 	{
 		case K_MOUSE2:
 		case K_ESCAPE:
-// STONELANCE - dont pop the menu if we are on the top menu
+		case K_PAD0_B:
+	// STONELANCE - dont pop the menu if we are on the top menu
 			if (uis.mainMenu)
 				return sound;
 
@@ -2162,6 +2183,10 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 		}
 	}
 
+	if ( item && !(item->flags & (QMF_MOUSEONLY|QMF_GRAYED|QMF_INACTIVE)) && Menu_IsGamepadSelectKey( key ) ) {
+		return Menu_ActivateItem( m, item );
+	}
+
 	// default handling
 	switch ( key )
 	{
@@ -2176,6 +2201,7 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 #endif
 		case K_KP_UPARROW:
 		case K_UPARROW:
+		case K_PAD0_DPAD_UP:
 			cursor_prev    = m->cursor;
 			m->cursor_prev = m->cursor;
 			m->cursor--;
@@ -2189,6 +2215,7 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 		case K_TAB:
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
+		case K_PAD0_DPAD_DOWN:
 			cursor_prev    = m->cursor;
 			m->cursor_prev = m->cursor;
 			m->cursor++;
