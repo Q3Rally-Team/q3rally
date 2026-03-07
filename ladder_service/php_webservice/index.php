@@ -3706,6 +3706,7 @@ loadMatches();
 $pathInfo = $_SERVER['PATH_INFO'] ?? '';
 $path = trim($pathInfo, '/');
 $segments = $path === '' ? [] : explode('/', $path);
+$segments = normalize_api_segments($segments);
 
 try {
     switch ($method) {
@@ -3763,6 +3764,17 @@ function handle_post(array $segments): void
     }
 
     send_json(['matchId' => $payload['matchId']], 201);
+}
+
+function normalize_api_segments(array $segments): array
+{
+    if (count($segments) >= 2 &&
+        strcasecmp($segments[0], 'api') === 0 &&
+        strcasecmp($segments[1], 'v1') === 0) {
+        return array_slice($segments, 2);
+    }
+
+    return $segments;
 }
 
 function handle_get(array $segments): void
@@ -4173,4 +4185,3 @@ function send_error(int $statusCode, string $message): void
 {
     send_json(['error' => $message], $statusCode);
 }
-

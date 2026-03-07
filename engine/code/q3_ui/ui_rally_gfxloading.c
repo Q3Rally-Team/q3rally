@@ -42,6 +42,9 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 #define MIN_STAGE_TIME      450     /* minimum milliseconds per stage */
 #define FINAL_DISPLAY_TIME  1200    /* time to display 100% before transition */
 
+#define NUM_STAGES          8       /* must match ARRAY_LEN(stages) */
+#define SMOOTH_LERP_SPEED   4.5f    /* units per second for framerate-independent smoothing */
+
 #define Q3RALLY_DOWNLOAD_URL "https://www.q3rally.com/download-test/"
 
 /* Layout constants - all positions in 640x480 virtual screen space */
@@ -245,7 +248,7 @@ static qboolean DrawButton(int cx, int y, int w, int h,
    ------------------------------------------------------------------------- */
 
 static void UI_GFX_Loading_ExecuteStage(void) {
-    int totalStages = ARRAY_LEN(stages);
+    int totalStages = NUM_STAGES;
 
     if (s_gfxloading.cacheExecuted) {
         return;
@@ -263,7 +266,7 @@ static void UI_GFX_Loading_ExecuteStage(void) {
 static void UI_GFX_Loading_UpdateProgress(void) {
     int   currentTime  = trap_Milliseconds();
     int   stageElapsed = currentTime - s_gfxloading.stageStartTime;
-    int   totalStages  = ARRAY_LEN(stages);
+    int   totalStages  = NUM_STAGES;
     float stageProgress;
 
     UI_GFX_Loading_ExecuteStage();
@@ -296,21 +299,32 @@ static void UI_GFX_Loading_UpdateProgress(void) {
    ------------------------------------------------------------------------- */
 
 static void UI_GFX_Loading_MenuDraw(void) {
-    int         totalStages = ARRAY_LEN(stages);
+    int         totalStages = NUM_STAGES;
     int         stage_index;
     const char *stageName;
     int         textY;
     char        buf[256];
     char        updateState[32];
     int         currentTime;
+    float       deltaTime;
     vec4_t      color;
 
+    static int  lastDrawTime = 0;
+
     Menu_Draw(&s_gfxloading.menu);
+
+    currentTime = trap_Milliseconds();
+    deltaTime   = (lastDrawTime > 0)
+                  ? (float)(currentTime - lastDrawTime) * 0.001f
+                  : 0.016f;                             /* assume 60 fps on first frame */
+    if (deltaTime > 0.1f) deltaTime = 0.1f;            /* clamp: avoid huge jump after pause */
+    lastDrawTime = currentTime;
 
     UI_GFX_Loading_UpdateProgress();
 
     s_gfxloading.smoothProgress +=
-        (s_gfxloading.loadPercent - s_gfxloading.smoothProgress) * 0.08f;
+        (s_gfxloading.loadPercent - s_gfxloading.smoothProgress)
+        * (SMOOTH_LERP_SPEED * deltaTime);
 
     /* -----------------------------------------------------------------------
        HEADER
@@ -370,7 +384,7 @@ static void UI_GFX_Loading_MenuDraw(void) {
         if (progress > 1.0f) progress = 1.0f;
 
         car_x = BAR_X + (int)(BAR_W * progress) - CAR_ICON_W / 2;
-        UI_DrawHandlePic(car_x, BAR_Y - CAR_ICON_H,
+        UI_DrawHandlePic(car_x, BAR_Y - CAR_ICON_H - 10,
                          CAR_ICON_W, CAR_ICON_H, s_gfxloading.carShader);
     }
 
