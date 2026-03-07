@@ -32,22 +32,16 @@ qboolean isRaceObserver( int clientNum )
 #define ID_SKID_LENGTH          11
 #define ID_CONTROL_MODE         12
 #define ID_MANUAL_SHIFT         13
-#define ID_REAR_VIEW            14
-#define ID_CP_ARROW_MODE        15
 #define ID_ATMOSPHERIC_LEVEL	16
 #define ID_POSITION_SPRITES     17
 #define ID_CAM_TRACKING         18
 #define ID_ENGINE_SOUNDS        19
-#define ID_DRAW_MINIMAP         20
-
 #define ID_RVRL_PLAYERS         21
 #define ID_RVRL_OBJECTS         22
 #define ID_RVRL_SMOKE           23
 #define ID_RVRL_MARKS           24
 #define ID_RVRL_SPARKS          25
 
-#define ID_MMAP_SIZE            26
-#define ID_MMAP_FOV             27
 #define ID_SPEEDOMETER_MODE     28
 #define ID_FUEL_CONSUMPTION     29
 
@@ -72,17 +66,13 @@ typedef struct {
 
 	menulist_s		units;
         menulist_s              speedometer;
-	menulist_s		arrowMode;
 	menulist_s		controlMode;
 	menulist_s		atomspheric;
 
 	menuradiobutton_s	manualShift;
-	menuradiobutton_s	rearView;
 	menuradiobutton_s	positionSprites;
 	menuslider_s		skidlength;
 	menuslider_s		camtracking;
-	menuslider_s		mmap_size;
-	menuslider_s		mmap_fov;
 
 	menuradiobutton_s	rvrl_players;
 	menuradiobutton_s	rvrl_objects;
@@ -102,7 +92,6 @@ typedef struct {
 	menuradiobutton_s	engineSounds;
 	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
-        menuradiobutton_s       drawMinimap;
 
 	menutext_s		back;
 } q3roptionsmenu_t;
@@ -124,13 +113,6 @@ static const char *q3roptions_speedometer_mode[] = {
 static const char *q3roptions_control_mode[] = {
 	"Mouse",
 	"Keyboard/Joystick",
-	0
-};
-
-static const char *q3roptions_cp_arrow_mode[] = {
-	"Off",
-	"On HUD",
-	"Above Car",
 	0
 };
 
@@ -172,10 +154,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
                 trap_Cvar_SetValue( "cg_speedometerMode", s_q3roptions.speedometer.curvalue );
                 break;
 
-        case ID_CP_ARROW_MODE:
-                trap_Cvar_SetValue( "cg_checkpointArrowMode", s_q3roptions.arrowMode.curvalue );
-                break;
-
 	case ID_CONTROL_MODE:
 		trap_Cvar_SetValue( "cg_controlMode", s_q3roptions.controlMode.curvalue );
 		if ( s_q3roptions.controlMode.curvalue == 0 )
@@ -195,12 +173,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "cg_manualShift", s_q3roptions.manualShift.curvalue );
 		break;
 
-	case ID_REAR_VIEW:
-		trap_Cvar_SetValue( "cg_drawRearView", s_q3roptions.rearView.curvalue );
-		break;
-
-
-
 	case ID_POSITION_SPRITES:
 		trap_Cvar_SetValue( "cg_drawPositionSprites", s_q3roptions.positionSprites.curvalue );
 		break;
@@ -213,14 +185,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "cg_tightCamTracking", s_q3roptions.camtracking.curvalue );
 		break;
 
-	case ID_MMAP_SIZE:
-		trap_Cvar_SetValue( "cg_mmap_size", s_q3roptions.mmap_size.curvalue );
-		break;
-
-	case ID_MMAP_FOV:
-		trap_Cvar_SetValue( "cg_mmap_fov", s_q3roptions.mmap_fov.curvalue );
-		break;
-
 	case ID_ENGINE_SOUNDS:
 		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
 		break;
@@ -231,10 +195,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 
 	case ID_FUEL_CONSUMPTION:
 		trap_Cvar_SetValue( "g_useFuel", s_q3roptions.fuelConsumption.curvalue );
-		break;
-
-	case ID_DRAW_MINIMAP:
-		trap_Cvar_SetValue( "cg_drawMMap", s_q3roptions.drawMinimap.curvalue );
 		break;
 
 	case ID_RVRL_PLAYERS:
@@ -298,10 +258,6 @@ static void Q3ROptions_StatusBar( void *self )
                 text = "Select analog or digital speedometer.";
                 break;
 
-        case ID_CP_ARROW_MODE:
-                text = "Display options for the next checkpoint arrow.";
-                break;
-
 	case ID_CONTROL_MODE:
 		if( s_q3roptions.controlMode.curvalue == 0 )
 			text = "Mouse control allows a freelook like normal Q3A and the Car turns towards the direction you are looking.";
@@ -322,12 +278,6 @@ static void Q3ROptions_StatusBar( void *self )
 			text = "Use the gear up and gear down keys to switch between forward and reverse manually.";
 		break;
 
-	case ID_REAR_VIEW:
-		text = "Draw rear view mirror on the HUD.";
-		break;
-
-
-
 	case ID_POSITION_SPRITES:
 		text = "Draw position sprites above cars when their position changes.";
 		break;
@@ -340,24 +290,12 @@ static void Q3ROptions_StatusBar( void *self )
 		text = "Tightness of the joystick camera tracking mode.  A higher value makes the camera stay behind the car more.";
 		break;
 
-	case ID_MMAP_SIZE:
-		text = "Changes the size of the minimap.";
-		break;
-
-	case ID_MMAP_FOV:
-		text = "Changes the zoom of the minimap.";
-		break;
-
 	case ID_ENGINE_SOUNDS:
 		text = "Turns on engine sounds in game.";
 		break;
 
 	case ID_FUEL_CONSUMPTION:
 		text = "Toggle fuel consumption for vehicles.";
-		break;
-
-	case ID_DRAW_MINIMAP:
-		text = "Turns on the Minimap in game.";
 		break;
 
 	case ID_RVRL_PLAYERS:
@@ -415,23 +353,18 @@ void Q3ROptions_MenuInit( void ) {
 	// load current values
         s_q3roptions.units.curvalue = ui_metricUnits.integer;
         s_q3roptions.speedometer.curvalue = ui_speedometerMode.integer;
-        s_q3roptions.arrowMode.curvalue = ui_checkpointArrowMode.integer;
 	s_q3roptions.controlMode.curvalue = ui_controlMode.integer;
 	s_q3roptions.atomspheric.curvalue = ui_atmosphericLevel.integer;
 
 	s_q3roptions.manualShift.curvalue = ui_manualShift.integer;
-	s_q3roptions.rearView.curvalue = ui_drawRearView.integer;
 	s_q3roptions.positionSprites.curvalue = ui_drawPositionSprites.integer;
 
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
-	s_q3roptions.mmap_size.curvalue = ui_mmap_size.value;
-	s_q3roptions.mmap_fov.curvalue = ui_mmap_fov.value;
 
 	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer;
 	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
-	s_q3roptions.drawMinimap.curvalue = ui_drawMinimap.integer;
 
 	s_q3roptions.rvrl_players.curvalue = ( ui_rearViewRenderLevel.integer & RL_PLAYERS ) ? 1 : 0;
 	s_q3roptions.rvrl_objects.curvalue = ( ui_rearViewRenderLevel.integer & RL_OBJECTS ) ? 1 : 0;
@@ -460,26 +393,23 @@ void Q3ROptions_MenuInit( void ) {
 
 
 
-	// lists
-	s_q3roptions.units.generic.type			= MTYPE_SPINCONTROL;
-	s_q3roptions.units.generic.name			= "Unit Type:";
-	s_q3roptions.units.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_q3roptions.units.generic.callback		= Q3ROptions_MenuEvent;
-	s_q3roptions.units.generic.statusbar	= Q3ROptions_StatusBar;
-	s_q3roptions.units.generic.id			= ID_UNITS;
-	s_q3roptions.units.generic.x			= 200;
-	s_q3roptions.units.generic.y			= 90;
-	s_q3roptions.units.itemnames			= q3roptions_units;
+	/* ----------------------------------------------------------------
+	   Layout constants
+	   Screen: 640x480. Two columns.
+	   Left  column anchor: x=200  (Gameplay)
+	   Right column anchor: x=500  (Visual / Audio)
+	   Items start at y=TOP, step by STEP.
+	   Render-level groups sit below the divider at y=RLY.
+	   ---------------------------------------------------------------- */
+#define LAY_TOP   100
+#define LAY_STEP   22
+#define LAY_L     200
+#define LAY_R     500
+#define LAY_RLY   290
+#define LAY_SLD_Y ( LAY_TOP + LAY_STEP * 5 + 10 )  /* Skid + Camera Tracking row */
+#define LAY_HDG_Y ( LAY_RLY - 19 )                  /* Render level headings, 5px higher */
 
-	s_q3roptions.arrowMode.generic.type			= MTYPE_SPINCONTROL;
-	s_q3roptions.arrowMode.generic.name			= "Checkpoint Arrow Mode:";
-	s_q3roptions.arrowMode.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_q3roptions.arrowMode.generic.callback		= Q3ROptions_MenuEvent;
-	s_q3roptions.arrowMode.generic.statusbar	= Q3ROptions_StatusBar;
-	s_q3roptions.arrowMode.generic.id			= ID_CP_ARROW_MODE;
-	s_q3roptions.arrowMode.generic.x			= 200;
-	s_q3roptions.arrowMode.generic.y			= 90 + 20;
-	s_q3roptions.arrowMode.itemnames			= q3roptions_cp_arrow_mode;
+	// ---- LEFT COLUMN: Gameplay ----
 
 	s_q3roptions.controlMode.generic.type		= MTYPE_SPINCONTROL;
 	s_q3roptions.controlMode.generic.name		= "Control Mode:";
@@ -487,99 +417,52 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.controlMode.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.controlMode.generic.statusbar	= Q3ROptions_StatusBar;
 	s_q3roptions.controlMode.generic.id			= ID_CONTROL_MODE;
-	s_q3roptions.controlMode.generic.x			= 200;
-	s_q3roptions.controlMode.generic.y			= 90 + 40;
+	s_q3roptions.controlMode.generic.x			= LAY_L;
+	s_q3roptions.controlMode.generic.y			= LAY_TOP + LAY_STEP * 0;
 	s_q3roptions.controlMode.itemnames			= q3roptions_control_mode;
 
+	s_q3roptions.manualShift.generic.type		= MTYPE_RADIOBUTTON;
+	s_q3roptions.manualShift.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.manualShift.generic.x			= LAY_L;
+	s_q3roptions.manualShift.generic.y			= LAY_TOP + LAY_STEP * 1;
+	s_q3roptions.manualShift.generic.name		= "Manual Forward/Reverse:";
+	s_q3roptions.manualShift.generic.id			= ID_MANUAL_SHIFT;
+	s_q3roptions.manualShift.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.manualShift.generic.statusbar	= Q3ROptions_StatusBar;
+
 	s_q3roptions.atomspheric.generic.type		= MTYPE_SPINCONTROL;
-	s_q3roptions.atomspheric.generic.name		= "Atmospheric Level:";
+	s_q3roptions.atomspheric.generic.name		= "Atmospheric Effects:";
 	s_q3roptions.atomspheric.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_q3roptions.atomspheric.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.atomspheric.generic.statusbar	= Q3ROptions_StatusBar;
 	s_q3roptions.atomspheric.generic.id			= ID_ATMOSPHERIC_LEVEL;
-	s_q3roptions.atomspheric.generic.x			= 200;
-	s_q3roptions.atomspheric.generic.y			= 90 + 60;
+	s_q3roptions.atomspheric.generic.x			= LAY_L;
+	s_q3roptions.atomspheric.generic.y			= LAY_TOP + LAY_STEP * 2;
 	s_q3roptions.atomspheric.itemnames			= q3roptions_atmospheric;
-        s_q3roptions.speedometer.generic.type           = MTYPE_SPINCONTROL;
-        s_q3roptions.speedometer.generic.name           = "Speedometer Mode:";
-        s_q3roptions.speedometer.generic.flags          = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-        s_q3roptions.speedometer.generic.callback       = Q3ROptions_MenuEvent;
-        s_q3roptions.speedometer.generic.statusbar      = Q3ROptions_StatusBar;
-        s_q3roptions.speedometer.generic.id             = ID_SPEEDOMETER_MODE;
-        s_q3roptions.speedometer.generic.x              = 200;
-        s_q3roptions.speedometer.generic.y              = 90 + 80;
-        s_q3roptions.speedometer.itemnames              = q3roptions_speedometer_mode;
 
-        s_q3roptions.fuelConsumption.generic.type       = MTYPE_RADIOBUTTON;
-        s_q3roptions.fuelConsumption.generic.flags      = QMF_SMALLFONT;
-        s_q3roptions.fuelConsumption.generic.x          = 200;
-        s_q3roptions.fuelConsumption.generic.y          = 90 + 100;
-        s_q3roptions.fuelConsumption.generic.name       = "Fuel Consumption:";
-        s_q3roptions.fuelConsumption.generic.id         = ID_FUEL_CONSUMPTION;
-        s_q3roptions.fuelConsumption.generic.callback   = Q3ROptions_MenuEvent;
-        s_q3roptions.fuelConsumption.generic.statusbar  = Q3ROptions_StatusBar;
+	s_q3roptions.ghostPlayback.generic.type		= MTYPE_SPINCONTROL;
+	s_q3roptions.ghostPlayback.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_q3roptions.ghostPlayback.generic.x		= LAY_L;
+	s_q3roptions.ghostPlayback.generic.y		= LAY_TOP + LAY_STEP * 3;
+	s_q3roptions.ghostPlayback.generic.name		= "Ghost Playback:";
+	s_q3roptions.ghostPlayback.generic.id		= ID_GHOST_PLAYBACK;
+	s_q3roptions.ghostPlayback.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.ghostPlayback.generic.statusbar = Q3ROptions_StatusBar;
+	s_q3roptions.ghostPlayback.itemnames		= q3roptions_ghostPlayback;
 
-	// radio buttons
-	s_q3roptions.manualShift.generic.type			= MTYPE_RADIOBUTTON;
-	s_q3roptions.manualShift.generic.flags			= QMF_SMALLFONT;
-	s_q3roptions.manualShift.generic.x				= 500;
-	s_q3roptions.manualShift.generic.y				= 90;
-	s_q3roptions.manualShift.generic.name			= "Manual Forward/Reverse:";
-	s_q3roptions.manualShift.generic.id				= ID_MANUAL_SHIFT;
-	s_q3roptions.manualShift.generic.callback		= Q3ROptions_MenuEvent;
-	s_q3roptions.manualShift.generic.statusbar		= Q3ROptions_StatusBar;
+	s_q3roptions.fuelConsumption.generic.type	= MTYPE_RADIOBUTTON;
+	s_q3roptions.fuelConsumption.generic.flags	= QMF_SMALLFONT;
+	s_q3roptions.fuelConsumption.generic.x		= LAY_L;
+	s_q3roptions.fuelConsumption.generic.y		= LAY_TOP + LAY_STEP * 4;
+	s_q3roptions.fuelConsumption.generic.name	= "Fuel Consumption:";
+	s_q3roptions.fuelConsumption.generic.id		= ID_FUEL_CONSUMPTION;
+	s_q3roptions.fuelConsumption.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.fuelConsumption.generic.statusbar	= Q3ROptions_StatusBar;
 
-	s_q3roptions.rearView.generic.type				= MTYPE_RADIOBUTTON;
-	s_q3roptions.rearView.generic.flags				= QMF_SMALLFONT;
-	s_q3roptions.rearView.generic.x					= 500;
-	s_q3roptions.rearView.generic.y					= 90 + 20;
-	s_q3roptions.rearView.generic.name				= "Rear View Mirror:";
-	s_q3roptions.rearView.generic.id				= ID_REAR_VIEW;
-	s_q3roptions.rearView.generic.callback			= Q3ROptions_MenuEvent;
-	s_q3roptions.rearView.generic.statusbar			= Q3ROptions_StatusBar;
-
-	s_q3roptions.positionSprites.generic.type		= MTYPE_RADIOBUTTON;
-	s_q3roptions.positionSprites.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.positionSprites.generic.x			= 500;
-	s_q3roptions.positionSprites.generic.y			= 90 + 40;
-	s_q3roptions.positionSprites.generic.name		= "Race Position Sprites:";
-	s_q3roptions.positionSprites.generic.id			= ID_POSITION_SPRITES;
-	s_q3roptions.positionSprites.generic.callback	= Q3ROptions_MenuEvent;
-	s_q3roptions.positionSprites.generic.statusbar	= Q3ROptions_StatusBar;
-
-	s_q3roptions.engineSounds.generic.type			= MTYPE_RADIOBUTTON;
-	s_q3roptions.engineSounds.generic.flags			= QMF_SMALLFONT;
-	s_q3roptions.engineSounds.generic.x				= 500;
-	s_q3roptions.engineSounds.generic.y				= 90 + 60;
-	s_q3roptions.engineSounds.generic.name			= "Engine Sounds:";
-	s_q3roptions.engineSounds.generic.id			= ID_ENGINE_SOUNDS;
-	s_q3roptions.engineSounds.generic.callback		= Q3ROptions_MenuEvent;
-	s_q3roptions.engineSounds.generic.statusbar		= Q3ROptions_StatusBar;
-	s_q3roptions.ghostPlayback.generic.type			= MTYPE_SPINCONTROL;
-	s_q3roptions.ghostPlayback.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_q3roptions.ghostPlayback.generic.x				= 500;
-	s_q3roptions.ghostPlayback.generic.y				= 90 + 85;
-	s_q3roptions.ghostPlayback.generic.name			= "Ghost Playback:";
-	s_q3roptions.ghostPlayback.generic.id			= ID_GHOST_PLAYBACK;
-	s_q3roptions.ghostPlayback.generic.callback		= Q3ROptions_MenuEvent;
-	s_q3roptions.ghostPlayback.generic.statusbar		= Q3ROptions_StatusBar;
-	s_q3roptions.ghostPlayback.itemnames			= q3roptions_ghostPlayback;
-
-
-	s_q3roptions.drawMinimap.generic.type           = MTYPE_RADIOBUTTON;
-	s_q3roptions.drawMinimap.generic.flags          = QMF_SMALLFONT;
-	s_q3roptions.drawMinimap.generic.x              = 500;
-	s_q3roptions.drawMinimap.generic.y              = 90 + 105;
-	s_q3roptions.drawMinimap.generic.name           = "Minimap:";
-	s_q3roptions.drawMinimap.generic.id             = ID_DRAW_MINIMAP;
-	s_q3roptions.drawMinimap.generic.callback       = Q3ROptions_MenuEvent;
-	s_q3roptions.drawMinimap.generic.statusbar      = Q3ROptions_StatusBar;
-    
-	// sliders
 	s_q3roptions.skidlength.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.skidlength.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.skidlength.generic.x			= 200;
-	s_q3roptions.skidlength.generic.y			= 90 + 140;
+	s_q3roptions.skidlength.generic.x			= LAY_L;
+	s_q3roptions.skidlength.generic.y			= LAY_SLD_Y;
 	s_q3roptions.skidlength.generic.name		= "Skid Segment Length:";
 	s_q3roptions.skidlength.generic.id			= ID_SKID_LENGTH;
 	s_q3roptions.skidlength.minvalue			= 4;
@@ -587,10 +470,50 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.skidlength.generic.statusbar	= Q3ROptions_StatusBar;
 
+	// ---- RIGHT COLUMN: Visual / Audio ----
+
+	s_q3roptions.speedometer.generic.type		= MTYPE_SPINCONTROL;
+	s_q3roptions.speedometer.generic.name		= "Speedometer Mode:";
+	s_q3roptions.speedometer.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_q3roptions.speedometer.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.speedometer.generic.statusbar	= Q3ROptions_StatusBar;
+	s_q3roptions.speedometer.generic.id			= ID_SPEEDOMETER_MODE;
+	s_q3roptions.speedometer.generic.x			= LAY_R;
+	s_q3roptions.speedometer.generic.y			= LAY_TOP + LAY_STEP * 0;
+	s_q3roptions.speedometer.itemnames			= q3roptions_speedometer_mode;
+
+	s_q3roptions.units.generic.type				= MTYPE_SPINCONTROL;
+	s_q3roptions.units.generic.name				= "Unit Type:";
+	s_q3roptions.units.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_q3roptions.units.generic.callback			= Q3ROptions_MenuEvent;
+	s_q3roptions.units.generic.statusbar		= Q3ROptions_StatusBar;
+	s_q3roptions.units.generic.id				= ID_UNITS;
+	s_q3roptions.units.generic.x				= LAY_R;
+	s_q3roptions.units.generic.y				= LAY_TOP + LAY_STEP * 1;
+	s_q3roptions.units.itemnames				= q3roptions_units;
+
+	s_q3roptions.engineSounds.generic.type		= MTYPE_RADIOBUTTON;
+	s_q3roptions.engineSounds.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.engineSounds.generic.x			= LAY_R;
+	s_q3roptions.engineSounds.generic.y			= LAY_TOP + LAY_STEP * 2;
+	s_q3roptions.engineSounds.generic.name		= "Engine Sounds:";
+	s_q3roptions.engineSounds.generic.id		= ID_ENGINE_SOUNDS;
+	s_q3roptions.engineSounds.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.engineSounds.generic.statusbar	= Q3ROptions_StatusBar;
+
+	s_q3roptions.positionSprites.generic.type	= MTYPE_RADIOBUTTON;
+	s_q3roptions.positionSprites.generic.flags	= QMF_SMALLFONT;
+	s_q3roptions.positionSprites.generic.x		= LAY_R;
+	s_q3roptions.positionSprites.generic.y		= LAY_TOP + LAY_STEP * 3;
+	s_q3roptions.positionSprites.generic.name	= "Race Position Sprites:";
+	s_q3roptions.positionSprites.generic.id		= ID_POSITION_SPRITES;
+	s_q3roptions.positionSprites.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.positionSprites.generic.statusbar	= Q3ROptions_StatusBar;
+
 	s_q3roptions.camtracking.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.camtracking.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.camtracking.generic.x			= 500;
-	s_q3roptions.camtracking.generic.y			= 90 + 140;
+	s_q3roptions.camtracking.generic.x			= LAY_R;
+	s_q3roptions.camtracking.generic.y			= LAY_SLD_Y;
 	s_q3roptions.camtracking.generic.name		= "Camera Tracking Scale:";
 	s_q3roptions.camtracking.generic.id			= ID_CAM_TRACKING;
 	s_q3roptions.camtracking.minvalue			= 0;
@@ -598,43 +521,22 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.camtracking.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.camtracking.generic.statusbar	= Q3ROptions_StatusBar;
 
-	s_q3roptions.mmap_size.generic.type		= MTYPE_SLIDER;
-	s_q3roptions.mmap_size.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mmap_size.generic.x			= 200;
-	s_q3roptions.mmap_size.generic.y			= 90 + 160;
-	s_q3roptions.mmap_size.generic.name		= "Minimap Size:";
-	s_q3roptions.mmap_size.generic.id			= ID_MMAP_SIZE;
-	s_q3roptions.mmap_size.minvalue			= 0.5;
-	s_q3roptions.mmap_size.maxvalue			= 2.0;
-	s_q3roptions.mmap_size.generic.callback	= Q3ROptions_MenuEvent;
-	s_q3roptions.mmap_size.generic.statusbar	= Q3ROptions_StatusBar;
+	// ---- RENDER LEVEL GROUPS (below both columns) ----
 
-	s_q3roptions.mmap_fov.generic.type		= MTYPE_SLIDER;
-	s_q3roptions.mmap_fov.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mmap_fov.generic.x			= 500;
-	s_q3roptions.mmap_fov.generic.y			= 90 + 160;
-	s_q3roptions.mmap_fov.generic.name		= "Minimap Zoom:";
-	s_q3roptions.mmap_fov.generic.id			= ID_MMAP_FOV;
-	s_q3roptions.mmap_fov.minvalue			= 10;
-	s_q3roptions.mmap_fov.maxvalue			= 120;
-	s_q3roptions.mmap_fov.generic.callback	= Q3ROptions_MenuEvent;
-	s_q3roptions.mmap_fov.generic.statusbar	= Q3ROptions_StatusBar;
-
-	// render levels
 	s_q3roptions.rvrl_heading.generic.type		= MTYPE_PTEXT;
 	s_q3roptions.rvrl_heading.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_q3roptions.rvrl_heading.generic.x			= 200-20;
-	s_q3roptions.rvrl_heading.generic.y			= 280;
+	s_q3roptions.rvrl_heading.generic.x			= LAY_L - 20;
+	s_q3roptions.rvrl_heading.generic.y			= LAY_HDG_Y;
 	s_q3roptions.rvrl_heading.generic.id		= 0;
-	s_q3roptions.rvrl_heading.generic.callback	= Q3ROptions_MenuEvent; 
+	s_q3roptions.rvrl_heading.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.rvrl_heading.string			= "Rear View Render Level:";
 	s_q3roptions.rvrl_heading.color				= text_color_normal;
 	s_q3roptions.rvrl_heading.style				= UI_CENTER | UI_SMALLFONT;
 
 	s_q3roptions.rvrl_players.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.rvrl_players.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.rvrl_players.generic.x			= 200;
-	s_q3roptions.rvrl_players.generic.y			= 300;
+	s_q3roptions.rvrl_players.generic.x			= LAY_L;
+	s_q3roptions.rvrl_players.generic.y			= LAY_RLY + LAY_STEP * 0;
 	s_q3roptions.rvrl_players.generic.name		= "Players:";
 	s_q3roptions.rvrl_players.generic.id		= ID_RVRL_PLAYERS;
 	s_q3roptions.rvrl_players.generic.callback	= Q3ROptions_MenuEvent;
@@ -642,8 +544,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.rvrl_objects.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.rvrl_objects.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.rvrl_objects.generic.x			= 200;
-	s_q3roptions.rvrl_objects.generic.y			= 300 + 20;
+	s_q3roptions.rvrl_objects.generic.x			= LAY_L;
+	s_q3roptions.rvrl_objects.generic.y			= LAY_RLY + LAY_STEP * 1;
 	s_q3roptions.rvrl_objects.generic.name		= "Objects:";
 	s_q3roptions.rvrl_objects.generic.id		= ID_RVRL_OBJECTS;
 	s_q3roptions.rvrl_objects.generic.callback	= Q3ROptions_MenuEvent;
@@ -651,8 +553,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.rvrl_smoke.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.rvrl_smoke.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.rvrl_smoke.generic.x			= 200;
-	s_q3roptions.rvrl_smoke.generic.y			= 300 + 40;
+	s_q3roptions.rvrl_smoke.generic.x			= LAY_L;
+	s_q3roptions.rvrl_smoke.generic.y			= LAY_RLY + LAY_STEP * 2;
 	s_q3roptions.rvrl_smoke.generic.name		= "Smoke:";
 	s_q3roptions.rvrl_smoke.generic.id			= ID_RVRL_SMOKE;
 	s_q3roptions.rvrl_smoke.generic.callback	= Q3ROptions_MenuEvent;
@@ -660,8 +562,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.rvrl_marks.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.rvrl_marks.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.rvrl_marks.generic.x			= 200;
-	s_q3roptions.rvrl_marks.generic.y			= 300 + 60;
+	s_q3roptions.rvrl_marks.generic.x			= LAY_L;
+	s_q3roptions.rvrl_marks.generic.y			= LAY_RLY + LAY_STEP * 3;
 	s_q3roptions.rvrl_marks.generic.name		= "Marks:";
 	s_q3roptions.rvrl_marks.generic.id			= ID_RVRL_MARKS;
 	s_q3roptions.rvrl_marks.generic.callback	= Q3ROptions_MenuEvent;
@@ -669,29 +571,27 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.rvrl_sparks.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.rvrl_sparks.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.rvrl_sparks.generic.x			= 200;
-	s_q3roptions.rvrl_sparks.generic.y			= 300 + 80;
+	s_q3roptions.rvrl_sparks.generic.x			= LAY_L;
+	s_q3roptions.rvrl_sparks.generic.y			= LAY_RLY + LAY_STEP * 4;
 	s_q3roptions.rvrl_sparks.generic.name		= "Sparks:";
 	s_q3roptions.rvrl_sparks.generic.id			= ID_RVRL_SPARKS;
 	s_q3roptions.rvrl_sparks.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.rvrl_sparks.generic.statusbar	= Q3ROptions_StatusBar;
 
-
-
 	s_q3roptions.mvrl_heading.generic.type		= MTYPE_PTEXT;
 	s_q3roptions.mvrl_heading.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_q3roptions.mvrl_heading.generic.x			= 500-20;
-	s_q3roptions.mvrl_heading.generic.y			= 280;
+	s_q3roptions.mvrl_heading.generic.x			= LAY_R - 20;
+	s_q3roptions.mvrl_heading.generic.y			= LAY_HDG_Y;
 	s_q3roptions.mvrl_heading.generic.id		= 0;
-	s_q3roptions.mvrl_heading.generic.callback	= Q3ROptions_MenuEvent; 
+	s_q3roptions.mvrl_heading.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.mvrl_heading.string			= "Main View Render Level:";
 	s_q3roptions.mvrl_heading.color				= text_color_normal;
 	s_q3roptions.mvrl_heading.style				= UI_CENTER | UI_SMALLFONT;
 
 	s_q3roptions.mvrl_players.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.mvrl_players.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mvrl_players.generic.x			= 500;
-	s_q3roptions.mvrl_players.generic.y			= 300;
+	s_q3roptions.mvrl_players.generic.x			= LAY_R;
+	s_q3roptions.mvrl_players.generic.y			= LAY_RLY + LAY_STEP * 0;
 	s_q3roptions.mvrl_players.generic.name		= "Players:";
 	s_q3roptions.mvrl_players.generic.id		= ID_MVRL_PLAYERS;
 	s_q3roptions.mvrl_players.generic.callback	= Q3ROptions_MenuEvent;
@@ -699,8 +599,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.mvrl_objects.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.mvrl_objects.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mvrl_objects.generic.x			= 500;
-	s_q3roptions.mvrl_objects.generic.y			= 300 + 20;
+	s_q3roptions.mvrl_objects.generic.x			= LAY_R;
+	s_q3roptions.mvrl_objects.generic.y			= LAY_RLY + LAY_STEP * 1;
 	s_q3roptions.mvrl_objects.generic.name		= "Objects:";
 	s_q3roptions.mvrl_objects.generic.id		= ID_MVRL_OBJECTS;
 	s_q3roptions.mvrl_objects.generic.callback	= Q3ROptions_MenuEvent;
@@ -708,8 +608,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.mvrl_smoke.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.mvrl_smoke.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mvrl_smoke.generic.x			= 500;
-	s_q3roptions.mvrl_smoke.generic.y			= 300 + 40;
+	s_q3roptions.mvrl_smoke.generic.x			= LAY_R;
+	s_q3roptions.mvrl_smoke.generic.y			= LAY_RLY + LAY_STEP * 2;
 	s_q3roptions.mvrl_smoke.generic.name		= "Smoke:";
 	s_q3roptions.mvrl_smoke.generic.id			= ID_MVRL_SMOKE;
 	s_q3roptions.mvrl_smoke.generic.callback	= Q3ROptions_MenuEvent;
@@ -717,8 +617,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.mvrl_marks.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.mvrl_marks.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mvrl_marks.generic.x			= 500;
-	s_q3roptions.mvrl_marks.generic.y			= 300 + 60;
+	s_q3roptions.mvrl_marks.generic.x			= LAY_R;
+	s_q3roptions.mvrl_marks.generic.y			= LAY_RLY + LAY_STEP * 3;
 	s_q3roptions.mvrl_marks.generic.name		= "Marks:";
 	s_q3roptions.mvrl_marks.generic.id			= ID_MVRL_MARKS;
 	s_q3roptions.mvrl_marks.generic.callback	= Q3ROptions_MenuEvent;
@@ -726,8 +626,8 @@ void Q3ROptions_MenuInit( void ) {
 
 	s_q3roptions.mvrl_sparks.generic.type		= MTYPE_RADIOBUTTON;
 	s_q3roptions.mvrl_sparks.generic.flags		= QMF_SMALLFONT;
-	s_q3roptions.mvrl_sparks.generic.x			= 500;
-	s_q3roptions.mvrl_sparks.generic.y			= 300 + 80;
+	s_q3roptions.mvrl_sparks.generic.x			= LAY_R;
+	s_q3roptions.mvrl_sparks.generic.y			= LAY_RLY + LAY_STEP * 4;
 	s_q3roptions.mvrl_sparks.generic.name		= "Sparks:";
 	s_q3roptions.mvrl_sparks.generic.id			= ID_MVRL_SPARKS;
 	s_q3roptions.mvrl_sparks.generic.callback	= Q3ROptions_MenuEvent;
@@ -752,23 +652,18 @@ void Q3ROptions_MenuInit( void ) {
 
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.units );
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.arrowMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.controlMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.atomspheric );
         Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.speedometer );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.fuelConsumption );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.manualShift );
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rearView );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
     Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ghostPlayback );
-        Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.drawMinimap );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mmap_size );
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mmap_fov );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_heading );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_players );
