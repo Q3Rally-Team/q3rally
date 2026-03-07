@@ -2729,8 +2729,10 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_predict.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_draw.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_drawtools.o \
-  $(B)/$(BASEGAME)/cgame/cg_rally_hud.o \
-  $(B)/$(BASEGAME)/cgame/cg_rally_hud2.o \
+  $(B)/$(BASEGAME)/cgame/cg_hud_core.o \
+  $(B)/$(BASEGAME)/cgame/cg_hud_racing.o \
+  $(B)/$(BASEGAME)/cgame/cg_hud_derby.o \
+  $(B)/$(BASEGAME)/cgame/cg_hud_vehicle.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_platetools.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_racetools.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_rearweapons.o \

@@ -1309,8 +1309,25 @@ void CL_KeyDownEvent( int key, unsigned time )
 		return;
 	}
 
-	// send the bound action
-	CL_ParseBinding( key, qtrue, time );
+	// SHIFT+H toggles the in-game HUD options menu (Q3Rally)
+	if ( tolower(key) == 'h' && keys[K_SHIFT].down && clc.state == CA_ACTIVE && !( Key_GetCatcher() & KEYCATCH_UI ) ) {
+		if ( Key_GetCatcher() & KEYCATCH_CGAME ) {
+			// menu is open – close it
+			Cvar_Set( "cg_hudOptionsOpen", "0" );
+			Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_CGAME );
+			VM_Call( cgvm, CG_EVENT_HANDLING, CGAME_EVENT_NONE );
+		} else {
+			// menu is closed – open it
+			Cvar_Set( "cg_hudOptionsOpen", "1" );
+			Key_SetCatcher( Key_GetCatcher() | KEYCATCH_CGAME );
+		}
+		return;
+	}
+
+	// send the bound action only if no catcher is consuming input
+	if ( !( Key_GetCatcher() & KEYCATCH_CGAME ) ) {
+		CL_ParseBinding( key, qtrue, time );
+	}
 
 	// distribute the key down event to the appropriate handler
 	if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {

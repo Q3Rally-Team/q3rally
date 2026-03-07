@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // active (after loading) gameplay
 
 #include "cg_local.h"
+#include "cg_hud_elements.h"
 
 #ifdef MISSIONPACK
 #include "../ui/ui_shared.h"
@@ -3168,6 +3169,7 @@ static void CG_DrawIntermission( stereoFrame_t stereoFrame ) {
 
 // Q3Rally Code Start
 	cg.scoreBoardShowing = CG_DrawHUD();
+	CG_DrawHUDOptionsMenu();
 
 	if ( stereoFrame == STEREO_CENTER ) {
 		CG_JukeboxFrame();
@@ -3510,7 +3512,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 	CG_DrawFollow();
 
 	cg.scoreBoardShowing = CG_DrawHUD();
-
+	CG_DrawHUDOptionsMenu();
 
 	// don't draw center string if scoreboard is up
 

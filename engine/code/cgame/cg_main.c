@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
+#include "cg_hud_elements.h"
+#include "../client/keycodes.h"
 
 #ifdef MISSIONPACK
 #include "../ui/ui_shared.h"
@@ -528,6 +530,9 @@ void CG_RegisterCvars( void ) {
 // Q3Rally Code END
 	trap_Cvar_Register(NULL, "team_model", DEFAULT_TEAM_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "team_headmodel", DEFAULT_TEAM_HEAD, CVAR_USERINFO | CVAR_ARCHIVE );
+
+	/* Register HUD split-module cvars (including cg_hudOptionsOpen). */
+	CG_HUD_RegisterCvars();
 }
 
 /*																																			
@@ -2462,8 +2467,50 @@ void CG_EventHandling(int type) {
 
 
 void CG_KeyEvent(int key, qboolean down) {
+	if ( !down ) return;
+
+	/* F9 toggles the HUD options menu and manages the key catcher */
+	if ( key == K_F9 ) {
+		if ( CG_HUDOptionsIsOpen() ) {
+			trap_Cvar_Set( "cg_hudOptionsOpen", "0" );
+			trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_CGAME );
+		} else {
+			trap_Cvar_Set( "cg_hudOptionsOpen", "1" );
+			trap_Key_SetCatcher( trap_Key_GetCatcher() | KEYCATCH_CGAME );
+		}
+		return;
+	}
+
+	/* While menu is open: navigation and toggle */
+	if ( CG_HUDOptionsIsOpen() ) {
+		if ( key == K_ESCAPE ) {
+			trap_Cvar_Set( "cg_hudOptionsOpen", "0" );
+			trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_CGAME );
+		} else if ( key == K_MOUSE1 ) {
+			CG_HUDOptions_MouseEvent( cgs.cursorX, cgs.cursorY, qtrue );
+		} else {
+			CG_HUDOptions_KeyEvent( key );
+		}
+	}
 }
 
 void CG_MouseEvent(int x, int y) {
+	/* Keep a 640x480 UI cursor position for HUD menu hit-testing. */
+	cgs.cursorX += x;
+	if ( cgs.cursorX < 0 ) {
+		cgs.cursorX = 0;
+	} else if ( cgs.cursorX > 640 ) {
+		cgs.cursorX = 640;
+	}
+
+	cgs.cursorY += y;
+	if ( cgs.cursorY < 0 ) {
+		cgs.cursorY = 0;
+	} else if ( cgs.cursorY > 480 ) {
+		cgs.cursorY = 480;
+	}
+
+	/* Hover updates for row highlighting and click targeting. */
+	CG_HUDOptions_MouseEvent( cgs.cursorX, cgs.cursorY, qfalse );
 }
 #endif
