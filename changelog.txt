@@ -1,6 +1,6 @@
 !!! --- Q3Rally Changelog --- !!!
 
-new since v0.6c
+new in v0.7
 
 Added:
 
@@ -32,6 +32,36 @@ Fixed:
 - Race grid spawn fallback now avoids defaulting to DM spawns
 - Derby damage CVar validation and collision/ram damage rebalance
 - Ridge Racer map fix plus missing texture/file cleanup
+
+
+new in v0.6 / v0.6b / v0.6c
+
+Added:
+
+- Intermission jukebox with auto-discovered .ogg tracks, HUD track/progress overlay and playback controls
+- Fuel-system integration across game/client/UI CVars with prediction support
+- Client version-check module (cl_update) with remote version/date/error state tracking
+- Persistent player profile system with saved stats and achievements
+- Achievement expansion: medals, notifications/voiceover, additional achievement sets and UI pages
+- Sprint (A2B) race mode split into its own gametype with ladder/achievement integration
+- Ghost car mode for race modes with configurable transparency
+- Fuel item/map updates for multiple tracks plus additional map/startpoint updates
+- Playerscore persistence, rank tiers and in-game rank/notification UI
+
+Improved:
+
+- Tire friction handling and race HUD refinements (including Players Left visibility rules)
+- Scoreboard and overlays adapted for higher player counts
+- Jukebox rescan/sorting/playback-mode behavior improvements
+- CI/build workflow and metadata updates
+
+Fixed:
+
+- Ladder and version-check related fixes
+- Scripted object parser/model registration fallback and error reporting
+- Profile/plate display and profile loading bugs
+- Vehicle save/load and stats tracking fixes
+- Missing announcer/asset files and general cleanup
 
 new in v0.5
 
