@@ -1247,6 +1247,11 @@ qboolean UI_IsFullscreen( void ) {
 	return qfalse;
 }
 
+// NOTE: Not a static flag - persisted as a cvar so it survives UI module reloads on map exit.
+// The GFX loading screen is only shown once per session (first game start), never when
+// returning to the main menu after leaving a map.
+#define CVAR_GFX_LOADING_SHOWN "ui_gfxLoadingShown"
+
 static void NeedCDAction( qboolean result ) {
 	if ( !result ) {
 		trap_Cmd_ExecuteText( EXEC_APPEND, "quit\n" );
@@ -1271,7 +1276,12 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 	case UIMENU_MAIN:
 // STONELANCE
 //		UI_MainMenu();
-		UI_GFX_Loading();
+		if ( !trap_Cvar_VariableValue( CVAR_GFX_LOADING_SHOWN ) ) {
+			trap_Cvar_Set( CVAR_GFX_LOADING_SHOWN, "1" );
+			UI_GFX_Loading();
+		} else {
+			UI_MainMenu();
+		}
 // END
 		return;
 	case UIMENU_NEED_CD:
@@ -1286,6 +1296,12 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		UI_RankingsMenu();
 		return;
 		*/
+		/*
+		 * If the player has already entered an active game, don't show the
+		 * startup loading splash when returning to the main menu later
+		 * (e.g. via LEAVE ARENA).
+		 */
+		trap_Cvar_Set( CVAR_GFX_LOADING_SHOWN, "1" );
 		trap_Cvar_Set( "cl_paused", "1" );
 		UI_InGameMenu();
 		return;
