@@ -1,5 +1,68 @@
 !!! --- Q3Rally Changelog --- !!!
 
+new in v0.7
+
+Added:
+
+- New in-game HUD Elements menu (Shift+H) with per-element toggles
+- New Content Manager download system in the UI
+- New Advanced Graphics menu with presets, sun shadow controls and more rendering options
+- New hybrid waypoint system for racing bots (ghost source + flexible steering)
+- Added staged damage support for func_breakable objects
+- Added/updated NetRadiant GamePack data
+- Added bilingual atmospheric mapper guide (DE/EN)
+
+Improved:
+
+- Controller support across menus, bindings and loading flow
+- Q3R Options menu cleaned up and reorganized into a clearer two-column layout
+- Controls UX improved with racing defaults, search and mapper/dev bindings
+- Profile flow moved into the main menu with a lighter create/select overlay
+- Racing and Elimination flow robustness, HUD feedback and race UX
+- Vehicle handling CVars now replicated/latched for better server-client consistency
+- CI/build and Flatpak metadata updates
+
+Fixed:
+
+- Main menu no longer shows the GFX loading screen again after first launch
+- Credits screen merge/rewrite and scroll behavior fixes
+- UI hitboxes for CHANGE PLATE and Downloads tabs
+- Race-observer fallback crash in follow mode
+- Anisotropy menu selection and Driver Info spacing issues
+- Race grid spawn fallback now avoids defaulting to DM spawns
+- Derby damage CVar validation and collision/ram damage rebalance
+- Ridge Racer map fix plus missing texture/file cleanup
+
+
+new in v0.6 / v0.6b / v0.6c
+
+Added:
+
+- Intermission jukebox with auto-discovered .ogg tracks, HUD track/progress overlay and playback controls
+- Fuel-system integration across game/client/UI CVars with prediction support
+- Client version-check module (cl_update) with remote version/date/error state tracking
+- Persistent player profile system with saved stats and achievements
+- Achievement expansion: medals, notifications/voiceover, additional achievement sets and UI pages
+- Sprint (A2B) race mode split into its own gametype with ladder/achievement integration
+- Ghost car mode for race modes with configurable transparency
+- Fuel item/map updates for multiple tracks plus additional map/startpoint updates
+- Playerscore persistence, rank tiers and in-game rank/notification UI
+
+Improved:
+
+- Tire friction handling and race HUD refinements (including Players Left visibility rules)
+- Scoreboard and overlays adapted for higher player counts
+- Jukebox rescan/sorting/playback-mode behavior improvements
+- CI/build workflow and metadata updates
+
+Fixed:
+
+- Ladder and version-check related fixes
+- Scripted object parser/model registration fallback and error reporting
+- Profile/plate display and profile loading bugs
+- Vehicle save/load and stats tracking fixes
+- Missing announcer/asset files and general cleanup
+
 new in v0.5
 
 Fixed:
