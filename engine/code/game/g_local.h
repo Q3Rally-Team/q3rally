@@ -577,6 +577,7 @@ typedef struct {
         float                   cpDist[MAX_GENTITIES];
         gentity_t       *checkpoints[MAX_GENTITIES];
         float                   trackLength;
+        gentity_t               *finishEnt;     // rally_startfinish or rally_finish entity, cached in Think_StartFinish
 
         qtime_t         ladderStartTime;
         int                     ladderStartEpoch;

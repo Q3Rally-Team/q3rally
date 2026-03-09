@@ -574,6 +574,13 @@ void Think_StartFinish( gentity_t *self ){
                 }
         }
 
+        // Assign self its number now so the array fill below can place it correctly.
+        // self is the start/finish entity; it was spawned with number=0 because the map
+        // has no "number" key for it, but it is counted by G_Find above and belongs at
+        // slot [numCheckpoints-1].  Setting it here also fixes Think_Finish (A2B maps)
+        // which calls this function before doing its own self->number++ for the finish entity.
+        self->number = level.numCheckpoints;
+
         memset( level.checkpoints, 0, sizeof( level.checkpoints ) );
         memset( level.cpDist, 0, sizeof( level.cpDist ) );
         ent = NULL;
@@ -585,30 +592,50 @@ void Think_StartFinish( gentity_t *self ){
 
         level.trackLength = 0.0f;
         if ( level.numCheckpoints > 0 ) {
-                vec3_t last, first, delta;
+                vec3_t last, first, delta, center;
                 int i;
 
-                VectorCopy( level.checkpoints[0]->s.origin, first );
+// Brush entities without an explicit "origin" key have s.origin == (0,0,0).
+// Use the center of r.absmin/r.absmax instead, which trap_LinkEntity always sets correctly.
+#define CP_BOUNDS_CENTER(e, out) \
+        do { \
+                (out)[0] = ( (e)->r.absmin[0] + (e)->r.absmax[0] ) * 0.5f; \
+                (out)[1] = ( (e)->r.absmin[1] + (e)->r.absmax[1] ) * 0.5f; \
+                (out)[2] = ( (e)->r.absmin[2] + (e)->r.absmax[2] ) * 0.5f; \
+        } while(0)
+
+                CP_BOUNDS_CENTER( level.checkpoints[0], first );
                 VectorCopy( first, last );
                 level.cpDist[0] = 0.0f;
                 for ( i = 1; i < level.numCheckpoints; i++ ) {
-                        VectorSubtract( last, level.checkpoints[i]->s.origin, delta );
+                        CP_BOUNDS_CENTER( level.checkpoints[i], center );
+                        VectorSubtract( last, center, delta );
                         level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
-                        VectorCopy( level.checkpoints[i]->s.origin, last );
+                        VectorCopy( center, last );
                 }
-                VectorSubtract( last, first, delta );
+                CP_BOUNDS_CENTER( level.checkpoints[0], center );
+                VectorSubtract( last, center, delta );
                 level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+
+#undef CP_BOUNDS_CENTER
+        }
+
+        // Cache the finish entity for the final-segment distance display in g_active.c.
+        // rally_start (A2B) uses Touch_Start and is not a valid finish target.
+        if ( self->touch != Touch_Start ) {
+                level.finishEnt = self;
         }
 
         trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
 
-        self->number = level.numCheckpoints;
         self->s.weapon = self->number;
 }
 
 void Think_Finish( gentity_t *self ){
-Think_StartFinish( self );
-self->number++;
+        // Think_StartFinish already sets self->number = level.numCheckpoints correctly.
+        // The old self->number++ here was a bug: it pushed the value one past numCheckpoints
+        // so Touch_Finish's (self->number == other->number) check never fired on A2B maps.
+        Think_StartFinish( self );
 }
 
 

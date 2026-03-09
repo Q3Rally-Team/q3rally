@@ -458,6 +458,29 @@ static void UI_GFX_Loading_MenuDraw(void) {
             textY += 24;
         }
 
+    } else if (!Q_stricmp(updateState, "current")) {
+        char remoteVersion[64];
+
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
+
+        trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
+
+        color[0] = 0.5f; color[1] = 0.85f; color[2] = 0.5f; color[3] = 1.0f;
+        UI_DrawString(SCREEN_CX, textY,
+                      "Q3Rally is up to date.",
+                      UI_CENTER | UI_SMALLFONT, color);
+        textY += 22;
+
+        if (remoteVersion[0]) {
+            Com_sprintf(buf, sizeof(buf),
+                        "Installed: %s     Latest: %s",
+                        PRODUCT_VERSION, remoteVersion);
+            color[0] = 0.75f; color[1] = 0.85f; color[2] = 0.75f; color[3] = 1.0f;
+            UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_SMALLFONT, color);
+            textY += 24;
+        }
+
     } else if (!Q_stricmp(updateState, "offline") ||
                !Q_stricmp(updateState, "failed")) {
         char errorMsg[128];
