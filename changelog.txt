@@ -1,5 +1,19 @@
 !!! --- Q3Rally Changelog --- !!!
 
+new in v0.8
+
+Fixed:
+
+- Race distance counter now works correctly on maps with single-brush checkpoint entities
+  (e.g. q3r_valley). The counter was always zero on these maps because brush entities
+  without an explicit "origin" key have s.origin == (0,0,0); the calculation now uses
+  the center of r.absmin/r.absmax instead. Additionally, the start/finish entity was not
+  being stored in the checkpoint array due to a late number assignment, leaving a NULL
+  slot that froze the counter. The final segment from the last checkpoint to the finish
+  line now counts down correctly, and the counter is clamped to zero once the player
+  has finished the race.
+
+
 new in v0.7
 
 Added:
