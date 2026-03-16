@@ -52,6 +52,8 @@ extern vmCvar_t  cg_hudShowSpeed;          /* Speedometer / RPM gauge          *
 /* --- Derby HUD --- */
 extern vmCvar_t  cg_hudShowDerbyVehicle;   /* Vehicle state panel (Derby)      */
 extern vmCvar_t  cg_hudShowDerbyList;      /* Derby scoreboard                 */
+extern vmCvar_t  cg_hudShowKothHillStatus; /* KOTH hill status panel           */
+extern vmCvar_t  cg_hudShowKothRespawnWave;/* KOTH respawn wave timer          */
 
 /*
 ===========================================================================
@@ -76,11 +78,6 @@ float CG_DrawDistanceToFinish( float y );
 void  CG_DrawCurrentPosition( float y );
 float CG_DrawEliminationTimeline( float y );
 float CG_DrawCarAheadAndBehind( float y );
-void  CG_DrawHUD_Times( float x, float y );
-void  CG_DrawHUD_Positions( float x, float y );
-void  CG_DrawHUD_Laps( float x, float y );
-void  CG_DrawHUD_OpponentList( float x, float y );
-void  CG_DrawHUD_Scores( float x, float y );
 
 /* cg_hud_derby.c */
 void  CG_DrawHUD_DerbyList( float x, float y );

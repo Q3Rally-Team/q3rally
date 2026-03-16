@@ -338,11 +338,11 @@ static cvarTable_t		gameCvarTable[] = {
 		{ &g_kothScoreWin, "g_kothScoreWin", "100", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
 		{ &g_kothCaptureTime, "g_kothCaptureTime", "3000", CVAR_ARCHIVE, 0, qfalse },
 		{ &g_kothRespawnWave, "g_kothRespawnWave", "5000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
-		{ &g_kothPtsTick, "koth_pts_tick", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
-		{ &g_kothPtsCapture, "koth_pts_capture", "5", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
-		{ &g_kothPtsDefend, "koth_pts_defend", "3", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
-		{ &g_kothOvertime, "koth_overtime", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
-		{ &g_kothOvertimeHoldTime, "koth_overtime_hold", "10000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse }
+		{ &g_kothPtsTick, "g_kothPtsTick", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
+		{ &g_kothPtsCapture, "g_kothPtsCapture", "5", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
+		{ &g_kothPtsDefend, "g_kothPtsDefend", "3", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
+		{ &g_kothOvertime, "g_kothOvertime", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
+		{ &g_kothOvertimeHoldTime, "g_kothOvertimeHoldTime", "10000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse }
 		// Q3Rally Code END - KOTH
 };
 
@@ -2487,13 +2487,13 @@ void CheckExitRules( void ) {
 	// Q3Rally Code Start - KOTH win condition
 	if ( g_gametype.integer == GT_KOTH && g_kothScoreWin.integer > 0 ) {
 		if ( level.teamScores[TEAM_RED] >= g_kothScoreWin.integer ) {
-			trap_SendServerCommand( -1, "print \"Red team captured the hill!\n\"" );
-			LogExit( "KOTH score limit hit." );
+			trap_SendServerCommand( -1, "print \"Red team hit the KOTH score limit.\n\"" );
+			LogExit( "KOTH score limit hit by Red." );
 			return;
 		}
 		if ( level.teamScores[TEAM_BLUE] >= g_kothScoreWin.integer ) {
-			trap_SendServerCommand( -1, "print \"Blue team captured the hill!\n\"" );
-			LogExit( "KOTH score limit hit." );
+			trap_SendServerCommand( -1, "print \"Blue team hit the KOTH score limit.\n\"" );
+			LogExit( "KOTH score limit hit by Blue." );
 			return;
 		}
 	}

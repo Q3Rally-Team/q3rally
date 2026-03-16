@@ -596,6 +596,7 @@ static void CG_DrawKOTH_RespawnWave_Internal( void ) {
 	char msg[64];
 
 	if ( cgs.gametype != GT_KOTH ) return;
+	if ( !cg_hudShowKothRespawnWave.integer ) return;
 	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) return;
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) return;
 
@@ -3685,4 +3686,3 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	// draw status bar and other floating elements
  	CG_Draw2D(stereoView);
 }
-

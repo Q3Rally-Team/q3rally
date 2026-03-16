@@ -36,6 +36,12 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 	vec3_t		traceEnd;
 	float		pulse;
 	float		inversePulse;
+	float		ringScale;
+	float		beamHalfWidth;
+	float		ringAlphaBase;
+	float		ringAlphaPulse;
+	float		beamAlphaBase;
+	float		beamAlphaPulse;
 	qhandle_t	hillMarkerShader;
 	byte		tintR, tintG, tintB;
 
@@ -64,6 +70,38 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 	/* base pulse: 0..1, period ~7 s */
 	pulse        = 0.5f + 0.5f * sin( (float)cg.time * 0.009f );
 	inversePulse = 1.0f - pulse;
+
+	ringScale = cg_kothRingScale.value;
+	if ( ringScale <= 0.0f ) {
+		ringScale = 1.0f;
+	}
+
+	beamHalfWidth = cg_kothBeamHalfWidth.value;
+	if ( beamHalfWidth < 2.0f ) {
+		beamHalfWidth = 2.0f;
+	}
+
+	ringAlphaBase = cg_kothRingAlphaBase.value;
+	if ( ringAlphaBase < 0.0f ) {
+		ringAlphaBase = 0.0f;
+	} else if ( ringAlphaBase > 255.0f ) {
+		ringAlphaBase = 255.0f;
+	}
+	ringAlphaPulse = cg_kothRingAlphaPulse.value;
+	if ( ringAlphaPulse < 0.0f ) {
+		ringAlphaPulse = 0.0f;
+	}
+
+	beamAlphaBase = cg_kothBeamAlphaBase.value;
+	if ( beamAlphaBase < 0.0f ) {
+		beamAlphaBase = 0.0f;
+	} else if ( beamAlphaBase > 255.0f ) {
+		beamAlphaBase = 255.0f;
+	}
+	beamAlphaPulse = cg_kothBeamAlphaPulse.value;
+	if ( beamAlphaPulse < 0.0f ) {
+		beamAlphaPulse = 0.0f;
+	}
 
 	/* ---- find ground level below hill origin ----
 	   Start well above kothHillOrigin so the trace passes through
@@ -100,12 +138,20 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 		float       ix0, iy0, ix1, iy1;
 
 		outerR    = minimapPass
-			? ( cgs.kothHillRadius * 1.35f + 10.0f * pulse )
-			: ( cgs.kothHillRadius         +  8.0f * pulse );
+			? ( cgs.kothHillRadius * ( 1.35f * ringScale ) + 10.0f * pulse )
+			: ( cgs.kothHillRadius * ringScale + 8.0f * pulse );
 		innerR    = outerR * KOTH_INNER_FRAC;
 		rotOff    = (float)cg.time * 0.0008f;   /* slow rotation */
 		ringZ     = groundPos[2] + 2.0f;         /* just above ground */
-		ringAlpha = (byte)( 80 + 120 * pulse );
+		{
+			float alpha = ringAlphaBase + ringAlphaPulse * pulse;
+			if ( alpha < 0.0f ) {
+				alpha = 0.0f;
+			} else if ( alpha > 255.0f ) {
+				alpha = 255.0f;
+			}
+			ringAlpha = (byte)alpha;
+		}
 
 		for ( seg = 0; seg < KOTH_RING_SEGS; seg++ ) {
 			a0 = rotOff + (float)seg       * (2.0f * M_PI / KOTH_RING_SEGS);
@@ -159,7 +205,6 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 	      UV runs 0..1 bottom-to-top so tcMod scroll animates upward.
 	   ============================================================ */
 	{
-		#define BEAM_W 18.0f
 		polyVert_t  bv[4];
 		float       bz0, bz1;
 		byte        beamAlpha;
@@ -167,27 +212,35 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 
 		bz0       = groundPos[2]         + 2.0f;
 		bz1       = cgs.kothHillOrigin[2];
-		beamAlpha = (byte)( 55 + 110 * pulse );
+		{
+			float alpha = beamAlphaBase + beamAlphaPulse * pulse;
+			if ( alpha < 0.0f ) {
+				alpha = 0.0f;
+			} else if ( alpha > 255.0f ) {
+				alpha = 255.0f;
+			}
+			beamAlpha = (byte)alpha;
+		}
 		cx        = groundPos[0];
 		cy        = groundPos[1];
 
 		/* --- quad 1: aligned along X axis --- */
-		bv[0].xyz[0]=cx-BEAM_W; bv[0].xyz[1]=cy; bv[0].xyz[2]=bz0;
+		bv[0].xyz[0]=cx-beamHalfWidth; bv[0].xyz[1]=cy; bv[0].xyz[2]=bz0;
 		bv[0].st[0]=0.0f; bv[0].st[1]=1.0f;
 		bv[0].modulate[0]=tintR; bv[0].modulate[1]=tintG;
 		bv[0].modulate[2]=tintB; bv[0].modulate[3]=beamAlpha;
 
-		bv[1].xyz[0]=cx+BEAM_W; bv[1].xyz[1]=cy; bv[1].xyz[2]=bz0;
+		bv[1].xyz[0]=cx+beamHalfWidth; bv[1].xyz[1]=cy; bv[1].xyz[2]=bz0;
 		bv[1].st[0]=1.0f; bv[1].st[1]=1.0f;
 		bv[1].modulate[0]=tintR; bv[1].modulate[1]=tintG;
 		bv[1].modulate[2]=tintB; bv[1].modulate[3]=beamAlpha;
 
-		bv[2].xyz[0]=cx+BEAM_W; bv[2].xyz[1]=cy; bv[2].xyz[2]=bz1;
+		bv[2].xyz[0]=cx+beamHalfWidth; bv[2].xyz[1]=cy; bv[2].xyz[2]=bz1;
 		bv[2].st[0]=1.0f; bv[2].st[1]=0.0f;
 		bv[2].modulate[0]=tintR; bv[2].modulate[1]=tintG;
 		bv[2].modulate[2]=tintB; bv[2].modulate[3]=beamAlpha;
 
-		bv[3].xyz[0]=cx-BEAM_W; bv[3].xyz[1]=cy; bv[3].xyz[2]=bz1;
+		bv[3].xyz[0]=cx-beamHalfWidth; bv[3].xyz[1]=cy; bv[3].xyz[2]=bz1;
 		bv[3].st[0]=0.0f; bv[3].st[1]=0.0f;
 		bv[3].modulate[0]=tintR; bv[3].modulate[1]=tintG;
 		bv[3].modulate[2]=tintB; bv[3].modulate[3]=beamAlpha;
@@ -195,13 +248,12 @@ void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
 		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
 
 		/* --- quad 2: aligned along Y axis (crossed with quad 1) --- */
-		bv[0].xyz[0]=cx; bv[0].xyz[1]=cy-BEAM_W; bv[0].xyz[2]=bz0;
-		bv[1].xyz[0]=cx; bv[1].xyz[1]=cy+BEAM_W; bv[1].xyz[2]=bz0;
-		bv[2].xyz[0]=cx; bv[2].xyz[1]=cy+BEAM_W; bv[2].xyz[2]=bz1;
-		bv[3].xyz[0]=cx; bv[3].xyz[1]=cy-BEAM_W; bv[3].xyz[2]=bz1;
+		bv[0].xyz[0]=cx; bv[0].xyz[1]=cy-beamHalfWidth; bv[0].xyz[2]=bz0;
+		bv[1].xyz[0]=cx; bv[1].xyz[1]=cy+beamHalfWidth; bv[1].xyz[2]=bz0;
+		bv[2].xyz[0]=cx; bv[2].xyz[1]=cy+beamHalfWidth; bv[2].xyz[2]=bz1;
+		bv[3].xyz[0]=cx; bv[3].xyz[1]=cy-beamHalfWidth; bv[3].xyz[2]=bz1;
 		/* st and modulate same as quad 1 - already set above */
 		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
-		#undef BEAM_W
 	}
 
 	/* ============================================================

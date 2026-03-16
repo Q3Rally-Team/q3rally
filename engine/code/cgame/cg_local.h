@@ -1619,6 +1619,12 @@ extern	vmCvar_t		cg_mainViewRenderLevel;
 
 extern	vmCvar_t		cg_debugpredict;
 extern	vmCvar_t		cg_kothRespawnWave;
+extern	vmCvar_t		cg_kothRingScale;
+extern	vmCvar_t		cg_kothBeamHalfWidth;
+extern	vmCvar_t		cg_kothRingAlphaBase;
+extern	vmCvar_t		cg_kothRingAlphaPulse;
+extern	vmCvar_t		cg_kothBeamAlphaBase;
+extern	vmCvar_t		cg_kothBeamAlphaPulse;
 
 extern	vmCvar_t		cg_engineSounds;
 extern	vmCvar_t		cg_ghostPlayback;

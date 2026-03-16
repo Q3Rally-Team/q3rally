@@ -357,8 +357,67 @@ static void CG_ParseSigilStatus( void ) {
 }
 
 // Q3Rally Code Start - KOTH
+static qboolean CG_ParseNextKothInt( const char **cursor, int *out ) {
+	char *endptr;
+	long value;
+
+	if ( !cursor || !*cursor || !out ) {
+		return qfalse;
+	}
+
+	while ( **cursor == ' ' ) {
+		( *cursor )++;
+	}
+
+	if ( **cursor == '\0' ) {
+		return qfalse;
+	}
+
+	value = strtol( *cursor, &endptr, 10 );
+	if ( endptr == *cursor ) {
+		return qfalse;
+	}
+
+	*out = (int)value;
+	*cursor = endptr;
+	return qtrue;
+}
+
+static qboolean CG_ParseNextKothFloat( const char **cursor, float *out ) {
+	char *endptr;
+	double value;
+
+	if ( !cursor || !*cursor || !out ) {
+		return qfalse;
+	}
+
+	while ( **cursor == ' ' ) {
+		( *cursor )++;
+	}
+
+	if ( **cursor == '\0' ) {
+		return qfalse;
+	}
+
+	value = strtod( *cursor, &endptr );
+	if ( endptr == *cursor ) {
+		return qfalse;
+	}
+
+	*out = (float)value;
+	*cursor = endptr;
+	return qtrue;
+}
+
 static void CG_ParseKothStatus( void ) {
 	const char *str;
+	const char *cursor;
+	int owner;
+	int contested;
+	int capturePct;
+	float hillX, hillY, hillZ, hillRadius;
+	qboolean haveHillOrigin;
+	qboolean haveHillRadius;
 	int oldOwner;
 	int oldContested;
 	int localTeam;
@@ -373,34 +432,35 @@ static void CG_ParseKothStatus( void ) {
 	}
 
 	str = CG_ConfigString( CS_KOTHSTATUS );
-	cgs.kothOwner     = atoi( str );
-	str = strchr( str, ' ' ); if ( str ) str++; else return;
-	cgs.kothContested = atoi( str );
-	str = strchr( str, ' ' ); if ( str ) str++; else return;
-	cgs.kothCapturePct = atoi( str );
+	cursor = str;
+	if ( !CG_ParseNextKothInt( &cursor, &owner ) ) {
+		return;
+	}
+	if ( !CG_ParseNextKothInt( &cursor, &contested ) ) {
+		return;
+	}
+	if ( !CG_ParseNextKothInt( &cursor, &capturePct ) ) {
+		return;
+	}
+
+	cgs.kothOwner = owner;
+	cgs.kothContested = contested;
+	cgs.kothCapturePct = capturePct;
 
 	/* Optional hill origin payload: "owner contested pct x y z" */
 	cgs.kothHillOriginValid = qfalse;
-	str = strchr( str, ' ' );
-	if ( str ) {
-		str++;
-		cgs.kothHillOrigin[0] = atof( str );
-		str = strchr( str, ' ' );
-		if ( str ) {
-			str++;
-			cgs.kothHillOrigin[1] = atof( str );
-			str = strchr( str, ' ' );
-			if ( str ) {
-				str++;
-				cgs.kothHillOrigin[2] = atof( str );
-				cgs.kothHillOriginValid = qtrue;
-				/* Optional radius field */
-				str = strchr( str, ' ' );
-				if ( str ) {
-					str++;
-					cgs.kothHillRadius = atof( str );
-				}
-			}
+	haveHillOrigin = CG_ParseNextKothFloat( &cursor, &hillX ) &&
+		CG_ParseNextKothFloat( &cursor, &hillY ) &&
+		CG_ParseNextKothFloat( &cursor, &hillZ );
+	if ( haveHillOrigin ) {
+		cgs.kothHillOrigin[0] = hillX;
+		cgs.kothHillOrigin[1] = hillY;
+		cgs.kothHillOrigin[2] = hillZ;
+		cgs.kothHillOriginValid = qtrue;
+
+		haveHillRadius = CG_ParseNextKothFloat( &cursor, &hillRadius );
+		if ( haveHillRadius ) {
+			cgs.kothHillRadius = hillRadius;
 		}
 	}
 	if ( cgs.kothHillRadius <= 0.0f ) {

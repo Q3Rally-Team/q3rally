@@ -1428,6 +1428,94 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
 // Q3Rally Code END
 
 // Q3Rally Code Start - KOTH
+static gentity_t *KOTH_GetHillEntity( void ) {
+	gentity_t *ent;
+	static gentity_t *cachedHill = NULL;
+
+	if ( cachedHill && cachedHill->inuse && !Q_stricmp( cachedHill->classname, "trigger_koth_hill" ) ) {
+		return cachedHill;
+	}
+
+	for ( ent = g_entities; ent < &g_entities[level.num_entities]; ent++ ) {
+		if ( ent->inuse && !Q_stricmp( ent->classname, "trigger_koth_hill" ) ) {
+			cachedHill = ent;
+			return cachedHill;
+		}
+	}
+
+	cachedHill = NULL;
+	return NULL;
+}
+
+static qboolean KOTH_IsPositionInHillBounds( const vec3_t position, const gentity_t *hill ) {
+	if ( !hill ) {
+		return qfalse;
+	}
+
+	return ( position[0] >= hill->r.absmin[0] &&
+		position[0] <= hill->r.absmax[0] &&
+		position[1] >= hill->r.absmin[1] &&
+		position[1] <= hill->r.absmax[1] &&
+		position[2] >= hill->r.absmin[2] &&
+		position[2] <= hill->r.absmax[2] ) ? qtrue : qfalse;
+}
+
+static void KOTH_CountPlayersInHill( const gentity_t *hill, int *redCount, int *blueCount ) {
+	int i;
+
+	*redCount = 0;
+	*blueCount = 0;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gclient_t *cl = &level.clients[i];
+		gentity_t *player = &g_entities[i];
+
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+		if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+
+		if ( !KOTH_IsPositionInHillBounds( player->r.currentOrigin, hill ) ) continue;
+
+		if ( cl->sess.sessionTeam == TEAM_RED ) {
+			( *redCount )++;
+		} else if ( cl->sess.sessionTeam == TEAM_BLUE ) {
+			( *blueCount )++;
+		}
+	}
+}
+
+static void KOTH_AddContestTimeForHillPlayers( const gentity_t *hill, int frameMs ) {
+	int i;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gclient_t *pl = &level.clients[i];
+		gentity_t *pe = &g_entities[i];
+
+		if ( pl->pers.connected != CON_CONNECTED ) continue;
+		if ( pl->sess.sessionTeam != TEAM_RED && pl->sess.sessionTeam != TEAM_BLUE ) continue;
+		if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+		if ( !KOTH_IsPositionInHillBounds( pe->r.currentOrigin, hill ) ) continue;
+
+		pl->kothContestTimeMs += frameMs;
+	}
+}
+
+static void KOTH_AwardPersistToHillTeamPlayers( const gentity_t *hill, int team, int persStat ) {
+	int ci;
+
+	for ( ci = 0; ci < level.maxclients; ci++ ) {
+		gclient_t *pl = &level.clients[ci];
+		gentity_t *pe = &g_entities[ci];
+
+		if ( pl->pers.connected != CON_CONNECTED ) continue;
+		if ( pl->sess.sessionTeam != team ) continue;
+		if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+		if ( !KOTH_IsPositionInHillBounds( pe->r.currentOrigin, hill ) ) continue;
+
+		pl->ps.persistant[persStat]++;
+	}
+}
+
 /*
 ===================
 KOTH_SetHillStatus
@@ -1451,32 +1539,21 @@ void KOTH_SetHillStatus( int owner, int contested, int pct, const vec3_t hillOri
 }
 
 qboolean KOTH_IsClientInHill( int clientNum ) {
-	gentity_t	*ent;
-	gentity_t	*hill = NULL;
+	gentity_t	*hill;
 	gentity_t	*player;
 
 	if ( clientNum < 0 || clientNum >= level.maxclients ) {
 		return qfalse;
 	}
 
-	for ( ent = g_entities; ent < &g_entities[level.num_entities]; ent++ ) {
-		if ( ent->inuse && !Q_stricmp( ent->classname, "trigger_koth_hill" ) ) {
-			hill = ent;
-			break;
-		}
-	}
+	hill = KOTH_GetHillEntity();
 
 	if ( !hill ) {
 		return qfalse;
 	}
 
 	player = &g_entities[clientNum];
-	return ( player->r.currentOrigin[0] >= hill->r.absmin[0] &&
-		player->r.currentOrigin[0] <= hill->r.absmax[0] &&
-		player->r.currentOrigin[1] >= hill->r.absmin[1] &&
-		player->r.currentOrigin[1] <= hill->r.absmax[1] &&
-		player->r.currentOrigin[2] >= hill->r.absmin[2] &&
-		player->r.currentOrigin[2] <= hill->r.absmax[2] ) ? qtrue : qfalse;
+	return KOTH_IsPositionInHillBounds( player->r.currentOrigin, hill );
 }
 
 
@@ -1490,9 +1567,7 @@ Counts team presence in the hill trigger, drives capture/score/contested logic.
 */
 void KOTH_Think( void ) {
 	gentity_t	*hill;
-	gentity_t	*ent;
 	int			redCount = 0, blueCount = 0;
-	int			i;
 	int			pct = 0;
 	int			tickPoints;
 	int			capturePoints;
@@ -1507,13 +1582,7 @@ void KOTH_Think( void ) {
 	}
 
 	// Find the hill entity
-	hill = NULL;
-	for ( ent = g_entities; ent < &g_entities[level.num_entities]; ent++ ) {
-		if ( ent->inuse && !Q_stricmp( ent->classname, "trigger_koth_hill" ) ) {
-			hill = ent;
-			break;
-		}
-	}
+	hill = KOTH_GetHillEntity();
 
 	if ( !hill ) {
 		return;
@@ -1529,25 +1598,7 @@ void KOTH_Think( void ) {
 		hillRadius = ( rx > ry ) ? rx : ry;
 	}
 
-	// Count players inside the hill bounding box
-	for ( i = 0; i < level.maxclients; i++ ) {
-		gclient_t *cl = &level.clients[i];
-		gentity_t *player = &g_entities[i];
-
-		if ( cl->pers.connected != CON_CONNECTED ) continue;
-		if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
-		if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
-
-		if ( player->r.currentOrigin[0] >= hill->r.absmin[0] &&
-		     player->r.currentOrigin[0] <= hill->r.absmax[0] &&
-		     player->r.currentOrigin[1] >= hill->r.absmin[1] &&
-		     player->r.currentOrigin[1] <= hill->r.absmax[1] &&
-		     player->r.currentOrigin[2] >= hill->r.absmin[2] &&
-		     player->r.currentOrigin[2] <= hill->r.absmax[2] ) {
-			if ( cl->sess.sessionTeam == TEAM_RED )  redCount++;
-			if ( cl->sess.sessionTeam == TEAM_BLUE ) blueCount++;
-		}
-	}
+	KOTH_CountPlayersInHill( hill, &redCount, &blueCount );
 
 	teamgame.kothPresenceRed  = redCount;
 	teamgame.kothPresenceBlue = blueCount;
@@ -1572,21 +1623,7 @@ void KOTH_Think( void ) {
 			teamgame.kothContestedStart = level.time;
 		}
 
-		for ( i = 0; i < level.maxclients; i++ ) {
-			gclient_t *pl = &level.clients[i];
-			gentity_t *pe = &g_entities[i];
-			if ( pl->pers.connected != CON_CONNECTED ) continue;
-			if ( pl->sess.sessionTeam != TEAM_RED && pl->sess.sessionTeam != TEAM_BLUE ) continue;
-			if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
-			if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
-			     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
-			     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
-			     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
-			     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
-			     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
-				pl->kothContestTimeMs += frameMs;
-			}
-		}
+		KOTH_AddContestTimeForHillPlayers( hill, frameMs );
 
 		teamgame.kothContested = qtrue;
 		teamgame.kothCaptureStart = 0;
@@ -1631,28 +1668,13 @@ void KOTH_Think( void ) {
 			teamgame.kothCapturingTeam = TEAM_FREE;
 
 			if ( defendedHill && defendPoints > 0 ) {
-				int ci;
 				level.teamScores[presentTeam] += defendPoints;
 				trap_SendServerCommand( -1, va( "print \"%s^7 team defended the hill! (+%d)\\n\"",
 					( presentTeam == TEAM_RED ) ? "^1Red" : "^4Blue", defendPoints ) );
 				G_LogPrintf( "koth_hill_defended: team=%i points=%i attackTeam=%i contested_ms=%i\n",
 					presentTeam, defendPoints, teamgame.kothLastAttackingTeam, contestedDuration );
 
-				for ( ci = 0; ci < level.maxclients; ci++ ) {
-					gclient_t *pl = &level.clients[ci];
-					gentity_t *pe = &g_entities[ci];
-					if ( pl->pers.connected != CON_CONNECTED ) continue;
-					if ( pl->sess.sessionTeam != presentTeam ) continue;
-					if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
-					if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
-					     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
-					     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
-					     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
-					     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
-					     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
-						pl->ps.persistant[PERS_DEFEND_COUNT]++;
-					}
-				}
+				KOTH_AwardPersistToHillTeamPlayers( hill, presentTeam, PERS_DEFEND_COUNT );
 			}
 
 			teamgame.kothLastAttackingTeam = TEAM_FREE;
@@ -1684,7 +1706,6 @@ void KOTH_Think( void ) {
 
 			if ( pct >= 100 ) {
 				// Capture complete
-				int ci;
 				level.teamScores[presentTeam] += capturePoints;
 				teamgame.kothOwner = presentTeam;
 				teamgame.kothCaptureStart = 0;
@@ -1696,21 +1717,7 @@ void KOTH_Think( void ) {
 					presentTeam, capturePoints, level.time );
 
 				/* Award capture reward to all team members on the hill. */
-				for ( ci = 0; ci < level.maxclients; ci++ ) {
-					gclient_t *pl = &level.clients[ci];
-					gentity_t *pe = &g_entities[ci];
-					if ( pl->pers.connected != CON_CONNECTED ) continue;
-					if ( pl->sess.sessionTeam != presentTeam ) continue;
-					if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
-					if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
-					     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
-					     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
-					     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
-					     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
-					     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
-						pl->ps.persistant[PERS_CAPTURES]++;
-					}
-				}
+				KOTH_AwardPersistToHillTeamPlayers( hill, presentTeam, PERS_CAPTURES );
 				trap_SendServerCommand( -1, va( "print \"%s^7 team captured the hill! (+%d)\\n\"",
 					( presentTeam == TEAM_RED ) ? "^1Red" : "^4Blue", capturePoints ) );
 				KOTH_SetHillStatus( presentTeam, qfalse, 100, hillCenter, hillRadius );
