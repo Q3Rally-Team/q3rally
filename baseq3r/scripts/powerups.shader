@@ -1281,6 +1281,24 @@ medal_capture
         }
 }
 
+medal_koth_capture
+{
+	nopicmip
+	{
+		clampmap menu/medals/medal_koth_capture.tga
+		blendFunc blend
+	}
+}
+
+medal_koth_defend
+{
+	nopicmip
+	{
+		clampmap menu/medals/medal_koth_defend.tga
+		blendFunc blend
+	}
+}
+
 // gfx/2d/cursor defined in gfx.shader
 
 sprites/balloon3

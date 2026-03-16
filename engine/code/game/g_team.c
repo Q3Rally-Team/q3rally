@@ -27,6 +27,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern vmCvar_t g_dominationScoreInterval;
 extern vmCvar_t g_dominationCaptureDelay;
+// Q3Rally Code Start - KOTH
+extern vmCvar_t g_kothScoreWin;
+extern vmCvar_t g_kothCaptureTime;
+extern vmCvar_t g_kothRespawnWave;
+extern vmCvar_t g_kothPtsTick;
+extern vmCvar_t g_kothPtsCapture;
+extern vmCvar_t g_kothPtsDefend;
+extern vmCvar_t g_kothOvertime;
+extern vmCvar_t g_kothOvertimeHoldTime;
+// Q3Rally Code END - KOTH
 
 // Q3Rally Code Start
 
@@ -47,6 +57,19 @@ typedef struct teamgame_s {
 // Q3Rally Code Start
 	domination_sigil_t     sigil[MAX_SIGILS];
 	int				numSigils;
+	// KOTH hill state
+	int				kothOwner;
+	int				kothContested;
+	int				kothCaptureStart;
+	int				kothCapturingTeam;
+	int				kothPresenceRed;
+	int				kothPresenceBlue;
+	int				kothNextTick;
+	int				kothContestedStart;
+	int				kothLastAttackingTeam;
+	int				kothOvertimeActive;
+	int				kothOvertimeOwner;
+	int				kothOvertimeOwnerSince;
 // Q3Rally Code END
 } teamgame_t;
 
@@ -59,6 +82,10 @@ void Team_SetFlagStatus( int team, flagStatus_t status );
 void Team_SetSigilStatus( int sigilNum, sigilStatus_t status );
 void Init_Sigils( void );
 // Q3Rally Code END
+// Q3Rally Code Start - KOTH
+void KOTH_SetHillStatus( int owner, int contested, int pct, const vec3_t hillOrigin, float hillRadius );
+void KOTH_Think( void );
+// Q3Rally Code END - KOTH
 
 void Team_InitGame( void ) {
 	int i;
@@ -86,6 +113,25 @@ void Team_InitGame( void ) {
         		
 // Q3Rally Code Start
 		
+	case GT_KOTH:
+	{
+		vec3_t initOrigin = { 0.0f, 0.0f, 0.0f };
+		teamgame.kothOwner = TEAM_FREE;
+		teamgame.kothContested = qfalse;
+		teamgame.kothCaptureStart = 0;
+		teamgame.kothCapturingTeam = TEAM_FREE;
+		teamgame.kothPresenceRed = 0;
+		teamgame.kothPresenceBlue = 0;
+		teamgame.kothNextTick = 0;
+		teamgame.kothContestedStart = 0;
+		teamgame.kothLastAttackingTeam = TEAM_FREE;
+		teamgame.kothOvertimeActive = qfalse;
+		teamgame.kothOvertimeOwner = TEAM_FREE;
+		teamgame.kothOvertimeOwnerSince = 0;
+		KOTH_SetHillStatus( TEAM_FREE, qfalse, 0, initOrigin, 0.0f );
+		break;
+	}
+
 	case GT_DOMINATION:
 	  Init_Sigils();
 	  for ( i = 0; i < teamgame.numSigils; i++ ) {
@@ -117,6 +163,9 @@ void Team_InitGame( void ) {
 // Q3Rally Code Start
 void Team_EndGame( void ) {
 	// stop adding score when intermission starts
+	if ( g_gametype.integer == GT_KOTH ) {
+		// nothing to tear down for KOTH on EndGame
+	}
 	if ( g_gametype.integer == GT_DOMINATION ) {
 		int i;
 		for ( i = 0; i < teamgame.numSigils; i++ ) {
@@ -1377,9 +1426,360 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
   }
 
 // Q3Rally Code END
+
+// Q3Rally Code Start - KOTH
+/*
+===================
+KOTH_SetHillStatus
+
+Encodes hill state into CS_KOTHSTATUS configstring:
+  "<owner> <contested> <capture_pct> <x> <y> <z>"
+  owner: 0=free 1=red 2=blue
+  contested: 0 or 1
+  capture_pct: 0-100
+===================
+*/
+void KOTH_SetHillStatus( int owner, int contested, int pct, const vec3_t hillOrigin, float hillRadius ) {
+	trap_SetConfigstring( CS_KOTHSTATUS, va( "%i %i %i %i %i %i %i",
+		owner,
+		contested,
+		pct,
+		(int)hillOrigin[0],
+		(int)hillOrigin[1],
+		(int)hillOrigin[2],
+		(int)hillRadius ) );
+}
+
+qboolean KOTH_IsClientInHill( int clientNum ) {
+	gentity_t	*ent;
+	gentity_t	*hill = NULL;
+	gentity_t	*player;
+
+	if ( clientNum < 0 || clientNum >= level.maxclients ) {
+		return qfalse;
+	}
+
+	for ( ent = g_entities; ent < &g_entities[level.num_entities]; ent++ ) {
+		if ( ent->inuse && !Q_stricmp( ent->classname, "trigger_koth_hill" ) ) {
+			hill = ent;
+			break;
+		}
+	}
+
+	if ( !hill ) {
+		return qfalse;
+	}
+
+	player = &g_entities[clientNum];
+	return ( player->r.currentOrigin[0] >= hill->r.absmin[0] &&
+		player->r.currentOrigin[0] <= hill->r.absmax[0] &&
+		player->r.currentOrigin[1] >= hill->r.absmin[1] &&
+		player->r.currentOrigin[1] <= hill->r.absmax[1] &&
+		player->r.currentOrigin[2] >= hill->r.absmin[2] &&
+		player->r.currentOrigin[2] <= hill->r.absmax[2] ) ? qtrue : qfalse;
+}
+
+
+/*
+===================
+KOTH_Think
+
+Called every server frame from g_active.c / RunFrame.
+Counts team presence in the hill trigger, drives capture/score/contested logic.
+===================
+*/
+void KOTH_Think( void ) {
+	gentity_t	*hill;
+	gentity_t	*ent;
+	int			redCount = 0, blueCount = 0;
+	int			i;
+	int			pct = 0;
+	int			tickPoints;
+	int			capturePoints;
+	int			defendPoints;
+	qboolean	wasContested;
+	int			contestedDuration;
+	vec3_t		hillCenter;
+	float		hillRadius;
+
+	if ( level.warmupTime ) {
+		return;
+	}
+
+	// Find the hill entity
+	hill = NULL;
+	for ( ent = g_entities; ent < &g_entities[level.num_entities]; ent++ ) {
+		if ( ent->inuse && !Q_stricmp( ent->classname, "trigger_koth_hill" ) ) {
+			hill = ent;
+			break;
+		}
+	}
+
+	if ( !hill ) {
+		return;
+	}
+
+	hillCenter[0] = ( hill->r.absmin[0] + hill->r.absmax[0] ) * 0.5f;
+	hillCenter[1] = ( hill->r.absmin[1] + hill->r.absmax[1] ) * 0.5f;
+	hillCenter[2] = hill->r.absmax[2] + hill->speed;
+	/* XY radius: half of the longer side of the hill brush */
+	{
+		float rx = ( hill->r.absmax[0] - hill->r.absmin[0] ) * 0.5f;
+		float ry = ( hill->r.absmax[1] - hill->r.absmin[1] ) * 0.5f;
+		hillRadius = ( rx > ry ) ? rx : ry;
+	}
+
+	// Count players inside the hill bounding box
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gclient_t *cl = &level.clients[i];
+		gentity_t *player = &g_entities[i];
+
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+		if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+
+		if ( player->r.currentOrigin[0] >= hill->r.absmin[0] &&
+		     player->r.currentOrigin[0] <= hill->r.absmax[0] &&
+		     player->r.currentOrigin[1] >= hill->r.absmin[1] &&
+		     player->r.currentOrigin[1] <= hill->r.absmax[1] &&
+		     player->r.currentOrigin[2] >= hill->r.absmin[2] &&
+		     player->r.currentOrigin[2] <= hill->r.absmax[2] ) {
+			if ( cl->sess.sessionTeam == TEAM_RED )  redCount++;
+			if ( cl->sess.sessionTeam == TEAM_BLUE ) blueCount++;
+		}
+	}
+
+	teamgame.kothPresenceRed  = redCount;
+	teamgame.kothPresenceBlue = blueCount;
+
+	tickPoints = g_kothPtsTick.integer;
+	if ( tickPoints < 0 ) tickPoints = 0;
+	capturePoints = g_kothPtsCapture.integer;
+	if ( capturePoints < 0 ) capturePoints = 0;
+	defendPoints = g_kothPtsDefend.integer;
+	if ( defendPoints < 0 ) defendPoints = 0;
+	wasContested = teamgame.kothContested;
+	contestedDuration = 0;
+
+	// --- Contested: both teams present ---
+	if ( redCount > 0 && blueCount > 0 ) {
+		int frameMs = level.time - level.previousTime;
+		if ( frameMs < 0 ) {
+			frameMs = 0;
+		}
+
+		if ( !wasContested ) {
+			teamgame.kothContestedStart = level.time;
+		}
+
+		for ( i = 0; i < level.maxclients; i++ ) {
+			gclient_t *pl = &level.clients[i];
+			gentity_t *pe = &g_entities[i];
+			if ( pl->pers.connected != CON_CONNECTED ) continue;
+			if ( pl->sess.sessionTeam != TEAM_RED && pl->sess.sessionTeam != TEAM_BLUE ) continue;
+			if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+			if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
+			     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
+			     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
+			     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
+			     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
+			     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
+				pl->kothContestTimeMs += frameMs;
+			}
+		}
+
+		teamgame.kothContested = qtrue;
+		teamgame.kothCaptureStart = 0;
+		teamgame.kothCapturingTeam = TEAM_FREE;
+		KOTH_SetHillStatus( teamgame.kothOwner, qtrue, 0, hillCenter, hillRadius );
+		return;
+	}
+
+	if ( wasContested && teamgame.kothContestedStart > 0 ) {
+		contestedDuration = level.time - teamgame.kothContestedStart;
+		if ( contestedDuration < 0 ) {
+			contestedDuration = 0;
+		}
+		G_LogPrintf( "koth_hill_contested: duration_ms=%i owner=%i red=%i blue=%i\n",
+			contestedDuration, teamgame.kothOwner, redCount, blueCount );
+		teamgame.kothContestedStart = 0;
+	}
+
+	teamgame.kothContested = qfalse;
+
+	// --- Nobody in hill ---
+	if ( redCount == 0 && blueCount == 0 ) {
+		teamgame.kothCaptureStart = 0;
+		teamgame.kothCapturingTeam = TEAM_FREE;
+		teamgame.kothLastAttackingTeam = TEAM_FREE;
+		KOTH_SetHillStatus( teamgame.kothOwner, qfalse, 0, hillCenter, hillRadius );
+		return;
+	}
+
+	// --- One team in hill ---
+	{
+		int presentTeam = ( redCount > 0 ) ? TEAM_RED : TEAM_BLUE;
+
+		if ( presentTeam == teamgame.kothOwner ) {
+			qboolean defendedHill = qfalse;
+
+			if ( wasContested || teamgame.kothLastAttackingTeam != TEAM_FREE ) {
+				defendedHill = qtrue;
+			}
+
+			teamgame.kothCaptureStart = 0;
+			teamgame.kothCapturingTeam = TEAM_FREE;
+
+			if ( defendedHill && defendPoints > 0 ) {
+				int ci;
+				level.teamScores[presentTeam] += defendPoints;
+				trap_SendServerCommand( -1, va( "print \"%s^7 team defended the hill! (+%d)\\n\"",
+					( presentTeam == TEAM_RED ) ? "^1Red" : "^4Blue", defendPoints ) );
+				G_LogPrintf( "koth_hill_defended: team=%i points=%i attackTeam=%i contested_ms=%i\n",
+					presentTeam, defendPoints, teamgame.kothLastAttackingTeam, contestedDuration );
+
+				for ( ci = 0; ci < level.maxclients; ci++ ) {
+					gclient_t *pl = &level.clients[ci];
+					gentity_t *pe = &g_entities[ci];
+					if ( pl->pers.connected != CON_CONNECTED ) continue;
+					if ( pl->sess.sessionTeam != presentTeam ) continue;
+					if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+					if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
+					     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
+					     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
+					     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
+					     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
+					     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
+						pl->ps.persistant[PERS_DEFEND_COUNT]++;
+					}
+				}
+			}
+
+			teamgame.kothLastAttackingTeam = TEAM_FREE;
+
+			// Owner is defending - award team score tick and track time-on-hill stat tick
+			if ( level.time >= teamgame.kothNextTick ) {
+				if ( tickPoints > 0 ) {
+					level.teamScores[presentTeam] += tickPoints;
+				}
+				teamgame.kothNextTick = level.time + 1000;
+				/* PERS_CAPTURES wird nicht mehr pro Tick erhoeht -
+				   Reward faeuert nur noch bei Capture und Defend. */
+				CalculateRanks();
+			}
+			KOTH_SetHillStatus( presentTeam, qfalse, 100, hillCenter, hillRadius );
+		} else {
+			// Captor is capturing / neutralizing
+			int captureTime = g_kothCaptureTime.integer;
+			if ( captureTime <= 0 ) captureTime = 3000;
+
+			if ( teamgame.kothCaptureStart == 0 || teamgame.kothCapturingTeam != presentTeam ) {
+				teamgame.kothCaptureStart = level.time;
+				teamgame.kothCapturingTeam = presentTeam;
+				teamgame.kothLastAttackingTeam = presentTeam;
+			}
+
+			pct = (int)( 100.0f * ( level.time - teamgame.kothCaptureStart ) / captureTime );
+			if ( pct > 100 ) pct = 100;
+
+			if ( pct >= 100 ) {
+				// Capture complete
+				int ci;
+				level.teamScores[presentTeam] += capturePoints;
+				teamgame.kothOwner = presentTeam;
+				teamgame.kothCaptureStart = 0;
+				teamgame.kothCapturingTeam = TEAM_FREE;
+				teamgame.kothLastAttackingTeam = TEAM_FREE;
+				teamgame.kothNextTick = level.time + 1000;
+				CalculateRanks();
+				G_LogPrintf( "koth_hill_captured: team=%i points=%i time=%i\n",
+					presentTeam, capturePoints, level.time );
+
+				/* Award capture reward to all team members on the hill. */
+				for ( ci = 0; ci < level.maxclients; ci++ ) {
+					gclient_t *pl = &level.clients[ci];
+					gentity_t *pe = &g_entities[ci];
+					if ( pl->pers.connected != CON_CONNECTED ) continue;
+					if ( pl->sess.sessionTeam != presentTeam ) continue;
+					if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+					if ( pe->r.currentOrigin[0] >= hill->r.absmin[0] &&
+					     pe->r.currentOrigin[0] <= hill->r.absmax[0] &&
+					     pe->r.currentOrigin[1] >= hill->r.absmin[1] &&
+					     pe->r.currentOrigin[1] <= hill->r.absmax[1] &&
+					     pe->r.currentOrigin[2] >= hill->r.absmin[2] &&
+					     pe->r.currentOrigin[2] <= hill->r.absmax[2] ) {
+						pl->ps.persistant[PERS_CAPTURES]++;
+					}
+				}
+				trap_SendServerCommand( -1, va( "print \"%s^7 team captured the hill! (+%d)\\n\"",
+					( presentTeam == TEAM_RED ) ? "^1Red" : "^4Blue", capturePoints ) );
+				KOTH_SetHillStatus( presentTeam, qfalse, 100, hillCenter, hillRadius );
+			} else {
+				KOTH_SetHillStatus( teamgame.kothOwner, qfalse, pct, hillCenter, hillRadius );
+			}
+		}
+	}
+}
+
+/*
+===================
+KOTH_HandleOvertime
+
+Returns qtrue when KOTH should end after timelimit handling.
+Returns qfalse while Overtime remains active.
+===================
+*/
+qboolean KOTH_HandleOvertime( void ) {
+	int holdMs = g_kothOvertimeHoldTime.integer;
+
+	if ( g_kothOvertime.integer <= 0 ) {
+		return qtrue;
+	}
+
+	if ( holdMs <= 0 ) {
+		holdMs = 10000;
+	}
+
+	if ( !teamgame.kothOvertimeActive ) {
+		if ( !teamgame.kothContested ) {
+			return qtrue;
+		}
+
+		teamgame.kothOvertimeActive = qtrue;
+		teamgame.kothOvertimeOwner = TEAM_FREE;
+		teamgame.kothOvertimeOwnerSince = 0;
+		trap_SendServerCommand( -1, "print \"KOTH OVERTIME! Hold hill uncontested to win.\n\"" );
+		G_LogPrintf( "koth_overtime_start: time=%i owner=%i\n", level.time, teamgame.kothOwner );
+		return qfalse;
+	}
+
+	if ( teamgame.kothContested || teamgame.kothOwner == TEAM_FREE ) {
+		teamgame.kothOvertimeOwner = TEAM_FREE;
+		teamgame.kothOvertimeOwnerSince = 0;
+		return qfalse;
+	}
+
+	if ( teamgame.kothOvertimeOwner != teamgame.kothOwner ) {
+		teamgame.kothOvertimeOwner = teamgame.kothOwner;
+		teamgame.kothOvertimeOwnerSince = level.time;
+		G_LogPrintf( "koth_overtime_hold_start: team=%i time=%i\n", teamgame.kothOvertimeOwner, level.time );
+		return qfalse;
+	}
+
+	if ( teamgame.kothOvertimeOwnerSince > 0 && level.time - teamgame.kothOvertimeOwnerSince >= holdMs ) {
+		G_LogPrintf( "koth_overtime_end: team=%i hold_ms=%i\n", teamgame.kothOvertimeOwner, holdMs );
+		teamgame.kothOvertimeActive = qfalse;
+		return qtrue;
+	}
+
+	return qfalse;
+}
+// Q3Rally Code END - KOTH
+
 /*
 ===========
 Team_GetLocation
+
 
 Report a location for the player. Uses placed nearby target_location entities
 ============
@@ -1727,6 +2127,40 @@ Targets will be fired when someone spawns in on them.
 void SP_team_CTF_yellowspawn(gentity_t *ent) {
 	(void)ent;
 }
+
+// Q3Rally Code Start - KOTH spawn points
+/*QUAKED team_KOTH_redplayer (1 0 0) (-16 -16 -16) (16 16 32)
+KOTH game mode only. Red team players spawn here at game start.
+This is a point entity - place it where red team should initially spawn.
+*/
+void SP_team_KOTH_redplayer( gentity_t *ent ) {
+	ent->classname = "team_CTF_redplayer";
+}
+
+/*QUAKED team_KOTH_blueplayer (0 0 1) (-16 -16 -16) (16 16 32)
+KOTH game mode only. Blue team players spawn here at game start.
+This is a point entity - place it where blue team should initially spawn.
+*/
+void SP_team_KOTH_blueplayer( gentity_t *ent ) {
+	ent->classname = "team_CTF_blueplayer";
+}
+
+/*QUAKED team_KOTH_redspawn (1 0 0) (-16 -16 -24) (16 16 32)
+KOTH game mode only. Potential respawn point for red team.
+Place multiple around the map for varied red team respawning.
+*/
+void SP_team_KOTH_redspawn( gentity_t *ent ) {
+	ent->classname = "team_CTF_redspawn";
+}
+
+/*QUAKED team_KOTH_bluespawn (0 0 1) (-16 -16 -24) (16 16 32)
+KOTH game mode only. Potential respawn point for blue team.
+Place multiple around the map for varied blue team respawning.
+*/
+void SP_team_KOTH_bluespawn( gentity_t *ent ) {
+	ent->classname = "team_CTF_bluespawn";
+}
+// Q3Rally Code END - KOTH spawn points
 
 /*QUAKED team_CTF_redflag (1 0 0) (-16 -16 -16) (16 16 16)
 Red flag

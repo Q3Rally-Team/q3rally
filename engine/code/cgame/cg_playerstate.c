@@ -262,6 +262,12 @@ void CG_Respawn( void ) {
 	VectorCopy( cg.snap->ps.origin, cg.predictedPlayerState.origin);
 	VectorCopy( cg.snap->ps.viewangles, cg.predictedPlayerState.viewangles );
 	cg.car.initializeOnNextMove = qtrue;
+	cg.kothDeathTime = 0;
+	cg.kothRespawnAt = 0;
+	cg.kothLastOwner = TEAM_FREE;
+	cg.kothLastContested = qfalse;
+	cg.kothStatusInitialized = qfalse;
+	cg.kothLossFlashUntil = 0;
 // END
 }
 
@@ -406,10 +412,17 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 
 	// reward sounds
 	reward = qfalse;
-	if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
-		pushReward(cgs.media.captureAwardSound, cgs.media.medalCapture, ps->persistant[PERS_CAPTURES]);
-		reward = qtrue;
-		//Com_Printf("capture\n");
+	/* KOTH: hill capture reward - sprite only, sound via cg_servercmds.c */
+	if ( cgs.gametype == GT_KOTH ) {
+		if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
+			pushReward(0, cgs.media.medalKothCapture, ps->persistant[PERS_CAPTURES]);
+			reward = qtrue;
+		}
+	} else {
+		if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
+			pushReward(cgs.media.captureAwardSound, cgs.media.medalCapture, ps->persistant[PERS_CAPTURES]);
+			reward = qtrue;
+		}
 	}
 	if (ps->persistant[PERS_IMPRESSIVE_COUNT] != ops->persistant[PERS_IMPRESSIVE_COUNT]) {
 #ifdef MISSIONPACK
@@ -467,10 +480,17 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 		reward = qtrue;
 		//Com_Printf("gauntlet frag\n");
 	}
-	if (ps->persistant[PERS_DEFEND_COUNT] != ops->persistant[PERS_DEFEND_COUNT]) {
-		pushReward(cgs.media.defendSound, cgs.media.medalDefend, ps->persistant[PERS_DEFEND_COUNT]);
-		reward = qtrue;
-		//Com_Printf("defend\n");
+	/* KOTH: hill defend reward (replaces CTF flag-defend medal) */
+	if ( cgs.gametype == GT_KOTH ) {
+		if (ps->persistant[PERS_DEFEND_COUNT] != ops->persistant[PERS_DEFEND_COUNT]) {
+			pushReward(cgs.media.kothDefendRewardSound, cgs.media.medalKothDefend, ps->persistant[PERS_DEFEND_COUNT]);
+			reward = qtrue;
+		}
+	} else {
+		if (ps->persistant[PERS_DEFEND_COUNT] != ops->persistant[PERS_DEFEND_COUNT]) {
+			pushReward(cgs.media.defendSound, cgs.media.medalDefend, ps->persistant[PERS_DEFEND_COUNT]);
+			reward = qtrue;
+		}
 	}
 	if (ps->persistant[PERS_ASSIST_COUNT] != ops->persistant[PERS_ASSIST_COUNT]) {
 		pushReward(cgs.media.assistSound, cgs.media.medalAssist, ps->persistant[PERS_ASSIST_COUNT]);
@@ -587,6 +607,22 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 		CG_ApplyDerbyHitImpact( ps->damageCount );
 	}
 
+	// Q3Rally KOTH: remember when local player died so client can show wave-respawn ETA
+	if ( cgs.gametype == GT_KOTH && ps->pm_type == PM_DEAD && ops->pm_type != PM_DEAD ) {
+		int waveMs = cg_kothRespawnWave.integer;
+
+		cg.kothDeathTime = cg.snap->serverTime;
+		if ( waveMs > 0 ) {
+			int respawnGate = cg.kothDeathTime + 1700;
+			if ( waveMs < 1000 ) {
+				waveMs *= 1000;
+			}
+			cg.kothRespawnAt = ( ( respawnGate + waveMs - 1 ) / waveMs ) * waveMs;
+		} else {
+			cg.kothRespawnAt = 0;
+		}
+	}
+
 	// respawning
 	if ( ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT] ) {
 		CG_Respawn();
@@ -615,4 +651,3 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 		cg.duckTime = cg.time;
 	}
 }
-

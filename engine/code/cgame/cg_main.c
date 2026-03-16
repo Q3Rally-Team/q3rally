@@ -277,6 +277,7 @@ vmCvar_t	cg_tightCamTracking;
 vmCvar_t	cg_rearViewRenderLevel;
 vmCvar_t	cg_mainViewRenderLevel;
 vmCvar_t	cg_debugpredict;
+vmCvar_t	cg_kothRespawnWave;
 
 vmCvar_t	cg_engineSounds;
 vmCvar_t	cg_ghostPlayback;
@@ -454,6 +455,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_paused, "cl_paused", "0", CVAR_ROM },
 	{ &cg_blood, "com_blood", "1", CVAR_ARCHIVE },
 	{ &cg_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO },
+	{ &cg_kothRespawnWave, "g_kothRespawnWave", "5000", CVAR_SERVERINFO },
 #ifdef MISSIONPACK
 	{ &cg_redTeamName, "g_redteam", DEFAULT_REDTEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
 	{ &cg_blueTeamName, "g_blueteam", DEFAULT_BLUETEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
@@ -896,6 +898,8 @@ cgs.media.impressiveTelefragSound = trap_S_RegisterSound( "sound/feedback/telefr
 	cgs.media.humiliationSound = trap_S_RegisterSound( "sound/feedback/humiliation.wav", qtrue );
 	cgs.media.assistSound = trap_S_RegisterSound( "sound/feedback/assist.wav", qtrue );
 	cgs.media.defendSound = trap_S_RegisterSound( "sound/feedback/defense.wav", qtrue );
+	cgs.media.kothCaptureRewardSound = trap_S_RegisterSound( "sound/feedback/koth_capture.wav", qtrue );
+	cgs.media.kothDefendRewardSound  = trap_S_RegisterSound( "sound/feedback/koth_defend.wav", qtrue );
 #ifdef MISSIONPACK
 	cgs.media.firstImpressiveSound = trap_S_RegisterSound( "sound/feedback/first_impressive.wav", qtrue );
 	cgs.media.firstExcellentSound = trap_S_RegisterSound( "sound/feedback/first_excellent.wav", qtrue );
@@ -1130,6 +1134,15 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.tracerShader = trap_R_RegisterShader( "gfx/misc/tracer" );
 	cgs.media.selectShader = trap_R_RegisterShader( "gfx/2d/select" );
+	cgs.media.select2Shader = trap_R_RegisterShader( "gfx/2d/select2" );
+	/* KOTH hill indicator textures (loaded globally for main world/minimap passes) */
+	cgs.media.kothHillMarkerNeutralShader = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker.png" );
+	cgs.media.kothHillMarkerRedShader     = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker_red.png" );
+	cgs.media.kothHillMarkerBlueShader    = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker_blue.png" );
+	cgs.media.kothBeamShader              = trap_R_RegisterShader( "textures/fx/koth_beam" );
+	cgs.media.kothRingShader              = trap_R_RegisterShader( "textures/fx/koth_ring" );
+	cgs.media.medalKothCapture            = trap_R_RegisterShaderNoMip( "medal_koth_capture" );
+	cgs.media.medalKothDefend             = trap_R_RegisterShaderNoMip( "medal_koth_defend" );
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 //		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/crosshair%c", 'a'+i) );
@@ -1182,7 +1195,7 @@ static void CG_RegisterGraphics( void ) {
 
 	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_1FCTF || cgs.gametype == GT_HARVESTER || cg_buildScript.integer ) {
 #else
-	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION || cg_buildScript.integer ) {
+	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION || cgs.gametype == GT_KOTH || cg_buildScript.integer ) {
 #endif
 		cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag.md3" );
 		cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag.md3" );
@@ -1206,7 +1219,7 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.yellowFlagShader[1] = trap_R_RegisterShaderNoMip( "icons/iconf_yell2" );
 		cgs.media.yellowFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_yell3" );
 // Q3Rally Code Start
-        cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "icons/icons_neutral" );
+        cgs.media.sigilShader = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker.png" );
         cgs.media.redsigilShader = trap_R_RegisterShaderNoMip( "icons/icons_red" );
         cgs.media.bluesigilShader = trap_R_RegisterShaderNoMip( "icons/icons_blu" );
         cgs.media.greensigilShader = trap_R_RegisterShaderNoMip( "icons/icons_green" );
@@ -2272,6 +2285,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	memset( cg_items, 0, sizeof(cg_items) );
 
 	cg.clientNum = clientNum;
+	cg.showHUD = qtrue;	// modular HUD should be visible by default
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.serverCommandSequence = serverCommandSequence;

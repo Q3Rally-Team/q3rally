@@ -150,6 +150,9 @@ void SP_trigger_push (gentity_t *ent);
 void SP_trigger_teleport (gentity_t *ent);
 void SP_trigger_hurt (gentity_t *ent);
 void SP_trigger_fuel (gentity_t *ent);
+// Q3Rally Code Start - KOTH
+void SP_trigger_koth_hill (gentity_t *ent);
+// Q3Rally Code END - KOTH
 
 void SP_target_remove_powerups( gentity_t *ent );
 void SP_target_give (gentity_t *ent);
@@ -186,6 +189,12 @@ void SP_team_CTF_redflag( gentity_t *ent );
 void SP_team_CTF_blueflag( gentity_t *ent );
 void SP_team_CTF_greenflag( gentity_t *ent );
 void SP_team_CTF_yellowflag( gentity_t *ent );
+// Q3Rally Code Start - KOTH spawn points
+void SP_team_KOTH_redplayer( gentity_t *ent );
+void SP_team_KOTH_blueplayer( gentity_t *ent );
+void SP_team_KOTH_redspawn( gentity_t *ent );
+void SP_team_KOTH_bluespawn( gentity_t *ent );
+// Q3Rally Code END - KOTH spawn points
 
 
 void SP_func_door_rotating( gentity_t *ent );	// Rotating Doors
@@ -251,6 +260,9 @@ spawn_t	spawns[] = {
         {"trigger_teleport", SP_trigger_teleport},
         {"trigger_hurt", SP_trigger_hurt},
         {"trigger_fuel", SP_trigger_fuel},
+        // Q3Rally Code Start - KOTH
+        {"trigger_koth_hill", SP_trigger_koth_hill},
+        // Q3Rally Code END - KOTH
 
 	// targets perform no action by themselves, but must be triggered
 	// by another entity
@@ -291,6 +303,12 @@ spawn_t	spawns[] = {
 	{"team_CTF_bluespawn", SP_team_CTF_bluespawn},
 	{"team_CTF_greenspawn", SP_team_CTF_greenspawn},
 	{"team_CTF_yellowspawn", SP_team_CTF_yellowspawn},
+	// Q3Rally Code Start - KOTH spawn points
+	{"team_KOTH_redplayer", SP_team_KOTH_redplayer},
+	{"team_KOTH_blueplayer", SP_team_KOTH_blueplayer},
+	{"team_KOTH_redspawn", SP_team_KOTH_redspawn},
+	{"team_KOTH_bluespawn", SP_team_KOTH_bluespawn},
+	// Q3Rally Code END - KOTH spawn points
 
     {"team_CTF_redflag", SP_team_CTF_redflag},
     {"team_CTF_blueflag", SP_team_CTF_blueflag},
@@ -696,6 +714,35 @@ void LoadBezierPathFile_Think(gentity_t *ent) {
 
 	G_FreeEntity(ent);
 }
+
+// Q3Rally Code Start - KOTH
+/*QUAKED trigger_koth_hill (.5 .5 .5) ?
+Marks the King of the Hill control zone.
+Place a brush entity covering the hill area.
+KOTH_Think() detects player presence via bounding box overlap.
+"indicatorHeight" vertical offset above hill top for HUD/world indicator origin (default 24)
+*/
+void SP_trigger_koth_hill( gentity_t *ent ) {
+	if ( g_gametype.integer != GT_KOTH ) {
+		G_FreeEntity( ent );
+		return;
+	}
+
+	// SetBrushModel first, then override contents (SetBrushModel overwrites r.contents)
+	trap_SetBrushModel( ent, ent->model );
+	ent->r.contents = CONTENTS_TRIGGER;	// passthrough volume, not solid
+	ent->r.svFlags = SVF_NOCLIENT;		// invisible to clients, no physical collision
+
+	// mapper-configurable vertical indicator offset above hill top
+	if ( !G_SpawnFloat( "indicatorHeight", "24", &ent->speed ) ) {
+		ent->speed = 24.0f;
+	}
+	trap_LinkEntity( ent );
+
+	G_Printf( "^2KOTH: trigger_koth_hill spawned at (%.0f %.0f %.0f), indicatorHeight=%.1f\n",
+		ent->s.origin[0], ent->s.origin[1], ent->s.origin[2], ent->speed );
+}
+// Q3Rally Code END - KOTH
 
 /*QUAKED worldspawn (0 0 0) ?
 

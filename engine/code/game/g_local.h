@@ -458,6 +458,10 @@ struct gclient_s {
 
 	int			profileLastTime;        // NEU: für Zeit-Tracking unabhängig von Framerate
 
+	/* Q3Rally KOTH post-match stats */
+	int			kothHillKills;
+	int			kothContestTimeMs;
+
 	// profileLastCmdTime wird nicht mehr benötigt - kann entfernt werden
 	// int		profileLastCmdTime;
 	// qboolean	profileHasLastCmdTime;
@@ -944,6 +948,9 @@ void G_RunClient( gentity_t *ent );
 qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 void Team_CheckDroppedItem( gentity_t *dropped );
 qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker );
+void KOTH_Think( void ); /* Q3Rally KOTH */
+qboolean KOTH_HandleOvertime( void ); /* Q3Rally KOTH */
+qboolean KOTH_IsClientInHill( int clientNum ); /* Q3Rally KOTH */
 
 //
 // g_mem.c
@@ -1034,6 +1041,14 @@ extern	vmCvar_t	g_speed;
 extern	vmCvar_t	g_knockback;
 extern	vmCvar_t	g_quadfactor;
 extern	vmCvar_t	g_forcerespawn;
+extern	vmCvar_t	g_kothScoreWin;
+extern	vmCvar_t	g_kothCaptureTime;
+extern	vmCvar_t	g_kothRespawnWave;
+extern	vmCvar_t	g_kothPtsTick;
+extern	vmCvar_t	g_kothPtsCapture;
+extern	vmCvar_t	g_kothPtsDefend;
+extern	vmCvar_t	g_kothOvertime;
+extern	vmCvar_t	g_kothOvertimeHoldTime;
 extern	vmCvar_t	g_inactivity;
 extern	vmCvar_t	g_debugMove;
 extern	vmCvar_t	g_debugAlloc;

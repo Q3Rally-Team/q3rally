@@ -9,7 +9,7 @@ longname "Jungle Opening"
 author "|CE & P3rlE"
 
 //GAME TYPE SUPPORTS
-type "q3r_ctf"
+type "q3r_ctf q3r_koth"
 
 //CUSTOM BOTS
 bots "Sam Dean Minori Vlad Kuro Emma Bee"

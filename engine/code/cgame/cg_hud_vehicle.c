@@ -23,6 +23,208 @@ This file is part of q3rally source code.
 #include "cg_local.h"
 #include "cg_hud_elements.h"
 
+/* -----------------------------------------------------------------------
+   CG_AddKOTHHillIndicatorToScene
+   Adds a pulse/ring style world indicator for the KOTH hill. Used in
+   main world rendering and minimap rendering.
+   ----------------------------------------------------------------------- */
+void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
+	refEntity_t	marker;
+	trace_t		tr;
+	vec3_t		groundPos;
+	vec3_t		beamStart;
+	vec3_t		traceEnd;
+	float		pulse;
+	float		inversePulse;
+	qhandle_t	hillMarkerShader;
+	byte		tintR, tintG, tintB;
+
+	if ( cgs.gametype != GT_KOTH ) {
+		return;
+	}
+
+	if ( !cgs.kothHillOriginValid ) {
+		return;
+	}
+
+	/* ---- colour by owner / state ---- */
+	hillMarkerShader = cgs.media.kothHillMarkerNeutralShader;
+	if ( cgs.kothContested ) {
+		tintR = 255; tintG = 220; tintB = 64;
+	} else if ( cgs.kothOwner == TEAM_RED ) {
+		hillMarkerShader = cgs.media.kothHillMarkerRedShader;
+		tintR = 255; tintG = 0;   tintB = 0;
+	} else if ( cgs.kothOwner == TEAM_BLUE ) {
+		hillMarkerShader = cgs.media.kothHillMarkerBlueShader;
+		tintR = 0;   tintG = 12;  tintB = 255;
+	} else {
+		tintR = 240; tintG = 240; tintB = 240;
+	}
+
+	/* base pulse: 0..1, period ~7 s */
+	pulse        = 0.5f + 0.5f * sin( (float)cg.time * 0.009f );
+	inversePulse = 1.0f - pulse;
+
+	/* ---- find ground level below hill origin ----
+	   Start well above kothHillOrigin so the trace passes through
+	   the hill brush (CONTENTS_TRIGGER, not solid) to the real floor.
+	   MASK_PLAYERSOLID skips trigger volumes. */
+	VectorCopy( cgs.kothHillOrigin, beamStart );
+	beamStart[2] += 256.0f;
+	VectorCopy( beamStart, traceEnd );
+	traceEnd[2] -= 8192.0f;
+	CG_Trace( &tr, beamStart, NULL, NULL, traceEnd, ENTITYNUM_NONE, MASK_PLAYERSOLID );
+	if ( tr.fraction < 1.0f ) {
+		VectorCopy( tr.endpos, groundPos );
+	} else {
+		VectorCopy( cgs.kothHillOrigin, groundPos );
+	}
+
+	/* ============================================================
+	   1) GROUND RING  (flat horizontal poly ring in world space)
+	      Built as a triangle fan: SEGMENTS quads, each quad = 2
+	      tris.  Inner radius = outerRadius * INNER_FRAC gives the
+	      ring band width.  A slow angular offset animates rotation.
+	   ============================================================ */
+	{
+		#define KOTH_RING_SEGS  24
+		#define KOTH_INNER_FRAC 0.72f
+		polyVert_t  rv[4];
+		float       outerR, innerR;
+		float       rotOff;
+		float       ringZ;
+		byte        ringAlpha;
+		int         seg;
+		float       a0, a1, c0, s0, c1, s1;
+		float       ox0, oy0, ox1, oy1;
+		float       ix0, iy0, ix1, iy1;
+
+		outerR    = minimapPass
+			? ( cgs.kothHillRadius * 1.35f + 10.0f * pulse )
+			: ( cgs.kothHillRadius         +  8.0f * pulse );
+		innerR    = outerR * KOTH_INNER_FRAC;
+		rotOff    = (float)cg.time * 0.0008f;   /* slow rotation */
+		ringZ     = groundPos[2] + 2.0f;         /* just above ground */
+		ringAlpha = (byte)( 80 + 120 * pulse );
+
+		for ( seg = 0; seg < KOTH_RING_SEGS; seg++ ) {
+			a0 = rotOff + (float)seg       * (2.0f * M_PI / KOTH_RING_SEGS);
+			a1 = rotOff + (float)(seg + 1) * (2.0f * M_PI / KOTH_RING_SEGS);
+			c0 = cos(a0); s0 = sin(a0);
+			c1 = cos(a1); s1 = sin(a1);
+
+			/* outer vertices */
+			ox0 = groundPos[0] + outerR * c0;
+			oy0 = groundPos[1] + outerR * s0;
+			ox1 = groundPos[0] + outerR * c1;
+			oy1 = groundPos[1] + outerR * s1;
+			/* inner vertices */
+			ix0 = groundPos[0] + innerR * c0;
+			iy0 = groundPos[1] + innerR * s0;
+			ix1 = groundPos[0] + innerR * c1;
+			iy1 = groundPos[1] + innerR * s1;
+
+			/* quad as two tris wound CCW (outer0, inner0, inner1, outer1) */
+			rv[0].xyz[0] = ox0; rv[0].xyz[1] = oy0; rv[0].xyz[2] = ringZ;
+			rv[0].st[0] = 0.0f; rv[0].st[1] = 0.0f;
+			rv[0].modulate[0] = tintR; rv[0].modulate[1] = tintG;
+			rv[0].modulate[2] = tintB; rv[0].modulate[3] = ringAlpha;
+
+			rv[1].xyz[0] = ix0; rv[1].xyz[1] = iy0; rv[1].xyz[2] = ringZ;
+			rv[1].st[0] = 0.5f; rv[1].st[1] = 0.0f;
+			rv[1].modulate[0] = tintR; rv[1].modulate[1] = tintG;
+			rv[1].modulate[2] = tintB; rv[1].modulate[3] = ringAlpha;
+
+			rv[2].xyz[0] = ix1; rv[2].xyz[1] = iy1; rv[2].xyz[2] = ringZ;
+			rv[2].st[0] = 0.5f; rv[2].st[1] = 1.0f;
+			rv[2].modulate[0] = tintR; rv[2].modulate[1] = tintG;
+			rv[2].modulate[2] = tintB; rv[2].modulate[3] = ringAlpha;
+
+			rv[3].xyz[0] = ox1; rv[3].xyz[1] = oy1; rv[3].xyz[2] = ringZ;
+			rv[3].st[0] = 0.0f; rv[3].st[1] = 1.0f;
+			rv[3].modulate[0] = tintR; rv[3].modulate[1] = tintG;
+			rv[3].modulate[2] = tintB; rv[3].modulate[3] = ringAlpha;
+
+			trap_R_AddPolyToScene( cgs.media.kothRingShader, 4, rv );
+		}
+		#undef KOTH_RING_SEGS
+		#undef KOTH_INNER_FRAC
+	}
+
+	/* ============================================================
+	   2) UPWARD BEAM  (two crossed vertical quads = X-shape)
+	      Visible from all angles without billboard math.
+	      Each quad spans groundPos.Z -> kothHillOrigin.Z.
+	      Half-width BEAM_W controls thickness.
+	      UV runs 0..1 bottom-to-top so tcMod scroll animates upward.
+	   ============================================================ */
+	{
+		#define BEAM_W 18.0f
+		polyVert_t  bv[4];
+		float       bz0, bz1;
+		byte        beamAlpha;
+		float       cx, cy;
+
+		bz0       = groundPos[2]         + 2.0f;
+		bz1       = cgs.kothHillOrigin[2];
+		beamAlpha = (byte)( 55 + 110 * pulse );
+		cx        = groundPos[0];
+		cy        = groundPos[1];
+
+		/* --- quad 1: aligned along X axis --- */
+		bv[0].xyz[0]=cx-BEAM_W; bv[0].xyz[1]=cy; bv[0].xyz[2]=bz0;
+		bv[0].st[0]=0.0f; bv[0].st[1]=1.0f;
+		bv[0].modulate[0]=tintR; bv[0].modulate[1]=tintG;
+		bv[0].modulate[2]=tintB; bv[0].modulate[3]=beamAlpha;
+
+		bv[1].xyz[0]=cx+BEAM_W; bv[1].xyz[1]=cy; bv[1].xyz[2]=bz0;
+		bv[1].st[0]=1.0f; bv[1].st[1]=1.0f;
+		bv[1].modulate[0]=tintR; bv[1].modulate[1]=tintG;
+		bv[1].modulate[2]=tintB; bv[1].modulate[3]=beamAlpha;
+
+		bv[2].xyz[0]=cx+BEAM_W; bv[2].xyz[1]=cy; bv[2].xyz[2]=bz1;
+		bv[2].st[0]=1.0f; bv[2].st[1]=0.0f;
+		bv[2].modulate[0]=tintR; bv[2].modulate[1]=tintG;
+		bv[2].modulate[2]=tintB; bv[2].modulate[3]=beamAlpha;
+
+		bv[3].xyz[0]=cx-BEAM_W; bv[3].xyz[1]=cy; bv[3].xyz[2]=bz1;
+		bv[3].st[0]=0.0f; bv[3].st[1]=0.0f;
+		bv[3].modulate[0]=tintR; bv[3].modulate[1]=tintG;
+		bv[3].modulate[2]=tintB; bv[3].modulate[3]=beamAlpha;
+
+		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
+
+		/* --- quad 2: aligned along Y axis (crossed with quad 1) --- */
+		bv[0].xyz[0]=cx; bv[0].xyz[1]=cy-BEAM_W; bv[0].xyz[2]=bz0;
+		bv[1].xyz[0]=cx; bv[1].xyz[1]=cy+BEAM_W; bv[1].xyz[2]=bz0;
+		bv[2].xyz[0]=cx; bv[2].xyz[1]=cy+BEAM_W; bv[2].xyz[2]=bz1;
+		bv[3].xyz[0]=cx; bv[3].xyz[1]=cy-BEAM_W; bv[3].xyz[2]=bz1;
+		/* st and modulate same as quad 1 - already set above */
+		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
+		#undef BEAM_W
+	}
+
+	/* ============================================================
+	   3) HILL MARKER at beam tip
+	      Pulses in inverse phase to the beam so one is always
+	      clearly visible.
+	   ============================================================ */
+	Com_Memset( &marker, 0, sizeof( marker ) );
+	marker.reType        = RT_SPRITE;
+	VectorCopy( cgs.kothHillOrigin, marker.origin );
+	marker.origin[2]    += 4.0f;
+	marker.customShader  = hillMarkerShader;
+	marker.shaderRGBA[0] = tintR;
+	marker.shaderRGBA[1] = tintG;
+	marker.shaderRGBA[2] = tintB;
+	marker.shaderRGBA[3] = (byte)( 110 + 105 * inversePulse );
+	marker.rotation      = 0.0f;
+	marker.radius        = minimapPass
+		? ( 54.0f + 10.0f * inversePulse )
+		: ( 38.0f +  8.0f * inversePulse );
+	trap_R_AddRefEntityToScene( &marker );
+}
+
 
 /* -----------------------------------------------------------------------
    CG_AddObjectsToScene
@@ -121,6 +323,7 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	cg.mmapRefdef.rdflags = 0;
 
 	CG_AddObjectsToScene( cg_mmap_renderLevel.integer );
+	CG_AddKOTHHillIndicatorToScene( qtrue );
 
 	if ( cg_mmap_renderLevel.integer & RL_PLAYERS )
 		CG_AddCEntity( &cg_entities[cg.snap->ps.clientNum] );

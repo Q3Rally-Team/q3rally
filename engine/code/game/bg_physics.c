@@ -1586,12 +1586,12 @@ void PM_CalculateSecondaryQuantities( car_t *car, carBody_t *body, carPoint_t *p
 	m[1][2] = car->inverseBodyInertiaTensor[2][2] * body->t[1][2];
 	m[2][2] = car->inverseBodyInertiaTensor[2][2] * body->t[2][2];
 
-	MatrixTranspose(body->t, m2);
+	MatrixTranspose((float(*)[3])body->t, m2);
 	MatrixMultiply(m, m2, body->inverseWorldInertiaTensor);
 
 	VectorRotate(body->L, body->inverseWorldInertiaTensor, body->w);
 
-	OrientationToVectors(body->t, body->forward, body->right, body->up);
+	OrientationToVectors((float(*)[3])body->t, body->forward, body->right, body->up);
 
 	// set locations and velocities of frame points
 	PM_InitializeFrame(body, &points[FL_FRAME],  1.0f, -1.0f, 0.0f);

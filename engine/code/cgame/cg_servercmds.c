@@ -100,28 +100,30 @@ static void CG_ParseScores( void ) {
 	memset( cg.scores, 0, sizeof( cg.scores ) );
 	for ( i = 0 ; i < cg.numScores ; i++ ) {
 //
-// STONELANCE changed i * 14 to i * 18, added 4 (now 19 for rank tier)
-cg.scores[i].client = atoi( CG_Argv( i * 19 + 6 ) );
-cg.scores[i].score = atoi( CG_Argv( i * 19 + 7 ) );
-cg.scores[i].ping = atoi( CG_Argv( i * 19 + 8 ) );
-cg.scores[i].time = atoi( CG_Argv( i * 19 + 9 ) );
-cg.scores[i].scoreFlags = atoi( CG_Argv( i * 19 + 10 ) );
-powerups = atoi( CG_Argv( i * 19 + 11 ) );
-cg.scores[i].accuracy = atoi(CG_Argv(i * 19 + 12));
-cg.scores[i].impressiveCount = atoi(CG_Argv(i * 19 + 13));
-cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 19 + 14));
-cg.scores[i].excellentCount = atoi(CG_Argv(i * 19 + 15));
-cg.scores[i].guantletCount = atoi(CG_Argv(i * 19 + 16));
-cg.scores[i].defendCount = atoi(CG_Argv(i * 19 + 17));
-cg.scores[i].assistCount = atoi(CG_Argv(i * 19 + 18));
-cg.scores[i].perfect = atoi(CG_Argv(i * 19 + 19));
-cg.scores[i].captures = atoi(CG_Argv(i * 19 + 20));
+// STONELANCE changed i * 14 to i * 20, added 6 (now 21 with KOTH extras + rank tier)
+cg.scores[i].client = atoi( CG_Argv( i * 21 + 6 ) );
+cg.scores[i].score = atoi( CG_Argv( i * 21 + 7 ) );
+cg.scores[i].ping = atoi( CG_Argv( i * 21 + 8 ) );
+cg.scores[i].time = atoi( CG_Argv( i * 21 + 9 ) );
+cg.scores[i].scoreFlags = atoi( CG_Argv( i * 21 + 10 ) );
+powerups = atoi( CG_Argv( i * 21 + 11 ) );
+cg.scores[i].accuracy = atoi(CG_Argv(i * 21 + 12));
+cg.scores[i].impressiveCount = atoi(CG_Argv(i * 21 + 13));
+cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 21 + 14));
+cg.scores[i].excellentCount = atoi(CG_Argv(i * 21 + 15));
+cg.scores[i].guantletCount = atoi(CG_Argv(i * 21 + 16));
+cg.scores[i].defendCount = atoi(CG_Argv(i * 21 + 17));
+cg.scores[i].assistCount = atoi(CG_Argv(i * 21 + 18));
+cg.scores[i].perfect = atoi(CG_Argv(i * 21 + 19));
+cg.scores[i].captures = atoi(CG_Argv(i * 21 + 20));
 // END
-// STONELANCE add two more score parts
-cg.scores[i].damageDealt = atoi(CG_Argv(i * 19 + 21));
-cg.scores[i].damageTaken = atoi(CG_Argv(i * 19 + 22));
-cg.scores[i].position = atoi(CG_Argv(i * 19 + 23));
-cg.scores[i].rankTier = atoi(CG_Argv(i * 19 + 24));
+// STONELANCE add four more score parts
+cg.scores[i].damageDealt = atoi(CG_Argv(i * 21 + 21));
+cg.scores[i].damageTaken = atoi(CG_Argv(i * 21 + 22));
+cg.scores[i].position = atoi(CG_Argv(i * 21 + 23));
+cg.scores[i].kothHillKills = atoi(CG_Argv(i * 21 + 24));
+cg.scores[i].kothContestTimeMs = atoi(CG_Argv(i * 21 + 25));
+cg.scores[i].rankTier = atoi(CG_Argv(i * 21 + 26));
 // END
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
@@ -354,6 +356,94 @@ static void CG_ParseSigilStatus( void ) {
 	}
 }
 
+// Q3Rally Code Start - KOTH
+static void CG_ParseKothStatus( void ) {
+	const char *str;
+	int oldOwner;
+	int oldContested;
+	int localTeam;
+	qboolean hadSnapshot;
+
+	hadSnapshot = ( cg.snap != NULL );
+	oldOwner = cgs.kothOwner;
+	oldContested = cgs.kothContested;
+	localTeam = TEAM_FREE;
+	if ( hadSnapshot ) {
+		localTeam = cg.snap->ps.persistant[PERS_TEAM];
+	}
+
+	str = CG_ConfigString( CS_KOTHSTATUS );
+	cgs.kothOwner     = atoi( str );
+	str = strchr( str, ' ' ); if ( str ) str++; else return;
+	cgs.kothContested = atoi( str );
+	str = strchr( str, ' ' ); if ( str ) str++; else return;
+	cgs.kothCapturePct = atoi( str );
+
+	/* Optional hill origin payload: "owner contested pct x y z" */
+	cgs.kothHillOriginValid = qfalse;
+	str = strchr( str, ' ' );
+	if ( str ) {
+		str++;
+		cgs.kothHillOrigin[0] = atof( str );
+		str = strchr( str, ' ' );
+		if ( str ) {
+			str++;
+			cgs.kothHillOrigin[1] = atof( str );
+			str = strchr( str, ' ' );
+			if ( str ) {
+				str++;
+				cgs.kothHillOrigin[2] = atof( str );
+				cgs.kothHillOriginValid = qtrue;
+				/* Optional radius field */
+				str = strchr( str, ' ' );
+				if ( str ) {
+					str++;
+					cgs.kothHillRadius = atof( str );
+				}
+			}
+		}
+	}
+	if ( cgs.kothHillRadius <= 0.0f ) {
+		cgs.kothHillRadius = 128.0f;	/* safe fallback */
+	}
+
+	if ( !cg.kothStatusInitialized ) {
+		cg.kothStatusInitialized = qtrue;
+		cg.kothLastOwner = cgs.kothOwner;
+		cg.kothLastContested = cgs.kothContested;
+		return;
+	}
+
+	if ( !hadSnapshot || localTeam == TEAM_SPECTATOR ) {
+		cg.kothLastOwner = cgs.kothOwner;
+		cg.kothLastContested = cgs.kothContested;
+		return;
+	}
+
+	if ( !oldContested && cgs.kothContested ) {
+		trap_S_StartLocalSound( cgs.media.takenOpponentSound, CHAN_ANNOUNCER );
+	}
+
+	if ( oldContested && !cgs.kothContested ) {
+		trap_S_StartLocalSound( cgs.media.returnYourTeamSound, CHAN_ANNOUNCER );
+	}
+
+	if ( oldOwner != cgs.kothOwner ) {
+		if ( cgs.kothOwner == localTeam ) {
+			trap_S_StartLocalSound( cgs.media.kothCaptureRewardSound, CHAN_ANNOUNCER );
+		} else if ( cgs.kothOwner != TEAM_FREE ) {
+			trap_S_StartLocalSound( cgs.media.captureOpponentSound, CHAN_ANNOUNCER );
+			if ( oldOwner == localTeam ) {
+				cg.kothLossFlashUntil = cg.time + 600;
+			}
+		}
+	}
+
+	cg.kothLastOwner = cgs.kothOwner;
+	cg.kothLastContested = cgs.kothContested;
+}
+// Q3Rally Code END - KOTH
+
 /*
 ===============================================================
 CG_SetConfigValues
@@ -388,6 +478,11 @@ if( cgs.gametype == GT_CTF ) {
 	else if ( cgs.gametype == GT_DOMINATION ) {
 		CG_ParseSigilStatus();
 	}
+	// Q3Rally Code Start - KOTH
+	else if ( cgs.gametype == GT_KOTH ) {
+		CG_ParseKothStatus();
+	}
+	// Q3Rally Code END - KOTH
 
 #ifdef MISSIONPACK
 	else if( cgs.gametype == GT_1FCTF ) {
@@ -536,6 +631,13 @@ static void CG_ConfigStringModified( void ) {
 			CG_ParseSigilStatus();
 		}
 	}
+	// Q3Rally Code Start - KOTH
+	else if ( num == CS_KOTHSTATUS ) {
+		if ( cgs.gametype == GT_KOTH ) {
+			CG_ParseKothStatus();
+		}
+	}
+	// Q3Rally Code END - KOTH
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();
 	}

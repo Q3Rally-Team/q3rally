@@ -784,6 +784,13 @@ qboolean CG_DrawHUD( void ) {
         if ( cg_hudShowScores.integer )   CG_DrawHUD_Scores( 264, 130 );
         break;
 
+    // Q3Rally Code Start - KOTH
+    case GT_KOTH:
+        // KOTH uses the modular top-right scoreboard; avoid duplicate legacy FRAGS/TEAM panel.
+        CG_DrawKOTH_HillStatus();
+        break;
+    // Q3Rally Code END - KOTH
+
     case GT_DERBY:
         if ( cg_hudShowDerbyVehicle.integer )   CG_DrawHUD_DerbyVehicleState();
         if ( cg_hudShowDerbyList.integer )      CG_DrawHUD_DerbyList( 440, 130 );
@@ -795,5 +802,6 @@ qboolean CG_DrawHUD( void ) {
         break;
     }
 
-    return qtrue;
+    // CG_DrawHUD draws overlays but is not the scoreboard visibility gate.
+    return qfalse;
 }

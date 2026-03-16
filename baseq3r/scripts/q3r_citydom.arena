@@ -9,7 +9,7 @@ longname "Dominate the City"
 author "P3rlE"
 
 //GAME TYPE SUPPORTS
-type "q3r_dom"
+type "q3r_dom q3r_koth"
 
 //CUSTOM BOTS
 bots "Ivan Tanya Kuro Alexandra Bobby Samuel Jennifer"

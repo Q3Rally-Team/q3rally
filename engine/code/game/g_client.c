@@ -1306,6 +1306,8 @@ void ClientBegin( int clientNum ) {
 	client->pers.connected = CON_CONNECTED;
 	client->pers.enterTime = level.time;
 	client->pers.teamState.state = TEAM_BEGIN;
+	client->kothHillKills = 0;
+	client->kothContestTimeMs = 0;
 
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we

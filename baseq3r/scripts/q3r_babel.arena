@@ -9,7 +9,7 @@ longname "Babel's Military Base"
 author "Marc Fontaine (insellium remix)"
 
 //GAME TYPE SUPPORTS
-type "q3r_dom"
+type "q3r_dom q3r_koth"
 
 //CUSTOM BOTS
 bots "Dean Minori Vlad Emma Tobias Alexandra Sam"

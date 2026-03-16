@@ -100,12 +100,13 @@ static const char *gametype_items[] = {
 	"Capture the Flag",
 	"4-Team CTF",
 	"Domination",
+	"King of the Hill",
 	0
 };
 
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
-static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_SPRINT, GT_DERBY, GT_LCS, GT_ELIMINATION, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION};
-static int gametype_remap2[] = {0, 1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_SPRINT, GT_DERBY, GT_LCS, GT_ELIMINATION, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH};
+static int gametype_remap2[] = {0, 1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
 
 int		allowLength[3];
 int		reversable;
@@ -339,6 +340,7 @@ static const struct {
         { "q3r_ctf", GT_CTF },
         { "q3r_ctf4", GT_CTF4 },
         { "q3r_dom", GT_DOMINATION },
+        { "q3r_koth", GT_KOTH }, /* Q3Rally KOTH */
 };
 
 /*
@@ -833,6 +835,11 @@ typedef struct {
 	menufield_s			timelimit;
 	menufield_s			fraglimit;
 	menufield_s			flaglimit;
+	menufield_s			kothPtsTick;
+	menufield_s			kothPtsCapture;
+	menufield_s			kothPtsDefend;
+	menuradiobutton_s	kothOvertime;
+	menufield_s			kothOvertimeHold;
 	menuradiobutton_s	friendlyfire;
 	menufield_s			hostname;
     menulist_s          dominationSpawnStyle;
@@ -960,6 +967,11 @@ static void ServerOptions_Start( void ) {
 	int		dedicated;
 	int		friendlyfire;
 	int		flaglimit;
+	int		kothPtsTick;
+	int		kothPtsCapture;
+	int		kothPtsDefend;
+	int		kothOvertime;
+	int		kothOvertimeHoldSec;
 	int		pure;
 	int		trackLength;
 	int		reversed;
@@ -972,6 +984,11 @@ static void ServerOptions_Start( void ) {
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
 	fraglimit	 = ( s_serveroptions.gametype == GT_SPRINT ) ? 1 : atoi( s_serveroptions.fraglimit.field.buffer );
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
+	kothPtsTick	 = atoi( s_serveroptions.kothPtsTick.field.buffer );
+	kothPtsCapture = atoi( s_serveroptions.kothPtsCapture.field.buffer );
+	kothPtsDefend = atoi( s_serveroptions.kothPtsDefend.field.buffer );
+	kothOvertime = s_serveroptions.kothOvertime.curvalue;
+	kothOvertimeHoldSec = atoi( s_serveroptions.kothOvertimeHold.field.buffer );
 	dominationScoreInterval = atoi( s_serveroptions.dominationScoreInterval.field.buffer );
 	dominationCaptureDelay = atoi( s_serveroptions.dominationCaptureDelay.field.buffer );
 	dedicated	 = s_serveroptions.dedicated.curvalue;
@@ -1040,6 +1057,61 @@ default:
 		trap_Cvar_SetValue( "ui_ctf_friendly", friendlyfire );
 		break;
 		
+	    // Q3Rally Code Start - KOTH
+	    case GT_KOTH:
+		{
+			int kothScoreWin = flaglimit;
+			int kothTick = kothPtsTick;
+			int kothCapture = kothPtsCapture;
+			int kothDefend = kothPtsDefend;
+			int kothOtEnabled = kothOvertime;
+			int kothOtHoldMs = kothOvertimeHoldSec * 1000;
+			if ( kothScoreWin <= 0 ) {
+				kothScoreWin = (int)trap_Cvar_VariableValue( "ui_koth_scorelimit" );
+			}
+			if ( kothScoreWin <= 0 ) {
+				kothScoreWin = 100;
+			}
+
+			if ( kothTick < 0 ) {
+				kothTick = (int)trap_Cvar_VariableValue( "ui_koth_pts_tick" );
+			}
+			if ( kothCapture < 0 ) {
+				kothCapture = (int)trap_Cvar_VariableValue( "ui_koth_pts_capture" );
+			}
+			if ( kothDefend < 0 ) {
+				kothDefend = (int)trap_Cvar_VariableValue( "ui_koth_pts_defend" );
+			}
+			if ( kothOtHoldMs <= 0 ) {
+				kothOtHoldMs = (int)trap_Cvar_VariableValue( "ui_koth_overtime_hold" );
+			}
+			if ( kothOtHoldMs <= 0 ) {
+				kothOtHoldMs = (int)trap_Cvar_VariableValue( "koth_overtime_hold" );
+			}
+			if ( kothOtHoldMs <= 0 ) {
+				kothOtHoldMs = 10000;
+			}
+
+			trap_Cvar_SetValue( "g_kothScoreWin",    Com_Clamp( 1, 9999, kothScoreWin ) );
+			trap_Cvar_SetValue( "g_kothCaptureTime", 3000 );
+			trap_Cvar_SetValue( "g_kothRespawnWave", 5000 );
+			trap_Cvar_SetValue( "koth_pts_tick", Com_Clamp( 0, 999, kothTick ) );
+			trap_Cvar_SetValue( "koth_pts_capture", Com_Clamp( 0, 999, kothCapture ) );
+			trap_Cvar_SetValue( "koth_pts_defend", Com_Clamp( 0, 999, kothDefend ) );
+			trap_Cvar_SetValue( "koth_overtime", Com_Clamp( 0, 1, kothOtEnabled ) );
+			trap_Cvar_SetValue( "koth_overtime_hold", Com_Clamp( 1000, 120000, kothOtHoldMs ) );
+			trap_Cvar_SetValue( "ui_koth_scorelimit", kothScoreWin );
+			trap_Cvar_SetValue( "ui_koth_pts_tick", Com_Clamp( 0, 999, kothTick ) );
+			trap_Cvar_SetValue( "ui_koth_pts_capture", Com_Clamp( 0, 999, kothCapture ) );
+			trap_Cvar_SetValue( "ui_koth_pts_defend", Com_Clamp( 0, 999, kothDefend ) );
+			trap_Cvar_SetValue( "ui_koth_overtime", Com_Clamp( 0, 1, kothOtEnabled ) );
+			trap_Cvar_SetValue( "ui_koth_overtime_hold", Com_Clamp( 1000, 120000, kothOtHoldMs ) );
+			trap_Cvar_SetValue( "ui_koth_timelimit",  timelimit );
+			trap_Cvar_SetValue( "ui_koth_friendly",   friendlyfire );
+			break;
+	}
+    // Q3Rally Code END - KOTH
+
     case GT_DOMINATION:
 		trap_Cvar_SetValue( "g_dominationSpawnStyle", Com_Clamp( 0, 1, dominationSpawnStyle ) );
 		trap_Cvar_SetValue( "g_dominationScoreInterval", Com_Clamp( 0, 99999, dominationScoreInterval * 1000 ) );
@@ -1057,7 +1129,12 @@ default:
 	trap_Cvar_SetValue ("timelimit", Com_Clamp( 0, timelimit, timelimit ) );
 	trap_Cvar_SetValue ("fraglimit", Com_Clamp( 0, fraglimit, fraglimit ) );
 	trap_Cvar_SetValue ("laplimit", Com_Clamp( 0, fraglimit, fraglimit ) );
-	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
+	// Q3Rally Fix: KOTH uses g_kothScoreWin, not capturelimit - reset to 0 to avoid false exits
+	if ( s_serveroptions.gametype == GT_KOTH ) {
+		trap_Cvar_SetValue( "capturelimit", 0 );
+	} else {
+		trap_Cvar_SetValue( "capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
+	}
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
 	trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLength, 2 ) );
@@ -1554,6 +1631,62 @@ static void ServerOptions_SetMenuItems( void ) {
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ctf_friendly" ) );
 		break;
 
+	case GT_KOTH:
+	{
+		int kothScoreLimit = (int)trap_Cvar_VariableValue( "ui_koth_scorelimit" );
+		if ( kothScoreLimit <= 0 ) {
+			kothScoreLimit = (int)trap_Cvar_VariableValue( "g_kothScoreWin" );
+		}
+		if ( kothScoreLimit <= 0 ) {
+			kothScoreLimit = 100;
+		}
+			kothScoreLimit = (int)Com_Clamp( 1, 999, kothScoreLimit );
+			trap_Cvar_SetValue( "ui_koth_scorelimit", kothScoreLimit );
+			Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", kothScoreLimit );
+			{
+				int kothTick = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_tick" ) );
+				int kothCapture = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_capture" ) );
+				int kothDefend = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_defend" ) );
+
+				if ( kothTick == 0 && trap_Cvar_VariableValue( "koth_pts_tick" ) > 0 ) {
+					kothTick = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_tick" ) );
+				}
+				if ( kothCapture == 0 && trap_Cvar_VariableValue( "koth_pts_capture" ) > 0 ) {
+					kothCapture = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_capture" ) );
+				}
+				if ( kothDefend == 0 && trap_Cvar_VariableValue( "koth_pts_defend" ) > 0 ) {
+					kothDefend = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_defend" ) );
+				}
+
+				if ( kothTick == 0 ) kothTick = 1;
+				if ( kothCapture == 0 ) kothCapture = 5;
+				if ( kothDefend == 0 ) kothDefend = 3;
+
+				trap_Cvar_SetValue( "ui_koth_pts_tick", kothTick );
+				trap_Cvar_SetValue( "ui_koth_pts_capture", kothCapture );
+				trap_Cvar_SetValue( "ui_koth_pts_defend", kothDefend );
+				Com_sprintf( s_serveroptions.kothPtsTick.field.buffer, 4, "%i", kothTick );
+				Com_sprintf( s_serveroptions.kothPtsCapture.field.buffer, 4, "%i", kothCapture );
+				Com_sprintf( s_serveroptions.kothPtsDefend.field.buffer, 4, "%i", kothDefend );
+			}
+			{
+				int kothOtEnable = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_koth_overtime" ) );
+				int kothOtHoldMs = (int)Com_Clamp( 1000, 120000, trap_Cvar_VariableValue( "ui_koth_overtime_hold" ) );
+
+				if ( trap_Cvar_VariableValue( "ui_koth_overtime_hold" ) <= 0 ) {
+					kothOtHoldMs = (int)Com_Clamp( 1000, 120000, trap_Cvar_VariableValue( "koth_overtime_hold" ) );
+				}
+
+				trap_Cvar_SetValue( "ui_koth_overtime", kothOtEnable );
+				trap_Cvar_SetValue( "ui_koth_overtime_hold", kothOtHoldMs );
+				s_serveroptions.kothOvertime.curvalue = kothOtEnable;
+				Com_sprintf( s_serveroptions.kothOvertimeHold.field.buffer, 4, "%i", kothOtHoldMs / 1000 );
+			}
+			Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_timelimit" ) ) );
+			s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_koth_friendly" ) );
+			break;
+		}
+
 	case GT_DOMINATION:
 		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_dom_capturelimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dom_timelimit" ) ) );
@@ -1696,7 +1829,19 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	limitFieldAdded = qfalse;
 
-	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
+	if( s_serveroptions.gametype == GT_KOTH ) {
+		s_serveroptions.flaglimit.generic.type		= MTYPE_FIELD;
+		s_serveroptions.flaglimit.generic.name		= "Score Limit:";
+		s_serveroptions.flaglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.flaglimit.generic.x			= OPTIONS_X;
+		s_serveroptions.flaglimit.generic.y			= y;
+		s_serveroptions.flaglimit.generic.statusbar	= ServerOptions_StatusBar;
+		s_serveroptions.flaglimit.field.widthInChars = 3;
+		s_serveroptions.flaglimit.field.maxchars	= 3;
+
+		limitFieldAdded = qtrue;
+	}
+	else if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
 		s_serveroptions.flaglimit.generic.type		= MTYPE_FIELD;
 		s_serveroptions.flaglimit.generic.name		= "Capture Limit:";
 		s_serveroptions.flaglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1741,6 +1886,56 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	if ( limitFieldAdded ) {
 		y += BIGCHAR_HEIGHT+2;
 	}
+
+	if ( s_serveroptions.gametype == GT_KOTH ) {
+		s_serveroptions.kothPtsTick.generic.type		= MTYPE_FIELD;
+		s_serveroptions.kothPtsTick.generic.name		= "Tick Pts:";
+		s_serveroptions.kothPtsTick.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.kothPtsTick.generic.x			= OPTIONS_X;
+		s_serveroptions.kothPtsTick.generic.y			= y;
+		s_serveroptions.kothPtsTick.generic.statusbar	= ServerOptions_StatusBar;
+		s_serveroptions.kothPtsTick.field.widthInChars = 3;
+		s_serveroptions.kothPtsTick.field.maxchars	= 3;
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.kothPtsCapture.generic.type	= MTYPE_FIELD;
+		s_serveroptions.kothPtsCapture.generic.name	= "Capture Pts:";
+		s_serveroptions.kothPtsCapture.generic.flags	= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.kothPtsCapture.generic.x		= OPTIONS_X;
+		s_serveroptions.kothPtsCapture.generic.y		= y;
+		s_serveroptions.kothPtsCapture.generic.statusbar = ServerOptions_StatusBar;
+		s_serveroptions.kothPtsCapture.field.widthInChars = 3;
+		s_serveroptions.kothPtsCapture.field.maxchars	= 3;
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.kothPtsDefend.generic.type	= MTYPE_FIELD;
+		s_serveroptions.kothPtsDefend.generic.name	= "Defend Pts:";
+		s_serveroptions.kothPtsDefend.generic.flags	= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.kothPtsDefend.generic.x		= OPTIONS_X;
+		s_serveroptions.kothPtsDefend.generic.y		= y;
+		s_serveroptions.kothPtsDefend.generic.statusbar = ServerOptions_StatusBar;
+		s_serveroptions.kothPtsDefend.field.widthInChars = 3;
+		s_serveroptions.kothPtsDefend.field.maxchars	= 3;
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.kothOvertime.generic.type     = MTYPE_RADIOBUTTON;
+		s_serveroptions.kothOvertime.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.kothOvertime.generic.x        = OPTIONS_X;
+		s_serveroptions.kothOvertime.generic.y        = y;
+		s_serveroptions.kothOvertime.generic.name     = "Overtime:";
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.kothOvertimeHold.generic.type       = MTYPE_FIELD;
+		s_serveroptions.kothOvertimeHold.generic.name       = "OT Hold (s):";
+		s_serveroptions.kothOvertimeHold.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.kothOvertimeHold.generic.x          = OPTIONS_X;
+		s_serveroptions.kothOvertimeHold.generic.y          = y;
+		s_serveroptions.kothOvertimeHold.generic.statusbar  = ServerOptions_StatusBar;
+		s_serveroptions.kothOvertimeHold.field.widthInChars = 3;
+		s_serveroptions.kothOvertimeHold.field.maxchars     = 3;
+		y += BIGCHAR_HEIGHT+2;
+	}
+
 	s_serveroptions.timelimit.generic.type       = MTYPE_FIELD;
 	s_serveroptions.timelimit.generic.name       = "Time Limit:";
 	s_serveroptions.timelimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1975,11 +2170,19 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		}
 	}
 
-	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
+	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION || s_serveroptions.gametype == GT_KOTH ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
 	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS && s_serveroptions.gametype != GT_SPRINT ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
+	}
+
+	if( s_serveroptions.gametype == GT_KOTH ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothPtsTick );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothPtsCapture );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothPtsDefend );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothOvertime );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothOvertimeHold );
 	}
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );

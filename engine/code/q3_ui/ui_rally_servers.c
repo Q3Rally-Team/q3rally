@@ -134,7 +134,8 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TEAMPLAY                  9
 #define GAMES_CTF                               10
 #define GAMES_DOMINATION                11
-#define GAMES_NUM_GAMES                 12
+#define GAMES_KOTH                      12  // Q3Rally KOTH
+#define GAMES_NUM_GAMES                 13
 // END
 
 static const char *master_items[] = {
@@ -210,6 +211,7 @@ static char* gamenames[] = {
         "Team DM",      // team deathmatch
         "CTF",  // capture the flag
         "Domination",   // domination
+        "KOTH",         // king of the hill
 // END
         "???",                  // unknown
         0
@@ -540,6 +542,11 @@ int ArenaServers_GametypeForGames(int games) {
         case GAMES_DOMINATION:
                 gametype = GT_DOMINATION;
                 break;
+        // Q3Rally Code Start - KOTH
+        case GAMES_KOTH:
+                gametype = GT_KOTH;
+                break;
+        // Q3Rally Code END - KOTH
 	}
 
 	return gametype;

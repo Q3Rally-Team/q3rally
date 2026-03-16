@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_ents.c -- present snapshot entities, happens every single frame
 
 #include "cg_local.h"
+#include "cg_hud_elements.h"
 
 
 // Q3Rally Code Start
@@ -1323,6 +1324,8 @@ void CG_AddPacketEntities( void ) {
 		CG_AddCEntity( cent );
 	}
 
+	CG_AddKOTHHillIndicatorToScene( qfalse );
+
 // Q3Rally Code Start
 	if( cg_drawBotPaths.integer )
 		CG_DrawCheckpointLinks();
@@ -1448,4 +1451,3 @@ void CG_AddPacketEntities( void ) {
 	cg.newSnap = qfalse;
 // Q3Rally Code END
 }
-

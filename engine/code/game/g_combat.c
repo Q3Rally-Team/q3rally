@@ -72,7 +72,8 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	if (!isRallyRace() || level.startRaceTime)
 		ent->client->ps.persistant[PERS_SCORE] += score;
 
-	if (g_gametype.integer >= GT_TEAM && g_gametype.integer != GT_CTF){
+	// Q3Rally Fix: KOTH scores are managed exclusively by KOTH_Think, not by kills
+	if (g_gametype.integer >= GT_TEAM && g_gametype.integer != GT_CTF && g_gametype.integer != GT_KOTH){
 		if (!isRallyRace() || level.startRaceTime)
 			level.teamScores[ ent->client->ps.persistant[PERS_TEAM] ] += score;
 	}
@@ -589,6 +590,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
                         AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
+
+			if ( g_gametype.integer == GT_KOTH && KOTH_IsClientInHill( attacker->s.number ) ) {
+				attacker->client->kothHillKills++;
+			}
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				

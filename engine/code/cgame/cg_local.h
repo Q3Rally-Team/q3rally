@@ -463,6 +463,8 @@ typedef struct {
 	int				damageDealt;
 	int				damageTaken;
 	int				position;
+	int				kothHillKills;
+	int				kothContestTimeMs;
 	int				rankTier;
 } score_t;
 
@@ -776,6 +778,12 @@ typedef struct {
 
 	char		countDownPrint[16];
 	int			countDownEnd;
+	int			kothDeathTime;		// serverTime when local player entered PM_DEAD in KOTH
+	int			kothRespawnAt;		// serverTime when next KOTH respawn wave should trigger
+	int			kothLastOwner;		// previous owner seen from CS_KOTHSTATUS
+	int			kothLastContested;	// previous contested flag seen from CS_KOTHSTATUS
+	int			kothStatusInitialized;
+	int			kothLossFlashUntil;	// local-team-loss tint end time
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
@@ -923,6 +931,14 @@ typedef struct {
     qhandle_t   bluesigilShader;
     qhandle_t   greensigilShader;
     qhandle_t   yellowsigilShader;
+	/* KOTH hill indicator shaders */
+	qhandle_t   kothHillMarkerNeutralShader;
+	qhandle_t   kothHillMarkerRedShader;
+	qhandle_t   kothHillMarkerBlueShader;
+	qhandle_t   kothBeamShader;             /* upward beam: textures/fx/koth_beam */
+	qhandle_t   kothRingShader;             /* flat ground ring: textures/fx/koth_ring */
+	qhandle_t   medalKothCapture;           /* KOTH hill-capture reward sprite */
+	qhandle_t   medalKothDefend;            /* KOTH hill-defend reward sprite */
 	qhandle_t	flagPoleModel;
 	qhandle_t	flagFlapModel;
 
@@ -1032,6 +1048,7 @@ typedef struct {
 	qhandle_t	connectionShader;
 
 	qhandle_t	selectShader;
+	qhandle_t	select2Shader;
 	qhandle_t	viewBloodShader;
 	qhandle_t	tracerShader;
 	qhandle_t	crosshairShader[NUM_CROSSHAIRS];
@@ -1199,6 +1216,8 @@ typedef struct {
 	sfxHandle_t humiliationSound;
 	sfxHandle_t assistSound;
 	sfxHandle_t defendSound;
+	sfxHandle_t kothCaptureRewardSound;     /* KOTH hill-capture reward sound */
+	sfxHandle_t kothDefendRewardSound;      /* KOTH hill-defend reward sound */
 	sfxHandle_t firstImpressiveSound;
 	sfxHandle_t firstExcellentSound;
 	sfxHandle_t firstHumiliationSound;
@@ -1386,6 +1405,13 @@ typedef struct {
 	int				redflag, blueflag, greenflag, yellowflag;		// flag status from configstrings
 	int				flagStatus;
     int             sigil[MAX_SIGILS];
+    /* Q3Rally KOTH - parsed from CS_KOTHSTATUS */
+    int             kothOwner;      /* TEAM_FREE / TEAM_RED / TEAM_BLUE */
+    int             kothContested;  /* qtrue when both teams in hill */
+    int             kothCapturePct; /* 0-100 capture progress */
+	vec3_t			kothHillOrigin;
+	qboolean		kothHillOriginValid;
+	float			kothHillRadius;		/* XY radius of the hill brush, from CS_KOTHSTATUS */
 	qboolean  newHud;
 
 	//
@@ -1592,6 +1618,7 @@ extern	vmCvar_t		cg_rearViewRenderLevel;
 extern	vmCvar_t		cg_mainViewRenderLevel;
 
 extern	vmCvar_t		cg_debugpredict;
+extern	vmCvar_t		cg_kothRespawnWave;
 
 extern	vmCvar_t		cg_engineSounds;
 extern	vmCvar_t		cg_ghostPlayback;
@@ -2065,6 +2092,8 @@ float CG_DrawLowerLeftHUD( float y );
 void CG_DrawMMap( float x, float y, float w, float h );
 void CG_DrawHUD_DerbyList(float x, float y);
 void CG_DrawFuelGauge( float x, float y, float w, float h );
+void CG_DrawKOTH_HillStatus( void ); /* Q3Rally KOTH */
+void CG_DrawKOTH_RespawnWave( void ); /* Q3Rally KOTH */
 
 
 //

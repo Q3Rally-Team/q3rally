@@ -9,7 +9,7 @@ longname "Capture in the Jungle"
 author "P3rlE"
 
 //GAME TYPE SUPPORTS
-type "q3r_ctf"
+type "q3r_ctf q3r_koth"
 
 //CUSTOM BOTS
 bots "Chloe Jim Zack Paul Tobias Josh Tony"

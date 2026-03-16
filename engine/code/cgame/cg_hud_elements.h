@@ -93,6 +93,7 @@ void  CG_DrawFuelGauge( float x, float y, float w, float h );
 void  CG_DrawRearviewMirror( float x, float y, float w, float h );
 void  CG_DrawMMap( float x, float y, float w, float h );
 void  CG_AddObjectsToScene( int renderLevel );
+void  CG_AddKOTHHillIndicatorToScene( qboolean minimapPass );
 
 /* cg_hud_core.c */
 float    CG_GetEliminationColumnWidth( void );
