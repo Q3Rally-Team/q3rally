@@ -863,7 +863,7 @@ qboolean CG_DrawHUD( void ) {
 
     case GT_DERBY:
         if ( cg_hudShowDerbyVehicle.integer )   CG_DrawHUD_DerbyVehicleState();
-        if ( cg_hudShowDerbyList.integer )      CG_DrawHUD_DerbyList( 440, 130 );
+        if ( cg_hudShowDerbyList.integer )      CG_DrawHUD_DerbyList( 440, 16 );
         if ( cg_derbyHitFxEnable.integer )     CG_DrawHUD_DerbyHitImpact();
         break;
 

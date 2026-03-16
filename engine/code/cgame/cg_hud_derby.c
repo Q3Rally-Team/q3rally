@@ -248,14 +248,14 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 	vec4_t    color;
 	centity_t *cent;
 
-	x = 636 - 120;   /* anchor to right edge */
+	x = 729;   /* anchor to right edge */
 
 	/* Header row */
-	CG_FillRect( x, y, 120, 18, bgColor );
-	CG_DrawTinyStringColor( x + 16,  y, "P:",   colorWhite );
-	CG_DrawTinyStringColor( x + 70,  y, "DD:",  colorWhite );
-	CG_DrawTinyStringColor( x + 100, y, "DT:",  colorWhite );
-	y += 20;
+	CG_FillRect( x, y, 120, 16, bgColor );
+	CG_DrawTinyStringColor( x + 0,  y + 4, "PLAYER:",   colorWhite );
+	CG_DrawTinyStringColor( x + 60,  y + 4, "DD:",  colorWhite );
+	CG_DrawTinyStringColor( x + 90, y + 4, "DT:",  colorWhite );
+	y += 16;
 
 	/* Top-8 player rows */
 	for ( i = 0; i < 8; i++ ) {
@@ -264,7 +264,7 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 		cent = &cg_entities[cg.scores[i].client];
 		if ( !cent ) continue;
 
-		CG_FillRect( x, y, 120, 18, bgColor );
+		CG_FillRect( x, y, 120, 16, bgColor );
 
 		Vector4Copy( colorWhite, color );
 		if ( cg.scores[i].client == cg.snap->ps.clientNum ) {
@@ -276,11 +276,11 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 			Vector4Copy( colorMdGrey, color );
 		}
 
-		CG_DrawTinyStringColor( x + 2,   y, va("%i",  i + 1),                              color );
-		CG_DrawTinyStringColor( x + 16,  y, cgs.clientinfo[cg.scores[i].client].name,       color );
-		CG_DrawTinyStringColor( x + 75,  y, va("%i",  cg.scores[i].damageDealt),            color );
-		CG_DrawTinyStringColor( x + 105, y, va("%i",  cg.scores[i].damageTaken),            color );
+		CG_DrawTinyStringColor( x + 2,   y + 4, va("%i",  i + 1),                              color );
+		CG_DrawTinyStringColor( x + 16,  y + 4, cgs.clientinfo[cg.scores[i].client].name,       color );
+		CG_DrawTinyStringColor( x + 65,  y + 4, va("%i",  cg.scores[i].damageDealt),            color );
+		CG_DrawTinyStringColor( x + 95, y + 4, va("%i",  cg.scores[i].damageTaken),            color );
 
-		y += 20;
+		y += 16;
 	}
 }
