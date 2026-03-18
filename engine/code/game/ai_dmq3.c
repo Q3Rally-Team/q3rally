@@ -4987,7 +4987,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 			}
 			else
 #endif
-				if (!strcmp(buf, "sound/items/poweruprespawn.wav")) {
+				if (!strcmp(buf, "sound/items/poweruprespawn.ogg")) {
 				//powerup respawned... go get it
 				BotGoForPowerups(bs);
 			}

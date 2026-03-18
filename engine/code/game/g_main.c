@@ -1056,7 +1056,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
         level.ladderStartEpoch = trap_RealTime( &level.ladderStartTime );
         G_LadderBuildMatchId( randomSeed );
 
-	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
+	level.snd_fry = G_SoundIndex("sound/player/fry.ogg");	// FIXME standing in lava / slime
 
 	if ( g_gametype.integer != GT_SINGLE_PLAYER && g_logfile.string[0] ) {
 		if ( g_logfileSync.integer ) {

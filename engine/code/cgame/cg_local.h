@@ -284,9 +284,11 @@ typedef struct centity_s {
 	vec3_t			lastSkidOrigin[4];
 	float			smokeTime[4];
 	float			engineSmokeTime;
+	float			engineSoundFrac;
 
 	int				skidSoundTime;
 	int				engineSoundEntity;
+	int				engineSoundIndex;
 
 	// scripted object variables
 	int				scriptLoadTime;
@@ -1174,6 +1176,7 @@ typedef struct {
 	sfxHandle_t	useNothingSound;
 	sfxHandle_t	wearOffSound;
 	sfxHandle_t	turboSound;
+	sfxHandle_t	skidSound;
 	sfxHandle_t	shieldSound;
 	sfxHandle_t	sfx_lghit1;
 	sfxHandle_t	sfx_lghit2;

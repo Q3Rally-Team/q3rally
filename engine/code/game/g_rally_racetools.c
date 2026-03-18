@@ -492,7 +492,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 		RaceCountdown("GO!", 0);
 
-		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.wav") );
+		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/go.ogg") );
 
 		if (g_gametype.integer != GT_DERBY)
 			ent->think = RallyRace_Think;
@@ -500,19 +500,19 @@ void RallyStarter_Think( gentity_t *ent ){
 	else if ( level.time > ent->pain_debounce_time + 4000 ){
 		RaceCountdown("1", 1);
 
-		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/one.wav") );
+		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/one.ogg") );
 		ent->number = -1;
 	}
 	else if ( level.time > ent->pain_debounce_time + 3000 ){
 		RaceCountdown("2", 2);
 
-		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/two.wav") );
+		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/two.ogg") );
 		ent->number = 1;
 	}
 	else if ( level.time > ent->pain_debounce_time + 2000 ){
 		RaceCountdown("3", 3);
 
-		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/three.wav") );
+		Rally_Sound( ent, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/three.ogg") );
 		ent->number = 2;
 	}
 	else {

@@ -525,7 +525,7 @@ Target this entity with a misc_model to have the model attached to the entity (s
 
 //=============================================================================
 
-/*QUAKED func_static (0 .5 .8) ?
+/*QUAKED func_static (0 .5 .8) ? KOTH_ONLY
 Static non-solid bspmodel. Can be used for conditional walls and models.
 -------- KEYS --------
 model2 : path/name of model to include (eg: models/mapobjects/bitch/fembotbig.md3).
@@ -536,6 +536,9 @@ targetname : NOT SUPPORTED BY RENDERER - if set, a func_button or trigger can ma
 notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 notsingle : when set to 1, entity will not spawn in Single Player mode.
+gametype : whitespace-separated list of gametype names this entity should spawn in (supports e.g. "koth").
+-------- SPAWNFLAGS --------
+KOTH_ONLY : when checked, this func_static only spawns in GT_KOTH.
 -------- Q3MAP2 KEYS --------
 _targetname : Used to attach a misc_model entity to this entity.
 _lightmapscale : Floating point value scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).

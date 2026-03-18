@@ -213,11 +213,9 @@ void SP_target_speaker( gentity_t *ent ) {
 		ent->spawnflags |= 8;
 	}
 
-	if (!strstr( s, ".wav" )) {
-		Com_sprintf (buffer, sizeof(buffer), "%s.wav", s );
-	} else {
-		Q_strncpyz( buffer, s, sizeof(buffer) );
-	}
+	// Keep the mapper-provided path as-is so the sound layer can resolve the
+	// available codec instead of forcing a .wav suffix onto .ogg-only assets.
+	Q_strncpyz( buffer, s, sizeof(buffer) );
 	ent->noise_index = G_SoundIndex(buffer);
 
 	// a repeating speaker can be done completely client side

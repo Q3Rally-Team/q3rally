@@ -201,8 +201,12 @@ extern	vec3_t	listener_right;
 extern	vec3_t	listener_up;
 extern	dma_t	dma;
 
-#define	MAX_RAW_SAMPLES	16384
+// Raw streaming uses ring-buffer masking with (MAX_RAW_SAMPLES - 1), so keep
+// this as a power of two. 32768 sample-pairs buffer ~743 ms at 44.1 kHz,
+// which keeps cinematic/audio preload safely above 500 ms.
+#define	MAX_RAW_SAMPLES	32768
 #define MAX_RAW_STREAMS (MAX_CLIENTS * 2 + 1)
+#define CIN_RAW_STREAM (MAX_RAW_STREAMS - 1)
 extern	portable_samplepair_t s_rawsamples[MAX_RAW_STREAMS][MAX_RAW_SAMPLES];
 extern	int		s_rawend[MAX_RAW_STREAMS];
 

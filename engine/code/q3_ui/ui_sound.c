@@ -56,6 +56,10 @@ SOUND OPTIONS MENU
 #define ID_BACK				19
 #define ID_APPLY			20
 
+/*
+ * Keep the UI's implicit-default mapping in sync with the SDL backend:
+ * s_sdlSpeed = 0 falls back to 22050 Hz.
+ */
 #define DEFAULT_SDL_SND_SPEED 22050
 
 static const char *quality_items[] = {

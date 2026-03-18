@@ -194,7 +194,12 @@ qboolean SNDDMA_Init(void)
 
 	if (!s_sdlBits) {
 		s_sdlBits = Cvar_Get("s_sdlBits", "16", CVAR_ARCHIVE);
-		s_sdlSpeed = Cvar_Get("s_sdlSpeed", "44100", CVAR_ARCHIVE);
+		/*
+		 * 22050 Hz is the effective SDL default. Existing configs may still
+		 * store s_sdlSpeed = 0, which keeps using the same implicit default
+		 * via the desired.freq fallback below.
+		 */
+		s_sdlSpeed = Cvar_Get("s_sdlSpeed", "22050", CVAR_ARCHIVE);
 		s_sdlChannels = Cvar_Get("s_sdlChannels", "2", CVAR_ARCHIVE);
 		s_sdlDevSamps = Cvar_Get("s_sdlDevSamps", "0", CVAR_ARCHIVE);
 		s_sdlMixSamps = Cvar_Get("s_sdlMixSamps", "0", CVAR_ARCHIVE);
@@ -437,4 +442,3 @@ void SNDDMA_MasterGain( float val )
 #endif
 }
 #endif
-

@@ -237,11 +237,14 @@ static int loadPagesToStreams(void)
 	int             r = -1;
 	int             AudioPages = 0;
 	int             VideoPages = 0;
+	int             KnownPages = 0;
 	ogg_stream_state *osptr = NULL;
 	ogg_page        og;
 
 	while(!AudioPages || !VideoPages)
 	{
+		osptr = NULL;
+
 		if(ogg_sync_pageout(&g_ogm.oy, &og) != 1)
 			break;
 
@@ -250,7 +253,7 @@ static int loadPagesToStreams(void)
 			osptr = &g_ogm.os_audio;
 			++AudioPages;
 		}
-		if(g_ogm.os_video.serialno == ogg_page_serialno(&og))
+		else if(g_ogm.os_video.serialno == ogg_page_serialno(&og))
 		{
 			osptr = &g_ogm.os_video;
 			++VideoPages;
@@ -259,10 +262,11 @@ static int loadPagesToStreams(void)
 		if(osptr != NULL)
 		{
 			ogg_stream_pagein(osptr, &og);
+			++KnownPages;
 		}
 	}
 
-	if(AudioPages && VideoPages)
+	if(KnownPages)
 		r = 0;
 
 	return r;
@@ -271,8 +275,13 @@ static int loadPagesToStreams(void)
 #define SIZEOF_RAWBUFF 4*1024
 static byte     rawBuffer[SIZEOF_RAWBUFF];
 
-#define MIN_AUDIO_PRELOAD 400	// in ms
-#define MAX_AUDIO_PRELOAD 500	// in ms
+// Keep OGM preload below the default streaming capacity of both sound backends.
+// With SDL at 44.1 kHz, the default mix buffer is 10240 sample-pairs
+// (~232 ms). OpenAL also streams OGM audio in 1024-sample chunks and has a
+// finite queued-buffer limit. Staying at 100-200 ms avoids overfilling either
+// path while still providing enough headroom for decoding jitter.
+#define MIN_AUDIO_PRELOAD 100	// in ms
+#define MAX_AUDIO_PRELOAD 200	// in ms
 
 
 /*
@@ -323,7 +332,7 @@ static qboolean loadAudio(void)
 				vorbis_synthesis_read(&g_ogm.vd, i);
 
 //              S_RawSamples(ssize, 22050, 2, 2, (byte *)sbuf, 1.0f, -1);
-				S_RawSamples(0, i, g_ogm.vi.rate, 2, 2, rawBuffer, 1.0f, -1);
+				S_RawSamples(CIN_RAW_STREAM, i, g_ogm.vi.rate, 2, 2, rawBuffer, 1.0f, -1);
 
 				anyDataTransferred = qtrue;
 			}
@@ -996,4 +1005,3 @@ void Cin_OGM_Shutdown(void)
 	return;
 }
 #endif
-

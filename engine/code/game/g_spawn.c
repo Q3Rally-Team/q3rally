@@ -514,7 +514,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// UPDATE : change these
 // STONELANCE
 //	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester"};
-        static char *gametypeNames[] = {"racing", "racing_dm", "sprint", "single", "derby", "lcs", "elimination", "dm", "team", "team_racing", "team_racing_dm", "ctf", "ctf4", "domination"};
+	        static char *gametypeNames[] = {"racing", "racing_dm", "sprint", "single", "derby", "lcs", "elimination", "dm", "team", "team_racing", "team_racing_dm", "ctf", "ctf4", "domination", "koth"};
 // END
 
 	// get the next free entity

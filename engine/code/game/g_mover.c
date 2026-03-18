@@ -1207,8 +1207,8 @@ void SP_func_door (gentity_t *ent) {
 	float	lip;
 
 	startsound = endsound = NULL;
-	G_SpawnString("startsound", "sound/movers/doors/dr1_strt.wav", &startsound);
-	G_SpawnString("endsound", "sound/movers/doors/dr1_end.wav", &endsound);
+	G_SpawnString("startsound", "sound/movers/doors/dr1_strt.ogg", &startsound);
+	G_SpawnString("endsound", "sound/movers/doors/dr1_end.ogg", &endsound);
 
 	ent->sound1to2 = ent->sound2to1 = G_SoundIndex(startsound);
 	ent->soundPos1 = ent->soundPos2 = G_SoundIndex(endsound);
@@ -1294,8 +1294,8 @@ check either the X_AXIS or Y_AXIS box to change that.
 */
 
 void SP_func_door_rotating ( gentity_t *ent ) {
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.wav");
+	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.ogg");
+	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.ogg");
 
 	ent->blocked = Blocked_Door;
 
@@ -1480,8 +1480,8 @@ Plats are always drawn in the extended position so they will light correctly.
 void SP_func_plat (gentity_t *ent) {
 	float		lip, height;
 
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/plats/pt1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/plats/pt1_end.wav");
+	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/plats/pt1_strt.ogg");
+	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/plats/pt1_end.ogg");
 
 	VectorClear (ent->s.angles);
 
@@ -1568,7 +1568,7 @@ void SP_func_button( gentity_t *ent ) {
 	float		lip;
 
 	sound = NULL;
-	G_SpawnString("sound", "sound/movers/switches/butn2.wav", &sound);
+	G_SpawnString("sound", "sound/movers/switches/butn2.ogg", &sound);
 	ent->sound1to2 = G_SoundIndex(sound);
 	
 	if ( !ent->speed ) {
@@ -1848,13 +1848,18 @@ STATIC
 */
 
 
-/*QUAKED func_static (0 .5 .8) ?
+/*QUAKED func_static (0 .5 .8) ? KOTH_ONLY
 A bmodel that just sits there, doing nothing.  Can be used for conditional walls and models.
 "model2"	.md3 model to also draw
 "color"		constantLight color
 "light"		constantLight radius
 */
 void SP_func_static( gentity_t *ent ) {
+	if ( ( ent->spawnflags & 1 ) && g_gametype.integer != GT_KOTH ) {
+		G_FreeEntity( ent );
+		return;
+	}
+
 	trap_SetBrushModel( ent, ent->model );
 	InitMover( ent );
 	VectorCopy( ent->s.origin, ent->s.pos.trBase );

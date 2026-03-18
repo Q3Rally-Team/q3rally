@@ -70,7 +70,7 @@ gitem_t	bg_itemlist[] =
 //		"item_armor_shard", 
 		"item_armor_green", 
 // END
-		"sound/misc/ar1_pkup.wav",
+		"sound/misc/ar1_pkup.ogg",
 // STONELANCE
 //		{ "models/powerups/armor/shard.md3", 
 //		"models/powerups/armor/shard_sphere.md3",
@@ -133,7 +133,7 @@ Only in CTF games
 //		"item_armor_combat", 
 		"item_armor_yellow", 
 // END
-		"sound/misc/ar2_pkup.wav",
+		"sound/misc/ar2_pkup.ogg",
 // STONELANCE
 //        { "models/powerups/armor/armor_yel.md3",
 		{ "models/powerups/armor/yellowshard.md3",
@@ -159,7 +159,7 @@ Only in CTF games
 //		"item_armor_body", 
 		"item_armor_red", 
 // END
-		"sound/misc/ar2_pkup.wav",
+		"sound/misc/ar2_pkup.ogg",
 // STONELANCE
 //		{ "models/powerups/armor/armor_red.md3",
 		{ "models/powerups/armor/redshard.md3",
@@ -185,7 +185,7 @@ Only in CTF games
 */
 	{
 		"item_health_small",
-		"sound/items/s_health.wav",
+		"sound/items/s_health.ogg",
         { "models/powerups/health/small_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_green",
 /* pickup */	"5 Health",
@@ -200,7 +200,7 @@ Only in CTF games
 */
 	{
 		"item_health",
-		"sound/items/n_health.wav",
+		"sound/items/n_health.ogg",
         { "models/powerups/health/medium_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_yellow",
 /* pickup */	"25 Health",
@@ -215,7 +215,7 @@ Only in CTF games
 */
 	{
 		"item_health_large",
-		"sound/items/l_health.wav",
+		"sound/items/l_health.ogg",
         { "models/powerups/health/large_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_red",
 /* pickup */	"50 Health",
@@ -230,7 +230,7 @@ Only in CTF games
 */
 	{
 		"item_health_mega",
-		"sound/items/m_health.wav",
+		"sound/items/m_health.ogg",
         { "models/powerups/health/mega_cross.md3", NULL, NULL },
 /* icon */		"icons/iconh_mega",
 /* pickup */	"Mega Health",
@@ -246,7 +246,7 @@ Refills vehicle fuel.
 */
         {
                 "item_fuelcan",
-                "sound/items/n_health.wav",
+                "sound/items/n_health.ogg",
         { "models/items/fuelcan.md3", NULL, NULL, NULL },
 /* icon */              "icons/fuelcan",
 /* pickup */    "Fuel Can",
@@ -266,7 +266,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_gauntlet", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/gauntlet/gauntlet.md3",
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_gauntlet",
@@ -282,7 +282,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_shotgun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/shotgun/shotgun.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_shotgun",
@@ -298,7 +298,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_machinegun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/machinegun/machinegun.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_machinegun",
@@ -314,7 +314,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_grenadelauncher",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/grenadel/grenadel.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_grenade",
@@ -323,14 +323,14 @@ Refills vehicle fuel.
 		IT_WEAPON,
 		WP_GRENADE_LAUNCHER,
 /* precache */ "",
-/* sounds */ "sound/weapons/grenade/hgrenb1a.wav sound/weapons/grenade/hgrenb2a.wav"
+/* sounds */ "sound/weapons/grenade/hgrenb1a.ogg sound/weapons/grenade/hgrenb2a.ogg"
 	},
 
 /*QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
 		"weapon_rocketlauncher",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/rocketl/rocketl.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_rocket",
@@ -346,7 +346,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_lightning", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/lightning/lightning.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_lightning",
@@ -362,7 +362,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_railgun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/railgun/railgun.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_railgun",
@@ -378,7 +378,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_plasmagun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/plasma/plasma.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_plasma",
@@ -394,7 +394,7 @@ Refills vehicle fuel.
 */
 	{
 		"weapon_bfg",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/bfg/bfg.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_bfg",
@@ -412,7 +412,7 @@ Refills vehicle fuel.
 /*
 	{
 		"weapon_grapplinghook",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons2/grapple/grapple.md3", 
 		NULL, NULL, NULL},
 		"icons/iconw_grapple",	// icon
@@ -432,7 +432,7 @@ Refills vehicle fuel.
 */
 {
 	"weapon_flamethrower",
-	"sound/misc/w_pkup.wav",
+	"sound/misc/w_pkup.ogg",
 	{ "models/weapons2/flamethrower/flamethrower.md3",
 	NULL, NULL, NULL},
 /* icon */	"icons/iconw_flame",
@@ -450,7 +450,7 @@ Refills vehicle fuel.
 	// rally_weapon_smoke
 	{
 		"rally_weapon_smoke",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/rearfire/rf_smoke.md3", 
 		NULL, NULL, NULL},
 		"icons/rf_smoke",				// icon
@@ -465,7 +465,7 @@ Refills vehicle fuel.
 	// rally_weapon_oil
 	{
 		"rally_weapon_oil",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/rearfire/rf_oil.md3", 
 		NULL, NULL, NULL},
 		"icons/rf_oil",					// icon
@@ -480,7 +480,7 @@ Refills vehicle fuel.
 	// rally_weapon_mine
 	{
 		"rally_weapon_mine",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/rearfire/rf_mines.md3", 
 		NULL, NULL, NULL},
 		"icons/rf_mine",				// icon
@@ -489,13 +489,13 @@ Refills vehicle fuel.
 		IT_RFWEAPON,
 		RWP_MINE,
 		"",								// precache
-		"sound/weapons/grenade/hgrenb1a.wav sound/weapons/grenade/hgrenb2a.wav" // sounds
+		"sound/weapons/grenade/hgrenb1a.ogg sound/weapons/grenade/hgrenb2a.ogg" // sounds
 	},
 
 	// rally_weapon_flame
 	{
 		"rally_weapon_flame",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/rearfire/rf_flame.md3", 
 		NULL, NULL, NULL},
 		"icons/rf_flame",				// icon
@@ -510,7 +510,7 @@ Refills vehicle fuel.
 	// rally_weapon_bio
 	{
 		"rally_weapon_bio",
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/rearfire/rf_bio.md3", 
 		NULL, NULL, NULL},
 		"icons/rf_bio",					// icon
@@ -531,7 +531,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_shells",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/shotgunam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_shotgun",
@@ -547,7 +547,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_bullets",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/machinegunam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_machinegun",
@@ -563,7 +563,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_grenades",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/grenadeam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_grenade",
@@ -579,7 +579,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_cells",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/plasmaam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_plasma",
@@ -595,7 +595,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_lightning",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/lightningam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_lightning",
@@ -611,7 +611,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_rockets",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/rocketam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_rocket",
@@ -627,7 +627,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_slugs",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/railgunam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_railgun",
@@ -643,7 +643,7 @@ Refills vehicle fuel.
 */
 	{
 		"ammo_bfg",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/bfgam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_bfg",
@@ -661,7 +661,7 @@ Refills vehicle fuel.
 */
 {
 	"ammo_flame",
-	"sound/misc/am_pkup.wav",
+	"sound/misc/am_pkup.ogg",
 	{ "models/powerups/ammo/flameam.md3", 
 	NULL, NULL, NULL},
 /* icon */ "icons/icona_flame",
@@ -682,7 +682,7 @@ Refills vehicle fuel.
 */
 	{
 		"holdable_teleporter", 
-		"sound/items/holdable.wav",
+		"sound/items/holdable.ogg",
         { "models/powerups/holdable/teleporter.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/teleporter",
@@ -697,7 +697,7 @@ Refills vehicle fuel.
 */
 	{
 		"holdable_medkit", 
-		"sound/items/holdable.wav",
+		"sound/items/holdable.ogg",
         { 
 		"models/powerups/holdable/medkit.md3", 
 		"models/powerups/holdable/medkit_sphere.md3",
@@ -708,14 +708,14 @@ Refills vehicle fuel.
 		IT_HOLDABLE,
 		HI_MEDKIT,
 /* precache */ "",
-/* sounds */ "sound/items/use_medkit.wav"
+/* sounds */ "sound/items/use_medkit.ogg"
 	},
 
 // STONELANCE
 	// rally_item_turbo
 	{
 		"rally_item_turbo", 
-		"sound/items/turbo.wav",
+		"sound/items/turbo.ogg",
         { "models/powerups/turbo/turbo.md3",
 		"models/powerups/turbo/turbogear.md3",
 		NULL, NULL},
@@ -740,7 +740,7 @@ Refills vehicle fuel.
 //		"item_quad", 
 		"rally_item_quad", 
 // END
-		"sound/items/quaddamage.wav",
+		"sound/items/quaddamage.ogg",
 // STONELANCE
 //		{ "models/powerups/instant/quad.md3", 
 //		"models/powerups/instant/quad_ring.md3",
@@ -754,7 +754,7 @@ Refills vehicle fuel.
 		IT_POWERUP,
 		PW_QUAD,
 /* precache */ "",
-/* sounds */ "sound/items/damage2.wav sound/items/damage3.wav"
+/* sounds */ "sound/items/damage2.ogg sound/items/damage3.ogg"
 	},
 
 /*QUAKED item_enviro (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
@@ -764,7 +764,7 @@ Refills vehicle fuel.
 //		"item_enviro",
 		"rally_item_env",
 // END
-		"sound/items/protect.wav",
+		"sound/items/protect.ogg",
 // STONELANCE
 //		{ "models/powerups/instant/enviro.md3", 
 //		"models/powerups/instant/enviro_ring.md3", 
@@ -782,7 +782,7 @@ Refills vehicle fuel.
 		IT_POWERUP,
 		PW_BATTLESUIT,
 /* precache */ "",
-/* sounds */ "sound/items/airout.wav sound/items/protect3.wav"
+/* sounds */ "sound/items/airout.ogg sound/items/protect3.ogg"
 	},
 
 /*QUAKED item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
@@ -792,7 +792,7 @@ Refills vehicle fuel.
 //		"item_haste",
 		"rally_item_haste",
 // END
-		"sound/items/haste.wav",
+		"sound/items/haste.ogg",
 // STONELANCE
 //		{ "models/powerups/instant/haste.md3", 
 //		"models/powerups/instant/haste_ring.md3", 
@@ -821,7 +821,7 @@ Refills vehicle fuel.
 //		"item_invis",
 		"rally_item_invis",
 // END
-		"sound/items/invisibility.wav",
+		"sound/items/invisibility.ogg",
 // STONELANCE
 //		{ "models/powerups/instant/invis.md3", 
 //		"models/powerups/instant/invis_ring.md3", 
@@ -845,7 +845,7 @@ Refills vehicle fuel.
 //		"item_regen",
 		"rally_item_regen",
 // END
-		"sound/items/regeneration.wav",
+		"sound/items/regeneration.ogg",
 // STONELANCE
 //		{ "models/powerups/instant/regen.md3", 
 //		"models/powerups/instant/regen_ring.md3", 
@@ -859,14 +859,14 @@ Refills vehicle fuel.
 		IT_POWERUP,
 		PW_REGEN,
 /* precache */ "",
-/* sounds */ "sound/items/regen.wav"
+/* sounds */ "sound/items/regen.ogg"
 	},
 
 	// item_flight
 /*
 	{
 		"item_flight",
-		"sound/items/flight.wav",
+		"sound/items/flight.ogg",
         { "models/powerups/instant/flight.md3", 
 		"models/powerups/instant/flight_ring.md3", 
 		NULL, NULL },
@@ -876,7 +876,7 @@ Refills vehicle fuel.
 		IT_POWERUP,
 		PW_FLIGHT,
 		"",							// precache
-		"sound/items/flight.wav"	// sounds
+		"sound/items/flight.ogg"	// sounds
 	},
 */
 
@@ -884,7 +884,7 @@ Refills vehicle fuel.
 	// rally_item_shield
 	{
 		"rally_item_shield", 
-		"sound/items/shield.wav",
+		"sound/items/shield.ogg",
         { "models/powerups/shield/shield.md3", 
 		"models/powerups/shield/shgear.md3",
 		NULL, NULL },
@@ -894,7 +894,7 @@ Refills vehicle fuel.
 		IT_POWERUP,
 		PW_SHIELD,
 		"",							// precache
-		"sound/items/damage2.wav sound/items/damage3.wav" // sounds
+		"sound/items/damage2.ogg sound/items/damage3.ogg" // sounds
 	},
 // END
 
@@ -1026,7 +1026,7 @@ Only in Domination games
 */
 	{
 		"holdable_kamikaze", 
-		"sound/items/holdable.wav",
+		"sound/items/holdable.ogg",
         { "models/powerups/kamikazi.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/kamikaze",
@@ -1042,7 +1042,7 @@ Only in Domination games
 */
 	{
 		"holdable_portal", 
-		"sound/items/holdable.wav",
+		"sound/items/holdable.ogg",
         { "models/powerups/holdable/porter.md3",
 		NULL, NULL, NULL},
 /* icon */		"icons/portal",
@@ -1058,7 +1058,7 @@ Only in Domination games
 */
 	{
 		"holdable_invulnerability", 
-		"sound/items/holdable.wav",
+		"sound/items/holdable.ogg",
         { "models/powerups/holdable/invulnerability.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/invulnerability",
@@ -1074,7 +1074,7 @@ Only in Domination games
 */
 	{
 		"ammo_nails",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/nailgunam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_nailgun",
@@ -1090,7 +1090,7 @@ Only in Domination games
 */
 	{
 		"ammo_mines",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/proxmineam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_proxlauncher",
@@ -1106,7 +1106,7 @@ Only in Domination games
 */
 	{
 		"ammo_belt",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/ammo/chaingunam.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/icona_chaingun",
@@ -1204,7 +1204,7 @@ Only in One Flag CTF games
 
 	{
 		"item_redcube",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/orb/r_orb.md3",
 		NULL, NULL, NULL },
 /* icon */		"icons/iconh_rorb",
@@ -1218,7 +1218,7 @@ Only in One Flag CTF games
 
 	{
 		"item_bluecube",
-		"sound/misc/am_pkup.wav",
+		"sound/misc/am_pkup.ogg",
         { "models/powerups/orb/b_orb.md3",
 		NULL, NULL, NULL },
 /* icon */		"icons/iconh_borb",
@@ -1233,7 +1233,7 @@ Only in One Flag CTF games
 */
 	{
 		"weapon_nailgun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons/nailgun/nailgun.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_nailgun",
@@ -1249,7 +1249,7 @@ Only in One Flag CTF games
 */
 	{
 		"weapon_prox_launcher", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons/proxmine/proxmine.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_proxlauncher",
@@ -1270,7 +1270,7 @@ Only in One Flag CTF games
 */
 	{
 		"weapon_chaingun", 
-		"sound/misc/w_pkup.wav",
+		"sound/misc/w_pkup.ogg",
         { "models/weapons/vulcan/vulcan.md3", 
 		NULL, NULL, NULL},
 /* icon */		"icons/iconw_chaingun",
