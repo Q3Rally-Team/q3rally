@@ -2131,94 +2131,37 @@ count : number of times this spawnpoint can be used to spawn a player. Omit or s
 
 //=============================================================================
 
-/*QUAKED rallyball_redplayer (1 .2 0) (-52 -26 -16) (52 26 16)
-Initial Red team spawning position for Rallyball games. This is where players spawn when they join the Red team.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_redspawn (1 .2 0) (-52 -26 -16) (52 26 16)
-Red team respawning position for Rallyball games. This is where Red team players respawn after they get fragged.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_blueplayer (0 .2 1) (-52 -26 -16) (52 26 16)
-Initial Blue team spawning position for Rallyball games. This is where players spawn when they join the Blue team.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_bluespawn (0 .2 1) (-52 -26 -16) (52 26 16)
-Blue team respawning position for Rallyball games. This is where Blue team players respawn after they get fragged.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_greenplayer (0 1 0) (-52 -26 -16) (52 26 16)
-Initial Green team spawning position for Rallyball games. This is where players spawn when they join the Green team.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_greenspawn (0 1 0) (-52 -26 -16) (52 26 16)
-Green team respawning position for Rallyball games. This is where Green team players respawn after they get fragged.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_yellowplayer (1 1 0) (-52 -26 -16) (52 26 16)
-Initial Yellow team spawning position for Rallyball games. This is where players spawn when they join the Yellow team.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-
-/*QUAKED rallyball_yellowspawn (1 1 0) (-52 -26 -16) (52 26 16)
-Yellow team respawning position for Rallyball games. This is where Yellow team players respawn after they get fragged.
--------- KEYS --------
-target : this can point at a target_give entity for respawn freebies.
-target2 : this can point at a target_give entity for respawn freebies.
-count : number of times this spawnpoint can be used to spawn a player. Omit or set to 0 to set no limit.*/
-
-//=============================================================================
-/*QUAKED rallyball_spawn (0 0.5 0.5) (-8 -8 -8) (8 8 8)
-Defines the spawn location for the rallyball.
+/*QUAKED team_DOMINATION_sigil_red (1 0 0) (-16 -16 -24) (16 16 32)
+Only in Domination games.
+Marks a red domination control point.
 */
 
 //=============================================================================
 
-/*QUAKED rallyball_ball_spawn (0 0.5 0.5) (-8 -8 -8) (8 8 8)
-Defines where the rallyball initially appears. Only one entity is needed.
-The optional "model" key sets a different model.
+/*QUAKED team_DOMINATION_sigil_blue (0 0 1) (-16 -16 -24) (16 16 32)
+Only in Domination games.
+Marks a blue domination control point.
 */
 
 //=============================================================================
 
-/*QUAKED rallyball_goal (0 0.5 0.5) (-16 -16 -16) (16 16 16)
-A static model marking a rallyball goal. Use in combination with a
-trigger_rallyball_goal brush. The optional "model" key specifies a
-different model.
+/*QUAKED team_DOMINATION_sigil_green (0 1 0) (-16 -16 -24) (16 16 32)
+Only in Domination games.
+Marks a green domination control point.
+*/
+
+//=============================================================================
+
+/*QUAKED team_DOMINATION_sigil_yellow (1 1 0) (-16 -16 -24) (16 16 32)
+Only in Domination games.
+Marks a yellow domination control point.
+*/
+
+//=============================================================================
+
+/*QUAKED team_DOMINATION_sigil (0.5 0.5 0.5) (-16 -16 -24) (16 16 32)
+Only in Domination games.
+Marks a neutral domination control point.
 */
 
 //=============================================================================
@@ -2386,17 +2329,6 @@ The server detects player presence by bounding box overlap with this volume.
 g_kothScoreWin    : points needed to win (default 100)
 g_kothCaptureTime : ms to neutralize/capture (default 3000)
 g_kothRespawnWave : respawn wave interval in ms (default 5000)
-*/
-
-//=============================================================================
-
-/*QUAKED trigger_rallyball_goal (.5 .5 .5) ? RED_GOAL BLUE_GOAL GREEN_GOAL YELLOW_GOAL
-A trigger volume that scores for the specified team when the rallyball touches it.
--------- SPAWNFLAGS --------
-RED_GOAL : scores for the red team
-BLUE_GOAL : scores for the blue team
-GREEN_GOAL : scores for the green team
-YELLOW_GOAL : scores for the yellow team
 */
 
 //=============================================================================
