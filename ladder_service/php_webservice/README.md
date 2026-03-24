@@ -78,8 +78,8 @@ curl -X POST https://example.com/ladder/index.php/version \
      -H "Content-Type: application/json" \
      -d '{
            "password": "supersecret",
-           "version": "v0.7",
-           "downloadUrl": "https://downloads.example.com/q3rally-v0.7.zip",
+           "version": "v0.7b",
+           "downloadUrl": "https://downloads.example.com/q3rally-v0.7b.zip",
            "message": "Bugfix-Release mit verbesserten Streckenzeiten."
          }'
 ```

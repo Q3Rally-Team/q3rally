@@ -1,3 +1,4 @@
+
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
@@ -21,7 +22,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 //
+#ifndef CG_LOCAL_H
+#define CG_LOCAL_H
 #include "../qcommon/q_shared.h"
+#include "../qcommon/engine_audio_shared.h"
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_public.h"
 #include "../game/bg_achievements.h"
@@ -1630,6 +1634,7 @@ extern	vmCvar_t		cg_kothBeamAlphaBase;
 extern	vmCvar_t		cg_kothBeamAlphaPulse;
 
 extern	vmCvar_t		cg_engineSounds;
+extern	vmCvar_t		cg_engineAudioMode;
 extern	vmCvar_t		cg_ghostPlayback;
 extern	vmCvar_t		cg_ghostDebug;
 extern	vmCvar_t		cg_ghostAlpha;
@@ -2222,6 +2227,9 @@ void		trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t v
 void		trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void		trap_S_SetEntityPitch( int entityNum, float pitch );
+void		trap_S_RegisterEngineEmitter( int entityNum, int presetHandle );
+void		trap_S_RemoveEngineEmitter( int entityNum );
+void		trap_S_UpdateEngineEmitterState( int entityNum, const vehicleAudioState_t *state, const vec3_t exhaustOrigin, const vec3_t engineBayOrigin, const vec3_t velocity, int quality );
 
 // respatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position
@@ -2359,3 +2367,5 @@ void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
+
+#endif /* CG_LOCAL_H */

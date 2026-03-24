@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 #include "snd_local.h"
+#include "snd_engine_audio.h"
 
 static portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
 static int snd_vol;
@@ -619,6 +620,8 @@ void S_PaintChannels( int endtime ) {
 				}
 			} while ( ltime < end);
 		}
+
+		S_RenderEngineAudio( paintbuffer, end - s_paintedtime );
 
 		// transfer out according to DMA format
 		S_TransferPaintBuffer( end );

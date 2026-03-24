@@ -4,12 +4,99 @@
 
 declare(strict_types=1);
 
-const DATA_DIR = __DIR__ . '/data';
+const DATA_DIR  = __DIR__ . '/data';
 const ARENA_DIR = __DIR__ . '/arena';
+const INDEX_FILE    = __DIR__ . '/data/match_index.json';
+const PROFILES_DIR  = __DIR__ . '/data/profiles';
 if (!is_dir(DATA_DIR)) {
     if (!mkdir(DATA_DIR, 0775, true) && !is_dir(DATA_DIR)) {
         send_error(500, 'Failed to create data directory.');
     }
+}
+if (!is_dir(PROFILES_DIR)) {
+    mkdir(PROFILES_DIR, 0775, true);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURITY CONFIGURATION
+// Per-server keys are managed via register.php / admin.php.
+// ─────────────────────────────────────────────────────────────────────────────
+const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
+const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
+const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
+const LADDER_RATE_FILE_PREFIX  = 'rl_';   // rate-limit state file prefix
+
+require_once __DIR__ . '/keys.php';
+
+function ladder_check_rate_limit(): void
+{
+    $ip      = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $safeIp  = preg_replace('/[^a-fA-F0-9:.]/', '_', $ip);
+    $rlFile  = DATA_DIR . '/' . LADDER_RATE_FILE_PREFIX . $safeIp . '.json';
+    $now     = time();
+    $windowStart = $now - LADDER_RATE_LIMIT_WINDOW;
+
+    $state = ['hits' => []];
+    if (is_file($rlFile)) {
+        $raw = file_get_contents($rlFile);
+        if ($raw !== false) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $state = $decoded;
+            }
+        }
+    }
+
+    $state['hits'] = array_values(array_filter(
+        $state['hits'] ?? [],
+        static fn($t) => is_int($t) && $t > $windowStart
+    ));
+
+    if (count($state['hits']) >= LADDER_RATE_LIMIT_MAX) {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        header('Retry-After: ' . LADDER_RATE_LIMIT_WINDOW);
+        echo json_encode(['error' => 'Rate limit exceeded. Try again later.']);
+        exit;
+    }
+
+    $state['hits'][] = $now;
+    file_put_contents($rlFile, json_encode($state), LOCK_EX);
+}
+
+function ladder_read_body(): string
+{
+    $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if ($contentLength > LADDER_MAX_BODY_BYTES) {
+        http_response_code(413);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Payload too large.']);
+        exit;
+    }
+
+    $body   = '';
+    $stream = fopen('php://input', 'rb');
+    if ($stream === false) {
+        return '';
+    }
+
+    while (!feof($stream)) {
+        $chunk = fread($stream, 8192);
+        if ($chunk === false) {
+            break;
+        }
+        $body .= $chunk;
+        if (strlen($body) > LADDER_MAX_BODY_BYTES) {
+            fclose($stream);
+            http_response_code(413);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Payload too large.']);
+            exit;
+        }
+    }
+
+    fclose($stream);
+    return $body;
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -37,14 +124,14 @@ try {
         header('Content-Type: text/html; charset=UTF-8');
         ?>
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Q3Rally Ladder Monitor beta</title>
   <meta name="description" content="Frontend zur Auswertung der gespeicherten Q3Rally-Ladder-Matches.">
   <style>
-    :root {
+    :root, [data-theme="dark"] {
       color-scheme: dark;
       --bg: radial-gradient(1200px 800px at 50% 0%, rgba(255,255,255,0.08), #05050c 60%);
       --surface: rgba(18, 21, 33, 0.72);
@@ -55,8 +142,45 @@ try {
       --text-muted: #B7BCD6;
       --accent: #5D8BFF;
       --accent-soft: rgba(93, 139, 255, 0.18);
+      --theme-icon: "☀️";
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: radial-gradient(1200px 800px at 50% 0%, rgba(93,139,255,0.08), #f0f2f8 60%);
+      --surface: rgba(255, 255, 255, 0.85);
+      --surface-strong: rgba(240, 242, 248, 0.97);
+      --border: rgba(0, 0, 0, 0.10);
+      --border-strong: rgba(0, 0, 0, 0.18);
+      --text: #1a1d2e;
+      --text-muted: #4a5080;
+      --accent: #3a6aee;
+      --accent-soft: rgba(58, 106, 238, 0.12);
+      --theme-icon: "🌙";
+    }
+
+    [data-theme="light"] .panel {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+
+    [data-theme="light"] body {
+      background: var(--bg);
+    }
+
+    #theme-toggle {
+      appearance: none;
+      background: var(--surface-strong);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 6px 10px;
+      transition: background .15s, border-color .15s;
+    }
+    #theme-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
 
     body {
       margin: 0;
@@ -851,6 +975,101 @@ try {
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── Player link ────────────────────────────────────────────────────────── */
+    a.player-link {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--accent);
+      transition: color .15s, border-color .15s;
+    }
+    a.player-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Overlay backdrop ───────────────────────────────────────────────────── */
+    .q3-overlay-backdrop {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+    .q3-overlay {
+      background: var(--surface-strong);
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      width: min(780px, 100%);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      animation: slideUp .18s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform:none; opacity:1 } }
+
+    .q3-overlay-close {
+      position: absolute; top: 16px; right: 18px;
+      background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-muted); cursor: pointer;
+      font-size: .9rem; padding: 4px 10px; transition: background .15s;
+    }
+    .q3-overlay-close:hover { background: rgba(255,255,255,0.14); }
+
+    .q3-overlay h2 { margin: 0 0 20px; font-size: 1.15rem; color: var(--text); }
+    .q3-overlay h3 { margin: 20px 0 10px; font-size: .85rem; font-weight:600;
+      text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+
+    .q3-stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px;
+    }
+    .q3-stat-card {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .q3-stat-card dt { font-size: .75rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+    .q3-stat-card dd { margin:0; font-size: 1.05rem; font-weight: 600; color: var(--text); }
+
+    .q3-rank-bar {
+      background: rgba(255,255,255,0.06); border-radius: 6px; height: 8px;
+      overflow: hidden; margin-top: 6px;
+    }
+    .q3-rank-bar-fill {
+      height: 100%; background: var(--accent); border-radius: 6px;
+      transition: width .4s ease;
+    }
+
+    .q3-achievements {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 8px;
+    }
+    .q3-achv {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .q3-achv-name { font-size: .8rem; color: var(--text-muted); }
+    .q3-achv-tier { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .q3-achv-progress {
+      height: 4px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+    }
+    .q3-achv-progress-fill {
+      height: 100%; background: var(--accent-soft);
+      border: 1px solid var(--accent-border); border-radius: 3px;
+    }
+    .q3-achv.unlocked .q3-achv-progress-fill { background: var(--accent); }
+
+    .q3-match-players { display: flex; flex-direction: column; gap: 6px; }
+    .q3-match-player {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px 14px;
+      font-size: .88rem;
+    }
+    .q3-match-player .pos {
+      min-width: 24px; font-weight: 700; color: var(--accent); font-size: .95rem;
+    }
+    .q3-match-player .pname { flex: 1; font-weight: 600; color: var(--text); }
+    .q3-match-player .pstats { color: var(--text-muted); font-size: .82rem; }
+    .q3-loading { text-align:center; color: var(--text-muted); padding: 32px; font-size: .9rem; }
   </style>
 </head>
 <body>
@@ -869,9 +1088,12 @@ try {
           <nav class="main-nav" aria-label="Bereiche" data-i18n-aria-label="nav.label">
             <a class="nav-link active" aria-current="page" href="<?= htmlspecialchars($apiBase, ENT_QUOTES); ?>" data-i18n="nav.matches">Matches</a>
           </nav>
-            <div class="language-toggle" role="group" aria-label="Sprachauswahl" data-i18n-aria-label="language.toggleLabel">
+            <div style="display:flex;align-items:center;gap:10px">
+            <button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark/light mode">☀️</button>
+          <div class="language-toggle" role="group" aria-label="Sprachauswahl" data-i18n-aria-label="language.toggleLabel">
               <button class="language-button active" type="button" data-lang="en" aria-label="Englisch" data-i18n-aria-label="language.enLabel" title="Englisch" data-i18n-title="language.enLabel"><img src="<?= htmlspecialchars($flagEn, ENT_QUOTES); ?>" alt=""></button>
               <button class="language-button" type="button" data-lang="de" aria-label="Deutsch" data-i18n-aria-label="language.deLabel" title="Deutsch" data-i18n-title="language.deLabel"><img src="<?= htmlspecialchars($flagDe, ENT_QUOTES); ?>" alt=""></button>
+          </div>
           </div>
         </div>
         <p class="empty-state" id="leaderboardEmpty" hidden data-i18n="matches.empty">Keine Bestzeiten gefunden. Lade weitere Renn-Matches oder passe die Filter an.</p>
@@ -922,6 +1144,7 @@ try {
     const levelshotAssetCache = new Map();
     const levelshotMapCache = new Map();
     let levelshotRequestCounter = 0;
+    let levelshotManifest = null;  // { mapname: 'ext', ... } loaded once from server
 
     const I18N = {
       de: {
@@ -1386,6 +1609,8 @@ try {
 
 const state = {
   aggregation: createEmptyAggregation(),
+  aggregationOnline: createEmptyAggregation(),
+  aggregationOffline: createEmptyAggregation(),
   leaderboard: [],
   deathmatchLeaderboard: [],
   objectiveLeaderboard: [],
@@ -1394,6 +1619,7 @@ const state = {
   selectedMaps: new Map(),
   mapMetadata: new Map(),
   activeMode: MODE_CONFIG.length ? MODE_CONFIG[0].key : 'gt_racing',
+  activeSource: 'online',
   language: 'en',
   modeStatus: { key: null, params: {}, isError: false }
 };
@@ -1992,6 +2218,14 @@ function renderModeTable(modeKey) {
 
   rows.forEach((entry, index) => {
     const tr = document.createElement('tr');
+    if (entry.matchId) {
+      tr.style.cursor = 'pointer';
+      tr.title = 'Click to view match details';
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('.player-link')) return;
+        showMatchDetails(entry.matchId);
+      });
+    }
     columns.forEach((column) => {
       const td = document.createElement('td');
       switch (column.key) {
@@ -2001,7 +2235,20 @@ function renderModeTable(modeKey) {
         case 'player': {
           td.classList.add('leaderboard-player');
           const strong = document.createElement('strong');
-          strong.textContent = entry.player || t('common.unknown');
+          if (entry.playerId && !entry.isBot) {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.className = 'player-link';
+            link.textContent = entry.player || t('common.unknown');
+            link.title = 'View player profile';
+            link.addEventListener('click', (e) => {
+              e.preventDefault();
+              showPlayerProfile(entry.playerId, entry.player);
+            });
+            strong.appendChild(link);
+          } else {
+            strong.textContent = entry.player || t('common.unknown');
+          }
           td.appendChild(strong);
           if (entry.isBot) {
             const badge = document.createElement('span');
@@ -2115,49 +2362,61 @@ function formatDate(value) {
   return formatter.format(value);
 }
 
+async function fetchLevelshotManifest() {
+  if (levelshotManifest !== null) {
+    return levelshotManifest;
+  }
+  try {
+    const response = await fetch(`${API_BASE}/maps/levelshots`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    levelshotManifest = await response.json();
+  } catch (error) {
+    console.warn('Could not load levelshot manifest, falling back to probing.', error);
+    levelshotManifest = {};
+  }
+  return levelshotManifest;
+}
+
 async function resolveLevelshotAsset(mapName) {
   const mapKey = normalizeLevelshotKey(mapName);
+
+  // Fast path: check in-memory cache
   if (mapKey && levelshotMapCache.has(mapKey)) {
     return levelshotMapCache.get(mapKey);
   }
 
-  const candidates = getLevelshotCandidates(mapName);
-  for (const candidate of candidates) {
-    if (levelshotAssetCache.has(candidate.cacheKey)) {
-      const cached = levelshotAssetCache.get(candidate.cacheKey);
-      if (cached) {
-        if (mapKey) {
-          levelshotMapCache.set(mapKey, cached);
-        }
-        return cached;
-      }
-      continue;
-    }
+  // Load manifest once (single request for all maps)
+  const manifest = await fetchLevelshotManifest();
+  const { base } = extractMapBase(mapName);
+  const lookupKey = (base || '').toLowerCase();
 
-    try {
-      let resolved = null;
-      if (candidate.ext === 'tga') {
-        const dataUrl = await loadTgaAsDataUrl(candidate.url);
+  if (lookupKey && manifest && typeof manifest[lookupKey] === 'string') {
+    const ext = manifest[lookupKey];
+    const url = `images/${encodeURIComponent(lookupKey)}.${ext}`;
+    let resolved = null;
+
+    if (ext === 'tga') {
+      try {
+        const dataUrl = await loadTgaAsDataUrl(url);
         if (dataUrl) {
           resolved = { src: dataUrl, isDataUrl: true };
         }
-      } else {
-        await probeImageCandidate(candidate.url);
-        resolved = { src: candidate.url, isDataUrl: false };
+      } catch (error) {
+        resolved = null;
       }
-      if (resolved) {
-        levelshotAssetCache.set(candidate.cacheKey, resolved);
-        if (mapKey) {
-          levelshotMapCache.set(mapKey, resolved);
-        }
-        return resolved;
-      }
-      levelshotAssetCache.set(candidate.cacheKey, null);
-    } catch (error) {
-      levelshotAssetCache.set(candidate.cacheKey, null);
+    } else {
+      resolved = { src: url, isDataUrl: false };
     }
+
+    if (mapKey) {
+      levelshotMapCache.set(mapKey, resolved);
+    }
+    return resolved;
   }
 
+  // Not in manifest → no levelshot available
   if (mapKey) {
     levelshotMapCache.set(mapKey, null);
   }
@@ -2666,18 +2925,95 @@ async function fetchMapMetadata() {
   return metadata;
 }
 
+// ── Source toggle (Online / Offline / All) ────────────────────────────────────
+
+function renderSourceToggle() {
+  const existing = document.getElementById('source-toggle');
+  if (existing) return;
+
+  const panel = document.querySelector('.tabbed-panel');
+  if (!panel) return;
+
+  const bar = document.createElement('div');
+  bar.id = 'source-toggle';
+  bar.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap';
+
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-right:4px';
+  label.textContent = 'Source';
+  bar.appendChild(label);
+
+  [
+    { key: 'online',  labelDe: 'Online',  labelEn: 'Online'  },
+    { key: 'offline', labelDe: 'Offline', labelEn: 'Offline' },
+    { key: 'all',     labelDe: 'Alle',    labelEn: 'All'     }
+  ].forEach(({ key, labelEn }) => {
+    const btn = document.createElement('button');
+    btn.dataset.source = key;
+    btn.textContent = labelEn;
+    btn.style.cssText = 'padding:6px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);'
+      + 'background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:.82rem;font-weight:600;'
+      + 'cursor:pointer;transition:background .15s,color .15s,border-color .15s';
+    btn.addEventListener('click', () => setActiveSource(key));
+    bar.appendChild(btn);
+  });
+
+  panel.insertBefore(bar, panel.firstChild);
+  updateSourceToggleUI();
+}
+
+function updateSourceToggleUI() {
+  const btns = document.querySelectorAll('#source-toggle button[data-source]');
+  btns.forEach((btn) => {
+    const active = btn.dataset.source === state.activeSource;
+    btn.style.background  = active ? 'rgba(93,139,255,0.18)' : 'rgba(255,255,255,0.05)';
+    btn.style.color       = active ? 'var(--accent)'         : 'var(--text-muted)';
+    btn.style.borderColor = active ? 'rgba(93,139,255,0.45)' : 'rgba(255,255,255,0.12)';
+  });
+}
+
+function setActiveSource(source) {
+  state.activeSource = source;
+  updateSourceToggleUI();
+  rebuildForSource();
+}
+
+function rebuildForSource() {
+  if (state.activeSource === 'online') {
+    state.aggregation = state.aggregationOnline;
+  } else if (state.activeSource === 'offline') {
+    state.aggregation = state.aggregationOffline;
+  } else {
+    // 'all' – re-aggregate everything
+    state.aggregation = createEmptyAggregation();
+    for (const match of (state.allMatches || [])) {
+      ingestMatchInto(match, state.aggregation);
+    }
+  }
+  buildRaceLeaderboard();
+  buildDeathmatchLeaderboard();
+  buildObjectiveLeaderboard();
+  prepareModeData();
+  updateSummary();
+  updateModeOptions();
+  MODE_CONFIG.forEach(({ key }) => renderModeTable(key));
+}
+
 async function loadMatches() {
   setModeStatus('mode.status.loading');
   try {
     state.mapMetadata = new Map();
     state.aggregation = createEmptyAggregation();
+    state.aggregationOnline = createEmptyAggregation();
+    state.aggregationOffline = createEmptyAggregation();
     state.leaderboard = [];
     state.deathmatchLeaderboard = [];
     state.objectiveLeaderboard = [];
     state.eliminationLeaderboard = [];
     state.modeData = new Map();
+    state.allMatches = [];
 
-    const response = await fetch(`${API_BASE}/matches?limit=all`);
+    const response = await fetch(`${API_BASE}/matches/index`);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -2686,8 +3022,15 @@ async function loadMatches() {
       throw new Error(t('errors.unexpectedResponse'));
     }
 
+    state.allMatches = payload.matches;
     for (const match of payload.matches) {
-      ingestMatch(match);
+      const src = (match.source === 'offline') ? 'offline' : 'online';
+      ingestMatchInto(match, state.aggregation);
+      if (src === 'online') {
+        ingestMatchInto(match, state.aggregationOnline);
+      } else {
+        ingestMatchInto(match, state.aggregationOffline);
+      }
     }
 
     payload.matches = undefined;
@@ -2702,14 +3045,9 @@ async function loadMatches() {
       return;
     }
 
-    state.mapMetadata = await fetchMapMetadata();
-    buildRaceLeaderboard();
-    buildDeathmatchLeaderboard();
-    buildObjectiveLeaderboard();
-    prepareModeData();
-    updateSummary();
-    updateModeOptions();
-    MODE_CONFIG.forEach(({ key }) => renderModeTable(key));
+    [state.mapMetadata] = await Promise.all([fetchMapMetadata(), fetchLevelshotManifest()]);
+    renderSourceToggle();
+    rebuildForSource();
     setModeStatus('mode.status.ready', { count: state.aggregation.totalMatches });
   } catch (error) {
     console.error(error);
@@ -2727,8 +3065,7 @@ async function loadMatches() {
   }
 }
 
-function ingestMatch(match) {
-  const aggregation = state.aggregation;
+function ingestMatchInto(match, aggregation) {
   if (!aggregation) {
     return;
   }
@@ -2798,9 +3135,11 @@ function ingestRaceEntries(aggregation, entries, context) {
     if (!current || seconds < current.time) {
       const vehicle = extractVehicle(entry);
       const isBot = extractIsBot(entry);
+      const racePlayerId = entry.playerId || '';
       aggregation.raceBest.set(key, {
         player,
         playerLower,
+        playerId: racePlayerId,
         time: seconds,
         map,
         mapKey,
@@ -2842,9 +3181,11 @@ function ingestDeathmatchEntries(aggregation, entries, context) {
       (ratio === current.ratio && safeKills === current.kills && safeDeaths < current.deaths);
     if (shouldUpdate) {
       const isBot = extractIsBot(entry);
+      const dmPlayerId = entry.playerId || '';
       aggregation.deathmatchBest.set(key, {
         player,
         playerLower,
+        playerId: dmPlayerId,
         ratio,
         kills: safeKills,
         deaths: safeDeaths,
@@ -3678,14 +4019,263 @@ function parseDate(value) {
   return null;
 }
 
+// ── Overlay helpers ──────────────────────────────────────────────────────────
+const RANK_NAMES = [
+  'Rookie Driver','Street Newbie','Weekend Racer','Track Learner','Amateur Racer',
+  'Street Racer','Semi-Pro Driver','Pro Racer','Elite Driver','Track Dominator',
+  'Master of Speed','Racing Legend','Asphalt King','Grand Champion','Q3Rally Icon'
+];
+const ACHIEVEMENT_NAMES = [
+  'Distance Driven','Kills','Races Won','Sprint Wins','Flags Captured',
+  'Flag Assists','Fuel Consumed','Accuracy','Excellent','Impressive','Perfect'
+];
+const ACHIEVEMENT_MAX_TIERS = 8;
+
+function createOverlay(content) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'q3-overlay-backdrop';
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+  const box = document.createElement('div');
+  box.className = 'q3-overlay';
+
+  const close = document.createElement('button');
+  close.className = 'q3-overlay-close';
+  close.textContent = '✕ Close';
+  close.addEventListener('click', () => backdrop.remove());
+
+  box.appendChild(close);
+  box.appendChild(content);
+  backdrop.appendChild(box);
+  document.body.appendChild(backdrop);
+  return backdrop;
+}
+
+function statCard(label, value) {
+  const card = document.createElement('div');
+  card.className = 'q3-stat-card';
+  card.innerHTML = `<dt>${label}</dt><dd>${value}</dd>`;
+  return card;
+}
+
+function formatMs(ms) {
+  if (!ms || ms <= 0) return '–';
+  const m = Math.floor(ms / 60000);
+  const s = ((ms % 60000) / 1000).toFixed(3);
+  return m > 0 ? `${m}:${s.padStart(6,'0')}` : `${s}s`;
+}
+
+function formatKm(km) {
+  if (!km || km <= 0) return '–';
+  return Number(km).toFixed(1) + ' km';
+}
+
+// ── Player Profile Overlay ────────────────────────────────────────────────────
+async function showPlayerProfile(playerId, playerName) {
+  const frag = document.createDocumentFragment();
+  const h2 = document.createElement('h2');
+  h2.textContent = playerName || 'Player Profile';
+  frag.appendChild(h2);
+
+  const loading = document.createElement('div');
+  loading.className = 'q3-loading';
+  loading.textContent = 'Loading profile…';
+  frag.appendChild(loading);
+
+  const backdrop = createOverlay(frag);
+
+  try {
+    const resp = await fetch(`${API_BASE}/players/${encodeURIComponent(playerId)}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const p = await resp.json();
+
+    loading.remove();
+    const box = backdrop.querySelector('.q3-overlay');
+
+    // Rank
+    const rankName = RANK_NAMES[p.currentRank] || `Rank ${p.currentRank}`;
+    const highestName = RANK_NAMES[p.highestRank] || `Rank ${p.highestRank}`;
+    const rankPct = Math.round(((p.currentRank || 0) / (RANK_NAMES.length - 1)) * 100);
+
+    const rankSection = document.createElement('div');
+    rankSection.innerHTML = `
+      <h3>Rank</h3>
+      <div style="margin-bottom:16px">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--accent);margin-bottom:4px">${rankName}</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:8px">
+          Score: <strong style="color:var(--text)">${(p.playerScore||0).toLocaleString()}</strong>
+          &nbsp;·&nbsp; Highest: <strong style="color:var(--text)">${highestName}</strong>
+        </div>
+        <div class="q3-rank-bar"><div class="q3-rank-bar-fill" style="width:${rankPct}%"></div></div>
+      </div>`;
+    box.appendChild(rankSection);
+
+    // Stats grid
+    const statsH = document.createElement('h3');
+    statsH.textContent = 'Career Stats';
+    box.appendChild(statsH);
+
+    const grid = document.createElement('div');
+    grid.className = 'q3-stat-grid';
+    const kd = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : (p.kills || 0);
+    grid.appendChild(statCard('Wins', p.wins || 0));
+    grid.appendChild(statCard('Losses', p.losses || 0));
+    grid.appendChild(statCard('Kills', p.kills || 0));
+    grid.appendChild(statCard('Deaths', p.deaths || 0));
+    grid.appendChild(statCard('K/D', kd));
+    grid.appendChild(statCard('Best Lap', formatMs(p.bestLapMs)));
+    grid.appendChild(statCard('Distance', formatKm(p.distanceKm)));
+    grid.appendChild(statCard('Top Speed', p.topSpeedKph ? p.topSpeedKph.toFixed(1) + ' km/h' : '–'));
+    grid.appendChild(statCard('Flag Captures', p.flagCaptures || 0));
+    grid.appendChild(statCard('Flag Assists', p.flagAssists || 0));
+    grid.appendChild(statCard('Accuracy Awards', p.accuracyAwards || 0));
+    grid.appendChild(statCard('Most Used', p.mostUsedVehicle || '–'));
+    box.appendChild(grid);
+
+    // Achievements
+    if (Array.isArray(p.achievementTiers) && p.achievementTiers.length > 0) {
+      const achvH = document.createElement('h3');
+      achvH.textContent = 'Achievements';
+      box.appendChild(achvH);
+
+      const achvGrid = document.createElement('div');
+      achvGrid.className = 'q3-achievements';
+      p.achievementTiers.forEach((tiers, i) => {
+        const name = ACHIEVEMENT_NAMES[i] || `Category ${i}`;
+        const pct = Math.round((tiers / ACHIEVEMENT_MAX_TIERS) * 100);
+        const div = document.createElement('div');
+        div.className = 'q3-achv' + (tiers > 0 ? ' unlocked' : '');
+        div.innerHTML = `
+          <div class="q3-achv-name">${name}</div>
+          <div class="q3-achv-tier">${tiers > 0 ? `Tier ${tiers} / ${ACHIEVEMENT_MAX_TIERS}` : 'Locked'}</div>
+          <div class="q3-achv-progress">
+            <div class="q3-achv-progress-fill" style="width:${pct}%"></div>
+          </div>`;
+        achvGrid.appendChild(div);
+      });
+      box.appendChild(achvGrid);
+    }
+
+  } catch (err) {
+    loading.textContent = `Could not load profile: ${err.message}`;
+  }
+}
+
+// ── Match Details Overlay ─────────────────────────────────────────────────────
+async function showMatchDetails(matchId) {
+  const frag = document.createDocumentFragment();
+  const h2 = document.createElement('h2');
+  h2.textContent = 'Match Details';
+  frag.appendChild(h2);
+
+  const loading = document.createElement('div');
+  loading.className = 'q3-loading';
+  loading.textContent = 'Loading match…';
+  frag.appendChild(loading);
+
+  const backdrop = createOverlay(frag);
+
+  try {
+    const resp = await fetch(`${API_BASE}/matches/${encodeURIComponent(matchId)}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const m = await resp.json();
+
+    loading.remove();
+    const box = backdrop.querySelector('.q3-overlay');
+
+    // Header info
+    const mode = m.mode || '–';
+    const map  = m.map  || '–';
+    const date = m.startTime ? new Date(m.startTime).toLocaleString() : '–';
+    const server = m.server?.name || '–';
+
+    box.querySelector('h2').textContent = `${mode} · ${map}`;
+
+    const meta = document.createElement('div');
+    meta.style.cssText = 'font-size:.85rem;color:var(--text-muted);margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap';
+    meta.innerHTML = `<span>📅 ${date}</span><span>🖥 ${server}</span><span>🆔 ${matchId}</span>`;
+    box.insertBefore(meta, box.querySelector('h3') || null);
+    box.appendChild(meta);
+
+    // Players
+    const players = Array.isArray(m.players) ? m.players : [];
+    if (players.length > 0) {
+      const ph = document.createElement('h3');
+      ph.textContent = `Players (${players.length})`;
+      box.appendChild(ph);
+
+      const list = document.createElement('div');
+      list.className = 'q3-match-players';
+
+      const sorted = [...players].sort((a, b) => (a.position || 99) - (b.position || 99));
+      sorted.forEach((p) => {
+        const name = p.cleanName || p.name || 'Unknown';
+        const pos  = p.position || '–';
+        const stats = [];
+        if (p.bestLapMs > 0) stats.push(`Best: ${formatMs(p.bestLapMs)}`);
+        if (p.totalRaceMs > 0) stats.push(`Total: ${formatMs(p.totalRaceMs)}`);
+        if (p.kills != null) stats.push(`K: ${p.kills}`);
+        if (p.deaths != null) stats.push(`D: ${p.deaths}`);
+        if (p.captures > 0) stats.push(`Caps: ${p.captures}`);
+        if (p.score != null) stats.push(`Score: ${p.score}`);
+
+        const row = document.createElement('div');
+        row.className = 'q3-match-player';
+        row.innerHTML = `
+          <span class="pos">${pos}</span>
+          <span class="pname">${name}${p.isBot ? ' <span class="bot-tag">Bot</span>' : ''}</span>
+          <span class="pstats">${stats.join(' · ') || '–'}</span>`;
+
+        if (p.playerId && !p.isBot) {
+          row.querySelector('.pname').style.cursor = 'pointer';
+          row.querySelector('.pname').title = 'View profile';
+          row.querySelector('.pname').addEventListener('click', () => {
+            backdrop.remove();
+            showPlayerProfile(p.playerId, name);
+          });
+        }
+        list.appendChild(row);
+      });
+      box.appendChild(list);
+    }
+
+  } catch (err) {
+    loading.textContent = `Could not load match: ${err.message}`;
+  }
+}
+
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+(function () {
+  const html   = document.documentElement;
+  const btn    = document.getElementById('theme-toggle');
+  const stored = localStorage.getItem('q3rally_theme');
+  const theme  = stored === 'light' ? 'light' : 'dark';
+
+  function applyTheme(t) {
+    html.dataset.theme = t;
+    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('q3rally_theme', t);
+  }
+
+  applyTheme(theme);
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      applyTheme(html.dataset.theme === 'dark' ? 'light' : 'dark');
+    });
+  }
+})();
+
 createModeTabs();
-applyLanguage(state.language);
+const _savedLang = localStorage.getItem('q3rally_lang');
+applyLanguage((_savedLang === 'de' || _savedLang === 'en') ? _savedLang : state.language);
 setActiveMode(state.activeMode);
 elements.languageButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const lang = button.dataset.lang;
     if (lang && lang !== state.language) {
       applyLanguage(lang);
+      localStorage.setItem('q3rally_lang', lang);
     }
   });
 });
@@ -3711,12 +4301,14 @@ $segments = normalize_api_segments($segments);
 try {
     switch ($method) {
         case 'POST':
+            ladder_check_rate_limit();
             handle_post($segments);
             break;
         case 'GET':
             handle_get($segments);
             break;
         case 'DELETE':
+            keys_require_auth('');
             handle_delete($segments);
             break;
         default:
@@ -3726,16 +4318,315 @@ try {
     send_error(400, $e->getMessage());
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLAYER PROFILES
+// Per-player career data extracted from match payloads and stored in
+// data/profiles/PLAYERID.json. Updated on every match upload when the
+// local client includes a profile snapshot.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Rank table mirrored from profile_shared.h PROFILE_RANK_TABLE
+const LADDER_RANK_NAMES = [
+    'Rookie Driver', 'Street Newbie', 'Weekend Racer', 'Track Learner',
+    'Amateur Racer', 'Street Racer', 'Semi-Pro Driver', 'Pro Racer',
+    'Elite Driver', 'Track Dominator', 'Master of Speed', 'Racing Legend',
+    'Asphalt King', 'Grand Champion', 'Q3Rally Icon'
+];
+
+// Achievement category names mirrored from bg_achievements.c
+const LADDER_ACHIEVEMENT_NAMES = [
+    'Distance Driven', 'Kills', 'Races Won', 'Sprint Wins',
+    'Flags Captured', 'Flag Assists', 'Fuel Consumed', 'Accuracy',
+    'Excellent', 'Impressive', 'Perfect'
+];
+
+function profile_path(string $playerId): string
+{
+    $safe = preg_replace('/[^a-zA-Z0-9._-]/', '_', $playerId);
+    return PROFILES_DIR . '/' . $safe . '.json';
+}
+
+function profile_load(string $playerId): ?array
+{
+    $path = profile_path($playerId);
+    if (!is_file($path)) {
+        return null;
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        return null;
+    }
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : null;
+}
+
+function profile_save(string $playerId, array $data): void
+{
+    if (!is_dir(PROFILES_DIR)) {
+        mkdir(PROFILES_DIR, 0775, true);
+    }
+    file_put_contents(
+        profile_path($playerId),
+        json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
+}
+
+/**
+ * Extract and upsert profile data from an incoming match payload.
+ * Called once per upload. Only updates if the payload contains a valid
+ * profile snapshot (local client only).
+ */
+function profile_upsert_from_payload(array $payload): void
+{
+    $players = $payload['players'] ?? [];
+    if (!is_array($players)) {
+        return;
+    }
+
+    foreach ($players as $player) {
+        if (!is_array($player)) {
+            continue;
+        }
+        $snap = $player['profile'] ?? null;
+        if (!is_array($snap) || empty($snap)) {
+            continue;
+        }
+
+        $playerId = (string)($player['playerId'] ?? '');
+        if ($playerId === '') {
+            continue;
+        }
+
+        $existing = profile_load($playerId) ?? [];
+
+        // Keep the best (highest) playerScore seen
+        $newScore = (int)($snap['playerScore'] ?? 0);
+        $oldScore = (int)($existing['playerScore'] ?? 0);
+
+        $profile = [
+            'playerId'        => $playerId,
+            'cleanName'       => (string)($player['cleanName'] ?? $player['name'] ?? ''),
+            'playerScore'     => max($newScore, $oldScore),
+            'currentRank'     => (int)($snap['currentRank'] ?? 0),
+            'highestRank'     => max((int)($snap['highestRank'] ?? 0), (int)($existing['highestRank'] ?? 0)),
+            'wins'            => (int)($snap['wins']             ?? $existing['wins']             ?? 0),
+            'losses'          => (int)($snap['losses']           ?? $existing['losses']           ?? 0),
+            'kills'           => (int)($snap['kills']            ?? $existing['kills']            ?? 0),
+            'deaths'          => (int)($snap['deaths']           ?? $existing['deaths']           ?? 0),
+            'flagCaptures'    => (int)($snap['flagCaptures']     ?? $existing['flagCaptures']     ?? 0),
+            'flagAssists'     => (int)($snap['flagAssists']      ?? $existing['flagAssists']      ?? 0),
+            'bestLapMs'       => (function() use ($snap, $existing) {
+                $new = (int)($snap['bestLapMs'] ?? 0);
+                $old = (int)($existing['bestLapMs'] ?? 0);
+                if ($new > 0 && ($old === 0 || $new < $old)) return $new;
+                return $old ?: $new;
+            })(),
+            'accuracyAwards'  => (int)($snap['accuracyAwards']  ?? $existing['accuracyAwards']  ?? 0),
+            'excellentAwards' => (int)($snap['excellentAwards'] ?? $existing['excellentAwards'] ?? 0),
+            'impressiveAwards'=> (int)($snap['impressiveAwards']?? $existing['impressiveAwards']?? 0),
+            'perfectAwards'   => (int)($snap['perfectAwards']   ?? $existing['perfectAwards']   ?? 0),
+            'damageDealt'     => (int)($snap['damageDealt']     ?? $existing['damageDealt']     ?? 0),
+            'damageTaken'     => (int)($snap['damageTaken']     ?? $existing['damageTaken']     ?? 0),
+            'distanceKm'      => (float)($snap['distanceKm']    ?? $existing['distanceKm']      ?? 0.0),
+            'topSpeedKph'     => max((float)($snap['topSpeedKph'] ?? 0), (float)($existing['topSpeedKph'] ?? 0)),
+            'fuelUsed'        => (float)($snap['fuelUsed']       ?? $existing['fuelUsed']        ?? 0.0),
+            'mostUsedVehicle' => (string)($snap['mostUsedVehicle'] ?? $existing['mostUsedVehicle'] ?? ''),
+            'achievementTiers'=> (array)($snap['achievementTiers'] ?? $existing['achievementTiers'] ?? []),
+            'lastSeen'        => $payload['receivedAt'] ?? gmdate('c'),
+            'vehicle'         => (string)($player['vehicle'] ?? $existing['vehicle'] ?? ''),
+        ];
+
+        profile_save($playerId, $profile);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MATCH INDEX
+// A single flat file (match_index.json) stores only the leaderboard-relevant
+// fields for every match. This avoids reading 30 000+ individual JSON files
+// on every page load.
+//
+// Index record structure (one entry per match):
+// {
+//   "matchId":     "69C1BCD6-...",
+//   "mode":        "GT_RACING_DM",
+//   "gametype":    1,
+//   "map":         "q3r_downtown",
+//   "startTime":   "2026-03-23T22:21:10",
+//   "source":      "online",
+//   "serverName":  "headcrab.party | Q3Rally 0.7",
+//   "playerCount": 4,
+//   "players": [
+//     { "name": "...", "score": 0, "bestLapMs": 0, "kills": 0, "deaths": 0,
+//       "position": 1, "isBot": false, "team": 0, "captures": 0,
+//       "damageDealt": 0, "totalRaceMs": 0 }
+//   ]
+// }
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function index_extract_entry(array $payload): array
+{
+    $dedicated = $payload['server']['dedicated'] ?? null;
+    $source    = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
+        ? 'online' : ($payload['source'] ?? 'offline');
+
+    $players = [];
+    foreach ((array)($payload['players'] ?? []) as $p) {
+        if (!is_array($p)) {
+            continue;
+        }
+        $players[] = [
+            'name'        => (string)($p['cleanName'] ?? $p['name'] ?? $p['displayName'] ?? ''),
+            'score'       => (int)($p['score'] ?? $p['rawScore'] ?? 0),
+            'bestLapMs'   => (int)($p['bestLapMs'] ?? 0),
+            'totalRaceMs' => (int)($p['totalRaceMs'] ?? 0),
+            'kills'       => (int)($p['kills'] ?? 0),
+            'deaths'      => (int)($p['deaths'] ?? 0),
+            'position'    => (int)($p['position'] ?? 0),
+            'isBot'       => (bool)($p['isBot'] ?? false),
+            'team'        => (int)($p['team'] ?? 0),
+            'captures'    => (int)($p['captures'] ?? 0),
+            'damageDealt' => (int)($p['damageDealt'] ?? 0),
+        ];
+    }
+
+    return [
+        'matchId'     => (string)($payload['matchId'] ?? ''),
+        'mode'        => (string)($payload['mode'] ?? ''),
+        'gametype'    => (int)($payload['gametype'] ?? 0),
+        'map'         => (string)($payload['map'] ?? ''),
+        'startTime'   => (string)($payload['startTime'] ?? $payload['startTimeIso'] ?? ''),
+        'source'      => $source,
+        'serverName'  => (string)($payload['server']['name'] ?? ''),
+        'playerCount' => (int)($payload['playerCount'] ?? count($players)),
+        'players'     => $players,
+    ];
+}
+
+function index_load(): array
+{
+    if (!is_file(INDEX_FILE)) {
+        return [];
+    }
+    $raw = file_get_contents(INDEX_FILE);
+    if ($raw === false || $raw === '') {
+        return [];
+    }
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : [];
+}
+
+function index_save(array $entries): bool
+{
+    $json = json_encode($entries, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($json === false) {
+        return false;
+    }
+    return file_put_contents(INDEX_FILE, $json, LOCK_EX) !== false;
+}
+
+function index_append(array $payload): void
+{
+    $entry   = index_extract_entry($payload);
+    $entries = index_load();
+
+    // Avoid duplicates
+    foreach ($entries as $existing) {
+        if (($existing['matchId'] ?? '') === $entry['matchId']) {
+            return;
+        }
+    }
+
+    $entries[] = $entry;
+    index_save($entries);
+}
+
+function index_remove(string $matchId): void
+{
+    $entries = index_load();
+    $entries = array_values(array_filter(
+        $entries,
+        static fn($e) => ($e['matchId'] ?? '') !== $matchId
+    ));
+    index_save($entries);
+}
+
+/**
+ * Rebuild the entire index from individual match files.
+ * Called lazily when the index is missing.
+ * Returns the rebuilt entries array.
+ */
+function index_rebuild(): array
+{
+    $files   = glob(DATA_DIR . '/*.json');
+    $entries = [];
+
+    if (!is_array($files)) {
+        return $entries;
+    }
+
+    foreach ($files as $file) {
+        $basename = basename($file);
+        // Skip non-match files
+        if ($basename === 'match_index.json' || $basename === 'version.json') {
+            continue;
+        }
+        if (strncmp($basename, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) === 0) {
+            continue;
+        }
+        if ($basename === 'server_keys.json') {
+            continue;
+        }
+
+        $raw = file_get_contents($file);
+        if ($raw === false) {
+            continue;
+        }
+        $payload = json_decode($raw, true);
+        if (!is_array($payload)) {
+            continue;
+        }
+        $entries[] = index_extract_entry($payload);
+    }
+
+    index_save($entries);
+    return $entries;
+}
+
+/**
+ * Return the index entries, rebuilding lazily if missing.
+ */
+function index_get(): array
+{
+    if (!is_file(INDEX_FILE)) {
+        return index_rebuild();
+    }
+    $entries = index_load();
+    if (empty($entries) && count(glob(DATA_DIR . '/*.json') ?: []) > 5) {
+        return index_rebuild();
+    }
+    return $entries;
+}
+
 function handle_post(array $segments): void
 {
     if ($segments !== ['matches']) {
         send_error(404, 'Endpoint not found.');
     }
 
-    $payload = json_decode(file_get_contents('php://input'), true);
+    $payload = json_decode(ladder_read_body(), true);
     if (!is_array($payload)) {
         throw new RuntimeException('Invalid JSON payload.');
     }
+
+    // Auth: verify Bearer token against registered server keys.
+    // Server name in payload must match the registered name for this key.
+    $serverName = '';
+    if (isset($payload['server']['name']) && is_string($payload['server']['name'])) {
+        $serverName = $payload['server']['name'];
+    }
+    keys_require_auth($serverName);
 
     if (!isset($payload['matchId']) || !is_string($payload['matchId']) || trim($payload['matchId']) === '') {
         throw new RuntimeException('matchId is required.');
@@ -3754,6 +4645,12 @@ function handle_post(array $segments): void
 
     $payload['receivedAt'] = gmdate('c');
 
+    // Normalize dedicated flag → source field for frontend filtering
+    $dedicated = $payload['server']['dedicated'] ?? null;
+    $payload['source'] = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
+        ? 'online'
+        : 'offline';
+
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         throw new RuntimeException('Failed to encode payload.');
@@ -3762,6 +4659,12 @@ function handle_post(array $segments): void
     if (file_put_contents($matchPath, $json . "\n") === false) {
         throw new RuntimeException('Unable to persist match.');
     }
+
+    // Update leaderboard index
+    index_append($payload);
+
+    // Update player profiles
+    profile_upsert_from_payload($payload);
 
     send_json(['matchId' => $payload['matchId']], 201);
 }
@@ -3803,6 +4706,42 @@ function handle_get(array $segments): void
         return;
     }
 
+    // Levelshot manifest – scan images/ directory once, return available files
+    if ($segments === ['maps', 'levelshots']) {
+        $imageDir = __DIR__ . '/images';
+        $manifest = [];
+        if (is_dir($imageDir)) {
+            $allowed = ['webp', 'png', 'jpg', 'jpeg', 'tga'];
+            foreach (scandir($imageDir) ?: [] as $file) {
+                if ($file === '.' || $file === '..') {
+                    continue;
+                }
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowed, true)) {
+                    continue;
+                }
+                $base = strtolower(pathinfo($file, PATHINFO_FILENAME));
+                // Only keep the first (best) extension per map name
+                if (!isset($manifest[$base])) {
+                    $manifest[$base] = $ext;
+                }
+            }
+        }
+        header('Content-Type: application/json');
+        header('Cache-Control: public, max-age=300');
+        echo json_encode($manifest, JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    // Fast leaderboard index endpoint – returns only fields needed by the frontend
+    if ($segments === ['matches', 'index']) {
+        $entries = index_get();
+        header('Content-Type: application/json');
+        header('Cache-Control: public, max-age=30');
+        echo json_encode(['matches' => array_values($entries), 'count' => count($entries)], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     if ($segments === ['matches']) {
         $mode = $_GET['mode'] ?? null;
         $modeFilter = is_string($mode) && $mode !== '' ? $mode : null;
@@ -3826,6 +4765,22 @@ function handle_get(array $segments): void
 
         send_json(['matches' => array_values($matches)], 200);
         return;
+    }
+
+    // Player profile endpoint
+    if (count($segments) === 2 && $segments[0] === 'players') {
+        $playerId = $segments[1];
+        if ($playerId === '') {
+            send_error(400, 'Player ID required.');
+        }
+        $profile = profile_load($playerId);
+        if ($profile === null) {
+            send_error(404, 'Player not found.');
+        }
+        header('Content-Type: application/json');
+        header('Cache-Control: public, max-age=60');
+        echo json_encode($profile, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     if (count($segments) === 2 && $segments[0] === 'matches') {
@@ -3867,6 +4822,9 @@ function handle_delete(array $segments): void
     if (!unlink($matchPath)) {
         throw new RuntimeException('Failed to delete match.');
     }
+
+    // Remove from leaderboard index
+    index_remove($matchId);
 
     http_response_code(204);
 }
@@ -4110,7 +5068,7 @@ function list_match_files(): array
             return false;
         }
         $basename = basename($file);
-        return $basename !== 'version.json';
+        return $basename !== 'version.json' && strncmp($basename, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) !== 0;
     });
 
     usort($filtered, static function ($a, $b) {

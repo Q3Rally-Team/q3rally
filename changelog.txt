@@ -14,7 +14,7 @@ Fixed:
   has finished the race.
 
 
-new in v0.7
+new in v0.7b
 
 Added:
 

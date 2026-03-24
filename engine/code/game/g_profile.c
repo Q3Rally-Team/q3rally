@@ -1473,3 +1473,16 @@ void G_Profile_RecordPerfect( gclient_t *client ) {
 
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_PERFECT );
 }
+
+/* ── Public parse helpers used by g_main.c to read profile JSON ── */
+int G_Profile_ParseIntPublic( const char *buffer, const char *key, int defaultValue ) {
+    return G_Profile_ParseInt( buffer, key, defaultValue );
+}
+
+double G_Profile_ParseDoublePublic( const char *buffer, const char *key, double defaultValue ) {
+    return G_Profile_ParseDouble( buffer, key, defaultValue );
+}
+
+void G_Profile_ParseStringPublic( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue ) {
+    G_Profile_ParseString( buffer, key, out, outSize, defaultValue );
+}

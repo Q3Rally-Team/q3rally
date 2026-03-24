@@ -22,9 +22,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // sv_ladder.c -- ladder upload interface
 
-#include "server.h"
+/* Must be defined before any header that includes profile_shared.h */
 #define PROFILE_SHARED_IMPLEMENTATION
-#include "../game/profile_shared.h"
+#include "server.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -634,6 +634,70 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
                 return qfalse;
         }
 
+        /* Career profile snapshot */
+        if ( player->profile.valid ) {
+                const ladderProfileSnapshot_t *snap = &player->profile;
+                qboolean profFirst = qtrue;
+                int i;
+
+                if ( !SV_LadderJsonAppendKey( builder, "profile", &first ) ||
+                     !SV_LadderJsonAppendChar( builder, '{' ) ) {
+                        return qfalse;
+                }
+
+#define SNAP_INT(key, field) \
+                if ( !SV_LadderJsonAppendKey( builder, key, &profFirst ) || \
+                     !SV_LadderJsonAppendInt( builder, snap->field ) ) { return qfalse; }
+#define SNAP_FLT(key, field) \
+                if ( !SV_LadderJsonAppendKey( builder, key, &profFirst ) || \
+                     !SV_LadderJsonAppendFloat( builder, (float)snap->field ) ) { return qfalse; }
+#define SNAP_STR(key, field) \
+                if ( !SV_LadderJsonAppendKey( builder, key, &profFirst ) || \
+                     !SV_LadderJsonAppendString( builder, snap->field ) ) { return qfalse; }
+
+                SNAP_INT( "playerScore",      playerScore      )
+                SNAP_INT( "currentRank",      currentRank      )
+                SNAP_INT( "highestRank",      highestRank      )
+                SNAP_INT( "wins",             wins             )
+                SNAP_INT( "losses",           losses           )
+                SNAP_INT( "kills",            kills            )
+                SNAP_INT( "deaths",           deaths           )
+                SNAP_INT( "flagCaptures",     flagCaptures     )
+                SNAP_INT( "flagAssists",      flagAssists      )
+                SNAP_INT( "bestLapMs",        bestLapMs        )
+                SNAP_INT( "accuracyAwards",   accuracyAwards   )
+                SNAP_INT( "excellentAwards",  excellentAwards  )
+                SNAP_INT( "impressiveAwards", impressiveAwards )
+                SNAP_INT( "perfectAwards",    perfectAwards    )
+                SNAP_INT( "damageDealt",      damageDealt      )
+                SNAP_INT( "damageTaken",      damageTaken      )
+                SNAP_FLT( "distanceKm",       distanceKm       )
+                SNAP_FLT( "topSpeedKph",      topSpeedKph      )
+                SNAP_FLT( "fuelUsed",         fuelUsed         )
+                SNAP_STR( "mostUsedVehicle",  mostUsedVehicle  )
+
+#undef SNAP_INT
+#undef SNAP_FLT
+#undef SNAP_STR
+
+                if ( !SV_LadderJsonAppendKey( builder, "achievementTiers", &profFirst ) ||
+                     !SV_LadderJsonAppendChar( builder, '[' ) ) {
+                        return qfalse;
+                }
+                for ( i = 0; i < (int)( sizeof( snap->achievementTiers ) / sizeof( snap->achievementTiers[0] ) ); ++i ) {
+                        if ( i > 0 && !SV_LadderJsonAppendChar( builder, ',' ) ) {
+                                return qfalse;
+                        }
+                        if ( !SV_LadderJsonAppendInt( builder, snap->achievementTiers[i] ) ) {
+                                return qfalse;
+                        }
+                }
+                if ( !SV_LadderJsonAppendChar( builder, ']' ) ||
+                     !SV_LadderJsonAppendChar( builder, '}' ) ) {
+                        return qfalse;
+                }
+        }
+
         if ( !SV_LadderJsonAppendChar( builder, '}' ) ) {
                 return qfalse;
         }
@@ -736,6 +800,11 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                 }
                 if ( !SV_LadderJsonAppendKey( &builder, "build", &serverFirst ) ||
                      !SV_LadderJsonAppendString( &builder, payload->serverBuild ) ) {
+                        Z_Free( builder.data );
+                        return NULL;
+                }
+                if ( !SV_LadderJsonAppendKey( &builder, "dedicated", &serverFirst ) ||
+                     !SV_LadderJsonAppendBoolean( &builder, payload->isDedicated ) ) {
                         Z_Free( builder.data );
                         return NULL;
                 }

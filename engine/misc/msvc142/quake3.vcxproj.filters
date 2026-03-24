@@ -22,6 +22,9 @@
     <ClCompile Include="..\..\code\client\snd_codec_wav.c" />
     <ClCompile Include="..\..\code\client\snd_dma.c" />
     <ClCompile Include="..\..\code\client\snd_main.c" />
+    <ClCompile Include="..\..\code\client\snd_engine_audio.c" />
+    <ClCompile Include="..\..\code\client\snd_engine_dsp.c" />
+    <ClCompile Include="..\..\code\client\snd_engine_presets.c" />
     <ClCompile Include="..\..\code\client\snd_mem.c" />
     <ClCompile Include="..\..\code\client\snd_mix.c" />
     <ClCompile Include="..\..\code\client\snd_openal.c" />

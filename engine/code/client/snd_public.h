@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#include "../qcommon/engine_audio_shared.h"
 
 void S_Init( void );
 void S_Shutdown( void );
@@ -57,6 +58,9 @@ void S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inw
 // let the sound system know where an entity currently is
 void S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void S_SetEntityPitch( int entityNum, float pitch );
+void S_RegisterEngineEmitter( int entityNum, int presetHandle );
+void S_RemoveEngineEmitter( int entityNum );
+void S_UpdateEngineEmitterState( int entityNum, const vehicleAudioState_t *state, const vec3_t exhaustOrigin, const vec3_t engineBayOrigin, const vec3_t velocity, engineAudioQualityTier_t quality );
 
 void S_Update( void );
 

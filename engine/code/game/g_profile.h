@@ -29,6 +29,11 @@ void G_Profile_RecordImpressive( struct gclient_s *client );
 void G_Profile_RecordAccuracy( struct gclient_s *client, int accuracyPercent );
 void G_Profile_RecordPerfect( struct gclient_s *client );
 void G_Profile_RecordDominationCapture( struct gclient_s *client );
+/* Public parse helpers – allow g_main.c to read profile JSON fields */
+int      G_Profile_ParseIntPublic( const char *buffer, const char *key, int defaultValue );
+double   G_Profile_ParseDoublePublic( const char *buffer, const char *key, double defaultValue );
+void     G_Profile_ParseStringPublic( const char *buffer, const char *key, char *out, int outSize, const char *defaultValue );
+
 qboolean G_Profile_GetRank( const struct profile_stats_s *stats, struct profile_rank_s *outRank );
 int G_Profile_GetPlayerScore( void );
 

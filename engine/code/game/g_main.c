@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 #include "g_profile.h"
+#include "bg_achievements.h"
 
 level_locals_t	level;
 
@@ -802,7 +803,13 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
 
         value = Info_ValueForKey( userinfo, "ip" );
         if ( value && value[0] ) {
-                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+                /* For local clients, don't use IP (would be "localhost") as playerId.
+                 * We prefer cl_guid which is already set above, or fall through to cleanName. */
+                if ( !client->pers.localClient ) {
+                        if ( !player->playerId[0] ) {
+                                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+                        }
+                }
                 if ( !player->guid[0] ) {
                         Q_strncpyz( player->guid, value, sizeof( player->guid ) );
                 }
@@ -920,6 +927,103 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
 
         player->zoneActiveSigil = -1;
 
+        /* Attach career profile snapshot for the local client only.
+         * Remote players do not have their profile data available on the server. */
+        if ( client->pers.localClient ) {
+                ladderProfileSnapshot_t *snap = &player->profile;
+                char profileName[PROFILE_MAX_NAME];
+                char profilePath[MAX_QPATH];
+                fileHandle_t fh;
+                int len;
+                int i;
+
+                Com_Memset( snap, 0, sizeof( *snap ) );
+
+                trap_Cvar_VariableStringBuffer( "profile_active", profileName, sizeof( profileName ) );
+                if ( profileName[0] ) {
+                        Com_sprintf( profilePath, sizeof( profilePath ), "profiles/%s.json", profileName );
+                        len = trap_FS_FOpenFile( profilePath, &fh, FS_READ );
+                        if ( len > 0 ) {
+                                static char profileBuf[8192];
+                                if ( len >= (int)sizeof( profileBuf ) ) len = sizeof( profileBuf ) - 1;
+                                trap_FS_Read( profileBuf, len, fh );
+                                profileBuf[len] = '\0';
+                                trap_FS_FCloseFile( fh );
+
+                                /* Profile JSON structure:
+                                 * { "name": "...", "info": { "currentRank": N, "highestRank": N, ... },
+                                 *   "stats": { "playerScore": N, "kills": N, ... } }
+                                 * Info fields are at top level of "info" object,
+                                 * stats fields are nested under "stats". */
+                                {
+                                        /* Find the opening brace of each section to avoid
+                                         * parsing keys from sibling sections. */
+                                        const char *statsSection = strstr( profileBuf, "\"stats\"" );
+                                        const char *infoSection  = strstr( profileBuf, "\"info\"" );
+                                        /* Advance past the colon and opening brace so the parser
+                                         * only sees content inside that section. */
+                                        const char *statsBuf = profileBuf;
+                                        const char *infoBuf  = profileBuf;
+                                        if ( statsSection ) {
+                                                const char *brace = strchr( statsSection, '{' );
+                                                if ( brace ) statsBuf = brace;
+                                        }
+                                        if ( infoSection ) {
+                                                const char *brace = strchr( infoSection, '{' );
+                                                if ( brace ) infoBuf = brace;
+                                        }
+
+                                        snap->valid            = qtrue;
+                                        snap->playerScore      = G_Profile_ParseIntPublic( statsBuf,  "playerScore",     0 );
+                                        snap->currentRank      = G_Profile_ParseIntPublic( infoBuf,   "currentRank",     0 );
+                                        snap->highestRank      = G_Profile_ParseIntPublic( infoBuf,   "highestRank",     0 );
+                                        snap->wins             = G_Profile_ParseIntPublic( statsBuf,  "wins",            0 );
+                                        snap->losses           = G_Profile_ParseIntPublic( statsBuf,  "losses",          0 );
+                                        snap->kills            = G_Profile_ParseIntPublic( statsBuf,  "kills",           0 );
+                                        snap->deaths           = G_Profile_ParseIntPublic( statsBuf,  "deaths",          0 );
+                                        snap->flagCaptures     = G_Profile_ParseIntPublic( statsBuf,  "flagCaptures",    0 );
+                                        snap->flagAssists      = G_Profile_ParseIntPublic( statsBuf,  "flagAssists",     0 );
+                                        snap->bestLapMs        = G_Profile_ParseIntPublic( statsBuf,  "bestLapMs",       0 );
+                                        snap->accuracyAwards   = G_Profile_ParseIntPublic( statsBuf,  "accuracyAwards",  0 );
+                                        snap->excellentAwards  = G_Profile_ParseIntPublic( statsBuf,  "excellentAwards", 0 );
+                                        snap->impressiveAwards = G_Profile_ParseIntPublic( statsBuf,  "impressiveAwards",0 );
+                                        snap->perfectAwards    = G_Profile_ParseIntPublic( statsBuf,  "perfectAwards",   0 );
+                                        snap->damageDealt      = G_Profile_ParseIntPublic( statsBuf,  "damageDealt",     0 );
+                                        snap->damageTaken      = G_Profile_ParseIntPublic( statsBuf,  "damageTaken",     0 );
+                                        snap->distanceKm       = G_Profile_ParseDoublePublic( statsBuf,  "distanceKm",  0.0 );
+                                        snap->topSpeedKph      = G_Profile_ParseDoublePublic( statsBuf,  "topSpeedKph", 0.0 );
+                                        snap->fuelUsed         = G_Profile_ParseDoublePublic( statsBuf,  "fuelUsed",    0.0 );
+                                        G_Profile_ParseStringPublic( statsBuf, "mostUsedVehicle",
+                                                snap->mostUsedVehicle, sizeof( snap->mostUsedVehicle ), "" );
+                                }
+
+                                /* Achievement tiers – reuse bg_achievements logic */
+                                {
+                                        int sprintWins = G_Profile_ParseIntPublic( profileBuf, "sprintWins", 0 );
+                                        double progress_table[BG_ACHIEVEMENT_CATEGORY_COUNT];
+                                        progress_table[BG_ACHIEVEMENT_DISTANCE]      = snap->distanceKm;
+                                        progress_table[BG_ACHIEVEMENT_KILLS]         = (double)snap->kills;
+                                        progress_table[BG_ACHIEVEMENT_WINS]          = (double)snap->wins;
+                                        progress_table[BG_ACHIEVEMENT_SPRINT_WINS]   = (double)sprintWins;
+                                        progress_table[BG_ACHIEVEMENT_FLAG_CAPTURES] = (double)snap->flagCaptures;
+                                        progress_table[BG_ACHIEVEMENT_FLAG_ASSISTS]  = (double)snap->flagAssists;
+                                        progress_table[BG_ACHIEVEMENT_FUEL]          = snap->fuelUsed;
+                                        progress_table[BG_ACHIEVEMENT_ACCURACY]      = (double)snap->accuracyAwards;
+                                        progress_table[BG_ACHIEVEMENT_EXCELLENT]     = (double)snap->excellentAwards;
+                                        progress_table[BG_ACHIEVEMENT_IMPRESSIVE]    = (double)snap->impressiveAwards;
+                                        progress_table[BG_ACHIEVEMENT_PERFECT]       = (double)snap->perfectAwards;
+
+                                        for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
+                                                const bgAchievementCategoryDef_t *cat = BG_AchievementGetCategory( i );
+                                                snap->achievementTiers[i] = BG_AchievementUnlockedTiers( cat, progress_table[i] );
+                                        }
+                                }
+                        } else if ( fh ) {
+                                trap_FS_FCloseFile( fh );
+                        }
+                }
+        }
+
         payload->playerCount++;
         return qtrue;
 }
@@ -936,6 +1040,9 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         if ( trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) == 0 ) {
                 return;
         }
+
+        // Flag whether this is a dedicated server or a local/offline game.
+        // Both are allowed – the ladder displays them in separate lists.
 
         Com_Memset( payload, 0, sizeof( *payload ) );
 
@@ -966,6 +1073,7 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         Com_sprintf( payload->durationIso, sizeof( payload->durationIso ), "PT%iS", payload->durationSeconds );
 
         trap_Cvar_VariableStringBuffer( "sv_hostname", payload->serverName, sizeof( payload->serverName ) );
+        payload->isDedicated = g_dedicated.integer ? qtrue : qfalse;
         trap_Cvar_VariableStringBuffer( "net_ip", payload->serverHost, sizeof( payload->serverHost ) );
         if ( payload->serverHost[0] ) {
                 trap_Cvar_VariableStringBuffer( "net_port", buffer, sizeof( buffer ) );

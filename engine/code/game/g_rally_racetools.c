@@ -402,6 +402,34 @@ TESTABLE_STATIC void G_RallyConfigureElimination( int participantCount ) {
 	}
 }
 
+static void G_RallyInitializeLapTimersAtRaceStart( int startTime ) {
+	gentity_t *player;
+	int i;
+
+	if ( startTime <= 0 ) {
+		return;
+	}
+
+	for ( i = 0; i < MAX_CLIENTS; ++i ) {
+		player = &g_entities[i];
+		if ( !player->inuse || !player->client ) {
+			continue;
+		}
+		if ( player->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+			continue;
+		}
+		if ( isRaceObserver( i ) ) {
+			continue;
+		}
+		if ( player->client->finishRaceTime ) {
+			continue;
+		}
+
+		player->client->lapStartTime = startTime;
+		player->client->lastCheckpointTime = startTime;
+	}
+}
+
 void RallyStarter_Think( gentity_t *ent ){
 	gentity_t		*player, *t;
 	int				i, count;
@@ -420,6 +448,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		if (t == NULL){
 			// start race right away
 			level.startRaceTime = level.time;
+			G_RallyInitializeLapTimersAtRaceStart( level.startRaceTime );
 			trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 			CenterPrint_All("GO..");
 
@@ -488,6 +517,7 @@ void RallyStarter_Think( gentity_t *ent ){
 
 	if ( level.time > ent->pain_debounce_time + 5000 ){
 		level.startRaceTime = level.time;
+		G_RallyInitializeLapTimersAtRaceStart( level.startRaceTime );
 
 		trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 		RaceCountdown("GO!", 0);

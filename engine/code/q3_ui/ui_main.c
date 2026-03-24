@@ -206,6 +206,7 @@ vmCvar_t	ui_checkpointArrowMode;
 vmCvar_t	ui_atmosphericLevel;
 vmCvar_t	ui_drawPositionSprites;
 vmCvar_t	ui_engineSounds;
+vmCvar_t	ui_engineAudioMode;
 vmCvar_t	ui_ghostPlayback;
 vmCvar_t	ui_useFuel;
 vmCvar_t    ui_drawMinimap;
@@ -330,6 +331,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
 	{ &ui_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
         { &ui_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
+	{ &ui_engineAudioMode, "cg_engineAudioMode", "1", CVAR_ARCHIVE },
         { &ui_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
         { &ui_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO },
     { &ui_drawMinimap, "cg_drawMMap", "0", CVAR_ARCHIVE },

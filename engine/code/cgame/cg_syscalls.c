@@ -222,6 +222,18 @@ void    trap_S_SetEntityPitch( int entityNum, float pitch ) {
         syscall( CG_S_SETENTITYPITCH, entityNum, PASSFLOAT( pitch ) );
 }
 
+void	trap_S_RegisterEngineEmitter( int entityNum, int presetHandle ) {
+	syscall( CG_S_REGISTERENGINEEMITTER, entityNum, presetHandle );
+}
+
+void	trap_S_RemoveEngineEmitter( int entityNum ) {
+	syscall( CG_S_REMOVEENGINEEMITTER, entityNum );
+}
+
+void	trap_S_UpdateEngineEmitterState( int entityNum, const vehicleAudioState_t *state, const vec3_t exhaustOrigin, const vec3_t engineBayOrigin, const vec3_t velocity, int quality ) {
+	syscall( CG_S_UPDATEENGINEEMITTERSTATE, entityNum, state, exhaustOrigin, engineBayOrigin, velocity, quality );
+}
+
 
 void	trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater ) {
 	syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater );

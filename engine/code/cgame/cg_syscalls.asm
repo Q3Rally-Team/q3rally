@@ -94,6 +94,9 @@ equ trap_FS_Seek			-91
 equ	trap_FS_GetFileList					-92
 equ	trap_S_GetStreamLength				-93
 equ	trap_S_GetStreamMetadata			-94
+equ	trap_S_RegisterEngineEmitter		-95
+equ	trap_S_RemoveEngineEmitter		-96
+equ	trap_S_UpdateEngineEmitterState	-97
 
 equ	memset						-101
 equ	memcpy						-102

@@ -89,7 +89,7 @@ typedef struct {
 	menutext_s		rvrl_heading;
 	menutext_s		mvrl_heading;
 
-	menuradiobutton_s	engineSounds;
+	menulist_s		engineSounds;
 	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
 
@@ -128,6 +128,13 @@ static const char *q3roptions_ghostPlayback[] = {
         "Personal ghost",
         "Base ghost",
         0
+};
+
+static const char *q3roptions_engine_sounds[] = {
+	"Off",
+	"Legacy",
+	"Experimental",
+	0
 };
 
 
@@ -186,7 +193,12 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		break;
 
 	case ID_ENGINE_SOUNDS:
-		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
+		if ( s_q3roptions.engineSounds.curvalue <= 0 ) {
+			trap_Cvar_SetValue( "cg_engineSounds", 0 );
+		} else {
+			trap_Cvar_SetValue( "cg_engineSounds", 1 );
+			trap_Cvar_SetValue( "cg_engineAudioMode", ( s_q3roptions.engineSounds.curvalue == 2 ) ? 2 : 1 );
+		}
 		break;
 
 	case ID_GHOST_PLAYBACK:
@@ -291,7 +303,7 @@ static void Q3ROptions_StatusBar( void *self )
 		break;
 
 	case ID_ENGINE_SOUNDS:
-		text = "Turns on engine sounds in game.";
+		text = "Choose engine sound mode: off, classic legacy, or experimental synthesis.";
 		break;
 
 	case ID_FUEL_CONSUMPTION:
@@ -362,7 +374,11 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
 
-	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer;
+	if ( !ui_engineSounds.integer ) {
+		s_q3roptions.engineSounds.curvalue = 0;
+	} else {
+		s_q3roptions.engineSounds.curvalue = ( Com_Clamp( 1, 2, ui_engineAudioMode.integer ) == 2 ) ? 2 : 1;
+	}
 	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
 
@@ -492,14 +508,15 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.units.generic.y				= LAY_TOP + LAY_STEP * 1;
 	s_q3roptions.units.itemnames				= q3roptions_units;
 
-	s_q3roptions.engineSounds.generic.type		= MTYPE_RADIOBUTTON;
-	s_q3roptions.engineSounds.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.engineSounds.generic.type		= MTYPE_SPINCONTROL;
+	s_q3roptions.engineSounds.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_q3roptions.engineSounds.generic.x			= LAY_R;
 	s_q3roptions.engineSounds.generic.y			= LAY_TOP + LAY_STEP * 2;
 	s_q3roptions.engineSounds.generic.name		= "Engine Sounds:";
 	s_q3roptions.engineSounds.generic.id		= ID_ENGINE_SOUNDS;
 	s_q3roptions.engineSounds.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.engineSounds.generic.statusbar	= Q3ROptions_StatusBar;
+	s_q3roptions.engineSounds.itemnames			= q3roptions_engine_sounds;
 
 	s_q3roptions.positionSprites.generic.type	= MTYPE_RADIOBUTTON;
 	s_q3roptions.positionSprites.generic.flags	= QMF_SMALLFONT;

@@ -123,7 +123,7 @@ endif
 export CROSS_COMPILING
 
 ifndef VERSION
-VERSION=v0.7
+VERSION=v0.7b
 endif
 
 ifndef CLIENTBIN
@@ -1995,6 +1995,9 @@ Q3OBJ = \
   $(B)/client/snd_wavelet.o \
   \
   $(B)/client/snd_main.o \
+  $(B)/client/snd_engine_audio.o \
+  $(B)/client/snd_engine_dsp.o \
+  $(B)/client/snd_engine_presets.o \
   $(B)/client/snd_codec.o \
   $(B)/client/snd_codec_wav.o \
   $(B)/client/snd_codec_ogg.o \
@@ -2724,6 +2727,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_localents.o \
   $(B)/$(BASEGAME)/cgame/cg_marks.o \
   $(B)/$(BASEGAME)/cgame/cg_particles.o \
+  $(B)/$(BASEGAME)/cgame/cg_engine_audio.o \
   $(B)/$(BASEGAME)/cgame/cg_players.o \
   $(B)/$(BASEGAME)/cgame/cg_playerstate.o \
   $(B)/$(BASEGAME)/cgame/cg_predict.o \

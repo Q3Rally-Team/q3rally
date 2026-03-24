@@ -2,6 +2,12 @@
 #define BG_LADDER_H
 
 #include "../qcommon/q_shared.h"
+#include "profile_shared.h"
+
+/* Number of achievement categories. Mirrors BG_ACHIEVEMENT_CATEGORY_COUNT
+ * from bg_achievements.h without pulling in that header in the server build
+ * (where bg_achievements.c is not linked). Must stay in sync. */
+#define LADDER_ACHIEVEMENT_CATEGORY_COUNT 11
 
 #define LADDER_MAX_MATCH_ID             64
 #define LADDER_MAX_MODE                 32
@@ -18,6 +24,37 @@
 #ifndef RACE_MAX_RECORDED_LAPS
 #define RACE_MAX_RECORDED_LAPS          LADDER_MAX_LAP_TIMES
 #endif
+
+/* Snapshot of a player's career profile, attached to the match payload.
+ * Only populated for the local client – remote players don't have their
+ * profile data available on the server. */
+typedef struct ladderProfileSnapshot_s {
+        qboolean        valid;                          /* qtrue if this snapshot was filled */
+        int             playerScore;
+        int             currentRank;
+        int             highestRank;
+        int             wins;
+        int             losses;
+        int             kills;
+        int             deaths;
+        int             flagCaptures;
+        int             flagAssists;
+        int             bestLapMs;
+        int             accuracyAwards;
+        int             excellentAwards;
+        int             impressiveAwards;
+        int             perfectAwards;
+        int             damageDealt;
+        int             damageTaken;
+        /* Keep telemetry fields as float to avoid 8-byte alignment padding
+         * differences between QVM and native server builds. */
+        float           distanceKm;
+        float           topSpeedKph;
+        float           fuelUsed;
+        char            mostUsedVehicle[PROFILE_MAX_VEHICLE];
+        /* Achievement progress per category (unlocked tier count, 0 = none) */
+        int             achievementTiers[LADDER_ACHIEVEMENT_CATEGORY_COUNT];
+} ladderProfileSnapshot_t;
 
 typedef struct ladderPlayerPayload_s {
         int                     clientNum;
@@ -60,6 +97,7 @@ typedef struct ladderPlayerPayload_s {
         float           eliminationMetric;
         int                     finishRaceTime;
         float           kdRatio;
+        ladderProfileSnapshot_t profile;   /* career snapshot, valid only for local client */
 } ladderPlayerPayload_t;
 
 typedef struct ladderMatchPayload_s {
@@ -91,6 +129,7 @@ typedef struct ladderMatchPayload_s {
         int                     teamScores[TEAM_NUM_TEAMS];
         int                     teamTimes[TEAM_NUM_TEAMS];
         int                     playerCount;
+        qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];
 } ladderMatchPayload_t;
 

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "client.h"
+#include "snd_engine_audio.h"
 #include "snd_codec.h"
 #include "snd_local.h"
 #include "snd_public.h"
@@ -33,6 +34,19 @@ cvar_t *s_doppler;
 cvar_t *s_backend;
 cvar_t *s_muteWhenMinimized;
 cvar_t *s_muteWhenUnfocused;
+cvar_t *s_engineAudioGain;
+cvar_t *s_engineAudioExhaustGainScale;
+cvar_t *s_engineAudioIntakeGainScale;
+cvar_t *s_engineAudioMechanicalGainScale;
+cvar_t *s_engineAudioTransmissionGainScale;
+cvar_t *s_engineAudioExhaustSourceGainScale;
+cvar_t *s_engineAudioEngineBaySourceGainScale;
+cvar_t *s_engineAudioExhaustEventGainScale;
+cvar_t *s_engineAudioEngineBayEventGainScale;
+cvar_t *s_engineAudioLimiterEnable;
+cvar_t *s_engineAudioBackfireEnable;
+cvar_t *s_engineAudioCockpitEnable;
+cvar_t *s_engineAudioDebug;
 
 static soundInterface_t si;
 
@@ -261,6 +275,8 @@ void S_Update( void )
 		}
 	}
 	
+	S_EngineAudio_BeginFrame();
+
 	if( si.Update ) {
 		si.Update( );
 	}
@@ -496,6 +512,19 @@ void S_Init( void )
 	s_backend = Cvar_Get( "s_backend", "", CVAR_ROM );
 	s_muteWhenMinimized = Cvar_Get( "s_muteWhenMinimized", "0", CVAR_ARCHIVE );
 	s_muteWhenUnfocused = Cvar_Get( "s_muteWhenUnfocused", "0", CVAR_ARCHIVE );
+	s_engineAudioGain = Cvar_Get( "s_engineAudioGain", "1", CVAR_ARCHIVE );
+	s_engineAudioExhaustGainScale = Cvar_Get( "s_engineAudioExhaustGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioIntakeGainScale = Cvar_Get( "s_engineAudioIntakeGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioMechanicalGainScale = Cvar_Get( "s_engineAudioMechanicalGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioTransmissionGainScale = Cvar_Get( "s_engineAudioTransmissionGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioExhaustSourceGainScale = Cvar_Get( "s_engineAudioExhaustSourceGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioEngineBaySourceGainScale = Cvar_Get( "s_engineAudioEngineBaySourceGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioExhaustEventGainScale = Cvar_Get( "s_engineAudioExhaustEventGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioEngineBayEventGainScale = Cvar_Get( "s_engineAudioEngineBayEventGainScale", "1", CVAR_ARCHIVE );
+	s_engineAudioLimiterEnable = Cvar_Get( "s_engineAudioLimiterEnable", "1", CVAR_ARCHIVE );
+	s_engineAudioBackfireEnable = Cvar_Get( "s_engineAudioBackfireEnable", "1", CVAR_ARCHIVE );
+	s_engineAudioCockpitEnable = Cvar_Get( "s_engineAudioCockpitEnable", "1", CVAR_ARCHIVE );
+	s_engineAudioDebug = Cvar_Get( "s_engineAudioDebug", "0", CVAR_TEMP );
 
 	cv = Cvar_Get( "s_initsound", "1", 0 );
 	if( !cv->integer ) {
@@ -524,6 +553,8 @@ void S_Init( void )
 		}
 
 		if( started ) {
+			S_EngineAudio_Init();
+
 			if( !S_ValidSoundInterface( &si ) ) {
 				Com_Error( ERR_FATAL, "Sound interface invalid" );
 			}
@@ -545,6 +576,8 @@ S_Shutdown
 */
 void S_Shutdown( void )
 {
+	S_EngineAudio_Shutdown();
+
 	if( si.Shutdown ) {
 		si.Shutdown( );
 	}
@@ -560,4 +593,3 @@ void S_Shutdown( void )
 
 	S_CodecShutdown( );
 }
-

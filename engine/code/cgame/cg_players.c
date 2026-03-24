@@ -3645,7 +3645,8 @@ void CG_Player( centity_t *cent ) {
 	// engine sounds
 
        if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
-               cg_engineSounds.integer )
+               cg_engineSounds.integer &&
+               cg_engineAudioMode.integer != 2 )
        {
                float rpmFrac;
                float pitch;
