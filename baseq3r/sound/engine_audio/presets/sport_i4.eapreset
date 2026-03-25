@@ -1,0 +1,26 @@
+name sport_i4
+cylinderCount 4
+strokeCycle 4
+firingOrderLength 4
+firingOrder 1 3 4 2
+idleRpm 950
+redlineRpm 8000
+exhaustGain 1.28
+intakeGain 0.30
+mechanicalGain 0.16
+transmissionGain 0.06
+exhaustResonator 78 1.40 1.15
+exhaustResonator 132 1.15 0.70
+exhaustResonator 196 1.00 0.30
+intakeResonator 300 0.90 0.14
+intakeResonator 540 0.78 0.07
+harmonicGain 0 1.00
+harmonicGain 1 0.22
+harmonicGain 2 0.06
+harmonicGain 3 0.02
+distortionDrive 0.03
+noiseGain 0.035
+backfireGain 0.32
+limiterGain 0.20
+cockpitLowpassHz 2400
+exteriorPresenceGain 1.12
