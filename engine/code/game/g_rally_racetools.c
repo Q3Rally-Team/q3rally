@@ -433,6 +433,7 @@ static void G_RallyInitializeLapTimersAtRaceStart( int startTime ) {
 void RallyStarter_Think( gentity_t *ent ){
 	gentity_t		*player, *t;
 	int				i, count;
+	int				activePlayers;
 	qboolean	start;
 	qboolean	enforceReady;
 	qboolean	ignoreBots;
@@ -446,6 +447,21 @@ void RallyStarter_Think( gentity_t *ent ){
 		t = NULL;
 		t = G_Find (t, FOFS(classname), "rally_checkpoint");
 		if (t == NULL){
+			activePlayers = 0;
+			for ( i = 0; i < MAX_CLIENTS; i++ ) {
+				player = &g_entities[i];
+				if ( !player->inuse ) continue;
+				if ( !player->client ) continue;
+				if ( player->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+
+				activePlayers++;
+				break;
+			}
+
+			if ( !activePlayers ) {
+				return;
+			}
+
 			// start race right away
 			level.startRaceTime = level.time;
 			G_RallyInitializeLapTimersAtRaceStart( level.startRaceTime );

@@ -141,24 +141,32 @@ typedef enum {
         GT_OBELISK,
         GT_HARVESTER,
 */
-        GT_RACING,                      // racing
-        GT_RACING_DM,           // racing with weapons
-        GT_SPRINT,                      // point-to-point racing
-        GT_SINGLE_PLAYER,       // single player tournament
-        GT_DERBY,                       // demolition derby
-        GT_LCS,                       // last car standing
-        GT_ELIMINATION,        // elimination race
-        GT_DEATHMATCH,          // random destruction
+        // Q3Rally Fix: explicit integer values prevent accidental shifts
+        // when new gametypes are inserted. Non-team and team blocks each
+        // have deliberate gaps so future modes can be added without
+        // renumbering existing entries.
 
-        //-- team games go after this --
+        // --- non-team gametypes (0-15) ---
+        GT_RACING          =  0,    // racing
+        GT_RACING_DM       =  1,    // racing with weapons
+        GT_SINGLE_PLAYER   =  2,    // single player / time trial
+        GT_DERBY           =  3,    // demolition derby
+        GT_LCS             =  4,    // last car standing
+        GT_ELIMINATION     =  5,    // elimination race
+        GT_DEATHMATCH      =  6,    // free-for-all deathmatch
+        GT_SPRINT          =  7,    // point-to-point sprint race
+        // 8-15: reserved for future non-team modes
 
-        GT_TEAM,                        // team deathmatch
-        GT_TEAM_RACING,         // team racing
-        GT_TEAM_RACING_DM,      // team racing with weapons
-        GT_CTF,                         // capture the flag
-        GT_CTF4,                        // 4 team capture the flag
-        GT_DOMINATION,              // domination
-        GT_KOTH,                    // king of the hill
+        // --- team gametypes (16+) ---
+        GT_TEAM            = 16,    // team deathmatch
+        GT_TEAM_RACING     = 17,    // team racing
+        GT_TEAM_RACING_DM  = 18,    // team racing with weapons
+        GT_CTF             = 19,    // capture the flag
+        GT_CTF4            = 20,    // 4-team capture the flag
+        GT_DOMINATION      = 21,    // domination
+        GT_KOTH            = 22,    // king of the hill
+        // 23+: reserved for future team modes
+
 // Q3Rally Code END
         GT_MAX_GAME_TYPE
 } gametype_t;

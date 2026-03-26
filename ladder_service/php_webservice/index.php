@@ -4651,6 +4651,9 @@ function handle_post(array $segments): void
         ? 'online'
         : 'offline';
 
+    // Never persist shared secrets in public match payloads.
+    $payload = sanitize_public_match_payload($payload);
+
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         throw new RuntimeException('Failed to encode payload.');
@@ -4790,13 +4793,8 @@ function handle_get(array $segments): void
             send_error(404, 'Match not found.');
         }
 
-        $json = file_get_contents($matchPath);
-        if ($json === false) {
-            throw new RuntimeException('Failed to read match.');
-        }
-
-        $payload = json_decode($json, true);
-        if (!is_array($payload)) {
+        $payload = decode_match_file($matchPath);
+        if ($payload === null) {
             throw new RuntimeException('Stored match is corrupted.');
         }
 
@@ -5110,6 +5108,17 @@ function decode_match_file(string $file): ?array
     if (!is_array($payload)) {
         return null;
     }
+
+    return sanitize_public_match_payload($payload);
+}
+
+function sanitize_public_match_payload(array $payload): array
+{
+    if (!isset($payload['server']) || !is_array($payload['server'])) {
+        return $payload;
+    }
+
+    unset($payload['server']['key']);
 
     return $payload;
 }

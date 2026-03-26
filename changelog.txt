@@ -14,6 +14,22 @@ Fixed:
   has finished the race.
 
 
+new in v0.7c
+
+Fixed:
+
+- Dedicated server in DM mode was cycling through map rotation immediately without
+  waiting for players. Root cause: GT_SPRINT was inserted into the gametype enum
+  (bg_public.h) without explicit integer values, shifting GT_DEATHMATCH from 6 to 7
+  and all team gametypes by one. A server configured with g_gametype 6 (DM) was
+  therefore running GT_ELIMINATION (a race mode), which exits immediately when no
+  players are present. Fixed by assigning explicit integer values to all gametype
+  enum entries. Non-team gametypes retain their v0.6c values (0-6), GT_SPRINT is
+  assigned 7. Team gametypes start at 16 to leave room for future non-team modes.
+  Server configs for team-based servers (Team DM, CTF, CTF4, etc.) must be updated
+  to the new values - see docs/gametype_values.md for the full mapping table.
+
+
 new in v0.7b
 
 Added:
