@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q3Rally Ladder Service — Setup &amp; API</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+:root {
+  color-scheme: dark;
+  --bg:             radial-gradient(1200px 800px at 50% 0%, rgba(255,255,255,0.07), #05050c 60%);
+  --surface:        rgba(18,21,33,0.72);
+  --surface-strong: rgba(28,31,46,0.94);
+  --surface-hover:  rgba(35,40,60,0.85);
+  --border:         rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.18);
+  --text:           #F5F6FF;
+  --text-muted:     #8b90b0;
+  --accent:         #5D8BFF;
+  --accent-soft:    rgba(93,139,255,0.15);
+  --accent-border:  rgba(93,139,255,0.40);
+  --gold:           #f0a500;
+  --green:          #34d399;
+  --red:            #f87171;
+  --orange:         #fb923c;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);background-color:#05050c;color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:400;line-height:1.65;min-height:100vh}
+header{padding:36px 48px 32px;border-bottom:1px solid var(--border);background:rgba(10,12,22,0.6);backdrop-filter:blur(20px)}
+.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.header-logo{font-size:24px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+.header-logo span{color:var(--accent)}
+.header-sub{font-size:13px;color:var(--text-muted);font-style:italic}
+.header-meta{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:3px 12px 4px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.badge.orange{background:rgba(251,146,60,.12);border-color:rgba(251,146,60,.35);color:var(--orange)}
+.badge.green{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.35);color:var(--green)}
+.tab-nav{position:sticky;top:0;z-index:100;background:rgba(10,12,22,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.tab-nav-inner{max-width:1200px;margin:0 auto;padding:0 48px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tab-nav-inner::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:14px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+main{max-width:1200px;margin:0 auto;padding:40px 48px 96px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px}
+.eyebrow:first-child{margin-top:0}
+h2{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--text);margin-bottom:18px}
+h3{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+p{color:var(--text-muted);margin-bottom:14px;font-size:13px}
+ul,ol{color:var(--text-muted);font-size:13px;padding-left:20px;margin-bottom:14px}
+li{margin-bottom:4px;line-height:1.6}
+.callout{border-left:3px solid var(--accent);background:var(--surface-strong);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0 24px;font-size:12.5px;color:var(--text-muted)}
+.callout.green{border-color:var(--green)}
+.callout.gold{border-color:var(--gold)}
+.callout.red{border-color:var(--red)}
+.callout.orange{border-color:var(--orange)}
+.callout strong{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.callout.green strong{color:var(--green)}
+.callout.gold strong{color:var(--gold)}
+.callout.red strong{color:var(--red)}
+.callout.orange strong{color:var(--orange)}
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(10,15,26,.75);margin:14px 0 28px}
+table{width:100%;border-collapse:collapse;min-width:400px}
+thead{background:rgba(255,255,255,.04);border-bottom:1px solid var(--border-strong)}
+thead th{padding:11px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+td{padding:10px 16px;vertical-align:top;font-size:13px;line-height:1.5;color:var(--text-muted)}
+td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:11.5px;background:rgba(93,139,255,.1);color:#7eb3ff;padding:1px 6px;border-radius:4px;border:1px solid rgba(93,139,255,.2)}
+pre{background:rgba(5,8,18,.9);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:16px 18px;overflow-x:auto;margin:14px 0 22px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:var(--text-muted)}
+.status-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 10px 3px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.status-chip.done{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:var(--green)}
+.status-chip.planned{background:rgba(93,139,255,.12);border:1px solid var(--accent-border);color:var(--accent)}
+.status-chip.wip{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.35);color:var(--orange)}
+.status-chip.open{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:var(--red)}
+.card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px}
+.card:hover{border-color:var(--accent-border)}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.card-desc{font-size:12.5px;color:var(--text-muted);line-height:1.6}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0 24px}
+.cvar-name{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;color:#7eb3ff;white-space:nowrap}
+footer{border-top:1px solid var(--border);padding:20px 48px;text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{color:#fff}
+.pill-list{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
+.pill{display:inline-block;padding:2px 10px 3px;background:var(--surface-strong);border:1px solid var(--border);border-radius:6px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px;color:var(--text-muted)}
+.pill.high{border-color:rgba(93,139,255,.4);color:#7eb3ff}
+.pill.mid{border-color:rgba(52,211,153,.3);color:var(--green)}
+.pill.atm{border-color:rgba(240,165,0,.3);color:var(--gold)}
+.pill.perf{border-color:rgba(251,146,60,.3);color:var(--orange)}
+.pill.debug{border-color:rgba(255,255,255,.1);color:var(--text-muted)}
+@media(max-width:700px){header,main,footer{padding-left:20px;padding-right:20px}.tab-nav-inner{padding:0 20px}.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">Q3<span>Rally</span></div>
+    <div class="header-sub">Ladder Service — Setup &amp; API Reference</div>
+    <div class="header-meta">
+      <span class="badge green">PHP</span>
+      <span class="badge orange">Python</span>
+      <span class="badge">v0.7c</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('php')" data-tab="php"><span>🐘</span> PHP Webservice</button>
+    <button class="tab-btn" onclick="switchTab('python')" data-tab="python"><span>🐍</span> Python Service</button>
+    <button class="tab-btn" onclick="switchTab('api')" data-tab="api"><span>📡</span> API Reference</button>
+    <button class="tab-btn" onclick="switchTab('version')" data-tab="version"><span>🔄</span> Version Check</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════ PHP WEBSERVICE ═══════════════ -->
+<section class="tab-panel active" id="tab-php">
+  <div class="eyebrow">Recommended Deployment</div>
+  <h2>PHP Webservice</h2>
+  <p>A self-contained single-file PHP service that receives match data from Q3Rally dedicated servers, stores it as JSON files, and renders a full leaderboard dashboard. No database or framework required — runs on any standard PHP 8.0+ shared hosting.</p>
+
+  <div class="callout green"><strong>Requirements</strong>PHP 8.0 or newer. Write access to the <code>data/</code> subdirectory. No additional libraries or extensions needed.</div>
+
+  <h3>Deployment</h3>
+  <div class="card">
+    <div class="card-title">Shared Hosting <span class="status-chip done">Recommended</span></div>
+    <div class="card-desc">
+      <ol style="margin-top:8px">
+        <li>Upload the contents of <code>ladder_service/php_webservice/</code> to your webspace.</li>
+        <li>Ensure PHP 8.0+ is active and the webserver has write access to the <code>data/</code> folder. Grant write permissions via your hosting panel if needed.</li>
+        <li>The API is now reachable at your webspace URL, e.g. <code>https://example.com/ladder/index.php</code>.</li>
+      </ol>
+      <p style="margin-top:10px">Many hosts set <code>index.php</code> as the default file. If the folder is in the document root the base URL may simply be <code>https://example.com/</code>.</p>
+    </div>
+  </div>
+
+  <h3>Data Storage</h3>
+  <p>Each match is stored as a single JSON file under <code>data/&lt;matchId&gt;.json</code>. The service automatically appends a <code>receivedAt</code> timestamp for sorting. Back up the <code>data/</code> folder regularly. For very large installations a full database backend is recommended long-term.</p>
+
+  <h3>Web Dashboard</h3>
+  <p>The root page of <code>index.php</code> serves a full leaderboard dashboard that reads from the <code>data/</code> folder and renders four ranking categories:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Category</th><th>Modes</th><th>Metric</th></tr></thead>
+    <tbody>
+      <tr><td>Best Times</td><td>Racing, Team Racing, Sprint</td><td>Fastest lap/finish time per player per map</td></tr>
+      <tr><td>Deathmatch</td><td>DM, Team DM</td><td>K/D ratio, kills, deaths — sorted by ratio</td></tr>
+      <tr><td>Objective</td><td>CTF, Domination, Derby, LCS</td><td>Captures / objectives / score — mode-priority sorted</td></tr>
+      <tr><td>Elimination</td><td>Elimination</td><td>Round wins (derived from position + roster if not explicit)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>Domination Scoring</strong>The dashboard searches each scoreboard entry for <code>objectives</code>, <code>objectiveScore</code>, or <code>objectivePoints</code> fields. If present, that value is used as the ranking metric. Otherwise it falls back to the general <code>score</code>/<code>points</code> field.</div>
+
+  <h3>Security &amp; Rate Limiting</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Feature</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Per-server API keys</td><td>Managed via <code>register.php</code> / <code>admin.php</code>. Each POST must include a valid <code>Authorization: Bearer &lt;key&gt;</code> header.</td></tr>
+      <tr><td>Rate limiting</td><td>Max 30 requests per 60 s per IP by default (<code>LADDER_RATE_LIMIT_MAX</code> / <code>LADDER_RATE_LIMIT_WINDOW</code>).</td></tr>
+      <tr><td>Payload size</td><td>Max 512 KB per POST body (<code>LADDER_MAX_BODY_BYTES</code>).</td></tr>
+      <tr><td>Deduplication</td><td>Re-posting an existing <code>matchId</code> returns HTTP 200 silently — no duplicate stored.</td></tr>
+      <tr><td>Key sanitisation</td><td>The server key is stripped from all publicly readable match payloads.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Error Responses</h3>
+  <p>All errors return JSON: <code>{ "error": "..." }</code>. File permission issues return HTTP 500. Malformed payloads return HTTP 400.</p>
+</section>
+
+<!-- ═══════════════ PYTHON SERVICE ═══════════════ -->
+<section class="tab-panel" id="tab-python">
+  <div class="eyebrow">Development / Self-Hosted</div>
+  <h2>Python Service</h2>
+  <p>A lightweight FastAPI/SQLite service for development or self-hosted deployments. Implements the same REST interface as the PHP webservice but stores matches in a SQLite database instead of flat JSON files.</p>
+
+  <div class="callout orange"><strong>Use Case</strong>The Python service is best suited for local development, testing, or server environments where you control the stack. For simple shared hosting the PHP webservice is easier to deploy.</div>
+
+  <h3>Requirements</h3>
+  <ul>
+    <li>Python 3.11</li>
+    <li>Dependencies from <code>requirements.txt</code></li>
+  </ul>
+
+  <h3>Installation</h3>
+<pre>cd ladder_service
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt</pre>
+
+  <h3>Start Development Server</h3>
+<pre>uvicorn ladder_service.main:app --reload</pre>
+  <p>By default a <code>ladder.db</code> SQLite file is created in the working directory. Override the path with the environment variable <code>LADDER_DB_PATH</code>.</p>
+
+  <h3>Run Tests</h3>
+<pre>pytest</pre>
+
+  <h3>Endpoints</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>POST</td><td>/api/v1/matches</td><td>Store a new match. Returns <code>{ "matchId": "…" }</code> on success.</td></tr>
+      <tr><td>GET</td><td>/api/v1/matches</td><td>List matches. Optional: <code>mode</code>, <code>limit</code>, <code>offset</code> query params.</td></tr>
+      <tr><td>GET</td><td>/api/v1/matches/{matchId}</td><td>Full match payload plus <code>createdAt</code> timestamp.</td></tr>
+      <tr><td>DELETE</td><td>/api/v1/matches/{matchId}</td><td>Delete a match permanently.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════════ API REFERENCE ═══════════════ -->
+<section class="tab-panel" id="tab-api">
+  <div class="eyebrow">Integration</div>
+  <h2>API Reference</h2>
+  <p>Both service implementations expose the same REST API. The base URL depends on your deployment.</p>
+
+  <h3>Authentication</h3>
+  <p>All POST requests require a bearer token in the <code>Authorization</code> header. Keys are managed server-side via <code>register.php</code> / <code>admin.php</code> (PHP) or the admin interface (Python).</p>
+<pre>Authorization: Bearer your-secret-api-key</pre>
+
+  <h3>POST /matches — Submit a Match</h3>
+<pre>curl -X POST https://example.com/ladder/index.php/matches \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer your-secret-api-key" \
+     -d @match.json</pre>
+
+  <p>The payload is the JSON object built by the Q3Rally dedicated server. Required top-level fields:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>matchId</td><td>✔</td><td>Unique match identifier, e.g. <code>srv-20240405-183011-42</code></td></tr>
+      <tr><td>mode</td><td>✔</td><td>Gametype string, e.g. <code>GT_RACING</code></td></tr>
+      <tr><td>startTime / endTime</td><td>✔</td><td>ISO 8601 timestamps</td></tr>
+      <tr><td>players[*].playerId</td><td>✔</td><td>Persistent player identity (cl_guid hash)</td></tr>
+      <tr><td>players[*].rawScore</td><td>✔</td><td>Mode-dependent primary metric</td></tr>
+      <tr><td>settings.g_gametype</td><td>✔</td><td>Integer gametype value</td></tr>
+      <tr><td>map</td><td></td><td>Map name string</td></tr>
+      <tr><td>server</td><td></td><td>Object: <code>name</code>, <code>host</code>, <code>build</code>, <code>dedicated</code></td></tr>
+      <tr><td>teams</td><td></td><td>Team aggregate objects (team modes)</td></tr>
+      <tr><td>events</td><td></td><td>Optional lap/flag/kill event log</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Responses: <code>201 Created</code> with <code>{ "matchId": "…" }</code> on success. <code>200 OK</code> if <code>matchId</code> already exists (no-op). <code>400</code> for malformed JSON. <code>413</code> if payload exceeds 512 KB. <code>429</code> if rate-limited.</p>
+
+  <h3>GET /matches — List Matches</h3>
+<pre>curl "https://example.com/ladder/index.php/matches?limit=10&amp;mode=GT_RACING"</pre>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>limit</td><td>100</td><td>Max results to return. Pass <code>all</code> for streaming output.</td></tr>
+      <tr><td>offset</td><td>0</td><td>Skip this many results (pagination).</td></tr>
+      <tr><td>mode</td><td>—</td><td>Filter by gametype string, e.g. <code>GT_RACING</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>GET /matches/{matchId} — Single Match</h3>
+<pre>curl https://example.com/ladder/index.php/matches/srv-20240405-183011-42</pre>
+  <p>Returns the full stored payload. The server key is stripped from the response.</p>
+
+  <h3>DELETE /matches/{matchId}</h3>
+<pre>curl -X DELETE https://example.com/ladder/index.php/matches/srv-20240405-183011-42</pre>
+  <p>Returns <code>204 No Content</code> on success. Requires admin auth.</p>
+
+  <h3>GET /matches/index — Fast Leaderboard Index</h3>
+<pre>curl https://example.com/ladder/index.php/matches/index</pre>
+  <p>Returns only the leaderboard-relevant fields for every match (no full payloads). Used by the web dashboard to load all results efficiently. Cached for 30 s.</p>
+
+  <h3>GET /maps/metadata &amp; /maps/levelshots</h3>
+<pre># Map long-name lookup (from .arena files)
+curl https://example.com/ladder/index.php/maps/metadata
+
+# Available levelshot image manifest
+curl https://example.com/ladder/index.php/maps/levelshots</pre>
+
+  <h3>GET/POST /players/{playerId}</h3>
+<pre>curl https://example.com/ladder/index.php/players/abc123def456</pre>
+  <p>Returns career profile data: rank, stats, achievements. Updated automatically on each match upload when the local client includes a profile snapshot.</p>
+
+  <h3>Example Match Payload</h3>
+<pre>{
+  "matchId": "srv-20240405-183011-42",
+  "mode": "GT_RACING",
+  "startTime": "2024-04-05T18:30:11Z",
+  "endTime": "2024-04-05T18:42:39Z",
+  "duration": "PT12M28S",
+  "map": "q3r_country01",
+  "server": {
+    "name": "Q3Rally EU #1",
+    "host": "203.0.113.10:27960",
+    "dedicated": true
+  },
+  "settings": { "g_gametype": 0, "g_laplimit": 3 },
+  "players": [
+    {
+      "playerId": "sha256:abc...",
+      "displayName": "SpeedDemon",
+      "vehicle": "alpine",
+      "position": 1,
+      "bestLapMs": 72340,
+      "totalRaceMs": 224180,
+      "isBot": false
+    }
+  ]
+}</pre>
+</section>
+
+<!-- ═══════════════ VERSION CHECK ═══════════════ -->
+<section class="tab-panel" id="tab-version">
+  <div class="eyebrow">Client Update System</div>
+  <h2>Version Check Endpoint</h2>
+  <p>The Q3Rally client checks for updates on startup by fetching a version text file from the ladder server. The check is triggered on every UI load (<code>CL_InitUI</code>) and runs asynchronously in the background.</p>
+
+  <div class="callout"><strong>Default Endpoint</strong><code>https://ladder.q3rally.com/version.txt</code> — overrideable via the <code>cl_updateEndpoint</code> CVar.</div>
+
+  <h3>How the Client Works</h3>
+  <ol style="margin-bottom:20px">
+    <li>On UI init, <code>CL_UpdateRequestLatest</code> fires an async HTTP GET to <code>cl_updateEndpoint</code>.</li>
+    <li>The response is parsed: first line is the version string. Leading/trailing whitespace and optional surrounding quotes are stripped. A leading <code>v</code>/<code>V</code> is optional.</li>
+    <li>The remote version is compared against the local <code>PRODUCT_VERSION</code>. If newer: status <code>outdated</code>, main menu shows a download prompt. Otherwise: <code>up_to_date</code>.</li>
+    <li>Network errors or invalid responses set status <code>error</code> — no prompt shown.</li>
+  </ol>
+
+  <h3>Serving the Version File (PHP)</h3>
+  <p>The PHP webservice exposes <code>GET /version</code> for reading and <code>POST /version</code> for updating. A password protects writes.</p>
+
+  <h3>Setting the Password</h3>
+  <p>Set via environment variable (preferred) or a password file:</p>
+<pre># Option 1: environment variable (.htaccess on shared hosting)
+SetEnv LADDER_VERSION_PASSWORD "your-secret"
+
+# Option 2: password file (auto-read if present)
+echo -n "your-secret" &gt; /path/to/ladder/version.password</pre>
+  <p>Without a configured password, write requests return HTTP 403.</p>
+
+  <h3>Read Current Version</h3>
+<pre>curl https://example.com/ladder/index.php/version</pre>
+  <p>Returns JSON with at least <code>latest</code> (or <code>version</code>). Pass <code>Accept: text/plain</code> to get a plain text response.</p>
+
+  <h3>Update the Version</h3>
+<pre>curl -X POST https://example.com/ladder/index.php/version \
+     -H "Content-Type: application/json" \
+     -d '{
+       "password":    "your-secret",
+       "version":     "v0.7c",
+       "downloadUrl": "https://downloads.example.com/q3rally-v0.7c.zip",
+       "message":     "Bugfix release — gametype enum fixed."
+     }'</pre>
+  <p><code>downloadUrl</code> and <code>message</code> are optional and can be overwritten or cleared at any time.</p>
+
+  <h3>Static File Alternative</h3>
+  <p>If you don't need the update endpoint, a plain static text file works too — just place <code>version.txt</code> on any HTTPS server with the version string on the first line:</p>
+<pre>v0.7c</pre>
+  <p>Point <code>cl_updateEndpoint</code> to its URL. The client handles both JSON and plain-text responses.</p>
+
+  <h3>Client CVars</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>CVar</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>cl_updateCheck</td><td>1</td><td>Enable / disable the version check entirely.</td></tr>
+      <tr><td>cl_updateEndpoint</td><td>ladder URL</td><td>URL of the version file or endpoint.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+
+<footer>
+  Q3Rally v0.7c &nbsp;·&nbsp; Ladder Service Documentation &nbsp;·&nbsp;
+  <a href="http://www.q3rally.com">q3rally.com</a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/rX8Sxmh">Discord</a>
+</footer>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

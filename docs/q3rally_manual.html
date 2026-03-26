@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q3Rally Manual — v0.7c</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  --bg:             radial-gradient(1200px 800px at 50% 0%, rgba(255,255,255,0.07), #05050c 60%);
+  --surface:        rgba(18,21,33,0.72);
+  --surface-strong: rgba(28,31,46,0.94);
+  --surface-hover:  rgba(35,40,60,0.85);
+  --border:         rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.18);
+  --text:           #F5F6FF;
+  --text-muted:     #8b90b0;
+  --accent:         #5D8BFF;
+  --accent-soft:    rgba(93,139,255,0.15);
+  --accent-border:  rgba(93,139,255,0.40);
+  --gold:           #f0a500;
+  --green:          #34d399;
+  --red:            #f87171;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);background-color:#05050c;color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:400;line-height:1.65;min-height:100vh}
+
+header{padding:36px 48px 32px;border-bottom:1px solid var(--border);background:rgba(10,12,22,0.6);backdrop-filter:blur(20px)}
+.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px}
+.header-logo{font-size:26px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+.header-logo span{color:var(--accent)}
+.header-sub{font-size:13px;color:var(--text-muted);font-style:italic}
+.header-meta{margin-left:auto}
+.badge{display:inline-flex;align-items:center;padding:3px 12px 4px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+
+.tab-nav{position:sticky;top:0;z-index:100;background:rgba(10,12,22,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.tab-nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.tab-nav-inner::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:14px 14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+
+main{max-width:1200px;margin:0 auto;padding:40px 48px 96px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px}
+.section-eyebrow:first-child{margin-top:0}
+h2{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--text);margin-bottom:18px}
+h3{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+p{color:var(--text-muted);margin-bottom:14px;font-size:13px}
+
+.callout{border-left:3px solid var(--accent);background:var(--surface-strong);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0 24px;font-size:12.5px;color:var(--text-muted)}
+.callout.green{border-color:var(--green)}
+.callout.gold{border-color:var(--gold)}
+.callout.red{border-color:var(--red)}
+.callout strong{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.callout.green strong{color:var(--green)}
+.callout.gold strong{color:var(--gold)}
+.callout.red strong{color:var(--red)}
+
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(10,15,26,.75);margin:14px 0 28px}
+table{width:100%;border-collapse:collapse;min-width:480px}
+thead{background:rgba(255,255,255,.04);border-bottom:1px solid var(--border-strong)}
+thead th{padding:11px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+td{padding:11px 16px;vertical-align:top;font-size:13px;line-height:1.5;color:var(--text-muted)}
+td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:14px 0 32px}
+.mode-card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;transition:border-color .15s,background .15s}
+.mode-card:hover{border-color:var(--accent-border);background:var(--surface-hover)}
+.mode-num{display:inline-flex;align-items:center;padding:2px 10px 3px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:10px}
+.mode-num.team{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.35);color:var(--green)}
+.mode-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin-bottom:3px}
+.mode-tag{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.mode-desc{font-size:12.5px;color:var(--text-muted);line-height:1.6}
+
+.vehicle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:14px 0 28px}
+.vehicle-card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:18px 20px;transition:border-color .15s,background .15s}
+.vehicle-card:hover{border-color:var(--accent-border);background:var(--surface-hover)}
+.vehicle-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.vehicle-sub{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.vehicle-desc{font-size:12px;color:var(--text-muted);line-height:1.55}
+
+.cvar-group-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);padding:6px 0 10px;border-bottom:1px solid rgba(240,165,0,.2);margin:28px 0 0}
+.cvar-table{width:100%;border-collapse:collapse;margin-bottom:6px}
+.cvar-table td{padding:8px 14px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:top}
+.cvar-table tr:last-child td{border-bottom:none}
+.cvar-table tr:hover td{background:rgba(255,255,255,.02)}
+.cvar-name{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;color:#7eb3ff;white-space:nowrap;width:220px}
+.cvar-default{color:var(--gold);font-size:12px;font-family:monospace;width:80px;text-align:center;white-space:nowrap}
+.cvar-desc{color:var(--text-muted)}
+
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:11.5px;background:rgba(93,139,255,.1);color:#7eb3ff;padding:1px 6px;border-radius:4px;border:1px solid rgba(93,139,255,.2)}
+pre{background:rgba(5,8,18,.9);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:16px 18px;overflow-x:auto;margin:14px 0 22px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:var(--text-muted)}
+
+.changed{color:var(--gold);font-weight:600}
+.same{color:var(--text-muted)}
+.new-val{color:var(--green);font-weight:600}
+.bad-val{color:var(--red)}
+
+.flow-steps{display:flex;flex-direction:column;gap:0;margin:16px 0 24px}
+.flow-step{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);position:relative}
+.flow-step:last-child{border-bottom:none}
+.flow-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.flow-content{}
+.flow-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.flow-desc{font-size:12.5px;color:var(--text-muted);line-height:1.55}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:14px 0 24px}
+@media(max-width:700px){.two-col{grid-template-columns:1fr}}
+
+.info-box{background:var(--surface-strong);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.info-box h4{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.info-box p{font-size:12.5px;margin-bottom:0}
+
+footer{border-top:1px solid var(--border);padding:20px 48px;text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{color:#fff}
+
+@media(max-width:700px){
+  header,main,footer{padding-left:20px;padding-right:20px}
+  .tab-nav-inner{padding:0 20px}
+  .mode-grid,.vehicle-grid{grid-template-columns:1fr}
+}
+
+/* ── BUILDING TAB extras ── */
+.eyebrow { font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px }
+.eyebrow:first-child { margin-top:0 }
+ul,ol { color:var(--text-muted);font-size:13px;padding-left:20px;margin-bottom:14px }
+li { margin-bottom:4px;line-height:1.6 }
+.card { background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px;transition:border-color .15s }
+.card:hover { border-color:var(--accent-border) }
+.card-title { font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap }
+.card-desc { font-size:12.5px;color:var(--text-muted);line-height:1.6 }
+.card-desc p { font-size:12.5px;margin-bottom:8px }
+.card-desc p:last-child { margin-bottom:0 }
+.status-chip { display:inline-flex;align-items:center;padding:2px 10px 3px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase }
+.status-chip.done { background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:var(--green) }
+.status-chip.planned { background:rgba(93,139,255,.12);border:1px solid var(--accent-border);color:var(--accent) }
+.status-chip.open { background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:var(--red) }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">Q3<span>Rally</span></div>
+    <div class="header-sub">It's damn fast, baby.</div>
+    <div class="header-meta"><span class="badge">v0.7c</span></div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('modes')" data-tab="modes"><span>🏁</span> Game Modes</button>
+    <button class="tab-btn" onclick="switchTab('maps')" data-tab="maps"><span>🗺️</span> Map Pool</button>
+    <button class="tab-btn" onclick="switchTab('vehicles')" data-tab="vehicles"><span>🚗</span> Vehicles</button>
+    <button class="tab-btn" onclick="switchTab('weapons')" data-tab="weapons"><span>🔫</span> Weapons</button>
+    <button class="tab-btn" onclick="switchTab('server')" data-tab="server"><span>🖥️</span> Server</button>
+    <button class="tab-btn" onclick="switchTab('ladder')" data-tab="ladder"><span>🏆</span> Ladder</button>
+    <button class="tab-btn" onclick="switchTab('cvars')" data-tab="cvars"><span>⚙️</span> CVars</button>
+    <button class="tab-btn" onclick="switchTab('mapping')" data-tab="mapping"><span>🔧</span> Mapping</button>
+    <button class="tab-btn" onclick="switchTab('building')" data-tab="building"><span>🔨</span> Building</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════ GAME MODES ═══════════════ -->
+<section class="tab-panel active" id="tab-modes">
+  <div class="section-eyebrow">Overview</div>
+  <h2>Game Modes</h2>
+  <p>Q3Rally ships with twelve distinct game modes covering pure racing, armed racing, team play, survival, and arena combat. The <code>g_gametype</code> server variable selects the active mode.</p>
+  <div class="callout green"><strong>✔ v0.7c Fix</strong>All gametype values now have explicit integer assignments in <code>bg_public.h</code>. Non-team modes retain historical values (0–6). Team modes start at 16, leaving slots 8–15 for future additions.</div>
+
+  <h3>Non-Team Modes</h3>
+  <div class="mode-grid">
+    <div class="mode-card"><div class="mode-num">g_gametype 0</div><div class="mode-name">Racing</div><div class="mode-tag">GT_RACING</div><div class="mode-desc">Pure lap racing. Position by race progress only — frags have no effect on standings.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 1</div><div class="mode-name">Racing DM</div><div class="mode-tag">GT_RACING_DM</div><div class="mode-desc">Same as Racing but every frag subtracts <strong>500 ms</strong> from your recorded finish time.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 2</div><div class="mode-name">Single Player</div><div class="mode-tag">GT_SINGLE_PLAYER</div><div class="mode-desc">Solo time-trial. Lap count via <code>g_timeTrialLaps</code>. Frags +1, suicides −1.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 3</div><div class="mode-name">Derby</div><div class="mode-tag">GT_DERBY</div><div class="mode-desc">Last running car wins. Scoreboard shows "wrecks." Heavy collision damage encouraged.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 4</div><div class="mode-name">Last Car Standing</div><div class="mode-tag">GT_LCS</div><div class="mode-desc">Survival without respawns. One surviving car ends the round immediately.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 5</div><div class="mode-name">Elimination</div><div class="mode-tag">GT_ELIMINATION</div><div class="mode-desc">Lap racing with knockout waves at set intervals. Maps must carry <code>elimination "1"</code>.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 6</div><div class="mode-name">Deathmatch</div><div class="mode-tag">GT_DEATHMATCH</div><div class="mode-desc">Classic FFA. Kills +1, suicides −1. Ends at frag or time limit.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 7</div><div class="mode-name">Sprint</div><div class="mode-tag">GT_SPRINT</div><div class="mode-desc">Point-to-point single-lap race. <code>laplimit</code> is forced to 1 automatically.</div></div>
+  </div>
+
+  <h3>Team Modes</h3>
+  <div class="mode-grid">
+    <div class="mode-card"><div class="mode-num team">g_gametype 16</div><div class="mode-name">Team DM</div><div class="mode-tag">GT_TEAM</div><div class="mode-desc">Personal scores mirror DM; team totals rise in parallel. Frag limits apply per team.</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 17</div><div class="mode-name">Team Racing</div><div class="mode-tag">GT_TEAM_RACING</div><div class="mode-desc">Teams ranked by aggregated finish times. Pure race — frags don't alter standings.</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 18</div><div class="mode-name">Team Racing DM</div><div class="mode-tag">GT_TEAM_RACING_DM</div><div class="mode-desc">Team times plus 500 ms bonus per frag. Combines lap strategy with active combat.</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 19</div><div class="mode-name">CTF</div><div class="mode-tag">GT_CTF</div><div class="mode-desc">Two-team flag capture. Captures +5, returns +1, carrier kills +2.</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 20</div><div class="mode-name">CTF4</div><div class="mode-tag">GT_CTF4</div><div class="mode-desc">Four-team CTF. Coloured HUD messages and per-team audio cues for all four sides.</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 21</div><div class="mode-name">Domination</div><div class="mode-tag">GT_DOMINATION</div><div class="mode-desc">Hold sigil points to score every <code>g_dominationScoreInterval</code> ms (default 10 s).</div></div>
+    <div class="mode-card"><div class="mode-num team">g_gametype 22</div><div class="mode-name">King of the Hill</div><div class="mode-tag">GT_KOTH</div><div class="mode-desc">Hold the hill zone to accumulate team points. Overtime mode available.</div></div>
+  </div>
+
+  <h3>Scoring Summary</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mode</th><th>Win Condition</th><th>Kill Value</th><th>Suicide</th></tr></thead>
+    <tbody>
+      <tr><td>Racing / Team Racing</td><td>Best race time / progress</td><td>No effect</td><td>No effect</td></tr>
+      <tr><td>Racing DM / Team Racing DM</td><td>Best adjusted time</td><td>−500 ms from time</td><td>No effect</td></tr>
+      <tr><td>Sprint</td><td>Fastest point-to-point</td><td>No effect</td><td>No effect</td></tr>
+      <tr><td>Elimination</td><td>Last survivor</td><td>No effect</td><td>—</td></tr>
+      <tr><td>Derby / LCS</td><td>Last car alive</td><td>+1</td><td>−1</td></tr>
+      <tr><td>Deathmatch / Team DM</td><td>Frag or time limit</td><td>+1</td><td>−1</td></tr>
+      <tr><td>CTF / CTF4</td><td>Capture limit</td><td>+2 (carrier kill)</td><td>—</td></tr>
+      <tr><td>Domination / KOTH</td><td>Score limit / time</td><td>+1</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════════ MAP POOL ═══════════════ -->
+<section class="tab-panel" id="tab-maps">
+  <div class="section-eyebrow">Tracks &amp; Arenas</div>
+  <h2>Map Pool</h2>
+  <p>Q3Rally ships with a curated set of race circuits and combat arenas. Each map's <code>.arena</code> file defines supported modes, default lap count, checkpoints, weapons, and powerups.</p>
+  <h3>Race Circuits</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Map ID</th><th>Title</th><th>Author</th><th>Modes</th><th>Laps</th><th>CPs</th><th>Weapons</th><th>Elim</th></tr></thead>
+    <tbody>
+      <tr><td>Race_Bot_Test</td><td>Race Bot Test</td><td>P3rlE</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>14</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_a_to_b_test</td><td>A 2 B Test</td><td>P3rlE</td><td>Racing, Team Racing</td><td>1</td><td>2</td><td>—</td><td>—</td></tr>
+      <tr><td>q3r_country01</td><td>Roll On Down The Line</td><td>Stecki</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>20</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_dirtyfun</td><td>Dirty Fun</td><td>Stecki &amp; insellium</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>4–9</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_downtown</td><td>DownTown</td><td>OliverV</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>25</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_lavafalls</td><td>Lava Falls</td><td>Cyberdemon</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>22</td><td>FT PG RG RL</td><td>✔</td></tr>
+      <tr><td>q3r_nightcity</td><td>Night City</td><td>Amphetamine</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>9&amp;12</td><td>GL RG RL</td><td>✔</td></tr>
+      <tr><td>q3r_ridgeracer</td><td>Ridge Racer</td><td>TheBigBuu &amp; insellium</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>19</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_sk1</td><td>Canyon Cruise</td><td>SystemKrash &amp; insellium</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>14</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_valley</td><td>Desert Valley</td><td>Dipso</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>12</td><td>PG RL SG</td><td>✔</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Combat, Team &amp; Special Maps</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Map ID</th><th>Title</th><th>Author</th><th>Supported Modes</th><th>Weapons</th></tr></thead>
+    <tbody>
+      <tr><td>q3r_babel</td><td>Babel's Military Base</td><td>insellium (remix)</td><td>Domination</td><td>SG RG PG RL BFG</td></tr>
+      <tr><td>q3r_battlecanyon</td><td>Battle Canyon</td><td>P3rle &amp; insellium</td><td>DM, Team DM</td><td>RL PG RG SG LG + Mines</td></tr>
+      <tr><td>q3r_citydom</td><td>Dominate the City</td><td>P3rlE</td><td>Domination</td><td>All</td></tr>
+      <tr><td>q3r_ctf_01</td><td>Capture in the Jungle</td><td>P3rlE</td><td>CTF</td><td>FT PG RL SG RG</td></tr>
+      <tr><td>q3r_ctf4_01</td><td>Flag Frenzy Speedway</td><td>P3rlE</td><td>CTF4</td><td>—</td></tr>
+      <tr><td>q3r_david4</td><td>Jungle Opening</td><td>CE &amp; P3rlE</td><td>CTF</td><td>BFG GL FT RL LG</td></tr>
+      <tr><td>q3r_david5</td><td>Underground Battle Arena</td><td>CE</td><td>DM, Team DM, Derby</td><td>RL PG</td></tr>
+      <tr><td>q3r_demobowl</td><td>Destroy Yourself Now</td><td>Stecki</td><td>DM, Team DM, Derby</td><td>LG RL RG</td></tr>
+      <tr><td>q3r_dm02</td><td>Classic Demolition Derby</td><td>gout</td><td>Derby, DM, Team DM</td><td>RL PG SG</td></tr>
+      <tr><td>q3r_lcs1</td><td>LCS TEST MAP</td><td>insellium</td><td>Last Car Standing</td><td>All</td></tr>
+      <tr><td>q3r_mk</td><td>Warehouse Playground</td><td>insellium</td><td>DM, Team DM, Domination</td><td>All</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Elimination Flag</strong>Maps supporting Elimination carry <code>elimination "1"</code> in their <code>.arena</code> file. Use this in rotation scripts to auto-filter eligible tracks.</div>
+</section>
+
+<!-- ═══════════════ VEHICLES ═══════════════ -->
+<section class="tab-panel" id="tab-vehicles">
+  <div class="section-eyebrow">Garage</div>
+  <h2>Vehicles</h2>
+  <p>All vehicles ship as player models in <code>baseq3r/models/players/</code>. Each comes with multiple liveries (skin files) and a bot profile describing handling traits.</p>
+  <div class="vehicle-grid">
+    <div class="vehicle-card"><div class="vehicle-name">Alpine</div><div class="vehicle-sub">Compact Sports Car</div><div class="vehicle-desc">Extensive light tags, smooth racing line. Good grip balance — suits technical circuits.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Camaro</div><div class="vehicle-sub">American Classic</div><div class="vehicle-desc">Multiple stripe liveries. Playful drifting at the limit — rear-happy and rewarding.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Gravelord</div><div class="vehicle-sub">Hearse</div><div class="vehicle-desc">Curtains and coffin options. Heavier mass makes it a threat in Derby and LCS modes.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Gremlin</div><div class="vehicle-sub">Compact Sedan</div><div class="vehicle-desc">Minimalistic paintwork, consistent handling. Solid pick for newcomers learning circuits.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Murci&eacute;lago</div><div class="vehicle-sub">Wedge Supercar</div><div class="vehicle-desc">The "red missile." High top speed — needs smooth input to stay planted.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">MacDaddy</div><div class="vehicle-sub">Muscular Dragster</div><div class="vehicle-desc">Supercharger on full display. Loud and spectacular — best on long straights.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Mini</div><div class="vehicle-sub">Short Wheelbase</div><div class="vehicle-desc">Multiple roof colours. Nimble in chicanes — ideal for sprint races with tight sections.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Raptor</div><div class="vehicle-sub">Pickup Truck</div><div class="vehicle-desc">Brush guard for aggressive passes. Robust in collisions — a derby favourite.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Reaper</div><div class="vehicle-sub">Tube-Frame Buggy</div><div class="vehicle-desc">Mesh protection, sharp bite. Light weight and high CoG — thrilling at the limit.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Roadster</div><div class="vehicle-sub">Open-Top Cabrio</div><div class="vehicle-desc">Shares parts with the Slingshot. Elegant and precise on flowing layouts.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Sidepipe</div><div class="vehicle-sub">Muscle Car</div><div class="vehicle-desc">Heavy spoilers to defend track position. Stable at speed — wins the late-brake battle.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Slingshot</div><div class="vehicle-sub">Targa</div><div class="vehicle-desc">Removable roofs ideal for slipstream attacks. Twitchy but fast — strike when it counts.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Viper</div><div class="vehicle-sub">Aerodynamic GT</div><div class="vehicle-desc">Lurking predator with graphite finish. High downforce, decisive under braking.</div></div>
+  </div>
+</section>
+
+<!-- ═══════════════ WEAPONS ═══════════════ -->
+<section class="tab-panel" id="tab-weapons">
+  <div class="section-eyebrow">Arsenal</div>
+  <h2>Weapons &amp; Powerups</h2>
+  <p>Q3Rally expands the classic Quake 3 front weapon set with an exclusive rear-fire arsenal and vehicle-specific powerups.</p>
+  <h3>Front Weapons</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Weapon</th><th>Ammo</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Chainsaw</td><td>Unlimited</td><td>Close-combat melee replacing the Gauntlet.</td></tr>
+      <tr><td>Shotgun</td><td>10 shells</td><td>Wide pellet spread for short to mid-range engagements.</td></tr>
+      <tr><td>Machinegun</td><td>40 bullets</td><td>Continuous fire to sweep narrow passages.</td></tr>
+      <tr><td>Grenade Launcher</td><td>10 grenades</td><td>Arcing splash projectiles for area denial.</td></tr>
+      <tr><td>Rocket Launcher</td><td>10 rockets</td><td>Classic splash damage in tunnels and over jumps.</td></tr>
+      <tr><td>Lightning Gun</td><td>100 energy</td><td>Beam weapon — stable hits during overtaking.</td></tr>
+      <tr><td>Railgun</td><td>10 slugs</td><td>Precision shot for long straights.</td></tr>
+      <tr><td>Plasma Gun</td><td>50 plasma</td><td>Rapid-fire orbs for tight corner sequences.</td></tr>
+      <tr><td>BFG10K</td><td>20 orbs</td><td>Massive splash damage in arena and CTF maps.</td></tr>
+      <tr><td>Flame Thrower</td><td>20 flames</td><td>Q3Rally-exclusive. Long cone — torches rivals or ignites oil slicks.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Rear-Fire Arsenal</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pickup</th><th>Charges</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Smoke Screen</td><td>15</td><td>Opaque cloud that blinds pursuers.</td></tr>
+      <tr><td>Oil Slick</td><td>15</td><td>Reduces friction on contact. Can be ignited by Flame Thrower.</td></tr>
+      <tr><td>Mine</td><td>5</td><td>Sticks to track surface, detonates on contact for heavy burst damage.</td></tr>
+      <tr><td>Flame Trail</td><td>15</td><td>Burning strip inflicting sustained fire damage.</td></tr>
+      <tr><td>Bio Sludge</td><td>15</td><td>Toxic trail with expanding damage radius over time.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Powerups &amp; Holdables</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pickup</th><th>Duration</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Turbo</td><td>5 s</td><td>Afterburner — temporary boost to acceleration and top speed.</td></tr>
+      <tr><td>Quad Damage</td><td>30 s</td><td>Quadruples all outgoing weapon damage.</td></tr>
+      <tr><td>Environmental Protection</td><td>30 s</td><td>Mitigates lava, acid, and environmental hazards.</td></tr>
+      <tr><td>Haste</td><td>30 s</td><td>Raises fire rate and reduces reload speed.</td></tr>
+      <tr><td>Invisibility</td><td>30 s</td><td>Makes your vehicle harder to spot — useful for ambush play.</td></tr>
+      <tr><td>Auto Repair</td><td>30 s</td><td>Continuously regenerates vehicle hit points.</td></tr>
+      <tr><td>Shielding</td><td>30 s</td><td>Extra damage absorption stacking with existing armour.</td></tr>
+      <tr><td>Personal Teleporter</td><td>1 use</td><td>Instantly resets vehicle to last safe position on track.</td></tr>
+      <tr><td>Fuel Can</td><td>1 use</td><td>Refills tank to maximum without affecting turbo reserves.</td></tr>
+      <tr><td>Medkit</td><td>1 use</td><td>On-demand health restore.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Secondary Fire Modes</h3>
+  <p>Every front weapon has a secondary fire mode activated by the secondary attack key. Rear-fire weapons have no secondary mode.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Weapon</th><th>Primary</th><th>Secondary</th></tr></thead>
+    <tbody>
+      <tr><td>Chainsaw</td><td>Close-range melee strike.</td><td>Identical to primary.</td></tr>
+      <tr><td>Shotgun</td><td>Spread of pellets.</td><td>Single high-damage slug.</td></tr>
+      <tr><td>Machinegun</td><td>Continuous stream of bullets.</td><td>Precise three-round burst with cooldown.</td></tr>
+      <tr><td>Grenade Launcher</td><td>Standard timed/impact grenade.</td><td>Cluster grenade that splits into multiple sub-munitions.</td></tr>
+      <tr><td>Rocket Launcher</td><td>Standard rocket with splash damage.</td><td>Homing rocket that tracks the nearest target.</td></tr>
+      <tr><td>Lightning Gun</td><td>Continuous lightning beam.</td><td>Chain lightning that arcs to nearby opponents.</td></tr>
+      <tr><td>Railgun</td><td>High-velocity slug that pierces targets.</td><td>Telefrag shot — teleports the shooter to the hit location for massive damage.</td></tr>
+      <tr><td>Plasma Gun</td><td>Rapid plasma bolts traveling straight.</td><td>Bouncing plasma bolt with circular arc motion.</td></tr>
+      <tr><td>BFG10K</td><td>Fast energy projectile with large splash.</td><td>Slower energy sphere with expanded splash radius.</td></tr>
+      <tr><td>Flame Thrower</td><td>Forward stream of flame.</td><td>Triple flame spread forming a wide cone.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════════ SERVER SETUP ═══════════════ -->
+<section class="tab-panel" id="tab-server">
+  <div class="section-eyebrow">Administration</div>
+  <h2>Server Setup</h2>
+  <p>Q3Rally dedicated servers are configured via <code>.cfg</code> files. The most important variable is <code>g_gametype</code> which selects the active game mode.</p>
+
+  
+  <h3>Starting the Server</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Platform</th><th>Command</th></tr></thead>
+    <tbody>
+      <tr><td>Windows (manual)</td><td><code>q3rally.x86_64.exe +set dedicated 1 +exec racing_server.cfg</code></td></tr>
+      <tr><td>Windows (.bat)</td><td>Double-click <code>baseq3r/start_racing_server.bat</code> — picks the correct executable automatically. Each multiplayer gametype has its own batch file.</td></tr>
+      <tr><td>Linux</td><td><code>./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Note</strong>GT_SINGLE_PLAYER is local-only. Its batch file notes that a dedicated server is not available for this mode.</div>
+
+  <h3>Docker</h3>
+  <p>A Docker image is available for running Q3Rally without manual compilation.</p>
+<pre># Pull the latest image
+docker pull registry.gitlab.com/manalejandro/q3rally-docker/q3rally-docker:latest
+
+# Run a dedicated server (port 27960 UDP)
+docker run --rm -it -p 27960:27960/udp \
+  registry.gitlab.com/manalejandro/q3rally-docker/q3rally-docker:latest \
+  +set dedicated 1 +exec server.cfg</pre>
+
+<h3>g_gametype Values — Migration Table</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Gametype</th><th>Mode</th><th>v0.6c</th><th>v0.7b ⚠️</th><th>v0.7c ✔</th></tr></thead>
+    <tbody>
+      <tr><td>GT_RACING</td><td>Racing</td><td class="same">0</td><td class="same">0</td><td class="same">0</td></tr>
+      <tr><td>GT_RACING_DM</td><td>Racing DM</td><td class="same">1</td><td class="same">1</td><td class="same">1</td></tr>
+      <tr><td>GT_SINGLE_PLAYER</td><td>Single Player</td><td class="same">2</td><td class="bad-val">3 ⚠️</td><td class="same">2</td></tr>
+      <tr><td>GT_DERBY</td><td>Derby</td><td class="same">3</td><td class="bad-val">4 ⚠️</td><td class="same">3</td></tr>
+      <tr><td>GT_LCS</td><td>Last Car Standing</td><td class="same">4</td><td class="bad-val">5 ⚠️</td><td class="same">4</td></tr>
+      <tr><td>GT_ELIMINATION</td><td>Elimination</td><td class="same">5</td><td class="bad-val">6 ⚠️</td><td class="same">5</td></tr>
+      <tr><td>GT_DEATHMATCH</td><td>Deathmatch</td><td class="same">6</td><td class="bad-val">7 ⚠️</td><td class="same">6</td></tr>
+      <tr><td>GT_SPRINT</td><td>Sprint</td><td class="same">—</td><td class="bad-val">2 ⚠️</td><td class="new-val">7 (new)</td></tr>
+      <tr><td colspan="5" style="font-size:11px;color:var(--text-muted);font-style:italic;padding:6px 16px">8–15 reserved for future non-team modes</td></tr>
+      <tr><td>GT_TEAM</td><td>Team DM</td><td class="changed">7</td><td class="bad-val">8 ⚠️</td><td class="new-val">16</td></tr>
+      <tr><td>GT_TEAM_RACING</td><td>Team Racing</td><td class="changed">8</td><td class="bad-val">9 ⚠️</td><td class="new-val">17</td></tr>
+      <tr><td>GT_TEAM_RACING_DM</td><td>Team Racing DM</td><td class="changed">9</td><td class="bad-val">10 ⚠️</td><td class="new-val">18</td></tr>
+      <tr><td>GT_CTF</td><td>CTF</td><td class="changed">10</td><td class="bad-val">11 ⚠️</td><td class="new-val">19</td></tr>
+      <tr><td>GT_CTF4</td><td>CTF4</td><td class="changed">11</td><td class="bad-val">12 ⚠️</td><td class="new-val">20</td></tr>
+      <tr><td>GT_DOMINATION</td><td>Domination</td><td class="changed">12</td><td class="bad-val">13 ⚠️</td><td class="new-val">21</td></tr>
+      <tr><td>GT_KOTH</td><td>KOTH</td><td class="same">—</td><td class="bad-val">14 ⚠️</td><td class="new-val">22 (new)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout gold"><strong>⚠ Action Required — Team Servers</strong>Upgrading from v0.6c → v0.7c: all team-mode configs must be updated (GT_TEAM and above). Non-team servers (0–6) require no change.</div>
+
+  <h3>Minimal DM Server Config</h3>
+<pre>seta sv_hostname     "My Q3Rally Server"
+seta sv_maxclients   16
+seta g_gametype      6          // 6 = Deathmatch
+seta fraglimit       30
+seta timelimit       20
+
+set d1 "map q3r_battlecanyon  ; set nextmap vstr d2"
+set d2 "map q3r_demobowl      ; set nextmap vstr d3"
+set d3 "map q3r_mk            ; set nextmap vstr d1"
+vstr d1</pre>
+
+  <h3>Elimination Server Config</h3>
+<pre>seta g_gametype              5    // Elimination
+seta g_eliminationStartDelay 30
+seta g_eliminationInterval   15
+seta g_eliminationWarning    5
+
+set d1 "map q3r_country01  ; set nextmap vstr d2"
+set d2 "map q3r_valley     ; set nextmap vstr d1"
+vstr d1</pre>
+
+  <h3>Racing Server Config</h3>
+<pre>seta g_gametype          0    // Racing
+seta g_laplimit          3
+seta g_forceEngineStart  60
+seta g_finishRaceDelay   30
+seta g_rallyReadyCheck   1    // Wait for all players ready
+
+set d1 "map q3r_country01 ; set nextmap vstr d2"
+set d2 "map q3r_downtown  ; set nextmap vstr d3"
+set d3 "map q3r_valley    ; set nextmap vstr d1"
+vstr d1</pre>
+</section>
+
+<!-- ═══════════════ LADDER ═══════════════ -->
+<section class="tab-panel" id="tab-ladder">
+  <div class="section-eyebrow">Online Ranking</div>
+  <h2>Ladder Service</h2>
+  <p>The Q3Rally Ladder automatically records match results from dedicated servers and publishes leaderboards per game mode and map. The ladder web frontend is available at <code>ladder.q3rally.com</code>.</p>
+
+  <h3>How It Works</h3>
+  <div class="flow-steps">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="flow-title">Match ends on the server</div><div class="flow-desc">When intermission starts, <code>sv_ladder.c</code> assembles a JSON payload from the level state — timestamps, player positions, lap times, kills, and damage figures.</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="flow-title">POST to the ladder endpoint</div><div class="flow-desc">The server posts to <code>POST /api/v1/matches</code> using libcurl asynchronously. The request includes a bearer token from <code>sv_ladderApiKey</code>.</div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="flow-title">Retry on failure</div><div class="flow-desc">Transport errors or HTTP ≥ 500 queue the payload to <code>telemetry/outbox</code> and retry with exponential backoff (5 s → 5 min cap). Successful delivery removes the spool entry.</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="flow-title">Leaderboard updated</div><div class="flow-desc">The ladder service indexes the match and updates best times, K/D records, and objective scores. The web frontend reflects changes within seconds.</div></div></div>
+  </div>
+
+  <h3>Server CVars</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>CVar</th><th>Default</th><th>Flags</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>sv_ladderEnabled</td><td>0</td><td>ARCHIVE</td><td>Globally enable or disable the HTTP reporter. Set to 1 to activate.</td></tr>
+      <tr><td>sv_ladderUrl</td><td>—</td><td>ARCHIVE</td><td>Target endpoint. Example: <code>https://ladder.q3rally.com/index.php</code></td></tr>
+      <tr><td>sv_ladderApiKey</td><td>—</td><td>TEMP · PROTECTED</td><td>Bearer token for authentication. Never appears in status output or logs.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>Security Note</strong><code>sv_ladderApiKey</code> is treated like <code>rconPassword</code> — stored as a temporary protected CVar that is never included in <code>status</code> responses or written to disk.</div>
+
+  <h3>Minimal Ladder Config</h3>
+<pre>seta sv_ladderEnabled  1
+seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
+// sv_ladderApiKey is set at runtime, never saved to a public config file:
+// seta sv_ladderApiKey "your-secret-key-here"</pre>
+
+  <h3>Match Payload Structure</h3>
+  <p>Each submission is a JSON object with the following top-level fields. Required fields are marked.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>matchId</td><td>✔</td><td>Unique match identifier, e.g. <code>srv-20240405-183011-42</code></td></tr>
+      <tr><td>mode</td><td>✔</td><td>Gametype string, e.g. <code>GT_RACING</code></td></tr>
+      <tr><td>startTime / endTime</td><td>✔</td><td>ISO 8601 timestamps from <code>level.startRaceTime</code> / <code>level.finishRaceTime</code></td></tr>
+      <tr><td>map</td><td>✔</td><td>Map name string</td></tr>
+      <tr><td>server</td><td></td><td>Object: <code>name</code>, <code>host</code>, <code>build</code></td></tr>
+      <tr><td>settings</td><td>✔</td><td>Active CVars: <code>g_gametype</code>, <code>g_eliminationInterval</code>, etc.</td></tr>
+      <tr><td>players</td><td>✔</td><td>Array of player objects (see below)</td></tr>
+      <tr><td>teams</td><td></td><td>Array of team aggregates (team modes only)</td></tr>
+      <tr><td>events</td><td></td><td>Optional lap/flag/kill event log</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Player Object Fields</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Source</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>playerId</td><td>cl_guid + name hash</td><td>Persistent player identity, used for profile lookups</td></tr>
+      <tr><td>displayName</td><td>client userinfo</td><td>In-game name at match end</td></tr>
+      <tr><td>team</td><td>score_t.team</td><td>Team assignment (red / blue / green / yellow / free)</td></tr>
+      <tr><td>vehicle</td><td>gclient_t.car</td><td>Vehicle model used during the match</td></tr>
+      <tr><td>position</td><td>score_t.position</td><td>Final placement</td></tr>
+      <tr><td>score / rawScore</td><td>score_t.score</td><td>Mode-dependent primary metric</td></tr>
+      <tr><td>bestLapMs</td><td>gclient_t lap timers</td><td>Fastest single lap in milliseconds (race modes)</td></tr>
+      <tr><td>totalRaceMs</td><td>finishRaceTime − startRaceTime</td><td>Total race duration (race modes)</td></tr>
+      <tr><td>kills / deaths</td><td>game stats</td><td>Combat stats (DM and armed race modes)</td></tr>
+      <tr><td>captures / assists</td><td>score_t</td><td>Flag captures and assists (CTF modes)</td></tr>
+      <tr><td>damageDealt / damageTaken</td><td>score_t</td><td>Available in Racing DM, Derby, and combat modes</td></tr>
+      <tr><td>isBot</td><td>SVF_BOT flag</td><td>Whether this entry was a bot</td></tr>
+      <tr><td>profile</td><td>local profile snapshot</td><td>Career stats snapshot from the local client (online matches only)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Mode-Specific Payload Notes</h3>
+  <div class="two-col">
+    <div class="info-box"><h4>Race Modes (GT_RACING, GT_RACING_DM, GT_SPRINT)</h4><p>Include <code>raceStart</code>, <code>raceFinish</code>, <code>completedLaps</code>, <code>bestLap</code>, and <code>totalTime</code>. The DM variant adds <code>damageDealt</code>/<code>damageTaken</code> per player.</p></div>
+    <div class="info-box"><h4>Team Racing (GT_TEAM_RACING, GT_TEAM_RACING_DM)</h4><p>Team lap times are stored in <code>level.teamTimes</code> and normalized by participant count. Player fields mirror solo racing, extended with team membership.</p></div>
+    <div class="info-box"><h4>Elimination &amp; LCS</h4><p>Adds <code>eliminationSchedule</code> (start delay, interval, warning), <code>survivalTime</code>, <code>elimOrder</code>, and <code>lapsAtElim</code> per player.</p></div>
+    <div class="info-box"><h4>Derby</h4><p>Uses race timing fields combined with knockout and damage efficiency metrics via <code>score_t.score</code>, <code>damageDealt</code>, and <code>damageTaken</code>.</p></div>
+    <div class="info-box"><h4>CTF / CTF4</h4><p>Flag metrics: <code>captures</code>, <code>assistCount</code>, <code>defendCount</code>, and carrier-related damage values. Team scores via <code>level.teamScores</code>.</p></div>
+    <div class="info-box"><h4>Domination / KOTH</h4><p>Control-point ticks from <code>level.teamScores</code>/<code>level.teamTimes</code>, paired with per-player <code>score_t.score</code> and damage figures.</p></div>
+  </div>
+
+  <h3>Transport &amp; Reliability</h3>
+  <p>The HTTP façade lives in <code>engine/code/server/sv_ladder.c</code> and uses a dedicated <code>CURLM</code> handle for fully asynchronous POST requests. Communication uses libcurl (<code>USE_CURL</code> / <code>USE_CURL_DLOPEN</code>).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Behaviour</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Retry backoff</td><td>Transport errors or HTTP ≥ 500 → queued to <code>telemetry/outbox</code>. Retry: 5 s → exponential → max 5 min.</td></tr>
+      <tr><td>Spool limit</td><td>Controlled by <code>sv_telemetryMaxBatch</code>. Stored under <code>fs_homepath</code>.</td></tr>
+      <tr><td>TLS</td><td>Uses system trust store by default. Certificate failures trigger backoff without marking the match as delivered.</td></tr>
+      <tr><td>Auth</td><td><code>sv_ladderApiKey</code> sent as <code>Authorization: Bearer ...</code>. Never logged.</td></tr>
+      <tr><td>Deduplication</td><td>Server-side deduplication on <code>matchId</code> — re-posting the same ID is a no-op.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Web Frontend</h3>
+  <p>The ladder frontend (PHP webservice) reads the match index and exposes leaderboards per mode and map. It supports Online / Offline / All source filtering and a player profile overlay with career stats and achievement tiers.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Endpoint</th><th>Method</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>/api/v1/matches</td><td>POST</td><td>Submit a new match result</td></tr>
+      <tr><td>/matches/index</td><td>GET</td><td>Fast leaderboard index (all matches, minimal fields)</td></tr>
+      <tr><td>/matches/{id}</td><td>GET</td><td>Full match payload</td></tr>
+      <tr><td>/players/{playerId}</td><td>GET</td><td>Player career profile</td></tr>
+      <tr><td>/maps/metadata</td><td>GET</td><td>Map long-name lookup table</td></tr>
+      <tr><td>/maps/levelshots</td><td>GET</td><td>Available levelshot image manifest</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════════ CVARS ═══════════════ -->
+<section class="tab-panel" id="tab-cvars">
+  <div class="section-eyebrow">Configuration</div>
+  <h2>Server CVars</h2>
+  <p>Key server-side variables for tuning gameplay. All physics CVars are latched (<code>CVAR_LATCH</code>) and published via <code>CVAR_SERVERINFO</code> for deterministic client prediction.</p>
+<div class="cvar-group-label">Racing</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_laplimit</td><td class="cvar-default">5</td><td class="cvar-desc">Default lap count. Individual maps may override via their <code>.arena</code> file.</td></tr>
+<tr><td class="cvar-name">g_forceEngineStart</td><td class="cvar-default">60 s</td><td class="cvar-desc">Forces race start after this many seconds with a 10 s countdown warning.</td></tr>
+<tr><td class="cvar-name">g_finishRaceDelay</td><td class="cvar-default">30 s</td><td class="cvar-desc">Grace period after first finisher before the race ends.</td></tr>
+<tr><td class="cvar-name">g_timeTrialLaps</td><td class="cvar-default">3</td><td class="cvar-desc">Lap count in GT_SINGLE_PLAYER time-trial mode.</td></tr>
+<tr><td class="cvar-name">g_timeTrialFinishDelay</td><td class="cvar-default">10 s</td><td class="cvar-desc">Finish grace period for GT_SINGLE_PLAYER.</td></tr>
+<tr><td class="cvar-name">g_rallyReadyCheck</td><td class="cvar-default">1</td><td class="cvar-desc">Require all human players to signal ready before race start.</td></tr>
+<tr><td class="cvar-name">g_rallyIgnoreBots</td><td class="cvar-default">0</td><td class="cvar-desc">When set, bots are moved to spectator and excluded from the ready check.</td></tr>
+</table>
+<div class="cvar-group-label">Elimination</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_eliminationStartDelay</td><td class="cvar-default">30 s</td><td class="cvar-desc">Delay before the first knockout wave fires after race start.</td></tr>
+<tr><td class="cvar-name">g_eliminationInterval</td><td class="cvar-default">15 s</td><td class="cvar-desc">Time between successive elimination rounds.</td></tr>
+<tr><td class="cvar-name">g_eliminationWarning</td><td class="cvar-default">5 s</td><td class="cvar-desc">Warning countdown shown before the next elimination fires.</td></tr>
+<tr><td class="cvar-name">g_eliminationWeapons</td><td class="cvar-default">0</td><td class="cvar-desc">Enable weapons in Elimination mode.</td></tr>
+</table>
+<div class="cvar-group-label">Vehicle Physics (latched + serverinfo)</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">car_spring</td><td class="cvar-default">120</td><td class="cvar-desc">Suspension spring rate. Higher = stiffer, less body roll.</td></tr>
+<tr><td class="cvar-name">car_shock_up / _down</td><td class="cvar-default">12 / 11</td><td class="cvar-desc">Shock damping on compression and rebound.</td></tr>
+<tr><td class="cvar-name">car_swaybar</td><td class="cvar-default">20</td><td class="cvar-desc">Anti-roll bar stiffness.</td></tr>
+<tr><td class="cvar-name">car_wheel / _damp</td><td class="cvar-default">2400 / 140</td><td class="cvar-desc">Wheel rotational inertia and spin damping.</td></tr>
+<tr><td class="cvar-name">car_frontweight_dist</td><td class="cvar-default">0.5</td><td class="cvar-desc">Front/rear weight distribution. 0.5 = even.</td></tr>
+<tr><td class="cvar-name">car_body_elasticity</td><td class="cvar-default">0.05</td><td class="cvar-desc">Chassis flex coefficient on collision.</td></tr>
+<tr><td class="cvar-name">car_air_cof</td><td class="cvar-default">0.31</td><td class="cvar-desc">Aerodynamic drag coefficient.</td></tr>
+<tr><td class="cvar-name">car_air_frac_to_df</td><td class="cvar-default">0.5</td><td class="cvar-desc">Fraction of aerodynamic force converted to downforce.</td></tr>
+<tr><td class="cvar-name">car_friction_scale</td><td class="cvar-default">1.1</td><td class="cvar-desc">Global surface grip multiplier.</td></tr>
+</table>
+<div class="cvar-group-label">Damage &amp; Health</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_vehicleHealth</td><td class="cvar-default">100</td><td class="cvar-desc">Base hit points for all vehicles at spawn.</td></tr>
+<tr><td class="cvar-name">g_vehicleDamageScale</td><td class="cvar-default">5.0</td><td class="cvar-desc">Global collision damage multiplier.</td></tr>
+<tr><td class="cvar-name">g_vehicleDamageOffset</td><td class="cvar-default">0</td><td class="cvar-desc">Flat damage added to every collision hit.</td></tr>
+</table>
+<div class="cvar-group-label">Demolition Derby</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_derbyDamageFactor</td><td class="cvar-default">1.0</td><td class="cvar-desc">Overall Derby damage scaling multiplier.</td></tr>
+<tr><td class="cvar-name">g_derbyRamDamage</td><td class="cvar-default">100</td><td class="cvar-desc">Base ram damage before velocity scaling is applied.</td></tr>
+<tr><td class="cvar-name">g_derbyRamDamageScale</td><td class="cvar-default">0.05</td><td class="cvar-desc">Velocity-based damage scaling coefficient.</td></tr>
+<tr><td class="cvar-name">g_derbyRamDamageMax</td><td class="cvar-default">50</td><td class="cvar-desc">Maximum ram damage cap per single hit.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionFrontWeight</td><td class="cvar-default">1.0</td><td class="cvar-desc">Damage weight for front-end collisions. Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionSideWeight</td><td class="cvar-default">0.65</td><td class="cvar-desc">Damage weight for side impacts. Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionRearWeight</td><td class="cvar-default">0.35</td><td class="cvar-desc">Damage weight for rear-end hits. Clamped 0–2.</td></tr>
+</table>
+<div class="cvar-group-label">Domination</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_dominationScoreInterval</td><td class="cvar-default">10000 ms</td><td class="cvar-desc">Tick rate for control-point scoring.</td></tr>
+<tr><td class="cvar-name">g_dominationCaptureDelay</td><td class="cvar-default">1500 ms</td><td class="cvar-desc">Time to capture a neutral or enemy control point.</td></tr>
+<tr><td class="cvar-name">g_dominationSpawnStyle</td><td class="cvar-default">0</td><td class="cvar-desc">Spawn point selection strategy.</td></tr>
+</table>
+<div class="cvar-group-label">KOTH</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">g_kothScoreWin</td><td class="cvar-default">100</td><td class="cvar-desc">Score threshold that ends the match.</td></tr>
+<tr><td class="cvar-name">g_kothCaptureTime</td><td class="cvar-default">3000 ms</td><td class="cvar-desc">Time to capture the hill from neutral or enemy.</td></tr>
+<tr><td class="cvar-name">g_kothRespawnWave</td><td class="cvar-default">5000 ms</td><td class="cvar-desc">Wave respawn interval for dead players.</td></tr>
+<tr><td class="cvar-name">g_kothPtsTick</td><td class="cvar-default">1</td><td class="cvar-desc">Points awarded per tick while holding the hill.</td></tr>
+<tr><td class="cvar-name">g_kothPtsCapture</td><td class="cvar-default">5</td><td class="cvar-desc">Bonus points for capturing the hill.</td></tr>
+<tr><td class="cvar-name">g_kothPtsDefend</td><td class="cvar-default">3</td><td class="cvar-desc">Points for a kill made while inside the hill zone.</td></tr>
+<tr><td class="cvar-name">g_kothOvertime</td><td class="cvar-default">1</td><td class="cvar-desc">Enable overtime if match ends in a tie.</td></tr>
+<tr><td class="cvar-name">g_kothOvertimeHoldTime</td><td class="cvar-default">10000 ms</td><td class="cvar-desc">Time a team must hold the hill to win in overtime.</td></tr>
+</table>
+<div class="cvar-group-label">Ladder</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">sv_ladderEnabled</td><td class="cvar-default">0</td><td class="cvar-desc">Globally enable the HTTP match reporter.</td></tr>
+<tr><td class="cvar-name">sv_ladderUrl</td><td class="cvar-default">—</td><td class="cvar-desc">Target endpoint URL for <code>POST /api/v1/matches</code>.</td></tr>
+<tr><td class="cvar-name">sv_ladderApiKey</td><td class="cvar-default">—</td><td class="cvar-desc">Bearer token. Protected — never logged or saved to disk.</td></tr>
+</table>
+
+<div class="cvar-group-label">Client</div>
+<table class="cvar-table">
+<tr><td class="cvar-name">cl_updateCheck</td><td class="cvar-default">1</td><td class="cvar-desc">Enable automatic version check on startup. Checks against <code>cl_updateEndpoint</code> on UI load.</td></tr>
+<tr><td class="cvar-name">cl_updateEndpoint</td><td class="cvar-default">ladder URL</td><td class="cvar-desc">URL of the version text file. Default: <code>https://ladder.q3rally.com/version.txt</code></td></tr>
+<tr><td class="cvar-name">cg_ghostAlpha</td><td class="cvar-default">160</td><td class="cvar-desc">Transparency of ghost vehicles and their wheels (0–255). Lower = more transparent.</td></tr>
+<tr><td class="cvar-name">ui_menuBackEnable</td><td class="cvar-default">1</td><td class="cvar-desc">Enable remote background image download for the main menu.</td></tr>
+<tr><td class="cvar-name">ui_menuBackUrl</td><td class="cvar-default">ladder URL</td><td class="cvar-desc">HTTP(S) URL of the background image (PNG/JPG/TGA, max 5 MiB, max 4096×4096).</td></tr>
+<tr><td class="cvar-name">ui_menuBackRefreshSec</td><td class="cvar-default">0</td><td class="cvar-desc">Auto-refresh interval in seconds for the menu background. 0 = disabled.</td></tr>
+</table>
+
+</section>
+
+<!-- ═══════════════ MAPPING ═══════════════ -->
+<section class="tab-panel" id="tab-mapping">
+  <div class="section-eyebrow">Level Design</div>
+  <h2>Mapping Reference</h2>
+  <p>Q3Rally extends Quake 3's entity set with race triggers, weather volumes, hazard fields, and scripted objects.</p>
+
+  <h3>Race Entities</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>rally_startfinish</td><td>Combined start/finish brush</td><td>If <code>g_laplimit</code> unset, the <code>laps</code> key takes control and syncs the lap limit.</td></tr>
+      <tr><td>rally_start</td><td>Sprint start volume</td><td>Forces <code>laplimit = 1</code> automatically. Use for GT_SPRINT maps.</td></tr>
+      <tr><td>rally_finish</td><td>Dedicated finish trigger</td><td>Marks vehicles finished via the checkpoint system.</td></tr>
+      <tr><td>rally_checkpoint</td><td>Checkpoint volume</td><td>Auto-numbers on spawn. Spawnflag 1 = placement message; Spawnflag 2 = global checkpoint sound.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Weather &amp; Atmosphere</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>rally_sun</td><td>Sun direction setter</td><td>Forwards sun position to clients for dynamic lighting.</td></tr>
+      <tr><td>rally_weather_rain</td><td>Rain particle volume</td><td><code>number</code> = density. Spawnflags add lightning and wind effects.</td></tr>
+      <tr><td>rally_weather_snow</td><td>Snow particle volume</td><td>Fixed type (<code>weapon = 1</code>). Extra spawnflags ignored.</td></tr>
+    </tbody>
+  </table></div>
+
+
+  <h3>Atmospheric Weather — Mapper Guide</h3>
+  <p>Practical checklist for placing and tuning weather volumes in Q3Rally maps.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Topic</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Place weather entities correctly</td>
+        <td>Use <code>rally_weather_rain</code> for rain volumes and <code>rally_weather_snow</code> for snow. Both are created as <code>ET_WEATHER</code> server-side. Brush bounds matter — the client checks whether particle positions are inside the volume.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Type wiring</td>
+        <td><code>rally_weather_rain</code> sets <code>weapon = 0</code>, <code>rally_weather_snow</code> sets <code>weapon = 1</code>. The client uses this value to select the weather type. Baseline particle count is carried in entity state.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Rain spawnflags</td>
+        <td>For rain, <code>spawnflags</code> are passed to the client as a splash toggle: controls whether <code>waterSplash</code> / <code>landSplash</code> effects are enabled. Snow splash is disabled by design regardless of spawnflags.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Adaptive quality</td>
+        <td>Particle density scales automatically per client. Profile is selected via <code>cg_atmosphericLevel</code> (0 = Low, 1 = Medium, 2 = High, default 2). Per-frame budget is computed from profile + FPS + FOV + base drops — visible density may differ per machine. This is intentional.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Cone &amp; distance culling</td>
+        <td>Particles outside the view cone or beyond culling distance are deactivated or redistributed. Very large volumes can look thinner than expected. <strong>Recommendation:</strong> place weather zones along typical racing/sight corridors rather than one large global volume covering the whole map.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Deterministic seeds</td>
+        <td>Spawn variation (position, colour, flake selection) is deterministic per zone and particle index, not random per frame. Result: stable, consistent appearance across clients.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>QA / validation</td>
+        <td>Test with <code>cg_atmosphericLevel 0</code>, <code>1</code>, and <code>2</code> before release. Check that the volume size and placement looks correct at all three quality levels.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h3>Utilities &amp; Hazards</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>trigger_fuel</td><td>Vehicle refuelling zone</td><td><code>rate</code> = fill speed (default 10 u/s). <code>max</code> = target level. Stops at cap.</td></tr>
+    </tbody>
+  </table></div>
+
+
+  <h3>Surface Parameters (surfaceparms)</h3>
+  <p>Surface parameters are per-texture flags defined inside shader scripts. When compiled with <code>q3map2 -meta -custinfoparms custinfoparms.txt map.map</code>, these flags are embedded into the BSP so the game applies friction, skidmarks, particle effects, and special rendering per surface.</p>
+  <div class="callout"><strong>Workflow</strong>Add <code>surfaceparm</code> lines inside the texture block in your shader script, compile with <code>-custinfoparms</code>, then apply the shader to brush faces in Radiant. The <code>qer_editorimage</code> key provides an editor preview.</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Flag</th><th>Effect</th><th>Example textures</th></tr></thead>
+    <tbody>
+      <tr><td>SURF_ASPHALT</td><td>Standard road friction &amp; skidmarks</td><td>textures/q3r_road/asphalt</td></tr>
+      <tr><td>SURF_DIRT</td><td>Dusty brown skidmarks and particles</td><td>textures/q3r_dirt_grass/dirt01</td></tr>
+      <tr><td>SURF_GRASS</td><td>Green-tinted skidmarks, grass debris</td><td>textures/q3r_dirt_grass/grass01</td></tr>
+      <tr><td>SURF_GRAVEL</td><td>Similar to dirt but with coarser particles</td><td>textures/q3r_dirt_grass/gravel01</td></tr>
+      <tr><td>SURF_SAND</td><td>Loose sand, dust puffs, low traction</td><td>textures/q3r_dirt_grass/sand</td></tr>
+      <tr><td>SURF_SNOW</td><td>White skidmarks and snow spray</td><td>textures/q3r_ground/snowy01–04</td></tr>
+      <tr><td>SURF_ICE</td><td>Very low friction, optional sheen</td><td>textures/q3r_ground/ice01</td></tr>
+      <tr><td>SURF_WET</td><td>Splash effects when tyres touch liquid</td><td>textures/q3r_liquids/q3r_water_01</td></tr>
+      <tr><td>SURF_METAL</td><td>Metallic sparks on impact</td><td>Metal grates, pipes</td></tr>
+      <tr><td>SURF_SLICK</td><td>Extremely low friction, no skidmarks</td><td>textures/common/slick</td></tr>
+      <tr><td>surfaceparm dust</td><td>Raises dust clouds on traversal. Compiles to BSP flag <code>SURF_DUST</code>, detected by <code>CG_SurfaceEffects</code> at the wheel contact point.</td><td>textures/common/terrain2</td></tr>
+    </tbody>
+  </table></div>
+  <p>All flags are defined in <code>custinfoparms.txt</code> and can be combined freely on a single texture.</p>
+
+  <h3>Scripted Objects — Full Reference</h3>
+  <p>Scripted objects allow interactive, destructible, and moveable props to be placed in a map. They require a <code>.script</code> file and a <code>rally_scripted_object</code> entity in the editor.</p>
+
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 1 — Create the script file</h4>
+  <p>Create a <code>*.script</code> file describing the object. The <code>rally_scripted_object</code> block defines the model, destroyed model, mass, health, bounds, and sounds.</p>
+<pre>rally_scripted_object {
+    type         0
+    model        "hydrant"        // direct path or named section reference
+    deadmodel    "waterspray"     // shown after destruction
+    moveable     0                // 1 = subject to physics
+    mass         50
+    health       1000             // 0 = indestructible
+    mins         "-8 -8 -8"
+    maxs         "8 8 8"
+    presound     "sound/hydrant/metalcreak"
+    hitsound     "sound/hydrant/solidmetalbang"
+    destroysound "sound/hydrant/solidmetalbreak"
+    postsound    "sound/hydrant/waterspray"
+    gibs {
+        "models/mapobjects/hydrant/piece1" -3
+        "models/mapobjects/hydrant/piece2"  2
+        "models/mapobjects/hydrant/piece3"  1
+        "models/mapobjects/hydrant/piece4"  4
+    }
+}</pre>
+  <p>The <code>model</code> and <code>deadmodel</code> values can either be a direct model path (e.g. <code>"models/mapobjects/hydrant/hydrant"</code>) or the name of another section in the same script file that contains a <code>model</code> token — in that case the path is loaded from that section automatically.</p>
+
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 2 — Place the entity in Radiant</h4>
+  <p>Select entity class <code>rally_scripted_object</code> and set these key/value pairs:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Key</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>script</td><td>path/to/file</td><td>Path to the script file, without the <code>.script</code> extension. Required.</td></tr>
+      <tr><td>angle / angles</td><td>yaw / pitch yaw roll</td><td>Optional orientation.</td></tr>
+      <tr><td>targetname</td><td>string</td><td>Optional — allows triggers to reference the object.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 3 — In-game behaviour</h4>
+  <ul>
+    <li>On map load the game reads the <code>script</code> path and loads the file. Objects without a valid script are discarded with a console warning.</li>
+    <li><code>moveable 1</code> subjects the object to the physics simulation.</li>
+    <li><code>health &gt; 0</code> makes the object destructible — on death the <code>deadmodel</code> is shown and <code>gibs</code> are spawned.</li>
+    <li>All defined sounds (<code>hitsound</code>, <code>presound</code>, <code>postsound</code>, <code>destroysound</code>) are played automatically at the appropriate moments.</li>
+  </ul>
+
+  <h3>Runtime Hazard Fields</h3>
+  <p>Spawned by rear-fire weapons or map scripts. Oil slicks lower friction (and can be ignited), bio sludge expands its toxic radius over time, flame trails inflict sustained burn damage to followers.</p>
+
+  <h3>Elimination Map Flagging</h3>
+<pre>//GAME TYPE SUPPORTS
+type "q3r_racing q3r_team_racing q3r_elimination"
+
+//ELIMINATION READY
+elimination "1"</pre>
+
+
+  <h3>Jukebox OGG Metadata</h3>
+  <p>The in-game jukebox reads optional Vorbis comments from <code>.ogg</code> files placed in <code>music/jukebox/</code>. Drop additional tracks there to extend the rotation.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tag</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>TITLE</td><td>Shown in the jukebox overlay.</td></tr>
+      <tr><td>ARTIST</td><td>Shown alongside title as <em>Artist — Title</em>.</td></tr>
+      <tr><td>ALBUM</td><td>Read and cached but not currently displayed in the overlay.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Display priority: if both <code>ARTIST</code> and <code>TITLE</code> are present the overlay shows <em>Artist — Title</em>. If only <code>TITLE</code> is set it shows the title alone. Files without tags fall back to the filename-derived display name — existing behaviour is fully preserved.</p>
+  <p>Menu music rotation uses a separate path: place any <code>.ogg</code> file prefixed with <code>menumusic</code> in <code>baseq3r/music/</code> to add it to the main-menu auto-play rotation.</p>
+
+  <div class="callout"><strong>Racing Bot Waypoints</strong>Bots navigate from <code>.ghost</code> replay files. The server loads the fastest ghost route, samples waypoints, and uses them for steering with a fixed lookahead and smoothed target speed. Legacy <code>.bpd</code> bezier paths are also supported. The full Ghost Converter and in-game recording commands (<code>recordRacingLine start/stop/save</code>) are planned but not yet in the production build.</div>
+</section>
+
+<!-- ═══════════════ BUILDING ═══════════════ -->
+<section class="tab-panel" id="tab-building">
+  <div class="eyebrow">Compilation</div>
+  <h2>Building Q3Rally</h2>
+  <p>Q3Rally uses GNU Make and is based on ioquake3. The engine directory contains all source code. Compiling produces the game binary plus QVM files for the game logic.</p>
+
+  <div class="callout green"><strong>Quick Start</strong>Clone the repo, <code>cd engine</code>, run <code>make</code>. That's it on most Linux and macOS systems.</div>
+
+  <h3>Windows</h3>
+  <div class="card">
+    <div class="card-title">MSYS2 <span class="status-chip done">Recommended</span></div>
+    <div class="card-desc">
+      <ol style="margin-top:8px">
+        <li>Install MSYS2 with packages: <code>git make mingw-w64-i686-gcc mingw-w64-x86_64-gcc</code></li>
+        <li>Open <strong>MSYS2 MinGW 64-bit</strong></li>
+        <li><code>git clone https://github.com/Q3Rally-Team/q3rally.git</code></li>
+        <li><code>cd q3rally/engine &amp;&amp; make</code></li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">WSL (Windows Subsystem for Linux)</div>
+    <div class="card-desc">
+      <ol style="margin-top:8px">
+        <li>Install WSL + Ubuntu from the Windows Store</li>
+        <li><code>sudo apt install git make gcc mingw-w64</code></li>
+        <li><code>git clone https://github.com/Q3Rally-Team/q3rally.git</code></li>
+        <li><code>cd q3rally/engine &amp;&amp; make PLATFORM=mingw32</code></li>
+      </ol>
+    </div>
+  </div>
+
+  <h3>Linux</h3>
+  <div class="card">
+    <div class="card-title">Standard Build</div>
+    <div class="card-desc">
+      <ol style="margin-top:8px">
+        <li>Install: <code>git make gcc libsdl2-dev</code></li>
+        <li><code>git clone https://github.com/Q3Rally-Team/q3rally.git</code></li>
+        <li><code>cd q3rally/engine &amp;&amp; make</code></li>
+      </ol>
+      <p style="margin-top:10px">For a portable release bundle including SDL2: <code>./make-linux-portable.sh x86_64</code></p>
+    </div>
+  </div>
+
+  <h3>macOS</h3>
+  <div class="card">
+    <div class="card-title">Standard Build</div>
+    <div class="card-desc">
+      <ol style="margin-top:8px">
+        <li>Install Xcode command-line tools</li>
+        <li><code>git clone https://github.com/Q3Rally-Team/q3rally.git</code></li>
+        <li><code>cd q3rally/engine &amp;&amp; make</code></li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">AppBundle</div>
+    <div class="card-desc">
+      <ul style="margin-top:8px">
+        <li>Modern macOS 10.9+ (Apple Silicon + x86_64): <code>./make-macosx-ub2.sh</code></li>
+        <li>Legacy macOS 10.5+: <code>./make-macosx-ub.sh</code></li>
+        <li>Single arch: <code>./make-macosx.sh x86_64</code> (or <code>arm64</code>)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Architecture Flags</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>make ARCH=x86_64</td><td>Compile for 64-bit x86 explicitly</td></tr>
+      <tr><td>make ARCH=x86</td><td>Compile for 32-bit x86</td></tr>
+      <tr><td>make ARCH=arm64</td><td>Compile for ARM64 / Apple Silicon</td></tr>
+      <tr><td>make PLATFORM=mingw32</td><td>Cross-compile for Windows (requires mingw-w64)</td></tr>
+      <tr><td>make PLATFORM=darwin</td><td>Cross-compile for macOS (requires osxcross)</td></tr>
+    </tbody>
+  </table></div>
+
+
+  <h3>Docker</h3>
+  <p>A pre-built Docker image is available — no compilation required.</p>
+<pre># Pull
+docker pull registry.gitlab.com/manalejandro/q3rally-docker/q3rally-docker:latest
+
+# Run client
+docker run --rm -it registry.gitlab.com/manalejandro/q3rally-docker/q3rally-docker:latest
+
+# Run dedicated server
+docker run --rm -it -p 27960:27960/udp \
+  registry.gitlab.com/manalejandro/q3rally-docker/q3rally-docker:latest \
+  +set dedicated 1 +exec server.cfg</pre>
+
+  <h3>Engine Changes vs ioquake3</h3>
+  <ul>
+    <li>Added Theora video playback for the Q3Rally intro video</li>
+    <li>Changed various cvar defaults for the racing game context</li>
+    <li>Changed the fallback missing sound filename</li>
+    <li>Modified mouse handling in menus</li>
+    <li>Changed invalid default pk3 checksums to use <code>sv_pure 0</code></li>
+    <li>Added <code>baseq3r</code> pk3 checksums</li>
+  </ul>
+
+  <h3>Run Without Installing</h3>
+  <pre>./run.sh +set g_gametype 6 +map q3r_battlecanyon</pre>
+  <p>The <code>run.sh</code> script builds if needed, creates symlinks to the compiled QVMs, and launches the game. Use <code>run-debug.sh</code> for native <code>.so</code> builds (faster iteration, no QVM compilation).</p>
+</section>
+
+</main>
+
+<footer>
+  Q3Rally v0.7c &nbsp;·&nbsp;
+  <a href="http://www.q3rally.com">q3rally.com</a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/rX8Sxmh">Discord</a> &nbsp;·&nbsp;
+  <a href="https://www.moddb.com/games/q3rally">ModDB</a> &nbsp;·&nbsp;
+  Source: GPLv2 or later
+</footer>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

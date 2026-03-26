@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q3Rally Dev Notes — v0.7c</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+:root {
+  color-scheme: dark;
+  --bg:             radial-gradient(1200px 800px at 50% 0%, rgba(255,255,255,0.07), #05050c 60%);
+  --surface:        rgba(18,21,33,0.72);
+  --surface-strong: rgba(28,31,46,0.94);
+  --surface-hover:  rgba(35,40,60,0.85);
+  --border:         rgba(255,255,255,0.10);
+  --border-strong:  rgba(255,255,255,0.18);
+  --text:           #F5F6FF;
+  --text-muted:     #8b90b0;
+  --accent:         #5D8BFF;
+  --accent-soft:    rgba(93,139,255,0.15);
+  --accent-border:  rgba(93,139,255,0.40);
+  --gold:           #f0a500;
+  --green:          #34d399;
+  --red:            #f87171;
+  --orange:         #fb923c;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);background-color:#05050c;color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:400;line-height:1.65;min-height:100vh}
+header{padding:36px 48px 32px;border-bottom:1px solid var(--border);background:rgba(10,12,22,0.6);backdrop-filter:blur(20px)}
+.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.header-logo{font-size:24px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+.header-logo span{color:var(--accent)}
+.header-sub{font-size:13px;color:var(--text-muted);font-style:italic}
+.header-meta{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:3px 12px 4px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.badge.orange{background:rgba(251,146,60,.12);border-color:rgba(251,146,60,.35);color:var(--orange)}
+.badge.green{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.35);color:var(--green)}
+.tab-nav{position:sticky;top:0;z-index:100;background:rgba(10,12,22,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.tab-nav-inner{max-width:1200px;margin:0 auto;padding:0 48px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tab-nav-inner::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:14px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+main{max-width:1200px;margin:0 auto;padding:40px 48px 96px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px}
+.eyebrow:first-child{margin-top:0}
+h2{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--text);margin-bottom:18px}
+h3{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+p{color:var(--text-muted);margin-bottom:14px;font-size:13px}
+ul,ol{color:var(--text-muted);font-size:13px;padding-left:20px;margin-bottom:14px}
+li{margin-bottom:4px;line-height:1.6}
+.callout{border-left:3px solid var(--accent);background:var(--surface-strong);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0 24px;font-size:12.5px;color:var(--text-muted)}
+.callout.green{border-color:var(--green)}
+.callout.gold{border-color:var(--gold)}
+.callout.red{border-color:var(--red)}
+.callout.orange{border-color:var(--orange)}
+.callout strong{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.callout.green strong{color:var(--green)}
+.callout.gold strong{color:var(--gold)}
+.callout.red strong{color:var(--red)}
+.callout.orange strong{color:var(--orange)}
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(10,15,26,.75);margin:14px 0 28px}
+table{width:100%;border-collapse:collapse;min-width:400px}
+thead{background:rgba(255,255,255,.04);border-bottom:1px solid var(--border-strong)}
+thead th{padding:11px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+td{padding:10px 16px;vertical-align:top;font-size:13px;line-height:1.5;color:var(--text-muted)}
+td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:11.5px;background:rgba(93,139,255,.1);color:#7eb3ff;padding:1px 6px;border-radius:4px;border:1px solid rgba(93,139,255,.2)}
+pre{background:rgba(5,8,18,.9);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:16px 18px;overflow-x:auto;margin:14px 0 22px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:var(--text-muted)}
+.status-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 10px 3px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.status-chip.done{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:var(--green)}
+.status-chip.planned{background:rgba(93,139,255,.12);border:1px solid var(--accent-border);color:var(--accent)}
+.status-chip.wip{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.35);color:var(--orange)}
+.status-chip.open{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:var(--red)}
+.card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px}
+.card:hover{border-color:var(--accent-border)}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.card-desc{font-size:12.5px;color:var(--text-muted);line-height:1.6}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0 24px}
+.cvar-name{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;color:#7eb3ff;white-space:nowrap}
+footer{border-top:1px solid var(--border);padding:20px 48px;text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{color:#fff}
+.pill-list{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
+.pill{display:inline-block;padding:2px 10px 3px;background:var(--surface-strong);border:1px solid var(--border);border-radius:6px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px;color:var(--text-muted)}
+.pill.high{border-color:rgba(93,139,255,.4);color:#7eb3ff}
+.pill.mid{border-color:rgba(52,211,153,.3);color:var(--green)}
+.pill.atm{border-color:rgba(240,165,0,.3);color:var(--gold)}
+.pill.perf{border-color:rgba(251,146,60,.3);color:var(--orange)}
+.pill.debug{border-color:rgba(255,255,255,.1);color:var(--text-muted)}
+@media(max-width:700px){header,main,footer{padding-left:20px;padding-right:20px}.tab-nav-inner{padding:0 20px}.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-logo">Q3<span>Rally</span></div>
+    <div class="header-sub">Internal Development Notes</div>
+    <div class="header-meta">
+      <span class="badge orange">Internal</span>
+      <span class="badge">v0.7c</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('graphics')" data-tab="graphics"><span>🎨</span> Graphics Audit</button>
+    <button class="tab-btn" onclick="switchTab('aniso')" data-tab="aniso"><span>⚙️</span> Aniso &amp; MSAA Plan</button>
+    <button class="tab-btn" onclick="switchTab('bots')" data-tab="bots"><span>🤖</span> Bot Waypoints</button>
+    <button class="tab-btn" onclick="switchTab('bugfixes')" data-tab="bugfixes"><span>🔧</span> Bug Investigations</button>
+    <button class="tab-btn" onclick="switchTab('telemetry')" data-tab="telemetry"><span>📊</span> Telemetry Plan</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════ GRAPHICS AUDIT ═══════════════ -->
+<section class="tab-panel active" id="tab-graphics">
+  <div class="eyebrow">Code Audit</div>
+  <h2>Hidden Graphics Features</h2>
+  <p>CVars present in the renderer code but not exposed in any menu (neither the classic graphics menu nor the Advanced Graphics menu). Audit compares <code>ui_video.c</code>, <code>ui_advanced_graphics.c</code> against <code>renderergl1/tr_init.c</code> and <code>renderergl2/tr_init.c</code>.</p>
+
+  <div class="callout green"><strong>Already in Menu</strong>Classic: Resolution, Fullscreen, Colour depth, Texture bits, LOD, Texture Filter, Aniso, MSAA, Sun Shadows, Shadow Quality. Advanced: HDR, PostProcess, ToneMap, AutoExposure, SSAO, Sun Rays, Dynamic Reflections.</div>
+
+  <h3>Tier 1 — High-Impact Visual Upgrades (GL2 only)</h3>
+  <p>These CVars have the largest visible effect on rendering quality. Strong candidates for future Advanced Graphics menu integration.</p>
+  <div class="pill-list">
+    <span class="pill high">r_pbr</span>
+    <span class="pill high">r_normalMapping</span>
+    <span class="pill high">r_specularMapping</span>
+    <span class="pill high">r_deluxeMapping</span>
+    <span class="pill high">r_parallaxMapping</span>
+    <span class="pill high">r_parallaxMapOffset</span>
+    <span class="pill high">r_parallaxMapShadows</span>
+    <span class="pill high">r_deluxeSpecular</span>
+    <span class="pill high">r_baseNormalX / Y</span>
+    <span class="pill high">r_baseParallax</span>
+    <span class="pill high">r_baseSpecular</span>
+    <span class="pill high">r_baseGloss</span>
+    <span class="pill high">r_glossType</span>
+    <span class="pill high">r_cubeMapping</span>
+    <span class="pill high">r_cubemapSize</span>
+    <span class="pill high">r_sunlightMode</span>
+    <span class="pill high">r_shadowBlur</span>
+    <span class="pill high">r_shadowCascadeZNear/Far/Bias</span>
+    <span class="pill high">r_pshadowDist</span>
+    <span class="pill high">r_floatLightmap</span>
+    <span class="pill high">r_depthPrepass</span>
+    <span class="pill high">r_mergeLightmaps</span>
+    <span class="pill high">r_imageUpsample</span>
+    <span class="pill high">r_imageUpsampleMaxSize</span>
+    <span class="pill high">r_imageUpsampleType</span>
+    <span class="pill high">r_genNormalMaps</span>
+  </div>
+
+  <h3>Tier 2 — Mid-Range Tuning</h3>
+  <div class="pill-list">
+    <span class="pill mid">r_overBrightBits</span>
+    <span class="pill mid">r_roundImagesDown</span>
+    <span class="pill mid">r_simpleMipMaps</span>
+    <span class="pill mid">r_detailtextures</span>
+    <span class="pill mid">r_lodCurveError</span>
+    <span class="pill mid">r_lodbias</span>
+    <span class="pill mid">r_lodscale</span>
+    <span class="pill mid">r_gamma</span>
+    <span class="pill mid">r_ext_compressed_textures</span>
+    <span class="pill mid">r_ext_framebuffer_multisample</span>
+    <span class="pill mid">r_vaoCache</span>
+    <span class="pill mid">r_arb_vertex_array_object</span>
+    <span class="pill mid">r_externalGLSL</span>
+  </div>
+
+  <h3>Tier 3 — Atmospheric / Look</h3>
+  <div class="pill-list">
+    <span class="pill atm">r_forceSun</span>
+    <span class="pill atm">r_forceSunLightScale</span>
+    <span class="pill atm">r_forceSunAmbientScale</span>
+    <span class="pill atm">r_drawSun</span>
+    <span class="pill atm">r_dynamiclight</span>
+    <span class="pill atm">r_dlightBacks</span>
+    <span class="pill atm">r_dlightMode</span>
+    <span class="pill atm">r_fastsky</span>
+    <span class="pill atm">r_greyscale</span>
+    <span class="pill atm">r_inGameVideo</span>
+  </div>
+
+  <h3>Tier 4 — Performance / Compatibility</h3>
+  <div class="pill-list">
+    <span class="pill perf">r_swapInterval</span>
+    <span class="pill perf">r_displayRefresh</span>
+    <span class="pill perf">r_noborder</span>
+    <span class="pill perf">r_primitives</span>
+    <span class="pill perf">r_ignoreFastPath</span>
+    <span class="pill perf">r_ignoreGLErrors</span>
+    <span class="pill perf">r_ignorehwgamma</span>
+    <span class="pill perf">r_maxpolys</span>
+    <span class="pill perf">r_maxpolyverts</span>
+    <span class="pill perf">r_stereoEnabled</span>
+    <span class="pill perf">r_stereoSeparation</span>
+    <span class="pill perf">r_anaglyphMode</span>
+  </div>
+
+  <h3>Tier 5 — Debug / Diagnostics</h3>
+  <div class="pill-list">
+    <span class="pill debug">r_showImages</span>
+    <span class="pill debug">r_debuglight</span>
+    <span class="pill debug">r_debugSort</span>
+    <span class="pill debug">r_measureOverdraw</span>
+    <span class="pill debug">r_logFile</span>
+    <span class="pill debug">r_verbose</span>
+    <span class="pill debug">r_printShaders</span>
+    <span class="pill debug">r_znear</span>
+    <span class="pill debug">r_zproj</span>
+    <span class="pill debug">r_ambientScale</span>
+    <span class="pill debug">r_directedScale</span>
+    <span class="pill debug">r_railWidth</span>
+    <span class="pill debug">r_railCoreWidth</span>
+    <span class="pill debug">r_railSegmentLength</span>
+  </div>
+
+  <h3>Shadow Controls Gap (Advanced Graphics Menu)</h3>
+  <p>The Advanced Graphics menu currently covers post-processing features only. These shadow controls exist in the engine but are not yet accessible from the Advanced menu:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>CVar</th><th>Currently accessible via</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>r_sunShadows</td><td>Classic Graphics menu</td><td>✔ Exposed</td></tr>
+      <tr><td>r_shadowFilter</td><td>Classic menu (Shadow Quality)</td><td>✔ Indirect</td></tr>
+      <tr><td>r_shadowMapSize</td><td>Classic menu (Shadow Quality)</td><td>✔ Indirect</td></tr>
+      <tr><td>r_shadowBlur</td><td>Console only</td><td>❌ Hidden</td></tr>
+      <tr><td>r_shadowCascadeZNear/Far/Bias</td><td>Console only</td><td>❌ Hidden</td></tr>
+      <tr><td>r_pshadowDist</td><td>Console only</td><td>❌ Hidden</td></tr>
+      <tr><td>r_sunlightMode</td><td>Console only</td><td>❌ Hidden</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>Takeaway</strong>Biggest bang for effort: expose the GL2 material system (Normal/Specular/Parallax/PBR), shadow cascade controls, cubemap reflections, and image upsampling in a future Advanced Graphics panel.</div>
+</section>
+
+<!-- ═══════════════ ANISO & MSAA PLAN ═══════════════ -->
+<section class="tab-panel" id="tab-aniso">
+  <div class="eyebrow">Feature Plan</div>
+  <h2>Anisotropic Filtering &amp; MSAA Menu Integration</h2>
+  <p>Task plan for exposing anisotropic filtering and MSAA directly in the graphics menu, replacing console-only configuration.</p>
+
+  <h3>Epic 1 — Menu UX</h3>
+  <div class="card">
+    <div class="card-title">Task 1.1 — New UI Elements <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Add two options to <code>engine/code/q3_ui/ui_video.c</code> under Texture Filter / Quality block:<br>
+    <ul style="margin-top:8px">
+      <li><strong>Anisotropic Filtering</strong>: Off, 2×, 4×, 8×, 16×</li>
+      <li><strong>MSAA</strong>: Off, 2×, 4×</li>
+    </ul>
+    Acceptance: both options visible, focusable, preloaded from current CVars on open.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Task 1.2 — CVar Mapping <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">
+      <ul>
+        <li>Aniso → <code>r_ext_texture_filter_anisotropic</code> (0/1) + <code>r_ext_max_anisotropy</code> (2/4/8/16)</li>
+        <li>MSAA → <code>r_ext_multisample</code> (0/2/4) + optionally <code>r_ext_framebuffer_multisample</code> for GL2</li>
+      </ul>
+      Apply + <code>vid_restart</code> must flush correctly.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Task 1.3 — Feature-Dependent Display <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Grey out or limit to "Off" when extension / capability is missing. Cap max selectable aniso to hardware <code>maxAnisotropy</code>.</div>
+  </div>
+
+  <h3>Epic 2 — Renderer Validation</h3>
+  <div class="card">
+    <div class="card-title">Task 2.1 — GL1 Path <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Verify <code>r_ext_texture_filter_anisotropic</code>, <code>r_ext_max_anisotropy</code>, <code>r_ext_multisample</code> work correctly under GL1.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Task 2.2 — GL2 + FBO MSAA <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Verify <code>r_ext_framebuffer_multisample</code> under GL2. Ensure auto-reduction on unsupported sample counts, stable at chosen level.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Task 2.3 — Renderer Encapsulation <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Respect <code>cl_renderer</code> (opengl1/opengl2). Central mapping helpers in UI code — no scattered special cases.</div>
+  </div>
+
+  <h3>Epic 3 — UX Polish &amp; QA</h3>
+  <div class="card">
+    <div class="card-title">Task 3.1 — Help Text <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Short in-menu hints: "Aniso improves sharpness in depth" / "MSAA smooths edges, costs GPU." Mark latched CVars as "Restart required."</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Task 3.2 — Test Matrix <span class="status-chip planned">Planned</span></div>
+    <div class="card-desc">Four cases: GL2 full support, GL2 limited samples, GL1 support, missing aniso extension. Each: menu display, Apply behaviour, persistence, visual result.</div>
+  </div>
+
+  <h3>Recommended Implementation Order</h3>
+  <ol>
+    <li>UI elements + CVar mapping (Epic 1)</li>
+    <li>GL2 validation incl. FBO MSAA (Task 2.2)</li>
+    <li>GL1 validation (Task 2.1)</li>
+    <li>Renderer encapsulation (Task 2.3)</li>
+    <li>Help texts, test matrix, docs (Epic 3)</li>
+  </ol>
+</section>
+
+<!-- ═══════════════ BOT WAYPOINTS ═══════════════ -->
+<section class="tab-panel" id="tab-bots">
+  <div class="eyebrow">Bot AI</div>
+  <h2>Racing Bot Waypoint System</h2>
+  <p>Current state, identified issues, and the planned hybrid Ghost-Converter approach for improving bot racing quality.</p>
+
+  <h3>Current State</h3>
+  <div class="callout green"><strong>What Works Today</strong>Server loads <code>.ghost</code> files robustly (header/frames, size limit, fallbacks). Fastest matching ghost is selected as the bot route. Bots actively use waypoints for steering direction and approximate target speed. Legacy <code>.bpd</code> bezier paths from map entities still load at map start.</div>
+
+  <h3>Identified Issues</h3>
+  <div class="card">
+    <div class="card-title">1. Track Crossing Ambiguity <span class="status-chip open">Open</span></div>
+    <div class="card-desc">Per tick the nearest waypoint is searched geometrically. At track overlaps / crossings this can snap to the wrong section of the circuit.<br><br>
+    <strong>Proposal:</strong> Cache a progress index per bot (forward-only with a small search window). Optionally blend checkpoint-progress + ghost-progress.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">2. Fixed-Index Lookahead <span class="status-chip open">Open</span></div>
+    <div class="card-desc"><code>bestIndex + 12</code> is track- and sampling-dependent. Dense or sparse samples cause too-short or too-long lookahead.<br><br>
+    <strong>Proposal:</strong> Lookahead by time offset (+400–900 ms) or distance (+20–50 m) instead of fixed count. Or adaptive scaling based on current speed.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">3. No Segment Projection <span class="status-chip open">Open</span></div>
+    <div class="card-desc">Steering targets a future waypoint but does not project onto the current segment <code>(i→i+1)</code>. Causes unnecessary oscillation.<br><br>
+    <strong>Proposal:</strong> Project position onto segment, derive tangential direction. Optionally apply Catmull-Rom smoothing.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">4. Target Speed from Single Segment <span class="status-chip open">Open</span></div>
+    <div class="card-desc">Target speed estimated only from <code>bestIndex</code> and <code>bestIndex+1</code> — susceptible to timing jitter in ghost frames.<br><br>
+    <strong>Proposal:</strong> Average speed over a window (5–15 segments). Use curvature lookahead to decelerate early for corners.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">5. No Route Quality Metric <span class="status-chip open">Open</span></div>
+    <div class="card-desc">Any parseable route is used even if noisy.<br><br>
+    <strong>Proposal:</strong> Plausibility checks on load: monotone timestamps, min/max distances, outlier filter. Optional resampling to constant time grid.</div>
+  </div>
+
+  <h3>Hybrid Ghost-Converter Plan</h3>
+  <div class="callout orange"><strong>Status: Planned — Not Yet Implemented</strong>The ghost converter, in-game recording commands, and flexible corridor navigation are design documents. They are not present in the current production build.</div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-top:0">Preferred Workflow</h3>
+      <ol>
+        <li>Input: <code>ghost/&lt;map&gt;/&lt;run&gt;.ghost</code></li>
+        <li>Tool: <code>ghost2bpd input.ghost output.bpd</code></li>
+        <li>Output: <code>maps/&lt;map&gt;.bpd</code></li>
+      </ol>
+      <p style="margin-top:10px">On conversion: ghost samples are resampled and smoothed, projected onto checkpoint segments, Bézier handles estimated from tangents and curvature.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Fallback: In-Game Record &amp; Bake</h3>
+      <ol>
+        <li><code>recordRacingLine start</code></li>
+        <li>Drive a reference lap</li>
+        <li><code>recordRacingLine stop</code></li>
+        <li><code>recordRacingLine save</code></li>
+      </ol>
+      <p style="margin-top:10px">Saves as <code>maps/&lt;map&gt;.bpd</code> in the existing parser-compatible format.</p>
+    </div>
+  </div>
+
+  <h3>Minimal-Invasive Implementation Strategy</h3>
+  <ol>
+    <li>Introduce <code>ghostRouteIndexHint</code> per bot</li>
+    <li>Nearest search only in local window around hint (e.g. [−8, +24])</li>
+    <li>Lookahead by time offset instead of fixed waypoint count</li>
+    <li>Speed smoothing over multiple segments</li>
+  </ol>
+  <p>This stays fully compatible with the existing <code>.ghost</code> format while gaining robustness and pace consistency.</p>
+
+  <h3>Expected Impact (Prioritised)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Change</th><th>Expected Benefit</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Progress index + search window</td><td>Biggest stability improvement immediately</td></tr>
+      <tr><td>2</td><td>Time/distance lookahead</td><td>Better line choice across varying track layouts</td></tr>
+      <tr><td>3</td><td>Segment projection + smoothed target speed</td><td>Less steering jitter, more natural bot movement</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════════ BUG INVESTIGATIONS ═══════════════ -->
+<section class="tab-panel" id="tab-bugfixes">
+  <div class="eyebrow">Investigations</div>
+  <h2>Bug Investigations &amp; Fixes</h2>
+  <p>Internal post-mortems and fix documentation for non-trivial bugs.</p>
+
+  <h3>Team Mode Entity Overflow</h3>
+  <div class="card">
+    <div class="card-title">G_Spawn: no free entities in team game types <span class="status-chip done">Fixed</span></div>
+    <div class="card-desc">
+      <p><strong>Symptom:</strong> Server aborts with <code>G_Spawn: no free entities</code> during any team-based game type. Entity dump shows hundreds of entries tagged <code>noclass</code>.</p>
+      <p><strong>Root cause:</strong> <code>CopyToBodyQue</code> clones the extra collision bounds (<code>frontBounds</code>/<code>rearBounds</code>) from the dying vehicle so the corpse keeps its full collision hull. Body queue slots are recycled in a ring buffer — helper entities from a previous corpse may still exist when the slot is reused. The old code overwrote <code>body->frontBounds</code>/<code>rearBounds</code> pointers with new <code>G_Spawn()</code> results, leaving the old helpers orphaned. The leak quickly exhausted the entity pool in small-team modes with frequent deaths.</p>
+      <p><strong>Fix:</strong> Each body-queue entry now owns two persistent helper entities created alongside the queue in <code>InitBodyQue</code>. When a corpse is copied into the slot the helpers are simply updated and relinked; when the corpse sinks they are unlinked instead of freed. A shared <code>G_ResetExtraBBox</code> helper keeps all code paths (body sinking, gibbing, etc.) consistent. Entity count stays flat regardless of death frequency.</p>
+    </div>
+  </div>
+
+  <h3>Ghost Waypoint System Review</h3>
+  <div class="card">
+    <div class="card-title">Waypoint ambiguity at track crossings <span class="status-chip open">Open</span></div>
+    <div class="card-desc">See the <strong>Bot Waypoints</strong> tab for the full analysis and proposed fixes. Root issue: nearest-waypoint search without a progress hint can snap to the wrong track section at overlaps.</div>
+  </div>
+
+  <h3>v0.7c — Gametype Enum Shift</h3>
+  <div class="card">
+    <div class="card-title">DM dedicated server cycling maps immediately <span class="status-chip done">Fixed in v0.7c</span></div>
+    <div class="card-desc">
+      <p><strong>Symptom:</strong> A dedicated server in DM mode immediately cycles through the map rotation without waiting for players.</p>
+      <p><strong>Root cause:</strong> <code>GT_SPRINT</code> was inserted into the <code>gametype_t</code> enum in <code>bg_public.h</code> without explicit integer values, shifting <code>GT_DEATHMATCH</code> from 6 to 7 and all team gametypes by one. A server started with <code>g_gametype 6</code> (DM) was therefore running <code>GT_ELIMINATION</code> (a race mode), which exits immediately when no players are present.</p>
+      <p><strong>Fix:</strong> Assigned explicit integer values to all entries in <code>gametype_t</code>. Non-team gametypes retain v0.6c values (0–6), <code>GT_SPRINT</code> = 7. Team gametypes start at 16, leaving slots 8–15 for future non-team modes. See the Server Setup tab in the manual for the migration table.</p>
+    </div>
+  </div>
+
+  <h3>Known Open Issues</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Issue</th><th>Area</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Fallback spawns (DM spawn used when grid full) risk telefrag</td><td>Racing</td><td><span class="status-chip open">Open</span></td></tr>
+      <tr><td>Bot waypoint nearest-search ambiguity at track crossings</td><td>Bot AI</td><td><span class="status-chip open">Open</span></td></tr>
+      <tr><td>Ghost Converter (<code>ghost2bpd</code>) not yet implemented</td><td>Bot AI / Mapping</td><td><span class="status-chip planned">Planned</span></td></tr>
+      <tr><td>In-game <code>recordRacingLine</code> commands not yet implemented</td><td>Bot AI / Mapping</td><td><span class="status-chip planned">Planned</span></td></tr>
+      <tr><td>Aniso / MSAA menu controls not yet exposed</td><td>Graphics UI</td><td><span class="status-chip planned">Planned</span></td></tr>
+      <tr><td>Shadow cascade controls not in Advanced Graphics menu</td><td>Graphics UI</td><td><span class="status-chip planned">Planned</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+
+<!-- ═══════════════ TELEMETRY ═══════════════ -->
+<section class="tab-panel" id="tab-telemetry">
+  <div class="eyebrow">Match Reporting</div>
+  <h2>Telemetry Reporting Plan</h2>
+  <p>Planned payload structure and delivery mechanics for automated match reporting from dedicated servers. Describes per-mode metrics, normalization, transport, and the required new CVars.</p>
+
+  <div class="callout orange"><strong>Status: Planned — Not Yet Implemented</strong>The telemetry system and its CVars (<code>sv_telemetry*</code>) are a design document. They are not present in the current production build. The ladder service uses <code>sv_ladderEnabled</code> / <code>sv_ladderUrl</code> / <code>sv_ladderApiKey</code> instead.</div>
+
+  <h3>Common Player Object</h3>
+  <p>All mode payloads share this base player structure:</p>
+<pre>{
+  "playerId":        "sha256:...",   // SHA-256 of cl_guid + server namespace
+  "displayName":     "Player",
+  "team":            "red" | "blue" | null,
+  "car":             "carmodel/skin",
+  "normalizedScore": 0.0,            // 0.0–1.0, scope = match
+  "rawScore":        0,
+  "damageDealt":     { "raw": 1234, "normalized": 0.52 },
+  "damageTaken":     { "raw": 800,  "normalized": 0.33 },
+  "timeAlive":       "PT12M3.542S"
+}</pre>
+  <ul>
+    <li><strong>Player ID:</strong> SHA-256 of <code>cl_guid</code> salted with <code>sv_telemetryNamespace</code> to avoid GUID collisions between communities.</li>
+    <li><strong>Time format:</strong> absolute timestamps as RFC 3339 UTC, durations as ISO 8601 (<code>PTmmMss.mmmS</code>).</li>
+    <li><strong>Normalization:</strong> raw metrics mapped to 0.0–1.0 per match scope. Accuracy (already a percentage) is divided by 100.</li>
+  </ul>
+
+  <h3>Metrics by Game Mode</h3>
+
+  <div class="card">
+    <div class="card-title">GT_RACING / GT_RACING_DM</div>
+    <div class="card-desc">
+      <div class="table-wrap" style="margin-top:10px"><table>
+        <thead><tr><th>Metric</th><th>Description</th><th>Normalization</th></tr></thead>
+        <tbody>
+          <tr><td>completedLaps</td><td>Laps finished</td><td>÷ track.totalLaps</td></tr>
+          <tr><td>bestLap</td><td>Fastest lap (ISO 8601 duration)</td><td>bestLapMs / sessionBestLapMs</td></tr>
+          <tr><td>totalTime</td><td>Time to finish flag</td><td>winnerTimeMs / playerTimeMs (≤ 1.0)</td></tr>
+          <tr><td>position</td><td>Final placement</td><td>1 − ((pos−1) / (gridSize−1))</td></tr>
+          <tr><td>startReaction</td><td>Delay between green light and start</td><td>vs g_eliminationStartDelay</td></tr>
+          <tr><td>boostUsage</td><td>Boost time used</td><td>÷ sv_telemetryMaxBoostMs</td></tr>
+        </tbody>
+      </table></div>
+      Racing DM also includes <code>damageDealt</code> / <code>damageTaken</code>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_TEAM_RACING / GT_TEAM_RACING_DM</div>
+    <div class="card-desc">All racing metrics plus: <code>teamScoreFraction</code> (team score ÷ sum of all team scores), <code>teamDamageShare</code> (player damage ÷ team damage), <code>relaySegments</code> (hand-offs when <code>g_teamRelay</code> is enabled).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_ELIMINATION / GT_LCS</div>
+    <div class="card-desc">
+      <div class="table-wrap" style="margin-top:10px"><table>
+        <thead><tr><th>Metric</th><th>Description</th><th>Normalization</th></tr></thead>
+        <tbody>
+          <tr><td>survivalTime</td><td>Duration until elimination</td><td>÷ longest survival time in session</td></tr>
+          <tr><td>elimOrder</td><td>Order of elimination</td><td>1 − ((elimOrder−1) / (gridSize−1))</td></tr>
+          <tr><td>lapsAtElim</td><td>Laps completed before elimination</td><td>÷ track.totalLaps</td></tr>
+          <tr><td>warningResponses</td><td>Reaction time to elimination warnings</td><td>avg delay ÷ g_eliminationWarning</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_DERBY</div>
+    <div class="card-desc">
+      <div class="table-wrap" style="margin-top:10px"><table>
+        <thead><tr><th>Metric</th><th>Description</th><th>Normalization</th></tr></thead>
+        <tbody>
+          <tr><td>knockouts</td><td>Opponents eliminated</td><td>÷ maxOpponents</td></tr>
+          <tr><td>ringOuts</td><td>Self-inflicted eliminations</td><td>1 − min(self, limit)/limit</td></tr>
+          <tr><td>armorIntegrity</td><td>Average remaining HP</td><td>÷ maxHealth</td></tr>
+          <tr><td>damageEfficiency</td><td>damageDealt ÷ damageTaken</td><td>scaled 0–1 via tanh</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_DEATHMATCH / GT_TEAM</div>
+    <div class="card-desc">
+      <div class="table-wrap" style="margin-top:10px"><table>
+        <thead><tr><th>Metric</th><th>Normalization</th></tr></thead>
+        <tbody>
+          <tr><td>frags</td><td>÷ highest frag count in match</td></tr>
+          <tr><td>deaths</td><td>1 − (deaths / maxDeaths)</td></tr>
+          <tr><td>accuracy</td><td>score.accuracy / 100</td></tr>
+          <tr><td>streaks</td><td>÷ fraglimit (or session max)</td></tr>
+          <tr><td>powerupUptime</td><td>÷ match duration</td></tr>
+        </tbody>
+      </table></div>
+      Team variant adds <code>teamScoreFraction</code> and <code>teamDamageShare</code>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_CTF / GT_CTF4</div>
+    <div class="card-desc"><code>captures</code>, <code>flagReturns</code>, <code>carrierKills</code>, <code>flagHoldTime</code>. Team: <code>teamCaptureFraction</code> (team captures ÷ total captures). CTF4 adds per-colour breakdown.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GT_DOMINATION</div>
+    <div class="card-desc"><code>controlTicks</code> (intervals a point was held), <code>capturesTotals</code>, <code>defenseKills</code>. Team: <code>teamControlFraction</code>.</div>
+  </div>
+
+  <h3>Planned CVars</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>CVar</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>sv_telemetryEnabled</td><td>0</td><td>Global switch — payloads are only generated and sent when set to 1.</td></tr>
+      <tr><td>sv_telemetryUrl</td><td>—</td><td>HTTPS endpoint, e.g. <code>https://telemetry.example.com/v1/matches</code>.</td></tr>
+      <tr><td>sv_telemetryApiKey</td><td>—</td><td>Bearer token. Stored as a latched protected CVar — never appears in <code>serverinfo</code>.</td></tr>
+      <tr><td>sv_telemetryTimeoutMs</td><td>5000</td><td>Network timeout for POST requests in ms.</td></tr>
+      <tr><td>sv_telemetryEvents</td><td>0</td><td>Enable the optional <code>events</code> array (lap completions, flag events, kills).</td></tr>
+      <tr><td>sv_telemetryMaxBatch</td><td>8</td><td>Number of match reports held in the outbox spool.</td></tr>
+      <tr><td>sv_telemetryNamespace</td><td>"default"</td><td>Salt for player ID hashing — avoids GUID collisions between communities.</td></tr>
+      <tr><td>sv_telemetryMaxBoostMs</td><td>15000</td><td>Cap for boost-time normalization in racing metrics.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Transport &amp; Retry</h3>
+  <ul>
+    <li>Async POST via libcurl (same <code>CURLM</code> pattern as the ladder reporter).</li>
+    <li>HTTP 5xx or network failure → spool to <code>telemetry/outbox</code>, exponential backoff (5 s start, 5 min cap).</li>
+    <li>HTTP 202 queued → optional polling via <code>GET /v1/matches/{matchId}</code> (disabled by default).</li>
+    <li>Spool limited to <code>sv_telemetryMaxBatch</code> entries under <code>fs_homepath</code>.</li>
+  </ul>
+
+  <h3>Full Payload Example</h3>
+<pre>{
+  "matchId":   "srv-20240405-183011-42",
+  "mode":      "GT_RACING",
+  "startTime": "2024-04-05T18:30:11Z",
+  "endTime":   "2024-04-05T18:42:39Z",
+  "duration":  "PT12M28S",
+  "settings": {
+    "g_gametype":          0,
+    "g_eliminationInterval": 15000
+  },
+  "players": [ { "...player metrics..." } ],
+  "teams": [
+    {
+      "team":            "red",
+      "rawScore":        123,
+      "normalizedScore": 0.64,
+      "damageDealt":     4200,
+      "objectives": { "captures": 2, "controlTicks": 35 }
+    }
+  ],
+  "events": [
+    {
+      "timestamp": "2024-04-05T18:33:15.210Z",
+      "type":      "lap_completed",
+      "playerId":  "sha256:...",
+      "lap":       2,
+      "lapTime":   "PT1M12.250S"
+    }
+  ]
+}</pre>
+  <p><code>events</code> is optional and only active when <code>sv_telemetryEvents 1</code> is set.</p>
+</section>
+
+</main>
+
+<footer>
+  Q3Rally v0.7c &nbsp;·&nbsp; Internal Dev Notes &nbsp;·&nbsp;
+  <a href="http://www.q3rally.com">q3rally.com</a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/rX8Sxmh">Discord</a>
+</footer>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
