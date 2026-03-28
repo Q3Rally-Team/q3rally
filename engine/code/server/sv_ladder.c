@@ -82,11 +82,37 @@ typedef struct ladderRequest_s {
 #endif
 } ladderRequest_t;
 
+/* ── Registration state ─────────────────────────────────────────────────────
+ * The registration request runs on its own easy handle, completely separate
+ * from the match-upload multi handle.  This avoids any interaction with the
+ * upload queue and lets us fire it even before sv_ladderEnabled is set.
+ * ──────────────────────────────────────────────────────────────────────────── */
+#define LADDER_REGISTER_BODY_MAX        512
+#define LADDER_REGISTER_RESPONSE_MAX    2048  /* JSON response is ~60 bytes; 2 KB gives ample margin */
+#define LADDER_REGISTER_URL_MAX         256
+#define LADDER_REGISTER_KEY_MAX         128  /* hex key is 64 chars + margin  */
+
+typedef struct {
+        qboolean        active;                                 /* request in flight    */
+#ifdef USE_CURL
+        CURL            *easy;
+        struct curl_slist *headers;
+        char            errorBuffer[CURL_ERROR_SIZE];
+#endif
+        char            body[LADDER_REGISTER_BODY_MAX];         /* form-encoded POST    */
+        size_t          bodyLength;
+        char            url[LADDER_REGISTER_URL_MAX];
+        char            serverName[68];                         /* registered server name */
+        char            response[LADDER_REGISTER_RESPONSE_MAX];
+        size_t          responseLength;
+} svLadderRegState_t;
+
 typedef struct {
         qboolean        initialized;
         qboolean        spoolReady;
         qboolean        warnedNoCurl;
         qboolean        warnedNoUrl;
+        qboolean        warnedInvalidUrl;
         int             maxQueue;
         int             queueSize;
         int             nextFileId;
@@ -98,6 +124,7 @@ typedef struct {
         qboolean        curlLoaded;
         CURLM           *multi;
 #endif
+        svLadderRegState_t reg;                                 /* registration sub-state */
 } svLadderState_t;
 
 static svLadderState_t sv_ladder;
@@ -165,6 +192,22 @@ static qboolean SV_LadderGetRankForScore( int playerScore, profile_rank_t *outRa
         stats.playerScore = playerScore;
 
         return Profile_GetRankForScore( &stats, sv_ladderRankTable, SV_LADDER_RANK_COUNT, outRank );
+}
+
+static qboolean SV_LadderLooksLikeMatchEndpoint( const char *url ) {
+        const char *matches;
+
+        if ( !url || !url[0] ) {
+                return qfalse;
+        }
+
+        matches = strstr( url, "/matches" );
+        if ( !matches ) {
+                return qfalse;
+        }
+
+        matches += 8;
+        return ( *matches == '\0' || *matches == '?' || *matches == '#' );
 }
 
 static void SV_LadderRefreshQueueLimit( void ) {
@@ -1340,7 +1383,8 @@ static qboolean SV_LadderLoadCurlLibrary( void ) {
         sv_curl_slist_free_all = SV_LadderGPA( "curl_slist_free_all" );
 
         if ( !sv_curl_easy_init || !sv_curl_easy_setopt || !sv_curl_easy_getinfo ||
-             !sv_curl_easy_cleanup || !sv_curl_easy_strerror || !sv_curl_multi_init ||
+             !sv_curl_easy_cleanup || !sv_curl_easy_strerror ||
+             !sv_curl_multi_init ||
              !sv_curl_multi_add_handle || !sv_curl_multi_remove_handle ||
              !sv_curl_multi_perform || !sv_curl_multi_cleanup || !sv_curl_multi_info_read ||
              !sv_curl_multi_strerror || !sv_curl_slist_append || !sv_curl_slist_free_all ) {
@@ -1635,6 +1679,12 @@ static void SV_LadderActivateNext( void ) {
         }
 }
 
+/* Forward declarations – defined after SV_LadderPollActive */
+#ifdef USE_CURL
+static void SV_LadderAbortRegister( void );
+static void SV_LadderFinishRegister( CURLcode result, long responseCode );
+#endif
+
 static void SV_LadderPollActive( void ) {
         CURLMsg *msg;
         int messages;
@@ -1643,37 +1693,65 @@ static void SV_LadderPollActive( void ) {
                 return;
         }
 
-        if ( sv_ladder.active ) {
+        {
                 int running = 0;
                 CURLMcode mcode = sv_curl_multi_perform( sv_ladder.multi, &running );
                 if ( mcode != CURLM_OK && !sv_ladder.warnedNoCurl ) {
-                        Com_Printf( "Ladder: curl_multi_perform failed: %s\n", sv_curl_multi_strerror( mcode ) );
+                        Com_Printf( "Ladder: curl_multi_perform failed: %s\n",
+                                    sv_curl_multi_strerror( mcode ) );
                         sv_ladder.warnedNoCurl = qtrue;
+                }
+                if ( sv_ladder.reg.active ) {
+                        Com_DPrintf( "Ladder[reg]: multi_perform running=%d mcode=%d\n",
+                                     running, (int)mcode );
                 }
         }
 
         while ( ( msg = sv_curl_multi_info_read( sv_ladder.multi, &messages ) ) != NULL ) {
                 if ( msg->msg == CURLMSG_DONE ) {
-                        ladderRequest_t *request = NULL;
-                        long responseCode = 0;
-                        CURL *easy = msg->easy_handle;
+                        void *priv        = NULL;
+                        long  responseCode = 0;
+                        CURL *easy        = msg->easy_handle;
 
-                        sv_curl_easy_getinfo( easy, CURLINFO_PRIVATE, (char **)&request );
+                        sv_curl_easy_getinfo( easy, CURLINFO_PRIVATE,       (char **)&priv );
                         sv_curl_easy_getinfo( easy, CURLINFO_RESPONSE_CODE, &responseCode );
 
                         sv_curl_multi_remove_handle( sv_ladder.multi, easy );
-                        sv_curl_easy_cleanup( easy );
 
-                        if ( request ) {
-                                if ( sv_ladder.active == request ) {
-                                        sv_ladder.active = NULL;
+                        if ( priv == (void *)&sv_ladder.reg ) {
+                                /* ── Registration response ─────────────── */
+                                svLadderRegState_t *reg = &sv_ladder.reg;
+                                CURLcode result = msg->data.result;
+
+                                Com_Printf( "Ladder[reg]: transfer done – curl=%d http=%ld\n",
+                                            (int)result, responseCode );
+
+                                sv_curl_easy_cleanup( easy );
+                                reg->easy = NULL;
+                                if ( reg->headers ) {
+                                        sv_curl_slist_free_all( reg->headers );
+                                        reg->headers = NULL;
                                 }
-                                request->easy = NULL;
-                                if ( request->headers ) {
-                                        sv_curl_slist_free_all( request->headers );
-                                        request->headers = NULL;
+                                reg->active = qfalse;
+                                SV_LadderFinishRegister( result, responseCode );
+                        } else {
+                                /* ── Match-upload response ──────────────── */
+                                ladderRequest_t *request = (ladderRequest_t *)priv;
+
+                                sv_curl_easy_cleanup( easy );
+
+                                if ( request ) {
+                                        if ( sv_ladder.active == request ) {
+                                                sv_ladder.active = NULL;
+                                        }
+                                        request->easy = NULL;
+                                        if ( request->headers ) {
+                                                sv_curl_slist_free_all( request->headers );
+                                                request->headers = NULL;
+                                        }
+                                        SV_LadderCompleteRequest( request, msg->data.result,
+                                                                   responseCode );
                                 }
-                                SV_LadderCompleteRequest( request, msg->data.result, responseCode );
                         }
                 }
         }
@@ -1695,9 +1773,425 @@ static void SV_LadderResetState( void ) {
         sv_ladder.active = NULL;
         sv_ladder.warnedNoCurl = qfalse;
         sv_ladder.warnedNoUrl = qfalse;
+        sv_ladder.warnedInvalidUrl = qfalse;
         sv_ladder.nextFileId = 1;
         SV_LadderRefreshQueueLimit();
 }
+
+/* ── URL helper: derive register.php URL from sv_ladderUrl ───────────────── */
+
+static void SV_LadderBuildRegisterUrl( char *out, size_t outSize ) {
+        const char *matchUrl;
+        const char *tail;
+        size_t      baseLen;
+
+        out[0] = '\0';
+
+        matchUrl = ( sv_ladderUrl && sv_ladderUrl->string[0] )
+                   ? sv_ladderUrl->string
+                   : "https://ladder.q3rally.com/index.php/matches";
+
+        /* Strip /index.php/matches (or just /matches) off the end, then
+         * append /register.php.
+         * Accepted suffixes (case-sensitive):
+         *   /index.php/matches
+         *   /matches             */
+        tail = strstr( matchUrl, "/index.php/matches" );
+        if ( tail ) {
+                baseLen = (size_t)( tail - matchUrl );
+        } else {
+                tail = strstr( matchUrl, "/matches" );
+                if ( tail ) {
+                        baseLen = (size_t)( tail - matchUrl );
+                } else {
+                        /* Fallback: use the URL as-is up to the last '/' */
+                        const char *lastSlash = strrchr( matchUrl, '/' );
+                        baseLen = lastSlash ? (size_t)( lastSlash - matchUrl ) : strlen( matchUrl );
+                }
+        }
+
+        if ( baseLen + sizeof( "/register.php" ) > outSize ) {
+                return;
+        }
+
+        Com_Memcpy( out, matchUrl, baseLen );
+        out[baseLen] = '\0';
+        Q_strcat( out, outSize, "/register.php" );
+}
+
+/* ── Simple percent-encoding for form values ─────────────────────────────── */
+
+static void SV_LadderUrlEncode( const char *src, char *dst, size_t dstSize ) {
+        static const char hex[] = "0123456789ABCDEF";
+        size_t j = 0;
+
+        if ( !dst || !dstSize ) return;
+
+        for ( ; *src && j + 4 < dstSize; ++src ) {
+                unsigned char c = (unsigned char)*src;
+
+                if ( ( c >= 'A' && c <= 'Z' ) ||
+                     ( c >= 'a' && c <= 'z' ) ||
+                     ( c >= '0' && c <= '9' ) ||
+                     c == '-' || c == '_' || c == '.' || c == '~' ) {
+                        dst[j++] = (char)c;
+                } else if ( c == ' ' ) {
+                        dst[j++] = '+';
+                } else {
+                        dst[j++] = '%';
+                        dst[j++] = hex[c >> 4];
+                        dst[j++] = hex[c & 0x0F];
+                }
+        }
+
+        dst[j] = '\0';
+}
+
+/* ── cURL write callback for the register response ───────────────────────── */
+
+#ifdef USE_CURL
+static size_t SV_LadderRegWriteCallback( void *buffer, size_t size, size_t nmemb, void *userdata ) {
+        svLadderRegState_t *reg   = (svLadderRegState_t *)userdata;
+        size_t              bytes = size * nmemb;
+        size_t              remaining;
+        size_t              toCopy;
+
+        if ( !reg ) return bytes;
+
+        remaining = sizeof( reg->response ) - 1 - reg->responseLength;
+        toCopy    = bytes < remaining ? bytes : remaining;
+
+        if ( toCopy > 0 ) {
+                Com_Memcpy( reg->response + reg->responseLength, buffer, toCopy );
+                reg->responseLength += toCopy;
+                reg->response[reg->responseLength] = '\0';
+        }
+
+        return bytes;
+}
+#endif /* USE_CURL */
+
+/* ── Extract the value of a JSON string field (shallow, no full parser) ───── *
+ * Sufficient for the compact {"status":"pending","key":"<hex>"} response.    */
+
+static void SV_LadderExtractJsonString( const char *json,
+                                        const char *key,
+                                        char       *out,
+                                        size_t      outSize ) {
+        char        search[72];
+        const char *p;
+        size_t      i;
+
+        out[0] = '\0';
+        if ( !json || !key || !out || !outSize ) return;
+
+        Com_sprintf( search, sizeof( search ), "\"%s\"", key );
+        p = strstr( json, search );
+        if ( !p ) return;
+
+        p += strlen( search );
+        while ( *p == ' ' || *p == '\t' || *p == ':' ) ++p;
+        if ( *p != '"' ) return;
+        ++p; /* skip opening quote */
+
+        for ( i = 0; *p && *p != '"' && i + 1 < outSize; ++p ) {
+                if ( *p == '\\' && *(p+1) ) { ++p; }  /* skip simple escapes */
+                out[i++] = *p;
+        }
+        out[i] = '\0';
+}
+
+/* ── SV_LadderRegister_f ─────────────────────────────────────────────────── *
+ *
+ * Console command:  ladder_register "<ownerName>" "<ownerEmail>" "<serverName>" "agree"
+ *
+ * Sends a synchronous (blocking) HTTP POST to register.php using an
+ * independent curl easy handle so it doesn't touch the upload queue.
+ * On success  → fires  "ladder_register_result ok <key>"  into the cmd buffer.
+ * On failure  → fires  "ladder_register_result err <message>".
+ *
+ * The UI module picks both up via UI_ConsoleCommand.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── SV_LadderAbortRegister ──────────────────────────────────────────────── *
+ * Tears down an in-flight registration handle.  Safe to call at any time.   */
+#ifdef USE_CURL
+static void SV_LadderAbortRegister( void ) {
+        svLadderRegState_t *reg = &sv_ladder.reg;
+
+        if ( !reg->active ) return;
+
+        if ( reg->easy ) {
+                if ( sv_ladder.multi ) {
+                        sv_curl_multi_remove_handle( sv_ladder.multi, reg->easy );
+                }
+                sv_curl_easy_cleanup( reg->easy );
+                reg->easy = NULL;
+        }
+
+        if ( reg->headers ) {
+                sv_curl_slist_free_all( reg->headers );
+                reg->headers = NULL;
+        }
+
+        reg->active         = qfalse;
+        reg->responseLength = 0;
+        reg->response[0]    = '\0';
+        reg->errorBuffer[0] = '\0';
+}
+#endif /* USE_CURL */
+
+/* ── SV_LadderFinishRegister ─────────────────────────────────────────────── *
+ * Called from SV_LadderPollActive once the transfer is done.
+ * Parses the JSON, fires the Cbuf command.                                  */
+#ifdef USE_CURL
+static void SV_LadderFinishRegister( CURLcode result, long responseCode ) {
+        svLadderRegState_t *reg = &sv_ladder.reg;
+        char                cbufCmd[256];
+        char                apiKey[LADDER_REGISTER_KEY_MAX];
+        char                errMsg[128];
+
+        /* ── cURL transport error ────────────────────────────────────── */
+        if ( result != CURLE_OK ) {
+                const char *curlErr = reg->errorBuffer[0]
+                                      ? reg->errorBuffer
+                                      : sv_curl_easy_strerror( result );
+                Com_Printf( "Ladder: registration request failed: %s\n", curlErr );
+                Com_sprintf( cbufCmd, sizeof( cbufCmd ),
+                             "ladder_register_result err \"%s\"\n", curlErr );
+                Cbuf_AddText( cbufCmd );
+                return;
+        }
+
+        /* ── HTTP error ──────────────────────────────────────────────── */
+        if ( responseCode < 200 || responseCode >= 300 ) {
+                Com_Printf( "Ladder: registration HTTP %ld\n", responseCode );
+                Com_sprintf( errMsg, sizeof( errMsg ), "HTTP %ld", responseCode );
+                Com_sprintf( cbufCmd, sizeof( cbufCmd ),
+                             "ladder_register_result err \"%s\"\n", errMsg );
+                Cbuf_AddText( cbufCmd );
+                return;
+        }
+
+        /* ── Parse JSON ──────────────────────────────────────────────── *
+         * Expected:  {"status":"pending","key":"<64 hex>"}
+         * On error:  {"status":"error","error":"<message>"}             */
+        {
+                char statusField[16];
+                char errorField[128];
+
+                apiKey[0] = '\0';
+                SV_LadderExtractJsonString( reg->response, "status",
+                                            statusField, sizeof( statusField ) );
+
+                if ( Q_stricmp( statusField, "pending" ) != 0 ) {
+                        SV_LadderExtractJsonString( reg->response, "error",
+                                                    errorField, sizeof( errorField ) );
+                        if ( !errorField[0] ) {
+                                Q_strncpyz( errorField, "Unexpected server response.",
+                                            sizeof( errorField ) );
+                        }
+                        Com_Printf( "Ladder: registration failed: %s\n", errorField );
+                        Com_sprintf( cbufCmd, sizeof( cbufCmd ),
+                                     "ladder_register_result err \"%s\"\n", errorField );
+                        Cbuf_AddText( cbufCmd );
+                        return;
+                }
+
+                SV_LadderExtractJsonString( reg->response, "key",
+                                            apiKey, sizeof( apiKey ) );
+        }
+
+        if ( !apiKey[0] ) {
+                Com_Printf( "Ladder: registration response missing key field.\n" );
+                Cbuf_AddText( "ladder_register_result err \"No API key in response.\"\n" );
+                return;
+        }
+
+        /* Sanitise: truncate at first non-hex character */
+        {
+                size_t i;
+                for ( i = 0; apiKey[i]; ++i ) {
+                        char c = apiKey[i];
+                        if ( !( ( c >= '0' && c <= '9' ) ||
+                                ( c >= 'a' && c <= 'f' ) ||
+                                ( c >= 'A' && c <= 'F' ) ) ) {
+                                apiKey[i] = '\0';
+                                break;
+                        }
+                }
+        }
+
+        Com_Printf( "Ladder: registration succeeded (key prefix=%.8s...).\n", apiKey );
+
+        /* Set the ladder cvars from engine code – the UI VM does not have
+         * write permission for protected server cvars.                      */
+        if ( sv_ladderApiKey ) {
+                Cvar_Set( "sv_ladderApiKey", apiKey );
+        }
+        if ( sv_ladderEnabled ) {
+                Cvar_Set( "sv_ladderEnabled", "1" );
+        }
+        /* Set sv_ladderUrl to the default match endpoint only when not yet
+         * configured – preserves a custom URL set by the operator.          */
+        if ( sv_ladderUrl && !sv_ladderUrl->string[0] ) {
+                Cvar_Set( "sv_ladderUrl",
+                          "https://ladder.q3rally.com/index.php/matches" );
+        }
+        /* sv_hostname also needs engine-side write (CVAR_SERVERINFO).       */
+        if ( sv_ladder.reg.serverName[0] ) {
+                Cvar_Set( "sv_hostname", sv_ladder.reg.serverName );
+        }
+
+        /* Persist all cvar changes to q3config.cfg.  This runs in engine
+         * code before the UI VM receives ladder_register_result, so there
+         * is no risk of a VM reload tearing the wizard stack.               */
+        Cbuf_AddText( "writeconfig\n" );
+
+        Com_sprintf( cbufCmd, sizeof( cbufCmd ),
+                     "ladder_register_result ok \"%s\"\n", apiKey );
+        Cbuf_AddText( cbufCmd );
+}
+#endif /* USE_CURL */
+
+/* ── SV_LadderRegisterAbort_f ────────────────────────────────────────────── *
+ * Console command: ladder_register_abort
+ * Cancels an in-flight registration request.                                */
+void SV_LadderRegisterAbort_f( void ) {
+#ifdef USE_CURL
+        if ( sv_ladder.reg.active ) {
+                Com_Printf( "Ladder: registration aborted by user.\n" );
+                SV_LadderAbortRegister();
+        }
+#endif
+}
+
+/* ── SV_LadderRegister_f ─────────────────────────────────────────────────── *
+ * Console command:  ladder_register "<ownerName>" "<ownerEmail>" "<serverName>" "agree"
+ *
+ * Sets up an async HTTP POST to register.php via the existing multi handle.
+ * Returns immediately – SV_LadderPollActive (called each frame) drives it
+ * to completion and fires "ladder_register_result ok/err ..." into Cbuf.    */
+void SV_LadderRegister_f( void ) {
+#ifndef USE_CURL
+        Com_Printf( "Ladder: built without libcurl support, cannot register.\n" );
+        Cbuf_AddText( "ladder_register_result err \"No libcurl support.\"\n" );
+        return;
+#else
+        svLadderRegState_t *reg = &sv_ladder.reg;
+        char                ownerName[64];
+        char                ownerEmail[128];
+        char                serverName[68];
+        char                agree[16];
+        char                encName[192];
+        char                encEmail[384];
+        char                encServer[204];
+        CURL               *easy;
+        struct curl_slist  *headers = NULL;
+
+        /* ── Guard: only one registration at a time ──────────────────── */
+        if ( reg->active ) {
+                Com_Printf( "Ladder: registration already in progress.\n" );
+                return;
+        }
+
+        /* ── Argument validation ─────────────────────────────────────── */
+        if ( Cmd_Argc() < 5 ) {
+                Com_Printf( "Usage: ladder_register <ownerName> <ownerEmail>"
+                            " <serverName> agree\n" );
+                Cbuf_AddText( "ladder_register_result err \"Missing arguments.\"\n" );
+                return;
+        }
+
+        Q_strncpyz( ownerName,  Cmd_Argv( 1 ), sizeof( ownerName  ) );
+        Q_strncpyz( ownerEmail, Cmd_Argv( 2 ), sizeof( ownerEmail  ) );
+        Q_strncpyz( serverName, Cmd_Argv( 3 ), sizeof( serverName  ) );
+        Q_strncpyz( agree,      Cmd_Argv( 4 ), sizeof( agree       ) );
+
+        if ( !ownerName[0] || !ownerEmail[0] || !serverName[0] ) {
+                Cbuf_AddText( "ladder_register_result err \"Empty field.\"\n" );
+                return;
+        }
+
+        if ( Q_stricmp( agree, "agree" ) != 0 ) {
+                Cbuf_AddText( "ladder_register_result err \"Agreement not confirmed.\"\n" );
+                return;
+        }
+
+        /* ── Build URL and POST body ─────────────────────────────────── */
+        SV_LadderBuildRegisterUrl( reg->url, sizeof( reg->url ) );
+        if ( !reg->url[0] ) {
+                Cbuf_AddText( "ladder_register_result err \"Internal URL error.\"\n" );
+                return;
+        }
+
+        Q_strncpyz( reg->serverName, serverName, sizeof( reg->serverName ) );
+
+        SV_LadderUrlEncode( ownerName,  encName,   sizeof( encName   ) );
+        SV_LadderUrlEncode( ownerEmail, encEmail,  sizeof( encEmail  ) );
+        SV_LadderUrlEncode( serverName, encServer, sizeof( encServer ) );
+
+        Com_sprintf( reg->body, sizeof( reg->body ),
+                     "server_name=%s&owner_name=%s&owner_email=%s&agree=1",
+                     encServer, encName, encEmail );
+
+        /* ── Initialise cURL ─────────────────────────────────────────── */
+        if ( !SV_LadderEnsureCurl() ) {
+                Cbuf_AddText( "ladder_register_result err \"libcurl unavailable.\"\n" );
+                return;
+        }
+
+        easy = sv_curl_easy_init();
+        if ( !easy ) {
+                Cbuf_AddText( "ladder_register_result err \"curl_easy_init failed.\"\n" );
+                return;
+        }
+
+        reg->easy           = easy;
+        reg->responseLength = 0;
+        reg->response[0]    = '\0';
+        reg->errorBuffer[0] = '\0';
+
+        sv_curl_easy_setopt( easy, CURLOPT_URL,            reg->url );
+        sv_curl_easy_setopt( easy, CURLOPT_POST,           1L );
+        sv_curl_easy_setopt( easy, CURLOPT_POSTFIELDS,     reg->body );
+        sv_curl_easy_setopt( easy, CURLOPT_POSTFIELDSIZE,  (long)strlen( reg->body ) );
+        sv_curl_easy_setopt( easy, CURLOPT_WRITEFUNCTION,  SV_LadderRegWriteCallback );
+        sv_curl_easy_setopt( easy, CURLOPT_WRITEDATA,      reg );
+        sv_curl_easy_setopt( easy, CURLOPT_FOLLOWLOCATION, 1L );
+        sv_curl_easy_setopt( easy, CURLOPT_MAXREDIRS,      5L );
+        sv_curl_easy_setopt( easy, CURLOPT_CONNECTTIMEOUT, 15L );
+        sv_curl_easy_setopt( easy, CURLOPT_TIMEOUT,        30L );
+        sv_curl_easy_setopt( easy, CURLOPT_NOSIGNAL,       1L );
+        sv_curl_easy_setopt( easy, CURLOPT_USERAGENT,      Q3_VERSION );
+        sv_curl_easy_setopt( easy, CURLOPT_ERRORBUFFER,    reg->errorBuffer );
+        sv_curl_easy_setopt( easy, CURLOPT_PRIVATE,        reg );
+
+        headers = sv_curl_slist_append( headers,
+                  "Content-Type: application/x-www-form-urlencoded" );
+        headers = sv_curl_slist_append( headers, "Accept: application/json" );
+        if ( headers ) {
+                sv_curl_easy_setopt( easy, CURLOPT_HTTPHEADER, headers );
+        }
+        reg->headers = headers;
+
+        if ( sv_curl_multi_add_handle( sv_ladder.multi, easy ) != CURLM_OK ) {
+                sv_curl_slist_free_all( headers );
+                sv_curl_easy_cleanup( easy );
+                reg->easy    = NULL;
+                reg->headers = NULL;
+                Cbuf_AddText( "ladder_register_result err \"curl_multi_add failed.\"\n" );
+                return;
+        }
+
+        reg->active = qtrue;
+        Com_Printf( "Ladder: registration request started (%s).\n", reg->url );
+        Com_Printf( "Ladder: multi=%p easy=%p initialized=%d\n",
+                    (void *)sv_ladder.multi, (void *)easy,
+                    (int)sv_ladder.initialized );
+#endif /* USE_CURL */
+}
+
 
 void SV_LadderInit( void ) {
         if ( sv_ladder.initialized ) {
@@ -1707,6 +2201,9 @@ void SV_LadderInit( void ) {
         Com_Memset( &sv_ladder, 0, sizeof( sv_ladder ) );
         SV_LadderRefreshQueueLimit();
         sv_ladder.initialized = qtrue;
+
+        Cmd_AddCommand( "ladder_register",       SV_LadderRegister_f );
+        Cmd_AddCommand( "ladder_register_abort", SV_LadderRegisterAbort_f );
 
         if ( SV_LadderEnsureSpoolDirectory() ) {
                 SV_LadderLoadSpool();
@@ -1718,7 +2215,12 @@ void SV_LadderShutdown( void ) {
                 return;
         }
 
+        Cmd_RemoveCommand( "ladder_register" );
+        Cmd_RemoveCommand( "ladder_register_abort" );
+
 #ifdef USE_CURL
+        SV_LadderAbortRegister();
+
         if ( sv_ladder.active ) {
                 SV_LadderFreeRequest( sv_ladder.active, qtrue );
                 sv_ladder.active = NULL;
@@ -1762,6 +2264,14 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
                         sv_ladder.warnedNoUrl = qtrue;
                 }
                 return;
+        }
+
+        if ( SV_LadderLooksLikeMatchEndpoint( sv_ladderUrl->string ) ) {
+                sv_ladder.warnedInvalidUrl = qfalse;
+        } else if ( !sv_ladder.warnedInvalidUrl ) {
+                Com_Printf( "Ladder: sv_ladderUrl \"%s\" does not look like a match endpoint (expected .../matches)\n",
+                        sv_ladderUrl->string );
+                sv_ladder.warnedInvalidUrl = qtrue;
         }
 
         SV_LadderRefreshQueueLimit();
@@ -1817,15 +2327,33 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
 }
 
 void SV_LadderFrame( void ) {
-        if ( !sv_ladderEnabled || !sv_ladderEnabled->integer ) {
-                return;
-        }
-
         if ( !sv_ladder.initialized ) {
-                SV_LadderInit();
+                /* Initialise early if a registration is pending so the
+                 * multi handle exists to drive it to completion. */
+                if ( sv_ladder.reg.active ) {
+                        Com_Printf( "Ladder[frame]: not initialized but reg.active – calling Init\n" );
+                        SV_LadderInit();
+                }
                 if ( !sv_ladder.initialized ) {
                         return;
                 }
+        }
+
+        /* Drive the multi handle unconditionally so a pending registration
+         * completes even when sv_ladderEnabled is still 0.
+         * SV_LadderPollActive now handles both reg and match-upload handles
+         * via CURLINFO_PRIVATE – no separate PollRegister needed.           */
+#ifdef USE_CURL
+        if ( sv_ladder.reg.active || sv_ladder.active ) {
+                Com_DPrintf( "Ladder[frame]: polling – reg.active=%d match.active=%d\n",
+                             (int)sv_ladder.reg.active,
+                             (int)( sv_ladder.active != NULL ) );
+                SV_LadderPollActive();
+        }
+#endif
+
+        if ( !sv_ladderEnabled || !sv_ladderEnabled->integer ) {
+                return;
         }
 
 #ifdef USE_CURL

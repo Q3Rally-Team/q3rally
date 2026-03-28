@@ -582,6 +582,10 @@ void UI_MainMenu( void ) {
 
         UI_ProfileOverlay_MaybeShow();
 
+        /* Q3RALLY LADDER: show offline tracking wizard for existing players
+         * who update to v0.8 and have not yet registered. */
+        UI_LadderWizard_MaybeShow();
+
         if ( uis.activemenu == &s_main.menu ) {
                 uis.transitionIn = uis.realtime;
         }

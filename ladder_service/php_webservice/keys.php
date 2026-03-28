@@ -235,8 +235,7 @@ function keys_register(string $serverName, string $ownerName, string $ownerEmail
         $body    = "A new server has registered for the Q3Rally Ladder:\n\n"
                  . "Server:  {$serverName}\n"
                  . "Owner:   {$ownerName}\n"
-                 . "E-Mail:  {$ownerEmail}\n"
-                 . "Key:     {$key}\n\n"
+                 . "E-Mail:  {$ownerEmail}\n\n"
                  . "Approve or revoke at: https://ladder.q3rally.com/admin.php\n";
         mail($notifyEmail, $subject, $body, "From: noreply@q3rally.com");
     }
@@ -292,6 +291,49 @@ function keys_require_admin(): void
     <button type="submit">Login</button></form></body></html>
     HTML;
     exit;
+}
+
+// ── Source classification ─────────────────────────────────────────────────────
+
+/**
+ * Returns true when the key was registered by the in-game offline wizard.
+ * Convention: the wizard always appends "_OFFLINE" (case-insensitive) to the
+ * player name when building the server name, e.g. "PlayerName_OFFLINE".
+ */
+function keys_is_offline(array $record): bool
+{
+    $name = keys_strip_color_codes($record['serverName'] ?? '');
+    return (bool) preg_match('/_OFFLINE$/i', trim($name));
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+/**
+ * Permanently remove a key record from the store.
+ * Only permitted for revoked keys.
+ */
+function keys_delete(string $key): bool
+{
+    $keys    = keys_load();
+    $initial = count($keys);
+
+    $keys = array_values(array_filter($keys, static function ($record) use ($key) {
+        if (!isset($record['key'])) {
+            return true;
+        }
+        if (!hash_equals($record['key'], $key)) {
+            return true;
+        }
+        // Only allow deletion of revoked keys
+        return ($record['status'] ?? '') !== 'revoked';
+    }));
+
+    if (count($keys) === $initial) {
+        return false; // nothing was removed
+    }
+
+    keys_save($keys);
+    return true;
 }
 
 function keys_approve(string $key): bool

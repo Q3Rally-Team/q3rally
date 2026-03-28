@@ -11,6 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $agree       = !empty($_POST['agree']);
     $serverNameClean = keys_strip_color_codes($serverName);
 
+    // Detect in-game (engine) requests by Accept header
+    $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
+    $wantsJson    = strpos($acceptHeader, 'application/json') !== false;
+
     if ($serverNameClean === '' || $ownerName === '' || $ownerEmail === '') {
         $error = 'All fields are required.';
     } elseif (!filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
@@ -30,6 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newKey  = keys_register($serverNameClean, $ownerName, $ownerEmail);
             $success = true;
         }
+    }
+
+    // JSON response path – used by the in-game registration wizard.
+    // Returns before any HTML is emitted so the engine gets a compact payload.
+    if ($wantsJson) {
+        header('Content-Type: application/json');
+        if ($success && $newKey !== '') {
+            http_response_code(200);
+            echo json_encode(['status' => 'pending', 'key' => $newKey]);
+        } else {
+            http_response_code(422);
+            echo json_encode(['status' => 'error', 'error' => $error]);
+        }
+        exit;
     }
 }
 ?>
@@ -106,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <strong>Save this key now – it will not be shown again.</strong><br>
         Once approved, add these lines to your server config:
         <div class="codeblock">set sv_ladderEnabled  "1"
-set sv_ladderUrl      "https://ladder.q3rally.com/index.php"
+set sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
 set sv_ladderApiKey   "<?= htmlspecialchars($newKey) ?>"</div>
       </div>
 
@@ -200,7 +218,7 @@ set sv_ladderApiKey   "<?= htmlspecialchars($newKey) ?>"</div>
           <p class="step-title">Add three lines to your server config</p>
           <p class="step-desc">Once approved, add the following and restart your server:</p>
           <div class="codeblock">set sv_ladderEnabled  "1"
-set sv_ladderUrl      "https://ladder.q3rally.com/index.php"
+set sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
 set sv_ladderApiKey   "your-key-here"</div>
           <p class="step-desc" style="margin-top:10px">
             The key is handled like <code>rconPassword</code> –

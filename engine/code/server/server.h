@@ -350,6 +350,8 @@ int SV_RateMsec( client_t *client );
 
 void SV_LadderInit( void );
 void SV_LadderShutdown( void );
+void SV_LadderRegister_f( void );
+void SV_LadderRegisterAbort_f( void );
 void SV_LadderSubmit( const ladderMatchPayload_t *payload );
 void SV_LadderFrame( void );
 

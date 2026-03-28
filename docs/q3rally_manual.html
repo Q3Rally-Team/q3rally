@@ -452,17 +452,30 @@ vstr d1</pre>
     <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="flow-title">Leaderboard updated</div><div class="flow-desc">The ladder service indexes the match and updates best times, K/D records, and objective scores. The web frontend reflects changes within seconds.</div></div></div>
   </div>
 
+  <h3>Offline Client Registration</h3>
+  <p>Solo players who race offline can register their client with the ladder directly from the main menu — no dedicated server required. Once registered, match results are uploaded automatically at the end of each offline session.</p>
+
+  <div class="flow-steps">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="flow-title">Registration wizard on first start</div><div class="flow-desc">The registration wizard appears automatically on every game start until it has been completed successfully or permanently dismissed. It cannot be opened manually from the menu.</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="flow-title">Fill in name and e-mail</div><div class="flow-desc">Enter your player name and a contact e-mail address. The server name is derived automatically from your player name with an <code>_OFFLINE</code> suffix so the admin panel can distinguish offline clients from dedicated servers.</div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="flow-title">Submit and wait</div><div class="flow-desc">The client sends a registration request to <code>register.php</code> asynchronously. The wizard shows a spinner while the request is in flight — the game remains fully responsive.</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="flow-title">Automatic configuration</div><div class="flow-desc">On success the engine sets <code>sv_ladderEnabled</code>, <code>sv_ladderUrl</code>, <code>sv_ladderApiKey</code>, and <code>sv_hostname</code> automatically and writes them to <code>q3config.cfg</code>. No manual CVar editing is required.</div></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="flow-title">Admin approval</div><div class="flow-desc">The registration appears in the <strong>Offline</strong> tab of the ladder admin panel at <code>/admin.php</code>. An admin approves the key before match uploads are accepted.</div></div></div>
+  </div>
+
+  <div class="callout"><strong>Note</strong> Offline registrations are visible in the <em>Offline</em> tab of the admin panel, separate from dedicated server keys. The API key is stored in <code>q3config.cfg</code> with the <code>CVAR_ARCHIVE</code> and <code>CVAR_PROTECTED</code> flags — it cannot be read or overwritten by mods or the console.</div>
+
   <h3>Server CVars</h3>
   <div class="table-wrap"><table>
     <thead><tr><th>CVar</th><th>Default</th><th>Flags</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td>sv_ladderEnabled</td><td>0</td><td>ARCHIVE</td><td>Globally enable or disable the HTTP reporter. Set to 1 to activate.</td></tr>
       <tr><td>sv_ladderUrl</td><td>—</td><td>ARCHIVE</td><td>Target endpoint. Example: <code>https://ladder.q3rally.com/index.php</code></td></tr>
-      <tr><td>sv_ladderApiKey</td><td>—</td><td>TEMP · PROTECTED</td><td>Bearer token for authentication. Never appears in status output or logs.</td></tr>
+      <tr><td>sv_ladderApiKey</td><td>—</td><td>ARCHIVE · PROTECTED</td><td>Bearer token for authentication. Never appears in status output or logs.</td></tr>
     </tbody>
   </table></div>
 
-  <div class="callout"><strong>Security Note</strong><code>sv_ladderApiKey</code> is treated like <code>rconPassword</code> — stored as a temporary protected CVar that is never included in <code>status</code> responses or written to disk.</div>
+  <div class="callout"><strong>Security Note</strong><code>sv_ladderApiKey</code> is stored with <code>CVAR_ARCHIVE | CVAR_PROTECTED</code> — it is written to <code>q3config.cfg</code> for persistence but cannot be read or overwritten by mods or the console.</div>
 
   <h3>Minimal Ladder Config</h3>
 <pre>seta sv_ladderEnabled  1

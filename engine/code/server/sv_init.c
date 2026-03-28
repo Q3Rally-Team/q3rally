@@ -712,7 +712,7 @@ void SV_Init (void)
 
 	sv_ladderEnabled = Cvar_Get ("sv_ladderEnabled", "0", CVAR_ARCHIVE );
 	sv_ladderUrl = Cvar_Get ("sv_ladderUrl", "", CVAR_ARCHIVE );
-	sv_ladderApiKey = Cvar_Get ("sv_ladderApiKey", "", CVAR_TEMP | CVAR_PROTECTED );
+	sv_ladderApiKey = Cvar_Get ("sv_ladderApiKey", "", CVAR_ARCHIVE | CVAR_PROTECTED );
 	sv_telemetryMaxBatch = Cvar_Get ("sv_telemetryMaxBatch", "8", CVAR_ARCHIVE );
 
 	// initialize bot cvars so they are listed and can be set before loading the botlib

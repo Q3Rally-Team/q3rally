@@ -1543,6 +1543,19 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		return qtrue;
 	}
 
+	if ( Q_stricmp( cmd, "ladder_register_result" ) == 0 ) {
+		char status[8];
+		char payload[256];
+		trap_Argv( 1, status,  sizeof( status  ) );
+		trap_Argv( 2, payload, sizeof( payload ) );
+		if ( Q_stricmp( status, "ok" ) == 0 ) {
+			UI_LadderWizard_OnSuccess( payload );
+		} else {
+			UI_LadderWizard_OnError( payload[0] ? payload : "Registration failed." );
+		}
+		return qtrue;
+	}
+
 	return qfalse;
 }
 

@@ -1067,6 +1067,11 @@ void SV_Frame( int msec ) {
 		return;
 	}
 
+	// Drive the ladder HTTP stack every frame regardless of server state.
+	// This is required for the registration wizard which runs in the menu
+	// before any map is loaded (com_sv_running == 0 at that point).
+	SV_LadderFrame();
+
 	if (!com_sv_running->integer)
 	{
 		// Running as a server, but no map loaded
@@ -1162,7 +1167,6 @@ void SV_Frame( int msec ) {
 
 	// send messages back to the clients
 	SV_SendClientMessages();
-	SV_LadderFrame();
 
 	// send a heartbeat to the master if needed
 	SV_MasterHeartbeat(HEARTBEAT_FOR_MASTER);

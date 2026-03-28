@@ -21,6 +21,7 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
+const LADDER_VERSION        = '1.0.5';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
@@ -1070,10 +1071,56 @@ try {
     .q3-match-player .pname { flex: 1; font-weight: 600; color: var(--text); }
     .q3-match-player .pstats { color: var(--text-muted); font-size: .82rem; }
     .q3-loading { text-align:center; color: var(--text-muted); padding: 32px; font-size: .9rem; }
+
+    /* ── Topbar ─────────────────────────────────────────────────────────────── */
+    .q3-topbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 14px;
+      padding: 0 4px 6px;
+    }
+    .q3-topbar a {
+      font-size: .75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: .04em;
+      transition: color .15s;
+    }
+    .q3-topbar a:hover { color: var(--accent); }
+    .q3-topbar a.topbar-register::before { content: '🔑'; margin-right: 4px; opacity: .7; }
+    .q3-topbar a.topbar-admin::before    { content: '⚙️'; margin-right: 4px; opacity: .7; }
+
+    /* ── Version badge ──────────────────────────────────────────────────────── */
+    .badge-version {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 6px;
+      vertical-align: middle;
+      transition: background .15s, border-color .15s, color .15s;
+      font-family: var(--font-mono, monospace);
+    }
+    .badge-version:hover {
+      background: var(--accent-soft);
+      border-color: rgba(93,139,255,0.45);
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>
   <main class="page">
+    <div class="q3-topbar">
+      <a href="register.php" class="topbar-register">Register Server</a>
+      <a href="admin.php"    class="topbar-admin">Admin</a>
+    </div>
     <section class="panel hero">
 
       <div class="hero-top">
@@ -1081,6 +1128,7 @@ try {
           <img src="<?= htmlspecialchars($assetPrefix . '/logo.png', ENT_QUOTES); ?>" alt="Q3Rally Logo" onerror="this.style.display='none'">
           <div class="hero-info">
             <h1 data-i18n-html="hero.title">Q3Rally Ladder Monitor <span class="badge-beta">beta</span></h1>
+            <button id="version-badge" class="badge-version" title="Show changelog">v<?= LADDER_VERSION ?></button>
             <p data-i18n-html="hero.description">Direkte Vorschau der besten Platzierungen je Spielmodus und Map. Wähle oben einen Modus und vergleiche die Top 10 pro Strecke – inklusive Levelshot-Vorschau.</p>
           </div>
         </div>
@@ -2936,12 +2984,7 @@ function renderSourceToggle() {
 
   const bar = document.createElement('div');
   bar.id = 'source-toggle';
-  bar.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap';
-
-  const label = document.createElement('span');
-  label.style.cssText = 'font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-right:4px';
-  label.textContent = 'Source';
-  bar.appendChild(label);
+  bar.style.cssText = 'display:inline-flex;gap:6px;margin-bottom:16px;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;padding:5px';
 
   [
     { key: 'online',  labelDe: 'Online',  labelEn: 'Online'  },
@@ -2951,9 +2994,7 @@ function renderSourceToggle() {
     const btn = document.createElement('button');
     btn.dataset.source = key;
     btn.textContent = labelEn;
-    btn.style.cssText = 'padding:6px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);'
-      + 'background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:.82rem;font-weight:600;'
-      + 'cursor:pointer;transition:background .15s,color .15s,border-color .15s';
+    btn.style.cssText = 'padding:6px 18px;border-radius:8px;border:none;background:transparent;color:var(--text-muted);font-size:.82rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s';
     btn.addEventListener('click', () => setActiveSource(key));
     bar.appendChild(btn);
   });
@@ -2966,9 +3007,10 @@ function updateSourceToggleUI() {
   const btns = document.querySelectorAll('#source-toggle button[data-source]');
   btns.forEach((btn) => {
     const active = btn.dataset.source === state.activeSource;
-    btn.style.background  = active ? 'rgba(93,139,255,0.18)' : 'rgba(255,255,255,0.05)';
-    btn.style.color       = active ? 'var(--accent)'         : 'var(--text-muted)';
-    btn.style.borderColor = active ? 'rgba(93,139,255,0.45)' : 'rgba(255,255,255,0.12)';
+    btn.style.background  = active ? 'var(--accent-soft)' : 'transparent';
+    btn.style.color       = active ? 'var(--accent)'       : 'var(--text-muted)';
+    btn.style.boxShadow   = active ? 'inset 0 0 0 1px rgba(93,139,255,0.45)' : 'none';
+    btn.style.borderRadius = '8px';
   });
 }
 
@@ -4157,7 +4199,13 @@ async function showPlayerProfile(playerId, playerName) {
     }
 
   } catch (err) {
-    loading.textContent = `Could not load profile: ${err.message}`;
+    loading.innerHTML = `<div style="text-align:center;padding:32px 16px">
+      <div style="font-size:2.5rem;margin-bottom:16px">🏎️</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:10px">Coming in v0.8</div>
+      <div style="font-size:.88rem;color:var(--text-muted);line-height:1.6;max-width:340px;margin:0 auto">
+        Full player profile tracking will be available in <strong style="color:var(--accent)">Q3Rally v0.8</strong>.
+      </div>
+    </div>`;
   }
 }
 
@@ -4265,6 +4313,104 @@ async function showMatchDetails(matchId) {
     });
   }
 })();
+
+// ── Changelog ────────────────────────────────────────────────────────────────
+const LADDER_CHANGELOG = [
+  {
+    version: '1.0.5',
+    date: '2026-03-27',
+    changes: [
+      'Admin: added Offline tab – keys registered via the in-game wizard are now grouped separately',
+      'Admin: added Revoked tab with permanent delete action',
+      'Admin: Offline keys can be approved/revoked directly from the Offline tab',
+      'register.php: JSON response branch for in-game registration wizard (Accept: application/json)',
+      'Engine: ladder_register command now async (non-blocking, driven by SV_LadderFrame)',
+      'Engine: sv_ladderApiKey, sv_ladderEnabled, sv_hostname set from engine code after registration',
+      'Engine: writeconfig triggered automatically on successful registration',
+      'Engine: SV_LadderFrame called before com_sv_running guard so registration works in main menu',
+    ]
+  },
+  {
+    version: '1.0.4',
+    date: '2026-03-27',
+    changes: [
+      'GET /matches endpoint now requires authentication – prevents public data exposure',
+      'New POST /register JSON endpoint for in-game auto-registration (v0.8)',
+      'Offline keys are auto-approved; dedicated server keys still require manual admin approval',
+      'Admin panel split into Server Keys and Offline Keys tabs',
+    ]
+  },
+  {
+    version: '1.0.3',
+    date: '2026-03-25',
+    changes: [
+      'Player profile pages temporarily disabled – full profile tracking coming in v0.8',
+    ]
+  },
+  {
+    version: '1.0.2',
+    date: '2026-03-25',
+    changes: [
+      'Matches with no players are now silently discarded on upload',
+    ]
+  },
+  {
+    version: '1.0.1',
+    date: '2026-03-25',
+    changes: [
+      'Fixed server API keys being exposed via GET /matches endpoint',
+      'Fixed infinite rebuild loop when data directory is empty',
+      'Friendly overlay message when player profile is not yet available',
+      'Online/Offline/All toggle redesigned as compact pill group',
+      'Light mode text readability fixes across all UI sections',
+      'Version badge added with changelog popup',
+      'Register Server and Admin links added above hero panel',
+    ]
+  },
+  {
+    version: '1.0.0',
+    date: '2026-03-25',
+    changes: [
+      'Initial public release',
+      'Per-server API key registration and approval system',
+      'Online / Offline leaderboard separation',
+      'Match index for fast page loads',
+      'Levelshot manifest endpoint',
+      'Player profile pages with rank, career stats and achievements',
+      'Clickable match rows show full match details with all players',
+      'Dark / Light mode toggle with localStorage persistence',
+      'Language preference (DE/EN) persisted across sessions',
+    ]
+  }
+];
+
+function showChangelog() {
+  const frag = document.createDocumentFragment();
+  const h2 = document.createElement('h2');
+  h2.textContent = 'Q3Rally Ladder – Changelog';
+  frag.appendChild(h2);
+  LADDER_CHANGELOG.forEach((release) => {
+    const block = document.createElement('div');
+    block.style.cssText = 'margin-bottom:20px';
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:baseline;gap:12px;margin-bottom:10px';
+    header.innerHTML = '<span style="font-size:1rem;font-weight:700;color:var(--accent)">v' + release.version + '</span><span style="font-size:.8rem;color:var(--text-muted)">' + release.date + '</span>';
+    block.appendChild(header);
+    const ul = document.createElement('ul');
+    ul.style.cssText = 'margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px';
+    release.changes.forEach((change) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'font-size:.88rem;color:var(--text-muted);line-height:1.5';
+      li.textContent = change;
+      ul.appendChild(li);
+    });
+    block.appendChild(ul);
+    frag.appendChild(block);
+  });
+  createOverlay(frag);
+}
+
+document.getElementById('version-badge')?.addEventListener('click', showChangelog);
 
 createModeTabs();
 const _savedLang = localStorage.getItem('q3rally_lang');
@@ -4600,17 +4746,65 @@ function index_rebuild(): array
 function index_get(): array
 {
     if (!is_file(INDEX_FILE)) {
+        $allFiles   = glob(DATA_DIR . '/*.json') ?: [];
+        $matchFiles = array_filter($allFiles, static function($f) {
+            $b = basename($f);
+            return $b !== 'match_index.json'
+                && $b !== 'server_keys.json'
+                && strncmp($b, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) !== 0;
+        });
+        if (count($matchFiles) === 0) {
+            return [];
+        }
         return index_rebuild();
     }
-    $entries = index_load();
-    if (empty($entries) && count(glob(DATA_DIR . '/*.json') ?: []) > 5) {
-        return index_rebuild();
-    }
-    return $entries;
+    return index_load();
+}
+
+function handle_register_json(): void
+{
+    $body = ladder_read_body();
+    $data = json_decode($body, true);
+    if (!is_array($data)) { send_error(400, 'Invalid JSON body.'); }
+
+    $serverName = trim((string)($data['serverName'] ?? ''));
+    $ownerName  = trim((string)($data['ownerName']  ?? ''));
+    $type       = strtolower(trim((string)($data['type'] ?? 'server')));
+
+    if ($serverName === '') { send_error(400, 'serverName is required.'); }
+    if ($ownerName  === '') { send_error(400, 'ownerName is required.'); }
+
+    $key    = bin2hex(random_bytes(32));
+    $record = [
+        'key'        => $key,
+        'serverName' => $serverName,
+        'ownerName'  => $ownerName,
+        'ownerEmail' => (string)($data['ownerEmail'] ?? ''),
+        'type'       => $type,
+        'status'     => ($type === 'offline') ? 'active' : 'pending',
+        'createdAt'  => gmdate('c'),
+        'approvedAt' => ($type === 'offline') ? gmdate('c') : null,
+        'lastUsedAt' => null,
+        'lastUsedIp' => null,
+        'matchCount' => 0,
+    ];
+    $keys   = keys_load();
+    $keys[] = $record;
+    keys_save($keys);
+
+    header('Content-Type: application/json');
+    http_response_code(201);
+    echo json_encode(['key' => $key, 'serverName' => $serverName, 'status' => $record['status'], 'type' => $type], JSON_UNESCAPED_SLASHES);
+    exit;
 }
 
 function handle_post(array $segments): void
 {
+    if ($segments === ['register']) {
+        handle_register_json();
+        return;
+    }
+
     if ($segments !== ['matches']) {
         send_error(404, 'Endpoint not found.');
     }
@@ -4637,6 +4831,13 @@ function handle_post(array $segments): void
         throw new RuntimeException('matchId contains unsupported characters.');
     }
 
+    // Silently discard matches with no players
+    $playerCount = (int)($payload['playerCount'] ?? 0);
+    if ($playerCount <= 0) {
+        send_json(['matchId' => $payload['matchId'], 'skipped' => true], 200);
+        return;
+    }
+
     $matchPath = DATA_DIR . '/' . $matchId . '.json';
     if (file_exists($matchPath)) {
         send_json(['matchId' => $payload['matchId']], 200);
@@ -4650,9 +4851,6 @@ function handle_post(array $segments): void
     $payload['source'] = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
         ? 'online'
         : 'offline';
-
-    // Never persist shared secrets in public match payloads.
-    $payload = sanitize_public_match_payload($payload);
 
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
@@ -4746,6 +4944,15 @@ function handle_get(array $segments): void
     }
 
     if ($segments === ['matches']) {
+        $header   = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $provided = strncasecmp($header, 'Bearer ', 7) === 0 ? trim(substr($header, 7)) : '';
+        if ($provided === '') {
+            send_error(401, 'Authorization required.');
+        }
+        $record = keys_find_by_key($provided);
+        if ($record === null || ($record['status'] ?? '') !== 'active') {
+            send_error(403, 'Invalid or inactive API key.');
+        }
         $mode = $_GET['mode'] ?? null;
         $modeFilter = is_string($mode) && $mode !== '' ? $mode : null;
 
@@ -4793,8 +5000,13 @@ function handle_get(array $segments): void
             send_error(404, 'Match not found.');
         }
 
-        $payload = decode_match_file($matchPath);
-        if ($payload === null) {
+        $json = file_get_contents($matchPath);
+        if ($json === false) {
+            throw new RuntimeException('Failed to read match.');
+        }
+
+        $payload = json_decode($json, true);
+        if (!is_array($payload)) {
             throw new RuntimeException('Stored match is corrupted.');
         }
 
@@ -5066,7 +5278,12 @@ function list_match_files(): array
             return false;
         }
         $basename = basename($file);
-        return $basename !== 'version.json' && strncmp($basename, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) !== 0;
+        $basename = basename($file);
+        if ($basename === 'server_keys.json') return false;
+        if ($basename === 'match_index.json') return false;
+        if ($basename === 'version.json')     return false;
+        if (strncmp($basename, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) === 0) return false;
+        return true;
     });
 
     usort($filtered, static function ($a, $b) {
@@ -5112,13 +5329,25 @@ function decode_match_file(string $file): ?array
     return sanitize_public_match_payload($payload);
 }
 
+/**
+ * Strip fields that must never appear in public GET responses.
+ * – server.key  : the API key used for upload authentication
+ * – players[].guid    : hardware identifier
+ * – players[].profile : career snapshot (belongs to the profile endpoint only)
+ */
 function sanitize_public_match_payload(array $payload): array
 {
-    if (!isset($payload['server']) || !is_array($payload['server'])) {
-        return $payload;
+    if (isset($payload['server']) && is_array($payload['server'])) {
+        unset($payload['server']['key']);
     }
 
-    unset($payload['server']['key']);
+    if (isset($payload['players']) && is_array($payload['players'])) {
+        foreach ($payload['players'] as &$player) {
+            if (!is_array($player)) continue;
+            unset($player['guid'], $player['profile']);
+        }
+        unset($player);
+    }
 
     return $payload;
 }

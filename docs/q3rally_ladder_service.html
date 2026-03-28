@@ -173,6 +173,23 @@ footer a:hover{color:#fff}
     </tbody>
   </table></div>
 
+  <h3>In-Game Client Registration</h3>
+  <p>Solo players can register directly from the Q3Rally main menu without touching any config file. The wizard sends a <code>POST</code> request to <code>register.php</code> and receives a JSON response containing the new API key.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Step</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Wizard location</td><td><strong>Main Menu → Multiplayer → Ladder → Register Client</strong></td></tr>
+      <tr><td>Request endpoint</td><td><code>POST /register.php</code> with <code>Accept: application/json</code> header</td></tr>
+      <tr><td>Response</td><td><code>{"status":"pending","key":"&lt;hex64&gt;"}</code> — the key is immediately stored in the engine</td></tr>
+      <tr><td>Server name</td><td>Derived from the player name with an <code>_OFFLINE</code> suffix, e.g. <code>P3rlE_OFFLINE</code></td></tr>
+      <tr><td>Admin panel</td><td>Offline registrations appear in the <strong>Offline</strong> tab of <code>admin.php</code>, separate from dedicated server keys</td></tr>
+      <tr><td>Auto-configuration</td><td>On success the engine sets <code>sv_ladderEnabled</code>, <code>sv_ladderUrl</code>, <code>sv_ladderApiKey</code>, and <code>sv_hostname</code> and writes them to <code>q3config.cfg</code> automatically</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>register.php — JSON branch</strong> When the request includes <code>Accept: application/json</code> the endpoint returns a compact JSON object instead of an HTML page. This is how the in-game wizard communicates with the service. Browser requests without the header continue to receive the standard HTML registration form.</div>
+
   <h3>Error Responses</h3>
   <p>All errors return JSON: <code>{ "error": "..." }</code>. File permission issues return HTTP 500. Malformed payloads return HTTP 400.</p>
 </section>
@@ -226,7 +243,7 @@ pip install -r requirements.txt</pre>
   <p>All POST requests require a bearer token in the <code>Authorization</code> header. Keys are managed server-side via <code>register.php</code> / <code>admin.php</code> (PHP) or the admin interface (Python).</p>
 <pre>Authorization: Bearer your-secret-api-key</pre>
 
-  <h3>POST /matches — Submit a Match</h3>
+  <h3>POST /index.php/matches — Submit a Match</h3>
 <pre>curl -X POST https://example.com/ladder/index.php/matches \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer your-secret-api-key" \
@@ -251,7 +268,7 @@ pip install -r requirements.txt</pre>
 
   <p>Responses: <code>201 Created</code> with <code>{ "matchId": "…" }</code> on success. <code>200 OK</code> if <code>matchId</code> already exists (no-op). <code>400</code> for malformed JSON. <code>413</code> if payload exceeds 512 KB. <code>429</code> if rate-limited.</p>
 
-  <h3>GET /matches — List Matches</h3>
+  <h3>GET /index.php/matches — List Matches</h3>
 <pre>curl "https://example.com/ladder/index.php/matches?limit=10&amp;mode=GT_RACING"</pre>
   <div class="table-wrap"><table>
     <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
@@ -262,15 +279,15 @@ pip install -r requirements.txt</pre>
     </tbody>
   </table></div>
 
-  <h3>GET /matches/{matchId} — Single Match</h3>
+  <h3>GET /index.php/matches/{matchId} — Single Match</h3>
 <pre>curl https://example.com/ladder/index.php/matches/srv-20240405-183011-42</pre>
   <p>Returns the full stored payload. The server key is stripped from the response.</p>
 
-  <h3>DELETE /matches/{matchId}</h3>
+  <h3>DELETE /index.php/matches/{matchId}</h3>
 <pre>curl -X DELETE https://example.com/ladder/index.php/matches/srv-20240405-183011-42</pre>
   <p>Returns <code>204 No Content</code> on success. Requires admin auth.</p>
 
-  <h3>GET /matches/index — Fast Leaderboard Index</h3>
+  <h3>GET /index.php/matches/index — Fast Leaderboard Index</h3>
 <pre>curl https://example.com/ladder/index.php/matches/index</pre>
   <p>Returns only the leaderboard-relevant fields for every match (no full payloads). Used by the web dashboard to load all results efficiently. Cached for 30 s.</p>
 

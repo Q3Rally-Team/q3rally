@@ -382,6 +382,53 @@ static void UI_ProfileOverlay_TrimName( char *name ) {
     }
 }
 
+static void UI_ProfileOverlay_NormalizeName( const char *in, char *out, size_t outSize ) {
+    const char *cursor;
+    size_t outIndex = 0;
+    qboolean sawNonWhitespace = qfalse;
+    qboolean pendingSpace = qfalse;
+
+    if ( !out || outSize == 0 ) {
+        return;
+    }
+
+    out[0] = '\0';
+    if ( !in || !in[0] ) {
+        return;
+    }
+
+    cursor = in;
+
+    while ( *cursor && outIndex + 1 < outSize ) {
+        unsigned char ch;
+
+        if ( Q_IsColorString( cursor ) ) {
+            cursor += 2;
+            continue;
+        }
+
+        ch = (unsigned char)*cursor;
+        if ( isspace( ch ) ) {
+            if ( sawNonWhitespace ) {
+                pendingSpace = qtrue;
+            }
+            cursor++;
+            continue;
+        }
+
+        if ( pendingSpace && outIndex > 0 && outIndex + 1 < outSize ) {
+            out[outIndex++] = ' ';
+        }
+
+        out[outIndex++] = (char)tolower( ch );
+        sawNonWhitespace = qtrue;
+        pendingSpace = qfalse;
+        cursor++;
+    }
+
+    out[outIndex] = '\0';
+}
+
 static qboolean UI_Profile_NameIsValid( const char *name, char *error, int errorSize ) {
     int length;
     int i;
@@ -1084,6 +1131,7 @@ static void UI_ProfileOverlay_MenuEvent( void *ptr, int event ) {
 
 static qboolean UI_ProfileOverlay_HandleCreate( void ) {
     char name[PROFILE_MAX_NAME];
+    char normalizedInput[PROFILE_MAX_NAME];
     char error[64];
     int i;
 
@@ -1095,8 +1143,13 @@ static qboolean UI_ProfileOverlay_HandleCreate( void ) {
         return qfalse;
     }
 
+    UI_ProfileOverlay_NormalizeName( name, normalizedInput, sizeof( normalizedInput ) );
+
     for ( i = 0; i < s_profileOverlay.profileCount; ++i ) {
-        if ( !Q_stricmp( s_profileOverlay.profileNames[i], name ) ) {
+        char normalizedExisting[PROFILE_MAX_NAME];
+
+        UI_ProfileOverlay_NormalizeName( s_profileOverlay.profileNames[i], normalizedExisting, sizeof( normalizedExisting ) );
+        if ( !Q_stricmp( normalizedExisting, normalizedInput ) ) {
             UI_ProfileOverlay_SetStatus( "Profile already exists", statusErrorColor );
             return qfalse;
         }
@@ -1189,6 +1242,11 @@ static qboolean UI_ProfileOverlay_HandleSelect( void ) {
 
     MainMenu_Prepare();
     UI_PopMenu();
+
+    /* Q3RALLY LADDER: show wizard after profile is activated.
+     * Wizard runs modal/fullscreen and draws its own dimmed backdrop. */
+    UI_LadderWizard_MaybeShow();
+
     return qtrue;
 }
 

@@ -458,6 +458,12 @@ extern void UI_Rally_CreditMenu( void );
 // ui_rally_downloads.c
 //
 extern void UI_Rally_DownloadsMenu( void );
+
+// ui_rally_ladder_wizard.c
+extern void UI_LadderWizardMenu( void );
+extern void UI_LadderWizard_MaybeShow( void );
+extern void UI_LadderWizard_OnSuccess( const char *key );
+extern void UI_LadderWizard_OnError( const char *msg );
 // Q3RALLY DOWNLOADS END
 
 //

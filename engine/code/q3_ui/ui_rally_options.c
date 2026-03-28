@@ -52,6 +52,7 @@ qboolean isRaceObserver( int clientNum )
 #define ID_MVRL_SPARKS          34
 #define ID_GHOST_PLAYBACK       35
 
+#define ID_LADDER_OFFLINE       41
 #define ID_BACK                 40
 
 #define Q3ROPTIONS_TAB_TOP           64
@@ -92,6 +93,7 @@ typedef struct {
 	menulist_s		engineSounds;
 	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
+	menuradiobutton_s	ladderOffline;
 
 	menutext_s		back;
 } q3roptionsmenu_t;
@@ -209,6 +211,10 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		trap_Cvar_SetValue( "g_useFuel", s_q3roptions.fuelConsumption.curvalue );
 		break;
 
+	case ID_LADDER_OFFLINE:
+		trap_Cvar_SetValue( "sv_ladderEnabled", s_q3roptions.ladderOffline.curvalue );
+		break;
+
 	case ID_RVRL_PLAYERS:
 	case ID_RVRL_OBJECTS:
 	case ID_RVRL_SMOKE:
@@ -310,6 +316,10 @@ static void Q3ROptions_StatusBar( void *self )
 		text = "Toggle fuel consumption for vehicles.";
 		break;
 
+	case ID_LADDER_OFFLINE:
+		text = "Enable or disable automatic upload of offline match results to the Q3Rally Ladder.";
+		break;
+
 	case ID_RVRL_PLAYERS:
 		text = "Show other players in the rear view mirror.";
 		break;
@@ -381,6 +391,7 @@ void Q3ROptions_MenuInit( void ) {
 	}
 	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
+	s_q3roptions.ladderOffline.curvalue = trap_Cvar_VariableValue( "sv_ladderEnabled" ) != 0 ? 1 : 0;
 
 	s_q3roptions.rvrl_players.curvalue = ( ui_rearViewRenderLevel.integer & RL_PLAYERS ) ? 1 : 0;
 	s_q3roptions.rvrl_objects.curvalue = ( ui_rearViewRenderLevel.integer & RL_OBJECTS ) ? 1 : 0;
@@ -422,7 +433,7 @@ void Q3ROptions_MenuInit( void ) {
 #define LAY_L     200
 #define LAY_R     500
 #define LAY_RLY   290
-#define LAY_SLD_Y ( LAY_TOP + LAY_STEP * 5 + 10 )  /* Skid + Camera Tracking row */
+#define LAY_SLD_Y ( LAY_TOP + LAY_STEP * 6 + 10 )  /* Skid + Camera Tracking row */
 #define LAY_HDG_Y ( LAY_RLY - 19 )                  /* Render level headings, 5px higher */
 
 	// ---- LEFT COLUMN: Gameplay ----
@@ -474,6 +485,17 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.fuelConsumption.generic.id		= ID_FUEL_CONSUMPTION;
 	s_q3roptions.fuelConsumption.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.fuelConsumption.generic.statusbar	= Q3ROptions_StatusBar;
+
+	/* Q3RALLY LADDER START */
+	s_q3roptions.ladderOffline.generic.type		= MTYPE_RADIOBUTTON;
+	s_q3roptions.ladderOffline.generic.flags	= QMF_SMALLFONT;
+	s_q3roptions.ladderOffline.generic.x		= LAY_L;
+	s_q3roptions.ladderOffline.generic.y		= LAY_TOP + LAY_STEP * 5;
+	s_q3roptions.ladderOffline.generic.name		= "Ladder Offline Tracking:";
+	s_q3roptions.ladderOffline.generic.id		= ID_LADDER_OFFLINE;
+	s_q3roptions.ladderOffline.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.ladderOffline.generic.statusbar	= Q3ROptions_StatusBar;
+	/* Q3RALLY LADDER END */
 
 	s_q3roptions.skidlength.generic.type		= MTYPE_SLIDER;
 	s_q3roptions.skidlength.generic.flags		= QMF_SMALLFONT;
@@ -673,6 +695,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.atomspheric );
         Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.speedometer );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.fuelConsumption );
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ladderOffline ); /* Q3RALLY LADDER */
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.manualShift );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
