@@ -541,7 +541,7 @@ CG_DrawModernTeamHeaderRow
 Draws a header row for a team in the scoreboard
 =================
 */
-static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, int damage, float fade) {
+static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, int damage, int teamTime, float fade) {
     char teamText[128];
     char scoreText[64];
     vec4_t teamColor;
@@ -558,9 +558,22 @@ static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, 
     Com_sprintf(teamText, sizeof(teamText), "%d. %s", rank, CG_GetTeamName(team));
     CG_DrawModernText(scoreboardX, textY, teamText, 0, currentScoreboardWidth, teamColor, qtrue);
 
-    /* Team Score & Damage */
+    /* Team Score — show average race time for team racing, pts/dmg for everything else */
     textColor[0] = 0.9f; textColor[1] = 0.9f; textColor[2] = 0.9f; textColor[3] = fade;
-    Com_sprintf(scoreText, sizeof(scoreText), "%d pts / %d dmg", score, damage);
+    if ( cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM ) {
+        if ( teamTime > 0 ) {
+            if ( cgs.gametype == GT_TEAM_RACING_DM && score > 0 ) {
+                /* Show average time and frag bonus so players can see both */
+                Com_sprintf(scoreText, sizeof(scoreText), "avg %s  +%d frags", getStringForTimePrecise(teamTime), score);
+            } else {
+                Com_sprintf(scoreText, sizeof(scoreText), "avg %s", getStringForTimePrecise(teamTime));
+            }
+        } else {
+            Com_sprintf(scoreText, sizeof(scoreText), "avg --:--:---");
+        }
+    } else {
+        Com_sprintf(scoreText, sizeof(scoreText), "%d pts / %d dmg", score, damage);
+    }
     CG_DrawModernText(scoreboardX, textY, scoreText, 2, currentScoreboardWidth, textColor, qtrue);
 }
 
@@ -1137,7 +1150,7 @@ qboolean CG_DrawModernScoreboard(void) {
             }
 
             // Draw team header
-            CG_DrawModernTeamHeaderRow(y, team, i + 1, cg.teamScores[team - TEAM_RED], teamDamage, fade);
+            CG_DrawModernTeamHeaderRow(y, team, i + 1, cg.teamScores[team - TEAM_RED], teamDamage, cg.teamTimes[team - TEAM_RED], fade);
             y += MODERN_SB_COMPACT_HEIGHT + 2;
 
             teamClients = 0;

@@ -58,6 +58,12 @@ int GetTeamAtRank( int rank ){
 			ranks[count] = TEAM_RED + i;
 	}
 
+	// Guard against invalid rank values to prevent out-of-bounds array access.
+	// rank is 1-based; ranks[] has 4 entries, so valid range is [1, 4].
+	if ( rank < 1 || rank > 4 ) {
+		return -1;
+	}
+
 	if (g_gametype.integer == GT_CTF && rank > 2){
 		return -1;
 	}
@@ -69,8 +75,13 @@ int GetTeamAtRank( int rank ){
 
 // UPDATE - send as command string instead?
 void Cmd_RacePositions_f( void ) {
-	char			entry[1024];
-	char			string[1400];
+	// Each entry is " <clientNum> <position>": at most " 63 64" = 6 chars + NUL.
+	// 64 clients * 7 bytes = 448 bytes worst case, well within STRING_SIZE.
+	// entry[] only needs to hold one formatted entry at a time.
+#define ENTRY_SIZE  32
+#define STRING_SIZE 512
+	char			entry[ENTRY_SIZE];
+	char			string[STRING_SIZE];
 	gentity_t		*player;
 	int				i, count, j, stringlength;
 
@@ -84,13 +95,16 @@ void Cmd_RacePositions_f( void ) {
 
 		Com_sprintf (entry, sizeof(entry)," %i %i", player->s.clientNum, player->client->ps.stats[STAT_POSITION]);
 		j = strlen(entry);
-		if (stringlength + j > 1024)
+		// Guard: ensure entry fits including the NUL terminator Q_strncpyz writes
+		if (stringlength + j >= (int)sizeof(string) - 1)
 			break;
-		strcpy (string + stringlength, entry);
+		Q_strncpyz(string + stringlength, entry, sizeof(string) - stringlength);
 		stringlength += j;
 
 		count++;
 	}
+#undef ENTRY_SIZE
+#undef STRING_SIZE
 
 	G_LogPrintf("%s\n", va("positions %i%s", count, string));
 	trap_SendServerCommand( -1, va("positions %i%s\n", count, string) );
@@ -98,63 +112,15 @@ void Cmd_RacePositions_f( void ) {
 
 
 void Cmd_Times_f( gentity_t *ent ) {
-/*
-	gentity_t		*player;
-	int				times[4];
-	int				i, count;
-
-	for(i = 0; i < 4; i++){
-		times[i] = 0;
-	}
-
-	for(i = 0; i < MAX_CLIENTS; i++){
-		player = &g_entities[i];
-		if (!player->inuse) continue;
-		if (!player->client) continue;
-		if (player->client->sess.sessionTeam == TEAM_SPECTATOR) continue;
-		if (player->client->sess.sessionTeam == TEAM_FREE) continue;
-		if (!level.startRaceTime) continue;
-
-		if (player->client->finishRaceTime){
-			times[player->client->sess.sessionTeam - TEAM_RED] +=
-				(player->client->finishRaceTime - level.startRaceTime);
-		}
-		else {
-			times[player->client->sess.sessionTeam - TEAM_RED] +=
-				(level.time - level.startRaceTime);
-		}
-	}
-
-	if (g_gametype.integer == GT_TEAM_RACING_DM){
-		for(i = 0; i < 4; i++){
-			if (level.teamScores[i + TEAM_RED] > 0){
-				times[i] -= level.teamScores[i + TEAM_RED] * TIME_BONUS_PER_FRAG;
-			}
-
-			if (times[i] < 0)
-				times[i] = 0;
-
-			count = TeamCount( -1, TEAM_RED+i );
-			if (count){
-				times[i] /= count;
-			}
-		}
-	}
-	else {
-		for(i = 0; i < 4; i++){
-			if (times[i] < 0)
-				times[i] = 0;
-
-			count = TeamCount( -1, TEAM_RED+i );
-			if (count){
-				times[i] /= count;
-			}
-		}
-	}
-
-	trap_SendServerCommand( ent-g_entities, va("times %i %i %i %i\n",
-		times[0], times[1], times[2], times[3]) );
-*/
+	// Send current team race times to the requesting client.
+	// level.teamTimes[] is kept up-to-date by G_RallyUpdateTeamTime() in
+	// g_rally_mapents.c whenever a player crosses the finish line.
+	// For non-team or non-race modes the values are 0, which is harmless.
+	trap_SendServerCommand( ent - g_entities, va( "times %i %i %i %i",
+		level.teamTimes[TEAM_RED],
+		level.teamTimes[TEAM_BLUE],
+		level.teamTimes[TEAM_GREEN],
+		level.teamTimes[TEAM_YELLOW] ) );
 }
 
 
@@ -356,6 +322,10 @@ void CalculatePlayerPositions( void )
 		Cmd_RacePositions_f();
 		CalculateRanks();
 	}
+
+	// Keep team times live during the race so scoreboard and HUD
+	// always show the correct team ranking, not just at finish events.
+	G_RallyUpdateAllTeamTimes();
 }
 
 
@@ -511,6 +481,14 @@ void RallyStarter_Think( gentity_t *ent ){
 		if ( !count ){
 			return;
 		}
+		// Option A lobby: Derby and LCS need at least g_derbyMinPlayers real players
+		// before the countdown begins. Show a waiting message and hold here.
+		else if ( (g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS)
+			&& count < g_derbyMinPlayers.integer ) {
+			CenterPrint_All( va("Waiting for players... (%i/%i)",
+				count, g_derbyMinPlayers.integer) );
+			return;
+		}
 		else if ( start && count ){
 			ent->number = 3;
 			G_RallyConfigureElimination( count );
@@ -533,6 +511,18 @@ void RallyStarter_Think( gentity_t *ent ){
 
 	if ( level.time > ent->pain_debounce_time + 5000 ){
 		level.startRaceTime = level.time;
+		// Snapshot how many players were present at race start.
+		// Used by CheckExitRules to prevent a solo-start instant win.
+		if ( g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS ) {
+			int pi;
+			level.derbyStartPlayerCount = 0;
+			for ( pi = 0; pi < MAX_CLIENTS; pi++ ) {
+				gentity_t *pl = &g_entities[pi];
+				if ( !pl->inuse || !pl->client ) continue;
+				if ( pl->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+				level.derbyStartPlayerCount++;
+			}
+		}
 		G_RallyInitializeLapTimersAtRaceStart( level.startRaceTime );
 
 		trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );

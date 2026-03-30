@@ -389,6 +389,113 @@ void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
         Rally_Sound( self, EV_GLOBAL_SOUND, CHAN_ANNOUNCER, G_SoundIndex("sound/rally/race/checkpoint.ogg") );
 }
 
+/*
+================================================================================
+G_RallyUpdateTeamTime
+
+Called whenever a player finishes the race. Recomputes level.teamTimes[] for
+the finishing player's team as the average race duration of all team members
+who have finished so far (using level.time as a stand-in for those who haven't).
+
+For GT_TEAM_RACING_DM each frag subtracts TIME_BONUS_PER_FRAG ms, mirroring
+the individual finish-time logic in IsCarAhead().
+
+After updating, broadcasts the new times to all clients so that cg.teamTimes[]
+stays in sync and the scoreboard/header reflect the correct ranking immediately.
+================================================================================
+*/
+static void G_RallyUpdateTeamTime( gentity_t *finisher ) {
+	int		team;
+	int		i;
+	int		memberCount;
+	int		totalTime;
+	gclient_t	*cl;
+
+	if ( !finisher->client ) {
+		return;
+	}
+	if ( !level.startRaceTime ) {
+		return;
+	}
+
+	team = finisher->client->sess.sessionTeam;
+	if ( team < TEAM_RED || team > TEAM_YELLOW ) {
+		return;
+	}
+
+	memberCount = 0;
+	totalTime   = 0;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		cl = &level.clients[i];
+		if ( cl->pers.connected != CON_CONNECTED ) continue;
+		if ( cl->sess.sessionTeam != team ) continue;
+
+		memberCount++;
+
+		if ( cl->finishRaceTime ) {
+			totalTime += cl->finishRaceTime - level.startRaceTime;
+		} else {
+			// Player hasn't finished yet — use current elapsed time as
+			// a running estimate so the ranking stays live during the race.
+			totalTime += level.time - level.startRaceTime;
+		}
+	}
+
+	if ( memberCount == 0 ) {
+		return;
+	}
+
+	level.teamTimes[team] = totalTime / memberCount;
+
+	// Apply frag time bonus for combat variant (lower = better, so subtract)
+	if ( g_gametype.integer == GT_TEAM_RACING_DM ) {
+		int bonus = level.teamScores[team] * TIME_BONUS_PER_FRAG;
+		level.teamTimes[team] -= bonus;
+		if ( level.teamTimes[team] < 1 ) {
+			level.teamTimes[team] = 1;
+		}
+	}
+}
+
+/*
+================================================================================
+G_RallyUpdateAllTeamTimes
+
+Recomputes level.teamTimes[] for all active teams and pushes the result to
+all clients. Called periodically from CalculatePlayerPositions so that the
+scoreboard and HUD team-rank display stays live during the race.
+================================================================================
+*/
+void G_RallyUpdateAllTeamTimes( void ) {
+	gentity_t	dummy;
+	gclient_t	dummyClient;
+	int		t;
+
+	if ( !level.startRaceTime ) {
+		return;
+	}
+	if ( g_gametype.integer != GT_TEAM_RACING && g_gametype.integer != GT_TEAM_RACING_DM ) {
+		return;
+	}
+
+	memset( &dummy, 0, sizeof( dummy ) );
+	memset( &dummyClient, 0, sizeof( dummyClient ) );
+	dummy.client = &dummyClient;
+
+	for ( t = TEAM_RED; t <= TEAM_YELLOW; t++ ) {
+		if ( !TeamCount( -1, t ) ) continue;
+		dummyClient.sess.sessionTeam = t;
+		G_RallyUpdateTeamTime( &dummy );
+	}
+
+	trap_SendServerCommand( -1, va( "times %i %i %i %i",
+		level.teamTimes[TEAM_RED],
+		level.teamTimes[TEAM_BLUE],
+		level.teamTimes[TEAM_GREEN],
+		level.teamTimes[TEAM_YELLOW] ) );
+}
+
 void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         const char *place;
 
@@ -413,6 +520,11 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         other->client->finishRaceTime = level.time;
         other->s.weapon = WP_NONE;
         other->takedamage = qfalse;
+
+        // Update team average time now that this player has a finish time
+        if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {
+                G_RallyUpdateTeamTime( other );
+        }
 
         trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
 
@@ -477,6 +589,11 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
 			other->takedamage = qfalse;
+
+			// Update team average time now that this player has a finish time
+			if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {
+				G_RallyUpdateTeamTime( other );
+			}
 
 			trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
 
@@ -632,10 +749,13 @@ void Think_StartFinish( gentity_t *self ){
 }
 
 void Think_Finish( gentity_t *self ){
-        // Think_StartFinish already sets self->number = level.numCheckpoints correctly.
-        // The old self->number++ here was a bug: it pushed the value one past numCheckpoints
-        // so Touch_Finish's (self->number == other->number) check never fired on A2B maps.
-        Think_StartFinish( self );
+	// Think_StartFinish counts rally_checkpoints and sets self->number = numCheckpoints.
+	// For A2B Sprint maps the finish entity (rally_finish) is NOT a rally_checkpoint,
+	// so the player's other->number reaches numCheckpoints+1 after clearing all CPs.
+	// We need self->number to match that value so Touch_Finish's equality check passes.
+	Think_StartFinish( self );
+	self->number = level.numCheckpoints + 1;
+	self->s.weapon = self->number;
 }
 
 

@@ -15,6 +15,12 @@ static int s_levelGhostCount = 0;
 static ghostBotRoute_t s_botRoute;
 static ghostBotRoute_t s_botRouteScratch;
 
+// Shared read buffer for ghost file loading. Declared once at module level to
+// avoid a 2 MB static allocation inside each function that reads ghost files.
+// Safe to share: G_Ghost_ParseHeader, G_Ghost_LoadBotRouteFromFile, and the
+// scan loop in G_Ghost_LoadForMap are never called concurrently (single-thread QVM).
+static char s_ghostFileBuffer[MAX_GHOST_FILE_SIZE + 1];
+
 static int G_Ghost_Strlen( const char *text ) {
     int len = 0;
 
@@ -195,7 +201,6 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, qboo
 static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghostBotRoute_t *outRoute ) {
     fileHandle_t f;
     int length;
-    static char buffer[MAX_GHOST_FILE_SIZE + 1];
     char *cursor;
     char *line;
     char mapName[MAX_QPATH] = "";
@@ -219,14 +224,14 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
         return qfalse;
     }
 
-    trap_FS_Read( buffer, length, f );
+    trap_FS_Read( s_ghostFileBuffer, length, f );
     trap_FS_FCloseFile( f );
-    buffer[length] = '\0';
+    s_ghostFileBuffer[length] = '\0';
 
     Com_Memset( outRoute, 0, sizeof( *outRoute ) );
     Q_strncpyz( outRoute->path, record->path, sizeof( outRoute->path ) );
 
-    cursor = buffer;
+    cursor = s_ghostFileBuffer;
     while ( ( line = G_Ghost_NextLine( &cursor ) ) != NULL ) {
         if ( line[0] == '#' || line[0] == '\0' ) {
             continue;
@@ -375,7 +380,6 @@ void G_Ghost_InitForMap( const char *mapname ) {
                 qboolean filenameLooksLikeMap;
                 fileHandle_t f;
                 int length;
-                char buffer[16 * 1024 + 1];
 
                 offset += G_Ghost_Strlen( filename ) + 1;
 
@@ -394,13 +398,13 @@ void G_Ghost_InitForMap( const char *mapname ) {
                 }
 
                 {
-                    int readLen = length < (int)sizeof( buffer ) - 1 ? length : (int)sizeof( buffer ) - 1;
-                    trap_FS_Read( buffer, readLen, f );
-                    buffer[readLen] = '\0';
+                    int readLen = length < (int)sizeof( s_ghostFileBuffer ) - 1 ? length : (int)sizeof( s_ghostFileBuffer ) - 1;
+                    trap_FS_Read( s_ghostFileBuffer, readLen, f );
+                    s_ghostFileBuffer[readLen] = '\0';
                 }
                 trap_FS_FCloseFile( f );
 
-                if ( G_Ghost_ParseHeader( buffer, mapname, filenameLooksLikeMap, &s_levelGhosts[s_levelGhostCount] ) ) {
+                if ( G_Ghost_ParseHeader( s_ghostFileBuffer, mapname, filenameLooksLikeMap, &s_levelGhosts[s_levelGhostCount] ) ) {
                     Q_strncpyz( s_levelGhosts[s_levelGhostCount].path, va( "%s/%s", ghostDir, filename ), sizeof( s_levelGhosts[s_levelGhostCount].path ) );
                     ++s_levelGhostCount;
                 }

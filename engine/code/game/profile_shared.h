@@ -12,6 +12,9 @@
 #define PROFILE_MAX_FAVORITE_CARS 4
 #define PROFILE_MAX_FAVORITE_FIELD MAX_QPATH
 
+/* UUID v4 als null-terminierter String: "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" = 36 Zeichen + '\0' */
+#define PROFILE_MAX_UUID 37
+
 typedef struct profile_rank_def_s {
     const char *name;
     int minimumScore;
@@ -35,26 +38,99 @@ typedef struct profile_rank_def_s {
     ENTRY( "Q3Rally Icon", 40000 )
 
 typedef struct profile_stats_s {
+    /* ── Allgemein ───────────────────────────────────────────────────────── */
     double distanceKm;
     double fuelUsed;
-    int bestLapMs;
-    int kills;
-    int deaths;
-    int wins;
-    int playerScore;
-    int sprintWins;
-    int losses;
-    int flagCaptures;
-    int flagAssists;
-    int accuracyAwards;
-    int excellentAwards;
-    int impressiveAwards;
-    int perfectAwards;
+    int    bestLapMs;
+    int    kills;
+    int    deaths;
+    int    wins;
+    int    playerScore;
+    int    sprintWins;
+    int    losses;
+    int    flagCaptures;
+    int    flagAssists;
+    int    accuracyAwards;
+    int    excellentAwards;
+    int    impressiveAwards;
+    int    perfectAwards;
     double topSpeedKph;
-    int damageDealt;
-    int damageTaken;
-    char mostUsedVehicle[PROFILE_MAX_VEHICLE];
-    int mostUsedVehicleTimeMs;
+    int    damageDealt;
+    int    damageTaken;
+    char   mostUsedVehicle[PROFILE_MAX_VEHICLE];
+    int    mostUsedVehicleTimeMs;
+    int    gamesPlayed;
+
+    /* ── GT_RACING ───────────────────────────────────────────────────────── */
+    int    racingWins;
+    int    racingPodiums;
+    int    racingCompleted;
+    int    racingTotalMs;
+
+    /* ── GT_RACING_DM ────────────────────────────────────────────────────── */
+    int    racingDmWins;
+    int    racingDmPodiums;
+    int    racingDmCompleted;
+    int    racingDmTotalMs;
+
+    /* ── GT_SPRINT ───────────────────────────────────────────────────────── */
+    int    sprintCompleted;
+    int    sprintBestMs;
+
+    /* ── GT_ELIMINATION ──────────────────────────────────────────────────── */
+    int    eliminationWins;
+    int    eliminationCompleted;
+    int    eliminationTotalRoundsLasted;
+
+    /* ── GT_LCS ──────────────────────────────────────────────────────────── */
+    int    lcsWins;
+    int    lcsCompleted;
+    int    lcsTotalSurvivalMs;
+
+    /* ── GT_DERBY ────────────────────────────────────────────────────────── */
+    int    derbyWins;
+    int    derbyCompleted;
+    int    derbyKills;
+
+    /* ── GT_DEATHMATCH ───────────────────────────────────────────────────── */
+    int    dmWins;
+    int    dmCompleted;
+    int    dmKills;
+
+    /* ── GT_CTF ──────────────────────────────────────────────────────────── */
+    int    ctfWins;
+    int    ctfCompleted;
+    int    ctfCaptures;
+
+    /* ── GT_CTF4 ─────────────────────────────────────────────────────────── */
+    int    ctf4Wins;
+    int    ctf4Completed;
+    int    ctf4Captures;
+
+    /* ── GT_TEAM ─────────────────────────────────────────────────────────── */
+    int    teamWins;
+    int    teamCompleted;
+    int    teamKills;
+
+    /* ── GT_TEAM_RACING ──────────────────────────────────────────────────── */
+    int    teamRacingWins;
+    int    teamRacingCompleted;
+    int    teamRacingPodiums;
+
+    /* ── GT_TEAM_RACING_DM ───────────────────────────────────────────────── */
+    int    teamRacingDmWins;
+    int    teamRacingDmCompleted;
+    int    teamRacingDmPodiums;
+
+    /* ── GT_DOMINATION ───────────────────────────────────────────────────── */
+    int    dominationWins;
+    int    dominationCompleted;
+    int    dominationZoneHoldMs;
+
+    /* ── GT_KOTH ─────────────────────────────────────────────────────────── */
+    int    kothWins;
+    int    kothCompleted;
+    int    kothZoneHoldMs;
 } profile_stats_t;
 
 typedef struct profile_favorite_car_s {
@@ -65,6 +141,11 @@ typedef struct profile_favorite_car_s {
 } profile_favorite_car_t;
 
 typedef struct profile_info_s {
+    /* Stabiler Identifier — wird einmalig beim Erstellen des Profils generiert
+     * und danach nie mehr verändert. Format: RFC 4122 UUID v4,
+     * z.B. "a3f7c821-4b2e-4d9f-b1e0-9c8d7e6f5a4b" (36 Zeichen + '\0'). */
+    char uuid[PROFILE_MAX_UUID];
+
     char name[PROFILE_MAX_NAME];
     char gender[PROFILE_MAX_GENDER];
     char birthDate[PROFILE_MAX_BIRTHDATE];

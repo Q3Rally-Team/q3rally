@@ -1549,9 +1549,36 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		trap_Argv( 1, status,  sizeof( status  ) );
 		trap_Argv( 2, payload, sizeof( payload ) );
 		if ( Q_stricmp( status, "ok" ) == 0 ) {
-			UI_LadderWizard_OnSuccess( payload );
+			/* Route to whichever wizard is currently active.
+			 * The profile wizard fires ladder_register as part of
+			 * its Page 3 flow; the standalone ladder wizard fires
+			 * it independently. Only one can be active at a time. */
+			if ( UI_ProfileWizard_IsActive() ) {
+				UI_ProfileWizard_OnOfflineKeyResult( qtrue, NULL );
+			} else {
+				UI_LadderWizard_OnSuccess( payload );
+			}
 		} else {
-			UI_LadderWizard_OnError( payload[0] ? payload : "Registration failed." );
+			if ( UI_ProfileWizard_IsActive() ) {
+				UI_ProfileWizard_OnOfflineKeyResult( qfalse,
+				    payload[0] ? payload : "Offline key registration failed." );
+			} else {
+				UI_LadderWizard_OnError( payload[0] ? payload : "Registration failed." );
+			}
+		}
+		return qtrue;
+	}
+
+	if ( Q_stricmp( cmd, "ladder_player_register_result" ) == 0 ) {
+		char status[8];
+		char payload[256];
+		trap_Argv( 1, status,  sizeof( status  ) );
+		trap_Argv( 2, payload, sizeof( payload ) );
+		if ( Q_stricmp( status, "ok" ) == 0 ) {
+			UI_ProfileWizard_OnRegisterResult( qtrue, NULL );
+		} else {
+			UI_ProfileWizard_OnRegisterResult( qfalse,
+			    payload[0] ? payload : "Registration failed." );
 		}
 		return qtrue;
 	}

@@ -464,6 +464,20 @@ extern void UI_LadderWizardMenu( void );
 extern void UI_LadderWizard_MaybeShow( void );
 extern void UI_LadderWizard_OnSuccess( const char *key );
 extern void UI_LadderWizard_OnError( const char *msg );
+
+/* Profile creation wizard */
+extern void     UI_ProfileWizard_MaybeShow( void );
+extern void     UI_ProfileWizard_Show( void );
+extern qboolean UI_ProfileWizard_IsActive( void );
+extern void     UI_ProfileWizard_OnRegisterResult( qboolean success, const char *errorMsg );
+extern void     UI_ProfileWizard_OnOfflineKeyResult( qboolean success, const char *errorMsg );
+
+/* Profile data helpers — used by wizard and settings screens */
+extern qboolean UI_Profile_WriteDefaultFile( const char *name );
+extern qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats );
+extern qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats );
+extern void     UI_Profile_MarkStatsDirty( void );
+extern void     UI_Profile_ActivateProfile( const char *name );
 // Q3RALLY DOWNLOADS END
 
 //
@@ -853,6 +867,7 @@ extern vmCvar_t	ui_menuBackEnable;
 extern vmCvar_t	ui_menuBackRefreshSec;
 extern vmCvar_t	ui_menuBackPath;
 extern vmCvar_t	ui_menuBackState;
+extern vmCvar_t	ui_clUuid;
 
 // Q3RALLY DOWNLOADS START
 extern vmCvar_t	ui_dl_state;

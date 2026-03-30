@@ -604,6 +604,18 @@ int GetTeamAtRank(int rank){
 			ranks[count] = TEAM_RED + i;
 	}
 
+	// Guard against invalid rank values to prevent out-of-bounds array access.
+	// rank is 1-based; ranks[] has 4 entries, so valid range is [1, 4].
+	if ( rank < 1 || rank > 4 ) {
+		return -1;
+	}
+
+	// Guard against invalid rank values to prevent out-of-bounds array access.
+	// rank is 1-based; ranks[] has 4 entries, so valid range is [1, 4].
+	if ( rank < 1 || rank > 4 ) {
+		return -1;
+	}
+
 	if (cgs.gametype == GT_CTF && rank > 2){
 		return -1;
 	}
@@ -622,7 +634,9 @@ qboolean TiedWinner( void ){
 		if (i == winner) continue;
 		if (!TeamCount(-1, TEAM_RED + i)) continue;
 
-		if ((isRallyRace() && cg.teamTimes[winner] == cg.teamTimes[i])
+		if ((isRallyRace()
+				&& cg.teamTimes[winner] != 0
+				&& cg.teamTimes[winner] == cg.teamTimes[i])
 			|| (!isRallyRace() && cg.teamScores[winner] == cg.teamScores[i])){
 			tied = qtrue;
 			break;

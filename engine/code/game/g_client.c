@@ -1193,6 +1193,14 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		client->pers.localClient = qtrue;
 	}
 
+	// store cl_uuid from userinfo for online profile tracking
+	value = Info_ValueForKey( userinfo, "cl_uuid" );
+	if ( value && value[0] ) {
+		Q_strncpyz( client->pers.uuid, value, sizeof( client->pers.uuid ) );
+	} else {
+		client->pers.uuid[0] = '\0';
+	}
+
 // STONELANCE
 	// FIXME: dont need this anymore?
 /*

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/q_shared.h"
 #include "bg_public.h"
 #include "bg_ladder.h"
+#include "profile_shared.h"
 #include "g_public.h"
 
 //==================================================================
@@ -356,6 +357,7 @@ typedef struct {
 	qboolean	manualShift;		// shift manually?
 	char                    vehicleClass[MAX_QPATH];
         qboolean        profileRacePlacementPenalized; // profile penalty for poor race placement already applied
+        char            uuid[PROFILE_MAX_UUID];         // cl_uuid aus dem Userinfo; leer wenn kein UUID-Client
 // END
 } clientPersistant_t;
 
@@ -568,6 +570,7 @@ typedef struct {
 	int			startRaceTime;
 	int			finishRaceTime;
 	int			winnerNumber;
+	int			derbyStartPlayerCount;	// number of active players when the Derby/LCS race started
 	qboolean	trackIsReversable;
 	int			eliminationRound;
 	int			eliminationPlayersRemaining;
@@ -1091,6 +1094,8 @@ extern	vmCvar_t	g_trackReversed;
 extern	vmCvar_t	g_trackLength;
 extern	vmCvar_t	g_developer;
 extern	vmCvar_t	g_rallyReadyCheck;
+extern	vmCvar_t	g_derbyMinPlayers;
+void G_RallyUpdateAllTeamTimes( void );
 extern	vmCvar_t	g_rallyIgnoreBots;
 extern	vmCvar_t	g_damageScale;
 extern	vmCvar_t	g_vehicleDamageScale;

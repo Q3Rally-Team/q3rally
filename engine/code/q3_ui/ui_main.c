@@ -221,6 +221,7 @@ vmCvar_t	ui_model;
 vmCvar_t	ui_head;
 vmCvar_t	ui_rim;
 vmCvar_t	ui_plate;
+vmCvar_t	ui_clUuid;
 // END
 
 vmCvar_t	ui_profileActive;
@@ -346,6 +347,10 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_head, "head", "doom", CVAR_USERINFO|CVAR_ARCHIVE },
 	{ &ui_rim, "rim", "svt_cobra", CVAR_USERINFO|CVAR_ARCHIVE },
 	{ &ui_plate, "plate", "usa_california", CVAR_USERINFO|CVAR_ARCHIVE },
+	/* Stabiler Spieler-Identifier — wird vom Profil-System befüllt,
+	 * nicht vom Spieler editierbar. CVAR_USERINFO sorgt dafür dass
+	 * die Engine den Wert automatisch in den Userinfo-String einträgt. */
+	{ &ui_clUuid, "cl_uuid", "", CVAR_USERINFO|CVAR_ARCHIVE },
 // END
 
 	{ &ui_profileActive, "profile_active", "", CVAR_ARCHIVE },

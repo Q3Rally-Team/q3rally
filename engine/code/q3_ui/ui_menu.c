@@ -580,6 +580,14 @@ void UI_MainMenu( void ) {
 
         UI_PushMenu ( &s_main.menu );
 
+        /* Profile wizard — must run first. If no active profile exists, this
+         * pushes the creation wizard on top of the main menu and blocks all
+         * other auto-show logic until the player completes it.
+         * UI_ProfileOverlay_MaybeShow and UI_LadderWizard_MaybeShow both
+         * check for an active profile internally and will no-op when called
+         * from here while the wizard is on screen. */
+        UI_ProfileWizard_MaybeShow();
+
         UI_ProfileOverlay_MaybeShow();
 
         /* Q3RALLY LADDER: show offline tracking wizard for existing players

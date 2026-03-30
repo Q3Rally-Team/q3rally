@@ -15,6 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
     $wantsJson    = strpos($acceptHeader, 'application/json') !== false;
 
+    // For in-game requests the e-mail is optional — the player has no way
+    // to enter one in the wizard. A placeholder is stored so the record is
+    // valid, and the admin can update it later if needed.
+    if ($wantsJson && $ownerEmail === '') {
+        $ownerEmail = 'ingame@q3rally.com';
+    }
+
     if ($serverNameClean === '' || $ownerName === '' || $ownerEmail === '') {
         $error = 'All fields are required.';
     } elseif (!filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {

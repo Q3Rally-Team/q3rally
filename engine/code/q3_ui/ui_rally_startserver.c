@@ -105,8 +105,35 @@ static const char *gametype_items[] = {
 };
 
 // gametype_items[gametype_remap2[s_serveroptions.gametype]]
+// gametype_remap maps display-list index -> raw GT_ value (used when starting server)
+// gametype_remap2 maps raw GT_ value -> gametype_items display index
+// Team gametypes start at GT_TEAM=16; indices 8-15 are unused gaps filled with 0.
 static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_SPRINT, GT_DERBY, GT_LCS, GT_ELIMINATION, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH};
-static int gametype_remap2[] = {0, 1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+static int gametype_remap2[] = {
+	0,  // GT_RACING          = 0
+	1,  // GT_RACING_DM       = 1
+	2,  // GT_SINGLE_PLAYER   = 2  (reused as Sprint display)
+	3,  // GT_DERBY           = 3
+	4,  // GT_LCS             = 4
+	5,  // GT_ELIMINATION     = 5
+	6,  // GT_DEATHMATCH      = 6
+	2,  // GT_SPRINT          = 7
+	0,  // 8  (unused)
+	0,  // 9  (unused)
+	0,  // 10 (unused)
+	0,  // 11 (unused)
+	0,  // 12 (unused)
+	0,  // 13 (unused)
+	0,  // 14 (unused)
+	0,  // 15 (unused)
+	7,  // GT_TEAM            = 16
+	8,  // GT_TEAM_RACING     = 17
+	9,  // GT_TEAM_RACING_DM  = 18
+	10, // GT_CTF             = 19
+	11, // GT_CTF4            = 20
+	12, // GT_DOMINATION      = 21
+	13, // GT_KOTH            = 22
+};
 
 
 
@@ -853,6 +880,7 @@ typedef struct {
         menuradiobutton_s       pure;
 	menuradiobutton_s       eliminationWeapons;
 	menuradiobutton_s       ghostOnly;
+	menufield_s				minPlayers;
 	menulist_s			botSkill;
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
@@ -1035,10 +1063,14 @@ default:
 
 	case GT_DERBY:
 		trap_Cvar_SetValue( "ui_derby_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_derby_minplayers", atoi( s_serveroptions.minPlayers.field.buffer ) );
+		trap_Cvar_SetValue( "g_derbyMinPlayers",   atoi( s_serveroptions.minPlayers.field.buffer ) );
 		break;
 		
 	case GT_LCS:
 		trap_Cvar_SetValue( "ui_lcs_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_lcs_minplayers", atoi( s_serveroptions.minPlayers.field.buffer ) );
+		trap_Cvar_SetValue( "g_derbyMinPlayers",   atoi( s_serveroptions.minPlayers.field.buffer ) );
 		break;
 
 	case GT_DEATHMATCH:
@@ -1455,7 +1487,11 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	UI_DrawString( x, y, author, UI_CENTER|UI_SMALLFONT, text_color_normal );
 
 	y += SMALLCHAR_HEIGHT + 2;
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, text_color_normal );
+	{
+		int gtIdx = s_serveroptions.gametype;
+		if ( gtIdx < 0 || gtIdx >= (int)ARRAY_LEN(gametype_remap2) ) gtIdx = 0;
+		UI_DrawString( x, y, gametype_items[gametype_remap2[gtIdx]], UI_CENTER|UI_SMALLFONT, text_color_normal );
+	}
 
 	x = b->generic.x;
 	y = b->generic.y;
@@ -1609,10 +1645,20 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	case GT_DERBY:
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_derby_timelimit" ) ) );
+		{
+			int mp = (int)trap_Cvar_VariableValue( "ui_derby_minplayers" );
+			if ( mp < 2 ) mp = 2;
+			Com_sprintf( s_serveroptions.minPlayers.field.buffer, 3, "%i", (int)Com_Clamp( 2, 99, mp ) );
+		}
 		break;
 		
 	case GT_LCS:
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_lcs_timelimit" ) ) );
+		{
+			int mp = (int)trap_Cvar_VariableValue( "ui_lcs_minplayers" );
+			if ( mp < 2 ) mp = 2;
+			Com_sprintf( s_serveroptions.minPlayers.field.buffer, 3, "%i", (int)Com_Clamp( 2, 99, mp ) );
+		}
 		break;
 
 	case GT_DEATHMATCH:
@@ -1803,8 +1849,9 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	memset( &s_serveroptions, 0 ,sizeof(serveroptions_t) );
 	s_serveroptions.multiplayer = multiplayer;
-	s_serveroptions.gametype = (int) Com_Clamp(0, ARRAY_LEN(gametype_remap2) - 1,
-						trap_Cvar_VariableValue("g_gametype"));
+	// Store the raw GT_ value so that comparisons like (gametype >= GT_TEAM)
+	// work correctly. gametype_remap2 now covers the full GT_ range 0..GT_KOTH.
+	s_serveroptions.gametype = (int)trap_Cvar_VariableValue( "g_gametype" );
 	showGhostMode = ServerOptions_IsRacingGametype( s_serveroptions.gametype );
 
 	ServerOptions_Cache();
@@ -1991,6 +2038,18 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
                 s_serveroptions.ghostOnly.generic.flags         = QMF_INACTIVE|QMF_HIDDEN;
                 s_serveroptions.ghostOnly.curvalue                         = 0;
         }
+
+	if ( s_serveroptions.gametype == GT_DERBY || s_serveroptions.gametype == GT_LCS ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.minPlayers.generic.type			= MTYPE_FIELD;
+		s_serveroptions.minPlayers.generic.name			= "Min Players:";
+		s_serveroptions.minPlayers.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.minPlayers.generic.x			= OPTIONS_X;
+		s_serveroptions.minPlayers.generic.y			= y;
+		s_serveroptions.minPlayers.generic.statusbar	= ServerOptions_StatusBar;
+		s_serveroptions.minPlayers.field.widthInChars	= 2;
+		s_serveroptions.minPlayers.field.maxchars		= 2;
+	}
 
         n = 0;
         if ( allowLength[0] ){
@@ -2201,6 +2260,10 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 
 	if( s_serveroptions.gametype == GT_ELIMINATION ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.eliminationWeapons );
+	}
+
+	if( s_serveroptions.gametype == GT_DERBY || s_serveroptions.gametype == GT_LCS ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.minPlayers );
 	}
 
 	if( s_serveroptions.gametype == GT_RACING || s_serveroptions.gametype == GT_RACING_DM

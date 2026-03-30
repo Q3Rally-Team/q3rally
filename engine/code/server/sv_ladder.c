@@ -718,6 +718,79 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
                 SNAP_FLT( "topSpeedKph",      topSpeedKph      )
                 SNAP_FLT( "fuelUsed",         fuelUsed         )
                 SNAP_STR( "mostUsedVehicle",  mostUsedVehicle  )
+                SNAP_INT( "gamesPlayed",      gamesPlayed      )
+
+                /* ── GT_RACING ── */
+                SNAP_INT( "racingWins",       racingWins       )
+                SNAP_INT( "racingPodiums",    racingPodiums    )
+                SNAP_INT( "racingCompleted",  racingCompleted  )
+                SNAP_INT( "racingTotalMs",    racingTotalMs    )
+
+                /* ── GT_RACING_DM ── */
+                SNAP_INT( "racingDmWins",       racingDmWins       )
+                SNAP_INT( "racingDmPodiums",    racingDmPodiums    )
+                SNAP_INT( "racingDmCompleted",  racingDmCompleted  )
+                SNAP_INT( "racingDmTotalMs",    racingDmTotalMs    )
+
+                /* ── GT_SPRINT ── */
+                SNAP_INT( "sprintWins",       sprintWins       )
+                SNAP_INT( "sprintCompleted",  sprintCompleted  )
+                SNAP_INT( "sprintBestMs",     sprintBestMs     )
+
+                /* ── GT_ELIMINATION ── */
+                SNAP_INT( "eliminationWins",              eliminationWins              )
+                SNAP_INT( "eliminationCompleted",         eliminationCompleted         )
+                SNAP_INT( "eliminationTotalRoundsLasted", eliminationTotalRoundsLasted )
+
+                /* ── GT_LCS ── */
+                SNAP_INT( "lcsWins",             lcsWins            )
+                SNAP_INT( "lcsCompleted",        lcsCompleted       )
+                SNAP_INT( "lcsTotalSurvivalMs",  lcsTotalSurvivalMs )
+
+                /* ── GT_DERBY ── */
+                SNAP_INT( "derbyWins",       derbyWins       )
+                SNAP_INT( "derbyCompleted",  derbyCompleted  )
+                SNAP_INT( "derbyKills",      derbyKills      )
+
+                /* ── GT_DEATHMATCH ── */
+                SNAP_INT( "dmWins",       dmWins       )
+                SNAP_INT( "dmCompleted",  dmCompleted  )
+                SNAP_INT( "dmKills",      dmKills      )
+
+                /* ── GT_CTF ── */
+                SNAP_INT( "ctfWins",       ctfWins       )
+                SNAP_INT( "ctfCompleted",  ctfCompleted  )
+                SNAP_INT( "ctfCaptures",   ctfCaptures   )
+
+                /* ── GT_CTF4 ── */
+                SNAP_INT( "ctf4Wins",       ctf4Wins       )
+                SNAP_INT( "ctf4Completed",  ctf4Completed  )
+                SNAP_INT( "ctf4Captures",   ctf4Captures   )
+
+                /* ── GT_TEAM ── */
+                SNAP_INT( "teamWins",       teamWins       )
+                SNAP_INT( "teamCompleted",  teamCompleted  )
+                SNAP_INT( "teamKills",      teamKills      )
+
+                /* ── GT_TEAM_RACING ── */
+                SNAP_INT( "teamRacingWins",       teamRacingWins       )
+                SNAP_INT( "teamRacingCompleted",  teamRacingCompleted  )
+                SNAP_INT( "teamRacingPodiums",    teamRacingPodiums    )
+
+                /* ── GT_TEAM_RACING_DM ── */
+                SNAP_INT( "teamRacingDmWins",       teamRacingDmWins       )
+                SNAP_INT( "teamRacingDmCompleted",  teamRacingDmCompleted  )
+                SNAP_INT( "teamRacingDmPodiums",    teamRacingDmPodiums    )
+
+                /* ── GT_DOMINATION ── */
+                SNAP_INT( "dominationWins",        dominationWins        )
+                SNAP_INT( "dominationCompleted",   dominationCompleted   )
+                SNAP_INT( "dominationZoneHoldMs",  dominationZoneHoldMs  )
+
+                /* ── GT_KOTH ── */
+                SNAP_INT( "kothWins",        kothWins        )
+                SNAP_INT( "kothCompleted",   kothCompleted   )
+                SNAP_INT( "kothZoneHoldMs",  kothZoneHoldMs  )
 
 #undef SNAP_INT
 #undef SNAP_FLT

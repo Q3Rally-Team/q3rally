@@ -505,6 +505,9 @@ void UI_LadderWizard_MaybeShow( void ) {
     /* Product decision: once completed, don't auto-show again even if API key is removed later. */
     if ( ui_ladderWizardCompleted.integer != 0 ) return;
     if ( ui_ladderWizardDismissed.integer != 0 ) return;
+    /* Don't show standalone wizard while the new profile wizard is active —
+     * it handles offline key registration as part of its Page 3 flow.      */
+    if ( UI_ProfileWizard_IsActive() ) return;
 
     UI_LadderWizardMenu();
 }

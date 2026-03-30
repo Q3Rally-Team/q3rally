@@ -29,7 +29,8 @@
  * Only populated for the local client – remote players don't have their
  * profile data available on the server. */
 typedef struct ladderProfileSnapshot_s {
-        qboolean        valid;                          /* qtrue if this snapshot was filled */
+        qboolean        valid;
+        /* ── Allgemein ─────────────────────────────────────────────────── */
         int             playerScore;
         int             currentRank;
         int             highestRank;
@@ -46,14 +47,84 @@ typedef struct ladderProfileSnapshot_s {
         int             perfectAwards;
         int             damageDealt;
         int             damageTaken;
-        /* Keep telemetry fields as float to avoid 8-byte alignment padding
-         * differences between QVM and native server builds. */
         float           distanceKm;
         float           topSpeedKph;
         float           fuelUsed;
         char            mostUsedVehicle[PROFILE_MAX_VEHICLE];
-        /* Achievement progress per category (unlocked tier count, 0 = none) */
+        int             gamesPlayed;
         int             achievementTiers[LADDER_ACHIEVEMENT_CATEGORY_COUNT];
+
+        /* ── GT_RACING ──────────────────────────────────────────────────── */
+        int             racingWins;
+        int             racingPodiums;
+        int             racingCompleted;
+        int             racingTotalMs;
+
+        /* ── GT_RACING_DM ───────────────────────────────────────────────── */
+        int             racingDmWins;
+        int             racingDmPodiums;
+        int             racingDmCompleted;
+        int             racingDmTotalMs;
+
+        /* ── GT_SPRINT ──────────────────────────────────────────────────── */
+        int             sprintWins;
+        int             sprintCompleted;
+        int             sprintBestMs;
+
+        /* ── GT_ELIMINATION ─────────────────────────────────────────────── */
+        int             eliminationWins;
+        int             eliminationCompleted;
+        int             eliminationTotalRoundsLasted;
+
+        /* ── GT_LCS ─────────────────────────────────────────────────────── */
+        int             lcsWins;
+        int             lcsCompleted;
+        int             lcsTotalSurvivalMs;
+
+        /* ── GT_DERBY ───────────────────────────────────────────────────── */
+        int             derbyWins;
+        int             derbyCompleted;
+        int             derbyKills;
+
+        /* ── GT_DEATHMATCH ──────────────────────────────────────────────── */
+        int             dmWins;
+        int             dmCompleted;
+        int             dmKills;
+
+        /* ── GT_CTF ─────────────────────────────────────────────────────── */
+        int             ctfWins;
+        int             ctfCompleted;
+        int             ctfCaptures;
+
+        /* ── GT_CTF4 ────────────────────────────────────────────────────── */
+        int             ctf4Wins;
+        int             ctf4Completed;
+        int             ctf4Captures;
+
+        /* ── GT_TEAM ────────────────────────────────────────────────────── */
+        int             teamWins;
+        int             teamCompleted;
+        int             teamKills;
+
+        /* ── GT_TEAM_RACING ─────────────────────────────────────────────── */
+        int             teamRacingWins;
+        int             teamRacingCompleted;
+        int             teamRacingPodiums;
+
+        /* ── GT_TEAM_RACING_DM ──────────────────────────────────────────── */
+        int             teamRacingDmWins;
+        int             teamRacingDmCompleted;
+        int             teamRacingDmPodiums;
+
+        /* ── GT_DOMINATION ──────────────────────────────────────────────── */
+        int             dominationWins;
+        int             dominationCompleted;
+        int             dominationZoneHoldMs;
+
+        /* ── GT_KOTH ────────────────────────────────────────────────────── */
+        int             kothWins;
+        int             kothCompleted;
+        int             kothZoneHoldMs;
 } ladderProfileSnapshot_t;
 
 typedef struct ladderPlayerPayload_s {

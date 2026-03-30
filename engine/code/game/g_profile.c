@@ -31,7 +31,7 @@ static const profile_rank_def_t s_profileRankTable[] = {
 
 #define PROFILE_VEHICLE_JSON_ENTRY_SIZE ( PROFILE_MAX_VEHICLE + 32 )
 #define PROFILE_VEHICLE_JSON_BUFFER_SIZE ( PROFILE_MAX_TRACKED_VEHICLES * PROFILE_VEHICLE_JSON_ENTRY_SIZE + 32 )
-#define PROFILE_FILE_BUFFER_SIZE 16384
+#define PROFILE_FILE_BUFFER_SIZE 32768
 
 static void QDECL G_PROFILE_LOG( const char *fmt, ... ) {
     (void)fmt;
@@ -40,6 +40,7 @@ static void QDECL G_PROFILE_LOG( const char *fmt, ... ) {
 static struct {
     qboolean        loaded;
     qboolean        dirty;
+    qboolean        isOnlineSession;  /* qtrue wenn aktiver Client über dedizierten Server verbunden */
     char            name[PROFILE_MAX_NAME];
     profile_stats_t stats;
     profile_info_t  info;
@@ -62,7 +63,31 @@ static qboolean G_Profile_ShouldTrackClient( const gclient_t *client ) {
         return qfalse;
     }
 
-    return client->pers.localClient ? qtrue : qfalse;
+    /* Offline / listen-server: immer tracken */
+    if ( client->pers.localClient ) {
+        return qtrue;
+    }
+
+    /* Online / dedizierter Server: tracken wenn die UUID des Clients
+     * mit der UUID des geladenen Profils übereinstimmt.
+     * So werden auf einem dedizierten Server nur die eigenen Stats
+     * getracked, auch wenn mehrere Spieler verbunden sind. */
+    if ( client->pers.uuid[0] && s_profileState.info.uuid[0] ) {
+        if ( Q_stricmp( client->pers.uuid, s_profileState.info.uuid ) == 0 ) {
+            return qtrue;
+        }
+    }
+
+    return qfalse;
+}
+
+/* Gibt qtrue zurück wenn der Spieler über einen dedizierten Server
+ * verbunden ist (nicht localClient). Wird für den Online-Multiplikator genutzt. */
+static qboolean G_Profile_IsOnlineSession( const gclient_t *client ) {
+    if ( !client ) {
+        return qfalse;
+    }
+    return ( !client->pers.localClient && client->pers.uuid[0] ) ? qtrue : qfalse;
 }
 
 static qboolean G_Profile_IsRacingGametype( void ) {
@@ -118,6 +143,101 @@ static void G_Profile_NormalizeVehicleName( const char *vehicle, char *out, int 
     }
 
     out[i] = '\0';
+}
+
+/*
+ * G_Profile_GenerateUUID
+ *
+ * Erzeugt eine UUID v4 gemäß RFC 4122.
+ *
+ * Com_RandomBytes ist im game-Modul (qagame DLL) nicht verfügbar —
+ * es lebt in qcommon und ist nicht über den Syscall-Mechanismus
+ * erreichbar. Wir verwenden rand() mit level.time als Seed-Beitrag.
+ *
+ * Qualitätshinweis: diese UUID wird nur noch als Fallback generiert
+ * wenn ein Legacy-Profil ohne UUID geladen wird. Neue Profile bekommen
+ * ihre UUID bereits vom UI-Wizard (UI_Profile_WriteDefaultFile), der
+ * trap_Milliseconds() + Profilname-Hash als Seed nutzt.
+ *
+ * out muss mindestens PROFILE_MAX_UUID (37) Bytes groß sein.
+ */
+static void G_Profile_GenerateUUID( char *out, int outSize ) {
+    static const char hex[] = "0123456789abcdef";
+    unsigned char b[16];
+    int i;
+
+    if ( !out || outSize < PROFILE_MAX_UUID ) {
+        return;
+    }
+
+    /* Seed mit level.time XOR aktueller rand()-State für etwas mehr Varianz */
+    srand( (unsigned int)( level.time ^ rand() ) );
+
+    for ( i = 0; i < 16; ++i ) {
+        b[i] = (unsigned char)( ( rand() ^ ( rand() << 8 ) ) & 0xFF );
+    }
+
+    /* RFC 4122 §4.4: Version = 4 */
+    b[6] = ( b[6] & 0x0F ) | 0x40;
+
+    /* RFC 4122 §4.4: Variant = 10xx */
+    b[8] = ( b[8] & 0x3F ) | 0x80;
+
+    Com_sprintf( out, outSize,
+        "%c%c%c%c%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c%c%c%c%c%c%c%c%c",
+        hex[b[ 0]>>4], hex[b[ 0]&0xF],
+        hex[b[ 1]>>4], hex[b[ 1]&0xF],
+        hex[b[ 2]>>4], hex[b[ 2]&0xF],
+        hex[b[ 3]>>4], hex[b[ 3]&0xF],
+        hex[b[ 4]>>4], hex[b[ 4]&0xF],
+        hex[b[ 5]>>4], hex[b[ 5]&0xF],
+        hex[b[ 6]>>4], hex[b[ 6]&0xF],
+        hex[b[ 7]>>4], hex[b[ 7]&0xF],
+        hex[b[ 8]>>4], hex[b[ 8]&0xF],
+        hex[b[ 9]>>4], hex[b[ 9]&0xF],
+        hex[b[10]>>4], hex[b[10]&0xF],
+        hex[b[11]>>4], hex[b[11]&0xF],
+        hex[b[12]>>4], hex[b[12]&0xF],
+        hex[b[13]>>4], hex[b[13]&0xF],
+        hex[b[14]>>4], hex[b[14]&0xF],
+        hex[b[15]>>4], hex[b[15]&0xF]
+    );
+}
+
+/*
+ * G_Profile_IsValidUUID
+ *
+ * Prüft ob ein String das erwartete UUID-Format hat:
+ * "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" (36 Zeichen).
+ * Lehnt leere Strings und offensichtlich korrupte Werte ab.
+ * Keine vollständige RFC-Validierung — ausreichend als Ladezeit-Sanity-Check.
+ */
+static qboolean G_Profile_IsValidUUID( const char *s ) {
+    int i;
+
+    if ( !s ) {
+        return qfalse;
+    }
+
+    if ( strlen( s ) != 36 ) {
+        return qfalse;
+    }
+
+    /* Erwartetes Muster: 8-4-4-4-12 Hex-Gruppen, getrennt durch '-' */
+    for ( i = 0; i < 36; ++i ) {
+        char c = s[i];
+        if ( i == 8 || i == 13 || i == 18 || i == 23 ) {
+            if ( c != '-' ) return qfalse;
+        } else {
+            if ( !( ( c >= '0' && c <= '9' ) ||
+                    ( c >= 'a' && c <= 'f' ) ||
+                    ( c >= 'A' && c <= 'F' ) ) ) {
+                return qfalse;
+            }
+        }
+    }
+
+    return qtrue;
 }
 
 qboolean Profile_GetRankForScore( const profile_stats_t *stats,
@@ -247,6 +367,25 @@ int G_Profile_GetPlayerScore( void ) {
     return s_profileState.stats.playerScore;
 }
 
+qboolean G_Profile_GetUUID( char *out, int outSize ) {
+    if ( !out || outSize < PROFILE_MAX_UUID ) {
+        return qfalse;
+    }
+
+    out[0] = '\0';
+
+    if ( !s_profileState.loaded ) {
+        return qfalse;
+    }
+
+    if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
+        return qfalse;
+    }
+
+    Q_strncpyz( out, s_profileState.info.uuid, outSize );
+    return qtrue;
+}
+
 static void G_Profile_UpdateRankState( void ) {
     profile_rank_t rank;
 
@@ -296,7 +435,7 @@ static void G_Profile_SendAchievementUnlock( gclient_t *client, bgAchievementCat
     int clientNum;
     const bgAchievementCategoryDef_t *categoryDef;
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 
@@ -657,7 +796,7 @@ static void G_Profile_UpdateVehicleUsage( gentity_t *ent, int frameMsec ) {
 static qboolean G_Profile_LoadFromDisk( void ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[PROFILE_FILE_BUFFER_SIZE];
+    static char buffer[PROFILE_FILE_BUFFER_SIZE];
     int length;
     const char *vehiclesStart;
     const char *cursor;
@@ -711,6 +850,78 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.damageTaken = G_Profile_ParseInt( buffer, "damageTaken", 0 );
     G_Profile_ParseString( buffer, "mostUsedVehicle", s_profileState.stats.mostUsedVehicle, sizeof( s_profileState.stats.mostUsedVehicle ), "" );
     s_profileState.stats.mostUsedVehicleTimeMs = G_Profile_ParseInt( buffer, "mostUsedVehicleTimeMs", 0 );
+    s_profileState.stats.gamesPlayed           = G_Profile_ParseInt( buffer, "gamesPlayed",           0 );
+
+    /* GT_RACING */
+    s_profileState.stats.racingWins      = G_Profile_ParseInt( buffer, "racingWins",      0 );
+    s_profileState.stats.racingPodiums   = G_Profile_ParseInt( buffer, "racingPodiums",   0 );
+    s_profileState.stats.racingCompleted = G_Profile_ParseInt( buffer, "racingCompleted", 0 );
+    s_profileState.stats.racingTotalMs   = G_Profile_ParseInt( buffer, "racingTotalMs",   0 );
+
+    /* GT_RACING_DM */
+    s_profileState.stats.racingDmWins      = G_Profile_ParseInt( buffer, "racingDmWins",      0 );
+    s_profileState.stats.racingDmPodiums   = G_Profile_ParseInt( buffer, "racingDmPodiums",   0 );
+    s_profileState.stats.racingDmCompleted = G_Profile_ParseInt( buffer, "racingDmCompleted", 0 );
+    s_profileState.stats.racingDmTotalMs   = G_Profile_ParseInt( buffer, "racingDmTotalMs",   0 );
+
+    /* GT_SPRINT */
+    s_profileState.stats.sprintCompleted = G_Profile_ParseInt( buffer, "sprintCompleted", 0 );
+    s_profileState.stats.sprintBestMs    = G_Profile_ParseInt( buffer, "sprintBestMs",    0 );
+
+    /* GT_ELIMINATION */
+    s_profileState.stats.eliminationWins              = G_Profile_ParseInt( buffer, "eliminationWins",              0 );
+    s_profileState.stats.eliminationCompleted         = G_Profile_ParseInt( buffer, "eliminationCompleted",         0 );
+    s_profileState.stats.eliminationTotalRoundsLasted = G_Profile_ParseInt( buffer, "eliminationTotalRoundsLasted", 0 );
+
+    /* GT_LCS */
+    s_profileState.stats.lcsWins            = G_Profile_ParseInt( buffer, "lcsWins",            0 );
+    s_profileState.stats.lcsCompleted       = G_Profile_ParseInt( buffer, "lcsCompleted",       0 );
+    s_profileState.stats.lcsTotalSurvivalMs = G_Profile_ParseInt( buffer, "lcsTotalSurvivalMs", 0 );
+
+    /* GT_DERBY */
+    s_profileState.stats.derbyWins      = G_Profile_ParseInt( buffer, "derbyWins",      0 );
+    s_profileState.stats.derbyCompleted = G_Profile_ParseInt( buffer, "derbyCompleted", 0 );
+    s_profileState.stats.derbyKills     = G_Profile_ParseInt( buffer, "derbyKills",     0 );
+
+    /* GT_DEATHMATCH */
+    s_profileState.stats.dmWins      = G_Profile_ParseInt( buffer, "dmWins",      0 );
+    s_profileState.stats.dmCompleted = G_Profile_ParseInt( buffer, "dmCompleted", 0 );
+    s_profileState.stats.dmKills     = G_Profile_ParseInt( buffer, "dmKills",     0 );
+
+    /* GT_CTF */
+    s_profileState.stats.ctfWins      = G_Profile_ParseInt( buffer, "ctfWins",      0 );
+    s_profileState.stats.ctfCompleted = G_Profile_ParseInt( buffer, "ctfCompleted", 0 );
+    s_profileState.stats.ctfCaptures  = G_Profile_ParseInt( buffer, "ctfCaptures",  0 );
+
+    /* GT_CTF4 */
+    s_profileState.stats.ctf4Wins      = G_Profile_ParseInt( buffer, "ctf4Wins",      0 );
+    s_profileState.stats.ctf4Completed = G_Profile_ParseInt( buffer, "ctf4Completed", 0 );
+    s_profileState.stats.ctf4Captures  = G_Profile_ParseInt( buffer, "ctf4Captures",  0 );
+
+    /* GT_TEAM */
+    s_profileState.stats.teamWins      = G_Profile_ParseInt( buffer, "teamWins",      0 );
+    s_profileState.stats.teamCompleted = G_Profile_ParseInt( buffer, "teamCompleted", 0 );
+    s_profileState.stats.teamKills     = G_Profile_ParseInt( buffer, "teamKills",     0 );
+
+    /* GT_TEAM_RACING */
+    s_profileState.stats.teamRacingWins      = G_Profile_ParseInt( buffer, "teamRacingWins",      0 );
+    s_profileState.stats.teamRacingCompleted = G_Profile_ParseInt( buffer, "teamRacingCompleted", 0 );
+    s_profileState.stats.teamRacingPodiums   = G_Profile_ParseInt( buffer, "teamRacingPodiums",   0 );
+
+    /* GT_TEAM_RACING_DM */
+    s_profileState.stats.teamRacingDmWins      = G_Profile_ParseInt( buffer, "teamRacingDmWins",      0 );
+    s_profileState.stats.teamRacingDmCompleted = G_Profile_ParseInt( buffer, "teamRacingDmCompleted", 0 );
+    s_profileState.stats.teamRacingDmPodiums   = G_Profile_ParseInt( buffer, "teamRacingDmPodiums",   0 );
+
+    /* GT_DOMINATION */
+    s_profileState.stats.dominationWins       = G_Profile_ParseInt( buffer, "dominationWins",       0 );
+    s_profileState.stats.dominationCompleted  = G_Profile_ParseInt( buffer, "dominationCompleted",  0 );
+    s_profileState.stats.dominationZoneHoldMs = G_Profile_ParseInt( buffer, "dominationZoneHoldMs", 0 );
+
+    /* GT_KOTH */
+    s_profileState.stats.kothWins       = G_Profile_ParseInt( buffer, "kothWins",       0 );
+    s_profileState.stats.kothCompleted  = G_Profile_ParseInt( buffer, "kothCompleted",  0 );
+    s_profileState.stats.kothZoneHoldMs = G_Profile_ParseInt( buffer, "kothZoneHoldMs", 0 );
 
     G_Profile_ParseString( buffer, "gender", s_profileState.info.gender, sizeof( s_profileState.info.gender ), "" );
     G_Profile_ParseString( buffer, "birthDate", s_profileState.info.birthDate, sizeof( s_profileState.info.birthDate ), "" );
@@ -719,6 +930,10 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.info.currentRank = G_Profile_ParseInt( buffer, "currentRank", 0 );
     s_profileState.info.highestRank = G_Profile_ParseInt( buffer, "highestRank", 0 );
     G_Profile_ParseFavoriteCars( buffer, &s_profileState.info );
+
+    /* UUID lesen — Top-Level-Feld. Existiert nicht in Legacy-Profilen;
+     * G_Profile_Init erkennt das leere Feld und generiert dann eine neue UUID. */
+    G_Profile_ParseString( buffer, "uuid", s_profileState.info.uuid, sizeof( s_profileState.info.uuid ), "" );
 
     // Lade Vehicle-Array aus JSON
     vehiclesStart = strstr( buffer, "\"vehicles\"" );
@@ -864,6 +1079,18 @@ static void G_Profile_WriteToDisk( void ) {
         G_Profile_ParseString( readBuffer, "country", s_profileState.info.country, sizeof( s_profileState.info.country ), s_profileState.info.country );
         s_profileState.info.currentRank = G_Profile_ParseInt( readBuffer, "currentRank", s_profileState.info.currentRank );
         s_profileState.info.highestRank = G_Profile_ParseInt( readBuffer, "highestRank", s_profileState.info.highestRank );
+
+        /* UUID aus Datei nur übernehmen wenn im RAM noch keine valide UUID sitzt.
+         * Schreibrichtung ist immer RAM → Disk, nie Disk → RAM bei der UUID,
+         * ausser beim ersten Laden. So wird eine einmal generierte UUID nie
+         * versehentlich durch einen Re-Read-Zyklus überschrieben. */
+        if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
+            char uuidOnDisk[PROFILE_MAX_UUID];
+            G_Profile_ParseString( readBuffer, "uuid", uuidOnDisk, sizeof( uuidOnDisk ), "" );
+            if ( G_Profile_IsValidUUID( uuidOnDisk ) ) {
+                Q_strncpyz( s_profileState.info.uuid, uuidOnDisk, sizeof( s_profileState.info.uuid ) );
+            }
+        }
     } else if ( readFile ) {
         trap_FS_FCloseFile( readFile );
     }
@@ -956,8 +1183,11 @@ static void G_Profile_WriteToDisk( void ) {
                s_profileState.stats.mostUsedVehicle, 
                s_profileState.stats.mostUsedVehicleTimeMs );
 
+    /* Write JSON in multiple Com_sprintf calls to stay within QVM argument limits.
+     * Part 1: header + info section */
     length = Com_sprintf( buffer, sizeof( buffer ),
         "{\n"
+        "\t\"uuid\": \"%s\",\n"
         "\t\"name\": \"%s\",\n"
         "\t\"info\": {\n"
         "\t\t\"gender\": \"%s\",\n"
@@ -968,30 +1198,8 @@ static void G_Profile_WriteToDisk( void ) {
         "\t\t\"highestRank\": %d,\n"
         "\t\t\"favoriteCars\": %s\n"
         "\t},\n"
-        "\t\"stats\": {\n"
-        "\t\t\"distanceKm\": %.6f,\n"
-        "\t\t\"fuelUsed\": %.3f,\n"
-        "\t\t\"bestLapMs\": %d,\n"
-        "\t\t\"kills\": %d,\n"
-        "\t\t\"deaths\": %d,\n"
-        "\t\t\"wins\": %d,\n"
-        "\t\t\"playerScore\": %d,\n"
-        "\t\t\"sprintWins\": %d,\n"
-        "\t\t\"losses\": %d,\n"
-        "\t\t\"flagCaptures\": %d,\n"
-        "\t\t\"flagAssists\": %d,\n"
-        "\t\t\"accuracyAwards\": %d,\n"
-        "\t\t\"excellentAwards\": %d,\n"
-        "\t\t\"impressiveAwards\": %d,\n"
-        "\t\t\"perfectAwards\": %d,\n"
-        "\t\t\"topSpeedKph\": %.2f,\n"
-        "\t\t\"damageDealt\": %d,\n"
-        "\t\t\"damageTaken\": %d,\n"
-        "\t\t\"mostUsedVehicle\": \"%s\",\n"
-        "\t\t\"mostUsedVehicleTimeMs\": %d,\n"
-        "\t\t\"vehicles\": %s\n"
-        "\t}\n"
-        "}\n",
+        "\t\"stats\": {\n",
+        s_profileState.info.uuid,
         s_profileState.name,
         gender,
         birthDate,
@@ -999,28 +1207,174 @@ static void G_Profile_WriteToDisk( void ) {
         country,
         s_profileState.info.currentRank,
         s_profileState.info.highestRank,
-        favoriteCarsJson,
-        s_profileState.stats.distanceKm,
-        s_profileState.stats.fuelUsed,
-        s_profileState.stats.bestLapMs,
-        s_profileState.stats.kills,
-        s_profileState.stats.deaths,
-        s_profileState.stats.wins,
-        s_profileState.stats.playerScore,
-        s_profileState.stats.sprintWins,
-        s_profileState.stats.losses,
-        s_profileState.stats.flagCaptures,
-        s_profileState.stats.flagAssists,
-        s_profileState.stats.accuracyAwards,
-        s_profileState.stats.excellentAwards,
-        s_profileState.stats.impressiveAwards,
-        s_profileState.stats.perfectAwards,
-        s_profileState.stats.topSpeedKph,
-        s_profileState.stats.damageDealt,
-        s_profileState.stats.damageTaken,
-        s_profileState.stats.mostUsedVehicle,
-        s_profileState.stats.mostUsedVehicleTimeMs,
-        vehicleJson );
+        favoriteCarsJson );
+
+    if ( length < 0 || length >= (int)sizeof( buffer ) ) {
+        G_PROFILE_LOG( "G_Profile: Com_sprintf part1 failed\n" );
+        return;
+    }
+
+    /* Part 2: base stats */
+    {
+        int len2 = Com_sprintf( buffer + length, sizeof( buffer ) - length,
+            "\t\t\"distanceKm\": %.6f,\n"
+            "\t\t\"fuelUsed\": %.3f,\n"
+            "\t\t\"bestLapMs\": %d,\n"
+            "\t\t\"kills\": %d,\n"
+            "\t\t\"deaths\": %d,\n"
+            "\t\t\"wins\": %d,\n"
+            "\t\t\"playerScore\": %d,\n"
+            "\t\t\"sprintWins\": %d,\n"
+            "\t\t\"losses\": %d,\n"
+            "\t\t\"flagCaptures\": %d,\n"
+            "\t\t\"flagAssists\": %d,\n"
+            "\t\t\"accuracyAwards\": %d,\n"
+            "\t\t\"excellentAwards\": %d,\n"
+            "\t\t\"impressiveAwards\": %d,\n"
+            "\t\t\"perfectAwards\": %d,\n"
+            "\t\t\"topSpeedKph\": %.2f,\n"
+            "\t\t\"damageDealt\": %d,\n"
+            "\t\t\"damageTaken\": %d,\n"
+            "\t\t\"mostUsedVehicle\": \"%s\",\n"
+            "\t\t\"mostUsedVehicleTimeMs\": %d,\n"
+            "\t\t\"gamesPlayed\": %d,\n",
+            s_profileState.stats.distanceKm,
+            s_profileState.stats.fuelUsed,
+            s_profileState.stats.bestLapMs,
+            s_profileState.stats.kills,
+            s_profileState.stats.deaths,
+            s_profileState.stats.wins,
+            s_profileState.stats.playerScore,
+            s_profileState.stats.sprintWins,
+            s_profileState.stats.losses,
+            s_profileState.stats.flagCaptures,
+            s_profileState.stats.flagAssists,
+            s_profileState.stats.accuracyAwards,
+            s_profileState.stats.excellentAwards,
+            s_profileState.stats.impressiveAwards,
+            s_profileState.stats.perfectAwards,
+            s_profileState.stats.topSpeedKph,
+            s_profileState.stats.damageDealt,
+            s_profileState.stats.damageTaken,
+            s_profileState.stats.mostUsedVehicle,
+            s_profileState.stats.mostUsedVehicleTimeMs,
+            s_profileState.stats.gamesPlayed );
+        if ( len2 < 0 || length + len2 >= (int)sizeof( buffer ) ) {
+            G_PROFILE_LOG( "G_Profile: Com_sprintf part2 failed\n" );
+            return;
+        }
+        length += len2;
+    }
+
+    /* Part 3: mode-specific stats */
+    {
+        int len3 = Com_sprintf( buffer + length, sizeof( buffer ) - length,
+            "\t\t\"racingWins\": %d,\n"
+            "\t\t\"racingPodiums\": %d,\n"
+            "\t\t\"racingCompleted\": %d,\n"
+            "\t\t\"racingTotalMs\": %d,\n"
+            "\t\t\"racingDmWins\": %d,\n"
+            "\t\t\"racingDmPodiums\": %d,\n"
+            "\t\t\"racingDmCompleted\": %d,\n"
+            "\t\t\"racingDmTotalMs\": %d,\n"
+            "\t\t\"sprintCompleted\": %d,\n"
+            "\t\t\"sprintBestMs\": %d,\n"
+            "\t\t\"eliminationWins\": %d,\n"
+            "\t\t\"eliminationCompleted\": %d,\n"
+            "\t\t\"eliminationTotalRoundsLasted\": %d,\n"
+            "\t\t\"lcsWins\": %d,\n"
+            "\t\t\"lcsCompleted\": %d,\n"
+            "\t\t\"lcsTotalSurvivalMs\": %d,\n"
+            "\t\t\"derbyWins\": %d,\n"
+            "\t\t\"derbyCompleted\": %d,\n"
+            "\t\t\"derbyKills\": %d,\n"
+            "\t\t\"dmWins\": %d,\n"
+            "\t\t\"dmCompleted\": %d,\n"
+            "\t\t\"dmKills\": %d,\n",
+            s_profileState.stats.racingWins,
+            s_profileState.stats.racingPodiums,
+            s_profileState.stats.racingCompleted,
+            s_profileState.stats.racingTotalMs,
+            s_profileState.stats.racingDmWins,
+            s_profileState.stats.racingDmPodiums,
+            s_profileState.stats.racingDmCompleted,
+            s_profileState.stats.racingDmTotalMs,
+            s_profileState.stats.sprintCompleted,
+            s_profileState.stats.sprintBestMs,
+            s_profileState.stats.eliminationWins,
+            s_profileState.stats.eliminationCompleted,
+            s_profileState.stats.eliminationTotalRoundsLasted,
+            s_profileState.stats.lcsWins,
+            s_profileState.stats.lcsCompleted,
+            s_profileState.stats.lcsTotalSurvivalMs,
+            s_profileState.stats.derbyWins,
+            s_profileState.stats.derbyCompleted,
+            s_profileState.stats.derbyKills,
+            s_profileState.stats.dmWins,
+            s_profileState.stats.dmCompleted,
+            s_profileState.stats.dmKills );
+        if ( len3 < 0 || length + len3 >= (int)sizeof( buffer ) ) {
+            G_PROFILE_LOG( "G_Profile: Com_sprintf part3 failed\n" );
+            return;
+        }
+        length += len3;
+    }
+
+    /* Part 4: team/zone stats + footer */
+    {
+        int len4 = Com_sprintf( buffer + length, sizeof( buffer ) - length,
+            "\t\t\"ctfWins\": %d,\n"
+            "\t\t\"ctfCompleted\": %d,\n"
+            "\t\t\"ctfCaptures\": %d,\n"
+            "\t\t\"ctf4Wins\": %d,\n"
+            "\t\t\"ctf4Completed\": %d,\n"
+            "\t\t\"ctf4Captures\": %d,\n"
+            "\t\t\"teamWins\": %d,\n"
+            "\t\t\"teamCompleted\": %d,\n"
+            "\t\t\"teamKills\": %d,\n"
+            "\t\t\"teamRacingWins\": %d,\n"
+            "\t\t\"teamRacingCompleted\": %d,\n"
+            "\t\t\"teamRacingPodiums\": %d,\n"
+            "\t\t\"teamRacingDmWins\": %d,\n"
+            "\t\t\"teamRacingDmCompleted\": %d,\n"
+            "\t\t\"teamRacingDmPodiums\": %d,\n"
+            "\t\t\"dominationWins\": %d,\n"
+            "\t\t\"dominationCompleted\": %d,\n"
+            "\t\t\"dominationZoneHoldMs\": %d,\n"
+            "\t\t\"kothWins\": %d,\n"
+            "\t\t\"kothCompleted\": %d,\n"
+            "\t\t\"kothZoneHoldMs\": %d,\n"
+            "\t\t\"vehicles\": %s\n"
+            "\t}\n"
+            "}\n",
+            s_profileState.stats.ctfWins,
+            s_profileState.stats.ctfCompleted,
+            s_profileState.stats.ctfCaptures,
+            s_profileState.stats.ctf4Wins,
+            s_profileState.stats.ctf4Completed,
+            s_profileState.stats.ctf4Captures,
+            s_profileState.stats.teamWins,
+            s_profileState.stats.teamCompleted,
+            s_profileState.stats.teamKills,
+            s_profileState.stats.teamRacingWins,
+            s_profileState.stats.teamRacingCompleted,
+            s_profileState.stats.teamRacingPodiums,
+            s_profileState.stats.teamRacingDmWins,
+            s_profileState.stats.teamRacingDmCompleted,
+            s_profileState.stats.teamRacingDmPodiums,
+            s_profileState.stats.dominationWins,
+            s_profileState.stats.dominationCompleted,
+            s_profileState.stats.dominationZoneHoldMs,
+            s_profileState.stats.kothWins,
+            s_profileState.stats.kothCompleted,
+            s_profileState.stats.kothZoneHoldMs,
+            vehicleJson );
+        if ( len4 < 0 || length + len4 >= (int)sizeof( buffer ) ) {
+            G_PROFILE_LOG( "G_Profile: Com_sprintf part4 failed\n" );
+            return;
+        }
+        length += len4;
+    }
 
     if ( length < 0 ) {
         G_PROFILE_LOG( "G_Profile: Com_sprintf failed\n" );
@@ -1080,6 +1434,20 @@ void G_Profile_Init( void ) {
         G_Profile_WriteToDisk();
     }
 
+    /* UUID sicherstellen: falls das Profil geladen wurde aber noch keine
+     * gültige UUID hat (Legacy-Profil vor dieser Änderung), wird jetzt
+     * eine generiert. Neue Profile erhalten ihre UUID bereits vom Wizard. */
+    if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
+        G_Profile_GenerateUUID( s_profileState.info.uuid, sizeof( s_profileState.info.uuid ) );
+        Com_Printf( "Q3Rally Profile: generated UUID %s for '%s'\n",
+                    s_profileState.info.uuid, s_profileState.name );
+        s_profileState.dirty = qtrue;
+        G_Profile_WriteToDisk();
+    } else {
+        Com_Printf( "Q3Rally Profile: loaded UUID %s for '%s'\n",
+                    s_profileState.info.uuid, s_profileState.name );
+    }
+
     G_Profile_RecomputeAchievementState();
 
     s_profileState.loaded = qtrue;
@@ -1101,12 +1469,12 @@ void G_Profile_RecordDamage( gclient_t *attacker, gclient_t *victim, int damage 
         return;
     }
 
-    if ( attacker && attacker->pers.localClient && attacker != victim ) {
+    if ( attacker && G_Profile_ShouldTrackClient( attacker ) && attacker != victim ) {
         s_profileState.stats.damageDealt += damage;
         s_profileState.dirty = qtrue;
     }
 
-    if ( victim && victim->pers.localClient ) {
+    if ( victim && G_Profile_ShouldTrackClient( victim ) ) {
         s_profileState.stats.damageTaken += damage;
         s_profileState.dirty = qtrue;
     }
@@ -1115,6 +1483,11 @@ void G_Profile_RecordDamage( gclient_t *attacker, gclient_t *victim, int damage 
 void G_Profile_TrackClientSpawn( gclient_t *client ) {
     if ( !client ) {
         return;
+    }
+
+    /* Erkenne ob diese Session online ist (dedizierter Server + UUID) */
+    if ( G_Profile_IsOnlineSession( client ) && G_Profile_ShouldTrackClient( client ) ) {
+        s_profileState.isOnlineSession = qtrue;
     }
 
     client->profileHasLastOrigin = qfalse;
@@ -1212,6 +1585,14 @@ void G_Profile_AddScore( int delta ) {
         return;
     }
 
+    /* Online-Bonus: Score-Punkte werden mit 1.25 multipliziert wenn
+     * der Spieler über einen dedizierten Server verbunden ist.
+     * Nur auf positive Deltas — Strafen bleiben unverändert. */
+    if ( s_profileState.isOnlineSession && delta > 0 ) {
+        delta = (int)( delta * 1.25f );
+        if ( delta < 1 ) delta = 1;
+    }
+
     previousRank = s_profileState.info.currentRank;
 
     s_profileState.stats.playerScore += delta;
@@ -1247,7 +1628,7 @@ void G_Profile_RecordKill( gclient_t *attacker, gclient_t *victim ) {
         return;
     }
 
-    if ( !attacker || !attacker->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( attacker ) ) {
         return;
     }
 
@@ -1259,6 +1640,21 @@ void G_Profile_RecordKill( gclient_t *attacker, gclient_t *victim ) {
     s_profileState.stats.kills++;
     s_profileState.dirty = qtrue;
 
+    /* Modi-spezifische Kill-Zähler */
+    switch ( g_gametype.integer ) {
+    case GT_DEATHMATCH:
+        s_profileState.stats.dmKills++;
+        break;
+    case GT_DERBY:
+        s_profileState.stats.derbyKills++;
+        break;
+    case GT_TEAM:
+        s_profileState.stats.teamKills++;
+        break;
+    default:
+        break;
+    }
+
     G_Profile_AddScore( PROFILE_SCORE_FRAG );
 
     G_Profile_CheckAchievementProgress( attacker, BG_ACHIEVEMENT_KILLS );
@@ -1269,7 +1665,7 @@ void G_Profile_RecordDeath( gclient_t *victim ) {
         return;
     }
 
-    if ( !victim || !victim->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( victim ) ) {
         return;
     }
 
@@ -1284,12 +1680,15 @@ void G_Profile_RecordFlagCapture( gclient_t *client ) {
         return;
     }
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 
     s_profileState.stats.flagCaptures++;
     s_profileState.dirty = qtrue;
+
+    /* Modi-spezifische Capture-Zähler */
+    G_Profile_RecordCtfCapture( client );
 
     G_Profile_AddScore( PROFILE_SCORE_FLAG_CAPTURE );
 
@@ -1301,7 +1700,7 @@ void G_Profile_RecordFlagAssist( gclient_t *client ) {
         return;
     }
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 
@@ -1342,10 +1741,29 @@ void G_Profile_RecordRacePlacement( gclient_t *client, int position ) {
         return;
     }
 
+    /* Podium (1.-3. Platz) */
     if ( position <= 3 ) {
+        switch ( g_gametype.integer ) {
+        case GT_RACING:
+            s_profileState.stats.racingPodiums++;
+            break;
+        case GT_RACING_DM:
+            s_profileState.stats.racingDmPodiums++;
+            break;
+        case GT_TEAM_RACING:
+            s_profileState.stats.teamRacingPodiums++;
+            break;
+        case GT_TEAM_RACING_DM:
+            s_profileState.stats.teamRacingDmPodiums++;
+            break;
+        default:
+            break;
+        }
+        s_profileState.dirty = qtrue;
         return;
     }
 
+    /* Position schlechter als 3 — Strafpunkte */
     if ( client->pers.profileRacePlacementPenalized ) {
         return;
     }
@@ -1354,24 +1772,194 @@ void G_Profile_RecordRacePlacement( gclient_t *client, int position ) {
     client->pers.profileRacePlacementPenalized = qtrue;
 }
 
+/* Gesamte Rennzeit für Racing-Modi akkumulieren.
+ * Wird am Ende eines Rennens mit der tatsächlichen Fahrzeit aufgerufen. */
+void G_Profile_RecordRaceTime( gclient_t *client, int totalRaceMs ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( totalRaceMs <= 0 ) {
+        return;
+    }
+
+    switch ( g_gametype.integer ) {
+    case GT_RACING:
+        s_profileState.stats.racingTotalMs += totalRaceMs;
+        break;
+    case GT_RACING_DM:
+        s_profileState.stats.racingDmTotalMs += totalRaceMs;
+        break;
+    default:
+        break;
+    }
+    s_profileState.dirty = qtrue;
+}
+
+/* Überlebenszeit für LCS akkumulieren. */
+void G_Profile_RecordSurvivalTime( gclient_t *client, int survivalMs ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( survivalMs <= 0 ) {
+        return;
+    }
+
+    if ( g_gametype.integer == GT_LCS ) {
+        s_profileState.stats.lcsTotalSurvivalMs += survivalMs;
+        s_profileState.dirty = qtrue;
+    }
+}
+
+/* Elimination-Runden-Zähler: wie viele Runden der Spieler überlebt hat. */
+void G_Profile_RecordEliminationRound( gclient_t *client, int roundsLasted ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( roundsLasted <= 0 ) {
+        return;
+    }
+
+    if ( g_gametype.integer == GT_ELIMINATION ) {
+        s_profileState.stats.eliminationTotalRoundsLasted += roundsLasted;
+        s_profileState.dirty = qtrue;
+    }
+}
+
+/* Zone-Haltezeit für Domination und KOTH akkumulieren. */
+void G_Profile_RecordZoneHold( gclient_t *client, int zoneHoldMs ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( zoneHoldMs <= 0 ) {
+        return;
+    }
+
+    switch ( g_gametype.integer ) {
+    case GT_DOMINATION:
+        s_profileState.stats.dominationZoneHoldMs += zoneHoldMs;
+        break;
+    case GT_KOTH:
+        s_profileState.stats.kothZoneHoldMs += zoneHoldMs;
+        break;
+    default:
+        break;
+    }
+    s_profileState.dirty = qtrue;
+}
+
+/* CTF-Captures für den jeweiligen Modus zählen. */
+void G_Profile_RecordCtfCapture( gclient_t *client ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    switch ( g_gametype.integer ) {
+    case GT_CTF:
+        s_profileState.stats.ctfCaptures++;
+        break;
+    case GT_CTF4:
+        s_profileState.stats.ctf4Captures++;
+        break;
+    default:
+        break;
+    }
+    s_profileState.dirty = qtrue;
+}
+
+/* Sprint best time */
+void G_Profile_RecordSprintTime( gclient_t *client, int totalMs ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( g_gametype.integer != GT_SPRINT || totalMs <= 0 ) {
+        return;
+    }
+
+    if ( s_profileState.stats.sprintBestMs == 0 || totalMs < s_profileState.stats.sprintBestMs ) {
+        s_profileState.stats.sprintBestMs = totalMs;
+        s_profileState.dirty = qtrue;
+    }
+}
+
 void G_Profile_RecordWin( gclient_t *client ) {
     if ( !s_profileState.loaded ) {
         return;
     }
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 
     s_profileState.stats.wins++;
     s_profileState.dirty = qtrue;
 
-    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_WINS );
-
-    if ( g_gametype.integer == GT_SPRINT ) {
+    /* Modi-spezifische Win-Zähler */
+    switch ( g_gametype.integer ) {
+    case GT_RACING:
+        s_profileState.stats.racingWins++;
+        break;
+    case GT_RACING_DM:
+        s_profileState.stats.racingDmWins++;
+        break;
+    case GT_SPRINT:
         s_profileState.stats.sprintWins++;
+        s_profileState.stats.sprintCompleted++;
         G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_SPRINT_WINS );
+        break;
+    case GT_ELIMINATION:
+        s_profileState.stats.eliminationWins++;
+        s_profileState.stats.eliminationCompleted++;
+        break;
+    case GT_LCS:
+        s_profileState.stats.lcsWins++;
+        s_profileState.stats.lcsCompleted++;
+        break;
+    case GT_DERBY:
+        s_profileState.stats.derbyWins++;
+        s_profileState.stats.derbyCompleted++;
+        break;
+    case GT_DEATHMATCH:
+        s_profileState.stats.dmWins++;
+        s_profileState.stats.dmCompleted++;
+        break;
+    case GT_CTF:
+        s_profileState.stats.ctfWins++;
+        s_profileState.stats.ctfCompleted++;
+        break;
+    case GT_CTF4:
+        s_profileState.stats.ctf4Wins++;
+        s_profileState.stats.ctf4Completed++;
+        break;
+    case GT_TEAM:
+        s_profileState.stats.teamWins++;
+        s_profileState.stats.teamCompleted++;
+        break;
+    case GT_TEAM_RACING:
+        s_profileState.stats.teamRacingWins++;
+        s_profileState.stats.teamRacingCompleted++;
+        break;
+    case GT_TEAM_RACING_DM:
+        s_profileState.stats.teamRacingDmWins++;
+        s_profileState.stats.teamRacingDmCompleted++;
+        break;
+    case GT_DOMINATION:
+        s_profileState.stats.dominationWins++;
+        s_profileState.stats.dominationCompleted++;
+        break;
+    case GT_KOTH:
+        s_profileState.stats.kothWins++;
+        s_profileState.stats.kothCompleted++;
+        break;
+    default:
+        break;
     }
+
+    G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_WINS );
 
     if ( G_Profile_ShouldTrackClient( client ) ) {
         if ( G_Profile_IsRacingGametype() ) {
@@ -1387,12 +1975,62 @@ void G_Profile_RecordLoss( gclient_t *client ) {
         return;
     }
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 
     s_profileState.stats.losses++;
+    s_profileState.stats.gamesPlayed++;
     s_profileState.dirty = qtrue;
+
+    /* Modi-spezifische Completed-Zähler (nur bei Verlierern —
+     * Gewinner zählen ihr Completed bereits in RecordWin) */
+    switch ( g_gametype.integer ) {
+    case GT_RACING:
+        s_profileState.stats.racingCompleted++;
+        break;
+    case GT_RACING_DM:
+        s_profileState.stats.racingDmCompleted++;
+        break;
+    case GT_SPRINT:
+        s_profileState.stats.sprintCompleted++;
+        break;
+    case GT_ELIMINATION:
+        s_profileState.stats.eliminationCompleted++;
+        break;
+    case GT_LCS:
+        s_profileState.stats.lcsCompleted++;
+        break;
+    case GT_DERBY:
+        s_profileState.stats.derbyCompleted++;
+        break;
+    case GT_DEATHMATCH:
+        s_profileState.stats.dmCompleted++;
+        break;
+    case GT_CTF:
+        s_profileState.stats.ctfCompleted++;
+        break;
+    case GT_CTF4:
+        s_profileState.stats.ctf4Completed++;
+        break;
+    case GT_TEAM:
+        s_profileState.stats.teamCompleted++;
+        break;
+    case GT_TEAM_RACING:
+        s_profileState.stats.teamRacingCompleted++;
+        break;
+    case GT_TEAM_RACING_DM:
+        s_profileState.stats.teamRacingDmCompleted++;
+        break;
+    case GT_DOMINATION:
+        s_profileState.stats.dominationCompleted++;
+        break;
+    case GT_KOTH:
+        s_profileState.stats.kothCompleted++;
+        break;
+    default:
+        break;
+    }
 
     if ( G_Profile_ShouldTrackClient( client ) && !G_Profile_IsRacingGametype() ) {
         G_Profile_AddScore( -5 );
@@ -1412,7 +2050,7 @@ void G_Profile_RecordBestLap( gclient_t *client, int lapTime ) {
         return;
     }
 
-    if ( !client || !client->pers.localClient ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
 

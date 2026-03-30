@@ -136,6 +136,7 @@ vmCvar_t	g_trackReversed;
 vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
 vmCvar_t	g_rallyReadyCheck;
+vmCvar_t	g_derbyMinPlayers;
 vmCvar_t	g_rallyIgnoreBots;
 
 vmCvar_t	g_damageScale;
@@ -287,6 +288,7 @@ static cvarTable_t		gameCvarTable[] = {
 
 { &g_developer, "developer", "0", 0, 0, qfalse },
 { &g_rallyReadyCheck, "g_rallyReadyCheck", "1", CVAR_ARCHIVE, 0, qfalse },
+{ &g_derbyMinPlayers, "g_derbyMinPlayers", "2", CVAR_ARCHIVE, 0, qfalse },
 { &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
 { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
 { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
@@ -796,19 +798,39 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
 
         trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
+        /* ── playerId: UUID des Spielers ────────────────────────────────────
+         * Priorität (höchste zuerst):
+         *   1. cl_uuid aus dem Userinfo — gesetzt vom Client der eine UUID
+         *      im lokalen Profil hat. Stabil über Namensänderungen und IPs.
+         *   2. Für den lokalen Client: UUID direkt aus dem Profil-State im RAM
+         *      (Fallback falls cl_uuid noch nicht im Userinfo gesetzt wurde).
+         *   3. cl_guid — Hardware-ID, instabil aber besser als Name.
+         *   4. IP-Adresse — nur für Remote-Clients, letzter stabiler Anker.
+         *   5. cleanName → "client-N" — absolute Notfallwerte.
+         * ────────────────────────────────────────────────────────────────── */
+        value = Info_ValueForKey( userinfo, "cl_uuid" );
+        if ( value && value[0] ) {
+                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+        }
+
+        if ( !player->playerId[0] && client->pers.localClient ) {
+                /* Direktzugriff auf den Profil-State: vermeidet einen
+                 * Userinfo-Round-Trip wenn der Cvar noch nicht propagiert ist. */
+                G_Profile_GetUUID( player->playerId, sizeof( player->playerId ) );
+        }
+
         value = Info_ValueForKey( userinfo, "cl_guid" );
         if ( value && value[0] ) {
                 Q_strncpyz( player->guid, value, sizeof( player->guid ) );
+                if ( !player->playerId[0] ) {
+                        Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+                }
         }
 
         value = Info_ValueForKey( userinfo, "ip" );
         if ( value && value[0] ) {
-                /* For local clients, don't use IP (would be "localhost") as playerId.
-                 * We prefer cl_guid which is already set above, or fall through to cleanName. */
-                if ( !client->pers.localClient ) {
-                        if ( !player->playerId[0] ) {
-                                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
-                        }
+                if ( !client->pers.localClient && !player->playerId[0] ) {
+                        Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
                 }
                 if ( !player->guid[0] ) {
                         Q_strncpyz( player->guid, value, sizeof( player->guid ) );
@@ -990,11 +1012,84 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         snap->perfectAwards    = G_Profile_ParseIntPublic( statsBuf,  "perfectAwards",   0 );
                                         snap->damageDealt      = G_Profile_ParseIntPublic( statsBuf,  "damageDealt",     0 );
                                         snap->damageTaken      = G_Profile_ParseIntPublic( statsBuf,  "damageTaken",     0 );
-                                        snap->distanceKm       = G_Profile_ParseDoublePublic( statsBuf,  "distanceKm",  0.0 );
-                                        snap->topSpeedKph      = G_Profile_ParseDoublePublic( statsBuf,  "topSpeedKph", 0.0 );
-                                        snap->fuelUsed         = G_Profile_ParseDoublePublic( statsBuf,  "fuelUsed",    0.0 );
+                                        snap->distanceKm       = (float)G_Profile_ParseDoublePublic( statsBuf, "distanceKm",  0.0 );
+                                        snap->topSpeedKph      = (float)G_Profile_ParseDoublePublic( statsBuf, "topSpeedKph", 0.0 );
+                                        snap->fuelUsed         = (float)G_Profile_ParseDoublePublic( statsBuf, "fuelUsed",    0.0 );
+                                        snap->gamesPlayed      = G_Profile_ParseIntPublic( statsBuf,  "gamesPlayed",     0 );
                                         G_Profile_ParseStringPublic( statsBuf, "mostUsedVehicle",
                                                 snap->mostUsedVehicle, sizeof( snap->mostUsedVehicle ), "" );
+
+                                        /* ── GT_RACING ── */
+                                        snap->racingWins       = G_Profile_ParseIntPublic( statsBuf, "racingWins",      0 );
+                                        snap->racingPodiums    = G_Profile_ParseIntPublic( statsBuf, "racingPodiums",   0 );
+                                        snap->racingCompleted  = G_Profile_ParseIntPublic( statsBuf, "racingCompleted", 0 );
+                                        snap->racingTotalMs    = G_Profile_ParseIntPublic( statsBuf, "racingTotalMs",   0 );
+
+                                        /* ── GT_RACING_DM ── */
+                                        snap->racingDmWins      = G_Profile_ParseIntPublic( statsBuf, "racingDmWins",      0 );
+                                        snap->racingDmPodiums   = G_Profile_ParseIntPublic( statsBuf, "racingDmPodiums",   0 );
+                                        snap->racingDmCompleted = G_Profile_ParseIntPublic( statsBuf, "racingDmCompleted", 0 );
+                                        snap->racingDmTotalMs   = G_Profile_ParseIntPublic( statsBuf, "racingDmTotalMs",   0 );
+
+                                        /* ── GT_SPRINT ── */
+                                        snap->sprintWins      = G_Profile_ParseIntPublic( statsBuf, "sprintWins",      0 );
+                                        snap->sprintCompleted = G_Profile_ParseIntPublic( statsBuf, "sprintCompleted", 0 );
+                                        snap->sprintBestMs    = G_Profile_ParseIntPublic( statsBuf, "sprintBestMs",    0 );
+
+                                        /* ── GT_ELIMINATION ── */
+                                        snap->eliminationWins               = G_Profile_ParseIntPublic( statsBuf, "eliminationWins",               0 );
+                                        snap->eliminationCompleted          = G_Profile_ParseIntPublic( statsBuf, "eliminationCompleted",          0 );
+                                        snap->eliminationTotalRoundsLasted  = G_Profile_ParseIntPublic( statsBuf, "eliminationTotalRoundsLasted",  0 );
+
+                                        /* ── GT_LCS ── */
+                                        snap->lcsWins            = G_Profile_ParseIntPublic( statsBuf, "lcsWins",            0 );
+                                        snap->lcsCompleted       = G_Profile_ParseIntPublic( statsBuf, "lcsCompleted",       0 );
+                                        snap->lcsTotalSurvivalMs = G_Profile_ParseIntPublic( statsBuf, "lcsTotalSurvivalMs", 0 );
+
+                                        /* ── GT_DERBY ── */
+                                        snap->derbyWins      = G_Profile_ParseIntPublic( statsBuf, "derbyWins",      0 );
+                                        snap->derbyCompleted = G_Profile_ParseIntPublic( statsBuf, "derbyCompleted", 0 );
+                                        snap->derbyKills     = G_Profile_ParseIntPublic( statsBuf, "derbyKills",     0 );
+
+                                        /* ── GT_DEATHMATCH ── */
+                                        snap->dmWins      = G_Profile_ParseIntPublic( statsBuf, "dmWins",      0 );
+                                        snap->dmCompleted = G_Profile_ParseIntPublic( statsBuf, "dmCompleted", 0 );
+                                        snap->dmKills     = G_Profile_ParseIntPublic( statsBuf, "dmKills",     0 );
+
+                                        /* ── GT_CTF ── */
+                                        snap->ctfWins      = G_Profile_ParseIntPublic( statsBuf, "ctfWins",      0 );
+                                        snap->ctfCompleted = G_Profile_ParseIntPublic( statsBuf, "ctfCompleted", 0 );
+                                        snap->ctfCaptures  = G_Profile_ParseIntPublic( statsBuf, "ctfCaptures",  0 );
+
+                                        /* ── GT_CTF4 ── */
+                                        snap->ctf4Wins      = G_Profile_ParseIntPublic( statsBuf, "ctf4Wins",      0 );
+                                        snap->ctf4Completed = G_Profile_ParseIntPublic( statsBuf, "ctf4Completed", 0 );
+                                        snap->ctf4Captures  = G_Profile_ParseIntPublic( statsBuf, "ctf4Captures",  0 );
+
+                                        /* ── GT_TEAM ── */
+                                        snap->teamWins      = G_Profile_ParseIntPublic( statsBuf, "teamWins",      0 );
+                                        snap->teamCompleted = G_Profile_ParseIntPublic( statsBuf, "teamCompleted", 0 );
+                                        snap->teamKills     = G_Profile_ParseIntPublic( statsBuf, "teamKills",     0 );
+
+                                        /* ── GT_TEAM_RACING ── */
+                                        snap->teamRacingWins      = G_Profile_ParseIntPublic( statsBuf, "teamRacingWins",      0 );
+                                        snap->teamRacingCompleted = G_Profile_ParseIntPublic( statsBuf, "teamRacingCompleted", 0 );
+                                        snap->teamRacingPodiums   = G_Profile_ParseIntPublic( statsBuf, "teamRacingPodiums",   0 );
+
+                                        /* ── GT_TEAM_RACING_DM ── */
+                                        snap->teamRacingDmWins      = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmWins",      0 );
+                                        snap->teamRacingDmCompleted = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmCompleted", 0 );
+                                        snap->teamRacingDmPodiums   = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmPodiums",   0 );
+
+                                        /* ── GT_DOMINATION ── */
+                                        snap->dominationWins        = G_Profile_ParseIntPublic( statsBuf, "dominationWins",        0 );
+                                        snap->dominationCompleted   = G_Profile_ParseIntPublic( statsBuf, "dominationCompleted",   0 );
+                                        snap->dominationZoneHoldMs  = G_Profile_ParseIntPublic( statsBuf, "dominationZoneHoldMs",  0 );
+
+                                        /* ── GT_KOTH ── */
+                                        snap->kothWins       = G_Profile_ParseIntPublic( statsBuf, "kothWins",       0 );
+                                        snap->kothCompleted  = G_Profile_ParseIntPublic( statsBuf, "kothCompleted",  0 );
+                                        snap->kothZoneHoldMs = G_Profile_ParseIntPublic( statsBuf, "kothZoneHoldMs", 0 );
                                 }
 
                                 /* Achievement tiers – reuse bg_achievements logic */
@@ -1094,6 +1189,28 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         payload->raceStartTime = level.startRaceTime;
         payload->raceEndTime = level.finishRaceTime;
         payload->finishRaceTime = level.finishRaceTime;
+        /* For score-based game modes (DM, Derby, etc.) level.winnerNumber is
+         * initialised to 0 and only set for modes that have an explicit
+         * winner event (Race, LCS, Derby last-man-standing).
+         * Re-derive the winner here by finding the connected non-spectator
+         * with the highest score so the payload always carries the correct value. */
+        {
+            int dmWinner = -1;
+            int dmBestScore = -99999;
+            int wi;
+            for ( wi = 0; wi < level.maxclients; ++wi ) {
+                gclient_t *wc = &level.clients[wi];
+                if ( wc->pers.connected != CON_CONNECTED ) continue;
+                if ( wc->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+                if ( wc->ps.persistant[PERS_SCORE] > dmBestScore ) {
+                    dmBestScore = wc->ps.persistant[PERS_SCORE];
+                    dmWinner = wi;
+                }
+            }
+            if ( dmWinner >= 0 ) {
+                level.winnerNumber = dmWinner;
+            }
+        }
         payload->winnerClientNum = level.winnerNumber;
         payload->numberOfLaps = level.numberOfLaps;
         payload->trackReversed = g_trackReversed.integer ? qtrue : qfalse;
@@ -1579,6 +1696,24 @@ static void G_RecordMatchOutcome( void ) {
                         G_Profile_RecordLoss( client );
                 }
 
+                /* Modi-spezifische Lifetime-Stats */
+                {
+                        int position = client->ps.persistant[PERS_RANK] + 1; /* 1-basiert */
+                        G_Profile_RecordRacePlacement( client, position );
+
+                        if ( client->finishRaceTime > level.startRaceTime ) {
+                                int totalMs = client->finishRaceTime - level.startRaceTime;
+                                G_Profile_RecordRaceTime( client, totalMs );
+                                G_Profile_RecordSprintTime( client, totalMs );
+                                G_Profile_RecordSurvivalTime( client, totalMs );
+                        } else if ( level.finishRaceTime > level.startRaceTime ) {
+                                G_Profile_RecordSurvivalTime( client,
+                                        level.finishRaceTime - level.startRaceTime );
+                        }
+
+                        G_Profile_RecordEliminationRound( client, client->eliminationRound );
+                }
+
                 G_Profile_RecordMatchAchievements( client );
 
                 ClientUserinfoChanged( clientNum );
@@ -2025,6 +2160,10 @@ void ExitLevel (void) {
 	level.teamScores[TEAM_GREEN] = 0;
 	level.teamScores[TEAM_YELLOW] = 0;
 // END
+	level.teamTimes[TEAM_RED] = 0;
+	level.teamTimes[TEAM_BLUE] = 0;
+	level.teamTimes[TEAM_GREEN] = 0;
+	level.teamTimes[TEAM_YELLOW] = 0;
 	for ( i=0 ; i< g_maxclients.integer ; i++ ) {
 		cl = level.clients + i;
 		if ( cl->pers.connected != CON_CONNECTED ) {
@@ -2335,7 +2474,11 @@ qboolean ScoreIsTied( void ) {
 			if (i == winner) continue;
 			if (!TeamCount(-1, TEAM_RED + i)) continue;
 
-			if ((isRallyRace() && level.teamTimes[winner + TEAM_RED] == level.teamTimes[i + TEAM_RED])
+			if ((isRallyRace()
+					// Only a tie if both teams have actual finish times.
+					// Two zeros just mean nobody has finished yet.
+					&& level.teamTimes[winner + TEAM_RED] != 0
+					&& level.teamTimes[winner + TEAM_RED] == level.teamTimes[i + TEAM_RED])
 				|| (!isRallyRace() && level.teamScores[winner + TEAM_RED] == level.teamScores[i + TEAM_RED])){
 				tied = qtrue;
 				break;
@@ -2432,12 +2575,14 @@ void CheckExitRules( void ) {
 			winner = cl;
 		}
 
-		if (winner && count == 1) {
+		// Only declare a winner when more than one player participated.
+		// A lone player who started with no opponents never gets a free win.
+		if (winner && count == 1 && level.derbyStartPlayerCount >= g_derbyMinPlayers.integer) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
 			trap_SendServerCommand( -1, va("print \"%s won the demolition derby!\n\"", winner->pers.netname ));
-			trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\n\"");
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the demolition derby!\"");
 		}
 
 		return;
@@ -2457,12 +2602,12 @@ void CheckExitRules( void ) {
 			winner = cl;
 		}
 
-		if (winner && count == 1) {
+		if (winner && count == 1 && level.derbyStartPlayerCount >= g_derbyMinPlayers.integer) {
 			level.winnerNumber = winner->ps.clientNum;
 			level.finishRaceTime = level.time;
 
 			trap_SendServerCommand( -1, va("print \"%s won the last car standing!\n\"", winner->pers.netname ));
-			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\n\"");
+			trap_SendServerCommand( level.winnerNumber, "cp \"You won the last car standing!\"");
 		}
 
 		return;

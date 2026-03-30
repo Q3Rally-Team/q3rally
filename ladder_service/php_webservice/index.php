@@ -990,8 +990,9 @@ try {
     .q3-overlay-backdrop {
       position: fixed; inset: 0; z-index: 9000;
       background: rgba(0,0,0,0.72);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: flex-start; justify-content: center;
       padding: 20px;
+      overflow-y: auto;
       animation: fadeIn .15s ease;
     }
     @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
@@ -1000,22 +1001,70 @@ try {
       background: var(--surface-strong);
       border: 1px solid var(--border-strong);
       border-radius: 20px;
-      width: min(780px, 100%);
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 28px;
+      width: min(1400px, 100%);
+      max-height: none;
+      overflow-y: visible;
+      padding: 0;
       position: relative;
       animation: slideUp .18s ease;
+      margin: auto;
     }
     @keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform:none; opacity:1 } }
 
-    .q3-overlay-close {
-      position: absolute; top: 16px; right: 18px;
-      background: rgba(255,255,255,0.08); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text-muted); cursor: pointer;
-      font-size: .9rem; padding: 4px 10px; transition: background .15s;
+    .q3-overlay-header {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 10px 16px;
+      background: var(--accent);
+      border-radius: 20px 20px 0 0;
+      min-height: 44px;
     }
-    .q3-overlay-close:hover { background: rgba(255,255,255,0.14); }
+    .q3-overlay-title {
+      font-size: 1.1rem; font-weight: 700; color: var(--text);
+      margin: 0 0 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .q3-overlay-title-main {
+      font-size: 1.05rem; font-weight: 700; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .q3-overlay-title-sub {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      font-size: .78rem; font-weight: 400; color: rgba(255,255,255,0.72);
+    }
+    .q3-overlay-rank-bar {
+      height: 3px; background: rgba(255,255,255,0.2);
+      border-radius: 0; overflow: hidden;
+    }
+    .q3-overlay-rank-bar-fill {
+      height: 100%; background: rgba(255,255,255,0.55);
+      transition: width .4s ease;
+    }
+    .q3-overlay-body {
+      padding: 24px 28px;
+    }
+
+    /* Zweispaltiges Profil-Layout */
+    .q3-profile-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .q3-profile-layout-full {
+      grid-column: 1 / -1;
+    }
+    @media (max-width: 800px) {
+      .q3-profile-layout { grid-template-columns: 1fr; }
+    }
+
+    .q3-overlay-close {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px; color: #fff; cursor: pointer;
+      font-size: .9rem; padding: 4px 12px; transition: background .15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .q3-overlay-close:hover { background: rgba(255,255,255,0.28); }
 
     .q3-overlay h2 { margin: 0 0 20px; font-size: 1.15rem; color: var(--text); }
     .q3-overlay h3 { margin: 20px 0 10px; font-size: .85rem; font-weight:600;
@@ -2920,7 +2969,10 @@ function updateSummary() {
   elements.statPlayers.textContent = playerCount ? playerCount.toString() : '–';
 
   const items = Array.from(aggregation.modeCounts.entries())
-    .map(([modeKey, count]) => ({ label: humanizeMode(modeKey), count }))
+    .map(([modeKey, count]) => ({
+      label: modeKey === '__unknown__' ? t('mode.unknown') : humanizeMode(modeKey),
+      count
+    }))
     .sort((a, b) => b.count - a.count);
 
   if (!items.length) {
@@ -3133,7 +3185,15 @@ function ingestMatchInto(match, aggregation) {
 
   const rawMode = extractMode(match);
   const modeKey = canonicalMode(rawMode);
-  aggregation.modeCounts.set(modeKey, (aggregation.modeCounts.get(modeKey) || 0) + 1);
+  // Count all modes in the breakdown, using '__unknown__' for unrecognised ones
+  // so they appear in the distribution without polluting any leaderboard.
+  const modeCountKey = modeKey ?? '__unknown__';
+  aggregation.modeCounts.set(modeCountKey, (aggregation.modeCounts.get(modeCountKey) || 0) + 1);
+
+  // Unknown mode: nothing to ingest into any leaderboard.
+  if (modeKey === null) {
+    return;
+  }
 
   const entries = extractScoreboardEntries(match);
   if (!entries.length) {
@@ -3325,12 +3385,15 @@ function escapeHtml(value) {
 }
 
 function canonicalMode(mode) {
+  // Returns a known gt_* key from MODE_CONFIG_MAP, or null for unrecognised modes.
+  // Never falls back to 'gt_elimination' — callers must handle null explicitly
+  // so that unknown matches don't pollute the Elimination leaderboard.
   if (typeof mode !== 'string') {
-    return 'gt_elimination';
+    return null;
   }
   const trimmed = mode.trim();
   if (!trimmed) {
-    return 'gt_elimination';
+    return null;
   }
   let normalized = trimmed.toLowerCase().replace(/[\s-]+/g, '_');
   if (!normalized.startsWith('gt_')) {
@@ -3339,25 +3402,20 @@ function canonicalMode(mode) {
   if (MODE_CONFIG_MAP.has(normalized)) {
     return normalized;
   }
-  return 'gt_elimination';
+  return null;
 }
 
 function humanizeMode(mode) {
   const translations = MODE_TRANSLATIONS[state.language] || {};
-  if (typeof mode !== 'string') {
-    return translations.gt_elimination || 'Elimination';
+  if (typeof mode !== 'string' || !mode.trim()) {
+    return t('mode.unknown');
   }
   const trimmed = mode.trim();
-  if (!trimmed) {
-    return translations.gt_elimination || 'Elimination';
-  }
   const canonical = canonicalMode(trimmed);
-  if (Object.prototype.hasOwnProperty.call(translations, canonical)) {
+  if (canonical !== null && Object.prototype.hasOwnProperty.call(translations, canonical)) {
     return translations[canonical];
   }
-  if (canonical === 'gt_elimination') {
-    return translations.gt_elimination || 'Elimination';
-  }
+  // Unknown mode: strip gt_ prefix and title-case the remainder for display.
   const withoutPrefix = trimmed.replace(/^GT[_\-\s]?/i, '');
   const normalized = withoutPrefix.replace(/[_\-]+/g, ' ').toLowerCase();
   const locale = getLocale();
@@ -4073,7 +4131,7 @@ const ACHIEVEMENT_NAMES = [
 ];
 const ACHIEVEMENT_MAX_TIERS = 8;
 
-function createOverlay(content) {
+function createOverlay(content, title) {
   const backdrop = document.createElement('div');
   backdrop.className = 'q3-overlay-backdrop';
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
@@ -4081,13 +4139,30 @@ function createOverlay(content) {
   const box = document.createElement('div');
   box.className = 'q3-overlay';
 
+  // Header: close button only — no title here
+  const header = document.createElement('div');
+  header.className = 'q3-overlay-header';
   const close = document.createElement('button');
   close.className = 'q3-overlay-close';
   close.textContent = '✕ Close';
   close.addEventListener('click', () => backdrop.remove());
+  header.appendChild(close);
 
-  box.appendChild(close);
-  box.appendChild(content);
+  const body = document.createElement('div');
+  body.className = 'q3-overlay-body';
+
+  // Title goes into the body as the first element, before the caller's content
+  if (title) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'q3-overlay-title';
+    titleEl.textContent = title;
+    body.appendChild(titleEl);
+  }
+
+  body.appendChild(content);
+
+  box.appendChild(header);
+  box.appendChild(body);
   backdrop.appendChild(box);
   document.body.appendChild(backdrop);
   return backdrop;
@@ -4115,16 +4190,13 @@ function formatKm(km) {
 // ── Player Profile Overlay ────────────────────────────────────────────────────
 async function showPlayerProfile(playerId, playerName) {
   const frag = document.createDocumentFragment();
-  const h2 = document.createElement('h2');
-  h2.textContent = playerName || 'Player Profile';
-  frag.appendChild(h2);
 
   const loading = document.createElement('div');
   loading.className = 'q3-loading';
   loading.textContent = 'Loading profile…';
   frag.appendChild(loading);
 
-  const backdrop = createOverlay(frag);
+  const backdrop = createOverlay(frag, playerName || 'Player Profile');
 
   try {
     const resp = await fetch(`${API_BASE}/players/${encodeURIComponent(playerId)}`);
@@ -4132,53 +4204,135 @@ async function showPlayerProfile(playerId, playerName) {
     const p = await resp.json();
 
     loading.remove();
-    const box = backdrop.querySelector('.q3-overlay');
+    const body = backdrop.querySelector('.q3-overlay-body');
 
-    // Rank
     const rankName = RANK_NAMES[p.currentRank] || `Rank ${p.currentRank}`;
-    const highestName = RANK_NAMES[p.highestRank] || `Rank ${p.highestRank}`;
-    const rankPct = Math.round(((p.currentRank || 0) / (RANK_NAMES.length - 1)) * 100);
+    const rankPct  = Math.round(((p.currentRank || 0) / (RANK_NAMES.length - 1)) * 100);
 
-    const rankSection = document.createElement('div');
-    rankSection.innerHTML = `
-      <h3>Rank</h3>
-      <div style="margin-bottom:16px">
-        <div style="font-size:1.2rem;font-weight:700;color:var(--accent);margin-bottom:4px">${rankName}</div>
-        <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:8px">
-          Score: <strong style="color:var(--text)">${(p.playerScore||0).toLocaleString()}</strong>
-          &nbsp;·&nbsp; Highest: <strong style="color:var(--text)">${highestName}</strong>
+    // Rank + Score + progress bar as a compact info strip at the top of the body
+    const rankStrip = document.createElement('div');
+    rankStrip.style.cssText = [
+      'display:flex', 'align-items:center', 'gap:16px',
+      'padding:12px 16px', 'margin-bottom:20px',
+      'background:rgba(255,255,255,0.04)',
+      'border:1px solid rgba(255,255,255,0.08)',
+      'border-radius:12px', 'flex-wrap:wrap'
+    ].join(';');
+    rankStrip.innerHTML = `
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Rank</div>
+        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${rankName}</div>
+        <div class="q3-rank-bar" style="margin-top:6px">
+          <div class="q3-rank-bar-fill" style="width:${rankPct}%"></div>
         </div>
-        <div class="q3-rank-bar"><div class="q3-rank-bar-fill" style="width:${rankPct}%"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Score</div>
+        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${((p.playerScore)||0).toLocaleString()}</div>
       </div>`;
-    box.appendChild(rankSection);
+    body.appendChild(rankStrip);
 
-    // Stats grid
+    // Zweispaltiges Haupt-Layout
+    const layout = document.createElement('div');
+    layout.className = 'q3-profile-layout';
+    body.appendChild(layout);
+
+    // ── Linke Spalte: Career Stats ──────────────────────────────
+    const colLeft = document.createElement('div');
+
     const statsH = document.createElement('h3');
     statsH.textContent = 'Career Stats';
-    box.appendChild(statsH);
+    colLeft.appendChild(statsH);
 
     const grid = document.createElement('div');
     grid.className = 'q3-stat-grid';
-    const kd = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : (p.kills || 0);
+    const kd = (p.deaths || 0) > 0 ? ((p.kills || 0) / p.deaths).toFixed(2) : (p.kills || 0);
     grid.appendChild(statCard('Wins', p.wins || 0));
     grid.appendChild(statCard('Losses', p.losses || 0));
     grid.appendChild(statCard('Kills', p.kills || 0));
     grid.appendChild(statCard('Deaths', p.deaths || 0));
     grid.appendChild(statCard('K/D', kd));
+    grid.appendChild(statCard('Games Played', p.gamesPlayed || 0));
     grid.appendChild(statCard('Best Lap', formatMs(p.bestLapMs)));
     grid.appendChild(statCard('Distance', formatKm(p.distanceKm)));
     grid.appendChild(statCard('Top Speed', p.topSpeedKph ? p.topSpeedKph.toFixed(1) + ' km/h' : '–'));
+    grid.appendChild(statCard('Fuel Used', p.fuelUsed ? p.fuelUsed.toFixed(1) + ' L' : '–'));
     grid.appendChild(statCard('Flag Captures', p.flagCaptures || 0));
     grid.appendChild(statCard('Flag Assists', p.flagAssists || 0));
     grid.appendChild(statCard('Accuracy Awards', p.accuracyAwards || 0));
+    grid.appendChild(statCard('Excellent', p.excellentAwards || 0));
+    grid.appendChild(statCard('Impressive', p.impressiveAwards || 0));
+    grid.appendChild(statCard('Perfect', p.perfectAwards || 0));
+    grid.appendChild(statCard('Damage Dealt', p.damageDealt || 0));
+    grid.appendChild(statCard('Damage Taken', p.damageTaken || 0));
     grid.appendChild(statCard('Most Used', p.mostUsedVehicle || '–'));
-    box.appendChild(grid);
+    colLeft.appendChild(grid);
+    layout.appendChild(colLeft);
 
-    // Achievements
+    // ── Rechte Spalte: Mode Stats ───────────────────────────────────────
+    const colRight = document.createElement('div');
+
+    const modeGroups = [
+      { title: 'Deathmatch',      fields: [['Wins','dmWins'],['Completed','dmCompleted'],['Kills','dmKills']] },
+      { title: 'Derby',           fields: [['Wins','derbyWins'],['Completed','derbyCompleted'],['Kills','derbyKills']] },
+      { title: 'Racing',          fields: [['Wins','racingWins'],['Podiums','racingPodiums'],['Completed','racingCompleted'],['Total Time',null,'racingTotalMs']] },
+      { title: 'Racing DM',       fields: [['Wins','racingDmWins'],['Podiums','racingDmPodiums'],['Completed','racingDmCompleted']] },
+      { title: 'Sprint',          fields: [['Wins','sprintWins'],['Completed','sprintCompleted'],['Best Time',null,'sprintBestMs']] },
+      { title: 'Elimination',     fields: [['Wins','eliminationWins'],['Completed','eliminationCompleted'],['Rounds Lasted','eliminationTotalRoundsLasted']] },
+      { title: 'LCS',             fields: [['Wins','lcsWins'],['Completed','lcsCompleted'],['Survival Time',null,'lcsTotalSurvivalMs']] },
+      { title: 'CTF',             fields: [['Wins','ctfWins'],['Completed','ctfCompleted'],['Captures','ctfCaptures']] },
+      { title: 'CTF 4-Team',      fields: [['Wins','ctf4Wins'],['Completed','ctf4Completed'],['Captures','ctf4Captures']] },
+      { title: 'Team DM',         fields: [['Wins','teamWins'],['Completed','teamCompleted'],['Kills','teamKills']] },
+      { title: 'Team Racing',     fields: [['Wins','teamRacingWins'],['Completed','teamRacingCompleted'],['Podiums','teamRacingPodiums']] },
+      { title: 'Team Racing DM',  fields: [['Wins','teamRacingDmWins'],['Completed','teamRacingDmCompleted'],['Podiums','teamRacingDmPodiums']] },
+      { title: 'Domination',      fields: [['Wins','dominationWins'],['Completed','dominationCompleted'],['Zone Hold',null,'dominationZoneHoldMs']] },
+      { title: 'King of the Hill', fields: [['Wins','kothWins'],['Completed','kothCompleted'],['Zone Hold',null,'kothZoneHoldMs']] },
+    ];
+
+    const activeModes = modeGroups.filter(g =>
+      g.fields.some(([,key,msKey]) => (key && (p[key]||0) > 0) || (msKey && (p[msKey]||0) > 0))
+    );
+
+    if (activeModes.length > 0) {
+      const modeH = document.createElement('h3');
+      modeH.textContent = 'Mode Stats';
+      modeH.style.marginTop = '0';
+      colRight.appendChild(modeH);
+
+      activeModes.forEach(group => {
+        const groupH = document.createElement('div');
+        groupH.style.cssText = 'font-size:.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 6px';
+        groupH.textContent = group.title;
+        colRight.appendChild(groupH);
+
+        const modeGrid = document.createElement('div');
+        modeGrid.className = 'q3-stat-grid';
+        group.fields.forEach(([label, key, msKey]) => {
+          let val;
+          if (msKey) {
+            const ms = p[msKey] || 0;
+            val = ms > 0 ? formatMs(ms) : '–';
+          } else {
+            val = p[key] || 0;
+          }
+          modeGrid.appendChild(statCard(label, val));
+        });
+        colRight.appendChild(modeGrid);
+      });
+    } else {
+      // Platzhalter wenn noch keine Mode Stats
+      colRight.innerHTML = '<h3 style="margin-top:0">Mode Stats</h3><div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Play matches to unlock mode stats.</div>';
+    }
+    layout.appendChild(colRight);
+
+    // ── Volle Breite: Achievements ──────────────────────────────────────
     if (Array.isArray(p.achievementTiers) && p.achievementTiers.length > 0) {
+      const achvWrap = document.createElement('div');
+      achvWrap.className = 'q3-profile-layout-full';
+
       const achvH = document.createElement('h3');
       achvH.textContent = 'Achievements';
-      box.appendChild(achvH);
+      achvWrap.appendChild(achvH);
 
       const achvGrid = document.createElement('div');
       achvGrid.className = 'q3-achievements';
@@ -4195,7 +4349,8 @@ async function showPlayerProfile(playerId, playerName) {
           </div>`;
         achvGrid.appendChild(div);
       });
-      box.appendChild(achvGrid);
+      achvWrap.appendChild(achvGrid);
+      layout.appendChild(achvWrap);
     }
 
   } catch (err) {
@@ -4212,16 +4367,13 @@ async function showPlayerProfile(playerId, playerName) {
 // ── Match Details Overlay ─────────────────────────────────────────────────────
 async function showMatchDetails(matchId) {
   const frag = document.createDocumentFragment();
-  const h2 = document.createElement('h2');
-  h2.textContent = 'Match Details';
-  frag.appendChild(h2);
 
   const loading = document.createElement('div');
   loading.className = 'q3-loading';
   loading.textContent = 'Loading match…';
   frag.appendChild(loading);
 
-  const backdrop = createOverlay(frag);
+  const backdrop = createOverlay(frag, 'Match Details');
 
   try {
     const resp = await fetch(`${API_BASE}/matches/${encodeURIComponent(matchId)}`);
@@ -4229,28 +4381,39 @@ async function showMatchDetails(matchId) {
     const m = await resp.json();
 
     loading.remove();
-    const box = backdrop.querySelector('.q3-overlay');
+    const box    = backdrop.querySelector('.q3-overlay');
+    const body   = backdrop.querySelector('.q3-overlay-body');
+    const header = backdrop.querySelector('.q3-overlay-header');
 
-    // Header info
-    const mode = m.mode || '–';
-    const map  = m.map  || '–';
-    const date = m.startTime ? new Date(m.startTime).toLocaleString() : '–';
-    const server = m.server?.name || '–';
+    // Header stays "Match Details" — mode + map go into the body as a title
+    const rawMode = m.mode || '';
+    const rawMap  = m.map  || '';
+    const date    = m.startTime ? new Date(m.startTime).toLocaleString() : '–';
+    const server  = m.server?.name || '–';
 
-    box.querySelector('h2').textContent = `${mode} · ${map}`;
+    const displayMode = rawMode ? humanizeMode(rawMode) : '–';
+    const displayMap  = rawMap  ? humanizeMapName(rawMap) : '–';
 
+    // Mode · Map heading inside the body
+    const matchTitle = document.createElement('div');
+    matchTitle.style.cssText = 'margin-bottom:6px';
+    matchTitle.innerHTML = `
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${displayMode}</div>
+      <div style="font-size:.88rem;color:var(--text-muted);margin-top:2px">${displayMap}</div>`;
+    body.appendChild(matchTitle);
+
+    // Meta row: date, server, ID
     const meta = document.createElement('div');
-    meta.style.cssText = 'font-size:.85rem;color:var(--text-muted);margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap';
+    meta.style.cssText = 'font-size:.82rem;color:var(--text-muted);margin-bottom:20px;margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.07)';
     meta.innerHTML = `<span>📅 ${date}</span><span>🖥 ${server}</span><span>🆔 ${matchId}</span>`;
-    box.insertBefore(meta, box.querySelector('h3') || null);
-    box.appendChild(meta);
+    body.appendChild(meta);
 
     // Players
     const players = Array.isArray(m.players) ? m.players : [];
     if (players.length > 0) {
       const ph = document.createElement('h3');
       ph.textContent = `Players (${players.length})`;
-      box.appendChild(ph);
+      body.appendChild(ph);
 
       const list = document.createElement('div');
       list.className = 'q3-match-players';
@@ -4284,7 +4447,7 @@ async function showMatchDetails(matchId) {
         }
         list.appendChild(row);
       });
-      box.appendChild(list);
+      body.appendChild(list);
     }
 
   } catch (err) {
@@ -4523,6 +4686,14 @@ function profile_save(string $playerId, array $data): void
  * Called once per upload. Only updates if the payload contains a valid
  * profile snapshot (local client only).
  */
+function profile_is_valid_uuid(string $s): bool
+{
+    return (bool) preg_match(
+        '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+        $s
+    );
+}
+
 function profile_upsert_from_payload(array $payload): void
 {
     $players = $payload['players'] ?? [];
@@ -4530,57 +4701,194 @@ function profile_upsert_from_payload(array $payload): void
         return;
     }
 
+    $mode            = $payload['mode'] ?? '';
+    $winnerClientNum = (int)($payload['settings']['winnerClientNum'] ?? -1);
+
     foreach ($players as $player) {
         if (!is_array($player)) {
             continue;
         }
-        $snap = $player['profile'] ?? null;
-        if (!is_array($snap) || empty($snap)) {
+
+        if (!empty($player['isBot'])) {
             continue;
         }
 
         $playerId = (string)($player['playerId'] ?? '');
-        if ($playerId === '') {
+        if ($playerId === '' || !profile_is_valid_uuid($playerId)) {
             continue;
         }
 
         $existing = profile_load($playerId) ?? [];
 
-        // Keep the best (highest) playerScore seen
-        $newScore = (int)($snap['playerScore'] ?? 0);
+        // ── Snapshot-first: wenn ein Profil-Snapshot mitgeschickt wurde,
+        //    dessen Werte direkt übernehmen (absolute Gesamtstände).
+        //    Nur für Felder die lokal getrackt werden (distanceKm etc.)
+        $snap = $player['profile'] ?? null;
+
+        // ── Win-Detection ──────────────────────────────────────────────
+        $clientNum  = (int)($player['clientNum'] ?? -1);
+        $isRaceMode = in_array($mode, ['GT_RACING','GT_RACING_DM','GT_SPRINT',
+                                        'GT_ELIMINATION','GT_LCS'], true);
+        $isWinner   = !$isRaceMode && $winnerClientNum >= 0
+                      && $winnerClientNum === $clientNum;
+
+        // ── Accuracy Award ─────────────────────────────────────────────
+        $accuracy      = (int)($player['accuracy'] ?? 0);
+        $accuracyAward = ($accuracy >= 75) ? 1 : 0;
+
+        // ── Vehicle ────────────────────────────────────────────────────
+        $modelRaw    = (string)($player['model'] ?? '');
+        $vehicleName = $modelRaw !== '' ? explode('/', $modelRaw)[0]
+                                        : ($existing['mostUsedVehicle'] ?? '');
+
+        // ── Score ──────────────────────────────────────────────────────
+        $newScore = $snap ? (int)($snap['playerScore'] ?? 0) : 0;
         $oldScore = (int)($existing['playerScore'] ?? 0);
+        // Fallback: wenn kein Snapshot, Match-Score nur als Minimum nutzen
+        $matchScore = (int)($player['playerScore'] ?? 0);
+
+        // ── Snapshot-Werte (lokal getrackt, absolut) ───────────────────
+        $distanceKm  = $snap ? (float)($snap['distanceKm']  ?? $existing['distanceKm']  ?? 0.0)
+                              : (float)($existing['distanceKm']  ?? 0.0);
+        $topSpeedKph = $snap ? max((float)($snap['topSpeedKph'] ?? 0), (float)($existing['topSpeedKph'] ?? 0))
+                              : (float)($existing['topSpeedKph'] ?? 0.0);
+        $fuelUsed    = $snap ? (float)($snap['fuelUsed']    ?? $existing['fuelUsed']    ?? 0.0)
+                              : (float)($existing['fuelUsed']    ?? 0.0);
+        $mostUsed    = $snap ? ((string)($snap['mostUsedVehicle'] ?? '') ?: $vehicleName)
+                              : $vehicleName;
+
+        // ── Helper: snapshot-int oder akkumuliert ──────────────────────
+        $si = function(string $key) use ($snap, $existing, $player): int {
+            if ($snap && isset($snap[$key])) return (int)$snap[$key];
+            return (int)($existing[$key] ?? 0) + (int)($player[$key] ?? 0);
+        };
+        $se = function(string $key) use ($snap, $existing): int {
+            if ($snap && isset($snap[$key])) return (int)$snap[$key];
+            return (int)($existing[$key] ?? 0);
+        };
 
         $profile = [
             'playerId'        => $playerId,
             'cleanName'       => (string)($player['cleanName'] ?? $player['name'] ?? ''),
-            'playerScore'     => max($newScore, $oldScore),
-            'currentRank'     => (int)($snap['currentRank'] ?? 0),
-            'highestRank'     => max((int)($snap['highestRank'] ?? 0), (int)($existing['highestRank'] ?? 0)),
-            'wins'            => (int)($snap['wins']             ?? $existing['wins']             ?? 0),
-            'losses'          => (int)($snap['losses']           ?? $existing['losses']           ?? 0),
-            'kills'           => (int)($snap['kills']            ?? $existing['kills']            ?? 0),
-            'deaths'          => (int)($snap['deaths']           ?? $existing['deaths']           ?? 0),
-            'flagCaptures'    => (int)($snap['flagCaptures']     ?? $existing['flagCaptures']     ?? 0),
-            'flagAssists'     => (int)($snap['flagAssists']      ?? $existing['flagAssists']      ?? 0),
-            'bestLapMs'       => (function() use ($snap, $existing) {
-                $new = (int)($snap['bestLapMs'] ?? 0);
+            'playerScore'     => max($newScore, $oldScore, $matchScore),
+            'currentRank'     => $snap ? (int)($snap['currentRank'] ?? $existing['currentRank'] ?? 0)
+                                       : (int)($player['rankTier'] ?? $existing['currentRank'] ?? 0),
+            'highestRank'     => max(
+                                    $snap ? (int)($snap['highestRank'] ?? 0) : 0,
+                                    (int)($player['rankTier'] ?? 0),
+                                    (int)($existing['highestRank'] ?? 0)
+                                 ),
+            // gamesPlayed: always increment by 1 for this match regardless of any
+            // snapshot value. The snapshot reflects the local client counter which
+            // is not synchronised with server matches. The ladder is the authoritative
+            // source for how many matches have been reported.
+            'gamesPlayed'     => (int)($existing['gamesPlayed'] ?? 0) + 1,
+
+            // ── Allgemein ───────────────────────────────────────────────
+            'wins'            => $se('wins'),
+            'losses'          => $se('losses'),
+            'kills'           => $se('kills'),
+            'deaths'          => $se('deaths'),
+            'flagCaptures'    => (int)($existing['flagCaptures'] ?? 0) + (int)($player['captures']    ?? 0),
+            'flagAssists'     => (int)($existing['flagAssists']  ?? 0) + (int)($player['assistCount'] ?? 0),
+            'bestLapMs'       => (function() use ($player, $existing, $snap) {
+                $new = (int)($snap['bestLapMs'] ?? $player['bestLapMs'] ?? 0);
                 $old = (int)($existing['bestLapMs'] ?? 0);
                 if ($new > 0 && ($old === 0 || $new < $old)) return $new;
                 return $old ?: $new;
             })(),
-            'accuracyAwards'  => (int)($snap['accuracyAwards']  ?? $existing['accuracyAwards']  ?? 0),
-            'excellentAwards' => (int)($snap['excellentAwards'] ?? $existing['excellentAwards'] ?? 0),
-            'impressiveAwards'=> (int)($snap['impressiveAwards']?? $existing['impressiveAwards']?? 0),
-            'perfectAwards'   => (int)($snap['perfectAwards']   ?? $existing['perfectAwards']   ?? 0),
-            'damageDealt'     => (int)($snap['damageDealt']     ?? $existing['damageDealt']     ?? 0),
-            'damageTaken'     => (int)($snap['damageTaken']     ?? $existing['damageTaken']     ?? 0),
-            'distanceKm'      => (float)($snap['distanceKm']    ?? $existing['distanceKm']      ?? 0.0),
-            'topSpeedKph'     => max((float)($snap['topSpeedKph'] ?? 0), (float)($existing['topSpeedKph'] ?? 0)),
-            'fuelUsed'        => (float)($snap['fuelUsed']       ?? $existing['fuelUsed']        ?? 0.0),
-            'mostUsedVehicle' => (string)($snap['mostUsedVehicle'] ?? $existing['mostUsedVehicle'] ?? ''),
-            'achievementTiers'=> (array)($snap['achievementTiers'] ?? $existing['achievementTiers'] ?? []),
-            'lastSeen'        => $payload['receivedAt'] ?? gmdate('c'),
-            'vehicle'         => (string)($player['vehicle'] ?? $existing['vehicle'] ?? ''),
+            'accuracyAwards'  => (int)($existing['accuracyAwards']   ?? 0) + $accuracyAward,
+            'excellentAwards' => (int)($existing['excellentAwards']  ?? 0) + (int)($player['excellentCount']  ?? 0),
+            'impressiveAwards'=> (int)($existing['impressiveAwards'] ?? 0) + (int)($player['impressiveCount'] ?? 0),
+            'perfectAwards'   => (int)($existing['perfectAwards']    ?? 0) + (!empty($player['perfect']) ? 1 : 0),
+            'damageDealt'     => (int)($existing['damageDealt']      ?? 0) + (int)($player['damageDealt'] ?? 0),
+            'damageTaken'     => (int)($existing['damageTaken']      ?? 0) + (int)($player['damageTaken'] ?? 0),
+            'distanceKm'      => $distanceKm,
+            'topSpeedKph'     => $topSpeedKph,
+            'fuelUsed'        => $fuelUsed,
+            'mostUsedVehicle' => $mostUsed,
+
+            // ── GT_RACING ───────────────────────────────────────────────
+            'racingWins'      => $se('racingWins'),
+            'racingPodiums'   => $se('racingPodiums'),
+            'racingCompleted' => $se('racingCompleted'),
+            'racingTotalMs'   => $se('racingTotalMs'),
+
+            // ── GT_RACING_DM ────────────────────────────────────────────
+            'racingDmWins'      => $se('racingDmWins'),
+            'racingDmPodiums'   => $se('racingDmPodiums'),
+            'racingDmCompleted' => $se('racingDmCompleted'),
+            'racingDmTotalMs'   => $se('racingDmTotalMs'),
+
+            // ── GT_SPRINT ───────────────────────────────────────────────
+            'sprintWins'      => $se('sprintWins'),
+            'sprintCompleted' => $se('sprintCompleted'),
+            'sprintBestMs'    => (function() use ($snap, $existing) {
+                $new = (int)($snap['sprintBestMs'] ?? 0);
+                $old = (int)($existing['sprintBestMs'] ?? 0);
+                if ($new > 0 && ($old === 0 || $new < $old)) return $new;
+                return $old ?: $new;
+            })(),
+
+            // ── GT_ELIMINATION ──────────────────────────────────────────
+            'eliminationWins'              => $se('eliminationWins'),
+            'eliminationCompleted'         => $se('eliminationCompleted'),
+            'eliminationTotalRoundsLasted' => $se('eliminationTotalRoundsLasted'),
+
+            // ── GT_LCS ──────────────────────────────────────────────────
+            'lcsWins'            => $se('lcsWins'),
+            'lcsCompleted'       => $se('lcsCompleted'),
+            'lcsTotalSurvivalMs' => $se('lcsTotalSurvivalMs'),
+
+            // ── GT_DERBY ────────────────────────────────────────────────
+            'derbyWins'      => $se('derbyWins'),
+            'derbyCompleted' => $se('derbyCompleted'),
+            'derbyKills'     => $se('derbyKills'),
+
+            // ── GT_DEATHMATCH ────────────────────────────────────────────
+            'dmWins'      => $se('dmWins'),
+            'dmCompleted' => $se('dmCompleted'),
+            'dmKills'     => $se('dmKills'),
+
+            // ── GT_CTF ──────────────────────────────────────────────────
+            'ctfWins'      => $se('ctfWins'),
+            'ctfCompleted' => $se('ctfCompleted'),
+            'ctfCaptures'  => $se('ctfCaptures'),
+
+            // ── GT_CTF4 ─────────────────────────────────────────────────
+            'ctf4Wins'      => $se('ctf4Wins'),
+            'ctf4Completed' => $se('ctf4Completed'),
+            'ctf4Captures'  => $se('ctf4Captures'),
+
+            // ── GT_TEAM ─────────────────────────────────────────────────
+            'teamWins'      => $se('teamWins'),
+            'teamCompleted' => $se('teamCompleted'),
+            'teamKills'     => $se('teamKills'),
+
+            // ── GT_TEAM_RACING ───────────────────────────────────────────
+            'teamRacingWins'      => $se('teamRacingWins'),
+            'teamRacingCompleted' => $se('teamRacingCompleted'),
+            'teamRacingPodiums'   => $se('teamRacingPodiums'),
+
+            // ── GT_TEAM_RACING_DM ────────────────────────────────────────
+            'teamRacingDmWins'      => $se('teamRacingDmWins'),
+            'teamRacingDmCompleted' => $se('teamRacingDmCompleted'),
+            'teamRacingDmPodiums'   => $se('teamRacingDmPodiums'),
+
+            // ── GT_DOMINATION ────────────────────────────────────────────
+            'dominationWins'       => $se('dominationWins'),
+            'dominationCompleted'  => $se('dominationCompleted'),
+            'dominationZoneHoldMs' => $se('dominationZoneHoldMs'),
+
+            // ── GT_KOTH ──────────────────────────────────────────────────
+            'kothWins'       => $se('kothWins'),
+            'kothCompleted'  => $se('kothCompleted'),
+            'kothZoneHoldMs' => $se('kothZoneHoldMs'),
+
+            'achievementTiers' => (array)($snap['achievementTiers'] ?? $existing['achievementTiers'] ?? []),
+            'lastSeen'         => $payload['receivedAt'] ?? gmdate('c'),
+            'vehicle'          => $mostUsed,
+            'registeredAt'     => $existing['registeredAt'] ?? ($payload['receivedAt'] ?? gmdate('c')),
         ];
 
         profile_save($playerId, $profile);
