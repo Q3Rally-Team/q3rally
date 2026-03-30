@@ -466,6 +466,7 @@ typedef enum {
 STATS_ROW_PLAYER_SCORE = 0,
 STATS_ROW_CURRENT_RANK,
 STATS_ROW_NEXT_RANK,
+STATS_ROW_GAMES_PLAYED,
 STATS_ROW_DISTANCE,
 STATS_ROW_FUEL,
 STATS_ROW_TOP_SPEED,
@@ -476,7 +477,75 @@ STATS_ROW_DAMAGE_TAKEN,
 STATS_ROW_WINS,
 STATS_ROW_FLAGS_CAPTURED,
 STATS_ROW_FLAG_ASSISTS,
+STATS_ROW_AWARDS,
 STATS_ROW_VEHICLE,
+/* ── GT_RACING ─────────────────────── */
+STATS_ROW_RACING_HEADER,
+STATS_ROW_RACING_WINS,
+STATS_ROW_RACING_PODIUMS,
+STATS_ROW_RACING_COMPLETED,
+/* ── GT_RACING_DM ──────────────────── */
+STATS_ROW_RACING_DM_HEADER,
+STATS_ROW_RACING_DM_WINS,
+STATS_ROW_RACING_DM_PODIUMS,
+STATS_ROW_RACING_DM_COMPLETED,
+/* ── GT_SPRINT ─────────────────────── */
+STATS_ROW_SPRINT_HEADER,
+STATS_ROW_SPRINT_WINS,
+STATS_ROW_SPRINT_COMPLETED,
+STATS_ROW_SPRINT_BEST,
+/* ── GT_DERBY ──────────────────────── */
+STATS_ROW_DERBY_HEADER,
+STATS_ROW_DERBY_WINS,
+STATS_ROW_DERBY_COMPLETED,
+STATS_ROW_DERBY_KILLS,
+/* ── GT_LCS ────────────────────────── */
+STATS_ROW_LCS_HEADER,
+STATS_ROW_LCS_WINS,
+STATS_ROW_LCS_COMPLETED,
+/* ── GT_ELIMINATION ────────────────── */
+STATS_ROW_ELIM_HEADER,
+STATS_ROW_ELIM_WINS,
+STATS_ROW_ELIM_COMPLETED,
+STATS_ROW_ELIM_ROUNDS,
+/* ── GT_DEATHMATCH ─────────────────── */
+STATS_ROW_DM_HEADER,
+STATS_ROW_DM_WINS,
+STATS_ROW_DM_COMPLETED,
+STATS_ROW_DM_KILLS,
+/* ── GT_TEAM ───────────────────────── */
+STATS_ROW_TEAM_HEADER,
+STATS_ROW_TEAM_WINS,
+STATS_ROW_TEAM_COMPLETED,
+STATS_ROW_TEAM_KILLS,
+/* ── GT_TEAM_RACING ────────────────── */
+STATS_ROW_TEAM_RACING_HEADER,
+STATS_ROW_TEAM_RACING_WINS,
+STATS_ROW_TEAM_RACING_PODIUMS,
+STATS_ROW_TEAM_RACING_COMPLETED,
+/* ── GT_TEAM_RACING_DM ─────────────── */
+STATS_ROW_TEAM_RACING_DM_HEADER,
+STATS_ROW_TEAM_RACING_DM_WINS,
+STATS_ROW_TEAM_RACING_DM_PODIUMS,
+STATS_ROW_TEAM_RACING_DM_COMPLETED,
+/* ── GT_CTF ────────────────────────── */
+STATS_ROW_CTF_HEADER,
+STATS_ROW_CTF_WINS,
+STATS_ROW_CTF_COMPLETED,
+STATS_ROW_CTF_CAPTURES,
+/* ── GT_CTF4 ───────────────────────── */
+STATS_ROW_CTF4_HEADER,
+STATS_ROW_CTF4_WINS,
+STATS_ROW_CTF4_COMPLETED,
+STATS_ROW_CTF4_CAPTURES,
+/* ── GT_DOMINATION ─────────────────── */
+STATS_ROW_DOM_HEADER,
+STATS_ROW_DOM_WINS,
+STATS_ROW_DOM_COMPLETED,
+/* ── GT_KOTH ───────────────────────── */
+STATS_ROW_KOTH_HEADER,
+STATS_ROW_KOTH_WINS,
+STATS_ROW_KOTH_COMPLETED,
 STATS_ROW_COUNT
 } statsRow_t;
 
@@ -2180,6 +2249,7 @@ PlayerSettings_DrawStatsMessage( STATS_ROW_PLAYER_SCORE, "Unable to read profile
 return;
 }
 
+/* ── General ─────────────────────────────────────────────────────── */
 Com_sprintf( buffer, sizeof( buffer ), "%d", stats->playerScore );
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_PLAYER_SCORE, "Player Score", buffer );
 
@@ -2198,6 +2268,9 @@ Com_sprintf( buffer, sizeof( buffer ), "%s (%d)", rank.next->name, rank.next->mi
 Q_strncpyz( buffer, "--", sizeof( buffer ) );
 }
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_NEXT_RANK, s_statsLabelNextRank, buffer );
+
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->gamesPlayed );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_GAMES_PLAYED, "Games Played", buffer );
 
 Com_sprintf( buffer, sizeof( buffer ), "%.2f km", stats->distanceKm );
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_DISTANCE, "Distance Driven", buffer );
@@ -2230,39 +2303,161 @@ PlayerSettings_DrawStatsLabelValue( STATS_ROW_FUEL, "Fuel Used", buffer );
 Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->wins, stats->losses );
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_WINS, "Wins / Losses", buffer );
 
-Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagCaptures );
-PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAGS_CAPTURED, "Flags Captured", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d / %d", stats->flagCaptures, stats->flagAssists );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAGS_CAPTURED, "Flags Cap / Assists", buffer );
 
-        Com_sprintf( buffer, sizeof( buffer ), "%d", stats->flagAssists );
-        PlayerSettings_DrawStatsLabelValue( STATS_ROW_FLAG_ASSISTS, "Flag Assists", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "Acc: %d  Exc: %d  Imp: %d  Perf: %d",
+        stats->accuracyAwards, stats->excellentAwards,
+        stats->impressiveAwards, stats->perfectAwards );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_AWARDS, "Awards", buffer );
 
         if ( stats->mostUsedVehicle[0] ) {
-                // Kopiere Fahrzeugname und entferne Skin (alles nach dem '/')
                 Q_strncpyz( vehicleName, stats->mostUsedVehicle, sizeof( vehicleName ) );
                 slash = strchr( vehicleName, '/' );
-                if ( slash ) {
-                        *slash = '\0';
-                }
-                // Großbuchstabe am Anfang
+                if ( slash ) { *slash = '\0'; }
                 if ( vehicleName[0] >= 'a' && vehicleName[0] <= 'z' ) {
                         vehicleName[0] = vehicleName[0] - 'a' + 'A';
                 }
-
                 if ( stats->mostUsedVehicleTimeMs > 0 ) {
-                        int hours = stats->mostUsedVehicleTimeMs / ( 1000 * 60 * 60 );
+                        int hours   = stats->mostUsedVehicleTimeMs / ( 1000 * 60 * 60 );
                         int minutes = ( stats->mostUsedVehicleTimeMs / ( 1000 * 60 ) ) % 60;
                         int seconds = ( stats->mostUsedVehicleTimeMs / 1000 ) % 60;
-
                         Com_sprintf( vehicleTime, sizeof( vehicleTime ), "%02d:%02d:%02d", hours, minutes, seconds );
                 } else {
                         Q_strncpyz( vehicleTime, "--", sizeof( vehicleTime ) );
                 }
-
-                Com_sprintf( buffer, sizeof( buffer ), "%s — %s", vehicleName, vehicleTime );
+                Com_sprintf( buffer, sizeof( buffer ), "%s -- %s", vehicleName, vehicleTime );
         } else {
                 Q_strncpyz( buffer, "--", sizeof( buffer ) );
         }
         PlayerSettings_DrawStatsLabelValue( STATS_ROW_VEHICLE, "Most Used Vehicle", buffer );
+
+/* ── Racing ──────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_HEADER, "--- RACING ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingPodiums );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_PODIUMS, "Podiums", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_COMPLETED, "Races Completed", buffer );
+
+/* ── Racing DM ───────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_DM_HEADER, "--- RACING DM ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingDmWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_DM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingDmPodiums );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_DM_PODIUMS, "Podiums", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->racingDmCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_RACING_DM_COMPLETED, "Races Completed", buffer );
+
+/* ── Sprint ──────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_SPRINT_HEADER, "--- SPRINT ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->sprintWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_SPRINT_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->sprintCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_SPRINT_COMPLETED, "Completed", buffer );
+if ( stats->sprintBestMs > 0 ) {
+        int minutes = stats->sprintBestMs / 60000;
+        int seconds = ( stats->sprintBestMs % 60000 ) / 1000;
+        int millis  = stats->sprintBestMs % 1000;
+        Com_sprintf( buffer, sizeof( buffer ), "%02d:%02d.%03d", minutes, seconds, millis );
+} else {
+        Q_strncpyz( buffer, "--", sizeof( buffer ) );
+}
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_SPRINT_BEST, "Best Time", buffer );
+
+/* ── Derby ───────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DERBY_HEADER, "--- DERBY ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->derbyWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DERBY_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->derbyCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DERBY_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->derbyKills );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DERBY_KILLS, "Kills", buffer );
+
+/* ── LCS ─────────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_LCS_HEADER, "--- LAST CAR STANDING ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->lcsWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_LCS_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->lcsCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_LCS_COMPLETED, "Completed", buffer );
+
+/* ── Elimination ─────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_ELIM_HEADER, "--- ELIMINATION ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->eliminationWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_ELIM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->eliminationCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_ELIM_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->eliminationTotalRoundsLasted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_ELIM_ROUNDS, "Total Rounds Lasted", buffer );
+
+/* ── Deathmatch ──────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DM_HEADER, "--- DEATHMATCH ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->dmWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->dmCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DM_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->dmKills );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DM_KILLS, "Kills", buffer );
+
+/* ── Team DM ─────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_HEADER, "--- TEAM DEATHMATCH ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamKills );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_KILLS, "Kills", buffer );
+
+/* ── Team Racing ─────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_HEADER, "--- TEAM RACING ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingPodiums );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_PODIUMS, "Podiums", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_COMPLETED, "Races Completed", buffer );
+
+/* ── Team Racing DM ──────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_DM_HEADER, "--- TEAM RACING DM ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingDmWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_DM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingDmPodiums );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_DM_PODIUMS, "Podiums", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->teamRacingDmCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_TEAM_RACING_DM_COMPLETED, "Races Completed", buffer );
+
+/* ── CTF ─────────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF_HEADER, "--- CAPTURE THE FLAG ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctfWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctfCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctfCaptures );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF_CAPTURES, "Flag Captures", buffer );
+
+/* ── CTF4 ────────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF4_HEADER, "--- 4-TEAM CTF ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctf4Wins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF4_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctf4Completed );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF4_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->ctf4Captures );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_CTF4_CAPTURES, "Flag Captures", buffer );
+
+/* ── Domination ──────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DOM_HEADER, "--- DOMINATION ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->dominationWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DOM_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->dominationCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_DOM_COMPLETED, "Completed", buffer );
+
+/* ── King of the Hill ────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_KOTH_HEADER, "--- KING OF THE HILL ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->kothWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_KOTH_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->kothCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_KOTH_COMPLETED, "Completed", buffer );
 }
 
 

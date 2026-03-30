@@ -624,7 +624,7 @@ static void UI_Profile_FormatJsonString( char *out, int outSize, const char *val
 qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[2048];
+    static char buffer[8192];
     int length;
 
     if ( !name || !name[0] ) {
@@ -650,26 +650,85 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
 
         if ( outStats ) {
         Com_Memset( outStats, 0, sizeof( *outStats ) );
-            outStats->distanceKm = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
-            outStats->fuelUsed = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
-            outStats->bestLapMs = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
-            outStats->kills = UI_Profile_ParseInt( buffer, "kills", 0 );
-            outStats->deaths = UI_Profile_ParseInt( buffer, "deaths", 0 );
-            outStats->wins = UI_Profile_ParseInt( buffer, "wins", 0 );
-            outStats->playerScore = UI_Profile_ParseInt( buffer, "playerScore", 0 );
-            outStats->sprintWins = UI_Profile_ParseInt( buffer, "sprintWins", 0 );
-            outStats->losses = UI_Profile_ParseInt( buffer, "losses", 0 );
-            outStats->flagCaptures = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
-            outStats->flagAssists = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
-            outStats->accuracyAwards = UI_Profile_ParseInt( buffer, "accuracyAwards", 0 );
-            outStats->excellentAwards = UI_Profile_ParseInt( buffer, "excellentAwards", 0 );
-            outStats->impressiveAwards = UI_Profile_ParseInt( buffer, "impressiveAwards", 0 );
-            outStats->perfectAwards = UI_Profile_ParseInt( buffer, "perfectAwards", 0 );
-            outStats->topSpeedKph = UI_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
-            outStats->damageDealt = UI_Profile_ParseInt( buffer, "damageDealt", 0 );
-            outStats->damageTaken = UI_Profile_ParseInt( buffer, "damageTaken", 0 );
+        /* ── General ──────────────────────────────────────────────────── */
+            outStats->distanceKm          = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
+            outStats->fuelUsed            = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
+            outStats->bestLapMs           = UI_Profile_ParseInt( buffer, "bestLapMs", 0 );
+            outStats->kills               = UI_Profile_ParseInt( buffer, "kills", 0 );
+            outStats->deaths              = UI_Profile_ParseInt( buffer, "deaths", 0 );
+            outStats->wins                = UI_Profile_ParseInt( buffer, "wins", 0 );
+            outStats->playerScore         = UI_Profile_ParseInt( buffer, "playerScore", 0 );
+            outStats->sprintWins          = UI_Profile_ParseInt( buffer, "sprintWins", 0 );
+            outStats->losses              = UI_Profile_ParseInt( buffer, "losses", 0 );
+            outStats->flagCaptures        = UI_Profile_ParseInt( buffer, "flagCaptures", 0 );
+            outStats->flagAssists         = UI_Profile_ParseInt( buffer, "flagAssists", 0 );
+            outStats->accuracyAwards      = UI_Profile_ParseInt( buffer, "accuracyAwards", 0 );
+            outStats->excellentAwards     = UI_Profile_ParseInt( buffer, "excellentAwards", 0 );
+            outStats->impressiveAwards    = UI_Profile_ParseInt( buffer, "impressiveAwards", 0 );
+            outStats->perfectAwards       = UI_Profile_ParseInt( buffer, "perfectAwards", 0 );
+            outStats->topSpeedKph         = UI_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
+            outStats->damageDealt         = UI_Profile_ParseInt( buffer, "damageDealt", 0 );
+            outStats->damageTaken         = UI_Profile_ParseInt( buffer, "damageTaken", 0 );
             UI_Profile_ParseString( buffer, "mostUsedVehicle", outStats->mostUsedVehicle, sizeof( outStats->mostUsedVehicle ), "" );
             outStats->mostUsedVehicleTimeMs = UI_Profile_ParseInt( buffer, "mostUsedVehicleTimeMs", 0 );
+            outStats->gamesPlayed         = UI_Profile_ParseInt( buffer, "gamesPlayed", 0 );
+        /* ── GT_RACING ──────────────────────────────────────────────── */
+            outStats->racingWins          = UI_Profile_ParseInt( buffer, "racingWins", 0 );
+            outStats->racingPodiums       = UI_Profile_ParseInt( buffer, "racingPodiums", 0 );
+            outStats->racingCompleted     = UI_Profile_ParseInt( buffer, "racingCompleted", 0 );
+            outStats->racingTotalMs       = UI_Profile_ParseInt( buffer, "racingTotalMs", 0 );
+        /* ── GT_RACING_DM ────────────────────────────────────────────── */
+            outStats->racingDmWins        = UI_Profile_ParseInt( buffer, "racingDmWins", 0 );
+            outStats->racingDmPodiums     = UI_Profile_ParseInt( buffer, "racingDmPodiums", 0 );
+            outStats->racingDmCompleted   = UI_Profile_ParseInt( buffer, "racingDmCompleted", 0 );
+            outStats->racingDmTotalMs     = UI_Profile_ParseInt( buffer, "racingDmTotalMs", 0 );
+        /* ── GT_SPRINT ───────────────────────────────────────────────── */
+            outStats->sprintCompleted     = UI_Profile_ParseInt( buffer, "sprintCompleted", 0 );
+            outStats->sprintBestMs        = UI_Profile_ParseInt( buffer, "sprintBestMs", 0 );
+        /* ── GT_ELIMINATION ──────────────────────────────────────────── */
+            outStats->eliminationWins              = UI_Profile_ParseInt( buffer, "eliminationWins", 0 );
+            outStats->eliminationCompleted         = UI_Profile_ParseInt( buffer, "eliminationCompleted", 0 );
+            outStats->eliminationTotalRoundsLasted = UI_Profile_ParseInt( buffer, "eliminationTotalRoundsLasted", 0 );
+        /* ── GT_LCS ──────────────────────────────────────────────────── */
+            outStats->lcsWins             = UI_Profile_ParseInt( buffer, "lcsWins", 0 );
+            outStats->lcsCompleted        = UI_Profile_ParseInt( buffer, "lcsCompleted", 0 );
+            outStats->lcsTotalSurvivalMs  = UI_Profile_ParseInt( buffer, "lcsTotalSurvivalMs", 0 );
+        /* ── GT_DERBY ─────────────────────────────────────────────────── */
+            outStats->derbyWins           = UI_Profile_ParseInt( buffer, "derbyWins", 0 );
+            outStats->derbyCompleted      = UI_Profile_ParseInt( buffer, "derbyCompleted", 0 );
+            outStats->derbyKills          = UI_Profile_ParseInt( buffer, "derbyKills", 0 );
+        /* ── GT_DEATHMATCH ───────────────────────────────────────────── */
+            outStats->dmWins              = UI_Profile_ParseInt( buffer, "dmWins", 0 );
+            outStats->dmCompleted         = UI_Profile_ParseInt( buffer, "dmCompleted", 0 );
+            outStats->dmKills             = UI_Profile_ParseInt( buffer, "dmKills", 0 );
+        /* ── GT_CTF ───────────────────────────────────────────────────── */
+            outStats->ctfWins             = UI_Profile_ParseInt( buffer, "ctfWins", 0 );
+            outStats->ctfCompleted        = UI_Profile_ParseInt( buffer, "ctfCompleted", 0 );
+            outStats->ctfCaptures         = UI_Profile_ParseInt( buffer, "ctfCaptures", 0 );
+        /* ── GT_CTF4 ──────────────────────────────────────────────────── */
+            outStats->ctf4Wins            = UI_Profile_ParseInt( buffer, "ctf4Wins", 0 );
+            outStats->ctf4Completed       = UI_Profile_ParseInt( buffer, "ctf4Completed", 0 );
+            outStats->ctf4Captures        = UI_Profile_ParseInt( buffer, "ctf4Captures", 0 );
+        /* ── GT_TEAM ──────────────────────────────────────────────────── */
+            outStats->teamWins            = UI_Profile_ParseInt( buffer, "teamWins", 0 );
+            outStats->teamCompleted       = UI_Profile_ParseInt( buffer, "teamCompleted", 0 );
+            outStats->teamKills           = UI_Profile_ParseInt( buffer, "teamKills", 0 );
+        /* ── GT_TEAM_RACING ───────────────────────────────────────────── */
+            outStats->teamRacingWins      = UI_Profile_ParseInt( buffer, "teamRacingWins", 0 );
+            outStats->teamRacingCompleted = UI_Profile_ParseInt( buffer, "teamRacingCompleted", 0 );
+            outStats->teamRacingPodiums   = UI_Profile_ParseInt( buffer, "teamRacingPodiums", 0 );
+        /* ── GT_TEAM_RACING_DM ────────────────────────────────────────── */
+            outStats->teamRacingDmWins      = UI_Profile_ParseInt( buffer, "teamRacingDmWins", 0 );
+            outStats->teamRacingDmCompleted = UI_Profile_ParseInt( buffer, "teamRacingDmCompleted", 0 );
+            outStats->teamRacingDmPodiums   = UI_Profile_ParseInt( buffer, "teamRacingDmPodiums", 0 );
+        /* ── GT_DOMINATION ────────────────────────────────────────────── */
+            outStats->dominationWins          = UI_Profile_ParseInt( buffer, "dominationWins", 0 );
+            outStats->dominationCompleted     = UI_Profile_ParseInt( buffer, "dominationCompleted", 0 );
+            outStats->dominationZoneHoldMs    = UI_Profile_ParseInt( buffer, "dominationZoneHoldMs", 0 );
+        /* ── GT_KOTH ──────────────────────────────────────────────────── */
+            outStats->kothWins            = UI_Profile_ParseInt( buffer, "kothWins", 0 );
+            outStats->kothCompleted       = UI_Profile_ParseInt( buffer, "kothCompleted", 0 );
+            outStats->kothZoneHoldMs      = UI_Profile_ParseInt( buffer, "kothZoneHoldMs", 0 );
         }
 
     if ( outInfo ) {
@@ -691,7 +750,7 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
 qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[1024];
+    char buffer[4096];
     char gender[PROFILE_MAX_GENDER * 2];
     char birthDate[PROFILE_MAX_BIRTHDATE * 2];
     char avatar[PROFILE_MAX_AVATAR * 2];
@@ -749,71 +808,125 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
     }
     Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "\n\t\t]" );
 
-    length = Com_sprintf( buffer, sizeof( buffer ),
-        "{\n"
-        "\t\"uuid\": \"%s\",\n"
-        "\t\"name\": \"%s\",\n"
-        "\t\"info\": {\n"
-        "\t\t\"gender\": \"%s\",\n"
-        "\t\t\"birthDate\": \"%s\",\n"
-        "\t\t\"avatar\": \"%s\",\n"
-        "\t\t\"country\": \"%s\",\n"
-        "\t\t\"currentRank\": %d,\n"
-        "\t\t\"highestRank\": %d,\n"
-        "\t\t\"favoriteCars\": %s\n"
-        "\t},\n"
-        "\t\"stats\": {\n"
-        "\t\t\"distanceKm\": %.6f,\n"
-        "\t\t\"fuelUsed\": %.3f,\n"
-        "\t\t\"bestLapMs\": %d,\n"
-        "\t\t\"kills\": %d,\n"
-        "\t\t\"deaths\": %d,\n"
-        "\t\t\"wins\": %d,\n"
-        "\t\t\"playerScore\": %d,\n"
-        "\t\t\"sprintWins\": %d,\n"
-        "\t\t\"losses\": %d,\n"
-        "\t\t\"flagCaptures\": %d,\n"
-        "\t\t\"flagAssists\": %d,\n"
-        "\t\t\"accuracyAwards\": %d,\n"
-        "\t\t\"excellentAwards\": %d,\n"
-        "\t\t\"impressiveAwards\": %d,\n"
-        "\t\t\"perfectAwards\": %d,\n"
-        "\t\t\"topSpeedKph\": %.2f,\n"
-        "\t\t\"damageDealt\": %d,\n"
-        "\t\t\"damageTaken\": %d,\n"
-        "\t\t\"mostUsedVehicle\": \"%s\",\n"
-        "\t\t\"mostUsedVehicleTimeMs\": %d\n"
-        "\t}\n"
-        "}\n",
-        info->uuid,
-        info->name[0] ? info->name : name,
-        gender,
-        birthDate,
-        avatar,
-        country,
-        info->currentRank,
-        info->highestRank,
-        favoriteCarsJson,
-        stats->distanceKm,
-        stats->fuelUsed,
-        stats->bestLapMs,
-        stats->kills,
-        stats->deaths,
-        stats->wins,
-        stats->playerScore,
-        stats->sprintWins,
-        stats->losses,
-        stats->flagCaptures,
-        stats->flagAssists,
-        stats->accuracyAwards,
-        stats->excellentAwards,
-        stats->impressiveAwards,
-        stats->perfectAwards,
-        stats->topSpeedKph,
-        stats->damageDealt,
-        stats->damageTaken,
-        stats->mostUsedVehicle,
-        stats->mostUsedVehicleTimeMs );
+    /* Build the JSON in small Com_sprintf chunks so the Q3ASM argument
+     * stack (256-byte limit) is never exceeded.  Each call has at most
+     * 8 arguments.  We accumulate into buffer[] and track the offset. */
+    {
+        int off = 0;
+        char tmp[128];
+
+        /* Header + info block */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "{\n\t\"uuid\": \"%s\",\n\t\"name\": \"%s\",\n\t\"info\": {\n",
+            info->uuid, info->name[0] ? info->name : name );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"gender\": \"%s\",\n\t\t\"birthDate\": \"%s\",\n",
+            gender, birthDate );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"avatar\": \"%s\",\n\t\t\"country\": \"%s\",\n",
+            avatar, country );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"currentRank\": %d,\n\t\t\"highestRank\": %d,\n\t\t\"favoriteCars\": %s\n\t},\n",
+            info->currentRank, info->highestRank, favoriteCarsJson );
+
+        /* stats block — open */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off, "\t\"stats\": {\n" );
+
+        /* General */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"distanceKm\": %.6f,\n\t\t\"fuelUsed\": %.3f,\n\t\t\"bestLapMs\": %d,\n",
+            stats->distanceKm, stats->fuelUsed, stats->bestLapMs );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"kills\": %d,\n\t\t\"deaths\": %d,\n\t\t\"wins\": %d,\n\t\t\"playerScore\": %d,\n",
+            stats->kills, stats->deaths, stats->wins, stats->playerScore );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"sprintWins\": %d,\n\t\t\"losses\": %d,\n\t\t\"flagCaptures\": %d,\n\t\t\"flagAssists\": %d,\n",
+            stats->sprintWins, stats->losses, stats->flagCaptures, stats->flagAssists );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"accuracyAwards\": %d,\n\t\t\"excellentAwards\": %d,\n\t\t\"impressiveAwards\": %d,\n\t\t\"perfectAwards\": %d,\n",
+            stats->accuracyAwards, stats->excellentAwards, stats->impressiveAwards, stats->perfectAwards );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"topSpeedKph\": %.2f,\n\t\t\"damageDealt\": %d,\n\t\t\"damageTaken\": %d,\n",
+            stats->topSpeedKph, stats->damageDealt, stats->damageTaken );
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"mostUsedVehicle\": \"%s\",\n\t\t\"mostUsedVehicleTimeMs\": %d,\n\t\t\"gamesPlayed\": %d,\n",
+            stats->mostUsedVehicle, stats->mostUsedVehicleTimeMs, stats->gamesPlayed );
+
+        /* GT_RACING */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"racingWins\": %d,\n\t\t\"racingPodiums\": %d,\n\t\t\"racingCompleted\": %d,\n\t\t\"racingTotalMs\": %d,\n",
+            stats->racingWins, stats->racingPodiums, stats->racingCompleted, stats->racingTotalMs );
+
+        /* GT_RACING_DM */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"racingDmWins\": %d,\n\t\t\"racingDmPodiums\": %d,\n\t\t\"racingDmCompleted\": %d,\n\t\t\"racingDmTotalMs\": %d,\n",
+            stats->racingDmWins, stats->racingDmPodiums, stats->racingDmCompleted, stats->racingDmTotalMs );
+
+        /* GT_SPRINT */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"sprintCompleted\": %d,\n\t\t\"sprintBestMs\": %d,\n",
+            stats->sprintCompleted, stats->sprintBestMs );
+
+        /* GT_ELIMINATION */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"eliminationWins\": %d,\n\t\t\"eliminationCompleted\": %d,\n\t\t\"eliminationTotalRoundsLasted\": %d,\n",
+            stats->eliminationWins, stats->eliminationCompleted, stats->eliminationTotalRoundsLasted );
+
+        /* GT_LCS */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"lcsWins\": %d,\n\t\t\"lcsCompleted\": %d,\n\t\t\"lcsTotalSurvivalMs\": %d,\n",
+            stats->lcsWins, stats->lcsCompleted, stats->lcsTotalSurvivalMs );
+
+        /* GT_DERBY */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"derbyWins\": %d,\n\t\t\"derbyCompleted\": %d,\n\t\t\"derbyKills\": %d,\n",
+            stats->derbyWins, stats->derbyCompleted, stats->derbyKills );
+
+        /* GT_DEATHMATCH */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"dmWins\": %d,\n\t\t\"dmCompleted\": %d,\n\t\t\"dmKills\": %d,\n",
+            stats->dmWins, stats->dmCompleted, stats->dmKills );
+
+        /* GT_CTF */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"ctfWins\": %d,\n\t\t\"ctfCompleted\": %d,\n\t\t\"ctfCaptures\": %d,\n",
+            stats->ctfWins, stats->ctfCompleted, stats->ctfCaptures );
+
+        /* GT_CTF4 */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"ctf4Wins\": %d,\n\t\t\"ctf4Completed\": %d,\n\t\t\"ctf4Captures\": %d,\n",
+            stats->ctf4Wins, stats->ctf4Completed, stats->ctf4Captures );
+
+        /* GT_TEAM */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"teamWins\": %d,\n\t\t\"teamCompleted\": %d,\n\t\t\"teamKills\": %d,\n",
+            stats->teamWins, stats->teamCompleted, stats->teamKills );
+
+        /* GT_TEAM_RACING */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"teamRacingWins\": %d,\n\t\t\"teamRacingCompleted\": %d,\n\t\t\"teamRacingPodiums\": %d,\n",
+            stats->teamRacingWins, stats->teamRacingCompleted, stats->teamRacingPodiums );
+
+        /* GT_TEAM_RACING_DM */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"teamRacingDmWins\": %d,\n\t\t\"teamRacingDmCompleted\": %d,\n\t\t\"teamRacingDmPodiums\": %d,\n",
+            stats->teamRacingDmWins, stats->teamRacingDmCompleted, stats->teamRacingDmPodiums );
+
+        /* GT_DOMINATION */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"dominationWins\": %d,\n\t\t\"dominationCompleted\": %d,\n\t\t\"dominationZoneHoldMs\": %d,\n",
+            stats->dominationWins, stats->dominationCompleted, stats->dominationZoneHoldMs );
+
+        /* GT_KOTH — last entry: no trailing comma */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"kothWins\": %d,\n\t\t\"kothCompleted\": %d,\n\t\t\"kothZoneHoldMs\": %d\n",
+            stats->kothWins, stats->kothCompleted, stats->kothZoneHoldMs );
+
+        /* Close stats + root object */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off, "\t}\n}\n" );
+        length = off;
+        (void)tmp; /* suppress unused warning */
+    }
 
     trap_FS_FOpenFile( path, &file, FS_WRITE );
     if ( file < 0 ) {

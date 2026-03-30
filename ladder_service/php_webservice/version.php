@@ -6,9 +6,20 @@
 
 declare(strict_types=1);
 
-const LADDER_VERSION = '1.0.5';
+const LADDER_VERSION = '1.0.6';
 
 const LADDER_CHANGELOG = [
+    '1.0.6' => [
+        'date'    => '2026-03-30',
+        'changes' => [
+            'canonicalMode(): returns null for unknown game modes instead of falling back to gt_elimination',
+            'Unknown game modes counted as __unknown__ in breakdown, excluded from all leaderboards',
+            'gamesPlayed: always incremented per upload; snapshot value no longer used',
+            'Overlay layout: header contains close button only; title and match info moved into body',
+            'Profile overlay: rank and score shown as info strip in body, not in header bar',
+            'Match details: mode and map displayed as body heading via humanizeMode / humanizeMapName',
+        ],
+    ],
     '1.0.5' => [
         'date'    => '2026-03-27',
         'changes' => [

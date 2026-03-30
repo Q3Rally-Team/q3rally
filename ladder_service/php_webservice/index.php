@@ -21,7 +21,7 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.5';
+const LADDER_VERSION        = '1.0.6';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
@@ -1143,24 +1143,25 @@ try {
     .badge-version {
       display: inline-flex;
       align-items: center;
-      padding: 2px 10px 4px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: var(--text-muted);
-      font-size: 0.72rem;
-      letter-spacing: 0.06em;
-      font-weight: 600;
+      padding: 1px 6px 2px;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+      color: rgba(var(--text-muted), 0.5);
+      color: #6b7294;
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      font-weight: 400;
       cursor: pointer;
-      margin-left: 6px;
+      margin-left: 4px;
       vertical-align: middle;
-      transition: background .15s, border-color .15s, color .15s;
+      transition: color .15s;
       font-family: var(--font-mono, monospace);
+      opacity: 0.55;
     }
     .badge-version:hover {
-      background: var(--accent-soft);
-      border-color: rgba(93,139,255,0.45);
       color: var(--accent);
+      opacity: 1;
     }
   </style>
 </head>
@@ -4479,6 +4480,18 @@ async function showMatchDetails(matchId) {
 
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
+  {
+    version: '1.0.6',
+    date: '2026-03-30',
+    changes: [
+      'canonicalMode(): returns null for unknown game modes instead of falling back to gt_elimination',
+      'Unknown game modes counted as __unknown__ in breakdown, excluded from all leaderboards',
+      'gamesPlayed: always incremented per upload; snapshot value no longer used',
+      'Overlay layout: header contains close button only; title and match info moved into body',
+      'Profile overlay: rank and score shown as info strip in body, not in header bar',
+      'Match details: mode and map displayed as body heading via humanizeMode / humanizeMapName',
+    ]
+  },
   {
     version: '1.0.5',
     date: '2026-03-27',
