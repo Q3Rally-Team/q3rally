@@ -278,6 +278,7 @@ typedef struct bot_state_s
 
 	float ghostTargetSpeedFiltered;				//smoothed target speed for ghost racing line
 	int ghostTargetSpeedValid;					//whether ghostTargetSpeedFiltered is initialized
+	int ghostRouteIndexHint;					//persistent waypoint index hint for ghost racing line
 } bot_state_t;
 
 //resets the whole bot state

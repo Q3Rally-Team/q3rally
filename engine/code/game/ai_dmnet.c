@@ -64,6 +64,8 @@ int numnodeswitches;
 char nodeswitch[MAX_NODESWITCHES+1][144];
 
 #define LOOKAHEAD_DISTANCE			300
+#define GHOST_ROUTE_HINT_WINDOW		48
+#define GHOST_ROUTE_LOOKAHEAD_MS	900
 
 /*
 ==================
@@ -3026,6 +3028,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	//float		accel, a_normal;
 	int			throttleChange;
 	const ghostBotRoute_t *ghostRoute;
+	const char *routeVariant = NULL;
 
 	if (BotIsObserver(bs)) {
 		BotClearActivateGoalStack(bs);
@@ -3050,39 +3053,50 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	if( lastCheckpoint < 1 )
 		lastCheckpoint = level.numCheckpoints;
 
-	if ( G_Ghost_GetBotRoute( &ghostRoute ) && ghostRoute ) {
-		int bestIndex = -1;
-		float bestDistSq = 0.0f;
-		int i;
-
-		for ( i = 0; i < ghostRoute->numWaypoints; ++i ) {
-			vec3_t deltaToWaypoint;
-			float distSq;
-			VectorSubtract( ghostRoute->waypoints[i].origin, bs->cur_ps.origin, deltaToWaypoint );
-			distSq = VectorLengthSquared( deltaToWaypoint );
-			if ( bestIndex < 0 || distSq < bestDistSq ) {
-				bestIndex = i;
-				bestDistSq = distSq;
-			}
+	if ( bs->entitynum >= 0 && bs->entitynum < level.maxclients ) {
+		gentity_t *botEnt = &g_entities[bs->entitynum];
+		if ( botEnt->client && botEnt->client->pers.vehicleClass[0] ) {
+			routeVariant = botEnt->client->pers.vehicleClass;
 		}
+	}
+
+	if ( G_Ghost_GetBotRouteForVariant( routeVariant, &ghostRoute ) && ghostRoute ) {
+		int bestIndex = -1;
+		int i;
+		int hintIndex = bs->ghostRouteIndexHint;
+		bestIndex = G_Ghost_SelectClosestWaypoint( ghostRoute, bs->cur_ps.origin, hintIndex, GHOST_ROUTE_HINT_WINDOW );
 
 		if ( bestIndex >= 0 ) {
-			int lookAheadIndex = bestIndex + 12;
+			int lookAheadIndex = bestIndex;
 			int speedStartIndex;
-			int speedEndIndex;
+			int speedEndIndex = bestIndex;
+			int lookAheadTime = ghostRoute->waypoints[bestIndex].timeOffset + GHOST_ROUTE_LOOKAHEAD_MS;
+			float lookAheadDistanceSq = LOOKAHEAD_DISTANCE * LOOKAHEAD_DISTANCE;
 			float smoothedSpeed = 0.0f;
 			int smoothedSegments = 0;
 			float curvatureScore = 0.0f;
 			int curvatureSamples = 0;
-			if ( lookAheadIndex >= ghostRoute->numWaypoints ) {
-				lookAheadIndex = ghostRoute->numWaypoints - 1;
+			bs->ghostRouteIndexHint = bestIndex;
+
+			for ( i = bestIndex + 1; i < ghostRoute->numWaypoints; ++i ) {
+				vec3_t deltaToWaypoint;
+				float distSq;
+				lookAheadIndex = i;
+				VectorSubtract( ghostRoute->waypoints[i].origin, bs->cur_ps.origin, deltaToWaypoint );
+				distSq = VectorLengthSquared( deltaToWaypoint );
+				if ( ghostRoute->waypoints[i].timeOffset >= lookAheadTime || distSq >= lookAheadDistanceSq ) {
+					break;
+				}
 			}
+
 			VectorSubtract( ghostRoute->waypoints[lookAheadIndex].origin, bs->cur_ps.origin, dir );
 			dir[2] = 0;
 			actualSpeed = VectorLength( bs->cur_ps.velocity );
 
 			speedStartIndex = bestIndex;
-			speedEndIndex = bestIndex + 10;
+			if ( lookAheadIndex > speedStartIndex ) {
+				speedEndIndex = lookAheadIndex - 1;
+			}
 			if ( speedEndIndex >= ghostRoute->numWaypoints - 1 ) {
 				speedEndIndex = ghostRoute->numWaypoints - 2;
 			}
@@ -3197,6 +3211,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 	/* Ghost guidance not active this tick, reset speed filter state. */
 	bs->ghostTargetSpeedValid = qfalse;
+	bs->ghostRouteIndexHint = -1;
 
 	while ((ent = G_Find (ent, FOFS(classname), "rally_checkpoint")) != NULL)
 	{
@@ -3293,4 +3308,3 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	return qtrue;
 }
 // END
-

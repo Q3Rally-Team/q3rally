@@ -1334,6 +1334,7 @@ int BotAIShutdownClient(int client, qboolean restart) {
 	BotClearActivateGoalStack(bs);
 	//clear the bot state
 	memset(bs, 0, sizeof(bot_state_t));
+	bs->ghostRouteIndexHint = -1;
 	//set the inuse flag to qfalse
 	bs->inuse = qfalse;
 	//there's one bot less
@@ -1375,6 +1376,7 @@ void BotResetState(bot_state_t *bs) {
 	BotFreeWaypoints(bs->patrolpoints);
 	//reset the whole state
 	memset(bs, 0, sizeof(bot_state_t));
+	bs->ghostRouteIndexHint = -1;
 	//copy back some state stuff that should not be reset
 	bs->ms = movestate;
 	bs->gs = goalstate;
@@ -1753,4 +1755,3 @@ int BotAIShutdown( int restart ) {
 	}
 	return qtrue;
 }
-
