@@ -57,6 +57,8 @@ typedef struct teamgame_s {
 // Q3Rally Code Start
 	domination_sigil_t     sigil[MAX_SIGILS];
 	int				numSigils;
+	int				sigilCaptureStart[MAX_SIGILS];
+	team_t			sigilCapturingTeam[MAX_SIGILS];
 	// KOTH hill state
 	int				kothOwner;
 	int				kothContested;
@@ -1368,7 +1370,9 @@ void Sigil_Think( gentity_t *ent ) {
 
 void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t powerup) {
     Team_SetSigilStatus(sigilNum, status);
-    ent->nextthink = level.time - (level.time % 4000) + 4000;
+    teamgame.sigilCaptureStart[sigilNum] = 0;
+    teamgame.sigilCapturingTeam[sigilNum] = TEAM_FREE;
+    ent->nextthink = level.time + g_dominationScoreInterval.integer;
     ent->think = Sigil_Think;
     ent->s.powerups = powerup;
     ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( powerup ) );
@@ -1383,38 +1387,61 @@ Sigil_Touch
 int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
     gclient_t *cl = other->client;
     int sigilNum = 0;
+    team_t team = TEAM_FREE;
     powerup_t powerup = PW_NONE;
     sigilStatus_t status = SIGIL_NONE;
     
     if (!cl)
         return 0;
         
-    if    (ent->count && ent->nextthink < level.time + g_dominationCaptureDelay.integer)    // protect against overflows by not counting
-        return 0;
-        
     // find the index of the sigil reffered by ent
     while ( sigilNum < MAX_SIGILS && teamgame.sigil[sigilNum].entity != ent )
           sigilNum++;
+    if ( sigilNum >= MAX_SIGILS ) {
+        return 0;
+    }
 
     switch (cl->sess.sessionTeam) {
         case TEAM_RED:
+            team = TEAM_RED;
             powerup = PW_SIGILRED;
             status = SIGIL_ISRED;
             break;
         case TEAM_BLUE:
+            team = TEAM_BLUE;
             powerup = PW_SIGILBLUE;
             status = SIGIL_ISBLUE;
             break;
         case TEAM_GREEN:
+            team = TEAM_GREEN;
             powerup = PW_SIGILGREEN;
             status = SIGIL_ISGREEN;
             break;
         case TEAM_YELLOW:
+            team = TEAM_YELLOW;
             powerup = PW_SIGILYELLOW;
             status = SIGIL_ISYELLOW;
             break;
         default:
             return 0;
+    }
+
+    if ( ent->s.powerups == powerup ) {
+        teamgame.sigilCaptureStart[sigilNum] = 0;
+        teamgame.sigilCapturingTeam[sigilNum] = TEAM_FREE;
+        return 0;
+    }
+
+    if ( g_dominationCaptureDelay.integer > 0 ) {
+        if ( teamgame.sigilCapturingTeam[sigilNum] != team ) {
+            teamgame.sigilCapturingTeam[sigilNum] = team;
+            teamgame.sigilCaptureStart[sigilNum] = level.time;
+            return 0;
+        }
+
+        if ( level.time - teamgame.sigilCaptureStart[sigilNum] < g_dominationCaptureDelay.integer ) {
+            return 0;
+        }
     }
 
     if (ent->s.powerups != powerup) {
@@ -2534,3 +2561,4 @@ qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker ) {
 	return qfalse;
 }
 #endif
+
