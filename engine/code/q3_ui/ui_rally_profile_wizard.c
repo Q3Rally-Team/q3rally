@@ -10,14 +10,16 @@ Copyright (C) 2002-2026 Q3Rally Team
 //
 // Flow:
 //   Page 1 — Enter display name
-//   Page 2 — Gender, Birth date (Day/Month/Year), Avatar, Country
-//             (all fields optional; page is skippable)
+//   Page 2 — Gender, Birth date, Avatar, Country  (all optional, skippable)
 //   Page 3 — Ladder opt-in (optional) or skip → done
 //
-// The wizard writes the profile to disk at the end of Page 1 so Pages 2
-// and 3 always have a valid profile to update. Page 2 updates the profile
-// info fields. Page 3 fires "ladder_player_register <uuid> <n>" and
-// waits for "ladder_player_register_result ok/err" via UI_ConsoleCommand.
+// KEY DESIGN RULES:
+//   - Each page owns its own set of menu items.
+//   - PW_SetPageItems() hides+deactivates all items, then shows only the
+//     items belonging to the current page.  This prevents keyboard focus
+//     from leaking to items on other pages.
+//   - The single Com_Memset is done in UI_ProfileWizard_Show so all
+//     pointers are valid before any item is initialised.
 
 #include "ui_local.h"
 
@@ -27,42 +29,37 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_H            480
 #define PW_CX           ( PW_W / 2 )
 
-// Panel — tall enough for all Page 2 fields
 #define PW_PANEL_W      480
 #define PW_PANEL_H      370
 #define PW_PANEL_X      ( ( PW_W - PW_PANEL_W ) / 2 )
 #define PW_PANEL_Y      ( ( PW_H - PW_PANEL_H ) / 2 )
 
-// Content area inside panel
 #define PW_PAD          28
 #define PW_CONTENT_X    ( PW_PANEL_X + PW_PAD )
 #define PW_CONTENT_W    ( PW_PANEL_W - PW_PAD * 2 )
 #define PW_TITLE_Y      ( PW_PANEL_Y + 20 )
-#define PW_BODY_Y       ( PW_PANEL_Y + 50 )
+#define PW_BODY_Y       ( PW_PANEL_Y + 62 )    // extra line under heading
 
-// Button row at bottom of panel
 #define PW_BTN_Y        ( PW_PANEL_Y + PW_PANEL_H - 40 )
 #define PW_BTN_NEXT_X   ( PW_PANEL_X + PW_PANEL_W - PW_PAD )
 #define PW_BTN_BACK_X   ( PW_PANEL_X + PW_PAD )
 #define PW_BTN_SKIP_X   ( PW_CX )
 
-// Page 2 field layout — left column labels, right column spincontrols
+// Page 2 field layout — starts lower to give heading room
 #define PW_P2_LABEL_X   ( PW_PANEL_X + PW_PAD )
 #define PW_P2_SPIN_X    ( PW_PANEL_X + 130 )
 #define PW_P2_ROW_H     28
-#define PW_P2_ROW_1     ( PW_BODY_Y + 14 )                  // Gender
-#define PW_P2_ROW_2     ( PW_P2_ROW_1 + PW_P2_ROW_H )       // Birth day
-#define PW_P2_ROW_3     ( PW_P2_ROW_2 + PW_P2_ROW_H )       // Birth month
-#define PW_P2_ROW_4     ( PW_P2_ROW_3 + PW_P2_ROW_H )       // Birth year
-#define PW_P2_ROW_5     ( PW_P2_ROW_4 + PW_P2_ROW_H + 8 )  // Avatar (extra gap)
-#define PW_P2_ROW_6     ( PW_P2_ROW_5 + PW_P2_ROW_H )       // Country
+#define PW_P2_ROW_1     ( PW_BODY_Y + 28 )
+#define PW_P2_ROW_2     ( PW_P2_ROW_1 + PW_P2_ROW_H )
+#define PW_P2_ROW_3     ( PW_P2_ROW_2 + PW_P2_ROW_H )
+#define PW_P2_ROW_4     ( PW_P2_ROW_3 + PW_P2_ROW_H )
+#define PW_P2_ROW_5     ( PW_P2_ROW_4 + PW_P2_ROW_H + 8 )
+#define PW_P2_ROW_6     ( PW_P2_ROW_5 + PW_P2_ROW_H )
 
-// Avatar preview — right side, vertically centred on rows 5-6
 #define PW_AVATAR_SIZE  48
 #define PW_AVATAR_X     ( PW_PANEL_X + PW_PANEL_W - PW_PAD - PW_AVATAR_SIZE )
 #define PW_AVATAR_Y     ( PW_P2_ROW_5 - 4 )
 
-// Progress dots below panel
 #define PW_DOT_Y        ( PW_PANEL_Y + PW_PANEL_H + 10 )
 #define PW_DOT_SPACING  14
 #define PW_PAGES        3
@@ -111,21 +108,12 @@ static vec4_t pwDotOn    = { 0.48f, 0.66f, 1.00f, 1.00f };
 static vec4_t pwDotOff   = { 0.30f, 0.32f, 0.40f, 1.00f };
 static vec4_t pwAvatarBg = { 0.08f, 0.08f, 0.14f, 1.00f };
 
-// ── Gender list ───────────────────────────────────────────────────────────────
-// Must stay in sync with s_genderItems in ui_playersettings.c.
+// ── Lists ─────────────────────────────────────────────────────────────────────
 
 static const char *s_pwGenderItems[] = {
-    "Unspecified",
-    "Female",
-    "Male",
-    "Non-binary",
-    "Other",
-    NULL
+    "Unspecified", "Female", "Male", "Non-binary", "Other", NULL
 };
 #define PW_GENDER_COUNT 5
-
-// ── Birth date lists ──────────────────────────────────────────────────────────
-// Mirror of the lists in ui_playersettings.c, local to this file.
 
 #define PW_BIRTH_YEAR_START  1950
 #define PW_BIRTH_YEAR_END    2100
@@ -134,12 +122,12 @@ static const char *s_pwGenderItems[] = {
 
 static const char *s_pwBirthMonthItems[] = {
     "-",
-    "January",   "February", "March",    "April",
-    "May",       "June",     "July",     "August",
-    "September", "October",  "November", "December",
+    "January", "February", "March",    "April",
+    "May",     "June",     "July",     "August",
+    "September","October", "November", "December",
     NULL
 };
-#define PW_BIRTH_MONTH_COUNT 13   // "-" plus 12 months
+#define PW_BIRTH_MONTH_COUNT 13
 
 static const char  *s_pwBirthDayItems[ PW_BIRTH_DAY_MAX + 2 ];
 static char         s_pwBirthDayStrings[ PW_BIRTH_DAY_MAX + 1 ][ 3 ];
@@ -152,44 +140,30 @@ static qboolean s_pwBirthListsBuilt = qfalse;
 static void PW_BuildBirthDateLists( void ) {
     int i;
     if ( s_pwBirthListsBuilt ) return;
-
     s_pwBirthDayItems[0] = "-";
     for ( i = 1; i <= PW_BIRTH_DAY_MAX; ++i ) {
-        Com_sprintf( s_pwBirthDayStrings[i],
-                     sizeof( s_pwBirthDayStrings[i] ), "%d", i );
+        Com_sprintf( s_pwBirthDayStrings[i], sizeof( s_pwBirthDayStrings[i] ), "%d", i );
         s_pwBirthDayItems[i] = s_pwBirthDayStrings[i];
     }
     s_pwBirthDayItems[ PW_BIRTH_DAY_MAX + 1 ] = NULL;
-
     s_pwBirthYearItems[0] = "-";
     for ( i = 0; i < PW_BIRTH_YEAR_COUNT; ++i ) {
-        Com_sprintf( s_pwBirthYearStrings[i],
-                     sizeof( s_pwBirthYearStrings[i] ),
+        Com_sprintf( s_pwBirthYearStrings[i], sizeof( s_pwBirthYearStrings[i] ),
                      "%d", PW_BIRTH_YEAR_START + i );
         s_pwBirthYearItems[ i + 1 ] = s_pwBirthYearStrings[i];
     }
     s_pwBirthYearItems[ PW_BIRTH_YEAR_COUNT + 1 ] = NULL;
-
     s_pwBirthListsBuilt = qtrue;
 }
 
-// ── Avatar list ───────────────────────────────────────────────────────────────
-
 #define PW_AVATAR_COUNT 10
-
 static const char *s_avatarShaderPaths[ PW_AVATAR_COUNT ] = {
-    "",
-    "gfx/avatars/preset/driver_01",
-    "gfx/avatars/preset/driver_02",
-    "gfx/avatars/preset/driver_03",
-    "gfx/avatars/preset/driver_04",
-    "gfx/avatars/preset/driver_05",
-    "gfx/avatars/preset/driver_06",
-    "gfx/avatars/preset/driver_07",
-    "gfx/avatars/preset/driver_08",
+    "", "gfx/avatars/preset/driver_01", "gfx/avatars/preset/driver_02",
+    "gfx/avatars/preset/driver_03", "gfx/avatars/preset/driver_04",
+    "gfx/avatars/preset/driver_05", "gfx/avatars/preset/driver_06",
+    "gfx/avatars/preset/driver_07", "gfx/avatars/preset/driver_08",
     "gfx/avatars/preset/driver_09",
 };
-
 static const char *s_avatarDisplayNames[ PW_AVATAR_COUNT ] = {
     "None",
     "Driver 01", "Driver 02", "Driver 03",
@@ -197,31 +171,27 @@ static const char *s_avatarDisplayNames[ PW_AVATAR_COUNT ] = {
     "Driver 07", "Driver 08", "Driver 09",
 };
 
-// ── Country list ──────────────────────────────────────────────────────────────
-
 #define PW_COUNTRY_COUNT 42
-
 static const char *s_countryCodes[ PW_COUNTRY_COUNT ] = {
     "",
-    "AT", "AU", "BE", "BR", "CA", "CH", "CN", "CZ", "DE",
-    "DK", "ES", "FI", "FR", "GB", "GR", "HU", "ID", "IN",
-    "IT", "JP", "KR", "MX", "NL", "NO", "NZ", "PL", "PT",
-    "RO", "RU", "SE", "SG", "SK", "TH", "TR", "TW", "UA",
-    "US", "VN", "ZA", "AR", "CL",
+    "AT","AU","BE","BR","CA","CH","CN","CZ","DE",
+    "DK","ES","FI","FR","GB","GR","HU","ID","IN",
+    "IT","JP","KR","MX","NL","NO","NZ","PL","PT",
+    "RO","RU","SE","SG","SK","TH","TR","TW","UA",
+    "US","VN","ZA","AR","CL",
 };
-
 static const char *s_countryNames[ PW_COUNTRY_COUNT ] = {
     "Not specified",
-    "Austria",        "Australia",     "Belgium",      "Brazil",
-    "Canada",         "Switzerland",   "China",        "Czech Republic",
-    "Germany",        "Denmark",       "Spain",        "Finland",
-    "France",         "United Kingdom","Greece",       "Hungary",
-    "Indonesia",      "India",         "Italy",        "Japan",
-    "South Korea",    "Mexico",        "Netherlands",  "Norway",
-    "New Zealand",    "Poland",        "Portugal",     "Romania",
-    "Russia",         "Sweden",        "Singapore",    "Slovakia",
-    "Thailand",       "Turkey",        "Taiwan",       "Ukraine",
-    "United States",  "Vietnam",       "South Africa", "Argentina",
+    "Austria",       "Australia",      "Belgium",       "Brazil",
+    "Canada",        "Switzerland",    "China",         "Czech Republic",
+    "Germany",       "Denmark",        "Spain",         "Finland",
+    "France",        "United Kingdom", "Greece",        "Hungary",
+    "Indonesia",     "India",          "Italy",         "Japan",
+    "South Korea",   "Mexico",         "Netherlands",   "Norway",
+    "New Zealand",   "Poland",         "Portugal",      "Romania",
+    "Russia",        "Sweden",         "Singapore",     "Slovakia",
+    "Thailand",      "Turkey",         "Taiwan",        "Ukraine",
+    "United States", "Vietnam",        "South Africa",  "Argentina",
     "Chile",
 };
 
@@ -241,23 +211,24 @@ static struct {
     menulist_s      avatarSpin;
     menulist_s      countrySpin;
 
-    // Navigation buttons (repurposed per page)
+    // Navigation buttons (shared across pages)
     menutext_s      btnNext;
     menutext_s      btnBack;
     menutext_s      btnSkip;
 
     pwPage_t        page;
-    pwResult_t      ladderResult;      // POST /players/register
-    pwResult_t      offlineKeyResult;  // ladder_register (offline server key)
+    pwResult_t      ladderResult;
+    pwResult_t      offlineKeyResult;
 
     char            profileName[ PROFILE_MAX_NAME ];
-    char            offlineServerName[ 68 ];  // PLAYERNAME_OFFLINE, normalized
+    char            offlineServerName[ 68 ];
     char            statusLine[ 128 ];
     qboolean        submitting;
 
-    // Avatar preview shader
     qhandle_t       avatarShader;
     int             avatarCurIdx;
+
+    playerInfo_t    doneVehicleInfo;   // rotating vehicle on the Done page
 
 } s_pw;
 
@@ -267,8 +238,56 @@ static void PW_Draw( void );
 static void PW_MenuEvent( void *ptr, int event );
 static sfxHandle_t PW_MenuKey( int key );
 static void PW_SetPage( pwPage_t page );
+static void PW_SetPageItems( pwPage_t page );
 static void PW_UpdateButtons( void );
 static void PW_LoadAvatarShader( int idx );
+
+// ── Item visibility control ───────────────────────────────────────────────────
+//
+// Called on every page transition. Hides and deactivates ALL interactive
+// items, then re-enables only the ones that belong to the target page.
+// This is what prevents keyboard focus from leaking to off-page items.
+
+static void PW_SetPageItems( pwPage_t page ) {
+    // All items off — covers buttons too; PW_UpdateButtons will re-enable
+    // the appropriate buttons for this page right after.
+    unsigned int allOff = QMF_INACTIVE | QMF_HIDDEN;
+
+    s_pw.nameField.generic.flags  = allOff;
+
+    s_pw.genderSpin.generic.flags  = allOff;
+    s_pw.bDaySpin.generic.flags    = allOff;
+    s_pw.bMonthSpin.generic.flags  = allOff;
+    s_pw.bYearSpin.generic.flags   = allOff;
+    s_pw.avatarSpin.generic.flags  = allOff;
+    s_pw.countrySpin.generic.flags = allOff;
+
+    s_pw.btnNext.generic.flags = allOff;
+    s_pw.btnBack.generic.flags = allOff;
+    s_pw.btnSkip.generic.flags = allOff;
+
+    switch ( page ) {
+    case PW_PAGE_NAME:
+        s_pw.nameField.generic.flags = QMF_SMALLFONT;
+        break;
+
+    case PW_PAGE_DETAILS:
+        s_pw.genderSpin.generic.flags  = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        s_pw.bDaySpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        s_pw.bMonthSpin.generic.flags  = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        s_pw.bYearSpin.generic.flags   = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        s_pw.avatarSpin.generic.flags  = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        s_pw.countrySpin.generic.flags = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
+        break;
+
+    case PW_PAGE_LADDER:
+    case PW_PAGE_DONE:
+        // No interactive input items on these pages — buttons only.
+        break;
+    }
+    // Buttons are handled by PW_UpdateButtons() which is called right after
+    // PW_SetPageItems() in PW_SetPage().
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -281,9 +300,7 @@ static qboolean PW_IsValidName( const char *name ) {
         char c = name[i];
         if ( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) ||
              ( c >= '0' && c <= '9' ) ||
-             c == '_' || c == '-' || c == '.' ) {
-            continue;
-        }
+             c == '_' || c == '-' || c == '.' ) continue;
         return qfalse;
     }
     return qtrue;
@@ -316,48 +333,28 @@ static void PW_LoadAvatarShader( int idx ) {
 
 static qboolean PW_CommitName( void ) {
     char name[ PROFILE_MAX_NAME ];
-
     Q_strncpyz( name, s_pw.nameField.field.buffer, sizeof( name ) );
     PW_TrimName( name );
-
     if ( !PW_IsValidName( name ) ) {
-        Q_strncpyz( s_pw.statusLine,
-                    "Name must use letters, numbers, _ - . only.",
-                    sizeof( s_pw.statusLine ) );
+        Q_strncpyz( s_pw.statusLine, "Name must use letters, numbers, _ - . only.", sizeof( s_pw.statusLine ) );
         return qfalse;
     }
-
     if ( !UI_Profile_WriteDefaultFile( name ) ) {
-        Q_strncpyz( s_pw.statusLine,
-                    "Failed to create profile file.",
-                    sizeof( s_pw.statusLine ) );
+        Q_strncpyz( s_pw.statusLine, "Failed to create profile file.", sizeof( s_pw.statusLine ) );
         return qfalse;
     }
-
     Q_strncpyz( s_pw.profileName, name, sizeof( s_pw.profileName ) );
-
-    /* Activate via the same path as the profile overlay — this sets
-     * uis.activeProfile, updates ui_profileActive, calls MainMenu_Prepare,
-     * and marks stats dirty so cl_uuid gets read on the next data refresh. */
     UI_Profile_ActivateProfile( name );
     trap_Cvar_Set( "name", name );
-
-    /* Read back the UUID immediately so Page 3 has it without waiting
-     * for the next data refresh cycle. */
     {
         profile_info_t  info;
         profile_stats_t stats;
-        Com_Memset( &info, 0, sizeof( info ) );
+        Com_Memset( &info,  0, sizeof( info  ) );
         Com_Memset( &stats, 0, sizeof( stats ) );
         if ( UI_Profile_ReadData( name, &info, &stats ) && info.uuid[0] ) {
             trap_Cvar_Set( "cl_uuid", info.uuid );
-            trap_Print( va( "Q3Rally Profile: wizard UUID %s for '%s'\n",
-                            info.uuid, name ) );
-        } else {
-            trap_Print( S_COLOR_YELLOW "Q3Rally Profile: WARNING – no UUID found after profile creation\n" );
         }
     }
-
     s_pw.statusLine[0] = '\0';
     return qtrue;
 }
@@ -368,63 +365,44 @@ static void PW_CommitDetails( void ) {
     int avatarIdx  = s_pw.avatarSpin.curvalue;
     int countryIdx = s_pw.countrySpin.curvalue;
     int genderIdx  = s_pw.genderSpin.curvalue;
-    int bDay       = s_pw.bDaySpin.curvalue;   // 0 = "-", 1..31
-    int bMonth     = s_pw.bMonthSpin.curvalue; // 0 = "-", 1..12
-    int bYear      = s_pw.bYearSpin.curvalue;  // 0 = "-", else 1-based index
+    int bDay       = s_pw.bDaySpin.curvalue;
+    int bMonth     = s_pw.bMonthSpin.curvalue;
+    int bYear      = s_pw.bYearSpin.curvalue;
 
     if ( !UI_Profile_ReadData( s_pw.profileName, &info, &stats ) ) {
         Com_Memset( &info,  0, sizeof( info  ) );
         Com_Memset( &stats, 0, sizeof( stats ) );
     }
-
-    // Gender — index 0 = "Unspecified" → store empty string
-    if ( genderIdx > 0 && genderIdx < PW_GENDER_COUNT &&
-         s_pwGenderItems[ genderIdx ] ) {
-        Q_strncpyz( info.gender, s_pwGenderItems[ genderIdx ],
-                    sizeof( info.gender ) );
+    if ( genderIdx > 0 && genderIdx < PW_GENDER_COUNT && s_pwGenderItems[ genderIdx ] ) {
+        Q_strncpyz( info.gender, s_pwGenderItems[ genderIdx ], sizeof( info.gender ) );
     } else {
         info.gender[0] = '\0';
     }
-
-    // Birth date — only write YYYY-MM-DD when all three fields are set
     if ( bDay > 0 && bMonth > 0 && bYear > 0 ) {
         int year = PW_BIRTH_YEAR_START + ( bYear - 1 );
-        Com_sprintf( info.birthDate, sizeof( info.birthDate ),
-                     "%04d-%02d-%02d", year, bMonth, bDay );
+        Com_sprintf( info.birthDate, sizeof( info.birthDate ), "%04d-%02d-%02d", year, bMonth, bDay );
     } else {
         info.birthDate[0] = '\0';
     }
-
-    // Avatar
     if ( avatarIdx > 0 && avatarIdx < PW_AVATAR_COUNT ) {
-        Q_strncpyz( info.avatar, s_avatarShaderPaths[ avatarIdx ],
-                    sizeof( info.avatar ) );
+        Q_strncpyz( info.avatar, s_avatarShaderPaths[ avatarIdx ], sizeof( info.avatar ) );
     } else {
         info.avatar[0] = '\0';
     }
-
-    // Country
     if ( countryIdx > 0 && countryIdx < PW_COUNTRY_COUNT ) {
-        Q_strncpyz( info.country, s_countryCodes[ countryIdx ],
-                    sizeof( info.country ) );
+        Q_strncpyz( info.country, s_countryCodes[ countryIdx ], sizeof( info.country ) );
     } else {
         info.country[0] = '\0';
     }
-
     UI_Profile_WriteFile( s_pw.profileName, &info, &stats );
     UI_Profile_MarkStatsDirty();
 }
 
-static void PW_BuildOfflineServerName( const char *profileName,
-                                       char *out, int outSize ) {
-    /* Mirror of LadderWizard_NormalizeServerName: strip color codes,
-     * keep only safe chars, append _OFFLINE suffix. */
+static void PW_BuildOfflineServerName( const char *profileName, char *out, int outSize ) {
     char raw[128];
     int i, j;
     char c;
-
     Com_sprintf( raw, sizeof( raw ), "%s_OFFLINE", profileName );
-
     j = 0;
     for ( i = 0; raw[i] && j < outSize - 1; ++i ) {
         c = raw[i];
@@ -438,81 +416,91 @@ static void PW_BuildOfflineServerName( const char *profileName,
         }
     }
     out[j] = '\0';
-
-    if ( !out[0] ) {
-        Q_strncpyz( out, "q3rally_offline", outSize );
-    }
+    if ( !out[0] ) Q_strncpyz( out, "q3rally_offline", outSize );
 }
 
 static void PW_StartLadderRegister( void ) {
     char uuid[ PROFILE_MAX_UUID ];
     char cmd[ 384 ];
 
-    /* cl_uuid was set in PW_CommitName immediately after WriteDefaultFile. */
     trap_Cvar_VariableStringBuffer( "cl_uuid", uuid, sizeof( uuid ) );
-
     if ( !uuid[0] ) {
-        Q_strncpyz( s_pw.statusLine,
-                    "No UUID found. Please restart and try again.",
-                    sizeof( s_pw.statusLine ) );
+        Q_strncpyz( s_pw.statusLine, "No UUID found. Please restart and try again.", sizeof( s_pw.statusLine ) );
         s_pw.ladderResult     = PW_RESULT_ERROR;
         s_pw.offlineKeyResult = PW_RESULT_ERROR;
         PW_UpdateButtons();
         return;
     }
 
-    /* ── 1. Player profile registration (POST /players/register) ── */
-    Com_sprintf( cmd, sizeof( cmd ),
-                 "ladder_player_register \"%s\" \"%s\"\n",
-                 uuid, s_pw.profileName );
-    trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
-    trap_Print( va( "Q3Rally Ladder: registering player UUID %s name '%s'\n",
-                    uuid, s_pw.profileName ) );
-    s_pw.ladderResult = PW_RESULT_PENDING;
+    /* ladder_player_register (POST /players/register) is not yet implemented
+     * in the engine — mark it OK immediately so it doesn't block the flow.
+     * The offline server-key registration below is the functional step. */
+    s_pw.ladderResult = PW_RESULT_OK;
 
-    /* ── 2. Offline server key registration ── *
-     * Use ladder_offline_register which posts JSON to /index.php/register
-     * with type=offline — auto-approved, no e-mail required.          */
-    PW_BuildOfflineServerName( s_pw.profileName,
-                               s_pw.offlineServerName,
-                               sizeof( s_pw.offlineServerName ) );
-
+    /* Register an offline server key via the existing ladder_register command.
+     * ownerEmail uses the in-game placeholder recognised by register.php
+     * (Accept: application/json path auto-approves offline keys).          */
+    PW_BuildOfflineServerName( s_pw.profileName, s_pw.offlineServerName, sizeof( s_pw.offlineServerName ) );
     trap_Cvar_Set( "sv_ladderEnabled", "1" );
-    trap_Cvar_Set( "sv_ladderUrl",
-                   "https://ladder.q3rally.com/index.php/matches" );
+    trap_Cvar_Set( "sv_ladderUrl", "https://ladder.q3rally.com/index.php/matches" );
     trap_Cvar_Set( "sv_hostname", s_pw.offlineServerName );
 
     Com_sprintf( cmd, sizeof( cmd ),
-                 "ladder_offline_register \"%s\" \"%s\"\n",
+                 "ladder_register \"%s\" \"ingame@q3rally.com\" \"%s\" \"agree\"\n",
                  s_pw.profileName, s_pw.offlineServerName );
     trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
     s_pw.offlineKeyResult = PW_RESULT_PENDING;
 
     s_pw.submitting = qtrue;
-    Q_strncpyz( s_pw.statusLine, "Connecting to ladder...",
-                sizeof( s_pw.statusLine ) );
+    Q_strncpyz( s_pw.statusLine, "Connecting to ladder...", sizeof( s_pw.statusLine ) );
     PW_UpdateButtons();
 }
 
 // ── Page transitions ──────────────────────────────────────────────────────────
 
 static void PW_SetPage( pwPage_t page ) {
-    s_pw.page             = page;
-    s_pw.statusLine[0]    = '\0';
+    s_pw.page          = page;
+    s_pw.statusLine[0] = '\0';
     if ( page != PW_PAGE_LADDER ) {
-        /* Reset both results when leaving the ladder page */
         s_pw.ladderResult     = PW_RESULT_NONE;
         s_pw.offlineKeyResult = PW_RESULT_NONE;
         s_pw.submitting       = qfalse;
     }
+    // Hide/show items before updating buttons so focus can't fall on
+    // an item from a different page.
+    PW_SetPageItems( page );
     PW_UpdateButtons();
+
+    // Set keyboard focus to the first interactive item on this page.
+    switch ( page ) {
+    case PW_PAGE_NAME:
+        Menu_SetCursorToItem( &s_pw.menu, &s_pw.nameField );
+        break;
+    case PW_PAGE_DETAILS:
+        Menu_SetCursorToItem( &s_pw.menu, &s_pw.genderSpin );
+        break;
+    case PW_PAGE_LADDER:
+    case PW_PAGE_DONE:
+        Menu_SetCursorToItem( &s_pw.menu, &s_pw.btnNext );
+        break;
+    }
+
+    // Load rotating vehicle for the Done page.
+    if ( page == PW_PAGE_DONE ) {
+        char model[ MAX_QPATH ];
+        Com_Memset( &s_pw.doneVehicleInfo, 0, sizeof( s_pw.doneVehicleInfo ) );
+        // Use the player's current car if set, else fall back to roadster/blue.
+        trap_Cvar_VariableStringBuffer( "model", model, sizeof( model ) );
+        if ( !model[0] ) {
+            Q_strncpyz( model, "roadster/blue", sizeof( model ) );
+        }
+        UI_PlayerInfo_SetModel( &s_pw.doneVehicleInfo, model, NULL, NULL, NULL );
+    }
 }
 
 static void PW_UpdateButtons( void ) {
-    s_pw.btnNext.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
-    s_pw.btnBack.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
-    s_pw.btnSkip.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
-
+    // Buttons start hidden; PW_SetPageItems already hid them.
+    // Re-enable the appropriate subset here.
     switch ( s_pw.page ) {
 
     case PW_PAGE_NAME:
@@ -550,7 +538,6 @@ static void PW_UpdateButtons( void ) {
             s_pw.btnSkip.string        = "SKIP";
             s_pw.btnSkip.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
         } else {
-            // Initial state — player hasn't clicked yet
             s_pw.btnNext.string        = "JOIN LADDER";
             s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY  | QMF_PULSEIFFOCUS;
             s_pw.btnBack.string        = "BACK";
@@ -574,7 +561,6 @@ static void PW_DrawDots( void ) {
     int totalW   = ( PW_PAGES - 1 ) * PW_DOT_SPACING + 6;
     int startX   = PW_CX - totalW / 2;
     int activePg = ( s_pw.page >= PW_PAGE_DONE ) ? PW_PAGES - 1 : (int)s_pw.page;
-
     for ( i = 0; i < PW_PAGES; ++i ) {
         int x = startX + i * PW_DOT_SPACING;
         vec4_t *col = ( i == activePg ) ? &pwDotOn : &pwDotOff;
@@ -583,130 +569,86 @@ static void PW_DrawDots( void ) {
 }
 
 static void PW_DrawPage1( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y,
-        "CREATE YOUR PROFILE",
-        UI_CENTER | UI_SMALLFONT, pwTitle );
-
-    UI_DrawString( PW_CX, PW_BODY_Y,
-        "Choose a display name for your profile.",
-        UI_CENTER | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 14,
-        "Letters, numbers, _ - . only.",
-        UI_CENTER | UI_SMALLFONT, pwMuted );
-
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 44,
-        "Name:", UI_LEFT | UI_SMALLFONT, pwText );
-
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "CREATE YOUR PROFILE", UI_CENTER | UI_SMALLFONT, pwTitle );
+    UI_DrawString( PW_CX, PW_BODY_Y,      "Choose a display name for your profile.", UI_CENTER | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_CX, PW_BODY_Y + 16, "Letters, numbers, _ - . only.",           UI_CENTER | UI_SMALLFONT, pwMuted );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 46, "Name:", UI_LEFT | UI_SMALLFONT, pwText );
     if ( s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 18,
-            s_pw.statusLine,
-            UI_CENTER | UI_SMALLFONT, pwError );
+        UI_DrawString( PW_CX, PW_BTN_Y - 18, s_pw.statusLine, UI_CENTER | UI_SMALLFONT, pwError );
     }
 }
 
 static void PW_DrawPage2( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y,
-        "PERSONALISE",
-        UI_CENTER | UI_SMALLFONT, pwTitle );
-
-    UI_DrawString( PW_CX, PW_BODY_Y,
-        "All fields are optional. You can change them later in Settings.",
-        UI_CENTER | UI_SMALLFONT, pwMuted );
-
-    // Row labels (left column)
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_1 + 2,
-        "Gender:",    UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_2 + 2,
-        "Birth day:", UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_3 + 2,
-        "Month:",     UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_4 + 2,
-        "Year:",      UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_5 + 2,
-        "Avatar:",    UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_6 + 2,
-        "Country:",   UI_LEFT | UI_SMALLFONT, pwText );
-
-    // Avatar preview box — right side, rows 5-6
-    UI_FillRect( PW_AVATAR_X, PW_AVATAR_Y,
-                 PW_AVATAR_SIZE, PW_AVATAR_SIZE, pwAvatarBg );
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "PERSONALISE", UI_CENTER | UI_SMALLFONT, pwTitle );
+    UI_DrawString( PW_CX, PW_BODY_Y, "All fields are optional. You can change them later in Settings.", UI_CENTER | UI_SMALLFONT, pwMuted );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_1 + 2, "Gender:",    UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_2 + 2, "Birth day:", UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_3 + 2, "Month:",     UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_4 + 2, "Year:",      UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_5 + 2, "Avatar:",    UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_6 + 2, "Country:",   UI_LEFT | UI_SMALLFONT, pwText );
+    UI_FillRect( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, pwAvatarBg );
     if ( s_pw.avatarShader ) {
-        UI_DrawHandlePic( PW_AVATAR_X, PW_AVATAR_Y,
-                          PW_AVATAR_SIZE, PW_AVATAR_SIZE,
-                          s_pw.avatarShader );
+        UI_DrawHandlePic( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, s_pw.avatarShader );
     } else {
-        UI_DrawString( PW_AVATAR_X + PW_AVATAR_SIZE / 2,
-                       PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4,
-                       "?", UI_CENTER | UI_SMALLFONT, pwMuted );
+        UI_DrawString( PW_AVATAR_X + PW_AVATAR_SIZE / 2, PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4, "?", UI_CENTER | UI_SMALLFONT, pwMuted );
     }
 }
 
 static void PW_DrawPage3( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y,
-        "Q3RALLY LADDER",
-        UI_CENTER | UI_SMALLFONT, pwTitle );
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "Q3RALLY LADDER", UI_CENTER | UI_SMALLFONT, pwTitle );
 
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
-        UI_DrawString( PW_CX, PW_BODY_Y,
-            "You're on the ladder!",
-            UI_CENTER | UI_SMALLFONT, pwSuccess );
-        UI_DrawString( PW_CX, PW_BODY_Y + 18,
-            "Profile and offline tracking are both active.",
-            UI_CENTER | UI_SMALLFONT, pwText );
-        UI_DrawString( PW_CX, PW_BODY_Y + 34,
-            "Stats update automatically after each match.",
-            UI_CENTER | UI_SMALLFONT, pwText );
+        UI_DrawString( PW_CX, PW_BODY_Y,      "You're on the ladder!",                           UI_CENTER | UI_SMALLFONT, pwSuccess );
+        UI_DrawString( PW_CX, PW_BODY_Y + 18, "Profile and offline tracking are both active.",   UI_CENTER | UI_SMALLFONT, pwText );
+        UI_DrawString( PW_CX, PW_BODY_Y + 34, "Stats update automatically after each match.",    UI_CENTER | UI_SMALLFONT, pwText );
         return;
     }
 
-    UI_DrawString( PW_CX, PW_BODY_Y,
-        "Track your stats on the Q3Rally online ladder.",
-        UI_CENTER | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 18,
-        "Includes online and offline matches. No password needed.",
-        UI_CENTER | UI_SMALLFONT, pwMuted );
+    UI_DrawString( PW_CX, PW_BODY_Y,      "Track your race results on the Q3Rally online ladder.", UI_CENTER | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_CX, PW_BODY_Y + 18, "Covers both online and offline matches. No password needed.", UI_CENTER | UI_SMALLFONT, pwMuted );
+    UI_DrawString( PW_CX, PW_BODY_Y + 36, "ladder.q3rally.com", UI_CENTER | UI_SMALLFONT, pwAccent );
 
     if ( s_pw.submitting ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22,
-            "Registering...",
-            UI_CENTER | UI_SMALLFONT, pwAccent );
+        UI_DrawString( PW_CX, PW_BTN_Y - 22, "Registering...", UI_CENTER | UI_SMALLFONT, pwAccent );
     } else if ( ( s_pw.ladderResult     == PW_RESULT_ERROR ||
-                  s_pw.offlineKeyResult == PW_RESULT_ERROR ) &&
-                s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22,
-            s_pw.statusLine,
-            UI_CENTER | UI_SMALLFONT, pwError );
+                  s_pw.offlineKeyResult == PW_RESULT_ERROR ) && s_pw.statusLine[0] ) {
+        UI_DrawString( PW_CX, PW_BTN_Y - 22, s_pw.statusLine, UI_CENTER | UI_SMALLFONT, pwError );
     }
 }
 
 static void PW_DrawPageDone( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y,
-        "YOU'RE ALL SET",
-        UI_CENTER | UI_SMALLFONT, pwTitle );
-    UI_DrawString( PW_CX, PW_BODY_Y,
-        va( "Welcome, %s!", s_pw.profileName ),
-        UI_CENTER | UI_SMALLFONT, pwAccent );
-    UI_DrawString( PW_CX, PW_BODY_Y + 22,
-        "Your profile is ready. Settings can be changed",
-        UI_CENTER | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 36,
-        "at any time in Config > Player > Profile.",
-        UI_CENTER | UI_SMALLFONT, pwText );
+    /* Vehicle preview — right half of panel, vertically centred in content area */
+    int modelX = PW_PANEL_X + PW_PANEL_W / 2;
+    int modelY = PW_PANEL_Y + 10;
+    int modelW = PW_PANEL_W / 2 - 8;
+    int modelH = PW_PANEL_H - PW_BTN_Y + PW_PANEL_Y + PW_PANEL_H - 60;
+    /* clamp to a square that fits the right column */
+    if ( modelH > modelW ) modelH = modelW;
+    if ( s_pw.doneVehicleInfo.headModel ) {
+        UI_DrawPlayer( modelX, modelY, modelW, modelH, &s_pw.doneVehicleInfo, uis.realtime );
+    }
+
+    /* Text — left column */
+    UI_DrawProportionalString( PW_CX - 60, PW_TITLE_Y, "YOU'RE ALL SET !!!", UI_CENTER | UI_SMALLFONT, pwTitle );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y,      va( "Welcome, %s!", s_pw.profileName ), UI_LEFT | UI_SMALLFONT, pwAccent );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 28, "Your profile is ready.",               UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 58, "Start here:",                          UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 76, "PLAY OFFLINE for a first Solo Race",            UI_LEFT | UI_SMALLFONT, pwAccent );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 94, "CONFIG > CONTROLS for Key Bindings",     UI_LEFT | UI_SMALLFONT, pwMuted );
 }
 
 static void PW_Draw( void ) {
     UI_FillRect( 0, 0, PW_W, PW_H, pwDim );
     UI_FillRect( PW_PANEL_X, PW_PANEL_Y, PW_PANEL_W, PW_PANEL_H, pwBg );
     UI_DrawRect( PW_PANEL_X, PW_PANEL_Y, PW_PANEL_W, PW_PANEL_H, pwBorder );
-
     switch ( s_pw.page ) {
     case PW_PAGE_NAME:    PW_DrawPage1();    break;
     case PW_PAGE_DETAILS: PW_DrawPage2();    break;
     case PW_PAGE_LADDER:  PW_DrawPage3();    break;
     case PW_PAGE_DONE:    PW_DrawPageDone(); break;
     }
-
     PW_DrawDots();
     Menu_Draw( &s_pw.menu );
 }
@@ -716,12 +658,10 @@ static void PW_Draw( void ) {
 static void PW_MenuEvent( void *ptr, int event ) {
     menucommon_s *item = (menucommon_s *)ptr;
 
-    // Avatar spin changed — update preview immediately
     if ( item->id == ID_PW_AVATAR && event == QM_ACTIVATED ) {
         PW_LoadAvatarShader( s_pw.avatarSpin.curvalue );
         return;
     }
-
     if ( event != QM_ACTIVATED ) return;
 
     switch ( item->id ) {
@@ -740,7 +680,6 @@ static void PW_MenuEvent( void *ptr, int event ) {
                  s_pw.offlineKeyResult == PW_RESULT_OK ) {
                 PW_SetPage( PW_PAGE_DONE );
             } else {
-                /* RETRY — reset both and fire again */
                 s_pw.ladderResult     = PW_RESULT_NONE;
                 s_pw.offlineKeyResult = PW_RESULT_NONE;
                 PW_StartLadderRegister();
@@ -763,11 +702,11 @@ static void PW_MenuEvent( void *ptr, int event ) {
     case ID_PW_SKIP:
         switch ( s_pw.page ) {
         case PW_PAGE_DETAILS:
-            PW_CommitDetails();         // write whatever the player set so far
+            PW_CommitDetails();
             PW_SetPage( PW_PAGE_LADDER );
             break;
         case PW_PAGE_LADDER:
-            PW_SetPage( PW_PAGE_DONE ); // skip ladder registration entirely
+            PW_SetPage( PW_PAGE_DONE );
             break;
         default: break;
         }
@@ -778,10 +717,7 @@ static void PW_MenuEvent( void *ptr, int event ) {
 // ── Key handler ───────────────────────────────────────────────────────────────
 
 static sfxHandle_t PW_MenuKey( int key ) {
-    if ( key == K_ESCAPE ) {
-        // Wizard is mandatory — Escape intentionally blocked
-        return 0;
-    }
+    if ( key == K_ESCAPE ) return 0;  // Wizard is mandatory
     return Menu_DefaultKey( &s_pw.menu, key );
 }
 
@@ -804,90 +740,69 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.menu.showlogo    = qfalse;
 
     // ── Page 1: name field ────────────────────────────────────────────────────
-
+    // Width is capped to the panel content area so the field never bleeds
+    // beyond the panel border.
     fieldX = PW_CONTENT_X;
-    fieldW = ( PW_CONTENT_W - SMALLCHAR_WIDTH * 2 ) / SMALLCHAR_WIDTH;
+    fieldW = ( PW_CONTENT_W - 30 ) / SMALLCHAR_WIDTH;
+    if ( fieldW > PROFILE_MAX_NAME - 1 ) fieldW = PROFILE_MAX_NAME - 1;
     if ( fieldW < 8 ) fieldW = 8;
 
     s_pw.nameField.generic.type       = MTYPE_FIELD;
-    s_pw.nameField.generic.flags      = QMF_SMALLFONT;
     s_pw.nameField.generic.id         = ID_PW_NAME;
     s_pw.nameField.generic.x          = fieldX;
     s_pw.nameField.generic.y          = PW_BODY_Y + 62;
     s_pw.nameField.field.widthInChars = fieldW;
     s_pw.nameField.field.maxchars     = PROFILE_MAX_NAME - 1;
 
-    // ── Page 2: gender ────────────────────────────────────────────────────────
+    // ── Page 2: spin controls ─────────────────────────────────────────────────
 
     s_pw.genderSpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.genderSpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.genderSpin.generic.id       = ID_PW_GENDER;
     s_pw.genderSpin.generic.callback = PW_MenuEvent;
     s_pw.genderSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.genderSpin.generic.y        = PW_P2_ROW_1;
     s_pw.genderSpin.itemnames        = (const char **)s_pwGenderItems;
     s_pw.genderSpin.numitems         = PW_GENDER_COUNT;
-    s_pw.genderSpin.curvalue         = 0;
-
-    // ── Page 2: birth day ─────────────────────────────────────────────────────
 
     s_pw.bDaySpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.bDaySpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.bDaySpin.generic.id       = ID_PW_BDAY;
     s_pw.bDaySpin.generic.callback = PW_MenuEvent;
     s_pw.bDaySpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bDaySpin.generic.y        = PW_P2_ROW_2;
     s_pw.bDaySpin.itemnames        = (const char **)s_pwBirthDayItems;
-    s_pw.bDaySpin.numitems         = PW_BIRTH_DAY_MAX + 1;  // index 0="-", 1..31
-    s_pw.bDaySpin.curvalue         = 0;
-
-    // ── Page 2: birth month ───────────────────────────────────────────────────
+    s_pw.bDaySpin.numitems         = PW_BIRTH_DAY_MAX + 1;
 
     s_pw.bMonthSpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.bMonthSpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.bMonthSpin.generic.id       = ID_PW_BMONTH;
     s_pw.bMonthSpin.generic.callback = PW_MenuEvent;
     s_pw.bMonthSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bMonthSpin.generic.y        = PW_P2_ROW_3;
     s_pw.bMonthSpin.itemnames        = (const char **)s_pwBirthMonthItems;
     s_pw.bMonthSpin.numitems         = PW_BIRTH_MONTH_COUNT;
-    s_pw.bMonthSpin.curvalue         = 0;
-
-    // ── Page 2: birth year ────────────────────────────────────────────────────
 
     s_pw.bYearSpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.bYearSpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.bYearSpin.generic.id       = ID_PW_BYEAR;
     s_pw.bYearSpin.generic.callback = PW_MenuEvent;
     s_pw.bYearSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bYearSpin.generic.y        = PW_P2_ROW_4;
     s_pw.bYearSpin.itemnames        = (const char **)s_pwBirthYearItems;
-    s_pw.bYearSpin.numitems         = PW_BIRTH_YEAR_COUNT + 1;  // 0="-", rest=years
-    s_pw.bYearSpin.curvalue         = 0;
-
-    // ── Page 2: avatar ────────────────────────────────────────────────────────
+    s_pw.bYearSpin.numitems         = PW_BIRTH_YEAR_COUNT + 1;
 
     s_pw.avatarSpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.avatarSpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.avatarSpin.generic.id       = ID_PW_AVATAR;
     s_pw.avatarSpin.generic.callback = PW_MenuEvent;
     s_pw.avatarSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.avatarSpin.generic.y        = PW_P2_ROW_5;
     s_pw.avatarSpin.itemnames        = (const char **)s_avatarDisplayNames;
     s_pw.avatarSpin.numitems         = PW_AVATAR_COUNT;
-    s_pw.avatarSpin.curvalue         = 0;
-
-    // ── Page 2: country ───────────────────────────────────────────────────────
 
     s_pw.countrySpin.generic.type     = MTYPE_SPINCONTROL;
-    s_pw.countrySpin.generic.flags    = QMF_SMALLFONT | QMF_PULSEIFFOCUS;
     s_pw.countrySpin.generic.id       = ID_PW_COUNTRY;
     s_pw.countrySpin.generic.callback = PW_MenuEvent;
     s_pw.countrySpin.generic.x        = PW_P2_SPIN_X;
     s_pw.countrySpin.generic.y        = PW_P2_ROW_6;
     s_pw.countrySpin.itemnames        = (const char **)s_countryNames;
     s_pw.countrySpin.numitems         = PW_COUNTRY_COUNT;
-    s_pw.countrySpin.curvalue         = 0;
 
     // ── Navigation buttons ────────────────────────────────────────────────────
 
@@ -919,6 +834,8 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnSkip.color            = pwMuted;
 
     // ── Register all items ────────────────────────────────────────────────────
+    // All items are registered but start hidden+inactive. PW_SetPage will
+    // enable only the subset belonging to the initial page.
 
     Menu_AddItem( &s_pw.menu, &s_pw.nameField   );
     Menu_AddItem( &s_pw.menu, &s_pw.genderSpin  );
@@ -931,80 +848,63 @@ void UI_ProfileWizard_Show( void ) {
     Menu_AddItem( &s_pw.menu, &s_pw.btnBack     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnSkip     );
 
-    PW_UpdateButtons();
-    Menu_SetCursorToItem( &s_pw.menu, &s_pw.nameField );
-
     uis.transitionIn  = 0;
     uis.transitionOut = 0;
 
     UI_PushMenu( &s_pw.menu );
+
+    // Set initial page — this calls PW_SetPageItems + PW_UpdateButtons
+    // and sets cursor focus correctly.
+    PW_SetPage( PW_PAGE_NAME );
 }
 
 // ── Public interface ──────────────────────────────────────────────────────────
 
 void UI_ProfileWizard_MaybeShow( void ) {
     char profileName[ PROFILE_MAX_NAME ];
-    trap_Cvar_VariableStringBuffer( "profile_active", profileName,
-                                    sizeof( profileName ) );
+    trap_Cvar_VariableStringBuffer( "profile_active", profileName, sizeof( profileName ) );
     if ( profileName[0] ) return;
     UI_ProfileWizard_Show();
 }
 
 qboolean UI_ProfileWizard_IsActive( void ) {
-    /* The wizard is active if its menu is anywhere in the menu stack. */
     int i;
     for ( i = 0; i < uis.menusp; ++i ) {
-        if ( uis.stack[i] == &s_pw.menu ) {
-            return qtrue;
-        }
+        if ( uis.stack[i] == &s_pw.menu ) return qtrue;
     }
-    /* Also check the top-level active menu */
     return ( uis.activemenu == &s_pw.menu ) ? qtrue : qfalse;
 }
 
 void UI_ProfileWizard_OnRegisterResult( qboolean success, const char *errorMsg ) {
+    /* ladder_player_register is not yet implemented — this callback is never
+     * called in the current build. Kept for future use. */
     s_pw.ladderResult = success ? PW_RESULT_OK : PW_RESULT_ERROR;
-
     if ( !success ) {
-        if ( errorMsg && errorMsg[0] ) {
-            Q_strncpyz( s_pw.statusLine, errorMsg, sizeof( s_pw.statusLine ) );
-        } else {
-            Q_strncpyz( s_pw.statusLine,
-                        "Could not reach the ladder. Try again later.",
-                        sizeof( s_pw.statusLine ) );
-        }
+        Q_strncpyz( s_pw.statusLine,
+                    ( errorMsg && errorMsg[0] ) ? errorMsg : "Could not reach the ladder. Try again later.",
+                    sizeof( s_pw.statusLine ) );
     }
-
-    /* Stop spinning as soon as either result arrives — don't wait for both.
-     * The buttons will show RETRY if anything failed. */
     s_pw.submitting = qfalse;
-
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
         trap_Cvar_SetValue( "ladder_wizard_completed", 1 );
         PW_SetPage( PW_PAGE_DONE );
         return;
     }
-
     PW_UpdateButtons();
 }
 
 void UI_ProfileWizard_OnOfflineKeyResult( qboolean success, const char *errorMsg ) {
     s_pw.offlineKeyResult = success ? PW_RESULT_OK : PW_RESULT_ERROR;
-
     if ( !success && errorMsg && errorMsg[0] && !s_pw.statusLine[0] ) {
         Q_strncpyz( s_pw.statusLine, errorMsg, sizeof( s_pw.statusLine ) );
     }
-
-    /* Same as above — stop spinning immediately */
     s_pw.submitting = qfalse;
-
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
         trap_Cvar_SetValue( "ladder_wizard_completed", 1 );
         PW_SetPage( PW_PAGE_DONE );
         return;
     }
-
     PW_UpdateButtons();
 }

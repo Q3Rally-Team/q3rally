@@ -999,16 +999,35 @@ static void PlayerSettings_SetAvatarProfileName( const char *profileName ) {
 	Q_strncpyz( s_playersettings.avatarProfileName, profileName, sizeof( s_playersettings.avatarProfileName ) );
 
 	if ( profileName[0] ) {
-		Com_sprintf( s_playersettings.profileInfo.avatar, sizeof( s_playersettings.profileInfo.avatar ), "gfx/avatars/%s", profileName );
-		Com_sprintf( s_playersettings.avatarDisplayPath, sizeof( s_playersettings.avatarDisplayPath ), "baseq3r/gfx/avatars/%s.tga", profileName );
+		/* Read the avatar path directly from the profile JSON.
+		 * The wizard saves the full preset path (e.g. gfx/avatars/preset/driver_01)
+		 * into info.avatar — use that as-is as the shader name.
+		 * Only fall back to the legacy profile-name-based path if info.avatar
+		 * is empty (pre-wizard profiles or manually cleared). */
+		profile_info_t  info;
+		profile_stats_t stats;
+		Com_Memset( &info,  0, sizeof( info  ) );
+		Com_Memset( &stats, 0, sizeof( stats ) );
+		if ( UI_Profile_ReadData( profileName, &info, &stats ) && info.avatar[0] ) {
+			Q_strncpyz( s_playersettings.profileInfo.avatar,
+			            info.avatar,
+			            sizeof( s_playersettings.profileInfo.avatar ) );
+			/* Display path shown in the UI tooltip — derive .tga from shader name */
+			Com_sprintf( s_playersettings.avatarDisplayPath,
+			             sizeof( s_playersettings.avatarDisplayPath ),
+			             "baseq3r/%s.tga", info.avatar );
+		} else {
+			s_playersettings.profileInfo.avatar[0]  = '\0';
+			s_playersettings.avatarDisplayPath[0]   = '\0';
+		}
 	} else {
-		s_playersettings.profileInfo.avatar[0] = '\0';
-		s_playersettings.avatarDisplayPath[0] = '\0';
+		s_playersettings.profileInfo.avatar[0]  = '\0';
+		s_playersettings.avatarDisplayPath[0]   = '\0';
 	}
 
-	s_playersettings.avatarShader = 0;
-	s_playersettings.avatarShaderInitialized = qfalse;
-	s_playersettings.avatarShaderName[0] = '\0';
+	s_playersettings.avatarShader             = 0;
+	s_playersettings.avatarShaderInitialized  = qfalse;
+	s_playersettings.avatarShaderName[0]      = '\0';
 }
 
 
@@ -3360,11 +3379,10 @@ static void PlayerSettings_SaveChanges( void ) {
 			Com_sprintf( info.birthDate, sizeof( info.birthDate ), "%04d-%02d-%02d", birthYear, birthMonth, birthDay );
 		}
 
-                if ( s_playersettings.avatarProfileName[0] ) {
-                        Com_sprintf( info.avatar, sizeof( info.avatar ), "gfx/avatars/%s", s_playersettings.avatarProfileName );
-                } else {
-                        info.avatar[0] = '\0';
-                }
+                /* Avatar: the wizard stores the full preset shader path in info.avatar.
+                 * Don't overwrite it here — preserve whatever is already in the
+                 * loaded profile. The avatar field in this settings screen is
+                 * read-only (managed by the wizard / profile editor). */
                 Q_strncpyz( info.country, s_playersettings.country.field.buffer, sizeof( info.country ) );
                 PlayerSettings_CopyFavoritesToProfile( &info );
                 UI_Profile_SaveActiveInfo( &info );
