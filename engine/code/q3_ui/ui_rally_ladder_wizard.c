@@ -389,28 +389,31 @@ static void LadderWizard_UpdateButtons( void ) {
             s_wizard.btnNever.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
         }
         s_wizard.btnNo.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
-        return;
-    }
-
-    if ( s_wizard.result == WIZARD_RESULT_SUCCESS ) {
-        s_wizard.btnYes.string    = "OK";
-        s_wizard.btnYes.generic.x = WIZARD_SCREEN_W / 2 - 145;
-        s_wizard.btnNo.string     = "";
-        s_wizard.btnNo.generic.flags    = QMF_INACTIVE | QMF_HIDDEN;
-        s_wizard.btnNever.string        = "";
-        s_wizard.btnNever.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
-        s_wizard.ownerName.generic.flags  = QMF_INACTIVE | QMF_HIDDEN;
-        s_wizard.ownerEmail.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
     } else {
-        s_wizard.btnYes.string    = "RETRY";
-        s_wizard.btnYes.generic.x = WIZARD_SCREEN_W / 2 - 145;
-        s_wizard.btnNo.string     = "BACK";
-        s_wizard.btnNo.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
-        s_wizard.btnNever.string        = "";
-        s_wizard.btnNever.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+        if ( s_wizard.result == WIZARD_RESULT_SUCCESS ) {
+            s_wizard.btnYes.string    = "OK";
+            s_wizard.btnYes.generic.x = WIZARD_SCREEN_W / 2 - 145;
+            s_wizard.btnNo.string     = "";
+            s_wizard.btnNo.generic.flags    = QMF_INACTIVE | QMF_HIDDEN;
+            s_wizard.btnNever.string        = "";
+            s_wizard.btnNever.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+            s_wizard.ownerName.generic.flags  = QMF_INACTIVE | QMF_HIDDEN;
+            s_wizard.ownerEmail.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+        } else {
+            s_wizard.btnYes.string    = "RETRY";
+            s_wizard.btnYes.generic.x = WIZARD_SCREEN_W / 2 - 145;
+            s_wizard.btnNo.string     = "BACK";
+            s_wizard.btnNo.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+            s_wizard.btnNever.string        = "";
+            s_wizard.btnNever.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+        }
+
+        s_wizard.btnYes.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     }
 
-    s_wizard.btnYes.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+    UI_ReflowPTextBounds( &s_wizard.btnYes );
+    UI_ReflowPTextBounds( &s_wizard.btnNo );
+    UI_ReflowPTextBounds( &s_wizard.btnNever );
 }
 
 static qboolean LadderWizard_IsFocusableItem( const menucommon_s *item ) {

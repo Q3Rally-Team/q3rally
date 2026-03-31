@@ -197,7 +197,7 @@ static void BText_Draw( menutext_s *t )
 PText_Init
 =================
 */
-static void PText_Init( menutext_s *t )
+void UI_ReflowPTextBounds( menutext_s *t )
 {
 	int	x;
 	int	y;
@@ -223,6 +223,11 @@ static void PText_Init( menutext_s *t )
 	t->generic.right  = x + w + PROP_GAP_WIDTH * sizeScale;
 	t->generic.top    = y;
 	t->generic.bottom = y + h;
+}
+
+static void PText_Init( menutext_s *t )
+{
+	UI_ReflowPTextBounds( t );
 }
 
 /*

@@ -22,6 +22,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 //     pointers are valid before any item is initialised.
 
 #include "ui_local.h"
+#include "ui_rally_theme.h"
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -95,18 +96,18 @@ typedef enum {
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
-static vec4_t pwBg       = { 0.06f, 0.06f, 0.10f, 0.98f };
-static vec4_t pwDim      = { 0.00f, 0.00f, 0.00f, 0.55f };
-static vec4_t pwBorder   = { 0.32f, 0.44f, 0.72f, 0.55f };
-static vec4_t pwTitle    = { 0.72f, 0.84f, 1.00f, 1.00f };
-static vec4_t pwText     = { 0.74f, 0.78f, 0.88f, 1.00f };
-static vec4_t pwMuted    = { 0.50f, 0.54f, 0.62f, 1.00f };
-static vec4_t pwAccent   = { 0.48f, 0.66f, 1.00f, 1.00f };
-static vec4_t pwSuccess  = { 0.40f, 0.85f, 0.55f, 1.00f };
-static vec4_t pwError    = { 1.00f, 0.40f, 0.40f, 1.00f };
-static vec4_t pwDotOn    = { 0.48f, 0.66f, 1.00f, 1.00f };
-static vec4_t pwDotOff   = { 0.30f, 0.32f, 0.40f, 1.00f };
-static vec4_t pwAvatarBg = { 0.08f, 0.08f, 0.14f, 1.00f };
+static vec4_t pwBg       = UI_THEME_COLOR_PANEL_BG;
+static vec4_t pwDim      = UI_THEME_COLOR_PANEL_DIM;
+static vec4_t pwBorder   = UI_THEME_COLOR_PANEL_BORDER;
+static vec4_t pwTitle    = UI_THEME_COLOR_TEXT_TITLE;
+static vec4_t pwText     = UI_THEME_COLOR_TEXT_BODY;
+static vec4_t pwMuted    = UI_THEME_COLOR_TEXT_MUTED;
+static vec4_t pwAccent   = UI_THEME_COLOR_ACCENT;
+static vec4_t pwSuccess  = UI_THEME_COLOR_SUCCESS;
+static vec4_t pwError    = UI_THEME_COLOR_ERROR;
+static vec4_t pwDotOn    = UI_THEME_COLOR_ACCENT;
+static vec4_t pwDotOff   = UI_THEME_COLOR_TEXT_MUTED;
+static vec4_t pwAvatarBg = UI_THEME_COLOR_PANEL_SUBBG;
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
 
@@ -164,11 +165,12 @@ static const char *s_avatarShaderPaths[ PW_AVATAR_COUNT ] = {
     "gfx/avatars/preset/driver_07", "gfx/avatars/preset/driver_08",
     "gfx/avatars/preset/driver_09",
 };
-static const char *s_avatarDisplayNames[ PW_AVATAR_COUNT ] = {
+static const char *s_avatarDisplayNames[ PW_AVATAR_COUNT + 1 ] = {
     "None",
     "Driver 01", "Driver 02", "Driver 03",
     "Driver 04", "Driver 05", "Driver 06",
     "Driver 07", "Driver 08", "Driver 09",
+    NULL
 };
 
 #define PW_COUNTRY_COUNT 42
@@ -180,7 +182,7 @@ static const char *s_countryCodes[ PW_COUNTRY_COUNT ] = {
     "RO","RU","SE","SG","SK","TH","TR","TW","UA",
     "US","VN","ZA","AR","CL",
 };
-static const char *s_countryNames[ PW_COUNTRY_COUNT ] = {
+static const char *s_countryNames[ PW_COUNTRY_COUNT + 1 ] = {
     "Not specified",
     "Austria",       "Australia",      "Belgium",       "Brazil",
     "Canada",        "Switzerland",    "China",         "Czech Republic",
@@ -193,6 +195,7 @@ static const char *s_countryNames[ PW_COUNTRY_COUNT ] = {
     "Thailand",      "Turkey",         "Taiwan",        "Ukraine",
     "United States", "Vietnam",        "South Africa",  "Argentina",
     "Chile",
+    NULL
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -552,6 +555,10 @@ static void PW_UpdateButtons( void ) {
         s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY | QMF_PULSEIFFOCUS;
         break;
     }
+
+    UI_ReflowPTextBounds( &s_pw.btnNext );
+    UI_ReflowPTextBounds( &s_pw.btnBack );
+    UI_ReflowPTextBounds( &s_pw.btnSkip );
 }
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
@@ -569,52 +576,52 @@ static void PW_DrawDots( void ) {
 }
 
 static void PW_DrawPage1( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "CREATE YOUR PROFILE", UI_CENTER | UI_SMALLFONT, pwTitle );
-    UI_DrawString( PW_CX, PW_BODY_Y,      "Choose a display name for your profile.", UI_CENTER | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 16, "Letters, numbers, _ - . only.",           UI_CENTER | UI_SMALLFONT, pwMuted );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 46, "Name:", UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "CREATE YOUR PROFILE", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
+    UI_DrawString( PW_CX, PW_BODY_Y,      "Choose a display name for your profile.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_CX, PW_BODY_Y + 16, "Letters, numbers, _ - . only.",           UI_CENTER | UI_THEME_STYLE_HINT_FONT, pwMuted );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 46, "Name:", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
     if ( s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 18, s_pw.statusLine, UI_CENTER | UI_SMALLFONT, pwError );
+        UI_DrawString( PW_CX, PW_BTN_Y - 18, s_pw.statusLine, UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwError );
     }
 }
 
 static void PW_DrawPage2( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "PERSONALISE", UI_CENTER | UI_SMALLFONT, pwTitle );
-    UI_DrawString( PW_CX, PW_BODY_Y, "All fields are optional. You can change them later in Settings.", UI_CENTER | UI_SMALLFONT, pwMuted );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_1 + 2, "Gender:",    UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_2 + 2, "Birth day:", UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_3 + 2, "Month:",     UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_4 + 2, "Year:",      UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_5 + 2, "Avatar:",    UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_6 + 2, "Country:",   UI_LEFT | UI_SMALLFONT, pwText );
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "PERSONALISE", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
+    UI_DrawString( PW_CX, PW_BODY_Y, "All fields are optional. You can change them later in Settings.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_1 + 2, "Gender:",    UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_2 + 2, "Birth day:", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_3 + 2, "Month:",     UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_4 + 2, "Year:",      UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_5 + 2, "Avatar:",    UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_6 + 2, "Country:",   UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
     UI_FillRect( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, pwAvatarBg );
     if ( s_pw.avatarShader ) {
         UI_DrawHandlePic( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, s_pw.avatarShader );
     } else {
-        UI_DrawString( PW_AVATAR_X + PW_AVATAR_SIZE / 2, PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4, "?", UI_CENTER | UI_SMALLFONT, pwMuted );
+        UI_DrawString( PW_AVATAR_X + PW_AVATAR_SIZE / 2, PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4, "?", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
     }
 }
 
 static void PW_DrawPage3( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "Q3RALLY LADDER", UI_CENTER | UI_SMALLFONT, pwTitle );
+    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "Q3RALLY LADDER", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
 
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
-        UI_DrawString( PW_CX, PW_BODY_Y,      "You're on the ladder!",                           UI_CENTER | UI_SMALLFONT, pwSuccess );
-        UI_DrawString( PW_CX, PW_BODY_Y + 18, "Profile and offline tracking are both active.",   UI_CENTER | UI_SMALLFONT, pwText );
-        UI_DrawString( PW_CX, PW_BODY_Y + 34, "Stats update automatically after each match.",    UI_CENTER | UI_SMALLFONT, pwText );
+        UI_DrawString( PW_CX, PW_BODY_Y,      "You're on the ladder!",                           UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwSuccess );
+        UI_DrawString( PW_CX, PW_BODY_Y + 18, "Profile and offline tracking are both active.",   UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
+        UI_DrawString( PW_CX, PW_BODY_Y + 34, "Stats update automatically after each match.",    UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
         return;
     }
 
-    UI_DrawString( PW_CX, PW_BODY_Y,      "Track your race results on the Q3Rally online ladder.", UI_CENTER | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 18, "Covers both online and offline matches. No password needed.", UI_CENTER | UI_SMALLFONT, pwMuted );
-    UI_DrawString( PW_CX, PW_BODY_Y + 36, "ladder.q3rally.com", UI_CENTER | UI_SMALLFONT, pwAccent );
+    UI_DrawString( PW_CX, PW_BODY_Y,      "Track your race results on the Q3Rally online ladder.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_CX, PW_BODY_Y + 18, "Covers both online and offline matches. No password needed.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
+    UI_DrawString( PW_CX, PW_BODY_Y + 36, "ladder.q3rally.com", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwAccent );
 
     if ( s_pw.submitting ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22, "Registering...", UI_CENTER | UI_SMALLFONT, pwAccent );
+        UI_DrawString( PW_CX, PW_BTN_Y - 22, "Registering...", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwAccent );
     } else if ( ( s_pw.ladderResult     == PW_RESULT_ERROR ||
                   s_pw.offlineKeyResult == PW_RESULT_ERROR ) && s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22, s_pw.statusLine, UI_CENTER | UI_SMALLFONT, pwError );
+        UI_DrawString( PW_CX, PW_BTN_Y - 22, s_pw.statusLine, UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwError );
     }
 }
 
@@ -631,12 +638,13 @@ static void PW_DrawPageDone( void ) {
     }
 
     /* Text — left column */
-    UI_DrawProportionalString( PW_CX - 60, PW_TITLE_Y, "YOU'RE ALL SET !!!", UI_CENTER | UI_SMALLFONT, pwTitle );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y,      va( "Welcome, %s!", s_pw.profileName ), UI_LEFT | UI_SMALLFONT, pwAccent );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 28, "Your profile is ready.",               UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 58, "Start here:",                          UI_LEFT | UI_SMALLFONT, pwText );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 76, "PLAY OFFLINE for a first Solo Race",            UI_LEFT | UI_SMALLFONT, pwAccent );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 94, "CONFIG > CONTROLS for Key Bindings",     UI_LEFT | UI_SMALLFONT, pwMuted );
+    UI_DrawProportionalString( PW_CX - 60, PW_TITLE_Y, "YOU'RE ALL SET !!!", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y,      va( "Welcome, %s!", s_pw.profileName ), UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwAccent );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 28, "Your profile is ready.",               UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 58, "Start here:",                          UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 76, "PLAY OFFLINE for a first Solo Race",            UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwAccent );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 94, "CONFIG > CONTROLS for Key Bindings",     UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwMuted );
+    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 118, "Ladder tracking starts after admin key activation.", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwMuted );
 }
 
 static void PW_Draw( void ) {
@@ -812,7 +820,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnNext.generic.x        = PW_BTN_NEXT_X;
     s_pw.btnNext.generic.y        = PW_BTN_Y;
     s_pw.btnNext.string           = "NEXT";
-    s_pw.btnNext.style            = UI_RIGHT | UI_SMALLFONT;
+    s_pw.btnNext.style            = UI_RIGHT | UI_THEME_STYLE_BUTTON_FONT;
     s_pw.btnNext.color            = pwAccent;
 
     s_pw.btnBack.generic.type     = MTYPE_PTEXT;
@@ -821,7 +829,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnBack.generic.x        = PW_BTN_BACK_X;
     s_pw.btnBack.generic.y        = PW_BTN_Y;
     s_pw.btnBack.string           = "BACK";
-    s_pw.btnBack.style            = UI_LEFT | UI_SMALLFONT;
+    s_pw.btnBack.style            = UI_LEFT | UI_THEME_STYLE_BUTTON_FONT;
     s_pw.btnBack.color            = pwText;
 
     s_pw.btnSkip.generic.type     = MTYPE_PTEXT;
@@ -830,7 +838,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnSkip.generic.x        = PW_BTN_SKIP_X;
     s_pw.btnSkip.generic.y        = PW_BTN_Y;
     s_pw.btnSkip.string           = "SKIP";
-    s_pw.btnSkip.style            = UI_CENTER | UI_SMALLFONT;
+    s_pw.btnSkip.style            = UI_CENTER | UI_THEME_STYLE_BUTTON_FONT;
     s_pw.btnSkip.color            = pwMuted;
 
     // ── Register all items ────────────────────────────────────────────────────

@@ -34,6 +34,7 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 */
 
 #include "ui_local.h"
+#include "ui_rally_theme.h"
 
 /* -------------------------------------------------------------------------
    Constants
@@ -201,14 +202,31 @@ static const char *loadingTips[] = {
     "Practice a track in free roam before racing - knowing the layout pays off.",
 };
 
+
+static vec4_t gfxSeparatorColor     = UI_THEME_COLOR_PANEL_BORDER;
+static vec4_t gfxHeaderColor        = UI_THEME_COLOR_TEXT_TITLE;
+static vec4_t gfxSecondaryTextColor = UI_THEME_COLOR_TEXT_HINT;
+static vec4_t gfxBodyTextColor      = UI_THEME_COLOR_TEXT_BODY;
+static vec4_t gfxMutedTextColor     = UI_THEME_COLOR_TEXT_MUTED;
+static vec4_t gfxAccentColor        = UI_THEME_COLOR_ACCENT;
+static vec4_t gfxSuccessColor       = UI_THEME_COLOR_SUCCESS;
+static vec4_t gfxErrorColor         = UI_THEME_COLOR_ERROR;
+static vec4_t gfxWarningColor       = UI_THEME_COLOR_WARNING;
+static vec4_t gfxProgressTrackColor = UI_THEME_COLOR_PROGRESS_TRACK;
+static vec4_t gfxButtonBgColor      = UI_THEME_COLOR_BUTTON_BG;
+static vec4_t gfxButtonBorderColor  = UI_THEME_COLOR_BUTTON_BORDER;
+static vec4_t gfxButtonTextColor    = UI_THEME_COLOR_BUTTON_TEXT;
+static vec4_t gfxButtonHoverBgColor     = UI_THEME_COLOR_BUTTON_HOVER_BG;
+static vec4_t gfxButtonHoverBorderColor = UI_THEME_COLOR_BUTTON_HOVER_BORDER;
+static vec4_t gfxButtonHoverTextColor   = UI_THEME_COLOR_BUTTON_HOVER_TEXT;
+static vec4_t gfxBackdropColor          = UI_THEME_COLOR_PANEL_BG;
+
 /* -------------------------------------------------------------------------
    Helper: draw a thin horizontal separator line
    ------------------------------------------------------------------------- */
 
 static void DrawSeparator(int y) {
-    vec4_t sepColor;
-    sepColor[0] = 0.4f; sepColor[1] = 0.4f; sepColor[2] = 0.4f; sepColor[3] = 0.6f;
-    UI_FillRect(80, y, 480, 1, sepColor);
+    UI_FillRect(80, y, 480, 1, gfxSeparatorColor);
 }
 
 /* -------------------------------------------------------------------------
@@ -222,13 +240,13 @@ static qboolean DrawButton(int cx, int y, int w, int h,
     int    x = cx - w / 2;
 
     if (highlighted) {
-        bgColor[0]     = 0.85f; bgColor[1]     = 0.55f; bgColor[2]     = 0.0f;  bgColor[3]     = 1.0f;
-        borderColor[0] = 1.0f;  borderColor[1] = 0.75f; borderColor[2] = 0.2f;  borderColor[3] = 1.0f;
-        textColor[0]   = 1.0f;  textColor[1]   = 1.0f;  textColor[2]   = 1.0f;  textColor[3]   = 1.0f;
+        Vector4Copy(gfxButtonHoverBgColor, bgColor);
+        Vector4Copy(gfxButtonHoverBorderColor, borderColor);
+        Vector4Copy(gfxButtonHoverTextColor, textColor);
     } else {
-        bgColor[0]     = 0.15f; bgColor[1]     = 0.15f; bgColor[2]     = 0.15f; bgColor[3]     = 0.85f;
-        borderColor[0] = 0.5f;  borderColor[1] = 0.5f;  borderColor[2] = 0.5f;  borderColor[3] = 1.0f;
-        textColor[0]   = 0.75f; textColor[1]   = 0.75f; textColor[2]   = 0.75f; textColor[3]   = 1.0f;
+        Vector4Copy(gfxButtonBgColor, bgColor);
+        Vector4Copy(gfxButtonBorderColor, borderColor);
+        Vector4Copy(gfxButtonTextColor, textColor);
     }
 
     shadow[0] = 0.0f; shadow[1] = 0.0f; shadow[2] = 0.0f; shadow[3] = 0.5f;
@@ -237,7 +255,7 @@ static qboolean DrawButton(int cx, int y, int w, int h,
     UI_DrawRect(x, y, w, h, borderColor);
 
     UI_DrawString(cx, y + (h - SMALLCHAR_HEIGHT) / 2,
-                  label, UI_CENTER | UI_SMALLFONT, textColor);
+                  label, UI_CENTER | UI_THEME_STYLE_BUTTON_FONT, textColor);
 
     return (uis.cursorx >= x && uis.cursorx <= x + w &&
             uis.cursory >= y && uis.cursory <= y + h) ? qtrue : qfalse;
@@ -312,6 +330,8 @@ static void UI_GFX_Loading_MenuDraw(void) {
     static int  lastDrawTime = 0;
 
     Menu_Draw(&s_gfxloading.menu);
+    gfxBackdropColor[3] = 1.0f;
+    UI_FillRect(-uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, SCREEN_HEIGHT, gfxBackdropColor);
 
     currentTime = trap_Milliseconds();
     deltaTime   = (lastDrawTime > 0)
@@ -330,14 +350,14 @@ static void UI_GFX_Loading_MenuDraw(void) {
        HEADER
        ----------------------------------------------------------------------- */
 
-    color[0] = 1.0f; color[1] = 0.65f; color[2] = 0.0f; color[3] = 1.0f;
+    Vector4Copy(gfxHeaderColor, color);
     UI_DrawProportionalString(SCREEN_CX, HDR_TITLE_Y,
-                              "Q3Rally", UI_CENTER | UI_BIGFONT, color);
+                              "Q3Rally", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, color);
 
-    color[0] = 0.65f; color[1] = 0.65f; color[2] = 0.65f; color[3] = 1.0f;
+    Vector4Copy(gfxSecondaryTextColor, color);
     UI_DrawString(SCREEN_CX, HDR_VERSION_Y,
                   va("Version %s - Loading Resources", PRODUCT_VERSION),
-                  UI_CENTER | UI_SMALLFONT, color);
+                  UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     DrawSeparator(SEP_TOP_Y);
 
@@ -347,15 +367,15 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
     stage_index = s_gfxloading.currentCache;
     stageName   = stageNames[(stage_index < totalStages) ? stage_index : totalStages];
-    color[0] = 0.9f; color[1] = 0.9f; color[2] = 0.9f; color[3] = 1.0f;
-    UI_DrawString(SCREEN_CX, BAR_STAGE_Y, stageName, UI_CENTER | UI_SMALLFONT, color);
+    Vector4Copy(gfxBodyTextColor, color);
+    UI_DrawString(SCREEN_CX, BAR_STAGE_Y, stageName, UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     /* shadow frame */
     color[0] = 0.0f; color[1] = 0.0f; color[2] = 0.0f; color[3] = 1.0f;
     UI_FillRect(BAR_X - 2, BAR_Y - 2, BAR_W + 4, BAR_H + 4, color);
 
     /* track */
-    color[0] = 0.12f; color[1] = 0.12f; color[2] = 0.12f; color[3] = 1.0f;
+    Vector4Copy(gfxProgressTrackColor, color);
     UI_FillRect(BAR_X, BAR_Y, BAR_W, BAR_H, color);
 
     /* fill - red to green */
@@ -363,16 +383,16 @@ static void UI_GFX_Loading_MenuDraw(void) {
         vec4_t fillColor;
         int    fillW = (int)(BAR_W * s_gfxloading.smoothProgress);
 
-        fillColor[0] = 0.85f + (0.1f  - 0.85f) * s_gfxloading.smoothProgress;
-        fillColor[1] = 0.15f + (0.85f - 0.15f) * s_gfxloading.smoothProgress;
-        fillColor[2] = 0.05f + (0.2f  - 0.05f) * s_gfxloading.smoothProgress;
+        fillColor[0] = gfxAccentColor[0] + (gfxSuccessColor[0] - gfxAccentColor[0]) * s_gfxloading.smoothProgress;
+        fillColor[1] = gfxAccentColor[1] + (gfxSuccessColor[1] - gfxAccentColor[1]) * s_gfxloading.smoothProgress;
+        fillColor[2] = gfxAccentColor[2] + (gfxSuccessColor[2] - gfxAccentColor[2]) * s_gfxloading.smoothProgress;
         fillColor[3] = 1.0f;
 
         UI_FillRect(BAR_X, BAR_Y, fillW, BAR_H, fillColor);
     }
 
     /* border */
-    color[0] = 0.55f; color[1] = 0.55f; color[2] = 0.55f; color[3] = 1.0f;
+    Vector4Copy(gfxSeparatorColor, color);
     UI_DrawRect(BAR_X, BAR_Y, BAR_W, BAR_H, color);
 
     /* car icon */
@@ -389,10 +409,10 @@ static void UI_GFX_Loading_MenuDraw(void) {
     }
 
     /* percentage */
-    color[0] = 0.75f; color[1] = 0.75f; color[2] = 0.75f; color[3] = 1.0f;
+    Vector4Copy(gfxMutedTextColor, color);
     UI_DrawString(SCREEN_CX, BAR_PCT_Y,
                   va("%.0f%%", s_gfxloading.smoothProgress * 100.0f),
-                  UI_CENTER | UI_SMALLFONT, color);
+                  UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     /* -----------------------------------------------------------------------
        UPDATE NOTICE
@@ -415,10 +435,10 @@ static void UI_GFX_Loading_MenuDraw(void) {
         trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
         trap_Cvar_VariableStringBuffer("cl_updateDate",   remoteDate,   sizeof(remoteDate));
 
-        color[0] = 1.0f; color[1] = 0.35f; color[2] = 0.1f; color[3] = 1.0f;
+        Vector4Copy(gfxErrorColor, color);
         UI_DrawString(SCREEN_CX, textY,
                       "A new version of Q3Rally is available!",
-                      UI_CENTER | UI_SMALLFONT, color);
+                      UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
         textY += 22;
 
         if (remoteVersion[0]) {
@@ -436,8 +456,8 @@ static void UI_GFX_Loading_MenuDraw(void) {
                         "Installed: %s     Latest: unknown", PRODUCT_VERSION);
         }
 
-        color[0] = 0.85f; color[1] = 0.85f; color[2] = 0.2f; color[3] = 1.0f;
-        UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_SMALLFONT, color);
+        Vector4Copy(gfxWarningColor, color);
+        UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
         textY += 28;
 
         if (!s_gfxloading.updateAcked) {
@@ -452,9 +472,9 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
             textY += 40;
         } else {
-            color[0] = 0.5f; color[1] = 0.85f; color[2] = 0.5f; color[3] = 1.0f;
+            Vector4Copy(gfxSuccessColor, color);
             UI_DrawString(SCREEN_CX, textY, "Update acknowledged - continuing...",
-                          UI_CENTER | UI_SMALLFONT, color);
+                          UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
             textY += 24;
         }
 
@@ -466,18 +486,18 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
         trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
 
-        color[0] = 0.5f; color[1] = 0.85f; color[2] = 0.5f; color[3] = 1.0f;
+        Vector4Copy(gfxSuccessColor, color);
         UI_DrawString(SCREEN_CX, textY,
                       "Q3Rally is up to date.",
-                      UI_CENTER | UI_SMALLFONT, color);
+                      UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
         textY += 22;
 
         if (remoteVersion[0]) {
             Com_sprintf(buf, sizeof(buf),
                         "Installed: %s     Latest: %s",
                         PRODUCT_VERSION, remoteVersion);
-            color[0] = 0.75f; color[1] = 0.85f; color[2] = 0.75f; color[3] = 1.0f;
-            UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_SMALLFONT, color);
+            Vector4Copy(gfxBodyTextColor, color);
+            UI_DrawString(SCREEN_CX, textY, buf, UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
             textY += 24;
         }
 
@@ -499,9 +519,9 @@ static void UI_GFX_Loading_MenuDraw(void) {
             }
         }
 
-        color[0] = 0.7f; color[1] = 0.7f; color[2] = 0.3f; color[3] = 1.0f;
+        Vector4Copy(gfxWarningColor, color);
         UI_DrawString(SCREEN_CX, textY, errorMsg,
-                      UI_CENTER | UI_SMALLFONT, color);
+                      UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
         textY += 24;
 
     } else {
@@ -515,14 +535,14 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
     DrawSeparator(SEP_BOT_Y);
 
-    color[0] = 0.55f; color[1] = 0.55f; color[2] = 0.55f; color[3] = 1.0f;
+    Vector4Copy(gfxSeparatorColor, color);
     UI_DrawString(SCREEN_CX, TIP_LABEL_Y, "TIP",
-                  UI_CENTER | UI_SMALLFONT, color);
+                  UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
-    color[0] = 0.85f; color[1] = 0.85f; color[2] = 0.85f; color[3] = 1.0f;
+    Vector4Copy(gfxBodyTextColor, color);
     UI_DrawString(SCREEN_CX, TIP_TEXT_Y,
                   loadingTips[s_gfxloading.tipIndex],
-                  UI_CENTER | UI_SMALLFONT, color);
+                  UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     /* -----------------------------------------------------------------------
        TRANSITION
@@ -587,6 +607,11 @@ void UI_GFX_Loading(void) {
     s_gfxloading.carShader = trap_R_RegisterShaderNoMip("menu/art/loading_car");
 
     s_gfxloading.menu.draw       = UI_GFX_Loading_MenuDraw;
+    /*
+     * Draw our own full-width theme background in UI_GFX_Loading_MenuDraw.
+     * Keep fullscreen background disabled here so UI_DrawMenu won't paint
+     * menuBackShader underneath.
+     */
     s_gfxloading.menu.fullscreen = qtrue;
     s_gfxloading.menu.key        = UI_GFX_Loading_Key;
 

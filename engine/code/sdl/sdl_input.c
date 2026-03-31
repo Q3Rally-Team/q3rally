@@ -44,6 +44,7 @@ static SDL_Joystick *stick = NULL;
 
 static qboolean mouseAvailable = qfalse;
 static qboolean mouseActive = qfalse;
+static qboolean systemCursorVisible = qtrue;
 static int mouseLastX = 0;
 static int mouseLastY = 0;
 static float mouse640X = 0.0f;
@@ -347,6 +348,23 @@ static void IN_GobbleMotionEvents( void )
 
 /*
 ===============
+IN_SetSystemCursorVisible
+===============
+*/
+static void IN_SetSystemCursorVisible( qboolean visible )
+{
+	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
+		return;
+
+	if( systemCursorVisible == visible )
+		return;
+
+	SDL_ShowCursor( visible );
+	systemCursorVisible = visible;
+}
+
+/*
+===============
 IN_ActivateMouse
 ===============
 */
@@ -354,6 +372,8 @@ static void IN_ActivateMouse( qboolean isFullscreen )
 {
 	if (!mouseAvailable || !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
+
+	IN_SetSystemCursorVisible( qfalse );
 
 	if( !mouseActive )
 	{
@@ -388,15 +408,12 @@ static void IN_ActivateMouse( qboolean isFullscreen )
 IN_DeactivateMouse
 ===============
 */
-static void IN_DeactivateMouse( qboolean isFullscreen, qboolean showSystemCursor )
+static void IN_DeactivateMouse( qboolean showSystemCursor )
 {
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
 
-	// Always show the cursor when the mouse is disabled,
-	// but not when fullscreen
-	if( !isFullscreen )
-		SDL_ShowCursor( showSystemCursor );
+	IN_SetSystemCursorVisible( showSystemCursor );
 
 	if( !mouseAvailable )
 		return;
@@ -1345,20 +1362,23 @@ void IN_Frame( void )
 	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{
 		// Console is down in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
+		IN_DeactivateMouse( qtrue );
 	}
 	else if( !cls.glconfig.isFullscreen && loading )
 	{
 		// Loading in windowed mode
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
+		IN_DeactivateMouse( qtrue );
 	}
 	else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
 	{
 		// Window not got focus
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qtrue );
+		IN_DeactivateMouse( qtrue );
 	}
-	else if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		IN_DeactivateMouse( cls.glconfig.isFullscreen, qfalse );
+	else if( Key_GetCatcher( ) & ( KEYCATCH_UI | KEYCATCH_CGAME ) )
+	{
+		// UI/HUD overlays draw their own ingame cursor.
+		// Keep system cursor hidden to avoid dual-cursor states.
+		IN_DeactivateMouse( qfalse );
 	}
 	else
 		IN_ActivateMouse( cls.glconfig.isFullscreen );
@@ -1412,7 +1432,7 @@ void IN_Init( void *windowData )
 	SDL_StartTextInput( );
 
 	mouseAvailable = ( in_mouse->value != 0 );
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
+	IN_DeactivateMouse( qtrue );
 
 	SDL_GetMouseState( &mouseLastX, &mouseLastY );
 
@@ -1433,7 +1453,7 @@ void IN_Shutdown( void )
 {
 	SDL_StopTextInput( );
 
-	IN_DeactivateMouse( Cvar_VariableIntegerValue( "r_fullscreen" ) != 0, qtrue );
+	IN_DeactivateMouse( qtrue );
 	mouseAvailable = qfalse;
 
 	IN_ShutdownJoystick( );
