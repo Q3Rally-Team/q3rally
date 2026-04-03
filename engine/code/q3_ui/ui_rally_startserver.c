@@ -139,6 +139,8 @@ static int gametype_remap2[] = {
 
 int		allowLength[3];
 int		reversable;
+static int	trackLengthValueByUiIndex[3];
+static int	trackLengthUiCount;
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
 static void ServerOptions_InitBotNames( void );
@@ -956,6 +958,31 @@ static const char *dtfspawn_list[] = {
   0
 };
 
+static int ServerOptions_TrackLengthValueFromIndex( int listIndex ) {
+	if ( trackLengthUiCount <= 0 ) {
+		return 0;
+	}
+
+	if ( listIndex < 0 || listIndex >= trackLengthUiCount ) {
+		return trackLengthValueByUiIndex[0];
+	}
+
+	return trackLengthValueByUiIndex[listIndex];
+}
+
+static int ServerOptions_TrackLengthIndexFromValue( int trackLengthValue ) {
+	int i;
+
+	trackLengthValue = (int)Com_Clamp( 0, 2, trackLengthValue );
+	for ( i = 0; i < trackLengthUiCount; i++ ) {
+		if ( trackLengthValueByUiIndex[i] == trackLengthValue ) {
+			return i;
+		}
+	}
+
+	return 0;
+}
+
 /*
 =================
 BotAlreadySelected
@@ -1008,6 +1035,7 @@ static void ServerOptions_Start( void ) {
 	int		eliminationWeapons;
 	int		skill;
 	qboolean	isRacingGametype;
+	int		trackLengthValue;
 	int		n;
 	char	buf[64];
 
@@ -1028,6 +1056,7 @@ static void ServerOptions_Start( void ) {
     dominationSpawnStyle = s_serveroptions.dominationSpawnStyle.curvalue; // dtf
     sigillocator = s_serveroptions.sigillocator.curvalue; // dtf
 	trackLength  = s_serveroptions.trackLength.curvalue;
+	trackLengthValue = ServerOptions_TrackLengthValueFromIndex( trackLength );
 	reversed     = s_serveroptions.reversed.curvalue;
 	eliminationWeapons = s_serveroptions.eliminationWeapons.curvalue;
 	isRacingGametype = ServerOptions_IsRacingGametype( s_serveroptions.gametype );
@@ -1171,9 +1200,9 @@ default:
 	}
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
-	trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLength, 2 ) );
+	trap_Cvar_SetValue( "g_trackLength", Com_Clamp( 0, trackLengthValue, 2 ) );
 	trap_Cvar_SetValue( "g_trackReversed", Com_Clamp( 0, reversed, 1 ) );
-	trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLength, 2 ) );
+	trap_Cvar_SetValue( "ui_racing_tracklength", Com_Clamp( 0, trackLengthValue, 2 ) );
 	trap_Cvar_SetValue( "ui_racing_trackreversed", Com_Clamp( 0, reversed, 1 ) );
 	if ( isRacingGametype ) {
 		trap_Cvar_SetValue( "ui_ghostonly", s_serveroptions.ghostOnly.curvalue );
@@ -1754,7 +1783,7 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	Q_strncpyz( s_serveroptions.hostname.field.buffer, UI_Cvar_VariableString( "sv_hostname" ), sizeof( s_serveroptions.hostname.field.buffer ) );
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
-	s_serveroptions.trackLength.curvalue = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_racing_tracklength" ) );
+	s_serveroptions.trackLength.curvalue = ServerOptions_TrackLengthIndexFromValue( (int)trap_Cvar_VariableValue( "ui_racing_tracklength" ) );
 	s_serveroptions.reversed.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_racing_trackreversed" ) );
 	if ( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) ) {
 		s_serveroptions.ghostOnly.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ghostonly" ) );
@@ -2052,17 +2081,30 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	}
 
         n = 0;
+	trackLengthUiCount = 0;
         if ( allowLength[0] ){
                 track_length_list[n] = "Short";
+		trackLengthValueByUiIndex[n] = 0;
                 n++;
+		trackLengthUiCount++;
         }
 	if ( allowLength[1] ){
 		track_length_list[n] = "Medium";
+		trackLengthValueByUiIndex[n] = 1;
 		n++;
+		trackLengthUiCount++;
 	}
 	if ( allowLength[2] ){
 		track_length_list[n] = "Long";
+		trackLengthValueByUiIndex[n] = 2;
 		n++;
+		trackLengthUiCount++;
+	}
+	if ( trackLengthUiCount <= 0 ) {
+		track_length_list[0] = "Short";
+		trackLengthValueByUiIndex[0] = 0;
+		trackLengthUiCount = 1;
+		n = 1;
 	}
 	track_length_list[n] = 0;
 

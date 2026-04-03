@@ -2643,6 +2643,19 @@ Used between rally_start and rally_finish to mark progress.
 
 */
 
+/*QUAKED bot_path_node (0 .7 1) (-8 -8 -8) (8 8 8)
+Mapper-definierter Botpfad-Knoten für Racing-Bot-Navigation.
+
+-------- KEYS --------
+"pathId"		Route-ID des Botpfads (default 0)
+"order"		Sortierreihenfolge innerhalb der Route (default 0)
+"targetSpeed"	Zielgeschwindigkeit am Knoten in Quake Units/s (default -1, -1 = Auto-Speed)
+"width"		Empfohlene Fahrbahnbreite in Quake Units (default 220)
+"trackLengthMask"	Bitmaske für Streckenlängen (default 7; 1=short, 2=medium, 4=long, Kombinationen erlaubt)
+"reversed"	Fahrtrichtungsmodus (default 0; 0=normal, 1=reversed, 2=both)
+
+*/
+
 /*QUAKED info_observer_spot (0 .9 .1) (-8 -8 -8) (8 8 8) 0 1 2 3
 "target"	info_null or other entity with same targetname used to aim the camera (creates a fixed camera)
 

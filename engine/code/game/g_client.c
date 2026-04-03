@@ -1756,6 +1756,7 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 	client->ps.pm_time = 100;
 
 	client->respawnTime = level.time;
+	client->ghostSpawnTime = level.time;
 	client->inactivityTime = level.time + g_inactivity.integer * 1000;
 	client->latched_buttons = 0;
 

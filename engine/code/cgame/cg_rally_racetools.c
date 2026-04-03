@@ -773,6 +773,8 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         char timestamp[32];
         qtime_t now;
         int bestLapTime;
+        int retentionEntryCount;
+        int worstQualifiedBestTime;
         int lapStartOffset;
         int lapEndOffset;
         int trackLength = 0;
@@ -780,25 +782,38 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         int i;
         static ghostRecording_t lapRecording;
         ghostFrame_t *previousFrame;
+        qboolean qualifiesTop5 = qtrue;
+        const char *top5Result = "saved";
+        const char *top5Reason = "eligible";
 
         if ( !cg.snap || cg.snap->ps.clientNum >= MAX_CLIENTS ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: invalid snapshot/client (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-client)",
+                        0, cg.personalGhostBestTime );
                 return;
         }
 
         if ( !cg.ghostRecording.valid || cg.ghostRecording.frameCount <= 1 ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: recording invalid (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-recording)",
+                        0, cg.personalGhostBestTime );
                 return;
         }
 
         if ( !cg_entities[cg.snap->ps.clientNum].startRaceTime || finishTime <= cg_entities[cg.snap->ps.clientNum].startRaceTime ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: missing/invalid race time (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-race-time)",
+                        0, cg.personalGhostBestTime );
                 return;
         }
 
         if ( !cgs.clientinfo[cg.snap->ps.clientNum].infoValid ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: client info invalid (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-clientinfo)",
+                        0, cg.personalGhostBestTime );
                 return;
         }
 
         bestLapTime = cg_entities[cg.snap->ps.clientNum].bestLapTime;
         if ( bestLapTime <= 0 ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: best lap <= 0 (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-bestlap)",
+                        bestLapTime, cg.personalGhostBestTime );
                 return;
         }
 
@@ -806,10 +821,8 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         lapEndOffset = lapStartOffset + bestLapTime;
 
         if ( lapStartOffset < 0 || lapEndOffset > cg.ghostRecording.duration ) {
-                return;
-        }
-
-        if ( cg.personalGhostBestTime > 0 && bestLapTime >= cg.personalGhostBestTime ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: lap offsets out of range (bestLapTime=%d personalBest=%d variant=unknown/unknown/unknown top5=skipped:invalid-lap-window)",
+                        bestLapTime, cg.personalGhostBestTime );
                 return;
         }
 
@@ -818,7 +831,33 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         CG_GetGhostTrackVariant( &trackLength, &trackReversed );
 
         if ( !mapname[0] || !vehicle[0] ) {
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: map/vehicle missing (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=skipped:missing-map-or-vehicle)",
+                        bestLapTime, cg.personalGhostBestTime, mapname[0] ? mapname : "<empty>", trackLength, trackReversed );
                 return;
+        }
+
+        retentionEntryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed );
+        if ( retentionEntryCount >= 5 ) {
+                worstQualifiedBestTime = 0;
+
+                CG_SortGhostRetentionEntries( retentionEntryCount );
+
+                for ( i = retentionEntryCount - 1; i >= 0; --i ) {
+                        if ( s_ghostRetentionEntries[i].bestTimeMs > 0 ) {
+                                worstQualifiedBestTime = s_ghostRetentionEntries[i].bestTimeMs;
+                                break;
+                        }
+                }
+
+                if ( worstQualifiedBestTime > 0 && bestLapTime >= worstQualifiedBestTime ) {
+                        qualifiesTop5 = qfalse;
+                        top5Result = "skipped";
+                        top5Reason = "top5-gate";
+                        CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: top-5 qualification failed (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s worstQualified=%d retentionEntries=%d)",
+                                bestLapTime, cg.personalGhostBestTime, mapname, trackLength, trackReversed, top5Result, top5Reason,
+                                worstQualifiedBestTime, retentionEntryCount );
+                        return;
+                }
         }
 
         memset( &lapRecording, 0, sizeof( lapRecording ) );
@@ -910,6 +949,10 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         }
 
         if ( lapRecording.frameCount <= 1 ) {
+                top5Result = qualifiesTop5 ? "skipped" : top5Result;
+                top5Reason = qualifiesTop5 ? "lap-frame-validation" : top5Reason;
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: lap recording frame validation failed (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s)",
+                        bestLapTime, cg.personalGhostBestTime, mapname, trackLength, trackReversed, top5Result, top5Reason );
                 return;
         }
 
@@ -930,8 +973,17 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         }
 
         if ( !CG_WriteGhostFile( path, mapname, trackLength, trackReversed, vehicle, bestLapTime, &lapRecording ) ) {
+                top5Result = qualifiesTop5 ? "skipped" : top5Result;
+                top5Reason = qualifiesTop5 ? "file-write-failed" : top5Reason;
+                CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: file write failed (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s path=%s)",
+                        bestLapTime, cg.personalGhostBestTime, mapname, trackLength, trackReversed, top5Result, top5Reason, path );
                 return;
         }
+
+        top5Result = "saved";
+        top5Reason = qualifiesTop5 ? "qualified" : top5Reason;
+        CG_GhostDebugPrint( "AttemptSavePersonalGhost saved (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s path=%s)",
+                bestLapTime, cg.personalGhostBestTime, mapname, trackLength, trackReversed, top5Result, top5Reason, path );
 
         CG_CleanupPersonalGhostsForVariant( mapname, trackLength, trackReversed );
 

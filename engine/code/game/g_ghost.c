@@ -28,6 +28,7 @@ static int G_Ghost_FindRoutePoolIndexByVariant( const char *variantKey );
 static int G_Ghost_SelectRoutePoolSlot( const ghostBotRoute_t *route );
 static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs );
 static qboolean G_Ghost_AddRecordTop5PerVariant( const ghostRecord_t *record );
+static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route );
 
 static int G_Ghost_GetTrackLengthVariant( void ) {
     if ( g_trackLength.integer < 0 || g_trackLength.integer > 2 ) {
@@ -504,6 +505,7 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
         }
     }
 
+    G_Ghost_BuildRouteSegments( outRoute );
     outRoute->valid = qtrue;
     G_Printf( "G_Ghost: Bot route ready from %s (%d waypoints, vehicle=%s, map=%s)\n",
         record->path,
@@ -512,6 +514,87 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
         mapName[0] ? mapName : "unknown" );
 
     return qtrue;
+}
+
+static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route ) {
+    int i;
+    int segmentCount;
+
+    if ( !route || route->numWaypoints < 2 ) {
+        return;
+    }
+
+    segmentCount = route->numWaypoints - 1;
+    if ( segmentCount > ( MAX_GHOST_BOT_WAYPOINTS - 1 ) ) {
+        segmentCount = MAX_GHOST_BOT_WAYPOINTS - 1;
+    }
+
+    route->numSegments = segmentCount;
+
+    for ( i = 0; i < segmentCount; ++i ) {
+        vec3_t seg;
+        float dt;
+        float segSpeed = 0.0f;
+        float curvature = 0.0f;
+        float turnSign = 0.0f;
+        float baseWindow;
+        float straightness;
+
+        VectorSubtract( route->waypoints[i + 1].origin, route->waypoints[i].origin, seg );
+        dt = (float)( route->waypoints[i + 1].timeOffset - route->waypoints[i].timeOffset );
+        if ( dt > 0.0f ) {
+            segSpeed = 1000.0f * VectorLength( seg ) / dt;
+        }
+
+        if ( i > 0 && i + 1 < segmentCount ) {
+            vec3_t prevSeg, nextSeg;
+            float prevLen, nextLen;
+            float segDot;
+
+            VectorSubtract( route->waypoints[i].origin, route->waypoints[i - 1].origin, prevSeg );
+            VectorSubtract( route->waypoints[i + 2].origin, route->waypoints[i + 1].origin, nextSeg );
+            prevLen = VectorLength( prevSeg );
+            nextLen = VectorLength( nextSeg );
+            if ( prevLen > 1.0f && nextLen > 1.0f ) {
+                segDot = DotProduct( prevSeg, nextSeg ) / ( prevLen * nextLen );
+                if ( segDot > 1.0f ) {
+                    segDot = 1.0f;
+                } else if ( segDot < -1.0f ) {
+                    segDot = -1.0f;
+                }
+                curvature = ( 1.0f - segDot );
+                turnSign = prevSeg[0] * nextSeg[1] - prevSeg[1] * nextSeg[0];
+            }
+        }
+
+        straightness = 1.0f - curvature * 0.6f;
+        if ( straightness < 0.45f ) {
+            straightness = 0.45f;
+        } else if ( straightness > 1.05f ) {
+            straightness = 1.05f;
+        }
+        route->segments[i].recommendedSpeed = segSpeed * straightness;
+        route->segments[i].curvature = curvature;
+
+        baseWindow = 60.0f + ( 1.0f - curvature ) * 45.0f;
+        if ( baseWindow < 28.0f ) {
+            baseWindow = 28.0f;
+        }
+        route->segments[i].overtakeWindowInside = baseWindow;
+        route->segments[i].overtakeWindowOutside = baseWindow * ( 0.82f + curvature * 0.12f );
+
+        route->segments[i].lines[GHOST_LINE_BASE].lateralOffset = 0.0f;
+        route->segments[i].lines[GHOST_LINE_BASE].speedScale = 1.0f;
+
+        route->segments[i].lines[GHOST_LINE_RACE].lateralOffset = ( turnSign >= 0.0f ) ? -baseWindow : baseWindow;
+        route->segments[i].lines[GHOST_LINE_RACE].speedScale = 1.04f - curvature * 0.16f;
+
+        route->segments[i].lines[GHOST_LINE_DEFENSIVE].lateralOffset = ( turnSign >= 0.0f ) ? baseWindow * 0.72f : -baseWindow * 0.72f;
+        route->segments[i].lines[GHOST_LINE_DEFENSIVE].speedScale = 0.96f - curvature * 0.05f;
+
+        route->segments[i].lines[GHOST_LINE_SAFE].lateralOffset = 0.0f;
+        route->segments[i].lines[GHOST_LINE_SAFE].speedScale = 0.88f - curvature * 0.10f;
+    }
 }
 
 void G_Ghost_InitForMap( const char *mapname ) {

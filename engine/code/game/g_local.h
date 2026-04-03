@@ -268,20 +268,69 @@ typedef struct ghostRecord_s {
 
 #define MAX_GHOST_BOT_WAYPOINTS 4096
 #define MAX_GHOST_BOT_ROUTE_VARIANTS 8
+#define MAX_BOT_PATH_NODES 4096
+#define MAX_BOT_PATH_ROUTES 64
 
 typedef struct ghostWaypoint_s {
 	vec3_t	origin;
 	int	timeOffset;
 } ghostWaypoint_t;
 
+typedef enum {
+	GHOST_LINE_BASE = 0,
+	GHOST_LINE_RACE,
+	GHOST_LINE_DEFENSIVE,
+	GHOST_LINE_SAFE,
+	GHOST_LINE_FAMILY_COUNT
+} ghostRouteLineFamily_t;
+
+typedef struct ghostRouteLineProfile_s {
+	float lateralOffset;
+	float speedScale;
+} ghostRouteLineProfile_t;
+
+typedef struct ghostRouteSegment_s {
+	float recommendedSpeed;
+	float curvature;
+	float overtakeWindowInside;
+	float overtakeWindowOutside;
+	ghostRouteLineProfile_t lines[GHOST_LINE_FAMILY_COUNT];
+} ghostRouteSegment_t;
+
 typedef struct ghostBotRoute_s {
 	char	path[MAX_QPATH];
 	char	vehicleClass[MAX_QPATH];
 	int	bestTimeMs;
 	int	numWaypoints;
+	int	numSegments;
 	qboolean valid;
 	ghostWaypoint_t waypoints[MAX_GHOST_BOT_WAYPOINTS];
+	ghostRouteSegment_t segments[MAX_GHOST_BOT_WAYPOINTS - 1];
 } ghostBotRoute_t;
+
+typedef struct botPathNode_s {
+	vec3_t	origin;
+	float	width;
+	float	targetSpeed;
+	float	effectiveWidth;
+} botPathNode_t;
+
+typedef struct botPathSegment_s {
+	vec3_t	direction;
+	float	length;
+	float	curvature;
+	float	recommendedSpeed;
+	float	width;
+} botPathSegment_t;
+
+typedef struct botPathRoute_s {
+	char	name[MAX_QPATH];
+	int	numNodes;
+	int	numSegments;
+	qboolean valid;
+	botPathNode_t nodes[MAX_BOT_PATH_NODES];
+	botPathSegment_t segments[MAX_BOT_PATH_NODES - 1];
+} botPathRoute_t;
 
 typedef enum {
 	SPECTATOR_NOT,
@@ -409,6 +458,7 @@ struct gclient_s {
 
 	// timers
 	int			respawnTime;		     // can respawn when time > this, force after g_forcerespwan
+	int			ghostSpawnTime;		     // level.time when bot last spawned, for DMNet forward-init phase
 	int			inactivityTime;		     // kick players when time > this
 	qboolean	inactivityWarning;	     // qtrue if the five seoond warning has been given
 	int			rewardTime;			     // clear the EF_AWARD_IMPRESSIVE, etc when time > this
@@ -871,6 +921,13 @@ void G_Ghost_AnnounceForClient( gentity_t *ent );
 qboolean G_Ghost_GetBotRoute( const ghostBotRoute_t **outRoute );
 qboolean G_Ghost_GetBotRouteForVariant( const char *variantKey, const ghostBotRoute_t **outRoute );
 int G_Ghost_SelectClosestWaypoint( const ghostBotRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow );
+void G_BotPath_ClearAllRoutes( void );
+int G_BotPath_RegisterRoute( const char *name, const botPathNode_t *nodes, int numNodes );
+int G_BotPath_GetRouteCount( void );
+const botPathRoute_t *G_BotPath_GetRouteByIndex( int routeIndex );
+const botPathRoute_t *G_BotPath_GetRouteByName( const char *name );
+int G_BotPath_SelectClosestNode( const botPathRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow );
+int G_BotPath_SelectLookAheadNode( const botPathRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow, int lookAheadNodes );
 
 #ifdef UNIT_TEST
 int G_Ghost_Test_GetLevelGhostCount( void );
@@ -1107,6 +1164,8 @@ extern	vmCvar_t	g_rallyReadyCheck;
 extern	vmCvar_t	g_derbyMinPlayers;
 void G_RallyUpdateAllTeamTimes( void );
 extern	vmCvar_t	g_rallyIgnoreBots;
+extern	vmCvar_t	g_aiDmnetDebugExport;
+extern	vmCvar_t	g_aiDmnetDebugExportPath;
 extern	vmCvar_t	g_damageScale;
 extern	vmCvar_t	g_vehicleDamageScale;
 extern  vmCvar_t        g_vehicleDamageOffset;

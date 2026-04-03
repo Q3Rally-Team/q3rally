@@ -138,6 +138,8 @@ vmCvar_t	g_developer;
 vmCvar_t	g_rallyReadyCheck;
 vmCvar_t	g_derbyMinPlayers;
 vmCvar_t	g_rallyIgnoreBots;
+vmCvar_t	g_aiDmnetDebugExport;
+vmCvar_t	g_aiDmnetDebugExportPath;
 
 vmCvar_t	g_damageScale;
 vmCvar_t	g_vehicleDamageScale;
@@ -279,8 +281,8 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &pmove_msec, "pmove_msec", "18", CVAR_SYSTEMINFO, 0, qfalse},
 
 	// UPDATE : needs to be server info?
-	{ &g_trackReversed, "g_trackReversed", "0", CVAR_LATCH, 0, qfalse  },
-	{ &g_trackLength, "g_trackLength", "0", CVAR_LATCH, 0, qfalse  },
+	{ &g_trackReversed, "g_trackReversed", "0", CVAR_SERVERINFO | CVAR_LATCH, 0, qfalse  },
+	{ &g_trackLength, "g_trackLength", "0", CVAR_SERVERINFO | CVAR_LATCH, 0, qfalse  },
 
 { &g_forceEngineStart, "g_forceEngineStart", "60", CVAR_ARCHIVE, 0, qfalse },
 { &g_finishRaceDelay, "g_finishRaceDelay", "30", CVAR_ARCHIVE, 0, qfalse },
@@ -290,6 +292,8 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_rallyReadyCheck, "g_rallyReadyCheck", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_derbyMinPlayers, "g_derbyMinPlayers", "2", CVAR_ARCHIVE, 0, qfalse },
 { &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
+{ &g_aiDmnetDebugExport, "g_aiDmnetDebugExport", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
+{ &g_aiDmnetDebugExportPath, "g_aiDmnetDebugExportPath", "logs/ai_dmnet_debug.csv", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
 { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
 { &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },

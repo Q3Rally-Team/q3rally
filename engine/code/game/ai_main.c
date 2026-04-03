@@ -1335,6 +1335,14 @@ int BotAIShutdownClient(int client, qboolean restart) {
 	//clear the bot state
 	memset(bs, 0, sizeof(bot_state_t));
 	bs->ghostRouteIndexHint = -1;
+    bs->botPathRouteIndexHint = -1;
+    bs->botPathLateralOffset = 0.0f;
+    bs->botPathLastNodeIndex = -1;
+    bs->botPathStuckTime = 0.0f;
+    bs->botPathReverseTime = 0.0f;
+    bs->botPathReverseActive = 0;
+    bs->botPathFuelSeekActive = 0;
+    bs->botPathFuelCanTarget = -1;
 	//set the inuse flag to qfalse
 	bs->inuse = qfalse;
 	//there's one bot less
@@ -1377,6 +1385,14 @@ void BotResetState(bot_state_t *bs) {
 	//reset the whole state
 	memset(bs, 0, sizeof(bot_state_t));
 	bs->ghostRouteIndexHint = -1;
+    bs->botPathRouteIndexHint = -1;
+    bs->botPathLateralOffset = 0.0f;
+    bs->botPathLastNodeIndex = -1;
+    bs->botPathStuckTime = 0.0f;
+    bs->botPathReverseTime = 0.0f;
+    bs->botPathReverseActive = 0;
+    bs->botPathFuelSeekActive = 0;
+    bs->botPathFuelCanTarget = -1;
 	//copy back some state stuff that should not be reset
 	bs->ms = movestate;
 	bs->gs = goalstate;

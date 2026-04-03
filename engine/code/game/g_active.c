@@ -1346,6 +1346,11 @@ void ClientThink_real( gentity_t *ent ) {
 
         VectorCopy( client->ps.origin, client->oldOrigin );
 
+	/* snapshot fuel before Pmove for bot refund */
+	{
+		float fuelBeforePmove = ( g_useFuel.integer && ( ent->r.svFlags & SVF_BOT ) )
+			? client->car.fuel : -1.0f;
+
 #ifdef MISSIONPACK
 		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
 			if ( level.time - level.intermissionQueued >= 1000  ) {
@@ -1363,6 +1368,18 @@ void ClientThink_real( gentity_t *ent ) {
 #else
 		Pmove (&pm);
 #endif
+
+		/* refund 90% of fuel consumed - bots pay only 10% */
+		if ( fuelBeforePmove >= 0.0f ) {
+			float consumed = fuelBeforePmove - client->car.fuel;
+			if ( consumed > 0.0f ) {
+				client->car.fuel += consumed * 0.9f;
+				if ( client->car.fuel > client->car.maxFuel )
+					client->car.fuel = client->car.maxFuel;
+				client->ps.stats[STAT_FUEL] = (int)client->car.fuel;
+			}
+		}
+	} /* end fuel snapshot block */
 
 // STONELANCE
 	AnglesSubtract( client->ps.viewangles, oldAngles, ent->s.apos.trDelta );

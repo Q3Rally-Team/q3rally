@@ -24,6 +24,260 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+typedef struct {
+	int		pathId;
+	int		order;
+	float	targetSpeed;
+	float	width;
+	int		trackLengthMask;
+	int		trackLengthMaskRaw;
+	int		reversedMode;
+	qboolean	trackLengthMaskValid;
+	qboolean	reversedValueValid;
+	char		reversedValueRaw[16];
+	vec3_t	origin;
+} botPathNodeSpawn_t;
+
+#include "g_botpath_spawn_helpers.h"
+
+#define BOT_PATH_ROUTE_MIN_NODES	2
+#define BOT_PATH_SEGMENT_OUTLIER_MIN	64.0f
+#define BOT_PATH_SEGMENT_OUTLIER_MAX	16384.0f
+#define BOT_PATH_SEGMENT_OUTLIER_RATIO	6.0f
+
+static botPathNodeSpawn_t	s_botPathNodeSpawns[MAX_BOT_PATH_NODES];
+static int			s_botPathNodeSpawnCount;
+static botPathNodeSpawn_t	s_routeSpawnsScratch[MAX_BOT_PATH_NODES];
+static botPathNode_t		s_routeNodesScratch[MAX_BOT_PATH_NODES];
+
+static void G_ResetBotPathNodeSpawns( void ) {
+	s_botPathNodeSpawnCount = 0;
+}
+
+static void G_CollectBotPathNodeSpawn( gentity_t *ent ) {
+	botPathNodeSpawn_t *node;
+	int pathId;
+	int order;
+	float targetSpeed;
+	float width;
+	int trackLengthMask;
+	char *reversedValue;
+	int reversedMode;
+	vec3_t origin;
+
+	if ( s_botPathNodeSpawnCount >= MAX_BOT_PATH_NODES ) {
+		G_Printf( "bot_path_node ignored: MAX_BOT_PATH_NODES (%d) reached\n", MAX_BOT_PATH_NODES );
+		return;
+	}
+
+	G_SpawnInt( "pathId", "0", &pathId );
+	pathId = G_BotPath_ClampPathId( pathId );
+
+	G_SpawnInt( "order", "0", &order );
+	order = G_BotPath_ClampOrder( order );
+
+	G_SpawnFloat( "targetSpeed", "-1", &targetSpeed );
+	targetSpeed = G_BotPath_ClampTargetSpeed( targetSpeed );
+
+	G_SpawnFloat( "width", "256", &width );
+	width = G_BotPath_ClampWidth( width );
+
+	G_SpawnInt( "trackLengthMask", "7", &trackLengthMask );
+	node = &s_botPathNodeSpawns[s_botPathNodeSpawnCount++];
+	node->trackLengthMaskRaw = trackLengthMask;
+	trackLengthMask = G_BotPath_NormalizeTrackLengthMask( trackLengthMask, &node->trackLengthMaskValid );
+
+	G_SpawnString( "reversed", "0", &reversedValue );
+	reversedMode = G_BotPath_ParseReversedMode( reversedValue, &node->reversedValueValid );
+
+	G_SpawnVector( "origin", "0 0 0", origin );
+	if ( ent ) {
+		VectorCopy( ent->s.origin, origin );
+	}
+
+	node->pathId = pathId;
+	node->order = order;
+	node->targetSpeed = targetSpeed;
+	node->width = width;
+	node->trackLengthMask = trackLengthMask;
+	node->reversedMode = reversedMode;
+	Q_strncpyz( node->reversedValueRaw, reversedValue, sizeof( node->reversedValueRaw ) );
+	VectorCopy( origin, node->origin );
+}
+
+static int G_BotPathNodeSpawnOrderCmp( const void *left, const void *right ) {
+	const botPathNodeSpawn_t *a = (const botPathNodeSpawn_t *)left;
+	const botPathNodeSpawn_t *b = (const botPathNodeSpawn_t *)right;
+
+	if ( a->order < b->order ) {
+		return -1;
+	}
+	if ( a->order > b->order ) {
+		return 1;
+	}
+	return 0;
+}
+
+static qboolean G_BotPathNodeMatchesTrackLength( const botPathNodeSpawn_t *node ) {
+	if ( !node ) {
+		return qfalse;
+	}
+	return G_BotPath_NodeMatchesTrackLengthMask( node->trackLengthMask, g_trackLength.integer );
+}
+
+static qboolean G_BotPathNodeMatchesReverseMode( const botPathNodeSpawn_t *node ) {
+	if ( !node ) {
+		return qfalse;
+	}
+	return G_BotPath_NodeMatchesReversedMode( node->reversedMode, g_trackReversed.integer, level.trackIsReversable );
+}
+
+static qboolean G_BotPathHasSegmentLengthOutlier( const botPathNodeSpawn_t *nodes, int nodeCount, int pathId ) {
+	int i;
+	float minLen = 0.0f;
+	float maxLen = 0.0f;
+
+	if ( !nodes || nodeCount < 2 ) {
+		return qtrue;
+	}
+
+	for ( i = 0; i < nodeCount - 1; ++i ) {
+		vec3_t seg;
+		float length;
+
+		VectorSubtract( nodes[i + 1].origin, nodes[i].origin, seg );
+		length = VectorLength( seg );
+		if ( i == 0 || length < minLen ) {
+			minLen = length;
+		}
+		if ( i == 0 || length > maxLen ) {
+			maxLen = length;
+		}
+
+		if ( length < BOT_PATH_SEGMENT_OUTLIER_MIN || length > BOT_PATH_SEGMENT_OUTLIER_MAX ) {
+			G_Printf( "G_BotPath: critical validation error pathId=%d segment[%d]=%.1f outside [%0.1f..%0.1f]\n",
+				pathId, i, length, BOT_PATH_SEGMENT_OUTLIER_MIN, BOT_PATH_SEGMENT_OUTLIER_MAX );
+			return qtrue;
+		}
+	}
+
+	if ( minLen <= 0.0f ) {
+		G_Printf( "G_BotPath: critical validation error pathId=%d invalid segment min length %.1f\n",
+			pathId, minLen );
+		return qtrue;
+	}
+
+	if ( maxLen / minLen > BOT_PATH_SEGMENT_OUTLIER_RATIO ) {
+		G_Printf( "G_BotPath: critical validation error pathId=%d segment outlier ratio %.2f (max=%.1f min=%.1f)\n",
+			pathId, maxLen / minLen, maxLen, minLen );
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static void G_BuildBotPathRoutesFromSpawnNodes( void ) {
+	int pathId;
+	int totalRoutesBuilt = 0;
+	int totalNodesKept = 0;
+	int totalNodesRejected = 0;
+
+	G_BotPath_ClearAllRoutes();
+
+	for ( pathId = 0; pathId < MAX_BOT_PATH_ROUTES; ++pathId ) {
+		char routeName[32];
+		int i;
+		int filteredCount = 0;
+		int uniqueCount = 0;
+		qboolean hasCriticalValidationError = qfalse;
+		int registeredIndex;
+
+		for ( i = 0; i < s_botPathNodeSpawnCount; ++i ) {
+			const botPathNodeSpawn_t *node = &s_botPathNodeSpawns[i];
+
+			if ( node->pathId != pathId ) {
+				continue;
+			}
+			if ( !node->trackLengthMaskValid ) {
+				G_Printf( "G_BotPath: critical validation error pathId=%d order=%d invalid trackLengthMask=%d\n",
+					pathId, node->order, node->trackLengthMaskRaw );
+				hasCriticalValidationError = qtrue;
+			}
+			if ( !node->reversedValueValid ) {
+				G_Printf( "G_BotPath: critical validation error pathId=%d order=%d invalid reversed='%s'\n",
+					pathId, node->order, node->reversedValueRaw );
+				hasCriticalValidationError = qtrue;
+			}
+			if ( !G_BotPathNodeMatchesTrackLength( node ) ) {
+				totalNodesRejected++;
+				continue;
+			}
+			if ( !G_BotPathNodeMatchesReverseMode( node ) ) {
+				totalNodesRejected++;
+				continue;
+			}
+
+			if ( filteredCount >= MAX_BOT_PATH_NODES ) {
+				G_Printf( "G_BotPath: validation error pathId=%d has too many nodes after filtering (max=%d)\n",
+					pathId, MAX_BOT_PATH_NODES );
+				break;
+			}
+
+			s_routeSpawnsScratch[filteredCount++] = *node;
+		}
+
+		if ( filteredCount <= 0 ) {
+			continue;
+		}
+
+		qsort( s_routeSpawnsScratch, filteredCount, sizeof( s_routeSpawnsScratch[0] ), G_BotPathNodeSpawnOrderCmp );
+
+		for ( i = 0; i < filteredCount; ++i ) {
+			if ( uniqueCount > 0 && s_routeSpawnsScratch[i].order == s_routeSpawnsScratch[uniqueCount - 1].order ) {
+				G_Printf( "G_BotPath: critical validation error pathId=%d duplicate order=%d\n",
+					pathId, s_routeSpawnsScratch[i].order );
+				hasCriticalValidationError = qtrue;
+			}
+		}
+		uniqueCount = G_BotPath_CompressUniqueOrdersInPlace( s_routeSpawnsScratch, filteredCount );
+
+		if ( uniqueCount < BOT_PATH_ROUTE_MIN_NODES ) {
+			G_Printf( "G_BotPath: critical validation error pathId=%d discarded, not enough nodes after filtering (%d < %d)\n",
+				pathId, uniqueCount, BOT_PATH_ROUTE_MIN_NODES );
+			continue;
+		}
+
+		if ( G_BotPathHasSegmentLengthOutlier( s_routeSpawnsScratch, uniqueCount, pathId ) ) {
+			hasCriticalValidationError = qtrue;
+		}
+
+		if ( hasCriticalValidationError ) {
+			G_Printf( "G_BotPath: discarded route pathId=%d due to critical validation error(s)\n", pathId );
+			continue;
+		}
+
+		for ( i = 0; i < uniqueCount; ++i ) {
+			VectorCopy( s_routeSpawnsScratch[i].origin, s_routeNodesScratch[i].origin );
+			s_routeNodesScratch[i].width = s_routeSpawnsScratch[i].width;
+			s_routeNodesScratch[i].targetSpeed = s_routeSpawnsScratch[i].targetSpeed;
+			s_routeNodesScratch[i].effectiveWidth = s_routeSpawnsScratch[i].width;
+		}
+
+		Com_sprintf( routeName, sizeof( routeName ), "path_%d", pathId );
+		registeredIndex = G_BotPath_RegisterRoute( routeName, s_routeNodesScratch, uniqueCount );
+		if ( registeredIndex < 0 ) {
+			G_Printf( "G_BotPath: failed to register route pathId=%d (%d nodes)\n", pathId, uniqueCount );
+			continue;
+		}
+
+		totalRoutesBuilt++;
+		totalNodesKept += uniqueCount;
+	}
+
+	G_Printf( "G_BotPath: build complete, routes=%d keptNodes=%d rejectedNodes=%d collectedNodes=%d\n",
+		totalRoutesBuilt, totalNodesKept, totalNodesRejected, s_botPathNodeSpawnCount );
+}
+
 qboolean	G_SpawnString( const char *key, const char *defaultString, char **out ) {
 	int		i;
 
@@ -606,7 +860,13 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 			return;
 //		}
 	}
-// END
+	// END
+
+	if ( ent->classname && !Q_stricmp( ent->classname, "bot_path_node" ) ) {
+		G_CollectBotPathNodeSpawn( ent );
+		G_FreeEntity( ent );
+		return;
+	}
 
 	// move editor origin to pos
 	VectorCopy( ent->s.origin, ent->s.pos.trBase );
@@ -812,7 +1072,7 @@ void SP_worldspawn( void ) {
 			g_trackLength.integer = (g_trackLength.integer + 1) % 3;
 		}
 
-		// UPDATE: set g_trackLength cvar now?
+		trap_Cvar_Set( "g_trackLength", va( "%i", g_trackLength.integer ) );
 	}
 
 	G_SpawnString( "reflectionImage", "/textures/reflect/chrometest2", &s );
@@ -886,6 +1146,7 @@ void G_SpawnEntitiesFromString( void ) {
 	// allow calls to G_Spawn*()
 	level.spawning = qtrue;
 	level.numSpawnVars = 0;
+	G_ResetBotPathNodeSpawns();
 
 	// the worldspawn is not an actual entity, but it still
 	// has a "spawn" function to perform any global setup
@@ -899,6 +1160,8 @@ void G_SpawnEntitiesFromString( void ) {
 	while( G_ParseSpawnVars() ) {
 		G_SpawnGEntityFromSpawnVars();
 	}	
+
+	G_BuildBotPathRoutesFromSpawnNodes();
 
 // make sure Domination maps have a 3rd sigil
 if (g_gametype.integer == GT_DOMINATION)
