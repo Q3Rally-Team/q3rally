@@ -124,7 +124,7 @@ void InGame_Event( void *ptr, int notification ) {
 		break;
 
 	case ID_RESTART:
-		UI_ConfirmMenu( "RESTART ARENA?", 0, InGame_RestartAction );
+		UI_ConfirmMenu( "RESTART RACE?", 0, InGame_RestartAction );
 		break;
 
 	case ID_QUIT:
@@ -271,7 +271,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.restart.generic.y			= y;
 	s_ingame.restart.generic.id			= ID_RESTART;
 	s_ingame.restart.generic.callback	= InGame_Event; 
-	s_ingame.restart.string				= "RESTART ARENA";
+	s_ingame.restart.string				= "RESTART RACE";
 	s_ingame.restart.color				= color_red;
 	s_ingame.restart.style				= UI_CENTER|UI_SMALLFONT;
 	if( !trap_Cvar_VariableValue( "sv_running" ) ) {
@@ -285,7 +285,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.resume.generic.y				= y;
 	s_ingame.resume.generic.id				= ID_RESUME;
 	s_ingame.resume.generic.callback		= InGame_Event; 
-	s_ingame.resume.string					= "RESUME GAME";
+	s_ingame.resume.string					= "RESUME RACE";
 	s_ingame.resume.color					= color_red;
 	s_ingame.resume.style					= UI_CENTER|UI_SMALLFONT;
 
@@ -296,7 +296,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.leave.generic.y			= y;
 	s_ingame.leave.generic.id			= ID_LEAVEARENA;
 	s_ingame.leave.generic.callback		= InGame_Event; 
-	s_ingame.leave.string				= "LEAVE ARENA";
+	s_ingame.leave.string				= "LEAVE RACE";
 	s_ingame.leave.color				= color_red;
 	s_ingame.leave.style				= UI_CENTER|UI_SMALLFONT;
 

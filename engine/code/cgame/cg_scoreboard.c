@@ -141,6 +141,7 @@ static void CG_InitScoreboardColumns(void) {
     int totalContentWidth;
     qboolean showScore, showDeaths, showTimes, showLapTimes, showDelta;
     qboolean isRacing, isTeam;
+    qboolean ghostDeltaEnabled;
     
     /* Clear all columns first */
     for (i = 0; i < SBCOL_MAX; i++) {
@@ -151,6 +152,7 @@ static void CG_InitScoreboardColumns(void) {
     /* Determine gametype characteristics */
     isRacing = CG_IsRacingGametype();
     isTeam = CG_IsTeamGametype();
+    ghostDeltaEnabled = (cg_ghostPlayback.integer != 0);
     
     /* Determine what to show based on gametype */
     showScore = qfalse;
@@ -167,7 +169,7 @@ static void CG_InitScoreboardColumns(void) {
             /* Pure racing - only times matter */
             showTimes = qtrue;
             showLapTimes = qtrue;
-            showDelta = qtrue;
+            showDelta = ghostDeltaEnabled;
             break;
             
         case GT_DEATHMATCH:
@@ -191,7 +193,7 @@ static void CG_InitScoreboardColumns(void) {
             showScore = qtrue;
             showTimes = qtrue;
             showLapTimes = qtrue;
-            showDelta = qtrue;
+            showDelta = ghostDeltaEnabled;
             /* No deaths in racing modes typically */
             break;
             
@@ -702,8 +704,10 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                 absMs = deltaMs < 0 ? -deltaMs : deltaMs;
                 Com_sprintf(buffer, sizeof(buffer), "%c%d.%03d", sign, absMs / 1000, absMs % 1000);
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            } else if (cg.snap && score->client == cg.snap->ps.clientNum) {
+                CG_DrawModernText(x, y, "- - -", 1, width, textColor, qfalse);
             } else {
-                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+                CG_DrawModernText(x, y, "- - -", 1, width, textColor, qfalse);
             }
             break;
             
