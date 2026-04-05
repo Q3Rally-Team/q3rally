@@ -686,6 +686,22 @@ static int CG_CalcViewValues( void ) {
 	}
 // END
 
+// Q3Rally Code Start - Intro Camera: client-side evaluation at full framerate
+	{
+		vec3_t	introCamOrigin;
+		vec3_t	introCamAngles;
+		float	introCamFov;
+
+		if ( CG_IntroCam_CalcView( introCamOrigin, introCamAngles, &introCamFov ) ) {
+			VectorCopy( introCamOrigin, cg.refdef.vieworg );
+			VectorCopy( introCamAngles, cg.refdefViewAngles );
+			AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+			cg.fov = introCamFov;
+			return CG_CalcFov();
+		}
+	}
+// Q3Rally Code END - Intro Camera
+
 	// intermission view
 	if ( ps->pm_type == PM_INTERMISSION ) {
 		VectorCopy( ps->origin, cg.refdef.vieworg );

@@ -29,6 +29,119 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TESTABLE_STATIC static
 #endif
 
+#define RALLY_INTRO_CAM_DURATION_MS 3000
+
+static vec3_t rallyIntroGridOrigin[MAX_CLIENTS];
+static vec3_t rallyIntroGridAngles[MAX_CLIENTS];
+static qboolean rallyIntroGridSaved[MAX_CLIENTS];
+
+static void G_DebugRaceStateTransitionRally( gentity_t *ent, const char *context, int oldState, int newState ) {
+	if ( !g_debugIntroCam.integer ) {
+		return;
+	}
+
+	G_Printf( "RaceStateFlip[%s]: clientNum=%d sessionTeam=%d spectatorState=%d pm_flags=%d raceState=%d->%d level.time=%d raceIntroEndTime=%d\n",
+		context ? context : "unknown",
+		ent ? ent->s.number : -1,
+		( ent && ent->client ) ? ent->client->sess.sessionTeam : -1,
+		( ent && ent->client ) ? ent->client->sess.spectatorState : -1,
+		( ent && ent->client ) ? ent->client->ps.pm_flags : -1,
+		oldState,
+		newState,
+		level.time,
+		level.raceIntroEndTime );
+}
+
+static void G_RallyClearIntroGridSnapshots( void ) {
+	int i;
+
+	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+		rallyIntroGridSaved[i] = qfalse;
+	}
+}
+
+static void G_RallySnapshotIntroGridPositions( void ) {
+	int i;
+
+	G_RallyClearIntroGridSnapshots();
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *player = &g_entities[i];
+
+		if ( !player->inuse || !player->client ) {
+			continue;
+		}
+
+		if ( player->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+			continue;
+		}
+
+		VectorCopy( player->client->ps.origin, rallyIntroGridOrigin[i] );
+		VectorCopy( player->client->ps.viewangles, rallyIntroGridAngles[i] );
+		rallyIntroGridSaved[i] = qtrue;
+	}
+}
+
+static void G_RallyIntroCountdownHandover( void ) {
+	int i;
+	qboolean hasSnapshots = qfalse;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		if ( rallyIntroGridSaved[i] ) {
+			hasSnapshots = qtrue;
+			break;
+		}
+	}
+
+	if ( !hasSnapshots ) {
+		return;
+	}
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *player = &g_entities[i];
+		gclient_t *client;
+		int beforeSessionTeam;
+		int beforeSpectatorState;
+		int beforePmFlags;
+
+		if ( !player->inuse || !player->client ) {
+			continue;
+		}
+
+		client = player->client;
+		beforeSessionTeam = client->sess.sessionTeam;
+		beforeSpectatorState = client->sess.spectatorState;
+		beforePmFlags = client->ps.pm_flags;
+
+		G_Printf( "IntroHandover before: clientNum=%d sessionTeam=%d spectatorState=%d pm_flags=%d\n",
+			i, beforeSessionTeam, beforeSpectatorState, beforePmFlags );
+
+		if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+			G_Printf( "IntroHandover after: clientNum=%d sessionTeam=%d spectatorState=%d pm_flags=%d\n",
+				i, client->sess.sessionTeam, client->sess.spectatorState, client->ps.pm_flags );
+			continue;
+		}
+
+		client->ps.pm_flags &= ~( PMF_FOLLOW | PMF_OBSERVE );
+		client->sess.spectatorState = SPECTATOR_NOT;
+		client->ps.pm_type = PM_NORMAL;
+
+		if ( rallyIntroGridSaved[i] ) {
+			VectorCopy( rallyIntroGridOrigin[i], client->ps.origin );
+			VectorCopy( rallyIntroGridAngles[i], client->ps.viewangles );
+			VectorCopy( rallyIntroGridOrigin[i], player->s.origin );
+			VectorCopy( rallyIntroGridOrigin[i], player->r.currentOrigin );
+			VectorCopy( rallyIntroGridAngles[i], player->s.angles );
+			VectorCopy( rallyIntroGridAngles[i], player->r.currentAngles );
+		}
+
+		G_Printf( "IntroHandover after: clientNum=%d sessionTeam=%d spectatorState=%d pm_flags=%d\n",
+			i, client->sess.sessionTeam, client->sess.spectatorState, client->ps.pm_flags );
+	}
+
+	G_RallyClearIntroGridSnapshots();
+}
+
 
 int GetTeamAtRank( int rank ){
 	int		i, j, count;
@@ -407,9 +520,57 @@ void RallyStarter_Think( gentity_t *ent ){
 	qboolean	start;
 	qboolean	enforceReady;
 	qboolean	ignoreBots;
+	qboolean	useIntroRaceState;
+	int			introDurationMs;
+
+	useIntroRaceState = ( g_gametype.integer == GT_RACING
+		|| g_gametype.integer == GT_RACING_DM
+		|| g_gametype.integer == GT_TEAM_RACING
+		|| g_gametype.integer == GT_TEAM_RACING_DM
+		|| g_gametype.integer == GT_SPRINT
+		|| g_gametype.integer == GT_ELIMINATION ) ? qtrue : qfalse;
+	introDurationMs = level.raceIntroDurationMs > 0 ? level.raceIntroDurationMs : RALLY_INTRO_CAM_DURATION_MS;
+	ignoreBots = g_rallyIgnoreBots.integer;
 
 	if (level.startRaceTime){
+		{
+			int oldRaceState = level.raceState;
+			level.raceState = RACE_STATE_RUNNING;
+			level.raceIntroEndTime = 0;
+			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage countdown finished -> RUNNING", oldRaceState, level.raceState );
+		}
 		return;
+	}
+
+	/* Fire intro camera as early as possible -- before the 7500ms grid guard --
+	   so players see the track preview instead of sitting on the grid.
+	   raceIntroFallback is pre-set to qtrue in G_InitGame when restart=1,
+	   so the intro only plays on the initial map load, not after every race.
+	   We count connected non-spectator clients independently of the
+	   main ready-check loop below. */
+	if ( useIntroRaceState && level.raceIntroHasSequence
+		&& level.raceState != RACE_STATE_INTRO_CAM
+		&& !level.raceIntroFallback ) {
+		int introCount = 0;
+		for ( i = 0; i < MAX_CLIENTS; i++ ) {
+			player = &g_entities[i];
+			if ( !player->inuse || !player->client ) continue;
+			if ( player->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
+			if ( (player->r.svFlags & SVF_BOT) && ignoreBots ) continue;
+			introCount++;
+		}
+		if ( introCount > 0 ) {
+			int oldRaceState = level.raceState;
+			level.raceState = RACE_STATE_INTRO_CAM;
+			level.raceIntroEndTime = level.time + introDurationMs;
+			level.raceIntroFallback = qtrue;  /* prevent re-trigger after expiry */
+			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage early intro -> INTRO_CAM", oldRaceState, level.raceState );
+			trap_SendServerCommand( -1, va( "introCamStart %d", level.time ) );
+			G_RallySnapshotIntroGridPositions();
+			ent->number = 3;
+			ent->pain_debounce_time = 0;
+			G_RallyConfigureElimination( introCount );
+		}
 	}
 
 	// if no checkpoints dont do start sequence
@@ -433,6 +594,8 @@ void RallyStarter_Think( gentity_t *ent ){
 			}
 
 			// start race right away
+			level.raceState = RACE_STATE_RUNNING;
+			level.raceIntroEndTime = 0;
 			level.startRaceTime = level.time;
 			G_RallyInitializeLapTimersAtRaceStart( level.startRaceTime );
 			trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
@@ -446,7 +609,6 @@ void RallyStarter_Think( gentity_t *ent ){
 	t = NULL;
 
 	enforceReady = g_gametype.integer != GT_SINGLE_PLAYER && g_rallyReadyCheck.integer;
-	ignoreBots = g_rallyIgnoreBots.integer;
 
 	if ( ent->number == 0 ){
 
@@ -489,12 +651,42 @@ void RallyStarter_Think( gentity_t *ent ){
 				count, g_derbyMinPlayers.integer) );
 			return;
 		}
+		/* Intro is now triggered early (before the 7500ms grid guard) if a
+		   sequence exists. If we reach here and INTRO_CAM is already active,
+		   do nothing -- the intro expiry block below handles the handover. */
+		if ( level.raceState == RACE_STATE_INTRO_CAM ) {
+			/* waiting for intro to finish */
+		}
 		else if ( start && count ){
 			ent->number = 3;
+				{
+					int oldRaceState = level.raceState;
+
+					if ( useIntroRaceState && !level.raceIntroHasSequence ) {
+						level.raceIntroFallback = qtrue;
+					}
+					level.raceState = RACE_STATE_COUNTDOWN;
+					level.raceIntroEndTime = 0;
+					G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage start -> COUNTDOWN", oldRaceState, level.raceState );
+					G_RallyClearIntroGridSnapshots();
+				}
+			ent->pain_debounce_time = 0;
 			G_RallyConfigureElimination( count );
 		}
 		else if ( level.time >= level.startTime + (g_forceEngineStart.integer * 1000) ) {
 			ent->number = 3; // force race start
+				{
+					int oldRaceState = level.raceState;
+
+					if ( useIntroRaceState && !level.raceIntroHasSequence ) {
+						level.raceIntroFallback = qtrue;
+					}
+					level.raceState = RACE_STATE_COUNTDOWN;
+					level.raceIntroEndTime = 0;
+					G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage forced start -> COUNTDOWN", oldRaceState, level.raceState );
+					G_RallyClearIntroGridSnapshots();
+				}
+			ent->pain_debounce_time = 0;
 			G_RallyConfigureElimination( count );
 		}
 		else if (ent->number == 0 && level.time > level.startTime + (g_forceEngineStart.integer * 1000) - 10000){
@@ -506,10 +698,37 @@ void RallyStarter_Think( gentity_t *ent ){
 		}
 	}
 
-	if ( ent->pain_debounce_time == 0 )
+	if ( level.raceState == RACE_STATE_INTRO_CAM ) {
+		if ( level.time < level.raceIntroEndTime ) {
+			return;
+		}
+
+		{
+			int oldRaceState = level.raceState;
+			level.raceState = RACE_STATE_COUNTDOWN;
+			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage intro expired -> COUNTDOWN", oldRaceState, level.raceState );
+		}
+		G_RallyIntroCountdownHandover();
 		ent->pain_debounce_time = level.time;
+	}
+
+	if ( ent->pain_debounce_time == 0 ) {
+		{
+			int oldRaceState = level.raceState;
+			level.raceState = RACE_STATE_COUNTDOWN;
+			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage countdown bootstrap", oldRaceState, level.raceState );
+		}
+		G_RallyIntroCountdownHandover();
+		ent->pain_debounce_time = level.time;
+	}
 
 	if ( level.time > ent->pain_debounce_time + 5000 ){
+		{
+			int oldRaceState = level.raceState;
+			level.raceState = RACE_STATE_RUNNING;
+			level.raceIntroEndTime = 0;
+			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage countdown finished -> RUNNING", oldRaceState, level.raceState );
+		}
 		level.startRaceTime = level.time;
 		// Snapshot how many players were present at race start.
 		// Used by CheckExitRules to prevent a solo-start instant win.

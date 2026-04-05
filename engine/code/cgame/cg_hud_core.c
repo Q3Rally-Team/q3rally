@@ -695,6 +695,11 @@ float CG_DrawUpperRightHUD( float y ) {
         return y;
     }
 
+    /* Suppress all racing HUD elements during the intro camera sequence */
+    if ( CG_IntroCam_IsActive() ) {
+        return y;
+    }
+
     if ( isRallyRace() ) {
         float timesStart = y;
         float timesY     = y;

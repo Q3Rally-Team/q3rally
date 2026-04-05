@@ -522,6 +522,9 @@ cgs.scores4 = atoi( CG_ConfigString( CS_SCORES4 ) );
 // END
 cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
 cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
+// Q3Rally Code Start - Intro Camera
+CG_IntroCam_ParseConfigstring();
+// Q3Rally Code END
 if( cgs.gametype == GT_CTF ) {
 		s = CG_ConfigString( CS_FLAGSTATUS );
 		cgs.redflag = s[0] - '0';
@@ -698,6 +701,11 @@ static void CG_ConfigStringModified( void ) {
 		}
 	}
 	// Q3Rally Code END - KOTH
+	// Q3Rally Code Start - Intro Camera
+	else if ( num == CS_INTRO_CAM ) {
+		CG_IntroCam_ParseConfigstring();
+	}
+	// Q3Rally Code END - Intro Camera
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();
 	}
@@ -1982,6 +1990,11 @@ static void CG_ServerCommand( void ) {
 		i1 = atoi(CG_Argv(1));
 		i2 = atoi(CG_Argv(2));
 		CG_FinishedRace( i1, i2 );
+		return;
+	}
+
+	if ( !strcmp( cmd, "introCamStart" ) ) {
+		CG_IntroCam_SetStartTime( atoi( CG_Argv( 1 ) ) );
 		return;
 	}
 // END

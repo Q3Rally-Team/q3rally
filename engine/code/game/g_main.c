@@ -137,6 +137,8 @@ vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
 vmCvar_t	g_rallyReadyCheck;
 vmCvar_t	g_derbyMinPlayers;
+vmCvar_t	g_rallyIntroCamClients;
+vmCvar_t	g_debugIntroCam;
 vmCvar_t	g_rallyIgnoreBots;
 vmCvar_t	g_aiDmnetDebugExport;
 vmCvar_t	g_aiDmnetDebugExportPath;
@@ -291,6 +293,9 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_developer, "developer", "0", 0, 0, qfalse },
 { &g_rallyReadyCheck, "g_rallyReadyCheck", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_derbyMinPlayers, "g_derbyMinPlayers", "2", CVAR_ARCHIVE, 0, qfalse },
+// 0 = spectators/race observers only, 1 = all human clients before race start
+{ &g_rallyIntroCamClients, "g_rallyIntroCamClients", "1", CVAR_ARCHIVE, 0, qfalse },
+{ &g_debugIntroCam, "g_debugIntroCam", "0", CVAR_ARCHIVE, 0, qfalse },
 { &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
 { &g_aiDmnetDebugExport, "g_aiDmnetDebugExport", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_aiDmnetDebugExportPath, "g_aiDmnetDebugExportPath", "logs/ai_dmnet_debug.csv", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
@@ -1280,6 +1285,14 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// set some level globals
 	memset( &level, 0, sizeof( level ) );
+	level.raceState = RACE_STATE_NONE;
+	level.raceIntroEndTime = 0;
+	/* Preserve restart flag so the intro camera knows not to play again.
+	   raceIntroFallback=qtrue suppresses the early-intro trigger in
+	   RallyStarter_Think for all map_restart calls within a session. */
+	if ( restart ) {
+		level.raceIntroFallback = qtrue;
+	}
         level.time = levelTime;
         level.startTime = levelTime;
         level.ladderStartEpoch = trap_RealTime( &level.ladderStartTime );
@@ -1909,7 +1922,15 @@ void CalculateRanks( void ) {
 		score = 0;
 		for ( i = 0;  i < level.numPlayingClients; i++ ) {
 			cl = &level.clients[ level.sortedClients[i] ];
-			newScore = cl->ps.persistant[PERS_SCORE];
+			if ( isRallyRace() ) {
+				/* In rally races every player has the same PERS_SCORE (0),
+				   so use STAT_POSITION to detect ties instead. Positions
+				   are unique per player, so ties are extremely rare and
+				   only occur when two players genuinely share a position. */
+				newScore = cl->ps.stats[STAT_POSITION];
+			} else {
+				newScore = cl->ps.persistant[PERS_SCORE];
+			}
 			if ( i == 0 || newScore != score ) {
 				rank = i;
 				// assume we aren't tied until the next client is checked
@@ -2841,6 +2862,9 @@ void CheckTournament( void ) {
 		int		counts[TEAM_NUM_TEAMS];
 		qboolean	notEnough = qfalse;
 
+		level.raceState = RACE_STATE_NONE;
+		level.raceIntroEndTime = 0;
+
 		if ( g_gametype.integer >= GT_TEAM ) {
 			counts[TEAM_BLUE] = TeamCount( -1, TEAM_BLUE );
 			counts[TEAM_RED] = TeamCount( -1, TEAM_RED );
@@ -3119,6 +3143,8 @@ void G_RunFrame( int levelTime ) {
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted ) {
 // STONELANCE
+		level.raceState = RACE_STATE_NONE;
+		level.raceIntroEndTime = 0;
 		level.startRaceTime = 0;
 		level.finishRaceTime = 0;
 		level.winnerNumber = -1;

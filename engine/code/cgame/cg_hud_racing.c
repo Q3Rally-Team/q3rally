@@ -49,6 +49,10 @@ float CG_DrawArrowToCheckpoint( float y ) {
 	refEntity_t	ent;
 	vec3_t		mins, maxs, v;
 
+	/* Suppress checkpoint arrow and Wrong Way during intro camera */
+	if ( CG_IntroCam_IsActive() )
+		return y;
+
 	if ( cg_entities[cg.snap->ps.clientNum].finishRaceTime )
 		return y;
 

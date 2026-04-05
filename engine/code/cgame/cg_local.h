@@ -2130,6 +2130,14 @@ void CG_DropOil( centity_t *cent );
 void CG_StartFlameTrail( centity_t *cent );
 void CG_DropBio( centity_t *cent );
 
+//
+// cg_rally_intro_cam.c
+//
+void        CG_IntroCam_ParseConfigstring( void );
+void        CG_IntroCam_SetStartTime( int serverTime );
+qboolean    CG_IntroCam_IsActive( void );
+qboolean    CG_IntroCam_CalcView( vec3_t originOut, vec3_t anglesOut, float *fovOut );
+
 // Q3Rally Code END
 
 

@@ -2742,6 +2742,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_rally_rearweapons.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_scripted_objects.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_tools.o \
+  $(B)/$(BASEGAME)/cgame/cg_rally_intro_cam.o \
   $(B)/$(BASEGAME)/cgame/cg_scoreboard.o \
   $(B)/$(BASEGAME)/cgame/cg_servercmds.o \
   $(B)/$(BASEGAME)/cgame/cg_snapshot.o \

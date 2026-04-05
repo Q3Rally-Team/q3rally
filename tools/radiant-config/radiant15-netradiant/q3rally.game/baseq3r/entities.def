@@ -2658,6 +2658,13 @@ Mapper-definierter Botpfad-Knoten für Racing-Bot-Navigation.
 
 /*QUAKED info_observer_spot (0 .9 .1) (-8 -8 -8) (8 8 8) 0 1 2 3
 "target"	info_null or other entity with same targetname used to aim the camera (creates a fixed camera)
+"sequence"	Sequenzname für Observer-Cam-Sequenzen (nur "intro" wird genutzt, default: intro wenn nicht gesetzt)
+"intro"		Alias für sequence-Filter (1/0, true/false, yes/no oder "intro"; default: aktiv)
+"order"		Sortierreihenfolge innerhalb der Intro-Sequenz (default: Spawn-Reihenfolge)
+"duration"	Dauer des Intro-Schritts in Sekunden (default: 1.0)
+"lookat"	Explizites LookAt als Weltkoordinate "x y z" (default: nicht gesetzt)
+"lookat_target"	targetname eines Entities, dessen Origin als LookAt genutzt wird (default: nicht gesetzt)
+"fov"		Kamera-FOV für den Intro-Schritt (default: 90)
 
 SPAWNFLAGS
 

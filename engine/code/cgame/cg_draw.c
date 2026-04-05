@@ -3314,6 +3314,11 @@ static qboolean CG_DrawFollow( void ) {
 	if ( !(cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
 		return qfalse;
 	}
+
+	/* Don't show "following <player>" during the intro camera sequence */
+	if ( CG_IntroCam_IsActive() ) {
+		return qfalse;
+	}
     
     CG_SetScreenPlacement(PLACE_CENTER, PLACE_TOP);
     

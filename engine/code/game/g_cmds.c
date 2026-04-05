@@ -937,6 +937,15 @@ void Cmd_Team_f( gentity_t *ent ) {
 }
 
 
+static qboolean G_BlockSpectatorToggleDuringIntro( gentity_t *ent ) {
+	if ( level.raceState != RACE_STATE_INTRO_CAM || level.raceIntroEndTime <= level.time ) {
+		return qfalse;
+	}
+
+	trap_SendServerCommand( ent - g_entities, "print \"Track preview active - spectator mode is locked.\\n\"" );
+	return qtrue;
+}
+
 /*
 =================
 Cmd_Follow_f
@@ -945,6 +954,10 @@ Cmd_Follow_f
 void Cmd_Follow_f( gentity_t *ent ) {
 	int		i;
 	char	arg[MAX_TOKEN_CHARS];
+
+	if ( G_BlockSpectatorToggleDuringIntro( ent ) ) {
+		return;
+	}
 
 	if ( trap_Argc() != 2 ) {
 		if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
@@ -996,6 +1009,10 @@ Cmd_FollowCycle_f
 void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 	int		clientnum;
 	int		original;
+
+	if ( G_BlockSpectatorToggleDuringIntro( ent ) ) {
+		return;
+	}
 
 	// if they are playing a tournement game, count as a loss
 // STONELANCE - removed gametype

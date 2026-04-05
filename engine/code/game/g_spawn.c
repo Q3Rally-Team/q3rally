@@ -1161,6 +1161,7 @@ void G_SpawnEntitiesFromString( void ) {
 		G_SpawnGEntityFromSpawnVars();
 	}	
 
+	G_ObserverCamSequence_Finalize();
 	G_BuildBotPathRoutesFromSpawnNodes();
 
 // make sure Domination maps have a 3rd sigil

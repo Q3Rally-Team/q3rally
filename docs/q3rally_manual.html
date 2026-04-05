@@ -168,6 +168,7 @@ li { margin-bottom:4px;line-height:1.6 }
     <button class="tab-btn" onclick="switchTab('ladder')" data-tab="ladder"><span>🏆</span> Ladder</button>
     <button class="tab-btn" onclick="switchTab('cvars')" data-tab="cvars"><span>⚙️</span> CVars</button>
     <button class="tab-btn" onclick="switchTab('mapping')" data-tab="mapping"><span>🔧</span> Mapping</button>
+    <button class="tab-btn" onclick="switchTab('bots')" data-tab="bots"><span>🤖</span> Bots</button>
     <button class="tab-btn" onclick="switchTab('building')" data-tab="building"><span>🔨</span> Building</button>
   </div>
 </nav>
@@ -816,10 +817,156 @@ elimination "1"</pre>
   <p>Display priority: if both <code>ARTIST</code> and <code>TITLE</code> are present the overlay shows <em>Artist — Title</em>. If only <code>TITLE</code> is set it shows the title alone. Files without tags fall back to the filename-derived display name — existing behaviour is fully preserved.</p>
   <p>Menu music rotation uses a separate path: place any <code>.ogg</code> file prefixed with <code>menumusic</code> in <code>baseq3r/music/</code> to add it to the main-menu auto-play rotation.</p>
 
-  <div class="callout"><strong>Racing Bot Waypoints</strong>Bots navigate from <code>.ghost</code> replay files. The server loads the fastest ghost route, samples waypoints, and uses them for steering with a fixed lookahead and smoothed target speed. Legacy <code>.bpd</code> bezier paths are also supported. The full Ghost Converter and in-game recording commands (<code>recordRacingLine start/stop/save</code>) are planned but not yet in the production build.</div>
+
 </section>
 
 <!-- ═══════════════ BUILDING ═══════════════ -->
+<!-- =============== BOTS =============== -->
+<section class="tab-panel" id="tab-bots">
+  <div class="section-eyebrow">AI &amp; Bot Navigation</div>
+  <h2>Racing Bot Systems</h2>
+  <p>Q3Rally uses two bot navigation systems that work in tandem. <strong>bot_path_node</strong> is the primary system and is set up directly in the map editor. The <strong>Ghost Bot</strong> system acts as an automatic fallback when no bot_path_nodes are present.</p>
+
+  <div class="callout green"><strong>Primary System</strong>bot_path_node is the recommended way to add bot support to a map. It requires no ghost recordings, is fully controllable from the editor, and works out of the box on any map that has the entities placed.</div>
+
+  <h3>bot_path_node &mdash; Primary System</h3>
+  <p>bot_path_node defines an ordered sequence of waypoints placed directly in the map editor. Bots follow these nodes in sequence, loop back to node 0 after the last node, and use a dynamic lookahead to smooth their path. No ghost recordings are needed.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>pathId</td><td>0</td><td>Route identifier. All nodes with the same <code>pathId</code> form one route. Multiple routes per map are supported.</td></tr>
+      <tr><td>order</td><td>&mdash;</td><td>Sequence index within its route. Must be unique per <code>pathId</code>. Nodes are sorted by this value at load time.</td></tr>
+      <tr><td>width</td><td>500</td><td>Usable track width at this node in units. The bot steers within this corridor.</td></tr>
+      <tr><td>targetSpeed</td><td>-1</td><td>Target speed override in units/s. <code>-1</code> = auto-speed (recommended for most nodes).</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>Placement Tips</strong>Place nodes at the apex of each corner and at regular intervals on straights. Use wider values on straights and narrower values in technical sections. The bot interpolates smoothly between nodes so coverage of key track features matters more than density.</div>
+
+  <h3>How bot_path_node Navigation Works</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Step</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Node selection</td><td>Each tick the bot finds the closest forward node within a hint window around the last known node index.</td></tr>
+      <tr><td>2</td><td>Dynamic lookahead</td><td>A lookahead point is projected ahead by a distance proportional to current speed (400 + speed &times; 0.35 units). The bot steers toward this point.</td></tr>
+      <tr><td>3</td><td>Width clamping</td><td>The lateral offset is clamped to the node&apos;s <code>width</code> so the bot stays on the road even when recovering from a slide.</td></tr>
+      <tr><td>4</td><td>Lap wrap</td><td>After the last node the bot resets to node 0 and continues the next lap.</td></tr>
+      <tr><td>5</td><td>Stuck recovery</td><td>If speed drops below 50 u/s for 1.5 s the bot reverses briefly, resets its lateral offset, and rejoins the route.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ghost Bot System &mdash; Fallback</h3>
+  <p>When a map has no bot_path_nodes, bots fall back to the Ghost Bot system. Ghost bots replay the fastest recorded lap for the current track variant and follow those waypoints with adaptive speed and collision awareness.</p>
+
+  <div class="callout gold"><strong>Fallback Only</strong>The Ghost Bot system activates automatically when no bot_path_nodes are found. If bot_path_nodes are present, Ghost Bot is not used regardless of whether ghost files exist.</div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Feature</th><th>bot_path_node</th><th>Ghost Bot</th></tr></thead>
+    <tbody>
+      <tr><td>Setup required</td><td>Place entities in editor</td><td>Record a ghost lap in-game</td></tr>
+      <tr><td>Quality</td><td>Consistent, editor-controlled</td><td>Mirrors the recorded human run</td></tr>
+      <tr><td>Track variants</td><td>One node set covers all variants</td><td>Separate ghost file per variant needed</td></tr>
+      <tr><td>Priority</td><td><strong>Primary</strong></td><td>Fallback (no bot_path_nodes present)</td></tr>
+      <tr><td>Fuel consumption</td><td>10% of normal rate</td><td>10% of normal rate</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Recording Ghost Files</h3>
+  <p>Drive a clean lap and save the ghost. The server picks the fastest file per track variant automatically. File naming follows the pattern <code>mapname_tl{N}_rev{0|1}_date.ghost</code>. Variant selection is based on the current <code>g_trackLength</code> and <code>g_trackReversed</code> cvars.</p>
+  <div class="callout"><strong>Ghost File Location</strong>Ghost files are stored in <code>baseq3r/ghosts/</code>. The server loads all matching files on map start and builds a route pool from the top-5 fastest per track variant.</div>
+
+  <h3>Fuel Behaviour</h3>
+  <p>Both bot systems consume fuel at 10% of the normal rate. Bots effectively never run out of fuel during a normal race. The reduction is applied server-side after each physics tick and has no effect on human players.</p>
+
+  <h3>Debug Export</h3>
+  <p>Set <code>g_aiDmnetDebugExport 2</code> and <code>g_aiDmnetDebugExportPath "logs/ai_dmnet_debug.jsonl"</code> to record a JSONL tick stream for analysis.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>pathId</td><td><code>-1</code> = Ghost Bot active &nbsp;|&nbsp; <code>0+</code> = bot_path_node route index.</td></tr>
+      <tr><td>nodeIndex</td><td>Current closest node or waypoint index.</td></tr>
+      <tr><td>actualSpeed / targetSpeed</td><td>Current vs desired speed in units/s.</td></tr>
+      <tr><td>recoveryState</td><td><code>none</code>, <code>stuck_detect</code>, <code>reverse_unwind</code>, <code>rejoin_route</code>, <code>emergency_reset</code>.</td></tr>
+      <tr><td>collisionRisk</td><td><code>1</code> = predicted conflict with another vehicle within ~90 units ahead.</td></tr>
+      <tr><td>routeDeviation</td><td>Distance from bot to current node center. Use to verify the bot is on-route.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- =============== BOTS =============== -->
+<section class="tab-panel" id="tab-bots">
+  <div class="section-eyebrow">AI &amp; Bot Navigation</div>
+  <h2>Racing Bot Systems</h2>
+  <p>Q3Rally uses two bot navigation systems that work in tandem. <strong>bot_path_node</strong> is the primary system and is set up directly in the map editor. The <strong>Ghost Bot</strong> system acts as an automatic fallback when no bot_path_nodes are present.</p>
+
+  <div class="callout green"><strong>Primary System</strong>bot_path_node is the recommended way to add bot support to a map. It requires no ghost recordings, is fully controllable from the editor, and works out of the box on any map that has the entities placed.</div>
+
+  <h3>bot_path_node &mdash; Primary System</h3>
+  <p>bot_path_node defines an ordered sequence of waypoints placed directly in the map editor. Bots follow these nodes in sequence, loop back to node 0 after the last node, and use a dynamic lookahead to smooth their path. No ghost recordings are needed.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>pathId</td><td>0</td><td>Route identifier. All nodes with the same <code>pathId</code> form one route. Multiple routes per map are supported.</td></tr>
+      <tr><td>order</td><td>&mdash;</td><td>Sequence index within its route. Must be unique per <code>pathId</code>. Nodes are sorted by this value at load time.</td></tr>
+      <tr><td>width</td><td>500</td><td>Usable track width at this node in units. The bot steers within this corridor.</td></tr>
+      <tr><td>targetSpeed</td><td>-1</td><td>Target speed override in units/s. <code>-1</code> = auto-speed (recommended for most nodes).</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout"><strong>Placement Tips</strong>Place nodes at the apex of each corner and at regular intervals on straights. Use wider values on straights and narrower values in technical sections. The bot interpolates smoothly between nodes so coverage of key track features matters more than density.</div>
+
+  <h3>How bot_path_node Navigation Works</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Step</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Node selection</td><td>Each tick the bot finds the closest forward node within a hint window around the last known node index.</td></tr>
+      <tr><td>2</td><td>Dynamic lookahead</td><td>A lookahead point is projected ahead by a distance proportional to current speed (400 + speed &times; 0.35 units). The bot steers toward this point.</td></tr>
+      <tr><td>3</td><td>Width clamping</td><td>The lateral offset is clamped to the node&apos;s <code>width</code> so the bot stays on the road even when recovering from a slide.</td></tr>
+      <tr><td>4</td><td>Lap wrap</td><td>After the last node the bot resets to node 0 and continues the next lap.</td></tr>
+      <tr><td>5</td><td>Stuck recovery</td><td>If speed drops below 50 u/s for 1.5 s the bot reverses briefly, resets its lateral offset, and rejoins the route.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ghost Bot System &mdash; Fallback</h3>
+  <p>When a map has no bot_path_nodes, bots fall back to the Ghost Bot system. Ghost bots replay the fastest recorded lap for the current track variant and follow those waypoints with adaptive speed and collision awareness.</p>
+
+  <div class="callout gold"><strong>Fallback Only</strong>The Ghost Bot system activates automatically when no bot_path_nodes are found. If bot_path_nodes are present, Ghost Bot is not used regardless of whether ghost files exist.</div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Feature</th><th>bot_path_node</th><th>Ghost Bot</th></tr></thead>
+    <tbody>
+      <tr><td>Setup required</td><td>Place entities in editor</td><td>Record a ghost lap in-game</td></tr>
+      <tr><td>Quality</td><td>Consistent, editor-controlled</td><td>Mirrors the recorded human run</td></tr>
+      <tr><td>Track variants</td><td>One node set covers all variants</td><td>Separate ghost file per variant needed</td></tr>
+      <tr><td>Priority</td><td><strong>Primary</strong></td><td>Fallback (no bot_path_nodes present)</td></tr>
+      <tr><td>Fuel consumption</td><td>10% of normal rate</td><td>10% of normal rate</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Recording Ghost Files</h3>
+  <p>Drive a clean lap and save the ghost. The server picks the fastest file per track variant automatically. File naming follows the pattern <code>mapname_tl{N}_rev{0|1}_date.ghost</code>. Variant selection is based on the current <code>g_trackLength</code> and <code>g_trackReversed</code> cvars.</p>
+  <div class="callout"><strong>Ghost File Location</strong>Ghost files are stored in <code>baseq3r/ghosts/</code>. The server loads all matching files on map start and builds a route pool from the top-5 fastest per track variant.</div>
+
+  <h3>Fuel Behaviour</h3>
+  <p>Both bot systems consume fuel at 10% of the normal rate. Bots effectively never run out of fuel during a normal race. The reduction is applied server-side after each physics tick and has no effect on human players.</p>
+
+  <h3>Debug Export</h3>
+  <p>Set <code>g_aiDmnetDebugExport 2</code> and <code>g_aiDmnetDebugExportPath "logs/ai_dmnet_debug.jsonl"</code> to record a JSONL tick stream for analysis.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>pathId</td><td><code>-1</code> = Ghost Bot active &nbsp;|&nbsp; <code>0+</code> = bot_path_node route index.</td></tr>
+      <tr><td>nodeIndex</td><td>Current closest node or waypoint index.</td></tr>
+      <tr><td>actualSpeed / targetSpeed</td><td>Current vs desired speed in units/s.</td></tr>
+      <tr><td>recoveryState</td><td><code>none</code>, <code>stuck_detect</code>, <code>reverse_unwind</code>, <code>rejoin_route</code>, <code>emergency_reset</code>.</td></tr>
+      <tr><td>collisionRisk</td><td><code>1</code> = predicted conflict with another vehicle within ~90 units ahead.</td></tr>
+      <tr><td>routeDeviation</td><td>Distance from bot to current node center. Use to verify the bot is on-route.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
 <section class="tab-panel" id="tab-building">
   <div class="eyebrow">Compilation</div>
   <h2>Building Q3Rally</h2>
