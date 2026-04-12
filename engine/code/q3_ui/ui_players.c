@@ -1309,6 +1309,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	//
 	// add the license plate
 	//
+	// NOTE: UI has no in-game invisibility powerup state here; only tag/model availability is checked.
 	if (UI_TagExists(pi->bodyModel, "tag_plate")){
 		plate.frame = 0;
 		plate.hModel = pi->plateModel;
@@ -1320,6 +1321,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 
 		VectorCopy( origin, plate.lightingOrigin );
 		UI_PositionEntityOnTag( &plate, &body, pi->bodyModel, "tag_plate");
+		plate.shadowPlane = body.shadowPlane;
 		plate.renderfx = renderfx;
 
 		trap_R_AddRefEntityToScene( &plate );
@@ -1597,7 +1599,7 @@ static qboolean	UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, 
 	}
 
 	Com_sprintf( filename, sizeof( filename ), "models/players/plates/%s", plateName );
-	pi->plateShader = trap_R_RegisterShaderNoMip(filename);
+	pi->plateShader = trap_R_RegisterShader( filename );
 	if( !pi->plateShader ) {
 		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load plate shader: %s\n", filename );
 	}
@@ -1938,8 +1940,16 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi,  const char *modelSkinNam
 
 	// figure out plate model
 //	Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
-	if ( !Q_stricmpn( plateName, "usa_", 4 ) ){
+	if ( !Q_stricmpn( plateName, "usa_", 4 )
+		|| !Q_stricmpn( plateName, "uibot", 5 )
+		|| !Q_stricmpn( plateName, "player", 6 ) ){
 		Q_strncpyz( pi->plateName, "plate_usa", sizeof( pi->plateName ) );
+		if ( !Q_stricmpn( plateName, "uibot", 5 ) ) {
+			Com_Printf( "RIVALS: Detected generated bot plate '%s' -> pi->plateName '%s'\n", plateName, pi->plateName );
+		}
+		if ( !Q_stricmpn( plateName, "player", 6 ) ) {
+			Com_Printf( "RIVALS: Detected generated player-style plate '%s' -> pi->plateName '%s'\n", plateName, pi->plateName );
+		}
 //		CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 10);
 	}
 	else{
@@ -2159,4 +2169,3 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 */
 // END
 }
-

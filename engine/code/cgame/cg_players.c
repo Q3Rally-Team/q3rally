@@ -4022,7 +4022,7 @@ if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
 
     headlight.hModel = cgs.media.headLightGlow;
     if ( !headlight.hModel ) {
-        return;
+        goto skip_headlights;
     }
 
     VectorCopy( cent->lerpOrigin, headlight.lightingOrigin );
@@ -4058,44 +4058,30 @@ if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
         trap_R_AddRefEntityToScene( &headlight );
     }
 }
+skip_headlights:;
 
-/* Add the backlights (tag provides only position; beam uses vehicle backward axis) */
+/* Ruecklichter — dim red glow whenever headlights are on */
 if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
      !(cent->currentState.powerups & (1 << PW_INVIS)) ) {
-
-vec3_t back;     /* vehicle backward direction from body axis */
-int    i;
-
-backlight.hModel = cgs.media.brakeLightGlow;
-if ( !backlight.hModel ) {
-    return;
-}
-
-VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
-    backlight.shadowPlane = shadowPlane;
-    backlight.renderfx    = renderfx;
-
-    /* body.axis[0] points forward, so use the opposite for backlights */
-    VectorScale( body.axis[0], -1, back );
-
-    for ( i = 0; i < 3; i++ ) {
-        vec3_t beamPos;
-        char   tagname[32];
-
-        Com_sprintf( tagname, sizeof(tagname), "tag_blite%d", i + 1 );
-        if ( !CG_TagExists( ci->bodyModel, tagname ) ) {
-            continue;
+    int i;
+    vec3_t back;
+    backlight.hModel = cgs.media.brakeLightGlow;
+    if ( backlight.hModel ) {
+        VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
+        backlight.shadowPlane = shadowPlane;
+        backlight.renderfx    = renderfx;
+        VectorScale( body.axis[0], -1, back );
+        for ( i = 0; i < 3; i++ ) {
+            vec3_t beamPos;
+            char   tagname[32];
+            Com_sprintf( tagname, sizeof(tagname), "tag_blite%d", i + 1 );
+            if ( !CG_TagExists( ci->bodyModel, tagname ) ) continue;
+            CG_PositionEntityOnTag( &backlight, &body, ci->bodyModel, tagname );
+            trap_R_AddRefEntityToScene( &backlight );
+            /* Dim additive red — standlicht, weaker than brakelights */
+            VectorMA( backlight.origin, 40, back, beamPos );
+            trap_R_AddAdditiveLightToScene( beamPos, 50, 0.4f, 0.0f, 0.0f );
         }
-
-        /* Position the glow model on the tag (ignoring tag orientation) */
-        CG_PositionEntityOnTag( &backlight, &body, ci->bodyModel, tagname );
-
-        /* Single additive red light cast along the vehicle backward axis */
-        VectorMA( backlight.origin, 50, back, beamPos );
-        trap_R_AddAdditiveLightToScene( beamPos, 80, 0.6f, 0.0f, 0.0f );
-
-        /* Render the backlight glow model itself at the tag */
-        trap_R_AddRefEntityToScene( &backlight );
     }
 }
 
@@ -4113,33 +4099,36 @@ VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
 		if ( CG_TagExists(ci->bodyModel, "tag_redlight") ){
 			emergencylight.hModel = trap_R_RegisterModel( "gfx/flares/red_lite.md3" );
 			if (!emergencylight.hModel) {
-				return;
+				goto skip_redlight;
 			}
 
 			CG_PositionEntityOnTag( &emergencylight, &body, ci->bodyModel, "tag_redlight");
 			trap_R_AddRefEntityToScene( &emergencylight );
+skip_redlight:;
 		}
 
 		// blue
 		if ( CG_TagExists(ci->bodyModel, "tag_bluelight") ){
 			emergencylight.hModel = trap_R_RegisterModel( "gfx/flares/blue_lite.md3" );
 			if (!emergencylight.hModel) {
-				return;
+				goto skip_bluelight;
 			}
 
 			CG_PositionEntityOnTag( &emergencylight, &body, ci->bodyModel, "tag_bluelight");
 			trap_R_AddRefEntityToScene( &emergencylight );
+skip_bluelight:;
 		}
 
 		// yellow
 		if ( CG_TagExists(ci->bodyModel, "tag_yellowlight") ) {
 			emergencylight.hModel = trap_R_RegisterModel( "gfx/flares/yellow_lite.md3" );
 			if (!emergencylight.hModel) {
-				return;
+				goto skip_yellowlight;
 			}
 
 			CG_PositionEntityOnTag( &emergencylight, &body, ci->bodyModel, "tag_yellowlight");
 			trap_R_AddRefEntityToScene( &emergencylight );
+skip_yellowlight:;
 		}
 	}
 
@@ -4150,7 +4139,7 @@ VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
 		!(cent->currentState.powerups & ( 1 << PW_INVIS ))){
 		brakelight.hModel = cgs.media.brakeLightGlow;
 		if (!brakelight.hModel) {
-			return;
+			goto skip_brakelights;
 		}
 
 		VectorCopy( cent->lerpOrigin, brakelight.lightingOrigin );
@@ -4158,13 +4147,19 @@ VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
 		brakelight.renderfx = renderfx;
 
 		for (i = 0; i < 3; i++){
+			vec3_t brakeback, brakebeam;
 			Com_sprintf(filename, sizeof(filename), "tag_blite%d", i+1);
 			if (!CG_TagExists(ci->bodyModel, filename)) continue;
 
 			CG_PositionEntityOnTag( &brakelight, &body, ci->bodyModel, filename);
 			trap_R_AddRefEntityToScene( &brakelight );
+			/* Additive red light behind the vehicle */
+			VectorScale( body.axis[0], -1, brakeback );
+			VectorMA( brakelight.origin, 40, brakeback, brakebeam );
+			trap_R_AddAdditiveLightToScene( brakebeam, 100, 0.8f, 0.0f, 0.0f );
 		}
 	}
+skip_brakelights:;
 
 	//
 	// add the reverselights
@@ -4174,12 +4169,15 @@ VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
 		!(cent->currentState.powerups & ( 1 << PW_INVIS ))){
 		reverselight.hModel = cgs.media.reverseLightGlow;
 		if (!reverselight.hModel) {
-			return;
+			goto skip_reverselights;
 		}
 
+		{
+		vec3_t revback, revbeam;
 		VectorCopy( cent->lerpOrigin, reverselight.lightingOrigin );
 		reverselight.shadowPlane = shadowPlane;
 		reverselight.renderfx = renderfx;
+		VectorScale( body.axis[0], -1, revback );
 
 		for (i = 0; i < 2; i++){
 			Com_sprintf(filename, sizeof(filename), "tag_rlite%d", i+1);
@@ -4187,8 +4185,13 @@ VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
 
 			CG_PositionEntityOnTag( &reverselight, &body, ci->bodyModel, filename);
 			trap_R_AddRefEntityToScene( &reverselight );
+			/* White additive light behind vehicle when reversing */
+			VectorMA( reverselight.origin, 40, revback, revbeam );
+			trap_R_AddAdditiveLightToScene( revbeam, 80, 0.7f, 0.7f, 0.7f );
+		}
 		}
 	}
+skip_reverselights:;
 
 
 	//

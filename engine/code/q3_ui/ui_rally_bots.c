@@ -22,8 +22,59 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "ui_local.h"
+static qhandle_t UI_GenerateBotPlateShader( const char *botName, int botIndex, char *plateShaderName, int plateShaderNameSize ) {
+    char          output[MAX_QPATH];
+    char          shaderName[MAX_QPATH];
+    qhandle_t     h;
 
-/* ---------------------------------------------------------
+    Com_sprintf( output, sizeof(output), "models/players/plates/player%d.tga", botIndex );
+    Com_sprintf( shaderName, sizeof(shaderName), "models/players/plates/player%d", botIndex );
+    CreateLicensePlateImage( "models/players/plates/usa_california.tga", output, botName, 10 );
+
+    h = trap_R_RegisterShader( shaderName );
+    if ( plateShaderName && plateShaderNameSize > 0 ) {
+        Q_strncpyz( plateShaderName, va("player%d", botIndex), plateShaderNameSize );
+    }
+    Com_Printf( "Q3R UI Plate: bot %d (%s) -> %s (handle %d)\n", botIndex, botName, shaderName, h );
+    return h;
+}
+
+/* forward declaration — defined later in this file */
+static void UI_CanonicalizeWeapon( const char *in, char *out, int outSize );
+
+/* ==========================================================
+   WEAPON TEXT -> weapon_t MAPPING
+   ========================================================== */
+
+typedef struct { const char *canon; weapon_t wp; } weaponEnumMap_t;
+static const weaponEnumMap_t s_weaponEnumMap[] = {
+    { "GAUNTLET",        WP_GAUNTLET        },
+    { "CHAINSAW",        WP_GAUNTLET        },
+    { "MACHINEGUN",      WP_MACHINEGUN      },
+    { "SHOTGUN",         WP_SHOTGUN         },
+    { "GRENADELAUNCHER", WP_GRENADE_LAUNCHER},
+    { "ROCKETLAUNCHER",  WP_ROCKET_LAUNCHER },
+    { "LIGHTNING",       WP_LIGHTNING       },
+    { "RAILGUN",         WP_RAILGUN         },
+    { "PLASMAGUN",       WP_PLASMAGUN       },
+    { "BFG10K",          WP_BFG             },
+    { "FLAMETHROWER",    WP_FLAME_THROWER   },
+};
+#define WEAPONENUMMAP_COUNT ((int)(sizeof(s_weaponEnumMap)/sizeof(s_weaponEnumMap[0])))
+
+static weapon_t UI_WeaponEnumFromText( const char *favoriteText ) {
+    char canon[32];
+    int  i;
+    if ( !favoriteText || !*favoriteText ) return WP_MACHINEGUN;
+    UI_CanonicalizeWeapon( favoriteText, canon, sizeof(canon) );
+    for ( i = 0; i < WEAPONENUMMAP_COUNT; i++ ) {
+        if ( Q_stricmp( s_weaponEnumMap[i].canon, canon ) == 0 )
+            return s_weaponEnumMap[i].wp;
+    }
+    return WP_MACHINEGUN;   /* sensible default */
+}
+
+/* ==========================================================
    Icon helper: models/players/<model>/icon_<skin>
    - Do not pass a file extension (engine resolves .tga/.jpg)
    - Fallback order: icon_<skin> -> icon_default -> placeholder
@@ -197,7 +248,7 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 }
 
 #define NAME_BUFSIZE 64
-#define DESC_BUFSIZE 128
+#define DESC_BUFSIZE 256
 #define MAX_VISIBLE_BOTS 10
 #define DESC_MAXWIDTH 750
 #define DESC_LINEHEIGHT 16
@@ -209,7 +260,7 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 #define ID_BACK  10
 
 /* semi-transparent background color */
-static vec4_t garage_background = { 0.0f, 0.0f, 0.0f, 0.25f };
+static vec4_t rivals_background = { 0.0f, 0.0f, 0.0f, 0.25f };
 
 /* Draw weapon icon to the right of the car icon; derives position from given rect (no layout change) */
 static void UI_DrawWeaponIconNextTo( int x, int y, int w, int h, const char *favoriteText ) {
@@ -231,7 +282,10 @@ static char botAIFiles[MAX_BOTS][NAME_BUFSIZE];
 static char botDescriptions[MAX_BOTS][DESC_BUFSIZE];
 static char botPersonalities[MAX_BOTS][DESC_BUFSIZE];
 static char botFavWeapon[MAX_BOTS][DESC_BUFSIZE];
+static char botPlateNames[MAX_BOTS][NAME_BUFSIZE];
 static qhandle_t botIcons[MAX_BOTS];
+static qhandle_t botPlateShaders[MAX_BOTS];
+static weapon_t  botWeapons[MAX_BOTS];
 static int botCount = 0;
 static int botPage = 0;
 static int botSelected = -1;
@@ -252,6 +306,47 @@ static playerInfo_t s_garagePlayerInfo;
 static void UI_BotsMenu_Init(void);
 static void UI_BotsMenu_DrawBotPage(void);
 
+/* Apply model, weapon and plate for a selected rival */
+static void UI_BotsMenu_SetRival( int index ) {
+    vec3_t viewAngles  = { 0, 180, 0 };
+    vec3_t moveAngles  = { 0,   0, 0 };
+    char   plate[MAX_QPATH];
+    weapon_t wp;
+
+    if ( index < 0 || index >= botCount ) return;
+
+    wp = botWeapons[index];
+
+    /*
+     * Reload/invalidate point for RIVALS:
+     * regenerate and re-register plate shader whenever a rival is (re)selected
+     * so the latest generated file is always bound.
+     */
+    botPlateShaders[index] = 0;
+    botPlateShaders[index] = UI_GenerateBotPlateShader( botNames[index], index, botPlateNames[index], sizeof(botPlateNames[index]) );
+
+    if ( botPlateNames[index][0] ) {
+        Q_strncpyz( plate, botPlateNames[index], sizeof(plate) );
+    } else {
+        trap_Cvar_VariableStringBuffer( "plate", plate, sizeof(plate) );
+        if ( !plate[0] ) Q_strncpyz( plate, "usa_california", sizeof(plate) );
+    }
+
+    UI_PlayerInfo_SetModel( &s_garagePlayerInfo, botModels[index], NULL, NULL, plate );
+
+    /* Ensure plateShader points to the exact freshly-generated shader handle. */
+    if ( botPlateShaders[index] ) {
+        Com_Printf( "RIVALS: Bot %d uses generated plate '%s' with marker '%s' (handle %d)\n",
+                    index, botPlateNames[index], plate, botPlateShaders[index] );
+        s_garagePlayerInfo.plateShader = botPlateShaders[index];
+    }
+
+    UI_PlayerInfo_SetInfo( &s_garagePlayerInfo,
+        LEGS_IDLE, TORSO_STAND,
+        viewAngles, moveAngles,
+        wp, qfalse );
+}
+
 static void UI_BotsMenu_BackEvent(void *ptr, int event) {
     if (event != QM_ACTIVATED) return;
     UI_PopMenu();
@@ -268,7 +363,7 @@ static void UI_BotsMenu_BotSelectEvent(void *ptr, int event) {
             index = botPage * MAX_VISIBLE_BOTS + i;
             if (index >= 0 && index < botCount) {
                 botSelected = index;
-                UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[botSelected], NULL, NULL, NULL);
+                UI_BotsMenu_SetRival( botSelected );
                 UI_BotsMenu_DrawBotPage();
             }
             break;
@@ -286,7 +381,7 @@ static void UI_BotsMenu_NextPage(void *ptr, int event) {
         if (botSelected < start || botSelected >= start + MAX_VISIBLE_BOTS) {
             botSelected = (start < botCount) ? start : botCount - 1;
             if (botSelected >= 0) {
-                UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[botSelected], NULL, NULL, NULL);
+                UI_BotsMenu_SetRival( botSelected );
             }
         }
         UI_BotsMenu_DrawBotPage();
@@ -302,7 +397,7 @@ static void UI_BotsMenu_PrevPage(void *ptr, int event) {
         if (botSelected < start || botSelected >= start + MAX_VISIBLE_BOTS) {
             botSelected = (start < botCount) ? start : botCount - 1;
             if (botSelected >= 0) {
-                UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[botSelected], NULL, NULL, NULL);
+                UI_BotsMenu_SetRival( botSelected );
             }
         }
         UI_BotsMenu_DrawBotPage();
@@ -315,8 +410,17 @@ static sfxHandle_t UI_BotsMenu_Key(int key) {
 
 static void UI_BotsMenu_Draw(void) {
     int boxX = 0, boxY = 100, boxW = 640, boxH = 360;
-    UI_FillRect(boxX, boxY, boxW, boxH, garage_background);
+    UI_FillRect(boxX, boxY, boxW, boxH, rivals_background);
     Menu_Draw(&s_bots.menu);
+
+    /* Pagination counter: "Page X / Y" centered above the prev/next buttons */
+    if (botCount > MAX_VISIBLE_BOTS) {
+        int totalPages = (botCount + MAX_VISIBLE_BOTS - 1) / MAX_VISIBLE_BOTS;
+        char pageStr[32];
+        Com_sprintf(pageStr, sizeof(pageStr), "PAGE %d / %d", botPage + 1, totalPages);
+        UI_DrawProportionalString(320, 415, pageStr, UI_CENTER | UI_SMALLFONT, colorWhite);
+    }
+
     if (botSelected >= 0 && botSelected < botCount) {
         if (botIcons[botSelected]) {
             UI_DrawHandlePic(330, 375, 92, 92, botIcons[botSelected]);
@@ -331,6 +435,9 @@ static void UI_BotsMenu_Draw(void) {
         }
         UI_DrawWrappedProportional( 20, 360, DESC_MAXWIDTH, DESC_LINEHEIGHT, botDescriptions[botSelected], UI_LEFT | UI_SMALLFONT, colorYellow );
         UI_DrawPlayer(270, 0, 425, 425, &s_garagePlayerInfo, uis.realtime);
+    } else {
+        /* Empty state: no rival selected yet */
+        UI_DrawProportionalString(320, 250, "SELECT A RIVAL", UI_CENTER | UI_BIGFONT, colorWhite);
     }
 }
 
@@ -404,7 +511,10 @@ static void UI_BotsMenu_ParseBots(void) {
             Q_strncpyz(botDescriptions[botCount], description, DESC_BUFSIZE);
             Q_strncpyz(botPersonalities[botCount], personality, DESC_BUFSIZE);
             Q_strncpyz(botFavWeapon[botCount], favoriteweapon, DESC_BUFSIZE);
-            botIcons[botCount] = UI_LoadModelIconFor(model);
+            botPlateNames[botCount][0] = '\0';
+            botIcons[botCount]        = UI_LoadModelIconFor(model);
+            botWeapons[botCount]      = UI_WeaponEnumFromText(favoriteweapon);
+            botPlateShaders[botCount] = 0;
             
             botCount++;
         }
@@ -459,7 +569,7 @@ static void UI_BotsMenu_Init(void) {
     s_bots.banner.generic.type  = MTYPE_BTEXT;
     s_bots.banner.generic.x     = 320;
     s_bots.banner.generic.y     = 40;
-    s_bots.banner.string        = "THE GARAGE";
+    s_bots.banner.string        = "RIVALS";
     s_bots.banner.color         = color_white;
     s_bots.banner.style         = UI_CENTER;
 
@@ -516,7 +626,7 @@ static void UI_BotsMenu_Init(void) {
 
     if (botCount > 0) {
         botSelected = 0;
-        UI_PlayerInfo_SetModel(&s_garagePlayerInfo, botModels[0], NULL, NULL, NULL);
+        UI_BotsMenu_SetRival( 0 );
     }
     UI_BotsMenu_DrawBotPage();
 }

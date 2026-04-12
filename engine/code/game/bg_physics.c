@@ -809,6 +809,8 @@ static float PM_ApplyBodyBodyCollision( carBody_t *body1, carPoint_t *points1, c
 	//vec3_t	impulse, impulseMoment;
 	//vec3_t	cross, cross2;
 	vec3_t	diff1, diff2, delta;
+	vec3_t	diff1Normal, diff2Normal;
+	float	diff1Dot, diff2Dot;
 	//float	impulseNum, oppositeImpulseNum, impulseDen;
 	//float	totalMass;
 	int		i;
@@ -832,26 +834,32 @@ static float PM_ApplyBodyBodyCollision( carBody_t *body1, carPoint_t *points1, c
 	VectorAdd(body2->v, cross, vP2);
 */
 
-	// hacked up physics
+	// hacked up physics — improved to preserve tangential velocity
+	// Only transfer the normal component of the velocity change,
+	// so cars don't abruptly stop when colliding at an angle.
 	VectorCopy( body1->v, vP1 );
 	VectorCopy( body1->L, vP2 );
 	PM_ApplyCollision( body1, points1, at, normal, elasticity / 2.0f );
-//	VectorMA( body1->v, body2->mass / totalMass, vP2, body1->v );
-
-//	Com_Printf( "PM_ApplyBodyBodyCollision: v before %0.3f, %0.3f, %0.3f\n", body2->v[0], body2->v[1], body2->v[2] );
 
 	VectorSubtract( vP1, body1->v, diff1 );
 	VectorSubtract( vP2, body1->L, diff2 );
 
-	VectorAdd( body2->v, diff1, body2->v );
-	VectorAdd( body2->L, diff2, body2->L );
+	// Project diff onto collision normal — only transfer normal component
+	diff1Dot = DotProduct( diff1, normal );
+	VectorScale( normal, diff1Dot, diff1Normal );
+
+	diff2Dot = DotProduct( diff2, normal );
+	VectorScale( normal, diff2Dot, diff2Normal );
+
+	VectorAdd( body2->v, diff1Normal, body2->v );
+	VectorAdd( body2->L, diff2Normal, body2->L );
 
 	// compute affected auxiliary quantities
 	VectorRotate( body2->L, body2->inverseWorldInertiaTensor, body2->w );
 
 	// temp to help wheel movement when hitting walls
 	// FIXME: is this still needed?
-	VectorMA( diff1, -DotProduct(diff1, body2->up), body2->up, delta );
+	VectorMA( diff1Normal, -DotProduct(diff1Normal, body2->up), body2->up, delta );
 	for ( i = 0; i < FIRST_FRAME_POINT; i++ ){
 		VectorAdd( points2[i].v, delta, points2[i].v );
 	}
@@ -1586,12 +1594,15 @@ void PM_CalculateSecondaryQuantities( car_t *car, carBody_t *body, carPoint_t *p
 	m[1][2] = car->inverseBodyInertiaTensor[2][2] * body->t[1][2];
 	m[2][2] = car->inverseBodyInertiaTensor[2][2] * body->t[2][2];
 
-	MatrixTranspose((float(*)[3])body->t, m2);
-	MatrixMultiply(m, m2, body->inverseWorldInertiaTensor);
+	{
+		float (*bodyT)[3] = body->t;
+		MatrixTranspose(bodyT, m2);
+		MatrixMultiply(m, m2, body->inverseWorldInertiaTensor);
 
-	VectorRotate(body->L, body->inverseWorldInertiaTensor, body->w);
+		VectorRotate(body->L, body->inverseWorldInertiaTensor, body->w);
 
-	OrientationToVectors((float(*)[3])body->t, body->forward, body->right, body->up);
+		OrientationToVectors(bodyT, body->forward, body->right, body->up);
+	}
 
 	// set locations and velocities of frame points
 	PM_InitializeFrame(body, &points[FL_FRAME],  1.0f, -1.0f, 0.0f);

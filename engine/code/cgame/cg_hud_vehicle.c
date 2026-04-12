@@ -495,7 +495,7 @@ float CG_DrawSpeed( float y ) {
 		if ( len > maxLen ) maxLen = len;
 
 		rpm      = cg.predictedPlayerState.stats[STAT_RPM];
-		segments = (CP_RPM_MAX + 999) / 1000;
+		segments = (CP_RPM_MAX - CP_RPM_MIN + 999) / 1000;
 
 		barWidth    = maxLen * GIANTCHAR_WIDTH - 15;
 		blockWidth  = max( iconOffset + barWidth, rpmIconOffset + maxLen * GIANTCHAR_WIDTH );
@@ -518,7 +518,7 @@ float CG_DrawSpeed( float y ) {
 		}
 		for ( i = 0; i < segments; i++ ) {
 			float segX = x + rpmIconOffset + i * (segmentWidth + segmentGap);
-			if ( rpm >= (i + 1) * 1000 )
+			if ( rpm >= CP_RPM_MIN + i * 1000 )
 				CG_FillRect( segX, y, segmentWidth, segmentHeight, colorWhite );
 			else
 				CG_DrawRect( segX, y, segmentWidth, segmentHeight, 1, colorWhite );
@@ -614,7 +614,7 @@ float CG_DrawSpeed( float y ) {
 
 		{
 			int   rpm      = cg.predictedPlayerState.stats[STAT_RPM];
-			int   segments = (CP_RPM_MAX + 999) / 1000;
+			int   segments = (CP_RPM_MAX - CP_RPM_MIN + 999) / 1000;
 			float segGap   = 2.0f;
 			float segWidth = (fuelWidth - (segments - 1) * segGap) / segments;
 			float segX     = left + (blockWidth - fuelWidth) * 0.5f;
@@ -632,7 +632,7 @@ float CG_DrawSpeed( float y ) {
 
 			for ( i = 0; i < segments; i++ ) {
 				float xPos = segX + i * (segWidth + segGap);
-				if ( rpm >= (i + 1) * 1000 )
+				if ( rpm >= CP_RPM_MIN + i * 1000 )
 					CG_FillRect( xPos, segY, segWidth, rpmHeight, colorWhite );
 				else
 					CG_DrawRect( xPos, segY, segWidth, rpmHeight, 1, colorWhite );

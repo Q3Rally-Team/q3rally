@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CG_LOCAL_H
 #include "../qcommon/q_shared.h"
 #include "../qcommon/engine_audio_shared.h"
+#include "../qcommon/rally_plate_tools.h"
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_public.h"
 #include "../game/bg_achievements.h"
@@ -2116,10 +2117,9 @@ void CG_DrawKOTH_RespawnWave( void ); /* Q3Rally KOTH */
 qboolean CG_DrawHUD( void );
 
 //
-// cg_rally_platetools.c
+// qcommon/rally_plate_tools.c
 //
 extern int	propMap[128][3];
-void CreateLicensePlateImage(const char *input, const char *output, const char *name, int maxChars);
 
 //
 // cg_rally_rearweapons.c

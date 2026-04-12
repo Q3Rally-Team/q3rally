@@ -944,6 +944,7 @@ int				trap_FS_GetFileList(  const char *path, const char *extension, char *list
 int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 qhandle_t		trap_R_RegisterModel( const char *name );
 qhandle_t		trap_R_RegisterSkin( const char *name );
+qhandle_t		trap_R_RegisterShader( const char *name );
 qhandle_t		trap_R_RegisterShaderNoMip( const char *name );
 void			trap_R_ClearScene( void );
 void			trap_R_AddRefEntityToScene( const refEntity_t *re );

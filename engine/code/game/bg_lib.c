@@ -316,7 +316,7 @@ void *memmove(void *dest, const void *src, size_t count)
 	return dest;
 }
 
-// STONELANCE - used in cg_rally_platetools
+// STONELANCE - used in rally_plate_tools
 int memcmp( const void *lhs, const void *rhs, size_t count ) {
 	int		i;
 

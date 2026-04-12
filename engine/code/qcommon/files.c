@@ -738,6 +738,48 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 	return f;
 }
 
+
+/*
+===========
+FS_SV_WritePk3File
+
+Writes arbitrary data to a .pk3 file in the homepath without triggering
+the normal FS_CheckFilenameIsMutable restriction.  Only for internal use
+by the background-asset download system to create a minimal stored-ZIP
+that the renderer can load via the normal pak search path.
+===========
+*/
+qboolean FS_SV_WritePk3File( const char *svPath, const void *data, int size ) {
+	char		*ospath;
+	FILE		*f;
+
+	if ( !svPath || !data || size <= 0 ) {
+		return qfalse;
+	}
+
+	ospath = FS_BuildOSPath( fs_homepath->string, svPath, "" );
+	ospath[strlen(ospath)-1] = '\0';
+
+	if ( FS_CreatePath( ospath ) ) {
+		return qfalse;
+	}
+
+	f = Sys_FOpen( ospath, "wb" );
+	if ( !f ) {
+		Com_DPrintf( "FS_SV_WritePk3File: failed to open '%s'\n", ospath );
+		return qfalse;
+	}
+
+	if ( fwrite( data, 1, size, f ) != (size_t)size ) {
+		fclose( f );
+		Com_DPrintf( "FS_SV_WritePk3File: write error for '%s'\n", ospath );
+		return qfalse;
+	}
+
+	fclose( f );
+	return qtrue;
+}
+
 /*
 ===========
 FS_SV_FOpenFileRead
@@ -2155,6 +2197,38 @@ static pack_t *FS_LoadZipFile(const char *zipfile, const char *basename)
 	return pack;
 }
 
+
+/*
+=================
+FS_AddPakToSearchpaths
+
+Loads a pk3 file from an absolute OS path and prepends it to the
+search path list so that its contents are immediately accessible
+via FS_ReadFile / FS_FOpenFileRead.
+=================
+*/
+void FS_AddPakToSearchpaths( const char *ospath, const char *pakBasename )
+{
+	pack_t		*pak;
+	searchpath_t	*search;
+
+	if ( !ospath || !ospath[0] ) {
+		return;
+	}
+
+	pak = FS_LoadZipFile( ospath, pakBasename );
+	if ( !pak ) {
+		return;
+	}
+
+	search = Z_Malloc( sizeof( searchpath_t ) );
+	search->pack = pak;
+	search->dir  = NULL;
+	/* Prepend so this pak is searched before the existing paths */
+	search->next = fs_searchpaths;
+	fs_searchpaths = search;
+}
+
 /*
 =================
 FS_FreePak
@@ -2438,12 +2512,6 @@ int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int
 	if (Q_stricmp(path, "$modlist") == 0) {
 		return FS_GetModList(listbuf, bufsize);
 	}
-
-const char *extensions[] = { "RoQ", "roq"
-#if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
-			, "ogm", "ogv"
-#endif
-			};
 
 	pFiles = FS_ListFiles(path, extension, &nFiles);
 

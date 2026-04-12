@@ -41,7 +41,7 @@ MAIN MENU
 #define ID_PROFILE_ACTION               15
 
 #define ID_MODS                         16
-#define ID_GARAGE                       17
+#define ID_RIVALS                       17
 #define ID_EXIT                         18
 // Q3RALLY DOWNLOADS START
 #define ID_DOWNLOADS                    19
@@ -62,7 +62,7 @@ typedef struct {
         menutext_s              demos;
         menutext_s              cinematics;
         menutext_s              mods;
-        menutext_s              garage;
+        menutext_s              rivals;
         // Q3RALLY DOWNLOADS START
         menutext_s              downloads;
         // Q3RALLY DOWNLOADS END
@@ -235,7 +235,7 @@ void Main_MenuEvent (void* ptr, int event) {
         case ID_SINGLEPLAYER:
         case ID_MULTIPLAYER:
         case ID_SETUP:
-        case ID_GARAGE:
+        case ID_RIVALS:
         case ID_DEMOS:
         case ID_CINEMATICS:
         case ID_MODS:
@@ -277,7 +277,7 @@ void MainMenu_ChangeMenu( int menuId ){
                 UI_SetupMenu();
                 break;
 
-        case ID_GARAGE:
+        case ID_RIVALS:
                 UI_BotsMenu();
                 break;
 
@@ -318,7 +318,7 @@ void MainMenu_RunTransition( float frac ) {
         s_main.singleplayer.color = uis.text_color;
         s_main.multiplayer.color = uis.text_color;
         s_main.setup.color = uis.text_color;
-        s_main.garage.color = uis.text_color;
+        s_main.rivals.color = uis.text_color;
         s_main.cinematics.color = uis.text_color;
         s_main.demos.color = uis.text_color;
         s_main.mods.color = uis.text_color;
@@ -524,7 +524,7 @@ void UI_MainMenu( void ) {
 
 
 	y += menuSpacing;
-	InitMenuText(&s_main.garage, ID_GARAGE, "THE GARAGE", x - 10, y + 12);
+	InitMenuText(&s_main.rivals, ID_RIVALS, "RIVALS", x - 10, y + 12);
         
         
 	y += menuSpacing;
@@ -565,7 +565,7 @@ void UI_MainMenu( void ) {
         Menu_AddItem( &s_main.menu,     &s_main.singleplayer );
         Menu_AddItem( &s_main.menu,     &s_main.multiplayer );
         Menu_AddItem( &s_main.menu,     &s_main.setup );
-        Menu_AddItem( &s_main.menu,     &s_main.garage );
+        Menu_AddItem( &s_main.menu,     &s_main.rivals );
         Menu_AddItem( &s_main.menu,     &s_main.demos );
         // Q3RALLY DOWNLOADS START
         Menu_AddItem( &s_main.menu,     &s_main.downloads );

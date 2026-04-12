@@ -111,7 +111,7 @@ void *memmove( void *dest, const void *src, size_t count );
 void *memset( void *dest, int c, size_t count );
 void *memcpy( void *dest, const void *src, size_t count );
 
-// STONELANCE - used in cg_rally_platetools
+// STONELANCE - used in rally_plate_tools
 int memcmp( const void *dest, const void *src, size_t count );
 // END
 

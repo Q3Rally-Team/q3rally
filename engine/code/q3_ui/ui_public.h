@@ -56,6 +56,7 @@ typedef enum {
 	UI_FS_GETFILELIST,
 	UI_R_REGISTERMODEL,
 	UI_R_REGISTERSKIN,
+	UI_R_REGISTERSHADER,
 	UI_R_REGISTERSHADERNOMIP,
 	UI_R_CLEARSCENE,
 	UI_R_ADDREFENTITYTOSCENE,
@@ -131,7 +132,8 @@ typedef enum {
 	UI_ATAN2,
 	UI_SQRT,
 	UI_FLOOR,
-	UI_CEIL
+	UI_CEIL,
+	UI_CREATEPLATE          /* CreateLicensePlateImage(input, output, name, maxChars) */
 } uiImport_t;
 
 typedef enum {

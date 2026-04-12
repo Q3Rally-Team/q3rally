@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../client/keycodes.h"
 #include "../game/bg_public.h"
 #include "../game/profile_shared.h"
+#include "../qcommon/rally_plate_tools.h"
 
 typedef void (*voidfunc_f)(void);
 
@@ -744,6 +745,8 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi,  const char *modelSkinNam
 //
 // ui_atoms.c
 //
+extern int propMap[128][3];
+
 typedef struct {
 	int					frametime;
 	int					realtime;
@@ -862,12 +865,6 @@ extern qboolean		m_entersound;
 extern uiStatic_t	uis;
 extern vmCvar_t	ui_profileActive;
 extern vmCvar_t	ui_profileOverlaySeen;
-extern vmCvar_t	ui_menuBackOverride;
-extern vmCvar_t	ui_menuBackUrl;
-extern vmCvar_t	ui_menuBackEnable;
-extern vmCvar_t	ui_menuBackRefreshSec;
-extern vmCvar_t	ui_menuBackPath;
-extern vmCvar_t	ui_menuBackState;
 extern vmCvar_t	ui_clUuid;
 
 // Q3RALLY DOWNLOADS START
@@ -941,7 +938,9 @@ int				trap_FS_GetFileList(  const char *path, const char *extension, char *list
 int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 qhandle_t		trap_R_RegisterModel( const char *name );
 qhandle_t		trap_R_RegisterSkin( const char *name );
+qhandle_t		trap_R_RegisterShader( const char *name );
 qhandle_t		trap_R_RegisterShaderNoMip( const char *name );
+void			trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
 void			trap_R_ClearScene( void );
 void			trap_R_AddRefEntityToScene( const refEntity_t *re );
 void			trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts );

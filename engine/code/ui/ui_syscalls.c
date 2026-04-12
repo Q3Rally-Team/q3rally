@@ -137,6 +137,10 @@ qhandle_t trap_R_RegisterSkin( const char *name ) {
 	return syscall( UI_R_REGISTERSKIN, name );
 }
 
+qhandle_t trap_R_RegisterShader( const char *name ) {
+	return syscall( UI_R_REGISTERSHADER, name );
+}
+
 void trap_R_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 	syscall( UI_R_REGISTERFONT, fontName, pointSize, font );
 }
