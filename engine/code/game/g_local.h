@@ -1103,6 +1103,8 @@ void BotInterbreedEndMatch( void );
 typedef struct bot_settings_s
 {
 	char characterfile[MAX_FILEPATH];
+	char personality[32];
+	char favoriteweapon[32];
 	float skill;
 } bot_settings_t;
 

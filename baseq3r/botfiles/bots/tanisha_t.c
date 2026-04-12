@@ -285,5 +285,33 @@ chat "Tanisha"
 		// 4 = level's title
 		// 5 = random weapon from weapon list
 	} //end type
+	type "koth_contest" //initiated when the hill becomes contested
+	{
+		"Hill is contested, push in hard!";
+		"Stay sharp, we are fighting for the hill.";
+		"Dance fight on the hill, go go go!";
+	}
+
+	type "koth_capture" //initiated when our team captures the hill
+	{
+		"Hill secured, lock it down!";
+		"We have control of the hill, hold positions.";
+		"King of the hill, that is us!";
+	}
+
+	type "dom_lost_sigil" //initiated when our team loses a sigil
+	{
+		"We lost a sigil, take it back now!";
+		"Sigil lost, regroup and recover it.";
+		"Uh-oh, sigil slipped away, let us yoink it back!";
+	}
+
+	type "dom_push_sigil" //initiated when team orders switch to sigil pressure
+	{
+		"Push the next sigil, no mercy!";
+		"Advance on the next sigil together.";
+		"New target sigil, wheels up!";
+	}
+
 } //end chat
 

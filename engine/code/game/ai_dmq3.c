@@ -199,6 +199,120 @@ bot_goal_t *BotTeamFlag(bot_state_t *bs) {
 	}
 }
 
+static qboolean Bot_IsLowHealthForObjectivePush(bot_state_t *bs) {
+	if ( !bs ) {
+		return qfalse;
+	}
+	return ( bs->inventory[INVENTORY_HEALTH] > 0 && bs->inventory[INVENTORY_HEALTH] < 40 );
+}
+
+qboolean BotGetKOTHStatus(int *owner, int *contested, int *capturePct, vec3_t hillOrigin, float *hillRadius) {
+	char status[MAX_INFO_STRING];
+	int parsed;
+	int parsedOwner, parsedContested, parsedCapturePct;
+	int x, y, z, radius;
+
+	trap_GetConfigstring(CS_KOTHSTATUS, status, sizeof(status));
+	if (!status[0]) {
+		return qfalse;
+	}
+
+	parsed = sscanf(status, "%d %d %d %d %d %d %d",
+		&parsedOwner, &parsedContested, &parsedCapturePct, &x, &y, &z, &radius);
+	if (parsed < 7) {
+		return qfalse;
+	}
+
+	if (owner) {
+		*owner = parsedOwner;
+	}
+	if (contested) {
+		*contested = parsedContested;
+	}
+	if (capturePct) {
+		*capturePct = parsedCapturePct;
+	}
+	if (hillOrigin) {
+		hillOrigin[0] = x;
+		hillOrigin[1] = y;
+		hillOrigin[2] = z;
+	}
+	if (hillRadius) {
+		*hillRadius = radius;
+	}
+	return qtrue;
+}
+
+int BotGetDominationSigilGoal(bot_state_t *bs, bot_goal_t *goal, int *sigilStatus) {
+	char statusBuf[MAX_INFO_STRING];
+	bot_goal_t candidate;
+	int index;
+	int itemIndex;
+	int team;
+	int score;
+	int bestScore;
+	int bestItemIndex;
+	int bestStatus;
+	vec3_t delta;
+
+	if (!bs || !goal) {
+		return qfalse;
+	}
+
+	trap_GetConfigstring(CS_SIGILSTATUS, statusBuf, sizeof(statusBuf));
+	if (!statusBuf[0]) {
+		return qfalse;
+	}
+
+	team = BotTeam(bs);
+	itemIndex = -1;
+	index = 0;
+	bestScore = 999999;
+	bestItemIndex = -1;
+	bestStatus = SIGIL_NONE;
+
+	while (statusBuf[index]) {
+		itemIndex = trap_BotGetLevelItemGoal(itemIndex, "team_domination_sigil", &candidate);
+		if (itemIndex < 0) {
+			break;
+		}
+		switch (statusBuf[index] - '0') {
+			case SIGIL_ISWHITE:
+				score = 0;
+				break;
+			case SIGIL_ISRED:
+				score = (team == TEAM_RED) ? 3 : 1;
+				break;
+			case SIGIL_ISBLUE:
+				score = (team == TEAM_BLUE) ? 3 : 1;
+				break;
+			default:
+				score = 2;
+				break;
+		}
+
+		VectorSubtract(bs->origin, candidate.origin, delta);
+		score = score * 100000 + (int)VectorLengthSquared(delta);
+		if (score < bestScore) {
+			bestScore = score;
+			bestItemIndex = itemIndex;
+			bestStatus = statusBuf[index] - '0';
+		}
+		index++;
+	}
+
+	if (bestItemIndex < 0) {
+		return qfalse;
+	}
+	if (trap_BotGetLevelItemGoal(bestItemIndex, "team_domination_sigil", goal) < 0) {
+		return qfalse;
+	}
+	if (sigilStatus) {
+		*sigilStatus = bestStatus;
+	}
+	return qtrue;
+}
+
 
 /*
 ==================
@@ -1162,6 +1276,110 @@ void BotObeliskRetreatGoals(bot_state_t *bs) {
 	//nothing special
 }
 
+void BotDominationSeekGoals(bot_state_t *bs) {
+	int sigilStatus;
+	int team;
+
+	if (!BotGetDominationSigilGoal(bs, &bs->teamgoal, &sigilStatus)) {
+		return;
+	}
+
+	team = BotTeam(bs);
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = FloatTime() + random();
+
+	if (Bot_IsLowHealthForObjectivePush(bs) && BotFindEnemy(bs, -1)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 5;
+		BotSetTeamStatus(bs);
+		return;
+	}
+
+	if (sigilStatus == SIGIL_ISWHITE) {
+		bs->ltgtype = LTG_GETFLAG;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+	}
+	else if ((team == TEAM_RED && sigilStatus == SIGIL_ISBLUE)
+		|| (team == TEAM_BLUE && sigilStatus == SIGIL_ISRED)) {
+		bs->ltgtype = LTG_ATTACKENEMYBASE;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		bs->attackaway_time = 0;
+		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+	}
+	else {
+		bs->ltgtype = LTG_DEFENDKEYAREA;
+		bs->teamgoal_time = FloatTime() + TEAM_DEFENDKEYAREA_TIME;
+		bs->defendaway_time = 0;
+	}
+	BotSetTeamStatus(bs);
+}
+
+void BotDominationRetreatGoals(bot_state_t *bs) {
+	if (Bot_IsLowHealthForObjectivePush(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 4;
+		BotSetTeamStatus(bs);
+		return;
+	}
+	BotDominationSeekGoals(bs);
+}
+
+void BotKOTHSeekGoals(bot_state_t *bs) {
+	int owner, contested, capturePct;
+	float hillRadius;
+	vec3_t hillOrigin;
+	float radiusExtent;
+
+	if (!BotGetKOTHStatus(&owner, &contested, &capturePct, hillOrigin, &hillRadius)) {
+		return;
+	}
+
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = FloatTime() + random();
+
+	if (Bot_IsLowHealthForObjectivePush(bs) && owner != BotTeam(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 5;
+		BotSetTeamStatus(bs);
+		return;
+	}
+
+	radiusExtent = (hillRadius > 32.0f) ? hillRadius : 128.0f;
+	bs->teamgoal.entitynum = ENTITYNUM_NONE;
+	bs->teamgoal.areanum = BotPointAreaNum(hillOrigin);
+	VectorSet(bs->teamgoal.mins, -radiusExtent, -radiusExtent, -24);
+	VectorSet(bs->teamgoal.maxs, radiusExtent, radiusExtent, 48);
+	VectorCopy(hillOrigin, bs->teamgoal.origin);
+	bs->teamgoal.flags = 0;
+	bs->teamgoal.number = 0;
+	bs->teamgoal.iteminfo = 0;
+
+	if (owner == BotTeam(bs) && !contested && capturePct >= 100) {
+		bs->ltgtype = LTG_DEFENDKEYAREA;
+		bs->teamgoal_time = FloatTime() + TEAM_DEFENDKEYAREA_TIME;
+		bs->defendaway_time = 0;
+	}
+	else {
+		bs->ltgtype = LTG_ATTACKENEMYBASE;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		bs->attackaway_time = 0;
+	}
+	BotSetTeamStatus(bs);
+}
+
+void BotKOTHRetreatGoals(bot_state_t *bs) {
+	if (Bot_IsLowHealthForObjectivePush(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 4;
+		BotSetTeamStatus(bs);
+		return;
+	}
+	BotKOTHSeekGoals(bs);
+}
+
 /*
 ==================
 BotHarvesterSeekGoals
@@ -1325,6 +1543,110 @@ void BotHarvesterRetreatGoals(bot_state_t *bs) {
 }
 #endif
 
+void BotDominationSeekGoals(bot_state_t *bs) {
+	int sigilStatus;
+	int team;
+
+	if (!BotGetDominationSigilGoal(bs, &bs->teamgoal, &sigilStatus)) {
+		return;
+	}
+
+	team = BotTeam(bs);
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = FloatTime() + random();
+
+	if (Bot_IsLowHealthForObjectivePush(bs) && BotFindEnemy(bs, -1)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 5;
+		BotSetTeamStatus(bs);
+		return;
+	}
+
+	if (sigilStatus == SIGIL_ISWHITE) {
+		bs->ltgtype = LTG_GETFLAG;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+	}
+	else if ((team == TEAM_RED && sigilStatus == SIGIL_ISBLUE)
+		|| (team == TEAM_BLUE && sigilStatus == SIGIL_ISRED)) {
+		bs->ltgtype = LTG_ATTACKENEMYBASE;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		bs->attackaway_time = 0;
+		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+	}
+	else {
+		bs->ltgtype = LTG_DEFENDKEYAREA;
+		bs->teamgoal_time = FloatTime() + TEAM_DEFENDKEYAREA_TIME;
+		bs->defendaway_time = 0;
+	}
+	BotSetTeamStatus(bs);
+}
+
+void BotDominationRetreatGoals(bot_state_t *bs) {
+	if (Bot_IsLowHealthForObjectivePush(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 4;
+		BotSetTeamStatus(bs);
+		return;
+	}
+	BotDominationSeekGoals(bs);
+}
+
+void BotKOTHSeekGoals(bot_state_t *bs) {
+	int owner, contested, capturePct;
+	float hillRadius;
+	vec3_t hillOrigin;
+	float radiusExtent;
+
+	if (!BotGetKOTHStatus(&owner, &contested, &capturePct, hillOrigin, &hillRadius)) {
+		return;
+	}
+
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = FloatTime() + random();
+
+	if (Bot_IsLowHealthForObjectivePush(bs) && owner != BotTeam(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 5;
+		BotSetTeamStatus(bs);
+		return;
+	}
+
+	radiusExtent = (hillRadius > 32.0f) ? hillRadius : 128.0f;
+	bs->teamgoal.entitynum = ENTITYNUM_NONE;
+	bs->teamgoal.areanum = BotPointAreaNum(hillOrigin);
+	VectorSet(bs->teamgoal.mins, -radiusExtent, -radiusExtent, -24);
+	VectorSet(bs->teamgoal.maxs, radiusExtent, radiusExtent, 48);
+	VectorCopy(hillOrigin, bs->teamgoal.origin);
+	bs->teamgoal.flags = 0;
+	bs->teamgoal.number = 0;
+	bs->teamgoal.iteminfo = 0;
+
+	if (owner == BotTeam(bs) && !contested && capturePct >= 100) {
+		bs->ltgtype = LTG_DEFENDKEYAREA;
+		bs->teamgoal_time = FloatTime() + TEAM_DEFENDKEYAREA_TIME;
+		bs->defendaway_time = 0;
+	}
+	else {
+		bs->ltgtype = LTG_ATTACKENEMYBASE;
+		bs->teamgoal_time = FloatTime() + TEAM_ATTACKENEMYBASE_TIME;
+		bs->attackaway_time = 0;
+	}
+	BotSetTeamStatus(bs);
+}
+
+void BotKOTHRetreatGoals(bot_state_t *bs) {
+	if (Bot_IsLowHealthForObjectivePush(bs)) {
+		bs->ltgtype = LTG_GETITEM;
+		bs->teamgoal_time = FloatTime() + 4;
+		BotSetTeamStatus(bs);
+		return;
+	}
+	BotKOTHSeekGoals(bs);
+}
+
 
 // STONELANCE
 void BotRaceSeekGoals(bot_state_t *bs) {
@@ -1344,6 +1666,12 @@ void BotTeamGoals(bot_state_t *bs, int retreat) {
 		if (gametype == GT_CTF) {
 			BotCTFRetreatGoals(bs);
 		}
+		else if (gametype == GT_DOMINATION) {
+			BotDominationRetreatGoals(bs);
+		}
+		else if (gametype == GT_KOTH) {
+			BotKOTHRetreatGoals(bs);
+		}
 #ifdef MISSIONPACK
 		else if (gametype == GT_1FCTF) {
 			Bot1FCTFRetreatGoals(bs);
@@ -1360,6 +1688,12 @@ void BotTeamGoals(bot_state_t *bs, int retreat) {
 		if (gametype == GT_CTF) {
 			//decide what to do in CTF mode
 			BotCTFSeekGoals(bs);
+		}
+		else if (gametype == GT_DOMINATION) {
+			BotDominationSeekGoals(bs);
+		}
+		else if (gametype == GT_KOTH) {
+			BotKOTHSeekGoals(bs);
 		}
 #ifdef MISSIONPACK
 		else if (gametype == GT_1FCTF) {
@@ -1579,13 +1913,79 @@ BotChooseWeapon
 */
 void BotChooseWeapon(bot_state_t *bs) {
 	int newweaponnum;
+	int availabilityIndex = -1;
+	int ammoIndex = -1;
+	int originalAvailability = 0;
+	int originalAmmo = 0;
+
+	switch ( bs->favoriteWeapon ) {
+		case WP_GAUNTLET:
+			availabilityIndex = INVENTORY_GAUNTLET;
+			ammoIndex = -1;
+			break;
+		case WP_MACHINEGUN:
+			availabilityIndex = INVENTORY_MACHINEGUN;
+			ammoIndex = INVENTORY_BULLETS;
+			break;
+		case WP_SHOTGUN:
+			availabilityIndex = INVENTORY_SHOTGUN;
+			ammoIndex = INVENTORY_SHELLS;
+			break;
+		case WP_GRENADE_LAUNCHER:
+			availabilityIndex = INVENTORY_GRENADELAUNCHER;
+			ammoIndex = INVENTORY_GRENADES;
+			break;
+		case WP_ROCKET_LAUNCHER:
+			availabilityIndex = INVENTORY_ROCKETLAUNCHER;
+			ammoIndex = INVENTORY_ROCKETS;
+			break;
+		case WP_LIGHTNING:
+			availabilityIndex = INVENTORY_LIGHTNING;
+			ammoIndex = INVENTORY_LIGHTNINGAMMO;
+			break;
+		case WP_RAILGUN:
+			availabilityIndex = INVENTORY_RAILGUN;
+			ammoIndex = INVENTORY_SLUGS;
+			break;
+		case WP_PLASMAGUN:
+			availabilityIndex = INVENTORY_PLASMAGUN;
+			ammoIndex = INVENTORY_CELLS;
+			break;
+		case WP_BFG:
+			availabilityIndex = INVENTORY_BFG10K;
+			ammoIndex = INVENTORY_BFGAMMO;
+			break;
+		case WP_FLAME_THROWER:
+			availabilityIndex = INVENTORY_FLAMETHROWER;
+			ammoIndex = INVENTORY_FLAMETHROWERAMMO;
+			break;
+		default:
+			break;
+	}
 
 	if (bs->cur_ps.weaponstate == WEAPON_RAISING ||
 			bs->cur_ps.weaponstate == WEAPON_DROPPING) {
 		trap_EA_SelectWeapon(bs->client, bs->weaponnum);
 	}
 	else {
+		if ( availabilityIndex >= 0 && bs->inventory[availabilityIndex] > 0 && bs->favoriteWeaponWeightBonus > 0.0f ) {
+			originalAvailability = bs->inventory[availabilityIndex];
+			bs->inventory[availabilityIndex] += (int)bs->favoriteWeaponWeightBonus;
+			if ( ammoIndex >= 0 ) {
+				originalAmmo = bs->inventory[ammoIndex];
+				bs->inventory[ammoIndex] += (int)bs->favoriteWeaponWeightBonus;
+			}
+		}
+
 		newweaponnum = trap_BotChooseBestFightWeapon(bs->ws, bs->inventory);
+
+		if ( availabilityIndex >= 0 && originalAvailability > 0 ) {
+			bs->inventory[availabilityIndex] = originalAvailability;
+			if ( ammoIndex >= 0 ) {
+				bs->inventory[ammoIndex] = originalAmmo;
+			}
+		}
+
 		if (bs->weaponnum != newweaponnum) bs->weaponchange_time = FloatTime();
 		bs->weaponnum = newweaponnum;
 		//BotAI_Print(PRT_MESSAGE, "bs->weaponnum = %d\n", bs->weaponnum);
@@ -2251,12 +2651,15 @@ BotAggression
 ==================
 */
 float BotAggression(bot_state_t *bs) {
+	float aggression;
+
 	//if the bot has quad
 	if (bs->inventory[INVENTORY_QUAD]) {
 		//if the bot is not holding the gauntlet or the enemy is really nearby
 		if (bs->weaponnum != WP_GAUNTLET ||
 			bs->inventory[ENEMY_HORIZONTAL_DIST] < 80) {
-			return 70;
+			aggression = 70;
+			goto apply_profile;
 		}
 	}
 	//if the enemy is located way higher than the bot
@@ -2270,27 +2673,57 @@ float BotAggression(bot_state_t *bs) {
 	}
 	//if the bot can use the bfg
 	if (bs->inventory[INVENTORY_BFG10K] > 0 &&
-			bs->inventory[INVENTORY_BFGAMMO] > 7) return 100;
+			bs->inventory[INVENTORY_BFGAMMO] > 7) {
+		aggression = 100;
+		goto apply_profile;
+	}
 	//if the bot can use the railgun
 	if (bs->inventory[INVENTORY_RAILGUN] > 0 &&
-			bs->inventory[INVENTORY_SLUGS] > 5) return 95;
+			bs->inventory[INVENTORY_SLUGS] > 5) {
+		aggression = 95;
+		goto apply_profile;
+	}
 	//if the bot can use the lightning gun
 	if (bs->inventory[INVENTORY_LIGHTNING] > 0 &&
-			bs->inventory[INVENTORY_LIGHTNINGAMMO] > 50) return 90;
+			bs->inventory[INVENTORY_LIGHTNINGAMMO] > 50) {
+		aggression = 90;
+		goto apply_profile;
+	}
 	//if the bot can use the rocketlauncher
 	if (bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 &&
-			bs->inventory[INVENTORY_ROCKETS] > 5) return 90;
+			bs->inventory[INVENTORY_ROCKETS] > 5) {
+		aggression = 90;
+		goto apply_profile;
+	}
 	//if the bot can use the plasmagun
 	if (bs->inventory[INVENTORY_PLASMAGUN] > 0 &&
-			bs->inventory[INVENTORY_CELLS] > 40) return 85;
+			bs->inventory[INVENTORY_CELLS] > 40) {
+		aggression = 85;
+		goto apply_profile;
+	}
 	//if the bot can use the grenade launcher
 	if (bs->inventory[INVENTORY_GRENADELAUNCHER] > 0 &&
-			bs->inventory[INVENTORY_GRENADES] > 10) return 80;
+			bs->inventory[INVENTORY_GRENADES] > 10) {
+		aggression = 80;
+		goto apply_profile;
+	}
 	//if the bot can use the shotgun
 	if (bs->inventory[INVENTORY_SHOTGUN] > 0 &&
-			bs->inventory[INVENTORY_SHELLS] > 10) return 50;
+			bs->inventory[INVENTORY_SHELLS] > 10) {
+		aggression = 50;
+		goto apply_profile;
+	}
 	//otherwise the bot is not feeling too good
-	return 0;
+	aggression = 0;
+
+apply_profile:
+	aggression += bs->personalityAggressionBias;
+	if ( aggression < 0 ) {
+		aggression = 0;
+	} else if ( aggression > 100 ) {
+		aggression = 100;
+	}
+	return aggression;
 }
 
 /*
@@ -4807,6 +5240,10 @@ void BotCheckConsoleMessages(bot_state_t *bs) {
 				//if at a valid chat position and not chatting already and not in teamplay
 				else if (bs->ainode != AINode_Stand && BotValidChatPosition(bs) && !TeamPlayIsOn()) {
 					chat_reply = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_CHAT_REPLY, 0, 1);
+					chat_reply *= 0.60f + ( bs->personalityChatTone * 0.80f );
+					if ( chat_reply > 1.0f ) {
+						chat_reply = 1.0f;
+					}
 					if (random() < 1.5 / (NumBots()+1) && random() < chat_reply) {
 						//if bot replies with a chat message
 						if (trap_BotReplyChat(bs->cs, message, context, CONTEXT_REPLY,

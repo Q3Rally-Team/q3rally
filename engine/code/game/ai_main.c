@@ -82,6 +82,74 @@ vmCvar_t bot_interbreedbots;
 vmCvar_t bot_interbreedcycle;
 vmCvar_t bot_interbreedwrite;
 
+typedef struct bot_personality_entry_s {
+	const char *name;
+	bot_personality_profile_t profile;
+} bot_personality_entry_t;
+
+static const bot_personality_entry_t botPersonalityMap[] = {
+	{ "graceful",		{ -8.0f, 0.35f, 0.40f, 0.80f } },
+	{ "relentless",		{ 14.0f, 0.88f, 0.90f, 0.25f } },
+	{ "nimble",			{ 4.0f, 0.60f, 0.72f, 0.60f } },
+	{ "methodical",		{ -2.0f, 0.45f, 0.48f, 0.45f } },
+	{ "untamed",		{ 16.0f, 0.92f, 0.95f, 0.10f } },
+	{ "calculating",	{ 6.0f, 0.55f, 0.70f, 0.30f } },
+	{ "bulldog",		{ 12.0f, 0.86f, 0.82f, 0.20f } },
+	{ "unflappable",	{ -6.0f, 0.30f, 0.30f, 0.60f } },
+	{ "opportunist",	{ 8.0f, 0.70f, 0.85f, 0.45f } },
+	{ "playful",		{ 2.0f, 0.58f, 0.62f, 0.92f } },
+	{ "precise",		{ 0.0f, 0.46f, 0.52f, 0.48f } },
+	{ "predatory",		{ 10.0f, 0.82f, 0.88f, 0.18f } },
+	{ "suave",			{ -4.0f, 0.40f, 0.45f, 0.85f } },
+	{ "enigmatic",		{ 3.0f, 0.62f, 0.66f, 0.70f } },
+	{ "steadfast",		{ -1.0f, 0.50f, 0.50f, 0.40f } },
+	{ "benevolent",		{ -10.0f, 0.22f, 0.25f, 1.00f } },
+	{ "domineering",	{ 15.0f, 0.90f, 0.86f, 0.12f } },
+	{ "clinical",		{ 5.0f, 0.56f, 0.58f, 0.15f } },
+	{ "mischievous",	{ 7.0f, 0.74f, 0.80f, 0.94f } },
+	{ "crafty",			{ 6.0f, 0.68f, 0.78f, 0.82f } },
+	{ "fearless",		{ 14.0f, 0.96f, 0.98f, 0.10f } },
+	{ "boisterous",		{ 9.0f, 0.76f, 0.72f, 0.96f } },
+	{ "hyperactive",	{ 11.0f, 0.84f, 0.92f, 0.98f } },
+	{ "stoic",			{ -5.0f, 0.34f, 0.36f, 0.05f } }
+};
+
+static const bot_personality_profile_t botDefaultPersonalityProfile = { 0.0f, 0.50f, 0.50f, 0.50f };
+
+const bot_personality_profile_t *BotPersonalityProfileForName( const char *name ) {
+	int i;
+
+	if ( !name || !name[0] ) {
+		return &botDefaultPersonalityProfile;
+	}
+
+	for ( i = 0; i < (int)( sizeof( botPersonalityMap ) / sizeof( botPersonalityMap[0] ) ); i++ ) {
+		if ( !Q_stricmp( name, botPersonalityMap[i].name ) ) {
+			return &botPersonalityMap[i].profile;
+		}
+	}
+	return &botDefaultPersonalityProfile;
+}
+
+int BotFavoriteWeaponFromName( const char *name ) {
+	if ( !name || !name[0] ) {
+		return WP_NONE;
+	}
+
+	if ( !Q_stricmp( name, "Machinegun" ) ) return WP_MACHINEGUN;
+	if ( !Q_stricmp( name, "Shotgun" ) ) return WP_SHOTGUN;
+	if ( !Q_stricmp( name, "Grenade Launcher" ) ) return WP_GRENADE_LAUNCHER;
+	if ( !Q_stricmp( name, "Rocket Launcher" ) ) return WP_ROCKET_LAUNCHER;
+	if ( !Q_stricmp( name, "Lightning" ) ) return WP_LIGHTNING;
+	if ( !Q_stricmp( name, "Railgun" ) ) return WP_RAILGUN;
+	if ( !Q_stricmp( name, "Plasmagun" ) ) return WP_PLASMAGUN;
+	if ( !Q_stricmp( name, "BFG10k" ) ) return WP_BFG;
+	if ( !Q_stricmp( name, "Flamethrower" ) ) return WP_FLAME_THROWER;
+	if ( !Q_stricmp( name, "Chainsaw" ) ) return WP_GAUNTLET;
+
+	return WP_NONE;
+}
+
 
 void ExitLevel( void );
 
@@ -1203,6 +1271,7 @@ BotAISetupClient
 */
 int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean restart) {
 	char filename[144], name[144], gender[144];
+	const bot_personality_profile_t *personalityProfile;
 	bot_state_t *bs;
 	int errnum;
 
@@ -1276,6 +1345,13 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	bs->entergame_time = FloatTime();
 	bs->ms = trap_BotAllocMoveState();
 	bs->walker = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_WALKER, 0, 1);
+	personalityProfile = BotPersonalityProfileForName( settings->personality );
+	bs->personalityAggressionBias = personalityProfile->aggressionBias;
+	bs->personalityRisk = personalityProfile->risk;
+	bs->personalityOvertakeBias = personalityProfile->overtakeBias;
+	bs->personalityChatTone = personalityProfile->chatTone;
+	bs->favoriteWeapon = BotFavoriteWeaponFromName( settings->favoriteweapon );
+	bs->favoriteWeaponWeightBonus = ( bs->favoriteWeapon != WP_NONE ) ? 35.0f : 0.0f;
 	numbots++;
 
 	if (trap_Cvar_VariableIntegerValue("bot_testichat")) {

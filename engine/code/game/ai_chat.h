@@ -53,6 +53,8 @@ int BotChat_Kill(bot_state_t *bs);
 int BotChat_EnemySuicide(bot_state_t *bs);
 //
 int BotChat_Random(bot_state_t *bs);
+// objective/team event chat line (koth/dom)
+int BotChat_ObjectiveEvent(bot_state_t *bs, char *chattype);
 // time the selected chat takes to type in
 float BotChatTime(bot_state_t *bs);
 // returns true if the bot can chat at the current position

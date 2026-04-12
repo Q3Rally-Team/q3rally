@@ -551,6 +551,8 @@ qboolean G_BotConnect( int clientNum, qboolean restart ) {
 	trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
 
 	Q_strncpyz( settings.characterfile, Info_ValueForKey( userinfo, "characterfile" ), sizeof(settings.characterfile) );
+	Q_strncpyz( settings.personality, Info_ValueForKey( userinfo, "bot_personality" ), sizeof(settings.personality) );
+	Q_strncpyz( settings.favoriteweapon, Info_ValueForKey( userinfo, "bot_favweapon" ), sizeof(settings.favoriteweapon) );
 	settings.skill = atof( Info_ValueForKey( userinfo, "skill" ) );
 
 	if (!BotAISetupClient( clientNum, &settings, restart )) {
@@ -713,6 +715,8 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 		return;
 	}
 	Info_SetValueForKey( userinfo, "characterfile", s );
+	Info_SetValueForKey( userinfo, "bot_personality", Info_ValueForKey( botinfo, "personality" ) );
+	Info_SetValueForKey( userinfo, "bot_favweapon", Info_ValueForKey( botinfo, "favoriteweapon" ) );
 
 	// don't send tinfo to bots, they don't parse it
 	Info_SetValueForKey( userinfo, "teamoverlay", "0" );

@@ -962,6 +962,29 @@ int BotChat_Random(bot_state_t *bs) {
 	return qtrue;
 }
 
+
+/*
+==================
+BotChat_ObjectiveEvent
+==================
+*/
+int BotChat_ObjectiveEvent(bot_state_t *bs, char *chattype) {
+	if (bot_nochat.integer) return qfalse;
+	if (BotIsObserver(bs)) return qfalse;
+	if (!TeamPlayIsOn()) return qfalse;
+	if (bs->lastchat_time > FloatTime() - TIME_BETWEENCHATTING) return qfalse;
+	if (!BotValidChatPosition(bs)) return qfalse;
+	if (BotVisibleEnemies(bs)) return qfalse;
+	if (!chattype || !chattype[0]) return qfalse;
+	if (!trap_BotNumInitialChats(bs->cs, chattype)) return qfalse;
+
+	BotAI_BotInitialChat(bs, chattype, NULL);
+	bs->chatto = CHAT_TEAM;
+	bs->lastchat_time = FloatTime();
+	trap_BotEnterChat(bs->cs, 0, CHAT_TEAM);
+	return qtrue;
+}
+
 /*
 ==================
 BotChatTime

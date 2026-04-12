@@ -133,6 +133,69 @@ static const char *Bot_DebugRecoveryStateName( bot_recovery_state_t state ) {
 	}
 }
 
+static const char *Bot_DebugObjectiveStateName( int state ) {
+	switch ( state ) {
+		case 1: return "dom_neutralize";
+		case 2: return "dom_capture";
+		case 3: return "dom_defend";
+		case 4: return "koth_contest";
+		case 5: return "koth_defend";
+		case 6: return "health_retreat";
+		default: return "none";
+	}
+}
+
+static void Bot_DebugGetObjectiveSnapshot( bot_state_t *bs, int *objectiveState, int *kothOwner, int *kothContested ) {
+	int state = 0;
+	int owner = TEAM_FREE;
+	int contested = 0;
+
+	if ( bs ) {
+		if ( bs->inventory[INVENTORY_HEALTH] > 0 && bs->inventory[INVENTORY_HEALTH] < 40 ) {
+			state = 6;
+		}
+		if ( gametype == GT_DOMINATION ) {
+			bot_goal_t sigilGoal;
+			int sigilStatus = SIGIL_NONE;
+			int team = BotTeam( bs );
+
+			if ( BotGetDominationSigilGoal( bs, &sigilGoal, &sigilStatus ) ) {
+				if ( sigilStatus == SIGIL_ISWHITE ) {
+					state = 2;
+				} else if ( (team == TEAM_RED && sigilStatus == SIGIL_ISBLUE) ||
+					(team == TEAM_BLUE && sigilStatus == SIGIL_ISRED) ) {
+					state = 1;
+				} else {
+					state = 3;
+				}
+			}
+		}
+		else if ( gametype == GT_KOTH ) {
+			int capturePct;
+			float hillRadius;
+			vec3_t hillOrigin;
+
+			if ( BotGetKOTHStatus( &owner, &contested, &capturePct, hillOrigin, &hillRadius ) ) {
+				if ( owner == BotTeam( bs ) && !contested && capturePct >= 100 ) {
+					state = 5;
+				} else {
+					state = 4;
+				}
+			}
+		}
+	}
+
+	if ( objectiveState ) {
+		*objectiveState = state;
+	}
+	if ( kothOwner ) {
+		*kothOwner = owner;
+	}
+	if ( kothContested ) {
+		*kothContested = contested;
+	}
+}
+
 static void Bot_DebugFormatRecoveryTransition( char *buffer, int bufferSize, bot_recovery_state_t fromState, bot_recovery_state_t toState ) {
 	if ( !buffer || bufferSize <= 0 ) {
 		return;
@@ -150,7 +213,8 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 	ghostDecisionState_t decisionState, qboolean collisionRisk, bot_recovery_state_t recoveryState,
 	bot_recovery_state_t previousRecoveryState, const char *recoveryEvent,
 	const char *recoveryTrigger, float routeDeviation, int pathId, int nodeIndex, int lookAheadIndex,
-	int widthClampEvent, int autoSpeedActive, int targetSpeedOverrideActive, int launchGateActive ) {
+	int widthClampEvent, int autoSpeedActive, int targetSpeedOverrideActive, int launchGateActive,
+	int objectiveState, int kothOwner, int kothContested ) {
 	fileHandle_t f;
 	char line[1024];
 	char recoveryTransition[96];
@@ -189,7 +253,7 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 	}
 
 	if ( len == 0 && !isJson ) {
-		char header[] = "time,client,routeIndex,targetSpeed,actualSpeed,decisionState,collisionRisk,recoveryState,recoveryTransition,recoveryEvent,recoveryTrigger,routeDeviation,pathId,nodeIndex,lookaheadIndex,widthClampEvent,autoSpeedActive,targetSpeedOverrideActive,launchGate\n";
+		char header[] = "time,client,routeIndex,targetSpeed,actualSpeed,decisionState,collisionRisk,recoveryState,recoveryTransition,recoveryEvent,recoveryTrigger,routeDeviation,pathId,nodeIndex,lookaheadIndex,widthClampEvent,autoSpeedActive,targetSpeedOverrideActive,launchGate,objectiveState,kothOwner,kothContested\n";
 		trap_FS_Write( header, strlen( header ), f );
 	}
 	Bot_DebugFormatRecoveryTransition( recoveryTransition, sizeof( recoveryTransition ), previousRecoveryState, recoveryState );
@@ -200,23 +264,27 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 			"\"decisionState\":\"%s\",\"collisionRisk\":%d,\"recoveryState\":\"%s\","
 			"\"recoveryTransition\":\"%s\",\"recoveryEvent\":\"%s\",\"recoveryTrigger\":\"%s\",\"routeDeviation\":%.2f,"
 			"\"pathId\":%d,\"nodeIndex\":%d,\"lookaheadIndex\":%d,\"widthClampEvent\":%d,"
-			"\"autoSpeedActive\":%d,\"targetSpeedOverrideActive\":%d,\"launchGate\":%d,"			"\"ox\":%.2f,\"oy\":%.2f,\"oz\":%.2f}\n",
+			"\"autoSpeedActive\":%d,\"targetSpeedOverrideActive\":%d,\"launchGate\":%d,"
+			"\"objectiveState\":\"%s\",\"kothOwner\":%d,\"kothContested\":%d,"
+			"\"ox\":%.2f,\"oy\":%.2f,\"oz\":%.2f}\n",
 			level.time * 0.001f, bs->client, routeIndex, targetSpeed, actualSpeed,
 			Bot_DebugDecisionStateName( decisionState ), collisionRisk ? 1 : 0,
 			Bot_DebugRecoveryStateName( recoveryState ), recoveryTransition,
 			recoveryEvent ? recoveryEvent : "", recoveryTrigger ? recoveryTrigger : "",
 			routeDeviation, pathId, nodeIndex, lookAheadIndex, widthClampEvent,
 			autoSpeedActive, targetSpeedOverrideActive, launchGateActive,
+			Bot_DebugObjectiveStateName( objectiveState ), kothOwner, kothContested,
 			origin[0], origin[1], origin[2] );
 	} else {
 		Com_sprintf( line, sizeof( line ),
-			"%.3f,%d,%d,%.2f,%.2f,%s,%d,%s,%s,%s,%s,%.2f,%d,%d,%d,%d,%d,%d,%d\n",
+			"%.3f,%d,%d,%.2f,%.2f,%s,%d,%s,%s,%s,%s,%.2f,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d\n",
 			level.time * 0.001f, bs->client, routeIndex, targetSpeed, actualSpeed,
 			Bot_DebugDecisionStateName( decisionState ), collisionRisk ? 1 : 0,
 			Bot_DebugRecoveryStateName( recoveryState ), recoveryTransition,
 			recoveryEvent ? recoveryEvent : "", recoveryTrigger ? recoveryTrigger : "",
 			routeDeviation, pathId, nodeIndex, lookAheadIndex, widthClampEvent,
-			autoSpeedActive, targetSpeedOverrideActive, launchGateActive );
+			autoSpeedActive, targetSpeedOverrideActive, launchGateActive,
+			Bot_DebugObjectiveStateName( objectiveState ), kothOwner, kothContested );
 	}
 	trap_FS_Write( line, strlen( line ), f );
 	trap_FS_FCloseFile( f );
@@ -1650,6 +1718,64 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 		}
 	}
 #endif
+	if (gametype == GT_DOMINATION) {
+		int sigilStatus = SIGIL_NONE;
+		int team = BotTeam(bs);
+		qboolean lowHealth = (bs->inventory[INVENTORY_HEALTH] > 0 && bs->inventory[INVENTORY_HEALTH] < 40) ? qtrue : qfalse;
+
+		if ((bs->ltgtype == LTG_GETFLAG || bs->ltgtype == LTG_ATTACKENEMYBASE || bs->ltgtype == LTG_DEFENDKEYAREA) &&
+			BotGetDominationSigilGoal(bs, goal, &sigilStatus)) {
+			if (lowHealth && BotFindEnemy(bs, -1)) {
+				return BotGetItemLongTermGoal(bs, tfl, goal);
+			}
+
+			if (sigilStatus == SIGIL_ISWHITE) {
+				bs->ltgtype = LTG_GETFLAG;
+			}
+			else if ((team == TEAM_RED && sigilStatus == SIGIL_ISBLUE) ||
+				(team == TEAM_BLUE && sigilStatus == SIGIL_ISRED)) {
+				bs->ltgtype = LTG_ATTACKENEMYBASE;
+			}
+			else {
+				bs->ltgtype = LTG_DEFENDKEYAREA;
+			}
+
+			BotAlternateRoute(bs, goal);
+			return qtrue;
+		}
+	}
+	else if (gametype == GT_KOTH) {
+		int owner, contested, capturePct;
+		float hillRadius;
+		float radiusExtent;
+		vec3_t hillOrigin;
+		qboolean lowHealth = (bs->inventory[INVENTORY_HEALTH] > 0 && bs->inventory[INVENTORY_HEALTH] < 40) ? qtrue : qfalse;
+
+		if ((bs->ltgtype == LTG_ATTACKENEMYBASE || bs->ltgtype == LTG_DEFENDKEYAREA || bs->ltgtype == LTG_GETFLAG)
+			&& BotGetKOTHStatus(&owner, &contested, &capturePct, hillOrigin, &hillRadius)) {
+			if (lowHealth && owner != BotTeam(bs)) {
+				return BotGetItemLongTermGoal(bs, tfl, goal);
+			}
+
+			radiusExtent = (hillRadius > 32.0f) ? hillRadius : 128.0f;
+			goal->entitynum = ENTITYNUM_NONE;
+			goal->areanum = BotPointAreaNum(hillOrigin);
+			VectorSet(goal->mins, -radiusExtent, -radiusExtent, -24);
+			VectorSet(goal->maxs, radiusExtent, radiusExtent, 48);
+			VectorCopy(hillOrigin, goal->origin);
+			goal->flags = 0;
+			goal->number = 0;
+			goal->iteminfo = 0;
+
+			if (owner == BotTeam(bs) && !contested && capturePct >= 100) {
+				bs->ltgtype = LTG_DEFENDKEYAREA;
+			}
+			else {
+				bs->ltgtype = LTG_ATTACKENEMYBASE;
+			}
+			return qtrue;
+		}
+	}
 	//normal goal stuff
 	return BotGetItemLongTermGoal(bs, tfl, goal);
 }
@@ -3851,11 +3977,17 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 			throttleChange = Bot_CheckForObstacles( bs, angles, throttleChange );
 			VectorCopy( angles, bs->ideal_viewangles );
+			{
+				int objectiveState;
+				int kothOwner;
+				int kothContested;
+				Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
 			Bot_DebugExportDmnetTick( bs, selectedLookAheadIndex, speedFromRoute, actualSpeed, decisionState,
 				pathCollisionRisk.hasPredictedConflict, pathRecoveryState, pathRecoveryState, "", "",
 				Distance( bs->cur_ps.origin, baseTargetPoint ), selectedPathId, selectedNodeIndex,
 				selectedLookAheadIndex, widthClampEvent, autoSpeedActive, targetSpeedOverrideActive,
-				forwardLaunchPhase ? 1 : 0 );
+				forwardLaunchPhase ? 1 : 0, objectiveState, kothOwner, kothContested );
+			}
 
 			if ( throttleChange > 0 ) {
 				trap_EA_MoveForward( bs->client );
@@ -4088,57 +4220,66 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 			}
 			desiredOffset = 0.0f;
 			speedBias = 0.0f;
+			{
+				float overtakeEnterDist = 170.0f + ( bs->personalityOvertakeBias * 60.0f );
+				float overtakeEnterRelSpeed = 60.0f - ( bs->personalityOvertakeBias * 25.0f );
+				float defendRelSpeed = 95.0f - ( bs->personalityRisk * 35.0f );
+				float abortDist = 25.0f + ( ( 1.0f - bs->personalityRisk ) * 18.0f );
+				float sideSafetyThreshold = 66.0f - ( bs->personalityRisk * 28.0f );
+				float abortBrakeZone = 0.88f - ( bs->personalityRisk * 0.20f );
+				float followClearDist = 240.0f + ( bs->personalityOvertakeBias * 55.0f );
 
-			switch ( decisionState ) {
-				default:
-				case GHOST_DECISION_FOLLOW:
-					if ( collisionRisk.nearestAheadDist < 190.0f && collisionRisk.nearestAheadRelSpeed > 45.0f && brakeZone < 0.5f ) {
-						decisionState = GHOST_DECISION_PREPARE_OVERTAKE;
-					} else if ( collisionRisk.nearestBehindDist < 120.0f && collisionRisk.nearestBehindRelSpeed > 70.0f && ( brakeZone > 0.5f || cornerPhase > 0.35f ) ) {
-						decisionState = GHOST_DECISION_DEFEND_LINE;
-					} else if ( collisionRisk.hasPredictedConflict ) {
-						decisionState = GHOST_DECISION_ABORT_OVERTAKE;
-					}
-					break;
-
-				case GHOST_DECISION_PREPARE_OVERTAKE:
-					if ( collisionRisk.nearestAheadDist > 260.0f || collisionRisk.nearestAheadRelSpeed < 5.0f ) {
-						decisionState = GHOST_DECISION_FOLLOW;
-					} else if ( brakeZone > 0.5f || collisionRisk.abortOvertakeRecommended ) {
-						decisionState = GHOST_DECISION_ABORT_OVERTAKE;
-					} else {
-						if ( preferredInside ) {
-							decisionState = GHOST_DECISION_OVERTAKE_INSIDE;
-						} else {
-							decisionState = GHOST_DECISION_OVERTAKE_OUTSIDE;
+				switch ( decisionState ) {
+					default:
+					case GHOST_DECISION_FOLLOW:
+						if ( collisionRisk.nearestAheadDist < overtakeEnterDist && collisionRisk.nearestAheadRelSpeed > overtakeEnterRelSpeed && brakeZone < 0.5f ) {
+							decisionState = GHOST_DECISION_PREPARE_OVERTAKE;
+						} else if ( collisionRisk.nearestBehindDist < 120.0f && collisionRisk.nearestBehindRelSpeed > defendRelSpeed && ( brakeZone > 0.5f || cornerPhase > 0.35f ) ) {
+							decisionState = GHOST_DECISION_DEFEND_LINE;
+						} else if ( collisionRisk.hasPredictedConflict ) {
+							decisionState = GHOST_DECISION_ABORT_OVERTAKE;
 						}
-					}
-					break;
+						break;
 
-				case GHOST_DECISION_OVERTAKE_INSIDE:
-				case GHOST_DECISION_OVERTAKE_OUTSIDE:
-				{
-					qboolean sideBlocked;
-					sideBlocked = ( decisionState == GHOST_DECISION_OVERTAKE_INSIDE ) ? ( collisionRisk.sideSafetyInside < 48.0f ) : ( collisionRisk.sideSafetyOutside < 48.0f );
-					if ( collisionRisk.nearestAheadDist < 35.0f || sideBlocked || brakeZone > 0.75f || collisionRisk.abortOvertakeRecommended ) {
-						decisionState = GHOST_DECISION_ABORT_OVERTAKE;
-					} else if ( collisionRisk.nearestAheadDist > 270.0f || collisionRisk.nearestAheadRelSpeed < -20.0f ) {
-						decisionState = GHOST_DECISION_FOLLOW;
+					case GHOST_DECISION_PREPARE_OVERTAKE:
+						if ( collisionRisk.nearestAheadDist > followClearDist || collisionRisk.nearestAheadRelSpeed < 5.0f ) {
+							decisionState = GHOST_DECISION_FOLLOW;
+						} else if ( brakeZone > 0.5f || collisionRisk.abortOvertakeRecommended ) {
+							decisionState = GHOST_DECISION_ABORT_OVERTAKE;
+						} else {
+							if ( preferredInside ) {
+								decisionState = GHOST_DECISION_OVERTAKE_INSIDE;
+							} else {
+								decisionState = GHOST_DECISION_OVERTAKE_OUTSIDE;
+							}
+						}
+						break;
+
+					case GHOST_DECISION_OVERTAKE_INSIDE:
+					case GHOST_DECISION_OVERTAKE_OUTSIDE:
+					{
+						qboolean sideBlocked;
+						sideBlocked = ( decisionState == GHOST_DECISION_OVERTAKE_INSIDE ) ? ( collisionRisk.sideSafetyInside < sideSafetyThreshold ) : ( collisionRisk.sideSafetyOutside < sideSafetyThreshold );
+						if ( collisionRisk.nearestAheadDist < abortDist || sideBlocked || brakeZone > abortBrakeZone || collisionRisk.abortOvertakeRecommended ) {
+							decisionState = GHOST_DECISION_ABORT_OVERTAKE;
+						} else if ( collisionRisk.nearestAheadDist > followClearDist + 15.0f || collisionRisk.nearestAheadRelSpeed < -20.0f ) {
+							decisionState = GHOST_DECISION_FOLLOW;
+						}
+						break;
 					}
-					break;
+
+					case GHOST_DECISION_DEFEND_LINE:
+						if ( collisionRisk.nearestBehindDist > 220.0f || collisionRisk.nearestBehindRelSpeed < 25.0f ) {
+							decisionState = GHOST_DECISION_FOLLOW;
+						}
+						break;
+
+					case GHOST_DECISION_ABORT_OVERTAKE:
+						if ( collisionRisk.nearestAheadDist > 140.0f || brakeZone > 0.5f ) {
+							decisionState = GHOST_DECISION_FOLLOW;
+						}
+						break;
 				}
-
-				case GHOST_DECISION_DEFEND_LINE:
-					if ( collisionRisk.nearestBehindDist > 220.0f || collisionRisk.nearestBehindRelSpeed < 25.0f ) {
-						decisionState = GHOST_DECISION_FOLLOW;
-					}
-					break;
-
-				case GHOST_DECISION_ABORT_OVERTAKE:
-					if ( collisionRisk.nearestAheadDist > 140.0f || brakeZone > 0.5f ) {
-						decisionState = GHOST_DECISION_FOLLOW;
-					}
-					break;
 			}
 
 			if ( decisionState != (ghostDecisionState_t)bs->ghostDecisionState ) {
@@ -4149,15 +4290,15 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 			switch ( decisionState ) {
 				case GHOST_DECISION_PREPARE_OVERTAKE:
 					desiredOffset = ( collisionRisk.nearestAheadLateral >= 0.0f ) ? -32.0f : 32.0f;
-					speedBias = 40.0f;
+					speedBias = 25.0f + ( bs->personalityOvertakeBias * 30.0f );
 					break;
 				case GHOST_DECISION_OVERTAKE_INSIDE:
 					desiredOffset = preferredInside ? -72.0f : 72.0f;
-					speedBias = 65.0f;
+					speedBias = 35.0f + ( bs->personalityRisk * 45.0f );
 					break;
 				case GHOST_DECISION_OVERTAKE_OUTSIDE:
 					desiredOffset = preferredInside ? 72.0f : -72.0f;
-					speedBias = 20.0f;
+					speedBias = 10.0f + ( bs->personalityOvertakeBias * 25.0f );
 					break;
 				case GHOST_DECISION_DEFEND_LINE:
 					desiredOffset = ( collisionRisk.nearestBehindLateral >= 0.0f ) ? -46.0f : 46.0f;
@@ -4372,9 +4513,16 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 			throttleChange = Bot_CheckForObstacles( bs, angles, throttleChange );
 			VectorCopy( angles, bs->ideal_viewangles );
+			{
+				int objectiveState;
+				int kothOwner;
+				int kothContested;
+				Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
 			Bot_DebugExportDmnetTick( bs, bestIndex, speed, actualSpeed, decisionState, collisionRiskActive,
 				recoveryState, previousRecoveryState, recoveryEvent, recoveryTrigger, routeDistanceFromCenter,
-				-1, bestIndex, lookAheadIndex, 0, 1, 0, forwardLaunchPhase ? 1 : 0 );
+				-1, bestIndex, lookAheadIndex, 0, 1, 0, forwardLaunchPhase ? 1 : 0,
+				objectiveState, kothOwner, kothContested );
+			}
 
 			if( throttleChange > 0 )
 				trap_EA_MoveForward( bs->client );

@@ -285,5 +285,33 @@ chat "Sly"
 		// 4 = level's title
 		// 5 = random weapon from weapon list
 	} //end type
+	type "koth_contest" //initiated when the hill becomes contested
+	{
+		"Their pressure is on the hill, collapse on it.";
+		"Hill is hot, contest with discipline.";
+		"Hill brawl time, bring your best moves.";
+	}
+
+	type "koth_capture" //initiated when our team captures the hill
+	{
+		"Captured the hill, punish every push.";
+		"Hill belongs to us, play it clean.";
+		"Hill is ours, and yes, I called dibs.";
+	}
+
+	type "dom_lost_sigil" //initiated when our team loses a sigil
+	{
+		"We just lost a sigil, retaliate immediately.";
+		"Sigil control slipped, reclaim methodically.";
+		"Lost sigil detected, comedy is over, push back.";
+	}
+
+	type "dom_push_sigil" //initiated when team orders switch to sigil pressure
+	{
+		"Orders changed, spearhead the sigil push.";
+		"Rotate and pressure the sigil objective.";
+		"Fresh order: sigil sprint, make it stylish.";
+	}
+
 } //end chat
 

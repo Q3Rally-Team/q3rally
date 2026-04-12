@@ -1889,6 +1889,251 @@ void BotHarvesterOrders(bot_state_t *bs) {
 }
 #endif
 
+static char botDominationStatusSnapshot[MAX_CLIENTS][MAX_INFO_STRING];
+static int botKOTHOwnerSnapshot[MAX_CLIENTS];
+static int botKOTHContestedSnapshot[MAX_CLIENTS];
+static int botDominationOrderModeSnapshot[MAX_CLIENTS];
+static int botKOTHOrderModeSnapshot[MAX_CLIENTS];
+
+typedef enum {
+	BOT_DOM_ORDER_HOLD = 0,
+	BOT_DOM_ORDER_PUSH_NEUTRAL,
+	BOT_DOM_ORDER_PUSH_ENEMY
+} bot_dom_order_mode_t;
+
+typedef enum {
+	BOT_KOTH_ORDER_HOLD = 0,
+	BOT_KOTH_ORDER_CONTEST
+} bot_koth_order_mode_t;
+
+/*
+==================
+BotCountDominationOwnedSigils
+==================
+*/
+static int BotCountDominationOwnedSigils(int team, char *sigilStatus) {
+	int i, owned;
+	int ownedStatus;
+
+	if (!sigilStatus || !sigilStatus[0]) {
+		return 0;
+	}
+
+	ownedStatus = (team == TEAM_RED) ? SIGIL_ISRED : SIGIL_ISBLUE;
+	owned = 0;
+	for (i = 0; sigilStatus[i]; i++) {
+		if (sigilStatus[i] == ('0' + ownedStatus)) {
+			owned++;
+		}
+	}
+	return owned;
+}
+
+/*
+==================
+BotDominationOrderMode
+==================
+*/
+static int BotDominationOrderMode(bot_state_t *bs) {
+	int sigilStatus = SIGIL_NONE;
+	bot_goal_t sigilGoal;
+
+	if (!BotGetDominationSigilGoal(bs, &sigilGoal, &sigilStatus)) {
+		return BOT_DOM_ORDER_HOLD;
+	}
+	if (sigilStatus == SIGIL_ISWHITE) {
+		return BOT_DOM_ORDER_PUSH_NEUTRAL;
+	}
+	if ((BotTeam(bs) == TEAM_RED && sigilStatus == SIGIL_ISBLUE) ||
+		(BotTeam(bs) == TEAM_BLUE && sigilStatus == SIGIL_ISRED)) {
+		return BOT_DOM_ORDER_PUSH_ENEMY;
+	}
+	return BOT_DOM_ORDER_HOLD;
+}
+
+/*
+==================
+BotKOTHOrderMode
+==================
+*/
+static int BotKOTHOrderMode(int owner, int contested, int team) {
+	if (owner == team && !contested) {
+		return BOT_KOTH_ORDER_HOLD;
+	}
+	return BOT_KOTH_ORDER_CONTEST;
+}
+
+/*
+==================
+BotCollectTeamMates
+==================
+*/
+static int BotCollectTeamMates(bot_state_t *bs, int *teammates, int maxteammates) {
+	int i, numteammates;
+	char buf[MAX_INFO_STRING];
+
+	numteammates = 0;
+	for (i = 0; i < level.maxclients; i++) {
+		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
+		if (!strlen(buf) || !strlen(Info_ValueForKey(buf, "n"))) continue;
+		if (atoi(Info_ValueForKey(buf, "t")) == TEAM_SPECTATOR) continue;
+		if (!BotSameTeam(bs, i)) continue;
+		teammates[numteammates++] = i;
+		if (numteammates >= maxteammates) {
+			break;
+		}
+	}
+	return numteammates;
+}
+
+/*
+==================
+BotKOTHOrders
+==================
+*/
+void BotKOTHOrders(bot_state_t *bs) {
+	int teammates[MAX_CLIENTS];
+	int numteammates, i;
+	int owner, contested, capturePct;
+	vec3_t hillOrigin;
+	float hillRadius;
+	int holdCount, contestCount;
+	char name[MAX_NETNAME];
+
+	numteammates = BotCollectTeamMates(bs, teammates, MAX_CLIENTS);
+	if (numteammates <= 1) {
+		return;
+	}
+
+	if (!BotGetKOTHStatus(&owner, &contested, &capturePct, hillOrigin, &hillRadius)) {
+		owner = TEAM_FREE;
+		contested = qfalse;
+	}
+
+	if (owner == BotTeam(bs) && !contested) {
+		holdCount = (int)((float)numteammates * 0.6f + 0.5f);
+		if (holdCount < 1) holdCount = 1;
+		if (holdCount > numteammates) holdCount = numteammates;
+		contestCount = 0;
+	}
+	else if (contested) {
+		holdCount = (int)((float)numteammates * 0.25f + 0.5f);
+		if (holdCount > 2) holdCount = 2;
+		contestCount = (int)((float)numteammates * 0.55f + 0.5f);
+		if (contestCount < 1) contestCount = 1;
+	}
+	else {
+		holdCount = (int)((float)numteammates * 0.2f + 0.5f);
+		contestCount = (int)((float)numteammates * 0.6f + 0.5f);
+		if (contestCount < 1) contestCount = 1;
+	}
+	if (holdCount + contestCount > numteammates) {
+		contestCount = numteammates - holdCount;
+	}
+
+	for (i = 0; i < holdCount; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_defendbase", name, NULL); // Hold
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_DEFEND);
+	}
+
+	for (; i < holdCount + contestCount; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL); // Contest
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+	}
+
+	for (; i < numteammates; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL); // Rotate
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+	}
+}
+
+/*
+==================
+BotDominationOrders
+==================
+*/
+void BotDominationOrders(bot_state_t *bs) {
+	int teammates[MAX_CLIENTS];
+	int numteammates, i;
+	int defendCount, captureCount, backcapCount;
+	int sigilStatus = SIGIL_NONE;
+	bot_goal_t sigilGoal;
+	qboolean hasGoal;
+	char name[MAX_NETNAME];
+
+	numteammates = BotCollectTeamMates(bs, teammates, MAX_CLIENTS);
+	if (numteammates <= 1) {
+		return;
+	}
+
+	hasGoal = BotGetDominationSigilGoal(bs, &sigilGoal, &sigilStatus);
+	if (!hasGoal) {
+		BotTeamOrders(bs);
+		return;
+	}
+
+	defendCount = 0;
+	captureCount = 0;
+	backcapCount = 0;
+
+	if (sigilStatus == SIGIL_ISWHITE) {
+		captureCount = (int)((float)numteammates * 0.55f + 0.5f); // capture nearest neutral
+		defendCount = (int)((float)numteammates * 0.30f + 0.5f); // defend owned
+	}
+	else if ((BotTeam(bs) == TEAM_RED && sigilStatus == SIGIL_ISBLUE)
+		|| (BotTeam(bs) == TEAM_BLUE && sigilStatus == SIGIL_ISRED)) {
+		backcapCount = (int)((float)numteammates * 0.50f + 0.5f); // opportunistic backcap
+		defendCount = (int)((float)numteammates * 0.30f + 0.5f); // defend owned
+	}
+	else {
+		defendCount = (int)((float)numteammates * 0.60f + 0.5f); // defend owned
+		backcapCount = (int)((float)numteammates * 0.25f + 0.5f); // opportunistic backcap
+	}
+
+	if (defendCount < 1) defendCount = 1;
+	if (defendCount > numteammates) defendCount = numteammates;
+	if (defendCount + captureCount + backcapCount > numteammates) {
+		int overflow = defendCount + captureCount + backcapCount - numteammates;
+		if (backcapCount >= overflow) backcapCount -= overflow;
+		else if (captureCount >= overflow) captureCount -= overflow;
+		else defendCount -= overflow;
+	}
+
+	for (i = 0; i < defendCount; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_defendbase", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_DEFEND);
+	}
+
+	for (; i < defendCount + captureCount; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+	}
+
+	for (; i < defendCount + captureCount + backcapCount; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+	}
+
+	for (; i < numteammates; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+	}
+}
+
 /*
 ==================
 FindHumanTeamLeader
@@ -2015,6 +2260,81 @@ void BotTeamAI(bot_state_t *bs) {
 			}
 			break;
 		}
+		case GT_DOMINATION:
+		{
+			char sigilStatus[MAX_INFO_STRING];
+			int newOrderMode;
+			int oldOwned, newOwned;
+
+			trap_GetConfigstring(CS_SIGILSTATUS, sigilStatus, sizeof(sigilStatus));
+			oldOwned = BotCountDominationOwnedSigils(BotTeam(bs), botDominationStatusSnapshot[bs->client]);
+			newOwned = BotCountDominationOwnedSigils(BotTeam(bs), sigilStatus);
+			if (newOwned < oldOwned) {
+				BotChat_ObjectiveEvent(bs, "dom_lost_sigil");
+			}
+
+			newOrderMode = BotDominationOrderMode(bs);
+			if (botDominationOrderModeSnapshot[bs->client] != newOrderMode &&
+				newOrderMode != BOT_DOM_ORDER_HOLD) {
+				BotChat_ObjectiveEvent(bs, "dom_push_sigil");
+			}
+
+			if (bs->numteammates != numteammates ||
+				Q_stricmp(botDominationStatusSnapshot[bs->client], sigilStatus) ||
+				bs->forceorders) {
+				bs->teamgiveorders_time = FloatTime();
+				bs->numteammates = numteammates;
+				Q_strncpyz(botDominationStatusSnapshot[bs->client], sigilStatus, sizeof(botDominationStatusSnapshot[bs->client]));
+				botDominationOrderModeSnapshot[bs->client] = newOrderMode;
+				bs->forceorders = qfalse;
+			}
+
+			if (bs->teamgiveorders_time && bs->teamgiveorders_time < FloatTime() - 2) {
+				BotDominationOrders(bs);
+				bs->teamgiveorders_time = FloatTime() + 25;
+			}
+			break;
+		}
+		case GT_KOTH:
+		{
+			int owner, contested;
+			int newOrderMode;
+
+			if (!BotGetKOTHStatus(&owner, &contested, NULL, NULL, NULL)) {
+				owner = TEAM_FREE;
+				contested = qfalse;
+			}
+			if (botKOTHOwnerSnapshot[bs->client] != owner && owner == BotTeam(bs)) {
+				BotChat_ObjectiveEvent(bs, "koth_capture");
+			}
+			if (!botKOTHContestedSnapshot[bs->client] && contested) {
+				BotChat_ObjectiveEvent(bs, "koth_contest");
+			}
+
+			newOrderMode = BotKOTHOrderMode(owner, contested, BotTeam(bs));
+			if (botKOTHOrderModeSnapshot[bs->client] != newOrderMode &&
+				newOrderMode == BOT_KOTH_ORDER_CONTEST) {
+				BotChat_ObjectiveEvent(bs, "koth_contest");
+			}
+
+			if (bs->numteammates != numteammates ||
+				botKOTHOwnerSnapshot[bs->client] != owner ||
+				botKOTHContestedSnapshot[bs->client] != contested ||
+				bs->forceorders) {
+				bs->teamgiveorders_time = FloatTime();
+				bs->numteammates = numteammates;
+				botKOTHOwnerSnapshot[bs->client] = owner;
+				botKOTHContestedSnapshot[bs->client] = contested;
+				botKOTHOrderModeSnapshot[bs->client] = newOrderMode;
+				bs->forceorders = qfalse;
+			}
+
+			if (bs->teamgiveorders_time && bs->teamgiveorders_time < FloatTime() - 2) {
+				BotKOTHOrders(bs);
+				bs->teamgiveorders_time = FloatTime() + 20;
+			}
+			break;
+		}
 #ifdef MISSIONPACK
 		case GT_1FCTF:
 		{
@@ -2074,4 +2394,3 @@ void BotTeamAI(bot_state_t *bs) {
 #endif
 	}
 }
-

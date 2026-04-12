@@ -131,6 +131,13 @@ typedef enum bot_recovery_state_e
 	BOT_RECOVERY_EMERGENCY_RESET_REQUEST
 } bot_recovery_state_t;
 
+typedef struct bot_personality_profile_s {
+	float aggressionBias;
+	float risk;
+	float overtakeBias;
+	float chatTone;
+} bot_personality_profile_t;
+
 //bot state
 typedef struct bot_state_s
 {
@@ -310,6 +317,12 @@ typedef struct bot_state_s
 	float ghostRecoveryReverseWindowStart;		//start time for reverse cycle counting
 	vec3_t ghostRecoveryReverseStartOrigin;		//position where the current reverse phase started
 	int ghostRecoveryReverseStartCollisionCount;	//collision pressure sampled at reverse phase start
+	float personalityAggressionBias;			//personality-driven aggression offset
+	float personalityRisk;						//personality-driven risk preference [0..1]
+	float personalityOvertakeBias;				//personality-driven overtake preference [0..1]
+	float personalityChatTone;					//personality-driven chat tone [0..1]
+	int favoriteWeapon;							//preferred weapon enum (WP_*)
+	float favoriteWeaponWeightBonus;			//bonus weight for preferred weapon selection
 } bot_state_t;
 
 //resets the whole bot state
@@ -330,3 +343,5 @@ int		BotAI_GetClientState( int clientNum, playerState_t *state );
 int		BotAI_GetEntityState( int entityNum, entityState_t *state );
 int		BotAI_GetSnapshotEntity( int clientNum, int sequence, entityState_t *state );
 int		BotTeamLeader(bot_state_t *bs);
+const bot_personality_profile_t *BotPersonalityProfileForName( const char *name );
+int	BotFavoriteWeaponFromName( const char *name );

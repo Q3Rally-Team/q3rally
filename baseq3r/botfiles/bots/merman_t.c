@@ -281,5 +281,33 @@ chat "Merman"
 		// 4 = level's title
 		// 5 = random weapon from weapon list
 	} //end type
+	type "koth_contest" //initiated when the hill becomes contested
+	{
+		"Contest on hill, move now.";
+		"Hill pressure rising, rotate in.";
+		"Crowded hill, time to crash the party.";
+	}
+
+	type "koth_capture" //initiated when our team captures the hill
+	{
+		"Hill captured, set a perimeter.";
+		"Control gained, keep formation.";
+		"We got the hill, cue victory honk.";
+	}
+
+	type "dom_lost_sigil" //initiated when our team loses a sigil
+	{
+		"Enemy flipped one of ours, respond.";
+		"We dropped a sigil, stabilize.";
+		"They snagged a sigil, rude. Let us fix that.";
+	}
+
+	type "dom_push_sigil" //initiated when team orders switch to sigil pressure
+	{
+		"Switch orders: push that sigil.";
+		"New plan, pressure their sigil.";
+		"Target swap: sigil smash time.";
+	}
+
 } //end chat
 

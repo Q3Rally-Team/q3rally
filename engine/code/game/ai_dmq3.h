@@ -147,6 +147,16 @@ void BotRememberLastOrderedTask(bot_state_t *bs);
 void BotCTFSeekGoals(bot_state_t *bs);
 //set ctf goals (defend base, get enemy flag) during retreat
 void BotCTFRetreatGoals(bot_state_t *bs);
+//returns the highest-priority domination sigil goal for this bot
+int BotGetDominationSigilGoal(bot_state_t *bs, bot_goal_t *goal, int *sigilStatus);
+//reads KOTH hill state from CS_KOTHSTATUS configstring
+qboolean BotGetKOTHStatus(int *owner, int *contested, int *capturePct, vec3_t hillOrigin, float *hillRadius);
+//set domination goals during seek/retreat
+void BotDominationSeekGoals(bot_state_t *bs);
+void BotDominationRetreatGoals(bot_state_t *bs);
+//set KOTH goals during seek/retreat
+void BotKOTHSeekGoals(bot_state_t *bs);
+void BotKOTHRetreatGoals(bot_state_t *bs);
 //
 #ifdef MISSIONPACK
 int Bot1FCTFCarryingFlag(bot_state_t *bs);
