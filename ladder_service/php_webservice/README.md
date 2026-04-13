@@ -41,5 +41,66 @@ Jedes Match wird als einzelne JSON-Datei unter `data/<matchId>.json` abgelegt. S
 * Bei sehr vielen Matches kann die Dateibasis unübersichtlich werden; für große Installationen empfiehlt sich langfristig dennoch eine vollwertige Datenbank.
 
 ## Fehlerbehandlung
-Fehlerhafte Anfragen werden als JSON im Format `{ "error": "..." }` beantwortet. Stimmt etwas mit den Dateirechten nicht, liefert der Service HTTP-Status 500.
+Fehlerhafte Anfragen werden als strukturiertes JSON beantwortet:
 
+```json
+{
+  "error": {
+    "code": "MATCH_ID_REQUIRED",
+    "message": "matchId is required.",
+    "details": {}
+  }
+}
+```
+
+Ältere Payload-Varianten werden weiterhin akzeptiert (degraded mode), die neue Payload-Semantik wird jedoch bevorzugt normalisiert verarbeitet.
+
+
+## Contract-Release v1.0.8 (Mode-aware Felder)
+
+### Verbindliche Felder pro Modus
+
+Die API erwartet jetzt pro Modus verpflichtende, kanonische Felder pro Spielerobjekt:
+
+- **Racing-Modi** (`GT_RACING`, `GT_RACING_DM`, `GT_SPRINT`, `GT_TEAM_RACING`, `GT_TEAM_RACING_DM`):
+  - `raceTimeMs`, `bestLapMs`, `checkpoints`
+- **Deathmatch-Modi** (`GT_DEATHMATCH`, `GT_TEAM`, `GT_DERBY`, `GT_LCS`):
+  - `kills`, `deaths`
+- **Objective-Modi** (`GT_CTF`, `GT_CTF4`, `GT_DOMINATION`, `GT_KOTH`):
+  - `objectiveScore`, `objectiveTimeMs`
+- **Elimination** (`GT_ELIMINATION`):
+  - `objectiveScore`, `objectiveTimeMs`, `eliminationRound`, `eliminationState`
+
+Fehlen diese Felder, wird das Match als **invalid contract payload** abgewiesen.
+
+### Deprecated / neu interpretierte Felder
+
+Folgende Alt-Felder werden weiterhin angenommen, aber intern auf kanonische Keys umgeschrieben:
+
+- `lapTime` -> `bestLapMs`
+- `frags` -> `kills`
+- `captures` -> `objectiveScore`
+- `holdTime` -> `objectiveTimeMs`
+- `roundState` -> `eliminationState`
+
+`score` bleibt als Anzeige-/Sortierwert erhalten, ersetzt aber nicht mehr die modus-spezifischen Pflichtfelder.
+
+### Breaking vs. Non-breaking
+
+- **Breaking:** Score-only-Payloads ohne modusabhängige Pflichtfelder werden nicht mehr stillschweigend akzeptiert.
+- **Non-breaking:** Legacy-Aliasse bleiben in einer Übergangsphase kompatibel und werden normalisiert verarbeitet.
+
+### Migrationshinweise für Consumer
+
+1. Payload-Producer (Game-Server/Adapter) auf kanonische Felder pro Modus umstellen.
+2. Dashboard/Analytics nicht mehr auf universelles `score` verlassen, sondern modusabhängige Felder lesen.
+3. Fehlerbehandlung auf strukturierte API-Errors (`error.code`, `error.message`, `error.details`) ausrichten.
+4. Vor Go-Live E2E mit mindestens je einem Match pro Modus fahren.
+
+### Release-Checkliste
+
+- [ ] **Game-Server**: Exportiert pro Modus die neuen Pflichtfelder; Legacy-Aliasse nur noch fallback.
+- [ ] **Python-Service**: Validierung + Normalisierung auf identische Feldregeln wie PHP-Webservice geprüft.
+- [ ] **PHP-Webservice**: `version.txt`, `version.php`, UI-Changelog und README auf v1.0.8 aktualisiert.
+- [ ] **Dashboard/Consumer**: Queries, KPI-Berechnung und UI-Felder auf kanonische Keys migriert.
+- [ ] **E2E**: Upload/List/Detail/Delete für Racing, DM, Objective, Elimination erfolgreich getestet.

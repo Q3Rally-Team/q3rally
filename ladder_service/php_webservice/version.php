@@ -6,9 +6,29 @@
 
 declare(strict_types=1);
 
-const LADDER_VERSION = '1.0.6';
+const LADDER_VERSION = '1.0.8';
 
 const LADDER_CHANGELOG = [
+    '1.0.8' => [
+        'date'    => '2026-04-13',
+        'changes' => [
+            'Contract update: mode-aware player fields are now validated and normalized per game mode',
+            'New required fields by mode: racing/sprint/team-racing require raceTimeMs + bestLapMs + checkpoints; deathmatch/team/derby/lcs require kills + deaths; objective modes require objectiveScore + objectiveTimeMs; elimination also requires eliminationRound + eliminationState',
+            'Breaking change: ambiguous score-only payloads are rejected when mode-specific mandatory fields are missing',
+            'Non-breaking: deprecated aliases (lapTime, frags, captures, roundState) are still accepted but normalized to canonical keys',
+            'Migration guidance added for game server, Python ladder service, PHP webservice and dashboard consumers',
+            'Release checklist added for coordinated rollout across all services and consumers',
+        ],
+    ],
+    '1.0.7' => [
+        'date'    => '2026-04-13',
+        'changes' => [
+            'Ingest parser now normalizes mode-specific player fields (race/kills/zone/elimination)',
+            'Index mapping updated for score/kills/race timers/zone hold and elimination metadata',
+            'Backward-compatible payload handling: legacy aliases still accepted in degraded mode',
+            'Structured API errors with code/message/details payloads (no silent no-player drops)',
+        ],
+    ],
     '1.0.6' => [
         'date'    => '2026-03-30',
         'changes' => [

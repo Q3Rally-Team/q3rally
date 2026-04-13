@@ -1,6 +1,7 @@
 #include "profile_shared.h"
 #include "g_local.h"
 #include "g_profile.h"
+#include "bg_ladder.h"
 #include "bg_achievements.h"
 
 #ifdef Q3_VM
@@ -383,6 +384,128 @@ qboolean G_Profile_GetUUID( char *out, int outSize ) {
     }
 
     Q_strncpyz( out, s_profileState.info.uuid, outSize );
+    return qtrue;
+}
+
+static int G_Profile_ComputeSnapshotRevision( void ) {
+    int revision = 0;
+
+    revision ^= s_profileState.stats.playerScore;
+    revision ^= ( s_profileState.stats.wins << 1 );
+    revision ^= ( s_profileState.stats.losses << 2 );
+    revision ^= ( s_profileState.stats.kills << 3 );
+    revision ^= ( s_profileState.stats.deaths << 4 );
+    revision ^= ( s_profileState.stats.gamesPlayed << 5 );
+    revision ^= ( s_profileState.info.currentRank << 6 );
+    revision ^= ( s_profileState.info.highestRank << 7 );
+    revision ^= ( s_profileState.stats.bestLapMs << 8 );
+    return revision;
+}
+
+qboolean G_Profile_GetLadderSnapshot( ladderProfileSnapshot_t *outSnapshot,
+                                      int *outSnapshotRevision,
+                                      int *outSnapshotEpoch ) {
+    int i;
+    qtime_t now;
+
+    if ( !outSnapshot ) {
+        return qfalse;
+    }
+
+    Com_Memset( outSnapshot, 0, sizeof( *outSnapshot ) );
+    if ( outSnapshotRevision ) {
+        *outSnapshotRevision = 0;
+    }
+    if ( outSnapshotEpoch ) {
+        *outSnapshotEpoch = 0;
+    }
+
+    if ( !s_profileState.loaded ) {
+        return qfalse;
+    }
+
+    outSnapshot->valid = qtrue;
+    outSnapshot->snapshotRevision = G_Profile_ComputeSnapshotRevision();
+    outSnapshot->snapshotEpoch = trap_RealTime( &now );
+
+    outSnapshot->playerScore = s_profileState.stats.playerScore;
+    outSnapshot->currentRank = s_profileState.info.currentRank;
+    outSnapshot->highestRank = s_profileState.info.highestRank;
+    outSnapshot->wins = s_profileState.stats.wins;
+    outSnapshot->losses = s_profileState.stats.losses;
+    outSnapshot->kills = s_profileState.stats.kills;
+    outSnapshot->deaths = s_profileState.stats.deaths;
+    outSnapshot->flagCaptures = s_profileState.stats.flagCaptures;
+    outSnapshot->flagAssists = s_profileState.stats.flagAssists;
+    outSnapshot->bestLapMs = s_profileState.stats.bestLapMs;
+    outSnapshot->accuracyAwards = s_profileState.stats.accuracyAwards;
+    outSnapshot->excellentAwards = s_profileState.stats.excellentAwards;
+    outSnapshot->impressiveAwards = s_profileState.stats.impressiveAwards;
+    outSnapshot->perfectAwards = s_profileState.stats.perfectAwards;
+    outSnapshot->damageDealt = s_profileState.stats.damageDealt;
+    outSnapshot->damageTaken = s_profileState.stats.damageTaken;
+    outSnapshot->distanceKm = (float)s_profileState.stats.distanceKm;
+    outSnapshot->topSpeedKph = (float)s_profileState.stats.topSpeedKph;
+    outSnapshot->fuelUsed = (float)s_profileState.stats.fuelUsed;
+    Q_strncpyz( outSnapshot->mostUsedVehicle, s_profileState.stats.mostUsedVehicle, sizeof( outSnapshot->mostUsedVehicle ) );
+    outSnapshot->gamesPlayed = s_profileState.stats.gamesPlayed;
+
+    outSnapshot->racingWins = s_profileState.stats.racingWins;
+    outSnapshot->racingPodiums = s_profileState.stats.racingPodiums;
+    outSnapshot->racingCompleted = s_profileState.stats.racingCompleted;
+    outSnapshot->racingTotalMs = s_profileState.stats.racingTotalMs;
+    outSnapshot->racingDmWins = s_profileState.stats.racingDmWins;
+    outSnapshot->racingDmPodiums = s_profileState.stats.racingDmPodiums;
+    outSnapshot->racingDmCompleted = s_profileState.stats.racingDmCompleted;
+    outSnapshot->racingDmTotalMs = s_profileState.stats.racingDmTotalMs;
+    outSnapshot->sprintWins = s_profileState.stats.sprintWins;
+    outSnapshot->sprintCompleted = s_profileState.stats.sprintCompleted;
+    outSnapshot->sprintBestMs = s_profileState.stats.sprintBestMs;
+    outSnapshot->eliminationWins = s_profileState.stats.eliminationWins;
+    outSnapshot->eliminationCompleted = s_profileState.stats.eliminationCompleted;
+    outSnapshot->eliminationTotalRoundsLasted = s_profileState.stats.eliminationTotalRoundsLasted;
+    outSnapshot->lcsWins = s_profileState.stats.lcsWins;
+    outSnapshot->lcsCompleted = s_profileState.stats.lcsCompleted;
+    outSnapshot->lcsTotalSurvivalMs = s_profileState.stats.lcsTotalSurvivalMs;
+    outSnapshot->derbyWins = s_profileState.stats.derbyWins;
+    outSnapshot->derbyCompleted = s_profileState.stats.derbyCompleted;
+    outSnapshot->derbyKills = s_profileState.stats.derbyKills;
+    outSnapshot->dmWins = s_profileState.stats.dmWins;
+    outSnapshot->dmCompleted = s_profileState.stats.dmCompleted;
+    outSnapshot->dmKills = s_profileState.stats.dmKills;
+    outSnapshot->ctfWins = s_profileState.stats.ctfWins;
+    outSnapshot->ctfCompleted = s_profileState.stats.ctfCompleted;
+    outSnapshot->ctfCaptures = s_profileState.stats.ctfCaptures;
+    outSnapshot->ctf4Wins = s_profileState.stats.ctf4Wins;
+    outSnapshot->ctf4Completed = s_profileState.stats.ctf4Completed;
+    outSnapshot->ctf4Captures = s_profileState.stats.ctf4Captures;
+    outSnapshot->teamWins = s_profileState.stats.teamWins;
+    outSnapshot->teamCompleted = s_profileState.stats.teamCompleted;
+    outSnapshot->teamKills = s_profileState.stats.teamKills;
+    outSnapshot->teamRacingWins = s_profileState.stats.teamRacingWins;
+    outSnapshot->teamRacingCompleted = s_profileState.stats.teamRacingCompleted;
+    outSnapshot->teamRacingPodiums = s_profileState.stats.teamRacingPodiums;
+    outSnapshot->teamRacingDmWins = s_profileState.stats.teamRacingDmWins;
+    outSnapshot->teamRacingDmCompleted = s_profileState.stats.teamRacingDmCompleted;
+    outSnapshot->teamRacingDmPodiums = s_profileState.stats.teamRacingDmPodiums;
+    outSnapshot->dominationWins = s_profileState.stats.dominationWins;
+    outSnapshot->dominationCompleted = s_profileState.stats.dominationCompleted;
+    outSnapshot->dominationZoneHoldMs = s_profileState.stats.dominationZoneHoldMs;
+    outSnapshot->kothWins = s_profileState.stats.kothWins;
+    outSnapshot->kothCompleted = s_profileState.stats.kothCompleted;
+    outSnapshot->kothZoneHoldMs = s_profileState.stats.kothZoneHoldMs;
+
+    for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
+        outSnapshot->achievementTiers[i] = s_profileState.achievementsUnlocked[i];
+    }
+
+    if ( outSnapshotRevision ) {
+        *outSnapshotRevision = outSnapshot->snapshotRevision;
+    }
+    if ( outSnapshotEpoch ) {
+        *outSnapshotEpoch = outSnapshot->snapshotEpoch;
+    }
+
     return qtrue;
 }
 

@@ -21,13 +21,58 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.6';
+const LADDER_VERSION        = '1.0.8';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
 const LADDER_RATE_FILE_PREFIX  = 'rl_';   // rate-limit state file prefix
 
 require_once __DIR__ . '/keys.php';
+
+const LADDER_RACE_MODES = [
+    'GT_RACING', 'GT_RACING_DM', 'GT_SPRINT', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
+];
+const LADDER_DEATHMATCH_MODES = [
+    'GT_DEATHMATCH', 'GT_TEAM', 'GT_DERBY', 'GT_LCS',
+];
+const LADDER_OBJECTIVE_MODES = [
+    'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_ELIMINATION',
+];
+
+final class LadderApiException extends RuntimeException
+{
+    private string $errorCode;
+    /** @var array<string, mixed> */
+    private array $details;
+
+    /**
+     * @param array<string, mixed> $details
+     */
+    public function __construct(int $statusCode, string $errorCode, string $message, array $details = [])
+    {
+        parent::__construct($message, $statusCode);
+        $this->errorCode = $errorCode;
+        $this->details = $details;
+    }
+
+    public function statusCode(): int
+    {
+        return $this->getCode() > 0 ? $this->getCode() : 400;
+    }
+
+    public function errorCode(): string
+    {
+        return $this->errorCode;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function details(): array
+    {
+        return $this->details;
+    }
+}
 
 function ladder_check_rate_limit(): void
 {
@@ -4481,6 +4526,17 @@ async function showMatchDetails(matchId) {
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
   {
+    version: '1.0.8',
+    date: '2026-04-13',
+    changes: [
+      'Contract update: mode-aware player fields are now validated and normalized per game mode',
+      'Required fields by mode documented (race, deathmatch, objective, elimination)',
+      'Breaking: score-only payloads are rejected if required mode-specific fields are missing',
+      'Non-breaking: legacy aliases still accepted and normalized to canonical keys',
+      'Migration and rollout checklist published for server/service/dashboard consumers',
+    ]
+  },
+  {
     version: '1.0.6',
     date: '2026-03-30',
     changes: [
@@ -4636,8 +4692,10 @@ try {
         default:
             send_error(405, 'Method not allowed.');
     }
+} catch (LadderApiException $e) {
+    send_error($e->statusCode(), $e->getMessage(), $e->errorCode(), $e->details());
 } catch (RuntimeException $e) {
-    send_error(400, $e->getMessage());
+    send_error(400, $e->getMessage(), 'BAD_REQUEST');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4932,8 +4990,120 @@ function profile_upsert_from_payload(array $payload): void
 // }
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function normalize_mode_value($mode): string
+{
+    if (!is_string($mode)) {
+        return '';
+    }
+    $trimmed = trim($mode);
+    if ($trimmed === '') {
+        return '';
+    }
+    $upper = strtoupper(str_replace([' ', '-'], '_', $trimmed));
+    if (strpos($upper, 'GT_') !== 0) {
+        $upper = 'GT_' . $upper;
+    }
+    return $upper;
+}
+
+function mode_is_race(string $mode): bool
+{
+    return in_array($mode, LADDER_RACE_MODES, true);
+}
+
+function mode_is_deathmatch_like(string $mode): bool
+{
+    return in_array($mode, LADDER_DEATHMATCH_MODES, true);
+}
+
+function mode_is_objective(string $mode): bool
+{
+    return in_array($mode, LADDER_OBJECTIVE_MODES, true);
+}
+
+function mode_is_elimination(string $mode): bool
+{
+    return $mode === 'GT_ELIMINATION';
+}
+
+function first_numeric_value(array $source, array $fields): ?float
+{
+    foreach ($fields as $field) {
+        if (!array_key_exists($field, $source)) {
+            continue;
+        }
+        $value = $source[$field];
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+    }
+    return null;
+}
+
+function extract_player_score(array $player): int
+{
+    $score = first_numeric_value($player, ['score', 'rawScore', 'playerScore']);
+    return (int) max(0, $score ?? 0);
+}
+
+function extract_player_kills(array $player, string $mode): int
+{
+    if (mode_is_race($mode)) {
+        return 0;
+    }
+    $kills = first_numeric_value($player, ['kills', 'frags', 'elims']);
+    if ($kills !== null) {
+        return (int) max(0, $kills);
+    }
+    // degraded mode for legacy payloads: kills were mirrored from score
+    if (mode_is_deathmatch_like($mode) || mode_is_objective($mode)) {
+        return extract_player_score($player);
+    }
+    return 0;
+}
+
+function extract_player_deaths(array $player, string $mode): int
+{
+    if (mode_is_race($mode)) {
+        return 0;
+    }
+    $deaths = first_numeric_value($player, ['deaths', 'deathCount']);
+    return (int) max(0, $deaths ?? 0);
+}
+
+function extract_player_position(array $player, string $mode): int
+{
+    if (mode_is_race($mode) || mode_is_elimination($mode)) {
+        $position = first_numeric_value($player, ['position', 'rank']);
+        return (int) max(0, $position ?? 0);
+    }
+    return 0;
+}
+
+function extract_player_race_time(array $player, string $mode): int
+{
+    if (!mode_is_race($mode) && !mode_is_elimination($mode)) {
+        return 0;
+    }
+    $time = first_numeric_value($player, ['totalRaceMs', 'raceTimeMs', 'finishRaceTime', 'survivalMs']);
+    return (int) max(0, $time ?? 0);
+}
+
+function extract_player_zone_hold(array $player, string $mode): int
+{
+    if ($mode !== 'GT_DOMINATION' && $mode !== 'GT_KOTH') {
+        return 0;
+    }
+    $value = first_numeric_value($player, ['zoneHoldMs', 'zoneTimeMs']);
+    return (int) max(0, $value ?? 0);
+}
+
 function index_extract_entry(array $payload): array
 {
+    $mode = normalize_mode_value($payload['mode'] ?? '');
     $dedicated = $payload['server']['dedicated'] ?? null;
     $source    = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
         ? 'online' : ($payload['source'] ?? 'offline');
@@ -4943,24 +5113,29 @@ function index_extract_entry(array $payload): array
         if (!is_array($p)) {
             continue;
         }
+        $score = extract_player_score($p);
+        $kills = extract_player_kills($p, $mode);
         $players[] = [
             'name'        => (string)($p['cleanName'] ?? $p['name'] ?? $p['displayName'] ?? ''),
-            'score'       => (int)($p['score'] ?? $p['rawScore'] ?? 0),
+            'score'       => $score,
             'bestLapMs'   => (int)($p['bestLapMs'] ?? 0),
-            'totalRaceMs' => (int)($p['totalRaceMs'] ?? 0),
-            'kills'       => (int)($p['kills'] ?? 0),
-            'deaths'      => (int)($p['deaths'] ?? 0),
-            'position'    => (int)($p['position'] ?? 0),
+            'totalRaceMs' => extract_player_race_time($p, $mode),
+            'kills'       => $kills,
+            'deaths'      => extract_player_deaths($p, $mode),
+            'position'    => extract_player_position($p, $mode),
             'isBot'       => (bool)($p['isBot'] ?? false),
             'team'        => (int)($p['team'] ?? 0),
             'captures'    => (int)($p['captures'] ?? 0),
             'damageDealt' => (int)($p['damageDealt'] ?? 0),
+            'zoneHoldMs'  => extract_player_zone_hold($p, $mode),
+            'eliminationRound' => mode_is_elimination($mode) ? (int) max(0, first_numeric_value($p, ['eliminationRound']) ?? 0) : 0,
+            'eliminationPlayersRemaining' => mode_is_elimination($mode) ? (int) max(0, first_numeric_value($p, ['eliminationPlayersRemaining']) ?? 0) : 0,
         ];
     }
 
     return [
         'matchId'     => (string)($payload['matchId'] ?? ''),
-        'mode'        => (string)($payload['mode'] ?? ''),
+        'mode'        => $mode,
         'gametype'    => (int)($payload['gametype'] ?? 0),
         'map'         => (string)($payload['map'] ?? ''),
         'startTime'   => (string)($payload['startTime'] ?? $payload['startTimeIso'] ?? ''),
@@ -5119,6 +5294,58 @@ function handle_register_json(): void
     exit;
 }
 
+function normalize_ingest_payload(array $payload): array
+{
+    $payload['mode'] = normalize_mode_value($payload['mode'] ?? '');
+    if ($payload['mode'] === '') {
+        throw new LadderApiException(422, 'MODE_REQUIRED', 'mode is required.');
+    }
+
+    if (!isset($payload['players']) || !is_array($payload['players'])) {
+        throw new LadderApiException(422, 'PLAYERS_REQUIRED', 'players must be a non-empty array.');
+    }
+
+    $normalizedPlayers = [];
+    foreach ($payload['players'] as $index => $player) {
+        if (!is_array($player)) {
+            continue;
+        }
+
+        $player['score'] = extract_player_score($player);
+        $player['kills'] = extract_player_kills($player, $payload['mode']);
+        $player['deaths'] = extract_player_deaths($player, $payload['mode']);
+        $player['totalRaceMs'] = extract_player_race_time($player, $payload['mode']);
+        $player['position'] = extract_player_position($player, $payload['mode']);
+        $player['zoneHoldMs'] = extract_player_zone_hold($player, $payload['mode']);
+
+        // mode-specific neutralization (new semantics first, legacy-compatible)
+        if (!mode_is_race($payload['mode']) && !mode_is_elimination($payload['mode'])) {
+            $player['bestLapMs'] = 0;
+            $player['lapCount'] = 0;
+            $player['lapTimes'] = [];
+        }
+        if (!mode_is_elimination($payload['mode'])) {
+            $player['eliminationRound'] = 0;
+            $player['eliminationPlayersRemaining'] = 0;
+            $player['eliminationMetric'] = 0;
+        }
+        if ($payload['mode'] !== 'GT_DOMINATION' && $payload['mode'] !== 'GT_KOTH') {
+            $player['zoneHoldMs'] = 0;
+            $player['zoneActiveSigil'] = -1;
+        }
+        if (mode_is_race($payload['mode'])) {
+            $player['kills'] = 0;
+            $player['deaths'] = 0;
+        }
+
+        $normalizedPlayers[$index] = $player;
+    }
+
+    $payload['players'] = array_values($normalizedPlayers);
+    $payload['playerCount'] = count($payload['players']);
+    return $payload;
+}
+
 function handle_post(array $segments): void
 {
     if ($segments === ['register']) {
@@ -5132,8 +5359,10 @@ function handle_post(array $segments): void
 
     $payload = json_decode(ladder_read_body(), true);
     if (!is_array($payload)) {
-        throw new RuntimeException('Invalid JSON payload.');
+        throw new LadderApiException(400, 'INVALID_JSON', 'Invalid JSON payload.');
     }
+
+    $payload = normalize_ingest_payload($payload);
 
     // Auth: verify Bearer token against registered server keys.
     // Server name in payload must match the registered name for this key.
@@ -5144,19 +5373,17 @@ function handle_post(array $segments): void
     keys_require_auth($serverName);
 
     if (!isset($payload['matchId']) || !is_string($payload['matchId']) || trim($payload['matchId']) === '') {
-        throw new RuntimeException('matchId is required.');
+        throw new LadderApiException(422, 'MATCH_ID_REQUIRED', 'matchId is required.');
     }
 
     $matchId = normalize_match_id($payload['matchId']);
     if ($matchId === '') {
-        throw new RuntimeException('matchId contains unsupported characters.');
+        throw new LadderApiException(422, 'MATCH_ID_INVALID', 'matchId contains unsupported characters.');
     }
 
-    // Silently discard matches with no players
-    $playerCount = (int)($payload['playerCount'] ?? 0);
+    $playerCount = (int)($payload['playerCount'] ?? count((array)($payload['players'] ?? [])));
     if ($playerCount <= 0) {
-        send_json(['matchId' => $payload['matchId'], 'skipped' => true], 200);
-        return;
+        throw new LadderApiException(422, 'PLAYERS_EMPTY', 'No ingestable players found in payload.');
     }
 
     $matchPath = DATA_DIR . '/' . $matchId . '.json';
@@ -5175,11 +5402,11 @@ function handle_post(array $segments): void
 
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
-        throw new RuntimeException('Failed to encode payload.');
+        throw new LadderApiException(500, 'ENCODE_FAILED', 'Failed to encode payload.');
     }
 
     if (file_put_contents($matchPath, $json . "\n") === false) {
-        throw new RuntimeException('Unable to persist match.');
+        throw new LadderApiException(500, 'PERSIST_FAILED', 'Unable to persist match.');
     }
 
     // Update leaderboard index
@@ -5698,7 +5925,16 @@ function send_json(array $payload, int $statusCode): void
     exit;
 }
 
-function send_error(int $statusCode, string $message): void
+function send_error(int $statusCode, string $message, string $code = 'ERROR', array $details = []): void
 {
-    send_json(['error' => $message], $statusCode);
+    $payload = [
+        'error' => [
+            'code' => $code,
+            'message' => $message,
+        ],
+    ];
+    if (!empty($details)) {
+        $payload['error']['details'] = $details;
+    }
+    send_json($payload, $statusCode);
 }

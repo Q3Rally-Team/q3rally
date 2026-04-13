@@ -404,6 +404,131 @@ static const char *SV_LadderTeamName( int team ) {
         return "free";
 }
 
+static qboolean G_LadderGametypeHasRaceFields( int gametype ) {
+        return ( gametype == GT_RACING ||
+                 gametype == GT_RACING_DM ||
+                 gametype == GT_SPRINT ||
+                 gametype == GT_TEAM_RACING ||
+                 gametype == GT_TEAM_RACING_DM ||
+                 gametype == GT_ELIMINATION );
+}
+
+qboolean G_LadderValidatePayload( ladderMatchPayload_t *payload, qboolean blockOnHardErrors ) {
+        int i;
+        qboolean hasRaceFields;
+        qboolean killSemantics;
+        qboolean hasHardErrors;
+
+        if ( !payload ) {
+                return qfalse;
+        }
+
+        payload->validationWarnings = 0;
+        payload->validationErrors = 0;
+        payload->validationReason[0] = '\0';
+
+        if ( !payload->matchId[0] || !payload->mode[0] || !payload->mapName[0] ) {
+                payload->validationErrors |= LADDER_PAYLOAD_ERR_MISSING_REQUIRED;
+                Q_strncpyz( payload->validationReason, "missing_required_fields", sizeof( payload->validationReason ) );
+        }
+
+        if ( payload->durationSeconds < 0 || payload->startEpoch < 0 || payload->endEpoch < 0 ) {
+                payload->validationErrors |= LADDER_PAYLOAD_ERR_VALUE_RANGE;
+                Q_strncpyz( payload->validationReason, "negative_match_timing", sizeof( payload->validationReason ) );
+        }
+
+        hasRaceFields = G_LadderGametypeHasRaceFields( payload->gametype );
+        if ( hasRaceFields ) {
+                if ( payload->numberOfLaps <= 0 ) {
+                        payload->validationErrors |= LADDER_PAYLOAD_ERR_MISSING_REQUIRED;
+                        Q_strncpyz( payload->validationReason, "numberOfLaps_required_for_race_mode", sizeof( payload->validationReason ) );
+                }
+        } else if ( payload->numberOfLaps != 0 || payload->raceStartTime != 0 || payload->raceEndTime != 0 ) {
+                payload->validationWarnings |= LADDER_PAYLOAD_WARN_FORBIDDEN_MODE_FIELDS;
+        }
+
+        killSemantics = ( payload->gametype == GT_DEATHMATCH ||
+                          payload->gametype == GT_TEAM ||
+                          payload->gametype == GT_DERBY ||
+                          payload->gametype == GT_LCS ||
+                          payload->gametype == GT_ELIMINATION ||
+                          payload->gametype == GT_RACING_DM ||
+                          payload->gametype == GT_TEAM_RACING_DM ||
+                          payload->gametype == GT_CTF ||
+                          payload->gametype == GT_CTF4 ||
+                          payload->gametype == GT_DOMINATION ||
+                          payload->gametype == GT_KOTH );
+
+        if ( payload->playerCount < 0 || payload->playerCount > MAX_CLIENTS ) {
+                payload->validationErrors |= LADDER_PAYLOAD_ERR_VALUE_RANGE;
+                Q_strncpyz( payload->validationReason, "playerCount_out_of_range", sizeof( payload->validationReason ) );
+                if ( payload->playerCount < 0 ) {
+                        payload->playerCount = 0;
+                } else if ( payload->playerCount > MAX_CLIENTS ) {
+                        payload->playerCount = MAX_CLIENTS;
+                }
+                payload->validationWarnings |= LADDER_PAYLOAD_WARN_LAPCOUNT_REPAIRED;
+        }
+
+        for ( i = 0; i < payload->playerCount; ++i ) {
+                ladderPlayerPayload_t *player = &payload->players[i];
+                int expectedLapCount;
+                int j;
+                float expectedKdRatio;
+
+                if ( player->team < TEAM_FREE || player->team > TEAM_SPECTATOR ) {
+                        payload->validationErrors |= LADDER_PAYLOAD_ERR_VALUE_RANGE;
+                        Q_strncpyz( payload->validationReason, "invalid_team_id", sizeof( payload->validationReason ) );
+                }
+                if ( player->bestLapMs < 0 || player->totalRaceMs < 0 || player->finishRaceTime < 0 || player->deaths < 0 ) {
+                        payload->validationErrors |= LADDER_PAYLOAD_ERR_VALUE_RANGE;
+                        Q_strncpyz( payload->validationReason, "negative_player_timing_or_deaths", sizeof( payload->validationReason ) );
+                }
+
+                expectedLapCount = player->lapCount;
+                if ( expectedLapCount < 0 ) {
+                        expectedLapCount = 0;
+                }
+                if ( expectedLapCount > LADDER_MAX_LAP_TIMES ) {
+                        expectedLapCount = LADDER_MAX_LAP_TIMES;
+                }
+                if ( hasRaceFields && payload->numberOfLaps > 0 && expectedLapCount > payload->numberOfLaps ) {
+                        payload->validationWarnings |= LADDER_PAYLOAD_WARN_LAPCOUNT_REPAIRED;
+                }
+                if ( expectedLapCount != player->lapCount ) {
+                        payload->validationWarnings |= LADDER_PAYLOAD_WARN_LAPCOUNT_REPAIRED;
+                        player->lapCount = expectedLapCount;
+                }
+
+                for ( j = 0; j < player->lapCount; ++j ) {
+                        if ( player->lapTimes[j] <= 0 ) {
+                                payload->validationErrors |= LADDER_PAYLOAD_ERR_INTERNAL_CONSISTENCY;
+                                Q_strncpyz( payload->validationReason, "lapCount_lapTimes_inconsistent", sizeof( payload->validationReason ) );
+                                break;
+                        }
+                }
+
+                if ( killSemantics ) {
+                        if ( player->deaths > 0 ) {
+                                expectedKdRatio = (float)player->kills / (float)player->deaths;
+                        } else {
+                                expectedKdRatio = (float)player->kills;
+                        }
+                        if ( fabsf( expectedKdRatio - player->kdRatio ) > 0.01f ) {
+                                payload->validationWarnings |= LADDER_PAYLOAD_WARN_KD_RATIO_REPAIRED;
+                                player->kdRatio = expectedKdRatio;
+                        }
+                }
+        }
+
+        hasHardErrors = payload->validationErrors != 0;
+        if ( hasHardErrors && blockOnHardErrors ) {
+                payload->valid = qfalse;
+        }
+
+        return hasHardErrors ? qfalse : qtrue;
+}
+
 static qboolean SV_LadderJsonAppendKey( ladderJsonBuilder_t *builder, const char *key, qboolean *first ) {
         if ( !SV_LadderJsonEnsure( builder, 1 ) ) {
                 return qfalse;
@@ -678,7 +803,7 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
         }
 
         /* Career profile snapshot */
-        if ( player->profile.valid ) {
+        if ( player->profileAttached ) {
                 const ladderProfileSnapshot_t *snap = &player->profile;
                 qboolean profFirst = qtrue;
                 int i;
@@ -698,121 +823,133 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
                 if ( !SV_LadderJsonAppendKey( builder, key, &profFirst ) || \
                      !SV_LadderJsonAppendString( builder, snap->field ) ) { return qfalse; }
 
-                SNAP_INT( "playerScore",      playerScore      )
-                SNAP_INT( "currentRank",      currentRank      )
-                SNAP_INT( "highestRank",      highestRank      )
-                SNAP_INT( "wins",             wins             )
-                SNAP_INT( "losses",           losses           )
-                SNAP_INT( "kills",            kills            )
-                SNAP_INT( "deaths",           deaths           )
-                SNAP_INT( "flagCaptures",     flagCaptures     )
-                SNAP_INT( "flagAssists",      flagAssists      )
-                SNAP_INT( "bestLapMs",        bestLapMs        )
-                SNAP_INT( "accuracyAwards",   accuracyAwards   )
-                SNAP_INT( "excellentAwards",  excellentAwards  )
-                SNAP_INT( "impressiveAwards", impressiveAwards )
-                SNAP_INT( "perfectAwards",    perfectAwards    )
-                SNAP_INT( "damageDealt",      damageDealt      )
-                SNAP_INT( "damageTaken",      damageTaken      )
-                SNAP_FLT( "distanceKm",       distanceKm       )
-                SNAP_FLT( "topSpeedKph",      topSpeedKph      )
-                SNAP_FLT( "fuelUsed",         fuelUsed         )
-                SNAP_STR( "mostUsedVehicle",  mostUsedVehicle  )
-                SNAP_INT( "gamesPlayed",      gamesPlayed      )
+                if ( !SV_LadderJsonAppendKey( builder, "valid", &profFirst ) ||
+                     !SV_LadderJsonAppendBoolean( builder, snap->valid ) ) {
+                        return qfalse;
+                }
 
-                /* ── GT_RACING ── */
-                SNAP_INT( "racingWins",       racingWins       )
-                SNAP_INT( "racingPodiums",    racingPodiums    )
-                SNAP_INT( "racingCompleted",  racingCompleted  )
-                SNAP_INT( "racingTotalMs",    racingTotalMs    )
+                if ( !snap->valid ) {
+                        if ( !SV_LadderJsonAppendChar( builder, '}' ) ) {
+                                return qfalse;
+                        }
+                } else {
+                        SNAP_INT( "snapshotEpoch",    snapshotEpoch    )
+                        SNAP_INT( "snapshotRevision", snapshotRevision )
+                        SNAP_INT( "playerScore",      playerScore      )
+                        SNAP_INT( "currentRank",      currentRank      )
+                        SNAP_INT( "highestRank",      highestRank      )
+                        SNAP_INT( "wins",             wins             )
+                        SNAP_INT( "losses",           losses           )
+                        SNAP_INT( "kills",            kills            )
+                        SNAP_INT( "deaths",           deaths           )
+                        SNAP_INT( "flagCaptures",     flagCaptures     )
+                        SNAP_INT( "flagAssists",      flagAssists      )
+                        SNAP_INT( "bestLapMs",        bestLapMs        )
+                        SNAP_INT( "accuracyAwards",   accuracyAwards   )
+                        SNAP_INT( "excellentAwards",  excellentAwards  )
+                        SNAP_INT( "impressiveAwards", impressiveAwards )
+                        SNAP_INT( "perfectAwards",    perfectAwards    )
+                        SNAP_INT( "damageDealt",      damageDealt      )
+                        SNAP_INT( "damageTaken",      damageTaken      )
+                        SNAP_FLT( "distanceKm",       distanceKm       )
+                        SNAP_FLT( "topSpeedKph",      topSpeedKph      )
+                        SNAP_FLT( "fuelUsed",         fuelUsed         )
+                        SNAP_STR( "mostUsedVehicle",  mostUsedVehicle  )
+                        SNAP_INT( "gamesPlayed",      gamesPlayed      )
 
-                /* ── GT_RACING_DM ── */
-                SNAP_INT( "racingDmWins",       racingDmWins       )
-                SNAP_INT( "racingDmPodiums",    racingDmPodiums    )
-                SNAP_INT( "racingDmCompleted",  racingDmCompleted  )
-                SNAP_INT( "racingDmTotalMs",    racingDmTotalMs    )
+                        /* ── GT_RACING ── */
+                        SNAP_INT( "racingWins",       racingWins       )
+                        SNAP_INT( "racingPodiums",    racingPodiums    )
+                        SNAP_INT( "racingCompleted",  racingCompleted  )
+                        SNAP_INT( "racingTotalMs",    racingTotalMs    )
 
-                /* ── GT_SPRINT ── */
-                SNAP_INT( "sprintWins",       sprintWins       )
-                SNAP_INT( "sprintCompleted",  sprintCompleted  )
-                SNAP_INT( "sprintBestMs",     sprintBestMs     )
+                        /* ── GT_RACING_DM ── */
+                        SNAP_INT( "racingDmWins",       racingDmWins       )
+                        SNAP_INT( "racingDmPodiums",    racingDmPodiums    )
+                        SNAP_INT( "racingDmCompleted",  racingDmCompleted  )
+                        SNAP_INT( "racingDmTotalMs",    racingDmTotalMs    )
 
-                /* ── GT_ELIMINATION ── */
-                SNAP_INT( "eliminationWins",              eliminationWins              )
-                SNAP_INT( "eliminationCompleted",         eliminationCompleted         )
-                SNAP_INT( "eliminationTotalRoundsLasted", eliminationTotalRoundsLasted )
+                        /* ── GT_SPRINT ── */
+                        SNAP_INT( "sprintWins",       sprintWins       )
+                        SNAP_INT( "sprintCompleted",  sprintCompleted  )
+                        SNAP_INT( "sprintBestMs",     sprintBestMs     )
 
-                /* ── GT_LCS ── */
-                SNAP_INT( "lcsWins",             lcsWins            )
-                SNAP_INT( "lcsCompleted",        lcsCompleted       )
-                SNAP_INT( "lcsTotalSurvivalMs",  lcsTotalSurvivalMs )
+                        /* ── GT_ELIMINATION ── */
+                        SNAP_INT( "eliminationWins",              eliminationWins              )
+                        SNAP_INT( "eliminationCompleted",         eliminationCompleted         )
+                        SNAP_INT( "eliminationTotalRoundsLasted", eliminationTotalRoundsLasted )
 
-                /* ── GT_DERBY ── */
-                SNAP_INT( "derbyWins",       derbyWins       )
-                SNAP_INT( "derbyCompleted",  derbyCompleted  )
-                SNAP_INT( "derbyKills",      derbyKills      )
+                        /* ── GT_LCS ── */
+                        SNAP_INT( "lcsWins",             lcsWins            )
+                        SNAP_INT( "lcsCompleted",        lcsCompleted       )
+                        SNAP_INT( "lcsTotalSurvivalMs",  lcsTotalSurvivalMs )
 
-                /* ── GT_DEATHMATCH ── */
-                SNAP_INT( "dmWins",       dmWins       )
-                SNAP_INT( "dmCompleted",  dmCompleted  )
-                SNAP_INT( "dmKills",      dmKills      )
+                        /* ── GT_DERBY ── */
+                        SNAP_INT( "derbyWins",       derbyWins       )
+                        SNAP_INT( "derbyCompleted",  derbyCompleted  )
+                        SNAP_INT( "derbyKills",      derbyKills      )
 
-                /* ── GT_CTF ── */
-                SNAP_INT( "ctfWins",       ctfWins       )
-                SNAP_INT( "ctfCompleted",  ctfCompleted  )
-                SNAP_INT( "ctfCaptures",   ctfCaptures   )
+                        /* ── GT_DEATHMATCH ── */
+                        SNAP_INT( "dmWins",       dmWins       )
+                        SNAP_INT( "dmCompleted",  dmCompleted  )
+                        SNAP_INT( "dmKills",      dmKills      )
 
-                /* ── GT_CTF4 ── */
-                SNAP_INT( "ctf4Wins",       ctf4Wins       )
-                SNAP_INT( "ctf4Completed",  ctf4Completed  )
-                SNAP_INT( "ctf4Captures",   ctf4Captures   )
+                        /* ── GT_CTF ── */
+                        SNAP_INT( "ctfWins",       ctfWins       )
+                        SNAP_INT( "ctfCompleted",  ctfCompleted  )
+                        SNAP_INT( "ctfCaptures",   ctfCaptures   )
 
-                /* ── GT_TEAM ── */
-                SNAP_INT( "teamWins",       teamWins       )
-                SNAP_INT( "teamCompleted",  teamCompleted  )
-                SNAP_INT( "teamKills",      teamKills      )
+                        /* ── GT_CTF4 ── */
+                        SNAP_INT( "ctf4Wins",       ctf4Wins       )
+                        SNAP_INT( "ctf4Completed",  ctf4Completed  )
+                        SNAP_INT( "ctf4Captures",   ctf4Captures   )
 
-                /* ── GT_TEAM_RACING ── */
-                SNAP_INT( "teamRacingWins",       teamRacingWins       )
-                SNAP_INT( "teamRacingCompleted",  teamRacingCompleted  )
-                SNAP_INT( "teamRacingPodiums",    teamRacingPodiums    )
+                        /* ── GT_TEAM ── */
+                        SNAP_INT( "teamWins",       teamWins       )
+                        SNAP_INT( "teamCompleted",  teamCompleted  )
+                        SNAP_INT( "teamKills",      teamKills      )
 
-                /* ── GT_TEAM_RACING_DM ── */
-                SNAP_INT( "teamRacingDmWins",       teamRacingDmWins       )
-                SNAP_INT( "teamRacingDmCompleted",  teamRacingDmCompleted  )
-                SNAP_INT( "teamRacingDmPodiums",    teamRacingDmPodiums    )
+                        /* ── GT_TEAM_RACING ── */
+                        SNAP_INT( "teamRacingWins",       teamRacingWins       )
+                        SNAP_INT( "teamRacingCompleted",  teamRacingCompleted  )
+                        SNAP_INT( "teamRacingPodiums",    teamRacingPodiums    )
 
-                /* ── GT_DOMINATION ── */
-                SNAP_INT( "dominationWins",        dominationWins        )
-                SNAP_INT( "dominationCompleted",   dominationCompleted   )
-                SNAP_INT( "dominationZoneHoldMs",  dominationZoneHoldMs  )
+                        /* ── GT_TEAM_RACING_DM ── */
+                        SNAP_INT( "teamRacingDmWins",       teamRacingDmWins       )
+                        SNAP_INT( "teamRacingDmCompleted",  teamRacingDmCompleted  )
+                        SNAP_INT( "teamRacingDmPodiums",    teamRacingDmPodiums    )
 
-                /* ── GT_KOTH ── */
-                SNAP_INT( "kothWins",        kothWins        )
-                SNAP_INT( "kothCompleted",   kothCompleted   )
-                SNAP_INT( "kothZoneHoldMs",  kothZoneHoldMs  )
+                        /* ── GT_DOMINATION ── */
+                        SNAP_INT( "dominationWins",        dominationWins        )
+                        SNAP_INT( "dominationCompleted",   dominationCompleted   )
+                        SNAP_INT( "dominationZoneHoldMs",  dominationZoneHoldMs  )
 
+                        /* ── GT_KOTH ── */
+                        SNAP_INT( "kothWins",        kothWins        )
+                        SNAP_INT( "kothCompleted",   kothCompleted   )
+                        SNAP_INT( "kothZoneHoldMs",  kothZoneHoldMs  )
+
+                        if ( !SV_LadderJsonAppendKey( builder, "achievementTiers", &profFirst ) ||
+                             !SV_LadderJsonAppendChar( builder, '[' ) ) {
+                                return qfalse;
+                        }
+                        for ( i = 0; i < (int)( sizeof( snap->achievementTiers ) / sizeof( snap->achievementTiers[0] ) ); ++i ) {
+                                if ( i > 0 && !SV_LadderJsonAppendChar( builder, ',' ) ) {
+                                        return qfalse;
+                                }
+                                if ( !SV_LadderJsonAppendInt( builder, snap->achievementTiers[i] ) ) {
+                                        return qfalse;
+                                }
+                        }
+                        if ( !SV_LadderJsonAppendChar( builder, ']' ) ||
+                             !SV_LadderJsonAppendChar( builder, '}' ) ) {
+                                return qfalse;
+                        }
+                }
+        }
 #undef SNAP_INT
 #undef SNAP_FLT
 #undef SNAP_STR
-
-                if ( !SV_LadderJsonAppendKey( builder, "achievementTiers", &profFirst ) ||
-                     !SV_LadderJsonAppendChar( builder, '[' ) ) {
-                        return qfalse;
-                }
-                for ( i = 0; i < (int)( sizeof( snap->achievementTiers ) / sizeof( snap->achievementTiers[0] ) ); ++i ) {
-                        if ( i > 0 && !SV_LadderJsonAppendChar( builder, ',' ) ) {
-                                return qfalse;
-                        }
-                        if ( !SV_LadderJsonAppendInt( builder, snap->achievementTiers[i] ) ) {
-                                return qfalse;
-                        }
-                }
-                if ( !SV_LadderJsonAppendChar( builder, ']' ) ||
-                     !SV_LadderJsonAppendChar( builder, '}' ) ) {
-                        return qfalse;
-                }
-        }
 
         if ( !SV_LadderJsonAppendChar( builder, '}' ) ) {
                 return qfalse;
@@ -841,6 +978,21 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
 
         if ( !SV_LadderJsonAppendKey( &builder, "matchId", &first ) ||
              !SV_LadderJsonAppendString( &builder, payload->matchId ) ) {
+                Z_Free( builder.data );
+                return NULL;
+        }
+        if ( !SV_LadderJsonAppendKey( &builder, "validationWarnings", &first ) ||
+             !SV_LadderJsonAppendInt( &builder, payload->validationWarnings ) ) {
+                Z_Free( builder.data );
+                return NULL;
+        }
+        if ( !SV_LadderJsonAppendKey( &builder, "validationErrors", &first ) ||
+             !SV_LadderJsonAppendInt( &builder, payload->validationErrors ) ) {
+                Z_Free( builder.data );
+                return NULL;
+        }
+        if ( !SV_LadderJsonAppendKey( &builder, "validationReason", &first ) ||
+             !SV_LadderJsonAppendString( &builder, payload->validationReason ) ) {
                 Z_Free( builder.data );
                 return NULL;
         }
@@ -2309,6 +2461,7 @@ void SV_LadderShutdown( void ) {
 
 void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         ladderRequest_t *request;
+        ladderMatchPayload_t validatedPayload;
         char *json;
         size_t length = 0;
         int total;
@@ -2326,6 +2479,15 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         }
 
         if ( !payload || !payload->valid ) {
+                return;
+        }
+
+        Com_Memcpy( &validatedPayload, payload, sizeof( validatedPayload ) );
+        if ( !G_LadderValidatePayload( &validatedPayload, qtrue ) ) {
+                Com_Printf( "Ladder: blocking submit for match %s (errors=%d reason=%s)\n",
+                        validatedPayload.matchId[0] ? validatedPayload.matchId : "<unknown>",
+                        validatedPayload.validationErrors,
+                        validatedPayload.validationReason[0] ? validatedPayload.validationReason : "validation_failed" );
                 return;
         }
 
@@ -2352,11 +2514,11 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         total = sv_ladder.queueSize + ( sv_ladder.active ? 1 : 0 );
         if ( total >= sv_ladder.maxQueue ) {
                 Com_Printf( "Ladder: queue full, dropping match %s\n",
-                        payload->matchId[0] ? payload->matchId : "<unknown>" );
+                        validatedPayload.matchId[0] ? validatedPayload.matchId : "<unknown>" );
                 return;
         }
 
-        json = SV_LadderSerializeMatch( payload, &length );
+        json = SV_LadderSerializeMatch( &validatedPayload, &length );
         if ( !json || !length ) {
                         Com_Printf( "Ladder: failed to serialize match payload\n" );
                 if ( json ) {
@@ -2371,10 +2533,10 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
                 return;
         }
 
-        Com_Memcpy( &request->payload, payload, sizeof( *payload ) );
+        Com_Memcpy( &request->payload, &validatedPayload, sizeof( validatedPayload ) );
         request->json = json;
         request->jsonLength = length;
-        Q_strncpyz( request->matchId, payload->matchId, sizeof( request->matchId ) );
+        Q_strncpyz( request->matchId, validatedPayload.matchId, sizeof( request->matchId ) );
         request->nextAttemptTime = 0;
         request->attempt = 0;
 
@@ -2388,7 +2550,7 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
 #ifndef USE_CURL
         if ( !sv_ladder.warnedNoCurl ) {
                 Com_Printf( "Ladder: built without libcurl support, dropping match %s\n",
-                        payload->matchId[0] ? payload->matchId : "<unknown>" );
+                        validatedPayload.matchId[0] ? validatedPayload.matchId : "<unknown>" );
                 sv_ladder.warnedNoCurl = qtrue;
         }
         SV_LadderFreeRequest( request, qfalse );

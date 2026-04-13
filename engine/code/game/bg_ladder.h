@@ -20,6 +20,17 @@
 #define LADDER_MAX_MODEL                MAX_QPATH
 #define LADDER_MAX_VEHICLE              MAX_QPATH
 #define LADDER_MAX_LAP_TIMES            32
+#define LADDER_MAX_VALIDATION_REASON    128
+
+typedef enum ladderPayloadIssue_e {
+        LADDER_PAYLOAD_WARN_FORBIDDEN_MODE_FIELDS = 1 << 0,
+        LADDER_PAYLOAD_WARN_KD_RATIO_REPAIRED     = 1 << 1,
+        LADDER_PAYLOAD_WARN_LAPCOUNT_REPAIRED     = 1 << 2,
+
+        LADDER_PAYLOAD_ERR_MISSING_REQUIRED       = 1 << 8,
+        LADDER_PAYLOAD_ERR_VALUE_RANGE            = 1 << 9,
+        LADDER_PAYLOAD_ERR_INTERNAL_CONSISTENCY   = 1 << 10
+} ladderPayloadIssue_t;
 
 #ifndef RACE_MAX_RECORDED_LAPS
 #define RACE_MAX_RECORDED_LAPS          LADDER_MAX_LAP_TIMES
@@ -30,6 +41,8 @@
  * profile data available on the server. */
 typedef struct ladderProfileSnapshot_s {
         qboolean        valid;
+        int             snapshotEpoch;
+        int             snapshotRevision;
         /* ── Allgemein ─────────────────────────────────────────────────── */
         int             playerScore;
         int             currentRank;
@@ -168,11 +181,15 @@ typedef struct ladderPlayerPayload_s {
         float           eliminationMetric;
         int                     finishRaceTime;
         float           kdRatio;
+        qboolean        profileAttached; /* profile block explicitly attached (valid true/false) */
         ladderProfileSnapshot_t profile;   /* career snapshot, valid only for local client */
 } ladderPlayerPayload_t;
 
 typedef struct ladderMatchPayload_s {
         qboolean        valid;
+        int                     validationWarnings;
+        int                     validationErrors;
+        char            validationReason[LADDER_MAX_VALIDATION_REASON];
         char            matchId[LADDER_MAX_MATCH_ID];
         char            mode[LADDER_MAX_MODE];
         int                     gametype;

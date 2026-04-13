@@ -32,6 +32,27 @@ typedef struct {
         int dummy;
 } car_t;
 
+typedef struct {
+        const char *name;
+        int minimumScore;
+} profile_rank_def_t;
+
+typedef struct {
+        int playerScore;
+} profile_stats_t;
+
+typedef struct {
+        int index;
+        const profile_rank_def_t *current;
+} profile_rank_t;
+
+#define PROFILE_RANK_TABLE(X) \
+        X("Bronze", 0) \
+        X("Silver", 1000)
+
+static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, const profile_rank_def_t *table, size_t count, profile_rank_t *outRank ) {\
+        (void)stats; (void)table; (void)count; if ( outRank ) { outRank->index = 0; outRank->current = NULL; } return qtrue; }
+
 #define MAX_CLIENTS 64
 #define TEAM_NUM_TEAMS 4
 #define MAX_QPATH 64
@@ -45,6 +66,22 @@ typedef struct {
 #define TEAM_BLUE 2
 #define TEAM_SPECTATOR 3
 
+#define GT_RACING 0
+#define GT_RACING_DM 1
+#define GT_SINGLE_PLAYER 2
+#define GT_DERBY 3
+#define GT_LCS 4
+#define GT_ELIMINATION 5
+#define GT_DEATHMATCH 6
+#define GT_SPRINT 7
+#define GT_TEAM 16
+#define GT_TEAM_RACING 17
+#define GT_TEAM_RACING_DM 18
+#define GT_CTF 19
+#define GT_CTF4 20
+#define GT_DOMINATION 21
+#define GT_KOTH 22
+
 #define LADDER_MAX_MATCH_ID             64
 #define LADDER_MAX_MODE                 32
 #define LADDER_MAX_TIME_STRING          32
@@ -56,10 +93,63 @@ typedef struct {
 #define LADDER_MAX_MODEL                MAX_QPATH
 #define LADDER_MAX_VEHICLE              MAX_QPATH
 #define LADDER_MAX_LAP_TIMES            32
+#define LADDER_MAX_VALIDATION_REASON    128
+
+typedef enum ladderPayloadIssue_e {
+        LADDER_PAYLOAD_WARN_FORBIDDEN_MODE_FIELDS = 1 << 0,
+        LADDER_PAYLOAD_WARN_KD_RATIO_REPAIRED     = 1 << 1,
+        LADDER_PAYLOAD_WARN_LAPCOUNT_REPAIRED     = 1 << 2,
+
+        LADDER_PAYLOAD_ERR_MISSING_REQUIRED       = 1 << 8,
+        LADDER_PAYLOAD_ERR_VALUE_RANGE            = 1 << 9,
+        LADDER_PAYLOAD_ERR_INTERNAL_CONSISTENCY   = 1 << 10
+} ladderPayloadIssue_t;
 
 #ifndef RACE_MAX_RECORDED_LAPS
 #define RACE_MAX_RECORDED_LAPS          LADDER_MAX_LAP_TIMES
 #endif
+
+typedef struct ladderProfileSnapshot_s {
+        qboolean        valid;
+        int             snapshotEpoch;
+        int             snapshotRevision;
+        int             playerScore;
+        int             currentRank;
+        int             highestRank;
+        int             wins;
+        int             losses;
+        int             kills;
+        int             deaths;
+        int             flagCaptures;
+        int             flagAssists;
+        int             bestLapMs;
+        int             accuracyAwards;
+        int             excellentAwards;
+        int             impressiveAwards;
+        int             perfectAwards;
+        int             damageDealt;
+        int             damageTaken;
+        float           distanceKm;
+        float           topSpeedKph;
+        float           fuelUsed;
+        char            mostUsedVehicle[64];
+        int             gamesPlayed;
+        int             achievementTiers[11];
+        int             racingWins, racingPodiums, racingCompleted, racingTotalMs;
+        int             racingDmWins, racingDmPodiums, racingDmCompleted, racingDmTotalMs;
+        int             sprintWins, sprintCompleted, sprintBestMs;
+        int             eliminationWins, eliminationCompleted, eliminationTotalRoundsLasted;
+        int             lcsWins, lcsCompleted, lcsTotalSurvivalMs;
+        int             derbyWins, derbyCompleted, derbyKills;
+        int             dmWins, dmCompleted, dmKills;
+        int             ctfWins, ctfCompleted, ctfCaptures;
+        int             ctf4Wins, ctf4Completed, ctf4Captures;
+        int             teamWins, teamCompleted, teamKills;
+        int             teamRacingWins, teamRacingCompleted, teamRacingPodiums;
+        int             teamRacingDmWins, teamRacingDmCompleted, teamRacingDmPodiums;
+        int             dominationWins, dominationCompleted, dominationZoneHoldMs;
+        int             kothWins, kothCompleted, kothZoneHoldMs;
+} ladderProfileSnapshot_t;
 
 typedef struct ladderPlayerPayload_s {
         int                     clientNum;
@@ -102,10 +192,15 @@ typedef struct ladderPlayerPayload_s {
         float           eliminationMetric;
         int                     finishRaceTime;
         float           kdRatio;
+        qboolean        profileAttached;
+        ladderProfileSnapshot_t profile;
 } ladderPlayerPayload_t;
 
 typedef struct ladderMatchPayload_s {
         qboolean        valid;
+        int                     validationWarnings;
+        int                     validationErrors;
+        char            validationReason[LADDER_MAX_VALIDATION_REASON];
         char            matchId[LADDER_MAX_MATCH_ID];
         char            mode[LADDER_MAX_MODE];
         int                     gametype;
@@ -133,6 +228,7 @@ typedef struct ladderMatchPayload_s {
         int                     teamScores[TEAM_NUM_TEAMS];
         int                     teamTimes[TEAM_NUM_TEAMS];
         int                     playerCount;
+        qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];
 } ladderMatchPayload_t;
 
@@ -251,5 +347,13 @@ static inline void Q_strncpyz( char *dest, const char *src, int destsize ) {
 static inline int Q_stricmp( const char *s1, const char *s2 ) {
         return strcasecmp( s1 ? s1 : "", s2 ? s2 : "" );
 }
+
+static inline void Q_strcat( char *dest, int size, const char *src ) {
+        strncat( dest, src, (size_t)size - strlen( dest ) - 1 );
+}
+
+static inline void Cbuf_AddText( const char *text ) { (void)text; }
+static inline void Cmd_AddCommand( const char *name, void (*fn)(void) ) { (void)name; (void)fn; }
+static inline void Cmd_RemoveCommand( const char *name ) { (void)name; }
 
 #endif /* TEST_SERVER_H */

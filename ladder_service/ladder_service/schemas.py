@@ -26,6 +26,18 @@ Gametype = Literal[
 
 
 _VALID_GAMETYPES: set[str] = set(get_args(Gametype))
+_TEAM_MODES: set[str] = {
+    "GT_TEAM_RACING",
+    "GT_TEAM_RACING_DM",
+    "GT_TEAM",
+    "GT_CTF",
+    "GT_CTF4",
+    "GT_DOMINATION",
+}
+
+
+def _mode_error(code: str, message: str) -> ValueError:
+    return ValueError(f"[{code}] {message}")
 
 
 class ServerInfo(BaseModel):
@@ -121,6 +133,59 @@ class MatchCreate(BaseModel):
                 if upper in _VALID_GAMETYPES:
                     return upper
         return "GT_ELIMINATION"
+
+    @root_validator
+    def validate_mode_specific_payload(cls, values: dict[str, Any]) -> dict[str, Any]:
+        mode = values.get("mode")
+        players = values.get("players") or []
+        teams = values.get("teams")
+
+        if mode not in _TEAM_MODES:
+            if teams:
+                raise _mode_error(
+                    "MODE_FORBIDS_TEAMS",
+                    f"mode '{mode}' forbids teams payload",
+                )
+            for player in players:
+                if player.team is not None:
+                    player.team = None
+            values["teams"] = None
+            return values
+
+        if not teams:
+            raise _mode_error(
+                "MODE_REQUIRES_TEAMS",
+                f"mode '{mode}' requires a non-empty teams array",
+            )
+
+        team_names: set[str] = set()
+        for team in teams:
+            normalized_name = team.team.strip().lower()
+            if not normalized_name:
+                raise _mode_error("TEAM_NAME_INVALID", "team name must not be blank")
+            if normalized_name in team_names:
+                raise _mode_error(
+                    "TEAM_DUPLICATE",
+                    f"duplicate team '{team.team}' in teams payload",
+                )
+            team.team = normalized_name
+            team_names.add(normalized_name)
+
+        for player in players:
+            if player.team is None:
+                raise _mode_error(
+                    "PLAYER_TEAM_REQUIRED",
+                    f"player '{player.playerId}' is missing team in mode '{mode}'",
+                )
+            normalized_player_team = str(player.team).strip().lower()
+            if normalized_player_team not in team_names:
+                raise _mode_error(
+                    "PLAYER_TEAM_UNKNOWN",
+                    f"player '{player.playerId}' references unknown team '{player.team}'",
+                )
+            player.team = normalized_player_team
+
+        return values
 
     class Config:
         extra = "allow"

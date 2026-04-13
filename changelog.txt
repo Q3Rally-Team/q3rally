@@ -1,5 +1,26 @@
 !!! --- Q3Rally Changelog --- !!!
 
+new in v0.8a
+
+Added:
+
+- Ladder contract release for mode-aware field semantics across server -> API -> consumer pipeline.
+- Explicit migration guide for consumers that still rely on score-only or mixed legacy aliases.
+- Cross-service release checklist for Game-Server, Python-Service, PHP-Webservice and Dashboard consumers.
+
+Changed:
+
+- Match payload validation now enforces mode-specific required fields instead of generic score-only acceptance.
+- Deprecated aliases are still accepted, but normalized to canonical mode-aware fields during ingest.
+
+Breaking Changes:
+
+- Uploads missing newly required mode fields are rejected (HTTP 400) for the affected mode.
+
+Non-breaking Changes:
+
+- Existing producers using legacy keys continue to work in compatibility mode while they migrate to canonical keys.
+
 new in v0.8
 
 Fixed:

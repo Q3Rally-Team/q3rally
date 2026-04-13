@@ -766,6 +766,70 @@ static const char *G_LadderModeForGametype( int gametype ) {
         return "GT_ELIMINATION";
 }
 
+static qboolean G_LadderGametypeHasRaceFields( int gametype ) {
+        return ( gametype == GT_RACING
+                || gametype == GT_RACING_DM
+                || gametype == GT_SPRINT
+                || gametype == GT_TEAM_RACING
+                || gametype == GT_TEAM_RACING_DM
+                || gametype == GT_ELIMINATION
+                || gametype == GT_SINGLE_PLAYER
+                || gametype == GT_DERBY
+                || gametype == GT_LCS ) ? qtrue : qfalse;
+}
+
+static qboolean G_LadderGametypeUsesEliminationSettings( int gametype ) {
+        return ( gametype == GT_ELIMINATION || gametype == GT_LCS ) ? qtrue : qfalse;
+}
+
+static qboolean G_LadderGametypeIsTeamMode( int gametype ) {
+        return ( gametype == GT_TEAM
+                || gametype == GT_TEAM_RACING
+                || gametype == GT_TEAM_RACING_DM
+                || gametype == GT_CTF
+                || gametype == GT_CTF4
+                || gametype == GT_DOMINATION
+                || gametype == GT_KOTH ) ? qtrue : qfalse;
+}
+
+static int G_LadderWinnerForGametype( int gametype ) {
+        int wi;
+
+        switch ( gametype ) {
+        case GT_DEATHMATCH:
+                {
+                        int dmWinner = -1;
+                        int dmBestScore = -99999;
+                        for ( wi = 0; wi < level.maxclients; ++wi ) {
+                                gclient_t *wc = &level.clients[wi];
+                                if ( wc->pers.connected != CON_CONNECTED ) {
+                                        continue;
+                                }
+                                if ( wc->sess.sessionTeam == TEAM_SPECTATOR ) {
+                                        continue;
+                                }
+                                if ( wc->ps.persistant[PERS_SCORE] > dmBestScore ) {
+                                        dmBestScore = wc->ps.persistant[PERS_SCORE];
+                                        dmWinner = wi;
+                                }
+                        }
+                        return dmWinner;
+                }
+        case GT_TEAM:
+        case GT_TEAM_RACING:
+        case GT_TEAM_RACING_DM:
+        case GT_CTF:
+        case GT_CTF4:
+        case GT_DOMINATION:
+        case GT_KOTH:
+                return -1;
+        default:
+                break;
+        }
+
+        return level.winnerNumber;
+}
+
 static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum ) {
         gclient_t *client;
         gentity_t *ent;
@@ -775,6 +839,10 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
         int slot;
         int i;
         int deaths;
+        qboolean killSemantics;
+        qboolean raceSemantics;
+        qboolean zoneSemantics;
+        qboolean perfectSemantics;
 
         if ( !payload ) {
                 return qfalse;
@@ -911,7 +979,32 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
         player->damageTaken = client->ps.stats[STAT_DAMAGE_TAKEN];
         player->position = client->ps.stats[STAT_POSITION];
 
-        if ( level.startRaceTime > 0 ) {
+        killSemantics = qfalse;
+        raceSemantics = ( isRallyRace() || g_gametype.integer == GT_DERBY || g_gametype.integer == GT_LCS ) ? qtrue : qfalse;
+        zoneSemantics = ( g_gametype.integer == GT_DOMINATION || g_gametype.integer == GT_KOTH ) ? qtrue : qfalse;
+
+        switch ( g_gametype.integer ) {
+        case GT_DEATHMATCH:
+        case GT_TEAM:
+        case GT_CTF:
+        case GT_CTF4:
+        case GT_DOMINATION:
+        case GT_KOTH:
+        case GT_RACING_DM:
+        case GT_TEAM_RACING_DM:
+        case GT_DERBY:
+        case GT_LCS:
+                killSemantics = qtrue;
+                break;
+        case GT_ELIMINATION:
+                killSemantics = g_eliminationWeapons.integer ? qtrue : qfalse;
+                break;
+        default:
+                break;
+        }
+        perfectSemantics = killSemantics;
+
+        if ( raceSemantics && level.startRaceTime > 0 ) {
                 if ( client->finishRaceTime > level.startRaceTime ) {
                         player->survivalMs = client->finishRaceTime - level.startRaceTime;
                 } else if ( level.finishRaceTime > level.startRaceTime ) {
@@ -922,15 +1015,21 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
         player->eliminationPlayersRemaining = client->eliminationPlayersRemaining;
         player->eliminationMetric = client->eliminationMetric;
 
-        if ( level.startRaceTime > 0 && client->finishRaceTime > level.startRaceTime ) {
+        if ( raceSemantics && level.startRaceTime > 0 && client->finishRaceTime > level.startRaceTime ) {
                 player->totalRaceMs = client->finishRaceTime - level.startRaceTime;
-        } else if ( level.startRaceTime > 0 && level.time > level.startRaceTime ) {
+        } else if ( raceSemantics && level.startRaceTime > 0 && level.time > level.startRaceTime ) {
                 player->totalRaceMs = level.time - level.startRaceTime;
         }
-        player->finishRaceTime = client->finishRaceTime;
-        player->bestLapMs = client->bestLapMs;
+        if ( raceSemantics ) {
+                player->finishRaceTime = client->finishRaceTime;
+                player->bestLapMs = client->bestLapMs;
+        } else {
+                player->finishRaceTime = 0;
+                player->bestLapMs = 0;
+                player->totalRaceMs = 0;
+        }
 
-        {
+        if ( raceSemantics ) {
                 int lapCount = client->recordedLapCount;
                 if ( lapCount < 0 ) {
                         lapCount = 0;
@@ -942,59 +1041,86 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                         player->lapTimes[i] = client->recordedLaps[i];
                 }
                 player->lapCount = lapCount;
+        } else {
+                player->lapCount = 0;
+                for ( i = 0; i < LADDER_MAX_LAP_TIMES; ++i ) {
+                        player->lapTimes[i] = 0;
+                }
         }
 
-        player->kills = client->ps.persistant[PERS_SCORE];
-        deaths = client->ps.persistant[PERS_KILLED];
+        if ( killSemantics ) {
+                player->kills = client->ps.persistant[PERS_SCORE];
+                deaths = client->ps.persistant[PERS_KILLED];
+        } else {
+                player->kills = 0;
+                deaths = 0;
+        }
         player->deaths = deaths;
-        if ( player->kills > 0 && deaths == 0 ) {
+        if ( perfectSemantics && player->kills > 0 && deaths == 0 ) {
                 player->perfect = qtrue;
+        } else {
+                player->perfect = qfalse;
         }
-        if ( deaths > 0 ) {
+        if ( killSemantics && deaths > 0 ) {
                 player->kdRatio = (float)player->kills / (float)deaths;
-        } else if ( player->kills > 0 ) {
+        } else if ( killSemantics && player->kills > 0 ) {
                 player->kdRatio = (float)player->kills;
+        } else {
+                player->kdRatio = 0.0f;
         }
 
-        player->zoneActiveSigil = -1;
+        if ( zoneSemantics ) {
+                if ( g_gametype.integer == GT_KOTH ) {
+                        player->zoneHoldMs = client->kothContestTimeMs;
+                } else {
+                        player->zoneHoldMs = 0;
+                }
+                player->zoneActiveSigil = -1;
+        } else {
+                player->zoneHoldMs = 0;
+                player->zoneActiveSigil = -1;
+        }
 
         /* Attach career profile snapshot for the local client only.
-         * Remote players do not have their profile data available on the server. */
+         * Prefer runtime state (g_profile), use file-read fallback only when needed. */
         if ( client->pers.localClient ) {
                 ladderProfileSnapshot_t *snap = &player->profile;
+                int snapshotRevision = 0;
+                int snapshotEpoch = 0;
                 char profileName[PROFILE_MAX_NAME];
                 char profilePath[MAX_QPATH];
                 fileHandle_t fh;
                 int len;
                 int i;
 
+                player->profileAttached = qtrue;
                 Com_Memset( snap, 0, sizeof( *snap ) );
+                snap->valid = qfalse;
 
-                trap_Cvar_VariableStringBuffer( "profile_active", profileName, sizeof( profileName ) );
-                if ( profileName[0] ) {
-                        Com_sprintf( profilePath, sizeof( profilePath ), "profiles/%s.json", profileName );
-                        len = trap_FS_FOpenFile( profilePath, &fh, FS_READ );
-                        if ( len > 0 ) {
-                                static char profileBuf[8192];
-                                if ( len >= (int)sizeof( profileBuf ) ) len = sizeof( profileBuf ) - 1;
-                                trap_FS_Read( profileBuf, len, fh );
-                                profileBuf[len] = '\0';
-                                trap_FS_FCloseFile( fh );
+                if ( G_Profile_GetLadderSnapshot( snap, &snapshotRevision, &snapshotEpoch ) ) {
+                        snap->valid = qtrue;
+                        snap->snapshotRevision = snapshotRevision;
+                        snap->snapshotEpoch = snapshotEpoch;
+                } else {
+                        trap_Cvar_VariableStringBuffer( "profile_active", profileName, sizeof( profileName ) );
+                        if ( profileName[0] ) {
+                                Com_sprintf( profilePath, sizeof( profilePath ), "profiles/%s.json", profileName );
+                                len = trap_FS_FOpenFile( profilePath, &fh, FS_READ );
+                                if ( len > 0 ) {
+                                        static char profileBuf[8192];
+                                        const char *statsSection;
+                                        const char *infoSection;
+                                        const char *statsBuf;
+                                        const char *infoBuf;
+                                        if ( len >= (int)sizeof( profileBuf ) ) len = sizeof( profileBuf ) - 1;
+                                        trap_FS_Read( profileBuf, len, fh );
+                                        profileBuf[len] = '\0';
+                                        trap_FS_FCloseFile( fh );
 
-                                /* Profile JSON structure:
-                                 * { "name": "...", "info": { "currentRank": N, "highestRank": N, ... },
-                                 *   "stats": { "playerScore": N, "kills": N, ... } }
-                                 * Info fields are at top level of "info" object,
-                                 * stats fields are nested under "stats". */
-                                {
-                                        /* Find the opening brace of each section to avoid
-                                         * parsing keys from sibling sections. */
-                                        const char *statsSection = strstr( profileBuf, "\"stats\"" );
-                                        const char *infoSection  = strstr( profileBuf, "\"info\"" );
-                                        /* Advance past the colon and opening brace so the parser
-                                         * only sees content inside that section. */
-                                        const char *statsBuf = profileBuf;
-                                        const char *infoBuf  = profileBuf;
+                                        statsSection = strstr( profileBuf, "\"stats\"" );
+                                        infoSection  = strstr( profileBuf, "\"info\"" );
+                                        statsBuf = profileBuf;
+                                        infoBuf  = profileBuf;
                                         if ( statsSection ) {
                                                 const char *brace = strchr( statsSection, '{' );
                                                 if ( brace ) statsBuf = brace;
@@ -1005,6 +1131,8 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         }
 
                                         snap->valid            = qtrue;
+                                        snap->snapshotRevision = G_Profile_ParseIntPublic( profileBuf, "revision", 0 );
+                                        snap->snapshotEpoch    = G_Profile_ParseIntPublic( profileBuf, "timestamp", 0 );
                                         snap->playerScore      = G_Profile_ParseIntPublic( statsBuf,  "playerScore",     0 );
                                         snap->currentRank      = G_Profile_ParseIntPublic( infoBuf,   "currentRank",     0 );
                                         snap->highestRank      = G_Profile_ParseIntPublic( infoBuf,   "highestRank",     0 );
@@ -1027,103 +1155,73 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         snap->gamesPlayed      = G_Profile_ParseIntPublic( statsBuf,  "gamesPlayed",     0 );
                                         G_Profile_ParseStringPublic( statsBuf, "mostUsedVehicle",
                                                 snap->mostUsedVehicle, sizeof( snap->mostUsedVehicle ), "" );
-
-                                        /* ── GT_RACING ── */
-                                        snap->racingWins       = G_Profile_ParseIntPublic( statsBuf, "racingWins",      0 );
-                                        snap->racingPodiums    = G_Profile_ParseIntPublic( statsBuf, "racingPodiums",   0 );
-                                        snap->racingCompleted  = G_Profile_ParseIntPublic( statsBuf, "racingCompleted", 0 );
-                                        snap->racingTotalMs    = G_Profile_ParseIntPublic( statsBuf, "racingTotalMs",   0 );
-
-                                        /* ── GT_RACING_DM ── */
-                                        snap->racingDmWins      = G_Profile_ParseIntPublic( statsBuf, "racingDmWins",      0 );
-                                        snap->racingDmPodiums   = G_Profile_ParseIntPublic( statsBuf, "racingDmPodiums",   0 );
+                                        snap->racingWins = G_Profile_ParseIntPublic( statsBuf, "racingWins", 0 );
+                                        snap->racingPodiums = G_Profile_ParseIntPublic( statsBuf, "racingPodiums", 0 );
+                                        snap->racingCompleted = G_Profile_ParseIntPublic( statsBuf, "racingCompleted", 0 );
+                                        snap->racingTotalMs = G_Profile_ParseIntPublic( statsBuf, "racingTotalMs", 0 );
+                                        snap->racingDmWins = G_Profile_ParseIntPublic( statsBuf, "racingDmWins", 0 );
+                                        snap->racingDmPodiums = G_Profile_ParseIntPublic( statsBuf, "racingDmPodiums", 0 );
                                         snap->racingDmCompleted = G_Profile_ParseIntPublic( statsBuf, "racingDmCompleted", 0 );
-                                        snap->racingDmTotalMs   = G_Profile_ParseIntPublic( statsBuf, "racingDmTotalMs",   0 );
-
-                                        /* ── GT_SPRINT ── */
-                                        snap->sprintWins      = G_Profile_ParseIntPublic( statsBuf, "sprintWins",      0 );
+                                        snap->racingDmTotalMs = G_Profile_ParseIntPublic( statsBuf, "racingDmTotalMs", 0 );
+                                        snap->sprintWins = G_Profile_ParseIntPublic( statsBuf, "sprintWins", 0 );
                                         snap->sprintCompleted = G_Profile_ParseIntPublic( statsBuf, "sprintCompleted", 0 );
-                                        snap->sprintBestMs    = G_Profile_ParseIntPublic( statsBuf, "sprintBestMs",    0 );
-
-                                        /* ── GT_ELIMINATION ── */
-                                        snap->eliminationWins               = G_Profile_ParseIntPublic( statsBuf, "eliminationWins",               0 );
-                                        snap->eliminationCompleted          = G_Profile_ParseIntPublic( statsBuf, "eliminationCompleted",          0 );
-                                        snap->eliminationTotalRoundsLasted  = G_Profile_ParseIntPublic( statsBuf, "eliminationTotalRoundsLasted",  0 );
-
-                                        /* ── GT_LCS ── */
-                                        snap->lcsWins            = G_Profile_ParseIntPublic( statsBuf, "lcsWins",            0 );
-                                        snap->lcsCompleted       = G_Profile_ParseIntPublic( statsBuf, "lcsCompleted",       0 );
+                                        snap->sprintBestMs = G_Profile_ParseIntPublic( statsBuf, "sprintBestMs", 0 );
+                                        snap->eliminationWins = G_Profile_ParseIntPublic( statsBuf, "eliminationWins", 0 );
+                                        snap->eliminationCompleted = G_Profile_ParseIntPublic( statsBuf, "eliminationCompleted", 0 );
+                                        snap->eliminationTotalRoundsLasted = G_Profile_ParseIntPublic( statsBuf, "eliminationTotalRoundsLasted", 0 );
+                                        snap->lcsWins = G_Profile_ParseIntPublic( statsBuf, "lcsWins", 0 );
+                                        snap->lcsCompleted = G_Profile_ParseIntPublic( statsBuf, "lcsCompleted", 0 );
                                         snap->lcsTotalSurvivalMs = G_Profile_ParseIntPublic( statsBuf, "lcsTotalSurvivalMs", 0 );
-
-                                        /* ── GT_DERBY ── */
-                                        snap->derbyWins      = G_Profile_ParseIntPublic( statsBuf, "derbyWins",      0 );
+                                        snap->derbyWins = G_Profile_ParseIntPublic( statsBuf, "derbyWins", 0 );
                                         snap->derbyCompleted = G_Profile_ParseIntPublic( statsBuf, "derbyCompleted", 0 );
-                                        snap->derbyKills     = G_Profile_ParseIntPublic( statsBuf, "derbyKills",     0 );
-
-                                        /* ── GT_DEATHMATCH ── */
-                                        snap->dmWins      = G_Profile_ParseIntPublic( statsBuf, "dmWins",      0 );
+                                        snap->derbyKills = G_Profile_ParseIntPublic( statsBuf, "derbyKills", 0 );
+                                        snap->dmWins = G_Profile_ParseIntPublic( statsBuf, "dmWins", 0 );
                                         snap->dmCompleted = G_Profile_ParseIntPublic( statsBuf, "dmCompleted", 0 );
-                                        snap->dmKills     = G_Profile_ParseIntPublic( statsBuf, "dmKills",     0 );
-
-                                        /* ── GT_CTF ── */
-                                        snap->ctfWins      = G_Profile_ParseIntPublic( statsBuf, "ctfWins",      0 );
+                                        snap->dmKills = G_Profile_ParseIntPublic( statsBuf, "dmKills", 0 );
+                                        snap->ctfWins = G_Profile_ParseIntPublic( statsBuf, "ctfWins", 0 );
                                         snap->ctfCompleted = G_Profile_ParseIntPublic( statsBuf, "ctfCompleted", 0 );
-                                        snap->ctfCaptures  = G_Profile_ParseIntPublic( statsBuf, "ctfCaptures",  0 );
-
-                                        /* ── GT_CTF4 ── */
-                                        snap->ctf4Wins      = G_Profile_ParseIntPublic( statsBuf, "ctf4Wins",      0 );
+                                        snap->ctfCaptures = G_Profile_ParseIntPublic( statsBuf, "ctfCaptures", 0 );
+                                        snap->ctf4Wins = G_Profile_ParseIntPublic( statsBuf, "ctf4Wins", 0 );
                                         snap->ctf4Completed = G_Profile_ParseIntPublic( statsBuf, "ctf4Completed", 0 );
-                                        snap->ctf4Captures  = G_Profile_ParseIntPublic( statsBuf, "ctf4Captures",  0 );
-
-                                        /* ── GT_TEAM ── */
-                                        snap->teamWins      = G_Profile_ParseIntPublic( statsBuf, "teamWins",      0 );
+                                        snap->ctf4Captures = G_Profile_ParseIntPublic( statsBuf, "ctf4Captures", 0 );
+                                        snap->teamWins = G_Profile_ParseIntPublic( statsBuf, "teamWins", 0 );
                                         snap->teamCompleted = G_Profile_ParseIntPublic( statsBuf, "teamCompleted", 0 );
-                                        snap->teamKills     = G_Profile_ParseIntPublic( statsBuf, "teamKills",     0 );
-
-                                        /* ── GT_TEAM_RACING ── */
-                                        snap->teamRacingWins      = G_Profile_ParseIntPublic( statsBuf, "teamRacingWins",      0 );
+                                        snap->teamKills = G_Profile_ParseIntPublic( statsBuf, "teamKills", 0 );
+                                        snap->teamRacingWins = G_Profile_ParseIntPublic( statsBuf, "teamRacingWins", 0 );
                                         snap->teamRacingCompleted = G_Profile_ParseIntPublic( statsBuf, "teamRacingCompleted", 0 );
-                                        snap->teamRacingPodiums   = G_Profile_ParseIntPublic( statsBuf, "teamRacingPodiums",   0 );
-
-                                        /* ── GT_TEAM_RACING_DM ── */
-                                        snap->teamRacingDmWins      = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmWins",      0 );
+                                        snap->teamRacingPodiums = G_Profile_ParseIntPublic( statsBuf, "teamRacingPodiums", 0 );
+                                        snap->teamRacingDmWins = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmWins", 0 );
                                         snap->teamRacingDmCompleted = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmCompleted", 0 );
-                                        snap->teamRacingDmPodiums   = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmPodiums",   0 );
-
-                                        /* ── GT_DOMINATION ── */
-                                        snap->dominationWins        = G_Profile_ParseIntPublic( statsBuf, "dominationWins",        0 );
-                                        snap->dominationCompleted   = G_Profile_ParseIntPublic( statsBuf, "dominationCompleted",   0 );
-                                        snap->dominationZoneHoldMs  = G_Profile_ParseIntPublic( statsBuf, "dominationZoneHoldMs",  0 );
-
-                                        /* ── GT_KOTH ── */
-                                        snap->kothWins       = G_Profile_ParseIntPublic( statsBuf, "kothWins",       0 );
-                                        snap->kothCompleted  = G_Profile_ParseIntPublic( statsBuf, "kothCompleted",  0 );
+                                        snap->teamRacingDmPodiums = G_Profile_ParseIntPublic( statsBuf, "teamRacingDmPodiums", 0 );
+                                        snap->dominationWins = G_Profile_ParseIntPublic( statsBuf, "dominationWins", 0 );
+                                        snap->dominationCompleted = G_Profile_ParseIntPublic( statsBuf, "dominationCompleted", 0 );
+                                        snap->dominationZoneHoldMs = G_Profile_ParseIntPublic( statsBuf, "dominationZoneHoldMs", 0 );
+                                        snap->kothWins = G_Profile_ParseIntPublic( statsBuf, "kothWins", 0 );
+                                        snap->kothCompleted = G_Profile_ParseIntPublic( statsBuf, "kothCompleted", 0 );
                                         snap->kothZoneHoldMs = G_Profile_ParseIntPublic( statsBuf, "kothZoneHoldMs", 0 );
-                                }
 
-                                /* Achievement tiers – reuse bg_achievements logic */
-                                {
-                                        int sprintWins = G_Profile_ParseIntPublic( profileBuf, "sprintWins", 0 );
-                                        double progress_table[BG_ACHIEVEMENT_CATEGORY_COUNT];
-                                        progress_table[BG_ACHIEVEMENT_DISTANCE]      = snap->distanceKm;
-                                        progress_table[BG_ACHIEVEMENT_KILLS]         = (double)snap->kills;
-                                        progress_table[BG_ACHIEVEMENT_WINS]          = (double)snap->wins;
-                                        progress_table[BG_ACHIEVEMENT_SPRINT_WINS]   = (double)sprintWins;
-                                        progress_table[BG_ACHIEVEMENT_FLAG_CAPTURES] = (double)snap->flagCaptures;
-                                        progress_table[BG_ACHIEVEMENT_FLAG_ASSISTS]  = (double)snap->flagAssists;
-                                        progress_table[BG_ACHIEVEMENT_FUEL]          = snap->fuelUsed;
-                                        progress_table[BG_ACHIEVEMENT_ACCURACY]      = (double)snap->accuracyAwards;
-                                        progress_table[BG_ACHIEVEMENT_EXCELLENT]     = (double)snap->excellentAwards;
-                                        progress_table[BG_ACHIEVEMENT_IMPRESSIVE]    = (double)snap->impressiveAwards;
-                                        progress_table[BG_ACHIEVEMENT_PERFECT]       = (double)snap->perfectAwards;
+                                        {
+                                                double progress_table[BG_ACHIEVEMENT_CATEGORY_COUNT];
+                                                progress_table[BG_ACHIEVEMENT_DISTANCE]      = snap->distanceKm;
+                                                progress_table[BG_ACHIEVEMENT_KILLS]         = (double)snap->kills;
+                                                progress_table[BG_ACHIEVEMENT_WINS]          = (double)snap->wins;
+                                                progress_table[BG_ACHIEVEMENT_SPRINT_WINS]   = (double)snap->sprintWins;
+                                                progress_table[BG_ACHIEVEMENT_FLAG_CAPTURES] = (double)snap->flagCaptures;
+                                                progress_table[BG_ACHIEVEMENT_FLAG_ASSISTS]  = (double)snap->flagAssists;
+                                                progress_table[BG_ACHIEVEMENT_FUEL]          = snap->fuelUsed;
+                                                progress_table[BG_ACHIEVEMENT_ACCURACY]      = (double)snap->accuracyAwards;
+                                                progress_table[BG_ACHIEVEMENT_EXCELLENT]     = (double)snap->excellentAwards;
+                                                progress_table[BG_ACHIEVEMENT_IMPRESSIVE]    = (double)snap->impressiveAwards;
+                                                progress_table[BG_ACHIEVEMENT_PERFECT]       = (double)snap->perfectAwards;
 
-                                        for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
-                                                const bgAchievementCategoryDef_t *cat = BG_AchievementGetCategory( i );
-                                                snap->achievementTiers[i] = BG_AchievementUnlockedTiers( cat, progress_table[i] );
+                                                for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
+                                                        const bgAchievementCategoryDef_t *cat = BG_AchievementGetCategory( i );
+                                                        snap->achievementTiers[i] = BG_AchievementUnlockedTiers( cat, progress_table[i] );
+                                                }
                                         }
+                                } else if ( fh ) {
+                                        trap_FS_FCloseFile( fh );
                                 }
-                        } else if ( fh ) {
-                                trap_FS_FCloseFile( fh );
                         }
                 }
         }
@@ -1140,6 +1238,9 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         const char *value;
         char buffer[MAX_INFO_STRING];
         int i;
+        qboolean hasRaceFields;
+        qboolean hasEliminationSettings;
+        qboolean isTeamMode;
 
         if ( trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) == 0 ) {
                 return;
@@ -1195,41 +1296,65 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
 
         payload->levelStartTime = level.startTime;
         payload->levelEndTime = level.time;
-        payload->raceStartTime = level.startRaceTime;
-        payload->raceEndTime = level.finishRaceTime;
-        payload->finishRaceTime = level.finishRaceTime;
-        /* For score-based game modes (DM, Derby, etc.) level.winnerNumber is
-         * initialised to 0 and only set for modes that have an explicit
-         * winner event (Race, LCS, Derby last-man-standing).
-         * Re-derive the winner here by finding the connected non-spectator
-         * with the highest score so the payload always carries the correct value. */
-        {
-            int dmWinner = -1;
-            int dmBestScore = -99999;
-            int wi;
-            for ( wi = 0; wi < level.maxclients; ++wi ) {
-                gclient_t *wc = &level.clients[wi];
-                if ( wc->pers.connected != CON_CONNECTED ) continue;
-                if ( wc->sess.sessionTeam == TEAM_SPECTATOR ) continue;
-                if ( wc->ps.persistant[PERS_SCORE] > dmBestScore ) {
-                    dmBestScore = wc->ps.persistant[PERS_SCORE];
-                    dmWinner = wi;
-                }
-            }
-            if ( dmWinner >= 0 ) {
-                level.winnerNumber = dmWinner;
-            }
-        }
-        payload->winnerClientNum = level.winnerNumber;
-        payload->numberOfLaps = level.numberOfLaps;
-        payload->trackReversed = g_trackReversed.integer ? qtrue : qfalse;
-        payload->eliminationStartDelay = g_eliminationStartDelay.integer;
-        payload->eliminationInterval = g_eliminationInterval.integer;
-        payload->eliminationWarning = g_eliminationWarning.integer;
+        hasRaceFields = G_LadderGametypeHasRaceFields( payload->gametype );
+        hasEliminationSettings = G_LadderGametypeUsesEliminationSettings( payload->gametype );
+        isTeamMode = G_LadderGametypeIsTeamMode( payload->gametype );
 
-        for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
-                payload->teamScores[i] = level.teamScores[i];
-                payload->teamTimes[i] = level.teamTimes[i];
+        if ( hasRaceFields ) {
+                payload->raceStartTime = level.startRaceTime;
+                payload->raceEndTime = level.finishRaceTime;
+                payload->finishRaceTime = level.finishRaceTime;
+                payload->numberOfLaps = level.numberOfLaps;
+                payload->trackReversed = g_trackReversed.integer ? qtrue : qfalse;
+        } else {
+                if ( level.startRaceTime || level.finishRaceTime || level.numberOfLaps || g_trackReversed.integer ) {
+                        Com_Printf( "Ladder: warning - race fields set in non-race mode %s; neutralizing payload fields\n",
+                                payload->mode );
+                }
+                payload->raceStartTime = 0;
+                payload->raceEndTime = 0;
+                payload->finishRaceTime = 0;
+                payload->numberOfLaps = 0;
+                payload->trackReversed = qfalse;
+        }
+
+        payload->winnerClientNum = G_LadderWinnerForGametype( payload->gametype );
+        if ( payload->winnerClientNum != level.winnerNumber ) {
+                Com_Printf( "Ladder: info - winnerClientNum adjusted for mode %s (%d -> %d)\n",
+                        payload->mode, level.winnerNumber, payload->winnerClientNum );
+        }
+
+        if ( hasEliminationSettings ) {
+                payload->eliminationStartDelay = g_eliminationStartDelay.integer;
+                payload->eliminationInterval = g_eliminationInterval.integer;
+                payload->eliminationWarning = g_eliminationWarning.integer;
+        } else {
+                if ( g_eliminationStartDelay.integer || g_eliminationInterval.integer || g_eliminationWarning.integer ) {
+                        Com_Printf( "Ladder: warning - elimination settings present in mode %s; emitting optional neutral values\n",
+                                payload->mode );
+                }
+                payload->eliminationStartDelay = 0;
+                payload->eliminationInterval = 0;
+                payload->eliminationWarning = 0;
+        }
+
+        if ( isTeamMode ) {
+                for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
+                        payload->teamScores[i] = level.teamScores[i];
+                        payload->teamTimes[i] = level.teamTimes[i];
+                }
+        } else {
+                for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
+                        if ( level.teamScores[i] || level.teamTimes[i] ) {
+                                Com_Printf( "Ladder: warning - team fields populated in non-team mode %s; neutralizing payload fields\n",
+                                        payload->mode );
+                                break;
+                        }
+                }
+                for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
+                        payload->teamScores[i] = 0;
+                        payload->teamTimes[i] = 0;
+                }
         }
 
         for ( i = 0; i < level.maxclients; ++i ) {
@@ -2346,13 +2471,13 @@ void LogExit( const char *string ) {
 
         }
 
-	G_LadderSubmitMatchReport( string );
-
 	G_Profile_FlushIfDirty();
 
         if ( G_Profile_IsDirty() ) {
                 G_Profile_FlushIfDirty();
         }
+
+	G_LadderSubmitMatchReport( string );
 
 #ifdef MISSIONPACK
         if (g_singlePlayer.integer) {

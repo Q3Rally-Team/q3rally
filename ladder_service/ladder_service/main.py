@@ -6,7 +6,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import Engine, select
 from sqlalchemy.exc import IntegrityError
@@ -47,6 +48,30 @@ app = FastAPI(
 )
 
 
+def _extract_error_code(message: str) -> str:
+    if message.startswith("[") and "]" in message:
+        return message[1 : message.index("]")]
+    return "VALIDATION_ERROR"
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    _: Request, exc: RequestValidationError
+) -> JSONResponse:
+    errors = exc.errors()
+    detail = []
+    codes: list[str] = []
+    for err in errors:
+        msg = err.get("msg", "")
+        code = _extract_error_code(msg)
+        detail.append({**err, "errorCode": code})
+        codes.append(code)
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": detail, "validation": {"errorCodes": sorted(set(codes))}},
+    )
+
+
 @app.post(
     "/api/v1/matches",
     status_code=status.HTTP_201_CREATED,
@@ -69,7 +94,10 @@ def create_match(match: MatchCreate, session: Session = Depends(get_session)) ->
         session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="matchId already exists",
+            detail={
+                "message": "matchId already exists",
+                "errorCode": "MATCH_ID_CONFLICT",
+            },
         ) from exc
 
     return {"matchId": match.matchId}

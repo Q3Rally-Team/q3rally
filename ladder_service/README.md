@@ -24,6 +24,10 @@ uvicorn ladder_service.main:app --reload
 
 Standardmäßig wird eine Datei `ladder.db` im Arbeitsverzeichnis genutzt. Über die Umgebungsvariable `LADDER_DB_PATH` kann ein alternativer Pfad vorgegeben werden.
 
+## API-/Contract-Version
+
+Aktueller Contract-Stand: **v1.0.8** (Release-Datum **2026-04-13**). Der Stand beschreibt mode-aware Pflichtfelder pro Matchmodus inklusive Legacy-Alias-Normalisierung und strukturierter Fehlerantworten.
+
 ## Endpunkte
 
 | Methode | Pfad | Beschreibung |
@@ -38,3 +42,12 @@ Standardmäßig wird eine Datei `ladder.db` im Arbeitsverzeichnis genutzt. Über
 ```bash
 pytest
 ```
+
+## E2E-Modusmatrix-Tests
+
+```bash
+pytest tests/test_mode_e2e_matrix.py -q
+```
+
+Der Testlauf deckt alle unterstützten Modi mit Golden-Payloads, Negativfällen und Python/PHP-End-to-End-Prüfung ab.
+

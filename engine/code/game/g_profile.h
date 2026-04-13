@@ -3,6 +3,7 @@
 
 struct profile_stats_s;
 struct profile_rank_s;
+struct ladderProfileSnapshot_s;
 
 struct gclient_s;
 struct gentity_s;
@@ -42,6 +43,9 @@ void     G_Profile_ParseStringPublic( const char *buffer, const char *key, char 
 
 qboolean G_Profile_GetRank( const struct profile_stats_s *stats, struct profile_rank_s *outRank );
 int G_Profile_GetPlayerScore( void );
+qboolean G_Profile_GetLadderSnapshot( struct ladderProfileSnapshot_s *outSnapshot,
+                                      int *outSnapshotRevision,
+                                      int *outSnapshotEpoch );
 
 /* Gibt die UUID des aktiven Profils zurück.
  * Schreibt in out (muss mindestens PROFILE_MAX_UUID Bytes groß sein).

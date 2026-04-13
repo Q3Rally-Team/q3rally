@@ -15,6 +15,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from ladder_service.ladder_service import main
 from ladder_service.ladder_service.db import session_scope
 from ladder_service.ladder_service.models import Base
+from ladder_service.ladder_service.schemas import _TEAM_MODES, _VALID_GAMETYPES
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -57,6 +58,21 @@ MATCH_TEMPLATE = {
         }
     ],
 }
+
+
+def _build_match(match_id: str, mode: str) -> dict[str, object]:
+    payload = {
+        **MATCH_TEMPLATE,
+        "matchId": match_id,
+        "mode": mode,
+    }
+    if mode in _TEAM_MODES:
+        payload["teams"] = [{"team": "red", "rawScore": 10}, {"team": "blue", "rawScore": 8}]
+        payload["players"] = [{**MATCH_TEMPLATE["players"][0], "team": "red"}]
+    else:
+        payload["teams"] = None
+        payload["players"] = [{**MATCH_TEMPLATE["players"][0], "team": None}]
+    return payload
 
 
 def test_create_match() -> None:
@@ -105,11 +121,7 @@ def test_list_matches_filter_mode() -> None:
 
 
 def test_list_matches_supports_team_race_dm_mode() -> None:
-    match = {
-        **MATCH_TEMPLATE,
-        "matchId": "srv-20240405-183011-44",
-        "mode": "GT_TEAM_RACING_DM",
-    }
+    match = _build_match("srv-20240405-183011-44", "GT_TEAM_RACING_DM")
     created = client.post("/api/v1/matches", json=match)
     assert created.status_code == 201, created.text
 
@@ -139,6 +151,74 @@ def test_create_match_accepts_sprint_mode() -> None:
     assert payload["mode"] == "GT_SPRINT"
 
     cleanup = client.delete(f"/api/v1/matches/{match['matchId']}")
+    assert cleanup.status_code == 204
+
+
+def test_mode_forbids_teams_with_validation_codes() -> None:
+    match = _build_match("srv-20240405-183011-46", "GT_RACING")
+    match["teams"] = [{"team": "red", "rawScore": 1}]
+
+    response = client.post("/api/v1/matches", json=match)
+    assert response.status_code == 422, response.text
+    data = response.json()
+    assert "MODE_FORBIDS_TEAMS" in data["validation"]["errorCodes"]
+    assert any(item["errorCode"] == "MODE_FORBIDS_TEAMS" for item in data["detail"])
+
+
+def test_team_mode_requires_teams() -> None:
+    match = _build_match("srv-20240405-183011-47", "GT_TEAM")
+    match["teams"] = None
+
+    response = client.post("/api/v1/matches", json=match)
+    assert response.status_code == 422, response.text
+    assert "MODE_REQUIRES_TEAMS" in response.json()["validation"]["errorCodes"]
+
+
+def test_team_mode_rejects_unknown_player_team() -> None:
+    match = _build_match("srv-20240405-183011-48", "GT_CTF")
+    match["players"][0]["team"] = "spectator"
+
+    response = client.post("/api/v1/matches", json=match)
+    assert response.status_code == 422, response.text
+    assert "PLAYER_TEAM_UNKNOWN" in response.json()["validation"]["errorCodes"]
+
+
+def test_non_team_mode_sanitizes_player_team() -> None:
+    match = _build_match("srv-20240405-183011-49", "GT_ELIMINATION")
+    match["players"][0]["team"] = "red"
+
+    response = client.post("/api/v1/matches", json=match)
+    assert response.status_code == 201, response.text
+
+    stored = client.get(f"/api/v1/matches/{match['matchId']}")
+    assert stored.status_code == 200, stored.text
+    data = stored.json()
+    assert data["players"][0]["team"] is None
+    assert data["teams"] is None
+
+    cleanup = client.delete(f"/api/v1/matches/{match['matchId']}")
+    assert cleanup.status_code == 204
+
+
+@pytest.mark.parametrize("mode", sorted(_VALID_GAMETYPES))
+def test_all_modes_accept_mode_specific_payload(mode: str) -> None:
+    match_id = f"srv-20240405-183011-{mode.lower()}"
+    match = _build_match(match_id, mode)
+
+    created = client.post("/api/v1/matches", json=match)
+    assert created.status_code == 201, f"{mode}: {created.text}"
+
+    stored = client.get(f"/api/v1/matches/{match_id}")
+    assert stored.status_code == 200, f"{mode}: {stored.text}"
+    payload = stored.json()
+    if mode in _TEAM_MODES:
+        assert payload["teams"] is not None
+        assert payload["players"][0]["team"] == "red"
+    else:
+        assert payload["teams"] is None
+        assert payload["players"][0]["team"] is None
+
+    cleanup = client.delete(f"/api/v1/matches/{match_id}")
     assert cleanup.status_code == 204
 
 
