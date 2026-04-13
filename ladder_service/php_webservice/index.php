@@ -4530,10 +4530,21 @@ const LADDER_CHANGELOG = [
     date: '2026-04-13',
     changes: [
       'Contract update: mode-aware player fields are now validated and normalized per game mode',
-      'Required fields by mode documented (race, deathmatch, objective, elimination)',
-      'Breaking: score-only payloads are rejected if required mode-specific fields are missing',
-      'Non-breaking: legacy aliases still accepted and normalized to canonical keys',
-      'Migration and rollout checklist published for server/service/dashboard consumers',
+      'New required fields by mode: racing/sprint/team-racing require raceTimeMs + bestLapMs + checkpoints; deathmatch/team/derby/lcs require kills + deaths; objective modes require objectiveScore + objectiveTimeMs; elimination also requires eliminationRound + eliminationState',
+      'Breaking change: ambiguous score-only payloads are rejected when mode-specific mandatory fields are missing',
+      'Non-breaking: deprecated aliases (lapTime, frags, captures, roundState) are still accepted but normalized to canonical keys',
+      'Migration guidance added for game server, Python ladder service, PHP webservice and dashboard consumers',
+      'Release checklist added for coordinated rollout across all services and consumers',
+    ]
+  },
+  {
+    version: '1.0.7',
+    date: '2026-04-13',
+    changes: [
+      'Ingest parser now normalizes mode-specific player fields (race/kills/zone/elimination)',
+      'Index mapping updated for score/kills/race timers/zone hold and elimination metadata',
+      'Backward-compatible payload handling: legacy aliases still accepted in degraded mode',
+      'Structured API errors with code/message/details payloads (no silent no-player drops)',
     ]
   },
   {
@@ -4564,54 +4575,53 @@ const LADDER_CHANGELOG = [
   },
   {
     version: '1.0.4',
-    date: '2026-03-27',
+    date: '2026-03-20',
     changes: [
-      'GET /matches endpoint now requires authentication – prevents public data exposure',
-      'New POST /register JSON endpoint for in-game auto-registration (v0.8)',
-      'Offline keys are auto-approved; dedicated server keys still require manual admin approval',
-      'Admin panel split into Server Keys and Offline Keys tabs',
+      'In-game ladder registration wizard (ui_rally_ladder_wizard)',
+      'ladder_register / ladder_register_abort console commands',
+      'Per-server API key authentication via Bearer token',
+      'Auto-suspend inactive keys after 90 days',
+      'Admin panel: approve / revoke keys',
+      'register.php: self-service server key registration',
     ]
   },
   {
     version: '1.0.3',
-    date: '2026-03-25',
+    date: '2026-02-10',
     changes: [
-      'Player profile pages temporarily disabled – full profile tracking coming in v0.8',
+      'Player profile overlay in leaderboard frontend',
+      'Achievement tier display per category',
+      'Match detail overlay',
+      'Online / Offline source toggle in leaderboard',
     ]
   },
   {
     version: '1.0.2',
-    date: '2026-03-25',
+    date: '2026-01-15',
     changes: [
-      'Matches with no players are now silently discarded on upload',
+      'Leaderboard index endpoint (/matches/index) for fast frontend loads',
+      'TGA levelshot support in frontend',
+      'Map metadata from .arena files',
+      'Levelshot manifest endpoint (/maps/levelshots)',
     ]
   },
   {
     version: '1.0.1',
-    date: '2026-03-25',
+    date: '2025-12-01',
     changes: [
-      'Fixed server API keys being exposed via GET /matches endpoint',
-      'Fixed infinite rebuild loop when data directory is empty',
-      'Friendly overlay message when player profile is not yet available',
-      'Online/Offline/All toggle redesigned as compact pill group',
-      'Light mode text readability fixes across all UI sections',
-      'Version badge added with changelog popup',
-      'Register Server and Admin links added above hero panel',
+      'Rate limiting per IP (30 req / 60 s)',
+      'Match spool with retry and exponential backoff',
+      'Elimination, CTF and Deathmatch leaderboard tabs',
     ]
   },
   {
     version: '1.0.0',
-    date: '2026-03-25',
+    date: '2025-11-01',
     changes: [
-      'Initial public release',
-      'Per-server API key registration and approval system',
-      'Online / Offline leaderboard separation',
-      'Match index for fast page loads',
-      'Levelshot manifest endpoint',
-      'Player profile pages with rank, career stats and achievements',
-      'Clickable match rows show full match details with all players',
-      'Dark / Light mode toggle with localStorage persistence',
-      'Language preference (DE/EN) persisted across sessions',
+      'Initial release',
+      'Match upload endpoint (POST /matches)',
+      'Basic leaderboard frontend',
+      'Race / Sprint leaderboard',
     ]
   }
 ];

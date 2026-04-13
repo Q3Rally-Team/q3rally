@@ -12,6 +12,7 @@ Changed:
 
 - Match payload validation now enforces mode-specific required fields instead of generic score-only acceptance.
 - Deprecated aliases are still accepted, but normalized to canonical mode-aware fields during ingest.
+- Profile scoring rebalanced for fairer progression: lower achievement/death/loss inflation, higher objective rewards (CTF/Domination), reduced online positive-score multiplier (1.25x -> 1.10x), race win raised to +12, and explicit race placement handling to avoid duplicate match-outcome scoring while adding separate P2/P3 podium bonuses.
 
 Breaking Changes:
 

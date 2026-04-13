@@ -436,6 +436,8 @@ typedef struct {
 	qboolean	manualShift;		// shift manually?
 	char                    vehicleClass[MAX_QPATH];
         qboolean        profileRacePlacementPenalized; // profile penalty for poor race placement already applied
+        qboolean        profileRacePlacementRecorded;  // race placement score/podium already processed for this match
+        qboolean        profileMatchOutcomeRecorded;   // win/loss scoring already processed for this match
         char            uuid[PROFILE_MAX_UUID];         // cl_uuid aus dem Userinfo; leer wenn kein UUID-Client
 // END
 } clientPersistant_t;

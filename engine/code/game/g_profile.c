@@ -11,16 +11,20 @@
 #define PROFILE_AUTOSAVE_INTERVAL 30000
 #define PROFILE_DISPLAY_L_PER_100KM 9.0f
 #define PROFILE_SCORE_FRAG 2
-#define PROFILE_SCORE_DEATH -2
+#define PROFILE_SCORE_DEATH -1
 #define PROFILE_SCORE_SUICIDE -5
-#define PROFILE_SCORE_FLAG_CAPTURE 5
-#define PROFILE_SCORE_FLAG_ASSIST 2
-#define PROFILE_SCORE_DOMINATION_CAPTURE 5
-#define PROFILE_SCORE_LAP 2
-#define PROFILE_SCORE_LEAD_LAP 2
-#define PROFILE_SCORE_RACE_WIN 10
+#define PROFILE_SCORE_FLAG_CAPTURE 7
+#define PROFILE_SCORE_FLAG_ASSIST 4
+#define PROFILE_SCORE_DOMINATION_CAPTURE 6
+#define PROFILE_SCORE_LAP 1
+#define PROFILE_SCORE_LEAD_LAP 1
+#define PROFILE_SCORE_RACE_WIN 12
 #define PROFILE_SCORE_ELIMINATION_WIN 10
-#define PROFILE_SCORE_ACHIEVEMENT_TIER 20
+#define PROFILE_SCORE_ACHIEVEMENT_TIER 8
+#define PROFILE_SCORE_LOSS_PENALTY_NON_RACING -2
+#define PROFILE_SCORE_RACE_PLACEMENT_PENALTY -5
+#define PROFILE_SCORE_RACE_PLACE_SECOND 6
+#define PROFILE_SCORE_RACE_PLACE_THIRD 3
 
 #define PROFILE_RANK_ENTRY( name, threshold ) { name, threshold },
 static const profile_rank_def_t s_profileRankTable[] = {
@@ -1708,11 +1712,11 @@ void G_Profile_AddScore( int delta ) {
         return;
     }
 
-    /* Online-Bonus: Score-Punkte werden mit 1.25 multipliziert wenn
+    /* Online-Bonus: Score-Punkte werden mit 1.10 multipliziert wenn
      * der Spieler über einen dedizierten Server verbunden ist.
      * Nur auf positive Deltas — Strafen bleiben unverändert. */
     if ( s_profileState.isOnlineSession && delta > 0 ) {
-        delta = (int)( delta * 1.25f );
+        delta = (int)( delta * 1.10f );
         if ( delta < 1 ) delta = 1;
     }
 
@@ -1852,6 +1856,8 @@ void G_Profile_RecordLapComplete( gclient_t *client, qboolean isLeader, qboolean
 }
 
 void G_Profile_RecordRacePlacement( gclient_t *client, int position ) {
+    int placementScore = 0;
+
     if ( !G_Profile_ShouldTrackClient( client ) ) {
         return;
     }
@@ -1861,6 +1867,10 @@ void G_Profile_RecordRacePlacement( gclient_t *client, int position ) {
     }
 
     if ( position <= 0 ) {
+        return;
+    }
+
+    if ( client->pers.profileRacePlacementRecorded ) {
         return;
     }
 
@@ -1883,16 +1893,24 @@ void G_Profile_RecordRacePlacement( gclient_t *client, int position ) {
             break;
         }
         s_profileState.dirty = qtrue;
-        return;
+        if ( position == 2 ) {
+            placementScore = PROFILE_SCORE_RACE_PLACE_SECOND;
+        } else if ( position == 3 ) {
+            placementScore = PROFILE_SCORE_RACE_PLACE_THIRD;
+        }
+    } else {
+        /* Position schlechter als 3 — Strafpunkte */
+        if ( !client->pers.profileRacePlacementPenalized ) {
+            G_Profile_AddScore( PROFILE_SCORE_RACE_PLACEMENT_PENALTY );
+            client->pers.profileRacePlacementPenalized = qtrue;
+        }
     }
 
-    /* Position schlechter als 3 — Strafpunkte */
-    if ( client->pers.profileRacePlacementPenalized ) {
-        return;
-    }
+    client->pers.profileRacePlacementRecorded = qtrue;
 
-    G_Profile_AddScore( -5 );
-    client->pers.profileRacePlacementPenalized = qtrue;
+    if ( placementScore != 0 ) {
+        G_Profile_AddScore( placementScore );
+    }
 }
 
 /* Gesamte Rennzeit für Racing-Modi akkumulieren.
@@ -2018,6 +2036,11 @@ void G_Profile_RecordWin( gclient_t *client ) {
         return;
     }
 
+    if ( client->pers.profileMatchOutcomeRecorded ) {
+        return;
+    }
+    client->pers.profileMatchOutcomeRecorded = qtrue;
+
     s_profileState.stats.wins++;
     s_profileState.dirty = qtrue;
 
@@ -2102,6 +2125,11 @@ void G_Profile_RecordLoss( gclient_t *client ) {
         return;
     }
 
+    if ( client->pers.profileMatchOutcomeRecorded ) {
+        return;
+    }
+    client->pers.profileMatchOutcomeRecorded = qtrue;
+
     s_profileState.stats.losses++;
     s_profileState.stats.gamesPlayed++;
     s_profileState.dirty = qtrue;
@@ -2156,7 +2184,7 @@ void G_Profile_RecordLoss( gclient_t *client ) {
     }
 
     if ( G_Profile_ShouldTrackClient( client ) && !G_Profile_IsRacingGametype() ) {
-        G_Profile_AddScore( -5 );
+        G_Profile_AddScore( PROFILE_SCORE_LOSS_PENALTY_NON_RACING );
     }
 }
 

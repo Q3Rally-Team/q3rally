@@ -1297,10 +1297,13 @@ void ClientBegin( int clientNum ) {
 	}
 //	trap_SendServerCommand( -1, va("raceTime %i", level.startRaceTime) );
 
-        client->buttons = 0;
-        client->oldbuttons = 0;
-        client->lastCheckpointTime = 0;
-        G_ResetClientLapData( client );
+	client->buttons = 0;
+	client->oldbuttons = 0;
+	client->lastCheckpointTime = 0;
+	client->pers.profileRacePlacementPenalized = qfalse;
+	client->pers.profileRacePlacementRecorded = qfalse;
+	client->pers.profileMatchOutcomeRecorded = qfalse;
+	G_ResetClientLapData( client );
 // END
 
         if ( ent->r.linked ) {
@@ -1938,5 +1941,4 @@ void ClientDisconnect( int clientNum ) {
 		BotAIShutdownClient( clientNum, qfalse );
 	}
 }
-
 
