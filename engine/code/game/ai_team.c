@@ -846,6 +846,182 @@ void BotCTFOrders(bot_state_t *bs) {
 	}
 }
 
+static int BotCTF4TeamToFlagIndex(int team) {
+	switch (team) {
+		case TEAM_RED: return 0;
+		case TEAM_BLUE: return 1;
+		case TEAM_GREEN: return 2;
+		case TEAM_YELLOW: return 3;
+		default: return -1;
+	}
+}
+
+static int BotCTF4EnemyCarrierVisible(bot_state_t *bs) {
+	int i;
+	float vis;
+	aas_entityinfo_t entinfo;
+
+	for (i = 0; i < level.maxclients; i++) {
+		if (i == bs->client) {
+			continue;
+		}
+		BotEntityInfo(i, &entinfo);
+		if (!entinfo.valid || !EntityCarriesFlag(&entinfo) || BotSameTeam(bs, i)) {
+			continue;
+		}
+		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->cur_ps.viewangles, 360, i);
+		if (vis > 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static int BotCTF4BestEnemyFlagTeam(bot_state_t *bs, const char *flagStatus, qboolean scorePressure) {
+	int team, i, bestTeam, bestScore;
+	int ownTeam = BotTeam(bs);
+	int enemyTeams[3];
+	int enemyCount = 0;
+	int lowEnemyScore = 0x7fffffff;
+
+	for (team = TEAM_RED; team <= TEAM_YELLOW; team++) {
+		if (team == ownTeam || TeamCount(-1, team) <= 0) {
+			continue;
+		}
+		if (level.teamScores[team] < lowEnemyScore) {
+			lowEnemyScore = level.teamScores[team];
+		}
+		enemyTeams[enemyCount++] = team;
+	}
+	if (!enemyCount) {
+		return TEAM_FREE;
+	}
+
+	bestTeam = enemyTeams[0];
+	bestScore = 0x7fffffff;
+	for (i = 0; i < enemyCount; i++) {
+		int travel = 0;
+		int score = 0;
+		int idx = BotCTF4TeamToFlagIndex(enemyTeams[i]);
+		bot_goal_t *goal = (enemyTeams[i] == TEAM_RED) ? &ctf_redflag :
+			(enemyTeams[i] == TEAM_BLUE) ? &ctf_blueflag :
+			(enemyTeams[i] == TEAM_GREEN) ? &ctf_greenflag : &ctf_yellowflag;
+
+		if (goal->areanum) {
+			travel = trap_AAS_AreaTravelTimeToGoalArea(bs->areanum, bs->origin, goal->areanum, TFL_DEFAULT);
+		}
+		score = travel > 0 ? travel : 10000;
+		// prefer weaker teams, then shorter runs
+		score += (level.teamScores[enemyTeams[i]] - lowEnemyScore) * 120;
+		// if an enemy flag is already out, deprioritize to avoid overstacking one objective
+		if (flagStatus && idx >= 0 && flagStatus[idx] != '0') {
+			score += 220;
+		}
+		if (scorePressure && g_capturelimit.integer > 0 &&
+			level.teamScores[enemyTeams[i]] >= g_capturelimit.integer - 1) {
+			// when close to losing, pressure the current leaders harder
+			score -= 300;
+		}
+		if (score < bestScore) {
+			bestScore = score;
+			bestTeam = enemyTeams[i];
+		}
+	}
+	return bestTeam;
+}
+
+static qboolean BotCTF4ScorePressure(bot_state_t *bs) {
+	int team, ownScore, bestEnemyScore;
+
+	if (g_capturelimit.integer <= 0) {
+		return qfalse;
+	}
+
+	team = BotTeam(bs);
+	ownScore = level.teamScores[team];
+	bestEnemyScore = -1;
+	for (team = TEAM_RED; team <= TEAM_YELLOW; team++) {
+		if (team == BotTeam(bs) || TeamCount(-1, team) <= 0) {
+			continue;
+		}
+		if (level.teamScores[team] > bestEnemyScore) {
+			bestEnemyScore = level.teamScores[team];
+		}
+	}
+	if (bestEnemyScore < 0) {
+		return qfalse;
+	}
+	if (bestEnemyScore >= g_capturelimit.integer - 1) {
+		return qtrue;
+	}
+	return (bestEnemyScore - ownScore >= 2);
+}
+
+/*
+==================
+BotCTF4Orders
+==================
+*/
+void BotCTF4Orders(bot_state_t *bs) {
+	int i, numteammates, defenders, interceptors;
+	int teammates[MAX_CLIENTS] = {0};
+	int ownIndex, enemyCarrier, targetTeam;
+	qboolean ownFlagStolen, scorePressure;
+	char flagStatus[8];
+	char name[MAX_NETNAME];
+
+	trap_GetConfigstring(CS_FLAGSTATUS, flagStatus, sizeof(flagStatus));
+	ownIndex = BotCTF4TeamToFlagIndex(BotTeam(bs));
+	ownFlagStolen = (ownIndex >= 0 && flagStatus[ownIndex] && flagStatus[ownIndex] != '0');
+	scorePressure = BotCTF4ScorePressure(bs);
+	enemyCarrier = BotCTF4EnemyCarrierVisible(bs);
+	targetTeam = BotCTF4BestEnemyFlagTeam(bs, flagStatus, scorePressure);
+
+	numteammates = BotSortTeamMatesByBaseTravelTime(bs, teammates, sizeof(teammates));
+	BotSortTeamMatesByTaskPreference(bs, teammates, numteammates);
+	if (numteammates <= 1) {
+		return;
+	}
+
+	defenders = 1;
+	if (!scorePressure && numteammates >= 6) {
+		defenders = 2;
+	}
+	interceptors = (enemyCarrier >= 0) ? 2 : (ownFlagStolen ? 1 : 0);
+	if (scorePressure && interceptors > 0) {
+		interceptors--;
+	}
+	if (defenders + interceptors >= numteammates) {
+		interceptors = numteammates - defenders - 1;
+		if (interceptors < 0) {
+			interceptors = 0;
+		}
+	}
+	for (i = 0; i < defenders && i < numteammates; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_defendbase", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_DEFEND);
+	}
+	for (; i < defenders + interceptors && i < numteammates; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		BotAI_BotInitialChat(bs, "cmd_returnflag", name, NULL);
+		BotSayTeamOrder(bs, teammates[i]);
+		BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_RETURNFLAG);
+	}
+	for (; i < numteammates; i++) {
+		ClientName(teammates[i], name, sizeof(name));
+		if (targetTeam == TEAM_FREE) {
+			BotAI_BotInitialChat(bs, "cmd_getflag", name, NULL);
+			BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_GETFLAG);
+		} else {
+			BotAI_BotInitialChat(bs, "cmd_attackenemybase", name, NULL);
+			BotSayVoiceTeamOrder(bs, teammates[i], VOICECHAT_OFFENSE);
+		}
+		BotSayTeamOrder(bs, teammates[i]);
+	}
+}
+
 
 /*
 ==================
@@ -1894,6 +2070,9 @@ static int botKOTHOwnerSnapshot[MAX_CLIENTS];
 static int botKOTHContestedSnapshot[MAX_CLIENTS];
 static int botDominationOrderModeSnapshot[MAX_CLIENTS];
 static int botKOTHOrderModeSnapshot[MAX_CLIENTS];
+static char botCTF4FlagStatusSnapshot[MAX_CLIENTS][8];
+static int botCTF4EnemyCarrierVisibleSnapshot[MAX_CLIENTS];
+static int botCTF4ScorePressureSnapshot[MAX_CLIENTS];
 
 typedef enum {
 	BOT_DOM_ORDER_HOLD = 0,
@@ -2257,6 +2436,53 @@ void BotTeamAI(bot_state_t *bs) {
 				BotCTFOrders(bs);
 				//
 				bs->teamgiveorders_time = 0;
+			}
+			break;
+		}
+		case GT_CTF4:
+		{
+			char flagStatus[8];
+			int ownIndex, ownWasStolen, ownNowStolen;
+			int enemyCarrierVisible;
+			int scorePressure;
+
+			trap_GetConfigstring(CS_FLAGSTATUS, flagStatus, sizeof(flagStatus));
+			ownIndex = BotCTF4TeamToFlagIndex(BotTeam(bs));
+			ownWasStolen = (ownIndex >= 0 && botCTF4FlagStatusSnapshot[bs->client][ownIndex] &&
+				botCTF4FlagStatusSnapshot[bs->client][ownIndex] != '0');
+			ownNowStolen = (ownIndex >= 0 && flagStatus[ownIndex] && flagStatus[ownIndex] != '0');
+			enemyCarrierVisible = (BotCTF4EnemyCarrierVisible(bs) >= 0);
+			scorePressure = BotCTF4ScorePressure(bs);
+
+			if (!ownWasStolen && ownNowStolen) {
+				BotChat_ObjectiveEvent(bs, "ctf4_own_flag_stolen");
+				BotVoiceChat(bs, -1, VOICECHAT_RETURNFLAG);
+			}
+			if (!botCTF4EnemyCarrierVisibleSnapshot[bs->client] && enemyCarrierVisible) {
+				BotChat_ObjectiveEvent(bs, "ctf4_enemy_carrier_visible");
+				BotVoiceChat(bs, -1, VOICECHAT_RETURNFLAG);
+			}
+			if (!botCTF4ScorePressureSnapshot[bs->client] && scorePressure) {
+				BotChat_ObjectiveEvent(bs, "ctf4_score_pressure");
+				BotVoiceChat(bs, -1, VOICECHAT_OFFENSE);
+			}
+
+			if (bs->numteammates != numteammates ||
+				Q_stricmp(botCTF4FlagStatusSnapshot[bs->client], flagStatus) ||
+				botCTF4EnemyCarrierVisibleSnapshot[bs->client] != enemyCarrierVisible ||
+				botCTF4ScorePressureSnapshot[bs->client] != scorePressure ||
+				bs->forceorders) {
+				bs->teamgiveorders_time = FloatTime();
+				bs->numteammates = numteammates;
+				Q_strncpyz(botCTF4FlagStatusSnapshot[bs->client], flagStatus, sizeof(botCTF4FlagStatusSnapshot[bs->client]));
+				botCTF4EnemyCarrierVisibleSnapshot[bs->client] = enemyCarrierVisible;
+				botCTF4ScorePressureSnapshot[bs->client] = scorePressure;
+				bs->forceorders = qfalse;
+			}
+
+			if (bs->teamgiveorders_time && bs->teamgiveorders_time < FloatTime() - 2) {
+				BotCTF4Orders(bs);
+				bs->teamgiveorders_time = FloatTime() + 20;
 			}
 			break;
 		}

@@ -85,6 +85,8 @@ vmCvar_t bot_testrchat;
 vmCvar_t bot_challenge;
 vmCvar_t bot_predictobstacles;
 vmCvar_t g_spSkill;
+vmCvar_t g_botLcsAggressionBias;
+vmCvar_t g_botLcsEvasionBias;
 
 extern vmCvar_t bot_developer;
 
@@ -95,6 +97,8 @@ int max_bspmodelindex;			//maximum BSP model index
 //CTF flag goals
 bot_goal_t ctf_redflag;
 bot_goal_t ctf_blueflag;
+bot_goal_t ctf_greenflag;
+bot_goal_t ctf_yellowflag;
 #ifdef MISSIONPACK
 bot_goal_t ctf_neutralflag;
 bot_goal_t redobelisk;
@@ -135,6 +139,8 @@ int BotCTFCarryingFlag(bot_state_t *bs) {
 
 	if (bs->inventory[INVENTORY_REDFLAG] > 0) return CTF_FLAG_RED;
 	else if (bs->inventory[INVENTORY_BLUEFLAG] > 0) return CTF_FLAG_BLUE;
+	else if (bs->cur_ps.powerups[PW_GREENFLAG]) return CTF_FLAG_GREEN;
+	else if (bs->cur_ps.powerups[PW_YELLOWFLAG]) return CTF_FLAG_YELLOW;
 	return CTF_FLAG_NONE;
 }
 
@@ -149,10 +155,14 @@ int BotTeam(bot_state_t *bs) {
 		return qfalse;
 	}
 
-    if (level.clients[bs->client].sess.sessionTeam == TEAM_RED) {
+	if (level.clients[bs->client].sess.sessionTeam == TEAM_RED) {
 		return TEAM_RED;
 	} else if (level.clients[bs->client].sess.sessionTeam == TEAM_BLUE) {
 		return TEAM_BLUE;
+	} else if (level.clients[bs->client].sess.sessionTeam == TEAM_GREEN) {
+		return TEAM_GREEN;
+	} else if (level.clients[bs->client].sess.sessionTeam == TEAM_YELLOW) {
+		return TEAM_YELLOW;
 	}
 
 	return TEAM_FREE;
@@ -164,11 +174,98 @@ BotOppositeTeam
 ==================
 */
 int BotOppositeTeam(bot_state_t *bs) {
-	switch(BotTeam(bs)) {
-		case TEAM_RED: return TEAM_BLUE;
-		case TEAM_BLUE: return TEAM_RED;
-		default: return TEAM_FREE;
+	int team, i, enemyTeams[3], enemyCount, bestTeam, bestTravel;
+	bot_goal_t *goal;
+	int travelTime;
+	char flagStatus[8];
+	int ownFlagIndex, ownFlagStolen;
+	int lowEnemyScore;
+	qboolean scorePressure;
+
+	team = BotTeam(bs);
+	if (team < TEAM_RED || team > TEAM_YELLOW) {
+		return TEAM_FREE;
 	}
+
+	enemyCount = 0;
+	lowEnemyScore = 0x7fffffff;
+	for (i = TEAM_RED; i <= TEAM_YELLOW; i++) {
+		if (i == team) {
+			continue;
+		}
+		goal = (i == TEAM_RED) ? &ctf_redflag :
+			(i == TEAM_BLUE) ? &ctf_blueflag :
+			(i == TEAM_GREEN) ? &ctf_greenflag : &ctf_yellowflag;
+		if (!goal->areanum) {
+			continue;
+		}
+		if (TeamCount(-1, i) <= 0) {
+			continue;
+		}
+		if (level.teamScores[i] < lowEnemyScore) {
+			lowEnemyScore = level.teamScores[i];
+		}
+		enemyTeams[enemyCount++] = i;
+	}
+	if (!enemyCount) {
+		switch(team) {
+			case TEAM_RED: return TEAM_BLUE;
+			case TEAM_BLUE: return TEAM_RED;
+			default: return TEAM_FREE;
+		}
+	}
+
+	bestTeam = enemyTeams[0];
+	bestTravel = 0x7fffffff;
+	trap_GetConfigstring(CS_FLAGSTATUS, flagStatus, sizeof(flagStatus));
+	ownFlagIndex = (team == TEAM_RED) ? 0 :
+		(team == TEAM_BLUE) ? 1 :
+		(team == TEAM_GREEN) ? 2 :
+		(team == TEAM_YELLOW) ? 3 : -1;
+	ownFlagStolen = (ownFlagIndex >= 0 && flagStatus[ownFlagIndex] && flagStatus[ownFlagIndex] != '0');
+	scorePressure = (g_capturelimit.integer > 0);
+	if (scorePressure) {
+		int topEnemy = -1;
+		for (i = 0; i < enemyCount; i++) {
+			if (level.teamScores[enemyTeams[i]] > topEnemy) {
+				topEnemy = level.teamScores[enemyTeams[i]];
+			}
+		}
+		scorePressure = (topEnemy >= g_capturelimit.integer - 1 ||
+			topEnemy - level.teamScores[team] >= 2);
+	}
+
+	for (i = 0; i < enemyCount; i++) {
+		int score;
+		int idx;
+		goal = (enemyTeams[i] == TEAM_RED) ? &ctf_redflag :
+			(enemyTeams[i] == TEAM_BLUE) ? &ctf_blueflag :
+			(enemyTeams[i] == TEAM_GREEN) ? &ctf_greenflag : &ctf_yellowflag;
+		travelTime = trap_AAS_AreaTravelTimeToGoalArea(bs->areanum, bs->origin, goal->areanum, TFL_DEFAULT);
+		score = travelTime > 0 ? travelTime : 10000;
+		// favor the weaker enemy team as primary farm target
+		score += (level.teamScores[enemyTeams[i]] - lowEnemyScore) * 120;
+		idx = (enemyTeams[i] == TEAM_RED) ? 0 :
+			(enemyTeams[i] == TEAM_BLUE) ? 1 :
+			(enemyTeams[i] == TEAM_GREEN) ? 2 : 3;
+		// if this flag is already missing from base, spread pressure to other teams
+		if (flagStatus[idx] && flagStatus[idx] != '0') {
+			score += 220;
+		}
+		// when under pressure, deprioritize distant targets if own flag is currently stolen
+		if (ownFlagStolen && scorePressure) {
+			score += 120;
+		}
+		if (scorePressure && g_capturelimit.integer > 0 &&
+			level.teamScores[enemyTeams[i]] >= g_capturelimit.integer - 1) {
+			score -= 320;
+		}
+		if (score < bestTravel) {
+			bestTravel = score;
+			bestTeam = enemyTeams[i];
+		}
+	}
+	return bestTeam;
 }
 
 /*
@@ -177,11 +274,19 @@ BotEnemyFlag
 ==================
 */
 bot_goal_t *BotEnemyFlag(bot_state_t *bs) {
-	if (BotTeam(bs) == TEAM_RED) {
-		return &ctf_blueflag;
-	}
-	else {
-		return &ctf_redflag;
+	int enemyTeam;
+
+	enemyTeam = BotOppositeTeam(bs);
+	switch (enemyTeam) {
+		case TEAM_RED: return &ctf_redflag;
+		case TEAM_BLUE: return &ctf_blueflag;
+		case TEAM_GREEN: return &ctf_greenflag;
+		case TEAM_YELLOW: return &ctf_yellowflag;
+		default:
+			if (BotTeam(bs) == TEAM_RED) {
+				return &ctf_blueflag;
+			}
+			return &ctf_redflag;
 	}
 }
 
@@ -191,11 +296,12 @@ BotTeamFlag
 ==================
 */
 bot_goal_t *BotTeamFlag(bot_state_t *bs) {
-	if (BotTeam(bs) == TEAM_RED) {
-		return &ctf_redflag;
-	}
-	else {
-		return &ctf_blueflag;
+	switch (BotTeam(bs)) {
+		case TEAM_RED: return &ctf_redflag;
+		case TEAM_BLUE: return &ctf_blueflag;
+		case TEAM_GREEN: return &ctf_greenflag;
+		case TEAM_YELLOW: return &ctf_yellowflag;
+		default: return &ctf_redflag;
 	}
 }
 
@@ -342,6 +448,10 @@ qboolean EntityCarriesFlag(aas_entityinfo_t *entinfo) {
 	if ( entinfo->powerups & ( 1 << PW_REDFLAG ) )
 		return qtrue;
 	if ( entinfo->powerups & ( 1 << PW_BLUEFLAG ) )
+		return qtrue;
+	if ( entinfo->powerups & ( 1 << PW_GREENFLAG ) )
+		return qtrue;
+	if ( entinfo->powerups & ( 1 << PW_YELLOWFLAG ) )
 		return qtrue;
 #ifdef MISSIONPACK
 	if ( entinfo->powerups & ( 1 << PW_NEUTRALFLAG ) )
@@ -543,16 +653,26 @@ BotSetLastOrderedTask
 ==================
 */
 int BotSetLastOrderedTask(bot_state_t *bs) {
+	char flagStatus[8];
+	int team;
 
 	if (gametype == GT_CTF) {
 		// don't go back to returning the flag if it's at the base
 		if ( bs->lastgoal_ltgtype == LTG_RETURNFLAG ) {
-			if ( BotTeam(bs) == TEAM_RED ) {
+			team = BotTeam(bs);
+			if (g_gametype.integer == GT_CTF4) {
+				trap_GetConfigstring(CS_FLAGSTATUS, flagStatus, sizeof(flagStatus));
+				if ((team == TEAM_RED && flagStatus[0] == '0') ||
+					(team == TEAM_BLUE && flagStatus[1] == '0') ||
+					(team == TEAM_GREEN && flagStatus[2] == '0') ||
+					(team == TEAM_YELLOW && flagStatus[3] == '0')) {
+					bs->lastgoal_ltgtype = 0;
+				}
+			} else if ( team == TEAM_RED ) {
 				if ( bs->redflagstatus == 0 ) {
 					bs->lastgoal_ltgtype = 0;
 				}
-			}
-			else {
+			} else {
 				if ( bs->blueflagstatus == 0 ) {
 					bs->lastgoal_ltgtype = 0;
 				}
@@ -621,6 +741,8 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 	if (BotCTFCarryingFlag(bs)) {
 		//if not already rushing to the base
 		if (bs->ltgtype != LTG_RUSHBASE) {
+			bot_goal_t *enemyFlag;
+
 			BotRefuseOrder(bs);
 			bs->ltgtype = LTG_RUSHBASE;
 			bs->teamgoal_time = FloatTime() + CTF_RUSHBASE_TIME;
@@ -628,10 +750,11 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 			bs->decisionmaker = bs->client;
 			bs->ordered = qfalse;
 			//
-			switch(BotTeam(bs)) {
-				case TEAM_RED: VectorSubtract(bs->origin, ctf_blueflag.origin, dir); break;
-				case TEAM_BLUE: VectorSubtract(bs->origin, ctf_redflag.origin, dir); break;
-				default: VectorSet(dir, 999, 999, 999); break;
+			enemyFlag = BotEnemyFlag(bs);
+			if (enemyFlag && enemyFlag->areanum) {
+				VectorSubtract(bs->origin, enemyFlag->origin, dir);
+			} else {
+				VectorSet(dir, 999, 999, 999);
 			}
 			// if the bot picked up the flag very close to the enemy base
 			if ( VectorLength(dir) < 128 ) {
@@ -645,7 +768,16 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 			BotVoiceChat(bs, -1, VOICECHAT_IHAVEFLAG);
 		}
 		else if (bs->rushbaseaway_time > FloatTime()) {
-			if (BotTeam(bs) == TEAM_RED) flagstatus = bs->redflagstatus;
+			if (g_gametype.integer == GT_CTF4) {
+				char flagStatus[8];
+				int team = BotTeam(bs);
+				trap_GetConfigstring(CS_FLAGSTATUS, flagStatus, sizeof(flagStatus));
+				if (team == TEAM_RED) flagstatus = (flagStatus[0] != '0');
+				else if (team == TEAM_BLUE) flagstatus = (flagStatus[1] != '0');
+				else if (team == TEAM_GREEN) flagstatus = (flagStatus[2] != '0');
+				else if (team == TEAM_YELLOW) flagstatus = (flagStatus[3] != '0');
+				else flagstatus = 1;
+			} else if (BotTeam(bs) == TEAM_RED) flagstatus = bs->redflagstatus;
 			else flagstatus = bs->blueflagstatus;
 			//if the flag is back
 			if (flagstatus == 0) {
@@ -2196,6 +2328,12 @@ void BotUpdateInventory(bot_state_t *bs) {
 #endif
 	bs->inventory[INVENTORY_REDFLAG] = bs->cur_ps.powerups[PW_REDFLAG] != 0;
 	bs->inventory[INVENTORY_BLUEFLAG] = bs->cur_ps.powerups[PW_BLUEFLAG] != 0;
+#ifdef INVENTORY_GREENFLAG
+	bs->inventory[INVENTORY_GREENFLAG] = bs->cur_ps.powerups[PW_GREENFLAG] != 0;
+#endif
+#ifdef INVENTORY_YELLOWFLAG
+	bs->inventory[INVENTORY_YELLOWFLAG] = bs->cur_ps.powerups[PW_YELLOWFLAG] != 0;
+#endif
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_NEUTRALFLAG] = bs->cur_ps.powerups[PW_NEUTRALFLAG] != 0;
 	if (BotTeam(bs) == TEAM_RED) {
@@ -2645,6 +2783,69 @@ int TeamPlayIsOn(void) {
 	return ( gametype >= GT_TEAM );
 }
 
+qboolean BotGetLcsRiskMetrics(bot_state_t *bs, float *relativePosition, float *threatProximity, int *remainingOpponents) {
+	int i;
+	int opponents = 0;
+	int healthierOpponents = 0;
+	float nearestDist = 99999.0f;
+
+	if ( !bs || gametype != GT_LCS ) {
+		return qfalse;
+	}
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *other = &g_entities[i];
+		vec3_t toOther;
+		float dist;
+
+		if ( i == bs->client ) {
+			continue;
+		}
+		if ( level.clients[i].pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR ) {
+			continue;
+		}
+		if ( !other->inuse || !other->client || other->health <= 0 ) {
+			continue;
+		}
+
+		opponents++;
+		if ( other->health > bs->inventory[INVENTORY_HEALTH] ) {
+			healthierOpponents++;
+		}
+
+		VectorSubtract( other->client->ps.origin, bs->origin, toOther );
+		dist = VectorLength( toOther );
+		if ( dist < nearestDist ) {
+			nearestDist = dist;
+		}
+	}
+
+	if ( remainingOpponents ) {
+		*remainingOpponents = opponents;
+	}
+	if ( relativePosition ) {
+		if ( opponents <= 0 ) {
+			*relativePosition = 1.0f;
+		} else {
+			*relativePosition = 1.0f - ( (float)healthierOpponents / (float)opponents );
+		}
+	}
+	if ( threatProximity ) {
+		float threat = 0.0f;
+		if ( nearestDist < 1400.0f ) {
+			threat = 1.0f - ( nearestDist / 1400.0f );
+			if ( threat < 0.0f ) threat = 0.0f;
+			if ( threat > 1.0f ) threat = 1.0f;
+		}
+		*threatProximity = threat;
+	}
+
+	return qtrue;
+}
+
 /*
 ==================
 BotAggression
@@ -2652,6 +2853,9 @@ BotAggression
 */
 float BotAggression(bot_state_t *bs) {
 	float aggression;
+	float lcsRelativePosition = 0.5f;
+	float lcsThreatProximity = 0.0f;
+	int lcsRemainingOpponents = 0;
 
 	//if the bot has quad
 	if (bs->inventory[INVENTORY_QUAD]) {
@@ -2718,6 +2922,14 @@ float BotAggression(bot_state_t *bs) {
 
 apply_profile:
 	aggression += bs->personalityAggressionBias;
+	if ( BotGetLcsRiskMetrics(bs, &lcsRelativePosition, &lcsThreatProximity, &lcsRemainingOpponents) ) {
+		float lcsAggressionBias = g_botLcsAggressionBias.value;
+		float lcsEvasionBias = g_botLcsEvasionBias.value;
+		aggression *= 0.52f + lcsAggressionBias;
+		aggression -= lcsThreatProximity * (28.0f + lcsEvasionBias * 20.0f);
+		aggression -= lcsRemainingOpponents * (1.6f + lcsEvasionBias * 0.5f);
+		aggression += lcsRelativePosition * 10.0f;
+	}
 	if ( aggression < 0 ) {
 		aggression = 0;
 	} else if ( aggression > 100 ) {
@@ -2754,6 +2966,9 @@ BotWantsToRetreat
 */
 int BotWantsToRetreat(bot_state_t *bs) {
 	aas_entityinfo_t entinfo;
+	float lcsRelativePosition = 0.5f;
+	float lcsThreatProximity = 0.0f;
+	int lcsRemainingOpponents = 0;
 
 	if (gametype == GT_CTF) {
 		//always retreat when carrying a CTF flag
@@ -2797,6 +3012,19 @@ int BotWantsToRetreat(bot_state_t *bs) {
 	//if the bot is getting the flag
 	if (bs->ltgtype == LTG_GETFLAG)
 		return qtrue;
+
+	if ( BotGetLcsRiskMetrics(bs, &lcsRelativePosition, &lcsThreatProximity, &lcsRemainingOpponents) ) {
+		float retreatThreshold = 58.0f + g_botLcsEvasionBias.value * 12.0f;
+		if ( lcsThreatProximity > 0.38f ) {
+			return qtrue;
+		}
+		if ( lcsRemainingOpponents > 2 ) {
+			return qtrue;
+		}
+		if ( BotAggression(bs) < retreatThreshold ) {
+			return qtrue;
+		}
+	}
 	//
 	if (BotAggression(bs) < 50)
 		return qtrue;
@@ -2810,6 +3038,9 @@ BotWantsToChase
 */
 int BotWantsToChase(bot_state_t *bs) {
 	aas_entityinfo_t entinfo;
+	float lcsRelativePosition = 0.5f;
+	float lcsThreatProximity = 0.0f;
+	int lcsRemainingOpponents = 0;
 
 	if (gametype == GT_CTF) {
 		//never chase when carrying a CTF flag
@@ -2851,6 +3082,16 @@ int BotWantsToChase(bot_state_t *bs) {
 	//if the bot is getting the flag
 	if (bs->ltgtype == LTG_GETFLAG)
 		return qfalse;
+
+	if ( BotGetLcsRiskMetrics(bs, &lcsRelativePosition, &lcsThreatProximity, &lcsRemainingOpponents) ) {
+		float aggressionThreshold = 62.0f + g_botLcsEvasionBias.value * 10.0f;
+		qboolean closeOpportunity = ( bs->inventory[ENEMY_HORIZONTAL_DIST] > 0 && bs->inventory[ENEMY_HORIZONTAL_DIST] < 260 );
+		if ( lcsRemainingOpponents <= 2 && lcsRelativePosition > 0.45f && closeOpportunity &&
+			lcsThreatProximity > 0.52f && BotAggression(bs) >= aggressionThreshold ) {
+			return qtrue;
+		}
+		return qfalse;
+	}
 	//
 	if (BotAggression(bs) > 50)
 		return qtrue;
@@ -3049,7 +3290,9 @@ BotGoForPowerups
 void BotGoForPowerups(bot_state_t *bs) {
 
 	//don't avoid any of the powerups anymore
-	BotDontAvoid(bs, "Quad Damage");
+	if ( gametype != GT_LCS ) {
+		BotDontAvoid(bs, "Quad Damage");
+	}
 	BotDontAvoid(bs, "Auto Repair");
 	BotDontAvoid(bs, "Battle Suit");
 	BotDontAvoid(bs, "Speed");
@@ -5992,12 +6235,20 @@ void BotSetupDeathmatchAI(void) {
 	trap_Cvar_Register(&bot_challenge, "bot_challenge", "0", 0);
 	trap_Cvar_Register(&bot_predictobstacles, "bot_predictobstacles", "1", 0);
 	trap_Cvar_Register(&g_spSkill, "g_spSkill", "2", 0);
+	trap_Cvar_Register(&g_botLcsAggressionBias, "g_botLcsAggressionBias", "0.18", CVAR_ARCHIVE);
+	trap_Cvar_Register(&g_botLcsEvasionBias, "g_botLcsEvasionBias", "0.32", CVAR_ARCHIVE);
 	//
 	if (gametype == GT_CTF) {
 		if (trap_BotGetLevelItemGoal(-1, "Red Flag", &ctf_redflag) < 0)
 			BotAI_Print(PRT_WARNING, "CTF without Red Flag\n");
 		if (trap_BotGetLevelItemGoal(-1, "Blue Flag", &ctf_blueflag) < 0)
 			BotAI_Print(PRT_WARNING, "CTF without Blue Flag\n");
+		if (g_gametype.integer == GT_CTF4) {
+			if (trap_BotGetLevelItemGoal(-1, "Green Flag", &ctf_greenflag) < 0)
+				BotAI_Print(PRT_WARNING, "CTF4 without Green Flag\n");
+			if (trap_BotGetLevelItemGoal(-1, "Yellow Flag", &ctf_yellowflag) < 0)
+				BotAI_Print(PRT_WARNING, "CTF4 without Yellow Flag\n");
+		}
 	}
 #ifdef MISSIONPACK
 	else if (gametype == GT_1FCTF) {

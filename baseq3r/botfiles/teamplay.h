@@ -542,3 +542,22 @@ type "cmd_takeb"
 {
 0, " dominate point B";
 }
+
+// CTF4 objective event chatter
+type "ctf4_own_flag_stolen"
+{
+"Our flag is out, rotate back now!";
+"They're running our flag, collapse on return!";
+}
+
+type "ctf4_enemy_carrier_visible"
+{
+"Enemy carrier is spotted, intercept!";
+"Carrier seen, cut them off!";
+}
+
+type "ctf4_score_pressure"
+{
+"We're behind, push for a fast capture!";
+"Score pressure on us, full offense!";
+}

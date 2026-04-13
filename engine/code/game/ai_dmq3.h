@@ -63,6 +63,10 @@ qboolean EntityIsDead(aas_entityinfo_t *entinfo);
 qboolean EntityIsInvisible(aas_entityinfo_t *entinfo);
 //returns true if the entity is shooting
 qboolean EntityIsShooting(aas_entityinfo_t *entinfo);
+//returns true if the entity carries any CTF flag
+qboolean EntityCarriesFlag(aas_entityinfo_t *entinfo);
+//returns true if the entity carries harvester cubes (missionpack)
+qboolean EntityCarriesCubes(aas_entityinfo_t *entinfo);
 #ifdef MISSIONPACK
 //returns true if this entity has the kamikaze
 qboolean EntityHasKamikaze(aas_entityinfo_t *entinfo);
@@ -105,6 +109,7 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl);
 int BotSameTeam(bot_state_t *bs, int entnum);
 //returns true if teamplay is on
 int TeamPlayIsOn(void);
+qboolean BotGetLcsRiskMetrics(bot_state_t *bs, float *relativePosition, float *threatProximity, int *remainingOpponents);
 // returns the client number of the team mate flag carrier (-1 if none)
 int BotTeamFlagCarrier(bot_state_t *bs);
 //returns visible team mate flag carrier if available
@@ -193,6 +198,8 @@ void BotMapScripts(bot_state_t *bs);
 #define CTF_FLAG_NONE		0
 #define CTF_FLAG_RED		1
 #define CTF_FLAG_BLUE		2
+#define CTF_FLAG_GREEN		3
+#define CTF_FLAG_YELLOW		4
 //CTF skins
 #define CTF_SKIN_REDTEAM	"red"
 #define CTF_SKIN_BLUETEAM	"blue"
@@ -206,9 +213,13 @@ extern vmCvar_t bot_fastchat;
 extern vmCvar_t bot_nochat;
 extern vmCvar_t bot_testrchat;
 extern vmCvar_t bot_challenge;
+extern vmCvar_t g_botLcsAggressionBias;
+extern vmCvar_t g_botLcsEvasionBias;
 
 extern bot_goal_t ctf_redflag;
 extern bot_goal_t ctf_blueflag;
+extern bot_goal_t ctf_greenflag;
+extern bot_goal_t ctf_yellowflag;
 #ifdef MISSIONPACK
 extern bot_goal_t ctf_neutralflag;
 extern bot_goal_t redobelisk;
