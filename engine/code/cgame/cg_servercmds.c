@@ -489,9 +489,7 @@ static void CG_ParseKothStatus( void ) {
 	}
 
 	if ( oldOwner != cgs.kothOwner ) {
-		if ( cgs.kothOwner == localTeam ) {
-			trap_S_StartLocalSound( cgs.media.kothCaptureRewardSound, CHAN_ANNOUNCER );
-		} else if ( cgs.kothOwner != TEAM_FREE ) {
+		if ( cgs.kothOwner != TEAM_FREE ) {
 			trap_S_StartLocalSound( cgs.media.captureOpponentSound, CHAN_ANNOUNCER );
 			if ( oldOwner == localTeam ) {
 				cg.kothLossFlashUntil = cg.time + 600;
@@ -818,6 +816,12 @@ static void CG_MapRestart( void ) {
 	cgs.scores2 = SCORE_NOT_PRESENT;
 	cgs.scores3 = SCORE_NOT_PRESENT;
 	cgs.scores4 = SCORE_NOT_PRESENT;
+	// Immediately reload scores from configstrings.  The server only transmits
+	// configstring updates when the value *changes*, so if CS_SCORES3/4 were
+	// already "0" from the previous round they will not be re-sent and
+	// scores3/4 would stay at SCORE_NOT_PRESENT (-9999) until the first
+	// capture event.
+	CG_SetConfigValues();
 	cg.rewardTime = 0;
 	cg.rewardStack = 0;
 	cg.intermissionStarted = qfalse;

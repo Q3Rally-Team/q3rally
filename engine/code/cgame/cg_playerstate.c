@@ -412,15 +412,18 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 
 	// reward sounds
 	reward = qfalse;
-	/* KOTH: hill capture reward - sprite only, sound via cg_servercmds.c */
+	/* KOTH: local capture reward stays scoped to the capturing player. */
 	if ( cgs.gametype == GT_KOTH ) {
 		if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
-			pushReward(0, cgs.media.medalKothCapture, ps->persistant[PERS_CAPTURES]);
+			pushReward(cgs.media.kothCaptureRewardSound, cgs.media.medalKothCapture, ps->persistant[PERS_CAPTURES]);
 			reward = qtrue;
 		}
 	} else {
 		if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
-			pushReward(cgs.media.captureAwardSound, cgs.media.medalCapture, ps->persistant[PERS_CAPTURES]);
+			// Sound is already played globally via EV_GLOBAL_TEAM_SOUND (GTS_*_CAPTURE).
+			// Passing 0 here suppresses the duplicate local sound while still
+			// showing the capture medal sprite.
+			pushReward(0, cgs.media.medalCapture, ps->persistant[PERS_CAPTURES]);
 			reward = qtrue;
 		}
 	}
@@ -516,10 +519,14 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 
 	// check for flag pickup
 	if ( cgs.gametype > GT_TEAM ) {
-		if ((ps->powerups[PW_REDFLAG] != ops->powerups[PW_REDFLAG] && ps->powerups[PW_REDFLAG]) ||
-			(ps->powerups[PW_BLUEFLAG] != ops->powerups[PW_BLUEFLAG] && ps->powerups[PW_BLUEFLAG]) ||
-			(ps->powerups[PW_NEUTRALFLAG] != ops->powerups[PW_NEUTRALFLAG] && ps->powerups[PW_NEUTRALFLAG]) )
+		if ((ps->powerups[PW_REDFLAG]    != ops->powerups[PW_REDFLAG]    && ps->powerups[PW_REDFLAG]   ) ||
+			(ps->powerups[PW_BLUEFLAG]   != ops->powerups[PW_BLUEFLAG]   && ps->powerups[PW_BLUEFLAG]  ) ||
+			(ps->powerups[PW_GREENFLAG]  != ops->powerups[PW_GREENFLAG]  && ps->powerups[PW_GREENFLAG] ) ||
+			(ps->powerups[PW_YELLOWFLAG] != ops->powerups[PW_YELLOWFLAG] && ps->powerups[PW_YELLOWFLAG]) ||
+			(ps->powerups[PW_NEUTRALFLAG]!= ops->powerups[PW_NEUTRALFLAG]&& ps->powerups[PW_NEUTRALFLAG]) )
 		{
+			// The carrier hears "you have the flag" (personal).
+			// Teammates hear "we have the flag" via GTS_*_TAKEN in cg_event.c.
 			trap_S_StartLocalSound( cgs.media.youHaveFlagSound, CHAN_ANNOUNCER );
 		}
 	}

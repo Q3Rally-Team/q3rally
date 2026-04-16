@@ -831,7 +831,7 @@ static void CG_RegisterSounds( void ) {
 		cgs.media.takenYourTeamSound = trap_S_RegisterSound( "sound/teamplay/flagtaken_yourteam.ogg", qtrue );
 		cgs.media.takenOpponentSound = trap_S_RegisterSound( "sound/teamplay/flagtaken_opponent.ogg", qtrue );
 
-		if ( cgs.gametype == GT_CTF || cgs.gametype == GT_DOMINATION || cg_buildScript.integer ) {
+		if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION || cg_buildScript.integer ) {
 			cgs.media.redFlagReturnedSound = trap_S_RegisterSound( "sound/teamplay/voc_red_returned.ogg", qtrue );
 			cgs.media.blueFlagReturnedSound = trap_S_RegisterSound( "sound/teamplay/voc_blue_returned.ogg", qtrue );
 			cgs.media.greenFlagReturnedSound = trap_S_RegisterSound( "sound/teamplay/voc_green_returned.ogg", qtrue );

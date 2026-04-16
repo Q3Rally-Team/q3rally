@@ -1319,6 +1319,7 @@ void ClientBegin( int clientNum ) {
 	client->pers.teamState.state = TEAM_BEGIN;
 	client->kothHillKills = 0;
 	client->kothContestTimeMs = 0;
+	client->dominationZoneHoldMs = 0;
 
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we

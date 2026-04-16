@@ -238,7 +238,7 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_SCORE].width = COL_SCORE_WIDTH;
         
         /* Different header based on gametype */
-        if (cgs.gametype == GT_CTF) {
+        if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTF4) {
             columns[SBCOL_SCORE].header = "CAPS";
         } else if (cgs.gametype == GT_KOTH) {
             columns[SBCOL_SCORE].header = "PTS";
@@ -1318,6 +1318,7 @@ Get appropriate score label for current gametype
 const char* CG_GetGametypeScoreLabel(void) {
     switch (cgs.gametype) {
         case GT_CTF:
+        case GT_CTF4:
             return "CAPS";
         case GT_DOMINATION:
             return "POINTS";

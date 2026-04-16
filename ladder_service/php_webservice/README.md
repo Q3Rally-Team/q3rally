@@ -39,6 +39,7 @@ Jedes Match wird als einzelne JSON-Datei unter `data/<matchId>.json` abgelegt. S
 ## Backup & Wartung
 * Regelmäßig den Ordner `data/` sichern.
 * Bei sehr vielen Matches kann die Dateibasis unübersichtlich werden; für große Installationen empfiehlt sich langfristig dennoch eine vollwertige Datenbank.
+* Bei Upgrades der Profilstruktur kann `php migrate_profiles.php` ausgeführt werden, um bestehende `data/profiles/*.json` auf das neue Match-Dedupe-Tracking (`_processedMatchIds`, `_lastProcessedMatch`) zu migrieren.
 
 ## Fehlerbehandlung
 Fehlerhafte Anfragen werden als strukturiertes JSON beantwortet:

@@ -21,7 +21,7 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.8';
+const LADDER_VERSION        = '1.0.9';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
@@ -33,7 +33,13 @@ const LADDER_RACE_MODES = [
     'GT_RACING', 'GT_RACING_DM', 'GT_SPRINT', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
 ];
 const LADDER_DEATHMATCH_MODES = [
-    'GT_DEATHMATCH', 'GT_TEAM', 'GT_DERBY', 'GT_LCS',
+    'GT_DEATHMATCH', 'GT_TEAM',
+];
+const LADDER_DERBY_MODES = [
+    'GT_DERBY',
+];
+const LADDER_SURVIVAL_MODES = [
+    'GT_LCS',
 ];
 const LADDER_OBJECTIVE_MODES = [
     'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_ELIMINATION',
@@ -143,6 +149,24 @@ function ladder_read_body(): string
 
     fclose($stream);
     return $body;
+}
+
+function ladder_pipeline_log(string $event, array $fields = []): void
+{
+    $parts = [];
+    foreach ($fields as $key => $value) {
+        if (is_bool($value)) {
+            $value = $value ? '1' : '0';
+        } elseif ($value === null) {
+            $value = 'null';
+        } elseif (is_array($value) || is_object($value)) {
+            $value = json_encode($value, JSON_UNESCAPED_SLASHES);
+        }
+        $parts[] = sprintf('%s=%s', (string)$key, (string)$value);
+    }
+
+    $suffix = $parts ? (' ' . implode(' ', $parts)) : '';
+    error_log('[ladder-pipeline] ' . $event . $suffix);
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -1271,8 +1295,8 @@ try {
       { key: 'gt_racing', type: 'race' },
       { key: 'gt_racing_dm', type: 'race' },
       { key: 'gt_sprint', type: 'race' },
-      { key: 'gt_derby', type: 'objective' },
-      { key: 'gt_lcs', type: 'objective' },
+      { key: 'gt_derby', type: 'derby' },
+      { key: 'gt_lcs', type: 'survival' },
       { key: 'gt_elimination', type: 'objective' },
       { key: 'gt_deathmatch', type: 'deathmatch' },
       { key: 'gt_team', type: 'deathmatch' },
@@ -1280,7 +1304,8 @@ try {
       { key: 'gt_team_racing_dm', type: 'race' },
       { key: 'gt_ctf', type: 'objective' },
       { key: 'gt_ctf4', type: 'objective' },
-      { key: 'gt_domination', type: 'objective' }
+      { key: 'gt_domination', type: 'objective' },
+      { key: 'gt_koth', type: 'objective' }
     ];
 
     const LEVELSHOT_EXTENSIONS = ['webp', 'png', 'jpg', 'jpeg', 'tga'];
@@ -1626,7 +1651,8 @@ try {
         gt_team_racing_dm: 'Team Racing Deathmatch',
         gt_ctf: 'Capture the Flag',
         gt_ctf4: '4-Teams-CTF',
-        gt_domination: 'Domination'
+        gt_domination: 'Domination',
+        gt_koth: 'King of the Hill'
       },
       en: {
         gt_racing: 'Racing',
@@ -1641,13 +1667,16 @@ try {
         gt_team_racing_dm: 'Team Racing Deathmatch',
         gt_ctf: 'Capture the Flag',
         gt_ctf4: '4-Team CTF',
-        gt_domination: 'Domination'
+        gt_domination: 'Domination',
+        gt_koth: 'King of the Hill'
       }
     };
 
     const RACE_MODE_KEYS = new Set(['gt_racing', 'gt_racing_dm', 'gt_sprint', 'gt_team_racing', 'gt_team_racing_dm']);
     const DEATHMATCH_MODE_KEYS = new Set(['gt_deathmatch', 'gt_team']);
-    const OBJECTIVE_MODE_KEYS = new Set(['gt_ctf', 'gt_ctf4', 'gt_elimination', 'gt_domination', 'gt_derby', 'gt_lcs']);
+    const DERBY_MODE_KEYS = new Set(['gt_derby']);
+    const SURVIVAL_MODE_KEYS = new Set(['gt_lcs']);
+    const OBJECTIVE_MODE_KEYS = new Set(['gt_ctf', 'gt_ctf4', 'gt_elimination', 'gt_domination', 'gt_koth']);
 
     const OBJECTIVE_METRIC_DEFINITIONS = {
       captures: {
@@ -1722,7 +1751,7 @@ try {
       gt_ctf4: ['captures', 'score', 'objectives', 'wins'],
       gt_elimination: ['wins', 'score', 'captures', 'objectives'],
       gt_domination: ['objectives', 'score', 'captures', 'wins'],
-      gt_derby: ['score', 'wins', 'objectives', 'captures'],
+      gt_koth: ['objectives', 'score', 'captures', 'wins'],
       gt_lcs: ['wins', 'score', 'captures', 'objectives']
     };
 
@@ -1744,6 +1773,8 @@ try {
         playerNames: new Set(),
         raceBest: new Map(),
         deathmatchBest: new Map(),
+        derbyBest: new Map(),
+        survivalBest: new Map(),
         objectiveBest: new Map(),
         eliminationBest: new Map()
       };
@@ -1756,6 +1787,8 @@ const state = {
   aggregationOffline: createEmptyAggregation(),
   leaderboard: [],
   deathmatchLeaderboard: [],
+  derbyLeaderboard: [],
+  survivalLeaderboard: [],
   objectiveLeaderboard: [],
   eliminationLeaderboard: [],
   modeData: new Map(),
@@ -2072,6 +2105,8 @@ function applyLanguage(lang) {
   updateModeTabsLanguage();
   buildRaceLeaderboard();
   buildDeathmatchLeaderboard();
+  buildDerbyLeaderboard();
+  buildSurvivalLeaderboard();
   buildObjectiveLeaderboard();
   prepareModeData();
   updateSummary();
@@ -2258,6 +2293,25 @@ function getColumnsForMode(config) {
       { key: 'kills', labelKey: 'deathmatch.headers.kills' },
       { key: 'deaths', labelKey: 'deathmatch.headers.deaths' },
       { key: 'recorded', labelKey: 'deathmatch.headers.recorded' }
+    ];
+  }
+  if (config.type === 'derby') {
+    return [
+      { key: 'rank', labelKey: 'deathmatch.headers.rank' },
+      { key: 'player', labelKey: 'deathmatch.headers.player' },
+      { key: 'kdr', labelKey: 'deathmatch.headers.kdr' },
+      { key: 'kills', labelKey: 'deathmatch.headers.kills' },
+      { key: 'deaths', labelKey: 'deathmatch.headers.deaths' },
+      { key: 'recorded', labelKey: 'deathmatch.headers.recorded' }
+    ];
+  }
+  if (config.type === 'survival') {
+    return [
+      { key: 'rank', labelKey: 'leaderboard.headers.rank' },
+      { key: 'player', labelKey: 'leaderboard.headers.player' },
+      { key: 'metric', labelKey: 'mode.headers.metric' },
+      { key: 'value', labelKey: 'ctf.headers.value' },
+      { key: 'recorded', labelKey: 'ctf.headers.recorded' }
     ];
   }
   return [
@@ -2824,6 +2878,12 @@ function prepareModeData() {
   for (const entry of state.deathmatchLeaderboard) {
     addEntry(entry.modeKey, entry);
   }
+  for (const entry of state.derbyLeaderboard) {
+    addEntry(entry.modeKey, entry);
+  }
+  for (const entry of state.survivalLeaderboard) {
+    addEntry(entry.modeKey, entry);
+  }
   for (const entry of state.objectiveLeaderboard) {
     addEntry(entry.modeKey, entry);
   }
@@ -2842,7 +2902,7 @@ function prepareModeData() {
           }
           return a.player.localeCompare(b.player, locale);
         });
-      } else if (config.type === 'deathmatch') {
+      } else if (config.type === 'deathmatch' || config.type === 'derby') {
         mapData.entries.sort((a, b) => {
           if (b.ratio !== a.ratio) {
             return b.ratio - a.ratio;
@@ -2928,6 +2988,63 @@ function buildDeathmatchLeaderboard() {
     return a.player.localeCompare(b.player, locale);
   });
   state.deathmatchLeaderboard = entries;
+}
+
+function buildDerbyLeaderboard() {
+  if (!state.aggregation) {
+    state.derbyLeaderboard = [];
+    return;
+  }
+  const locale = getLocale();
+  const entries = Array.from(state.aggregation.derbyBest.values());
+  entries.forEach((entry) => {
+    entry.mode = humanizeMode(entry.modeKey);
+  });
+  entries.sort((a, b) => {
+    if (b.ratio !== a.ratio) {
+      return b.ratio - a.ratio;
+    }
+    if (b.kills !== a.kills) {
+      return b.kills - a.kills;
+    }
+    if (a.deaths !== b.deaths) {
+      return a.deaths - b.deaths;
+    }
+    return a.player.localeCompare(b.player, locale);
+  });
+  state.derbyLeaderboard = entries;
+}
+
+function buildSurvivalLeaderboard() {
+  if (!state.aggregation) {
+    state.survivalLeaderboard = [];
+    return;
+  }
+  const locale = getLocale();
+  const entries = Array.from(state.aggregation.survivalBest.values());
+  entries.forEach((entry) => {
+    entry.mode = humanizeMode(entry.modeKey);
+  });
+  entries.sort((a, b) => {
+    if (b.value !== a.value) {
+      return b.value - a.value;
+    }
+    const priority = OBJECTIVE_MODE_PRIORITY.gt_lcs || OBJECTIVE_DEFAULT_PRIORITY;
+    const priorityA = priorityIndex(a.metricType, priority);
+    const priorityB = priorityIndex(b.metricType, priority);
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    const dateA = a.recordedAt || a.startedAt;
+    const dateB = b.recordedAt || b.startedAt;
+    const timeA = dateA instanceof Date ? dateA.getTime() : 0;
+    const timeB = dateB instanceof Date ? dateB.getTime() : 0;
+    if (timeA !== timeB) {
+      return timeB - timeA;
+    }
+    return a.player.localeCompare(b.player, locale);
+  });
+  state.survivalLeaderboard = entries;
 }
 
 function buildObjectiveLeaderboard() {
@@ -3132,6 +3249,8 @@ function rebuildForSource() {
   }
   buildRaceLeaderboard();
   buildDeathmatchLeaderboard();
+  buildDerbyLeaderboard();
+  buildSurvivalLeaderboard();
   buildObjectiveLeaderboard();
   prepareModeData();
   updateSummary();
@@ -3148,6 +3267,8 @@ async function loadMatches() {
     state.aggregationOffline = createEmptyAggregation();
     state.leaderboard = [];
     state.deathmatchLeaderboard = [];
+    state.derbyLeaderboard = [];
+    state.survivalLeaderboard = [];
     state.objectiveLeaderboard = [];
     state.eliminationLeaderboard = [];
     state.modeData = new Map();
@@ -3194,6 +3315,8 @@ async function loadMatches() {
     state.aggregation = createEmptyAggregation();
     state.leaderboard = [];
     state.deathmatchLeaderboard = [];
+    state.derbyLeaderboard = [];
+    state.survivalLeaderboard = [];
     state.objectiveLeaderboard = [];
     state.eliminationLeaderboard = [];
     state.modeData = new Map();
@@ -3261,6 +3384,10 @@ function ingestMatchInto(match, aggregation) {
     ingestRaceEntries(aggregation, entries, context);
   } else if (DEATHMATCH_MODE_KEYS.has(modeKey)) {
     ingestDeathmatchEntries(aggregation, entries, context);
+  } else if (DERBY_MODE_KEYS.has(modeKey)) {
+    ingestDerbyEntries(aggregation, entries, context);
+  } else if (SURVIVAL_MODE_KEYS.has(modeKey)) {
+    ingestSurvivalEntries(aggregation, entries, context);
   } else if (OBJECTIVE_MODE_KEYS.has(modeKey)) {
     ingestObjectiveEntries(aggregation, entries, context);
   }
@@ -3349,11 +3476,62 @@ function ingestDeathmatchEntries(aggregation, entries, context) {
   }
 }
 
-function ingestObjectiveEntries(aggregation, entries, context) {
+function ingestDerbyEntries(aggregation, entries, context) {
+  const { map, mapKey, modeKey, matchId, startedAt, recordedAt } = context;
+  for (const entry of entries) {
+    const player = extractLeaderboardPlayer(entry);
+    if (!player) {
+      continue;
+    }
+    const { kills, deaths } = extractKillDeath(entry);
+    if (kills === null && deaths === null) {
+      continue;
+    }
+    const safeKills = kills ?? 0;
+    const safeDeaths = deaths ?? 0;
+    const ratio = safeKills / Math.max(1, safeDeaths);
+    if (!Number.isFinite(ratio)) {
+      continue;
+    }
+    const playerLower = player.toLowerCase();
+    const key = `${modeKey}||${mapKey}||${playerLower}`;
+    const current = aggregation.derbyBest.get(key);
+    const shouldUpdate =
+      !current ||
+      ratio > current.ratio ||
+      (ratio === current.ratio && safeKills > current.kills) ||
+      (ratio === current.ratio && safeKills === current.kills && safeDeaths < current.deaths);
+    if (shouldUpdate) {
+      const isBot = extractIsBot(entry);
+      const derbyPlayerId = entry.playerId || '';
+      aggregation.derbyBest.set(key, {
+        player,
+        playerLower,
+        playerId: derbyPlayerId,
+        ratio,
+        kills: safeKills,
+        deaths: safeDeaths,
+        map,
+        mapKey,
+        modeKey,
+        matchId,
+        startedAt,
+        recordedAt,
+        isBot
+      });
+    }
+  }
+}
+
+function ingestSurvivalEntries(aggregation, entries, context) {
+  ingestObjectiveEntries(aggregation, entries, { ...context, modeKey: 'gt_lcs' }, aggregation.survivalBest);
+}
+
+function ingestObjectiveEntries(aggregation, entries, context, customTargetMap = null) {
   const { map, mapKey, modeKey, matchId, startedAt, recordedAt } = context;
   const priority = OBJECTIVE_MODE_PRIORITY[modeKey] || OBJECTIVE_DEFAULT_PRIORITY;
   const isElimination = modeKey === 'gt_elimination';
-  const targetMap = isElimination ? aggregation.eliminationBest : aggregation.objectiveBest;
+  const targetMap = customTargetMap || (isElimination ? aggregation.eliminationBest : aggregation.objectiveBest);
   const eliminationContext = isElimination ? prepareEliminationMetricContext(entries) : null;
 
   for (let index = 0; index < entries.length; index += 1) {
@@ -4235,6 +4413,7 @@ function formatKm(km) {
 
 // ── Player Profile Overlay ────────────────────────────────────────────────────
 async function showPlayerProfile(playerId, playerName) {
+  const INGEST_STALE_THRESHOLD_MS = 30 * 60 * 1000;
   const frag = document.createDocumentFragment();
 
   const loading = document.createElement('div');
@@ -4278,6 +4457,33 @@ async function showPlayerProfile(playerId, playerName) {
       </div>`;
     body.appendChild(rankStrip);
 
+    const ingestMatch = typeof p.lastIngestedMatchId === 'string' && p.lastIngestedMatchId
+      ? p.lastIngestedMatchId
+      : '–';
+    const ingestAtDate = p.lastIngestedAt ? new Date(p.lastIngestedAt) : null;
+    const ingestAtDisplay = ingestAtDate && !Number.isNaN(ingestAtDate.getTime())
+      ? ingestAtDate.toLocaleString()
+      : 'unbekannt';
+    const ingestMode = typeof p.lastIngestedMode === 'string' && p.lastIngestedMode
+      ? humanizeMode(p.lastIngestedMode)
+      : '';
+    const ingestSeq = Number.isFinite(Number(p.lastServerMatchSeq)) ? ` · Seq ${Number(p.lastServerMatchSeq)}` : '';
+
+    const ingestMeta = document.createElement('div');
+    ingestMeta.style.cssText = 'margin:-8px 0 16px;color:var(--text-muted);font-size:.82rem';
+    ingestMeta.textContent = `Stand: Match ${ingestMatch} um ${ingestAtDisplay}${ingestMode ? ` (${ingestMode}${ingestSeq})` : ingestSeq}`;
+    body.appendChild(ingestMeta);
+
+    if (ingestAtDate && !Number.isNaN(ingestAtDate.getTime())) {
+      const ageMs = Date.now() - ingestAtDate.getTime();
+      if (ageMs > INGEST_STALE_THRESHOLD_MS) {
+        const staleWarning = document.createElement('div');
+        staleWarning.style.cssText = 'margin:0 0 16px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,196,0,.35);background:rgba(255,196,0,.1);color:#ffd88a;font-size:.82rem';
+        staleWarning.textContent = 'Daten möglicherweise verzögert (letzter Ingest älter als 30 Minuten).';
+        body.appendChild(staleWarning);
+      }
+    }
+
     // Zweispaltiges Haupt-Layout
     const layout = document.createElement('div');
     layout.className = 'q3-profile-layout';
@@ -4319,25 +4525,45 @@ async function showPlayerProfile(playerId, playerName) {
     const colRight = document.createElement('div');
 
     const modeGroups = [
-      { title: 'Deathmatch',      fields: [['Wins','dmWins'],['Completed','dmCompleted'],['Kills','dmKills']] },
-      { title: 'Derby',           fields: [['Wins','derbyWins'],['Completed','derbyCompleted'],['Kills','derbyKills']] },
-      { title: 'Racing',          fields: [['Wins','racingWins'],['Podiums','racingPodiums'],['Completed','racingCompleted'],['Total Time',null,'racingTotalMs']] },
-      { title: 'Racing DM',       fields: [['Wins','racingDmWins'],['Podiums','racingDmPodiums'],['Completed','racingDmCompleted']] },
-      { title: 'Sprint',          fields: [['Wins','sprintWins'],['Completed','sprintCompleted'],['Best Time',null,'sprintBestMs']] },
-      { title: 'Elimination',     fields: [['Wins','eliminationWins'],['Completed','eliminationCompleted'],['Rounds Lasted','eliminationTotalRoundsLasted']] },
-      { title: 'LCS',             fields: [['Wins','lcsWins'],['Completed','lcsCompleted'],['Survival Time',null,'lcsTotalSurvivalMs']] },
-      { title: 'CTF',             fields: [['Wins','ctfWins'],['Completed','ctfCompleted'],['Captures','ctfCaptures']] },
-      { title: 'CTF 4-Team',      fields: [['Wins','ctf4Wins'],['Completed','ctf4Completed'],['Captures','ctf4Captures']] },
-      { title: 'Team DM',         fields: [['Wins','teamWins'],['Completed','teamCompleted'],['Kills','teamKills']] },
-      { title: 'Team Racing',     fields: [['Wins','teamRacingWins'],['Completed','teamRacingCompleted'],['Podiums','teamRacingPodiums']] },
-      { title: 'Team Racing DM',  fields: [['Wins','teamRacingDmWins'],['Completed','teamRacingDmCompleted'],['Podiums','teamRacingDmPodiums']] },
-      { title: 'Domination',      fields: [['Wins','dominationWins'],['Completed','dominationCompleted'],['Zone Hold',null,'dominationZoneHoldMs']] },
-      { title: 'King of the Hill', fields: [['Wins','kothWins'],['Completed','kothCompleted'],['Zone Hold',null,'kothZoneHoldMs']] },
+      { title: 'Deathmatch',      primaryStat: 'dmCompleted', fields: [['Wins','dmWins'],['Completed','dmCompleted'],['Kills','dmKills']] },
+      { title: 'Derby',           primaryStat: 'derbyCompleted', fields: [['Wins','derbyWins'],['Completed','derbyCompleted'],['Kills','derbyKills']] },
+      { title: 'Racing',          primaryStat: 'racingCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','racingWins'],['Podiums','racingPodiums'],['Completed','racingCompleted'],['Total Time',null,'racingTotalMs']] },
+      { title: 'Racing DM',       primaryStat: 'racingDmCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','racingDmWins'],['Podiums','racingDmPodiums'],['Completed','racingDmCompleted']] },
+      { title: 'Sprint',          primaryStat: 'sprintCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','sprintWins'],['Completed','sprintCompleted'],['Best Time',null,'sprintBestMs']] },
+      { title: 'Elimination',     primaryStat: 'eliminationCompleted', fields: [['Wins','eliminationWins'],['Completed','eliminationCompleted'],['Rounds Lasted','eliminationTotalRoundsLasted']] },
+      { title: 'LCS',             primaryStat: 'lcsCompleted', fields: [['Wins','lcsWins'],['Completed','lcsCompleted'],['Survival Time',null,'lcsTotalSurvivalMs']] },
+      { title: 'CTF',             primaryStat: 'ctfCompleted', fields: [['Wins','ctfWins'],['Completed','ctfCompleted'],['Captures','ctfCaptures']] },
+      { title: 'CTF 4-Team',      primaryStat: 'ctf4Completed', fields: [['Wins','ctf4Wins'],['Completed','ctf4Completed'],['Captures','ctf4Captures']] },
+      { title: 'Team DM',         primaryStat: 'teamCompleted', fields: [['Wins','teamWins'],['Completed','teamCompleted'],['Kills','teamKills']] },
+      { title: 'Team Racing',     primaryStat: 'teamRacingCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','teamRacingWins'],['Completed','teamRacingCompleted'],['Podiums','teamRacingPodiums']] },
+      { title: 'Team Racing DM',  primaryStat: 'teamRacingDmCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','teamRacingDmWins'],['Completed','teamRacingDmCompleted'],['Podiums','teamRacingDmPodiums']] },
+      { title: 'Domination',      primaryStat: 'dominationCompleted', fields: [['Wins','dominationWins'],['Completed','dominationCompleted'],['Zone Hold',null,'dominationZoneHoldMs']] },
+      { title: 'King of the Hill', primaryStat: 'kothCompleted', fields: [['Wins','kothWins'],['Completed','kothCompleted'],['Zone Hold',null,'kothZoneHoldMs']] },
     ];
 
-    const activeModes = modeGroups.filter(g =>
-      g.fields.some(([,key,msKey]) => (key && (p[key]||0) > 0) || (msKey && (p[msKey]||0) > 0))
-    );
+    const hasTrackedField = (obj, field) => Object.prototype.hasOwnProperty.call(obj || {}, field);
+    const toIntStat = (obj, field) => {
+      const num = Number(obj?.[field]);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    const activeModes = modeGroups.filter(g => {
+      const primaryActive = g.primaryStat ? toIntStat(p, g.primaryStat) > 0 : false;
+      if (primaryActive) {
+        return true;
+      }
+      const hasAnyPositiveField = g.fields.some(([,key,msKey]) => (key && toIntStat(p, key) > 0) || (msKey && toIntStat(p, msKey) > 0));
+      if (hasAnyPositiveField) {
+        return true;
+      }
+      if (g.alwaysVisibleWhenTracked) {
+        if (g.primaryStat && hasTrackedField(p, g.primaryStat)) {
+          return true;
+        }
+        return g.fields.some(([,key,msKey]) => (key && hasTrackedField(p, key)) || (msKey && hasTrackedField(p, msKey)));
+      }
+      return false;
+    });
 
     if (activeModes.length > 0) {
       const modeH = document.createElement('h3');
@@ -4356,10 +4582,10 @@ async function showPlayerProfile(playerId, playerName) {
         group.fields.forEach(([label, key, msKey]) => {
           let val;
           if (msKey) {
-            const ms = p[msKey] || 0;
+            const ms = toIntStat(p, msKey);
             val = ms > 0 ? formatMs(ms) : '–';
           } else {
-            val = p[key] || 0;
+            val = String(toIntStat(p, key));
           }
           modeGrid.appendChild(statCard(label, val));
         });
@@ -4525,6 +4751,20 @@ async function showMatchDetails(matchId) {
 
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
+  {
+    version: '1.0.9',
+    date: '2026-04-14',
+    changes: [
+      'Fix: mergeCareerCountField no longer double-counts kills/captures when a snapshot is present – snapshot is authoritative cumulative total, delta only applied when no snapshot exists',
+      'Fix: playerScore drift resolved – local-client snapshot accepted as-is (monotone); delta derivation restricted to remote players without a snapshot',
+      'Fix: kills extraction in profile_upsert now mirrors extract_player_kills() fallback chain (kills ?? frags ?? elims ?? score), closing discrepancy for legacy payloads',
+      'Fix: eliminationTotalRoundsLasted now accumulates eliminationRound from payload instead of staying frozen at snapshot value',
+      'Fix: isReplayBySeq uses strict less-than; same serverMatchSeq after server restart no longer silently drops a match',
+      'Engine: GT_DOMINATION now populates zoneHoldMs per player – new dominationZoneHoldMs in gclient_t, accumulated in Sigil_Think, read in G_LadderPopulatePlayer',
+      'Engine: G_LadderModeForGametype returns GT_UNKNOWN for unrecognised gametypes instead of GT_ELIMINATION',
+      'Engine: G_RecordMatchOutcome() now called in LogExit() before G_Profile_FlushIfDirty() and G_LadderSubmitMatchReport() – fixes profile snapshots missing wins/ctfWins/dmWins etc. because they were serialised before the outcome was recorded',
+    ]
+  },
   {
     version: '1.0.8',
     date: '2026-04-13',
@@ -4775,6 +5015,153 @@ function profile_is_valid_uuid(string $s): bool
     );
 }
 
+function profile_snapshot_int(?array $snapshot, string $key): ?int
+{
+    if (!is_array($snapshot) || !array_key_exists($key, $snapshot)) {
+        return null;
+    }
+    $value = $snapshot[$key];
+    if (is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))) {
+        return (int) $value;
+    }
+    return null;
+}
+
+function profile_match_checksum(string $matchId, string $mode, array $player): string
+{
+    $material = [
+        'matchId' => $matchId,
+        'mode' => $mode,
+        'playerId' => (string)($player['playerId'] ?? ''),
+        'clientNum' => (int)($player['clientNum'] ?? -1),
+        'score' => (int)($player['score'] ?? $player['rawScore'] ?? 0),
+        'kills' => (int)($player['kills'] ?? 0),
+        'deaths' => (int)($player['deaths'] ?? 0),
+        'position' => (int)($player['position'] ?? 0),
+    ];
+    return hash('sha256', json_encode($material, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
+}
+
+function profile_normalize_processed_match_ids(array $profile): array
+{
+    $ids = array_values(array_filter((array)($profile['_processedMatchIds'] ?? []), 'is_string'));
+    $ids = array_values(array_filter(array_map('normalize_match_id', $ids), static fn($v) => $v !== ''));
+    if (empty($ids) && isset($profile['_lastProcessedMatchId']) && is_string($profile['_lastProcessedMatchId'])) {
+        $legacy = normalize_match_id($profile['_lastProcessedMatchId']);
+        if ($legacy !== '') {
+            $ids[] = $legacy;
+        }
+    }
+    return array_slice(array_values(array_unique($ids)), -200);
+}
+
+function ladder_parse_server_match_seq($value): ?int
+{
+    if (is_int($value)) {
+        $seq = $value;
+    } elseif (is_float($value)) {
+        if (!is_finite($value)) {
+            return null;
+        }
+        if (floor($value) !== $value) {
+            return null;
+        }
+        $seq = (int)$value;
+    } elseif (is_string($value) && preg_match('/^\d+$/', $value)) {
+        $seq = (int)$value;
+    } else {
+        return null;
+    }
+
+    return $seq > 0 ? $seq : null;
+}
+
+function profile_last_server_match_seq(array $profile): ?int
+{
+    if (!isset($profile['_lastProcessedMatch']) || !is_array($profile['_lastProcessedMatch'])) {
+        return null;
+    }
+    if (!array_key_exists('serverMatchSeq', $profile['_lastProcessedMatch'])) {
+        return null;
+    }
+    return ladder_parse_server_match_seq($profile['_lastProcessedMatch']['serverMatchSeq']);
+}
+
+function profile_hydrate_ingest_metadata(array $profile): array
+{
+    if (!isset($profile['lastIngestedMatchId']) && isset($profile['_lastProcessedMatch']['matchId']) && is_string($profile['_lastProcessedMatch']['matchId'])) {
+        $profile['lastIngestedMatchId'] = $profile['_lastProcessedMatch']['matchId'];
+    }
+    if (!isset($profile['lastIngestedAt']) && isset($profile['_lastProcessedMatch']['timestamp']) && is_string($profile['_lastProcessedMatch']['timestamp'])) {
+        $profile['lastIngestedAt'] = $profile['_lastProcessedMatch']['timestamp'];
+    }
+    if (!isset($profile['lastIngestedMode']) && isset($profile['_lastProcessedMatch']['mode']) && is_string($profile['_lastProcessedMatch']['mode'])) {
+        $profile['lastIngestedMode'] = $profile['_lastProcessedMatch']['mode'];
+    }
+    if (!isset($profile['lastServerMatchSeq']) && isset($profile['_lastProcessedMatch']['serverMatchSeq'])) {
+        $legacySeq = ladder_parse_server_match_seq($profile['_lastProcessedMatch']['serverMatchSeq']);
+        if ($legacySeq !== null) {
+            $profile['lastServerMatchSeq'] = $legacySeq;
+        }
+    }
+    return $profile;
+}
+
+function profile_normalize_team_label($value): string
+{
+    if (is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))) {
+        $teamNum = (int)$value;
+        return match ($teamNum) {
+            1 => 'red',
+            2 => 'blue',
+            3 => 'green',
+            4 => 'yellow',
+            default => '',
+        };
+    }
+
+    if (!is_string($value)) {
+        return '';
+    }
+
+    $raw = strtolower(trim($value));
+    return match ($raw) {
+        '1', 'red' => 'red',
+        '2', 'blue' => 'blue',
+        '3', 'green' => 'green',
+        '4', 'yellow' => 'yellow',
+        default => '',
+    };
+}
+
+function profile_pick_winner_team_by_scores(array $scoresByTeam): ?string
+{
+    $topScore = null;
+    $topTeam = null;
+    $isTie = false;
+    foreach ($scoresByTeam as $team => $score) {
+        if (!in_array($team, ['red', 'blue', 'green', 'yellow'], true)) {
+            continue;
+        }
+        if (!is_int($score) && !is_float($score)) {
+            continue;
+        }
+        $scoreValue = (float)$score;
+        if ($topScore === null || $scoreValue > $topScore) {
+            $topScore = $scoreValue;
+            $topTeam = $team;
+            $isTie = false;
+        } elseif ($scoreValue === $topScore) {
+            $isTie = true;
+        }
+    }
+
+    if ($topTeam === null || $isTie) {
+        return null;
+    }
+    return $topTeam;
+}
+
 function profile_upsert_from_payload(array $payload): void
 {
     $players = $payload['players'] ?? [];
@@ -4782,8 +5169,117 @@ function profile_upsert_from_payload(array $payload): void
         return;
     }
 
-    $mode            = $payload['mode'] ?? '';
-    $winnerClientNum = (int)($payload['settings']['winnerClientNum'] ?? -1);
+    $mode = $payload['mode'] ?? '';
+    $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM', 'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
+    $isTeamMode = in_array($mode, $teamModes, true);
+    $winnerClientNum = -1;
+    $hasWinnerClientNum = false;
+    if (array_key_exists('winnerClientNum', $payload) &&
+        (is_int($payload['winnerClientNum']) ||
+         is_float($payload['winnerClientNum']) ||
+         (is_string($payload['winnerClientNum']) && is_numeric($payload['winnerClientNum'])))) {
+        $winnerClientNum = (int) $payload['winnerClientNum'];
+        $hasWinnerClientNum = $winnerClientNum >= 0;
+    } elseif (isset($payload['settings']) &&
+              is_array($payload['settings']) &&
+              array_key_exists('winnerClientNum', $payload['settings']) &&
+              (is_int($payload['settings']['winnerClientNum']) ||
+               is_float($payload['settings']['winnerClientNum']) ||
+               (is_string($payload['settings']['winnerClientNum']) && is_numeric($payload['settings']['winnerClientNum'])))) {
+        // Legacy fallback: old payloads nested the winner in settings.
+        $winnerClientNum = (int) $payload['settings']['winnerClientNum'];
+        $hasWinnerClientNum = $winnerClientNum >= 0;
+    }
+
+    $humanPlayers = [];
+    foreach ($players as $candidate) {
+        if (!is_array($candidate) || !empty($candidate['isBot'])) {
+            continue;
+        }
+        $candidateClientNum = (int)($candidate['clientNum'] ?? -1);
+        $candidateTeam = profile_normalize_team_label($candidate['team'] ?? null);
+        $humanPlayers[] = [
+            'clientNum' => $candidateClientNum,
+            'team' => $candidateTeam,
+            'position' => (int)($candidate['position'] ?? 0),
+        ];
+    }
+
+    $winnerTeam = null;
+    if ($isTeamMode) {
+        if ($hasWinnerClientNum) {
+            foreach ($humanPlayers as $hp) {
+                if ($hp['clientNum'] === $winnerClientNum && $hp['team'] !== '') {
+                    $winnerTeam = $hp['team'];
+                    break;
+                }
+            }
+        }
+        if ($winnerTeam === null && isset($payload['teams']) && is_array($payload['teams'])) {
+            $teamScores = [];
+            foreach ($payload['teams'] as $teamEntry) {
+                if (!is_array($teamEntry)) {
+                    continue;
+                }
+                $teamName = profile_normalize_team_label($teamEntry['team'] ?? null);
+                if ($teamName === '') {
+                    continue;
+                }
+                $score = null;
+                foreach (['rawScore', 'score', 'points'] as $field) {
+                    if (array_key_exists($field, $teamEntry) &&
+                        (is_int($teamEntry[$field]) || is_float($teamEntry[$field]) ||
+                         (is_string($teamEntry[$field]) && is_numeric($teamEntry[$field])))) {
+                        $score = (float) $teamEntry[$field];
+                        break;
+                    }
+                }
+                if ($score === null) {
+                    continue;
+                }
+                $teamScores[$teamName] = (float)$score;
+            }
+            $winnerTeam = profile_pick_winner_team_by_scores($teamScores);
+        }
+
+        if ($winnerTeam === null) {
+            $teamScores = [];
+            if (isset($payload['teamScores']) && is_array($payload['teamScores'])) {
+                foreach ($payload['teamScores'] as $teamKey => $scoreValue) {
+                    if (!is_int($scoreValue) && !is_float($scoreValue) && !(is_string($scoreValue) && is_numeric($scoreValue))) {
+                        continue;
+                    }
+                    $teamName = profile_normalize_team_label($teamKey);
+                    if ($teamName === '') {
+                        continue;
+                    }
+                    $teamScores[$teamName] = (float)$scoreValue;
+                }
+            }
+
+            foreach (['red', 'blue', 'green', 'yellow'] as $teamName) {
+                $field = $teamName . 'Score';
+                if (array_key_exists($field, $payload) &&
+                    (is_int($payload[$field]) || is_float($payload[$field]) ||
+                     (is_string($payload[$field]) && is_numeric($payload[$field])))) {
+                    $teamScores[$teamName] = (float)$payload[$field];
+                }
+            }
+
+            $winnerTeam = profile_pick_winner_team_by_scores($teamScores);
+        }
+    }
+
+    if (!$hasWinnerClientNum && !$isTeamMode) {
+        $positionOne = array_values(array_filter(
+            $humanPlayers,
+            static fn($hp) => (int)($hp['position'] ?? 0) === 1
+        ));
+        if (count($positionOne) === 1) {
+            $winnerClientNum = (int)$positionOne[0]['clientNum'];
+            $hasWinnerClientNum = $winnerClientNum >= 0;
+        }
+    }
 
     foreach ($players as $player) {
         if (!is_array($player)) {
@@ -4801,32 +5297,59 @@ function profile_upsert_from_payload(array $payload): void
 
         $existing = profile_load($playerId) ?? [];
 
-        // ── Snapshot-first: wenn ein Profil-Snapshot mitgeschickt wurde,
-        //    dessen Werte direkt übernehmen (absolute Gesamtstände).
-        //    Nur für Felder die lokal getrackt werden (distanceKm etc.)
-        $snap = $player['profile'] ?? null;
+        // ── Snapshot-first: Nur valide Snapshots als Primärquelle nutzen.
+        $snap = (isset($player['profile']) && is_array($player['profile']) && !empty($player['profile']['valid']))
+            ? $player['profile']
+            : null;
+        $matchId = isset($payload['matchId']) && is_string($payload['matchId']) ? normalize_match_id($payload['matchId']) : '';
+        $serverMatchSeq = array_key_exists('serverMatchSeq', $payload)
+            ? ladder_parse_server_match_seq($payload['serverMatchSeq'])
+            : null;
+        $receivedAt = is_string($payload['receivedAt'] ?? null) && $payload['receivedAt'] !== ''
+            ? $payload['receivedAt']
+            : gmdate('c');
+        $processedMatchIds = profile_normalize_processed_match_ids($existing);
+        $alreadyCounted = $matchId !== '' && in_array($matchId, $processedMatchIds, true);
+        $lastServerMatchSeq = profile_last_server_match_seq($existing);
+        $isOutdatedBySeq = $serverMatchSeq !== null &&
+                           $lastServerMatchSeq !== null &&
+                           $serverMatchSeq < $lastServerMatchSeq;
+        // Use strict less-than only: a match with the same seq as the last seen
+        // one is NOT a replay – it can happen after a server restart that resets
+        // the counter. Exact-match deduplication is already handled by
+        // $alreadyCounted (matchId set membership).
+        $isReplayBySeq = $isOutdatedBySeq;
+        $countThisMatch = $isReplayBySeq ? false : !$alreadyCounted;
 
         // ── Win-Detection ──────────────────────────────────────────────
         $clientNum  = (int)($player['clientNum'] ?? -1);
-        $isRaceMode = in_array($mode, ['GT_RACING','GT_RACING_DM','GT_SPRINT',
-                                        'GT_ELIMINATION','GT_LCS'], true);
-        $isWinner   = !$isRaceMode && $winnerClientNum >= 0
-                      && $winnerClientNum === $clientNum;
+        $position   = (int)($player['position'] ?? 0);
+        $playerTeam = profile_normalize_team_label($player['team'] ?? null);
+        $isWinnerByClient = $hasWinnerClientNum && $winnerClientNum >= 0 && $winnerClientNum === $clientNum;
+        $isWinnerByTeam = $isTeamMode && $winnerTeam !== null && $playerTeam !== '' && $playerTeam === $winnerTeam;
+        $isWinner = $isTeamMode ? $isWinnerByTeam : $isWinnerByClient;
 
         // ── Accuracy Award ─────────────────────────────────────────────
         $accuracy      = (int)($player['accuracy'] ?? 0);
         $accuracyAward = ($accuracy >= 75) ? 1 : 0;
+        // Mirror the same fallback as extract_player_kills() so that profile
+        // upsert and the match index see the same kill value for legacy payloads
+        // that omit the dedicated kills field and mirror it from score.
+        $matchKills = (int)(
+            $player['kills']
+            ?? $player['frags']
+            ?? $player['elims']
+            ?? (mode_is_deathmatch_like($mode) || mode_is_objective($mode) || mode_is_derby($mode)
+                ? ($player['score'] ?? $player['rawScore'] ?? $player['playerScore'] ?? 0)
+                : 0)
+        );
+        $matchDeaths   = (int)($player['deaths'] ?? $player['deathCount'] ?? 0);
+        $matchRaceMs   = (int)($player['totalRaceMs'] ?? 0);
 
         // ── Vehicle ────────────────────────────────────────────────────
         $modelRaw    = (string)($player['model'] ?? '');
         $vehicleName = $modelRaw !== '' ? explode('/', $modelRaw)[0]
                                         : ($existing['mostUsedVehicle'] ?? '');
-
-        // ── Score ──────────────────────────────────────────────────────
-        $newScore = $snap ? (int)($snap['playerScore'] ?? 0) : 0;
-        $oldScore = (int)($existing['playerScore'] ?? 0);
-        // Fallback: wenn kein Snapshot, Match-Score nur als Minimum nutzen
-        $matchScore = (int)($player['playerScore'] ?? 0);
 
         // ── Snapshot-Werte (lokal getrackt, absolut) ───────────────────
         $distanceKm  = $snap ? (float)($snap['distanceKm']  ?? $existing['distanceKm']  ?? 0.0)
@@ -4838,20 +5361,278 @@ function profile_upsert_from_payload(array $payload): void
         $mostUsed    = $snap ? ((string)($snap['mostUsedVehicle'] ?? '') ?: $vehicleName)
                               : $vehicleName;
 
-        // ── Helper: snapshot-int oder akkumuliert ──────────────────────
-        $si = function(string $key) use ($snap, $existing, $player): int {
-            if ($snap && isset($snap[$key])) return (int)$snap[$key];
-            return (int)($existing[$key] ?? 0) + (int)($player[$key] ?? 0);
+        // ── Helper: Zählwerte immer als max(existing, snapshot) + optionales Match-Delta
+        $pickCareer = function(string $key, int $delta = 0) use ($snap, $existing, $countThisMatch): int {
+            $base = (int)($existing[$key] ?? 0);
+            $snapValue = profile_snapshot_int($snap, $key);
+            if ($snapValue !== null) {
+                $base = max($base, $snapValue);
+            }
+            return $base + ($countThisMatch ? $delta : 0);
         };
-        $se = function(string $key) use ($snap, $existing): int {
-            if ($snap && isset($snap[$key])) return (int)$snap[$key];
-            return (int)($existing[$key] ?? 0);
+
+        $pickCareerWithBaselineDelta = $pickCareer;
+        $mergeCareerCountField = function(string $field, int $deltaValue) use ($snap, $existing, $countThisMatch, $matchId): int {
+            $existingValue = (int)($existing[$field] ?? 0);
+            $snapshotValue = profile_snapshot_int($snap, $field);
+
+            // The snapshot carries a cumulative total from the local client (same
+            // source as PERS_* counters). It must never be used as a baseline that
+            // we then add the delta on top of: doing so double-counts the event
+            // (once in the snapshot total, once as the new delta).
+            //
+            // Strategy:
+            //   • If a valid snapshot is present AND it is strictly higher than the
+            //     stored value, accept the snapshot as-is (the client advanced its
+            //     counter; the delta from this match is already included).
+            //   • Otherwise fall back to stored value + delta (no snapshot, or
+            //     snapshot is stale / equal).
+            if ($snapshotValue !== null && $snapshotValue > $existingValue) {
+                // Snapshot already incorporates this match's contribution.
+                $finalValue = $snapshotValue;
+            } else {
+                // No snapshot (remote player) or snapshot is not ahead – use delta.
+                $finalValue = $existingValue + ($countThisMatch ? $deltaValue : 0);
+            }
+
+            ladder_pipeline_log('php-profile_upsert-merge-field', [
+                'matchId' => $matchId,
+                'field' => $field,
+                'existing' => $existingValue,
+                'snapshot' => $snapshotValue,
+                'delta' => $deltaValue,
+                'final' => $finalValue,
+            ]);
+
+            return $finalValue;
         };
+
+        $hasOutcome = $isTeamMode ? ($winnerTeam !== null) : ($hasWinnerClientNum && $winnerClientNum >= 0);
+        $derivedWins = ($hasOutcome && $isWinner) ? 1 : 0;
+        $derivedLosses = ($hasOutcome && !$isWinner) ? 1 : 0;
+        $snapshotPresent = $snap !== null;
+        $existingWins = (int)($existing['wins'] ?? 0);
+        $baseWins = $existingWins;
+        if ($snapshotPresent) {
+            $baseWins = max($baseWins, (int)($snap['wins'] ?? $baseWins));
+        }
+        $deltaWins = $countThisMatch ? $derivedWins : 0;
+        $newWins = $baseWins + $deltaWins;
+
+        ladder_pipeline_log('php-profile_upsert-player', [
+            'matchId' => $matchId,
+            'playerId' => $playerId,
+            'alreadyCounted' => $alreadyCounted,
+            'snapshotPresent' => $snapshotPresent,
+            'existingWins' => $existingWins,
+            'deltaWins' => $deltaWins,
+            'newWins' => $newWins,
+        ]);
+
+        $isRaceCareerMode = in_array($mode, ['GT_RACING', 'GT_RACING_DM', 'GT_SPRINT', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM'], true);
+        $racePosition = (int)($player['position'] ?? $player['rank'] ?? 0);
+        $isRacePodium = $racePosition > 0 && $racePosition <= 3;
+        $raceTotalMs = $isRaceCareerMode ? max(0, $matchRaceMs) : 0;
+
+        $careerDeltas = [
+            'racingWinsDelta' => 0,
+            'racingPodiumsDelta' => 0,
+            'racingCompletedDelta' => 0,
+            'racingTotalMsDelta' => 0,
+            'racingDmWinsDelta' => 0,
+            'racingDmPodiumsDelta' => 0,
+            'racingDmCompletedDelta' => 0,
+            'racingDmTotalMsDelta' => 0,
+            'sprintWinsDelta' => 0,
+            'sprintCompletedDelta' => 0,
+            'eliminationWinsDelta' => 0,
+            'eliminationCompletedDelta' => 0,
+            'lcsWinsDelta' => 0,
+            'lcsCompletedDelta' => 0,
+            'lcsTotalSurvivalMsDelta' => 0,
+            'derbyWinsDelta' => 0,
+            'derbyCompletedDelta' => 0,
+            'derbyKillsDelta' => 0,
+            'dmWinsDelta' => 0,
+            'dmCompletedDelta' => 0,
+            'dmKillsDelta' => 0,
+            'ctfWinsDelta' => 0,
+            'ctfCompletedDelta' => 0,
+            'ctfCapturesDelta' => 0,
+            'ctf4WinsDelta' => 0,
+            'ctf4CompletedDelta' => 0,
+            'ctf4CapturesDelta' => 0,
+            'teamWinsDelta' => 0,
+            'teamCompletedDelta' => 0,
+            'teamKillsDelta' => 0,
+            'teamRacingWinsDelta' => 0,
+            'teamRacingCompletedDelta' => 0,
+            'teamRacingPodiumsDelta' => 0,
+            'teamRacingDmWinsDelta' => 0,
+            'teamRacingDmCompletedDelta' => 0,
+            'teamRacingDmPodiumsDelta' => 0,
+            'dominationWinsDelta' => 0,
+            'dominationCompletedDelta' => 0,
+            'dominationZoneHoldMsDelta' => 0,
+            'kothWinsDelta' => 0,
+            'kothCompletedDelta' => 0,
+            'kothZoneHoldMsDelta' => 0,
+        ];
+
+        switch ($mode) {
+            case 'GT_RACING':
+                $careerDeltas['racingWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['racingPodiumsDelta'] = $isRacePodium ? 1 : 0;
+                $careerDeltas['racingCompletedDelta'] = 1;
+                $careerDeltas['racingTotalMsDelta'] = $raceTotalMs;
+                break;
+            case 'GT_RACING_DM':
+                $careerDeltas['racingDmWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['racingDmPodiumsDelta'] = $isRacePodium ? 1 : 0;
+                $careerDeltas['racingDmCompletedDelta'] = 1;
+                $careerDeltas['racingDmTotalMsDelta'] = $raceTotalMs;
+                break;
+            case 'GT_SPRINT':
+                $careerDeltas['sprintWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['sprintCompletedDelta'] = 1;
+                break;
+            case 'GT_ELIMINATION':
+                $careerDeltas['eliminationWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['eliminationCompletedDelta'] = 1;
+                break;
+            case 'GT_LCS':
+                $careerDeltas['lcsWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['lcsCompletedDelta'] = 1;
+                $careerDeltas['lcsTotalSurvivalMsDelta'] = max(0, $matchRaceMs);
+                break;
+            case 'GT_DERBY':
+                $careerDeltas['derbyWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['derbyCompletedDelta'] = 1;
+                $careerDeltas['derbyKillsDelta'] = max(0, $matchKills);
+                break;
+            case 'GT_DEATHMATCH':
+                $careerDeltas['dmWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['dmCompletedDelta'] = 1;
+                $careerDeltas['dmKillsDelta'] = max(0, $matchKills);
+                break;
+            case 'GT_CTF':
+                $careerDeltas['ctfWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['ctfCompletedDelta'] = 1;
+                $careerDeltas['ctfCapturesDelta'] = (int)($player['captures'] ?? 0);
+                break;
+            case 'GT_CTF4':
+                $careerDeltas['ctf4WinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['ctf4CompletedDelta'] = 1;
+                $careerDeltas['ctf4CapturesDelta'] = (int)($player['captures'] ?? 0);
+                break;
+            case 'GT_TEAM':
+                $careerDeltas['teamWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['teamCompletedDelta'] = 1;
+                $careerDeltas['teamKillsDelta'] = max(0, $matchKills);
+                break;
+            case 'GT_TEAM_RACING':
+                $careerDeltas['teamRacingWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['teamRacingCompletedDelta'] = 1;
+                $careerDeltas['teamRacingPodiumsDelta'] = $isRacePodium ? 1 : 0;
+                break;
+            case 'GT_TEAM_RACING_DM':
+                $careerDeltas['teamRacingDmWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['teamRacingDmCompletedDelta'] = 1;
+                $careerDeltas['teamRacingDmPodiumsDelta'] = $isRacePodium ? 1 : 0;
+                break;
+            case 'GT_DOMINATION':
+                $careerDeltas['dominationWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['dominationCompletedDelta'] = 1;
+                $careerDeltas['dominationZoneHoldMsDelta'] = (int)($player['zoneHoldMs'] ?? 0);
+                break;
+            case 'GT_KOTH':
+                $careerDeltas['kothWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['kothCompletedDelta'] = 1;
+                $careerDeltas['kothZoneHoldMsDelta'] = (int)($player['zoneHoldMs'] ?? 0);
+                break;
+        }
+
+        // ── Score (Snapshot-first; Delta nur für Nicht-Snapshot-Spieler) ────
+        //
+        // The local client embeds a profile snapshot whose playerScore is the
+        // cumulative career total as tracked on-device. This is authoritative:
+        // adding a derived delta on top would double-count every match the
+        // client already recorded locally.
+        //
+        // Priority:
+        //   1. Explicit delta field in payload  -> always use it (server override)
+        //   2. Valid snapshot present           -> accept snapshot total directly;
+        //                                         advance only when snapshot > stored
+        //   3. No snapshot (remote player)      -> derive delta from match stats
+        $existingScore = (int)($existing['playerScore'] ?? 0);
+        $snapshotScore = ($snap !== null) ? (int)($snap['playerScore'] ?? 0) : null;
+
+        $scoreDeltaFromPayload = null;
+        foreach (['playerScoreDelta', 'scoreDelta', 'matchScoreDelta', 'awardedScore', 'awardedPoints'] as $deltaField) {
+            $rawDelta = $player[$deltaField] ?? $payload[$deltaField] ?? null;
+            if (is_int($rawDelta) || is_float($rawDelta) || (is_string($rawDelta) && is_numeric($rawDelta))) {
+                $scoreDeltaFromPayload = (int)$rawDelta;
+                break;
+            }
+        }
+
+        if ($scoreDeltaFromPayload !== null) {
+            // Explicit server-supplied delta.
+            $finalScore = $existingScore + ($countThisMatch ? $scoreDeltaFromPayload : 0);
+        } elseif ($snapshotScore !== null) {
+            // Snapshot present: the client is authoritative; never go backwards.
+            $finalScore = max($existingScore, $snapshotScore);
+        } else {
+            // Remote player, no snapshot - derive delta from match payload.
+            $scoreDeltaDerived = 0;
+            switch ($mode) {
+                case 'GT_DEATHMATCH':
+                case 'GT_TEAM':
+                case 'GT_DERBY':
+                    $scoreDeltaDerived = max(0, $matchKills);
+                    break;
+                case 'GT_CTF':
+                case 'GT_CTF4':
+                    $scoreDeltaDerived = max(0, (int)($player['captures'] ?? 0));
+                    break;
+                case 'GT_DOMINATION':
+                case 'GT_KOTH':
+                    $scoreDeltaDerived = max(0, (int)($player['zoneHoldMs'] ?? 0));
+                    break;
+                case 'GT_LCS':
+                    $scoreDeltaDerived = max(0, (int)($player['totalRaceMs'] ?? 0));
+                    break;
+                case 'GT_ELIMINATION':
+                    $scoreDeltaDerived = $isWinner ? 1 : 0;
+                    break;
+                case 'GT_RACING':
+                case 'GT_RACING_DM':
+                case 'GT_SPRINT':
+                case 'GT_TEAM_RACING':
+                case 'GT_TEAM_RACING_DM':
+                default:
+                    $scoreDeltaDerived = max(0, (int)($player['playerScore'] ?? $player['score'] ?? $player['rawScore'] ?? 0));
+                    break;
+            }
+            $finalScore = $existingScore + ($countThisMatch ? $scoreDeltaDerived : 0);
+        }
+
+        $scoreDelta = $scoreDeltaFromPayload ?? ($snapshotScore !== null ? ($finalScore - $existingScore) : ($finalScore - $existingScore));
+
+        ladder_pipeline_log('php-profile_upsert-score', [
+            'matchId' => $matchId,
+            'playerId' => $playerId,
+            'existingScore' => $existingScore,
+            'snapshotScore' => $snapshotScore,
+            'scoreDelta' => $scoreDelta,
+            'countThisMatch' => $countThisMatch,
+            'finalScore' => $finalScore,
+        ]);
 
         $profile = [
             'playerId'        => $playerId,
             'cleanName'       => (string)($player['cleanName'] ?? $player['name'] ?? ''),
-            'playerScore'     => max($newScore, $oldScore, $matchScore),
+            'playerScore'     => max($finalScore, 0),
             'currentRank'     => $snap ? (int)($snap['currentRank'] ?? $existing['currentRank'] ?? 0)
                                        : (int)($player['rankTier'] ?? $existing['currentRank'] ?? 0),
             'highestRank'     => max(
@@ -4863,47 +5644,50 @@ function profile_upsert_from_payload(array $payload): void
             // snapshot value. The snapshot reflects the local client counter which
             // is not synchronised with server matches. The ladder is the authoritative
             // source for how many matches have been reported.
-            'gamesPlayed'     => (int)($existing['gamesPlayed'] ?? 0) + 1,
+            'gamesPlayed'     => (int)($existing['gamesPlayed'] ?? 0) + ($countThisMatch ? 1 : 0),
 
             // ── Allgemein ───────────────────────────────────────────────
-            'wins'            => $se('wins'),
-            'losses'          => $se('losses'),
-            'kills'           => $se('kills'),
-            'deaths'          => $se('deaths'),
-            'flagCaptures'    => (int)($existing['flagCaptures'] ?? 0) + (int)($player['captures']    ?? 0),
-            'flagAssists'     => (int)($existing['flagAssists']  ?? 0) + (int)($player['assistCount'] ?? 0),
-            'bestLapMs'       => (function() use ($player, $existing, $snap) {
-                $new = (int)($snap['bestLapMs'] ?? $player['bestLapMs'] ?? 0);
+            'wins'            => $pickCareerWithBaselineDelta('wins', $derivedWins),
+            'losses'          => $pickCareerWithBaselineDelta('losses', $derivedLosses),
+            'kills'           => $mergeCareerCountField('kills', max(0, $matchKills)),
+            'deaths'          => $mergeCareerCountField('deaths', max(0, $matchDeaths)),
+            'flagCaptures'    => $mergeCareerCountField('flagCaptures', (int)($player['captures'] ?? 0)),
+            'flagAssists'     => $pickCareer('flagAssists', (int)($player['assistCount'] ?? 0)),
+            'bestLapMs'       => (function() use ($player, $existing, $snap, $isRaceCareerMode) {
                 $old = (int)($existing['bestLapMs'] ?? 0);
+                if (!$isRaceCareerMode) {
+                    return $old;
+                }
+                $new = (int)($snap['bestLapMs'] ?? $player['bestLapMs'] ?? 0);
                 if ($new > 0 && ($old === 0 || $new < $old)) return $new;
                 return $old ?: $new;
             })(),
-            'accuracyAwards'  => (int)($existing['accuracyAwards']   ?? 0) + $accuracyAward,
-            'excellentAwards' => (int)($existing['excellentAwards']  ?? 0) + (int)($player['excellentCount']  ?? 0),
-            'impressiveAwards'=> (int)($existing['impressiveAwards'] ?? 0) + (int)($player['impressiveCount'] ?? 0),
-            'perfectAwards'   => (int)($existing['perfectAwards']    ?? 0) + (!empty($player['perfect']) ? 1 : 0),
-            'damageDealt'     => (int)($existing['damageDealt']      ?? 0) + (int)($player['damageDealt'] ?? 0),
-            'damageTaken'     => (int)($existing['damageTaken']      ?? 0) + (int)($player['damageTaken'] ?? 0),
+            'accuracyAwards'  => $pickCareer('accuracyAwards', $accuracyAward),
+            'excellentAwards' => $pickCareer('excellentAwards', (int)($player['excellentCount'] ?? 0)),
+            'impressiveAwards'=> $pickCareer('impressiveAwards', (int)($player['impressiveCount'] ?? 0)),
+            'perfectAwards'   => $pickCareer('perfectAwards', !empty($player['perfect']) ? 1 : 0),
+            'damageDealt'     => $pickCareer('damageDealt', (int)($player['damageDealt'] ?? 0)),
+            'damageTaken'     => $pickCareer('damageTaken', (int)($player['damageTaken'] ?? 0)),
             'distanceKm'      => $distanceKm,
             'topSpeedKph'     => $topSpeedKph,
             'fuelUsed'        => $fuelUsed,
             'mostUsedVehicle' => $mostUsed,
 
             // ── GT_RACING ───────────────────────────────────────────────
-            'racingWins'      => $se('racingWins'),
-            'racingPodiums'   => $se('racingPodiums'),
-            'racingCompleted' => $se('racingCompleted'),
-            'racingTotalMs'   => $se('racingTotalMs'),
+            'racingWins'      => $pickCareer('racingWins', $careerDeltas['racingWinsDelta']),
+            'racingPodiums'   => $pickCareer('racingPodiums', $careerDeltas['racingPodiumsDelta']),
+            'racingCompleted' => $pickCareer('racingCompleted', $careerDeltas['racingCompletedDelta']),
+            'racingTotalMs'   => $pickCareer('racingTotalMs', $careerDeltas['racingTotalMsDelta']),
 
             // ── GT_RACING_DM ────────────────────────────────────────────
-            'racingDmWins'      => $se('racingDmWins'),
-            'racingDmPodiums'   => $se('racingDmPodiums'),
-            'racingDmCompleted' => $se('racingDmCompleted'),
-            'racingDmTotalMs'   => $se('racingDmTotalMs'),
+            'racingDmWins'      => $pickCareer('racingDmWins', $careerDeltas['racingDmWinsDelta']),
+            'racingDmPodiums'   => $pickCareer('racingDmPodiums', $careerDeltas['racingDmPodiumsDelta']),
+            'racingDmCompleted' => $pickCareer('racingDmCompleted', $careerDeltas['racingDmCompletedDelta']),
+            'racingDmTotalMs'   => $pickCareer('racingDmTotalMs', $careerDeltas['racingDmTotalMsDelta']),
 
             // ── GT_SPRINT ───────────────────────────────────────────────
-            'sprintWins'      => $se('sprintWins'),
-            'sprintCompleted' => $se('sprintCompleted'),
+            'sprintWins'      => $pickCareer('sprintWins', $careerDeltas['sprintWinsDelta']),
+            'sprintCompleted' => $pickCareer('sprintCompleted', $careerDeltas['sprintCompletedDelta']),
             'sprintBestMs'    => (function() use ($snap, $existing) {
                 $new = (int)($snap['sprintBestMs'] ?? 0);
                 $old = (int)($existing['sprintBestMs'] ?? 0);
@@ -4912,64 +5696,100 @@ function profile_upsert_from_payload(array $payload): void
             })(),
 
             // ── GT_ELIMINATION ──────────────────────────────────────────
-            'eliminationWins'              => $se('eliminationWins'),
-            'eliminationCompleted'         => $se('eliminationCompleted'),
-            'eliminationTotalRoundsLasted' => $se('eliminationTotalRoundsLasted'),
+            'eliminationWins'              => $pickCareer('eliminationWins', $careerDeltas['eliminationWinsDelta']),
+            'eliminationCompleted'         => $pickCareer('eliminationCompleted', $careerDeltas['eliminationCompletedDelta']),
+            // eliminationRound reflects how far the player survived; accumulate it.
+            'eliminationTotalRoundsLasted' => $pickCareer('eliminationTotalRoundsLasted', (int)($player['eliminationRound'] ?? 0)),
 
             // ── GT_LCS ──────────────────────────────────────────────────
-            'lcsWins'            => $se('lcsWins'),
-            'lcsCompleted'       => $se('lcsCompleted'),
-            'lcsTotalSurvivalMs' => $se('lcsTotalSurvivalMs'),
+            'lcsWins'            => $pickCareer('lcsWins', $careerDeltas['lcsWinsDelta']),
+            'lcsCompleted'       => $pickCareer('lcsCompleted', $careerDeltas['lcsCompletedDelta']),
+            'lcsTotalSurvivalMs' => $pickCareer('lcsTotalSurvivalMs', $careerDeltas['lcsTotalSurvivalMsDelta']),
 
             // ── GT_DERBY ────────────────────────────────────────────────
-            'derbyWins'      => $se('derbyWins'),
-            'derbyCompleted' => $se('derbyCompleted'),
-            'derbyKills'     => $se('derbyKills'),
+            'derbyWins'      => $pickCareer('derbyWins', $careerDeltas['derbyWinsDelta']),
+            'derbyCompleted' => $pickCareer('derbyCompleted', $careerDeltas['derbyCompletedDelta']),
+            'derbyKills'     => $pickCareer('derbyKills', $careerDeltas['derbyKillsDelta']),
 
             // ── GT_DEATHMATCH ────────────────────────────────────────────
-            'dmWins'      => $se('dmWins'),
-            'dmCompleted' => $se('dmCompleted'),
-            'dmKills'     => $se('dmKills'),
+            'dmWins'      => $pickCareer('dmWins', $careerDeltas['dmWinsDelta']),
+            'dmCompleted' => $pickCareer('dmCompleted', $careerDeltas['dmCompletedDelta']),
+            'dmKills'     => $mergeCareerCountField('dmKills', $careerDeltas['dmKillsDelta']),
 
             // ── GT_CTF ──────────────────────────────────────────────────
-            'ctfWins'      => $se('ctfWins'),
-            'ctfCompleted' => $se('ctfCompleted'),
-            'ctfCaptures'  => $se('ctfCaptures'),
+            'ctfWins'      => $pickCareer('ctfWins', $careerDeltas['ctfWinsDelta']),
+            'ctfCompleted' => $pickCareer('ctfCompleted', $careerDeltas['ctfCompletedDelta']),
+            'ctfCaptures'  => $mergeCareerCountField('ctfCaptures', $careerDeltas['ctfCapturesDelta']),
 
             // ── GT_CTF4 ─────────────────────────────────────────────────
-            'ctf4Wins'      => $se('ctf4Wins'),
-            'ctf4Completed' => $se('ctf4Completed'),
-            'ctf4Captures'  => $se('ctf4Captures'),
+            'ctf4Wins'      => $pickCareer('ctf4Wins', $careerDeltas['ctf4WinsDelta']),
+            'ctf4Completed' => $pickCareer('ctf4Completed', $careerDeltas['ctf4CompletedDelta']),
+            'ctf4Captures'  => $mergeCareerCountField('ctf4Captures', $careerDeltas['ctf4CapturesDelta']),
 
             // ── GT_TEAM ─────────────────────────────────────────────────
-            'teamWins'      => $se('teamWins'),
-            'teamCompleted' => $se('teamCompleted'),
-            'teamKills'     => $se('teamKills'),
+            'teamWins'      => $pickCareer('teamWins', $careerDeltas['teamWinsDelta']),
+            'teamCompleted' => $pickCareer('teamCompleted', $careerDeltas['teamCompletedDelta']),
+            'teamKills'     => $pickCareer('teamKills', $careerDeltas['teamKillsDelta']),
 
             // ── GT_TEAM_RACING ───────────────────────────────────────────
-            'teamRacingWins'      => $se('teamRacingWins'),
-            'teamRacingCompleted' => $se('teamRacingCompleted'),
-            'teamRacingPodiums'   => $se('teamRacingPodiums'),
+            'teamRacingWins'      => $pickCareer('teamRacingWins', $careerDeltas['teamRacingWinsDelta']),
+            'teamRacingCompleted' => $pickCareer('teamRacingCompleted', $careerDeltas['teamRacingCompletedDelta']),
+            'teamRacingPodiums'   => $pickCareer('teamRacingPodiums', $careerDeltas['teamRacingPodiumsDelta']),
 
             // ── GT_TEAM_RACING_DM ────────────────────────────────────────
-            'teamRacingDmWins'      => $se('teamRacingDmWins'),
-            'teamRacingDmCompleted' => $se('teamRacingDmCompleted'),
-            'teamRacingDmPodiums'   => $se('teamRacingDmPodiums'),
+            'teamRacingDmWins'      => $pickCareer('teamRacingDmWins', $careerDeltas['teamRacingDmWinsDelta']),
+            'teamRacingDmCompleted' => $pickCareer('teamRacingDmCompleted', $careerDeltas['teamRacingDmCompletedDelta']),
+            'teamRacingDmPodiums'   => $pickCareer('teamRacingDmPodiums', $careerDeltas['teamRacingDmPodiumsDelta']),
 
             // ── GT_DOMINATION ────────────────────────────────────────────
-            'dominationWins'       => $se('dominationWins'),
-            'dominationCompleted'  => $se('dominationCompleted'),
-            'dominationZoneHoldMs' => $se('dominationZoneHoldMs'),
+            'dominationWins'       => $pickCareer('dominationWins', $careerDeltas['dominationWinsDelta']),
+            'dominationCompleted'  => $pickCareer('dominationCompleted', $careerDeltas['dominationCompletedDelta']),
+            'dominationZoneHoldMs' => $pickCareer('dominationZoneHoldMs', $careerDeltas['dominationZoneHoldMsDelta']),
 
             // ── GT_KOTH ──────────────────────────────────────────────────
-            'kothWins'       => $se('kothWins'),
-            'kothCompleted'  => $se('kothCompleted'),
-            'kothZoneHoldMs' => $se('kothZoneHoldMs'),
+            'kothWins'       => $pickCareer('kothWins', $careerDeltas['kothWinsDelta']),
+            'kothCompleted'  => $pickCareer('kothCompleted', $careerDeltas['kothCompletedDelta']),
+            'kothZoneHoldMs' => $pickCareer('kothZoneHoldMs', $careerDeltas['kothZoneHoldMsDelta']),
 
             'achievementTiers' => (array)($snap['achievementTiers'] ?? $existing['achievementTiers'] ?? []),
-            'lastSeen'         => $payload['receivedAt'] ?? gmdate('c'),
+            'lastSeen'         => $receivedAt,
             'vehicle'          => $mostUsed,
-            'registeredAt'     => $existing['registeredAt'] ?? ($payload['receivedAt'] ?? gmdate('c')),
+            'registeredAt'     => $existing['registeredAt'] ?? $receivedAt,
+            'lastIngestedMatchId' => ($isOutdatedBySeq && isset($existing['lastIngestedMatchId']) && is_string($existing['lastIngestedMatchId']))
+                ? $existing['lastIngestedMatchId']
+                : $matchId,
+            'lastIngestedAt' => ($isOutdatedBySeq && isset($existing['lastIngestedAt']) && is_string($existing['lastIngestedAt']))
+                ? $existing['lastIngestedAt']
+                : $receivedAt,
+            'lastIngestedMode' => ($isOutdatedBySeq && isset($existing['lastIngestedMode']) && is_string($existing['lastIngestedMode']))
+                ? $existing['lastIngestedMode']
+                : (string)$mode,
+            'lastServerMatchSeq' => ($isOutdatedBySeq && isset($existing['lastServerMatchSeq']) && ladder_parse_server_match_seq($existing['lastServerMatchSeq']) !== null)
+                ? (int)$existing['lastServerMatchSeq']
+                : $serverMatchSeq,
+            '_processedMatchIds'=> (function() use ($processedMatchIds, $matchId, $countThisMatch): array {
+                if ($countThisMatch && $matchId !== '') {
+                    $processedMatchIds[] = $matchId;
+                }
+                return array_slice(array_values(array_unique($processedMatchIds)), -200);
+            })(),
+            '_lastProcessedMatch' => [
+                'matchId' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['matchId']) && is_string($existing['_lastProcessedMatch']['matchId']))
+                    ? $existing['_lastProcessedMatch']['matchId']
+                    : $matchId,
+                'serverMatchSeq' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['serverMatchSeq']))
+                    ? $existing['_lastProcessedMatch']['serverMatchSeq']
+                    : $serverMatchSeq,
+                'timestamp' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['timestamp']) && is_string($existing['_lastProcessedMatch']['timestamp']))
+                    ? $existing['_lastProcessedMatch']['timestamp']
+                    : $receivedAt,
+                'mode' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['mode']) && is_string($existing['_lastProcessedMatch']['mode']))
+                    ? $existing['_lastProcessedMatch']['mode']
+                    : (string)$mode,
+                'checksum' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['checksum']) && is_string($existing['_lastProcessedMatch']['checksum']))
+                    ? $existing['_lastProcessedMatch']['checksum']
+                    : ($matchId !== '' ? profile_match_checksum($matchId, (string)$mode, $player) : ''),
+            ],
         ];
 
         profile_save($playerId, $profile);
@@ -5026,6 +5846,16 @@ function mode_is_deathmatch_like(string $mode): bool
     return in_array($mode, LADDER_DEATHMATCH_MODES, true);
 }
 
+function mode_is_derby(string $mode): bool
+{
+    return in_array($mode, LADDER_DERBY_MODES, true);
+}
+
+function mode_is_survival(string $mode): bool
+{
+    return in_array($mode, LADDER_SURVIVAL_MODES, true);
+}
+
 function mode_is_objective(string $mode): bool
 {
     return in_array($mode, LADDER_OBJECTIVE_MODES, true);
@@ -5069,7 +5899,7 @@ function extract_player_kills(array $player, string $mode): int
         return (int) max(0, $kills);
     }
     // degraded mode for legacy payloads: kills were mirrored from score
-    if (mode_is_deathmatch_like($mode) || mode_is_objective($mode)) {
+    if (mode_is_deathmatch_like($mode) || mode_is_objective($mode) || mode_is_derby($mode)) {
         return extract_player_score($player);
     }
     return 0;
@@ -5095,7 +5925,7 @@ function extract_player_position(array $player, string $mode): int
 
 function extract_player_race_time(array $player, string $mode): int
 {
-    if (!mode_is_race($mode) && !mode_is_elimination($mode)) {
+    if (!mode_is_race($mode) && !mode_is_elimination($mode) && !mode_is_survival($mode)) {
         return 0;
     }
     $time = first_numeric_value($player, ['totalRaceMs', 'raceTimeMs', 'finishRaceTime', 'survivalMs']);
@@ -5390,6 +6220,13 @@ function handle_post(array $segments): void
     if ($matchId === '') {
         throw new LadderApiException(422, 'MATCH_ID_INVALID', 'matchId contains unsupported characters.');
     }
+    if (array_key_exists('serverMatchSeq', $payload)) {
+        $serverMatchSeq = ladder_parse_server_match_seq($payload['serverMatchSeq']);
+        if ($serverMatchSeq === null) {
+            throw new LadderApiException(422, 'SERVER_MATCH_SEQ_INVALID', 'serverMatchSeq must be a positive integer.');
+        }
+        $payload['serverMatchSeq'] = $serverMatchSeq;
+    }
 
     $playerCount = (int)($payload['playerCount'] ?? count((array)($payload['players'] ?? [])));
     if ($playerCount <= 0) {
@@ -5421,6 +6258,34 @@ function handle_post(array $segments): void
 
     // Update leaderboard index
     index_append($payload);
+
+    if (isset($payload['players']) && is_array($payload['players'])) {
+        foreach ($payload['players'] as $player) {
+            if (!is_array($player)) {
+                continue;
+            }
+            $playerId = (string)($player['playerId'] ?? '');
+            if ($playerId === '' || !profile_is_valid_uuid($playerId)) {
+                continue;
+            }
+
+            $snapshotPresent = isset($player['profile']) && is_array($player['profile']) && !empty($player['profile']['valid']);
+            $existingProfile = profile_load($playerId) ?? [];
+            $existingWins = (int)($existingProfile['wins'] ?? 0);
+            $processedMatchIds = profile_normalize_processed_match_ids($existingProfile);
+            $alreadyCounted = $matchId !== '' && in_array($matchId, $processedMatchIds, true);
+
+            ladder_pipeline_log('php-handle_post-player', [
+                'matchId' => $matchId,
+                'playerId' => $playerId,
+                'alreadyCounted' => $alreadyCounted,
+                'snapshotPresent' => $snapshotPresent,
+                'existingWins' => $existingWins,
+                'deltaWins' => 0,
+                'newWins' => $existingWins,
+            ]);
+        }
+    }
 
     // Update player profiles
     profile_upsert_from_payload($payload);
@@ -5545,6 +6410,7 @@ function handle_get(array $segments): void
         if ($profile === null) {
             send_error(404, 'Player not found.');
         }
+        $profile = profile_hydrate_ingest_metadata($profile);
         header('Content-Type: application/json');
         header('Cache-Control: public, max-age=60');
         echo json_encode($profile, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

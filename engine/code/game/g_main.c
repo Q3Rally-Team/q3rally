@@ -46,6 +46,7 @@ static const char *G_LadderModeForGametype( int gametype );
 static void G_LadderFormatIsoTime( const qtime_t *qt, char *buffer, size_t size );
 static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clientNum );
 static void G_LadderSubmitMatchReport( const char *reason );
+static void G_LadderLogSubmitSnapshot( const ladderMatchPayload_t *payload );
 static void G_ValidateDerbyDamageCvars( void );
 static ladderMatchPayload_t s_ladderMatchPayload;
 
@@ -142,6 +143,7 @@ vmCvar_t	g_debugIntroCam;
 vmCvar_t	g_rallyIgnoreBots;
 vmCvar_t	g_aiDmnetDebugExport;
 vmCvar_t	g_aiDmnetDebugExportPath;
+vmCvar_t	g_ladderMatchSeq;
 
 vmCvar_t	g_damageScale;
 vmCvar_t	g_vehicleDamageScale;
@@ -299,6 +301,7 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
 { &g_aiDmnetDebugExport, "g_aiDmnetDebugExport", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_aiDmnetDebugExportPath, "g_aiDmnetDebugExportPath", "logs/ai_dmnet_debug.csv", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
+{ &g_ladderMatchSeq, "sv_ladderMatchSeq", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
 { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
 { &g_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qfalse },
@@ -763,7 +766,12 @@ static const char *G_LadderModeForGametype( int gametype ) {
                 break;
         }
 
-        return "GT_ELIMINATION";
+        /* Return an explicit sentinel that the PHP webservice and JS frontend
+         * recognise as an unknown mode (canonicalMode() returns null, the match
+         * is counted under __unknown__ and excluded from all leaderboards).
+         * Using GT_ELIMINATION as the fallback was polluting the Elimination
+         * leaderboard with data from unrelated or future game modes. */
+        return "GT_UNKNOWN";
 }
 
 static qboolean G_LadderGametypeHasRaceFields( int gametype ) {
@@ -1072,6 +1080,8 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
         if ( zoneSemantics ) {
                 if ( g_gametype.integer == GT_KOTH ) {
                         player->zoneHoldMs = client->kothContestTimeMs;
+                } else if ( g_gametype.integer == GT_DOMINATION ) {
+                        player->zoneHoldMs = client->dominationZoneHoldMs;
                 } else {
                         player->zoneHoldMs = 0;
                 }
@@ -1254,6 +1264,17 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         if ( level.ladderMatchId[0] ) {
                 Q_strncpyz( payload->matchId, level.ladderMatchId, sizeof( payload->matchId ) );
         }
+        {
+                int nextServerMatchSeq = trap_Cvar_VariableIntegerValue( "sv_ladderMatchSeq" );
+                if ( nextServerMatchSeq < 0 ) {
+                        nextServerMatchSeq = 0;
+                }
+                nextServerMatchSeq++;
+                payload->serverMatchSeq = nextServerMatchSeq;
+                Com_sprintf( buffer, sizeof( buffer ), "%i", nextServerMatchSeq );
+                trap_Cvar_Set( "sv_ladderMatchSeq", buffer );
+                trap_Cvar_Update( &g_ladderMatchSeq );
+        }
 
         payload->valid = qtrue;
         payload->gametype = g_gametype.integer;
@@ -1361,6 +1382,8 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
                 G_LadderPopulatePlayer( payload, i );
         }
 
+        G_LadderLogSubmitSnapshot( payload );
+
         if ( reason && reason[0] ) {
                 Com_Printf( "Ladder: submitting '%s' with reason '%s' (%d players)\n",
                         payload->matchId[0] ? payload->matchId : "<unknown>", reason, payload->playerCount );
@@ -1371,6 +1394,38 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
 
         if ( payload->playerCount > 0 || reason ) {
                 trap_LadderSubmit( payload );
+        }
+}
+
+static void G_LadderLogSubmitSnapshot( const ladderMatchPayload_t *payload ) {
+        int i;
+
+        if ( !payload ) {
+                return;
+        }
+
+        for ( i = 0; i < payload->playerCount; ++i ) {
+                const ladderPlayerPayload_t *player = &payload->players[i];
+                int snapshotRevision = 0;
+                int snapshotEpoch = 0;
+
+                if ( !player->profileAttached ) {
+                        continue;
+                }
+
+                if ( player->profile.valid ) {
+                        snapshotRevision = player->profile.snapshotRevision;
+                        snapshotEpoch = player->profile.snapshotEpoch;
+                }
+
+                Com_Printf(
+                        "[ladder-pipeline] engine-submit matchId=%s mode=%s playerId(local)=%s snapshotRevision=%d snapshotEpoch=%d\n",
+                        payload->matchId[0] ? payload->matchId : "<unknown>",
+                        payload->mode[0] ? payload->mode : "<unknown>",
+                        player->playerId[0] ? player->playerId : "<unknown>",
+                        snapshotRevision,
+                        snapshotEpoch
+                );
         }
 }
 
@@ -1518,6 +1573,16 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	G_RemapTeamShaders();
 
 	trap_SetConfigstring( CS_INTERMISSION, "" );
+
+        /* Explicitly initialise the extended team-score configstrings so that
+         * cgame never reads a stale SCORE_NOT_PRESENT (-9999) value for the
+         * green and yellow teams at the start of a new round.
+         * CS_SCORES1/2 are written by CalculateRanks() on the first tick, but
+         * CS_SCORES3/4 have no other write path in G_InitGame, so they keep
+         * whatever value the engine transmitted from the previous map until
+         * CalculateRanks() fires for the first time. */
+        trap_SetConfigstring( CS_SCORES3, "0" );
+        trap_SetConfigstring( CS_SCORES4, "0" );
 
 // STONELANCE
 /*
@@ -2471,6 +2536,15 @@ void LogExit( const char *string ) {
 
         }
 
+        /* Record match outcomes (wins/losses) BEFORE flushing the profile and
+         * serialising the ladder payload.  Previously this only happened in
+         * BeginIntermission(), which is called after LogExit(), meaning the
+         * profile snapshot embedded in the ladder payload was captured before
+         * wins/ctfWins/dmWins etc. were incremented.  The idempotency guard
+         * (profileMatchOutcomeRecorded) makes the subsequent call in
+         * BeginIntermission() a safe no-op. */
+        G_RecordMatchOutcome();
+
 	G_Profile_FlushIfDirty();
 
         if ( G_Profile_IsDirty() ) {
@@ -2885,6 +2959,22 @@ void CheckExitRules( void ) {
 			LogExit( "Capturelimit hit." );
 			return;
 		}
+
+		// Q3Rally Code Start - CTF4: also check Green and Yellow
+		if ( g_gametype.integer == GT_CTF4 ) {
+			if ( level.teamScores[TEAM_GREEN] >= g_capturelimit.integer ) {
+				trap_SendServerCommand( -1, "print \"Green hit the capturelimit.\n\"" );
+				LogExit( "Capturelimit hit." );
+				return;
+			}
+
+			if ( level.teamScores[TEAM_YELLOW] >= g_capturelimit.integer ) {
+				trap_SendServerCommand( -1, "print \"Yellow hit the capturelimit.\n\"" );
+				LogExit( "Capturelimit hit." );
+				return;
+			}
+		}
+		// Q3Rally Code END - CTF4
 	}
 
 	// Q3Rally Code Start - KOTH win condition

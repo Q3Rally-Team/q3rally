@@ -40,7 +40,7 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 |---|---|---|---|---|
 | `valid` | alle: **P+B** | `g_main.c::G_LadderSubmitMatchReport` (`payload->valid=qtrue`) | Payload gültig/submitbar | `false` => Upload abbrechen |
 | `matchId` | alle: **P+B** | `level.ladderMatchId` (gesetzt in `G_LadderBuildMatchId`) | Match-Korrelation/Idempotenz | leer -> Serializer sendet `""` |
-| `mode` | alle: **P+B** | `G_LadderModeForGametype(g_gametype)` | String-Repräsentation des Gametype | unbekannt -> `GT_ELIMINATION` |
+| `mode` | alle: **P+B** | `G_LadderModeForGametype(g_gametype)` | String-Repräsentation des Gametype | unbekannt -> `GT_UNKNOWN` (zählt als `__unknown__`, kein Leaderboard-Eintrag) |
 | `gametype` | alle: **P+B** | `g_gametype.integer` | numerischer Gametype | `0` wenn uninitialisiert |
 | `mapName` (JSON: `map`) | alle: **P+B** | `serverinfo mapname` | technische Map-ID | `""` |
 | `startTimeIso`/`endTimeIso`/`durationIso` | alle: **P+B** | `G_LadderFormatIsoTime`, `Com_sprintf("PT%iS")` | Zeitstempel und Dauer | leere Strings / `PT0S` |

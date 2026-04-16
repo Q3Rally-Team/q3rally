@@ -687,12 +687,12 @@ void SetTeam( gentity_t *ent, const char *s ) {
 		}
 // STONELANCE
 		else if ( !Q_stricmp( s, "green" ) || !Q_stricmp( s, "g" ) ) {
-			if (g_gametype.integer == GT_CTF)
-				return; // no green in ctf
+			if (g_gametype.integer != GT_CTF4)
+				return; // green only in CTF4
 			team = TEAM_GREEN;
 		} else if ( !Q_stricmp( s, "yellow" ) || !Q_stricmp( s, "y" ) ) {
-			if (g_gametype.integer == GT_CTF)
-				return; // no yellow in ctf
+			if (g_gametype.integer != GT_CTF4)
+				return; // yellow only in CTF4
 			team = TEAM_YELLOW;
 		}
 // END

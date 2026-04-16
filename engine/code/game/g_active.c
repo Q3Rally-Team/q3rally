@@ -946,6 +946,14 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			} else if ( ent->client->ps.powerups[ PW_NEUTRALFLAG ] ) {
 				item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
 				j = PW_NEUTRALFLAG;
+			// Q3Rally Code Start - CTF4: also drop green/yellow flags on teleport
+			} else if ( ent->client->ps.powerups[ PW_GREENFLAG ] ) {
+				item = BG_FindItemForPowerup( PW_GREENFLAG );
+				j = PW_GREENFLAG;
+			} else if ( ent->client->ps.powerups[ PW_YELLOWFLAG ] ) {
+				item = BG_FindItemForPowerup( PW_YELLOWFLAG );
+				j = PW_YELLOWFLAG;
+			// Q3Rally Code END - CTF4
 			}
 
 			if ( item ) {

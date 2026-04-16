@@ -304,3 +304,593 @@ def test_mode_matrix_human_readable_report() -> None:
     report = "\n".join(rows)
     assert "GT_RACING" in report
     assert "GT_TEAM" in report
+
+
+def _post_php_match(php_env: dict[str, Any], payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    return _http_json(
+        "POST",
+        f"{php_env['base_url']}/api/v1/matches",
+        payload,
+        headers=php_env["auth"],
+    )
+
+
+def _get_php_profile(php_env: dict[str, Any], player_id: str) -> dict[str, Any]:
+    status, data = _http_json(
+        "GET",
+        f"{php_env['base_url']}/api/v1/players/{player_id}",
+        headers=php_env["auth"],
+    )
+    assert status == 200, data
+    return data
+
+
+def _assert_profile_fields(profile: dict[str, Any], expected: dict[str, int]) -> None:
+    for key, value in expected.items():
+        assert profile[key] == value, f"{key}: expected {value}, got {profile[key]}"
+
+
+def _profile_payload(match_id: str, mode: str, player_id: str) -> dict[str, Any]:
+    payload = generate_golden_payload(mode)
+    payload["matchId"] = match_id
+    payload["winnerClientNum"] = 1
+    payload["settings"]["winnerClientNum"] = 1
+    payload["players"][0].update(
+        {
+            "playerId": player_id,
+            "clientNum": 1,
+            "displayName": "ProfileTest",
+            "kills": 7,
+            "deaths": 2,
+            "position": 1,
+            "totalRaceMs": 77777,
+            "team": None,
+        }
+    )
+    payload["teams"] = None
+    return payload
+
+
+def test_php_profile_dm_single_match_winner_sets_win_loss(php_env: dict[str, Any]) -> None:
+    winner_id = "48b8e564-3e47-40a8-95ee-9611f88e6df0"
+    loser_id = "bb005b6a-c280-4dbf-b64e-8c67e058af00"
+    payload = _profile_payload("profile-dm-win-loss-1", "GT_DEATHMATCH", winner_id)
+    payload["players"] = [
+        {
+            "playerId": winner_id,
+            "clientNum": 1,
+            "displayName": "DMWinner",
+            "team": None,
+            "kills": 12,
+            "deaths": 4,
+            "position": 1,
+            "totalRaceMs": 0,
+        },
+        {
+            "playerId": loser_id,
+            "clientNum": 2,
+            "displayName": "DMLoser",
+            "team": None,
+            "kills": 4,
+            "deaths": 12,
+            "position": 2,
+            "totalRaceMs": 0,
+        },
+    ]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner_profile = _get_php_profile(php_env, winner_id)
+    loser_profile = _get_php_profile(php_env, loser_id)
+
+    _assert_profile_fields(winner_profile, {"wins": 1, "losses": 0, "dmWins": 1, "dmCompleted": 1})
+    _assert_profile_fields(loser_profile, {"wins": 0, "losses": 1, "dmWins": 0, "dmCompleted": 1})
+
+
+def test_php_profile_racing_p1_updates_racing_counters(php_env: dict[str, Any]) -> None:
+    player_id = "d6d92cb6-b889-4d89-b672-a38f23a9746c"
+    payload = _profile_payload("profile-racing-p1-1", "GT_RACING", player_id)
+    payload["players"][0].pop("profile", None)
+    payload["players"][0]["position"] = 1
+    payload["players"][0]["kills"] = 0
+    payload["players"][0]["deaths"] = 0
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    _assert_profile_fields(profile, {"racingWins": 1, "racingCompleted": 1})
+
+
+def test_php_profile_single_mode_regression_keeps_racing_keys_stable(php_env: dict[str, Any]) -> None:
+    dm_only_player = "fea4bdaa-4d9d-42ca-b7f1-0e0b3fc9a2aa"
+    race_only_player = "54d0f81f-0be8-463d-bc42-164c728ad623"
+
+    dm_payload = _profile_payload("profile-ui-single-mode-dm", "GT_DEATHMATCH", dm_only_player)
+    dm_payload["players"][0].pop("profile", None)
+    dm_status, dm_created = _post_php_match(php_env, dm_payload)
+    assert dm_status == 201, dm_created
+
+    dm_profile = _get_php_profile(php_env, dm_only_player)
+    for racing_key in (
+        "racingWins",
+        "racingPodiums",
+        "racingCompleted",
+        "racingTotalMs",
+        "racingDmWins",
+        "racingDmPodiums",
+        "racingDmCompleted",
+        "teamRacingWins",
+        "teamRacingPodiums",
+        "teamRacingCompleted",
+    ):
+        assert racing_key in dm_profile, f"missing profile key: {racing_key}"
+        assert dm_profile[racing_key] == 0, f"{racing_key} should remain zero for DM-only profile"
+
+    race_payload = _profile_payload("profile-ui-single-mode-racing", "GT_RACING", race_only_player)
+    race_payload["players"][0].pop("profile", None)
+    race_payload["players"][0]["position"] = 1
+    race_payload["players"][0]["kills"] = 0
+    race_payload["players"][0]["deaths"] = 0
+    race_status, race_created = _post_php_match(php_env, race_payload)
+    assert race_status == 201, race_created
+
+    race_profile = _get_php_profile(php_env, race_only_player)
+    assert race_profile["racingCompleted"] == 1
+    assert race_profile["racingWins"] == 1
+    assert race_profile["racingPodiums"] == 1
+    assert race_profile["dmCompleted"] == 0
+
+
+def test_php_profile_combined_dm_and_racing_stats_are_separated(php_env: dict[str, Any]) -> None:
+    player_id = "7f6e7277-d5fe-4a36-bfa6-e5a5b2f3cf09"
+
+    dm_payload = _profile_payload("profile-combined-dm-race-dm", "GT_DEATHMATCH", player_id)
+    dm_payload["players"][0].pop("profile", None)
+    dm_status, dm_created = _post_php_match(php_env, dm_payload)
+    assert dm_status == 201, dm_created
+
+    race_payload = _profile_payload("profile-combined-dm-race-race", "GT_RACING", player_id)
+    race_payload["players"][0].pop("profile", None)
+    race_payload["players"][0]["position"] = 1
+    race_payload["players"][0]["kills"] = 0
+    race_payload["players"][0]["deaths"] = 0
+    race_status, race_created = _post_php_match(php_env, race_payload)
+    assert race_status == 201, race_created
+
+    profile = _get_php_profile(php_env, player_id)
+    _assert_profile_fields(
+        profile,
+        {
+            "wins": 2,
+            "losses": 0,
+            "dmWins": 1,
+            "dmCompleted": 1,
+            "racingWins": 1,
+            "racingCompleted": 1,
+        },
+    )
+
+
+def test_php_profile_reupload_same_match_id_does_not_double_count(php_env: dict[str, Any]) -> None:
+    player_id = "2ad63bf6-9a30-46bb-a6d6-a2693f5e9b8f"
+    payload = _profile_payload("profile-dedupe-match-id-1", "GT_DEATHMATCH", player_id)
+    payload["players"][0].pop("profile", None)
+
+    first_status, first_created = _post_php_match(php_env, payload)
+    assert first_status == 201, first_created
+    second_status, second_created = _post_php_match(php_env, payload)
+    assert second_status == 200, second_created
+
+    profile = _get_php_profile(php_env, player_id)
+    expected_golden_profile = {
+        "wins": 1,
+        "losses": 0,
+        "gamesPlayed": 1,
+        "dmWins": 1,
+        "dmCompleted": 1,
+        "racingWins": 0,
+        "racingCompleted": 0,
+    }
+    _assert_profile_fields(profile, expected_golden_profile)
+
+
+def test_php_profile_dm_snapshot_delta_kills_count_once_per_match(php_env: dict[str, Any]) -> None:
+    player_id = "6b1f2505-c27c-4f19-b6df-8a92f049a5e3"
+
+    first_payload = _profile_payload("profile-dm-snapshot-delta-1", "GT_DEATHMATCH", player_id)
+    first_payload["players"][0]["profile"] = {"valid": True, "kills": 100, "wins": 10, "losses": 1}
+    first_payload["players"][0]["kills"] = 5
+    first_status, first_created = _post_php_match(php_env, first_payload)
+    assert first_status == 201, first_created
+
+    second_payload = _profile_payload("profile-dm-snapshot-delta-2", "GT_DEATHMATCH", player_id)
+    second_payload["players"][0]["profile"] = {"valid": True, "kills": 105, "wins": 11, "losses": 1}
+    second_payload["players"][0]["kills"] = 4
+    second_status, second_created = _post_php_match(php_env, second_payload)
+    assert second_status == 201, second_created
+
+    profile = _get_php_profile(php_env, player_id)
+    _assert_profile_fields(
+        profile,
+        {
+            "kills": 109,
+            "wins": 12,
+            "losses": 1,
+            "gamesPlayed": 2,
+            "dmWins": 2,
+            "dmCompleted": 2,
+        },
+    )
+    assert profile["_processedMatchIds"] == ["profile-dm-snapshot-delta-1", "profile-dm-snapshot-delta-2"]
+
+
+def test_php_profile_ctf_captures_snapshot_delta_counted_once(php_env: dict[str, Any]) -> None:
+    player_id = "de6fc0cf-9db9-4f9a-8578-4862dca5f7cc"
+    payload = generate_golden_payload("GT_CTF")
+    payload["matchId"] = "profile-ctf-captures-snapshot-delta-1"
+    payload["winnerClientNum"] = 1
+    payload["settings"]["winnerClientNum"] = 1
+    payload["players"] = [
+        {
+            "playerId": player_id,
+            "clientNum": 1,
+            "displayName": "CTFCarrier",
+            "team": 1,
+            "captures": 3,
+            "kills": 2,
+            "deaths": 1,
+            "profile": {"valid": True, "flagCaptures": 10, "ctfCaptures": 10, "wins": 5, "losses": 2},
+        }
+    ]
+    payload["teams"] = [{"team": 1, "rawScore": 5}, {"team": 2, "rawScore": 1}]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    _assert_profile_fields(
+        profile,
+        {
+            "flagCaptures": 13,
+            "ctfCaptures": 13,
+            "wins": 6,
+            "losses": 2,
+            "ctfWins": 1,
+            "ctfCompleted": 1,
+            "gamesPlayed": 1,
+        },
+    )
+    assert profile["_processedMatchIds"] == ["profile-ctf-captures-snapshot-delta-1"]
+
+
+def test_php_profile_ctf_winner_client_num_with_numeric_team_ids_sets_win_loss(php_env: dict[str, Any]) -> None:
+    winner_id = "4f4ab6bd-88c1-45f3-a145-4779a2f5bf2e"
+    loser_id = "a2ff3f08-a789-4419-896f-8d03196d3574"
+    payload = generate_golden_payload("GT_CTF")
+    payload["matchId"] = "profile-ctf-winner-client-num-int-team-1"
+    payload["winnerClientNum"] = 8
+    payload["settings"]["winnerClientNum"] = 8
+    payload["players"] = [
+        {"playerId": winner_id, "clientNum": 8, "displayName": "Winner", "team": 1, "captures": 1, "profile": {"valid": True}},
+        {"playerId": loser_id, "clientNum": 9, "displayName": "Loser", "team": 2, "captures": 0, "profile": {"valid": True}},
+    ]
+    payload["teams"] = [{"team": 1, "rawScore": 3}, {"team": 2, "rawScore": 99}]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    _assert_profile_fields(winner, {"wins": 1, "losses": 0, "ctfWins": 1, "gamesPlayed": 1})
+    _assert_profile_fields(loser, {"wins": 0, "losses": 1, "ctfWins": 0, "gamesPlayed": 1})
+    assert winner["_processedMatchIds"] == ["profile-ctf-winner-client-num-int-team-1"]
+    assert loser["_processedMatchIds"] == ["profile-ctf-winner-client-num-int-team-1"]
+
+
+def test_php_profile_retry_same_match_id_keeps_processed_match_ids_and_totals_stable(php_env: dict[str, Any]) -> None:
+    player_id = "47b3ef88-ee16-4446-9323-a89ad42d5311"
+    payload = _profile_payload("profile-retry-same-match-id-1", "GT_DEATHMATCH", player_id)
+    payload["players"][0].pop("profile", None)
+    payload["players"][0]["kills"] = 6
+
+    first_status, first_created = _post_php_match(php_env, payload)
+    assert first_status == 201, first_created
+
+    retry_status, retry_created = _post_php_match(php_env, payload)
+    assert retry_status == 200, retry_created
+
+    profile = _get_php_profile(php_env, player_id)
+    _assert_profile_fields(
+        profile,
+        {
+            "wins": 1,
+            "losses": 0,
+            "kills": 6,
+            "gamesPlayed": 1,
+            "dmWins": 1,
+            "dmCompleted": 1,
+        },
+    )
+    assert profile["_processedMatchIds"] == ["profile-retry-same-match-id-1"]
+
+def test_php_profile_upsert_prefers_valid_snapshot(php_env: dict[str, Any]) -> None:
+    player_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+    payload = _profile_payload("profile-snapshot-1", "GT_DEATHMATCH", player_id)
+    payload["players"][0]["profile"] = {
+        "valid": True,
+        "wins": 11,
+        "losses": 5,
+        "kills": 81,
+        "deaths": 44,
+        "dmWins": 9,
+        "racingWins": 4,
+    }
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["wins"] == 12
+    assert profile["losses"] == 5
+    assert profile["kills"] == 81
+    assert profile["deaths"] == 44
+    assert profile["dmWins"] == 9
+    assert profile["racingWins"] == 4
+
+
+def test_php_profile_upsert_derives_without_snapshot_and_is_idempotent(php_env: dict[str, Any]) -> None:
+    player_id = "9f8c8e19-a6d9-4aa9-a2e3-644f0e2f532f"
+    payload = _profile_payload("profile-derived-1", "GT_DEATHMATCH", player_id)
+    payload["players"][0].pop("profile", None)
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["wins"] == 1
+    assert profile["losses"] == 0
+    assert profile["kills"] == 7
+    assert profile["deaths"] == 2
+    assert profile["dmWins"] == 1
+    assert profile["racingWins"] == 0
+    assert profile["gamesPlayed"] == 1
+
+    duplicate_status, duplicate = _post_php_match(php_env, payload)
+    assert duplicate_status == 200, duplicate
+
+    profile_after_duplicate = _get_php_profile(php_env, player_id)
+    assert profile_after_duplicate["wins"] == 1
+    assert profile_after_duplicate["kills"] == 7
+    assert profile_after_duplicate["gamesPlayed"] == 1
+
+
+def test_php_profile_race_and_dm_wins_increment_separately(php_env: dict[str, Any]) -> None:
+    player_id = "1d3d02af-c23c-4f74-a20e-2f2f1cb2f60e"
+
+    race_payload = _profile_payload("profile-race-dm-race", "GT_RACING", player_id)
+    race_payload["winnerClientNum"] = -1
+    race_payload["settings"]["winnerClientNum"] = -1
+    race_payload["players"][0]["position"] = 1
+    race_payload["players"][0]["kills"] = 0
+    race_payload["players"][0]["deaths"] = 0
+    race_status, race_created = _post_php_match(php_env, race_payload)
+    assert race_status == 201, race_created
+
+    dm_payload = _profile_payload("profile-race-dm-dm", "GT_DEATHMATCH", player_id)
+    dm_payload["players"][0].pop("profile", None)
+    dm_status, dm_created = _post_php_match(php_env, dm_payload)
+    assert dm_status == 201, dm_created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["racingWins"] == 1
+    assert profile["dmWins"] == 1
+
+
+def test_php_profile_racing_dm_updates_racing_fields_not_dm_bucket(php_env: dict[str, Any]) -> None:
+    player_id = "b40f7ebf-036f-4d3f-81a5-a0f3f8195d5d"
+
+    payload = _profile_payload("profile-racing-dm-only-racing", "GT_RACING_DM", player_id)
+    payload["players"][0].pop("profile", None)
+    payload["players"][0]["position"] = 2
+    payload["players"][0]["bestLapMs"] = 65432
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["racingDmWins"] == 1
+    assert profile["racingDmCompleted"] == 1
+    assert profile["racingDmPodiums"] == 1
+    assert profile["racingDmTotalMs"] == 77777
+    assert profile["dmWins"] == 0
+    assert profile["dmCompleted"] == 0
+    assert profile["dmKills"] == 0
+
+
+def test_php_profile_best_lap_updates_only_in_race_career_modes(php_env: dict[str, Any]) -> None:
+    player_id = "6164e8ce-cc2e-4cc0-b5a5-65f69f8f7f38"
+
+    race_payload = _profile_payload("profile-best-lap-race", "GT_RACING", player_id)
+    race_payload["players"][0].pop("profile", None)
+    race_payload["players"][0]["bestLapMs"] = 11111
+    race_status, race_created = _post_php_match(php_env, race_payload)
+    assert race_status == 201, race_created
+
+    dm_payload = _profile_payload("profile-best-lap-dm", "GT_DEATHMATCH", player_id)
+    dm_payload["players"][0].pop("profile", None)
+    dm_payload["players"][0]["bestLapMs"] = 999
+    dm_status, dm_created = _post_php_match(php_env, dm_payload)
+    assert dm_status == 201, dm_created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["bestLapMs"] == 11111
+
+
+def test_php_profile_dm_uses_top_level_winner_client_num(php_env: dict[str, Any]) -> None:
+    player_id = "8ef82988-d418-443f-bb09-00143874ece1"
+    payload = _profile_payload("profile-dm-top-level-winner", "GT_DEATHMATCH", player_id)
+    payload["players"][0].pop("profile", None)
+    payload["winnerClientNum"] = 1
+    payload["settings"]["winnerClientNum"] = 0
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["wins"] == 1
+    assert profile["dmWins"] == 1
+
+
+def test_php_profile_racing_uses_top_level_winner_without_position_fallback(php_env: dict[str, Any]) -> None:
+    player_id = "01214b8a-e25f-4d26-bf77-160dca8a9dac"
+    payload = _profile_payload("profile-racing-top-level-winner", "GT_RACING", player_id)
+    payload["players"][0].pop("profile", None)
+    payload["winnerClientNum"] = 1
+    payload["settings"]["winnerClientNum"] = 0
+    payload["players"][0]["position"] = 2
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["wins"] == 1
+    assert profile["racingWins"] == 1
+    assert profile["racingPodiums"] == 1
+
+
+def test_php_profile_missing_winner_field_is_graceful(php_env: dict[str, Any]) -> None:
+    player_id = "f2cbf5d4-b8f9-4548-b3d8-fc1dbec8f8f5"
+    payload = _profile_payload("profile-missing-winner", "GT_DEATHMATCH", player_id)
+    payload["players"][0].pop("profile", None)
+    payload.pop("winnerClientNum", None)
+    payload["settings"].pop("winnerClientNum", None)
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    profile = _get_php_profile(php_env, player_id)
+    assert profile["wins"] == 0
+    assert profile["losses"] == 0
+    assert profile["dmWins"] == 0
+    assert profile["dmCompleted"] == 1
+
+
+def test_php_profile_team_mode_applies_team_win_loss_delta(php_env: dict[str, Any]) -> None:
+    winner_id = "fdde3dae-c8c7-4c36-a60d-145b7ad95c25"
+    loser_id = "0dd4d0a4-80ef-4d7d-93bd-c4e9c4e8ab16"
+    payload = generate_golden_payload("GT_TEAM")
+    payload["matchId"] = "profile-team-delta-1"
+    payload["winnerClientNum"] = 1
+    payload["settings"]["winnerClientNum"] = 1
+    payload["players"] = [
+        {
+            "playerId": winner_id,
+            "clientNum": 1,
+            "displayName": "Winner",
+            "team": "red",
+            "kills": 3,
+            "deaths": 1,
+            "position": 1,
+            "profile": {"valid": True, "wins": 4, "losses": 2},
+        },
+        {
+            "playerId": loser_id,
+            "clientNum": 2,
+            "displayName": "Loser",
+            "team": "blue",
+            "kills": 1,
+            "deaths": 3,
+            "position": 2,
+            "profile": {"valid": True, "wins": 9, "losses": 1},
+        },
+    ]
+    payload["teams"] = [{"team": "red", "rawScore": 10}, {"team": "blue", "rawScore": 5}]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    assert winner["wins"] == 5
+    assert winner["losses"] == 2
+    assert loser["wins"] == 9
+    assert loser["losses"] == 2
+
+
+@pytest.mark.parametrize("mode,win_field", [("GT_CTF", "ctfWins"), ("GT_CTF4", "ctf4Wins")])
+def test_php_profile_objective_team_int_with_teams_array(php_env: dict[str, Any], mode: str, win_field: str) -> None:
+    suffix = "1" if mode == "GT_CTF" else "4"
+    winner_id = f"11111111-1111-4111-8111-{suffix}00000000001"
+    loser_id = f"22222222-2222-4222-8222-{suffix}00000000002"
+    payload = generate_golden_payload(mode)
+    payload["matchId"] = f"profile-{mode.lower()}-int-team-with-teams"
+    payload.pop("winnerClientNum", None)
+    payload["settings"].pop("winnerClientNum", None)
+    payload["players"] = [
+        {"playerId": winner_id, "clientNum": 1, "displayName": "Winner", "team": 1, "captures": 2, "profile": {"valid": True}},
+        {"playerId": loser_id, "clientNum": 2, "displayName": "Loser", "team": 2, "captures": 0, "profile": {"valid": True}},
+    ]
+    payload["teams"] = [{"team": 1, "rawScore": 15}, {"team": 2, "rawScore": 9}]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    assert winner["wins"] == 1
+    assert loser["losses"] == 1
+    assert winner[win_field] == 1
+
+
+@pytest.mark.parametrize("mode,win_field", [("GT_CTF", "ctfWins"), ("GT_CTF4", "ctf4Wins")])
+def test_php_profile_objective_team_string_without_teams_uses_team_scores(php_env: dict[str, Any], mode: str, win_field: str) -> None:
+    suffix = "1" if mode == "GT_CTF" else "4"
+    winner_id = f"33333333-3333-4333-8333-{suffix}00000000003"
+    loser_id = f"44444444-4444-4444-8444-{suffix}00000000004"
+    payload = generate_golden_payload(mode)
+    payload["matchId"] = f"profile-{mode.lower()}-string-team-no-teams"
+    payload.pop("winnerClientNum", None)
+    payload["settings"].pop("winnerClientNum", None)
+    payload["players"] = [
+        {"playerId": winner_id, "clientNum": 1, "displayName": "Winner", "team": "RED", "captures": 1, "profile": {"valid": True}},
+        {"playerId": loser_id, "clientNum": 2, "displayName": "Loser", "team": "blue", "captures": 0, "profile": {"valid": True}},
+    ]
+    payload["teams"] = None
+    payload["teamScores"] = {"RED": 8, "blue": 4}
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    assert winner["wins"] == 1
+    assert loser["losses"] == 1
+    assert winner[win_field] == 1
+
+
+@pytest.mark.parametrize("mode,win_field", [("GT_CTF", "ctfWins"), ("GT_CTF4", "ctf4Wins")])
+def test_php_profile_objective_winner_client_num_has_priority_over_team_scores(php_env: dict[str, Any], mode: str, win_field: str) -> None:
+    suffix = "1" if mode == "GT_CTF" else "4"
+    winner_id = f"55555555-5555-4555-8555-{suffix}00000000005"
+    loser_id = f"66666666-6666-4666-8666-{suffix}00000000006"
+    payload = generate_golden_payload(mode)
+    payload["matchId"] = f"profile-{mode.lower()}-winner-client-priority"
+    payload["winnerClientNum"] = 2
+    payload["settings"]["winnerClientNum"] = 1
+    payload["players"] = [
+        {"playerId": loser_id, "clientNum": 1, "displayName": "Loser", "team": "red", "captures": 0, "profile": {"valid": True}},
+        {"playerId": winner_id, "clientNum": 2, "displayName": "Winner", "team": 2, "captures": 3, "profile": {"valid": True}},
+    ]
+    payload["teams"] = [{"team": "red", "rawScore": 99}, {"team": "blue", "rawScore": 1}]
+    payload["teamScores"] = {"red": 99, "blue": 1}
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    assert winner["wins"] == 1
+    assert loser["losses"] == 1
+    assert winner[win_field] == 1

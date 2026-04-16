@@ -191,6 +191,7 @@ typedef struct ladderMatchPayload_s {
         int                     validationErrors;
         char            validationReason[LADDER_MAX_VALIDATION_REASON];
         char            matchId[LADDER_MAX_MATCH_ID];
+        int                     serverMatchSeq;
         char            mode[LADDER_MAX_MODE];
         int                     gametype;
         char            mapName[MAX_QPATH];

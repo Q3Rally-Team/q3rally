@@ -333,8 +333,8 @@ void AddTeamScore(vec3_t origin, int team, int score) {
                                         statusSuffix = statusBuffer;
                                 }
 
-                                CenterPrint_All( va("%s%s^7 scores! ^7(%i)%s", TeamColorString(team), TeamName(team), newScore, statusSuffix) );
-                                PrintMsg( NULL, "%s%s^7 scores! ^7(%i)%s\n", TeamColorString(team), TeamName(team), newScore, statusSuffix );
+                                CenterPrint_All( va("%s%s^7 scores!%s", TeamColorString(team), TeamName(team), statusSuffix) );
+                                PrintMsg( NULL, "%s%s^7 scores!%s\n", TeamColorString(team), TeamName(team), statusSuffix );
                         }
 
                         return;
@@ -366,6 +366,60 @@ void AddTeamScore(vec3_t origin, int team, int score) {
                         level.teamScores[team] = newScore;
                         return;
                 }
+        }
+
+        if ( g_gametype.integer == GT_DOMINATION ) {
+                int previousScore = level.teamScores[team];
+                int newScore = previousScore + score;
+                int maxOtherBefore = 0;
+                qboolean haveOpponent = qfalse;
+                int i;
+
+                for ( i = TEAM_RED; i < TEAM_NUM_TEAMS; ++i ) {
+                        if ( i == TEAM_FREE || i == TEAM_SPECTATOR || i == team ) {
+                                continue;
+                        }
+
+                        if ( !haveOpponent || level.teamScores[i] > maxOtherBefore ) {
+                                maxOtherBefore = level.teamScores[i];
+                                haveOpponent = qtrue;
+                        }
+                }
+
+                if ( !haveOpponent ) {
+                        maxOtherBefore = 0;
+                }
+
+                if ( haveOpponent && newScore == maxOtherBefore ) {
+                        te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                } else if ( haveOpponent && newScore > maxOtherBefore && previousScore <= maxOtherBefore ) {
+                        if ( team == TEAM_RED ) {
+                                te->s.eventParm = GTS_REDTEAM_TOOK_LEAD;
+                        } else if ( team == TEAM_BLUE ) {
+                                te->s.eventParm = GTS_BLUETEAM_TOOK_LEAD;
+                        } else if ( team == TEAM_GREEN ) {
+                                te->s.eventParm = GTS_GREENTEAM_TOOK_LEAD;
+                        } else if ( team == TEAM_YELLOW ) {
+                                te->s.eventParm = GTS_YELLOWTEAM_TOOK_LEAD;
+                        } else {
+                                te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                        }
+                } else {
+                        if ( team == TEAM_RED ) {
+                                te->s.eventParm = GTS_REDTEAM_SCORED;
+                        } else if ( team == TEAM_BLUE ) {
+                                te->s.eventParm = GTS_BLUETEAM_SCORED;
+                        } else if ( team == TEAM_GREEN ) {
+                                te->s.eventParm = GTS_GREENTEAM_SCORED;
+                        } else if ( team == TEAM_YELLOW ) {
+                                te->s.eventParm = GTS_YELLOWTEAM_SCORED;
+                        } else {
+                                te->s.eventParm = GTS_TEAMS_ARE_TIED;
+                        }
+                }
+
+                level.teamScores[team] = newScore;
+                return;
         }
 
         level.teamScores[ team ] += score;
@@ -962,7 +1016,7 @@ void Team_ReturnFlagSound( gentity_t *ent, int team ) {
         te->r.svFlags |= SVF_BROADCAST;
 }
 
-void Team_TakeFlagSound( gentity_t *ent, int team ) {
+void Team_TakeFlagSound( gentity_t *ent, int team, int attackingTeam ) {
 	gentity_t	*te;
 
 	if (ent == NULL) {
@@ -997,6 +1051,9 @@ void Team_TakeFlagSound( gentity_t *ent, int team ) {
                 te->s.eventParm = GTS_BLUE_TAKEN;
                 break;
         }
+	// In CTF4 we also send the attacking team so clients can distinguish
+	// who took green/yellow flags (eventParm alone only identifies the victim).
+	te->s.otherEntityNum = attackingTeam;
         te->r.svFlags |= SVF_BROADCAST;
 }
 
@@ -1149,7 +1206,18 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 	}
 	else {
 #endif
-	PrintMsg( NULL, "%s" S_COLOR_WHITE " captured the %s flag!\n", cl->pers.netname, TeamName(OtherTeam(team)));
+	if ( g_gametype.integer == GT_CTF4 ) {
+		// In CTF4 OtherTeam() only flips Red<->Blue, so we derive the captured
+		// flag's team name directly from the powerup the player was carrying.
+		const char *capturedFlagTeam = "UNKNOWN";
+		if      ( enemy_flag == PW_REDFLAG    ) capturedFlagTeam = TeamName( TEAM_RED    );
+		else if ( enemy_flag == PW_BLUEFLAG   ) capturedFlagTeam = TeamName( TEAM_BLUE   );
+		else if ( enemy_flag == PW_GREENFLAG  ) capturedFlagTeam = TeamName( TEAM_GREEN  );
+		else if ( enemy_flag == PW_YELLOWFLAG ) capturedFlagTeam = TeamName( TEAM_YELLOW );
+		PrintMsg( NULL, "%s" S_COLOR_WHITE " captured the %s flag!\n", cl->pers.netname, capturedFlagTeam );
+	} else {
+		PrintMsg( NULL, "%s" S_COLOR_WHITE " captured the %s flag!\n", cl->pers.netname, TeamName(OtherTeam(team)));
+	}
 #ifdef MISSIONPACK
 	}
 #endif
@@ -1263,7 +1331,7 @@ int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, int team ) {
 	AddScore(other, ent->r.currentOrigin, CTF_FLAG_BONUS);
 #endif
 	cl->pers.teamState.flagsince = level.time;
-	Team_TakeFlagSound( ent, team );
+	Team_TakeFlagSound( ent, team, other->client->sess.sessionTeam );
 
 	return -1; // Do not respawn this automatically, but do delete it if it was FL_DROPPED
 }
@@ -1360,7 +1428,23 @@ void Sigil_Think( gentity_t *ent ) {
   }
 
   ent->count = 0;
-  level.teamScores[team]++;
+  AddTeamScore( ent->s.pos.trBase, team, 1 );
+
+  /* Accumulate zone-hold time for all living players on the owning team.
+   * This mirrors how KOTH_AddContestTimeForHillPlayers tracks kothContestTimeMs
+   * and gives G_LadderPopulatePlayer a per-player value to report. */
+  if ( g_dominationScoreInterval.integer > 0 ) {
+    int ci;
+    int intervalMs = g_dominationScoreInterval.integer;
+    for ( ci = 0; ci < level.maxclients; ci++ ) {
+      gclient_t *pl = &level.clients[ci];
+      if ( pl->pers.connected != CON_CONNECTED ) continue;
+      if ( pl->sess.sessionTeam != team ) continue;
+      if ( pl->ps.stats[STAT_HEALTH] <= 0 ) continue;
+      pl->dominationZoneHoldMs += intervalMs;
+    }
+  }
+
   ent->nextthink = level.time + g_dominationScoreInterval.integer;
 
   // refresh scoreboard
@@ -1368,7 +1452,30 @@ void Sigil_Think( gentity_t *ent ) {
 }
 
 
-void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t powerup) {
+static void Sigil_CaptureSound( gentity_t *ent, team_t team ) {
+    gentity_t *te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_TEAM_SOUND );
+    te->r.svFlags |= SVF_BROADCAST;
+
+    switch ( team ) {
+        case TEAM_RED:
+            te->s.eventParm = GTS_REDTEAM_SCORED;
+            break;
+        case TEAM_BLUE:
+            te->s.eventParm = GTS_BLUETEAM_SCORED;
+            break;
+        case TEAM_GREEN:
+            te->s.eventParm = GTS_GREENTEAM_SCORED;
+            break;
+        case TEAM_YELLOW:
+            te->s.eventParm = GTS_YELLOWTEAM_SCORED;
+            break;
+        default:
+            te->s.eventParm = GTS_TEAMS_ARE_TIED;
+            break;
+    }
+}
+
+void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t powerup, team_t team) {
     Team_SetSigilStatus(sigilNum, status);
     teamgame.sigilCaptureStart[sigilNum] = 0;
     teamgame.sigilCapturingTeam[sigilNum] = TEAM_FREE;
@@ -1377,6 +1484,7 @@ void CaptureSigil(gentity_t *ent, int sigilNum, sigilStatus_t status, powerup_t 
     ent->s.powerups = powerup;
     ent->s.modelindex = ITEM_INDEX( BG_FindItemForPowerup( powerup ) );
     ent->count = 1;
+    Sigil_CaptureSound( ent, team );
 }
 
 /*
@@ -1445,7 +1553,7 @@ int Sigil_Touch( gentity_t *ent, gentity_t *other ) {
     }
 
     if (ent->s.powerups != powerup) {
-        CaptureSigil(ent, sigilNum, status, powerup);
+        CaptureSigil(ent, sigilNum, status, powerup, team);
         G_Profile_RecordDominationCapture( cl );
     }
 
@@ -2561,4 +2669,3 @@ qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker ) {
 	return qfalse;
 }
 #endif
-

@@ -545,6 +545,7 @@ struct gclient_s {
 	/* Q3Rally KOTH post-match stats */
 	int			kothHillKills;
 	int			kothContestTimeMs;
+	int			dominationZoneHoldMs;   /* cumulative ms a player held any sigil zone (GT_DOMINATION) */
 
 	// profileLastCmdTime wird nicht mehr benötigt - kann entfernt werden
 	// int		profileLastCmdTime;
@@ -1210,6 +1211,7 @@ void G_RallyUpdateAllTeamTimes( void );
 extern	vmCvar_t	g_rallyIgnoreBots;
 extern	vmCvar_t	g_aiDmnetDebugExport;
 extern	vmCvar_t	g_aiDmnetDebugExportPath;
+extern	vmCvar_t	g_ladderMatchSeq;
 extern	vmCvar_t	g_damageScale;
 extern	vmCvar_t	g_vehicleDamageScale;
 extern  vmCvar_t        g_vehicleDamageOffset;

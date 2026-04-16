@@ -73,7 +73,11 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 		ent->client->ps.persistant[PERS_SCORE] += score;
 
 	// Q3Rally Fix: KOTH scores are managed exclusively by KOTH_Think, not by kills
-	if (g_gametype.integer >= GT_TEAM && g_gametype.integer != GT_CTF && g_gametype.integer != GT_KOTH){
+	// CTF and CTF4 team scores are managed exclusively by AddTeamScore (called on
+	// capture), so AddScore must not also increment level.teamScores for those modes
+	// or each capture adds both the CTF_CAPTURE_BONUS (5) AND the explicit +1 from
+	// AddTeamScore to the team score.
+	if (g_gametype.integer >= GT_TEAM && g_gametype.integer != GT_CTF && g_gametype.integer != GT_CTF4 && g_gametype.integer != GT_KOTH){
 		if (!isRallyRace() || level.startRaceTime)
 			level.teamScores[ ent->client->ps.persistant[PERS_TEAM] ] += score;
 	}
@@ -146,7 +150,24 @@ if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1u << weapon ) ) ) {
 			}
 		}
 	}
-        }
+
+	// Q3Rally Code Start - CTF4: return green/yellow flags on drop.
+	// CTF4 is a team mode (>= GT_TEAM) so the generic loop above is skipped.
+	// Red and blue flags are handled via Team_DroppedFlagThink when dropped,
+	// but green and yellow were silently lost.  Return them explicitly here
+	// so the flag spawns back at its base rather than disappearing.
+	if ( g_gametype.integer == GT_CTF4 ) {
+		if ( self->client->ps.powerups[PW_GREENFLAG] ) {
+			Drop_Item( self, BG_FindItemForPowerup( PW_GREENFLAG ), 0 );
+			self->client->ps.powerups[PW_GREENFLAG] = 0;
+		}
+		if ( self->client->ps.powerups[PW_YELLOWFLAG] ) {
+			Drop_Item( self, BG_FindItemForPowerup( PW_YELLOWFLAG ), 0 );
+			self->client->ps.powerups[PW_YELLOWFLAG] = 0;
+		}
+	}
+	// Q3Rally Code END - CTF4
+}
 
 #ifdef MISSIONPACK
 
@@ -643,14 +664,24 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			Team_ReturnFlag( TEAM_FREE );
 			self->client->ps.powerups[PW_NEUTRALFLAG] = 0;
 		}
-		else if ( self->client->ps.powerups[PW_REDFLAG] ) {		// only happens in standard CTF
+		else if ( self->client->ps.powerups[PW_REDFLAG] ) {		// standard CTF / CTF4
 			Team_ReturnFlag( TEAM_RED );
 			self->client->ps.powerups[PW_REDFLAG] = 0;
 		}
-		else if ( self->client->ps.powerups[PW_BLUEFLAG] ) {	// only happens in standard CTF
+		else if ( self->client->ps.powerups[PW_BLUEFLAG] ) {	// standard CTF / CTF4
 			Team_ReturnFlag( TEAM_BLUE );
 			self->client->ps.powerups[PW_BLUEFLAG] = 0;
 		}
+		// Q3Rally Code Start - CTF4: also return green and yellow flags on suicide
+		else if ( self->client->ps.powerups[PW_GREENFLAG] ) {
+			Team_ReturnFlag( TEAM_GREEN );
+			self->client->ps.powerups[PW_GREENFLAG] = 0;
+		}
+		else if ( self->client->ps.powerups[PW_YELLOWFLAG] ) {
+			Team_ReturnFlag( TEAM_YELLOW );
+			self->client->ps.powerups[PW_YELLOWFLAG] = 0;
+		}
+		// Q3Rally Code END - CTF4
 	}
 
 	TossClientItems( self );
@@ -1213,9 +1244,9 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 
 	// See if it's the player hurting the emeny flag carrier
 #ifdef MISSIONPACK
-	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF ) {
+	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 || g_gametype.integer == GT_1FCTF ) {
 #else	
-	if( g_gametype.integer == GT_CTF) {
+	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
 #endif
 		Team_CheckHurtCarrier(targ, attacker);
 	}
