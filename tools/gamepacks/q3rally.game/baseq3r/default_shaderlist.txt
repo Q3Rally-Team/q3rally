@@ -1,0 +1,24 @@
+//---------------------------------------------------------------
+// shaderlist.txt modified for GTKRadiant/Netradiant	 
+// by Perle for use with Q3Rally - 30/12/2017
+// updated 07/07/2020
+//---------------------------------------------------------------
+
+// this file lists all the separate shader files
+
+additional_textures
+ammo
+atmosphere
+base_textures
+blimp
+common
+ctf
+gfx
+liquids
+mapobjects
+plates
+powerups
+q3r_textures
+skies
+sprites
+weapons
