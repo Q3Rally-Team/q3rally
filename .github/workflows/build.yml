@@ -3,104 +3,120 @@ on: [push, pull_request]
 
 jobs:
   linux:
-    name: Linux
+    name: Linux ${{ matrix.arch }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, x86]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        if [ "${{ matrix.arch }}" = "x86" ]; then
+          sudo dpkg --add-architecture i386
+        fi
+        sudo apt-get update
+        if [ "${{ matrix.arch }}" = "x86" ]; then
+          sudo apt-get install -y gcc-multilib pkg-config libsdl2-dev:i386 libcurl4-openssl-dev:i386
+        else
+          sudo apt-get install -y pkg-config libsdl2-dev libcurl4-openssl-dev
+        fi
+    - name: Compile
+      run: |
+        if [ "${{ matrix.arch }}" = "x86" ]; then
+          PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig \
+            make release -j$(nproc) -C engine ARCH=${{ matrix.arch }} USE_CURL=1 USE_CURL_DLOPEN=0
+        else
+          make release -j$(nproc) -C engine ARCH=${{ matrix.arch }} USE_CURL=1 USE_CURL_DLOPEN=0
+        fi
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Linux-${{ matrix.arch }}
+        path: engine/build/*.zip
+  linux-arm64:
+    name: Linux ARM64
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libsdl2-dev
-
-      - name: Clean
-        run: make clean -C engine || true
-
-      - name: Compile
-        run: make release -j$(nproc) -C engine
-        env:
-          ARCHIVE: 1
-          TERM: xterm
-          CFLAGS: -m64
-          CXXFLAGS: -m64
-          LDFLAGS: -m64
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Linux
-          path: engine/build/*.zip
-
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+    - name: Compile
+      run: make release -j$(nproc) ARCH=arm64 BUILD_CLIENT=0 BUILD_RENDERER_OPENGL1=0 BUILD_RENDERER_OPENGL2=0 CC=aarch64-linux-gnu-gcc -C engine USE_CURL=1 USE_CURL_DLOPEN=1
+      env:
+        ARCHIVE: 1
   windows:
-    name: Windows
+    name: Windows ${{ matrix.arch }}
     runs-on: windows-2022
-    defaults:
-      run:
-        shell: pwsh
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - arch: x86_64
+          msystem: MINGW64
+          package_prefix: mingw-w64-x86_64
+        - arch: x86
+          msystem: MINGW32
+          package_prefix: mingw-w64-i686
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install tools
-        run: |
-          choco install -y zip make mingw
-
-      - name: Clean
-        run: |
-          make clean -C engine 2>$null
-          if ($LASTEXITCODE -ne 0) { exit 0 }
-
-      - name: Compile
-        run: |
-          # HACK: This sets USE_CURL_DLOPEN=1 because Curl fails to link otherwise.
-          make release -j $env:NUMBER_OF_PROCESSORS -C engine USE_CURL_DLOPEN=1
-        env:
-          ARCHIVE: 1
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Windows
-          path: engine/build/*.zip
-
+    - uses: actions/checkout@v4
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        update: true
+        install: >-
+          base-devel
+          git
+          make
+          zip
+          ${{ matrix.package_prefix }}-gcc
+    - name: Compile
+      shell: msys2 {0}
+      run: make release -j$(nproc) -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} USE_CURL=1 USE_CURL_DLOPEN=0
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows-${{ matrix.arch }}
+        path: engine/build/*.zip
   macos:
     name: macOS
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Compile
-        run: make release -j$(sysctl -n hw.logicalcpu) -C engine
-        env:
-          ARCHIVE: 1
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macOS
-          path: engine/build/*.zip
-
+    - uses: actions/checkout@v4
+    - name: Compile
+      run: make release -j$(sysctl -n hw.logicalcpu) -C engine USE_CURL=1 USE_CURL_DLOPEN=1
+      env:
+        ARCHIVE: 1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: macOS
+        path: engine/build/*.zip
   web:
-    name: Web
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/checkout@v4
-        with:
-          repository: emscripten-core/emsdk
-          path: emsdk
-
-      - name: Install Dependencies
-        run: |
-          cd emsdk
-          ./emsdk install 3.1.58
-          ./emsdk activate 3.1.58
-
-      - name: Compile
-        env:
-          ARCHIVE: 1
-        run: |
-          source emsdk/emsdk_env.sh
-          emmake make release -j$(nproc) -C engine
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Web
-          path: engine/build/*.zip
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        repository: emscripten-core/emsdk
+        path: emsdk
+    - name: Install Dependencies
+      run: |
+        cd emsdk
+        ./emsdk install 3.1.58
+        ./emsdk activate 3.1.58
+    - name: Compile
+      env:
+        ARCHIVE: 1
+      run: |
+        source emsdk/emsdk_env.sh
+        emmake make release -j$(nproc) -C engine USE_CURL=1
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Web
+        path: engine/build/*.zip
+        
