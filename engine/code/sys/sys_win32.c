@@ -46,6 +46,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define KEY_WOW64_32KEY 0x0200
 #endif
 
+typedef HRESULT (WINAPI *SHGetFolderPathProc)( HWND hwndOwner, int nFolder,
+		HANDLE hToken, DWORD dwFlags, LPSTR pszPath );
+
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
 
@@ -102,7 +105,7 @@ Sys_DefaultHomePath
 */
 char *Sys_DefaultHomePath( void )
 {
-	TCHAR szPath[MAX_PATH];
+	char szPath[MAX_PATH];
 	FARPROC qSHGetFolderPath;
 	HMODULE shfolder = LoadLibrary("shfolder.dll");
 
@@ -122,7 +125,7 @@ char *Sys_DefaultHomePath( void )
 			return NULL;
 		}
 
-		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_APPDATA,
+		if( !SUCCEEDED( ((SHGetFolderPathProc)qSHGetFolderPath)( NULL, CSIDL_APPDATA,
 						NULL, 0, szPath ) ) )
 		{
 			Com_Printf("Unable to detect CSIDL_APPDATA\n");
@@ -238,7 +241,7 @@ char* Sys_MicrosoftStorePath(void)
 #ifdef MSSTORE_PATH
 	if (!microsoftStorePath[0]) 
 	{
-		TCHAR szPath[MAX_PATH];
+		char szPath[MAX_PATH];
 		FARPROC qSHGetFolderPath;
 		HMODULE shfolder = LoadLibrary("shfolder.dll");
 
@@ -256,7 +259,7 @@ char* Sys_MicrosoftStorePath(void)
 			return microsoftStorePath;
 		}
 
-		if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_PROGRAM_FILES,
+		if( !SUCCEEDED( ((SHGetFolderPathProc)qSHGetFolderPath)( NULL, CSIDL_PROGRAM_FILES,
 						NULL, 0, szPath ) ) )
 		{
 			Com_Printf("Unable to detect CSIDL_PROGRAM_FILES\n");
