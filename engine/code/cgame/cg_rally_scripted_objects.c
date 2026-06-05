@@ -338,7 +338,7 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 			}
 		}
 		else {
-			Com_Printf( "Loading model info for '%s'\n", model );
+			if (cg_developer.integer) Com_Printf( "Loading model info for '%s'\n", model );
 			// load model info
 		}
 	}
@@ -353,7 +353,7 @@ qboolean CG_ParseScriptedObject( centity_t *cent, const char *scriptName ){
 			cent->deadModelHandle = trap_R_RegisterModel( deadmodel );
 		}
 		else {
-			Com_Printf( "Loading deadmodel info for '%s'\n", deadmodel );
+			if (cg_developer.integer) Com_Printf( "Loading deadmodel info for '%s'\n", deadmodel );
 			// load deadmodel info
 		}
 	}

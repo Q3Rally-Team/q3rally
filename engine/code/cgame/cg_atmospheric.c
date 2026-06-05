@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2002-2021 Q3Rally Team (Per Thormann - q3rally@gmail.com)
+Copyright (C) 2002-2026 Q3Rally Team (Per Thormann - q3rally@gmail.com)
 
 This file is part of q3rally source code.
 
@@ -24,8 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 // Q3Rally Code Start
-#define MAX_ATMOSPHERIC_PARTICLES		1000  	// maximum # of particles
-#define MAX_ATMOSPHERIC_DISTANCE		3000  	// maximum distance from refdef origin that particles are visible
+#define MAX_ATMOSPHERIC_PARTICLES		5000  	// maximum # of particles
+#define MAX_ATMOSPHERIC_DISTANCE		30000  	// maximum distance from refdef origin that particles are visible
 
 #define MAX_ATMOSPHERIC_HEIGHT			65536  	// maximum world height (FIXME: since 1.27 this should be 65536)
 #define MIN_ATMOSPHERIC_HEIGHT			-65536  	// minimum world height (FIXME: since 1.27 this should be -65536)

@@ -34,11 +34,38 @@ extern vmCvar_t g_dominationSpawnStyle;
 static vec3_t	playerMins = {-15, -15, -24};
 static vec3_t	playerMaxs = {15, 15, 32};
 */
-static vec3_t	playerMins = {-CAR_WIDTH/2, -CAR_WIDTH/2, -CAR_WIDTH/2};
-static vec3_t	playerMaxs = {CAR_WIDTH/2, CAR_WIDTH/2, CAR_WIDTH/2};
+/* Sub-bounds size — used for frontBounds / rearBounds entities.
+ * The car has TWO of these stacked along the forward axis at
+ * +/-(CAR_LENGTH-CAR_WIDTH)/2 = +/-25u from the player origin, so their
+ * union covers +/-CAR_LENGTH/2 along the car's forward direction.
+ *
+ * Lateral extent: +/-CAR_WIDTH/2 (= 25u) — correct.
+ * Vertical extent: was +/-CAR_WIDTH/2 (= 25u, a 50^3 cube, 14% too tall).
+ * Now CAR_HEIGHT/2 (= 22u) so the bounds match the real model height. */
+static vec3_t	playerMins = {-CAR_WIDTH/2, -CAR_WIDTH/2, -CAR_HEIGHT/2};
+static vec3_t	playerMaxs = {CAR_WIDTH/2, CAR_WIDTH/2, CAR_HEIGHT/2};
 
-//static vec3_t	playerMins = {-CAR_LENGTH/2, -CAR_WIDTH/2, -CAR_HEIGHT/2};
-//static vec3_t	playerMaxs = {CAR_LENGTH/2, CAR_WIDTH/2, CAR_HEIGHT/2};
+/* Main entity box — used for the player entity itself (the one that has
+ * takedamage=true and is returned by trap_EntitiesInBox).
+ *
+ * This box is the pre-filter for G_RadiusDamage / EntitiesInBox: if the
+ * explosion origin misses this box the engine never invokes the sub-bounds
+ * refinement logic and no damage is registered even though the front or
+ * rear of the car is fully inside the splash radius.
+ *
+ * The car is 100×50×44 (CAR_LENGTH × CAR_WIDTH × CAR_HEIGHT) in its local
+ * frame, but we don't track yaw here, so we use a conservative square
+ * CAR_LENGTH×CAR_LENGTH footprint that covers the vehicle at any rotation.
+ * The sub-bounds (frontBounds / rearBounds) then resolve the real distance,
+ * so the over-sized main box does NOT cause over-damage — it is only a
+ * coarse pre-filter.
+ *
+ * Three separate constants are intentional:
+ *   carMins/carMaxs    — main entity (conservative, EntitiesInBox pre-filter)
+ *   playerMins/Maxs    — sub-bounds (frontBounds/rearBounds, precise size)
+ *   pm->mins/maxs      — pmove trace box (set directly in bg_pmove.c) */
+static vec3_t	carMins = {-CAR_LENGTH/2, -CAR_LENGTH/2, -CAR_HEIGHT/2};
+static vec3_t	carMaxs = {CAR_LENGTH/2, CAR_LENGTH/2, CAR_HEIGHT/2};
 // END
 
 void G_ResetClientLapData( gclient_t *client ) {
@@ -1591,8 +1618,8 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 	ent->watertype = 0;
 	ent->flags = 0;
 	
-       VectorCopy (playerMins, ent->r.mins);
-       VectorCopy (playerMaxs, ent->r.maxs);
+       VectorCopy (carMins, ent->r.mins);   /* conservative main box, EntitiesInBox pre-filter */
+       VectorCopy (carMaxs, ent->r.maxs);
        ent->s.solid = SOLID_BBOX;
 
         client->ps.pm_flags |= SVF_CAPSULE;
@@ -1803,6 +1830,10 @@ if (client->ps.stats[STAT_WEAPONS] & (1u << i)) {
 					break;
 				}
 			}
+			if ( g_gametype.integer == GT_LCS &&
+					( client->ps.stats[STAT_WEAPONS] & ( 1u << WP_MACHINEGUN ) ) ) {
+				client->ps.weapon = WP_MACHINEGUN;
+			}
 			// positively link the client, even if the command times are weird
 			VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 
@@ -1942,4 +1973,3 @@ void ClientDisconnect( int clientNum ) {
 		BotAIShutdownClient( clientNum, qfalse );
 	}
 }
-

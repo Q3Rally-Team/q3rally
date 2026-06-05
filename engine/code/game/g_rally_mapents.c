@@ -950,7 +950,7 @@ void SP_rally_weather_snow( gentity_t *ent ){
 
 	ent->s.powerups = ent->number;
 	ent->s.weapon = 1;
-	ent->s.legsAnim = 0;
+	ent->s.legsAnim = ent->spawnflags;
 
 	trap_LinkEntity (ent);
 }

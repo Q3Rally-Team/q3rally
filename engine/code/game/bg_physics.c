@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "../qcommon/q_shared.h"
-#ifdef GAME
+#ifdef QAGAME
 #include "g_local.h"
 #else
 #include "bg_public.h"
@@ -649,35 +649,40 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->kcof = CP_ICE_KCOF;
 		point->scof = CP_ICE_SCOF;
 	}
-	else if (trace->surfaceFlags & SURF_ICE) {
-	    point->kcof = CP_ICE_KCOF;
-	    point->scof = CP_ICE_SCOF;
+	else if (trace->surfaceFlags & SURF_ICE){
+		point->kcof = CP_ICE_KCOF;
+		point->scof = CP_ICE_SCOF;
+	}
+	else if (trace->surfaceFlags & SURF_SNOW){
+		point->kcof = CP_SNOW_KCOF;
+		point->scof = CP_SNOW_SCOF;
+	}
+	else if (trace->surfaceFlags & SURF_SAND){
+		point->kcof = CP_SAND_KCOF;
+		point->scof = CP_SAND_SCOF;
 	}
 	else if (trace->surfaceFlags & SURF_GRASS){
 		point->kcof = CP_GRASS_KCOF;
 		point->scof = CP_GRASS_SCOF;
 	}
+	else if (trace->surfaceFlags & SURF_GRAVEL){
+		point->kcof = CP_GRAVEL_KCOF;
+		point->scof = CP_GRAVEL_SCOF;
+	}
+	else if (trace->surfaceFlags & SURF_DIRT){
+		point->kcof = CP_DIRT_KCOF;
+		point->scof = CP_DIRT_SCOF;
+	}
 	else if (trace->surfaceFlags & SURF_DUST){
 		point->kcof = CP_DIRT_KCOF;
 		point->scof = CP_DIRT_SCOF;
 	}
-    else if (trace->surfaceFlags & SURF_SAND){
-        point->kcof = CP_SAND_KCOF;
-        point->scof = CP_SAND_SCOF;
-    }
-	else if (trace->surfaceFlags & SURF_SNOW){
-		point->kcof = CP_SNOW_KCOF;
-		point->scof = CP_SNOW_SCOF;
+	else if (trace->surfaceFlags & SURF_METAL){
+		point->kcof = CP_METAL_KCOF;
+		point->scof = CP_METAL_SCOF;
 	}
-	else if (trace->surfaceFlags & SURF_GRAVEL) {
-        point->kcof = CP_GRAVEL_KCOF;
-        point->scof = CP_GRAVEL_SCOF;
-   }
-    else if (trace->surfaceFlags & SURF_DIRT) {
-        point->kcof = CP_DIRT_KCOF;
-        point->scof = CP_DIRT_SCOF;
-   }
 	else {
+		// default: dry asphalt (also covers SURF_ASPHALT)
 		point->kcof = CP_KCOF;
 		point->scof = CP_SCOF;
 	}
@@ -757,6 +762,12 @@ static float PM_ApplyCollision( carBody_t *body, carPoint_t *points, vec3_t at, 
 		CrossProduct(cross2, arm, cross);
 //		Com_Printf( "oneOverMass %f, cross.normal %f\n", 1.0f / body->mass, DotProduct(cross, normal) );
 		impulseDen = 1.0f / body->mass + DotProduct(cross, normal);
+		/* Guard: if the inertia tensor projection exactly cancels 1/mass the
+		   denominator is 0 (or very near 0), which would produce an infinite
+		   impulse.  Skip the collision response in that degenerate case. */
+		if ( fabs( impulseDen ) < 1e-6f ) {
+			return 0.0f;
+		}
 
 		VectorScale(normal, impulseNum / impulseDen, impulse);
 	}
@@ -791,7 +802,7 @@ static float PM_ApplyCollision( carBody_t *body, carPoint_t *points, vec3_t at, 
 }
 
 
-#if 0
+#ifdef QAGAME
 /*
 ================================================================================
 PM_ApplyBodyBodyCollision
@@ -801,6 +812,10 @@ PM_ApplyBodyBodyCollision
 
 Given: 2 rigid bodies, impact origin, impact normal, and elasticity
 Find:  the new linear and angular velocities of the two objects as a result of the impact.
+
+  Server-only: cgame side does its own client-prediction without applying
+  body-body impulses (the authoritative answer comes from the server). Wrapped
+  in QAGAME so cgame builds don't emit -Wunused-function for this static.
 ================================================================================
 */
 static float PM_ApplyBodyBodyCollision( carBody_t *body1, carPoint_t *points1, carBody_t *body2, carPoint_t *points2, vec3_t at, vec3_t normal, float elasticity ){
@@ -837,19 +852,39 @@ static float PM_ApplyBodyBodyCollision( carBody_t *body1, carPoint_t *points1, c
 	// hacked up physics — improved to preserve tangential velocity
 	// Only transfer the normal component of the velocity change,
 	// so cars don't abruptly stop when colliding at an angle.
-	VectorCopy( body1->v, vP1 );
-	VectorCopy( body1->L, vP2 );
-	PM_ApplyCollision( body1, points1, at, normal, elasticity / 2.0f );
+	//
+	// The "wall trick" (PM_ApplyCollision on body1 against the contact
+	// normal) makes body1 lose (1+e_wall) * v_normal. Naively re-adding
+	// that whole delta to body2 double-counts the impulse and launches
+	// the target body 1-2 car widths sideways on a glancing hit. For two
+	// roughly equal masses we want body2 to gain ~(1+e)/2 * v_normal of
+	// the closing speed, hence the transferScale below (default 0.5 from
+	// g_carImpactTransfer). The attacker (body1) keeps the original
+	// half-elasticity bounce so the rammer's recoil doesn't change.
+	{
+		float	transferScale;
 
-	VectorSubtract( vP1, body1->v, diff1 );
-	VectorSubtract( vP2, body1->L, diff2 );
+		transferScale = pm->car_impact_transfer;
+		/* defensive: fall back to a sensible default if cvar is unset */
+		if ( transferScale <= 0.0f ) {
+			transferScale = 0.5f;
+		}
 
-	// Project diff onto collision normal — only transfer normal component
-	diff1Dot = DotProduct( diff1, normal );
-	VectorScale( normal, diff1Dot, diff1Normal );
+		VectorCopy( body1->v, vP1 );
+		VectorCopy( body1->L, vP2 );
+		PM_ApplyCollision( body1, points1, at, normal, elasticity / 2.0f );
 
-	diff2Dot = DotProduct( diff2, normal );
-	VectorScale( normal, diff2Dot, diff2Normal );
+		VectorSubtract( vP1, body1->v, diff1 );
+		VectorSubtract( vP2, body1->L, diff2 );
+
+		// Project diff onto collision normal — only transfer normal
+		// component, scaled by the mass-split factor.
+		diff1Dot = DotProduct( diff1, normal ) * transferScale;
+		VectorScale( normal, diff1Dot, diff1Normal );
+
+		diff2Dot = DotProduct( diff2, normal ) * transferScale;
+		VectorScale( normal, diff2Dot, diff2Normal );
+	}
 
 	VectorAdd( body2->v, diff1Normal, body2->v );
 	VectorAdd( body2->L, diff2Normal, body2->L );
@@ -938,9 +973,11 @@ static float PM_ApplyBodyBodyCollision( carBody_t *body1, carPoint_t *points1, c
 		return 0;
 */
 }
+#endif /* QAGAME */
 
 
 
+#if 0
 /*
 ================================================================================
 PM_ApplyPointBodyCollision
@@ -1594,8 +1631,18 @@ void PM_CalculateSecondaryQuantities( car_t *car, carBody_t *body, carPoint_t *p
 	m[1][2] = car->inverseBodyInertiaTensor[2][2] * body->t[1][2];
 	m[2][2] = car->inverseBodyInertiaTensor[2][2] * body->t[2][2];
 
+	/* Copy body->t into a local [3][3] buffer before passing to the math
+	 * helpers. gcc's -Wstringop-overflow heuristic in -O2 can lose the
+	 * array bounds when chasing through `body->t` (a multi-dimensional
+	 * array reached via struct pointer) and emits false-positive
+	 * "accessing 36 bytes in a region of size 12" warnings. A local
+	 * `float[3][3]` makes the size unambiguous and silences the warning
+	 * without any runtime cost (the memcpy is 36 bytes / one SIMD op). */
 	{
-		float (*bodyT)[3] = body->t;
+		float bodyT[3][3];
+
+		Com_Memcpy( bodyT, body->t, sizeof(bodyT) );
+
 		MatrixTranspose(bodyT, m2);
 		MatrixMultiply(m, m2, body->inverseWorldInertiaTensor);
 
@@ -1799,14 +1846,22 @@ PM_Trace_Points
 static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoints, float time ){
 	vec3_t	maxs, mins;
 	vec3_t	start, dest, dir;
-	//vec3_t	normal;
+#ifdef QAGAME
+	vec3_t	normal;
+#endif
 	trace_t	trace;
 	int		i, j;
-	//float	minTrace = 1.0f;
-	//int		hitFirst, hitEnt;
+#ifdef QAGAME
+	float	minTrace = 1.0f;
+	int		hitFirst = -1;
+	int		hitEnt = -1;
+#endif
 	carPoint_t	*sPoint, *tPoint;
 
-	//int		count = 0;
+#ifdef QAGAME
+	int		count = 0;
+	int		savedTracemask;
+#endif
 	vec3_t	hitOrigin;
 
 // new stuff
@@ -1825,6 +1880,13 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 
 	VectorClear(hitOrigin);
 
+#ifdef QAGAME
+	// snapshot tracemask so the in-frame "skip cars after first contact"
+	// optimisation cannot leak past this function and silently disable
+	// CONTENTS_BODY for the rest of the pmove.
+	savedTracemask = pm->tracemask;
+#endif
+
 	// should actually do all points
 	for( i = 0 ; i < NUM_CAR_POINTS ; i++ ) {
 		// skip collision detection of suspension points
@@ -1837,9 +1899,17 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		VectorSet( maxs,  sPoint->radius,  sPoint->radius,  sPoint->radius );
 
 		if( i >= LAST_FRAME_POINT ) {
+			/* Body contact points: slight Z-flattening to reduce
+			 * spurious hits near the top/bottom edges of the car. */
 			mins[2] /= 1.5f;
 			maxs[2] /= 1.5f;
 		}
+		/* NOTE: Wheel points (i < FIRST_FRAME_POINT) intentionally keep a
+		 * symmetric ±WHEEL_RADIUS box in all three axes.  A Z-flatten would
+		 * reduce how early the ground-contact trace detects the floor,
+		 * collapsing the suspension and pinning the car body to the ground.
+		 * Unlike body points, wheel traces drive the spring-length
+		 * calculation directly, so the box size directly sets ride height. */
 
 /*
 		VectorSubtract( car->sBody.r, sPoints[i].r, dir);
@@ -2024,7 +2094,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 				continue;
 			}
 
-#ifdef GAME
+#ifdef QAGAME
 			if (trace.contents & CONTENTS_BODY){
 				if (g_entities[trace.entityNum].flags & FL_EXTRA_BBOX){
 					hitFirst = g_entities[trace.entityNum].r.ownerNum;
@@ -2032,6 +2102,18 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 				}
 				else
 					hitFirst = trace.entityNum;
+
+				/* Defensive self-skip: g_active.c already unlinks our own
+				 * front/rear sub-bounds before Pmove, but if anything is ever
+				 * mis-ordered (e.g. a future code path runs Pmove without that
+				 * unlink) we must not treat a hit on our OWN body or sub-bound
+				 * as a vehicle-vs-vehicle collision — it would feed self-self
+				 * into PM_ApplyBodyBodyCollision and corrupt our own velocity. */
+				if (hitFirst == pm->ps->clientNum) {
+					/* skip cars from now on this trace iteration only */
+					pm->tracemask &= ~CONTENTS_BODY;
+					continue;
+				}
 
 				if (g_entities[hitFirst].client){
 
@@ -2170,8 +2252,8 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 	}
 
 
-#ifdef GAME
-	if ( count && pm->cars[hitEnt] )
+#ifdef QAGAME
+	if ( count && hitEnt >= 0 && hitEnt < MAX_CLIENTS && pm->cars && pm->cars[hitEnt] )
 	{
 		float	impulseDamage;
 
@@ -2191,23 +2273,33 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		VectorSubtract(hitOrigin, pm->cars[hitEnt]->sBody.r, normal);
 		VectorNormalize(normal);
 
-		impulseDamage = PM_ApplyBodyBodyCollision(&car->tBody, car->tPoints, &pm->cars[hitEnt]->sBody, pm->cars[hitEnt]->sPoints, hitOrigin, normal, 0.25f);
-
-		// set normal on this car
-		for (i = 0; i < 3; i++){
-			if (!VectorLength(tPoints[hitEnt].normals[i])){
-				VectorScale(normal, -1.0f, tPoints[hitEnt].normals[i]);
-				break;
+		{
+			float carCarElasticity = pm->car_impact_elasticity;
+			/* defensive: clamp to the original 0.25 if the cvar is unset
+			 * or out of a sane range */
+			if ( carCarElasticity < 0.0f || carCarElasticity > 1.0f ) {
+				carCarElasticity = 0.25f;
 			}
+			impulseDamage = PM_ApplyBodyBodyCollision(&car->tBody, car->tPoints, &pm->cars[hitEnt]->sBody, pm->cars[hitEnt]->sPoints, hitOrigin, normal, carCarElasticity);
 		}
+
+		// NOTE: the original code wrote into tPoints[hitEnt].normals here,
+		// but hitEnt is an entity number (0..MAX_CLIENTS), while tPoints is
+		// indexed by carPoint slot (0..NUM_CAR_POINTS-1). That was an out-of-
+		// bounds access whenever hitEnt >= NUM_CAR_POINTS. We deliberately
+		// drop that loop; the normal information is no longer required for
+		// the body-body impulse below to work.
 
 		// damage stuff
 
 		VectorCopy(hitOrigin, pm->damage.origin);
 		VectorCopy(normal, pm->damage.dir);
 		pm->damage.dflags = DAMAGE_NO_KNOCKBACK;
-                pm->damage.mod = MOD_VEHICLE_COLLISION;
-		pm->damage.otherEnt = trace.entityNum;
+		pm->damage.mod = MOD_VEHICLE_COLLISION;
+		pm->damage.otherEnt = hitEnt;
+		if ( impulseDamage > 0.0f ) {
+			pm->damage.damage += impulseDamage / 25.0f;
+		}
 
 		PM_CopyTargetToSource(&car->tBody, &car->sBody, tPoints, sPoints);
 
@@ -2216,6 +2308,10 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		pm->tracemask &= ~CONTENTS_BODY;
 		PM_DriveMove(car, time * (1.0f - minTrace), qfalse);
 	}
+
+	// Restore tracemask so we never silently disable car-vs-car collision
+	// for subsequent pmove operations after this function returns.
+	pm->tracemask = savedTracemask;
 #endif
 
 	// break the frame up into parts

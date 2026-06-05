@@ -52,7 +52,7 @@ static void QDECL CG_GhostDebugPrint( const char *fmt, ... ) {
 	Q_vsnprintf( text, sizeof( text ), fmt, argptr );
 	va_end( argptr );
 
-	CG_Printf( "CG_GhostDebug: %s\n", text );
+	if (cg_developer.integer) CG_Printf( "CG_GhostDebug: %s\n", text );
 }
 
 static void CG_ChopNewline( char *value ) {

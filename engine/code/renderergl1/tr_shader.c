@@ -1392,6 +1392,27 @@ infoParm_t	infoParms[] = {
 	{"flesh",		0,	SURF_FLESH,		0 },
 	{"nosteps",		0,	SURF_NOSTEPS,	0 },
 
+	// Q3Rally surface types — accept both "dirt" and "SURF_DIRT" spellings
+	{"grass",		0,	SURF_GRASS,		0 },
+	{"SURF_GRASS",	0,	SURF_GRASS,		0 },
+	{"asphalt",		0,	SURF_ASPHALT,	0 },
+	{"SURF_ASPHALT",0,	SURF_ASPHALT,	0 },
+	{"wet",			0,	SURF_WET,		0 },
+	{"SURF_WET",	0,	SURF_WET,		0 },
+	{"snow",		0,	SURF_SNOW,		0 },
+	{"SURF_SNOW",	0,	SURF_SNOW,		0 },
+	{"gravel",		0,	SURF_GRAVEL,	0 },
+	{"SURF_GRAVEL",	0,	SURF_GRAVEL,	0 },
+	{"ice",			0,	SURF_ICE,		0 },
+	{"SURF_ICE",	0,	SURF_ICE,		0 },
+	{"dirt",		0,	SURF_DIRT,		0 },
+	{"SURF_DIRT",	0,	SURF_DIRT,		0 },
+	{"metal",		0,	SURF_METAL,		0 },
+	{"SURF_METAL",	0,	SURF_METAL,		0 },
+	{"sand",		0,	SURF_SAND,		0 },
+	{"SURF_SAND",	0,	SURF_SAND,		0 },
+	{"SURF_SLICK",	0,	SURF_SLICK,		0 },
+
 	// drawsurf attributes
 	{"nodraw",		0,	SURF_NODRAW,	0 },	// don't generate a drawsurface (or a lightmap)
 	{"pointlight",	0,	SURF_POINTLIGHT, 0 },	// sample lighting at vertexes

@@ -98,7 +98,7 @@ typedef struct {
 #define	MAX_VERTS_ON_POLY	10
 // Q3Rally Code Start
 //#define	MAX_MARK_POLYS		256
-#define	MAX_MARK_POLYS		2048
+#define	MAX_MARK_POLYS		4096
 // Q3Rally Code END
 
 #define STAT_MINUS			10	// num frame for '-' stats digit

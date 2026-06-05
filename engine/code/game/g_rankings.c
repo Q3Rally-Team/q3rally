@@ -28,6 +28,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
 ================
 G_RankRunFrame
+
+NOTE: This entire file implements the legacy Id Software global-rankings system
+(trap_RankBegin / trap_RankReportInt etc.).  The backend no longer exists and
+trap_RankActive() will never return true in production builds, so all reporting
+code below is effectively a no-op at runtime.  The file is kept for historical
+reference; it can be removed once the trap_ stubs are cleaned up from the engine.
 ================
 */
 void G_RankRunFrame()
@@ -72,10 +78,6 @@ void G_RankRunFrame()
 				// inform client of current status
 				// not needed for client side log in
 				trap_SendServerCommand( i, va("rank_status %i\n",status) );
-				if ( i == 0 )
-				{
-					int j = 0;
-				}
 				ent->client->client_status = status;
 			}
 			

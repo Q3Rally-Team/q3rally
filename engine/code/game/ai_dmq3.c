@@ -2043,6 +2043,40 @@ int BotSynonymContext(bot_state_t *bs) {
 BotChooseWeapon
 ==================
 */
+static int BotFirstUsableFrontWeapon( playerState_t *ps ) {
+	static const int weaponPriority[] = {
+		WP_BFG,
+		WP_ROCKET_LAUNCHER,
+		WP_RAILGUN,
+		WP_LIGHTNING,
+		WP_PLASMAGUN,
+		WP_FLAME_THROWER,
+		WP_GRENADE_LAUNCHER,
+		WP_SHOTGUN,
+		WP_MACHINEGUN,
+		WP_GAUNTLET
+	};
+	int i, weapon;
+
+	if ( ps->weapon > WP_NONE
+			&& ps->weapon < RWP_SMOKE
+			&& ps->weapon != WP_GAUNTLET
+			&& ( ps->stats[STAT_WEAPONS] & ( 1u << ps->weapon ) )
+			&& ps->ammo[ps->weapon] ) {
+		return ps->weapon;
+	}
+
+	for ( i = 0; i < ARRAY_LEN( weaponPriority ); i++ ) {
+		weapon = weaponPriority[i];
+		if ( ( ps->stats[STAT_WEAPONS] & ( 1u << weapon ) )
+				&& ps->ammo[weapon] ) {
+			return weapon;
+		}
+	}
+
+	return WP_NONE;
+}
+
 void BotChooseWeapon(bot_state_t *bs) {
 	int newweaponnum;
 	int availabilityIndex = -1;
@@ -2117,6 +2151,17 @@ void BotChooseWeapon(bot_state_t *bs) {
 				bs->inventory[ammoIndex] = originalAmmo;
 			}
 		}
+
+// Q3Rally Code Start
+		// trap_BotChooseBestFightWeapon can return 0 (WP_NONE) - e.g. in LCS,
+		// where the fuzzy weapon weights do not resolve to a car weapon. Selecting
+		// weapon 0 deselects the car gun (the bot stops firing) and spams
+		// "weapon number out of range". Fall back to a weapon the car actually
+		// holds so the bot keeps shooting. Derby is excluded: it rams by design.
+		if ( newweaponnum <= 0 && gametype != GT_DERBY ) {
+			newweaponnum = BotFirstUsableFrontWeapon( &bs->cur_ps );
+		}
+// END
 
 		if (bs->weaponnum != newweaponnum) bs->weaponchange_time = FloatTime();
 		bs->weaponnum = newweaponnum;
@@ -2969,6 +3014,7 @@ int BotWantsToRetreat(bot_state_t *bs) {
 	float lcsRelativePosition = 0.5f;
 	float lcsThreatProximity = 0.0f;
 	int lcsRemainingOpponents = 0;
+	int lcsUsableWeapon = WP_NONE;
 
 	if (gametype == GT_CTF) {
 		//always retreat when carrying a CTF flag
@@ -3015,6 +3061,15 @@ int BotWantsToRetreat(bot_state_t *bs) {
 
 	if ( BotGetLcsRiskMetrics(bs, &lcsRelativePosition, &lcsThreatProximity, &lcsRemainingOpponents) ) {
 		float retreatThreshold = 58.0f + g_botLcsEvasionBias.value * 12.0f;
+		lcsUsableWeapon = BotFirstUsableFrontWeapon( &bs->cur_ps );
+		if ( lcsUsableWeapon > WP_GAUNTLET
+				&& lcsUsableWeapon < RWP_SMOKE
+				&& bs->inventory[INVENTORY_HEALTH] >= 62 ) {
+			if ( lcsRemainingOpponents > 2 && lcsRelativePosition < 0.35f ) {
+				return qtrue;
+			}
+			return qfalse;
+		}
 		if ( lcsThreatProximity > 0.38f ) {
 			return qtrue;
 		}
@@ -3041,6 +3096,7 @@ int BotWantsToChase(bot_state_t *bs) {
 	float lcsRelativePosition = 0.5f;
 	float lcsThreatProximity = 0.0f;
 	int lcsRemainingOpponents = 0;
+	int lcsUsableWeapon = WP_NONE;
 
 	if (gametype == GT_CTF) {
 		//never chase when carrying a CTF flag
@@ -3086,11 +3142,19 @@ int BotWantsToChase(bot_state_t *bs) {
 	if ( BotGetLcsRiskMetrics(bs, &lcsRelativePosition, &lcsThreatProximity, &lcsRemainingOpponents) ) {
 		float aggressionThreshold = 62.0f + g_botLcsEvasionBias.value * 10.0f;
 		qboolean closeOpportunity = ( bs->inventory[ENEMY_HORIZONTAL_DIST] > 0 && bs->inventory[ENEMY_HORIZONTAL_DIST] < 260 );
+		lcsUsableWeapon = BotFirstUsableFrontWeapon( &bs->cur_ps );
+		if ( lcsUsableWeapon > WP_GAUNTLET
+				&& lcsUsableWeapon < RWP_SMOKE
+				&& bs->inventory[INVENTORY_HEALTH] >= 62 ) {
+			return qtrue;
+		}
 		if ( lcsRemainingOpponents <= 2 && lcsRelativePosition > 0.45f && closeOpportunity &&
 			lcsThreatProximity > 0.52f && BotAggression(bs) >= aggressionThreshold ) {
 			return qtrue;
 		}
-		return qfalse;
+		// Q3Rally Fix: Nicht hartes qfalse – Bots mit ausreichend Aggression kämpfen auch
+		// in anderen Situationen, sodass sie die Startwaffe tatsächlich einsetzen.
+		// Bot_LcsShouldAvoidBattleEntry filtert gefahrenreiche Engagements weiterhin heraus.
 	}
 	//
 	if (BotAggression(bs) > 50)
@@ -3181,6 +3245,84 @@ int BotHasPersistantPowerupAndWeapon(bot_state_t *bs) {
 	//if the bot can use the plasmagun
 	if (bs->inventory[INVENTORY_PLASMAGUN] > 0 &&
 			bs->inventory[INVENTORY_CELLS] > 20) return qtrue;
+	return qfalse;
+}
+
+/*
+==================
+BotNeedsCombatSupplies
+==================
+*/
+static qboolean BotIsRallyCombatMode( void ) {
+	switch ( gametype ) {
+		case GT_RACING:
+		case GT_RACING_DM:
+		case GT_SINGLE_PLAYER:
+		case GT_DERBY:
+		case GT_ELIMINATION:
+		case GT_SPRINT:
+		case GT_TEAM_RACING:
+		case GT_TEAM_RACING_DM:
+			return qfalse;
+		default:
+			break;
+	}
+	return qtrue;
+}
+
+int BotNeedsCombatSupplies(bot_state_t *bs) {
+	int weapon;
+	int hasStrongWeapon;
+
+	if ( !bs ) {
+		return qfalse;
+	}
+	if ( !BotIsRallyCombatMode() ) {
+		return qfalse;
+	}
+
+	weapon = BotFirstUsableFrontWeapon( &bs->cur_ps );
+	if ( weapon <= WP_GAUNTLET || weapon >= RWP_SMOKE ) {
+		return qtrue;
+	}
+
+	hasStrongWeapon = qfalse;
+	if ( bs->inventory[INVENTORY_BFG10K] > 0 && bs->inventory[INVENTORY_BFGAMMO] > 2 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_RAILGUN] > 0 && bs->inventory[INVENTORY_SLUGS] > 2 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 && bs->inventory[INVENTORY_ROCKETS] > 2 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_GRENADELAUNCHER] > 0 && bs->inventory[INVENTORY_GRENADES] > 3 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_LIGHTNING] > 0 && bs->inventory[INVENTORY_LIGHTNINGAMMO] > 18 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_PLASMAGUN] > 0 && bs->inventory[INVENTORY_CELLS] > 18 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_FLAMETHROWER] > 0 && bs->inventory[INVENTORY_FLAMETHROWERAMMO] > 18 ) hasStrongWeapon = qtrue;
+	if ( bs->inventory[INVENTORY_SHOTGUN] > 0 && bs->inventory[INVENTORY_SHELLS] > 4 ) hasStrongWeapon = qtrue;
+
+	if ( !hasStrongWeapon && bs->inventory[INVENTORY_BULLETS] < 45 ) {
+		return qtrue;
+	}
+
+	switch ( bs->cur_ps.weapon ) {
+		case WP_MACHINEGUN:
+			return bs->inventory[INVENTORY_BULLETS] < 20;
+		case WP_SHOTGUN:
+			return bs->inventory[INVENTORY_SHELLS] <= 2;
+		case WP_GRENADE_LAUNCHER:
+			return bs->inventory[INVENTORY_GRENADES] <= 2;
+		case WP_ROCKET_LAUNCHER:
+			return bs->inventory[INVENTORY_ROCKETS] <= 2;
+		case WP_LIGHTNING:
+			return bs->inventory[INVENTORY_LIGHTNINGAMMO] <= 12;
+		case WP_RAILGUN:
+			return bs->inventory[INVENTORY_SLUGS] <= 2;
+		case WP_PLASMAGUN:
+			return bs->inventory[INVENTORY_CELLS] <= 12;
+		case WP_BFG:
+			return bs->inventory[INVENTORY_BFGAMMO] <= 2;
+		case WP_FLAME_THROWER:
+			return bs->inventory[INVENTORY_FLAMETHROWERAMMO] <= 12;
+		default:
+			break;
+	}
+
 	return qfalse;
 }
 
@@ -3364,6 +3506,169 @@ void BotRoamGoal(bot_state_t *bs, vec3_t goal) {
 BotAttackMove
 ==================
 */
+#define RALLY_COMBAT_APPROACH		0
+#define RALLY_COMBAT_FIRE			1
+#define RALLY_COMBAT_BREAKAWAY		2
+#define RALLY_COMBAT_TURNAROUND		3
+
+static qboolean BotUseRallyCombatMovement( bot_state_t *bs ) {
+	if ( !bs ) {
+		return qfalse;
+	}
+	if ( !BotIsRallyCombatMode() ) {
+		return qfalse;
+	}
+	if ( bs->cur_ps.pm_type != PM_NORMAL ) {
+		return qfalse;
+	}
+	return qtrue;
+}
+
+static void BotRallyCombatSetPhase( bot_state_t *bs, int phase ) {
+	if ( bs->rallyCombatPhase != phase ) {
+		bs->rallyCombatPhase = phase;
+		bs->rallyCombatPhaseTime = FloatTime();
+	}
+}
+
+static void BotRallyCombatSteerTowardYaw( bot_state_t *bs, float targetYaw, qboolean reverseSteer ) {
+	float yawDelta;
+
+	yawDelta = AngleSubtract( targetYaw, bs->cur_ps.viewangles[YAW] );
+	if ( reverseSteer ) {
+		yawDelta = -yawDelta;
+	}
+	if ( yawDelta > 6.0f ) {
+		trap_EA_MoveRight( bs->entitynum );
+	} else if ( yawDelta < -6.0f ) {
+		trap_EA_MoveLeft( bs->entitynum );
+	}
+}
+
+static bot_moveresult_t BotRallyCombatMove( bot_state_t *bs, int tfl ) {
+	aas_entityinfo_t entinfo;
+	bot_moveresult_t moveresult;
+	vec3_t toEnemy;
+	vec3_t flatToEnemy;
+	vec3_t angles;
+	vec3_t moveDelta;
+	float dist;
+	float yawToEnemy;
+	float yawDelta;
+	float phaseAge;
+	float speed;
+	float movedSq;
+	qboolean enemyVisible;
+
+	memset( &moveresult, 0, sizeof( bot_moveresult_t ) );
+	(void)tfl;
+
+	if ( bs->enemy < 0 ) {
+		return moveresult;
+	}
+
+	BotEntityInfo( bs->enemy, &entinfo );
+	if ( !entinfo.valid ) {
+		return moveresult;
+	}
+
+	if ( bs->rallyCombatEnemy != bs->enemy || bs->rallyCombatPhaseTime <= 0.0f ) {
+		bs->rallyCombatEnemy = bs->enemy;
+		bs->rallyCombatPhase = RALLY_COMBAT_APPROACH;
+		bs->rallyCombatPhaseTime = FloatTime();
+		bs->rallyCombatTurnDir = random() < 0.5f ? -1 : 1;
+		bs->rallyCombatLastHitCount = bs->cur_ps.persistant[PERS_HITS];
+		bs->rallyCombatLastHitTime = FloatTime();
+		VectorCopy( bs->cur_ps.origin, bs->rallyCombatLastMoveOrigin );
+		bs->rallyCombatLastMoveSampleTime = FloatTime();
+	}
+	if ( bs->rallyCombatTurnDir == 0 ) {
+		bs->rallyCombatTurnDir = random() < 0.5f ? -1 : 1;
+	}
+
+	if ( bs->cur_ps.persistant[PERS_HITS] > bs->rallyCombatLastHitCount ) {
+		bs->rallyCombatLastHitCount = bs->cur_ps.persistant[PERS_HITS];
+		bs->rallyCombatLastHitTime = FloatTime();
+	}
+
+	VectorSubtract( entinfo.origin, bs->origin, toEnemy );
+	VectorCopy( toEnemy, flatToEnemy );
+	flatToEnemy[2] = 0.0f;
+	dist = VectorNormalize( flatToEnemy );
+	vectoangles( flatToEnemy, angles );
+	yawToEnemy = angles[YAW];
+	yawDelta = fabs( AngleSubtract( yawToEnemy, bs->cur_ps.viewangles[YAW] ) );
+	phaseAge = FloatTime() - bs->rallyCombatPhaseTime;
+	speed = VectorLength( bs->cur_ps.velocity );
+	enemyVisible = BotEntityVisible( bs->entitynum, bs->eye, bs->cur_ps.viewangles, 120, bs->enemy ) > 0.0f;
+
+	if ( bs->rallyCombatLastMoveSampleTime <= 0.0f ||
+			FloatTime() - bs->rallyCombatLastMoveSampleTime > 0.75f ) {
+		VectorSubtract( bs->cur_ps.origin, bs->rallyCombatLastMoveOrigin, moveDelta );
+		movedSq = VectorLengthSquared( moveDelta );
+		if ( bs->rallyCombatLastMoveSampleTime > 0.0f && movedSq < Square( 90 ) && speed < 120.0f ) {
+			bs->rallyCombatTurnDir = -bs->rallyCombatTurnDir;
+			BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+		}
+		VectorCopy( bs->cur_ps.origin, bs->rallyCombatLastMoveOrigin );
+		bs->rallyCombatLastMoveSampleTime = FloatTime();
+	}
+
+	if ( !enemyVisible && bs->rallyCombatPhase == RALLY_COMBAT_FIRE ) {
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_TURNAROUND );
+	}
+	if ( dist < 180.0f && bs->rallyCombatPhase != RALLY_COMBAT_BREAKAWAY ) {
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+	}
+	if ( FloatTime() - bs->rallyCombatLastHitTime > 3.2f &&
+			bs->rallyCombatPhase == RALLY_COMBAT_FIRE ) {
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+	}
+	phaseAge = FloatTime() - bs->rallyCombatPhaseTime;
+
+	switch ( bs->rallyCombatPhase ) {
+		case RALLY_COMBAT_FIRE:
+			BotRallyCombatSteerTowardYaw( bs, yawToEnemy, qfalse );
+			if ( dist < 260.0f ) {
+				trap_EA_MoveBack( bs->entitynum );
+			} else {
+				trap_EA_MoveForward( bs->entitynum );
+			}
+			if ( phaseAge > 1.45f || yawDelta > 70.0f ) {
+				BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+			}
+			break;
+		case RALLY_COMBAT_BREAKAWAY:
+			angles[YAW] = AngleNormalize360( yawToEnemy + bs->rallyCombatTurnDir * 125.0f );
+			BotRallyCombatSteerTowardYaw( bs, angles[YAW], qfalse );
+			trap_EA_MoveForward( bs->entitynum );
+			if ( phaseAge > 1.05f || dist > 620.0f ) {
+				BotRallyCombatSetPhase( bs, RALLY_COMBAT_TURNAROUND );
+			}
+			break;
+		case RALLY_COMBAT_TURNAROUND:
+			BotRallyCombatSteerTowardYaw( bs, yawToEnemy, qfalse );
+			trap_EA_MoveForward( bs->entitynum );
+			if ( ( enemyVisible && yawDelta < 42.0f ) || phaseAge > 1.8f ) {
+				BotRallyCombatSetPhase( bs, RALLY_COMBAT_APPROACH );
+			}
+			break;
+		case RALLY_COMBAT_APPROACH:
+		default:
+			BotRallyCombatSteerTowardYaw( bs, yawToEnemy, qfalse );
+			trap_EA_MoveForward( bs->entitynum );
+			if ( enemyVisible && dist < 760.0f && yawDelta < 44.0f ) {
+				BotRallyCombatSetPhase( bs, RALLY_COMBAT_FIRE );
+			}
+			if ( dist < 230.0f ) {
+				BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+			}
+			break;
+	}
+
+	return moveresult;
+}
+
 bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 	int movetype, i, attackentity;
 	float attack_skill, jumper, croucher, dist, strafechange_time;
@@ -3374,6 +3679,9 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 	bot_goal_t goal;
 
 	attackentity = bs->enemy;
+	if ( BotUseRallyCombatMovement( bs ) ) {
+		return BotRallyCombatMove( bs, tfl );
+	}
 	//
 	if (bs->attackchase_time > FloatTime()) {
 		//create the chase goal
@@ -4399,10 +4707,13 @@ void BotCheckAttack(bot_state_t *bs) {
 		fov = 50;
 	//
 	vectoangles(dir, angles);
-// STONELANCE
-//	if (!InFieldOfVision(bs->viewangles, fov, angles))
-	if (!InFieldOfVision(bs->cur_ps.viewangles, fov, angles))
-// END
+	if ( gametype == GT_LCS ) {
+		angles[PITCH] = bs->viewangles[PITCH];
+		if ( fov < 90 ) {
+			fov = 90;
+		}
+	}
+	if (!InFieldOfVision(bs->viewangles, fov, angles))
 		return;
 	BotAI_Trace(&bsptrace, bs->eye, NULL, NULL, bs->aimtarget, bs->client, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
 	if (bsptrace.fraction < 1 && bsptrace.ent != attackentity)
@@ -4413,10 +4724,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	//get the start point shooting from
 	VectorCopy(bs->origin, start);
 	start[2] += bs->cur_ps.viewheight;
-// STONELANCE
-//	AngleVectors(bs->viewangles, forward, right, NULL);
-	AngleVectors(bs->cur_ps.viewangles, forward, right, NULL);
-// END
+	AngleVectors(bs->viewangles, forward, right, NULL);
 	start[0] += forward[0] * wi.offset[0] + right[0] * wi.offset[1];
 	start[1] += forward[1] * wi.offset[0] + right[1] * wi.offset[1];
 	start[2] += forward[2] * wi.offset[0] + right[2] * wi.offset[1] + wi.offset[2];
@@ -5309,7 +5617,7 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 // STONELANCE
 		// try backing up first
 		VectorInverse(hordir);
-		Com_Printf("attempting to backup\n");
+		if (bot_developer.integer) Com_Printf("attempting to backup\n");
 		trap_EA_MoveBack( bs->entitynum );
 // END
 		if (!trap_BotMoveInDirection(bs->ms, sideward, 400, movetype)) {

@@ -109,6 +109,8 @@ extern	float CP_GEAR_RATIOS[];
 //#define	CP_SNOW_KCOF		0.5f
 #define CP_SAND_SCOF        0.75f
 #define CP_SAND_KCOF        0.6f
+#define	CP_METAL_SCOF		1.1f		// dry metal (road plates, bridges)
+#define	CP_METAL_KCOF		0.75f		// notably less kinetic grip than asphalt; very slippery when wet
 #define	CP_OIL_SCOF			0.3f		// oil
 #define	CP_OIL_KCOF			0.2f
 

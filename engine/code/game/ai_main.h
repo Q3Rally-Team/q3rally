@@ -198,6 +198,14 @@ typedef struct bot_state_s
 	float attackcrouch_time;						//time the bot will stop crouching
 	float attackchase_time;							//time the bot chases during actual attack
 	float attackjump_time;							//time the bot jumped during attack
+	int rallyCombatPhase;							//current rally vehicle attack phase
+	int rallyCombatTurnDir;							//preferred breakaway/turnaround direction
+	int rallyCombatEnemy;							//enemy this combat phase belongs to
+	int rallyCombatLastHitCount;					//hit count sampled for combat phase changes
+	float rallyCombatPhaseTime;						//time the current rally combat phase started
+	float rallyCombatLastHitTime;					//last time the bot scored a hit in vehicle combat
+	float rallyCombatLastMoveSampleTime;			//last movement sample time for combat stall checks
+	vec3_t rallyCombatLastMoveOrigin;				//last movement sample origin for combat stall checks
 	float enemysight_time;							//time before reacting to enemy
 	float enemydeath_time;							//time the enemy died
 	float enemyposition_time;						//time the position and velocity of the enemy were stored

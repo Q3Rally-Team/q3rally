@@ -262,7 +262,6 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 		if ( cg.scores[i].scoreFlags < 0 ) continue;
 
 		cent = &cg_entities[cg.scores[i].client];
-		if ( !cent ) continue;
 
 		CG_FillRect( x, y, 120, 16, bgColor );
 

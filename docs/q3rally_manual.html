@@ -3,173 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Q3Rally Manual — v0.7c</title>
+<title>Manual — It's Damn Fast, Baby. — Q3Rally</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-:root {
-  color-scheme: dark;
-  --bg:             radial-gradient(1200px 800px at 50% 0%, rgba(255,255,255,0.07), #05050c 60%);
-  --surface:        rgba(18,21,33,0.72);
-  --surface-strong: rgba(28,31,46,0.94);
-  --surface-hover:  rgba(35,40,60,0.85);
-  --border:         rgba(255,255,255,0.10);
-  --border-strong:  rgba(255,255,255,0.18);
-  --text:           #F5F6FF;
-  --text-muted:     #8b90b0;
-  --accent:         #5D8BFF;
-  --accent-soft:    rgba(93,139,255,0.15);
-  --accent-border:  rgba(93,139,255,0.40);
-  --gold:           #f0a500;
-  --green:          #34d399;
-  --red:            #f87171;
-}
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500&family=Share+Tech+Mono&display=swap');
+:root{--orange:#FF5500;--orange-dim:#cc4400;--black:#0a0a0a;--dark:#111111;--dark2:#181818;--white:#ffffff;--gray:#888888;--gray-light:#bbbbbb;--stripe:repeating-linear-gradient(-45deg,transparent 0px,transparent 9px,rgba(255,255,255,0.028) 9px,rgba(255,255,255,0.028) 10px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);background-color:#05050c;color:var(--text);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;font-weight:400;line-height:1.65;min-height:100vh}
-
-header{padding:36px 48px 32px;border-bottom:1px solid var(--border);background:rgba(10,12,22,0.6);backdrop-filter:blur(20px)}
-.header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px}
-.header-logo{font-size:26px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
-.header-logo span{color:var(--accent)}
-.header-sub{font-size:13px;color:var(--text-muted);font-style:italic}
-.header-meta{margin-left:auto}
-.badge{display:inline-flex;align-items:center;padding:3px 12px 4px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-
-.tab-nav{position:sticky;top:0;z-index:100;background:rgba(10,12,22,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.tab-nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
-.tab-nav-inner::-webkit-scrollbar{display:none}
-.tab-btn{display:flex;align-items:center;gap:6px;padding:14px 14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
-
-main{max-width:1200px;margin:0 auto;padding:40px 48px 96px}
+body{background:var(--black);color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;font-weight:400;line-height:1.65;min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+header{background:rgba(10,10,10,0.97);border-bottom:1px solid #1e1e1e;padding:0 40px;height:64px;display:flex;align-items:center;gap:20px;backdrop-filter:blur(8px);position:sticky;top:0;z-index:100}
+.header-logo{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase;flex-shrink:0}
+.header-logo span{color:var(--orange)}
+.header-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--gray);letter-spacing:0.12em;text-transform:uppercase;padding-left:20px;border-left:1px solid #333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-meta{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border:1px solid #333;color:var(--gray-light)}
+.badge.orange{border-color:var(--orange);color:var(--orange);background:rgba(255,85,0,0.05)}
+.badge.green{border-color:#2a4a2a;color:#5a9a5a;background:rgba(52,153,52,0.05)}
+.badge.blue{border-color:#1a2a4a;color:#5577bb;background:rgba(85,119,187,0.05)}
+.tab-nav{background:var(--dark2);border-bottom:1px solid #1e1e1e;display:flex;padding:0 40px;overflow-x:auto;scrollbar-width:none;position:sticky;top:64px;z-index:99}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);padding:14px 20px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;white-space:nowrap}
+.tab-btn:hover{color:var(--white)}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+main{max-width:1160px;margin:0 auto;padding:48px 40px 96px}
 .tab-panel{display:none}
-.tab-panel.active{display:block;animation:fadeUp .2s ease}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-.section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px}
-.section-eyebrow:first-child{margin-top:0}
-h2{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--text);margin-bottom:18px}
-h3{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-p{color:var(--text-muted);margin-bottom:14px;font-size:13px}
-
-.callout{border-left:3px solid var(--accent);background:var(--surface-strong);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0 24px;font-size:12.5px;color:var(--text-muted)}
-.callout.green{border-color:var(--green)}
-.callout.gold{border-color:var(--gold)}
-.callout.red{border-color:var(--red)}
-.callout strong{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
-.callout.green strong{color:var(--green)}
-.callout.gold strong{color:var(--gold)}
-.callout.red strong{color:var(--red)}
-
-.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);background:rgba(10,15,26,.75);margin:14px 0 28px}
-table{width:100%;border-collapse:collapse;min-width:480px}
-thead{background:rgba(255,255,255,.04);border-bottom:1px solid var(--border-strong)}
-thead th{padding:11px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
-tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+.tab-panel.active{display:block;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.eyebrow,.section-eyebrow{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--orange);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;margin-top:48px}
+.eyebrow:first-child,.section-eyebrow:first-child{margin-top:0}
+h2{font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:900;text-transform:uppercase;letter-spacing:0.02em;line-height:1;margin-bottom:20px}
+h3{font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);margin:36px 0 16px;padding-bottom:8px;border-bottom:1px solid #1a1a1a}
+h4{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--white);margin:16px 0 8px}
+p{color:var(--gray-light);margin-bottom:14px;font-size:14px;line-height:1.7}
+ul,ol{color:var(--gray-light);font-size:14px;padding-left:20px;margin-bottom:14px}
+li{margin-bottom:5px;line-height:1.65}
+.callout{border-left:3px solid var(--orange);background:#111;padding:14px 18px;margin:16px 0 28px;font-size:13px;color:var(--gray-light)}
+.callout.green{border-color:#3a7a3a}
+.callout.gold{border-color:#b87800}
+.callout.red{border-color:#7a3a3a}
+.callout.orange{border-color:var(--orange)}
+.callout strong{display:block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--orange);margin-bottom:5px}
+.callout.green strong{color:#5a9a5a}
+.callout.gold strong{color:#b87800}
+.callout.red strong{color:#9a5a5a}
+.callout.orange strong{color:var(--orange)}
+.table-wrap{overflow-x:auto;border:1px solid #1a1a1a;margin:16px 0 32px}
+table{width:100%;border-collapse:collapse;min-width:400px}
+thead{background:#111;border-bottom:1px solid #222}
+thead th{padding:10px 16px;text-align:left;font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);white-space:nowrap}
+tbody tr{border-bottom:1px solid #111;transition:background 0.1s}
 tbody tr:last-child{border-bottom:none}
-tbody tr:hover{background:rgba(255,255,255,.025)}
-td{padding:11px 16px;vertical-align:top;font-size:13px;line-height:1.5;color:var(--text-muted)}
-td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
-
-.mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:14px 0 32px}
-.mode-card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;transition:border-color .15s,background .15s}
-.mode-card:hover{border-color:var(--accent-border);background:var(--surface-hover)}
-.mode-num{display:inline-flex;align-items:center;padding:2px 10px 3px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:10px}
-.mode-num.team{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.35);color:var(--green)}
-.mode-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.01em;margin-bottom:3px}
-.mode-tag{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
-.mode-desc{font-size:12.5px;color:var(--text-muted);line-height:1.6}
-
-.vehicle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:14px 0 28px}
-.vehicle-card{background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:18px 20px;transition:border-color .15s,background .15s}
-.vehicle-card:hover{border-color:var(--accent-border);background:var(--surface-hover)}
-.vehicle-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
-.vehicle-sub{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-.vehicle-desc{font-size:12px;color:var(--text-muted);line-height:1.55}
-
-.cvar-group-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);padding:6px 0 10px;border-bottom:1px solid rgba(240,165,0,.2);margin:28px 0 0}
-.cvar-table{width:100%;border-collapse:collapse;margin-bottom:6px}
-.cvar-table td{padding:8px 14px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:top}
+tbody tr:hover{background:rgba(255,255,255,0.02)}
+td{padding:11px 16px;vertical-align:top;font-size:13px;line-height:1.5;color:var(--gray-light)}
+td:first-child{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--white);white-space:nowrap}
+code{font-family:'Share Tech Mono',monospace;font-size:12px;background:rgba(255,85,0,0.07);color:#ff8844;padding:1px 6px;border:1px solid rgba(255,85,0,0.15)}
+pre{background:#080808;border:1px solid #1a1a1a;border-left:3px solid var(--orange);padding:18px 20px;overflow-x:auto;margin:14px 0 24px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.7;color:var(--gray-light)}
+.status-chip{display:inline-flex;align-items:center;padding:2px 10px 3px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #2a2a2a;color:var(--gray)}
+.status-chip.done{border-color:#2a4a2a;color:#5a9a5a;background:rgba(52,153,52,0.05)}
+.status-chip.planned{border-color:#1a2a4a;color:#5577bb;background:rgba(85,119,187,0.05)}
+.status-chip.wip{border-color:rgba(255,85,0,0.3);color:var(--orange);background:rgba(255,85,0,0.05)}
+.status-chip.open{border-color:#4a2a2a;color:#9a5a5a;background:rgba(153,52,52,0.05)}
+.card{background:#111;border:1px solid #1e1e1e;padding:20px 24px;margin-bottom:8px;position:relative;transition:border-color 0.15s}
+.card:hover{border-color:#333}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card-desc{font-size:13px;color:var(--gray-light);line-height:1.65}
+.card-desc p{font-size:13px;margin-bottom:8px}
+.card-desc p:last-child{margin-bottom:0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 28px}
+.pill-list{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 24px}
+.pill{display:inline-block;padding:3px 10px 4px;background:#111;border:1px solid #222;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gray)}
+.pill.high{border-color:rgba(255,85,0,0.35);color:var(--orange)}
+.pill.mid{border-color:rgba(52,153,52,0.3);color:#5a9a5a}
+.pill.atm{border-color:rgba(184,120,0,0.3);color:#b87800}
+.pill.perf{border-color:rgba(85,119,187,0.3);color:#5577bb}
+.pill.debug{border-color:#222;color:#555}
+.cvar-group-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--orange);padding:8px 0 12px;border-bottom:1px solid rgba(255,85,0,0.2);margin:32px 0 0}
+.cvar-table{width:100%;border-collapse:collapse;margin-bottom:8px}
+.cvar-table td{padding:9px 14px;border-bottom:1px solid #111;font-size:13px;vertical-align:top}
 .cvar-table tr:last-child td{border-bottom:none}
-.cvar-table tr:hover td{background:rgba(255,255,255,.02)}
-.cvar-name{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:600;color:#7eb3ff;white-space:nowrap;width:220px}
-.cvar-default{color:var(--gold);font-size:12px;font-family:monospace;width:80px;text-align:center;white-space:nowrap}
-.cvar-desc{color:var(--text-muted)}
-
-code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:11.5px;background:rgba(93,139,255,.1);color:#7eb3ff;padding:1px 6px;border-radius:4px;border:1px solid rgba(93,139,255,.2)}
-pre{background:rgba(5,8,18,.9);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:16px 18px;overflow-x:auto;margin:14px 0 22px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:var(--text-muted)}
-
-.changed{color:var(--gold);font-weight:600}
-.same{color:var(--text-muted)}
-.new-val{color:var(--green);font-weight:600}
-.bad-val{color:var(--red)}
-
-.flow-steps{display:flex;flex-direction:column;gap:0;margin:16px 0 24px}
-.flow-step{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);position:relative}
+.cvar-table tr:hover td{background:rgba(255,255,255,0.015)}
+.cvar-name{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:600;color:#ff8844;white-space:nowrap;width:220px}
+.cvar-default{color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:11px;width:80px;text-align:center;white-space:nowrap}
+.cvar-desc{color:var(--gray-light);font-size:13px}
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px;margin:14px 0 32px}
+.mode-card{background:#111;border:1px solid #1a1a1a;padding:18px 20px;transition:border-color 0.15s,background 0.15s}
+.mode-card:hover{border-color:#333;background:#131313}
+.mode-num{display:inline-flex;align-items:center;padding:2px 8px 3px;border:1px solid rgba(255,85,0,0.3);color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.12em;margin-bottom:10px}
+.mode-num.team{border-color:rgba(52,153,52,0.3);color:#5a9a5a}
+.mode-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:3px}
+.mode-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px}
+.mode-desc{font-size:13px;color:var(--gray-light);line-height:1.6}
+.vehicle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px;margin:14px 0 28px}
+.vehicle-card{background:#111;border:1px solid #1a1a1a;padding:16px 18px;transition:border-color 0.15s}
+.vehicle-card:hover{border-color:#333}
+.vehicle-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;margin-bottom:2px}
+.vehicle-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--orange);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px}
+.vehicle-desc{font-size:12px;color:var(--gray);line-height:1.55}
+.flow-steps{display:flex;flex-direction:column;gap:0;margin:16px 0 28px}
+.flow-step{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #111}
 .flow-step:last-child{border-bottom:none}
-.flow-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.flow-num{flex-shrink:0;width:28px;height:28px;border:1px solid var(--orange);color:var(--orange);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.flow-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--white);margin-bottom:4px}
+.flow-desc{font-size:13px;color:var(--gray-light);line-height:1.55}
 .flow-content{}
-.flow-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
-.flow-desc{font-size:12.5px;color:var(--text-muted);line-height:1.55}
+.info-box{background:#111;border:1px solid #1e1e1e;padding:16px 18px}
+.info-box h4{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-bottom:8px}
+.info-box p{font-size:13px;margin-bottom:0}
+.changed{color:#b87800;font-weight:600}
+.same{color:var(--gray)}
+.new-val{color:#5a9a5a;font-weight:600}
+.bad-val{color:#9a5a5a}
+footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-brand{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:0.05em;text-transform:uppercase}
+.footer-brand span{color:var(--orange)}
+.footer-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--gray);letter-spacing:0.12em;text-transform:uppercase;display:flex;gap:20px;align-items:center}
+.footer-meta a{color:var(--orange);transition:color 0.15s}
+.footer-meta a:hover{color:var(--white)}
+@media(max-width:768px){header{padding:0 16px}.tab-nav{padding:0 16px}main{padding:32px 16px 64px}footer{padding:20px 16px;flex-direction:column;align-items:flex-start}.two-col{grid-template-columns:1fr}.mode-grid,.vehicle-grid{grid-template-columns:1fr}h2{font-size:32px}}
 
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:14px 0 24px}
-@media(max-width:700px){.two-col{grid-template-columns:1fr}}
-
-.info-box{background:var(--surface-strong);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
-.info-box h4{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
-.info-box p{font-size:12.5px;margin-bottom:0}
-
-footer{border-top:1px solid var(--border);padding:20px 48px;text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase}
-footer a{color:var(--accent);text-decoration:none}
-footer a:hover{color:#fff}
-
-@media(max-width:700px){
-  header,main,footer{padding-left:20px;padding-right:20px}
-  .tab-nav-inner{padding:0 20px}
-  .mode-grid,.vehicle-grid{grid-template-columns:1fr}
-}
-
-/* ── BUILDING TAB extras ── */
-.eyebrow { font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;margin-top:40px }
-.eyebrow:first-child { margin-top:0 }
-ul,ol { color:var(--text-muted);font-size:13px;padding-left:20px;margin-bottom:14px }
-li { margin-bottom:4px;line-height:1.6 }
-.card { background:var(--surface-strong);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px;transition:border-color .15s }
-.card:hover { border-color:var(--accent-border) }
-.card-title { font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap }
-.card-desc { font-size:12.5px;color:var(--text-muted);line-height:1.6 }
-.card-desc p { font-size:12.5px;margin-bottom:8px }
-.card-desc p:last-child { margin-bottom:0 }
-.status-chip { display:inline-flex;align-items:center;padding:2px 10px 3px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase }
-.status-chip.done { background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:var(--green) }
-.status-chip.planned { background:rgba(93,139,255,.12);border:1px solid var(--accent-border);color:var(--accent) }
-.status-chip.open { background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:var(--red) }
 </style>
 </head>
 <body>
-
 <header>
-  <div class="header-inner">
-    <div class="header-logo">Q3<span>Rally</span></div>
-    <div class="header-sub">It's damn fast, baby.</div>
-    <div class="header-meta"><span class="badge">v0.7c</span></div>
-  </div>
+  <div class="header-logo">Q3<span>Rally</span></div>
+  <div class="header-sub">Manual — It's Damn Fast, Baby.</div>
+  <div class="header-meta"><span class="badge">v0.7d</span></div>
 </header>
 
 <nav class="tab-nav">
   <div class="tab-nav-inner">
-    <button class="tab-btn active" onclick="switchTab('modes')" data-tab="modes"><span>🏁</span> Game Modes</button>
-    <button class="tab-btn" onclick="switchTab('maps')" data-tab="maps"><span>🗺️</span> Map Pool</button>
-    <button class="tab-btn" onclick="switchTab('vehicles')" data-tab="vehicles"><span>🚗</span> Vehicles</button>
-    <button class="tab-btn" onclick="switchTab('weapons')" data-tab="weapons"><span>🔫</span> Weapons</button>
-    <button class="tab-btn" onclick="switchTab('server')" data-tab="server"><span>🖥️</span> Server</button>
-    <button class="tab-btn" onclick="switchTab('ladder')" data-tab="ladder"><span>🏆</span> Ladder</button>
-    <button class="tab-btn" onclick="switchTab('cvars')" data-tab="cvars"><span>⚙️</span> CVars</button>
-    <button class="tab-btn" onclick="switchTab('mapping')" data-tab="mapping"><span>🔧</span> Mapping</button>
-    <button class="tab-btn" onclick="switchTab('bots')" data-tab="bots"><span>🤖</span> Bots</button>
-    <button class="tab-btn" onclick="switchTab('building')" data-tab="building"><span>🔨</span> Building</button>
+    <button class="tab-btn active" onclick="switchTab('modes')" data-tab="modes">Game Modes</button>
+    <button class="tab-btn" onclick="switchTab('maps')" data-tab="maps">Map Pool</button>
+    <button class="tab-btn" onclick="switchTab('vehicles')" data-tab="vehicles">Vehicles</button>
+    <button class="tab-btn" onclick="switchTab('weapons')" data-tab="weapons">Weapons</button>
+    <button class="tab-btn" onclick="switchTab('server')" data-tab="server">Server</button>
+    <button class="tab-btn" onclick="switchTab('ladder')" data-tab="ladder">Ladder</button>
+    <button class="tab-btn" onclick="switchTab('cvars')" data-tab="cvars">CVars</button>
+    <button class="tab-btn" onclick="switchTab('mapping')" data-tab="mapping">Mapping</button>
+    <button class="tab-btn" onclick="switchTab('bots')" data-tab="bots">Bots</button>
+    <button class="tab-btn" onclick="switchTab('building')" data-tab="building">Building</button>
   </div>
 </nav>
 
@@ -829,78 +802,9 @@ elimination "1"</pre>
 
   <div class="callout green"><strong>Primary System</strong>bot_path_node is the recommended way to add bot support to a map. It requires no ghost recordings, is fully controllable from the editor, and works out of the box on any map that has the entities placed.</div>
 
-  <h3>bot_path_node &mdash; Primary System</h3>
-  <p>bot_path_node defines an ordered sequence of waypoints placed directly in the map editor. Bots follow these nodes in sequence, loop back to node 0 after the last node, and use a dynamic lookahead to smooth their path. No ghost recordings are needed.</p>
-
-  <div class="table-wrap"><table>
-    <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td>pathId</td><td>0</td><td>Route identifier. All nodes with the same <code>pathId</code> form one route. Multiple routes per map are supported.</td></tr>
-      <tr><td>order</td><td>&mdash;</td><td>Sequence index within its route. Must be unique per <code>pathId</code>. Nodes are sorted by this value at load time.</td></tr>
-      <tr><td>width</td><td>500</td><td>Usable track width at this node in units. The bot steers within this corridor.</td></tr>
-      <tr><td>targetSpeed</td><td>-1</td><td>Target speed override in units/s. <code>-1</code> = auto-speed (recommended for most nodes).</td></tr>
-    </tbody>
-  </table></div>
-
-  <div class="callout"><strong>Placement Tips</strong>Place nodes at the apex of each corner and at regular intervals on straights. Use wider values on straights and narrower values in technical sections. The bot interpolates smoothly between nodes so coverage of key track features matters more than density.</div>
-
-  <h3>How bot_path_node Navigation Works</h3>
-  <div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Step</th><th>Details</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Node selection</td><td>Each tick the bot finds the closest forward node within a hint window around the last known node index.</td></tr>
-      <tr><td>2</td><td>Dynamic lookahead</td><td>A lookahead point is projected ahead by a distance proportional to current speed (400 + speed &times; 0.35 units). The bot steers toward this point.</td></tr>
-      <tr><td>3</td><td>Width clamping</td><td>The lateral offset is clamped to the node&apos;s <code>width</code> so the bot stays on the road even when recovering from a slide.</td></tr>
-      <tr><td>4</td><td>Lap wrap</td><td>After the last node the bot resets to node 0 and continues the next lap.</td></tr>
-      <tr><td>5</td><td>Stuck recovery</td><td>If speed drops below 50 u/s for 1.5 s the bot reverses briefly, resets its lateral offset, and rejoins the route.</td></tr>
-    </tbody>
-  </table></div>
-
-  <h3>Ghost Bot System &mdash; Fallback</h3>
-  <p>When a map has no bot_path_nodes, bots fall back to the Ghost Bot system. Ghost bots replay the fastest recorded lap for the current track variant and follow those waypoints with adaptive speed and collision awareness.</p>
-
-  <div class="callout gold"><strong>Fallback Only</strong>The Ghost Bot system activates automatically when no bot_path_nodes are found. If bot_path_nodes are present, Ghost Bot is not used regardless of whether ghost files exist.</div>
-
-  <div class="table-wrap"><table>
-    <thead><tr><th>Feature</th><th>bot_path_node</th><th>Ghost Bot</th></tr></thead>
-    <tbody>
-      <tr><td>Setup required</td><td>Place entities in editor</td><td>Record a ghost lap in-game</td></tr>
-      <tr><td>Quality</td><td>Consistent, editor-controlled</td><td>Mirrors the recorded human run</td></tr>
-      <tr><td>Track variants</td><td>One node set covers all variants</td><td>Separate ghost file per variant needed</td></tr>
-      <tr><td>Priority</td><td><strong>Primary</strong></td><td>Fallback (no bot_path_nodes present)</td></tr>
-      <tr><td>Fuel consumption</td><td>10% of normal rate</td><td>10% of normal rate</td></tr>
-    </tbody>
-  </table></div>
-
-  <h3>Recording Ghost Files</h3>
-  <p>Drive a clean lap and save the ghost. The server picks the fastest file per track variant automatically. File naming follows the pattern <code>mapname_tl{N}_rev{0|1}_date.ghost</code>. Variant selection is based on the current <code>g_trackLength</code> and <code>g_trackReversed</code> cvars.</p>
-  <div class="callout"><strong>Ghost File Location</strong>Ghost files are stored in <code>baseq3r/ghosts/</code>. The server loads all matching files on map start and builds a route pool from the top-5 fastest per track variant.</div>
-
-  <h3>Fuel Behaviour</h3>
-  <p>Both bot systems consume fuel at 10% of the normal rate. Bots effectively never run out of fuel during a normal race. The reduction is applied server-side after each physics tick and has no effect on human players.</p>
-
-  <h3>Debug Export</h3>
-  <p>Set <code>g_aiDmnetDebugExport 2</code> and <code>g_aiDmnetDebugExportPath "logs/ai_dmnet_debug.jsonl"</code> to record a JSONL tick stream for analysis.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Field</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td>pathId</td><td><code>-1</code> = Ghost Bot active &nbsp;|&nbsp; <code>0+</code> = bot_path_node route index.</td></tr>
-      <tr><td>nodeIndex</td><td>Current closest node or waypoint index.</td></tr>
-      <tr><td>actualSpeed / targetSpeed</td><td>Current vs desired speed in units/s.</td></tr>
-      <tr><td>recoveryState</td><td><code>none</code>, <code>stuck_detect</code>, <code>reverse_unwind</code>, <code>rejoin_route</code>, <code>emergency_reset</code>.</td></tr>
-      <tr><td>collisionRisk</td><td><code>1</code> = predicted conflict with another vehicle within ~90 units ahead.</td></tr>
-      <tr><td>routeDeviation</td><td>Distance from bot to current node center. Use to verify the bot is on-route.</td></tr>
-    </tbody>
-  </table></div>
-</section>
-
-<!-- =============== BOTS =============== -->
-<section class="tab-panel" id="tab-bots">
-  <div class="section-eyebrow">AI &amp; Bot Navigation</div>
-  <h2>Racing Bot Systems</h2>
-  <p>Q3Rally uses two bot navigation systems that work in tandem. <strong>bot_path_node</strong> is the primary system and is set up directly in the map editor. The <strong>Ghost Bot</strong> system acts as an automatic fallback when no bot_path_nodes are present.</p>
-
-  <div class="callout green"><strong>Primary System</strong>bot_path_node is the recommended way to add bot support to a map. It requires no ghost recordings, is fully controllable from the editor, and works out of the box on any map that has the entities placed.</div>
+  <h3>Combat Bot Behaviour</h3>
+  <p>In combat-focused non-racing modes, bots actively chase, aim, and fire front weapons. Their attack movement can break off, reverse direction, and re-engage instead of endlessly circling an opponent.</p>
+  <div class="callout green"><strong>v0.7d Combat Update</strong>Bots now look for weapons and ammunition when their current weapon is weak or empty. They first check nearby items, then fall back to a long-term weapon/ammo goal on larger maps. Flag and cube carriers keep their objective duties. Elimination is excluded from this combat logic because it is treated as a race/survival mode.</div>
 
   <h3>bot_path_node &mdash; Primary System</h3>
   <p>bot_path_node defines an ordered sequence of waypoints placed directly in the map editor. Bots follow these nodes in sequence, loop back to node 0 after the last node, and use a dynamic lookahead to smooth their path. No ghost recordings are needed.</p>
@@ -1077,11 +981,12 @@ docker run --rm -it -p 27960:27960/udp \
 </main>
 
 <footer>
-  Q3Rally v0.7c &nbsp;·&nbsp;
-  <a href="http://www.q3rally.com">q3rally.com</a> &nbsp;·&nbsp;
-  <a href="https://discord.gg/rX8Sxmh">Discord</a> &nbsp;·&nbsp;
-  <a href="https://www.moddb.com/games/q3rally">ModDB</a> &nbsp;·&nbsp;
-  Source: GPLv2 or later
+  <div class="footer-brand">Q3<span>Rally</span></div>
+  <div class="footer-meta">
+    <span>Q3Rally Manual · v0.7d</span>
+    <a href="https://www.q3rally.com">q3rally.com</a>
+    <a href="https://discord.gg/rX8Sxmh">Discord</a>
+  </div>
 </footer>
 
 <script>

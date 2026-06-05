@@ -622,13 +622,17 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             if (ci->team == TEAM_SPECTATOR) {
                 Com_sprintf(buffer, sizeof(buffer), "SPEC");
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
-            } else if (isRacingMode && score->position > 0) {
+            } else if (isRacingMode &&
+                       cgs.gametype != GT_DERBY && cgs.gametype != GT_LCS &&
+                       score->position > 0) {
+                /* Pure racing modes: use STAT_POSITION set by server */
                 Com_sprintf(buffer, sizeof(buffer), "%d", score->position);
                 CG_GetRankColor(score->position, rankColor);
                 rankColor[3] = fade;
-                CG_DrawModernText(x, y, buffer, 1, width, rankColor, 
+                CG_DrawModernText(x, y, buffer, 1, width, rankColor,
                                  (score->position <= 3) ? qtrue : qfalse);
-            } else if (!isRacingMode && rank > 0) {
+            } else if (rank > 0) {
+                /* Derby, LCS, and all non-racing modes: use sorted rank from server */
                 Com_sprintf(buffer, sizeof(buffer), "%d", rank);
                 CG_GetRankColor(rank, rankColor);
                 rankColor[3] = fade;
@@ -674,7 +678,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             } else {
-                /* Use damageDealt as damage indicator for Q3Rally */
+                /* Show damageTaken (damage received by this player) */
                 Com_sprintf(buffer, sizeof(buffer), "%d", score->damageTaken);
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             }
@@ -1282,6 +1286,7 @@ void CG_DrawScoreboardGameModeInfo(void) {
         case GT_TEAM_RACING:      gametypeName = "Team Racing"; break;
         case GT_TEAM_RACING_DM:   gametypeName = "Team Racing DM"; break;
         case GT_CTF:              gametypeName = "Capture The Flag"; break;
+        case GT_CTF4:             gametypeName = "4-Team CTF"; break;
         case GT_DOMINATION:       gametypeName = "Domination"; break;
         case GT_KOTH:              gametypeName = "King of the Hill"; break; /* Q3Rally KOTH */
         default:                  gametypeName = "Unknown"; break;

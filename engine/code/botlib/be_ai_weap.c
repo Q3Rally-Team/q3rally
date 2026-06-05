@@ -134,7 +134,7 @@ extern int g_gametype;
 // Q3Rally specific game type not defined in botlib headers.
 // Keep this value aligned with gametype_t in game/bg_public.h.
 #ifndef GT_DERBY
-#define GT_DERBY 4
+#define GT_DERBY 3
 #endif
 
 //========================================================================
@@ -151,7 +151,10 @@ int BotValidWeaponNumber(int weaponnum)
         }
         if (weaponnum <= 0 || weaponnum > weaponconfig->numweapons)
         {
-                botimport.Print(PRT_ERROR, "weapon number out of range\n");
+                if (weaponnum > 0)
+                {
+                        botimport.Print(PRT_ERROR, "weapon number out of range\n");
+                } //end if
                 return qfalse;
         } //end if
 	return qtrue;

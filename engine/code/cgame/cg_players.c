@@ -3099,7 +3099,12 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 			shader = cgs.media.SMDirtShader;
 			colorIndex = 1;
 		}
+		else if (tr.surfaceFlags & SURF_METAL){
+			shader = cgs.media.SMAsphaltShader;
+			colorIndex = 2;
+		}
 		else {
+			// default: asphalt (also covers SURF_ASPHALT)
 			shader = cgs.media.SMAsphaltShader;
 			colorIndex = 2;
 		}
@@ -3110,7 +3115,10 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 
 			// create smoke even if we arent moving because the car is being stopped from moving
 			if ( cent->smokeTime[tireNum] < cg.time ) {
-				if ( tr.surfaceFlags & SURF_DUST ) {
+				if ( tr.surfaceFlags & SURF_WET ) {
+					// wet surface: spray instead of smoke — fast, small, bluish-white, short-lived
+					CreateSmokeCloudEntity(tr.endpos, up, 22, 8, 400, 0.75f, 0.85f, 0.95f, 0.65f, cgs.media.snowPuffShader);
+				} else if ( tr.surfaceFlags & SURF_DUST ) {
 					CreateSmokeCloudEntity(tr.endpos, up, 20, 48, 2000, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], surfaceColors[colorIndex][3], cgs.media.smokePuffShader);
 				} else if ( tr.surfaceFlags & SURF_ICE ) {
 					CreateSmokeCloudEntity(tr.endpos, up, 10, 8, 500, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], 0.6f, cgs.media.snowPuffShader);
@@ -3143,10 +3151,31 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				cent->smokeTime[tireNum] = cg.time + 100;
 			}
 		}
+		else if ( tr.surfaceFlags & SURF_DIRT ){
+			// lighter passive dust than SURF_DUST — compacted dirt kicks up less
+			if ( VectorLength(delta) > 8 && cent->smokeTime[tireNum] < cg.time ){
+				CreateSmokeCloudEntity( tr.endpos, up, 14, 24, 1200, surfaceColors[colorIndex][0] * 1.2f, surfaceColors[colorIndex][1] * 1.2f, surfaceColors[colorIndex][2] * 1.2f, 0.6f, cgs.media.dustPuffShader);
+				cent->smokeTime[tireNum] = cg.time + 150;
+			}
+		}
+		else if ( tr.surfaceFlags & SURF_GRAVEL ){
+			// very light dust on gravel at speed
+			if ( VectorLength(delta) > 10 && cent->smokeTime[tireNum] < cg.time ){
+				CreateSmokeCloudEntity( tr.endpos, up, 10, 16, 800, surfaceColors[colorIndex][0] * 1.1f, surfaceColors[colorIndex][1] * 1.1f, surfaceColors[colorIndex][2] * 1.1f, 0.4f, cgs.media.dustPuffShader);
+				cent->smokeTime[tireNum] = cg.time + 200;
+			}
+		}
 		else if ( tr.surfaceFlags & SURF_ICE ){
 			if ( VectorLength(delta) > 5 && cent->smokeTime[tireNum] < cg.time ){
 				CreateSmokeCloudEntity( tr.endpos, up, 10, 8, 500, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], 0.6f, cgs.media.snowPuffShader);
 				cent->smokeTime[tireNum] = cg.time + 100;
+			}
+		}
+		else if ( tr.surfaceFlags & SURF_WET ){
+			// fine spray mist from rolling tire on wet road
+			if ( VectorLength(delta) > 8 && cent->smokeTime[tireNum] < cg.time ){
+				CreateSmokeCloudEntity( tr.endpos, up, 18, 6, 350, 0.75f, 0.85f, 0.95f, 0.4f, cgs.media.snowPuffShader);
+				cent->smokeTime[tireNum] = cg.time + 80;
 			}
 		}
 	}

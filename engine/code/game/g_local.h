@@ -1247,6 +1247,9 @@ extern	vmCvar_t	car_body_elasticity;
 extern	vmCvar_t	car_air_cof;
 extern	vmCvar_t	car_air_frac_to_df;
 extern	vmCvar_t	car_friction_scale;
+
+extern	vmCvar_t	g_carImpactTransfer;
+extern	vmCvar_t	g_carImpactElasticity;
 // END
 
 void	trap_Print( const char *text );

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+================================================================================
+Q3Rally Custom Surface Flags
+================================================================================
+
+PURPOSE
+  Defines the Q3Rally-specific SURF_* flags that extend the standard Quake 3
+  surface flag set. These flags control per-surface vehicle physics and visual
+  particle effects at runtime.
+
+HOW FLAGS REACH THE BSP
+  Two paths — both are OR'd together by q3map2:
+
+  1. Via shader declaration (automatic, texture-wide):
+       textures/q3r/terrain_grass01
+       {
+           surfaceparm grass       // maps to SURF_GRASS via custinfoparms.txt
+           surfaceparm wet         // combine for wet grass physics
+           { map textures/q3r/terrain_grass01.tga }
+       }
+     Requires: q3map2 compiled with -custinfoparms <path>/custinfoparms.txt
+
+  2. Via editor face flags (manual, per-face override):
+     Type the hex value directly in the Surface Inspector "Value" field,
+     or — if Q3RallyRadiant is updated to support it — use checkboxes.
+
+RADIANT INTEGRATION
+  Standard GtkRadiant / NetRadiant:
+    Surface flag checkboxes are hardcoded in the quake3 game plugin source.
+    To add Q3Rally flags as checkboxes, patch the plugin source and add the
+    entries from the <surfaceflags> block below to the flag definition array.
+    See: plugins/games/quake3.game (or equivalent in your Radiant source tree).
+
+  NetRadiant-Custom:
+    Place this file in the game pack and reference it from q3rally.game:
+      surfaceflags="q3rally_surfaceflags"
+    The <surfaceflags> block will be parsed and shown as checkboxes in the
+    Surface Inspector automatically.
+
+PHYSICS REFERENCE (bg_physics.c / PM_CheckSurfaceFlags)
+  Priority order when multiple flags are set (highest wins):
+    SLICK / ICE > SNOW > SAND > GRASS > GRAVEL > DIRT > METAL > ASPHALT(default)
+  WET is a modifier: applied after the base type, multiplies friction by 0.75.
+
+VISUAL REFERENCE (cg_players.c / CG_SurfaceEffects)
+  GRASS   -> grass skidmark shader, standard smoke on skid
+  ASPHALT -> asphalt skidmark shader, standard smoke on skid
+  WET     -> spray effect (bluish-white) on skid; passive mist when rolling
+  SNOW    -> snow skidmark shader, standard smoke on skid
+  GRAVEL  -> dirt skidmark shader; passive light dust when rolling
+  ICE     -> ice skidmark shader, ice crystal particles
+  DIRT    -> dirt skidmark shader; passive dust when rolling
+  METAL   -> asphalt skidmark shader, standard smoke on skid
+  SAND    -> sand skidmark shader, standard smoke on skid
+================================================================================
+-->
+
+<surfaceflags>
+
+  <!-- =========================================================
+       Q3Rally custom surface type flags
+       ========================================================= -->
+
+  <!-- NOTE: Values match q3rally.game surf20-surf28 (editor bit positions 20-28).
+       Bit 19 (0x80000) is unused – the quake3 editor plugin uses surf0-surf18 internally. -->
+
+  <surfaceflag
+    name        = "GRASS"
+    value       = "0x00100000"
+    description = "Grass surface. Moderate grip (scof=1.05, kcof=0.70). Light dust particles when rolling. Reduces to 0.75x when combined with WET."
+  />
+
+  <surfaceflag
+    name        = "ASPHALT"
+    value       = "0x00200000"
+    description = "Asphalt / tarmac road. Full grip (scof=1.50, kcof=1.00). This is also the engine default when no surface flag is set."
+  />
+
+  <surfaceflag
+    name        = "WET"
+    value       = "0x00400000"
+    description = "Wet surface modifier. Multiplies friction coefficients by 0.75. Replaces skid smoke with water spray. Adds passive spray mist. Combine with a base surface type (e.g. ASPHALT+WET, METAL+WET)."
+  />
+
+  <surfaceflag
+    name        = "SNOW"
+    value       = "0x00800000"
+    description = "Packed snow. Reduced grip (scof=0.40, kcof=0.27). Snow skidmark shader."
+  />
+
+  <surfaceflag
+    name        = "GRAVEL"
+    value       = "0x01000000"
+    description = "Gravel. Moderate grip (scof=1.22, kcof=0.85). Light passive dust cloud when rolling. Dirt skidmark shader."
+  />
+
+  <surfaceflag
+    name        = "ICE"
+    value       = "0x02000000"
+    description = "Ice. Very low grip (scof=0.30, kcof=0.20). Ice crystal particle effect. Treated as SLICK for skidmark purposes."
+  />
+
+  <surfaceflag
+    name        = "DIRT"
+    value       = "0x04000000"
+    description = "Compacted dirt / earth road. Moderate grip (scof=1.20, kcof=0.80). Medium passive dust cloud when rolling. Dirt skidmark shader."
+  />
+
+  <surfaceflag
+    name        = "METAL"
+    value       = "0x08000000"
+    description = "Metal road plates / bridges. Good grip dry (scof=1.10, kcof=0.75), but notably worse when combined with WET. Asphalt skidmark shader."
+  />
+
+  <surfaceflag
+    name        = "SAND"
+    value       = "0x10000000"
+    description = "Loose sand. Reduced grip (scof=0.75, kcof=0.60). Sand skidmark shader."
+  />
+
+</surfaceflags>

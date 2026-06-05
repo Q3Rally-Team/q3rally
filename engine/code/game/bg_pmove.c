@@ -2584,8 +2584,12 @@ void PmoveSingle (pmove_t *pmove) {
 	// set mins, maxs, and viewheight
 // STONELANCE
 //	PM_CheckDuck ();
-	VectorSet(pm->mins, -CAR_WIDTH/2, -CAR_WIDTH/2, -CAR_WIDTH/2);
-	VectorSet(pm->maxs, CAR_WIDTH/2, CAR_WIDTH/2, CAR_WIDTH/2);
+	/* Match the server-side g_client.c playerMins/Maxs: lateral and forward
+	 * coverage from CAR_WIDTH (subdivided into front/rear sub-bounds outside
+	 * pmove), vertical coverage from CAR_HEIGHT so pmove tracing doesn't
+	 * report collisions for empty space above/below the car. */
+	VectorSet(pm->mins, -CAR_WIDTH/2, -CAR_WIDTH/2, -CAR_HEIGHT/2);
+	VectorSet(pm->maxs, CAR_WIDTH/2, CAR_WIDTH/2, CAR_HEIGHT/2);
 	pm->ps->viewheight = 0;
 // END
 

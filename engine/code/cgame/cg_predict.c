@@ -1037,7 +1037,7 @@ void CG_PredictPlayerState( void ) {
 				// a teleport will not cause an error decay
 				VectorClear( cg.predictedError );
 				if ( cg_showmiss.integer ) {
-					CG_Printf( "PredictionTeleport\n" );
+					if (cg_developer.integer) CG_Printf( "PredictionTeleport\n" );
 				}
 				cg.thisFrameTeleport = qfalse;
 			} else {
@@ -1058,7 +1058,7 @@ void CG_PredictPlayerState( void ) {
 				len = VectorLength( delta );
 				if ( len > 0.1 ) {
 					if ( cg_showmiss.integer ) {
-						CG_Printf("Prediction miss: %f\n", len);
+						if (cg_developer.integer) CG_Printf("Prediction miss: %f\n", len);
 					}
 					if ( cg_errorDecay.integer ) {
 						int		t;
@@ -1070,7 +1070,7 @@ void CG_PredictPlayerState( void ) {
 							f = 0;
 						}
 						if ( f > 0 && cg_showmiss.integer ) {
-							CG_Printf("Double prediction decay: %f\n", f);
+							if (cg_developer.integer) CG_Printf("Double prediction decay: %f\n", f);
 						}
 						VectorScale( cg.predictedError, f, cg.predictedError );
 					} else {
@@ -1082,7 +1082,7 @@ void CG_PredictPlayerState( void ) {
 // Q3Rally Code Start
 					if ( cg_showmiss.integer ) {
 						len = VectorLength( cg.predictedError );
-						CG_Printf("Total predictedError: %f\n", len );
+						if (cg_developer.integer) CG_Printf("Total predictedError: %f\n", len );
 					}
 // END
 				}
@@ -1128,7 +1128,7 @@ void CG_PredictPlayerState( void ) {
 // END
 
 	if ( cg_showmiss.integer > 1 ) {
-		CG_Printf( "[%i : %i] ", cg_pmove.cmd.serverTime, cg.time );
+		if (cg_developer.integer) CG_Printf( "[%i : %i] ", cg_pmove.cmd.serverTime, cg.time );
 	}
 
 	if ( !moved ) {
@@ -1145,7 +1145,7 @@ void CG_PredictPlayerState( void ) {
 
 	if ( cg_showmiss.integer ) {
 		if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
-			CG_Printf("WARNING: dropped event\n");
+			if (cg_developer.integer) CG_Printf("WARNING: dropped event\n");
 		}
 	}
 

@@ -6,14 +6,18 @@
 }
 
 //custom SURF_ flags
+// NOTE: Values match q3rally.game surf20-surf28 (bit 20-28).
+// Bit 19 (0x80000) is unused – the editor plugin reserves surf0-surf18 internally.
 {
   SURF_SLICK   0x2
-  SURF_GRASS   0x80000
-  SURF_ASPHALT 0x100000
-  SURF_WET     0x200000
-  SURF_SNOW    0x400000
-  SURF_GRAVEL  0x800000
-  SURF_ICE     0x1000000
-  SURF_DIRT    0x2000000
+  SURF_GRASS   0x100000
+  SURF_ASPHALT 0x200000
+  SURF_WET     0x400000
+  SURF_SNOW    0x800000
+  SURF_GRAVEL  0x1000000
+  SURF_ICE     0x2000000
+  SURF_DIRT    0x4000000
+  SURF_METAL   0x8000000
+  SURF_SAND    0x10000000
 }
 

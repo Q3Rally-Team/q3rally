@@ -74,14 +74,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	SURF_ALPHASHADOW		0x10000	// do per-pixel light shadow casting in q3map
 #define	SURF_NODLIGHT			0x20000	// don't dlight even if solid (solid lava, skies)
 #define SURF_DUST				0x40000 // leave a dust trail when walking on this surface
-#define SURF_GRASS				0x80000
-#define SURF_ASPHALT			0x100000
-#define SURF_WET				0x200000
-#define SURF_SNOW				0x400000
-#define SURF_GRAVEL				0x800000
-#define SURF_ICE                0x1000000
-#define SURF_DIRT               0x2000000
-#define SURF_METAL              0x4000000
-#define SURF_SAND               0x8000000
+// Q3Rally custom surface flags.
+// Bit 19 (0x80000) is intentionally unused – the editor (q3rally.game) assigns
+// custom flags starting at surf20 (bit 20 = 0x100000) to avoid a conflict with
+// the quake3 game plugin's internal surf0–surf18 range.
+#define SURF_GRASS				0x100000	// surf20
+#define SURF_ASPHALT			0x200000	// surf21
+#define SURF_WET				0x400000	// surf22
+#define SURF_SNOW				0x800000	// surf23
+#define SURF_GRAVEL				0x1000000	// surf24
+#define SURF_ICE                0x2000000	// surf25
+#define SURF_DIRT               0x4000000	// surf26
+#define SURF_METAL              0x8000000	// surf27
+#define SURF_SAND               0x10000000	// surf28
 
 

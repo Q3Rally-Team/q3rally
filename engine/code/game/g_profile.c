@@ -96,12 +96,17 @@ static qboolean G_Profile_IsOnlineSession( const gclient_t *client ) {
 }
 
 static qboolean G_Profile_IsRacingGametype( void ) {
+    /* GT_DERBY and GT_LCS are combat modes that happen to use racing
+       infrastructure; they are intentionally excluded here so that
+       kill/death profile stats are recorded in those modes. */
     switch ( g_gametype.integer ) {
     case GT_RACING:
     case GT_RACING_DM:
     case GT_SPRINT:
     case GT_TEAM_RACING:
     case GT_TEAM_RACING_DM:
+    case GT_ELIMINATION:     /* racing with elimination still a race */
+    case GT_SINGLE_PLAYER:   /* single-player time trial */
         return qtrue;
     default:
         break;
@@ -1767,15 +1772,26 @@ void G_Profile_RecordKill( gclient_t *attacker, gclient_t *victim ) {
     s_profileState.stats.kills++;
     s_profileState.dirty = qtrue;
 
-    /* Modi-spezifische Kill-Zähler */
+    /* Modi-spezifische Kill-Zähler.
+       Mapping: FFA/combat modes → dmKills, Derby-style → derbyKills,
+       team-based modes → teamKills. */
     switch ( g_gametype.integer ) {
     case GT_DEATHMATCH:
+    case GT_RACING_DM:       /* racing DM variant — FFA combat */
+    case GT_ELIMINATION:     /* racing with elimination — FFA combat */
         s_profileState.stats.dmKills++;
         break;
     case GT_DERBY:
+    case GT_LCS:             /* Last Car Standing — Derby-style combat */
         s_profileState.stats.derbyKills++;
         break;
     case GT_TEAM:
+    case GT_TEAM_RACING:     /* team racing with weapons */
+    case GT_TEAM_RACING_DM:  /* team racing DM variant */
+    case GT_CTF:
+    case GT_CTF4:
+    case GT_KOTH:
+    case GT_DOMINATION:
         s_profileState.stats.teamKills++;
         break;
     default:

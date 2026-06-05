@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "../qcommon/q_shared.h"
-#ifdef GAME
+#ifdef QAGAME
 #include "g_local.h"
 #else
 //#include "../cgame/cg_local.h"
@@ -657,6 +657,16 @@ void PM_AddRoadForces(car_t *car, carBody_t *body, carPoint_t *points, float sec
 		}
 
 		PM_GroundFrictionForces(car, points, i, forward, right, up, sec);
+	}
+
+	// Open differential: if either rear wheel slips, both slip.
+	// Without a locking/limited-slip diff, one rear wheel losing traction
+	// while the other grips is physically correct but looks wrong visually
+	// (skid marks only on one side). Equalising the slip flag gives the
+	// expected twin-track skid-mark behaviour at no physics cost.
+	if (points[RL_WHEEL].slipping || points[RR_WHEEL].slipping) {
+		points[RL_WHEEL].slipping = qtrue;
+		points[RR_WHEEL].slipping = qtrue;
 	}
 
 	// calculate net forces

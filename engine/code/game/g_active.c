@@ -1496,10 +1496,25 @@ void ClientThink_real( gentity_t *ent ) {
         pm.car_air_cof = car_air_cof.value;
         pm.car_air_frac_to_df = car_air_frac_to_df.value;
         pm.car_friction_scale = car_friction_scale.value;
+        pm.car_impact_transfer = g_carImpactTransfer.value;
+        pm.car_impact_elasticity = g_carImpactElasticity.value;
         pm.useFuel = g_useFuel.integer ? qtrue : qfalse;
 // END
 
         VectorCopy( client->ps.origin, client->oldOrigin );
+
+	/* Unlink our own front/rear sub-hitboxes before running pmove. They
+	 * are separate entities (FL_EXTRA_BBOX) sitting at our LAST frame's
+	 * origin, and pmove's pass-entity filter (pm->ps->clientNum) only
+	 * skips the main player entity, not its sub-bounds. Without this
+	 * unlink the car would trace into its own front/rear bound from the
+	 * previous frame and get clipped as if it were a wall — particularly
+	 * noticeable when accelerating from standstill. They will be re-linked
+	 * at the new origin a few lines below this Pmove call. */
+	if ( ent->frontBounds )
+		trap_UnlinkEntity( ent->frontBounds );
+	if ( ent->rearBounds )
+		trap_UnlinkEntity( ent->rearBounds );
 
 	/* snapshot fuel before Pmove for bot refund */
 	{

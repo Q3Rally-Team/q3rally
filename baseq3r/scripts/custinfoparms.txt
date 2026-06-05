@@ -6,16 +6,17 @@
 }
 
 //custom SURF_ flags
+// Values must match engine/code/qcommon/surfaceflags.h and tools/gamepacks/games/q3rally.game
 {
   SURF_SLICK   0x2
-  SURF_GRASS   0x80000
-  SURF_ASPHALT 0x100000
-  SURF_WET     0x200000
-  SURF_SNOW    0x400000
-  SURF_GRAVEL  0x800000
-  SURF_ICE     0x1000000
-  SURF_DIRT    0x2000000
-  SURF_METAL   0x4000000
-  SURF_SAND    0x8000000
+  SURF_GRASS   0x100000
+  SURF_ASPHALT 0x200000
+  SURF_WET     0x400000
+  SURF_SNOW    0x800000
+  SURF_GRAVEL  0x1000000
+  SURF_ICE     0x2000000
+  SURF_DIRT    0x4000000
+  SURF_METAL   0x8000000
+  SURF_SAND    0x10000000
 }
 

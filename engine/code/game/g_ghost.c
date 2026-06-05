@@ -660,8 +660,11 @@ void G_Ghost_InitForMap( const char *mapname ) {
                 }
                 trap_FS_FCloseFile( f );
 
-                if ( G_Ghost_ParseHeader( s_ghostFileBuffer, mapname, trackLength, trackReversed, qfalse, &s_levelGhosts[s_levelGhostCount] ) ) {
-                    parsedRecord = s_levelGhosts[s_levelGhostCount];
+                /* Parse into the local record, not into s_levelGhosts[s_levelGhostCount]
+                   directly: if s_levelGhostCount has reached MAX_GHOST_RECORDS_PER_MAP
+                   the direct array write would be one element past the end of the array.
+                   G_Ghost_AddRecordTop5PerVariant handles the bounds check internally. */
+                if ( G_Ghost_ParseHeader( s_ghostFileBuffer, mapname, trackLength, trackReversed, qfalse, &parsedRecord ) ) {
                     Q_strncpyz( parsedRecord.path, va( "%s/%s", ghostDir, filename ), sizeof( parsedRecord.path ) );
                     G_Ghost_AddRecordTop5PerVariant( &parsedRecord );
                 }

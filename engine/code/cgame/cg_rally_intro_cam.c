@@ -209,7 +209,7 @@ void CG_IntroCam_ParseConfigstring( void ) {
 	s_totalDurationMs = totalMs;
 	s_hasSequence     = qtrue;
 
-	CG_Printf( "CG_IntroCam: %d nodes, %d ms\n", s_nodeCount, s_totalDurationMs );
+	if (cg_developer.integer) CG_Printf( "CG_IntroCam: %d nodes, %d ms\n", s_nodeCount, s_totalDurationMs );
 }
 
 /* ------------------------------------------------------------------ */
@@ -224,7 +224,7 @@ so serverTime is used directly as the elapsed-time base.
 */
 void CG_IntroCam_SetStartTime( int serverTime ) {
 	s_startTime = serverTime;
-	CG_Printf( "CG_IntroCam: startTime=%d cg.time=%d\n", s_startTime, cg.time );
+	if (cg_developer.integer) CG_Printf( "CG_IntroCam: startTime=%d cg.time=%d\n", s_startTime, cg.time );
 }
 
 /* ------------------------------------------------------------------ */

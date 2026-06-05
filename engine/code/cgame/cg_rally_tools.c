@@ -610,12 +610,6 @@ int GetTeamAtRank(int rank){
 		return -1;
 	}
 
-	// Guard against invalid rank values to prevent out-of-bounds array access.
-	// rank is 1-based; ranks[] has 4 entries, so valid range is [1, 4].
-	if ( rank < 1 || rank > 4 ) {
-		return -1;
-	}
-
 	if (cgs.gametype == GT_CTF && rank > 2){
 		return -1;
 	}
@@ -630,6 +624,12 @@ qboolean TiedWinner( void ){
 
 	tied = qfalse;
 	winner = GetTeamAtRank(1) - TEAM_RED;
+	/* GetTeamAtRank() returns -1 for invalid/empty teams.  Subtracting
+	   TEAM_RED (1) gives winner=-2, making cg.teamTimes[-2] an out-of-
+	   bounds read.  Return qfalse (no tie) when there is no valid leader. */
+	if ( winner < 0 || winner >= 4 ) {
+		return qfalse;
+	}
 	for (i = 0; i < 4; i++){
 		if (i == winner) continue;
 		if (!TeamCount(-1, TEAM_RED + i)) continue;
@@ -950,7 +950,10 @@ void CG_CheckEliminationWarning( int playersRemaining ) {
 		myPos = cgs.clientinfo[clientNum].position;
 	}
 	if ( myPos <= 0 ) {
-		myPos = playersRemaining;
+		// Q3Rally Fix: Position unbekannt – kein Warning-Sound auslösen.
+		// Vorher fiel myPos auf playersRemaining zurück, was myPos == playersRemaining
+		// sofort als wahr auswertete und finallap.ogg beim ersten Frag spielte.
+		return;
 	}
 
 	if ( myPos == playersRemaining ) {

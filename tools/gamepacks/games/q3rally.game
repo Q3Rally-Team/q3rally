@@ -24,4 +24,16 @@
   entities="quake3"
   brushtypes="quake3"
   patchtypes="quake3"
+
+  surf20="GRASS"
+  surf21="ASPHALT"
+  surf22="WET"
+  surf23="SNOW"
+  surf24="GRAVEL"
+  surf25="ICE"
+  surf26="DIRT"
+  surf27="METAL"
+  surf28="SAND"
+
+  si_flags="1"
 />

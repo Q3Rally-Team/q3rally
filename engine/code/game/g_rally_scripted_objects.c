@@ -280,7 +280,7 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 }
 
 void G_ScriptedObject_Destroy( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ){
-	Com_Printf("Destroying scripted map object %s\n", self->classname);
+	if (g_developer.integer) Com_Printf("Destroying scripted map object %s\n", self->classname);
 
 	self->s.eFlags |= EF_DEAD;
 }

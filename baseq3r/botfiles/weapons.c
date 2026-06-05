@@ -188,7 +188,7 @@ damagetype			$evalint(IMPACT_DAMAGE|SPLASH_DAMAGE)
 weaponinfo
 {
 name				"Flame Thrower"
-number				WEAPONINDEX_BFG
+number				WEAPONINDEX_FLAME_THROWER
 projectile			"flamethrowerexpolision"
 numprojectiles			1
 speed				300

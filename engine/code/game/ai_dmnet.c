@@ -224,12 +224,8 @@ static qboolean Bot_LcsShouldAvoidBattleEntry( bot_state_t *bs, const char **rea
 			}
 			return qtrue;
 		}
-		if ( threatProximity > 0.45f && remainingOpponents > 1 ) {
-			if ( reasonOut ) {
-				*reasonOut = "lcs_avoid_cluster";
-			}
-			return qtrue;
-		}
+		// Q3Rally Fix: Proximity-Check entfernt – mit mehreren Gegnern in der Arena
+		// griff threatProximity > 0.45f praktisch immer, wodurch Bots NIE kämpften.
 		if ( remainingOpponents > 2 && relativePosition < 0.35f ) {
 			if ( reasonOut ) {
 				*reasonOut = "lcs_avoid_last_place_risk";
@@ -239,6 +235,16 @@ static qboolean Bot_LcsShouldAvoidBattleEntry( bot_state_t *bs, const char **rea
 	}
 
 	return qfalse;
+}
+
+static qboolean Bot_LcsShouldIgnoreFoundEnemy( bot_state_t *bs ) {
+	const char *lcsReason = NULL;
+
+	if ( !bs || gametype != GT_LCS ) {
+		return qfalse;
+	}
+
+	return ( !BotWantsToChase( bs ) || Bot_LcsShouldAvoidBattleEntry( bs, &lcsReason ) );
 }
 
 static qboolean Bot_LcsShouldBreakEngagement( bot_state_t *bs, const botCollisionRisk_t *risk, const char **triggerOut ) {
@@ -927,6 +933,9 @@ int BotNearbyGoal(bot_state_t *bs, int tfl, bot_goal_t *ltg, float range) {
 			range = 220;
 		}
 	}
+	if ( BotNeedsCombatSupplies( bs ) && range < 650 ) {
+		range = 650;
+	}
 	//
 	ret = trap_BotChooseNBGItem(bs->gs, bs->origin, bs->inventory, tfl, ltg, range);
 	/*
@@ -940,6 +949,89 @@ int BotNearbyGoal(bot_state_t *bs, int tfl, bot_goal_t *ltg, float range) {
 	}
     */
 	return ret;
+}
+
+static void Bot_BiasCombatSupplyInventory( bot_state_t *bs, int *inventory ) {
+	if ( !bs || !inventory ) {
+		return;
+	}
+
+	memcpy( inventory, bs->inventory, sizeof( bs->inventory ) );
+
+	if ( bs->inventory[INVENTORY_BULLETS] < 45 ) {
+		inventory[INVENTORY_BULLETS] = 20;
+	}
+	if ( bs->inventory[INVENTORY_SHOTGUN] > 0 && bs->inventory[INVENTORY_SHELLS] <= 4 ) {
+		inventory[INVENTORY_SHELLS] = 20;
+	}
+	if ( bs->inventory[INVENTORY_GRENADELAUNCHER] > 0 && bs->inventory[INVENTORY_GRENADES] <= 3 ) {
+		inventory[INVENTORY_GRENADES] = 20;
+	}
+	if ( bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 && bs->inventory[INVENTORY_ROCKETS] <= 3 ) {
+		inventory[INVENTORY_ROCKETS] = 20;
+	}
+	if ( bs->inventory[INVENTORY_PLASMAGUN] > 0 && bs->inventory[INVENTORY_CELLS] <= 18 ) {
+		inventory[INVENTORY_CELLS] = 20;
+	}
+	if ( bs->inventory[INVENTORY_LIGHTNING] > 0 && bs->inventory[INVENTORY_LIGHTNINGAMMO] <= 18 ) {
+		inventory[INVENTORY_LIGHTNINGAMMO] = 20;
+	}
+	if ( bs->inventory[INVENTORY_RAILGUN] > 0 && bs->inventory[INVENTORY_SLUGS] <= 3 ) {
+		inventory[INVENTORY_SLUGS] = 20;
+	}
+	if ( bs->inventory[INVENTORY_BFG10K] > 0 && bs->inventory[INVENTORY_BFGAMMO] <= 3 ) {
+		inventory[INVENTORY_BFGAMMO] = 20;
+	}
+	if ( bs->inventory[INVENTORY_FLAMETHROWER] > 0 && bs->inventory[INVENTORY_FLAMETHROWERAMMO] <= 18 ) {
+		inventory[INVENTORY_FLAMETHROWERAMMO] = 20;
+	}
+
+	inventory[INVENTORY_SHOTGUN] = 1;
+	inventory[INVENTORY_GRENADELAUNCHER] = 1;
+	inventory[INVENTORY_ROCKETLAUNCHER] = 1;
+	inventory[INVENTORY_LIGHTNING] = 1;
+	inventory[INVENTORY_RAILGUN] = 1;
+	inventory[INVENTORY_PLASMAGUN] = 1;
+	inventory[INVENTORY_BFG10K] = 1;
+	inventory[INVENTORY_FLAMETHROWER] = 1;
+}
+
+static qboolean BotStartCombatSupplyLongTermGoal( bot_state_t *bs, int tfl, const char *reason ) {
+	int supplyInventory[MAX_ITEMS];
+	bot_goal_t goal;
+
+	if ( !bs || !BotNeedsCombatSupplies( bs ) ) {
+		return qfalse;
+	}
+	if ( BotCTFCarryingFlag( bs )
+#ifdef MISSIONPACK
+		|| Bot1FCTFCarryingFlag( bs ) || BotHarvesterCarryingCubes( bs )
+#endif
+		) {
+		return qfalse;
+	}
+
+	Bot_BiasCombatSupplyInventory( bs, supplyInventory );
+	trap_BotEmptyGoalStack( bs->gs );
+	if ( !trap_BotChooseLTGItem( bs->gs, bs->origin, supplyInventory, tfl ) ) {
+		trap_BotResetAvoidGoals( bs->gs );
+		if ( !trap_BotChooseLTGItem( bs->gs, bs->origin, supplyInventory, tfl ) ) {
+			return qfalse;
+		}
+	}
+	if ( !trap_BotGetTopGoal( bs->gs, &goal ) ) {
+		return qfalse;
+	}
+
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = 0;
+	bs->ltgtype = LTG_GETITEM;
+	bs->teamgoal_time = FloatTime() + 35.0f;
+	bs->ltg_time = FloatTime() + 20.0f;
+	memcpy( &bs->teamgoal, &goal, sizeof( bot_goal_t ) );
+	AIEnter_Seek_LTG( bs, reason ? (char *)reason : "combat supplies" );
+	return qtrue;
 }
 
 /*
@@ -2680,7 +2772,17 @@ int AINode_Seek_NBG(bot_state_t *bs) {
 	if (moveresult.flags & MOVERESULT_MOVEMENTWEAPON) bs->weaponnum = moveresult.weapon;
 	//if there is an enemy
 	if (BotFindEnemy(bs, -1)) {
-		if (BotWantsToRetreat(bs)) {
+		if ( bs->ltgtype == LTG_GETITEM && BotNeedsCombatSupplies( bs ) &&
+				bs->teamgoal_time > FloatTime() ) {
+			// Keep moving to the supply goal instead of immediately re-entering
+			// the same fight with an empty or weak weapon.
+		}
+		else if ( Bot_LcsShouldIgnoreFoundEnemy( bs ) ) {
+			// LCS avoidance keeps the current item/route goal instead of
+			// bouncing through battle enter nodes back into this seek node.
+			bs->enemy = -1;
+		}
+		else if (BotWantsToRetreat(bs)) {
 			//keep the current long term goal and retreat
 			AIEnter_Battle_NBG(bs, "seek nbg: found enemy");
 		}
@@ -2713,6 +2815,120 @@ void AIEnter_Seek_LTG(bot_state_t *bs, char *s) {
 	}
 	bs->ainode = AINode_Seek_LTG;
 }
+
+// Q3Rally Code Start
+// Forward declaration: Bot_CheckForObstacles is defined later in this file.
+// The derby/LCS car-roam helpers below use it so cars steer around / brake for
+// walls instead of driving straight into the first obstacle.
+int Bot_CheckForObstacles( bot_state_t *bs, vec3_t angles, int throttleChange );
+
+/*
+==================
+Bot_IsCarBrawlMode
+
+Demolition derby and last-car-standing are arena car-combat modes that are NOT
+rally races, so their bots never enter AINode_MoveToNextCheckpoint (it is gated
+by isRallyRace()). They run in AINode_Seek_LTG instead, which is where the
+car-aware driving below has to be applied.
+==================
+*/
+static qboolean Bot_IsCarBrawlMode( void ) {
+	return ( gametype == GT_DERBY || gametype == GT_LCS ) ? qtrue : qfalse;
+}
+
+/*
+==================
+Bot_NearestOpponentOrigin
+
+World origin of the closest living opponent. Pure distance test, independent of
+AAS reachability, so it still works on large open arenas where the item-based
+long term goal finder returns nothing.
+==================
+*/
+static qboolean Bot_NearestOpponentOrigin( bot_state_t *bs, vec3_t out ) {
+	int i;
+	float bestDistSq = 1.0e18f;
+	qboolean found = qfalse;
+
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *other = &g_entities[i];
+		vec3_t toOther;
+		float distSq;
+
+		if ( i == bs->client ) {
+			continue;
+		}
+		if ( level.clients[i].pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR ) {
+			continue;
+		}
+		if ( !other->inuse || !other->client || other->health <= 0 ) {
+			continue;
+		}
+
+		VectorSubtract( other->client->ps.origin, bs->cur_ps.origin, toOther );
+		distSq = VectorLengthSquared( toOther );
+		if ( distSq < bestDistSq ) {
+			bestDistSq = distSq;
+			VectorCopy( other->client->ps.origin, out );
+			found = qtrue;
+		}
+	}
+
+	return found;
+}
+
+/*
+==================
+Bot_DerbyDriveToward
+
+Steers the car toward worldTarget and applies throttle, routing the heading
+through Bot_CheckForObstacles so the car brakes / swerves for walls instead of
+getting stuck on them.
+==================
+*/
+static void Bot_DerbyDriveToward( bot_state_t *bs, const vec3_t worldTarget ) {
+	vec3_t dir, angles;
+	int throttleChange;
+
+	VectorSubtract( worldTarget, bs->cur_ps.origin, dir );
+	dir[2] = 0.0f;
+	if ( VectorNormalize( dir ) < 0.001f ) {
+		AngleVectors( bs->cur_ps.viewangles, dir, NULL, NULL );
+		dir[2] = 0.0f;
+		VectorNormalize( dir );
+	}
+	vectoangles( dir, angles );
+
+	throttleChange = Bot_CheckForObstacles( bs, angles, 1 );
+	VectorCopy( angles, bs->ideal_viewangles );
+
+	if ( throttleChange > 0 ) {
+		trap_EA_MoveForward( bs->client );
+	} else if ( throttleChange < 0 ) {
+		trap_EA_MoveBack( bs->client );
+	}
+}
+
+/*
+==================
+Bot_DerbyRoamDrive
+
+No item long term goal exists (common on large open arenas). Instead of standing
+still, drive toward the nearest opponent, or wander with BotRoamGoal when alone.
+==================
+*/
+static void Bot_DerbyRoamDrive( bot_state_t *bs ) {
+	vec3_t target;
+
+	if ( !Bot_NearestOpponentOrigin( bs, target ) ) {
+		BotRoamGoal( bs, target );
+	}
+	Bot_DerbyDriveToward( bs, target );
+}
+// END
 
 /*
 ==================
@@ -2776,7 +2992,17 @@ int AINode_Seek_LTG(bot_state_t *bs)
 //	if (BotFindEnemy(bs, -1)) {
    if ( BotFindEnemy(bs, -1) && gametype != GT_RACING && gametype != GT_SPRINT && gametype != GT_TEAM_RACING ) {
 // END
-		if (BotWantsToRetreat(bs)) {
+		if ( bs->ltgtype == LTG_GETITEM && BotNeedsCombatSupplies( bs ) &&
+				bs->teamgoal_time > FloatTime() ) {
+			// Keep moving to the supply goal instead of immediately re-entering
+			// the same fight with an empty or weak weapon.
+		}
+		else if ( Bot_LcsShouldIgnoreFoundEnemy( bs ) ) {
+			// LCS avoidance keeps seeking the current long-term goal instead
+			// of entering battle only to immediately re-enter this node.
+			bs->enemy = -1;
+		}
+		else if (BotWantsToRetreat(bs)) {
 			//keep the current long term goal and retreat
 			AIEnter_Battle_Retreat(bs, "seek ltg: found enemy");
 			return qfalse;
@@ -2794,6 +3020,14 @@ int AINode_Seek_LTG(bot_state_t *bs)
 	BotTeamGoals(bs, qfalse);
 	//get the current long term goal
 	if (!BotLongTermGoal(bs, bs->tfl, qfalse, &goal)) {
+// Q3Rally Code Start
+		// Derby/LCS arenas frequently have no reachable item-based long term
+		// goal, which would otherwise leave the car standing still. Keep it
+		// moving (toward the nearest opponent) with car-aware avoidance.
+		if ( Bot_IsCarBrawlMode() ) {
+			Bot_DerbyRoamDrive( bs );
+		}
+// END
 		return qtrue;
 	}
 	//check for nearby goals periodicly
@@ -2858,7 +3092,11 @@ int AINode_Seek_LTG(bot_state_t *bs)
 	trap_BotMoveToGoal(&moveresult, bs->ms, &goal, bs->tfl);
 
 // Q3Rally Code Start
-	trap_EA_MoveForward( bs->entitynum );
+	// For car-brawl modes the throttle is issued at the end of the function
+	// (after the heading is resolved) so it can run through obstacle avoidance.
+	if ( !Bot_IsCarBrawlMode() ) {
+		trap_EA_MoveForward( bs->entitynum );
+	}
 
 //	Com_Printf( "bot %i moveresult: blocked %i, fail %i, view angle %f, movedir (%f %f %f)\n", moveresult.blocked, moveresult.failure, moveresult.ideal_viewangles[YAW], moveresult.movedir );
 // END
@@ -2904,6 +3142,24 @@ int AINode_Seek_LTG(bot_state_t *bs)
 		}
 		bs->ideal_viewangles[2] *= 0.5;
 	}
+// Q3Rally Code Start
+	// Apply car-aware throttle and wall avoidance for derby/LCS, using the
+	// heading the movement code just resolved into bs->ideal_viewangles. This
+	// is what keeps the car from driving straight into the first obstacle.
+	if ( Bot_IsCarBrawlMode() ) {
+		vec3_t carAngles;
+		int carThrottle;
+
+		VectorCopy( bs->ideal_viewangles, carAngles );
+		carThrottle = Bot_CheckForObstacles( bs, carAngles, 1 );
+		VectorCopy( carAngles, bs->ideal_viewangles );
+		if ( carThrottle > 0 ) {
+			trap_EA_MoveForward( bs->client );
+		} else if ( carThrottle < 0 ) {
+			trap_EA_MoveBack( bs->client );
+		}
+	}
+// END
 	//if the weapon is used for the bot movement
 	if (moveresult.flags & MOVERESULT_MOVEMENTWEAPON) bs->weaponnum = moveresult.weapon;
 	//
@@ -2960,6 +3216,8 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	vec3_t target;
 	aas_entityinfo_t entinfo;
 	bot_moveresult_t moveresult;
+	bot_goal_t supplyGoal;
+	float supplyRange;
 
 // Q3Rally Code Start
 //	Com_Printf( "bot %i in AINode_Battle_Fight\n", bs->client );
@@ -3089,6 +3347,25 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	//
 	if (BotCanAndWantsToRocketJump(bs)) {
 		bs->tfl |= TFL_ROCKETJUMP;
+	}
+	if ( BotNeedsCombatSupplies( bs ) && bs->check_time < FloatTime() ) {
+		bs->check_time = FloatTime() + 0.8f;
+		memset( &supplyGoal, 0, sizeof( supplyGoal ) );
+		supplyGoal.entitynum = bs->enemy;
+		supplyGoal.areanum = bs->lastenemyareanum;
+		VectorCopy( bs->lastenemyorigin, supplyGoal.origin );
+		VectorSet( supplyGoal.mins, -8, -8, -8 );
+		VectorSet( supplyGoal.maxs, 8, 8, 8 );
+		supplyRange = 650.0f;
+		if ( BotNearbyGoal( bs, bs->tfl, &supplyGoal, supplyRange ) ) {
+			bs->nbg_time = FloatTime() + 6.5f;
+			trap_BotResetLastAvoidReach( bs->ms );
+			AIEnter_Battle_NBG( bs, "battle fight: combat supplies" );
+			return qfalse;
+		}
+		if ( BotStartCombatSupplyLongTermGoal( bs, bs->tfl, "battle fight: combat supply ltg" ) ) {
+			return qfalse;
+		}
 	}
 	//choose the best weapon to fight with
 	BotChooseWeapon(bs);

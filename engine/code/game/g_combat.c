@@ -717,12 +717,19 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	self->r.contents = CONTENTS_CORPSE;
 
 // STONELANCE
+	/* Mark the extended sub-bounds as corpse too. Without this, during
+	 * the 1.7s death-to-respawn window the wreck still tests CONTENTS_BODY
+	 * for bullets, splash radius and car-vs-car body collision — meaning
+	 * other cars can ram the dead car as if it were alive. (Note: the
+	 * frontBounds entity itself lives on `self`, not `self->client`; the
+	 * old commented-out version dereferenced `self->client->frontBounds`
+	 * which doesn't exist as a struct member, plus the rearBounds branch
+	 * was a copy-paste typo writing into frontBounds again.) */
+	if ( self->frontBounds != NULL )
+		self->frontBounds->r.contents = CONTENTS_CORPSE;
+	if ( self->rearBounds != NULL )
+		self->rearBounds->r.contents = CONTENTS_CORPSE;
 /*
-	if ( self->client->frontBounds != NULL )
-		self->client->frontBounds->r.contents = CONTENTS_CORPSE;
-	if ( self->client->rearBounds != NULL )
-		self->client->frontBounds->r.contents = CONTENTS_CORPSE;
-
 	self->s.angles[0] = 0;
 	self->s.angles[2] = 0;
 */
@@ -1471,6 +1478,19 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 		}
 
 // STONELANCE
+		/* For cars we have up to two extra sub-hitboxes (front and rear)
+		 * positioned 25u in front/behind the player origin. Pick the
+		 * closest of {main bbox, front bound, rear bound} as the effective
+		 * splash distance.
+		 *
+		 * IMPORTANT: previously the "dist = VectorLength(o); min(..)" lines
+		 * sat OUTSIDE the `if (ent->frontBounds)` / `if (ent->rearBounds)`
+		 * guards. When a client had no sub-bounds (spectator / race-observer
+		 * / freed during gib), `o` retained whatever value the previous
+		 * iteration of the entity loop wrote to it, so a totally unrelated
+		 * entity's bbox distance leaked into the comparison. That could
+		 * either spuriously pull the splash in (over-damaging) or push it
+		 * out (under-damaging). Move the comparisons INSIDE the guards. */
 		if (ent->client){
 			minDist = VectorLength( v );
 
@@ -1483,11 +1503,11 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 					else
 						o[i] = 0;
 				}
-			}
 
-			dist = VectorLength( o );
-			if ( (minDist = min(dist, minDist)) == dist )
-				VectorCopy(o, v);
+				dist = VectorLength( o );
+				if ( (minDist = min(dist, minDist)) == dist )
+					VectorCopy(o, v);
+			}
 
 			if (ent->rearBounds){
 				for ( i = 0 ; i < 3 ; i++ ) {
@@ -1498,11 +1518,11 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 					else
 						o[i] = 0;
 				}
-			}
 
-			dist = VectorLength( o );
-			if ( (minDist = min(dist, minDist)) == dist )
-				VectorCopy(o, v);
+				dist = VectorLength( o );
+				if ( (minDist = min(dist, minDist)) == dist )
+					VectorCopy(o, v);
+			}
 		}
 // END
 
