@@ -74,9 +74,12 @@ jobs:
           make
           zip
           ${{ matrix.package_prefix }}-gcc
+          ${{ matrix.package_prefix }}-binutils
     - name: Compile
       shell: msys2 {0}
-      run: make release -j$(nproc) -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} USE_CURL=1 USE_CURL_DLOPEN=0
+      run: |
+        command -v windres
+        make release -j$(nproc) -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} WINDRES=windres USE_CURL=1 USE_CURL_DLOPEN=0
       env:
         ARCHIVE: 1
     - uses: actions/upload-artifact@v4
@@ -119,4 +122,3 @@ jobs:
       with:
         name: Web
         path: engine/build/*.zip
-        

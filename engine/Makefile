@@ -1568,12 +1568,12 @@ endef
 
 define DO_WINDRES
 $(echo_cmd) "WINDRES $<"
-$(Q)$(WINDRES) -i $< -o $@
+$(Q)$(WINDRES) -I$(SYSDIR) -i $< -O coff -o $@
 endef
 
 define DO_DED_WINDRES
 $(echo_cmd) "DED_WINDRES $<"
-$(Q)$(WINDRES) -DDEDICATED -i $< -o $@
+$(Q)$(WINDRES) -I$(SYSDIR) -DDEDICATED -i $< -O coff -o $@
 endef
 
 
