@@ -138,41 +138,268 @@ FLAME THROWER
 
 =======================================================================
 */
-void Weapon_fire_flame (gentity_t *ent ) {
-	gentity_t *m;
+#define FLAME_CONE_RANGE              520.0f
+#define FLAME_CONE_COS                0.84f
+#define FLAME_CONE_DAMAGE             14
+#define FLAME_CONE_MIN_DAMAGE         4
+#define FLAME_CONE_OIL_RADIUS         96.0f
 
-	m = fire_flame(ent, muzzle, forward);
-	m->damage *= s_quadFactor;
-	m->splashDamage *= s_quadFactor;
+#define FLAME_ALT_CONE_RANGE          150.0f
+#define FLAME_ALT_CONE_COS            0.72f
+#define FLAME_ALT_CONE_DAMAGE         9
+#define FLAME_ALT_CONE_MIN_DAMAGE     3
+#define FLAME_ALT_CONE_OIL_RADIUS     64.0f
+
+static gentity_t *Flame_ResolveHitEntity( gentity_t *ent ) {
+	if ( ent && ( ent->flags & FL_EXTRA_BBOX ) ) {
+		if ( ent->r.ownerNum >= 0 && ent->r.ownerNum < MAX_GENTITIES ) {
+			return &g_entities[ ent->r.ownerNum ];
+		}
+		return NULL;
+	}
+
+	return ent;
+}
+
+static qboolean Flame_EvaluatePoint( const vec3_t start, const vec3_t dir, const vec3_t point,
+		float range, float coneCos, float *outDist, float *outScale ) {
+	vec3_t	delta;
+	float	dist;
+	float	dot;
+	float	angleScale;
+	float	rangeScale;
+
+	VectorSubtract( point, start, delta );
+	dist = VectorNormalize( delta );
+	if ( dist <= 1.0f || dist > range ) {
+		return qfalse;
+	}
+
+	dot = DotProduct( delta, dir );
+	if ( dot < coneCos ) {
+		return qfalse;
+	}
+
+	angleScale = ( dot - coneCos ) / ( 1.0f - coneCos );
+	rangeScale = 1.0f - ( dist / range );
+
+	*outDist = dist;
+	*outScale = 0.35f + 0.65f * angleScale * rangeScale;
+	return qtrue;
+}
+
+static qboolean Flame_BestTargetPoint( gentity_t *target, const vec3_t start, const vec3_t dir,
+		float range, float coneCos, vec3_t bestPoint, float *bestScale ) {
+	vec3_t	points[3];
+	int		numPoints;
+	int		i;
+	float	dist;
+	float	scale;
+	float	bestDist;
+	qboolean	found;
+
+	numPoints = 0;
+	VectorCopy( target->r.currentOrigin, points[numPoints++] );
+
+	if ( target->frontBounds ) {
+		VectorCopy( target->frontBounds->r.currentOrigin, points[numPoints++] );
+	}
+	if ( target->rearBounds ) {
+		VectorCopy( target->rearBounds->r.currentOrigin, points[numPoints++] );
+	}
+
+	found = qfalse;
+	bestDist = range + 1.0f;
+	*bestScale = 0.0f;
+
+	for ( i = 0; i < numPoints; i++ ) {
+		if ( !Flame_EvaluatePoint( start, dir, points[i], range, coneCos, &dist, &scale ) ) {
+			continue;
+		}
+		if ( !found || scale > *bestScale || ( scale == *bestScale && dist < bestDist ) ) {
+			VectorCopy( points[i], bestPoint );
+			*bestScale = scale;
+			bestDist = dist;
+			found = qtrue;
+		}
+	}
+
+	return found;
+}
+
+static void Flame_AddImpactEvent( gentity_t *ent, const vec3_t start, const vec3_t dir, float range ) {
+	trace_t		tr;
+	vec3_t		end;
+	vec3_t		eventDir;
+	gentity_t	*traceEnt;
+	gentity_t	*tent;
+
+	VectorMA( start, range, dir, end );
+	trap_Trace( &tr, start, NULL, NULL, end, ent->s.number, MASK_SHOT );
+
+	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+		return;
+	}
+
+	if ( tr.fraction < 1.0f ) {
+		traceEnt = Flame_ResolveHitEntity( &g_entities[ tr.entityNum ] );
+		if ( traceEnt && traceEnt->takedamage && traceEnt->client ) {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+			tent->s.otherEntityNum = traceEnt->s.number;
+		} else if ( tr.surfaceFlags & SURF_METALSTEPS ) {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS_METAL );
+		} else {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
+		}
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = WP_FLAME_THROWER;
+		return;
+	}
+
+	VectorCopy( dir, eventDir );
+	VectorInverse( eventDir );
+	tent = G_TempEntity( end, EV_MISSILE_MISS );
+	tent->s.eventParm = DirToByte( eventDir );
+	tent->s.weapon = WP_FLAME_THROWER;
+}
+
+static void Flame_SetWeaponAxis( gentity_t *ent ) {
+	vec3_t		flameAngles;
+
+	VectorCopy( ent->client->ps.viewangles, flameAngles );
+	flameAngles[PITCH] = 0;
+	flameAngles[ROLL] = 0;
+
+	AngleVectors( flameAngles, forward, right, up );
+
+	VectorCopy( ent->s.pos.trBase, muzzle );
+	VectorMA( muzzle, CAR_HEIGHT / 2, up, muzzle );
+	VectorMA( muzzle, 14, forward, muzzle );
+	SnapVector( muzzle );
+}
+
+static void Flame_SetSideWeaponAxis( gentity_t *ent, float side ) {
+	vec3_t		flameAngles;
+	vec3_t		carForward;
+	vec3_t		sideDir;
+
+	VectorCopy( ent->client->ps.viewangles, flameAngles );
+	flameAngles[PITCH] = 0;
+	flameAngles[ROLL] = 0;
+
+	AngleVectors( flameAngles, carForward, right, up );
+	VectorScale( right, side, sideDir );
+	VectorCopy( sideDir, forward );
+
+	VectorCopy( ent->s.pos.trBase, muzzle );
+	VectorMA( muzzle, CAR_HEIGHT / 2, up, muzzle );
+	VectorMA( muzzle, 8, carForward, muzzle );
+	VectorMA( muzzle, side * ( CAR_WIDTH / 2 + 4 ), right, muzzle );
+	SnapVector( muzzle );
+}
+
+static void Weapon_FlameCone( gentity_t *ent, float range, float coneCos, int damage,
+		int minDamage, float oilRadius ) {
+	vec3_t		mins;
+	vec3_t		maxs;
+	vec3_t		end;
+	vec3_t		hitPoint;
+	vec3_t		damageDir;
+	vec3_t		oilPoint;
+	vec3_t		streamEnd;
+	vec3_t		streamDelta;
+	int			entityList[MAX_GENTITIES];
+	qboolean	hitEntities[MAX_GENTITIES];
+	int			numEntities;
+	int			i;
+	int			entityNum;
+	int			take;
+	float		scale;
+	gentity_t	*target;
+	trace_t		tr;
+
+	VectorMA( muzzle, range, forward, end );
+	for ( i = 0; i < 3; i++ ) {
+		mins[i] = min( muzzle[i], end[i] ) - range * 0.45f;
+		maxs[i] = max( muzzle[i], end[i] ) + range * 0.45f;
+	}
+
+	memset( hitEntities, 0, sizeof( hitEntities ) );
+	numEntities = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
+
+	for ( i = 0; i < numEntities; i++ ) {
+		target = Flame_ResolveHitEntity( &g_entities[ entityList[i] ] );
+		if ( !target || target == ent || !target->takedamage ) {
+			continue;
+		}
+
+		entityNum = target->s.number;
+		if ( entityNum < 0 || entityNum >= MAX_GENTITIES || hitEntities[entityNum] ) {
+			continue;
+		}
+		hitEntities[entityNum] = qtrue;
+
+		if ( !Flame_BestTargetPoint( target, muzzle, forward, range, coneCos, hitPoint, &scale ) ) {
+			continue;
+		}
+
+		trap_Trace( &tr, muzzle, NULL, NULL, hitPoint, ent->s.number, MASK_SHOT );
+		if ( tr.fraction < 1.0f && Flame_ResolveHitEntity( &g_entities[tr.entityNum] ) != target ) {
+			continue;
+		}
+		if ( !CanDamage( target, muzzle ) ) {
+			continue;
+		}
+
+		take = minDamage + (int)( (float)( damage - minDamage ) * scale );
+		take = (int)( (float)take * s_quadFactor );
+		if ( take < minDamage ) {
+			take = minDamage;
+		}
+
+		VectorSubtract( target->r.currentOrigin, muzzle, damageDir );
+		VectorNormalize( damageDir );
+
+		G_Damage( target, ent, ent, damageDir, hitPoint, take,
+			DAMAGE_WEAPON | DAMAGE_NO_KNOCKBACK, MOD_FLAME_THROWER );
+
+		if ( LogAccuracyHit( target, ent ) ) {
+			ent->client->accuracy_hits++;
+		}
+	}
+
+	trap_Trace( &tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT );
+	VectorCopy( tr.endpos, streamEnd );
+
+	CheckForOil( streamEnd, oilRadius );
+	VectorSubtract( streamEnd, muzzle, streamDelta );
+	VectorMA( muzzle, 0.55f, streamDelta, oilPoint );
+	CheckForOil( oilPoint, oilRadius * 0.65f );
+
+	Flame_AddImpactEvent( ent, muzzle, forward, range );
+}
+
+void Weapon_fire_flame (gentity_t *ent ) {
+	Flame_SetWeaponAxis( ent );
+	Weapon_FlameCone( ent, FLAME_CONE_RANGE, FLAME_CONE_COS,
+		FLAME_CONE_DAMAGE, FLAME_CONE_MIN_DAMAGE, FLAME_CONE_OIL_RADIUS );
 }
 
 /*
 =======================================================================
 
-FLAME THROWER SPREAD - Altfire
+FLAME THROWER SIDE BURST - Altfire
 
 =======================================================================
 */
 
-void Weapon_cluster_fire_flame (gentity_t *ent ) {
-	gentity_t	*m, *n, *o;
-	vec3_t		temp;
-
-	m = fire_cluster_flame(ent, muzzle, forward);
-	m->damage *= s_quadFactor;
-	m->splashDamage *= s_quadFactor;	
-	
-	VectorAdd(forward, right, temp);
-	n = fire_cluster_flame(ent, muzzle, temp);
-	n->damage *= s_quadFactor;
-	n->splashDamage *= s_quadFactor;
-	
-	VectorInverse(right);
-	VectorAdd(forward, right, temp);
-	o = fire_cluster_flame(ent, muzzle, temp);
-	o->damage *= s_quadFactor;
-	o->splashDamage *= s_quadFactor;
-
+void Weapon_fire_flame_side_burst (gentity_t *ent ) {
+	Flame_SetSideWeaponAxis( ent, -1.0f );
+	Weapon_FlameCone( ent, FLAME_ALT_CONE_RANGE, FLAME_ALT_CONE_COS,
+		FLAME_ALT_CONE_DAMAGE, FLAME_ALT_CONE_MIN_DAMAGE, FLAME_ALT_CONE_OIL_RADIUS );
+	Flame_SetSideWeaponAxis( ent, 1.0f );
+	Weapon_FlameCone( ent, FLAME_ALT_CONE_RANGE, FLAME_ALT_CONE_COS,
+		FLAME_ALT_CONE_DAMAGE, FLAME_ALT_CONE_MIN_DAMAGE, FLAME_ALT_CONE_OIL_RADIUS );
 }
 
 
@@ -1613,7 +1840,7 @@ void FireAltWeapon( gentity_t *ent ) {
                weapon_bfg_alt_fire( ent );
                break;
     case WP_FLAME_THROWER:
-        Weapon_cluster_fire_flame( ent );
+        Weapon_fire_flame_side_burst( ent );
         break;
 
 #ifdef MISSIONPACK

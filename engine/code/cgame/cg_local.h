@@ -2047,7 +2047,6 @@ void CG_DrawCheckpointLinks(void);
 void CG_Sparks( const vec3_t origin, const vec3_t normal, const vec3_t direction, const float speed );
 qboolean CG_FrictionCalc( const carPoint_t *point, float *sCOF, float *kCOF );
 void CG_Hazard( int barrel, vec3_t origin, int radius );
-void CG_FlameTrail( centity_t *cent, const weaponInfo_t *wi );
 localEntity_t *CreateFireEntity( vec3_t origin, vec3_t dir,
                                                                 qhandle_t hModel, qhandle_t shader,
                                                                 int msec );
