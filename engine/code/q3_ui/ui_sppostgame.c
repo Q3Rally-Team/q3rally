@@ -348,20 +348,20 @@ static void UI_SPPostgameMenu_MenuDraw( void ) {
 		if( uis.demoversion ) {
 			if( postgameMenuInfo.won == 1 && UI_ShowTierVideo( 8 )) {
 				trap_Cvar_Set( "nextmap", "" );
-				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic demoEnd.RoQ\n" );
+				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic demoEnd\n" );
 				return;
 			}
 		}
 		else if( postgameMenuInfo.won > -1 && UI_ShowTierVideo( postgameMenuInfo.won + 1 )) {
 			if( postgameMenuInfo.won == postgameMenuInfo.lastTier ) {
 				trap_Cvar_Set( "nextmap", "" );
-				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic end.RoQ\n" );
+				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic end\n" );
 				return;
 			}
 
 			trap_Cvar_SetValue( "ui_spSelection", postgameMenuInfo.won * ARENAS_PER_TIER );
 			trap_Cvar_Set( "nextmap", "levelselect" );
-			trap_Cmd_ExecuteText( EXEC_APPEND, va( "disconnect; cinematic tier%i.RoQ\n", postgameMenuInfo.won + 1 ) );
+			trap_Cmd_ExecuteText( EXEC_APPEND, va( "disconnect; cinematic tier%i\n", postgameMenuInfo.won + 1 ) );
 			return;
 		}
 

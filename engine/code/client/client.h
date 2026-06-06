@@ -612,6 +612,7 @@ void Frame_yuv_to_rgb24(const unsigned char *y, const unsigned char *u, const un
 int				Cin_OGM_Init(const char *filename);
 int				Cin_OGM_Run(int time);
 unsigned char	*Cin_OGM_GetOutput(int *outWidth, int *outHeight);
+float			Cin_OGM_GetAspectRatio(int width, int height);
 void			Cin_OGM_Shutdown(void);
 
 //

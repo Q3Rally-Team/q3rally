@@ -43,6 +43,10 @@ int demo_protocols[] =
 #define DEF_COMHUNKMEGS_S	XSTRING(DEF_COMHUNKMEGS)
 #define DEF_COMZONEMEGS_S	XSTRING(DEF_COMZONEMEGS)
 
+#ifndef CINEMATICS_LOGO
+#define CINEMATICS_LOGO		"idlogo"
+#endif
+
 int		com_argc;
 char	*com_argv[MAX_NUM_ARGVS+1];
 

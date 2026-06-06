@@ -1110,7 +1110,7 @@ static void UI_DrawClanCinematic(rectDef_t *rect, float scale, vec4_t color) {
 
 		if (uiInfo.teamList[i].cinematic >= -2) {
 			if (uiInfo.teamList[i].cinematic == -1) {
-				uiInfo.teamList[i].cinematic = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.teamList[i].imageName), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+				uiInfo.teamList[i].cinematic = trap_CIN_PlayCinematic(uiInfo.teamList[i].imageName, 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 			}
 			if (uiInfo.teamList[i].cinematic >= 0) {
 			  trap_CIN_RunCinematic(uiInfo.teamList[i].cinematic);
@@ -1132,7 +1132,7 @@ static void UI_DrawClanCinematic(rectDef_t *rect, float scale, vec4_t color) {
 
 static void UI_DrawPreviewCinematic(rectDef_t *rect, float scale, vec4_t color) {
 	if (uiInfo.previewMovie > -2) {
-		uiInfo.previewMovie = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.movieList[uiInfo.movieIndex]), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+		uiInfo.previewMovie = trap_CIN_PlayCinematic(uiInfo.movieList[uiInfo.movieIndex], 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 		if (uiInfo.previewMovie >= 0) {
 		  trap_CIN_RunCinematic(uiInfo.previewMovie);
 			UI_DrawCinematic(uiInfo.previewMovie, rect->x, rect->y, rect->w, rect->h);
@@ -1254,7 +1254,7 @@ static void UI_DrawMapCinematic(rectDef_t *rect, float scale, vec4_t color, qboo
 
 	if (uiInfo.mapList[map].cinematic >= -1) {
 		if (uiInfo.mapList[map].cinematic == -1) {
-			uiInfo.mapList[map].cinematic = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.mapList[map].mapLoadName), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+			uiInfo.mapList[map].cinematic = trap_CIN_PlayCinematic(uiInfo.mapList[map].mapLoadName, 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 		}
 		if (uiInfo.mapList[map].cinematic >= 0) {
 		  trap_CIN_RunCinematic(uiInfo.mapList[map].cinematic);
@@ -2841,29 +2841,51 @@ static void UI_LoadTeams( void ) {
 UI_LoadMovies
 ===============
 */
-static void UI_LoadMovies( void ) {
-	char	movielist[4096];
-	char	*moviename;
-	int		i, len;
+static void UI_AddMovieFile( const char *filename ) {
+	char movieName[MAX_QPATH];
+	int i, len;
 
-	uiInfo.movieCount = trap_FS_GetFileList( "video", "roq", movielist, 4096 );
+	Q_strncpyz(movieName, filename, sizeof(movieName));
+	len = strlen(movieName);
 
-	if (uiInfo.movieCount) {
-		if (uiInfo.movieCount > MAX_MOVIES) {
-			uiInfo.movieCount = MAX_MOVIES;
-		}
-		moviename = movielist;
-		for ( i = 0; i < uiInfo.movieCount; i++ ) {
-			len = strlen( moviename );
-			if (!Q_stricmp(moviename +  len - 4,".roq")) {
-				moviename[len-4] = '\0';
-			}
-			Q_strupr(moviename);
-			uiInfo.movieList[i] = String_Alloc(moviename);
-			moviename += len + 1;
+	if (len > 4 && (!Q_stricmp(movieName + len - 4, ".roq") ||
+			!Q_stricmp(movieName + len - 4, ".ogv") ||
+			!Q_stricmp(movieName + len - 4, ".ogm"))) {
+		movieName[len - 4] = '\0';
+	}
+
+	Q_strupr(movieName);
+
+	for (i = 0; i < uiInfo.movieCount; i++) {
+		if (!Q_stricmp(uiInfo.movieList[i], movieName)) {
+			return;
 		}
 	}
 
+	if (uiInfo.movieCount < MAX_MOVIES) {
+		uiInfo.movieList[uiInfo.movieCount++] = String_Alloc(movieName);
+	}
+}
+
+static void UI_LoadMoviesForExtension( const char *extension ) {
+	char movielist[4096];
+	char *moviename;
+	int i, count;
+
+	count = trap_FS_GetFileList("video", extension, movielist, sizeof(movielist));
+	moviename = movielist;
+
+	for (i = 0; i < count && uiInfo.movieCount < MAX_MOVIES; i++) {
+		UI_AddMovieFile(moviename);
+		moviename += strlen(moviename) + 1;
+	}
+}
+
+static void UI_LoadMovies( void ) {
+	uiInfo.movieCount = 0;
+	UI_LoadMoviesForExtension("ogv");
+	UI_LoadMoviesForExtension("ogm");
+	UI_LoadMoviesForExtension("roq");
 }
 
 #define NAMEBUFSIZE (MAX_DEMOS * 32)
@@ -3267,7 +3289,7 @@ static void UI_RunMenuScript(char **args) {
 			if (uiInfo.previewMovie >= 0) {
 			  trap_CIN_StopCinematic(uiInfo.previewMovie);
 			}
-			trap_Cmd_ExecuteText( EXEC_APPEND, va("cinematic %s.roq 2\n", uiInfo.movieList[uiInfo.movieIndex]));
+			trap_Cmd_ExecuteText( EXEC_APPEND, va("cinematic %s 2\n", uiInfo.movieList[uiInfo.movieIndex]));
 		} else if (Q_stricmp(name, "RunMod") == 0) {
 			trap_Cvar_Set( "fs_game", uiInfo.modList[uiInfo.modIndex].modName);
 			trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
@@ -4451,14 +4473,14 @@ static void UI_FeederSelection(float feederID, int index) {
 		if (feederID == FEEDER_MAPS) {
 			ui_currentMap.integer = actual;
 			trap_Cvar_Set("ui_currentMap", va("%d", actual));
-	  	uiInfo.mapList[ui_currentMap.integer].cinematic = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.mapList[ui_currentMap.integer].mapLoadName), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+		uiInfo.mapList[ui_currentMap.integer].cinematic = trap_CIN_PlayCinematic(uiInfo.mapList[ui_currentMap.integer].mapLoadName, 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 			UI_LoadBestScores(uiInfo.mapList[ui_currentMap.integer].mapLoadName, uiInfo.gameTypes[ui_gameType.integer].gtEnum);
 			trap_Cvar_Set("ui_opponentModel", uiInfo.mapList[ui_currentMap.integer].opponentName);
 			updateOpponentModel = qtrue;
 		} else {
 			ui_currentNetMap.integer = actual;
 			trap_Cvar_Set("ui_currentNetMap", va("%d", actual));
-	  	uiInfo.mapList[ui_currentNetMap.integer].cinematic = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.mapList[ui_currentNetMap.integer].mapLoadName), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+		uiInfo.mapList[ui_currentNetMap.integer].cinematic = trap_CIN_PlayCinematic(uiInfo.mapList[ui_currentNetMap.integer].mapLoadName, 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 		}
 
   } else if (feederID == FEEDER_SERVERS) {
@@ -4472,7 +4494,7 @@ static void UI_FeederSelection(float feederID, int index) {
 		}
 		mapName = Info_ValueForKey(info, "mapname");
 		if (mapName && *mapName) {
-			uiInfo.serverStatus.currentServerCinematic = trap_CIN_PlayCinematic(va("%s.roq", mapName), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
+			uiInfo.serverStatus.currentServerCinematic = trap_CIN_PlayCinematic(mapName, 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 		}
   } else if (feederID == FEEDER_SERVERSTATUS) {
 		//
@@ -4827,7 +4849,7 @@ static qboolean MapList_Parse(char **p) {
 			//mapList[mapCount].imageName = String_Alloc(va("levelshots/%s", mapList[mapCount].mapLoadName));
 			//if (uiInfo.mapCount == 0) {
 			  // only load the first cinematic, selection loads the others
-  			//  uiInfo.mapList[uiInfo.mapCount].cinematic = trap_CIN_PlayCinematic(va("%s.roq",uiInfo.mapList[uiInfo.mapCount].mapLoadName), qfalse, qfalse, qtrue, 0, 0, 0, 0);
+			//  uiInfo.mapList[uiInfo.mapCount].cinematic = trap_CIN_PlayCinematic(uiInfo.mapList[uiInfo.mapCount].mapLoadName, qfalse, qfalse, qtrue, 0, 0, 0, 0);
 			//}
   		uiInfo.mapList[uiInfo.mapCount].cinematic = -1;
 			uiInfo.mapList[uiInfo.mapCount].levelShot = trap_R_RegisterShaderNoMip(va("levelshots/%s_small", uiInfo.mapList[uiInfo.mapCount].mapLoadName));

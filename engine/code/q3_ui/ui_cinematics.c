@@ -69,7 +69,7 @@ static cinematicsMenuInfo_t	cinematicsMenuInfo;
 
 static char *cinematics[] = {
 	//"idlogo",
-	"q3rlogo",
+	"idlogo",
 	"intro",
 	"tier1",
 	"tier2",
@@ -109,10 +109,10 @@ static void UI_CinematicsMenu_Event( void *ptr, int event ) {
 	//n = ((menucommon_s*)ptr)->q3r - ID_CIN_Q3RLOGO; //TBB
 	trap_Cvar_Set( "nextmap", va( "ui_cinematics %i", n ) );
 	if( uis.demoversion && ((menucommon_s*)ptr)->id == ID_CIN_END ) {
-		trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic demoEnd.RoQ 1\n" );
+		trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect; cinematic demoEnd 1\n" );
 	}
 	else {
-		trap_Cmd_ExecuteText( EXEC_APPEND, va( "disconnect; cinematic %s.RoQ\n", cinematics[n] ) );
+		trap_Cmd_ExecuteText( EXEC_APPEND, va( "disconnect; cinematic %s\n", cinematics[n] ) );
 	}
 }
 

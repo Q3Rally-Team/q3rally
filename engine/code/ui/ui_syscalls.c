@@ -365,7 +365,7 @@ int trap_RealTime(qtime_t *qtime) {
 	return syscall( UI_REAL_TIME, qtime );
 }
 
-// this returns a handle.  arg0 is the name in the format "idlogo.roq", set arg1 to NULL, alteredstates to qfalse (do not alter gamestate)
+// this returns a handle. arg0 is a cinematic name, such as "idlogo" or "idlogo.ogv"
 int trap_CIN_PlayCinematic( const char *arg0, int xpos, int ypos, int width, int height, int bits) {
   return syscall(UI_CIN_PLAYCINEMATIC, arg0, xpos, ypos, width, height, bits);
 }

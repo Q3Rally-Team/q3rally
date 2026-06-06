@@ -131,6 +131,7 @@ typedef struct {
 	long				drawX, drawY;
     filetype_t			fileType;
 	qboolean			audioInitialized;
+	float				aspectRatio;
 } cin_cache;
 
 static cinematics_t		cin;
@@ -687,6 +688,53 @@ void Frame_yuv_to_rgb24(const unsigned char *y, const unsigned char *u, const un
 				b = 255;
 
 			*output = LittleLong((r) | (g << 8) | (b << 16) | (255 << 24));
+			++output;
+		}
+	}
+}
+
+/******************************************************************************
+*
+* Function:	Frame_yuv_to_rgb24_cropped
+*
+* Description: Used by the Theora(ogm) code. Theora frames can contain a
+*		larger encoded frame with a display rectangle inside it, and the plane
+*		strides are not guaranteed to match the visible width.
+*
+******************************************************************************/
+static byte CIN_ClampByte( int value )
+{
+	if(value < 0)
+		return 0;
+	if(value > 255)
+		return 255;
+	return (byte)value;
+}
+
+void Frame_yuv_to_rgb24_cropped(const unsigned char *y, const unsigned char *u, const unsigned char *v,
+		int width, int height, int offsetX, int offsetY, int y_stride, int uv_stride,
+		int yWShift, int uvWShift, int yHShift, int uvHShift, unsigned int *output)
+{
+	int		i, j, srcX, srcY, uvI;
+	int		yValue, uValue, vValue;
+	int		r, g, b;
+
+	for(j = 0; j < height; ++j)
+	{
+		srcY = j + offsetY;
+		for(i = 0; i < width; ++i)
+		{
+			srcX = i + offsetX;
+			yValue = y[(srcX >> yWShift) + (srcY >> yHShift) * y_stride];
+			uvI = (srcX >> uvWShift) + (srcY >> uvHShift) * uv_stride;
+			uValue = u[uvI];
+			vValue = v[uvI];
+
+			r = (1904000 * yValue + 2609823 * vValue - 363703744) / 1635200;
+			g = (3827562 * yValue - 1287801 * uValue - 2672387 * vValue + 447306710) / 3287200;
+			b = (952000 * yValue + 1649289 * uValue - 225932192) / 817600;
+
+			*output = LittleLong(CIN_ClampByte(r) | (CIN_ClampByte(g) << 8) | (CIN_ClampByte(b) << 16) | (255 << 24));
 			++output;
 		}
 	}
@@ -1479,6 +1527,7 @@ if (cinTable[currentHandle].fileType == FT_OGM)
 			qboolean	resolutionChange = qfalse;
 
 			cinTable[currentHandle].buf = Cin_OGM_GetOutput(&newW, &newH);
+			cinTable[currentHandle].aspectRatio = Cin_OGM_GetAspectRatio(newW, newH);
 
 			if (newW != cinTable[currentHandle].CIN_WIDTH)
         	{
@@ -1581,23 +1630,25 @@ qboolean CIN_TheCheckExtension(char *filename, int size)
 {
 	enum
 	{
+#if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
+		CIN_ogv,
+		CIN_ogm,
+#endif
 		CIN_RoQ,
 		CIN_roq,
-#if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
-		CIN_ogm,
-		CIN_ogv,
-#endif
 		CIN_MAX
 	};
-	const char cin_ext[CIN_MAX][4] = { "RoQ\0", "roq\0"
+	const char cin_ext[CIN_MAX][4] = {
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
-		, "ogm\0", "ogv\0"
+		"ogv\0", "ogm\0",
 #endif
+		"RoQ\0", "roq\0"
 	};
-	qboolean skipCin[CIN_MAX] = { qfalse, qfalse
+	qboolean skipCin[CIN_MAX] = {
 #if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
-		, qfalse, qfalse
+		qfalse, qfalse,
 #endif
+		qfalse, qfalse
 	};
 	fileHandle_t hnd;
 	char fn[MAX_QPATH];
@@ -1613,14 +1664,20 @@ qboolean CIN_TheCheckExtension(char *filename, int size)
 		extptr = &fn[stringlen];
 
 		extptr[0] = '.';
+#if defined(USE_CODEC_VORBIS) && (defined(USE_CIN_XVID) || defined(USE_CIN_THEORA))
+		extptr[1] = 'o';
+		extptr[2] = 'g';
+		extptr[3] = 'v';
+		skipCin[CIN_ogv] = qtrue;
+#else
 		extptr[1] = 'R';
 		extptr[2] = 'o';
 		extptr[3] = 'Q';
+		skipCin[CIN_RoQ] = qtrue;
+#endif
 		extptr[4] = '\0';
 
 		stringlen += 4;
-
-		skipCin[CIN_RoQ] = qtrue;
 	}
 
 	FS_FOpenFileRead(fn, &hnd, qtrue);
@@ -1733,6 +1790,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 		cinTable[currentHandle].playonwalls = 1;
 		cinTable[currentHandle].silent = (systemBits & CIN_silent) != 0;
 		cinTable[currentHandle].shader = (systemBits & CIN_shader) != 0;
+		cinTable[currentHandle].aspectRatio = 0.0f;
 
 /* we will set this info after the first xvid-frame
 		cinTable[currentHandle].CIN_HEIGHT = DEFAULT_CIN_HEIGHT;
@@ -1778,6 +1836,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 	cinTable[currentHandle].playonwalls = 1;
 	cinTable[currentHandle].silent = (systemBits & CIN_silent) != 0;
 	cinTable[currentHandle].shader = (systemBits & CIN_shader) != 0;
+	cinTable[currentHandle].aspectRatio = 0.0f;
 
 	if (cinTable[currentHandle].alterGameState) {
 		// close the menu
@@ -1911,6 +1970,25 @@ void CIN_DrawCinematic (int handle) {
 	w = cinTable[handle].width;
 	h = cinTable[handle].height;
 	buf = cinTable[handle].buf;
+
+	if (cinTable[handle].alterGameState && w > 0 && h > 0 &&
+			cinTable[handle].CIN_WIDTH > 0 && cinTable[handle].CIN_HEIGHT > 0) {
+		float srcAspect = cinTable[handle].aspectRatio > 0.0f ?
+				cinTable[handle].aspectRatio :
+				(float)cinTable[handle].CIN_WIDTH / (float)cinTable[handle].CIN_HEIGHT;
+		float dstAspect = w / h;
+
+		if (srcAspect > dstAspect) {
+			float newH = w / srcAspect;
+			y += (h - newH) * 0.5f;
+			h = newH;
+		} else if (srcAspect < dstAspect) {
+			float newW = h * srcAspect;
+			x += (w - newW) * 0.5f;
+			w = newW;
+		}
+	}
+
 	SCR_AdjustFrom640( &x, &y, &w, &h );
 
 	if (cinTable[handle].dirty && (cinTable[handle].CIN_WIDTH != cinTable[handle].drawX || cinTable[handle].CIN_HEIGHT != cinTable[handle].drawY)) {
@@ -1942,7 +2020,9 @@ void CL_PlayCinematic_f(void) {
 	arg = Cmd_Argv( 1 );
 	s = Cmd_Argv(2);
 
-	if ((s && s[0] == '1') || Q_stricmp(arg,"demoend.roq")==0 || Q_stricmp(arg,"end.roq")==0) {
+	if ((s && s[0] == '1') ||
+		Q_stricmp(arg, "demoend") == 0 || Q_stricmp(arg, "demoend.roq") == 0 || Q_stricmp(arg, "demoend.ogv") == 0 ||
+		Q_stricmp(arg, "end") == 0 || Q_stricmp(arg, "end.roq") == 0 || Q_stricmp(arg, "end.ogv") == 0) {
 		bits |= CIN_hold;
 	}
 	if (s && s[0] == '2') {

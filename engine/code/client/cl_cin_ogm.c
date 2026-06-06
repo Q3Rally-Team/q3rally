@@ -434,10 +434,14 @@ static int loadVideoFrameXvid(void)
 			<0	-> error
 */
 #ifdef USE_CIN_THEORA
+void Frame_yuv_to_rgb24_cropped(const unsigned char *y, const unsigned char *u, const unsigned char *v,
+		int width, int height, int offsetX, int offsetY, int y_stride, int uv_stride,
+		int yWShift, int uvWShift, int yHShift, int uvHShift, unsigned int *output);
+
 /*
 how many >> are needed to make y==x (shifting y>>i)
 return: -1	-> no match
-		>=0	-> number of shifts
+	>=0	-> number of shifts
 */
 static int findSizeShift(int x, int y)
 {
@@ -470,21 +474,40 @@ static int loadVideoFrameTheora(void)
 //          int i,j;
 			int             yWShift, uvWShift;
 			int             yHShift, uvHShift;
+			int             displayWidth, displayHeight;
+			int             offsetX, offsetY;
 
 			if(theora_decode_YUVout(&g_ogm.th_state, &g_ogm.th_yuvbuffer))
 				continue;
 
-			if(g_ogm.outputWidht != g_ogm.th_info.width || g_ogm.outputHeight != g_ogm.th_info.height)
+			displayWidth = g_ogm.th_info.frame_width ? g_ogm.th_info.frame_width : g_ogm.th_info.width;
+			displayHeight = g_ogm.th_info.frame_height ? g_ogm.th_info.frame_height : g_ogm.th_info.height;
+			offsetX = g_ogm.th_info.offset_x;
+			offsetY = g_ogm.th_info.offset_y;
+
+			if(displayWidth <= 0 || displayHeight <= 0 ||
+					offsetX < 0 || offsetY < 0 ||
+					offsetX + displayWidth > g_ogm.th_info.width ||
+					offsetY + displayHeight > g_ogm.th_info.height)
 			{
-				g_ogm.outputWidht = g_ogm.th_info.width;
-				g_ogm.outputHeight = g_ogm.th_info.height;
+				Com_Printf("[Theora] invalid display rectangle %dx%d+%d+%d in %dx%d frame\n",
+						displayWidth, displayHeight, offsetX, offsetY,
+						g_ogm.th_info.width, g_ogm.th_info.height);
+				r = -1;
+				break;
+			}
+
+			if(g_ogm.outputWidht != displayWidth || g_ogm.outputHeight != displayHeight)
+			{
+				g_ogm.outputWidht = displayWidth;
+				g_ogm.outputHeight = displayHeight;
 				Com_DPrintf("[Theora(ogg)]new resolution %dx%d\n", g_ogm.outputWidht, g_ogm.outputHeight);
 			}
 
-			if(g_ogm.outputBufferSize < g_ogm.th_info.width * g_ogm.th_info.height)
+			if(g_ogm.outputBufferSize < displayWidth * displayHeight)
 			{
 
-				g_ogm.outputBufferSize = g_ogm.th_info.width * g_ogm.th_info.height;
+				g_ogm.outputBufferSize = displayWidth * displayHeight;
 
 				/* Free old output buffer */
 				if(g_ogm.outputBuffer)
@@ -513,8 +536,8 @@ static int loadVideoFrameTheora(void)
 			else
 			{
 
-				Frame_yuv_to_rgb24(g_ogm.th_yuvbuffer.y, g_ogm.th_yuvbuffer.u, g_ogm.th_yuvbuffer.v,
-								   g_ogm.th_info.width, g_ogm.th_info.height, g_ogm.th_yuvbuffer.y_stride,
+				Frame_yuv_to_rgb24_cropped(g_ogm.th_yuvbuffer.y, g_ogm.th_yuvbuffer.u, g_ogm.th_yuvbuffer.v,
+								   displayWidth, displayHeight, offsetX, offsetY, g_ogm.th_yuvbuffer.y_stride,
 								   g_ogm.th_yuvbuffer.uv_stride, yWShift, uvWShift, yHShift, uvHShift,
 								   (unsigned int *)g_ogm.outputBuffer);
 
@@ -953,6 +976,22 @@ unsigned char  *Cin_OGM_GetOutput(int *outWidth, int *outHeight)
 	return g_ogm.outputBuffer;
 }
 
+float Cin_OGM_GetAspectRatio(int width, int height)
+{
+	if(width <= 0 || height <= 0)
+		return 0.0f;
+
+#ifdef USE_CIN_THEORA
+	if(g_ogm.videoStreamIsTheora && g_ogm.th_info.aspect_numerator > 0 && g_ogm.th_info.aspect_denominator > 0)
+	{
+		return ((float)width * (float)g_ogm.th_info.aspect_numerator) /
+				((float)height * (float)g_ogm.th_info.aspect_denominator);
+	}
+#endif
+
+	return (float)width / (float)height;
+}
+
 void Cin_OGM_Shutdown()
 {
 #ifdef USE_CIN_XVID
@@ -998,6 +1037,11 @@ int Cin_OGM_Run(int time)
 unsigned char *Cin_OGM_GetOutput(int *outWidth, int *outHeight)
 {
 	return 0;
+}
+
+float Cin_OGM_GetAspectRatio(int width, int height)
+{
+	return 0.0f;
 }
 
 void Cin_OGM_Shutdown(void)
