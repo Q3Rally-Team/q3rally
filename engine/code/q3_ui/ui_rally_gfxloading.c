@@ -42,6 +42,7 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 
 #define MIN_STAGE_TIME      450     /* minimum milliseconds per stage */
 #define FINAL_DISPLAY_TIME  1200    /* time to display 100% before transition */
+#define MAX_DEBUG_PAUSE     15000   /* safety clamp for test-only loading pauses */
 
 #define NUM_STAGES          8       /* must match ARRAY_LEN(stages) */
 #define SMOOTH_LERP_SPEED   4.5f    /* units per second for framerate-independent smoothing */
@@ -53,20 +54,24 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 
 /* Header block */
 #define HDR_TITLE_Y      36
-#define HDR_VERSION_Y    72
+#define HDR_VERSION_Y    68
 
 /* Progress block */
-#define BAR_X           160
-#define BAR_Y           200
-#define BAR_W           320
-#define BAR_H            20
-#define CAR_ICON_W       48
-#define CAR_ICON_H       48
-#define BAR_STAGE_Y     (BAR_Y - 22)        /* stage label above the bar */
-#define BAR_PCT_Y       (BAR_Y + BAR_H + 10)/* percentage below the bar  */
+#define PANEL_X          82
+#define PANEL_Y         126
+#define PANEL_W         476
+#define PANEL_H         160
+#define BAR_X           118
+#define BAR_Y           210
+#define BAR_W           404
+#define BAR_H            14
+#define BAR_STAGE_Y     172                 /* stage label above the bar */
+#define BAR_PCT_Y       236                 /* percentage below the bar  */
+#define BAR_SEG_Y       255
+#define BAR_SEG_H         5
 
 /* Update notice block (below progress) */
-#define UPD_BASE_Y      (BAR_PCT_Y + 30)
+#define UPD_BASE_Y      304
 
 /* Tip block (near bottom) */
 #define TIP_LABEL_Y     390
@@ -74,7 +79,7 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 
 /* Separator line Y positions */
 #define SEP_TOP_Y        90
-#define SEP_BOT_Y       380
+#define SEP_BOT_Y       374
 
 /* -------------------------------------------------------------------------
    Update-dialog button state
@@ -98,7 +103,6 @@ typedef struct {
     float           smoothProgress;        /* smoothly interpolated value for visuals */
     int             stageStartTime;        /* when current stage started */
     int             finalDisplayStartTime; /* when 100% display phase started */
-    qhandle_t       carShader;             /* icon for progress indicator */
     int             tipIndex;              /* index into loading tips */
     qboolean        cacheExecuted;         /* whether current stage's cache has been executed */
     qboolean        finalPhase;            /* whether we're in the final display phase */
@@ -220,6 +224,10 @@ static vec4_t gfxButtonHoverBgColor     = UI_THEME_COLOR_BUTTON_HOVER_BG;
 static vec4_t gfxButtonHoverBorderColor = UI_THEME_COLOR_BUTTON_HOVER_BORDER;
 static vec4_t gfxButtonHoverTextColor   = UI_THEME_COLOR_BUTTON_HOVER_TEXT;
 static vec4_t gfxBackdropColor          = UI_THEME_COLOR_PANEL_BG;
+static vec4_t gfxPanelColor             = { 0.04f, 0.05f, 0.08f, 0.86f };
+static vec4_t gfxPanelShadowColor       = { 0.00f, 0.00f, 0.00f, 0.42f };
+static vec4_t gfxPanelBandColor         = { 0.08f, 0.10f, 0.16f, 0.92f };
+static vec4_t gfxProgressGlowColor      = { 0.64f, 0.82f, 1.00f, 0.32f };
 
 /* -------------------------------------------------------------------------
    Helper: draw a thin horizontal separator line
@@ -227,6 +235,44 @@ static vec4_t gfxBackdropColor          = UI_THEME_COLOR_PANEL_BG;
 
 static void DrawSeparator(int y) {
     UI_FillRect(80, y, 480, 1, gfxSeparatorColor);
+}
+
+static void DrawPanel(int x, int y, int w, int h) {
+    UI_FillRect(x + 4, y + 5, w, h, gfxPanelShadowColor);
+    UI_FillRect(x, y, w, h, gfxPanelColor);
+    UI_FillRect(x, y, w, 24, gfxPanelBandColor);
+    UI_FillRect(x, y, w, 2, gfxAccentColor);
+    UI_DrawRect(x, y, w, h, gfxSeparatorColor);
+}
+
+static void DrawProgressSegments(float progress) {
+    int segments = 18;
+    int gap = 3;
+    int usableW = BAR_W - (segments - 1) * gap;
+    int x = BAR_X;
+    int i;
+    int segW;
+    float threshold;
+    vec4_t color;
+
+    for (i = 0; i < segments; i++) {
+        segW = usableW / segments;
+        if (i < usableW % segments) {
+            segW++;
+        }
+        threshold = (float)(i + 1) / (float)segments;
+        if (progress >= threshold) {
+            color[0] = gfxAccentColor[0] + (gfxSuccessColor[0] - gfxAccentColor[0]) * threshold;
+            color[1] = gfxAccentColor[1] + (gfxSuccessColor[1] - gfxAccentColor[1]) * threshold;
+            color[2] = gfxAccentColor[2] + (gfxSuccessColor[2] - gfxAccentColor[2]) * threshold;
+            color[3] = 0.95f;
+        } else {
+            Vector4Copy(gfxProgressTrackColor, color);
+            color[3] = 0.58f;
+        }
+        UI_FillRect(x, BAR_SEG_Y, segW, BAR_SEG_H, color);
+        x += segW + gap;
+    }
 }
 
 /* -------------------------------------------------------------------------
@@ -277,6 +323,18 @@ static void UI_GFX_Loading_ExecuteStage(void) {
     s_gfxloading.cacheExecuted = qtrue;
 }
 
+static int UI_GFX_Loading_GetPause( const char *cvarName, int fallback ) {
+    int value = (int)trap_Cvar_VariableValue(cvarName);
+
+    if (value <= 0) {
+        return fallback;
+    }
+    if (value > MAX_DEBUG_PAUSE) {
+        return MAX_DEBUG_PAUSE;
+    }
+    return value;
+}
+
 /* -------------------------------------------------------------------------
    Progress update (timing + smooth interpolation)
    ------------------------------------------------------------------------- */
@@ -284,12 +342,13 @@ static void UI_GFX_Loading_ExecuteStage(void) {
 static void UI_GFX_Loading_UpdateProgress(void) {
     int   currentTime  = trap_Milliseconds();
     int   stageElapsed = currentTime - s_gfxloading.stageStartTime;
+    int   stageTime    = UI_GFX_Loading_GetPause("ui_gfxLoadingStagePause", MIN_STAGE_TIME);
     int   totalStages  = NUM_STAGES;
     float stageProgress;
 
     UI_GFX_Loading_ExecuteStage();
 
-    if (stageElapsed >= MIN_STAGE_TIME && s_gfxloading.currentCache < totalStages) {
+    if (stageElapsed >= stageTime && s_gfxloading.currentCache < totalStages) {
         s_gfxloading.loadPercent = (float)(s_gfxloading.currentCache + 1) / (float)totalStages;
         s_gfxloading.currentCache++;
         s_gfxloading.stageStartTime = currentTime;
@@ -301,7 +360,7 @@ static void UI_GFX_Loading_UpdateProgress(void) {
             s_gfxloading.finalDisplayStartTime = currentTime;
         }
     } else if (s_gfxloading.currentCache < totalStages) {
-        stageProgress = (float)stageElapsed / (float)MIN_STAGE_TIME;
+        stageProgress = (float)stageElapsed / (float)stageTime;
         if (stageProgress > 1.0f) stageProgress = 1.0f;
         s_gfxloading.loadPercent =
             ((float)s_gfxloading.currentCache + stageProgress) / (float)totalStages;
@@ -345,6 +404,9 @@ static void UI_GFX_Loading_MenuDraw(void) {
     s_gfxloading.smoothProgress +=
         (s_gfxloading.loadPercent - s_gfxloading.smoothProgress)
         * (SMOOTH_LERP_SPEED * deltaTime);
+    if (s_gfxloading.loadPercent >= 1.0f && s_gfxloading.smoothProgress > 0.995f) {
+        s_gfxloading.smoothProgress = 1.0f;
+    }
 
     /* -----------------------------------------------------------------------
        HEADER
@@ -356,10 +418,11 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
     Vector4Copy(gfxSecondaryTextColor, color);
     UI_DrawString(SCREEN_CX, HDR_VERSION_Y,
-                  va("Version %s - Loading Resources", PRODUCT_VERSION),
+                  va("Version %s  /  Loading Resources", PRODUCT_VERSION),
                   UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     DrawSeparator(SEP_TOP_Y);
+    DrawPanel(PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
 
     /* -----------------------------------------------------------------------
        PROGRESS BAR
@@ -367,11 +430,16 @@ static void UI_GFX_Loading_MenuDraw(void) {
 
     stage_index = s_gfxloading.currentCache;
     stageName   = stageNames[(stage_index < totalStages) ? stage_index : totalStages];
+
+    Vector4Copy(gfxMutedTextColor, color);
+    UI_DrawString(SCREEN_CX, PANEL_Y + 8, "RESOURCE CACHE",
+                  UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
+
     Vector4Copy(gfxBodyTextColor, color);
     UI_DrawString(SCREEN_CX, BAR_STAGE_Y, stageName, UI_CENTER | UI_THEME_STYLE_BODY_FONT, color);
 
     /* shadow frame */
-    color[0] = 0.0f; color[1] = 0.0f; color[2] = 0.0f; color[3] = 1.0f;
+    color[0] = 0.0f; color[1] = 0.0f; color[2] = 0.0f; color[3] = 0.75f;
     UI_FillRect(BAR_X - 2, BAR_Y - 2, BAR_W + 4, BAR_H + 4, color);
 
     /* track */
@@ -389,24 +457,14 @@ static void UI_GFX_Loading_MenuDraw(void) {
         fillColor[3] = 1.0f;
 
         UI_FillRect(BAR_X, BAR_Y, fillW, BAR_H, fillColor);
+        UI_FillRect(BAR_X, BAR_Y, fillW, 2, gfxProgressGlowColor);
     }
 
     /* border */
     Vector4Copy(gfxSeparatorColor, color);
     UI_DrawRect(BAR_X, BAR_Y, BAR_W, BAR_H, color);
 
-    /* car icon */
-    {
-        float progress = s_gfxloading.smoothProgress;
-        int   car_x;
-
-        if (progress < 0.0f) progress = 0.0f;
-        if (progress > 1.0f) progress = 1.0f;
-
-        car_x = BAR_X + (int)(BAR_W * progress) - CAR_ICON_W / 2;
-        UI_DrawHandlePic(car_x, BAR_Y - CAR_ICON_H - 10,
-                         CAR_ICON_W, CAR_ICON_H, s_gfxloading.carShader);
-    }
+    DrawProgressSegments(s_gfxloading.smoothProgress);
 
     /* percentage */
     Vector4Copy(gfxMutedTextColor, color);
@@ -549,8 +607,9 @@ static void UI_GFX_Loading_MenuDraw(void) {
        ----------------------------------------------------------------------- */
 
     if (s_gfxloading.finalPhase) {
+        int finalDisplayTime = UI_GFX_Loading_GetPause("ui_gfxLoadingFinalPause", FINAL_DISPLAY_TIME);
         currentTime = trap_Milliseconds();
-        if (currentTime - s_gfxloading.finalDisplayStartTime >= FINAL_DISPLAY_TIME &&
+        if (currentTime - s_gfxloading.finalDisplayStartTime >= finalDisplayTime &&
             s_gfxloading.smoothProgress >= 0.98f) {
             if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
                 return;
@@ -603,8 +662,6 @@ static sfxHandle_t UI_GFX_Loading_Key(int key) {
 
 void UI_GFX_Loading(void) {
     memset(&s_gfxloading, 0, sizeof(gfxloading_t));
-
-    s_gfxloading.carShader = trap_R_RegisterShaderNoMip("menu/art/loading_car");
 
     s_gfxloading.menu.draw       = UI_GFX_Loading_MenuDraw;
     /*

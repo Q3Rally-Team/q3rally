@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "ui_local.h"
+#include "ui_rally_theme.h"
 
 /*
 ===============================================================================
@@ -36,6 +37,29 @@ menufield_s passwordField;
 
 static connstate_t	lastConnState;
 static char			lastLoadingText[MAX_INFO_VALUE];
+
+static vec4_t connectTopScrimColor    = { 0.00f, 0.00f, 0.00f, 0.58f };
+static vec4_t connectPanelColor       = { 0.04f, 0.05f, 0.08f, 0.78f };
+static vec4_t connectPanelBandColor   = { 0.08f, 0.10f, 0.16f, 0.88f };
+static vec4_t connectBorderColor      = UI_THEME_COLOR_PANEL_BORDER;
+static vec4_t connectAccentColor      = UI_THEME_COLOR_ACCENT;
+static vec4_t connectMutedTextColor   = UI_THEME_COLOR_TEXT_HINT;
+
+static void UI_DrawConnectFrame( qboolean overlay ) {
+	if ( overlay ) {
+		return;
+	}
+
+	UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, 132, connectTopScrimColor );
+
+	UI_FillRect( 54, 100, 532, 168, connectPanelColor );
+	UI_FillRect( 54, 100, 532, 24, connectPanelBandColor );
+	UI_FillRect( 54, 100, 532, 2, connectAccentColor );
+	UI_DrawRect( 54, 100, 532, 168, connectBorderColor );
+
+	UI_DrawProportionalString( 320, 108, "CONNECTION STATUS",
+		UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, connectMutedTextColor );
+}
 
 static void UI_ReadableSize ( char *buf, int bufsize, int value )
 {
@@ -76,6 +100,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	char dlSizeBuf[64], totalSizeBuf[64], xferRateBuf[64], dlTimeBuf[64];
 	int xferRate;
 	int width, leftWidth;
+	int baseX, valueX;
 	int style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	const char *s;
 
@@ -89,10 +114,12 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	width = UI_ProportionalStringWidth( xferText ) * UI_ProportionalSizeScale( style );
 	if (width > leftWidth) leftWidth = width;
 	leftWidth += 16;
+	baseX = 72;
+	valueX = baseX + leftWidth;
 
-	UI_DrawProportionalString( 8, 128, dlText, style, color_white );
-	UI_DrawProportionalString( 8, 160, etaText, style, color_white );
-	UI_DrawProportionalString( 8, 224, xferText, style, color_white );
+	UI_DrawProportionalString( baseX, 138, dlText, style, color_white );
+	UI_DrawProportionalString( baseX, 178, etaText, style, color_white );
+	UI_DrawProportionalString( baseX, 232, xferText, style, color_white );
 
 	if (downloadSize > 0) {
 		s = va( "%s (%d%%)", downloadName, downloadCount * 100 / downloadSize );
@@ -100,14 +127,14 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 		s = downloadName;
 	}
 
-	UI_DrawProportionalString( leftWidth, 128, s, style, color_white );
+	UI_DrawProportionalString( valueX, 138, s, style, color_white );
 
 	UI_ReadableSize( dlSizeBuf,		sizeof dlSizeBuf,		downloadCount );
 	UI_ReadableSize( totalSizeBuf,	sizeof totalSizeBuf,	downloadSize );
 
 	if (downloadCount < 4096 || !downloadTime) {
-		UI_DrawProportionalString( leftWidth, 160, "estimating", style, color_white );
-		UI_DrawProportionalString( leftWidth, 192, 
+		UI_DrawProportionalString( valueX, 178, "estimating", style, color_white );
+		UI_DrawProportionalString( valueX, 206,
 			va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
 	} else {
 		if ((uis.realtime - downloadTime) / 1000) {
@@ -125,24 +152,24 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 			UI_PrintTime ( dlTimeBuf, sizeof dlTimeBuf, 
 				(n - (((downloadCount/1024) * n) / (downloadSize/1024))) * 1000);
 
-			UI_DrawProportionalString( leftWidth, 160, 
+			UI_DrawProportionalString( valueX, 178,
 				dlTimeBuf, style, color_white );
-			UI_DrawProportionalString( leftWidth, 192, 
+			UI_DrawProportionalString( valueX, 206,
 				va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
 		} else {
-			UI_DrawProportionalString( leftWidth, 160, 
+			UI_DrawProportionalString( valueX, 178,
 				"estimating", style, color_white );
 			if (downloadSize) {
-				UI_DrawProportionalString( leftWidth, 192, 
+				UI_DrawProportionalString( valueX, 206,
 					va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
 			} else {
-				UI_DrawProportionalString( leftWidth, 192, 
+				UI_DrawProportionalString( valueX, 206,
 					va("(%s copied)", dlSizeBuf), style, color_white );
 			}
 		}
 
 		if (xferRate) {
-			UI_DrawProportionalString( leftWidth, 224, 
+			UI_DrawProportionalString( valueX, 232,
 				va("%s/Sec", xferRateBuf), style, color_white );
 		}
 	}
@@ -168,6 +195,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
                UI_SetColor( color_white );
                UI_DrawBackground( uis.menuBackShader );
         }
+	UI_DrawConnectFrame( overlay );
 
 	// see what information we should display
 	trap_GetClientState( &cstate );
@@ -186,7 +214,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	
 	// print any server info (server full, bad version, etc)
 	if ( cstate.connState < CA_CONNECTED ) {
-		UI_DrawProportionalString( 320, 192, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
+		UI_DrawProportionalString( 320, 214, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
 	}
 
 #if 0
@@ -244,7 +272,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 		return;
 	}
 
-	UI_DrawProportionalString( 320, 128, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, 150, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	// password required / connection rejected information goes here
 }

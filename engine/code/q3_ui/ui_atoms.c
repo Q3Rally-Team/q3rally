@@ -1045,6 +1045,7 @@ qboolean UI_IsFullscreen( void ) {
 // The GFX loading screen is only shown once per session (first game start), never when
 // returning to the main menu after leaving a map.
 #define CVAR_GFX_LOADING_SHOWN "ui_gfxLoadingShown"
+#define CVAR_GFX_LOADING_TEST  "ui_gfxLoadingTest"
 
 static void NeedCDAction( qboolean result ) {
 	if ( !result ) {
@@ -1070,8 +1071,11 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 	case UIMENU_MAIN:
 // STONELANCE
 //		UI_MainMenu();
-		if ( !trap_Cvar_VariableValue( CVAR_GFX_LOADING_SHOWN ) ) {
-			trap_Cvar_Set( CVAR_GFX_LOADING_SHOWN, "1" );
+		if ( trap_Cvar_VariableValue( CVAR_GFX_LOADING_TEST ) ||
+			 !trap_Cvar_VariableValue( CVAR_GFX_LOADING_SHOWN ) ) {
+			if ( !trap_Cvar_VariableValue( CVAR_GFX_LOADING_TEST ) ) {
+				trap_Cvar_Set( CVAR_GFX_LOADING_SHOWN, "1" );
+			}
 			UI_GFX_Loading();
 		} else {
 			UI_MainMenu();
