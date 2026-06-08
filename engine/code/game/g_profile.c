@@ -2069,6 +2069,7 @@ void G_Profile_RecordWin( gclient_t *client ) {
     client->pers.profileMatchOutcomeRecorded = qtrue;
 
     s_profileState.stats.wins++;
+    s_profileState.stats.gamesPlayed++;
     s_profileState.dirty = qtrue;
 
     /* Modi-spezifische Win-Zähler */

@@ -4,6 +4,22 @@
 
 declare(strict_types=1);
 
+// ── CORS ──────────────────────────────────────────────────────────────────────
+$allowedOrigins = ['https://www.q3rally.com', 'https://q3rally.com'];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: https://www.q3rally.com');
+}
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Upload-Token');
+header('Access-Control-Max-Age: 86400');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 const DATA_DIR  = __DIR__ . '/data';
 const ARENA_DIR = __DIR__ . '/arena';
 const INDEX_FILE    = __DIR__ . '/data/match_index.json';
@@ -5666,8 +5682,14 @@ function profile_upsert_from_payload(array $payload): void
             'excellentAwards' => $pickCareer('excellentAwards', (int)($player['excellentCount'] ?? 0)),
             'impressiveAwards'=> $pickCareer('impressiveAwards', (int)($player['impressiveCount'] ?? 0)),
             'perfectAwards'   => $pickCareer('perfectAwards', !empty($player['perfect']) ? 1 : 0),
-            'damageDealt'     => $pickCareer('damageDealt', (int)($player['damageDealt'] ?? 0)),
-            'damageTaken'     => $pickCareer('damageTaken', (int)($player['damageTaken'] ?? 0)),
+            // Use mergeCareerCountField (not pickCareer) for damage stats:
+            // G_Profile_RecordDamage() updates the career total incrementally during
+            // the match, so the snapshot already contains this match's damage.
+            // pickCareer would add the per-match delta ON TOP of the snapshot baseline,
+            // causing double-counting. mergeCareerCountField uses the snapshot as-is
+            // when it's strictly ahead, matching the same logic used for kills/deaths.
+            'damageDealt'     => $mergeCareerCountField('damageDealt', (int)($player['damageDealt'] ?? 0)),
+            'damageTaken'     => $mergeCareerCountField('damageTaken', (int)($player['damageTaken'] ?? 0)),
             'distanceKm'      => $distanceKm,
             'topSpeedKph'     => $topSpeedKph,
             'fuelUsed'        => $fuelUsed,
@@ -5941,12 +5963,94 @@ function extract_player_zone_hold(array $player, string $mode): int
     return (int) max(0, $value ?? 0);
 }
 
+function index_derive_winner(array $payload, string $mode): array
+{
+    // Mirrors the winner-detection logic of profile_upsert_from_payload().
+    // Returns ['winner' => string cleanName, 'winnerTeam' => int].
+    $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
+                  'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
+    $isTeamMode = in_array($mode, $teamModes, true);
+
+    $winnerClientNum = -1;
+    $hasWinnerClientNum = false;
+    foreach ([$payload, $payload['settings'] ?? []] as $src) {
+        if (!is_array($src)) continue;
+        if (array_key_exists('winnerClientNum', $src) && is_numeric($src['winnerClientNum'])) {
+            $winnerClientNum = (int)$src['winnerClientNum'];
+            $hasWinnerClientNum = $winnerClientNum >= 0;
+            break;
+        }
+    }
+
+    $clientToName = [];
+    $clientToTeam = [];
+    foreach ((array)($payload['players'] ?? []) as $cp) {
+        if (!is_array($cp)) continue;
+        $cn = (int)($cp['clientNum'] ?? -1);
+        if ($cn >= 0) {
+            $clientToName[$cn] = (string)($cp['cleanName'] ?? $cp['name'] ?? '');
+            $clientToTeam[$cn] = (int)($cp['team'] ?? 0);
+        }
+    }
+
+    if (!$isTeamMode) {
+        if (!$hasWinnerClientNum) {
+            foreach ((array)($payload['players'] ?? []) as $cp) {
+                if (!is_array($cp) || !empty($cp['isBot'])) continue;
+                if ((int)($cp['position'] ?? 0) === 1) {
+                    $winnerClientNum = (int)($cp['clientNum'] ?? -1);
+                    $hasWinnerClientNum = $winnerClientNum >= 0;
+                    break;
+                }
+            }
+        }
+        $name = ($hasWinnerClientNum && isset($clientToName[$winnerClientNum]))
+            ? $clientToName[$winnerClientNum] : '';
+        return ['winner' => $name, 'winnerTeam' => 0];
+    }
+
+    // Team mode: find winning team from team scores
+    $teamScores = [];
+    if (isset($payload['teamScores']) && is_array($payload['teamScores'])) {
+        foreach ($payload['teamScores'] as $k => $v) {
+            if (is_numeric($v)) {
+                $tl = profile_normalize_team_label($k);
+                if ($tl !== '') $teamScores[$tl] = (float)$v;
+            }
+        }
+    }
+    foreach (['red', 'blue', 'green', 'yellow'] as $t) {
+        $f = $t . 'Score';
+        if (isset($payload[$f]) && is_numeric($payload[$f])) $teamScores[$t] = (float)$payload[$f];
+    }
+
+    $winnerTeamInt = 0;
+    if ($hasWinnerClientNum && isset($clientToTeam[$winnerClientNum])) {
+        $winnerTeamInt = $clientToTeam[$winnerClientNum];
+    } elseif ($teamScores) {
+        $wt = profile_pick_winner_team_by_scores($teamScores);
+        if ($wt !== null) {
+            foreach ((array)($payload['players'] ?? []) as $cp) {
+                if (!is_array($cp)) continue;
+                if (profile_normalize_team_label($cp['team'] ?? null) === $wt) {
+                    $winnerTeamInt = (int)($cp['team'] ?? 0);
+                    break;
+                }
+            }
+        }
+    }
+
+    return ['winner' => '', 'winnerTeam' => $winnerTeamInt];
+}
+
 function index_extract_entry(array $payload): array
 {
     $mode = normalize_mode_value($payload['mode'] ?? '');
     $dedicated = $payload['server']['dedicated'] ?? null;
     $source    = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
         ? 'online' : ($payload['source'] ?? 'offline');
+
+    $winnerInfo = index_derive_winner($payload, $mode);
 
     $players = [];
     foreach ((array)($payload['players'] ?? []) as $p) {
@@ -5958,6 +6062,61 @@ function index_extract_entry(array $payload): array
         $players[] = [
             'name'        => (string)($p['cleanName'] ?? $p['name'] ?? $p['displayName'] ?? ''),
             'score'       => $score,
+            'playerScore' => (function() use ($p): int {
+                // Prefer inline profile snapshot
+                if (isset($p['profile']['playerScore'])) {
+                    return (int)$p['profile']['playerScore'];
+                }
+                // Fallback: stored profile file
+                $playerId = (string)($p['playerId'] ?? '');
+                if ($playerId !== '') {
+                    $stored = profile_load($playerId);
+                    if ($stored && isset($stored['playerScore'])) {
+                        return (int)$stored['playerScore'];
+                    }
+                }
+                return 0;
+            })(),
+            'achievementTiers' => (function() use ($p): array {
+                // Prefer inline profile snapshot (present in recent matches)
+                if (isset($p['profile']['achievementTiers']) && is_array($p['profile']['achievementTiers'])) {
+                    return array_map('intval', $p['profile']['achievementTiers']);
+                }
+                // Fallback: load from stored profile file (covers old matches on rebuild)
+                $playerId = (string)($p['playerId'] ?? '');
+                if ($playerId !== '') {
+                    $stored = profile_load($playerId);
+                    if ($stored && isset($stored['achievementTiers']) && is_array($stored['achievementTiers'])) {
+                        return array_map('intval', $stored['achievementTiers']);
+                    }
+                }
+                return [];
+            })(),
+            'vehicle'     => (function() use ($p): string {
+                // vehicle field is often empty; fall back to model (e.g. "roadster/red" → "roadster")
+                $v = (string)($p['vehicle'] ?? $p['car'] ?? $p['vehicleModel'] ?? '');
+                if ($v === '') {
+                    $model = (string)($p['model'] ?? '');
+                    if ($model !== '') {
+                        $v = explode('/', $model)[0]; // strip skin suffix
+                    }
+                }
+                // try inline profile snapshot
+                if ($v === '') {
+                    $v = (string)($p['profile']['mostUsedVehicle'] ?? '');
+                }
+                // last resort: load stored profile file (covers old matches on rebuild)
+                if ($v === '') {
+                    $playerId = (string)($p['playerId'] ?? '');
+                    if ($playerId !== '') {
+                        $stored = profile_load($playerId);
+                        if ($stored) {
+                            $v = (string)($stored['vehicle'] ?? $stored['mostUsedVehicle'] ?? '');
+                        }
+                    }
+                }
+                return $v;
+            })(),
             'bestLapMs'   => (int)($p['bestLapMs'] ?? 0),
             'totalRaceMs' => extract_player_race_time($p, $mode),
             'kills'       => $kills,
@@ -5982,6 +6141,8 @@ function index_extract_entry(array $payload): array
         'source'      => $source,
         'serverName'  => (string)($payload['server']['name'] ?? ''),
         'playerCount' => (int)($payload['playerCount'] ?? count($players)),
+        'winner'      => $winnerInfo['winner'],
+        'winnerTeam'  => $winnerInfo['winnerTeam'],
         'players'     => $players,
     ];
 }
