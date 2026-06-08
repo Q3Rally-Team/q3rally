@@ -3,7 +3,8 @@ Q3Rally engine
 
 Q3Rally is a standalone game based on ioquake3.
 
-There are enhancements and customizations to the engine. It is prefered to use Q3Rally engine instead of ioquake3 to run the game.
+There are enhancements and customizations to the engine. Use the Q3Rally engine
+instead of stock ioquake3 to run the game.
 
 Engine changes compared to ioquake3:
 
@@ -21,12 +22,16 @@ Q3Rally is compiled using GNU Make (`make`) from a terminal while in the engine 
 
 `make ARCH=x86`, `make ARCH=x86_64`, `make ARCH=arm64` (ARM64/Apple Silicon) specify compiling for a specific architecture instead of the host architecture. (Windows ARM64 is unsupported.)
 
-Compiling Linux arm64 from a x86\_64 host requires `CC=aarch64-linux-gnu-gcc`. Compiling for a different architechture than the host on Linux requires setting `SDL_CFLAGS=... SDL_LIBS=...` (see output of pkg-config sdl2 --cflags and --libs) with the paths to a build of SDL2 for that architechture.
+Compiling Linux arm64 from an x86\_64 host requires
+`CC=aarch64-linux-gnu-gcc`. Compiling for a different architecture than the host
+on Linux requires setting `SDL_CFLAGS=... SDL_LIBS=...` with the paths to an
+SDL2 build for that architecture. Use `pkg-config sdl2 --cflags --libs` as a
+reference for the expected flags.
 
 If you have commit access and use an SSH key use `git clone git@github.com:Q3Rally-Team/q3rally.git` instead.
 
 ### Windows
-There is several ways to get an MinGW-w64 build environment.
+There are several ways to get a MinGW-w64 build environment.
 
 #### MSYS2
 1. Install MSYS2 with packages: git, make, mingw-w64-i686-gcc mingw-w64-x86_64-gcc
@@ -52,7 +57,9 @@ _This was more relevant before MSYS2 was made._
 6. Change to the engine directory using `cd q3rally/engine`
 7. Run `make PLATFORM=mingw32`
 
-It's possible to compile for Linux under WSL using `make` or `./make-linux-portable.sh`. Compiling for macOS using osxcross is not supported under WSL as of writting.
+It is possible to compile for Linux under WSL using `make` or
+`./make-linux-portable.sh`. Compiling for macOS using osxcross is not supported
+under WSL as of this writing.
 
 ### Linux
 1. Install `git make gcc libsdl2-dev` packages for your Linux distribution.
@@ -81,9 +88,11 @@ Modern AppBundle requires macOS 11.0 SDK or later to be installed. Legacy AppBun
 ## Release builds
 Assuming you have everything set up; release builds could be done like this.
 
-`clean` is used to do a fresh build to be sure VERSION, etc from Makefile are applied to the build.
+`clean` is used to do a fresh build and ensure values such as `VERSION` from the
+Makefile are applied to the build.
 
-`-j#` is the number of CPUs thread to use. Set it to your CPU cores/threads for faster compiling.
+`-j#` is the number of CPU threads to use. Set it to your CPU core/thread count
+for faster compiling.
 
 ```
 # Windows; run on Windows or Linux with mingw-w64

@@ -1,3 +1,10 @@
+# ioquake3 Upstream README
+
+> Q3Rally note: this file is kept as upstream ioquake3 reference
+> documentation. For Q3Rally-specific build instructions, see
+> [../README.md](../README.md). For Q3Rally project documentation, see
+> [../../docs/](../../docs/).
+
 ![Build](https://github.com/ioquake/ioq3/workflows/Build/badge.svg)
 
                    ,---------------------------------------.
