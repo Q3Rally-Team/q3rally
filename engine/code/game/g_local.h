@@ -951,6 +951,7 @@ void G_DropRearWeapon( gentity_t *ent );
 void CenterPrint_All( const char *s );
 qboolean isRallyRace( void );
 qboolean isRallyNonDMRace( void );
+qboolean isRallyDMRace( void );
 qboolean isRaceObserver( int clientNum );
 void G_PrintMapStats( gentity_t *player, qboolean generateArenaFile, char *longname );
 void G_Ghost_InitForMap( const char *mapname );

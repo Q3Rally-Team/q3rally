@@ -27,7 +27,7 @@ static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const g
 static int G_Ghost_FindRoutePoolIndexByVariant( const char *variantKey );
 static int G_Ghost_SelectRoutePoolSlot( const ghostBotRoute_t *route );
 static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs );
-static qboolean G_Ghost_AddRecordTop5PerVariant( const ghostRecord_t *record );
+static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *record );
 static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route );
 
 static int G_Ghost_GetTrackLengthVariant( void ) {
@@ -71,6 +71,23 @@ static int G_Ghost_Strlen( const char *text ) {
     }
 
     return len;
+}
+
+static qboolean G_Ghost_LineMatchesKey( const char *line, const char *key ) {
+    int keyLen;
+    char delimiter;
+
+    if ( !line || !key || !key[0] ) {
+        return qfalse;
+    }
+
+    keyLen = G_Ghost_Strlen( key );
+    if ( Q_stricmpn( line, key, keyLen ) ) {
+        return qfalse;
+    }
+
+    delimiter = line[keyLen];
+    return delimiter == '\0' || delimiter == ' ' || delimiter == '\t';
 }
 
 static int G_Ghost_ParseInt( const char *text ) {
@@ -200,31 +217,21 @@ static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs ) {
     return qfalse;
 }
 
-static qboolean G_Ghost_AddRecordTop5PerVariant( const ghostRecord_t *record ) {
+static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *record ) {
     int i;
-    int variantCount = 0;
     int worstIndex = -1;
-    const char *recordVariant;
 
     if ( !record ) {
         return qfalse;
     }
 
-    recordVariant = record->vehicleClass[0] ? record->vehicleClass : "any";
-
     for ( i = 0; i < s_levelGhostCount; ++i ) {
-        const char *candidateVariant = s_levelGhosts[i].vehicleClass[0] ? s_levelGhosts[i].vehicleClass : "any";
-        if ( Q_stricmp( recordVariant, candidateVariant ) ) {
-            continue;
-        }
-
-        ++variantCount;
         if ( worstIndex < 0 || G_Ghost_RecordTimeIsBetter( s_levelGhosts[worstIndex].bestTimeMs, s_levelGhosts[i].bestTimeMs ) ) {
             worstIndex = i;
         }
     }
 
-    if ( variantCount < 5 ) {
+    if ( s_levelGhostCount < 5 ) {
         if ( s_levelGhostCount >= MAX_GHOST_RECORDS_PER_MAP ) {
             return qfalse;
         }
@@ -300,46 +307,48 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, int 
         return qfalse;
     }
 
+    Com_Memset( outRecord, 0, sizeof( *outRecord ) );
+
     cursor = buffer;
     while ( ( line = G_Ghost_NextLine( &cursor ) ) != NULL ) {
         if ( line[0] == '#' || line[0] == '\0' ) {
             continue;
         }
 
-        if ( !Q_stricmpn( line, "map", 3 ) ) {
+        if ( G_Ghost_LineMatchesKey( line, "map" ) ) {
             const char *value = line + 3;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
             }
             Q_strncpyz( mapName, value, sizeof( mapName ) );
             hasMapHeader = qtrue;
-        } else if ( !Q_stricmpn( line, "vehicle", 7 ) ) {
+        } else if ( G_Ghost_LineMatchesKey( line, "vehicle" ) ) {
             const char *value = line + 7;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
             }
             Q_strncpyz( outRecord->vehicleClass, value, sizeof( outRecord->vehicleClass ) );
-        } else if ( !Q_stricmpn( line, "best_time_ms", 12 ) ) {
+        } else if ( G_Ghost_LineMatchesKey( line, "best_time_ms" ) ) {
             const char *value = line + 12;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
             }
             outRecord->bestTimeMs = G_Ghost_ParseInt( value );
-        } else if ( !Q_stricmpn( line, "track_length", 12 ) ) {
+        } else if ( G_Ghost_LineMatchesKey( line, "track_length" ) ) {
             const char *value = line + 12;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
             }
             trackLength = G_Ghost_ParseInt( value );
             hasTrackLength = qtrue;
-        } else if ( !Q_stricmpn( line, "track_reversed", 14 ) ) {
+        } else if ( G_Ghost_LineMatchesKey( line, "track_reversed" ) ) {
             const char *value = line + 14;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
             }
             trackReversed = G_Ghost_ParseInt( value ) ? 1 : 0;
             hasTrackReversed = qtrue;
-        } else if ( !Q_stricmpn( line, "frames", 6 ) ) {
+        } else if ( G_Ghost_LineMatchesKey( line, "frames" ) ) {
             break;
         }
     }
@@ -406,7 +415,7 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
             continue;
         }
 
-        if ( !Q_stricmpn( line, "map", 3 ) ) {
+        if ( G_Ghost_LineMatchesKey( line, "map" ) ) {
             const char *value = line + 3;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
@@ -415,16 +424,11 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
             continue;
         }
 
-        if ( !Q_stricmpn( line, "vehicle", 7 ) ) {
-            const char *value = line + 7;
-            while ( *value == ' ' || *value == '\t' ) {
-                ++value;
-            }
-            Q_strncpyz( outRoute->vehicleClass, value, sizeof( outRoute->vehicleClass ) );
+        if ( G_Ghost_LineMatchesKey( line, "vehicle" ) ) {
             continue;
         }
 
-        if ( !Q_stricmpn( line, "best_time_ms", 12 ) ) {
+        if ( G_Ghost_LineMatchesKey( line, "best_time_ms" ) ) {
             const char *value = line + 12;
             while ( *value == ' ' || *value == '\t' ) {
                 ++value;
@@ -433,7 +437,7 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
             continue;
         }
 
-        if ( !Q_stricmpn( line, "frames", 6 ) ) {
+        if ( G_Ghost_LineMatchesKey( line, "frames" ) ) {
             continue;
         }
 
@@ -663,10 +667,10 @@ void G_Ghost_InitForMap( const char *mapname ) {
                 /* Parse into the local record, not into s_levelGhosts[s_levelGhostCount]
                    directly: if s_levelGhostCount has reached MAX_GHOST_RECORDS_PER_MAP
                    the direct array write would be one element past the end of the array.
-                   G_Ghost_AddRecordTop5PerVariant handles the bounds check internally. */
+                   G_Ghost_AddRecordTop5ForTrackVariant handles the bounds check internally. */
                 if ( G_Ghost_ParseHeader( s_ghostFileBuffer, mapname, trackLength, trackReversed, qfalse, &parsedRecord ) ) {
                     Q_strncpyz( parsedRecord.path, va( "%s/%s", ghostDir, filename ), sizeof( parsedRecord.path ) );
-                    G_Ghost_AddRecordTop5PerVariant( &parsedRecord );
+                    G_Ghost_AddRecordTop5ForTrackVariant( &parsedRecord );
                 }
             }
         }
@@ -679,8 +683,6 @@ void G_Ghost_InitForMap( const char *mapname ) {
 
     if ( s_levelGhostCount == 0 ) {
         int legacyCandidates = 0;
-        int legacyAnyAmbiguous = 0;
-
         for ( dirIndex = 0; dirIndex < (int)( sizeof( ghostDirectories ) / sizeof( ghostDirectories[0] ) ); ++dirIndex ) {
             const char *ghostDir = ghostDirectories[dirIndex];
 
@@ -732,33 +734,15 @@ void G_Ghost_InitForMap( const char *mapname ) {
                 }
 
                 Q_strncpyz( parsedRecord.path, va( "%s/%s", ghostDir, filename ), sizeof( parsedRecord.path ) );
-                if ( G_Ghost_AddRecordTop5PerVariant( &parsedRecord ) ) {
+                if ( G_Ghost_AddRecordTop5ForTrackVariant( &parsedRecord ) ) {
                     ++legacyCandidates;
                 }
             }
         }
 
         if ( s_levelGhostCount > 0 ) {
-            for ( i = 0; i < s_levelGhostCount; ++i ) {
-                int j;
-                int variantMatches = 0;
-                const char *variantKey = s_levelGhosts[i].vehicleClass[0] ? s_levelGhosts[i].vehicleClass : "any";
-
-                for ( j = 0; j < s_levelGhostCount; ++j ) {
-                    const char *otherKey = s_levelGhosts[j].vehicleClass[0] ? s_levelGhosts[j].vehicleClass : "any";
-                    if ( !Q_stricmp( variantKey, otherKey ) ) {
-                        ++variantMatches;
-                    }
-                }
-                if ( variantMatches > 1 ) {
-                    s_levelGhosts[i].ambiguousLegacy = qtrue;
-                    legacyAnyAmbiguous = 1;
-                }
-            }
-
-            G_Printf( "G_Ghost: Legacy fallback loaded %d ghost(s)%s for %s\n",
+            G_Printf( "G_Ghost: Legacy fallback loaded %d ghost(s) for %s\n",
                 legacyCandidates,
-                legacyAnyAmbiguous ? " (ambiguous variants marked)" : "",
                 mapname );
         } else {
             G_Printf( "G_Ghost: No matching ghost files for map %s\n", mapname );
@@ -795,7 +779,7 @@ void G_Ghost_InitForMap( const char *mapname ) {
         }
 
         if ( s_bestBotRouteIndex >= 0 ) {
-            G_Printf( "G_Ghost: Bot route pool ready (%d variant(s), fallback=%s)\n",
+            G_Printf( "G_Ghost: Bot route ready (%d route(s), fallback=%s)\n",
                 s_botRoutePoolCount,
                 s_botRoutePool[s_bestBotRouteIndex].path );
         } else {
@@ -927,7 +911,7 @@ void G_Ghost_AnnounceForClient( gentity_t *ent ) {
     record = G_Ghost_FindBestRecord();
 
     if ( record ) {
-        trap_SendServerCommand( ent - g_entities, va( "ghostmeta %s %d %s", record->vehicleClass[0] ? record->vehicleClass : "any", record->bestTimeMs, record->path ) );
+        trap_SendServerCommand( ent - g_entities, va( "ghostmeta any %d %s", record->bestTimeMs, record->path ) );
     } else {
         trap_SendServerCommand( ent - g_entities, "ghostmeta none 0" );
     }

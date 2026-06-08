@@ -305,6 +305,15 @@ qboolean isRallyNonDMRace( void ){
 	return qfalse;
 }
 
+qboolean isRallyDMRace( void ){
+        if ( g_gametype.integer == GT_RACING_DM
+                || g_gametype.integer == GT_TEAM_RACING_DM ){
+                return qtrue;
+        }
+
+	return qfalse;
+}
+
 /*
 =================
 isRaceObserver

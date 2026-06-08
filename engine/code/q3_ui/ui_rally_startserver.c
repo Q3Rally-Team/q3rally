@@ -942,6 +942,12 @@ static const char *playerTeam_list[] = {
 	0
 };
 
+static const char *playerTeam_twoTeam_list[] = {
+	"Blue",
+	"Red",
+	0
+};
+
 static const char *botSkill_list[] = {
 	"I Can Win",
 	"Bring It On",
@@ -981,6 +987,37 @@ static int ServerOptions_TrackLengthIndexFromValue( int trackLengthValue ) {
 	}
 
 	return 0;
+}
+
+static qboolean ServerOptions_AllowsFourTeams( void ) {
+	return ( s_serveroptions.gametype == GT_CTF4 ) ? qtrue : qfalse;
+}
+
+static void ServerOptions_ClampPlayerTeams( void ) {
+	int n;
+
+	if ( s_serveroptions.gametype < GT_TEAM || ServerOptions_AllowsFourTeams() ) {
+		return;
+	}
+
+	for ( n = 0; n < PLAYER_SLOTS; n++ ) {
+		if ( s_serveroptions.playerTeam[n].curvalue > 1 ) {
+			s_serveroptions.playerTeam[n].curvalue = n & 1;
+		}
+	}
+}
+
+static void ServerOptions_UpdatePlayerTeamLists( void ) {
+	int n;
+	const char **teamList;
+
+	teamList = ServerOptions_AllowsFourTeams() ? playerTeam_list : playerTeam_twoTeam_list;
+
+	for ( n = 0; n < PLAYER_SLOTS; n++ ) {
+		s_serveroptions.playerTeam[n].itemnames = teamList;
+	}
+
+	ServerOptions_ClampPlayerTeams();
 }
 
 /*
@@ -1224,6 +1261,7 @@ default:
                 trap_Cvar_SetValue( "g_eliminationWeapons", eliminationWeapons );
         }
 	trap_Cvar_Set( "sv_hostname", s_serveroptions.hostname.field.buffer );
+	ServerOptions_ClampPlayerTeams();
 
 	// the wait commands will allow the dedicated to take effect
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", s_startserver.maplist[s_startserver.currentmap] ) );
@@ -1303,6 +1341,7 @@ static void ServerOptions_InitPlayerItems( void ) {
                 for( ; n < PLAYER_SLOTS; n++ ) {
                         s_serveroptions.playerTeam[n].curvalue = 1;
                 }
+                ServerOptions_UpdatePlayerTeamLists();
         }
         else {
                 for( n = 0; n < PLAYER_SLOTS; n++ ) {
@@ -1358,6 +1397,7 @@ static void ServerOptions_SetPlayerItems( void ) {
 	if( s_serveroptions.gametype < GT_TEAM ) {
 		return;
 	}
+	ServerOptions_UpdatePlayerTeamLists();
 	for( n = start; n < PLAYER_SLOTS; n++ ) {
 		if( s_serveroptions.playerType[n].curvalue == 2 ) {
 			s_serveroptions.playerTeam[n].generic.flags |= (QMF_INACTIVE|QMF_HIDDEN);
@@ -2231,7 +2271,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		s_serveroptions.playerTeam[n].generic.flags		= QMF_SMALLFONT;
 		s_serveroptions.playerTeam[n].generic.x			= 240;
 		s_serveroptions.playerTeam[n].generic.y			= y;
-		s_serveroptions.playerTeam[n].itemnames			= playerTeam_list;
+		s_serveroptions.playerTeam[n].itemnames			= playerTeam_twoTeam_list;
 
 		y += ( SMALLCHAR_HEIGHT + 4 );
 	}

@@ -1634,10 +1634,10 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
                         client->ps.ammo[WP_MACHINEGUN] = 200;
                 }
         }
-        else if ( (!isRallyRace()) && g_gametype.integer != GT_DERBY ){
+        else if ( ( isRallyDMRace() || !isRallyRace() ) && g_gametype.integer != GT_DERBY ){
                 client->ps.stats[STAT_WEAPONS] = ( 1u << WP_MACHINEGUN );
 
-                if ( g_gametype.integer == GT_TEAM ) {
+                if ( g_gametype.integer == GT_TEAM || g_gametype.integer == GT_TEAM_RACING_DM ) {
                         client->ps.ammo[WP_MACHINEGUN] = 50;
                 } else {
                         client->ps.ammo[WP_MACHINEGUN] = 100;
@@ -1645,7 +1645,7 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
         }
 
         if ( g_gametype.integer != GT_ELIMINATION ) {
-                if ( (!isRallyNonDMRace()) && g_gametype.integer != GT_DERBY){
+                if ( (!isRallyRace()) && g_gametype.integer != GT_DERBY){
                         client->ps.stats[STAT_WEAPONS] |= ( 1u << WP_GAUNTLET );
                 }
                 else {
@@ -1804,7 +1804,7 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 			G_KillBox(ent);
 			// force the base weapon up
 // STONELANCE
-			if ( (!isRallyRace() || ( g_gametype.integer == GT_ELIMINATION && g_eliminationWeapons.integer ))
+			if ( (isRallyDMRace() || !isRallyRace() || ( g_gametype.integer == GT_ELIMINATION && g_eliminationWeapons.integer ))
 					&& g_gametype.integer != GT_DERBY ){
 				client->ps.weapon = WP_MACHINEGUN;
 			}
