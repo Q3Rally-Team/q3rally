@@ -978,6 +978,11 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.impressiveAwards = G_Profile_ParseInt( buffer, "impressiveAwards", 0 );
     s_profileState.stats.perfectAwards = G_Profile_ParseInt( buffer, "perfectAwards", 0 );
     s_profileState.stats.topSpeedKph = G_Profile_ParseDouble( buffer, "topSpeedKph", 0.0 );
+    // Sanitize corrupted legacy values, such as physics spikes recorded before this fix.
+    if ( s_profileState.stats.topSpeedKph > 400.0 ) {
+        s_profileState.stats.topSpeedKph = 0.0;
+        s_profileState.dirty = qtrue;
+    }
     s_profileState.stats.damageDealt = G_Profile_ParseInt( buffer, "damageDealt", 0 );
     s_profileState.stats.damageTaken = G_Profile_ParseInt( buffer, "damageTaken", 0 );
     G_Profile_ParseString( buffer, "mostUsedVehicle", s_profileState.stats.mostUsedVehicle, sizeof( s_profileState.stats.mostUsedVehicle ), "" );
@@ -1698,6 +1703,12 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
     // Geschwindigkeits-Tracking
     speedQu = VectorLength( client->ps.velocity );
     speedKph = ( speedQu / CP_M_2_QU ) * 3.6;
+    // Ignore one-frame physics spikes that are not real vehicle speeds.
+    // The speedometer is designed for 0-200 km/h; 400 leaves room for boosts,
+    // ramps, and explosions while filtering artifacts such as 1400 km/h.
+    if ( speedKph > 400.0 ) {
+        speedKph = 0.0;
+    }
     if ( speedKph > s_profileState.stats.topSpeedKph ) {
         s_profileState.stats.topSpeedKph = speedKph;
         s_profileState.dirty = qtrue;
