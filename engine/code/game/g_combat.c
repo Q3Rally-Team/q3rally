@@ -1216,13 +1216,6 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
         asave = CheckArmor (targ, take, dflags);
         take -= asave;
 
-        if ( targ->client || ( attacker && attacker->client ) ) {
-                // Record only the actual damage that made it past armor, so profile stats
-                // match the in-game damage counters instead of using the raw pre-armor
-                // value.
-                G_Profile_RecordDamage( attacker ? attacker->client : NULL, targ->client, take );
-        }
-
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
 			targ->health, take, asave );
@@ -1266,9 +1259,29 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 
 	// do the damage
 	if (take) {
-		targ->health = targ->health - take;
+		int oldHealth;
+		int recordedDamage;
+
+		oldHealth = targ->health;
+		recordedDamage = take;
+		if ( client && oldHealth > 0 && recordedDamage > oldHealth ) {
+			recordedDamage = oldHealth;
+		}
+		if ( recordedDamage < 0 ) {
+			recordedDamage = 0;
+		}
+
+		targ->health = oldHealth - take;
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
+			if ( recordedDamage > 0 ) {
+				targ->client->ps.stats[STAT_DAMAGE_TAKEN] += recordedDamage;
+				if ( attacker && attacker->client && attacker != targ ) {
+					attacker->client->ps.stats[STAT_DAMAGE_DEALT] += recordedDamage;
+				}
+				G_Profile_RecordDamage( ( attacker && attacker != targ ) ? attacker->client : NULL,
+					targ->client, recordedDamage );
+			}
 			if ( !targ->client->car.fuelLeak ) {
 
 				int leakThreshold = g_vehicleHealth.integer / 4;
@@ -1285,12 +1298,6 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 			if ( client ){
 // END
 				targ->flags |= FL_NO_KNOCKBACK;
-// STONELANCE
-				if (attacker->client && (targ->health + take) >= 0){
-					// only add damage done to kill client
-					targ->client->ps.stats[STAT_DAMAGE_TAKEN] += (targ->health + take);
-					attacker->client->ps.stats[STAT_DAMAGE_DEALT] += (targ->health + take);
-				}
 			}
 // END
 
@@ -1308,10 +1315,6 @@ max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 */
 		}
 		else {
-			if (targ->client && attacker->client){
-				targ->client->ps.stats[STAT_DAMAGE_TAKEN] += take;
-				attacker->client->ps.stats[STAT_DAMAGE_DEALT] += take;
-			}
 			if ( targ->pain )
 				targ->pain (targ, attacker, take);
 		}

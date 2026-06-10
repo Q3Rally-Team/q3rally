@@ -41,6 +41,27 @@ static vec4_t loadingBorderColor      = { 0.34f, 0.48f, 0.76f, 0.72f };
 static vec4_t loadingAccentColor      = { 0.50f, 0.70f, 1.00f, 1.00f };
 static vec4_t loadingMutedTextColor   = { 0.60f, 0.66f, 0.77f, 1.00f };
 
+#define LOADING_DETAILS_Y              146
+#define LOADING_DETAILS_H              126
+#define LOADING_DETAILS_BAND_H          22
+#define LOADING_DETAILS_TEXT_Y         182
+#define LOADING_DETAILS_LINE_H          21
+#define LOADING_DETAILS_TEXT_SCALE     0.58f
+
+/*
+===================
+CG_DrawLoadingDetailLine
+===================
+*/
+static void CG_DrawLoadingDetailLine( int y, const char *text ) {
+	if ( !text || !text[0] ) {
+		return;
+	}
+
+	UI_DrawProportionalStringScaled( 320, y, text,
+		UI_CENTER|UI_DROPSHADOW, colorWhite, LOADING_DETAILS_TEXT_SCALE );
+}
+
 /*
 ===================
 CG_DrawLoadingFrame
@@ -51,10 +72,10 @@ static void CG_DrawLoadingFrame( void ) {
 	CG_FillRect( 0, 286, SCREEN_WIDTH, SCREEN_HEIGHT - 286, loadingBottomScrimColor );
 
 	CG_FillRect( 0, 130, SCREEN_WIDTH, 2, loadingAccentColor );
-	CG_FillRect( 0, 146, SCREEN_WIDTH, 126, loadingPanelColor );
-	CG_FillRect( 0, 146, SCREEN_WIDTH, 22, loadingPanelBandColor );
-	CG_FillRect( 0, 146, SCREEN_WIDTH, 2, loadingAccentColor );
-	CG_DrawRect( 0, 146, SCREEN_WIDTH, 126, 1, loadingBorderColor );
+	CG_FillRect( 0, LOADING_DETAILS_Y, SCREEN_WIDTH, LOADING_DETAILS_H, loadingPanelColor );
+	CG_FillRect( 0, LOADING_DETAILS_Y, SCREEN_WIDTH, LOADING_DETAILS_BAND_H, loadingPanelBandColor );
+	CG_FillRect( 0, LOADING_DETAILS_Y, SCREEN_WIDTH, 2, loadingAccentColor );
+	CG_DrawRect( 0, LOADING_DETAILS_Y, SCREEN_WIDTH, LOADING_DETAILS_H, 1, loadingBorderColor );
 
 	UI_DrawProportionalString( 320, 152, "MAP DETAILS",
 		UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, loadingMutedTextColor );
@@ -257,7 +278,7 @@ void CG_DrawInformation( void ) {
 
         // draw info string information
 
-        y = 178;
+        y = LOADING_DETAILS_TEXT_Y;
 
         // don't print server lines if playing a local game
 	trap_Cvar_VariableStringBuffer( "sv_running", buf, sizeof( buf ) );
@@ -265,44 +286,39 @@ void CG_DrawInformation( void ) {
 		// server hostname
 		Q_strncpyz(buf, Info_ValueForKey( info, "sv_hostname" ), 1024);
 		Q_CleanStr(buf);
-		UI_DrawProportionalString( 320, y, buf,
-			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-		y += PROP_HEIGHT;
+		CG_DrawLoadingDetailLine( y, buf );
+		y += LOADING_DETAILS_LINE_H;
 
 		// pure server
 		s = Info_ValueForKey( sysInfo, "sv_pure" );
 		if ( s[0] == '1' ) {
-			UI_DrawProportionalString( 320, y, "Pure Server",
-				UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-			y += PROP_HEIGHT;
+			CG_DrawLoadingDetailLine( y, "Pure Server" );
+			y += LOADING_DETAILS_LINE_H;
 		}
 
 		// server-specific message of the day
 		s = CG_ConfigString( CS_MOTD );
 		if ( s[0] ) {
-			UI_DrawProportionalString( 320, y, s,
-				UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-			y += PROP_HEIGHT;
+			CG_DrawLoadingDetailLine( y, s );
+			y += LOADING_DETAILS_LINE_H;
 		}
 
 		// some extra space after hostname and motd
-                y += 10;
+                y += 4;
         }
 
         // map-specific message (long map name)
         s = CG_ConfigString( CS_MESSAGE );
         if ( s[0] ) {
-                UI_DrawProportionalString( 320, y, s,
-			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-		y += PROP_HEIGHT;
+                CG_DrawLoadingDetailLine( y, s );
+		y += LOADING_DETAILS_LINE_H;
 	}
 
 	// cheats warning
 	s = Info_ValueForKey( sysInfo, "sv_cheats" );
 	if ( s[0] == '1' ) {
-		UI_DrawProportionalString( 320, y, "CHEATS ARE ENABLED",
-			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-		y += PROP_HEIGHT;
+		CG_DrawLoadingDetailLine( y, "CHEATS ARE ENABLED" );
+		y += LOADING_DETAILS_LINE_H;
 	}
 
 	// game type
@@ -379,15 +395,13 @@ void CG_DrawInformation( void ) {
 		s = "Unknown Gametype";
 		break;
 	}
-	UI_DrawProportionalString( 320, y, s,
-		UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-	y += PROP_HEIGHT;
+	CG_DrawLoadingDetailLine( y, s );
+	y += LOADING_DETAILS_LINE_H;
 		
 	value = atoi( Info_ValueForKey( info, "timelimit" ) );
 	if ( value ) {
-		UI_DrawProportionalString( 320, y, va( "timelimit %i", value ),
-			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-		y += PROP_HEIGHT;
+		CG_DrawLoadingDetailLine( y, va( "timelimit %i", value ) );
+		y += LOADING_DETAILS_LINE_H;
 	}
 
 // Q3Rally Code Start
@@ -406,8 +420,8 @@ void CG_DrawInformation( void ) {
 	if (cgs.gametype >= GT_CTF) {
 		value = atoi( Info_ValueForKey( info, "capturelimit" ) );
 		if ( value ) {
-			UI_DrawProportionalString( 320, y, va( "capturelimit %i", value ),
-				UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
+			CG_DrawLoadingDetailLine( y, va( "capturelimit %i", value ) );
+			y += LOADING_DETAILS_LINE_H;
 		}
 	}
 
@@ -415,17 +429,15 @@ void CG_DrawInformation( void ) {
 	else if (isRallyRace()){
 		value = atoi( Info_ValueForKey( info, "laplimit" ) );
 		if ( value ) {
-			UI_DrawProportionalString( 320, y, va( "laps %i", value ),
-				UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-			y += PROP_HEIGHT;
+			CG_DrawLoadingDetailLine( y, va( "laps %i", value ) );
+			y += LOADING_DETAILS_LINE_H;
 		}
 	}
 	else {
 		value = atoi( Info_ValueForKey( info, "fraglimit" ) );
 		if ( value ) {
-			UI_DrawProportionalString( 320, y, va( "fraglimit %i", value ),
-				UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
-			y += PROP_HEIGHT;
+			CG_DrawLoadingDetailLine( y, va( "fraglimit %i", value ) );
+			y += LOADING_DETAILS_LINE_H;
 		}
 	}
 // Q3Rally Code END

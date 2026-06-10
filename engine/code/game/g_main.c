@@ -895,23 +895,26 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
 
         /* ── playerId: UUID des Spielers ────────────────────────────────────
          * Priorität (höchste zuerst):
-         *   1. cl_uuid aus dem Userinfo — gesetzt vom Client der eine UUID
+         *   1. Für den lokalen Client: UUID direkt aus dem Profil-State im RAM.
+         *      Das aktive Profil ist authoritative; cl_uuid kann noch stale sein.
+         *   2. cl_uuid aus dem Userinfo — gesetzt vom Client der eine UUID
          *      im lokalen Profil hat. Stabil über Namensänderungen und IPs.
-         *   2. Für den lokalen Client: UUID direkt aus dem Profil-State im RAM
-         *      (Fallback falls cl_uuid noch nicht im Userinfo gesetzt wurde).
          *   3. cl_guid — Hardware-ID, instabil aber besser als Name.
          *   4. IP-Adresse — nur für Remote-Clients, letzter stabiler Anker.
          *   5. cleanName → "client-N" — absolute Notfallwerte.
          * ────────────────────────────────────────────────────────────────── */
-        value = Info_ValueForKey( userinfo, "cl_uuid" );
-        if ( value && value[0] ) {
-                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
+        /* For the local player, the loaded profile is authoritative.  cl_uuid
+         * can lag behind userinfo updates or contain an archived stale value. */
+        if ( client->pers.localClient ) {
+                if ( G_Profile_GetUUID( player->playerId, sizeof( player->playerId ) ) ) {
+                        trap_Cvar_Set( "cl_uuid", player->playerId );
+                        Q_strncpyz( client->pers.uuid, player->playerId, sizeof( client->pers.uuid ) );
+                }
         }
 
-        if ( !player->playerId[0] && client->pers.localClient ) {
-                /* Direktzugriff auf den Profil-State: vermeidet einen
-                 * Userinfo-Round-Trip wenn der Cvar noch nicht propagiert ist. */
-                G_Profile_GetUUID( player->playerId, sizeof( player->playerId ) );
+        value = Info_ValueForKey( userinfo, "cl_uuid" );
+        if ( !player->playerId[0] && value && value[0] ) {
+                Q_strncpyz( player->playerId, value, sizeof( player->playerId ) );
         }
 
         value = Info_ValueForKey( userinfo, "cl_guid" );

@@ -1320,6 +1320,7 @@ void CL_KeyDownEvent( int key, unsigned time )
 			// menu is closed – open it
 			Cvar_Set( "cg_hudOptionsOpen", "1" );
 			Key_SetCatcher( Key_GetCatcher() | KEYCATCH_CGAME );
+			IN_SyncMousePosition();
 		}
 		return;
 	}

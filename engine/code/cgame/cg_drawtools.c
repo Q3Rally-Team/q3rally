@@ -1014,15 +1014,12 @@ float UI_ProportionalSizeScale( int style ) {
 
 /*
 =================
-UI_DrawProportionalString
+UI_DrawProportionalStringScaled
 =================
 */
-void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color ) {
+void UI_DrawProportionalStringScaled( int x, int y, const char* str, int style, vec4_t color, float sizeScale ) {
 	vec4_t	drawcolor;
 	int		width;
-	float	sizeScale;
-
-	sizeScale = UI_ProportionalSizeScale( style );
 
 	switch( style & UI_FORMATMASK ) {
 		case UI_CENTER:
@@ -1071,4 +1068,14 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	}
 
 	UI_DrawProportionalString2( x, y, str, color, sizeScale, cgs.media.charsetProp );
+}
+
+
+/*
+=================
+UI_DrawProportionalString
+=================
+*/
+void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color ) {
+	UI_DrawProportionalStringScaled( x, y, str, style, color, UI_ProportionalSizeScale( style ) );
 }

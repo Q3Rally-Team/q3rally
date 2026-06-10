@@ -1225,7 +1225,7 @@ static void IN_ProcessEvents( void )
 					if( !xrel && !yrel )
 						break;
 
-					if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
+					if ( Key_GetCatcher( ) & ( KEYCATCH_UI | KEYCATCH_CGAME ) ) {
 						Com_QueueEvent( in_eventTime, SE_MOUSE, xrel, yrel, 0, NULL );
 					}
 					break;
