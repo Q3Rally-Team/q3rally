@@ -364,6 +364,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.sfxvolume.generic.name		= "Effects Volume:";
 	soundOptionsInfo.sfxvolume.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	soundOptionsInfo.sfxvolume.generic.callback	= UI_SoundOptionsMenu_Event;
+	soundOptionsInfo.sfxvolume.generic.ownerdraw	= UI_RallySlider_Draw;
 	soundOptionsInfo.sfxvolume.generic.id		= ID_EFFECTSVOLUME;
 	soundOptionsInfo.sfxvolume.generic.x		= 400;
 	soundOptionsInfo.sfxvolume.generic.y		= y;
@@ -375,6 +376,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.musicvolume.generic.name		= "Music Volume:";
 	soundOptionsInfo.musicvolume.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	soundOptionsInfo.musicvolume.generic.callback	= UI_SoundOptionsMenu_Event;
+	soundOptionsInfo.musicvolume.generic.ownerdraw	= UI_RallySlider_Draw;
 	soundOptionsInfo.musicvolume.generic.id			= ID_MUSICVOLUME;
 	soundOptionsInfo.musicvolume.generic.x			= 400;
 	soundOptionsInfo.musicvolume.generic.y			= y;

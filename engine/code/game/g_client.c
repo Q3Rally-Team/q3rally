@@ -1079,6 +1079,11 @@ void ClientUserinfoChanged( int clientNum ) {
                 client->pers.manualShift = atoi( s );
         }
 
+        s = Info_ValueForKey( userinfo, "cg_transmissionMode" );
+        if ( *s ) {
+                client->pers.transmissionMode = (int)Com_Clamp( TR_AUTO, TR_MANUAL_CLUTCH, atoi( s ) );
+        }
+
         s = Info_ValueForKey( userinfo, "chassis" );
         if ( !s || !s[0] ) {
                 s = Info_ValueForKey( userinfo, "vehicle" );
@@ -1124,10 +1129,10 @@ void ClientUserinfoChanged( int clientNum ) {
 	else
 	{
 // STONELANCE
-		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\rim\\%s\\plate\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\cm\\%i\\ms\\%i\\tt\\%d\\tl\\%d",
+		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\rim\\%s\\plate\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\cm\\%i\\ms\\%i\\tm\\%i\\tt\\%d\\tl\\%d",
 			client->pers.netname, client->sess.sessionTeam, model, headModel, rim, plate, redTeam, blueTeam, c1, c2, 
 			client->pers.maxHealth, client->sess.wins, client->sess.losses, 
-			client->pers.controlMode, client->pers.manualShift, teamTask, teamLeader);
+			client->pers.controlMode, client->pers.manualShift, client->pers.transmissionMode, teamTask, teamLeader);
 /*
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
 			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 

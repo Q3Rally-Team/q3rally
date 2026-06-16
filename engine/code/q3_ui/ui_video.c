@@ -1414,6 +1414,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.tq.minvalue       = 0;
 	s_graphicsoptions.tq.maxvalue       = 3;
 	s_graphicsoptions.tq.generic.callback = GraphicsOptions_TQEvent;
+	s_graphicsoptions.tq.generic.ownerdraw = UI_RallySlider_Draw;
 	y += BIGCHAR_HEIGHT+2;
 
 	// references/modifies "r_textureBits"

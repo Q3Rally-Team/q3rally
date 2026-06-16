@@ -312,6 +312,61 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
        }
 }
 
+#define RPM_GAUGE_RED_FRACTION 0.85f
+
+static float CG_RPMGaugeFraction( int rpm ) {
+       float frac;
+
+       if ( rpm <= 0 ) {
+               return 0.0f;
+       }
+       if ( rpm >= CP_RPM_MAX ) {
+               return 1.0f;
+       }
+
+       frac = rpm / (float)CP_RPM_MAX;
+       if ( frac < 0.0f ) {
+               return 0.0f;
+       }
+       if ( frac > 1.0f ) {
+               return 1.0f;
+       }
+       return frac;
+}
+
+static void CG_DrawRPMGaugeBar( float x, float y, float width, float height, int rpm ) {
+       float frac;
+       float innerX, innerY, innerW, innerH;
+       float fillW, redStartW;
+       vec4_t backColor = {0.0f, 0.0f, 0.0f, 0.25f};
+       vec4_t revColor = {1.0f, 0.12f, 0.02f, 1.0f};
+
+       if ( width <= 2.0f || height <= 2.0f ) {
+               return;
+       }
+
+       frac = CG_RPMGaugeFraction( rpm );
+       innerX = x + 1.0f;
+       innerY = y + 1.0f;
+       innerW = width - 2.0f;
+       innerH = height - 2.0f;
+       fillW = innerW * frac;
+       redStartW = innerW * RPM_GAUGE_RED_FRACTION;
+
+       CG_DrawRect( x, y, width, height, 1, colorWhite );
+       CG_FillRect( innerX, innerY, innerW, innerH, backColor );
+
+       if ( fillW <= 0.0f ) {
+               return;
+       }
+       if ( fillW <= redStartW ) {
+               CG_FillRect( innerX, innerY, fillW, innerH, colorWhite );
+       } else {
+               CG_FillRect( innerX, innerY, redStartW, innerH, colorWhite );
+               CG_FillRect( innerX + redStartW, innerY, fillW - redStartW, innerH, revColor );
+       }
+}
+
 /*
 ========================
 CG_DrawArrowToCheckpoint
@@ -987,17 +1042,13 @@ static float CG_DrawSpeed( float y ) {
 		int		maxLen, len;
 		float	bgColor[4] = {0.0f, 0.0f, 0.0f, 0.25f};
 		int		rpm;
-		int		segments;
-		float	segmentWidth;
                  const float segmentHeight = 8.0f;
-                 const float segmentGap = 4.0f;
                  const float gaugeHeight = 12.0f;
                 const float rpmIconSize = gaugeHeight * 2;
                 const float rpmIconOffset = rpmIconSize + 4;
                 const float rpmIconNudge = 3.0f;
                 float   iconOffset = gaugeHeight * 2 + 4;
                  float   blockWidth, blockHeight, barWidth;
-                 int             i;
                 int             speedWidth, gearWidth;
 
 		Com_sprintf( speedStr, sizeof( speedStr ), "%i %s", vel_speed, cg_metricUnits.integer ? "KPH" : "MPH" );
@@ -1018,7 +1069,6 @@ static float CG_DrawSpeed( float y ) {
 		}
 
                rpm = cg.predictedPlayerState.stats[STAT_RPM];
-               segments = (CP_RPM_MAX + 999) / 1000;
 
                 // determine total block dimensions
                 barWidth = maxLen * GIANTCHAR_WIDTH -15;
@@ -1038,7 +1088,6 @@ static float CG_DrawSpeed( float y ) {
                        CG_FillRect( rectX, rectY, rectW, rectH, bgColor );
                }
 
-		segmentWidth = (maxLen * GIANTCHAR_WIDTH - (segments - 1) * segmentGap) / segments;
 		{
 			static qhandle_t rpmIcon;
 			if ( !rpmIcon ) {
@@ -1046,14 +1095,7 @@ static float CG_DrawSpeed( float y ) {
 			}
                         CG_DrawPic( x - rpmIconNudge, y, rpmIconSize, rpmIconSize, rpmIcon );
 		}
-               for ( i = 0; i < segments; i++ ) {
-                       float segX = x + rpmIconOffset + i * (segmentWidth + segmentGap);
-                       if ( rpm >= (i + 1) * 1000 ) {
-                               CG_FillRect( segX, y, segmentWidth, segmentHeight, colorWhite );
-                       } else {
-                               CG_DrawRect( segX, y, segmentWidth, segmentHeight, 1, colorWhite );
-                       }
-               }
+               CG_DrawRPMGaugeBar( x + rpmIconOffset, y, maxLen * GIANTCHAR_WIDTH, segmentHeight, rpm );
 
                speedWidth = CG_DrawStrlen( speedStr ) * GIANTCHAR_WIDTH;
                gearWidth  = CG_DrawStrlen( gearStr )  * GIANTCHAR_WIDTH;
@@ -1098,7 +1140,6 @@ static float CG_DrawSpeed( float y ) {
                int speedWidth;
                float speedX, speedY;
                float centerX, centerY;
-               int i;
 
                 left = 640 - blockWidth - 8;
                 top = y - blockHeight;
@@ -1168,9 +1209,6 @@ static float CG_DrawSpeed( float y ) {
 
                {
                        int rpm = cg.predictedPlayerState.stats[STAT_RPM];
-                       int segments = (CP_RPM_MAX + 999) / 1000;
-                       float segGap = 2.0f;
-                       float segWidth = (fuelWidth - (segments - 1) * segGap) / segments;
                        float segX = left + (blockWidth - fuelWidth) * 0.5f;
                        float segY = top + gaugeSize + gaugeSpacing + fuelHeight + rpmSpacing;
 
@@ -1188,14 +1226,7 @@ static float CG_DrawSpeed( float y ) {
 
                        CG_DrawPic( rpmIconX, rpmIconY, rpmIconSize, rpmIconSize, rpmIcon );
 
-                       for ( i = 0 ; i < segments ; i++ ) {
-                               float xPos = segX + i * (segWidth + segGap);
-                               if ( rpm >= (i + 1) * 1000 ) {
-                                       CG_FillRect( xPos, segY, segWidth, rpmHeight, colorWhite );
-                               } else {
-                                       CG_DrawRect( xPos, segY, segWidth, rpmHeight, 1, colorWhite );
-                               }
-                       }
+                       CG_DrawRPMGaugeBar( segX, segY, fuelWidth, rpmHeight, rpm );
                }
 
                y = yorg - 44 - blockHeight;

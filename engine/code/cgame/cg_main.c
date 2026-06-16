@@ -256,6 +256,7 @@ vmCvar_t	cg_metricUnits;
 vmCvar_t        cg_speedometerMode;
 vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
+vmCvar_t	cg_transmissionMode;
 vmCvar_t	cg_minSkidLength;
 vmCvar_t	cg_drawRearView;
 vmCvar_t        cg_checkpointArrowMode;
@@ -397,6 +398,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_mmap_renderLevel, "cg_mmap_renderLevel", "3", CVAR_ARCHIVE },
 	{ &cg_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
+	{ &cg_transmissionMode, "cg_transmissionMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
         { &cg_distanceFormat, "cg_distanceFormat", "0", CVAR_ARCHIVE },
 	{ &cg_jukeboxShuffle, "cg_jukeboxShuffle", "0", CVAR_ARCHIVE },

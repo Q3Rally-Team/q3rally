@@ -33,6 +33,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 static float CP_TORQUE_SLOPE = (float)(CP_RPM_HP_PEAK * M_PI * CP_TORQUE_PEAK - 16500 * CP_HP_PEAK) / (float)(CP_RPM_HP_PEAK * M_PI * (CP_RPM_HP_PEAK*CP_RPM_HP_PEAK - 2 * CP_RPM_HP_PEAK * CP_RPM_TORQUE_PEAK + CP_RPM_TORQUE_PEAK*CP_RPM_TORQUE_PEAK));
 static float CP_GEAR_RATIOS[] = {CP_GEAR1, CP_GEAR2, CP_GEAR3, CP_GEAR4, CP_GEAR5, CP_GEAR6};
 
+#define CP_RPM_LIMITER_CUT		CP_RPM_MAX
+#define CP_RPM_LIMITER_RESUME	( CP_RPM_MAX - 320.0f )
+
 
 #if 0
 /*
@@ -94,9 +97,93 @@ static float PM_WheelSpeedtoRPM( car_t *car, carPoint_t *points ){
 PM_UpdateRPM
 ================================================================================
 */
-static void PM_UpdateRPM(car_t *car, carPoint_t *points){
+static float PM_ClampRPM( float rpm )
+{
+	if ( rpm < CP_RPM_MIN ) {
+		return CP_RPM_MIN;
+	}
+	if ( rpm > CP_RPM_MAX ) {
+		return CP_RPM_MAX;
+	}
+	return rpm;
+}
+
+static float PM_ApplyRevLimiter( car_t *car, float requestedRpm, float sec )
+{
+	float rpm;
+
+	if ( car->throttle <= 0.01f || car->fuel <= 0.0f || requestedRpm < CP_RPM_LIMITER_CUT ) {
+		return PM_ClampRPM( requestedRpm );
+	}
+
+	rpm = car->rpm;
+	if ( rpm >= CP_RPM_LIMITER_CUT ) {
+		rpm -= 6200.0f * sec;
+		if ( rpm < CP_RPM_LIMITER_RESUME ) {
+			rpm = CP_RPM_LIMITER_RESUME;
+		}
+	}
+	else {
+		rpm += 4300.0f * sec;
+		if ( rpm > CP_RPM_LIMITER_CUT ) {
+			rpm = CP_RPM_LIMITER_CUT;
+		}
+	}
+
+	return PM_ClampRPM( rpm );
+}
+
+static qboolean PM_ClutchOpen( car_t *car )
+{
+	if ( car->gear == 0 ) {
+		return qtrue;
+	}
+
+	if ( pm->transmissionMode == TR_MANUAL_CLUTCH && pm->cmd.upmove > 0 ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static void PM_UpdateFreeEngineRPM( car_t *car, float sec )
+{
+	float throttle;
+	float targetRpm;
+	float rpmRate;
+
+	throttle = car->throttle;
+	if ( throttle < 0.0f || car->fuel <= 0.0f ) {
+		throttle = 0.0f;
+	}
+
+	targetRpm = CP_RPM_MIN + throttle * ( CP_RPM_MAX - CP_RPM_MIN );
+	rpmRate = throttle > 0.01f ? 5200.0f + 2200.0f * throttle : 2600.0f;
+
+	if ( car->rpm < targetRpm ) {
+		car->rpm += rpmRate * sec;
+		if ( car->rpm > targetRpm ) {
+			car->rpm = targetRpm;
+		}
+	}
+	else if ( car->rpm > targetRpm ) {
+		car->rpm -= rpmRate * sec;
+		if ( car->rpm < targetRpm ) {
+			car->rpm = targetRpm;
+		}
+	}
+
+	car->rpm = PM_ApplyRevLimiter( car, car->rpm, sec );
+}
+
+static void PM_UpdateRPM(car_t *car, carPoint_t *points, float sec){
 	float	rpmTemp;
 	float	shiftDownRPM, shiftUpRPM;
+
+	if ( PM_ClutchOpen( car ) ) {
+		PM_UpdateFreeEngineRPM( car, sec );
+		return;
+	}
 
 	shiftDownRPM = CP_RPM_MIN + (CP_RPM_MAX - CP_RPM_MIN) * (0.4f + 0.2f * car->throttle);
 	shiftUpRPM = CP_RPM_MIN + (CP_RPM_MAX - CP_RPM_MIN) * (0.8f + 0.2f * car->throttle);
@@ -111,60 +198,56 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points){
 
 //	Com_Printf("1 Gear: %i RPM temp: %f\n", car->gear, rpmTemp);
 
-		while ( rpmTemp < shiftDownRPM ){
-			if (car->gear > 1)
-				car->gear--;
-			else if ( rpmTemp < CP_RPM_MIN ){
-				rpmTemp = CP_RPM_MIN;
-				break;
-			}
-			else
-				break;
+		if (pm->transmissionMode == TR_AUTO) {
+			while ( rpmTemp < shiftDownRPM ){
+				if (car->gear > 1)
+					car->gear--;
+				else if ( rpmTemp < CP_RPM_MIN ){
+					rpmTemp = CP_RPM_MIN;
+					break;
+				}
+				else
+					break;
 
-			rpmTemp = PM_WheelSpeedtoRPM(car, points);
-			if (rpmTemp > CP_RPM_MAX)
-				rpmTemp = CP_RPM_MAX;
+				rpmTemp = PM_WheelSpeedtoRPM(car, points);
+				if (rpmTemp > CP_RPM_MAX)
+					rpmTemp = CP_RPM_MAX;
+			}
 		}
 
 //		Com_Printf("2 Gear: %i RPM temp: %f\n", car->gear, rpmTemp);
 
-		while ( rpmTemp > shiftUpRPM ){
-			if ( !points[2].onGround || !points[3].onGround || points[2].slipping || points[3].slipping ){
-				if ( rpmTemp > CP_RPM_MAX ){
+		if (pm->transmissionMode == TR_AUTO) {
+			while ( rpmTemp > shiftUpRPM ){
+				if ( !points[2].onGround || !points[3].onGround || points[2].slipping || points[3].slipping ){
+					if ( rpmTemp > CP_RPM_MAX ){
+						rpmTemp = CP_RPM_MAX;
+						break;
+					}
+					else if ( rpmTemp > shiftUpRPM )
+						break;
+				}
+
+				if (car->gear < 6){
+					if ( points[2].onGround && points[3].onGround && !points[2].slipping && !points[3].slipping )
+						car->gear++;
+				}
+				else if ( rpmTemp > CP_RPM_MAX ){
 					rpmTemp = CP_RPM_MAX;
 					break;
 				}
-				else if ( rpmTemp > shiftUpRPM )
-					break;
-			}
 
-                if (car->gear < 6){
-				if ( points[2].onGround && points[3].onGround && !points[2].slipping && !points[3].slipping )
-					car->gear++;
+				rpmTemp = PM_WheelSpeedtoRPM(car, points);
+				if (rpmTemp < CP_RPM_MIN)
+					rpmTemp = CP_RPM_MIN;
 			}
-			else if ( rpmTemp > CP_RPM_MAX ){
-				rpmTemp = CP_RPM_MAX;
-				break;
-			}
-
-			rpmTemp = PM_WheelSpeedtoRPM(car, points);
-			if (rpmTemp < CP_RPM_MIN)
-				rpmTemp = CP_RPM_MIN;
 		}
 
-		car->rpm = rpmTemp;
-	}
-	else if (car->gear == 0){
-		car->rpm = CP_RPM_MIN;
+		car->rpm = PM_ApplyRevLimiter( car, rpmTemp, sec );
 	}
 	else {
 		rpmTemp = PM_WheelSpeedtoRPM(car, points);
-		if (rpmTemp < CP_RPM_MIN)
-			rpmTemp = CP_RPM_MIN;
-		if (rpmTemp > CP_RPM_MAX)
-			rpmTemp = CP_RPM_MAX;
-
-		car->rpm = rpmTemp;
+		car->rpm = PM_ApplyRevLimiter( car, rpmTemp, sec );
 	}
 }
 
@@ -403,6 +486,8 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
                 return;
 	if (car->fuel <= 0.0f)
 	return;
+	if (pm->transmissionMode == TR_MANUAL_CLUTCH && pm->cmd.upmove > 0)
+		return;
 
 	if (VectorLength(forward) == 0.0f){
 		if (pm->pDebug)
@@ -505,7 +590,7 @@ void PM_AddRoadForces(car_t *car, carBody_t *body, carPoint_t *points, float sec
 	if (pm->ps->stats[STAT_HEALTH] > 0){
 		car->throttle = pm->cmd.forwardmove / 127.0F;
 
-		if (!pm->manualShift){
+		if (pm->transmissionMode == TR_AUTO && !pm->manualShift){
 			if (car->gear < 0)
 				car->throttle *= -1.0f;
 
@@ -588,7 +673,7 @@ void PM_AddRoadForces(car_t *car, carBody_t *body, carPoint_t *points, float sec
 	else
 		pm->ps->extra_eFlags &= ~CF_BRAKE;
 
-	PM_UpdateRPM(car, points);
+	PM_UpdateRPM(car, points, sec);
 
 	PM_AirFrictionForces(car, body, points, sec);
 

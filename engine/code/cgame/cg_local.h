@@ -587,6 +587,7 @@ typedef struct {
 // Q3Rally Code Start
 	int				clientNum;
 	qboolean		manualShift;
+	int				transmissionMode;
 	qboolean		oppositeRoll;
 
 	int				position;
@@ -1605,6 +1606,7 @@ extern  vmCvar_t                cg_speedometerMode;
 extern	vmCvar_t		cg_minSkidLength;
 extern	vmCvar_t		cg_controlMode;
 extern	vmCvar_t		cg_manualShift;
+extern	vmCvar_t		cg_transmissionMode;
 extern	vmCvar_t		cg_drawRearView;
 extern	vmCvar_t		cg_drawMMap; //TBB - minimap
 extern	vmCvar_t		cg_mmap_fov;

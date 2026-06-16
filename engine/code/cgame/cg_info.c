@@ -387,6 +387,9 @@ void CG_DrawInformation( void ) {
 	case GT_DEATHMATCH:
 		s = "Deathmatch";
 		break;
+	case GT_KOTH:
+		s = "King of the Hill";
+		break;
 	case GT_SINGLE_PLAYER:
 		s = "Time Trial";
 		break;

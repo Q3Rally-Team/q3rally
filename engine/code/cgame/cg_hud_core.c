@@ -169,10 +169,21 @@ float CG_GetEliminationColumnWidth( void ) {
 #define HUDOPT_COL_GAP      30.0f   /* gap between columns (divider lives here)*/
 #define HUDOPT_COL_L_X     ( HUDOPT_PNL_X + HUDOPT_PAD )
 #define HUDOPT_COL_R_X     ( HUDOPT_COL_L_X + HUDOPT_COL_W + HUDOPT_COL_GAP )
-#define HUDOPT_ROW_H        22.0f
-#define HUDOPT_TITLE_H      20.0f   /* BIGCHAR title row                      */
-#define HUDOPT_HINT_H       14.0f   /* TINYCHAR hint row                      */
-#define HUDOPT_SEC_H        18.0f   /* section header height                  */
+#define HUDOPT_ROW_H        19.0f
+#define HUDOPT_TITLE_H      18.0f   /* BIGCHAR title row                      */
+#define HUDOPT_HINT_H       12.0f   /* TINYCHAR hint row                      */
+#define HUDOPT_SEC_H        16.0f   /* section header height                  */
+#define HUDOPT_TITLE_SCALE   0.66f
+#define HUDOPT_HINT_SCALE    0.40f
+#define HUDOPT_SECTION_SCALE 0.46f
+#define HUDOPT_ENTRY_SCALE   0.46f
+#define HUDOPT_SLIDER_SCALE  0.40f
+#define HUDOPT_SLIDER_TRACK_X ( HUDOPT_COL_R_X + 128.0f )
+#define HUDOPT_SLIDER_TRACK_W ( HUDOPT_COL_W - 182.0f )
+#define HUDOPT_MMAP_SLIDERS   2
+#define HUDOPT_SLIDER_NONE    0
+#define HUDOPT_SLIDER_SCALE_ID 1
+#define HUDOPT_SLIDER_ZOOM_ID  2
 /* Text sizes reuse the engine's built-in char constants:
  * Title  → BIGCHAR,  sections/entries → SMALLCHAR / TINYCHAR               */
 /* Left col: Racing (10 entries, indices 0-9)
@@ -224,6 +235,82 @@ static const hudToggleEntry_t hudToggleTable[] = {
 
 /* Track which row the cursor hovers over (-1 = none) */
 static int      g_hudOptHoverRow  = -1;
+static int      g_hudOptHoverSlider = HUDOPT_SLIDER_NONE;
+
+static void HUDOpt_DrawText( int x, int y, const char *text, vec4_t color, float scale ) {
+    UI_DrawProportionalStringScaled( x, y, text, UI_LEFT|UI_DROPSHADOW, color, scale );
+}
+
+static void HUDOpt_DrawCenteredText( float x, float width, int y, const char *text, vec4_t color, float scale ) {
+    UI_DrawProportionalStringScaled( (int)( x + width * 0.5f ), y, text,
+        UI_CENTER|UI_DROPSHADOW, color, scale );
+}
+
+static void HUDOpt_DrawRightText( float right, int y, const char *text, vec4_t color, float scale ) {
+    UI_DrawProportionalStringScaled( (int)right, y, text,
+        UI_RIGHT|UI_DROPSHADOW, color, scale );
+}
+
+static float HUDOpt_ClampFloat( float value, float minValue, float maxValue ) {
+    if ( value < minValue ) {
+        return minValue;
+    }
+    if ( value > maxValue ) {
+        return maxValue;
+    }
+    return value;
+}
+
+static void HUDOpt_SetFloatCvar( const char *cvarName, vmCvar_t *cvar, float value, qboolean wholeNumber ) {
+    if ( wholeNumber ) {
+        trap_Cvar_Set( cvarName, va( "%.0f", value ) );
+    } else {
+        trap_Cvar_Set( cvarName, va( "%.2f", value ) );
+    }
+    trap_Cvar_Update( cvar );
+}
+
+static void HUDOpt_SetSliderFromX( int sliderId, int cx ) {
+    float t = ( (float)cx - HUDOPT_SLIDER_TRACK_X ) / HUDOPT_SLIDER_TRACK_W;
+    t = HUDOpt_ClampFloat( t, 0.0f, 1.0f );
+
+    if ( sliderId == HUDOPT_SLIDER_SCALE_ID ) {
+        float value = 0.40f + t * 1.60f;
+        value = ( (int)( value * 20.0f + 0.5f ) ) / 20.0f;
+        HUDOpt_SetFloatCvar( "cg_mmap_size", &cg_mmap_size, value, qfalse );
+    } else if ( sliderId == HUDOPT_SLIDER_ZOOM_ID ) {
+        float value = 30.0f + t * 90.0f;
+        value = ( (int)( value / 5.0f + 0.5f ) ) * 5.0f;
+        HUDOpt_SetFloatCvar( "cg_mmap_fov", &cg_mmap_fov, value, qtrue );
+    }
+}
+
+static void HUDOpt_DrawSlider( float x, float y, const char *label, float value, float minValue,
+                               float maxValue, int hoverId, vec4_t labelColor, vec4_t valueColor,
+                               vec4_t trackColor, vec4_t fillColor, vec4_t hoverColor ) {
+    char    valueText[16];
+    float   t;
+    float   knobX;
+
+    t = HUDOpt_ClampFloat( ( value - minValue ) / ( maxValue - minValue ), 0.0f, 1.0f );
+    knobX = HUDOPT_SLIDER_TRACK_X + t * HUDOPT_SLIDER_TRACK_W;
+
+    if ( g_hudOptHoverSlider == hoverId ) {
+        CG_FillRect( x - 2.0f, y, HUDOPT_COL_W + 4.0f, HUDOPT_ROW_H, hoverColor );
+    }
+
+    if ( hoverId == HUDOPT_SLIDER_ZOOM_ID ) {
+        Com_sprintf( valueText, sizeof( valueText ), "%.0f", value );
+    } else {
+        Com_sprintf( valueText, sizeof( valueText ), "%.2f", value );
+    }
+
+    HUDOpt_DrawText( (int)( x + 3.0f ), (int)( y + 3.0f ), label, labelColor, HUDOPT_SLIDER_SCALE );
+    CG_FillRect( HUDOPT_SLIDER_TRACK_X, y + 10.0f, HUDOPT_SLIDER_TRACK_W, 2.0f, trackColor );
+    CG_FillRect( HUDOPT_SLIDER_TRACK_X, y + 10.0f, knobX - HUDOPT_SLIDER_TRACK_X, 2.0f, fillColor );
+    CG_FillRect( knobX - 2.0f, y + 7.0f, 4.0f, 8.0f, fillColor );
+    HUDOpt_DrawRightText( x + HUDOPT_COL_W, (int)( y + 3.0f ), valueText, valueColor, HUDOPT_SLIDER_SCALE );
+}
 
 /*
 ================
@@ -345,6 +432,7 @@ qboolean CG_HUDOptions_MouseEvent( int cx, int cy, qboolean clicked ) {
     }
 
     g_hudOptHoverRow = -1;
+    g_hudOptHoverSlider = HUDOPT_SLIDER_NONE;
 
     secY = HUDOPT_PNL_Y + HUDOPT_TITLE_H + HUDOPT_HINT_H + HUDOPT_PAD;
 
@@ -408,6 +496,27 @@ qboolean CG_HUDOptions_MouseEvent( int cx, int cy, qboolean clicked ) {
         rowY += HUDOPT_ROW_H;
     }
 
+    if ( cy >= rowY && cy < rowY + HUDOPT_ROW_H &&
+         cx >= HUDOPT_COL_R_X - 2.0f &&
+         cx <  HUDOPT_COL_R_X + HUDOPT_COL_W + 4.0f ) {
+        g_hudOptHoverSlider = HUDOPT_SLIDER_SCALE_ID;
+        if ( clicked ) {
+            HUDOpt_SetSliderFromX( HUDOPT_SLIDER_SCALE_ID, cx );
+        }
+        return qtrue;
+    }
+    rowY += HUDOPT_ROW_H;
+
+    if ( cy >= rowY && cy < rowY + HUDOPT_ROW_H &&
+         cx >= HUDOPT_COL_R_X - 2.0f &&
+         cx <  HUDOPT_COL_R_X + HUDOPT_COL_W + 4.0f ) {
+        g_hudOptHoverSlider = HUDOPT_SLIDER_ZOOM_ID;
+        if ( clicked ) {
+            HUDOpt_SetSliderFromX( HUDOPT_SLIDER_ZOOM_ID, cx );
+        }
+        return qtrue;
+    }
+
     return qtrue; /* consume all mouse input while menu is open */
 }
 
@@ -439,6 +548,8 @@ void CG_DrawHUDOptionsMenu( void ) {
     trap_Cvar_Update( &cg_hudShowFuelGauge );
     trap_Cvar_Update( &cg_drawRearView );
     trap_Cvar_Update( &cg_drawMMap );
+    trap_Cvar_Update( &cg_mmap_size );
+    trap_Cvar_Update( &cg_mmap_fov );
     trap_Cvar_Update( &cg_hudShowDerbyVehicle );
     trap_Cvar_Update( &cg_hudShowDerbyList );
 
@@ -448,18 +559,21 @@ void CG_DrawHUDOptionsMenu( void ) {
        Colour palette
        ---------------------------------------------------------------- */
     {
-        static vec4_t bgColor    = { 0.0f,  0.0f,  0.0f,  0.82f };
-        static vec4_t titleColor = { 1.0f,  0.2f,  0.2f,  1.0f  };
-        static vec4_t secColor   = { 0.9f,  0.7f,  0.1f,  1.0f  };
-        static vec4_t labelColor = { 1.0f,  0.2f,  0.2f,  1.0f  };
-        static vec4_t hoverColor = { 0.5f,  0.0f,  0.0f,  0.55f };
-        static vec4_t onColor    = { 0.2f,  1.0f,  0.2f,  1.0f  };
-        static vec4_t offColor   = { 0.7f,  0.7f,  0.7f,  1.0f  };
-        static vec4_t cycColor   = { 0.9f,  0.8f,  0.2f,  1.0f  };
-        static vec4_t naColor    = { 0.35f, 0.35f, 0.35f, 1.0f  };
-        static vec4_t greyColor  = { 0.35f, 0.35f, 0.35f, 1.0f  };
-        static vec4_t hintColor  = { 0.75f, 0.75f, 0.75f, 1.0f  };
-        static vec4_t divColor   = { 0.5f,  0.1f,  0.1f,  0.8f  };
+        static vec4_t bgColor     = { 0.04f, 0.05f, 0.08f, 0.78f };
+        static vec4_t bandColor   = { 0.08f, 0.10f, 0.16f, 0.86f };
+        static vec4_t borderColor = { 0.34f, 0.48f, 0.76f, 0.72f };
+        static vec4_t accentColor = { 0.50f, 0.70f, 1.00f, 1.00f };
+        static vec4_t titleColor  = { 0.78f, 0.84f, 0.95f, 1.00f };
+        static vec4_t secColor    = { 0.50f, 0.70f, 1.00f, 1.00f };
+        static vec4_t labelColor  = { 1.00f, 1.00f, 1.00f, 1.00f };
+        static vec4_t hoverColor  = { 0.18f, 0.28f, 0.44f, 0.62f };
+        static vec4_t onColor     = { 0.40f, 1.00f, 0.58f, 1.00f };
+        static vec4_t offColor    = { 0.60f, 0.66f, 0.77f, 1.00f };
+        static vec4_t cycColor    = { 0.95f, 0.82f, 0.35f, 1.00f };
+        static vec4_t naColor     = { 0.34f, 0.38f, 0.46f, 1.00f };
+        static vec4_t greyColor   = { 0.34f, 0.38f, 0.46f, 1.00f };
+        static vec4_t hintColor   = { 0.60f, 0.66f, 0.77f, 1.00f };
+        static vec4_t divColor    = { 0.34f, 0.48f, 0.76f, 0.55f };
 
 		/* Panel height: title + hint + max(leftH, rightH) + padding
 		 * Right col has 3 sections: Derby + KOTH + Vehicle         */
@@ -467,6 +581,7 @@ void CG_DrawHUDOptionsMenu( void ) {
 		float rightH = HUDOPT_SEC_H + HUDOPT_DERBY_COUNT * HUDOPT_ROW_H
 		             + HUDOPT_SEC_H + HUDOPT_KOTH_COUNT  * HUDOPT_ROW_H
 		             + HUDOPT_SEC_H + HUDOPT_VEH_COUNT   * HUDOPT_ROW_H
+		             + HUDOPT_MMAP_SLIDERS * HUDOPT_ROW_H
 		             + 12.0f; /* two section separators (6px each) */
 		float colH   = leftH > rightH ? leftH : rightH;
 		float panelH = HUDOPT_TITLE_H + HUDOPT_HINT_H + HUDOPT_PAD + colH + HUDOPT_PAD + 6.0f;
@@ -479,25 +594,23 @@ void CG_DrawHUDOptionsMenu( void ) {
 
         /* Background */
         CG_FillRect( panelX, panelY, HUDOPT_PNL_W + HUDOPT_PAD * 2.0f, panelH, bgColor );
+        CG_FillRect( panelX, panelY, HUDOPT_PNL_W + HUDOPT_PAD * 2.0f, HUDOPT_TITLE_H + 8.0f, bandColor );
+        CG_FillRect( panelX, panelY, HUDOPT_PNL_W + HUDOPT_PAD * 2.0f, 2.0f, accentColor );
+        CG_DrawRect( panelX, panelY, HUDOPT_PNL_W + HUDOPT_PAD * 2.0f, panelH, 1.0f, borderColor );
 
         /* Title – BIGCHAR, centred */
         {
             const char *title = "HUD ELEMENTS";
-            int tlen = CG_DrawStrlen( title );
-            int tx   = (int)( HUDOPT_PNL_X + ( HUDOPT_PNL_W - tlen * BIGCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( tx, (int)( HUDOPT_PNL_Y + 1 ),
-                              title, titleColor, qfalse, qtrue,
-                              BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_PNL_X, HUDOPT_PNL_W, (int)( HUDOPT_PNL_Y - 2 ),
+                                     title, titleColor, HUDOPT_TITLE_SCALE );
         }
 
         /* Hint – TINYCHAR, centred */
         {
             const char *hint = "Click to toggle  |  Shift+H to open/close";
-            int hlen = CG_DrawStrlen( hint );
-            int hx   = (int)( HUDOPT_PNL_X + ( HUDOPT_PNL_W - hlen * TINYCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( hx, (int)( HUDOPT_PNL_Y + HUDOPT_TITLE_H + 1 ),
-                              hint, hintColor, qfalse, qfalse,
-                              TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_PNL_X, HUDOPT_PNL_W,
+                                     (int)( HUDOPT_PNL_Y + HUDOPT_TITLE_H ),
+                                     hint, hintColor, HUDOPT_HINT_SCALE );
         }
 
         secY = HUDOPT_PNL_Y + HUDOPT_TITLE_H + HUDOPT_HINT_H + HUDOPT_PAD;
@@ -509,11 +622,8 @@ void CG_DrawHUDOptionsMenu( void ) {
         /* ===================== LEFT COLUMN: RACING ===================== */
         {
             const char *sec  = "RACING";
-            int slen = CG_DrawStrlen( sec );
-            int sx   = (int)( HUDOPT_COL_L_X + ( HUDOPT_COL_W - slen * TINYCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( sx, (int)( secY + 2 ),
-                              sec, secColor, qfalse, qtrue,
-                              TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_COL_L_X, HUDOPT_COL_W, (int)( secY + 2 ),
+                                     sec, secColor, HUDOPT_SECTION_SCALE );
         }
         rowY = secY + HUDOPT_SEC_H;
         for ( i = 0; i < HUDOPT_LEFT_COUNT; i++ ) {
@@ -521,7 +631,7 @@ void CG_DrawHUDOptionsMenu( void ) {
             qboolean                unavail = HUDEntry_IsUnavail( e );
             const char             *badge;
             float                  *badgeClr, *entryClr;
-            int                     blen, bx;
+            int                     bx;
 
             if ( i == g_hudOptHoverRow && !unavail )
                 CG_FillRect( HUDOPT_COL_L_X - 2.0f, rowY, HUDOPT_COL_W + 4.0f, HUDOPT_ROW_H, hoverColor );
@@ -537,23 +647,19 @@ void CG_DrawHUDOptionsMenu( void ) {
                 badgeClr = e->cvar->integer ? onColor : offColor;
                 entryClr = labelColor;
             }
-            blen = CG_DrawStrlen( badge );
-            bx   = (int)( HUDOPT_COL_L_X + HUDOPT_COL_W - blen * SMALLCHAR_WIDTH );
-            CG_DrawStringExt( (int)( HUDOPT_COL_L_X + 2 ), (int)( rowY + 2 ),
-                              e->label, entryClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-            CG_DrawStringExt( bx, (int)( rowY + 2 ),
-                              badge, badgeClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+            bx = (int)( HUDOPT_COL_L_X + HUDOPT_COL_W );
+            HUDOpt_DrawText( (int)( HUDOPT_COL_L_X + 3 ), (int)( rowY + 3 ),
+                             e->label, entryClr, HUDOPT_ENTRY_SCALE );
+            HUDOpt_DrawRightText( bx, (int)( rowY + 3 ),
+                                  badge, badgeClr, HUDOPT_ENTRY_SCALE );
             rowY += HUDOPT_ROW_H;
         }
 
         /* =============== RIGHT COLUMN TOP: DERBY =============== */
         {
             const char *sec  = "DERBY";
-            int slen = CG_DrawStrlen( sec );
-            int sx   = (int)( HUDOPT_COL_R_X + ( HUDOPT_COL_W - slen * TINYCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( sx, (int)( secY + 2 ),
-                              sec, secColor, qfalse, qtrue,
-                              TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_COL_R_X, HUDOPT_COL_W, (int)( secY + 2 ),
+                                     sec, secColor, HUDOPT_SECTION_SCALE );
         }
         rowY = secY + HUDOPT_SEC_H;
         for ( i = HUDOPT_DERBY_START; i < HUDOPT_DERBY_START + HUDOPT_DERBY_COUNT; i++ ) {
@@ -561,7 +667,7 @@ void CG_DrawHUDOptionsMenu( void ) {
             qboolean                unavail = HUDEntry_IsUnavail( e );
             const char             *badge;
             float                  *badgeClr, *entryClr;
-            int                     blen, bx;
+            int                     bx;
 
             if ( i == g_hudOptHoverRow && !unavail )
                 CG_FillRect( HUDOPT_COL_R_X - 2.0f, rowY, HUDOPT_COL_W + 4.0f, HUDOPT_ROW_H, hoverColor );
@@ -570,12 +676,11 @@ void CG_DrawHUDOptionsMenu( void ) {
             badgeClr = unavail ? naColor : ( e->cvar->integer ? onColor : offColor );
             entryClr = unavail ? greyColor : labelColor;
 
-            blen = CG_DrawStrlen( badge );
-            bx   = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W - blen * SMALLCHAR_WIDTH );
-            CG_DrawStringExt( (int)( HUDOPT_COL_R_X + 2 ), (int)( rowY + 2 ),
-                              e->label, entryClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-            CG_DrawStringExt( bx, (int)( rowY + 2 ),
-                              badge, badgeClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+            bx = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W );
+            HUDOpt_DrawText( (int)( HUDOPT_COL_R_X + 3 ), (int)( rowY + 3 ),
+                             e->label, entryClr, HUDOPT_ENTRY_SCALE );
+            HUDOpt_DrawRightText( bx, (int)( rowY + 3 ),
+                                  badge, badgeClr, HUDOPT_ENTRY_SCALE );
             rowY += HUDOPT_ROW_H;
         }
 
@@ -587,11 +692,8 @@ void CG_DrawHUDOptionsMenu( void ) {
         }
         {
             const char *sec  = "KOTH";
-            int slen = CG_DrawStrlen( sec );
-            int sx   = (int)( HUDOPT_COL_R_X + ( HUDOPT_COL_W - slen * TINYCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( sx, (int)( rowY + 2 ),
-                              sec, secColor, qfalse, qtrue,
-                              TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_COL_R_X, HUDOPT_COL_W, (int)( rowY + 2 ),
+                                     sec, secColor, HUDOPT_SECTION_SCALE );
         }
         rowY += HUDOPT_SEC_H;
         for ( i = HUDOPT_KOTH_START; i < HUDOPT_KOTH_START + HUDOPT_KOTH_COUNT; i++ ) {
@@ -599,7 +701,7 @@ void CG_DrawHUDOptionsMenu( void ) {
             qboolean                unavail = HUDEntry_IsUnavail( e );
             const char             *badge;
             float                  *badgeClr, *entryClr;
-            int                     blen, bx;
+            int                     bx;
 
             if ( i == g_hudOptHoverRow && !unavail )
                 CG_FillRect( HUDOPT_COL_R_X - 2.0f, rowY, HUDOPT_COL_W + 4.0f, HUDOPT_ROW_H, hoverColor );
@@ -608,12 +710,11 @@ void CG_DrawHUDOptionsMenu( void ) {
             badgeClr = unavail ? naColor : ( e->cvar->integer ? onColor : offColor );
             entryClr = unavail ? greyColor : labelColor;
 
-            blen = CG_DrawStrlen( badge );
-            bx   = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W - blen * SMALLCHAR_WIDTH );
-            CG_DrawStringExt( (int)( HUDOPT_COL_R_X + 2 ), (int)( rowY + 2 ),
-                              e->label, entryClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-            CG_DrawStringExt( bx, (int)( rowY + 2 ),
-                              badge, badgeClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+            bx = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W );
+            HUDOpt_DrawText( (int)( HUDOPT_COL_R_X + 3 ), (int)( rowY + 3 ),
+                             e->label, entryClr, HUDOPT_ENTRY_SCALE );
+            HUDOpt_DrawRightText( bx, (int)( rowY + 3 ),
+                                  badge, badgeClr, HUDOPT_ENTRY_SCALE );
             rowY += HUDOPT_ROW_H;
         }
 
@@ -625,11 +726,8 @@ void CG_DrawHUDOptionsMenu( void ) {
         }
         {
             const char *sec  = "VEHICLE";
-            int slen = CG_DrawStrlen( sec );
-            int sx   = (int)( HUDOPT_COL_R_X + ( HUDOPT_COL_W - slen * TINYCHAR_WIDTH ) * 0.5f );
-            CG_DrawStringExt( sx, (int)( rowY + 2 ),
-                              sec, secColor, qfalse, qtrue,
-                              TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
+            HUDOpt_DrawCenteredText( HUDOPT_COL_R_X, HUDOPT_COL_W, (int)( rowY + 2 ),
+                                     sec, secColor, HUDOPT_SECTION_SCALE );
         }
         rowY += HUDOPT_SEC_H;
         for ( i = HUDOPT_VEH_START; i < HUDOPT_VEH_START + HUDOPT_VEH_COUNT; i++ ) {
@@ -637,7 +735,7 @@ void CG_DrawHUDOptionsMenu( void ) {
             qboolean                unavail = HUDEntry_IsUnavail( e );
             const char             *badge;
             float                  *badgeClr, *entryClr;
-            int                     blen, bx;
+            int                     bx;
 
             if ( i == g_hudOptHoverRow && !unavail )
                 CG_FillRect( HUDOPT_COL_R_X - 2.0f, rowY, HUDOPT_COL_W + 4.0f, HUDOPT_ROW_H, hoverColor );
@@ -646,14 +744,23 @@ void CG_DrawHUDOptionsMenu( void ) {
             badgeClr = unavail ? naColor : ( e->cvar->integer ? onColor : offColor );
             entryClr = unavail ? greyColor : labelColor;
 
-            blen = CG_DrawStrlen( badge );
-            bx   = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W - blen * SMALLCHAR_WIDTH );
-            CG_DrawStringExt( (int)( HUDOPT_COL_R_X + 2 ), (int)( rowY + 2 ),
-                              e->label, entryClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-            CG_DrawStringExt( bx, (int)( rowY + 2 ),
-                              badge, badgeClr, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+            bx = (int)( HUDOPT_COL_R_X + HUDOPT_COL_W );
+            HUDOpt_DrawText( (int)( HUDOPT_COL_R_X + 3 ), (int)( rowY + 3 ),
+                             e->label, entryClr, HUDOPT_ENTRY_SCALE );
+            HUDOpt_DrawRightText( bx, (int)( rowY + 3 ),
+                                  badge, badgeClr, HUDOPT_ENTRY_SCALE );
             rowY += HUDOPT_ROW_H;
         }
+
+        HUDOpt_DrawSlider( HUDOPT_COL_R_X, rowY, "Minimap Scale", cg_mmap_size.value,
+                           0.40f, 2.00f, HUDOPT_SLIDER_SCALE_ID,
+                           labelColor, offColor, divColor, accentColor, hoverColor );
+        rowY += HUDOPT_ROW_H;
+
+        HUDOpt_DrawSlider( HUDOPT_COL_R_X, rowY, "Minimap Zoom", cg_mmap_fov.value,
+                           30.0f, 120.0f, HUDOPT_SLIDER_ZOOM_ID,
+                           labelColor, offColor, divColor, accentColor, hoverColor );
+        rowY += HUDOPT_ROW_H;
 
         /* Mouse cursor */
         {

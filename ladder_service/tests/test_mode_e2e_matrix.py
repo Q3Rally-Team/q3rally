@@ -844,6 +844,54 @@ def test_php_profile_objective_team_int_with_teams_array(php_env: dict[str, Any]
     assert winner[win_field] == 1
 
 
+def test_php_profile_team_racing_dm_uses_lowest_team_time_for_winner(php_env: dict[str, Any]) -> None:
+    winner_id = "77777777-7777-4777-8777-000000000777"
+    loser_id = "88888888-8888-4888-8888-000000000888"
+    payload = generate_golden_payload("GT_TEAM_RACING_DM")
+    payload["matchId"] = "profile-team-racing-dm-team-time-winner"
+    payload.pop("winnerClientNum", None)
+    payload["settings"].pop("winnerClientNum", None)
+    payload["players"] = [
+        {
+            "playerId": loser_id,
+            "clientNum": 1,
+            "displayName": "RedFragger",
+            "team": 1,
+            "score": 12,
+            "kills": 12,
+            "deaths": 1,
+            "position": 1,
+            "profile": {"valid": True},
+        },
+        {
+            "playerId": winner_id,
+            "clientNum": 2,
+            "displayName": "BlueRacer",
+            "team": 2,
+            "score": 3,
+            "kills": 3,
+            "deaths": 2,
+            "position": 2,
+            "profile": {"valid": True},
+        },
+    ]
+    payload["teams"] = [{"team": "red", "rawScore": 12}, {"team": "blue", "rawScore": 3}]
+    payload["teamScores"] = [0, 12, 3, 0, 0, 0]
+    payload["teamTimes"] = [0, 92000, 88000, 0, 0, 0]
+
+    status, created = _post_php_match(php_env, payload)
+    assert status == 201, created
+
+    winner = _get_php_profile(php_env, winner_id)
+    loser = _get_php_profile(php_env, loser_id)
+    assert winner["wins"] == 1
+    assert winner["teamRacingDmWins"] == 1
+    assert winner["teamRacingDmCompleted"] == 1
+    assert loser["losses"] == 1
+    assert loser["teamRacingDmWins"] == 0
+    assert loser["teamRacingDmCompleted"] == 1
+
+
 @pytest.mark.parametrize("mode,win_field", [("GT_CTF", "ctfWins"), ("GT_CTF4", "ctf4Wins")])
 def test_php_profile_objective_team_string_without_teams_uses_team_scores(php_env: dict[str, Any], mode: str, win_field: str) -> None:
     suffix = "1" if mode == "GT_CTF" else "4"

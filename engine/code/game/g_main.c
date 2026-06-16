@@ -814,6 +814,26 @@ static int G_LadderWinnerForGametype( int gametype ) {
         int wi;
 
         switch ( gametype ) {
+        case GT_RACING_DM:
+                for ( wi = 0; wi < level.numConnectedClients; ++wi ) {
+                        int clientNum = level.sortedClients[wi];
+                        gclient_t *wc;
+
+                        if ( clientNum < 0 || clientNum >= level.maxclients ) {
+                                continue;
+                        }
+
+                        wc = &level.clients[clientNum];
+                        if ( wc->pers.connected != CON_CONNECTED ) {
+                                continue;
+                        }
+                        if ( wc->sess.sessionTeam == TEAM_SPECTATOR ) {
+                                continue;
+                        }
+                        return clientNum;
+                }
+                return level.winnerNumber;
+
         case GT_DEATHMATCH:
                 {
                         int dmWinner = -1;

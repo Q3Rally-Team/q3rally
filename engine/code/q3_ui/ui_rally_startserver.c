@@ -708,7 +708,7 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	}
 
 	s_startserver.statlist.generic.type			= MTYPE_LISTBOX;
-	s_startserver.statlist.generic.flags		= QMF_HIGHLIGHT_IF_FOCUS | QMF_SCROLL_ONLY;
+	s_startserver.statlist.generic.flags		= QMF_HIGHLIGHT_IF_FOCUS | QMF_SCROLL_ONLY | QMF_MOUSEONLY;
 	s_startserver.statlist.scrollbarAlignment	= SB_RIGHT | SB_HIDE;
 	s_startserver.statlist.generic.x			= 290;
 	s_startserver.statlist.generic.y			= 272;
@@ -766,12 +766,12 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.item_null.height			= 480;
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.list );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.statlist );
-    Menu_AddItem( &s_startserver.menu, &s_startserver.mappic );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
+	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.next );
+	Menu_AddItem( &s_startserver.menu, &s_startserver.mappic );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.mapname );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.item_null );
 
@@ -2852,9 +2852,9 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 		Menu_AddItem( &botSelectInfo.menu,	&botSelectInfo.picnames[i] );
 	}
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.arrows );
+	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.back );
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.left );
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.right );
-	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.back );
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.go );
 
 	UI_BotSelectMenu_BuildList();

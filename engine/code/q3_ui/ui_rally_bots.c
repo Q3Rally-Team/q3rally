@@ -600,7 +600,6 @@ static void UI_BotsMenu_Init(void) {
     prevButton.string = "< PREV";
     prevButton.color = color_white;
     prevButton.style = UI_LEFT | UI_SMALLFONT;
-    Menu_AddItem(&s_bots.menu, &prevButton);
 
     nextButton.generic.type = MTYPE_PTEXT;
     nextButton.generic.flags = QMF_RIGHT_JUSTIFY | QMF_PULSEIFFOCUS;
@@ -611,7 +610,6 @@ static void UI_BotsMenu_Init(void) {
     nextButton.string = "NEXT >";
     nextButton.color = color_white;
     nextButton.style = UI_RIGHT | UI_SMALLFONT;
-    Menu_AddItem(&s_bots.menu, &nextButton);
 
     s_bots.back.generic.type     = MTYPE_PTEXT;
     s_bots.back.generic.flags    = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
@@ -623,6 +621,8 @@ static void UI_BotsMenu_Init(void) {
     s_bots.back.color            = color_white;
     s_bots.back.style            = UI_LEFT | UI_SMALLFONT;
     Menu_AddItem(&s_bots.menu, &s_bots.back);
+    Menu_AddItem(&s_bots.menu, &prevButton);
+    Menu_AddItem(&s_bots.menu, &nextButton);
 
     if (botCount > 0) {
         botSelected = 0;

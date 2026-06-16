@@ -1386,6 +1386,9 @@ void CG_NewClientInfo( int clientNum ) {
 
 	v = Info_ValueForKey( configstring, "ms" );
 	newInfo.manualShift = atoi(v);
+
+	v = Info_ValueForKey( configstring, "tm" );
+	newInfo.transmissionMode = atoi(v);
 // END
 
 	// head model

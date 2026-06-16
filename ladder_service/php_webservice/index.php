@@ -5178,6 +5178,65 @@ function profile_pick_winner_team_by_scores(array $scoresByTeam): ?string
     return $topTeam;
 }
 
+function profile_pick_winner_team_by_lowest_time(array $timesByTeam): ?string
+{
+    $bestTime = null;
+    $bestTeam = null;
+    $isTie = false;
+    foreach ($timesByTeam as $team => $time) {
+        if (!in_array($team, ['red', 'blue', 'green', 'yellow'], true)) {
+            continue;
+        }
+        if (!is_int($time) && !is_float($time)) {
+            continue;
+        }
+        $timeValue = (float)$time;
+        if ($timeValue <= 0) {
+            continue;
+        }
+        if ($bestTime === null || $timeValue < $bestTime) {
+            $bestTime = $timeValue;
+            $bestTeam = $team;
+            $isTie = false;
+        } elseif ($timeValue === $bestTime) {
+            $isTie = true;
+        }
+    }
+
+    if ($bestTeam === null || $isTie) {
+        return null;
+    }
+    return $bestTeam;
+}
+
+function profile_collect_team_times(array $payload): array
+{
+    $timesByTeam = [];
+    if (isset($payload['teamTimes']) && is_array($payload['teamTimes'])) {
+        foreach ($payload['teamTimes'] as $teamKey => $timeValue) {
+            if (!is_int($timeValue) && !is_float($timeValue) && !(is_string($timeValue) && is_numeric($timeValue))) {
+                continue;
+            }
+            $teamName = profile_normalize_team_label($teamKey);
+            if ($teamName === '') {
+                continue;
+            }
+            $timesByTeam[$teamName] = (float)$timeValue;
+        }
+    }
+
+    foreach (['red', 'blue', 'green', 'yellow'] as $teamName) {
+        $field = $teamName . 'Time';
+        if (array_key_exists($field, $payload) &&
+            (is_int($payload[$field]) || is_float($payload[$field]) ||
+             (is_string($payload[$field]) && is_numeric($payload[$field])))) {
+            $timesByTeam[$teamName] = (float)$payload[$field];
+        }
+    }
+
+    return $timesByTeam;
+}
+
 function profile_upsert_from_payload(array $payload): void
 {
     $players = $payload['players'] ?? [];
@@ -5188,6 +5247,7 @@ function profile_upsert_from_payload(array $payload): void
     $mode = $payload['mode'] ?? '';
     $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM', 'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
     $isTeamMode = in_array($mode, $teamModes, true);
+    $isTeamRaceMode = in_array($mode, ['GT_TEAM_RACING', 'GT_TEAM_RACING_DM'], true);
     $winnerClientNum = -1;
     $hasWinnerClientNum = false;
     if (array_key_exists('winnerClientNum', $payload) &&
@@ -5230,6 +5290,9 @@ function profile_upsert_from_payload(array $payload): void
                     break;
                 }
             }
+        }
+        if ($winnerTeam === null && $isTeamRaceMode) {
+            $winnerTeam = profile_pick_winner_team_by_lowest_time(profile_collect_team_times($payload));
         }
         if ($winnerTeam === null && isset($payload['teams']) && is_array($payload['teams'])) {
             $teamScores = [];
@@ -5663,8 +5726,14 @@ function profile_upsert_from_payload(array $payload): void
             'gamesPlayed'     => (int)($existing['gamesPlayed'] ?? 0) + ($countThisMatch ? 1 : 0),
 
             // ── Allgemein ───────────────────────────────────────────────
-            'wins'            => $pickCareerWithBaselineDelta('wins', $derivedWins),
-            'losses'          => $pickCareerWithBaselineDelta('losses', $derivedLosses),
+            // wins/losses: C code (G_Profile_RecordWin/Loss) already writes the
+            // new cumulative total into the snapshot before the upload happens,
+            // so the snapshot is already ahead by 1. Using pickCareer would add
+            // derivedWins on top of the snapshot → double-count. Same pattern as
+            // damageDealt – use mergeCareerCountField which treats a strictly-ahead
+            // snapshot as authoritative and skips the delta.
+            'wins'            => $mergeCareerCountField('wins', $derivedWins),
+            'losses'          => $mergeCareerCountField('losses', $derivedLosses),
             'kills'           => $mergeCareerCountField('kills', max(0, $matchKills)),
             'deaths'          => $mergeCareerCountField('deaths', max(0, $matchDeaths)),
             'flagCaptures'    => $mergeCareerCountField('flagCaptures', (int)($player['captures'] ?? 0)),
@@ -5970,6 +6039,7 @@ function index_derive_winner(array $payload, string $mode): array
     $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
                   'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
     $isTeamMode = in_array($mode, $teamModes, true);
+    $isTeamRaceMode = in_array($mode, ['GT_TEAM_RACING', 'GT_TEAM_RACING_DM'], true);
 
     $winnerClientNum = -1;
     $hasWinnerClientNum = false;
@@ -6009,7 +6079,29 @@ function index_derive_winner(array $payload, string $mode): array
         return ['winner' => $name, 'winnerTeam' => 0];
     }
 
-    // Team mode: find winning team from team scores
+    // Team racing uses lower aggregate team time. Team Racing DM already has
+    // frag bonuses applied to teamTimes by the engine.
+    $winnerTeamInt = 0;
+    if ($hasWinnerClientNum && isset($clientToTeam[$winnerClientNum])) {
+        $winnerTeamInt = $clientToTeam[$winnerClientNum];
+    } elseif ($isTeamRaceMode) {
+        $wt = profile_pick_winner_team_by_lowest_time(profile_collect_team_times($payload));
+        if ($wt !== null) {
+            foreach ((array)($payload['players'] ?? []) as $cp) {
+                if (!is_array($cp)) continue;
+                if (profile_normalize_team_label($cp['team'] ?? null) === $wt) {
+                    $winnerTeamInt = (int)($cp['team'] ?? 0);
+                    break;
+                }
+            }
+        }
+    }
+
+    if ($winnerTeamInt !== 0) {
+        return ['winner' => '', 'winnerTeam' => $winnerTeamInt];
+    }
+
+    // Remaining team modes: find winning team from team scores.
     $teamScores = [];
     if (isset($payload['teamScores']) && is_array($payload['teamScores'])) {
         foreach ($payload['teamScores'] as $k => $v) {
@@ -6024,10 +6116,7 @@ function index_derive_winner(array $payload, string $mode): array
         if (isset($payload[$f]) && is_numeric($payload[$f])) $teamScores[$t] = (float)$payload[$f];
     }
 
-    $winnerTeamInt = 0;
-    if ($hasWinnerClientNum && isset($clientToTeam[$winnerClientNum])) {
-        $winnerTeamInt = $clientToTeam[$winnerClientNum];
-    } elseif ($teamScores) {
+    if ($teamScores) {
         $wt = profile_pick_winner_team_by_scores($teamScores);
         if ($wt !== null) {
             foreach ((array)($payload['players'] ?? []) as $cp) {
@@ -6061,6 +6150,7 @@ function index_extract_entry(array $payload): array
         $kills = extract_player_kills($p, $mode);
         $players[] = [
             'name'        => (string)($p['cleanName'] ?? $p['name'] ?? $p['displayName'] ?? ''),
+            'playerId'    => (string)($p['playerId'] ?? ''),
             'score'       => $score,
             'playerScore' => (function() use ($p): int {
                 // Prefer inline profile snapshot
@@ -6568,6 +6658,24 @@ function handle_get(array $segments): void
             send_error(400, 'Player ID required.');
         }
         $profile = profile_load($playerId);
+
+        // If UUID lookup failed, try name-based fallback (e.g. when match index
+        // was built before playerId fields were added and still contains names).
+        if ($profile === null && !profile_is_valid_uuid($playerId)) {
+            $nameLower = mb_strtolower($playerId);
+            foreach (glob(PROFILES_DIR . '/*.json') ?: [] as $file) {
+                $raw = file_get_contents($file);
+                if ($raw === false) continue;
+                $candidate = json_decode($raw, true);
+                if (!is_array($candidate)) continue;
+                $cn = mb_strtolower((string)($candidate['cleanName'] ?? $candidate['displayName'] ?? $candidate['name'] ?? ''));
+                if ($cn === $nameLower) {
+                    $profile = $candidate;
+                    break;
+                }
+            }
+        }
+
         if ($profile === null) {
             send_error(404, 'Player not found.');
         }

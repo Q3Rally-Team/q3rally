@@ -2230,19 +2230,25 @@ void ClientCommand( int clientNum ) {
 		Cmd_Stats_f( ent );
 // STONELANCE
 	else if (Q_stricmp (cmd, "gearUp") == 0){
-		if (!ent->client->pers.manualShift) 
+		if ( ent->client->pers.transmissionMode == TR_AUTO && !ent->client->pers.manualShift )
+			return;
+		if ( ent->client->pers.transmissionMode == TR_MANUAL_CLUTCH && ent->client->pers.cmd.upmove <= 0 )
 			return;
 
-		if (ent->client->car.gear < 1)
+		if ( ent->client->pers.transmissionMode == TR_AUTO && ent->client->car.gear < 1 )
+			ent->client->car.gear++;
+		else if ( ent->client->pers.transmissionMode != TR_AUTO && ent->client->car.gear < 6 )
 			ent->client->car.gear++;
 	}
 	else if (Q_stricmp (cmd, "gearDown") == 0){
-		if (!ent->client->pers.manualShift) 
+		if ( ent->client->pers.transmissionMode == TR_AUTO && !ent->client->pers.manualShift )
+			return;
+		if ( ent->client->pers.transmissionMode == TR_MANUAL_CLUTCH && ent->client->pers.cmd.upmove <= 0 )
 			return;
 
-		if (ent->client->car.gear > 0)
+		if ( ent->client->pers.transmissionMode == TR_AUTO && ent->client->car.gear > 0 )
 			ent->client->car.gear = 0;
-		else if (ent->client->car.gear > -1)
+		else if ( ent->client->car.gear > -1 )
 			ent->client->car.gear--;
 	}
 /*	automatically reset car after 3 seconds

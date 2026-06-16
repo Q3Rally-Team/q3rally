@@ -908,6 +908,7 @@ void CG_PredictPlayerState( void ) {
 	cg_pmove.pDebug = cg.pDebug;
 	cg_pmove.controlMode = cgs.clientinfo[cg.predictedPlayerState.clientNum].controlMode;
 	cg_pmove.manualShift = cgs.clientinfo[cg.predictedPlayerState.clientNum].manualShift;
+	cg_pmove.transmissionMode = cgs.clientinfo[cg.predictedPlayerState.clientNum].transmissionMode;
 
 	cg_pmove.car_spring = cgs.car_spring > 0.0f ? cgs.car_spring : 120.0f;
 	cg_pmove.car_shock_up = cgs.car_shock_up > 0.0f ? cgs.car_shock_up : 12.0f;
@@ -1168,5 +1169,4 @@ void CG_PredictPlayerState( void ) {
 		}
 	}
 }
-
 

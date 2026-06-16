@@ -852,9 +852,9 @@ void UI_ProfileWizard_Show( void ) {
     Menu_AddItem( &s_pw.menu, &s_pw.bYearSpin   );
     Menu_AddItem( &s_pw.menu, &s_pw.avatarSpin  );
     Menu_AddItem( &s_pw.menu, &s_pw.countrySpin );
-    Menu_AddItem( &s_pw.menu, &s_pw.btnNext     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnBack     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnSkip     );
+    Menu_AddItem( &s_pw.menu, &s_pw.btnNext     );
 
     uis.transitionIn  = 0;
     uis.transitionOut = 0;

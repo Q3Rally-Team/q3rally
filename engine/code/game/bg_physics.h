@@ -145,6 +145,12 @@ extern	float CP_GEAR_RATIOS[];
 #define	CP_TORQUE_PEAK		400.0f
 #define	CP_RPM_TORQUE_PEAK	2800.0f
 
+typedef enum {
+	TR_AUTO = 0,
+	TR_MANUAL = 1,
+	TR_MANUAL_CLUTCH = 2
+} transmissionMode_t;
+
 #define HTYPE_NO_HIT		0
 #define HTYPE_BOTTOMED_OUT	1
 #define HTYPE_MAXED_OUT		2

@@ -1919,6 +1919,9 @@ static void ArenaServers_MenuInit( void ) {
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.showempty );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.onlyhumans );
 
+        Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.remove );
+        Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.save );
+
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.mappic );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.list );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.status );
@@ -1931,8 +1934,6 @@ static void ArenaServers_MenuInit( void ) {
 */
 // END
 
-        Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.remove );
-        Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.save );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.back );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.specify );
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );

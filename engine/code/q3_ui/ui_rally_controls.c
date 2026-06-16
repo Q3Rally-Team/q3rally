@@ -50,10 +50,11 @@ typedef struct
 // control sections
 #define C_MOVEMENT		0
 #define C_LOOKING		1
-#define C_WEAPONS		2
-#define C_MISC			3
-#define C_DEVELOPER	4
-#define C_MAX			5
+#define C_COMBAT		2
+#define C_WEAPONS		3
+#define C_MISC			4
+#define C_DEVELOPER	5
+#define C_MAX			6
 
 #define ID_MOVEMENT		100
 #define ID_LOOKING		101
@@ -67,6 +68,7 @@ typedef struct
 #define ID_EXITCONFIRM_SAVE	109
 #define ID_EXITCONFIRM_DISCARD	110
 #define ID_EXITCONFIRM_CANCEL	111
+#define ID_COMBAT		112
 
 // bindable actions
 #define ID_SHOWSCORES	0
@@ -142,7 +144,14 @@ typedef struct
 #define ID_NEXT_BPOINT		70
 #define ID_TOGGLE_BOT_PATHS	71
 #define ID_SAVE_BPOINTS	72
+#define ID_GEARUP		73
+#define ID_GEARDOWN		74
+#define ID_JOYANALOG	75
+#define ID_INPUTMODE	76
 
+#define CONTROLS_INPUT_KEYBOARD		0
+#define CONTROLS_INPUT_CONTROLLER	1
+#define CONTROLS_PROFILE_BINDINGS	128
 
 #define ANIM_IDLE		0
 #define ANIM_WALK		1
@@ -186,6 +195,7 @@ typedef struct
 	menubitmap_s		player;
 	menutext_s			movement;
 	menutext_s			looking;
+	menutext_s			combat;
 	menutext_s			weapons;
 	menutext_s			misc;
 	menutext_s			developer;
@@ -196,6 +206,8 @@ typedef struct
 	menuaction_s		brake;
 	menuaction_s		handbrake;
 	menuaction_s		turbo;
+	menuaction_s		gearup;
+	menuaction_s		geardown;
 
 	menuaction_s		moveup;
 	menuaction_s		movedown;
@@ -270,7 +282,9 @@ typedef struct
 	menuaction_s		toggleBotPaths;
 	menuaction_s		saveBPoints;
 
+	menulist_s			inputmode;
 	menuradiobutton_s	joyenable;
+	menuradiobutton_s	joyanalog;
 	menuslider_s		joythreshold;
 	int					section;
 	qboolean			waitingforkey;
@@ -301,6 +315,18 @@ static char s_rebindConfirmQuestion[128];
 static char s_controlsSearchText[64];
 static menucommon_s* s_globalSearchControls[128];
 static int s_globalSearchControlCount;
+static int s_controlsProfileKeys[2][CONTROLS_PROFILE_BINDINGS];
+static float s_controlsProfileJoyEnable[2];
+static float s_controlsProfileJoyAnalog[2];
+static float s_controlsProfileJoyThreshold[2];
+static qboolean s_controlsProfileLoaded[2];
+static int s_controlsActiveProfileMode;
+
+static const char *s_controlsInputModes[] = {
+	"Mouse/Keyboard",
+	"Controller",
+	0
+};
 
 // static vec4_t controls_binding_color  = {1.00, 0.43, 0.00, 1.00};
 
@@ -314,14 +340,16 @@ static bind_t g_bindings[] =
 	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            K_DOWNARROW,		-1, -1},
 	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		K_CTRL,		-1, -1},
 	{"+speed", 			"turbo",			ID_TURBO,		ANIM_TURBO,		K_SHIFT,		-1,		-1,	-1},
-	{"+moveup",			"up",				ID_MOVEUP,		ANIM_JUMP,		'x',			-1,		-1, -1},
+	{"gearUp",			"gear up",			ID_GEARUP,		ANIM_IDLE,		K_PGUP,			-1,		-1, -1},
+	{"gearDown",		"gear down",		ID_GEARDOWN,	ANIM_IDLE,		K_PGDN,			-1,		-1, -1},
+	{"+moveup",			"clutch / up",		ID_MOVEUP,		ANIM_JUMP,		'x',			-1,		-1, -1},
 	{"+movedown",		"down",				ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
 	{"+hud", 			"show HUD",			ID_SHOWHUD2,	0,				'q',			-1,		-1, -1},
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	'a',	K_LEFTARROW,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	'd',	K_RIGHTARROW,		-1, -1},
 	{"+button12", 		"rear attack",		ID_REARATTACK,	ANIM_REARATTACK, K_KP_INS,		-1,		-1, -1},
-	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
-	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
+	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	-1,			-1,		-1, -1},
+	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	-1,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
 	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END,			-1,		-1, -1},
 	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		K_MOUSE3,			-1,		-1, -1},
@@ -385,7 +413,9 @@ static configcvar_t g_configcvars[] =
 	{"m_pitch",			0,					0},
 	{"cg_autoswitch",	0,					0},
 	{"sensitivity",		0,					0},
+	{"cg_controlMode",	0,					0},
 	{"in_joystick",		0,					0},
+	{"in_joystickUseAnalog",	0,				0},
 	{"joy_threshold",	0,					0},
 	{"m_filter",		0,					0},
 	{"cl_freelook",		0,					0},
@@ -395,21 +425,31 @@ static configcvar_t g_configcvars[] =
 static menucommon_s *g_movement_controls[] = {
     (menucommon_s *)&s_controls.accel,
 	(menucommon_s *)&s_controls.brake,
+	(menucommon_s *)&s_controls.gearup,
+	(menucommon_s *)&s_controls.geardown,
+	(menucommon_s *)&s_controls.moveup,
 	(menucommon_s *)&s_controls.handbrake,      
 	(menucommon_s *)&s_controls.turbo,     
-	(menucommon_s *)&s_controls.moveup,        
 	(menucommon_s *)&s_controls.movedown,      
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,    
+	(menucommon_s *)&s_controls.headlight,
+	(menucommon_s *)&s_controls.horn,
 	NULL,
 };
 
-static menucommon_s *g_weapons_controls[] = {
+static menucommon_s *g_combat_controls[] = {
 	(menucommon_s *)&s_controls.attack,
     (menucommon_s *)&s_controls.alt_attack,
 	(menucommon_s *)&s_controls.rearattack,
 	(menucommon_s *)&s_controls.droprear,
 	(menucommon_s *)&s_controls.autodroprear,
+	(menucommon_s *)&s_controls.useitem,
+	(menucommon_s *)&s_controls.dropitem,
+	NULL,
+};
+
+static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.autoswitch,    
@@ -436,15 +476,15 @@ static menucommon_s *g_looking_controls[] = {
 	(menucommon_s *)&s_controls.freelook,
 	(menucommon_s *)&s_controls.centerview,
 	(menucommon_s *)&s_controls.zoomview,
+	(menucommon_s *)&s_controls.nextcamera,
 	(menucommon_s *)&s_controls.joyenable,
+	(menucommon_s *)&s_controls.joyanalog,
 	(menucommon_s *)&s_controls.joythreshold,
 	NULL,
 };
 
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores,
-	(menucommon_s *)&s_controls.useitem,
-	(menucommon_s *)&s_controls.dropitem,
 	(menucommon_s *)&s_controls.jukeboxPlay,
 	(menucommon_s *)&s_controls.jukeboxNext,
 	(menucommon_s *)&s_controls.jukeboxPrev,
@@ -455,11 +495,8 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
 	(menucommon_s *)&s_controls.chat4,
-	(menucommon_s *)&s_controls.headlight,
-	(menucommon_s *)&s_controls.horn,
 	(menucommon_s *)&s_controls.startdemo,
 	(menucommon_s *)&s_controls.stopdemo,
-	(menucommon_s *)&s_controls.nextcamera,
 	NULL,
 };
 
@@ -486,6 +523,7 @@ static menucommon_s *g_developer_controls[] = {
 static menucommon_s **g_controls[] = {
 	g_movement_controls,
 	g_looking_controls,
+	g_combat_controls,
 	g_weapons_controls,
 	g_misc_controls,
 	g_developer_controls,
@@ -583,14 +621,21 @@ static const char* Controls_SectionTagForAction( int id )
 	controls = g_movement_controls;
 	for ( i = 0; (control = controls[i]); i++ ) {
 		if ( control->id == id ) {
-			return "MOVEMENT";
+			return "DRIVE";
 		}
 	}
 
 	controls = g_looking_controls;
 	for ( i = 0; (control = controls[i]); i++ ) {
 		if ( control->id == id ) {
-			return "LOOKING";
+			return "VIEW";
+		}
+	}
+
+	controls = g_combat_controls;
+	for ( i = 0; (control = controls[i]); i++ ) {
+		if ( control->id == id ) {
+			return "COMBAT";
 		}
 	}
 
@@ -604,7 +649,7 @@ static const char* Controls_SectionTagForAction( int id )
 	controls = g_misc_controls;
 	for ( i = 0; (control = controls[i]); i++ ) {
 		if ( control->id == id ) {
-			return "MISC";
+			return "SYSTEM";
 		}
 	}
 
@@ -616,6 +661,22 @@ static const char* Controls_SectionTagForAction( int id )
 	}
 
 	return "UNKNOWN";
+}
+
+static qboolean Controls_ControlVisibleForInputMode( menucommon_s *control )
+{
+	if ( s_controls.inputmode.curvalue != CONTROLS_INPUT_CONTROLLER ) {
+		switch ( control->id ) {
+			case ID_JOYENABLE:
+			case ID_JOYANALOG:
+			case ID_JOYTHRESHOLD:
+				return qfalse;
+			default:
+				break;
+		}
+	}
+
+	return qtrue;
 }
 
 static void Controls_BuildGlobalSearchList( void )
@@ -638,6 +699,10 @@ static void Controls_BuildGlobalSearchList( void )
 
 			qboolean match = qfalse;
 
+			if ( !Controls_ControlVisibleForInputMode( control ) ) {
+				continue;
+			}
+
 			if ( binding && Controls_StringContainsCaseInsensitive( binding->label, s_controlsSearchText ) ) {
 				match = qtrue;
 			} else if ( control->name && Controls_StringContainsCaseInsensitive( control->name, s_controlsSearchText ) ) {
@@ -648,13 +713,6 @@ static void Controls_BuildGlobalSearchList( void )
 				s_globalSearchControls[s_globalSearchControlCount++] = control;
 
             }
-
-			if ( binding && Controls_StringContainsCaseInsensitive( binding->label, s_controlsSearchText ) ) {
-				if ( s_globalSearchControlCount < (int)ARRAY_LEN( s_globalSearchControls ) ) {
-					s_globalSearchControls[s_globalSearchControlCount++] = control;
-				}
-
-			}
 		}
 	}
 }
@@ -731,6 +789,183 @@ static float Controls_GetCvarValue( char* name )
 	}
 
 	return (cvarptr->value);
+}
+
+static int Controls_BindingCount( void )
+{
+	int i;
+
+	for ( i = 0; g_bindings[i].label && i < CONTROLS_PROFILE_BINDINGS; i++ ) {
+	}
+
+	return i;
+}
+
+static const char *Controls_ProfileName( int mode )
+{
+	return mode == CONTROLS_INPUT_CONTROLLER ? "controller" : "keyboard";
+}
+
+static qboolean Controls_ProfileCvarsInitialized( int mode )
+{
+	return trap_Cvar_VariableValue( va( "q3r_ctrl_%s_init", Controls_ProfileName( mode ) ) ) != 0;
+}
+
+static int Controls_DefaultKeyForProfile( int mode, int id, int fallback )
+{
+	if ( mode != CONTROLS_INPUT_CONTROLLER ) {
+		return fallback;
+	}
+
+	switch ( id ) {
+		case ID_SHOWSCORES: return K_PAD0_TOUCHPAD;
+		case ID_ACCEL: return K_PAD0_RIGHTTRIGGER;
+		case ID_BRAKE: return K_PAD0_LEFTTRIGGER;
+		case ID_LEFT: return K_PAD0_LEFTSTICK_LEFT;
+		case ID_RIGHT: return K_PAD0_LEFTSTICK_RIGHT;
+		case ID_MOVEUP: return K_PAD0_A;
+		case ID_HANDBRAKE: return K_PAD0_B;
+		case ID_TURBO: return K_PAD0_Y;
+		case ID_GEARUP: return K_PAD0_RIGHTSHOULDER;
+		case ID_GEARDOWN: return K_PAD0_LEFTSHOULDER;
+		case ID_HEADLIGHT: return K_PAD0_DPAD_UP;
+		case ID_HORN: return K_PAD0_LEFTSTICK_CLICK;
+		case ID_NEXTCAMERA: return K_PAD0_RIGHTSTICK_CLICK;
+		case ID_USEITEM: return K_PAD0_X;
+		case ID_DROPITEM: return K_PAD0_DPAD_DOWN;
+		case ID_REARATTACK: return K_PAD0_DPAD_RIGHT;
+		case ID_DROP_REAR: return K_PAD0_DPAD_LEFT;
+		default: return -1;
+	}
+}
+
+static void Controls_LoadDefaultProfile( int mode )
+{
+	int i;
+	int count;
+
+	count = Controls_BindingCount();
+	for ( i = 0; i < count; i++ ) {
+		s_controlsProfileKeys[mode][i] = Controls_DefaultKeyForProfile( mode, g_bindings[i].id, g_bindings[i].defaultbind1 );
+	}
+
+	s_controlsProfileJoyEnable[mode] = mode == CONTROLS_INPUT_CONTROLLER ? 1.0f : 0.0f;
+	s_controlsProfileJoyAnalog[mode] = mode == CONTROLS_INPUT_CONTROLLER ? 1.0f : 0.0f;
+	s_controlsProfileJoyThreshold[mode] = 0.15f;
+	s_controlsProfileLoaded[mode] = qtrue;
+}
+
+static void Controls_StoreProfile( int mode )
+{
+	int i;
+	int count;
+
+	mode = mode == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_CONTROLLER : CONTROLS_INPUT_KEYBOARD;
+	count = Controls_BindingCount();
+
+	for ( i = 0; i < count; i++ ) {
+		s_controlsProfileKeys[mode][i] = g_bindings[i].bind1;
+	}
+
+	s_controlsProfileJoyEnable[mode] = s_controls.joyenable.curvalue;
+	s_controlsProfileJoyAnalog[mode] = s_controls.joyanalog.curvalue;
+	s_controlsProfileJoyThreshold[mode] = s_controls.joythreshold.curvalue;
+	s_controlsProfileLoaded[mode] = qtrue;
+}
+
+static void Controls_StoreCurrentProfile( void )
+{
+	Controls_StoreProfile( s_controlsActiveProfileMode );
+}
+
+static void Controls_ApplyProfile( int mode )
+{
+	int i;
+	int count;
+
+	if ( !s_controlsProfileLoaded[mode] ) {
+		Controls_LoadDefaultProfile( mode );
+	}
+
+	count = Controls_BindingCount();
+	for ( i = 0; i < count; i++ ) {
+		g_bindings[i].bind1 = s_controlsProfileKeys[mode][i];
+		g_bindings[i].bind2 = -1;
+	}
+
+	s_controls.inputmode.curvalue = mode;
+	s_controls.joyenable.curvalue = s_controlsProfileJoyEnable[mode];
+	s_controls.joyanalog.curvalue = s_controlsProfileJoyAnalog[mode];
+	s_controls.joythreshold.curvalue = s_controlsProfileJoyThreshold[mode];
+	s_controlsActiveProfileMode = mode;
+}
+
+static void Controls_LoadProfileCvars( int mode )
+{
+	int i;
+	int count;
+
+	if ( !Controls_ProfileCvarsInitialized( mode ) ) {
+		Controls_LoadDefaultProfile( mode );
+		return;
+	}
+
+	count = Controls_BindingCount();
+	for ( i = 0; i < count; i++ ) {
+		int stored = (int)trap_Cvar_VariableValue( va( "q3r_ctrl_%s_%i", Controls_ProfileName( mode ), g_bindings[i].id ) );
+		s_controlsProfileKeys[mode][i] = stored > 0 ? stored - 2 : -1;
+	}
+
+	s_controlsProfileJoyEnable[mode] = UI_ClampCvar( 0, 1, trap_Cvar_VariableValue( va( "q3r_ctrl_%s_joyenable", Controls_ProfileName( mode ) ) ) );
+	s_controlsProfileJoyAnalog[mode] = UI_ClampCvar( 0, 1, trap_Cvar_VariableValue( va( "q3r_ctrl_%s_joyanalog", Controls_ProfileName( mode ) ) ) );
+	s_controlsProfileJoyThreshold[mode] = UI_ClampCvar( 0.05f, 0.75f, trap_Cvar_VariableValue( va( "q3r_ctrl_%s_joythreshold", Controls_ProfileName( mode ) ) ) );
+	s_controlsProfileLoaded[mode] = qtrue;
+}
+
+static void Controls_SaveProfileCvars( int mode )
+{
+	int i;
+	int count;
+
+	count = Controls_BindingCount();
+	for ( i = 0; i < count; i++ ) {
+		trap_Cmd_ExecuteText( EXEC_APPEND, va( "seta q3r_ctrl_%s_%i \"%i\"\n", Controls_ProfileName( mode ), g_bindings[i].id, s_controlsProfileKeys[mode][i] + 2 ) );
+	}
+
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "seta q3r_ctrl_%s_joyenable \"%i\"\n", Controls_ProfileName( mode ), (int)s_controlsProfileJoyEnable[mode] ) );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "seta q3r_ctrl_%s_joyanalog \"%i\"\n", Controls_ProfileName( mode ), (int)s_controlsProfileJoyAnalog[mode] ) );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "seta q3r_ctrl_%s_joythreshold \"%.3f\"\n", Controls_ProfileName( mode ), s_controlsProfileJoyThreshold[mode] ) );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "seta q3r_ctrl_%s_init \"1\"\n", Controls_ProfileName( mode ) ) );
+}
+
+static void Controls_ApplyInputModeProfile( int mode )
+{
+	int oldMode;
+
+	mode = mode == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_CONTROLLER : CONTROLS_INPUT_KEYBOARD;
+	oldMode = s_controlsActiveProfileMode == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_CONTROLLER : CONTROLS_INPUT_KEYBOARD;
+
+	Controls_StoreProfile( oldMode );
+	if ( mode != oldMode ) {
+		Controls_ApplyProfile( mode );
+	}
+
+	s_controls.changesmade = qtrue;
+}
+
+static void Controls_ClearCommandBindings( const char *command )
+{
+	int j;
+	char b[256];
+
+	for ( j = 0; j < MAX_KEYS; j++ )
+	{
+		trap_Key_GetBindingBuf( j, b, sizeof( b ) );
+		if ( *b && !Q_stricmp( b, command ) )
+		{
+			trap_Key_SetBinding( j, "" );
+		}
+	}
 }
 
 
@@ -888,7 +1123,7 @@ static void Controls_Update( void ) {
 	searchActive = Controls_SearchActive();
 
 	if ( s_controls.section == C_DEVELOPER && !Controls_ShowDeveloper() ) {
-		s_controls.section = C_LOOKING;
+		s_controls.section = C_MOVEMENT;
 	}
 
 	if ( Controls_ShowDeveloper() ) {
@@ -913,7 +1148,7 @@ static void Controls_Update( void ) {
 		y = ( SCREEN_HEIGHT - s_globalSearchControlCount * SMALLCHAR_HEIGHT ) / 2;
 		for ( j = 0; j < s_globalSearchControlCount; j++, y += SMALLCHAR_HEIGHT ) {
 			control = s_globalSearchControls[j];
-			control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
+			control->x      = 410 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
 			control->y      = y;
 			control->left   = control->x - 19*SMALLCHAR_WIDTH;
 			control->right  = control->x + 21*SMALLCHAR_WIDTH;
@@ -924,19 +1159,27 @@ static void Controls_Update( void ) {
 		controls = g_controls[s_controls.section];
 
 		// enable controls in active group (and count number of items for vertical centering)
-		for( j = 0;	(control = controls[j]); j++ ) {
-			control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
+		for( i = 0, j = 0; (control = controls[i]); i++ ) {
+			if ( Controls_ControlVisibleForInputMode( control ) ) {
+				control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
+				j++;
+			}
 		}
 
 		// position controls
 		y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
-		for( j = 0;	(control = controls[j]); j++, y += SMALLCHAR_HEIGHT ) {
+		for( j = 0;	(control = controls[j]); j++ ) {
+			if ( !Controls_ControlVisibleForInputMode( control ) ) {
+				continue;
+			}
+
 			control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
 			control->y      = y;
 			control->left   = control->x - 19*SMALLCHAR_WIDTH;
 			control->right  = control->x + 21*SMALLCHAR_WIDTH;
 			control->top    = y;
 			control->bottom = y + SMALLCHAR_HEIGHT;
+			y += SMALLCHAR_HEIGHT;
 		}
 	}
 
@@ -960,12 +1203,14 @@ static void Controls_Update( void ) {
 	// makes sure flags are right on the group selection controls
 	s_controls.looking.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.movement.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.combat.generic.flags   &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.weapons.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.misc.generic.flags     &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 	s_controls.developer.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 
 	s_controls.looking.generic.flags  |= QMF_PULSEIFFOCUS;
 	s_controls.movement.generic.flags |= QMF_PULSEIFFOCUS;
+	s_controls.combat.generic.flags   |= QMF_PULSEIFFOCUS;
 	s_controls.weapons.generic.flags  |= QMF_PULSEIFFOCUS;
 	s_controls.misc.generic.flags     |= QMF_PULSEIFFOCUS;
 	s_controls.developer.generic.flags |= QMF_PULSEIFFOCUS;
@@ -980,6 +1225,11 @@ static void Controls_Update( void ) {
 	case C_LOOKING:
 		s_controls.looking.generic.flags &= ~QMF_PULSEIFFOCUS;
 		s_controls.looking.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+		break;
+
+	case C_COMBAT:
+		s_controls.combat.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.combat.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
 	
 	case C_WEAPONS:
@@ -1007,18 +1257,65 @@ static void Controls_Update( void ) {
 Controls_DrawKeyBinding
 =================
 */
+static void Controls_KeyNameForDisplay( int keynum, char *buf, int buflen )
+{
+	const char *name = NULL;
+
+	switch ( keynum ) {
+		case K_PAD0_A: name = "CROSS"; break;
+		case K_PAD0_B: name = "CIRCLE"; break;
+		case K_PAD0_X: name = "SQUARE"; break;
+		case K_PAD0_Y: name = "TRIANGLE"; break;
+		case K_PAD0_BACK: name = "CREATE"; break;
+		case K_PAD0_GUIDE: name = "PS"; break;
+		case K_PAD0_START: name = "OPTIONS"; break;
+		case K_PAD0_LEFTSTICK_CLICK: name = "L3"; break;
+		case K_PAD0_RIGHTSTICK_CLICK: name = "R3"; break;
+		case K_PAD0_LEFTSHOULDER: name = "L1"; break;
+		case K_PAD0_RIGHTSHOULDER: name = "R1"; break;
+		case K_PAD0_DPAD_UP: name = "D-UP"; break;
+		case K_PAD0_DPAD_DOWN: name = "D-DOWN"; break;
+		case K_PAD0_DPAD_LEFT: name = "D-LEFT"; break;
+		case K_PAD0_DPAD_RIGHT: name = "D-RIGHT"; break;
+		case K_PAD0_LEFTSTICK_LEFT: name = "LS LEFT"; break;
+		case K_PAD0_LEFTSTICK_RIGHT: name = "LS RIGHT"; break;
+		case K_PAD0_LEFTSTICK_UP: name = "LS UP"; break;
+		case K_PAD0_LEFTSTICK_DOWN: name = "LS DOWN"; break;
+		case K_PAD0_RIGHTSTICK_LEFT: name = "RS LEFT"; break;
+		case K_PAD0_RIGHTSTICK_RIGHT: name = "RS RIGHT"; break;
+		case K_PAD0_RIGHTSTICK_UP: name = "RS UP"; break;
+		case K_PAD0_RIGHTSTICK_DOWN: name = "RS DOWN"; break;
+		case K_PAD0_LEFTTRIGGER: name = "L2"; break;
+		case K_PAD0_RIGHTTRIGGER: name = "R2"; break;
+		case K_PAD0_MISC1: name = "MISC"; break;
+		case K_PAD0_PADDLE1: name = "PADDLE 1"; break;
+		case K_PAD0_PADDLE2: name = "PADDLE 2"; break;
+		case K_PAD0_PADDLE3: name = "PADDLE 3"; break;
+		case K_PAD0_PADDLE4: name = "PADDLE 4"; break;
+		case K_PAD0_TOUCHPAD: name = "TOUCHPAD"; break;
+	}
+
+	if ( name ) {
+		Q_strncpyz( buf, name, buflen );
+		return;
+	}
+
+	trap_Key_KeynumToStringBuf( keynum, buf, buflen );
+	Q_strupr( buf );
+}
+
 static void Controls_DrawKeyBinding( void *self )
 {
 	menuaction_s*	a;
 	int				x;
 	int				y;
+	int				fillLeft;
+	int				fillRight;
 	int				b1;
 	int				b2;
 	qboolean		c;
 	char			name[96];
-	char			name2[32];
 	char			label[96];
-	qboolean		hasSecondaryBind;
 
 	a = (menuaction_s*) self;
 
@@ -1026,7 +1323,6 @@ static void Controls_DrawKeyBinding( void *self )
 	y = a->generic.y;
 
 	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
-	hasSecondaryBind = qfalse;
 
 	// find the binding
 	for (b1 = 0; g_bindings[b1].command; b1++) {
@@ -1043,16 +1339,7 @@ static void Controls_DrawKeyBinding( void *self )
 		if (b2 == -1) {
 			strcpy(name, "-?-");
 		} else {
-			trap_Key_KeynumToStringBuf( b2, name, 32 );
-			Q_strupr(name);
-
-			b2 = g_bindings[b1].bind2;
-			if (b2 != -1) {
-				hasSecondaryBind = qtrue;
-				trap_Key_KeynumToStringBuf( b2, name2, 32 );
-				Q_strupr(name2);
-				Com_sprintf( name, sizeof( name ), "%s / %s", name, name2 );
-			}
+			Controls_KeyNameForDisplay( b2, name, sizeof( name ) );
 		}
 
 		if ( Controls_SearchActive() ) {
@@ -1064,7 +1351,9 @@ static void Controls_DrawKeyBinding( void *self )
 
 	if (c)
 	{
-		UI_FillRect( a->generic.left, a->generic.top, a->generic.right-a->generic.left+1, a->generic.bottom-a->generic.top+1, listbar_color ); 
+		fillLeft = x - SMALLCHAR_WIDTH - strlen( label ) * SMALLCHAR_WIDTH - 2;
+		fillRight = x + SMALLCHAR_WIDTH + strlen( name ) * SMALLCHAR_WIDTH + 2;
+		UI_FillRect( fillLeft, a->generic.top, fillRight - fillLeft + 1, a->generic.bottom-a->generic.top+1, listbar_color );
 
 		UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
 		UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT|UI_PULSE, text_color_highlight );
@@ -1077,12 +1366,9 @@ static void Controls_DrawKeyBinding( void *self )
 		else
 		{
 			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "You can assign two keys per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "One input per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
 			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.88, "Enter/Click = rebind", UI_SMALLFONT|UI_CENTER, colorWhite );
 			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.92, "Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
-			if ( hasSecondaryBind ) {
-				UI_DrawString( x + SMALLCHAR_WIDTH + (strlen( name ) + 1) * SMALLCHAR_WIDTH, y, "Primary/Secondary", UI_LEFT|UI_SMALLFONT, text_color_highlight );
-			}
 		}
 		UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.95, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
 		if ( Controls_SearchActive() ) {
@@ -1104,6 +1390,153 @@ static void Controls_DrawKeyBinding( void *self )
 	}
 }
 
+static void Controls_DrawRadioButton( void *self )
+{
+	menuradiobutton_s* rb;
+	int x;
+	int y;
+	int fillLeft;
+	int fillRight;
+	int style;
+	const char* value;
+	float* color;
+	qboolean focus;
+
+	rb = (menuradiobutton_s*)self;
+	x = rb->generic.x;
+	y = rb->generic.y;
+	value = rb->curvalue ? "on" : "off";
+	focus = (rb->generic.parent->cursor == rb->generic.menuPosition);
+
+	style = UI_LEFT|UI_SMALLFONT;
+	if ( rb->generic.flags & QMF_GRAYED ) {
+		color = text_color_disabled;
+	} else if ( focus ) {
+		color = text_color_highlight;
+		style |= UI_PULSE;
+	} else {
+		color = text_color_normal;
+	}
+
+	if ( focus ) {
+		fillLeft = x - SMALLCHAR_WIDTH - strlen( rb->generic.name ) * SMALLCHAR_WIDTH - 2;
+		fillRight = x + SMALLCHAR_WIDTH + 16 + strlen( value ) * SMALLCHAR_WIDTH + 2;
+		UI_FillRect( fillLeft, rb->generic.top, fillRight - fillLeft + 1, rb->generic.bottom-rb->generic.top+1, listbar_color );
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color );
+	}
+
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT, color );
+	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y + 2, 16, 16, rb->curvalue ? uis.rb_on : uis.rb_off );
+	UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, value, style, color );
+}
+
+static void Controls_DrawSlider( void *self )
+{
+	menuslider_s* s;
+	int x;
+	int y;
+	int i;
+	int fillLeft;
+	int fillRight;
+	int style;
+	float* color;
+	qboolean focus;
+
+	s = (menuslider_s*)self;
+	x = s->generic.x;
+	y = s->generic.y;
+	focus = (s->generic.parent->cursor == s->generic.menuPosition);
+
+	style = UI_SMALLFONT;
+	if ( s->generic.flags & QMF_GRAYED ) {
+		color = text_color_disabled;
+	} else if ( focus ) {
+		color = text_color_highlight;
+		style |= UI_PULSE;
+	} else {
+		color = text_color_normal;
+	}
+
+	if ( focus ) {
+		fillLeft = x - SMALLCHAR_WIDTH - strlen( s->generic.name ) * SMALLCHAR_WIDTH - 2;
+		fillRight = x + (SLIDER_RANGE + 3) * SMALLCHAR_WIDTH + 2;
+		UI_FillRect( fillLeft, s->generic.top, fillRight - fillLeft + 1, s->generic.bottom-s->generic.top+1, listbar_color );
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color );
+	}
+
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, UI_RIGHT|style, color );
+	UI_DrawChar( x + SMALLCHAR_WIDTH, y, 128, UI_LEFT|style, color );
+	for ( i = 0; i < SLIDER_RANGE; i++ ) {
+		UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 129, UI_LEFT|style, color );
+	}
+	UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 130, UI_LEFT|style, color );
+
+	if (s->maxvalue > s->minvalue) {
+		s->range = ( s->curvalue - s->minvalue ) / ( float ) ( s->maxvalue - s->minvalue );
+		if ( s->range < 0 ) {
+			s->range = 0;
+		} else if ( s->range > 1 ) {
+			s->range = 1;
+		}
+	} else {
+		s->range = 0;
+	}
+
+	if ( style & UI_PULSE ) {
+		style &= ~UI_PULSE;
+		style |= UI_BLINK;
+	}
+	UI_DrawChar( (int)( x + 2*SMALLCHAR_WIDTH + (SLIDER_RANGE-1)*SMALLCHAR_WIDTH* s->range ), y, 131, UI_LEFT|style, color );
+}
+
+static void Controls_DrawSearchField( void *self )
+{
+	menufield_s* f;
+	int x;
+	int y;
+	int w;
+	int style;
+	int visibleChars;
+	int fillRight;
+	float* color;
+	qboolean focus;
+
+	f = (menufield_s*)self;
+	x = f->generic.x;
+	y = f->generic.y;
+	w = SMALLCHAR_WIDTH;
+	style = UI_SMALLFONT;
+	focus = (Menu_ItemAtCursor( f->generic.parent ) == f);
+
+	if ( focus ) {
+		style |= UI_PULSE;
+	}
+
+	if ( f->generic.flags & QMF_GRAYED ) {
+		color = text_color_disabled;
+	} else if ( focus ) {
+		color = text_color_highlight;
+	} else {
+		color = text_color_normal;
+	}
+
+	if ( focus ) {
+		visibleChars = strlen( f->field.buffer ) - f->field.scroll;
+		if ( visibleChars < 1 ) {
+			visibleChars = 1;
+		}
+		if ( visibleChars > f->field.widthInChars ) {
+			visibleChars = f->field.widthInChars;
+		}
+
+		fillRight = x + w + visibleChars * w + 2;
+		UI_FillRect( x - 2, f->generic.top, fillRight - x + 3, f->generic.bottom-f->generic.top+1, listbar_color );
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|style, color );
+	}
+
+	MField_Draw( &f->field, x + w, y, style, color );
+}
+
 
 /*
 =================
@@ -1112,7 +1545,7 @@ Controls_StatusBar
 */
 static void Controls_StatusBar( void *self )
 {
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "You can assign two keys per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "One input per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
 	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.86, "Enter/Click = rebind | Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
 	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.90, "Use Arrow Keys or Click to change options", UI_SMALLFONT|UI_CENTER, colorWhite );
 	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.94, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
@@ -1191,6 +1624,8 @@ RallyControls_GetConfig
 static void RallyControls_GetConfig( void )
 {
 	int		i;
+	int		mode;
+	int		otherMode;
 	int		twokeys[2];
 	bind_t*	bindptr;
 
@@ -1206,20 +1641,34 @@ static void RallyControls_GetConfig( void )
 		Controls_GetKeyAssignment(bindptr->command, twokeys);
 
 		bindptr->bind1 = twokeys[0];
-		bindptr->bind2 = twokeys[1];
+		bindptr->bind2 = -1;
 	}
 
+	s_controls.inputmode.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_controlMode" ) );
 	s_controls.invertmouse.curvalue  = Controls_GetCvarValue( "m_pitch" ) < 0;
 	s_controls.smoothmouse.curvalue  = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "m_filter" ) );
 	s_controls.alwaysrun.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_run" ) );
 	s_controls.autoswitch.curvalue   = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_autoswitch" ) );
 	s_controls.sensitivity.curvalue  = UI_ClampCvar( 2, 30, Controls_GetCvarValue( "sensitivity" ) );
 	s_controls.joyenable.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "in_joystick" ) );
+	s_controls.joyanalog.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "in_joystickUseAnalog" ) );
 	s_controls.joythreshold.curvalue = UI_ClampCvar( 0.05, 0.75, Controls_GetCvarValue( "joy_threshold" ) );
         s_controls.freelook.curvalue     = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_freelook" ) );
 // STONELANCE
         s_controls.autodroprear.curvalue = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_autodrop" ) );
 // END
+
+	mode = s_controls.inputmode.curvalue == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_CONTROLLER : CONTROLS_INPUT_KEYBOARD;
+	otherMode = mode == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_KEYBOARD : CONTROLS_INPUT_CONTROLLER;
+
+	if ( Controls_ProfileCvarsInitialized( mode ) ) {
+		Controls_LoadProfileCvars( mode );
+	} else {
+		Controls_StoreProfile( mode );
+	}
+
+	Controls_LoadProfileCvars( otherMode );
+	Controls_ApplyProfile( mode );
 }
 
 /*
@@ -1232,6 +1681,10 @@ static void RallyControls_SetConfig( void )
 	int		i;
 	bind_t*	bindptr;
 
+	Controls_StoreCurrentProfile();
+	Controls_SaveProfileCvars( CONTROLS_INPUT_KEYBOARD );
+	Controls_SaveProfileCvars( CONTROLS_INPUT_CONTROLLER );
+
 	// set the bindings from the local store
 	bindptr = g_bindings;
 
@@ -1241,12 +1694,11 @@ static void RallyControls_SetConfig( void )
 		if (!bindptr->label)
 			break;
 
+		Controls_ClearCommandBindings( bindptr->command );
+
 		if (bindptr->bind1 != -1)
 		{	
 			trap_Key_SetBinding( bindptr->bind1, bindptr->command );
-
-			if (bindptr->bind2 != -1)
-				trap_Key_SetBinding( bindptr->bind2, bindptr->command );
 		}
 	}
 
@@ -1259,8 +1711,11 @@ static void RallyControls_SetConfig( void )
 	trap_Cvar_SetValue( "cl_run", s_controls.alwaysrun.curvalue );
 	trap_Cvar_SetValue( "cg_autoswitch", s_controls.autoswitch.curvalue );
 	trap_Cvar_SetValue( "sensitivity", s_controls.sensitivity.curvalue );
+	trap_Cvar_SetValue( "cg_controlMode", s_controls.inputmode.curvalue );
 	trap_Cvar_SetValue( "in_joystick", s_controls.joyenable.curvalue );
+	trap_Cvar_SetValue( "in_joystickUseAnalog", s_controls.joyanalog.curvalue );
 	trap_Cvar_SetValue( "joy_threshold", s_controls.joythreshold.curvalue );
+	trap_Cmd_ExecuteText( EXEC_APPEND, s_controls.inputmode.curvalue == 1 ? "+strafe\n" : "-strafe\n" );
         trap_Cvar_SetValue( "cl_freelook", s_controls.freelook.curvalue );
 // STONELANCE
         trap_Cvar_SetValue( "cg_autodrop", s_controls.autodroprear.curvalue );
@@ -1275,33 +1730,11 @@ RallyControls_SetDefaults
 */
 static void RallyControls_SetDefaults( void )
 {
-	int	i;
-	bind_t*	bindptr;
+	int mode;
 
-	// set the bindings from the local store
-	bindptr = g_bindings;
-
-	// iterate each command, set its default binding
-	for (i=0; ;i++,bindptr++)
-	{
-		if (!bindptr->label)
-			break;
-
-		bindptr->bind1 = bindptr->defaultbind1;
-		bindptr->bind2 = bindptr->defaultbind2;
-	}
-
-	s_controls.invertmouse.curvalue  = Controls_GetCvarDefault( "m_pitch" ) < 0;
-	s_controls.smoothmouse.curvalue  = Controls_GetCvarDefault( "m_filter" );
-	s_controls.alwaysrun.curvalue    = Controls_GetCvarDefault( "cl_run" );
-	s_controls.autoswitch.curvalue   = Controls_GetCvarDefault( "cg_autoswitch" );
-	s_controls.sensitivity.curvalue  = Controls_GetCvarDefault( "sensitivity" );
-	s_controls.joyenable.curvalue    = Controls_GetCvarDefault( "in_joystick" );
-	s_controls.joythreshold.curvalue = Controls_GetCvarDefault( "joy_threshold" );
-	s_controls.freelook.curvalue     = Controls_GetCvarDefault( "cl_freelook" );
-// STONELANCE
-	s_controls.autodroprear.curvalue = Controls_GetCvarDefault( "cg_autodrop" );
-// END
+	mode = s_controls.inputmode.curvalue == CONTROLS_INPUT_CONTROLLER ? CONTROLS_INPUT_CONTROLLER : CONTROLS_INPUT_KEYBOARD;
+	Controls_LoadDefaultProfile( mode );
+	Controls_ApplyProfile( mode );
 }
 
 static bind_t* Controls_FindConflictingBinding( int key, int currentId )
@@ -1348,7 +1781,7 @@ static qboolean Controls_ApplyBindingChange( int id, int key )
 
 			if ( bindptr->bind1 == key )
 			{
-				bindptr->bind1 = bindptr->bind2;
+				bindptr->bind1 = -1;
 				bindptr->bind2 = -1;
 			}
 		}
@@ -1377,14 +1810,14 @@ static qboolean Controls_ApplyBindingChange( int id, int key )
 			}
 			else if ( bindptr->bind1 == -1 ) {
 				bindptr->bind1 = key;
-			}
-			else if ( bindptr->bind1 != key && bindptr->bind2 == -1 ) {
-				bindptr->bind2 = key;
+				bindptr->bind2 = -1;
 			}
 			else
 			{
-				trap_Key_SetBinding( bindptr->bind1, "" );
-				trap_Key_SetBinding( bindptr->bind2, "" );
+				if ( bindptr->bind1 != -1 )
+					trap_Key_SetBinding( bindptr->bind1, "" );
+				if ( bindptr->bind2 != -1 )
+					trap_Key_SetBinding( bindptr->bind2, "" );
 				bindptr->bind1 = key;
 				bindptr->bind2 = -1;
 			}
@@ -1669,6 +2102,14 @@ static void Controls_MenuEvent( void* ptr, int event )
 			}
 			break;
 
+		case ID_COMBAT:
+			if (event == QM_ACTIVATED)
+			{
+				s_controls.section = C_COMBAT;
+				Controls_Update();
+			}
+			break;
+
 		case ID_WEAPONS:
 			if (event == QM_ACTIVATED)
 			{
@@ -1733,6 +2174,7 @@ static void Controls_MenuEvent( void* ptr, int event )
 		case ID_ALWAYSRUN:
 		case ID_AUTOSWITCH:
 		case ID_JOYENABLE:
+		case ID_JOYANALOG:
 		case ID_JOYTHRESHOLD:
 // STONELANCE
 		case ID_AUTODROP:
@@ -1742,6 +2184,14 @@ static void Controls_MenuEvent( void* ptr, int event )
 				s_controls.changesmade = qtrue;
 			}
 			break;		
+
+		case ID_INPUTMODE:
+			if ( event == QM_ACTIVATED )
+			{
+				Controls_ApplyInputModeProfile( s_controls.inputmode.curvalue );
+				Controls_Update();
+			}
+			break;
 	}
 }
 
@@ -1758,7 +2208,8 @@ static void Controls_ActionEvent( void* ptr, int event )
 	}
 	else if (event == QM_GOTFOCUS)
 	{
-		Controls_UpdateModel( g_bindings[((menucommon_s*)ptr)->id].anim );
+		bind_t* binding = Controls_FindBindingById( ((menucommon_s*)ptr)->id );
+		Controls_UpdateModel( binding ? binding->anim : ANIM_IDLE );
 	}
 	else if ((event == QM_ACTIVATED) && !s_controls.waitingforkey)
 	{
@@ -1824,6 +2275,12 @@ static void Controls_MenuInit( void )
 
 	// zero set all our globals
 	memset( &s_controls, 0 ,sizeof(controls_t) );
+	memset( s_controlsProfileKeys, 0, sizeof( s_controlsProfileKeys ) );
+	memset( s_controlsProfileLoaded, 0, sizeof( s_controlsProfileLoaded ) );
+	memset( s_controlsProfileJoyEnable, 0, sizeof( s_controlsProfileJoyEnable ) );
+	memset( s_controlsProfileJoyAnalog, 0, sizeof( s_controlsProfileJoyAnalog ) );
+	memset( s_controlsProfileJoyThreshold, 0, sizeof( s_controlsProfileJoyThreshold ) );
+	s_controlsActiveProfileMode = CONTROLS_INPUT_KEYBOARD;
 	s_controlsSearchText[0] = '\0';
 	s_globalSearchControlCount = 0;
 	Controls_SearchFieldSyncFromState();
@@ -1873,7 +2330,7 @@ static void Controls_MenuInit( void )
 	s_controls.looking.generic.x	    = x;
 // END
 	s_controls.looking.generic.y	    = 240 - 2 * PROP_HEIGHT;
-	s_controls.looking.string			= "LOOK";
+	s_controls.looking.string			= "VIEW";
 	s_controls.looking.style			= UI_RIGHT;
 // STONELANCE
 //	s_controls.looking.color			= color_red;
@@ -1888,12 +2345,28 @@ static void Controls_MenuInit( void )
 //	s_controls.movement.generic.x	    = 152;
 	s_controls.movement.generic.x	    = x;
 // END
-	s_controls.movement.generic.y	     = 240 - PROP_HEIGHT;
-	s_controls.movement.string			= "MOVE";
+	s_controls.movement.generic.y	     = 240 - 3 * PROP_HEIGHT;
+	s_controls.movement.string			= "DRIVE";
 	s_controls.movement.style			= UI_RIGHT;
 // STONELANCE
 //	s_controls.movement.color			= color_red;
 	s_controls.movement.color			= text_color_normal;
+// END
+
+	s_controls.combat.generic.type	    = MTYPE_PTEXT;
+	s_controls.combat.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controls.combat.generic.id	    = ID_COMBAT;
+	s_controls.combat.generic.callback	= Controls_MenuEvent;
+// STONELANCE
+//	s_controls.combat.generic.x	    = 152;
+	s_controls.combat.generic.x	    = x;
+// END
+	s_controls.combat.generic.y	    = 240 - PROP_HEIGHT;
+	s_controls.combat.string			= "COMBAT";
+	s_controls.combat.style			= UI_RIGHT;
+// STONELANCE
+//	s_controls.combat.color			= color_red;
+	s_controls.combat.color			= text_color_normal;
 // END
 
 	s_controls.weapons.generic.type	    = MTYPE_PTEXT;
@@ -1905,7 +2378,7 @@ static void Controls_MenuInit( void )
 	s_controls.weapons.generic.x	    = x;
 // END
 	s_controls.weapons.generic.y	    = 240;
-	s_controls.weapons.string			= "SHOOT";
+	s_controls.weapons.string			= "WEAPONS";
 	s_controls.weapons.style			= UI_RIGHT;
 // STONELANCE
 //	s_controls.weapons.color			= color_red;
@@ -1921,7 +2394,7 @@ static void Controls_MenuInit( void )
 	s_controls.misc.generic.x	    = x;
 // END
 	s_controls.misc.generic.y		 = 240 + PROP_HEIGHT;
-	s_controls.misc.string			= "MISC";
+	s_controls.misc.string			= "SYSTEM";
 	s_controls.misc.style			= UI_RIGHT;
 // STONELANCE
 //	s_controls.misc.color			= color_red;
@@ -2025,6 +2498,18 @@ static void Controls_MenuInit( void )
 	s_controls.turbo.generic.callback  = Controls_ActionEvent;
 	s_controls.turbo.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.turbo.generic.id        = ID_TURBO;
+
+	s_controls.gearup.generic.type	     = MTYPE_ACTION;
+	s_controls.gearup.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.gearup.generic.callback  = Controls_ActionEvent;
+	s_controls.gearup.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.gearup.generic.id 	     = ID_GEARUP;
+
+	s_controls.geardown.generic.type	   = MTYPE_ACTION;
+	s_controls.geardown.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.geardown.generic.callback  = Controls_ActionEvent;
+	s_controls.geardown.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.geardown.generic.id 	   = ID_GEARDOWN;
 // END
 
 	s_controls.moveup.generic.type	    = MTYPE_ACTION;
@@ -2158,6 +2643,7 @@ static void Controls_MenuInit( void )
 	s_controls.autodroprear.generic.name	  = "autodrop rear weapons";
 	s_controls.autodroprear.generic.id        = ID_AUTODROP;
 	s_controls.autodroprear.generic.callback  = Controls_MenuEvent;
+	s_controls.autodroprear.generic.ownerdraw = Controls_DrawRadioButton;
 	s_controls.autodroprear.generic.statusbar = Controls_StatusBar;
 // END
 
@@ -2197,6 +2683,7 @@ static void Controls_MenuInit( void )
 	s_controls.freelook.generic.name		= "free look";
 	s_controls.freelook.generic.id			= ID_FREELOOK;
 	s_controls.freelook.generic.callback	= Controls_MenuEvent;
+	s_controls.freelook.generic.ownerdraw	= Controls_DrawRadioButton;
 	s_controls.freelook.generic.statusbar	= Controls_StatusBar;
 
 	s_controls.centerview.generic.type	    = MTYPE_ACTION;
@@ -2235,6 +2722,7 @@ static void Controls_MenuInit( void )
 	s_controls.invertmouse.generic.name	     = "invert mouse";
 	s_controls.invertmouse.generic.id        = ID_INVERTMOUSE;
 	s_controls.invertmouse.generic.callback  = Controls_MenuEvent;
+	s_controls.invertmouse.generic.ownerdraw = Controls_DrawRadioButton;
 	s_controls.invertmouse.generic.statusbar = Controls_StatusBar;
 
 	s_controls.smoothmouse.generic.type      = MTYPE_RADIOBUTTON;
@@ -2243,6 +2731,7 @@ static void Controls_MenuInit( void )
 	s_controls.smoothmouse.generic.name	     = "smooth mouse";
 	s_controls.smoothmouse.generic.id        = ID_SMOOTHMOUSE;
 	s_controls.smoothmouse.generic.callback  = Controls_MenuEvent;
+	s_controls.smoothmouse.generic.ownerdraw = Controls_DrawRadioButton;
 	s_controls.smoothmouse.generic.statusbar = Controls_StatusBar;
 
 // STONELANCE
@@ -2263,6 +2752,7 @@ static void Controls_MenuInit( void )
 	s_controls.autoswitch.generic.name	    = "autoswitch weapons";
 	s_controls.autoswitch.generic.id        = ID_AUTOSWITCH;
 	s_controls.autoswitch.generic.callback  = Controls_MenuEvent;
+	s_controls.autoswitch.generic.ownerdraw = Controls_DrawRadioButton;
 	s_controls.autoswitch.generic.statusbar = Controls_StatusBar;
 
 	s_controls.sensitivity.generic.type	     = MTYPE_SLIDER;
@@ -2271,6 +2761,7 @@ static void Controls_MenuInit( void )
 	s_controls.sensitivity.generic.name	     = "mouse speed";
 	s_controls.sensitivity.generic.id 	     = ID_MOUSESPEED;
 	s_controls.sensitivity.generic.callback  = Controls_MenuEvent;
+	s_controls.sensitivity.generic.ownerdraw = Controls_DrawSlider;
 	s_controls.sensitivity.minvalue		     = 2;
 	s_controls.sensitivity.maxvalue		     = 30;
 	s_controls.sensitivity.generic.statusbar = Controls_StatusBar;
@@ -2474,13 +2965,33 @@ static void Controls_MenuInit( void )
     
 // END
 
+	s_controls.inputmode.generic.type      = MTYPE_SPINCONTROL;
+	s_controls.inputmode.generic.flags	   = QMF_SMALLFONT;
+	s_controls.inputmode.generic.x	       = SCREEN_WIDTH/2;
+	s_controls.inputmode.generic.y	       = 240 - 4 * PROP_HEIGHT;
+	s_controls.inputmode.generic.name	   = "input mode";
+	s_controls.inputmode.generic.id        = ID_INPUTMODE;
+	s_controls.inputmode.generic.callback  = Controls_MenuEvent;
+	s_controls.inputmode.generic.statusbar = Controls_StatusBar;
+	s_controls.inputmode.itemnames         = s_controlsInputModes;
+
 	s_controls.joyenable.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.joyenable.generic.flags	   = QMF_SMALLFONT;
 	s_controls.joyenable.generic.x	       = SCREEN_WIDTH/2;
 	s_controls.joyenable.generic.name	   = "joystick";
 	s_controls.joyenable.generic.id        = ID_JOYENABLE;
 	s_controls.joyenable.generic.callback  = Controls_MenuEvent;
+	s_controls.joyenable.generic.ownerdraw = Controls_DrawRadioButton;
 	s_controls.joyenable.generic.statusbar = Controls_StatusBar;
+
+	s_controls.joyanalog.generic.type      = MTYPE_RADIOBUTTON;
+	s_controls.joyanalog.generic.flags	   = QMF_SMALLFONT;
+	s_controls.joyanalog.generic.x	       = SCREEN_WIDTH/2;
+	s_controls.joyanalog.generic.name	   = "analog input";
+	s_controls.joyanalog.generic.id        = ID_JOYANALOG;
+	s_controls.joyanalog.generic.callback  = Controls_MenuEvent;
+	s_controls.joyanalog.generic.ownerdraw = Controls_DrawRadioButton;
+	s_controls.joyanalog.generic.statusbar = Controls_StatusBar;
 
 	s_controls.joythreshold.generic.type	  = MTYPE_SLIDER;
 	s_controls.joythreshold.generic.x		  = SCREEN_WIDTH/2;
@@ -2488,29 +2999,25 @@ static void Controls_MenuInit( void )
 	s_controls.joythreshold.generic.name	  = "joystick threshold";
 	s_controls.joythreshold.generic.id 	      = ID_JOYTHRESHOLD;
 	s_controls.joythreshold.generic.callback  = Controls_MenuEvent;
+	s_controls.joythreshold.generic.ownerdraw = Controls_DrawSlider;
 	s_controls.joythreshold.minvalue		  = 0.05;
 	s_controls.joythreshold.maxvalue		  = 0.75;
 	s_controls.joythreshold.generic.statusbar = Controls_StatusBar;
 
 	{
-		int weaponsCount = 0;
-		while ( g_weapons_controls[weaponsCount] ) {
-			weaponsCount++;
-		}
-
-
 		s_controls.searchLabel.generic.type		= MTYPE_PTEXT;
 		s_controls.searchLabel.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_INACTIVE;
 		s_controls.searchLabel.generic.x			= x;
-		s_controls.searchLabel.generic.y			= ( SCREEN_HEIGHT - weaponsCount * SMALLCHAR_HEIGHT ) / 2;
+		s_controls.searchLabel.generic.y			= 240 - 5 * PROP_HEIGHT;
 		s_controls.searchLabel.string				= "SEARCH";
 		s_controls.searchLabel.style				= UI_RIGHT;
 		s_controls.searchLabel.color				= text_color_normal;
 
 		s_controls.search.generic.type			= MTYPE_FIELD;
 		s_controls.search.generic.flags			= QMF_SMALLFONT;
-		s_controls.search.generic.x				= x + 6;
-		s_controls.search.generic.y				= s_controls.searchLabel.generic.y + 6;
+		s_controls.search.generic.x				= x + 24;
+		s_controls.search.generic.y				= s_controls.searchLabel.generic.y + 5;
+		s_controls.search.generic.ownerdraw	= Controls_DrawSearchField;
 		s_controls.search.field.widthInChars	= 24;
 		s_controls.search.field.maxchars		= sizeof( s_controlsSearchText ) - 1;
 		Controls_SearchFieldSyncFromState();
@@ -2524,13 +3031,15 @@ static void Controls_MenuInit( void )
 // END
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
-	Menu_AddItem( &s_controls.menu, &s_controls.looking );
 	Menu_AddItem( &s_controls.menu, &s_controls.movement );
+	Menu_AddItem( &s_controls.menu, &s_controls.looking );
+	Menu_AddItem( &s_controls.menu, &s_controls.combat );
 	Menu_AddItem( &s_controls.menu, &s_controls.weapons );
 	Menu_AddItem( &s_controls.menu, &s_controls.misc );
 	Menu_AddItem( &s_controls.menu, &s_controls.developer );
 	Menu_AddItem( &s_controls.menu, &s_controls.searchLabel );
 	Menu_AddItem( &s_controls.menu, &s_controls.search );
+	Menu_AddItem( &s_controls.menu, &s_controls.inputmode );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.sensitivity );
 	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
@@ -2542,6 +3051,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.centerview );
 	Menu_AddItem( &s_controls.menu, &s_controls.zoomview );
 	Menu_AddItem( &s_controls.menu, &s_controls.joyenable );
+	Menu_AddItem( &s_controls.menu, &s_controls.joyanalog );
 	Menu_AddItem( &s_controls.menu, &s_controls.joythreshold );
 
 // STONELANCE
@@ -2553,6 +3063,8 @@ static void Controls_MenuInit( void )
 //	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.accel );
 	Menu_AddItem( &s_controls.menu, &s_controls.brake );
+	Menu_AddItem( &s_controls.menu, &s_controls.gearup );
+	Menu_AddItem( &s_controls.menu, &s_controls.geardown );
 	Menu_AddItem( &s_controls.menu, &s_controls.handbrake );
 	Menu_AddItem( &s_controls.menu, &s_controls.turbo );
 // END
@@ -2642,7 +3154,7 @@ static void Controls_MenuInit( void )
 	Controls_InitWeapons ();
 
 	// initial default section
-	s_controls.section = C_LOOKING;
+	s_controls.section = C_MOVEMENT;
 
 	// update the ui
 	Controls_Update();

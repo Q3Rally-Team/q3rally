@@ -250,6 +250,23 @@ static qboolean G_Profile_IsValidUUID( const char *s ) {
     return qtrue;
 }
 
+static qboolean G_Profile_GetArchivedUUID( char *out, int outSize ) {
+    char uuid[PROFILE_MAX_UUID];
+
+    if ( !out || outSize < PROFILE_MAX_UUID ) {
+        return qfalse;
+    }
+
+    out[0] = '\0';
+    trap_Cvar_VariableStringBuffer( "cl_uuid", uuid, sizeof( uuid ) );
+    if ( !G_Profile_IsValidUUID( uuid ) ) {
+        return qfalse;
+    }
+
+    Q_strncpyz( out, uuid, outSize );
+    return qtrue;
+}
+
 qboolean Profile_GetRankForScore( const profile_stats_t *stats,
                                  const profile_rank_def_t *rankDefs,
                                  int rankDefCount,
@@ -1232,6 +1249,19 @@ static void G_Profile_WriteToDisk( void ) {
         trap_FS_FCloseFile( readFile );
     }
 
+    if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
+        char archivedUuid[PROFILE_MAX_UUID];
+        if ( G_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
+            Q_strncpyz( s_profileState.info.uuid, archivedUuid, sizeof( s_profileState.info.uuid ) );
+        }
+    }
+
+    if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
+        Com_Printf( "Q3Rally Profile: refusing to write '%s' without a valid UUID\n",
+                    s_profileState.name );
+        return;
+    }
+
     // Escape Sonderzeichen für JSON
     G_Profile_FormatJsonString( gender, sizeof( gender ), s_profileState.info.gender );
     G_Profile_FormatJsonString( birthDate, sizeof( birthDate ), s_profileState.info.birthDate );
@@ -1538,6 +1568,7 @@ static void G_Profile_WriteToDisk( void ) {
     trap_FS_FCloseFile( file );
 
     G_PROFILE_LOG( "G_Profile: Successfully wrote %d bytes to %s\n", length, path );
+    trap_Cvar_Set( "cl_uuid", s_profileState.info.uuid );
 
     s_profileState.dirty = qfalse;
     s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
@@ -1565,19 +1596,28 @@ void G_Profile_Init( void ) {
 
     Q_strncpyz( s_profileState.name, activeName, sizeof( s_profileState.name ) );
     if ( !G_Profile_LoadFromDisk() ) {
-        Com_Memset( &s_profileState.stats, 0, sizeof( s_profileState.stats ) );
-        Com_Memset( &s_profileState.info, 0, sizeof( s_profileState.info ) );
-        s_profileState.dirty = qtrue;
-        G_Profile_WriteToDisk();
+        Com_Printf( "Q3Rally Profile: failed to load active profile '%s'; profile stats disabled for this session\n",
+                    activeName );
+        G_Profile_ClearState();
+        return;
     }
+
+    s_profileState.loaded = qtrue;
 
     /* UUID sicherstellen: falls das Profil geladen wurde aber noch keine
      * gültige UUID hat (Legacy-Profil vor dieser Änderung), wird jetzt
      * eine generiert. Neue Profile erhalten ihre UUID bereits vom Wizard. */
     if ( !G_Profile_IsValidUUID( s_profileState.info.uuid ) ) {
-        G_Profile_GenerateUUID( s_profileState.info.uuid, sizeof( s_profileState.info.uuid ) );
-        Com_Printf( "Q3Rally Profile: generated UUID %s for '%s'\n",
-                    s_profileState.info.uuid, s_profileState.name );
+        char archivedUuid[PROFILE_MAX_UUID];
+        if ( G_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
+            Q_strncpyz( s_profileState.info.uuid, archivedUuid, sizeof( s_profileState.info.uuid ) );
+            Com_Printf( "Q3Rally Profile: restored archived UUID %s for '%s'\n",
+                        s_profileState.info.uuid, s_profileState.name );
+        } else {
+            G_Profile_GenerateUUID( s_profileState.info.uuid, sizeof( s_profileState.info.uuid ) );
+            Com_Printf( "Q3Rally Profile: generated UUID %s for '%s'\n",
+                        s_profileState.info.uuid, s_profileState.name );
+        }
         s_profileState.dirty = qtrue;
         G_Profile_WriteToDisk();
     } else {
@@ -1585,9 +1625,10 @@ void G_Profile_Init( void ) {
                     s_profileState.info.uuid, s_profileState.name );
     }
 
+    trap_Cvar_Set( "cl_uuid", s_profileState.info.uuid );
+
     G_Profile_RecomputeAchievementState();
 
-    s_profileState.loaded = qtrue;
     s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
 }
 

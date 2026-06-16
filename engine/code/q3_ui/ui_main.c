@@ -200,6 +200,7 @@ vmCvar_t	ui_metricUnits;
 vmCvar_t        ui_speedometerMode;
 vmCvar_t	ui_controlMode;
 vmCvar_t	ui_manualShift;
+vmCvar_t	ui_transmissionMode;
 vmCvar_t	ui_minSkidLength;
 vmCvar_t	ui_drawRearView;
 vmCvar_t	ui_checkpointArrowMode;
@@ -318,8 +319,9 @@ static cvarTable_t		cvarTable[] = {
 
 	{ &ui_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
         { &ui_speedometerMode, "cg_speedometerMode", "0", CVAR_ARCHIVE },
-	{ &ui_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE },
-	{ &ui_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE },
+	{ &ui_controlMode, "cg_controlMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
+	{ &ui_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
+	{ &ui_transmissionMode, "cg_transmissionMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &ui_minSkidLength, "cg_minSkidLength", "12", CVAR_ARCHIVE },
 	{ &ui_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
 	{ &ui_checkpointArrowMode, "cg_checkpointArrowMode", "2", CVAR_ARCHIVE },

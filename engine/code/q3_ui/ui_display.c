@@ -239,6 +239,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.brightness.generic.name		= "Brightness:";
 	displayOptionsInfo.brightness.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	displayOptionsInfo.brightness.generic.callback	= UI_DisplayOptionsMenu_Event;
+	displayOptionsInfo.brightness.generic.ownerdraw	= UI_RallySlider_Draw;
 	displayOptionsInfo.brightness.generic.id		= ID_BRIGHTNESS;
 	displayOptionsInfo.brightness.generic.x			= 400;
 	displayOptionsInfo.brightness.generic.y			= y;
@@ -253,6 +254,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.screensize.generic.name		= "Screen Size:";
 	displayOptionsInfo.screensize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	displayOptionsInfo.screensize.generic.callback	= UI_DisplayOptionsMenu_Event;
+	displayOptionsInfo.screensize.generic.ownerdraw	= UI_RallySlider_Draw;
 	displayOptionsInfo.screensize.generic.id		= ID_SCREENSIZE;
 	displayOptionsInfo.screensize.generic.x			= 400;
 	displayOptionsInfo.screensize.generic.y			= y;

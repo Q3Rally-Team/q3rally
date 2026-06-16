@@ -93,6 +93,46 @@ static qboolean UI_Profile_FavoritesEmpty( const profile_info_t *info ) {
     return qtrue;
 }
 
+static qboolean UI_Profile_IsValidUUID( const char *s ) {
+    int i;
+
+    if ( !s || strlen( s ) != 36 ) {
+        return qfalse;
+    }
+
+    for ( i = 0; i < 36; ++i ) {
+        char c = s[i];
+        if ( i == 8 || i == 13 || i == 18 || i == 23 ) {
+            if ( c != '-' ) {
+                return qfalse;
+            }
+        } else if ( !( ( c >= '0' && c <= '9' ) ||
+                       ( c >= 'a' && c <= 'f' ) ||
+                       ( c >= 'A' && c <= 'F' ) ) ) {
+            return qfalse;
+        }
+    }
+
+    return qtrue;
+}
+
+static qboolean UI_Profile_GetArchivedUUID( char *out, int outSize ) {
+    char uuid[PROFILE_MAX_UUID];
+
+    if ( !out || outSize < PROFILE_MAX_UUID ) {
+        return qfalse;
+    }
+
+    out[0] = '\0';
+    trap_Cvar_VariableStringBuffer( "cl_uuid", uuid, sizeof( uuid ) );
+    if ( !UI_Profile_IsValidUUID( uuid ) ) {
+        return qfalse;
+    }
+
+    Q_strncpyz( out, uuid, outSize );
+    return qtrue;
+}
+
 qboolean UI_Profile_GetRank( const profile_stats_t *stats, profile_rank_t *outRank ) {
     return Profile_GetRankForScore( stats, s_uiProfileRanks, UI_PROFILE_RANK_COUNT, outRank );
 }
@@ -757,6 +797,7 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
     char country[PROFILE_MAX_COUNTRY * 2];
     char favoriteCarsJson[1024];
     char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
+    char uuid[PROFILE_MAX_UUID];
     profile_stats_t zeroStats;
     profile_info_t emptyInfo;
     int length;
@@ -776,6 +817,16 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
     if ( !stats ) {
         Com_Memset( &zeroStats, 0, sizeof( zeroStats ) );
         stats = &zeroStats;
+    }
+
+    uuid[0] = '\0';
+    if ( info ) {
+        Q_strncpyz( uuid, info->uuid, sizeof( uuid ) );
+    }
+    if ( !UI_Profile_IsValidUUID( uuid ) &&
+         !UI_Profile_GetArchivedUUID( uuid, sizeof( uuid ) ) ) {
+        trap_Print( va( "Q3Rally Profile: refusing to write '%s' without a valid UUID\n", name ) );
+        return qfalse;
     }
 
     UI_Profile_FormatJsonString( gender, sizeof( gender ), info->gender );
@@ -818,7 +869,7 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
         /* Header + info block */
         off += Com_sprintf( buffer + off, sizeof(buffer) - off,
             "{\n\t\"uuid\": \"%s\",\n\t\"name\": \"%s\",\n\t\"info\": {\n",
-            info->uuid, info->name[0] ? info->name : name );
+            uuid, info->name[0] ? info->name : name );
         off += Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"gender\": \"%s\",\n\t\t\"birthDate\": \"%s\",\n",
             gender, birthDate );
@@ -1396,6 +1447,13 @@ void UI_Profile_ActivateProfile( const char *name ) {
         return;
     }
 
+    Com_Memset( &info,  0, sizeof( info  ) );
+    Com_Memset( &stats, 0, sizeof( stats ) );
+    if ( !UI_Profile_ReadData( name, &info, &stats ) ) {
+        trap_Print( va( "Q3Rally Profile: failed to activate unreadable profile '%s'\n", name ) );
+        return;
+    }
+
     trap_Cvar_Set( "profile_active", name );
     trap_Cvar_Update( &ui_profileActive );
     Q_strncpyz( uis.activeProfile, name, sizeof( uis.activeProfile ) );
@@ -1408,9 +1466,7 @@ void UI_Profile_ActivateProfile( const char *name ) {
      * Userinfo string before the player connects to any server. Without this
      * the UUID would only reach cl_uuid after EnsureDataFresh is called
      * (e.g. when opening the profile settings page), which may be too late. */
-    Com_Memset( &info,  0, sizeof( info  ) );
-    Com_Memset( &stats, 0, sizeof( stats ) );
-    if ( UI_Profile_ReadData( name, &info, &stats ) && info.uuid[0] ) {
+    if ( UI_Profile_IsValidUUID( info.uuid ) ) {
         trap_Cvar_Set( "cl_uuid", info.uuid );
     } else {
         trap_Cvar_Set( "cl_uuid", "" );
@@ -1579,23 +1635,28 @@ void UI_ProfileOverlay_InitSession( void ) {
         Com_Memset( &info,  0, sizeof( info  ) );
         Com_Memset( &stats, 0, sizeof( stats ) );
         if ( UI_Profile_ReadData( uis.activeProfile, &info, &stats ) ) {
-            if ( !info.uuid[0] ) {
+            if ( !UI_Profile_IsValidUUID( info.uuid ) ) {
                 /* Legacy profile — generate UUID inline and write back */
-                static const char hex[] = "0123456789abcdef";
-                unsigned char b[16];
-                int j;
-                unsigned int seed;
-                const char *q;
+                char archivedUuid[PROFILE_MAX_UUID];
+                if ( UI_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
+                    Q_strncpyz( info.uuid, archivedUuid, sizeof( info.uuid ) );
+                    UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+                } else {
+                    static const char hex[] = "0123456789abcdef";
+                    unsigned char b[16];
+                    int j;
+                    unsigned int seed;
+                    const char *q;
 
-                seed = (unsigned int)trap_Milliseconds();
-                for ( q = uis.activeProfile; *q; ++q )
-                    seed ^= (unsigned int)( *q ) * 2654435761u;
-                srand( seed );
-                for ( j = 0; j < 16; ++j )
-                    b[j] = (unsigned char)( ( rand() ^ ( rand() << 8 ) ) & 0xFF );
-                b[6] = ( b[6] & 0x0F ) | 0x40;
-                b[8] = ( b[8] & 0x3F ) | 0x80;
-                Com_sprintf( info.uuid, sizeof( info.uuid ),
+                    seed = (unsigned int)trap_Milliseconds();
+                    for ( q = uis.activeProfile; *q; ++q )
+                        seed ^= (unsigned int)( *q ) * 2654435761u;
+                    srand( seed );
+                    for ( j = 0; j < 16; ++j )
+                        b[j] = (unsigned char)( ( rand() ^ ( rand() << 8 ) ) & 0xFF );
+                    b[6] = ( b[6] & 0x0F ) | 0x40;
+                    b[8] = ( b[8] & 0x3F ) | 0x80;
+                    Com_sprintf( info.uuid, sizeof( info.uuid ),
                     "%c%c%c%c%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c-%c%c%c%c%c%c%c%c%c%c%c%c",
                     hex[b[ 0]>>4],hex[b[ 0]&0xF], hex[b[ 1]>>4],hex[b[ 1]&0xF],
                     hex[b[ 2]>>4],hex[b[ 2]&0xF], hex[b[ 3]>>4],hex[b[ 3]&0xF],
@@ -1605,9 +1666,10 @@ void UI_ProfileOverlay_InitSession( void ) {
                     hex[b[10]>>4],hex[b[10]&0xF], hex[b[11]>>4],hex[b[11]&0xF],
                     hex[b[12]>>4],hex[b[12]&0xF], hex[b[13]>>4],hex[b[13]&0xF],
                     hex[b[14]>>4],hex[b[14]&0xF], hex[b[15]>>4],hex[b[15]&0xF] );
-                UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+                    UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+                }
             }
-            if ( info.uuid[0] ) {
+            if ( UI_Profile_IsValidUUID( info.uuid ) ) {
                 trap_Cvar_Set( "cl_uuid", info.uuid );
                 trap_Print( va( "Q3Rally Profile: startup UUID %s for '%s'\n",
                                 info.uuid, uis.activeProfile ) );
@@ -1672,6 +1734,7 @@ qboolean UI_Profile_HasActiveProfile( void ) {
 static qboolean UI_Profile_EnsureDataFresh( void ) {
     profile_stats_t stats;
     profile_info_t info;
+    char archivedUuid[PROFILE_MAX_UUID];
 
     if ( !uis.activeProfile[0] ) {
         return qfalse;
@@ -1685,6 +1748,12 @@ static qboolean UI_Profile_EnsureDataFresh( void ) {
         }
 
         UI_Profile_MigrateFavoriteCvars( uis.activeProfile, &info, &stats );
+
+        if ( !UI_Profile_IsValidUUID( info.uuid ) &&
+             UI_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
+            Q_strncpyz( info.uuid, archivedUuid, sizeof( info.uuid ) );
+            UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+        }
 
         uis.activeProfileStats = stats;
         uis.activeProfileInfo = info;
@@ -1705,10 +1774,8 @@ static qboolean UI_Profile_EnsureDataFresh( void ) {
          * PlayerID des Spielers kennt. Nur setzen wenn valide UUID vorhanden —
          * Legacy-Profile ohne UUID lassen den Cvar leer (Server fällt auf
          * cl_guid / IP zurück, wie bisher). */
-        if ( uis.activeProfileInfo.uuid[0] ) {
+        if ( UI_Profile_IsValidUUID( uis.activeProfileInfo.uuid ) ) {
             trap_Cvar_Set( "cl_uuid", uis.activeProfileInfo.uuid );
-        } else {
-            trap_Cvar_Set( "cl_uuid", "" );
         }
     }
 
@@ -1748,6 +1815,15 @@ qboolean UI_Profile_SaveActiveInfo( const profile_info_t *info ) {
     }
 
     infoCopy = *info;
+    if ( !UI_Profile_IsValidUUID( infoCopy.uuid ) ) {
+        char archivedUuid[PROFILE_MAX_UUID];
+        if ( UI_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
+            Q_strncpyz( infoCopy.uuid, archivedUuid, sizeof( infoCopy.uuid ) );
+        }
+    }
+    if ( !UI_Profile_IsValidUUID( infoCopy.uuid ) ) {
+        return qfalse;
+    }
 
     if ( !UI_Profile_WriteFile( uis.activeProfile, &infoCopy, &statsCopy ) ) {
         return qfalse;

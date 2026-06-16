@@ -2428,10 +2428,10 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 #endif
 //	car->shockStrength = CP_SHOCK_STRENGTH;
 
-	if (pm->cmd.upmove > 0){
+	if (pm->cmd.upmove > 0 && pm->transmissionMode != TR_MANUAL_CLUTCH){
 		car->springStrength *= 5.0f;
 	}
-	else if (pm->cmd.upmove < 0){
+	else if (pm->cmd.upmove < 0 && pm->transmissionMode != TR_MANUAL_CLUTCH){
 		car->springStrength /= 5.0f;
 	}
 
@@ -2521,4 +2521,3 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 // #endif
 //	Com_Printf( "t1 %d, t2 %d, t3 %d, t4 %d, t5 %d\n", t1 - t, t2 - t, t3 - t, t4 - t, t5 - t );
 }
-

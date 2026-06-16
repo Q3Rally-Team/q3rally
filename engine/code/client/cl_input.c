@@ -413,7 +413,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 		cmd->rightmove = ClampChar( cmd->rightmove + (int)right );
 	} else {
 		cl.viewangles[YAW] += anglespeed * right;
-		cmd->rightmove = ClampChar( cmd->rightmove + (int)yaw );
+		cmd->rightmove = ClampChar( cmd->rightmove - (int)yaw );
 	}
 
 	if ( in_mlooking ) {

@@ -506,8 +506,12 @@ static sfxHandle_t RadioButton_Key( menuradiobutton_s *rb, int key )
 		case K_KP_ENTER:
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
+		case K_PAD0_DPAD_LEFT:
+		case K_PAD0_LEFTSTICK_LEFT:
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
+		case K_PAD0_DPAD_RIGHT:
+		case K_PAD0_LEFTSTICK_RIGHT:
 			rb->curvalue = !rb->curvalue;
 			if ( rb->generic.callback )
 				rb->generic.callback( rb, QM_ACTIVATED );
@@ -626,6 +630,8 @@ static sfxHandle_t Slider_Key( menuslider_s *s, int key )
 
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
+		case K_PAD0_DPAD_LEFT:
+		case K_PAD0_LEFTSTICK_LEFT:
 			if (s->curvalue > s->minvalue)
 			{
 				s->curvalue--;
@@ -637,6 +643,8 @@ static sfxHandle_t Slider_Key( menuslider_s *s, int key )
 
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
+		case K_PAD0_DPAD_RIGHT:
+		case K_PAD0_LEFTSTICK_RIGHT:
 			if (s->curvalue < s->maxvalue)
 			{
 				s->curvalue++;
@@ -792,6 +800,71 @@ static void Slider_Draw( menuslider_s *s )
 }
 #endif
 
+void UI_RallySlider_Draw( void *self )
+{
+	menuslider_s* s;
+	float *color;
+	int	style;
+	int	i;
+	int x;
+	int y;
+	int fillLeft;
+	int fillRight;
+	qboolean focus;
+
+	s = (menuslider_s*)self;
+	x =	s->generic.x;
+	y = s->generic.y;
+	focus = (s->generic.parent->cursor == s->generic.menuPosition);
+
+	style = UI_SMALLFONT;
+	if ( s->generic.flags & QMF_GRAYED )
+	{
+		color = text_color_disabled;
+	}
+	else if ( focus )
+	{
+		color  = text_color_highlight;
+		style |= UI_PULSE;
+	}
+	else
+	{
+		color = text_color_normal;
+	}
+
+	if ( focus )
+	{
+		fillLeft = x - SMALLCHAR_WIDTH - strlen( s->generic.name ) * SMALLCHAR_WIDTH - 2;
+		fillRight = x + (SLIDER_RANGE + 3) * SMALLCHAR_WIDTH + 2;
+		UI_FillRect( fillLeft, s->generic.top, fillRight - fillLeft + 1, s->generic.bottom-s->generic.top+1, listbar_color );
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+	}
+
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, UI_RIGHT|style, color );
+
+	UI_DrawChar( x + SMALLCHAR_WIDTH, y, 128, UI_LEFT|style, color);
+	for ( i = 0; i < SLIDER_RANGE; i++ )
+		UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 129, UI_LEFT|style, color);
+	UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 130, UI_LEFT|style, color);
+
+	if (s->maxvalue > s->minvalue)
+	{
+		s->range = ( s->curvalue - s->minvalue ) / ( float ) ( s->maxvalue - s->minvalue );
+		if ( s->range < 0)
+			s->range = 0;
+		else if ( s->range > 1)
+			s->range = 1;
+	}
+	else
+		s->range = 0;
+
+	if (style & UI_PULSE) {
+		style &= ~UI_PULSE;
+		style |= UI_BLINK;
+	}
+	UI_DrawChar( (int)( x + 2*SMALLCHAR_WIDTH + (SLIDER_RANGE-1)*SMALLCHAR_WIDTH* s->range ), y, 131, UI_LEFT|style, color);
+}
+
 /*
 =================
 SpinControl_Init
@@ -838,6 +911,8 @@ static sfxHandle_t SpinControl_Key( menulist_s *s, int key )
 	{
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
+		case K_PAD0_DPAD_RIGHT:
+		case K_PAD0_LEFTSTICK_RIGHT:
 		case K_MOUSE1:
 			s->curvalue++;
 			if (s->curvalue >= s->numitems)
@@ -847,6 +922,8 @@ static sfxHandle_t SpinControl_Key( menulist_s *s, int key )
 		
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
+		case K_PAD0_DPAD_LEFT:
+		case K_PAD0_LEFTSTICK_LEFT:
 			s->curvalue--;
 			if (s->curvalue < 0)
 				s->curvalue = s->numitems-1;
@@ -1046,91 +1123,73 @@ sfxHandle_t ListBox_Key( menulist_s *l, int key )
 
 		case K_PGUP:
 		case K_KP_PGUP:
-			if (l->generic.flags & QMF_HASMOUSEFOCUS)
-			{
-				// clicked pageup
-				if (l->curvalue == 0)
-					return (menu_buzz_sound);
+			if (l->curvalue == 0)
+				return (menu_buzz_sound);
 
-				l->curvalue -= l->height;
-				if (l->curvalue < 0)
-					l->curvalue = 0;
+			l->curvalue -= l->height;
+			if (l->curvalue < 0)
+				l->curvalue = 0;
 
-				if( l->top > l->curvalue )
-					l->top = l->curvalue;
-				if( l->top + l->height <= l->curvalue )
-					l->top = l->curvalue - l->height + 1;
-				if (l->generic.callback) {
-					l->generic.callback(l, QM_GOTFOCUS);
-				}
-				return (menu_move_sound);
+			if( l->top > l->curvalue )
+				l->top = l->curvalue;
+			if( l->top + l->height <= l->curvalue )
+				l->top = l->curvalue - l->height + 1;
+			if (l->generic.callback) {
+				l->generic.callback(l, QM_GOTFOCUS);
 			}
-			break;
+			return (menu_move_sound);
 
 		case K_PGDN:
 		case K_KP_PGDN:
-			if (l->generic.flags & QMF_HASMOUSEFOCUS)
-			{
-				// clicked pagedown
-				if (l->curvalue >= l->numitems-1)
-					return (menu_buzz_sound);
+			if (l->curvalue >= l->numitems-1)
+				return (menu_buzz_sound);
 
-				l->curvalue += l->height;
-				if (l->curvalue > l->numitems-1)
-					l->curvalue = l->numitems-1;
+			l->curvalue += l->height;
+			if (l->curvalue > l->numitems-1)
+				l->curvalue = l->numitems-1;
 
-				if( l->top > l->curvalue )
-					l->top = l->curvalue;
-				if( l->top + l->height <= l->curvalue )
-					l->top = l->curvalue - l->height + 1;
-				if (l->generic.callback) {
-					l->generic.callback(l, QM_GOTFOCUS);
-				}
-				return (menu_move_sound);
+			if( l->top > l->curvalue )
+				l->top = l->curvalue;
+			if( l->top + l->height <= l->curvalue )
+				l->top = l->curvalue - l->height + 1;
+			if (l->generic.callback) {
+				l->generic.callback(l, QM_GOTFOCUS);
 			}
-			break;
+			return (menu_move_sound);
 
 		case K_KP_UPARROW:
 		case K_UPARROW:
 		case K_PAD0_DPAD_UP:
-			if (l->generic.flags & QMF_HASMOUSEFOCUS)
-			{
-				// clicked up
-				if (l->curvalue == 0)
+		case K_PAD0_LEFTSTICK_UP:
+			if (l->curvalue == 0)
 				return (menu_buzz_sound);
 
-				l->curvalue--;
-				if( l->top > l->curvalue )
-					l->top = l->curvalue;
-				if( l->top + l->height <= l->curvalue )
-					l->top = l->curvalue - l->height + 1;
-				if (l->generic.callback) {
-					l->generic.callback(l, QM_GOTFOCUS);
-				}
-				return (menu_move_sound);
+			l->curvalue--;
+			if( l->top > l->curvalue )
+				l->top = l->curvalue;
+			if( l->top + l->height <= l->curvalue )
+				l->top = l->curvalue - l->height + 1;
+			if (l->generic.callback) {
+				l->generic.callback(l, QM_GOTFOCUS);
 			}
-			break;
+			return (menu_move_sound);
 
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
 		case K_PAD0_DPAD_DOWN:
-			if (l->generic.flags & QMF_HASMOUSEFOCUS)
-			{
-				// clicked down
-				if (l->curvalue >= l->numitems-1)
-					return (menu_buzz_sound);
+		case K_PAD0_LEFTSTICK_DOWN:
+			if (l->curvalue >= l->numitems-1)
+				return (menu_buzz_sound);
 
-				l->curvalue++;
-				if( l->top > l->curvalue )
-					l->top = l->curvalue;
-				if( l->top + l->height <= l->curvalue )
-					l->top = l->curvalue - l->height + 1;
-				if (l->generic.callback) {
-					l->generic.callback(l, QM_GOTFOCUS);
-				}
-				return (menu_move_sound);
+			l->curvalue++;
+			if( l->top > l->curvalue )
+				l->top = l->curvalue;
+			if( l->top + l->height <= l->curvalue )
+				l->top = l->curvalue - l->height + 1;
+			if (l->generic.callback) {
+				l->generic.callback(l, QM_GOTFOCUS);
 			}
-			break;
+			return (menu_move_sound);
 	}
 
 		// cycle look for ascii key inside list items
@@ -1845,7 +1904,7 @@ Menu_SetCursor
 */
 void Menu_SetCursor( menuframework_s *m, int cursor )
 {
-	if (((menucommon_s*)(m->items[cursor]))->flags & (QMF_GRAYED|QMF_INACTIVE))
+	if (((menucommon_s*)(m->items[cursor]))->flags & (QMF_GRAYED|QMF_MOUSEONLY|QMF_INACTIVE|QMF_HIDDEN))
 	{
 		// cursor can't go there
 		return;
@@ -1890,7 +1949,7 @@ void Menu_AdjustCursor( menuframework_s *m, int dir ) {
 wrap:
 	while ( m->cursor >= 0 && m->cursor < m->nitems ) {
 		item = ( menucommon_s * ) m->items[m->cursor];
-		if (( item->flags & (QMF_GRAYED|QMF_MOUSEONLY|QMF_INACTIVE) ) ) {
+		if (( item->flags & (QMF_GRAYED|QMF_MOUSEONLY|QMF_INACTIVE|QMF_HIDDEN) ) ) {
 			m->cursor += dir;
 		}
 		else {
@@ -2114,6 +2173,77 @@ static qboolean Menu_IsGamepadSelectKey( int key )
 	return qfalse;
 }
 
+static qboolean Menu_IsUpKey( int key )
+{
+	return key == K_KP_UPARROW || key == K_UPARROW || key == K_PAD0_DPAD_UP || key == K_PAD0_LEFTSTICK_UP;
+}
+
+static qboolean Menu_IsDownKey( int key )
+{
+	return key == K_TAB || key == K_KP_DOWNARROW || key == K_DOWNARROW || key == K_PAD0_DPAD_DOWN || key == K_PAD0_LEFTSTICK_DOWN;
+}
+
+static qboolean Menu_IsLeftKey( int key )
+{
+	return key == K_KP_LEFTARROW || key == K_LEFTARROW || key == K_PAD0_DPAD_LEFT || key == K_PAD0_LEFTSTICK_LEFT;
+}
+
+static qboolean Menu_IsRightKey( int key )
+{
+	return key == K_KP_RIGHTARROW || key == K_RIGHTARROW || key == K_PAD0_DPAD_RIGHT || key == K_PAD0_LEFTSTICK_RIGHT;
+}
+
+static qboolean Menu_ListNavigationExit( menucommon_s *item, int key, int *dir )
+{
+	menulist_s *list;
+
+	if ( item->type != MTYPE_SCROLLLIST && item->type != MTYPE_LISTBOX ) {
+		return qfalse;
+	}
+
+	list = (menulist_s *)item;
+
+	if ( Menu_IsUpKey( key ) && list->curvalue <= 0 ) {
+		*dir = -1;
+		return qtrue;
+	}
+
+	if ( Menu_IsDownKey( key ) && list->curvalue >= list->numitems - 1 ) {
+		*dir = 1;
+		return qtrue;
+	}
+
+	if ( list->columns <= 1 ) {
+		if ( Menu_IsLeftKey( key ) ) {
+			*dir = -1;
+			return qtrue;
+		}
+		if ( Menu_IsRightKey( key ) ) {
+			*dir = 1;
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+static sfxHandle_t Menu_MoveCursor( menuframework_s *m, int dir )
+{
+	int cursor_prev;
+
+	cursor_prev    = m->cursor;
+	m->cursor_prev = m->cursor;
+	m->cursor += dir;
+	Menu_AdjustCursor( m, dir );
+
+	if ( cursor_prev != m->cursor ) {
+		Menu_CursorMoved( m );
+		return menu_move_sound;
+	}
+
+	return menu_buzz_sound;
+}
+
 /*
 =================
 Menu_DefaultKey
@@ -2123,7 +2253,7 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 {
 	sfxHandle_t		sound = 0;
 	menucommon_s	*item;
-	int				cursor_prev;
+	int				dir;
 
 	// menu system keys
 	switch ( key )
@@ -2153,6 +2283,10 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 	item = Menu_ItemAtCursor( m );
 	if (item && !(item->flags & (QMF_GRAYED|QMF_INACTIVE)))
 	{
+		if ( Menu_ListNavigationExit( item, key, &dir ) ) {
+			return Menu_MoveCursor( m, dir );
+		}
+
 		switch (item->type)
 		{
 			case MTYPE_SPINCONTROL:
@@ -2207,28 +2341,16 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 		case K_KP_UPARROW:
 		case K_UPARROW:
 		case K_PAD0_DPAD_UP:
-			cursor_prev    = m->cursor;
-			m->cursor_prev = m->cursor;
-			m->cursor--;
-			Menu_AdjustCursor( m, -1 );
-			if ( cursor_prev != m->cursor ) {
-				Menu_CursorMoved( m );
-				sound = menu_move_sound;
-			}
+		case K_PAD0_LEFTSTICK_UP:
+			sound = Menu_MoveCursor( m, -1 );
 			break;
 
 		case K_TAB:
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
 		case K_PAD0_DPAD_DOWN:
-			cursor_prev    = m->cursor;
-			m->cursor_prev = m->cursor;
-			m->cursor++;
-			Menu_AdjustCursor( m, 1 );
-			if ( cursor_prev != m->cursor ) {
-				Menu_CursorMoved( m );
-				sound = menu_move_sound;
-			}
+		case K_PAD0_LEFTSTICK_DOWN:
+			sound = Menu_MoveCursor( m, 1 );
 			break;
 
 		case K_MOUSE1:

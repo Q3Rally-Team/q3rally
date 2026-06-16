@@ -434,6 +434,7 @@ typedef struct {
 	int			controlMode;		// control mode
     int         autoDrop;           // autodrop
 	qboolean	manualShift;		// shift manually?
+	int			transmissionMode;	// automatic/manual gearbox mode
 	char                    vehicleClass[MAX_QPATH];
         qboolean        profileRacePlacementPenalized; // profile penalty for poor race placement already applied
         qboolean        profileRacePlacementRecorded;  // race placement score/podium already processed for this match

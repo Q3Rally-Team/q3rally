@@ -704,9 +704,60 @@ static void IN_ShutdownJoystick( void )
 }
 
 
-static qboolean KeyToAxisAndSign(int keynum, int *outAxis, int *outSign)
+static int IN_ScaleAnalogAxisForCommand(int value, float scale)
+{
+	float scaleAbs = scale < 0.0f ? -scale : scale;
+	float scaled;
+
+	if (scaleAbs <= 0.0001f)
+		return 0;
+
+	scaled = ((float)value / 32767.0f) * (127.0f / scaleAbs);
+
+	if (scaled > 32767.0f)
+		return 32767;
+	if (scaled < -32767.0f)
+		return -32767;
+
+	return (int)scaled;
+}
+
+static int IN_ScaleGenericJoystickAxisForCommand(int axisIndex, int value)
+{
+	float scale = 0.0f;
+	int matches = 0;
+
+	if (axisIndex == j_yaw_axis->integer) {
+		scale = j_yaw->value;
+		matches++;
+	}
+	if (axisIndex == j_side_axis->integer) {
+		scale = j_side->value;
+		matches++;
+	}
+	if (axisIndex == j_forward_axis->integer) {
+		scale = j_forward->value;
+		matches++;
+	}
+	if (axisIndex == j_pitch_axis->integer) {
+		scale = j_pitch->value;
+		matches++;
+	}
+	if (axisIndex == j_up_axis->integer) {
+		scale = j_up->value;
+		matches++;
+	}
+
+	if (matches != 1)
+		return value;
+
+	return IN_ScaleAnalogAxisForCommand(value, scale);
+}
+
+static qboolean KeyToAxisAndSign(int keynum, int *outAxis, int *outSign, float *outScale)
 {
 	char *bind;
+	float scaleAbs;
 
 	if (!keynum)
 		return qfalse;
@@ -717,59 +768,71 @@ static qboolean KeyToAxisAndSign(int keynum, int *outAxis, int *outSign)
 		return qfalse;
 
 	*outSign = 0;
+	*outScale = 0.0f;
 
 	if (Q_stricmp(bind, "+forward") == 0)
 	{
 		*outAxis = j_forward_axis->integer;
+		*outScale = j_forward->value;
 		*outSign = j_forward->value > 0.0f ? 1 : -1;
 	}
 	else if (Q_stricmp(bind, "+back") == 0)
 	{
 		*outAxis = j_forward_axis->integer;
+		*outScale = j_forward->value;
 		*outSign = j_forward->value > 0.0f ? -1 : 1;
 	}
 	else if (Q_stricmp(bind, "+moveleft") == 0)
 	{
 		*outAxis = j_side_axis->integer;
+		*outScale = j_side->value;
 		*outSign = j_side->value > 0.0f ? -1 : 1;
 	}
 	else if (Q_stricmp(bind, "+moveright") == 0)
 	{
 		*outAxis = j_side_axis->integer;
+		*outScale = j_side->value;
 		*outSign = j_side->value > 0.0f ? 1 : -1;
 	}
 	else if (Q_stricmp(bind, "+lookup") == 0)
 	{
 		*outAxis = j_pitch_axis->integer;
+		*outScale = j_pitch->value;
 		*outSign = j_pitch->value > 0.0f ? -1 : 1;
 	}
 	else if (Q_stricmp(bind, "+lookdown") == 0)
 	{
 		*outAxis = j_pitch_axis->integer;
+		*outScale = j_pitch->value;
 		*outSign = j_pitch->value > 0.0f ? 1 : -1;
 	}
 	else if (Q_stricmp(bind, "+left") == 0)
 	{
 		*outAxis = j_yaw_axis->integer;
+		*outScale = j_yaw->value;
 		*outSign = j_yaw->value > 0.0f ? 1 : -1;
 	}
 	else if (Q_stricmp(bind, "+right") == 0)
 	{
 		*outAxis = j_yaw_axis->integer;
+		*outScale = j_yaw->value;
 		*outSign = j_yaw->value > 0.0f ? -1 : 1;
 	}
 	else if (Q_stricmp(bind, "+moveup") == 0)
 	{
 		*outAxis = j_up_axis->integer;
+		*outScale = j_up->value;
 		*outSign = j_up->value > 0.0f ? 1 : -1;
 	}
 	else if (Q_stricmp(bind, "+movedown") == 0)
 	{
 		*outAxis = j_up_axis->integer;
+		*outScale = j_up->value;
 		*outSign = j_up->value > 0.0f ? -1 : 1;
 	}
 
-	return *outSign != 0;
+	scaleAbs = *outScale < 0.0f ? -*outScale : *outScale;
+	return *outSign != 0 && scaleAbs > 0.0001f;
 }
 
 /*
@@ -840,10 +903,11 @@ static void IN_GamepadMove( void )
 			if (in_joystickUseAnalog->integer)
 			{
 				int posAxis = 0, posSign = 0, negAxis = 0, negSign = 0;
+				float posScale = 0.0f, negScale = 0.0f;
 
 				// get axes and axes signs for keys if available
-				posAnalog = KeyToAxisAndSign(posKey, &posAxis, &posSign);
-				negAnalog = KeyToAxisAndSign(negKey, &negAxis, &negSign);
+				posAnalog = KeyToAxisAndSign(posKey, &posAxis, &posSign, &posScale);
+				negAnalog = KeyToAxisAndSign(negKey, &negAxis, &negSign, &negScale);
 
 				// positive to negative/neutral -> keyup if axis hasn't yet been set
 				if (posAnalog && !translatedAxesSet[posAxis] && oldAxis > 0 && axis <= 0)
@@ -862,14 +926,14 @@ static void IN_GamepadMove( void )
 				// negative/neutral to positive -> keydown
 				if (posAnalog && axis > 0)
 				{
-					translatedAxes[posAxis] = axis * posSign;
+					translatedAxes[posAxis] = IN_ScaleAnalogAxisForCommand(axis * posSign, posScale);
 					translatedAxesSet[posAxis] = qtrue;
 				}
 
 				// positive/neutral to negative -> keydown
 				if (negAnalog && axis < 0)
 				{
-					translatedAxes[negAxis] = -axis * negSign;
+					translatedAxes[negAxis] = IN_ScaleAnalogAxisForCommand(-axis * negSign, negScale);
 					translatedAxesSet[negAxis] = qtrue;
 				}
 			}
@@ -1076,6 +1140,7 @@ static void IN_JoyMove( void )
 				float f = ( (float) abs(axis) ) / 32767.0f;
 				
 				if( f < in_joystickThreshold->value ) axis = 0;
+				else axis = IN_ScaleGenericJoystickAxisForCommand(i, axis);
 
 				if ( axis != stick_state.oldaaxes[i] )
 				{

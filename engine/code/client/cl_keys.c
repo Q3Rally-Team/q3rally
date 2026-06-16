@@ -1238,6 +1238,24 @@ CL_KeyDownEvent
 Called by CL_KeyEvent to handle a keypress
 ===================
 */
+static qboolean CL_IsControllerMode( void )
+{
+	return Cvar_VariableIntegerValue( "cg_controlMode" ) == 1;
+}
+
+static qboolean CL_IsHUDOptionsShortcut( int key )
+{
+	if ( tolower( key ) == 'h' && keys[K_SHIFT].down ) {
+		return qtrue;
+	}
+
+	if ( CL_IsControllerMode() && key == K_PAD0_BACK ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 void CL_KeyDownEvent( int key, unsigned time )
 {
 	keys[key].down = qtrue;
@@ -1276,6 +1294,10 @@ void CL_KeyDownEvent( int key, unsigned time )
 		}
 	}
 
+	if ( CL_IsControllerMode() && key == K_PAD0_START && !( Key_GetCatcher() & KEYCATCH_UI ) ) {
+		key = K_ESCAPE;
+	}
+
 	// escape is always handled special
 	if ( key == K_ESCAPE ) {
 		if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) {
@@ -1309,8 +1331,8 @@ void CL_KeyDownEvent( int key, unsigned time )
 		return;
 	}
 
-	// SHIFT+H toggles the in-game HUD options menu (Q3Rally)
-	if ( tolower(key) == 'h' && keys[K_SHIFT].down && clc.state == CA_ACTIVE && !( Key_GetCatcher() & KEYCATCH_UI ) ) {
+	// SHIFT+H or controller CREATE toggles the in-game HUD options menu (Q3Rally)
+	if ( CL_IsHUDOptionsShortcut( key ) && clc.state == CA_ACTIVE && !( Key_GetCatcher() & KEYCATCH_UI ) ) {
 		if ( Key_GetCatcher() & KEYCATCH_CGAME ) {
 			// menu is open – close it
 			Cvar_Set( "cg_hudOptionsOpen", "0" );
