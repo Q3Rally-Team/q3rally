@@ -2952,6 +2952,158 @@ static float surfaceColors[4][4] = {
 		{ 0.4f, 0.05f, 0.0f, 0.3f }		// fleshy
 };
 
+static void CG_AddTireSprayParticle( vec3_t origin, vec3_t dir, float speed, int radius, int duration, float r, float g, float b, float a, qhandle_t shader ) {
+	vec3_t			velocity;
+	localEntity_t	*le;
+
+	VectorNormalize2( dir, velocity );
+	velocity[0] += crandom() * 0.08f;
+	velocity[1] += crandom() * 0.08f;
+	velocity[2] += crandom() * 0.05f;
+	VectorNormalize( velocity );
+	VectorScale( velocity, speed, velocity );
+
+	le = CG_SmokePuff( origin, velocity, radius, r, g, b, a, duration, cg.time, 0, LEF_PUFF_DONT_SCALE, shader );
+	if ( le ) {
+		le->refEntity.rotation = crandom() * 12.0f;
+	}
+}
+
+/*
+===============
+CG_AddWetTireSpray
+
+Adds road spray from a rolling tire on a wet surface.  This is deliberately
+independent from skid mark generation: a rain-wet road should throw a misty
+tail from normal rolling tires, while skidding only makes the spray heavier.
+===============
+*/
+static void CG_AddWetTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int tireNum, qboolean skidding ) {
+	vec3_t		flatVelocity;
+	vec3_t		sprayDir;
+	vec3_t		sprayOrigin;
+	float		speed;
+	float		normalSpeed;
+	int			interval;
+	int			radius;
+	int			duration;
+	float		particleSpeed;
+	float		alpha;
+	float		backScale;
+	float		liftScale;
+	float		originLift;
+	qboolean	frontAxle;
+
+	VectorCopy( cent->currentState.pos.trDelta, flatVelocity );
+	VectorMA( flatVelocity, -DotProduct( flatVelocity, up ), up, flatVelocity );
+	speed = VectorLength( flatVelocity );
+
+	if ( speed < 80.0f ) {
+		return;
+	}
+
+	interval = skidding ? 45 : 60;
+	if ( cent->wetSprayTime[tireNum] > cg.time ) {
+		return;
+	}
+
+	frontAxle = ( tireNum < 2 );
+	normalSpeed = Com_Clamp( 0.0f, 1.0f, ( speed - 80.0f ) / 520.0f );
+
+	if ( frontAxle ) {
+		radius = 7 + (int)( normalSpeed * 6.0f ) + ( skidding ? 3 : 0 );
+		duration = 240 + (int)( normalSpeed * 120.0f ) + ( skidding ? 80 : 0 );
+		particleSpeed = 28.0f + normalSpeed * 38.0f + ( skidding ? 10.0f : 0.0f );
+		alpha = 0.34f + normalSpeed * 0.16f + ( skidding ? 0.10f : 0.0f );
+		backScale = -0.72f;
+		liftScale = 12.0f;
+		originLift = 3.0f + normalSpeed * 2.0f;
+	} else {
+		radius = 9 + (int)( normalSpeed * 9.0f ) + ( skidding ? 6 : 0 );
+		duration = 300 + (int)( normalSpeed * 170.0f ) + ( skidding ? 130 : 0 );
+		particleSpeed = 24.0f + normalSpeed * 34.0f + ( skidding ? 14.0f : 0.0f );
+		alpha = 0.44f + normalSpeed * 0.20f + ( skidding ? 0.16f : 0.0f );
+		backScale = -0.55f;
+		liftScale = 30.0f;
+		originLift = 6.0f + normalSpeed * 4.0f;
+	}
+
+	VectorScale( flatVelocity, backScale, sprayDir );
+	VectorMA( sprayDir, liftScale, up, sprayDir );
+	VectorNormalize( sprayDir );
+
+	VectorMA( origin, originLift, up, sprayOrigin );
+	CG_AddTireSprayParticle( sprayOrigin, sprayDir, particleSpeed, radius, duration, 0.88f, 0.94f, 1.0f, alpha, cgs.media.waterSprayFanShader );
+	cent->wetSprayTime[tireNum] = cg.time + interval - (int)( normalSpeed * 25.0f );
+}
+
+/*
+===============
+CG_AddSnowTireSpray
+
+Adds powdery tire spray for packed/dynamic snow.  Front wheels cut a flatter
+mist; rear wheels kick a denser, higher plume.
+===============
+*/
+static void CG_AddSnowTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int tireNum, qboolean skidding ) {
+	vec3_t		flatVelocity;
+	vec3_t		sprayDir;
+	vec3_t		sprayOrigin;
+	float		speed;
+	float		normalSpeed;
+	int			interval;
+	int			radius;
+	int			duration;
+	float		particleSpeed;
+	float		alpha;
+	float		backScale;
+	float		liftScale;
+	float		originLift;
+	qboolean	frontAxle;
+
+	VectorCopy( cent->currentState.pos.trDelta, flatVelocity );
+	VectorMA( flatVelocity, -DotProduct( flatVelocity, up ), up, flatVelocity );
+	speed = VectorLength( flatVelocity );
+
+	if ( speed < 60.0f ) {
+		return;
+	}
+
+	interval = skidding ? 55 : 80;
+	if ( cent->wetSprayTime[tireNum] > cg.time ) {
+		return;
+	}
+
+	frontAxle = ( tireNum < 2 );
+	normalSpeed = Com_Clamp( 0.0f, 1.0f, ( speed - 60.0f ) / 500.0f );
+
+	if ( frontAxle ) {
+		radius = 8 + (int)( normalSpeed * 7.0f ) + ( skidding ? 3 : 0 );
+		duration = 320 + (int)( normalSpeed * 150.0f ) + ( skidding ? 90 : 0 );
+		particleSpeed = 18.0f + normalSpeed * 24.0f + ( skidding ? 8.0f : 0.0f );
+		alpha = 0.34f + normalSpeed * 0.16f + ( skidding ? 0.10f : 0.0f );
+		backScale = -0.62f;
+		liftScale = 14.0f;
+		originLift = 3.5f + normalSpeed * 2.5f;
+	} else {
+		radius = 11 + (int)( normalSpeed * 11.0f ) + ( skidding ? 6 : 0 );
+		duration = 420 + (int)( normalSpeed * 220.0f ) + ( skidding ? 150 : 0 );
+		particleSpeed = 20.0f + normalSpeed * 30.0f + ( skidding ? 12.0f : 0.0f );
+		alpha = 0.46f + normalSpeed * 0.22f + ( skidding ? 0.16f : 0.0f );
+		backScale = -0.48f;
+		liftScale = 34.0f;
+		originLift = 7.0f + normalSpeed * 5.0f;
+	}
+
+	VectorScale( flatVelocity, backScale, sprayDir );
+	VectorMA( sprayDir, liftScale, up, sprayDir );
+	VectorNormalize( sprayDir );
+
+	VectorMA( origin, originLift, up, sprayOrigin );
+	CG_AddTireSprayParticle( sprayOrigin, sprayDir, particleSpeed, radius, duration, 0.92f, 0.96f, 1.0f, alpha, cgs.media.snowSprayFanShader );
+	cent->wetSprayTime[tireNum] = cg.time + interval - (int)( normalSpeed * 20.0f );
+}
+
 /*
 ===============
 CG_AddSplash
@@ -3055,9 +3207,16 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 	float			length;
 	qhandle_t		shader;
 	trace_t			tr;
+	qboolean		wetSurface;
+	qboolean		snowSurface;
+	qboolean		skidding;
 
 	VectorMA(curOrigin, -(WHEEL_RADIUS * 2.0f), up, end);
 	CG_Trace(&tr, curOrigin, NULL, NULL, end, cent->currentState.number, CONTENTS_SOLID);
+	snowSurface = ( tr.surfaceFlags & SURF_SNOW ) || CG_AtmosphericPointSnow( tr.endpos );
+	wetSurface = !snowSurface && ( ( tr.surfaceFlags & SURF_WET ) || CG_AtmosphericPointWet( tr.endpos ) );
+	VectorSubtract(cent->lastSkidOrigin[tireNum], curOrigin, delta);
+	skidding = cent->wheelSkidding[tireNum];
 
 	if (tr.surfaceFlags & SURF_SKY)
 		return;
@@ -3065,9 +3224,17 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 	// teleportFlag - teleported so dont use old skid origin
 	if ( !CG_AddSplash(cent, curOrigin) && tr.fraction != 1.0 && !cent->teleportFlag ){
 
-		// FIXME: add snow and leaves
+		// FIXME: add leaves
 		if (tr.surfaceFlags & SURF_SLICK){
 			shader = -1;
+			colorIndex = 2;
+		}
+		else if (tr.surfaceFlags & SURF_ICE){
+			shader = cgs.media.SMIceShader;
+			colorIndex = 2;
+		}
+		else if (snowSurface){
+			shader = cgs.media.SMSnowShader;
 			colorIndex = 2;
 		}
 		else if (tr.surfaceFlags & SURF_GRASS){
@@ -3081,14 +3248,6 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 		else if (tr.surfaceFlags & SURF_DUST){
 			shader = cgs.media.SMDirtShader;
 			colorIndex = 1;
-		}
-		else if (tr.surfaceFlags & SURF_SNOW){
-			shader = cgs.media.SMSnowShader;
-			colorIndex = 2;
-		}
-		else if (tr.surfaceFlags & SURF_ICE){
-			shader = cgs.media.SMIceShader;
-			colorIndex = 2;
 		}
 		else if (tr.surfaceFlags & SURF_DIRT) {
 			shader = cgs.media.SMDirtShader;
@@ -3112,15 +3271,25 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 			colorIndex = 2;
 		}
 
-		VectorSubtract(cent->lastSkidOrigin[tireNum], curOrigin, delta);
-		if ( cent->wheelSkidding[tireNum] && shader >= 0 ){
+		if ( snowSurface ) {
+			CG_AddSnowTireSpray( cent, tr.endpos, up, tireNum, skidding );
+		} else if ( wetSurface ) {
+			CG_AddWetTireSpray( cent, tr.endpos, up, tireNum, skidding );
+		}
+
+		if ( skidding && shader >= 0 ){
 			length = VectorLength(delta) / 2;
 
 			// create smoke even if we arent moving because the car is being stopped from moving
 			if ( cent->smokeTime[tireNum] < cg.time ) {
-				if ( tr.surfaceFlags & SURF_WET ) {
+				if ( snowSurface ) {
+					// snow surface: powder spray instead of smoke
+					VectorMA( tr.endpos, 7.0f, up, origin );
+					CG_AddTireSprayParticle(origin, up, 24, 14, 480, 0.92f, 0.96f, 1.0f, 0.62f, cgs.media.snowSprayPuffShader);
+				} else if ( wetSurface ) {
 					// wet surface: spray instead of smoke — fast, small, bluish-white, short-lived
-					CreateSmokeCloudEntity(tr.endpos, up, 22, 8, 400, 0.75f, 0.85f, 0.95f, 0.65f, cgs.media.snowPuffShader);
+					VectorMA( tr.endpos, 7.0f, up, origin );
+					CG_AddTireSprayParticle(origin, up, 28, 13, 380, 0.88f, 0.94f, 1.0f, 0.58f, cgs.media.waterSprayPuffShader);
 				} else if ( tr.surfaceFlags & SURF_DUST ) {
 					CreateSmokeCloudEntity(tr.endpos, up, 20, 48, 2000, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], surfaceColors[colorIndex][3], cgs.media.smokePuffShader);
 				} else if ( tr.surfaceFlags & SURF_ICE ) {
@@ -3135,6 +3304,8 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				return;
 			}
 
+			VectorMA(curOrigin, 1/2.0F, delta, origin);
+
 			trap_S_AddRealLoopingSound( cent->currentState.clientNum, origin, cent->currentState.pos.trDelta, cgs.media.skidSound );
 
 			if( cent->skidSoundTime + 500 < cg.time )
@@ -3143,7 +3314,6 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				cent->skidSoundTime = cg.time;
 			}
 
-			VectorMA(curOrigin, 1/2.0F, delta, origin);
 			VectorNormalize(delta);
 
 			CG_SkidMark( shader, origin, tr.plane.normal, delta, 1,1,1,1, qfalse, 8.0F, length, qfalse );
@@ -3172,13 +3342,6 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 			if ( VectorLength(delta) > 5 && cent->smokeTime[tireNum] < cg.time ){
 				CreateSmokeCloudEntity( tr.endpos, up, 10, 8, 500, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], 0.6f, cgs.media.snowPuffShader);
 				cent->smokeTime[tireNum] = cg.time + 100;
-			}
-		}
-		else if ( tr.surfaceFlags & SURF_WET ){
-			// fine spray mist from rolling tire on wet road
-			if ( VectorLength(delta) > 8 && cent->smokeTime[tireNum] < cg.time ){
-				CreateSmokeCloudEntity( tr.endpos, up, 18, 6, 350, 0.75f, 0.85f, 0.95f, 0.4f, cgs.media.snowPuffShader);
-				cent->smokeTime[tireNum] = cg.time + 80;
 			}
 		}
 	}

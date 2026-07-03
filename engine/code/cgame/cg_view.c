@@ -1104,6 +1104,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 // Q3Rally Code Start
 		// used for q3f atmospheric effects
 		CG_AddAtmosphericEffects();
+		CG_AtmosphericAddLoopingSounds();
 // END
 	}
 	CG_AddViewWeapon( &cg.predictedPlayerState );
@@ -1189,4 +1190,3 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 */
 // END
 }
-

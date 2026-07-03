@@ -103,6 +103,12 @@ vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
 vmCvar_t	g_localTeamPref;
 vmCvar_t    g_enableSnow;
+vmCvar_t	g_dynamicWeather;
+vmCvar_t	g_weatherInitialChance;
+vmCvar_t	g_weatherOnMinTime;
+vmCvar_t	g_weatherOnMaxTime;
+vmCvar_t	g_weatherOffMinTime;
+vmCvar_t	g_weatherOffMaxTime;
 vmCvar_t    g_dominationScoreInterval;
 vmCvar_t    g_dominationCaptureDelay;
 vmCvar_t    g_dominationSpawnStyle;
@@ -263,6 +269,12 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
     { &g_enableSnow, "g_enableSnow", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
+	{ &g_dynamicWeather, "g_dynamicWeather", "1", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_weatherInitialChance, "g_weatherInitialChance", "70", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_weatherOnMinTime, "g_weatherOnMinTime", "45", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_weatherOnMaxTime, "g_weatherOnMaxTime", "120", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_weatherOffMinTime, "g_weatherOffMinTime", "25", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_weatherOffMaxTime, "g_weatherOffMaxTime", "90", CVAR_ARCHIVE, 0, qtrue },
 
 #ifdef MISSIONPACK
 	{ &g_obeliskHealth, "g_obeliskHealth", "2500", 0, 0, qfalse },

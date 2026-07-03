@@ -931,26 +931,108 @@ void SP_rally_sun( gentity_t *ent ){
 }
 
 
-// FIXME: improve these so they only need to be send to the client once?
-void SP_rally_weather_rain( gentity_t *ent ){
+// Q3Rally dynamic weather:
+// Weather brush entities define where weather can happen. The server keeps
+// the current on/off state authoritative in entityState_t::generic1 so visual
+// effects, audio, tire spray and physics all agree.
+#define RALLY_WEATHER_ACTIVE 1
+
+static int G_RallyWeatherDuration( qboolean active ) {
+	int minSeconds;
+	int maxSeconds;
+
+	if ( active ) {
+		minSeconds = g_weatherOnMinTime.integer;
+		maxSeconds = g_weatherOnMaxTime.integer;
+	} else {
+		minSeconds = g_weatherOffMinTime.integer;
+		maxSeconds = g_weatherOffMaxTime.integer;
+	}
+
+	if ( minSeconds < 1 ) {
+		minSeconds = 1;
+	}
+	if ( maxSeconds < minSeconds ) {
+		maxSeconds = minSeconds;
+	}
+
+	return 1000 * ( minSeconds + (int)( random() * ( maxSeconds - minSeconds + 1 ) ) );
+}
+
+static qboolean G_RallyWeatherInitialActive( void ) {
+	float chance;
+
+	if ( !g_dynamicWeather.integer ) {
+		return qtrue;
+	}
+
+	chance = Com_Clamp( 0.0f, 100.0f, g_weatherInitialChance.value );
+	return random() * 100.0f < chance;
+}
+
+static void Think_RallyWeather( gentity_t *ent ) {
+	if ( !g_dynamicWeather.integer ) {
+		ent->s.generic1 = RALLY_WEATHER_ACTIVE;
+		ent->nextthink = level.time + 1000;
+		return;
+	}
+
+	ent->s.generic1 = ent->s.generic1 ? 0 : RALLY_WEATHER_ACTIVE;
+	ent->nextthink = level.time + G_RallyWeatherDuration( ent->s.generic1 != 0 );
+}
+
+static void G_InitRallyWeather( gentity_t *ent, int type ) {
 	trap_SetBrushModel( ent, ent->model );
 	ent->s.eType = ET_WEATHER;
 
 	ent->s.powerups = ent->number;
-	ent->s.weapon = 0;
+	ent->s.weapon = type;
 	ent->s.legsAnim = ent->spawnflags;
+	ent->s.generic1 = G_RallyWeatherInitialActive() ? RALLY_WEATHER_ACTIVE : 0;
+
+	ent->think = Think_RallyWeather;
+	ent->nextthink = level.time + G_RallyWeatherDuration( ent->s.generic1 != 0 );
 
 	trap_LinkEntity (ent);
 }
 
+// FIXME: improve these so they only need to be send to the client once?
+void SP_rally_weather_rain( gentity_t *ent ){
+	G_InitRallyWeather( ent, 0 );
+}
+
 
 void SP_rally_weather_snow( gentity_t *ent ){
-	trap_SetBrushModel( ent, ent->model );
-	ent->s.eType = ET_WEATHER;
+	G_InitRallyWeather( ent, 1 );
+}
 
-	ent->s.powerups = ent->number;
-	ent->s.weapon = 1;
-	ent->s.legsAnim = ent->spawnflags;
+static qboolean G_WeatherPointInWeather( const vec3_t point, int type ){
+	int entityList[MAX_GENTITIES];
+	int numListedEntities;
+	vec3_t mins, maxs;
+	gentity_t *ent;
+	int i;
 
-	trap_LinkEntity (ent);
+	for ( i = 0; i < 3; i++ ) {
+		mins[i] = point[i] - 1.0f;
+		maxs[i] = point[i] + 1.0f;
+	}
+
+	numListedEntities = trap_EntitiesInBox( mins, maxs, entityList, MAX_GENTITIES );
+	for ( i = 0; i < numListedEntities; i++ ) {
+		ent = &g_entities[entityList[i]];
+		if ( ent->s.eType == ET_WEATHER && ent->s.weapon == type && ent->s.generic1 ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+qboolean G_WeatherPointWet( const vec3_t point ){
+	return G_WeatherPointInWeather( point, 0 );
+}
+
+qboolean G_WeatherPointSnow( const vec3_t point ){
+	return G_WeatherPointInWeather( point, 1 );
 }

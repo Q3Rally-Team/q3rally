@@ -640,8 +640,8 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
     <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td>rally_sun</td><td>Sun direction setter</td><td>Forwards sun position to clients for dynamic lighting.</td></tr>
-      <tr><td>rally_weather_rain</td><td>Rain particle volume</td><td><code>number</code> = density. Spawnflags add lightning and wind effects.</td></tr>
-      <tr><td>rally_weather_snow</td><td>Snow particle volume</td><td>Fixed type (<code>weapon = 1</code>). Extra spawnflags ignored.</td></tr>
+      <tr><td>rally_weather_rain</td><td>Rain particle and dynamic wetness volume</td><td><code>number</code> = density. Roads inside the volume lose grip and generate tire spray. Spawnflag 1 disables visual impact splashes.</td></tr>
+      <tr><td>rally_weather_snow</td><td>Snow particle and dynamic snow volume</td><td>Fixed type (<code>weapon = 1</code>). Roads inside the volume use packed-snow grip and generate tire snow spray. Extra spawnflags ignored.</td></tr>
     </tbody>
   </table></div>
 
@@ -665,27 +665,32 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
       <tr>
         <td>3</td>
         <td>Rain spawnflags</td>
-        <td>For rain, <code>spawnflags</code> are passed to the client as a splash toggle: controls whether <code>waterSplash</code> / <code>landSplash</code> effects are enabled. Snow splash is disabled by design regardless of spawnflags.</td>
+        <td>For rain, spawnflag 1 disables visual water/land impact splashes. It does not disable dynamic wet-road physics or tire spray. Snow volumes dynamically apply packed-snow tire grip and snow spray. Snow splash is disabled by design regardless of spawnflags.</td>
       </tr>
       <tr>
         <td>4</td>
         <td>Adaptive quality</td>
-        <td>Particle density scales automatically per client. Profile is selected via <code>cg_atmosphericLevel</code> (0 = Low, 1 = Medium, 2 = High, default 2). Per-frame budget is computed from profile + FPS + FOV + base drops — visible density may differ per machine. This is intentional.</td>
+        <td>Particle density scales automatically per client. Profile is selected via <code>cg_atmosphericLevel</code> (0 = None, 1 = Low, 2 = High, 3 = Ultra; default 2). Per-frame budget is computed from profile + FPS + FOV + base drops and smoothed to avoid density flicker. Visible density may differ per machine. This is intentional.</td>
       </tr>
       <tr>
         <td>5</td>
+        <td>Weather ambience audio</td>
+        <td>Rain and snow volumes can play local weather ambience when the camera or vehicle is inside the volume. Players can disable it with <code>cg_weatherAudio 0</code>.</td>
+      </tr>
+      <tr>
+        <td>6</td>
         <td>Cone &amp; distance culling</td>
         <td>Particles outside the view cone or beyond culling distance are deactivated or redistributed. Very large volumes can look thinner than expected. <strong>Recommendation:</strong> place weather zones along typical racing/sight corridors rather than one large global volume covering the whole map.</td>
       </tr>
       <tr>
-        <td>6</td>
+        <td>7</td>
         <td>Deterministic seeds</td>
         <td>Spawn variation (position, colour, flake selection) is deterministic per zone and particle index, not random per frame. Result: stable, consistent appearance across clients.</td>
       </tr>
       <tr>
         <td>7</td>
         <td>QA / validation</td>
-        <td>Test with <code>cg_atmosphericLevel 0</code>, <code>1</code>, and <code>2</code> before release. Check that the volume size and placement looks correct at all three quality levels.</td>
+        <td>Test with <code>cg_atmosphericLevel 0</code> through <code>3</code> before release. Check volume placement, transitions, tire grip and spray as well as particle density.</td>
       </tr>
     </tbody>
   </table></div>
@@ -710,7 +715,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
       <tr><td>SURF_GRASS</td><td>Green-tinted skidmarks, grass debris</td><td>textures/q3r_dirt_grass/grass01</td></tr>
       <tr><td>SURF_GRAVEL</td><td>Similar to dirt but with coarser particles</td><td>textures/q3r_dirt_grass/gravel01</td></tr>
       <tr><td>SURF_SAND</td><td>Loose sand, dust puffs, low traction</td><td>textures/q3r_dirt_grass/sand</td></tr>
-      <tr><td>SURF_SNOW</td><td>White skidmarks and snow spray</td><td>textures/q3r_ground/snowy01–04</td></tr>
+      <tr><td>SURF_SNOW</td><td>White skidmarks, packed-snow grip and snow spray</td><td>textures/q3r_ground/snowy01–04; also applied dynamically inside <code>rally_weather_snow</code> volumes</td></tr>
       <tr><td>SURF_ICE</td><td>Very low friction, optional sheen</td><td>textures/q3r_ground/ice01</td></tr>
       <tr><td>SURF_WET</td><td>Splash effects when tyres touch liquid</td><td>textures/q3r_liquids/q3r_water_01</td></tr>
       <tr><td>SURF_METAL</td><td>Metallic sparks on impact</td><td>Metal grates, pipes</td></tr>

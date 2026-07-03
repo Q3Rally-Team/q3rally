@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define RALLY_INTRO_CAM_DURATION_MS 3000
 
+static int CountRaceGridStarts( void );
+
 static vec3_t rallyIntroGridOrigin[MAX_CLIENTS];
 static vec3_t rallyIntroGridAngles[MAX_CLIENTS];
 static qboolean rallyIntroGridSaved[MAX_CLIENTS];
@@ -82,7 +84,7 @@ static void G_RallySnapshotIntroGridPositions( void ) {
 	}
 }
 
-static void G_RallyIntroCountdownHandover( void ) {
+void G_RallyIntroCountdownHandover( void ) {
 	int i;
 	qboolean hasSnapshots = qfalse;
 
@@ -128,11 +130,10 @@ static void G_RallyIntroCountdownHandover( void ) {
 
 		if ( rallyIntroGridSaved[i] ) {
 			VectorCopy( rallyIntroGridOrigin[i], client->ps.origin );
-			VectorCopy( rallyIntroGridAngles[i], client->ps.viewangles );
-			VectorCopy( rallyIntroGridOrigin[i], player->s.origin );
-			VectorCopy( rallyIntroGridOrigin[i], player->r.currentOrigin );
-			VectorCopy( rallyIntroGridAngles[i], player->s.angles );
-			VectorCopy( rallyIntroGridAngles[i], player->r.currentAngles );
+			G_SetOrigin( player, rallyIntroGridOrigin[i] );
+			SetClientViewAngle( player, rallyIntroGridAngles[i] );
+			VectorClear( client->ps.velocity );
+			VectorClear( client->ps.angularMomentum );
 		}
 
 		G_Printf( "IntroHandover after: clientNum=%d sessionTeam=%d spectatorState=%d pm_flags=%d\n",
@@ -532,6 +533,14 @@ void RallyStarter_Think( gentity_t *ent ){
 	introDurationMs = level.raceIntroDurationMs > 0 ? level.raceIntroDurationMs : RALLY_INTRO_CAM_DURATION_MS;
 	ignoreBots = g_rallyIgnoreBots.integer;
 
+	if ( !ent->count ) {
+		int gridStarts = CountRaceGridStarts();
+		ent->count = 1;
+		if ( gridStarts < level.maxclients ) {
+			G_Printf( "Warning: Map has %i info_player_start entities, but sv_maxClients is %i; temporary grid slots may be required\n", gridStarts, level.maxclients );
+		}
+	}
+
 	if (level.startRaceTime){
 		{
 			int oldRaceState = level.raceState;
@@ -775,23 +784,16 @@ void RallyStarter_Think( gentity_t *ent ){
 	}
 }
 
-static int CountRaceGridStarts( void );
-
 void CreateRallyStarter( void ) {
 	gentity_t		*ent;
-	int			gridStarts;
 
 	ent = G_Spawn();
 
 	ent->think = RallyStarter_Think;
 	ent->nextthink = level.time + 2000;
 	ent->number = 0;
+	ent->count = 0;
 	ent->classname = "rally_starter";
-
-	gridStarts = CountRaceGridStarts();
-	if ( gridStarts < level.maxclients ) {
-		G_Printf( "Warning: Map has %i info_player_start entities, but sv_maxClients is %i; temporary grid slots may be required\n", gridStarts, level.maxclients );
-	}
 }
 
 
@@ -843,6 +845,10 @@ static qboolean missingGridStartsNotified;
 
 #define OVERFLOW_GRID_COLUMNS			4
 #define OVERFLOW_GRID_SPACING			192.0f
+#define TEMP_GRID_GROUND_TRACE_UP		128.0f
+#define TEMP_GRID_GROUND_TRACE_DOWN		4096.0f
+#define TEMP_GRID_MIN_GROUND_NORMAL		0.3f
+#define TEMP_GRID_GROUND_CLEARANCE		1.0f
 
 static int CountRaceGridStarts( void ) {
 	gentity_t *spot;
@@ -855,6 +861,19 @@ static int CountRaceGridStarts( void ) {
 	}
 
 	return count;
+}
+
+static qboolean RaceGridHasNumberedStarts( void ) {
+	gentity_t *spot;
+
+	spot = NULL;
+	while ( ( spot = G_Find( spot, FOFS(classname), "info_player_start" ) ) != NULL ) {
+		if ( spot->number ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
 }
 
 static void BuildTemporaryGridSlot( vec3_t baseOrigin, vec3_t baseAngles, int slotIndex, vec3_t outOrigin, vec3_t outAngles ) {
@@ -871,6 +890,39 @@ static void BuildTemporaryGridSlot( vec3_t baseOrigin, vec3_t baseAngles, int sl
 	VectorMA( outOrigin, ( column - ( ( OVERFLOW_GRID_COLUMNS - 1 ) * 0.5f ) ) * OVERFLOW_GRID_SPACING, right, outOrigin );
 
 	VectorCopy( baseAngles, outAngles );
+}
+
+static qboolean SnapTemporaryGridSlotToGround( vec3_t candidateOrigin, vec3_t outOrigin ) {
+	trace_t tr;
+	vec3_t start, end;
+	vec3_t mins, maxs;
+
+	VectorSet( mins, -CAR_WIDTH / 2.0f, -CAR_WIDTH / 2.0f, -CAR_HEIGHT / 2.0f );
+	VectorSet( maxs, CAR_WIDTH / 2.0f, CAR_WIDTH / 2.0f, CAR_HEIGHT / 2.0f );
+
+	VectorCopy( candidateOrigin, start );
+	start[2] += TEMP_GRID_GROUND_TRACE_UP;
+	VectorCopy( candidateOrigin, end );
+	end[2] -= TEMP_GRID_GROUND_TRACE_DOWN;
+
+	trap_Trace( &tr, start, mins, maxs, end, ENTITYNUM_NONE, MASK_PLAYERSOLID & ~CONTENTS_BODY );
+	if ( tr.allsolid || tr.startsolid || tr.fraction == 1.0f ) {
+		return qfalse;
+	}
+
+	if ( tr.plane.normal[2] < TEMP_GRID_MIN_GROUND_NORMAL ) {
+		return qfalse;
+	}
+
+	VectorCopy( tr.endpos, outOrigin );
+	outOrigin[2] += TEMP_GRID_GROUND_CLEARANCE;
+
+	trap_Trace( &tr, outOrigin, mins, maxs, outOrigin, ENTITYNUM_NONE, MASK_PLAYERSOLID & ~CONTENTS_BODY );
+	if ( tr.allsolid || tr.startsolid ) {
+		return qfalse;
+	}
+
+	return qtrue;
 }
 
 static qboolean FindTemporaryGridAnchor( vec3_t baseOrigin, vec3_t baseAngles ) {
@@ -896,18 +948,23 @@ static qboolean FindTemporaryGridAnchor( vec3_t baseOrigin, vec3_t baseAngles ) 
 }
 
 TESTABLE_STATIC gentity_t *SelectOverflowGridPosition( gentity_t *baseSpot, int overflowIndex, gentity_t *ent, vec3_t origin, vec3_t angles ) {
-	vec3_t			tempOrigin, tempAngles;
+	vec3_t			tempOrigin, tempAngles, groundedOrigin;
 	int				attempts = 0;
 	int				currentIndex = overflowIndex;
 
 	while ( attempts < 16 ) {
 		BuildTemporaryGridSlot( baseSpot->s.origin, baseSpot->s.angles, currentIndex, tempOrigin, tempAngles );
-		VectorCopy( tempOrigin, overflowSpot.s.origin );
+		if ( !SnapTemporaryGridSlotToGround( tempOrigin, groundedOrigin ) ) {
+			attempts++;
+			currentIndex++;
+			continue;
+		}
+
+		VectorCopy( groundedOrigin, overflowSpot.s.origin );
 		VectorCopy( tempAngles, overflowSpot.s.angles );
 
 		if ( !SpotWouldTelefrag( &overflowSpot ) ) {
 			VectorCopy( overflowSpot.s.origin, origin );
-			origin[2] += 9;
 			VectorCopy( overflowSpot.s.angles, angles );
 
 			if ( ent && ent->client ) {
@@ -932,24 +989,25 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 	qboolean		hasNumberedGridSpots;
 	int				gridPosition;
 	int				fallbackIndex;
+	vec3_t			groundedOrigin;
 
 	spot = NULL;
 	firstGridSpot = NULL;
-	hasNumberedGridSpots = qfalse;
+	hasNumberedGridSpots = RaceGridHasNumberedStarts();
 	gridPosition = 1;
 	while ( gridPosition <= level.maxclients ) {
 		gentity_t *matchedSpot = NULL;
+		int unnumberedGridPosition = 1;
 		spot = NULL;
 
 		while ((spot = G_Find (spot, FOFS(classname), "info_player_start")) != NULL) {
 			if ( !firstGridSpot ) {
 				firstGridSpot = spot;
 			}
-			if ( spot->number ) {
-				hasNumberedGridSpots = qtrue;
-			}
 
-			if ( ( spot->number == gridPosition || ( !spot->number && gridPosition == 1 ) ) ) {
+			if ( ( spot->number == gridPosition ) ||
+				( !spot->number && !hasNumberedGridSpots && unnumberedGridPosition == gridPosition ) ||
+				( !spot->number && hasNumberedGridSpots && gridPosition == 1 ) ) {
 				matchedSpot = spot;
 				if ( !SpotWouldTelefrag( spot ) ) {
 					VectorCopy (spot->s.origin, origin);
@@ -960,6 +1018,10 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 				}
 
 				break;
+			}
+
+			if ( !spot->number ) {
+				unnumberedGridPosition++;
 			}
 		}
 
@@ -1001,12 +1063,16 @@ gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles
 
 	for ( gridPosition = fallbackIndex; gridPosition < fallbackIndex + 256; gridPosition++ ) {
 		BuildTemporaryGridSlot( anchorOrigin, anchorAngles, gridPosition, overflowSpot.s.origin, overflowSpot.s.angles );
+		if ( !SnapTemporaryGridSlotToGround( overflowSpot.s.origin, groundedOrigin ) ) {
+			continue;
+		}
+
+		VectorCopy( groundedOrigin, overflowSpot.s.origin );
 		if ( SpotWouldTelefrag( &overflowSpot ) ) {
 			continue;
 		}
 
 		VectorCopy( overflowSpot.s.origin, origin );
-		origin[2] += 9;
 		VectorCopy( overflowSpot.s.angles, angles );
 		return &overflowSpot;
 	}

@@ -736,6 +736,8 @@ void CG_PredictPlayerState( void ) {
 	cg_pmove.trace = CG_Trace;
 	cg_pmove.pointcontents = CG_PointContents;
 	cg_pmove.frictionFunc = CG_FrictionCalc;
+	cg_pmove.weatherWetFunc = CG_AtmosphericPointWet;
+	cg_pmove.weatherSnowFunc = CG_AtmosphericPointSnow;
 // Q3Rally Code Start
 /*
 	if ( cg_pmove.ps->pm_type == PM_DEAD ) {
@@ -1169,4 +1171,3 @@ void CG_PredictPlayerState( void ) {
 		}
 	}
 }
-

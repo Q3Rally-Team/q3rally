@@ -300,6 +300,8 @@ typedef struct {
         qboolean        useFuel;
 
         qboolean        (*frictionFunc)( const carPoint_t *point, float *sCOF, float *kCOF );
+        qboolean        (*weatherWetFunc)( const vec3_t point );
+        qboolean        (*weatherSnowFunc)( const vec3_t point );
 
         float           car_spring;
         float           car_shock_up;

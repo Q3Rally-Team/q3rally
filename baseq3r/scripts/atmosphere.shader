@@ -50,7 +50,7 @@ gfx/atmosphere/snowflake00
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake00.tga
+		map gfx/atmosphere/snowflake00.png
 		blendfunc blend
 		alphagen vertex
 	}
@@ -63,7 +63,7 @@ gfx/atmosphere/snowflake01
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake01.tga
+		map gfx/atmosphere/snowflake01.png
 		blendfunc blend
 		alphagen vertex
 	}
@@ -76,7 +76,7 @@ gfx/atmosphere/snowflake02
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake02.tga
+		map gfx/atmosphere/snowflake02.png
 		blendfunc blend
 		alphagen vertex
 	}
@@ -89,7 +89,7 @@ gfx/atmosphere/snowflake03
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake03.tga
+		map gfx/atmosphere/snowflake03.png
 		blendfunc blend
 		alphagen vertex
 	}
@@ -102,7 +102,7 @@ gfx/atmosphere/snowflake04
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake04.tga
+		map gfx/atmosphere/snowflake04.png
 		blendfunc blend
 		alphagen vertex
 	}
@@ -115,7 +115,7 @@ gfx/atmosphere/snowflake05
 	polygonoffset
 	sort 16
 	{
-		map gfx/atmosphere/snowflake05.tga
+		map gfx/atmosphere/snowflake05.png
 		blendfunc blend
 		alphagen vertex
 	}

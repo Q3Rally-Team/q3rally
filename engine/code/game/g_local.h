@@ -984,6 +984,7 @@ void Cmd_RacePositions_f( void );
 void Cmd_Times_f( gentity_t *ent );
 gentity_t *SelectLastMarkerForSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
 gentity_t *SelectGridPositionSpawn( gentity_t *ent, vec3_t origin, vec3_t angles, qboolean isbot );
+void G_RallyIntroCountdownHandover( void );
 
 //
 // g_rally_rearweapon.c
@@ -1190,6 +1191,12 @@ extern	vmCvar_t	pmove_msec;
 extern	vmCvar_t	g_rankings;
 extern	vmCvar_t	g_enableDust;
 extern  vmCvar_t    g_enableSnow;
+extern	vmCvar_t	g_dynamicWeather;
+extern	vmCvar_t	g_weatherInitialChance;
+extern	vmCvar_t	g_weatherOnMinTime;
+extern	vmCvar_t	g_weatherOnMaxTime;
+extern	vmCvar_t	g_weatherOffMinTime;
+extern	vmCvar_t	g_weatherOffMaxTime;
 extern	vmCvar_t	g_enableBreath;
 extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
@@ -1246,6 +1253,8 @@ extern	vmCvar_t	car_body_elasticity;
 extern	vmCvar_t	car_air_cof;
 extern	vmCvar_t	car_air_frac_to_df;
 extern	vmCvar_t	car_friction_scale;
+qboolean G_WeatherPointWet( const vec3_t point );
+qboolean G_WeatherPointSnow( const vec3_t point );
 
 extern	vmCvar_t	g_carImpactTransfer;
 extern	vmCvar_t	g_carImpactElasticity;

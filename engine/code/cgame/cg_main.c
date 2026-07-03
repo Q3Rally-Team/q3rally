@@ -270,6 +270,7 @@ vmCvar_t	cg_developer;
 
 // cutom variable used in modified atmospheric effects from q3f
 vmCvar_t	cg_atmosphericLevel;
+vmCvar_t	cg_weatherAudio;
 
 vmCvar_t	cg_fpsLimit;
 vmCvar_t	cg_autodrop;
@@ -414,9 +415,10 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_derbyVehicleHudScale, "cg_derbyVehicleHudScale", "1.0", CVAR_ARCHIVE },
 	{ &cg_derbyVehicleHudRoof, "cg_derbyVehicleHudRoof", "1", CVAR_ARCHIVE },
 
-        { &cg_developer, "developer", "0", 0 },
+	{ &cg_developer, "developer", "0", 0 },
 
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
+	{ &cg_weatherAudio, "cg_weatherAudio", "1", CVAR_ARCHIVE },
 
 
 	{ &cg_rearViewRenderLevel, "cg_rearViewRenderLevel", "31", CVAR_ARCHIVE },
@@ -869,6 +871,8 @@ static void CG_RegisterSounds( void ) {
 // Q3Rally Code Start
 	cgs.media.turboSound = trap_S_RegisterSound( "sound/items/turbo_use.ogg", qfalse );
 	cgs.media.skidSound = trap_S_RegisterSound( "sound/rally/car/skid.ogg", qfalse );
+	cgs.media.weatherRainLoopSound = trap_S_RegisterSound( "sound/weather/rain_loop_heavy.wav", qfalse );
+	cgs.media.weatherSnowLoopSound = trap_S_RegisterSound( "sound/weather/snow_wind_loop.wav", qfalse );
 // Q3Rally Code END
 	cgs.media.wearOffSound = trap_S_RegisterSound( "sound/items/wearoff.ogg", qfalse );
 	cgs.media.useNothingSound = trap_S_RegisterSound( "sound/items/use_nothing.ogg", qfalse );
@@ -1289,6 +1293,10 @@ static void CG_RegisterGraphics( void ) {
 #endif
 	cgs.media.dustPuffShader = trap_R_RegisterShader("hasteSmokePuff" );
     cgs.media.snowPuffShader = trap_R_RegisterShader("snowPuff" );
+    cgs.media.waterSprayFanShader = trap_R_RegisterShader("waterSprayFan" );
+    cgs.media.waterSprayPuffShader = trap_R_RegisterShader("waterSprayPuff" );
+    cgs.media.snowSprayFanShader = trap_R_RegisterShader("snowSprayFan" );
+    cgs.media.snowSprayPuffShader = trap_R_RegisterShader("snowSprayPuff" );
     cgs.media.sandPuffShader = trap_R_RegisterShader("sandPuff" );
 //#endif
 // Q3Rally Code END
@@ -2306,6 +2314,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	memset( cg_entities, 0, sizeof(cg_entities) );
 	memset( cg_weapons, 0, sizeof(cg_weapons) );
 	memset( cg_items, 0, sizeof(cg_items) );
+	CG_Atmospheric_Init();
 
 	cg.clientNum = clientNum;
 	cg.showHUD = qtrue;	// modular HUD should be visible by default
@@ -2485,6 +2494,7 @@ Called before every level change or subsystem restart
 =================
 */
 void CG_Shutdown( void ) {
+	CG_Atmospheric_Shutdown();
 	CG_EngineAudio_Shutdown();
 
 	// some mods may need to do cleanup work here,

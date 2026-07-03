@@ -930,7 +930,7 @@ void CG_CheckEliminationWarning( int playersRemaining ) {
 	}
 }
 
-qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos ){
+qboolean CG_InsideBox( const vec3_t mins, const vec3_t maxs, const vec3_t pos ){
 	if (pos[0] < mins[0] || pos[0] > maxs[0]) return qfalse;
 	if (pos[1] < mins[1] || pos[1] > maxs[1]) return qfalse;
 	if (pos[2] < mins[2] || pos[2] > maxs[2]) return qfalse;

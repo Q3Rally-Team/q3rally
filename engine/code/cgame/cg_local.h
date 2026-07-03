@@ -288,6 +288,7 @@ typedef struct centity_s {
 
 	vec3_t			lastSkidOrigin[4];
 	float			smokeTime[4];
+	int				wetSprayTime[4];
 	float			engineSmokeTime;
 	float			engineSoundFrac;
 
@@ -1149,6 +1150,10 @@ typedef struct {
 	qhandle_t	teleportEffectShader;
     qhandle_t	dustPuffShader;
     qhandle_t   snowPuffShader;
+    qhandle_t   waterSprayFanShader;
+    qhandle_t   waterSprayPuffShader;
+    qhandle_t   snowSprayFanShader;
+    qhandle_t   snowSprayPuffShader;
     qhandle_t   sandPuffShader;
 
 
@@ -1183,6 +1188,8 @@ typedef struct {
 	sfxHandle_t	wearOffSound;
 	sfxHandle_t	turboSound;
 	sfxHandle_t	skidSound;
+	sfxHandle_t	weatherRainLoopSound;
+	sfxHandle_t	weatherSnowLoopSound;
 	sfxHandle_t	shieldSound;
 	sfxHandle_t	sfx_lghit1;
 	sfxHandle_t	sfx_lghit2;
@@ -1617,6 +1624,7 @@ extern      vmCvar_t                cg_distanceFormat;
 
 
 extern	vmCvar_t		cg_atmosphericLevel;
+extern	vmCvar_t		cg_weatherAudio;
 extern	vmCvar_t		cg_developer;
 
 extern	vmCvar_t		cg_fpsLimit;
@@ -2023,7 +2031,13 @@ void CG_CheckChangedPredictableEvents( playerState_t *ps );
 // cg_atmospheric.c
 //
 void CG_AddAtmosphericEffects( void );
-void CG_Atmospheric_SetParticles( int type, int numParticles, qboolean diableSplashes );
+void CG_Atmospheric_Init( void );
+void CG_Atmospheric_Shutdown( void );
+void CG_Atmospheric_AddWeatherZone( centity_t *cent );
+qboolean CG_AtmosphericPointInWeather( const vec3_t point, int type );
+qboolean CG_AtmosphericPointWet( const vec3_t point );
+qboolean CG_AtmosphericPointSnow( const vec3_t point );
+void CG_AtmosphericAddLoopingSounds( void );
 
 //
 // cg_rally_scripted_objects.c
@@ -2076,7 +2090,7 @@ void CG_ResetEliminationTimeline( void );
 void CG_AddEliminationTimelineEvent( int clientNum, int round, int remaining, int timestamp );
 qboolean CG_IsActiveCompetitor( int clientNum );
 
-qboolean CG_InsideBox( vec3_t mins, vec3_t maxs, vec3_t pos );
+qboolean CG_InsideBox( const vec3_t mins, const vec3_t maxs, const vec3_t pos );
 
 
 //

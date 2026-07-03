@@ -725,12 +725,7 @@ CG_Weather
 ==================
 */
 static void CG_Weather( centity_t *cent ) {
-	entityState_t		*s1;
-
-	s1 = &cent->currentState;
-
-//	CG_EffectParse( "T=RAIN,B=5 10,C=0.5,G=0.5 2,BV=0,GV=0 100,W=1 2,D=300" );
-	CG_Atmospheric_SetParticles( s1->weapon, s1->powerups, s1->legsAnim );
+	CG_Atmospheric_AddWeatherZone( cent );
 }
 // Q3Rally Code END
 

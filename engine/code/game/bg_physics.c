@@ -635,8 +635,13 @@ PM_CheckSurfaceFlags
 ===================
 */
 static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
+	qboolean dynamicallyWet;
+	qboolean dynamicallySnow;
 
 	// TODO: include rolling friction... harder to roll tires in sand or mud
+
+	dynamicallyWet = pm->weatherWetFunc && pm->weatherWetFunc( point->r );
+	dynamicallySnow = pm->weatherSnowFunc && pm->weatherSnowFunc( point->r );
 
 	if( pm->frictionFunc( point, &point->scof, &point->kcof ) )
 	{
@@ -653,7 +658,7 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->kcof = CP_ICE_KCOF;
 		point->scof = CP_ICE_SCOF;
 	}
-	else if (trace->surfaceFlags & SURF_SNOW){
+	else if ((trace->surfaceFlags & SURF_SNOW) || dynamicallySnow){
 		point->kcof = CP_SNOW_KCOF;
 		point->scof = CP_SNOW_SCOF;
 	}
@@ -687,7 +692,7 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->scof = CP_SCOF;
 	}
 
-	if (trace->surfaceFlags & SURF_WET){
+	if ((trace->surfaceFlags & SURF_WET) || dynamicallyWet){
 		point->kcof *= CP_WET_SCALE;
 		point->scof *= CP_WET_SCALE;
 	}

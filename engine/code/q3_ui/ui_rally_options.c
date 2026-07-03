@@ -123,6 +123,7 @@ static const char *q3roptions_atmospheric[] = {
         "None",
         "Low",
         "High",
+        "Ultra",
         0
 };
 

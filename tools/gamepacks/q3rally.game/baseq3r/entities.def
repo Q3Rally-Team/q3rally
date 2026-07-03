@@ -2554,6 +2554,13 @@ SPAWNFLAGS
 
 /*QUAKED rally_weather_snow (.5 .5 .5) ?
 "number"	number of particles to draw, usually 200-1000
+
+The snow volume also marks the road beneath it as dynamically snow-covered at runtime:
+vehicle grip uses packed-snow friction and tires emit snow spray without requiring SURF_SNOW on the road shader.
+
+Server weather timing is controlled globally with:
+g_dynamicWeather 1/0, g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
+g_weatherOffMinTime and g_weatherOffMaxTime.
 */
 
 /*QUAKED rally_weather_rain (.5 .5 .5) ? DISABLE_SPLASH
@@ -2561,7 +2568,14 @@ SPAWNFLAGS
 
 SPAWNFLAGS
 
-disable_splash turns off splashes, improving framerates since there is not as much to calculate or draw. 
+disable_splash turns off visual impact splashes, improving framerates since there is not as much to calculate or draw.
+
+The rain volume also marks the road beneath it as dynamically wet at runtime:
+vehicle grip is reduced and tires emit spray without requiring SURF_WET on the road shader.
+
+Server weather timing is controlled globally with:
+g_dynamicWeather 1/0, g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
+g_weatherOffMinTime and g_weatherOffMaxTime.
 */
 
 /*QUAKED item_armor_green (0 .7 0) (-16 -16 -16) (16 16 16) SUSPENDED
