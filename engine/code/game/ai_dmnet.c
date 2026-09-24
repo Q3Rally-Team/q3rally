@@ -78,6 +78,9 @@ char nodeswitch[MAX_NODESWITCHES+1][144];
 #define GHOST_RECOVERY_REVERSE_COLLISION_SPIKE	2
 #define GHOST_RECOVERY_REJOIN_STEER_LIMIT	16.0f
 #define GHOST_RECOVERY_REJOIN_THROTTLE_STEP	0.22f
+#define GHOST_RECOVERY_RESET_COOLDOWN		8.0f
+#define GHOST_RECOVERY_RESET_SCAN_WAYPOINTS	12
+#define GHOST_RECOVERY_RESET_MAX_DISTANCE	1000.0f
 #define GHOST_FORWARD_DOT_SOFT_REJECT		-0.05f
 #define GHOST_FORWARD_DOT_STRICT_REJECT		0.25f
 
@@ -303,6 +306,7 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 	ghostDecisionState_t decisionState, qboolean collisionRisk, bot_recovery_state_t recoveryState,
 	bot_recovery_state_t previousRecoveryState, const char *recoveryEvent,
 	const char *recoveryTrigger, float routeDeviation, int pathId, int nodeIndex, int lookAheadIndex,
+	const char *routeSource, const char *activeRoutePath, const char *loadedGhostPath, qboolean routeUsable,
 	int widthClampEvent, int autoSpeedActive, int targetSpeedOverrideActive, int launchGateActive,
 	int objectiveState, int kothOwner, int kothContested ) {
 	fileHandle_t f;
@@ -353,7 +357,7 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 			"{\"time\":%.3f,\"client\":%d,\"routeIndex\":%d,\"targetSpeed\":%.2f,\"actualSpeed\":%.2f,"
 			"\"decisionState\":\"%s\",\"collisionRisk\":%d,\"recoveryState\":\"%s\","
 			"\"recoveryTransition\":\"%s\",\"recoveryEvent\":\"%s\",\"recoveryTrigger\":\"%s\",\"routeDeviation\":%.2f,"
-			"\"pathId\":%d,\"nodeIndex\":%d,\"lookaheadIndex\":%d,\"widthClampEvent\":%d,"
+			"\"pathId\":%d,\"nodeIndex\":%d,\"lookaheadIndex\":%d,\"routeSource\":\"%s\",\"activeRoutePath\":\"%s\",\"loadedGhostPath\":\"%s\",\"routeUsable\":%d,\"widthClampEvent\":%d,"
 			"\"autoSpeedActive\":%d,\"targetSpeedOverrideActive\":%d,\"launchGate\":%d,"
 			"\"objectiveState\":\"%s\",\"kothOwner\":%d,\"kothContested\":%d,"
 			"\"ox\":%.2f,\"oy\":%.2f,\"oz\":%.2f}\n",
@@ -361,7 +365,9 @@ static void Bot_DebugExportDmnetTick( bot_state_t *bs, int routeIndex, float tar
 			Bot_DebugDecisionStateName( decisionState ), collisionRisk ? 1 : 0,
 			Bot_DebugRecoveryStateName( recoveryState ), recoveryTransition,
 			recoveryEvent ? recoveryEvent : "", recoveryTrigger ? recoveryTrigger : "",
-			routeDeviation, pathId, nodeIndex, lookAheadIndex, widthClampEvent,
+			routeDeviation, pathId, nodeIndex, lookAheadIndex,
+			routeSource ? routeSource : "none", activeRoutePath ? activeRoutePath : "",
+			loadedGhostPath ? loadedGhostPath : "", routeUsable ? 1 : 0, widthClampEvent,
 			autoSpeedActive, targetSpeedOverrideActive, launchGateActive,
 			Bot_DebugObjectiveStateName( objectiveState ), kothOwner, kothContested,
 			origin[0], origin[1], origin[2] );
@@ -548,6 +554,174 @@ static void Bot_SetRecoveryState( bot_state_t *bs, bot_recovery_state_t newState
 			bs->ghostRecoveryLastSampleTime = now;
 		}
 	}
+}
+
+static qboolean Bot_GhostResetSpotOccupied( gentity_t *botEnt, const vec3_t origin ) {
+	int i;
+	vec3_t mins, maxs;
+
+	VectorSet( mins, origin[0] - CAR_LENGTH * 0.5f, origin[1] - CAR_LENGTH * 0.5f, origin[2] - CAR_HEIGHT * 0.5f );
+	VectorSet( maxs, origin[0] + CAR_LENGTH * 0.5f, origin[1] + CAR_LENGTH * 0.5f, origin[2] + CAR_HEIGHT * 0.5f );
+
+	for ( i = 0; i < level.maxclients; ++i ) {
+		gentity_t *other = &g_entities[i];
+
+		if ( other == botEnt || !other->inuse || !other->client ||
+			other->client->pers.connected != CON_CONNECTED ||
+			other->client->sess.sessionTeam == TEAM_SPECTATOR ||
+			other->client->ps.pm_type == PM_DEAD ) {
+			continue;
+		}
+
+		if ( trap_EntityContact( mins, maxs, other ) ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+static qboolean Bot_GhostFindSafeResetSpot( bot_state_t *bs, const ghostBotRoute_t *route, int bestIndex,
+	int nextCheckpoint, const vec3_t routeForward, vec3_t resetOrigin, vec3_t resetAngles, int *resetIndex ) {
+	int advance;
+	int maxAdvance;
+	vec3_t mins, maxs;
+
+	if ( !bs || !route || !route->valid || route->numWaypoints < 2 || bestIndex < 0 ||
+		bestIndex >= route->numWaypoints || !resetOrigin || !resetAngles || !resetIndex ) {
+		return qfalse;
+	}
+
+	VectorSet( mins, -CAR_LENGTH * 0.5f, -CAR_LENGTH * 0.5f, -18.0f );
+	VectorSet( maxs, CAR_LENGTH * 0.5f, CAR_LENGTH * 0.5f, 18.0f );
+	maxAdvance = GHOST_RECOVERY_RESET_SCAN_WAYPOINTS;
+	if ( maxAdvance >= route->numWaypoints ) {
+		maxAdvance = route->numWaypoints - 1;
+	}
+
+	for ( advance = 1; advance <= maxAdvance; ++advance ) {
+		int candidateIndex = bestIndex + advance;
+		int nextIndex;
+		vec3_t traceStart, traceEnd, direction, candidateOrigin;
+		trace_t groundTrace, clearanceTrace;
+		float candidateDistance;
+
+		if ( candidateIndex >= route->numWaypoints ) {
+			if ( nextCheckpoint > 2 ) {
+				break;
+			}
+			candidateIndex %= route->numWaypoints;
+		}
+
+		candidateDistance = Distance( bs->cur_ps.origin, route->waypoints[candidateIndex].origin );
+		if ( candidateDistance > GHOST_RECOVERY_RESET_MAX_DISTANCE ) {
+			continue;
+		}
+
+		VectorCopy( route->waypoints[candidateIndex].origin, traceStart );
+		traceStart[2] += 128.0f;
+		VectorCopy( route->waypoints[candidateIndex].origin, traceEnd );
+		traceEnd[2] -= 1024.0f;
+		trap_Trace( &groundTrace, traceStart, mins, maxs, traceEnd, bs->entitynum, MASK_PLAYERSOLID );
+		if ( groundTrace.startsolid || groundTrace.allsolid || groundTrace.fraction >= 1.0f ||
+			groundTrace.plane.normal[2] < 0.55f || ( groundTrace.contents & CONTENTS_BODY ) ||
+			( groundTrace.entityNum >= 0 && groundTrace.entityNum < level.maxclients && groundTrace.entityNum != bs->entitynum ) ) {
+			continue;
+		}
+
+		VectorCopy( groundTrace.endpos, candidateOrigin );
+		candidateOrigin[2] += 5.0f;
+		if ( Bot_GhostResetSpotOccupied( &g_entities[bs->entitynum], candidateOrigin ) ) {
+			continue;
+		}
+
+		/* Reject low ceilings and overhangs before committing the reposition. */
+		VectorCopy( candidateOrigin, traceStart );
+		traceStart[2] += 1.0f;
+		VectorCopy( traceStart, traceEnd );
+		traceEnd[2] += CAR_HEIGHT - 36.0f;
+		trap_Trace( &clearanceTrace, traceStart, mins, maxs, traceEnd, bs->entitynum, MASK_PLAYERSOLID & ~CONTENTS_BODY );
+		if ( clearanceTrace.startsolid || clearanceTrace.allsolid || clearanceTrace.fraction < 1.0f ) {
+			continue;
+		}
+
+		if ( candidateIndex == route->numWaypoints - 1 && nextCheckpoint > 2 ) {
+			VectorSubtract( route->waypoints[candidateIndex].origin, route->waypoints[candidateIndex - 1].origin, direction );
+		} else {
+			nextIndex = candidateIndex + 1;
+			if ( nextIndex >= route->numWaypoints ) {
+				nextIndex = 0;
+			}
+			VectorSubtract( route->waypoints[nextIndex].origin, route->waypoints[candidateIndex].origin, direction );
+		}
+		direction[2] = 0.0f;
+		if ( VectorNormalize( direction ) <= 0.001f ) {
+			VectorCopy( routeForward, direction );
+			direction[2] = 0.0f;
+			VectorNormalize( direction );
+		}
+		vectoangles( direction, resetAngles );
+		resetAngles[PITCH] = 0.0f;
+		resetAngles[ROLL] = 0.0f;
+		VectorCopy( candidateOrigin, resetOrigin );
+		*resetIndex = candidateIndex;
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+static qboolean Bot_GhostEmergencyRouteReset( bot_state_t *bs, const ghostBotRoute_t *route, int bestIndex,
+	int nextCheckpoint, const vec3_t routeForward, int *resetIndex ) {
+	gentity_t *botEnt;
+	gclient_t *client;
+	gentity_t *tempEnt;
+	vec3_t resetOrigin, resetAngles, oldOrigin;
+
+	if ( !bs || bs->entitynum < 0 || bs->entitynum >= level.maxclients || !resetIndex ) {
+		return qfalse;
+	}
+
+	botEnt = &g_entities[bs->entitynum];
+	if ( !botEnt->inuse || !botEnt->client || botEnt->client->pers.connected != CON_CONNECTED ) {
+		return qfalse;
+	}
+	client = botEnt->client;
+
+	if ( !Bot_GhostFindSafeResetSpot( bs, route, bestIndex, nextCheckpoint, routeForward,
+		resetOrigin, resetAngles, resetIndex ) ) {
+		return qfalse;
+	}
+
+	VectorCopy( client->ps.origin, oldOrigin );
+	tempEnt = G_TempEntity( oldOrigin, EV_PLAYER_TELEPORT_OUT );
+	tempEnt->s.clientNum = botEnt->s.clientNum;
+	trap_UnlinkEntity( botEnt );
+
+	VectorCopy( resetOrigin, client->ps.origin );
+	VectorClear( client->ps.velocity );
+	client->ps.pm_time = 0;
+	client->ps.pm_flags &= ~PMF_ALL_TIMES;
+	SetClientViewAngle( botEnt, resetAngles );
+	client->ps.eFlags ^= EF_TELEPORT_BIT;
+	client->car.preserveFuel = qtrue;
+	client->car.initializeOnNextMove = qtrue;
+	client->car.onGroundTime = level.time;
+	client->car.offGroundTime = level.time;
+
+	BG_PlayerStateToEntityState( &client->ps, &botEnt->s, qtrue );
+	VectorCopy( client->ps.origin, botEnt->r.currentOrigin );
+	trap_LinkEntity( botEnt );
+	tempEnt = G_TempEntity( client->ps.origin, EV_PLAYER_TELEPORT_IN );
+	tempEnt->s.clientNum = botEnt->s.clientNum;
+
+	memcpy( &bs->cur_ps, &client->ps, sizeof( bs->cur_ps ) );
+	VectorCopy( resetAngles, bs->ideal_viewangles );
+	bs->ghostRouteIndexHint = *resetIndex;
+	bs->ghostTargetSpeedValid = qfalse;
+	bs->ghostDecisionState = GHOST_DECISION_FOLLOW;
+	bs->ghostDecisionLateralOffset = 0.0f;
+	return qtrue;
 }
 
 static float Bot_ClampSteeringToRecoveryLimit( float currentYaw, float desiredYaw, float yawLimit ) {
@@ -748,7 +922,8 @@ static void Bot_PredictCollisionRisk( bot_state_t *bs, const vec3_t routeForward
 		predictedLateral = DotProduct( predictedDelta, routeRight );
 		predictedAbsLateral = fabs( predictedLateral );
 
-		if ( predictedAhead > -30.0f && predictedAhead < 150.0f ) {
+		/* Lane clearance must include vehicles approaching from either direction. */
+		if ( predictedAhead > -120.0f && predictedAhead < 150.0f ) {
 			if ( predictedLateral < 0.0f && -predictedLateral < risk->sideSafetyInside ) {
 				risk->sideSafetyInside = -predictedLateral;
 			}
@@ -775,6 +950,65 @@ static void Bot_PredictCollisionRisk( bot_state_t *bs, const vec3_t routeForward
 	if ( risk->sideSafetyInside + 8.0f < risk->sideSafetyOutside ) {
 		risk->laneSwapRecommended = qtrue;
 	}
+}
+
+static qboolean Bot_GhostLateralOffsetIsTrackClear( bot_state_t *bs, const ghostBotRoute_t *route,
+	int startIndex, int endIndex, const vec3_t routeRight, float lateralOffset ) {
+	int checkIndices[3];
+	int i;
+	vec3_t mins, maxs;
+	trace_t trace;
+
+	if ( !bs || !route || !route->valid || !routeRight || startIndex < 0 || endIndex < startIndex ||
+		endIndex >= route->numWaypoints ) {
+		return qfalse;
+	}
+	if ( fabs( lateralOffset ) < 1.0f ) {
+		return qtrue;
+	}
+
+	checkIndices[0] = startIndex;
+	checkIndices[1] = startIndex + ( endIndex - startIndex ) / 2;
+	checkIndices[2] = endIndex;
+	VectorSet( mins, -CAR_WIDTH * 0.5f, -CAR_WIDTH * 0.5f, -CAR_HEIGHT * 0.5f );
+	VectorSet( maxs, CAR_WIDTH * 0.5f, CAR_WIDTH * 0.5f, CAR_HEIGHT * 0.5f );
+
+	for ( i = 0; i < 3; ++i ) {
+		vec3_t traceStart, traceEnd;
+		int previous;
+
+		if ( i > 0 && checkIndices[i] == checkIndices[i - 1] ) {
+			continue;
+		}
+		for ( previous = 0; previous < i; ++previous ) {
+			if ( checkIndices[previous] == checkIndices[i] ) {
+				break;
+			}
+		}
+		if ( previous < i ) {
+			continue;
+		}
+
+		VectorCopy( route->waypoints[checkIndices[i]].origin, traceStart );
+		VectorMA( traceStart, lateralOffset, routeRight, traceEnd );
+		trap_Trace( &trace, traceStart, mins, maxs, traceEnd, bs->entitynum, MASK_PLAYERSOLID & ~CONTENTS_BODY );
+		if ( trace.startsolid || trace.allsolid || trace.fraction < 0.99f ) {
+			return qfalse;
+		}
+	}
+
+	/* Also ensure the first move from the current vehicle position is unobstructed. */
+	{
+		vec3_t traceStart, traceEnd;
+		VectorCopy( bs->cur_ps.origin, traceStart );
+		VectorMA( bs->cur_ps.origin, lateralOffset, routeRight, traceEnd );
+		trap_Trace( &trace, traceStart, mins, maxs, traceEnd, bs->entitynum, MASK_PLAYERSOLID & ~CONTENTS_BODY );
+		if ( trace.startsolid || trace.allsolid || trace.fraction < 0.99f ) {
+			return qfalse;
+		}
+	}
+
+	return qtrue;
 }
 
 /*
@@ -4097,7 +4331,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	//float		accel, a_normal;
 	int			throttleChange;
 	const ghostBotRoute_t *ghostRoute;
-	const char *routeVariant = NULL;
 	ghostDecisionState_t decisionState;
 	float desiredOffset;
 	float speedBias;
@@ -4137,9 +4370,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 	if ( bs->entitynum >= 0 && bs->entitynum < level.maxclients ) {
 		gentity_t *botEnt = &g_entities[bs->entitynum];
-		if ( botEnt->client && botEnt->client->pers.vehicleClass[0] ) {
-			routeVariant = botEnt->client->pers.vehicleClass;
-		}
 		if ( botEnt->client && level.time - botEnt->client->ghostSpawnTime <= GHOST_FORWARD_INIT_PHASE_MS ) {
 			spawnInitPhase = qtrue;
 		}
@@ -4149,6 +4379,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 	{
 		const botPathRoute_t *pathRoutes[BOT_PATH_LINE_FAMILY_COUNT];
+		const ghostBotRoute_t *loadedGhostRoute = NULL;
 		vec3_t baseTargetPoint;
 		vec3_t lineTargetPoint;
 		vec3_t blendedTargetPoint;
@@ -4177,10 +4408,14 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 		bot_recovery_state_t pathRecoveryState;
 		qboolean haveBaseGuidance = qfalse;
 		qboolean haveSelectedGuidance = qfalse;
+		const char *loadedGhostPath = "";
 
 		pathRoutes[BOT_PATH_LINE_BASE] = G_BotPath_GetRouteByIndex( BOT_PATH_LINE_BASE );
 		pathRoutes[BOT_PATH_LINE_AGGRESSIVE] = G_BotPath_GetRouteByIndex( BOT_PATH_LINE_AGGRESSIVE );
 		pathRoutes[BOT_PATH_LINE_SAFE] = G_BotPath_GetRouteByIndex( BOT_PATH_LINE_SAFE );
+		if ( G_Ghost_GetBotRoute( &loadedGhostRoute ) && loadedGhostRoute ) {
+			loadedGhostPath = loadedGhostRoute->path;
+		}
 
 		actualSpeed = VectorLength( bs->cur_ps.velocity );
 		haveBaseGuidance = Bot_BuildBotPathGuidance( pathRoutes[BOT_PATH_LINE_BASE], bs, actualSpeed, baseTargetPoint,
@@ -4379,11 +4614,12 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				int objectiveState;
 				int kothOwner;
 				int kothContested;
-				Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
+			Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
 			Bot_DebugExportDmnetTick( bs, selectedLookAheadIndex, speedFromRoute, actualSpeed, decisionState,
 				pathCollisionRisk.hasPredictedConflict, pathRecoveryState, pathRecoveryState, "", "",
 				Distance( bs->cur_ps.origin, baseTargetPoint ), selectedPathId, selectedNodeIndex,
-				selectedLookAheadIndex, widthClampEvent, autoSpeedActive, targetSpeedOverrideActive,
+				selectedLookAheadIndex, "map", pathRoutes[selectedPathId] ? pathRoutes[selectedPathId]->name : "unknown",
+				loadedGhostPath, qtrue, widthClampEvent, autoSpeedActive, targetSpeedOverrideActive,
 				forwardLaunchPhase ? 1 : 0, objectiveState, kothOwner, kothContested );
 			}
 
@@ -4396,7 +4632,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 		}
 	}
 
-	if ( G_Ghost_GetBotRouteForVariant( routeVariant, &ghostRoute ) && ghostRoute ) {
+	if ( G_Ghost_GetBotRoute( &ghostRoute ) && ghostRoute ) {
 		int bestIndex = -1;
 		int i;
 		int hintIndex = bs->ghostRouteIndexHint;
@@ -4439,6 +4675,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 		if ( bestIndex >= 0 ) {
 			int lookAheadIndex = bestIndex;
+			qboolean emergencyResetPerformed = qfalse;
 			int speedStartIndex;
 			int speedEndIndex = bestIndex;
 			int segmentStartIndex;
@@ -4447,6 +4684,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 			float lookAheadDistanceSq = LOOKAHEAD_DISTANCE * LOOKAHEAD_DISTANCE;
 			float cornerPhase = 0.0f;
 			float avgCurvature = 0.0f;
+			vec3_t routeForward;
 			bs->ghostRouteIndexHint = bestIndex;
 
 			for ( i = bestIndex + 1; i < ghostRoute->numWaypoints; ++i ) {
@@ -4514,14 +4752,13 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 
 			{
 			vec3_t targetPoint;
-			vec3_t routeForward;
 			vec3_t routeRight;
 			float routeForwardLen;
 			float routeDistanceFromCenter;
 			float brakeZone;
-			float baseTargetOffset;
 			float blendFactor;
 			float lineSpeedScale;
+			float sideSafetyThreshold;
 			int preferredInside = qtrue;
 			int segmentForProfile;
 			botCollisionRisk_t collisionRisk;
@@ -4548,6 +4785,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 			}
 
 			Bot_PredictCollisionRisk( bs, routeForward, routeRight, 0.5f, 1.5f, &collisionRisk );
+			sideSafetyThreshold = CAR_WIDTH + 16.0f;
 			routeDistanceFromCenter = Distance( bs->cur_ps.origin, ghostRoute->waypoints[bestIndex].origin );
 			recoveryState = (bot_recovery_state_t)bs->ghostRecoveryState;
 			previousRecoveryState = recoveryState;
@@ -4566,9 +4804,12 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 			}
 
 			{
-				float recoveryIdleTime = FloatTime() - bs->ghostRecoveryStateTime;
+				float recoveryNow = FloatTime();
+				float recoveryIdleTime = recoveryNow - bs->ghostRecoveryStateTime;
+				qboolean resetCooldownElapsed = ( bs->ghostRecoveryLastResetTime <= 0.0f ||
+					recoveryNow - bs->ghostRecoveryLastResetTime >= GHOST_RECOVERY_RESET_COOLDOWN ) ? qtrue : qfalse;
 				qboolean recoveryArmed = ( recoveryState == BOT_RECOVERY_NONE &&
-					recoveryIdleTime >= GHOST_RECOVERY_REARM_DELAY ) ? qtrue : qfalse;
+					recoveryIdleTime >= GHOST_RECOVERY_REARM_DELAY && resetCooldownElapsed ) ? qtrue : qfalse;
 
 				if ( recoveryArmed && !forwardLaunchPhase && FloatTime() - bs->ghostRecoveryLastSampleTime >= GHOST_RECOVERY_SAMPLE_WINDOW ) {
 					float sampledProgress = Distance( bs->cur_ps.origin, bs->ghostRecoveryLastOrigin );
@@ -4623,7 +4864,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				float overtakeEnterRelSpeed = 60.0f - ( bs->personalityOvertakeBias * 25.0f );
 				float defendRelSpeed = 95.0f - ( bs->personalityRisk * 35.0f );
 				float abortDist = 25.0f + ( ( 1.0f - bs->personalityRisk ) * 18.0f );
-				float sideSafetyThreshold = 66.0f - ( bs->personalityRisk * 28.0f );
 				float abortBrakeZone = 0.88f - ( bs->personalityRisk * 0.20f );
 				float followClearDist = 240.0f + ( bs->personalityOvertakeBias * 55.0f );
 
@@ -4695,11 +4935,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				}
 			}
 
-			if ( decisionState != (ghostDecisionState_t)bs->ghostDecisionState ) {
-				bs->ghostDecisionState = decisionState;
-				bs->ghostDecisionStateTime = FloatTime();
-			}
-
 			switch ( decisionState ) {
 				case GHOST_DECISION_PREPARE_OVERTAKE:
 					desiredOffset = ( collisionRisk.nearestAheadLateral >= 0.0f ) ? -32.0f : 32.0f;
@@ -4714,7 +4949,8 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 					speedBias = 10.0f + ( bs->personalityOvertakeBias * 25.0f );
 					break;
 				case GHOST_DECISION_DEFEND_LINE:
-					desiredOffset = ( collisionRisk.nearestBehindLateral >= 0.0f ) ? -46.0f : 46.0f;
+					/* Keep the recorded line; rear-traffic data does not prove a side gap is clear. */
+					desiredOffset = 0.0f;
 					speedBias = -25.0f;
 					break;
 				case GHOST_DECISION_ABORT_OVERTAKE:
@@ -4744,7 +4980,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				}
 			}
 
-			baseTargetOffset = 0.0f;
 			lineSpeedScale = 1.0f;
 			if ( ghostRoute->numSegments > 0 ) {
 				segmentForProfile = speedStartIndex;
@@ -4753,7 +4988,6 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				} else if ( segmentForProfile >= ghostRoute->numSegments ) {
 					segmentForProfile = ghostRoute->numSegments - 1;
 				}
-				baseTargetOffset = ghostRoute->segments[segmentForProfile].lines[selectedFamily].lateralOffset;
 				lineSpeedScale = ghostRoute->segments[segmentForProfile].lines[selectedFamily].speedScale;
 			}
 
@@ -4770,8 +5004,34 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				collisionRiskActive = collisionRisk.hasPredictedConflict;
 				lcsPredictedConflict = collisionRisk.hasPredictedConflict;
 
-			blendFactor = ( selectedFamily == GHOST_LINE_BASE ) ? 0.22f : 0.35f;
-			bs->ghostDecisionLateralOffset += ( ( baseTargetOffset + desiredOffset ) - bs->ghostDecisionLateralOffset ) * blendFactor;
+			if ( fabs( desiredOffset ) > 1.0f ) {
+				float sideClearance = desiredOffset < 0.0f ? collisionRisk.sideSafetyInside : collisionRisk.sideSafetyOutside;
+				qboolean safeGap = ( sideClearance >= sideSafetyThreshold ) ? qtrue : qfalse;
+				qboolean trackClear = Bot_GhostLateralOffsetIsTrackClear( bs, ghostRoute, bestIndex, lookAheadIndex,
+					routeRight, desiredOffset );
+				if ( !safeGap || !trackClear ) {
+					qboolean overtakeMove = ( decisionState == GHOST_DECISION_PREPARE_OVERTAKE ||
+						decisionState == GHOST_DECISION_OVERTAKE_INSIDE || decisionState == GHOST_DECISION_OVERTAKE_OUTSIDE ) ? qtrue : qfalse;
+					desiredOffset = 0.0f;
+					if ( overtakeMove ) {
+						decisionState = GHOST_DECISION_ABORT_OVERTAKE;
+						speedBias -= 45.0f;
+					}
+					if ( !recoveryEvent[0] ) {
+						recoveryEvent = "lateral_shift_rejected";
+					}
+					recoveryTrigger = !safeGap ? "occupied_side_gap" : "track_boundary";
+				}
+			}
+
+			if ( decisionState != (ghostDecisionState_t)bs->ghostDecisionState ) {
+				bs->ghostDecisionState = decisionState;
+				bs->ghostDecisionStateTime = FloatTime();
+			}
+
+			/* Return promptly to the captured route once a temporary lateral move ends. */
+			blendFactor = ( fabs( desiredOffset ) > 1.0f ) ? 0.35f : 0.55f;
+			bs->ghostDecisionLateralOffset += ( desiredOffset - bs->ghostDecisionLateralOffset ) * blendFactor;
 			VectorMA( ghostRoute->waypoints[lookAheadIndex].origin, bs->ghostDecisionLateralOffset, routeRight, targetPoint );
 			VectorSubtract( targetPoint, bs->cur_ps.origin, dir );
 			dir[2] = 0;
@@ -4908,13 +5168,33 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				}
 
 				case BOT_RECOVERY_EMERGENCY_RESET_REQUEST:
-					/* Keep ghostRouteIndexHint at current bestIndex - clearing to -1
-					   causes the waypoint selector to jump to end-of-route waypoints */
-					bs->ghostRouteIndexHint = bestIndex;
-					bs->ghostDecisionLateralOffset = 0.0f;
-					Bot_SetRecoveryState( bs, BOT_RECOVERY_NONE );
-					recoveryState = BOT_RECOVERY_NONE;
-					throttleChange = 1;
+					if ( bs->ghostRecoveryLastResetTime <= 0.0f ||
+						FloatTime() - bs->ghostRecoveryLastResetTime >= GHOST_RECOVERY_RESET_COOLDOWN ) {
+						int resetIndex = -1;
+						bs->ghostRecoveryLastResetTime = FloatTime();
+						if ( Bot_GhostEmergencyRouteReset( bs, ghostRoute, bestIndex, nextCheckpoint, routeForward, &resetIndex ) ) {
+							bestIndex = resetIndex;
+							lookAheadIndex = resetIndex;
+							routeDistanceFromCenter = 0.0f;
+							actualSpeed = 0.0f;
+							Bot_SetRecoveryState( bs, BOT_RECOVERY_NONE );
+							recoveryState = BOT_RECOVERY_NONE;
+							recoveryEvent = "emergency_route_reset";
+							recoveryTrigger = "recovery_exhausted";
+							emergencyResetPerformed = qtrue;
+							VectorCopy( bs->ideal_viewangles, angles );
+						} else {
+							Bot_SetRecoveryState( bs, BOT_RECOVERY_REJOIN_ROUTE );
+							recoveryState = BOT_RECOVERY_REJOIN_ROUTE;
+							recoveryEvent = "reset_no_safe_waypoint";
+							recoveryTrigger = "no_clear_route_spot";
+						}
+					} else {
+						Bot_SetRecoveryState( bs, BOT_RECOVERY_REJOIN_ROUTE );
+						recoveryState = BOT_RECOVERY_REJOIN_ROUTE;
+						recoveryEvent = "reset_cooldown_rejoin";
+						recoveryTrigger = "reset_cooldown";
+					}
 					break;
 
 				case BOT_RECOVERY_NONE:
@@ -4931,10 +5211,19 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 					recoveryEvent = "recovery_timeout_rejoin";
 					recoveryTrigger = "recovery_timeout";
 				} else {
-					Bot_SetRecoveryState( bs, BOT_RECOVERY_EMERGENCY_RESET_REQUEST );
-					recoveryState = BOT_RECOVERY_EMERGENCY_RESET_REQUEST;
-					recoveryEvent = "recovery_timeout";
-					recoveryTrigger = "recovery_timeout";
+					if ( bs->ghostRecoveryLastResetTime <= 0.0f ||
+						FloatTime() - bs->ghostRecoveryLastResetTime >= GHOST_RECOVERY_RESET_COOLDOWN ) {
+						Bot_SetRecoveryState( bs, BOT_RECOVERY_EMERGENCY_RESET_REQUEST );
+						recoveryState = BOT_RECOVERY_EMERGENCY_RESET_REQUEST;
+						recoveryEvent = "recovery_timeout";
+						recoveryTrigger = "recovery_timeout";
+					} else {
+						Bot_SetRecoveryState( bs, BOT_RECOVERY_REJOIN_ROUTE );
+						recoveryState = BOT_RECOVERY_REJOIN_ROUTE;
+						bs->ghostRecoveryStateTime = FloatTime();
+						recoveryEvent = "reset_cooldown_rejoin";
+						recoveryTrigger = "reset_cooldown";
+					}
 				}
 			}
 			if ( !recoveryEvent[0] && recoveryState != previousRecoveryState ) {
@@ -4945,19 +5234,25 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 				throttleChange = 0;
 			}
 
-			throttleChange = Bot_CheckForObstacles( bs, angles, throttleChange );
+			if ( !emergencyResetPerformed ) {
+				throttleChange = Bot_CheckForObstacles( bs, angles, throttleChange );
+			}
 			VectorCopy( angles, bs->ideal_viewangles );
 			{
 				int objectiveState;
 				int kothOwner;
 				int kothContested;
-				Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
+			Bot_DebugGetObjectiveSnapshot( bs, &objectiveState, &kothOwner, &kothContested );
 			Bot_DebugExportDmnetTick( bs, bestIndex, speed, actualSpeed, decisionState, collisionRiskActive,
 				recoveryState, previousRecoveryState, recoveryEvent, recoveryTrigger, routeDistanceFromCenter,
-				-1, bestIndex, lookAheadIndex, 0, 1, 0, forwardLaunchPhase ? 1 : 0,
+				-1, bestIndex, lookAheadIndex, "ghost", ghostRoute->path, ghostRoute->path, qtrue,
+				0, 1, 0, forwardLaunchPhase ? 1 : 0,
 				objectiveState, kothOwner, kothContested );
 			}
 
+			if ( emergencyResetPerformed ) {
+				return qtrue;
+			}
 			if( throttleChange > 0 )
 				trap_EA_MoveForward( bs->client );
 			else if( throttleChange < 0 )

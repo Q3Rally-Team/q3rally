@@ -32,6 +32,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define MAX_GLOBALSERVERS               128
@@ -107,6 +108,39 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define UIAS_NUM_SOURCES		8
 
 #define UI_MAX_MASTER_SERVERS	6
+
+/* Modern server browser layout. The legacy menu data and event routing stay
+ * intact, while the screen is rendered as a single frontend surface. */
+#define SERVERS_FRAME_X             24
+#define SERVERS_FRAME_Y             20
+#define SERVERS_FRAME_WIDTH         592
+#define SERVERS_FRAME_HEIGHT        440
+#define SERVERS_FILTER_X            40
+#define SERVERS_FILTER_Y            92
+#define SERVERS_FILTER_WIDTH        400
+#define SERVERS_FILTER_HEIGHT       64
+#define SERVERS_TOGGLE_Y            120
+#define SERVERS_LIST_X              40
+#define SERVERS_LIST_Y              192
+#define SERVERS_LIST_WIDTH          400
+#define SERVERS_LIST_HEIGHT         220
+#define SERVERS_ROW_X               48
+#define SERVERS_ROW_Y               174
+#define SERVERS_ROW_WIDTH           384
+#define SERVERS_ROW_HEIGHT          22
+#define SERVERS_ROW_GAP             3
+#define SERVERS_VISIBLE_ROWS        8
+#define SERVERS_DETAIL_X            456
+#define SERVERS_DETAIL_Y            84
+#define SERVERS_DETAIL_WIDTH        144
+#define SERVERS_DETAIL_HEIGHT       304
+#define SERVERS_ACTION_Y            420
+#define SERVERS_ACTION_WIDTH        80
+#define SERVERS_ACTION_HEIGHT       24
+
+static vec4_t serversTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t serversMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t serversAccentColor = UI_FRONTEND_COLOR_ACCENT;
 
 #define SORT_HOST                       0
 #define SORT_MAP                        1
@@ -336,6 +370,302 @@ static int                              g_sortkey;
 static int                              g_onlyhumans;
 static int                              g_emptyservers;
 static int                              g_fullservers;
+
+static void ArenaServers_Event( void *ptr, int event );
+static void ArenaServers_DrawFilter( void *self );
+static void ArenaServers_DoRefresh( void );
+
+static void ArenaServers_FitText( char *out, int outSize, const char *text,
+                                  int maxWidth ) {
+        int len;
+
+        if ( !out || outSize <= 0 ) {
+                return;
+        }
+
+        Q_strncpyz( out, text ? text : "", outSize );
+        if ( Frontend_TextWidth( out, UI_SMALLFONT ) <= maxWidth ) {
+                return;
+        }
+
+        len = (int)strlen( out );
+        while ( len > 3 && Frontend_TextWidth( out, UI_SMALLFONT ) > maxWidth ) {
+                len--;
+                out[len] = '\0';
+        }
+
+        if ( len >= 3 ) {
+                out[len - 3] = '.';
+                out[len - 2] = '.';
+                out[len - 1] = '.';
+        }
+}
+
+static void ArenaServers_DrawAction( void *self ) {
+        menutext_s *button;
+        qboolean focus;
+        qboolean disabled;
+        vec4_t disabledColor;
+
+        button = (menutext_s *)self;
+        focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+        disabled = ( button->generic.flags & QMF_GRAYED ) ? qtrue : qfalse;
+
+        if ( disabled ) {
+                Vector4Copy( serversMutedColor, disabledColor );
+                disabledColor[3] = 0.35f;
+                Frontend_DrawText( ( button->generic.left + button->generic.right ) / 2,
+                        button->generic.top + 4, button->string,
+                        UI_CENTER | UI_SMALLFONT, disabledColor );
+                return;
+        }
+
+        Frontend_DrawButton( button->generic.left, button->generic.top,
+                button->generic.right - button->generic.left,
+                button->generic.bottom - button->generic.top,
+                button->string, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
+
+static void ArenaServers_InitAction( menutext_s *item, int id,
+                                     const char *label, int x ) {
+        item->generic.type = MTYPE_PTEXT;
+        item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS |
+                QMF_NODEFAULTINIT;
+        item->generic.id = id;
+        item->generic.callback = ArenaServers_Event;
+        item->generic.x = x + SERVERS_ACTION_WIDTH / 2;
+        item->generic.y = SERVERS_ACTION_Y + SERVERS_ACTION_HEIGHT / 2;
+        item->generic.left = x;
+        item->generic.top = SERVERS_ACTION_Y;
+        item->generic.right = x + SERVERS_ACTION_WIDTH;
+        item->generic.bottom = SERVERS_ACTION_Y + SERVERS_ACTION_HEIGHT;
+        item->generic.ownerdraw = ArenaServers_DrawAction;
+        item->string = (char *)label;
+        item->color = serversTextColor;
+        item->style = UI_CENTER | UI_SMALLFONT;
+}
+
+static void ArenaServers_InitFilter( menucommon_s *item, int id,
+                                     int x, int y, int width ) {
+        item->flags |= QMF_NODEFAULTINIT;
+        item->id = id;
+        item->x = x + width / 2;
+        item->y = y + 11;
+        item->left = x;
+        item->top = y;
+        item->right = x + width;
+        item->bottom = y + 22;
+        item->ownerdraw = ArenaServers_DrawFilter;
+}
+
+static void ArenaServers_DrawFilter( void *self ) {
+        menucommon_s *item;
+        qboolean focus;
+        char label[96];
+        const char *value;
+
+        item = (menucommon_s *)self;
+        focus = ( Menu_ItemAtCursor( item->parent ) == item );
+        value = "";
+
+        switch ( item->id ) {
+        case ID_MASTER:
+                value = master_items[g_arenaservers.master.curvalue];
+                Com_sprintf( label, sizeof( label ), "Source  %s", value );
+                break;
+        case ID_GAMETYPE:
+                value = servertype_items[g_arenaservers.gametype.curvalue];
+                Com_sprintf( label, sizeof( label ), "Mode  %s", value );
+                break;
+        case ID_SORTKEY:
+                value = sortkey_items[g_arenaservers.sortkey.curvalue];
+                Com_sprintf( label, sizeof( label ), "Sort  %s", value );
+                break;
+        case ID_SHOW_FULL:
+                Com_sprintf( label, sizeof( label ), "Full  %s",
+                        g_fullservers ? "On" : "Off" );
+                break;
+        case ID_SHOW_EMPTY:
+                Com_sprintf( label, sizeof( label ), "Empty  %s",
+                        g_emptyservers ? "On" : "Off" );
+                break;
+        case ID_ONLY_HUMANS:
+                Com_sprintf( label, sizeof( label ), "Humans  %s",
+                        g_onlyhumans ? "On" : "Off" );
+                break;
+        default:
+                Q_strncpyz( label, "Filter", sizeof( label ) );
+                break;
+        }
+
+        ArenaServers_FitText( label, sizeof( label ), label,
+                item->right - item->left - 12 );
+        Frontend_DrawButton( item->left, item->top,
+                item->right - item->left, item->bottom - item->top,
+                label, 1.0f, focus, UI_FRONTEND_TEXT_LEFT );
+}
+
+static void ArenaServers_DrawList( void *self ) {
+        menulist_s *list;
+        int i;
+
+        list = (menulist_s *)self;
+        if ( !g_arenaservers.list.numitems ) {
+                Frontend_DrawText( SERVERS_ROW_X, SERVERS_ROW_Y + 12,
+                        "No servers found", UI_LEFT | UI_SMALLFONT,
+                        serversMutedColor );
+                return;
+        }
+
+        for ( i = 0; i < SERVERS_VISIBLE_ROWS; i++ ) {
+                int index;
+                int y;
+                servernode_t *server;
+                char hostname[64];
+                char mapname[32];
+                char players[24];
+                char ping[16];
+
+                index = list->top + i;
+                if ( index < 0 || index >= list->numitems ) {
+                        break;
+                }
+
+                server = g_arenaservers.table[index].servernode;
+                if ( !server ) {
+                        continue;
+                }
+
+                y = SERVERS_ROW_Y + i * ( SERVERS_ROW_HEIGHT + SERVERS_ROW_GAP );
+                ArenaServers_FitText( hostname, sizeof( hostname ),
+                        server->hostname, 150 );
+                ArenaServers_FitText( mapname, sizeof( mapname ),
+                        server->mapname, 88 );
+                Com_sprintf( players, sizeof( players ), "%d/%d",
+                        server->numclients, server->maxclients );
+                Com_sprintf( ping, sizeof( ping ), "%d", server->pingtime );
+
+                Frontend_DrawNavButton( SERVERS_ROW_X, y, SERVERS_ROW_WIDTH,
+                        SERVERS_ROW_HEIGHT, hostname, 1.0f,
+                        index == list->curvalue, UI_FRONTEND_TEXT_LEFT );
+                Frontend_DrawText( SERVERS_ROW_X + 176, y + 4, mapname,
+                        UI_LEFT | UI_SMALLFONT, serversMutedColor );
+                Frontend_DrawText( SERVERS_ROW_X + 292, y + 4, players,
+                        UI_LEFT | UI_SMALLFONT, serversTextColor );
+                Frontend_DrawText( SERVERS_ROW_X + SERVERS_ROW_WIDTH - 8,
+                        y + 4, ping, UI_RIGHT | UI_SMALLFONT,
+                        serversMutedColor );
+        }
+}
+
+static void ArenaServers_DrawDetails( void ) {
+        servernode_t *server;
+        char value[96];
+
+        if ( !g_arenaservers.list.numitems ||
+             g_arenaservers.list.curvalue < 0 ||
+             g_arenaservers.list.curvalue >= g_arenaservers.list.numitems ) {
+                Frontend_DrawText( SERVERS_DETAIL_X + 16, SERVERS_DETAIL_Y + 54,
+                        "Select a server", UI_LEFT | UI_SMALLFONT,
+                        serversMutedColor );
+                return;
+        }
+
+        server = g_arenaservers.table[g_arenaservers.list.curvalue].servernode;
+        if ( !server ) {
+                return;
+        }
+
+        if ( g_arenaservers.mappic.generic.name ) {
+                qhandle_t shader;
+                shader = trap_R_RegisterShaderNoMip( g_arenaservers.mappic.generic.name );
+                if ( shader ) {
+                        UI_DrawHandlePic( SERVERS_DETAIL_X + 8,
+                                SERVERS_DETAIL_Y + 42, 128, 72, shader );
+                }
+        }
+
+        ArenaServers_FitText( value, sizeof( value ), server->hostname,
+                SERVERS_DETAIL_WIDTH - 24 );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 132,
+                value, UI_LEFT | UI_SMALLFONT, serversTextColor );
+        ArenaServers_FitText( value, sizeof( value ), server->mapname,
+                SERVERS_DETAIL_WIDTH - 24 );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 158,
+                value, UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        Com_sprintf( value, sizeof( value ), "Players  %d/%d",
+                server->numclients, server->maxclients );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 190,
+                value, UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        Com_sprintf( value, sizeof( value ), "Ping  %d ms", server->pingtime );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 212,
+                value, UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        ArenaServers_FitText( value, sizeof( value ), server->adrstr,
+                SERVERS_DETAIL_WIDTH - 24 );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 244,
+                value, UI_LEFT | UI_SMALLFONT, serversMutedColor );
+}
+
+static void ArenaServers_Draw( void ) {
+        vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
+        char countText[64];
+
+        if ( g_arenaservers.refreshservers ) {
+                ArenaServers_DoRefresh();
+        }
+
+        Frontend_DrawBackground( scrimColor );
+        Frontend_DrawPanel( SERVERS_FRAME_X, SERVERS_FRAME_Y,
+                SERVERS_FRAME_WIDTH, SERVERS_FRAME_HEIGHT, 1.0f,
+                UI_FRONTEND_STYLE_FRAME );
+        Frontend_DrawText( SERVERS_FRAME_X + 24, SERVERS_FRAME_Y + 24,
+                "Online", UI_LEFT | UI_BIGFONT, serversTextColor );
+        Frontend_DrawText( SERVERS_FRAME_X + 24, SERVERS_FRAME_Y + 48,
+                "Find a server or host a new race", UI_LEFT | UI_SMALLFONT,
+                serversMutedColor );
+        Frontend_DrawStatusChip( SERVERS_FRAME_X + SERVERS_FRAME_WIDTH - 104,
+                SERVERS_FRAME_Y + 26, "Browser", serversAccentColor, 1.0f );
+
+        Frontend_DrawCard( SERVERS_FILTER_X, SERVERS_FILTER_Y,
+                SERVERS_FILTER_WIDTH, SERVERS_FILTER_HEIGHT, 1.0f, qfalse );
+        Frontend_DrawCard( SERVERS_LIST_X, SERVERS_LIST_Y - 34,
+                SERVERS_LIST_WIDTH, SERVERS_LIST_HEIGHT + 22, 1.0f, qfalse );
+        Frontend_DrawCard( SERVERS_DETAIL_X, SERVERS_DETAIL_Y,
+                SERVERS_DETAIL_WIDTH, SERVERS_DETAIL_HEIGHT, 1.0f, qfalse );
+        Frontend_DrawText( SERVERS_LIST_X + 8, SERVERS_ROW_Y - 14,
+                "Available servers", UI_LEFT | UI_SMALLFONT,
+                serversMutedColor );
+        Frontend_DrawText( SERVERS_DETAIL_X + 12, SERVERS_DETAIL_Y + 18,
+                "Server details", UI_LEFT | UI_SMALLFONT,
+                serversMutedColor );
+        Frontend_DrawText( SERVERS_ROW_X + 176, SERVERS_ROW_Y - 14,
+                "Map", UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        Frontend_DrawText( SERVERS_ROW_X + 292, SERVERS_ROW_Y - 14,
+                "Players", UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        Frontend_DrawText( SERVERS_ROW_X + SERVERS_ROW_WIDTH - 8,
+                SERVERS_ROW_Y - 14, "Ping", UI_RIGHT | UI_SMALLFONT,
+                serversMutedColor );
+
+        Menu_Draw( &g_arenaservers.menu );
+        ArenaServers_DrawDetails();
+
+        if ( g_arenaservers.refreshservers ) {
+                Q_strncpyz( countText, g_arenaservers.status.string,
+                        sizeof( countText ) );
+        } else if ( g_arenaservers.list.numitems > 0 ) {
+                Com_sprintf( countText, sizeof( countText ), "%d servers found",
+                        g_arenaservers.list.numitems );
+        } else {
+                Q_strncpyz( countText, g_arenaservers.status.string,
+                        sizeof( countText ) );
+        }
+        Frontend_DrawText( SERVERS_FRAME_X + 24, SERVERS_FRAME_Y + 384,
+                countText, UI_LEFT | UI_SMALLFONT, serversMutedColor );
+        Frontend_DrawText( SERVERS_FRAME_X + SERVERS_FRAME_WIDTH - 24,
+                SERVERS_FRAME_Y + 384,
+                "Enter connect   Esc back", UI_RIGHT | UI_SMALLFONT,
+                serversMutedColor );
+}
 
 /*
 =================
@@ -788,10 +1118,10 @@ static void ArenaServers_UpdateMenu( void ) {
 
 /*
 =================
-ArenaServers_Remove
+ArenaServers_RemoveNow
 =================
 */
-static void ArenaServers_Remove( void )
+static void ArenaServers_RemoveNow( void )
 {
         int                             i;
         servernode_t*   servernodeptr;
@@ -841,6 +1171,30 @@ static void ArenaServers_Remove( void )
 
         g_arenaservers.numqueriedservers = g_arenaservers.numfavoriteaddresses;
         g_arenaservers.currentping       = g_arenaservers.numfavoriteaddresses;
+}
+
+static void ArenaServers_RemoveConfirmAction( qboolean result ) {
+        if ( !result ) {
+                return;
+        }
+
+        ArenaServers_RemoveNow();
+        ArenaServers_UpdateMenu();
+}
+
+static void ArenaServers_RequestRemove( void ) {
+        if ( !g_arenaservers.list.numitems ) {
+                return;
+        }
+
+        if ( g_servertype == UIAS_FAVORITES ) {
+                UI_ConfirmMenu( "REMOVE SERVER?", NULL,
+                                ArenaServers_RemoveConfirmAction );
+                return;
+        }
+
+        ArenaServers_RemoveNow();
+        ArenaServers_UpdateMenu();
 }
 
 
@@ -1495,8 +1849,7 @@ static void ArenaServers_Event( void* ptr, int event ) {
                 break;
 
         case ID_REMOVE:
-                ArenaServers_Remove();
-                ArenaServers_UpdateMenu();
+                ArenaServers_RequestRemove();
                 break;
                 
         case ID_SAVE:
@@ -1510,34 +1863,55 @@ static void ArenaServers_Event( void* ptr, int event ) {
 
 /*
 =================
-ArenaServers_MenuDraw
-=================
-*/
-static void ArenaServers_MenuDraw( void )
-{
-        if (g_arenaservers.refreshservers)
-                ArenaServers_DoRefresh();
-
-        Menu_Draw( &g_arenaservers.menu );
-}
-
-
-/*
-=================
 ArenaServers_MenuKey
 =================
 */
 static sfxHandle_t ArenaServers_MenuKey( int key ) {
+        int row;
+        int index;
+
         if( key == K_SPACE  && g_arenaservers.refreshservers ) {
                 ArenaServers_StopRefresh();    
                 return menu_move_sound;
         }
 
+        if ( key == K_MOUSE1 &&
+             uis.cursorx >= SERVERS_ROW_X &&
+             uis.cursorx <= SERVERS_ROW_X + SERVERS_ROW_WIDTH &&
+             uis.cursory >= SERVERS_ROW_Y &&
+             uis.cursory < SERVERS_ROW_Y + SERVERS_VISIBLE_ROWS *
+                 ( SERVERS_ROW_HEIGHT + SERVERS_ROW_GAP ) ) {
+                row = ( uis.cursory - SERVERS_ROW_Y ) /
+                        ( SERVERS_ROW_HEIGHT + SERVERS_ROW_GAP );
+                if ( uis.cursory >= SERVERS_ROW_Y + row *
+                        ( SERVERS_ROW_HEIGHT + SERVERS_ROW_GAP ) +
+                        SERVERS_ROW_HEIGHT ) {
+                        return menu_null_sound;
+                }
+
+                index = g_arenaservers.list.top + row;
+                if ( index >= 0 && index < g_arenaservers.list.numitems ) {
+                        g_arenaservers.list.oldvalue =
+                                g_arenaservers.list.curvalue;
+                        g_arenaservers.list.curvalue = index;
+                        ArenaServers_UpdatePicture();
+                        return g_arenaservers.list.oldvalue == index ?
+                                menu_null_sound : menu_move_sound;
+                }
+                return menu_null_sound;
+        }
+
+        if ( ( key == K_ENTER || key == K_KP_ENTER ) &&
+             Menu_ItemAtCursor( &g_arenaservers.menu ) ==
+                 (menucommon_s *)&g_arenaservers.list ) {
+                ArenaServers_Go();
+                return menu_in_sound;
+        }
+
 
         if( ( key == K_DEL || key == K_KP_DEL ) && ( g_servertype == UIAS_FAVORITES ) &&
                 ( Menu_ItemAtCursor( &g_arenaservers.menu) == &g_arenaservers.list ) ) {
-                ArenaServers_Remove();
-                ArenaServers_UpdateMenu();
+                ArenaServers_RequestRemove();
                 return menu_move_sound;
         }
 
@@ -1569,7 +1943,7 @@ static void ArenaServers_MenuInit( void ) {
 
         g_arenaservers.menu.fullscreen = qtrue;
         g_arenaservers.menu.wrapAround = qtrue;
-        g_arenaservers.menu.draw       = ArenaServers_MenuDraw;
+        g_arenaservers.menu.draw       = ArenaServers_Draw;
         g_arenaservers.menu.key        = ArenaServers_MenuKey;
 
         g_arenaservers.banner.generic.type  = MTYPE_BTEXT;
@@ -1905,6 +2279,56 @@ static void ArenaServers_MenuInit( void ) {
         g_arenaservers.go.color                                 = text_color_normal;
         g_arenaservers.go.style                                 = UI_RIGHT | UI_SMALLFONT;
 // END
+
+        /* Keep the old menu items as the interaction model, but give every
+         * visible control a frontend hitbox and owner-drawn presentation. */
+        g_arenaservers.banner.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+        g_arenaservers.grlogo.generic.flags |= QMF_HIDDEN;
+        g_arenaservers.league.generic.flags |= QMF_HIDDEN;
+        g_arenaservers.practice.generic.flags |= QMF_HIDDEN;
+        g_arenaservers.mappic.generic.flags |= QMF_HIDDEN;
+        g_arenaservers.status.generic.flags |= QMF_HIDDEN;
+        g_arenaservers.statusbar.generic.flags |= QMF_HIDDEN;
+
+        ArenaServers_InitFilter( &g_arenaservers.master.generic, ID_MASTER,
+                48, 100, 124 );
+        ArenaServers_InitFilter( &g_arenaservers.gametype.generic, ID_GAMETYPE,
+                180, 100, 124 );
+        ArenaServers_InitFilter( &g_arenaservers.sortkey.generic, ID_SORTKEY,
+                312, 100, 124 );
+        ArenaServers_InitFilter( &g_arenaservers.showfull.generic, ID_SHOW_FULL,
+                48, 132, 124 );
+        ArenaServers_InitFilter( &g_arenaservers.showempty.generic, ID_SHOW_EMPTY,
+                180, 132, 124 );
+        ArenaServers_InitFilter( &g_arenaservers.onlyhumans.generic, ID_ONLY_HUMANS,
+                312, 132, 124 );
+
+        g_arenaservers.master.numitems = ARRAY_LEN( master_items ) - 1;
+        g_arenaservers.gametype.numitems = ARRAY_LEN( servertype_items ) - 1;
+        g_arenaservers.sortkey.numitems = ARRAY_LEN( sortkey_items ) - 1;
+
+        g_arenaservers.list.generic.x = SERVERS_ROW_X + SERVERS_ROW_WIDTH / 2;
+        g_arenaservers.list.generic.y = SERVERS_ROW_Y;
+        g_arenaservers.list.generic.left = SERVERS_ROW_X;
+        g_arenaservers.list.generic.top = SERVERS_ROW_Y;
+        g_arenaservers.list.generic.right = SERVERS_ROW_X + SERVERS_ROW_WIDTH;
+        g_arenaservers.list.generic.bottom = SERVERS_ROW_Y +
+                SERVERS_VISIBLE_ROWS * ( SERVERS_ROW_HEIGHT + SERVERS_ROW_GAP );
+        g_arenaservers.list.generic.flags |= QMF_NODEFAULTINIT;
+        g_arenaservers.list.generic.ownerdraw = ArenaServers_DrawList;
+        g_arenaservers.list.height = SERVERS_VISIBLE_ROWS;
+
+        ArenaServers_InitAction( &g_arenaservers.back, ID_BACK, "Back", 24 );
+        ArenaServers_InitAction( &g_arenaservers.save, ID_SAVE, "Save", 108 );
+        ArenaServers_InitAction( &g_arenaservers.remove, ID_REMOVE, "Delete", 192 );
+        ArenaServers_InitAction( &g_arenaservers.specify, ID_SPECIFY,
+                "Specify", 276 );
+        ArenaServers_InitAction( &g_arenaservers.refresh, ID_REFRESH,
+                "Refresh", 360 );
+        ArenaServers_InitAction( &g_arenaservers.create, ID_CREATE,
+                "Create", 444 );
+        ArenaServers_InitAction( &g_arenaservers.go, ID_CONNECT,
+                "Connect", 528 );
 
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.banner );
 

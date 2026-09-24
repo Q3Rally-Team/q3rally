@@ -189,7 +189,8 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
       <tr><td>Derby / LCS</td><td>Last car alive</td><td>+1</td><td>−1</td></tr>
       <tr><td>Deathmatch / Team DM</td><td>Frag or time limit</td><td>+1</td><td>−1</td></tr>
       <tr><td>CTF / CTF4</td><td>Capture limit</td><td>+2 (carrier kill)</td><td>—</td></tr>
-      <tr><td>Domination / KOTH</td><td>Score limit / time</td><td>+1</td><td>—</td></tr>
+      <tr><td>Domination</td><td>Score limit / time</td><td>+1</td><td>—</td></tr>
+      <tr><td>KOTH</td><td>Objective score limit / time</td><td>No team points for kills</td><td>—</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -207,7 +208,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
       <tr><td>q3r_a_to_b_test</td><td>A 2 B Test</td><td>P3rlE</td><td>Racing, Team Racing</td><td>1</td><td>2</td><td>—</td><td>—</td></tr>
       <tr><td>q3r_country01</td><td>Roll On Down The Line</td><td>Stecki</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>20</td><td>—</td><td>✔</td></tr>
       <tr><td>q3r_dirtyfun</td><td>Dirty Fun</td><td>Stecki &amp; insellium</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>4–9</td><td>—</td><td>✔</td></tr>
-      <tr><td>q3r_downtown</td><td>DownTown</td><td>OliverV</td><td>Racing, Team Racing, Elimination</td><td>3</td><td>25</td><td>—</td><td>✔</td></tr>
+      <tr><td>q3r_downtown</td><td>DownTown</td><td>OliverV</td><td>Racing, Racing DM, Team Racing, Team Racing DM, Elimination</td><td>3</td><td>25</td><td>—</td><td>✔</td></tr>
       <tr><td>q3r_lavafalls</td><td>Lava Falls</td><td>Cyberdemon</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>22</td><td>FT PG RG RL</td><td>✔</td></tr>
       <tr><td>q3r_nightcity</td><td>Night City</td><td>Amphetamine</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>9&amp;12</td><td>GL RG RL</td><td>✔</td></tr>
       <tr><td>q3r_ridgeracer</td><td>Ridge Racer</td><td>TheBigBuu &amp; insellium</td><td>Racing, Racing DM, Team Racing, Elimination</td><td>3</td><td>19</td><td>—</td><td>✔</td></tr>
@@ -501,7 +502,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
     <div class="info-box"><h4>Elimination &amp; LCS</h4><p>Adds <code>eliminationSchedule</code> (start delay, interval, warning), <code>survivalTime</code>, <code>elimOrder</code>, and <code>lapsAtElim</code> per player.</p></div>
     <div class="info-box"><h4>Derby</h4><p>Uses race timing fields combined with knockout and damage efficiency metrics via <code>score_t.score</code>, <code>damageDealt</code>, and <code>damageTaken</code>.</p></div>
     <div class="info-box"><h4>CTF / CTF4</h4><p>Flag metrics: <code>captures</code>, <code>assistCount</code>, <code>defendCount</code>, and carrier-related damage values. Team scores via <code>level.teamScores</code>.</p></div>
-    <div class="info-box"><h4>Domination / KOTH</h4><p>Control-point ticks from <code>level.teamScores</code>/<code>level.teamTimes</code>, paired with per-player <code>score_t.score</code> and damage figures.</p></div>
+    <div class="info-box"><h4>Domination / KOTH</h4><p>Control-point scores from <code>level.teamScores</code>. KOTH also reports the match-long uncontested team total as <code>teamHoldMs</code>, each player's uncontested time as <code>zoneHoldMs</code>, and contested time separately as <code>kothContestTimeMs</code>.</p></div>
   </div>
 
   <h3>Transport &amp; Reliability</h3>
@@ -593,11 +594,11 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
 <tr><td class="cvar-name">g_kothScoreWin</td><td class="cvar-default">100</td><td class="cvar-desc">Score threshold that ends the match.</td></tr>
 <tr><td class="cvar-name">g_kothCaptureTime</td><td class="cvar-default">3000 ms</td><td class="cvar-desc">Time to capture the hill from neutral or enemy.</td></tr>
 <tr><td class="cvar-name">g_kothRespawnWave</td><td class="cvar-default">5000 ms</td><td class="cvar-desc">Wave respawn interval for dead players.</td></tr>
-<tr><td class="cvar-name">g_kothPtsTick</td><td class="cvar-default">1</td><td class="cvar-desc">Points awarded per tick while holding the hill.</td></tr>
-<tr><td class="cvar-name">g_kothPtsCapture</td><td class="cvar-default">5</td><td class="cvar-desc">Bonus points for capturing the hill.</td></tr>
-<tr><td class="cvar-name">g_kothPtsDefend</td><td class="cvar-default">3</td><td class="cvar-desc">Points for a kill made while inside the hill zone.</td></tr>
+<tr><td class="cvar-name">g_kothPtsTick</td><td class="cvar-default">1</td><td class="cvar-desc">Points awarded per second of uncontested hill ownership, outside overtime.</td></tr>
+<tr><td class="cvar-name">g_kothPtsCapture</td><td class="cvar-default">5</td><td class="cvar-desc">Bonus points for capturing the hill, outside overtime.</td></tr>
+<tr><td class="cvar-name">g_kothPtsDefend</td><td class="cvar-default">3</td><td class="cvar-desc">Bonus points when your team regains uncontested control after an enemy contest.</td></tr>
 <tr><td class="cvar-name">g_kothOvertime</td><td class="cvar-default">1</td><td class="cvar-desc">Enable overtime if match ends in a tie.</td></tr>
-<tr><td class="cvar-name">g_kothOvertimeHoldTime</td><td class="cvar-default">10000 ms</td><td class="cvar-desc">Time a team must hold the hill to win in overtime.</td></tr>
+<tr><td class="cvar-name">g_kothOvertimeHoldTime</td><td class="cvar-default">10000 ms</td><td class="cvar-desc">Uncontested time the hill owner must hold the zone with at least one teammate present to win overtime.</td></tr>
 </table>
 <div class="cvar-group-label">Ladder</div>
 <table class="cvar-table">
@@ -632,6 +633,14 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
       <tr><td>rally_start</td><td>Sprint start volume</td><td>Forces <code>laplimit = 1</code> automatically. Use for GT_SPRINT maps.</td></tr>
       <tr><td>rally_finish</td><td>Dedicated finish trigger</td><td>Marks vehicles finished via the checkpoint system.</td></tr>
       <tr><td>rally_checkpoint</td><td>Checkpoint volume</td><td>Auto-numbers on spawn. Spawnflag 1 = placement message; Spawnflag 2 = global checkpoint sound.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Objective Entities</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>trigger_koth_hill</code></td><td>King of the Hill control zone</td><td>Place exactly one non-zero brush volume in a KOTH map. Add <code>q3r_koth</code> to the map's <code>.arena</code> type only after the hill volume is present. Invalid maps are rejected at match start.</td></tr>
     </tbody>
   </table></div>
 

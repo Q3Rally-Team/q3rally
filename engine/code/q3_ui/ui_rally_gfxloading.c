@@ -35,6 +35,7 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 
 #include "ui_local.h"
 #include "ui_rally_theme.h"
+#include "ui_rally_frontend.h"
 
 /* -------------------------------------------------------------------------
    Constants
@@ -50,7 +51,21 @@ Update dialog: integrated into loading screen with "Update Now" / "Skip" buttons
 #define Q3RALLY_DOWNLOAD_URL "https://www.q3rally.com/download-test/"
 
 /* Layout constants - all positions in 640x480 virtual screen space */
-#define SCREEN_CX       320     /* horizontal center */
+#define GFX_RAIL_Y             32
+#define GFX_RAIL_W            210
+#define GFX_RAIL_H            410
+#define GFX_CONTENT_Y          32
+#define GFX_CONTENT_H         410
+#define GFX_CONTENT_INSET      16
+#define GFX_PROGRESS_Y        176
+#define GFX_PROGRESS_H         14
+#define GFX_PROGRESS_SEG_Y    198
+#define GFX_PROGRESS_SEG_H      5
+#define GFX_STATUS_Y          226
+#define GFX_UPDATE_Y          250
+#define GFX_TIP_SEPARATOR_Y   324
+#define GFX_TIP_LABEL_Y       340
+#define GFX_TIP_TEXT_Y        358
 
 /* Header block */
 #define HDR_TITLE_Y      36
@@ -207,49 +222,58 @@ static const char *loadingTips[] = {
 };
 
 
-static vec4_t gfxSeparatorColor     = UI_THEME_COLOR_PANEL_BORDER;
-static vec4_t gfxHeaderColor        = UI_THEME_COLOR_TEXT_TITLE;
-static vec4_t gfxSecondaryTextColor = UI_THEME_COLOR_TEXT_HINT;
-static vec4_t gfxBodyTextColor      = UI_THEME_COLOR_TEXT_BODY;
-static vec4_t gfxMutedTextColor     = UI_THEME_COLOR_TEXT_MUTED;
-static vec4_t gfxAccentColor        = UI_THEME_COLOR_ACCENT;
-static vec4_t gfxSuccessColor       = UI_THEME_COLOR_SUCCESS;
-static vec4_t gfxErrorColor         = UI_THEME_COLOR_ERROR;
-static vec4_t gfxWarningColor       = UI_THEME_COLOR_WARNING;
-static vec4_t gfxProgressTrackColor = UI_THEME_COLOR_PROGRESS_TRACK;
-static vec4_t gfxButtonBgColor      = UI_THEME_COLOR_BUTTON_BG;
-static vec4_t gfxButtonBorderColor  = UI_THEME_COLOR_BUTTON_BORDER;
-static vec4_t gfxButtonTextColor    = UI_THEME_COLOR_BUTTON_TEXT;
-static vec4_t gfxButtonHoverBgColor     = UI_THEME_COLOR_BUTTON_HOVER_BG;
-static vec4_t gfxButtonHoverBorderColor = UI_THEME_COLOR_BUTTON_HOVER_BORDER;
-static vec4_t gfxButtonHoverTextColor   = UI_THEME_COLOR_BUTTON_HOVER_TEXT;
-static vec4_t gfxBackdropColor          = UI_THEME_COLOR_PANEL_BG;
-static vec4_t gfxPanelColor             = { 0.04f, 0.05f, 0.08f, 0.86f };
-static vec4_t gfxPanelShadowColor       = { 0.00f, 0.00f, 0.00f, 0.42f };
-static vec4_t gfxPanelBandColor         = { 0.08f, 0.10f, 0.16f, 0.92f };
-static vec4_t gfxProgressGlowColor      = { 0.64f, 0.82f, 1.00f, 0.32f };
+static vec4_t gfxSeparatorColor     = UI_FRONTEND_COLOR_BORDER;
+static vec4_t gfxHeaderColor        = UI_FRONTEND_COLOR_TEXT;
+static vec4_t gfxBodyTextColor      = UI_FRONTEND_COLOR_TEXT;
+static vec4_t gfxMutedTextColor     = UI_FRONTEND_COLOR_MUTED;
+static vec4_t gfxAccentColor        = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t gfxSuccessColor       = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t gfxErrorColor         = { 0.96f, 0.30f, 0.16f, 1.00f };
+static vec4_t gfxWarningColor       = UI_FRONTEND_COLOR_STATUS;
+static vec4_t gfxProgressTrackColor = UI_FRONTEND_COLOR_PROGRESS;
+static vec4_t gfxBackdropColor          = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t gfxPanelColor             = UI_FRONTEND_COLOR_PANEL;
+static vec4_t gfxHeroOverlayColor       = UI_FRONTEND_COLOR_HERO_OVERLAY;
+
+static float GFX_ViewportLeft( void ) {
+    if ( uis.xscale <= 0.0f ) {
+        return 0.0f;
+    }
+    return -uis.bias / uis.xscale;
+}
+
+static float GFX_ViewportRight( void ) {
+    return SCREEN_WIDTH - GFX_ViewportLeft();
+}
+
+static float GFX_RailX( void ) {
+    return GFX_ViewportLeft() + 24.0f;
+}
+
+static float GFX_ContentX( void ) {
+    return GFX_RailX() + 210.0f + 16.0f;
+}
+
+static float GFX_ContentRight( void ) {
+    return GFX_ViewportRight() - 24.0f;
+}
+
+static float GFX_ContentWidth( void ) {
+    return GFX_ContentRight() - GFX_ContentX();
+}
 
 /* -------------------------------------------------------------------------
    Helper: draw a thin horizontal separator line
    ------------------------------------------------------------------------- */
 
-static void DrawSeparator(int y) {
-    UI_FillRect(80, y, 480, 1, gfxSeparatorColor);
+static void DrawSeparator(float x, float width, int y) {
+    UI_FillRect(x, y, width, 1, gfxSeparatorColor);
 }
 
-static void DrawPanel(int x, int y, int w, int h) {
-    UI_FillRect(x + 4, y + 5, w, h, gfxPanelShadowColor);
-    UI_FillRect(x, y, w, h, gfxPanelColor);
-    UI_FillRect(x, y, w, 24, gfxPanelBandColor);
-    UI_FillRect(x, y, w, 2, gfxAccentColor);
-    UI_DrawRect(x, y, w, h, gfxSeparatorColor);
-}
-
-static void DrawProgressSegments(float progress) {
+static void DrawProgressSegments(int x, int y, int width, float progress) {
     int segments = 18;
     int gap = 3;
-    int usableW = BAR_W - (segments - 1) * gap;
-    int x = BAR_X;
+    int usableW = width - (segments - 1) * gap;
     int i;
     int segW;
     float threshold;
@@ -270,41 +294,9 @@ static void DrawProgressSegments(float progress) {
             Vector4Copy(gfxProgressTrackColor, color);
             color[3] = 0.58f;
         }
-        UI_FillRect(x, BAR_SEG_Y, segW, BAR_SEG_H, color);
+        UI_FillRect(x, y, segW, GFX_PROGRESS_SEG_H, color);
         x += segW + gap;
     }
-}
-
-/* -------------------------------------------------------------------------
-   Helper: draw a styled button, returns qtrue if mouse is inside.
-   Hit test uses uis.cursorx / uis.cursory (standard Q3 UI cursor state).
-   ------------------------------------------------------------------------- */
-
-static qboolean DrawButton(int cx, int y, int w, int h,
-                            const char *label, qboolean highlighted) {
-    vec4_t bgColor, borderColor, textColor, shadow;
-    int    x = cx - w / 2;
-
-    if (highlighted) {
-        Vector4Copy(gfxButtonHoverBgColor, bgColor);
-        Vector4Copy(gfxButtonHoverBorderColor, borderColor);
-        Vector4Copy(gfxButtonHoverTextColor, textColor);
-    } else {
-        Vector4Copy(gfxButtonBgColor, bgColor);
-        Vector4Copy(gfxButtonBorderColor, borderColor);
-        Vector4Copy(gfxButtonTextColor, textColor);
-    }
-
-    shadow[0] = 0.0f; shadow[1] = 0.0f; shadow[2] = 0.0f; shadow[3] = 0.5f;
-    UI_FillRect(x + 3, y + 3, w, h, shadow);
-    UI_FillRect(x, y, w, h, bgColor);
-    UI_DrawRect(x, y, w, h, borderColor);
-
-    UI_DrawString(cx, y + (h - SMALLCHAR_HEIGHT) / 2,
-                  label, UI_CENTER | UI_THEME_STYLE_BUTTON_FONT, textColor);
-
-    return (uis.cursorx >= x && uis.cursorx <= x + w &&
-            uis.cursory >= y && uis.cursory <= y + h) ? qtrue : qfalse;
 }
 
 /* -------------------------------------------------------------------------
@@ -375,7 +367,8 @@ static void UI_GFX_Loading_UpdateProgress(void) {
    Main draw function
    ------------------------------------------------------------------------- */
 
-static void UI_GFX_Loading_MenuDraw(void) {
+#if 0
+static void UI_GFX_Loading_MenuDraw_Legacy(void) {
     int         totalStages = NUM_STAGES;
     int         stage_index;
     const char *stageName;
@@ -618,6 +611,250 @@ static void UI_GFX_Loading_MenuDraw(void) {
             UI_MainMenu();
         }
     }
+}
+
+#endif
+
+static void UI_GFX_Loading_MenuDraw(void) {
+    int         totalStages = NUM_STAGES;
+    int         stage_index;
+    int         stageNumber;
+    int         progressX;
+    int         progressW;
+    int         updateX;
+    int         updateW;
+    int         currentTime;
+    int         textY;
+    const char *stageName;
+    float       deltaTime;
+    float       railX;
+    float       contentX;
+    float       contentRight;
+    float       contentWidth;
+    char        buf[256];
+    char        updateState[32];
+    vec4_t      color;
+    static int  lastDrawTime = 0;
+
+    railX         = GFX_RailX();
+    contentX      = GFX_ContentX();
+    contentRight  = GFX_ContentRight();
+    contentWidth  = GFX_ContentWidth();
+    progressX     = (int)contentX + GFX_CONTENT_INSET;
+    progressW     = (int)contentWidth - GFX_CONTENT_INSET * 2;
+    updateX       = progressX;
+    updateW       = progressW;
+
+    currentTime = trap_Milliseconds();
+    deltaTime   = (lastDrawTime > 0)
+                  ? (float)(currentTime - lastDrawTime) * 0.001f
+                  : 0.016f;
+    if (deltaTime > 0.1f) deltaTime = 0.1f;
+    lastDrawTime = currentTime;
+
+    UI_GFX_Loading_UpdateProgress();
+    s_gfxloading.smoothProgress +=
+        (s_gfxloading.loadPercent - s_gfxloading.smoothProgress)
+        * (SMOOTH_LERP_SPEED * deltaTime);
+    if (s_gfxloading.loadPercent >= 1.0f && s_gfxloading.smoothProgress > 0.995f) {
+        s_gfxloading.smoothProgress = 1.0f;
+    }
+
+    stage_index = s_gfxloading.currentCache;
+    stageNumber = (stage_index < totalStages) ? stage_index + 1 : totalStages;
+    stageName = stageNames[(stage_index < totalStages) ? stage_index : totalStages];
+
+    /* Use the same full-width background, rail, and hero-panel language as
+     * the main menu. */
+    Vector4Copy(gfxBackdropColor, color);
+    Frontend_DrawBackground(color);
+
+    Frontend_DrawPanel((int)railX, GFX_RAIL_Y, 210, GFX_RAIL_H,
+                       1.0f, UI_FRONTEND_STYLE_SURFACE);
+
+    UI_FillRect(contentX, GFX_CONTENT_Y, contentWidth, GFX_CONTENT_H, gfxPanelColor);
+    UI_SetColor(NULL);
+    UI_DrawHandlePic(contentX, GFX_CONTENT_Y, contentWidth, GFX_CONTENT_H,
+                     Frontend_BackgroundShader());
+    UI_FillRect(contentX, GFX_CONTENT_Y, contentWidth, GFX_CONTENT_H, gfxHeroOverlayColor);
+    Frontend_DrawPanel((int)contentX, GFX_CONTENT_Y, (int)contentWidth,
+                       GFX_CONTENT_H, 1.0f, UI_FRONTEND_STYLE_FRAME);
+
+    /* Brand and status rail. */
+    UI_FillRect(railX + 22, 50, 6, 6, gfxAccentColor);
+    Frontend_DrawText((int)railX + 38, 48, "Q3RALLY",
+                      UI_LEFT | UI_BIGFONT | UI_DROPSHADOW, gfxHeaderColor);
+    Frontend_DrawText((int)railX + 22, 94, "System boot",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+
+    Frontend_DrawCard((int)railX + 14, 112, 182, 76, 1.0f, qfalse);
+    Frontend_DrawText((int)railX + 28, 124, "Startup sequence",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText((int)railX + 28, 145,
+                      va("Stage %02d / %02d", stageNumber, totalStages),
+                      UI_LEFT | UI_SMALLFONT, gfxBodyTextColor);
+    Frontend_DrawText((int)railX + 28, 165,
+                      va("%.0f%% ready", s_gfxloading.smoothProgress * 100.0f),
+                      UI_LEFT | UI_SMALLFONT, gfxAccentColor);
+
+    Frontend_DrawCard((int)railX + 14, 348, 182, 64, 1.0f, qfalse);
+    UI_FillRect(railX + 28, 363, 6, 6,
+                s_gfxloading.smoothProgress >= 1.0f ? gfxAccentColor : gfxWarningColor);
+    Frontend_DrawText((int)railX + 44, 358, "Frontend",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText((int)railX + 44, 376,
+                      s_gfxloading.smoothProgress >= 1.0f ? "System ready" : "Boot sequence",
+                      UI_LEFT | UI_SMALLFONT, gfxBodyTextColor);
+    Frontend_DrawText((int)railX + 44, 394, "Q3Rally  -  2002-2026",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+
+    /* Workspace header and progress. */
+    Frontend_DrawText((int)contentX + GFX_CONTENT_INSET, 52,
+                      "System / GFX loading",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText((int)contentRight - GFX_CONTENT_INSET, 52,
+                      s_gfxloading.smoothProgress >= 1.0f ? "Ready" : "Loading",
+                      UI_RIGHT | UI_SMALLFONT, gfxAccentColor);
+    UI_FillRect(contentRight - 10, 48, 6, 6, gfxAccentColor);
+
+    Frontend_DrawText(progressX, 100, "Resource cache",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText(progressX, 122, stageName,
+                      UI_LEFT | UI_SMALLFONT | UI_DROPSHADOW, gfxBodyTextColor);
+    Frontend_DrawText((int)contentRight - GFX_CONTENT_INSET, 122,
+                      va("%02d / %02d", stageNumber, totalStages),
+                      UI_RIGHT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText(progressX, GFX_STATUS_Y, "Cache progress",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText((int)contentRight - GFX_CONTENT_INSET, GFX_STATUS_Y,
+                      va("%.0f%%", s_gfxloading.smoothProgress * 100.0f),
+                      UI_RIGHT | UI_SMALLFONT, gfxAccentColor);
+
+    Frontend_DrawProgress(progressX, GFX_PROGRESS_Y, progressW, GFX_PROGRESS_H,
+                          s_gfxloading.smoothProgress, 1.0f);
+    DrawProgressSegments(progressX, GFX_PROGRESS_SEG_Y, progressW, s_gfxloading.smoothProgress);
+
+    /* Compact update status card. */
+    textY = GFX_UPDATE_Y;
+    trap_Cvar_VariableStringBuffer("cl_updateState", updateState, sizeof(updateState));
+
+    if (!Q_stricmp(updateState, "outdated")) {
+        char remoteVersion[64];
+        char remoteDate[64];
+
+        if (!s_gfxloading.requireUpdateAck) {
+            s_gfxloading.requireUpdateAck = qtrue;
+            s_gfxloading.updateAcked      = qfalse;
+            s_gfxloading.hoveredBtn       = UPD_BTN_NONE;
+        }
+
+        trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
+        trap_Cvar_VariableStringBuffer("cl_updateDate", remoteDate, sizeof(remoteDate));
+        Frontend_DrawCard(updateX, textY - 10, updateW, 78, 1.0f, qfalse);
+        UI_FillRect(updateX, textY - 10, 3, 78, gfxErrorColor);
+        Frontend_DrawText(updateX + 14, textY, "Update available",
+                          UI_LEFT | UI_SMALLFONT, gfxErrorColor);
+
+        if (remoteVersion[0]) {
+            if (remoteDate[0]) {
+                Com_sprintf(buf, sizeof(buf), "Installed %s  /  latest %s (%s)",
+                            PRODUCT_VERSION, remoteVersion, remoteDate);
+            } else {
+                Com_sprintf(buf, sizeof(buf), "Installed %s  /  latest %s",
+                            PRODUCT_VERSION, remoteVersion);
+            }
+        } else {
+            Com_sprintf(buf, sizeof(buf), "Installed %s  /  latest unknown", PRODUCT_VERSION);
+        }
+        Frontend_DrawText(updateX + 14, textY + 18, buf,
+                          UI_LEFT | UI_SMALLFONT, gfxWarningColor);
+
+        if (!s_gfxloading.updateAcked) {
+            qboolean hoverNow = Frontend_DrawButton(updateX + updateW - 185,
+                                                     textY + 43, 102, 24,
+                                                     "Update", 1.0f, qfalse,
+                                                     UI_FRONTEND_TEXT_CENTER);
+            qboolean hoverSkip = Frontend_DrawButton(updateX + updateW - 80,
+                                                      textY + 43, 64, 24,
+                                                      "Skip", 1.0f, qfalse,
+                                                      UI_FRONTEND_TEXT_CENTER);
+            if (hoverNow)       s_gfxloading.hoveredBtn = UPD_BTN_NOW;
+            else if (hoverSkip) s_gfxloading.hoveredBtn = UPD_BTN_SKIP;
+            else                s_gfxloading.hoveredBtn = UPD_BTN_NONE;
+        } else {
+            Frontend_DrawText(updateX + 14, textY + 43, "Update acknowledged / continuing",
+                              UI_LEFT | UI_SMALLFONT, gfxSuccessColor);
+        }
+    } else if (!Q_stricmp(updateState, "current")) {
+        char remoteVersion[64];
+
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
+        trap_Cvar_VariableStringBuffer("cl_updateRemote", remoteVersion, sizeof(remoteVersion));
+        Frontend_DrawCard(updateX, textY - 10, updateW, 46, 1.0f, qfalse);
+        UI_FillRect(updateX, textY - 10, 3, 46, gfxAccentColor);
+        Frontend_DrawText(updateX + 14, textY, "System check / up to date",
+                          UI_LEFT | UI_SMALLFONT, gfxSuccessColor);
+        Com_sprintf(buf, sizeof(buf), "BUILD %s%s%s", PRODUCT_VERSION,
+                    remoteVersion[0] ? "  /  LATEST " : "", remoteVersion);
+        Frontend_DrawText(updateX + 14, textY + 18, buf,
+                          UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    } else if (!Q_stricmp(updateState, "offline") ||
+               !Q_stricmp(updateState, "failed")) {
+        char errorMsg[128];
+
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
+        trap_Cvar_VariableStringBuffer("cl_updateError", errorMsg, sizeof(errorMsg));
+        if (!errorMsg[0]) {
+            Q_strncpyz(errorMsg,
+                       !Q_stricmp(updateState, "offline") ? "UPDATE SERVICE OFFLINE" : "UPDATE CHECK FAILED",
+                       sizeof(errorMsg));
+        }
+        Frontend_DrawCard(updateX, textY - 10, updateW, 46, 1.0f, qfalse);
+        UI_FillRect(updateX, textY - 10, 3, 46, gfxWarningColor);
+        Frontend_DrawText(updateX + 14, textY, errorMsg,
+                          UI_LEFT | UI_SMALLFONT, gfxWarningColor);
+        Frontend_DrawText(updateX + 14, textY + 18, "Continuing without update data",
+                          UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    } else {
+        s_gfxloading.requireUpdateAck = qfalse;
+        s_gfxloading.updateAcked      = qfalse;
+        Frontend_DrawCard(updateX, textY - 10, updateW, 46, 1.0f, qfalse);
+        UI_FillRect(updateX, textY - 10, 3, 46, gfxMutedTextColor);
+        Frontend_DrawText(updateX + 14, textY, "Update check",
+                          UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+        Frontend_DrawText(updateX + 14, textY + 18, "Waiting for version status",
+                          UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    }
+
+    DrawSeparator(contentX + GFX_CONTENT_INSET, progressW, GFX_TIP_SEPARATOR_Y);
+    Frontend_DrawText(progressX, GFX_TIP_LABEL_Y, "Drive tip",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText(progressX, GFX_TIP_TEXT_Y,
+                      loadingTips[s_gfxloading.tipIndex],
+                      UI_LEFT | UI_SMALLFONT, gfxBodyTextColor);
+
+    Frontend_DrawText(progressX, 458, "Q3Rally  -  system initialization",
+                      UI_LEFT | UI_SMALLFONT, gfxMutedTextColor);
+    Frontend_DrawText((int)contentRight - GFX_CONTENT_INSET, 458,
+                      va("BUILD %s", PRODUCT_VERSION),
+                      UI_RIGHT | UI_SMALLFONT, gfxMutedTextColor);
+
+    if (s_gfxloading.finalPhase) {
+        int finalDisplayTime = UI_GFX_Loading_GetPause("ui_gfxLoadingFinalPause", FINAL_DISPLAY_TIME);
+
+        if (currentTime - s_gfxloading.finalDisplayStartTime >= finalDisplayTime &&
+            s_gfxloading.smoothProgress >= 0.98f) {
+            if (s_gfxloading.requireUpdateAck && !s_gfxloading.updateAcked) {
+                return;
+            }
+            UI_PopMenu();
+            UI_MainMenu();
+        }
+    }
+
+    Menu_Draw(&s_gfxloading.menu);
 }
 
 /* -------------------------------------------------------------------------

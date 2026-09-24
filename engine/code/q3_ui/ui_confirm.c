@@ -31,12 +31,22 @@ CONFIRMATION MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
-
-#define ART_CONFIRM_FRAME	"menu/art/cut_frame"
 
 #define ID_CONFIRM_NO		10
 #define ID_CONFIRM_YES		11
+
+#define CONFIRM_PANEL_X		112
+#define CONFIRM_PANEL_Y		136
+#define CONFIRM_PANEL_W		416
+#define CONFIRM_PANEL_H		208
+#define CONFIRM_BUTTON_Y		286
+#define CONFIRM_BUTTON_W		112
+#define CONFIRM_BUTTON_H		28
+#define CONFIRM_YES_X		184
+#define CONFIRM_NO_X		344
+#define CONFIRM_OK_X		264
 
 
 typedef struct {
@@ -56,6 +66,48 @@ typedef struct {
 
 
 static confirmMenu_t	s_confirm;
+static vec4_t confirmScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t confirmTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t confirmMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t confirmAccentColor = UI_FRONTEND_COLOR_ACCENT;
+
+
+static void ConfirmMenu_DrawButton( void *self ) {
+	menutext_s *button;
+	qboolean focus;
+
+	button = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+	Frontend_DrawButton( button->generic.left, button->generic.top,
+		button->generic.right - button->generic.left,
+		button->generic.bottom - button->generic.top,
+		button->string, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
+
+
+static void ConfirmMenu_DrawShell( const char *title ) {
+	if ( s_confirm.menu.fullscreen ) {
+		Frontend_DrawBackground( confirmScrimColor );
+	} else {
+		UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, confirmScrimColor );
+	}
+
+	Frontend_DrawPanel( CONFIRM_PANEL_X, CONFIRM_PANEL_Y,
+		CONFIRM_PANEL_W, CONFIRM_PANEL_H, 1.0f, UI_FRONTEND_STYLE_SURFACE );
+	if ( title && title[0] ) {
+		Frontend_DrawText( CONFIRM_PANEL_X + UI_FRONTEND_SPACE_LG,
+			CONFIRM_PANEL_Y + UI_FRONTEND_SPACE_LG, title,
+			UI_LEFT | UI_BIGFONT, confirmTextColor );
+	}
+}
+
+
+static void ConfirmMenu_DrawQuestion( void ) {
+	if ( s_confirm.question && s_confirm.question[0] ) {
+		Frontend_DrawText( 320, CONFIRM_PANEL_Y + 70, s_confirm.question,
+			UI_CENTER | UI_SMALLFONT, confirmTextColor );
+	}
+}
 
 
 /*
@@ -102,12 +154,12 @@ static sfxHandle_t ConfirmMenu_Key( int key ) {
 	case 'n':
 	case 'N':
 		ConfirmMenu_Event( &s_confirm.no, QM_ACTIVATED );
-		break;
+		return menu_move_sound;
 
 	case 'y':
 	case 'Y':
 		ConfirmMenu_Event( &s_confirm.yes, QM_ACTIVATED );
-		break;
+		return menu_move_sound;
 	}
 
 	return Menu_DefaultKey( &s_confirm.menu, key );
@@ -120,22 +172,19 @@ MessaheMenu_Draw
 =================
 */
 static void MessageMenu_Draw( void ) {
-	int i,y;
-	
-	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
-	
-	y = 188;
-	for(i=0; s_confirm.lines[i]; i++)
-	{
-		UI_DrawProportionalString( 320, y, s_confirm.lines[i], s_confirm.style, color_red );
-		y += 18;
+	int i;
+	int y;
+
+	ConfirmMenu_DrawShell( "Notice" );
+
+	y = CONFIRM_PANEL_Y + 72;
+	for ( i = 0; s_confirm.lines && s_confirm.lines[i]; i++ ) {
+		Frontend_DrawText( 320, y, s_confirm.lines[i],
+			UI_CENTER | UI_SMALLFONT, confirmMutedColor );
+		y += 20;
 	}
 
 	Menu_Draw( &s_confirm.menu );
-
-	if( s_confirm.draw ) {
-		s_confirm.draw();
-	}
 }
 
 /*
@@ -144,23 +193,8 @@ ConfirmMenu_Draw
 =================
 */
 static void ConfirmMenu_Draw( void ) {
-	vec4_t compactBoxColor = { 0.0f, 0.0f, 0.0f, 0.50f };
-
-	if ( s_confirm.question && s_confirm.question[0] ) {
-		UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
-	}
-	else {
-		UI_FillRect( 168, 188, 304, 104, compactBoxColor );
-	}
-
-	// BAGPUSS CHANGED TO TEXT_COLOR_NORMAL
-//	UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, color_red );
-//	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, color_red );
-	if ( s_confirm.question && s_confirm.question[0] ) {
-		UI_DrawProportionalString( 320, 204, s_confirm.question, s_confirm.style, text_color_normal );
-		UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE, text_color_normal );
-	}
-	// END
+	ConfirmMenu_DrawShell( "Confirm action" );
+	ConfirmMenu_DrawQuestion();
 
 	if( s_confirm.draw ) {
 		s_confirm.draw();
@@ -176,7 +210,6 @@ ConfirmMenu_Cache
 =================
 */
 void ConfirmMenu_Cache( void ) {
-	trap_R_RegisterShaderNoMip( ART_CONFIRM_FRAME );
 }
 
 
@@ -187,21 +220,11 @@ UI_ConfirmMenu_Stlye
 */
 void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) ) {
 	uiClientState_t	cstate;
-	int	n1, n2, n3;
-	int	l1, l2, l3;
 
 	// zero set all our globals
 	memset( &s_confirm, 0, sizeof(s_confirm) );
 
 	ConfirmMenu_Cache();
-
-	n1 = UI_ProportionalStringWidth( "YES/NO" );
-	n2 = UI_ProportionalStringWidth( "YES" ) + PROP_GAP_WIDTH;
-	n3 = UI_ProportionalStringWidth( "/" )  + PROP_GAP_WIDTH;
-	l1 = 320 - ( n1 / 2 );
-	l2 = l1 + n2;
-	l3 = l2 + n3;
-	s_confirm.slashX = l2;
 
 	s_confirm.question = question;
 	s_confirm.draw = draw;
@@ -223,37 +246,35 @@ void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void )
 		s_confirm.menu.fullscreen = qtrue;
 	}
 
-	s_confirm.yes.generic.type		= MTYPE_PTEXT;      
-	s_confirm.yes.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
+	s_confirm.yes.generic.type		= MTYPE_PTEXT;
+	s_confirm.yes.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_confirm.yes.generic.callback	= ConfirmMenu_Event;
 	s_confirm.yes.generic.id		= ID_CONFIRM_YES;
-	s_confirm.yes.generic.x			= l1;
-	s_confirm.yes.generic.y			= 264;
+	s_confirm.yes.generic.x			= CONFIRM_YES_X + CONFIRM_BUTTON_W / 2;
+	s_confirm.yes.generic.y			= CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H / 2;
+	s_confirm.yes.generic.left		= CONFIRM_YES_X;
+	s_confirm.yes.generic.top			= CONFIRM_BUTTON_Y;
+	s_confirm.yes.generic.right		= CONFIRM_YES_X + CONFIRM_BUTTON_W;
+	s_confirm.yes.generic.bottom		= CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H;
+	s_confirm.yes.generic.ownerdraw	= ConfirmMenu_DrawButton;
 	s_confirm.yes.string			= "YES";
-// BAGPUSS
-//	s_confirm.yes.color				= color_red;
-	s_confirm.yes.color				= text_color_normal;
-// END
-	s_confirm.yes.style				= UI_LEFT;
-	if ( !question || !question[0] ) {
-		s_confirm.yes.style |= UI_SMALLFONT;
-	}
+	s_confirm.yes.color				= confirmTextColor;
+	s_confirm.yes.style				= UI_CENTER | UI_SMALLFONT;
 
-	s_confirm.no.generic.type		= MTYPE_PTEXT;      
-	s_confirm.no.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
+	s_confirm.no.generic.type		= MTYPE_PTEXT;
+	s_confirm.no.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_confirm.no.generic.callback	= ConfirmMenu_Event;
 	s_confirm.no.generic.id			= ID_CONFIRM_NO;
-	s_confirm.no.generic.x		    = l3;
-	s_confirm.no.generic.y		    = 264;
+	s_confirm.no.generic.x		    = CONFIRM_NO_X + CONFIRM_BUTTON_W / 2;
+	s_confirm.no.generic.y		    = CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H / 2;
+	s_confirm.no.generic.left		= CONFIRM_NO_X;
+	s_confirm.no.generic.top		    = CONFIRM_BUTTON_Y;
+	s_confirm.no.generic.right		= CONFIRM_NO_X + CONFIRM_BUTTON_W;
+	s_confirm.no.generic.bottom		= CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H;
+	s_confirm.no.generic.ownerdraw	= ConfirmMenu_DrawButton;
 	s_confirm.no.string				= "NO";
-// BAGPUSS
-//	s_confirm.no.color			    = color_red;
-	s_confirm.no.color			    = text_color_normal;
-// END
-	s_confirm.no.style			    = UI_LEFT;
-	if ( !question || !question[0] ) {
-		s_confirm.no.style |= UI_SMALLFONT;
-	}
+	s_confirm.no.color			    = confirmTextColor;
+	s_confirm.no.style			    = UI_CENTER | UI_SMALLFONT;
 
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );             
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.no );
@@ -280,18 +301,14 @@ hacked over from Confirm stuff
 */
 void UI_Message( const char **lines ) {
 	uiClientState_t	cstate;
-	int n1, l1;
 	
 	// zero set all our globals
 	memset( &s_confirm, 0, sizeof(s_confirm) );
 
 	ConfirmMenu_Cache();
 
-	n1 = UI_ProportionalStringWidth( "OK" );
-	l1 = 320 - ( n1 / 2 );
-	
 	s_confirm.lines = lines;
-	s_confirm.style = UI_CENTER|UI_INVERSE|UI_SMALLFONT;
+	s_confirm.style = UI_CENTER|UI_SMALLFONT;
 
 	s_confirm.menu.draw       = MessageMenu_Draw;
 	s_confirm.menu.key        = ConfirmMenu_Key;
@@ -305,15 +322,20 @@ void UI_Message( const char **lines ) {
 		s_confirm.menu.fullscreen = qtrue;
 	}
 
-	s_confirm.yes.generic.type		= MTYPE_PTEXT;      
-	s_confirm.yes.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
+	s_confirm.yes.generic.type		= MTYPE_PTEXT;
+	s_confirm.yes.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_confirm.yes.generic.callback	= ConfirmMenu_Event;
 	s_confirm.yes.generic.id		= ID_CONFIRM_YES;
-	s_confirm.yes.generic.x			= l1;
-	s_confirm.yes.generic.y			= 280;
+	s_confirm.yes.generic.x			= CONFIRM_OK_X + CONFIRM_BUTTON_W / 2;
+	s_confirm.yes.generic.y			= CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H / 2;
+	s_confirm.yes.generic.left		= CONFIRM_OK_X;
+	s_confirm.yes.generic.top			= CONFIRM_BUTTON_Y;
+	s_confirm.yes.generic.right		= CONFIRM_OK_X + CONFIRM_BUTTON_W;
+	s_confirm.yes.generic.bottom		= CONFIRM_BUTTON_Y + CONFIRM_BUTTON_H;
+	s_confirm.yes.generic.ownerdraw	= ConfirmMenu_DrawButton;
 	s_confirm.yes.string			= "OK";
-	s_confirm.yes.color				= color_red;
-	s_confirm.yes.style				= UI_LEFT;
+	s_confirm.yes.color				= confirmAccentColor;
+	s_confirm.yes.style				= UI_CENTER | UI_SMALLFONT;
 
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );
 	

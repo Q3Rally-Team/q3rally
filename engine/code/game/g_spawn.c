@@ -272,9 +272,10 @@ static void G_BuildBotPathRoutesFromSpawnNodes( void ) {
 
 		totalRoutesBuilt++;
 		totalNodesKept += uniqueCount;
+		G_Printf( "G_BotPath: loaded map route=%s nodes=%d\n", routeName, uniqueCount );
 	}
 
-	G_Printf( "G_BotPath: build complete, routes=%d keptNodes=%d rejectedNodes=%d collectedNodes=%d\n",
+	G_Printf( "G_BotPath: build complete, routes=%d keptNodes=%d rejectedNodes=%d collectedNodes=%d; map routes have priority over Ghost fallback\n",
 		totalRoutesBuilt, totalNodesKept, totalNodesRejected, s_botPathNodeSpawnCount );
 }
 

@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* Modern scoreboard layout constants */
 #define MODERN_SB_Y             120
 #define MODERN_SB_WIDTH         650  
-#define MODERN_SB_MIN_WIDTH     650  /* Minimum scoreboard width */
+#define MODERN_SB_MIN_WIDTH     620  /* Keep the frame inside a 4:3 viewport */
 #define MODERN_SB_HEADER_HEIGHT 40
 #define MODERN_SB_ROW_HEIGHT    36
 #define MODERN_SB_COMPACT_HEIGHT 20
@@ -42,18 +42,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define COL_DELTA_WIDTH         90   /* Local ghost split delta */
 #define COL_TOTALTIME_WIDTH     120  /* Total time */
 #define COL_PING_WIDTH          60   /* Ping */
-#define COL_STATUS_WIDTH        80   /* Status (Ready, etc) */
-#define COL_HILL_TIME_WIDTH     100  /* Q3Rally KOTH: Time on Hill */
+#define COL_STATUS_WIDTH        96   /* Status (race result / ready) */
 #define COL_KOTH_CAPTURE_WIDTH  64
 #define COL_KOTH_DEFEND_WIDTH   64
 #define COL_KOTH_HILLKILLS_WIDTH 64
-#define COL_KOTH_CONTEST_WIDTH   90
+#define KOTH_SCOREBOARD_WIDTH   552
 
 /* Visual styling */
-#define MODERN_SB_ALPHA         0.85f
+#define MODERN_SB_ALPHA         0.68f
 #define MODERN_SB_BORDER_SIZE   2
 #define MODERN_SB_PADDING       8
 #define MODERN_SB_CORNER_RADIUS 4
+#define MODERN_SB_HEADING_SCALE 0.52f
+#define MODERN_SB_TEXT_SCALE    0.74f
+#define MODERN_SB_TITLE_SCALE   0.72f
 
 /* Maximum clients display */
 #define MAX_SCOREBOARD_CLIENTS  12
@@ -71,11 +73,11 @@ typedef enum {
     SBCOL_TOTALTIME,  /* Total/Race time */
     SBCOL_PING,       /* Network ping */
     SBCOL_STATUS,     /* Ready status, etc */
-    SBCOL_HILL_TIME,  /* Q3Rally KOTH: time on hill */
     SBCOL_KOTH_CAPS,  /* Q3Rally KOTH: captures */
     SBCOL_KOTH_DEF,   /* Q3Rally KOTH: defends */
     SBCOL_KOTH_HILL_KILLS,
     SBCOL_KOTH_CONTEST_TIME,
+    SBCOL_KOTH_HOLD_TIME,
     SBCOL_MAX
 } sbColumn_t;
 
@@ -113,6 +115,16 @@ static qboolean CG_IsRacingGametype(void) {
             cgs.gametype == GT_SINGLE_PLAYER);
 }
 
+/* Gametypes where finishRaceTime means a race finish, not an elimination. */
+static qboolean CG_HasRaceFinishStatus(void) {
+    return (cgs.gametype == GT_RACING ||
+            cgs.gametype == GT_SPRINT ||
+            cgs.gametype == GT_TEAM_RACING ||
+            cgs.gametype == GT_RACING_DM ||
+            cgs.gametype == GT_TEAM_RACING_DM ||
+            cgs.gametype == GT_SINGLE_PLAYER);
+}
+
 /*
 =================
 CG_IsTeamGametype
@@ -139,6 +151,7 @@ static void CG_InitScoreboardColumns(void) {
     int i;
     int currentX;
     int totalContentWidth;
+    int minimumScoreboardWidth;
     qboolean showScore, showDeaths, showTimes, showLapTimes, showDelta;
     qboolean isRacing, isTeam;
     qboolean ghostDeltaEnabled;
@@ -184,7 +197,7 @@ static void CG_InitScoreboardColumns(void) {
 
         case GT_KOTH: /* Q3Rally KOTH */
             showScore = qtrue;
-            showDeaths = qtrue;
+            showDeaths = qfalse;
             break;
             
         case GT_RACING_DM:
@@ -288,37 +301,44 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_TOTALTIME].visible = qtrue;
     }
     
-    /* Q3Rally KOTH: Time on Hill column - only in intermission */
+    /* Q3Rally KOTH result stats - only shown in intermission. */
     if (cgs.gametype == GT_KOTH &&
         cg.predictedPlayerState.pm_type == PM_INTERMISSION) {
-        columns[SBCOL_HILL_TIME].type    = SBCOL_HILL_TIME;
-        columns[SBCOL_HILL_TIME].width   = COL_HILL_TIME_WIDTH;
-        columns[SBCOL_HILL_TIME].header  = "HILL TIME";
-        columns[SBCOL_HILL_TIME].visible = qtrue;
-
+        /* KOTH has several useful result stats; use compact cells so the
+         * complete table stays comfortably inside the 640px HUD canvas. */
+        columns[SBCOL_RANK].width = 42;
+        columns[SBCOL_AVATAR].width = 34;
+        columns[SBCOL_NAME].width = 126;
+        columns[SBCOL_SCORE].width = 50;
         columns[SBCOL_KOTH_CAPS].type    = SBCOL_KOTH_CAPS;
-        columns[SBCOL_KOTH_CAPS].width   = COL_KOTH_CAPTURE_WIDTH;
+        columns[SBCOL_KOTH_CAPS].width   = 38;
         columns[SBCOL_KOTH_CAPS].header  = "CAP";
         columns[SBCOL_KOTH_CAPS].visible = qtrue;
 
         columns[SBCOL_KOTH_DEF].type    = SBCOL_KOTH_DEF;
-        columns[SBCOL_KOTH_DEF].width   = COL_KOTH_DEFEND_WIDTH;
+        columns[SBCOL_KOTH_DEF].width   = 38;
         columns[SBCOL_KOTH_DEF].header  = "DEF";
         columns[SBCOL_KOTH_DEF].visible = qtrue;
 
         columns[SBCOL_KOTH_HILL_KILLS].type    = SBCOL_KOTH_HILL_KILLS;
-        columns[SBCOL_KOTH_HILL_KILLS].width   = COL_KOTH_HILLKILLS_WIDTH;
+        columns[SBCOL_KOTH_HILL_KILLS].width   = 38;
         columns[SBCOL_KOTH_HILL_KILLS].header  = "HK";
         columns[SBCOL_KOTH_HILL_KILLS].visible = qtrue;
 
         columns[SBCOL_KOTH_CONTEST_TIME].type    = SBCOL_KOTH_CONTEST_TIME;
-        columns[SBCOL_KOTH_CONTEST_TIME].width   = COL_KOTH_CONTEST_WIDTH;
-        columns[SBCOL_KOTH_CONTEST_TIME].header  = "CONTEST";
+        columns[SBCOL_KOTH_CONTEST_TIME].width   = 68;
+        columns[SBCOL_KOTH_CONTEST_TIME].header  = "CONT.";
         columns[SBCOL_KOTH_CONTEST_TIME].visible = qtrue;
+
+        columns[SBCOL_KOTH_HOLD_TIME].type    = SBCOL_KOTH_HOLD_TIME;
+        columns[SBCOL_KOTH_HOLD_TIME].width   = 68;
+        columns[SBCOL_KOTH_HOLD_TIME].header  = "HOLD";
+        columns[SBCOL_KOTH_HOLD_TIME].visible = qtrue;
     }
 
     /* Status column only in intermission - no ping column */
-    if (cg.predictedPlayerState.pm_type == PM_INTERMISSION) {
+    if (cg.predictedPlayerState.pm_type == PM_INTERMISSION &&
+        cgs.gametype != GT_KOTH) {
         columns[SBCOL_STATUS].type = SBCOL_STATUS;
         columns[SBCOL_STATUS].width = COL_STATUS_WIDTH;
         columns[SBCOL_STATUS].header = "STATUS";
@@ -337,9 +357,12 @@ static void CG_InitScoreboardColumns(void) {
     }
     
     /* Set scoreboard width to be at least the minimum or the content width */
+    minimumScoreboardWidth = ( cgs.gametype == GT_KOTH &&
+                               cg.predictedPlayerState.pm_type == PM_INTERMISSION ) ?
+                              KOTH_SCOREBOARD_WIDTH : MODERN_SB_MIN_WIDTH;
     currentScoreboardWidth = totalContentWidth;
-    if (currentScoreboardWidth < MODERN_SB_MIN_WIDTH) {
-        currentScoreboardWidth = MODERN_SB_MIN_WIDTH;
+    if (currentScoreboardWidth < minimumScoreboardWidth) {
+        currentScoreboardWidth = minimumScoreboardWidth;
     }
     
     /* Calculate centered X position for the entire scoreboard */
@@ -368,26 +391,31 @@ static void CG_DrawModernBackground(int x, int y, int width, int height,
                                    float alpha, qboolean isHeader) {
     vec4_t bgColor;
     vec4_t borderColor;
+    vec4_t accentColor;
+    float fillAlpha;
     
-    /* Initialize colors - C89 style */
+    accentColor[0] = 0.72f; accentColor[1] = 1.0f;
+    accentColor[2] = 0.06f; accentColor[3] = alpha;
     if (isHeader) {
-        /* Header background - darker */
-        bgColor[0] = 0.12f; bgColor[1] = 0.15f; bgColor[2] = 0.18f; bgColor[3] = alpha;
-        borderColor[0] = 0.3f; borderColor[1] = 0.4f; borderColor[2] = 0.5f; borderColor[3] = alpha;
+        bgColor[0] = 0.008f; bgColor[1] = 0.012f;
+        bgColor[2] = 0.016f; bgColor[3] = alpha;
+        borderColor[0] = 0.24f; borderColor[1] = 0.34f;
+        borderColor[2] = 0.36f; borderColor[3] = alpha * 0.72f;
+        fillAlpha = alpha;
     } else {
-        /* Row background - lighter */
-        bgColor[0] = 0.08f; bgColor[1] = 0.10f; bgColor[2] = 0.12f; bgColor[3] = alpha * 0.8f;
-        borderColor[0] = 0.2f; borderColor[1] = 0.25f; borderColor[2] = 0.3f; borderColor[3] = alpha * 0.6f;
+        bgColor[0] = 0.018f; bgColor[1] = 0.027f;
+        bgColor[2] = 0.031f; bgColor[3] = alpha * 0.62f;
+        borderColor[0] = 0.24f; borderColor[1] = 0.34f;
+        borderColor[2] = 0.36f; borderColor[3] = alpha * 0.42f;
+        fillAlpha = alpha * 0.62f;
     }
+    bgColor[3] = fillAlpha;
     
-    /* Main background */
     CG_FillRect(x, y, width, height, bgColor);
-    
-    /* Top border */
-    CG_FillRect(x, y, width, MODERN_SB_BORDER_SIZE, borderColor);
-    
-    /* Bottom border */
-    CG_FillRect(x, y + height - MODERN_SB_BORDER_SIZE, width, MODERN_SB_BORDER_SIZE, borderColor);
+    if (isHeader) {
+        CG_FillRect(x, y, width, MODERN_SB_BORDER_SIZE, accentColor);
+    }
+    CG_FillRect(x, y + height - 1, width, 1, borderColor);
 }
 
 /*
@@ -398,13 +426,16 @@ Draw text with modern styling and proper alignment
 */
 static void CG_DrawModernText(int x, int y, const char *text, int align, 
                              int columnWidth, float *color, qboolean isBold) {
-    int textWidth, drawX;
+    int textWidth, drawX, fontStyle;
+    float scale;
     
     if (!text) {
         return;
     }
     
-    textWidth = CG_DrawStrlen(text) * (isBold ? BIGCHAR_WIDTH : SMALLCHAR_WIDTH);
+    fontStyle = isBold ? 0 : UI_SMALLFONT;
+    scale = isBold ? MODERN_SB_HEADING_SCALE : MODERN_SB_TEXT_SCALE;
+    textWidth = CG_IngameStringWidth(text, fontStyle, scale);
     
     switch (align) {
         case 0: /* Left align */
@@ -421,19 +452,8 @@ static void CG_DrawModernText(int x, int y, const char *text, int align,
             break;
     }
     
-    if (isBold) {
-        if (color) {
-            CG_DrawBigStringColor(drawX, y, text, color);
-        } else {
-            CG_DrawBigString(drawX, y, text, 1.0f);
-        }
-    } else {
-        if (color) {
-            CG_DrawSmallStringColor(drawX, y, text, color);
-        } else {
-            CG_DrawSmallString(drawX, y, text, 1.0f);
-        }
-    }
+    CG_DrawIngameString(drawX, y, text, fontStyle | UI_DROPSHADOW,
+                        scale, color ? color : colorWhite);
 }
 
 /*
@@ -442,17 +462,17 @@ CG_DrawModernHeader
 Draw the adaptive scoreboard header
 =================
 */
-static void CG_DrawModernHeader(int y) {
+static void CG_DrawModernHeader(int y, float fade) {
     vec4_t headerTextColor;
     int i;
     
     /* Initialize header text color */
-    headerTextColor[0] = 0.9f; headerTextColor[1] = 0.9f; 
-    headerTextColor[2] = 0.9f; headerTextColor[3] = 1.0f;
+    headerTextColor[0] = 0.47f; headerTextColor[1] = 0.62f;
+    headerTextColor[2] = 0.61f; headerTextColor[3] = fade;
     
     /* Draw header background */
-    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, MODERN_SB_HEADER_HEIGHT, 
-                           MODERN_SB_ALPHA, qtrue);
+    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, MODERN_SB_HEADER_HEIGHT,
+                           MODERN_SB_ALPHA * fade, qtrue);
     
     /* Draw visible column headers */
     for (i = 0; i < SBCOL_MAX; i++) {
@@ -472,13 +492,18 @@ static void CG_DrawModernHeader(int y) {
             case SBCOL_KOTH_DEF:
             case SBCOL_KOTH_HILL_KILLS:
             case SBCOL_KOTH_CONTEST_TIME:
+            case SBCOL_KOTH_HOLD_TIME:
                 /* Center-aligned columns */
-                CG_DrawModernText(columns[i].x, y + 8, columns[i].header, 1, 
+                CG_DrawModernText(columns[i].x,
+                                 y + (MODERN_SB_HEADER_HEIGHT - (int)(24 * MODERN_SB_HEADING_SCALE)) / 2,
+                                 columns[i].header, 1,
                                  columns[i].width, headerTextColor, qtrue);
                 break;
             case SBCOL_NAME:
                 /* Left-aligned text columns */
-                CG_DrawModernText(columns[i].x, y + 8, columns[i].header, 0, 
+                CG_DrawModernText(columns[i].x,
+                                 y + (MODERN_SB_HEADER_HEIGHT - (int)(24 * MODERN_SB_HEADING_SCALE)) / 2,
+                                 columns[i].header, 0,
                                  columns[i].width, headerTextColor, qtrue);
                 break;
             default:
@@ -543,11 +568,13 @@ CG_DrawModernTeamHeaderRow
 Draws a header row for a team in the scoreboard
 =================
 */
-static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, int damage, int teamTime, float fade) {
+static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, int damage, int teamTime, int kothHoldTimeMs, float fade) {
     char teamText[128];
     char scoreText[64];
+    char hillText[32];
     vec4_t teamColor;
     vec4_t textColor;
+    vec4_t metricDividerColor;
     int rowHeight = MODERN_SB_COMPACT_HEIGHT; // Use compact height for team headers
     int textY = y + (rowHeight - BIGCHAR_HEIGHT) / 2;
 
@@ -560,8 +587,12 @@ static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, 
     Com_sprintf(teamText, sizeof(teamText), "%d. %s", rank, CG_GetTeamName(team));
     CG_DrawModernText(scoreboardX, textY, teamText, 0, currentScoreboardWidth, teamColor, qtrue);
 
-    /* Team Score — show average race time for team racing, pts/dmg for everything else */
+    /* Team score — show average race time for team racing and objective points for KOTH. */
     textColor[0] = 0.9f; textColor[1] = 0.9f; textColor[2] = 0.9f; textColor[3] = fade;
+    metricDividerColor[0] = 0.24f;
+    metricDividerColor[1] = 0.34f;
+    metricDividerColor[2] = 0.36f;
+    metricDividerColor[3] = fade * 0.7f;
     if ( cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_TEAM_RACING_DM ) {
         if ( teamTime > 0 ) {
             if ( cgs.gametype == GT_TEAM_RACING_DM && score > 0 ) {
@@ -573,10 +604,26 @@ static void CG_DrawModernTeamHeaderRow(int y, team_t team, int rank, int score, 
         } else {
             Com_sprintf(scoreText, sizeof(scoreText), "avg --:--:---");
         }
+    } else if ( cgs.gametype == GT_KOTH ) {
+        int holdSecs = kothHoldTimeMs / 1000;
+        int metricRight = scoreboardX + currentScoreboardWidth - 8;
+        int hillWidth = 132;
+        int scoreWidth = 100;
+        int dividerX = metricRight - hillWidth - 9;
+        int scoreX = dividerX - scoreWidth - 9;
+
+        Com_sprintf(scoreText, sizeof(scoreText), "%d PTS", score);
+        Com_sprintf(hillText, sizeof(hillText), "HILL %d:%02d",
+                    holdSecs / 60, holdSecs % 60);
+        CG_DrawModernText(scoreX, textY, scoreText, 2, scoreWidth, textColor, qtrue);
+        CG_FillRect(dividerX, y + 5, 1, rowHeight - 10, metricDividerColor);
+        CG_DrawModernText(dividerX + 9, textY, hillText, 2, hillWidth, textColor, qtrue);
     } else {
         Com_sprintf(scoreText, sizeof(scoreText), "%d pts / %d dmg", score, damage);
     }
-    CG_DrawModernText(scoreboardX, textY, scoreText, 2, currentScoreboardWidth, textColor, qtrue);
+    if ( cgs.gametype != GT_KOTH ) {
+        CG_DrawModernText(scoreboardX, textY, scoreText, 2, currentScoreboardWidth, textColor, qtrue);
+    }
 }
 
 /*
@@ -737,25 +784,52 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             }
             break;
             
-        case SBCOL_HILL_TIME: /* Q3Rally KOTH */
-            if (ci->team == TEAM_SPECTATOR) {
-                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
-            } else {
-                /* timeOnHill is stored in score->captures for KOTH
-                   (reused from CTF captures field, set by server) */
-                int hillSecs = score->captures;
-                if (hillSecs > 0) {
-                    Com_sprintf(buffer, sizeof(buffer), "%d:%02d",
-                                hillSecs / 60, hillSecs % 60);
-                    CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
-                } else {
-                    CG_DrawModernText(x, y, "0:00", 1, width, textColor, qfalse);
-                }
-            }
-            break;
-
         case SBCOL_STATUS:
-            if (cg.snap && (cg.snap->ps.stats[STAT_CLIENTS_READY] & (1 << score->client))) {
+            if (cgs.gametype == GT_ELIMINATION) {
+                if (cg_entities[score->client].eliminationOut) {
+                    vec4_t outColor;
+                    outColor[0] = 1.0f;
+                    outColor[1] = 0.25f;
+                    outColor[2] = 0.20f;
+                    outColor[3] = fade;
+                    CG_DrawModernText(x, y, "OUT", 1, width, outColor, qfalse);
+                } else if (ci->team == TEAM_SPECTATOR) {
+                    CG_DrawModernText(x, y, "SPEC", 1, width, textColor, qfalse);
+                } else if (cg.predictedPlayerState.pm_type == PM_INTERMISSION && rank == 1) {
+                    CG_DrawModernText(x, y, "WINNER", 1, width, readyColor, qfalse);
+                } else {
+                    CG_DrawModernText(x, y, "ALIVE", 1, width, readyColor, qfalse);
+                }
+            } else if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "SPEC", 1, width, textColor, qfalse);
+            } else if (cgs.gametype == GT_DERBY) {
+                qboolean wrecked = (score->integrity == 0 ||
+                                    (cg_entities[score->client].currentState.eFlags & EF_DEAD));
+                if (cg.predictedPlayerState.pm_type == PM_INTERMISSION && rank == 1 && !wrecked) {
+                    CG_DrawModernText(x, y, "WINNER", 1, width, readyColor, qfalse);
+                } else if (wrecked) {
+                    vec4_t wreckedColor;
+                    wreckedColor[0] = 1.0f;
+                    wreckedColor[1] = 0.38f;
+                    wreckedColor[2] = 0.20f;
+                    wreckedColor[3] = fade;
+                    CG_DrawModernText(x, y, "WRECKED", 1, width, wreckedColor, qfalse);
+                } else {
+                    CG_DrawModernText(x, y, "ALIVE", 1, width, readyColor, qfalse);
+                }
+            } else if (CG_HasRaceFinishStatus() &&
+                       cg_entities[score->client].startRaceTime > 0) {
+                if (cg_entities[score->client].finishRaceTime > 0) {
+                    CG_DrawModernText(x, y, "FINISHED", 1, width, readyColor, qfalse);
+                } else {
+                    vec4_t dnfColor;
+                    dnfColor[0] = 1.0f;
+                    dnfColor[1] = 0.45f;
+                    dnfColor[2] = 0.20f;
+                    dnfColor[3] = fade;
+                    CG_DrawModernText(x, y, "DNF", 1, width, dnfColor, qfalse);
+                }
+            } else if (cg.snap && (cg.snap->ps.stats[STAT_CLIENTS_READY] & (1 << score->client))) {
                 CG_DrawModernText(x, y, "READY", 1, width, readyColor, qfalse);
             } else if (ci->team != TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "WAIT", 1, width, textColor, qfalse);
@@ -768,7 +842,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
             } else {
-                Com_sprintf(buffer, sizeof(buffer), "%d", score->assistCount);
+                Com_sprintf(buffer, sizeof(buffer), "%d", score->captures);
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             }
             break;
@@ -800,6 +874,16 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                 CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
             }
             break;
+
+        case SBCOL_KOTH_HOLD_TIME:
+            if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+            } else {
+                int holdSecs = score->kothHoldTimeMs / 1000;
+                Com_sprintf(buffer, sizeof(buffer), "%d:%02d", holdSecs / 60, holdSecs % 60);
+                CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            }
+            break;
             
         default:
             break;
@@ -818,6 +902,7 @@ static void CG_DrawModernPlayerRow(int y, score_t *score, int rank,
                                   int playersRemaining) {
     int rowHeight, textY, i;
     vec4_t localHighlight;
+    vec4_t localAccent;
     qboolean isLocalPlayer;
     
     if (score->client < 0 || score->client >= cgs.maxclients) {
@@ -825,12 +910,14 @@ static void CG_DrawModernPlayerRow(int y, score_t *score, int rank,
     }
     
     /* Initialize highlight color */
-    localHighlight[0] = 0.2f; localHighlight[1] = 0.4f;
-    localHighlight[2] = 0.8f; localHighlight[3] = 0.3f * fade;
+    localHighlight[0] = 0.06f; localHighlight[1] = 0.14f;
+    localHighlight[2] = 0.08f; localHighlight[3] = 0.32f * fade;
+    localAccent[0] = 0.72f; localAccent[1] = 1.0f;
+    localAccent[2] = 0.06f; localAccent[3] = fade;
 
     isLocalPlayer = (score->client == cg.snap->ps.clientNum);
     rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
-    textY = y + (rowHeight - SMALLCHAR_HEIGHT) / 2;
+    textY = y + (rowHeight - (int)(14 * MODERN_SB_TEXT_SCALE)) / 2;
 
     {
         vec4_t lastHighlight;
@@ -859,6 +946,7 @@ static void CG_DrawModernPlayerRow(int y, score_t *score, int rank,
 
         if (isLocalPlayer) {
             CG_FillRect(scoreboardX, y, currentScoreboardWidth, rowHeight, localHighlight);
+            CG_FillRect(scoreboardX, y, 2, rowHeight, localAccent);
         }
     }
 
@@ -894,7 +982,8 @@ static void CG_DrawModernGameInfo(int y, float fade,
     int remainingY;
     
     /* Initialize title color */
-    titleColor[0] = 1.0f; titleColor[1] = 1.0f; titleColor[2] = 1.0f; titleColor[3] = fade;
+    titleColor[0] = 0.72f; titleColor[1] = 1.0f;
+    titleColor[2] = 0.06f; titleColor[3] = fade;
     
     isRacing = CG_IsRacingGametype();
     isEliminationMode = (cgs.gametype == GT_ELIMINATION ||
@@ -933,9 +1022,10 @@ static void CG_DrawModernGameInfo(int y, float fade,
         }
     }
     
-    w = CG_DrawStrlen(gameInfo) * BIGCHAR_WIDTH;
+    w = CG_IngameStringWidth(gameInfo, 0, MODERN_SB_TITLE_SCALE);
     x = (SCREEN_WIDTH - w) / 2;
-    CG_DrawBigStringColor(x, y, gameInfo, titleColor);
+    CG_DrawIngameString(x, y, gameInfo, UI_DROPSHADOW,
+                        MODERN_SB_TITLE_SCALE, titleColor);
 
     if (isEliminationMode && playersRemaining > 0) {
         remainingY = y + BIGCHAR_HEIGHT + 4;
@@ -951,9 +1041,11 @@ static void CG_DrawModernGameInfo(int y, float fade,
             }
         }
 
-        CG_DrawSmallStringColor((SCREEN_WIDTH -
-                                 CG_DrawStrlen(remainingText) * SMALLCHAR_WIDTH) / 2,
-                                remainingY, remainingText, titleColor);
+        w = CG_IngameStringWidth(remainingText, UI_SMALLFONT, MODERN_SB_TEXT_SCALE);
+        x = (SCREEN_WIDTH - w) / 2;
+        CG_DrawIngameString(x, remainingY, remainingText,
+                            UI_SMALLFONT | UI_DROPSHADOW,
+                            MODERN_SB_TEXT_SCALE, titleColor);
     }
 }
 
@@ -1128,7 +1220,7 @@ qboolean CG_DrawModernScoreboard(void) {
     }
     
     /* Draw header */
-    CG_DrawModernHeader(y);
+    CG_DrawModernHeader(y, fade);
     y += MODERN_SB_HEADER_HEIGHT + 4;
     
     localClientDrawn = qfalse;
@@ -1139,6 +1231,7 @@ qboolean CG_DrawModernScoreboard(void) {
         for (i = 0; i < 4 && drawnClients < maxClients; i++) {
             qboolean hasPlayers = qfalse;
             int teamDamage = 0;
+            int teamKothHoldTimeMs = 0;
             team = GetTeamAtRank(i + 1);
             if (team == -1) {
                 continue;
@@ -1149,7 +1242,11 @@ qboolean CG_DrawModernScoreboard(void) {
                 score = &cg.scores[j];
                 if (cgs.clientinfo[score->client].team == team) {
                     hasPlayers = qtrue;
-                    teamDamage += score->damageDealt;
+                    if ( cgs.gametype != GT_KOTH ) {
+                        teamDamage += score->damageDealt;
+                    } else {
+                        teamKothHoldTimeMs = score->kothTeamHoldTimeMs;
+                    }
                 }
             }
 
@@ -1158,7 +1255,7 @@ qboolean CG_DrawModernScoreboard(void) {
             }
 
             // Draw team header
-            CG_DrawModernTeamHeaderRow(y, team, i + 1, cg.teamScores[team - TEAM_RED], teamDamage, cg.teamTimes[team - TEAM_RED], fade);
+            CG_DrawModernTeamHeaderRow(y, team, i + 1, cg.teamScores[team - TEAM_RED], teamDamage, cg.teamTimes[team - TEAM_RED], teamKothHoldTimeMs, fade);
             y += MODERN_SB_COMPACT_HEIGHT + 2;
 
             teamClients = 0;

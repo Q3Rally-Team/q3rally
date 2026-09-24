@@ -1354,7 +1354,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 			if ( UI_ProfileWizard_IsActive() ) {
 				UI_ProfileWizard_OnOfflineKeyResult( qtrue, NULL );
 			} else {
-				UI_LadderWizard_OnSuccess( payload );
+				UI_LadderWizard_OnSuccess();
 			}
 		} else {
 			if ( UI_ProfileWizard_IsActive() ) {

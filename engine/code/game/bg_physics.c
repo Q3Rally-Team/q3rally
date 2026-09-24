@@ -44,6 +44,45 @@ float CP_WR_DAMP_STRENGTH = 140.0f * CP_WHEEL_MASS;
 
 static int	numTraces;
 
+#define PM_CLEAN_WALL_IMPACT_THRESHOLD 180.0f
+#define PM_CLEAN_WALL_NORMAL_Z_MAX    0.5f
+
+#ifdef QAGAME
+#define PM_BREAKABLE_IMPACT_THRESHOLD 400.0f
+
+static void PM_RecordBreakableImpact( const trace_t *trace, const vec3_t velocity ) {
+	gentity_t	*hit;
+	float		impactSpeed;
+	float		damage;
+
+	if ( !trace || trace->entityNum < 0 || trace->entityNum >= MAX_GENTITIES ) {
+		return;
+	}
+
+	hit = &g_entities[trace->entityNum];
+	if ( !hit->inuse || !hit->takedamage || !hit->classname ||
+		Q_stricmp( hit->classname, "func_breakable" ) ) {
+		return;
+	}
+
+	impactSpeed = -DotProduct( velocity, trace->plane.normal );
+	if ( impactSpeed <= PM_BREAKABLE_IMPACT_THRESHOLD ) {
+		return;
+	}
+	damage = impactSpeed / 25.0f;
+	if ( damage <= pm->breakableDamage.damage ) {
+		return;
+	}
+
+	pm->breakableDamage.damage = damage;
+	pm->breakableDamage.mod = MOD_VEHICLE_COLLISION;
+	pm->breakableDamage.dflags = DAMAGE_NO_KNOCKBACK;
+	pm->breakableDamage.otherEnt = trace->entityNum;
+	VectorCopy( trace->endpos, pm->breakableDamage.origin );
+	VectorCopy( trace->plane.normal, pm->breakableDamage.dir );
+}
+#endif
+
 /*
 ================================================================================
 PM_DebugDynamics
@@ -2041,6 +2080,13 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 			// see if we can make it there
 			numTraces++;
 			pm->trace ( &trace, start, mins, maxs, dest, pm->ps->clientNum, pm->tracemask);
+			if ( trace.fraction < 1.0f &&
+				!( trace.contents & CONTENTS_BODY ) &&
+				VectorLengthSquared( trace.plane.normal ) > 0.0f &&
+				fabs( trace.plane.normal[2] ) < PM_CLEAN_WALL_NORMAL_Z_MAX &&
+				-DotProduct( vel, trace.plane.normal ) > PM_CLEAN_WALL_IMPACT_THRESHOLD ) {
+				pm->collisionDetected = qtrue;
+			}
 
 			if ( trace.startsolid && !bumpcount ) {
 				VectorCopy( sPoint->r, start );
@@ -2173,6 +2219,9 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 			}
 #endif
 
+#ifdef QAGAME
+			PM_RecordBreakableImpact( &trace, vel );
+#endif
 			VectorCopy ( trace.plane.normal, tPoint->normals[numplanes] );
 			tPoint->onGround = qtrue;
 			PM_CheckSurfaceFlags( &trace, tPoint );
@@ -2261,6 +2310,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 	if ( count && hitEnt >= 0 && hitEnt < MAX_CLIENTS && pm->cars && pm->cars[hitEnt] )
 	{
 		float	impulseDamage;
+		pm->collisionDetected = qtrue;
 
 //		G_LogPrintf( "minTrace %f\n", minTrace );
 //		G_LogPrintf("count = %d\n", count);

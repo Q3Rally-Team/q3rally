@@ -30,6 +30,7 @@ NETWORK OPTIONS MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 // STONELANCE
@@ -48,6 +49,34 @@ NETWORK OPTIONS MENU
 #define ID_NETWORK			13
 #define ID_RATE				14
 #define ID_BACK				15
+
+#define NETWORK_FRAME_X             24
+#define NETWORK_FRAME_Y             20
+#define NETWORK_FRAME_WIDTH         592
+#define NETWORK_FRAME_HEIGHT        440
+#define NETWORK_NAV_X               40
+#define NETWORK_NAV_Y               104
+#define NETWORK_NAV_WIDTH           164
+#define NETWORK_NAV_HEIGHT          292
+#define NETWORK_DETAIL_X            40
+#define NETWORK_DETAIL_Y            104
+#define NETWORK_DETAIL_WIDTH        556
+#define NETWORK_DETAIL_HEIGHT       292
+#define NETWORK_ROW_HEIGHT          24
+#define NETWORK_ROW_GAP             4
+#define NETWORK_ROW_START_Y         148
+#define NETWORK_COLUMN_X            236
+#define NETWORK_COLUMN_WIDTH        344
+#define NETWORK_ACTION_Y            420
+#define NETWORK_ACTION_WIDTH        120
+#define NETWORK_ACTION_HEIGHT       24
+
+static vec4_t networkScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t networkAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t networkTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t networkMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t networkBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t networkFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 
 static const char *rate_items[] = {
@@ -86,6 +115,162 @@ typedef struct {
 
 static networkOptionsInfo_t	networkOptionsInfo;
 
+static void UI_NetworkOptionsMenu_Event( void *ptr, int event );
+
+static const char *Network_ListValue( menulist_s *item ) {
+	int i;
+
+	if ( !item->itemnames || item->curvalue < 0 ) {
+		return "-";
+	}
+
+	for ( i = 0; item->itemnames[i]; i++ ) {
+		if ( i == item->curvalue ) {
+			return item->itemnames[i];
+		}
+	}
+
+	return "-";
+}
+
+static void Network_DrawNavItem( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+	qboolean active;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	active = ( item->id == ID_NETWORK );
+	Frontend_DrawNavButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, active || focus, UI_LEFT );
+}
+
+static void Network_DrawSetting( void *self ) {
+	menucommon_s *item;
+	const char *value;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	item = (menucommon_s *)self;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+	value = Network_ListValue( (menulist_s *)item );
+
+	Vector4Copy( networkFocusColor, fillColor );
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	Vector4Copy( networkBorderColor, lineColor );
+	lineColor[3] = 0.55f;
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( networkAccentColor, lineColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		Vector4Copy( networkMutedColor, labelColor );
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( networkAccentColor, labelColor );
+		Vector4Copy( networkTextColor, valueColor );
+	} else {
+		Vector4Copy( networkMutedColor, labelColor );
+		Vector4Copy( networkTextColor, valueColor );
+	}
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->right - UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Network_DrawAction( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, focus, UI_CENTER );
+}
+
+static void Network_SetBounds( menucommon_s *item, int id,
+	int x, int y, int width, int height, const char *label ) {
+	item->id = id;
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void Network_SetNavBounds( menutext_s *item, int id,
+	const char *label, int y ) {
+	item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	item->generic.callback = UI_NetworkOptionsMenu_Event;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = Network_DrawNavItem;
+	Network_SetBounds( &item->generic, id, NETWORK_NAV_X + 16, y,
+		NETWORK_NAV_WIDTH - 32, NETWORK_ROW_HEIGHT, NULL );
+}
+
+static void Network_SetSettingBounds( menulist_s *item, int id,
+	const char *label, int y ) {
+	item->generic.ownerdraw = Network_DrawSetting;
+	Network_SetBounds( &item->generic, id, NETWORK_COLUMN_X, y,
+		NETWORK_COLUMN_WIDTH, NETWORK_ROW_HEIGHT, label );
+}
+
+static void UI_NetworkOptionsMenu_Draw( void ) {
+	Frontend_DrawBackground( networkScrimColor );
+	Frontend_DrawPanel( NETWORK_FRAME_X, NETWORK_FRAME_Y,
+		NETWORK_FRAME_WIDTH, NETWORK_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( NETWORK_FRAME_X + 24, NETWORK_FRAME_Y + 24,
+		"Network", UI_LEFT | UI_BIGFONT, networkTextColor );
+	Frontend_DrawText( NETWORK_FRAME_X + 24, NETWORK_FRAME_Y + 48,
+		"Tune connection rate and server behavior",
+		UI_LEFT | UI_SMALLFONT, networkMutedColor );
+	Frontend_DrawStatusChip( NETWORK_FRAME_X + NETWORK_FRAME_WIDTH - 104,
+		NETWORK_FRAME_Y + 26, "Settings", networkAccentColor, 1.0f );
+
+	Frontend_DrawCard( NETWORK_DETAIL_X, NETWORK_DETAIL_Y,
+		NETWORK_DETAIL_WIDTH, NETWORK_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( NETWORK_DETAIL_X + 16, NETWORK_DETAIL_Y + 22,
+		"Connection", UI_LEFT | UI_SMALLFONT, networkMutedColor );
+
+	Menu_Draw( &networkOptionsInfo.menu );
+
+	Frontend_DrawText( NETWORK_FRAME_X + 24, NETWORK_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, networkMutedColor );
+}
+
 
 /*
 =================
@@ -98,29 +283,6 @@ static void UI_NetworkOptionsMenu_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_GRAPHICS:
-		UI_PopMenu();
-		UI_GraphicsOptionsMenu();
-		break;
-
-	case ID_ADVANCED_GRAPHICS:
-		UI_PopMenu();
-		UI_AdvancedGraphicsOptionsMenu();
-		break;
-
-	case ID_DISPLAY:
-		UI_PopMenu();
-		UI_DisplayOptionsMenu();
-		break;
-
-	case ID_SOUND:
-		UI_PopMenu();
-		UI_SoundOptionsMenu();
-		break;
-
-	case ID_NETWORK:
-		break;
-
 	case ID_RATE:
 		if( networkOptionsInfo.rate.curvalue == 0 ) {
 			trap_Cvar_SetValue( "rate", 2500 );
@@ -160,6 +322,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	UI_NetworkOptionsMenu_Cache();
 	networkOptionsInfo.menu.wrapAround = qtrue;
 	networkOptionsInfo.menu.fullscreen = qtrue;
+	networkOptionsInfo.menu.draw = UI_NetworkOptionsMenu_Draw;
 
 	networkOptionsInfo.banner.generic.type		= MTYPE_BTEXT;
 	networkOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY;
@@ -287,18 +450,12 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END
 
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.banner );
 // STONELANCE
 /*
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.framel );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.framer );
 */
 // END
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.graphics );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.advanced_graphics );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.display );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.sound );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.network );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.rate );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.back );
 
@@ -318,6 +475,15 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	else {
 		networkOptionsInfo.rate.curvalue = 4;
 	}
+
+	/* Menu_AddItem initializes the legacy widgets and overwrites their
+	 * default bounds. Apply the frontend layout after that initialization. */
+	Network_SetSettingBounds( &networkOptionsInfo.rate,
+		ID_RATE, "Data rate", NETWORK_ROW_START_Y );
+	Network_SetBounds( &networkOptionsInfo.back.generic, ID_BACK,
+		NETWORK_NAV_X, NETWORK_ACTION_Y, NETWORK_ACTION_WIDTH,
+		NETWORK_ACTION_HEIGHT, NULL );
+	networkOptionsInfo.back.generic.ownerdraw = Network_DrawAction;
 }
 
 
@@ -350,5 +516,5 @@ void UI_NetworkOptionsMenu( void ) {
 
 	UI_NetworkOptionsMenu_Init();
 	UI_PushMenu( &networkOptionsInfo.menu );
-	Menu_SetCursorToItem( &networkOptionsInfo.menu, &networkOptionsInfo.network );
+	Menu_SetCursorToItem( &networkOptionsInfo.menu, &networkOptionsInfo.rate );
 }

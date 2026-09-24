@@ -23,6 +23,23 @@ This file is part of q3rally source code.
 #include "cg_local.h"
 #include "cg_hud_elements.h"
 
+static const vec4_t vehicleHudPanel  = { 0.018f, 0.025f, 0.030f, 0.78f };
+static const vec4_t vehicleHudLine   = { 0.250f, 0.330f, 0.320f, 0.58f };
+static const vec4_t vehicleHudAccent = { 0.720f, 1.000f, 0.060f, 1.00f };
+static const vec4_t vehicleHudLabel  = { 0.57f, 0.70f, 0.74f, 0.90f };
+static const vec4_t vehicleHudFrame  = { 0.30f, 0.43f, 0.49f, 0.82f };
+
+static void CG_DrawVehicleHudFrame( float x, float y, float w, float h,
+                                    const char *title ) {
+	CG_FillRect( x, y, w, h, vehicleHudPanel );
+	CG_DrawRect( x, y, w, h, 1.0f, vehicleHudLine );
+	CG_FillRect( x, y, w, 2.0f, vehicleHudAccent );
+	CG_FillRect( x, y, 3.0f, h, vehicleHudAccent );
+	CG_DrawIngameString( (int)( x + 9.0f ), (int)( y + 4.0f ), title,
+	                     UI_SMALLFONT | UI_DROPSHADOW, 0.75f,
+	                     vehicleHudAccent );
+}
+
 /* -----------------------------------------------------------------------
    CG_AddKOTHHillIndicatorToScene
    Adds a pulse/ring style world indicator for the KOTH hill. Used in
@@ -309,8 +326,10 @@ void CG_AddObjectsToScene( int renderLevel ) {
    CG_DrawRearviewMirror
    ----------------------------------------------------------------------- */
 void CG_DrawRearviewMirror( float x, float y, float w, float h ) {
-	float mx, my, mw, mh;
 	int   tmp;
+	float labelX, labelY;
+	float frameX, frameY, frameW, frameH;
+	screenPlacement_e savedHorizontalPlacement, savedVerticalPlacement;
 
 	if ( !cg_drawRearView.integer )
 		return;
@@ -319,11 +338,15 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h ) {
 	if ( cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR )
 		return;
 
-	mx = x - 8;
-	my = y - 7;
-	mw = w * 1.0534f;
-	mh = h * 1.2f;
-
+	savedHorizontalPlacement = CG_GetScreenHorizontalPlacement();
+	savedVerticalPlacement = CG_GetScreenVerticalPlacement();
+	CG_SetScreenPlacement( PLACE_CENTER, PLACE_TOP );
+	frameX = x - 1.0f;
+	frameY = y - 1.0f;
+	frameW = w + 2.0f;
+	frameH = h + 2.0f;
+	labelX = x + 5.0f;
+	labelY = y + 3.0f;
 	CG_AdjustFrom640( &x, &y, &w, &h );
 
 	cg.mirrorRefdef.x      = x;
@@ -338,7 +361,11 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h ) {
 
 	CG_AddObjectsToScene( cg_rearViewRenderLevel.integer );
 	trap_R_RenderScene( &cg.mirrorRefdef );
-	CG_DrawPic( mx, my, mw, mh, cgs.media.rearviewMirrorShader );
+	CG_DrawRect( frameX, frameY, frameW, frameH, 1.0f, vehicleHudFrame );
+	CG_DrawIngameString( (int)labelX, (int)labelY,
+	                     "REAR VIEW", UI_SMALLFONT | UI_DROPSHADOW,
+	                     0.58f, vehicleHudLabel );
+	CG_SetScreenPlacement( savedHorizontalPlacement, savedVerticalPlacement );
 }
 
 
@@ -347,8 +374,9 @@ void CG_DrawRearviewMirror( float x, float y, float w, float h ) {
    Top-down minimap overlay.
    ----------------------------------------------------------------------- */
 void CG_DrawMMap( float x, float y, float w, float h ) {
-	float overlay_x, overlay_y, overlay_w, overlay_h;
+	float overlay_x, overlay_y, frameX, frameY, frameW, frameH;
 	float tmp;
+	screenPlacement_e savedHorizontalPlacement, savedVerticalPlacement;
 
 	if ( !cg_drawMMap.integer )
 		return;
@@ -357,11 +385,15 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 	if ( cgs.clientinfo[cg.snap->ps.clientNum].team == TEAM_SPECTATOR )
 		return;
 
+	savedHorizontalPlacement = CG_GetScreenHorizontalPlacement();
+	savedVerticalPlacement = CG_GetScreenVerticalPlacement();
+	CG_SetScreenPlacement( PLACE_LEFT, PLACE_TOP );
 	overlay_x = x;
 	overlay_y = y;
-	overlay_w = w * cg_mmap_size.value;
-	overlay_h = h * cg_mmap_size.value;
-
+	frameX = x - 1.0f;
+	frameY = y - 1.0f;
+	frameW = w * cg_mmap_size.value + 2.0f;
+	frameH = h * cg_mmap_size.value + 2.0f;
 	CG_AdjustFrom640( &x, &y, &w, &h );
 
 	cg.mmapRefdef.x       = x;
@@ -381,7 +413,11 @@ void CG_DrawMMap( float x, float y, float w, float h ) {
 		CG_AddCEntity( &cg_entities[cg.snap->ps.clientNum] );
 
 	trap_R_RenderScene( &cg.mmapRefdef );
-	CG_DrawPic( overlay_x, overlay_y, overlay_w, overlay_h, cgs.media.MMapShader );
+	CG_DrawRect( frameX, frameY, frameW, frameH, 1.0f, vehicleHudFrame );
+	CG_DrawIngameString( (int)( overlay_x + 7.0f ), (int)( overlay_y + 4.0f ),
+	                     "MAP", UI_SMALLFONT | UI_DROPSHADOW,
+	                     0.58f, vehicleHudLabel );
+	CG_SetScreenPlacement( savedHorizontalPlacement, savedVerticalPlacement );
 }
 
 
@@ -424,12 +460,12 @@ void CG_DrawFuelGauge( float x, float y, float w, float h ) {
 			CG_DrawPic( x - size - 4, y + ( h - size ) * 0.5f, size, size, icon );
 
 		{
-			int   textWidth = BIGCHAR_WIDTH * CG_DrawStrlen( "Fuel Critical - Refuel Now!" );
-			float textX     = ( SCREEN_WIDTH - textWidth ) / 2;
 			CG_SetScreenPlacement( PLACE_CENTER, PLACE_CENTER );
-			CG_DrawStringExt( textX, SCREEN_HEIGHT * 0.30f,
-			                  "Fuel Critical - Refuel Now!", warnColor,
-			                  qfalse, qtrue, BIGCHAR_WIDTH, (int)(BIGCHAR_WIDTH * 1.5f), 0 );
+			CG_DrawIngameString( (int)( SCREEN_WIDTH * 0.5f ),
+			                      (int)( SCREEN_HEIGHT * 0.30f ),
+			                      "FUEL CRITICAL - REFUEL NOW!",
+			                      UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW,
+			                      0.9f, warnColor );
 			CG_PopScreenPlacement();
 		}
 	} else {
@@ -549,9 +585,10 @@ float CG_DrawSpeed( float y ) {
 
 		rpm      = cg.predictedPlayerState.stats[STAT_RPM];
 
-		barWidth    = maxLen * GIANTCHAR_WIDTH - 15;
-		blockWidth  = max( iconOffset + barWidth, rpmIconOffset + maxLen * GIANTCHAR_WIDTH );
+		barWidth    = maxLen * 12 - 8;
+		blockWidth  = max( iconOffset + barWidth, rpmIconOffset + maxLen * 12 );
 		blockHeight = segmentHeight + 2 * GIANTCHAR_HEIGHT + gaugeHeight;
+		blockHeight += 18.0f;
 
 		x  = 640 - (int)blockWidth - 8;
 		y -= blockHeight;
@@ -559,23 +596,30 @@ float CG_DrawSpeed( float y ) {
 		{
 			float rectX = x - 4, rectY = y - 4;
 			float rectW = blockWidth + 8, rectH = blockHeight + 8;
-			CG_FillRect( rectX, rectY, rectW, rectH, bgClr );
+			CG_DrawVehicleHudFrame( rectX, rectY, rectW, rectH, "SPEED" );
+			CG_FillRect( rectX + 4, rectY + 20, rectW - 8,
+			             rectH - 24, bgClr );
 		}
+		y += 18;
 
 		{
 			static qhandle_t rpmIcon;
 			if ( !rpmIcon ) rpmIcon = trap_R_RegisterShaderNoMip( "icons/rpm" );
 			CG_DrawPic( x - rpmIconNudge, y, rpmIconSize, rpmIconSize, rpmIcon );
 		}
-		CG_DrawRPMGaugeBar( x + rpmIconOffset, y, maxLen * GIANTCHAR_WIDTH, segmentHeight, rpm );
+		CG_DrawRPMGaugeBar( x + rpmIconOffset, y, maxLen * 12, segmentHeight, rpm );
 
-		speedWidth = CG_DrawStrlen( speedStr ) * GIANTCHAR_WIDTH;
-		gearWidth  = CG_DrawStrlen( gearStr  ) * GIANTCHAR_WIDTH;
+		speedWidth = CG_IngameStringWidth( speedStr, UI_SMALLFONT, 0.75f );
+		gearWidth  = CG_IngameStringWidth( gearStr, UI_SMALLFONT, 0.75f );
 		y += segmentHeight;
-		CG_DrawStringExt( x + (int)blockWidth - speedWidth, (int)y, speedStr, colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
-		y += GIANTCHAR_HEIGHT;
-		CG_DrawStringExt( x + (int)blockWidth - gearWidth,  (int)y, gearStr,  colorWhite, qtrue, qfalse, GIANTCHAR_WIDTH, GIANTCHAR_HEIGHT, 0 );
-		y += GIANTCHAR_HEIGHT;
+		CG_DrawIngameString( x + (int)blockWidth - speedWidth, (int)y,
+		                     speedStr, UI_SMALLFONT | UI_DROPSHADOW,
+		                     0.75f, colorWhite );
+		y += 12;
+		CG_DrawIngameString( x + (int)blockWidth - gearWidth, (int)y,
+		                     gearStr, UI_SMALLFONT | UI_DROPSHADOW,
+		                     0.75f, colorWhite );
+		y += 12;
 		CG_DrawFuelGauge( x + iconOffset, y, barWidth, gaugeHeight );
 
 		y = yorg - 44 - blockHeight;
@@ -596,17 +640,24 @@ float CG_DrawSpeed( float y ) {
 		int   speedWidth;
 		float speedX, speedY;
 		float centerX, centerY;
+		char gearText[8];
 
 		left = 640 - blockWidth - 8;
+		blockHeight += 18.0f;
 		top  = y - blockHeight;
 
+		CG_DrawVehicleHudFrame( left - 4, top - 4, blockWidth + 8,
+		                        blockHeight + 8, "SPEED" );
+		top += 18.0f;
 		CG_DrawPic( left, top, gaugeSize, gaugeSize,
 		            cg_metricUnits.integer ? cgs.media.gaugeMetric : cgs.media.gaugeImperial );
 
-		speedWidth = CG_DrawStrlen( va("%i", vel_speed) ) * SMALLCHAR_WIDTH;
+		speedWidth = CG_IngameStringWidth( va("%i", vel_speed),
+		                                  UI_SMALLFONT, 0.75f );
 		speedX = left + (gaugeSize - speedWidth) * 0.5f;
 		speedY = top  + gaugeSize - 35;
-		CG_DrawSmallStringColor( (int)speedX, (int)speedY, va("%i", vel_speed), colorWhite );
+		CG_DrawIngameString( (int)speedX, (int)speedY, va("%i", vel_speed),
+		                     UI_SMALLFONT | UI_DROPSHADOW, 0.75f, colorWhite );
 
 		x2 = left;  y2 = top;  w = h = gaugeSize;
 		CG_AdjustFrom640( &x2, &y2, &w, &h );
@@ -645,12 +696,16 @@ float CG_DrawSpeed( float y ) {
 		CG_DrawPic( centerX, centerY, 24, 24, trap_R_RegisterShaderNoMip("gfx/hud/center01") );
 
 		if      ( cg.predictedPlayerState.stats[STAT_GEAR] == -1 )
-			CG_DrawSmallStringColor( (int)(centerX + 10), (int)(centerY + 4), "R", colorWhite );
+			Q_strncpyz( gearText, "R", sizeof(gearText) );
 		else if ( cg.predictedPlayerState.stats[STAT_GEAR] ==  0 )
-			CG_DrawSmallStringColor( (int)(centerX + 10), (int)(centerY + 4), "N", colorWhite );
+			Q_strncpyz( gearText, "N", sizeof(gearText) );
 		else
-			CG_DrawSmallStringColor( (int)(centerX + 10), (int)(centerY + 4),
-			    va("%i", cg.predictedPlayerState.stats[STAT_GEAR]), colorWhite );
+			Com_sprintf( gearText, sizeof(gearText), "%i",
+			             cg.predictedPlayerState.stats[STAT_GEAR] );
+		CG_DrawIngameString( (int)( centerX + 12.0f ),
+		                     (int)( centerY + 5.0f ), gearText,
+		                     UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW,
+		                     0.75f, colorWhite );
 
 		CG_DrawFuelGauge( left + (blockWidth - fuelWidth) * 0.5f,
 		                  top + gaugeSize + gaugeSpacing,

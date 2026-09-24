@@ -1656,6 +1656,16 @@ void CG_DrawWeaponSelect( void ) {
 	if ( cg_drawWeaponBar.value <= 0 ) {
 		return;
 	}
+	/* These modes show weapon selection in the telemetry strip. */
+	if ( cg_drawStatus.integer &&
+	     ( cgs.gametype == GT_RACING_DM ||
+	       cgs.gametype == GT_TEAM_RACING_DM ||
+	       cgs.gametype == GT_LCS ||
+	       cgs.gametype == GT_DEATHMATCH ||
+	       cgs.gametype == GT_DOMINATION ||
+	       cgs.gametype == GT_KOTH ) ) {
+		return;
+	}
     
 	// don't display if dead
 	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {

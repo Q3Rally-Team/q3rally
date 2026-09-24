@@ -1124,7 +1124,8 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
 
         if ( zoneSemantics ) {
                 if ( g_gametype.integer == GT_KOTH ) {
-                        player->zoneHoldMs = client->kothContestTimeMs;
+                        player->zoneHoldMs = client->kothHoldTimeMs;
+                        player->kothContestTimeMs = client->kothContestTimeMs;
                 } else if ( g_gametype.integer == GT_DOMINATION ) {
                         player->zoneHoldMs = client->dominationZoneHoldMs;
                 } else {
@@ -1297,6 +1298,11 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
         qboolean hasEliminationSettings;
         qboolean isTeamMode;
 
+	if ( g_gametype.integer == GT_KOTH && level.kothMapInvalid ) {
+		Com_Printf( "Ladder: skipped invalid KOTH map result\n" );
+		return;
+	}
+
         if ( trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) == 0 ) {
                 return;
         }
@@ -1408,6 +1414,8 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
                 for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
                         payload->teamScores[i] = level.teamScores[i];
                         payload->teamTimes[i] = level.teamTimes[i];
+                        payload->teamHoldMs[i] = ( g_gametype.integer == GT_KOTH ) ?
+                                level.kothTeamHoldTimeMs[i] : 0;
                 }
         } else {
                 for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
@@ -1420,6 +1428,7 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
                 for ( i = 0; i < TEAM_NUM_TEAMS; ++i ) {
                         payload->teamScores[i] = 0;
                         payload->teamTimes[i] = 0;
+                        payload->teamHoldMs[i] = 0;
                 }
         }
 
@@ -1590,6 +1599,16 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
         // parse the key/value pairs and spawn gentities
         G_SpawnEntitiesFromString();
+
+	if ( g_gametype.integer == GT_KOTH && !KOTH_MapHasValidHill() ) {
+		char mapname[MAX_QPATH];
+		trap_Cvar_VariableStringBuffer( "mapname", mapname, sizeof( mapname ) );
+		level.kothMapInvalid = qtrue;
+		G_Printf( "^1KOTH ERROR: map %s needs exactly one non-degenerate trigger_koth_hill.\n",
+			mapname[0] ? mapname : "<unknown>" );
+		G_LogPrintf( "koth_map_invalid: map=%s reason=hill_zone_count_or_bounds\n",
+			mapname[0] ? mapname : "<unknown>" );
+	}
 
 	// general initialization
 	G_FindTeams();
@@ -1868,6 +1887,10 @@ static void G_RecordMatchOutcome( void ) {
         int                     winner;
         qboolean                teamGame;
 
+	if ( g_gametype.integer == GT_KOTH && level.kothMapInvalid ) {
+		return;
+	}
+
         if ( level.numPlayingClients <= 0 ) {
                 return;
         }
@@ -1898,6 +1921,12 @@ static void G_RecordMatchOutcome( void ) {
                         } else {
                                 client->sess.losses++;
                                 G_Profile_RecordLoss( client );
+                        }
+
+                        if ( g_gametype.integer == GT_KOTH ) {
+                                G_Profile_RecordZoneHold( client, client->kothHoldTimeMs );
+                        } else if ( g_gametype.integer == GT_DOMINATION ) {
+                                G_Profile_RecordZoneHold( client, client->dominationZoneHoldMs );
                         }
 
                         G_Profile_RecordMatchAchievements( client );
@@ -2423,6 +2452,7 @@ void ExitLevel (void) {
 	// reset all the scores so we don't enter the intermission again
 	level.teamScores[TEAM_RED] = 0;
 	level.teamScores[TEAM_BLUE] = 0;
+	memset(level.kothTeamHoldTimeMs, 0, sizeof(level.kothTeamHoldTimeMs));
 // STONELANCE
 	level.teamScores[TEAM_GREEN] = 0;
 	level.teamScores[TEAM_YELLOW] = 0;
@@ -2821,9 +2851,10 @@ void CheckExitRules( void ) {
 		return;
 	}
 
-	// check for sudden death
-	if ( ScoreIsTied() ) {
-		// always wait for sudden death
+	if ( g_gametype.integer == GT_KOTH && level.kothMapInvalid && !level.warmupTime ) {
+		trap_SendServerCommand( -1,
+			"cp \"KOTH requires exactly one valid hill zone. This map cannot be played.\"" );
+		LogExit( "Invalid KOTH map: missing, multiple, or degenerate hill zone." );
 		return;
 	}
 
@@ -2833,15 +2864,32 @@ void CheckExitRules( void ) {
 		trap_Cvar_Update( &g_timelimit );
 	}
 
+	if ( g_gametype.integer == GT_KOTH && g_timelimit.integer &&
+		!level.warmupTime && level.time - level.startTime >= g_timelimit.integer * 60000 ) {
+		if ( !ScoreIsTied() ) {
+			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"" );
+			LogExit( "Timelimit hit." );
+			return;
+		}
+
+		/* A tied KOTH match uses hill-hold overtime when enabled.  When it is
+		 * disabled, retain objective sudden death until one side takes the lead. */
+		if ( g_kothOvertime.integer > 0 ) {
+			if ( KOTH_HandleOvertime() ) {
+				trap_SendServerCommand( -1, "print \"KOTH overtime finished.\n\"" );
+				LogExit( "KOTH overtime finished." );
+			}
+		}
+		return;
+	}
+
+	// check for sudden death in all other modes (and untimed KOTH matches)
+	if ( ScoreIsTied() ) {
+		return;
+	}
+
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
-			if ( g_gametype.integer == GT_KOTH ) {
-				if ( KOTH_HandleOvertime() ) {
-					trap_SendServerCommand( -1, "print \"KOTH overtime finished.\n\"" );
-					LogExit( "KOTH overtime finished." );
-				}
-				return;
-			}
 			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
@@ -3444,6 +3492,7 @@ void G_RunFrame( int levelTime ) {
 
 	// get any cvar changes
 	G_UpdateCvars();
+	G_Ghost_ProcessClientTransfers();
 
 // STONELANCE
 //	RunRallyPhysics(); // map object physics

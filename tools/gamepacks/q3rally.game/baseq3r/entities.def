@@ -317,7 +317,7 @@ Target this entity with a misc_model to have the model attached to the entity (s
 A static entity that is removed when it receives a set amount of damage.
 -------- KEYS --------
 health : The entire entity is removed once this amount of damages has been inflicted to it.
-count : The entity will spew out this number of chunks of debris when it's broken (default = 0).
+count : The entity will spew out this number of chunks of debris when it's broken (default = 0, or 10 when a debris spawnflag is set).
 target : Targetted entity will be triggered once the func_breakable is destroyed.
 target2 : Targetted entity will be triggered once the func_breakable is destroyed.
 light : constantLight radius of .md3 model included with entity. Has no effect on the entity's brushes (default 0).

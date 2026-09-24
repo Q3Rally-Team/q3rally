@@ -2024,6 +2024,10 @@ void SP_func_breakable( gentity_t *ent ) {
 	ent->breakableMaxHealth = ent->health;
 
 	debrisFlags = ent->spawnflags & (1 | 2 | 4 | 8 | 16 | 32 | 64 | 128);
+	if ( debrisFlags && ent->count <= 0 ) {
+		ent->count = 10;
+	}
+
 	if ( debrisFlags && (debrisFlags & (debrisFlags - 1)) ) {
 		G_Printf("WARNING: %s has multiple debris spawnflags set; using the first compatible flag.\n", ent->classname);
 	}

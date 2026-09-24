@@ -241,6 +241,7 @@ void G_ResetCar( gentity_t *ent ) {
 	VectorCopy(angles, ent->client->ps.viewangles);
 
 //	PM_InitializeVehicle(&ent->client->car, ent->client->ps.origin, ent->client->ps.viewangles, vec3_origin, car_frontweight_dist.value );
+	ent->client->car.preserveFuel = qtrue;
 	ent->client->car.initializeOnNextMove = qtrue;
 
 	ent->client->ps.eFlags ^= EF_TELEPORT_BIT;

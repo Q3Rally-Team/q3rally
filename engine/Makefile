@@ -777,7 +777,7 @@ ifdef MINGW
   ifneq ("$(CC)", $(findstring "$(CC)", "clang" "clang++"))
     CLIENT_LDFLAGS += -mwindows
   endif
-  CLIENT_LIBS = -lgdi32 -lole32
+	CLIENT_LIBS = -lgdi32 -lole32 -lcomdlg32
   SERVER_LIBS =
   RENDERER_LIBS = -lgdi32 -lole32 -static-libgcc
 
@@ -2971,6 +2971,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_rally_credits.o \
   $(B)/$(BASEGAME)/ui/ui_rally_favorites.o \
   $(B)/$(BASEGAME)/ui/ui_rally_gfxloading.o \
+  $(B)/$(BASEGAME)/ui/ui_rally_frontend.o \
   $(B)/$(BASEGAME)/ui/ui_rally_profiles.o \
   $(B)/$(BASEGAME)/ui/ui_rally_options.o \
   $(B)/$(BASEGAME)/ui/ui_rally_ladder_wizard.o \

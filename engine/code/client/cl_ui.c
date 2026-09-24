@@ -24,7 +24,132 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../botlib/botlib.h"
 
+#ifdef _WIN32
+#include <commdlg.h>
+#endif
+
 extern	botlib_export_t	*botlib_export;
+
+#ifdef _WIN32
+static int CLUI_CopyAvatarFile( const char *profileName, const char *sourcePath,
+								char *shaderPath, int shaderPathSize ) {
+	char safeName[64];
+	char extension[8];
+	char destination[MAX_QPATH];
+	const char *dot;
+	FILE *source;
+	fileHandle_t output;
+	byte *data;
+	long size;
+	int i;
+	int safeLength;
+
+	if ( !sourcePath || !sourcePath[0] || !shaderPath || shaderPathSize <= 0 ) {
+		return 0;
+	}
+	shaderPath[0] = '\0';
+
+	dot = strrchr( sourcePath, '.' );
+	if ( !dot || !dot[1] ) {
+		return 0;
+	}
+	Q_strncpyz( extension, dot, sizeof( extension ) );
+	for ( i = 0; extension[i]; ++i ) {
+		if ( extension[i] >= 'A' && extension[i] <= 'Z' ) {
+			extension[i] = (char)( extension[i] - 'A' + 'a' );
+		}
+	}
+	if ( Q_stricmp( extension, ".png" ) && Q_stricmp( extension, ".jpg" ) &&
+	     Q_stricmp( extension, ".jpeg" ) && Q_stricmp( extension, ".tga" ) ) {
+		return 0;
+	}
+
+	source = fopen( sourcePath, "rb" );
+	if ( !source ) {
+		return 0;
+	}
+	fseek( source, 0, SEEK_END );
+	size = ftell( source );
+	fseek( source, 0, SEEK_SET );
+	if ( size <= 0 || size > 8 * 1024 * 1024 ) {
+		fclose( source );
+		return 0;
+	}
+
+	data = (byte *)malloc( (size_t)size );
+	if ( !data || fread( data, 1, (size_t)size, source ) != (size_t)size ) {
+		if ( data ) {
+			free( data );
+		}
+		fclose( source );
+		return 0;
+	}
+	fclose( source );
+
+	safeLength = 0;
+	if ( profileName ) {
+		for ( i = 0; profileName[i] && safeLength < (int)sizeof( safeName ) - 1; ++i ) {
+			char c = profileName[i];
+			if ( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) ||
+			     ( c >= '0' && c <= '9' ) || c == '_' || c == '-' ) {
+				safeName[safeLength++] = c;
+			} else {
+				safeName[safeLength++] = '_';
+			}
+		}
+	}
+	if ( safeLength == 0 ) {
+		Q_strncpyz( safeName, "profile", sizeof( safeName ) );
+	} else {
+		safeName[safeLength] = '\0';
+	}
+
+	Com_sprintf( destination, sizeof( destination ), "gfx/avatars/custom/%s%s", safeName, extension );
+	output = FS_FOpenFileWrite( destination );
+	if ( !output ) {
+		free( data );
+		return 0;
+	}
+	FS_Write( data, (int)size, output );
+	FS_FCloseFile( output );
+	free( data );
+
+	Q_strncpyz( shaderPath, destination, shaderPathSize );
+	return 1;
+}
+
+static int CLUI_ImportAvatar( const char *profileName, char *shaderPath, int shaderPathSize ) {
+	OPENFILENAMEA dialog;
+	HWND owner;
+	char sourcePath[MAX_OSPATH];
+	char filter[] = "Avatar images (*.png;*.jpg;*.jpeg;*.tga)\0*.png;*.jpg;*.jpeg;*.tga\0All files (*.*)\0*.*\0";
+
+	if ( !shaderPath || shaderPathSize <= 0 ) {
+		return 0;
+	}
+	shaderPath[0] = '\0';
+
+	Com_Memset( &dialog, 0, sizeof( dialog ) );
+	Com_Memset( sourcePath, 0, sizeof( sourcePath ) );
+	owner = GetForegroundWindow();
+	if ( !owner ) {
+		owner = GetActiveWindow();
+	}
+	dialog.lStructSize = sizeof( dialog );
+	dialog.hwndOwner = owner;
+	dialog.lpstrFilter = filter;
+	dialog.lpstrFile = sourcePath;
+	dialog.nMaxFile = sizeof( sourcePath );
+	dialog.lpstrTitle = "Choose an avatar image";
+	dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+
+	if ( !GetOpenFileNameA( &dialog ) ) {
+		return 0;
+	}
+
+	return CLUI_CopyAvatarFile( profileName, sourcePath, shaderPath, shaderPathSize );
+}
+#endif
 
 vm_t *uivm;
 
@@ -806,6 +931,20 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 
 	case UI_FS_SEEK:
 		return FS_Seek( args[1], args[2], args[3] );
+
+	case UI_IMPORT_AVATAR:
+#ifdef _WIN32
+		return CLUI_ImportAvatar( VMA(1), VMA(2), args[3] );
+#else
+		return 0;
+#endif
+
+	case UI_IMPORT_AVATAR_PATH:
+#ifdef _WIN32
+		return CLUI_CopyAvatarFile( VMA(1), VMA(2), VMA(3), args[4] );
+#else
+		return 0;
+#endif
 	
 	case UI_R_REGISTERMODEL:
 		return re.RegisterModel( VMA(1) );

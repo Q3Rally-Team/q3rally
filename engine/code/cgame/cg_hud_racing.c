@@ -42,7 +42,6 @@ float CG_DrawArrowToCheckpoint( float y ) {
 	vec3_t		forward, origin, angles;
 	int			i;
 	float		angle1, angle2, angleDiff;
-	int			x, w;
 	float		fx, fy, fw, fh;
 	float		*color;
 	refdef_t	refdef;
@@ -133,18 +132,13 @@ float CG_DrawArrowToCheckpoint( float y ) {
 	if ( !cg.wrongWayStartTime || cg.wrongWayStartTime > cg.time - 2000 )
 		return y;
 
-	w = BIGCHAR_WIDTH * CG_DrawStrlen( "WRONG WAY!" );
-	x = ( SCREEN_WIDTH - w ) / 2;
-
 	color = CG_FadeColor( cg.wrongWayTime, 300 );
 	if ( !color )
 		return y;
 
-	trap_R_SetColor( color );
-	CG_SetScreenPlacement( PLACE_CENTER, PLACE_CENTER );
-	CG_DrawStringExt( x, SCREEN_HEIGHT * .30f, "WRONG WAY!", color,
-	                  qfalse, qtrue, BIGCHAR_WIDTH, (int)(BIGCHAR_WIDTH * 1.5), 0 );
-	CG_PopScreenPlacement();
+	CG_DrawIngameString( (int)( SCREEN_WIDTH * 0.5f ),
+	                      (int)( SCREEN_HEIGHT * 0.30f ), "WRONG WAY!",
+	                      UI_CENTER | UI_DROPSHADOW, 0.9f, color );
 
 	return y;
 }
@@ -180,20 +174,20 @@ float CG_DrawTimes( float y ) {
 		time = getStringForTime( cent->bestLapTime );
 		Com_sprintf( s, sizeof(s), "B: %s", time );
 		CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+		CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, colorWhite );
 		y += rowHeight;
 
 		time = getStringForTime( lapTime );
 		Com_sprintf( s, sizeof(s), "L: %s", time );
 		CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+		CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, colorWhite );
 		y += rowHeight;
 	}
 
 	time = getStringForTime( totalTime );
 	Com_sprintf( s, sizeof(s), "T: %s", time );
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -232,7 +226,7 @@ float CG_DrawGhostSplitDelta( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, deltaColor );
+	CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, deltaColor );
 	y += rowHeight;
 
 	return y;
@@ -261,7 +255,7 @@ float CG_DrawLaps( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -288,7 +282,7 @@ float CG_DrawDistanceToFinish( float y ) {
 
 	x = HUD_RIGHT_EDGE - columnWidth;
 	CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-	CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, s, colorWhite );
+	CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, s, colorWhite );
 	y += rowHeight;
 
 	return y;
@@ -321,12 +315,12 @@ void CG_DrawCurrentPosition( float y ) {
 	CG_FillRect( baseX, y, width, height, bgColor );
 
 	textX = baseX + HUD_TEXT_INSET;
-	textY = y + 4;
+	textY = y + 1;
 
 	if ( showPosition ) {
-		CG_DrawTinyStringColor( textX, textY, "POS:", colorWhite );
-		CG_DrawTinyStringColor( textX + TINYCHAR_WIDTH * 5, textY,
-		                        va("%i/%i", pos, cgs.numRacers), colorWhite );
+		CG_DrawIngameSmallString( (int)textX, (int)textY, "POS:", colorWhite );
+		CG_DrawIngameSmallString( (int)( textX + CG_IngameStringWidth( "POS:", UI_SMALLFONT, 0.75f ) + 3 ),
+		                          (int)textY, va("%i/%i", pos, cgs.numRacers), colorWhite );
 		textY += rowHeight;
 	}
 
@@ -335,7 +329,7 @@ void CG_DrawCurrentPosition( float y ) {
 			Com_sprintf( s, sizeof(s), "PLAYERS LEFT: %02i", remaining );
 		else
 			Com_sprintf( s, sizeof(s), "PLAYERS LEFT: --" );
-		CG_DrawTinyStringColor( textX, textY, s, colorWhite );
+		CG_DrawIngameSmallString( (int)textX, (int)textY, s, colorWhite );
 	}
 }
 
@@ -351,7 +345,7 @@ float CG_DrawEliminationTimeline( float y ) {
 	const float	rowHeight   = HUD_ROW_HEIGHT;
 
 	if ( !cg_elimTimeline.integer )                                       return y;
-	if ( cgs.gametype != GT_ELIMINATION && cgs.gametype != GT_LCS )       return y;
+	if ( cgs.gametype != GT_LCS )                                        return y;
 	if ( cg.elimTimelineCount <= 0 )                                      return y;
 
 	x = HUD_RIGHT_EDGE - columnWidth;
@@ -373,7 +367,7 @@ float CG_DrawEliminationTimeline( float y ) {
 		             event->round, event->remaining, name, elapsedSeconds );
 
 		CG_FillRect( x, y, columnWidth, rowHeight, bgColor );
-		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y + 4, line, colorWhite );
+		CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y + 1, line, colorWhite );
 		y += rowHeight;
 	}
 
@@ -412,10 +406,10 @@ float CG_DrawCarAheadAndBehind( float y ) {
 
 	x      = HUD_RIGHT_EDGE - columnWidth;
 	width  = columnWidth;
-	height = TINYCHAR_HEIGHT;
+	height = 12.0f;
 
 	if ( endPos >= startPos )
-		y += HUD_ROW_HEIGHT - (float)TINYCHAR_HEIGHT;
+		y += HUD_ROW_HEIGHT - height;
 
 	for ( i = startPos; i <= endPos; i++ ) {
 		num = -1;
@@ -448,9 +442,9 @@ float CG_DrawCarAheadAndBehind( float y ) {
 			if ( rowPosition <= 0 ) rowPosition = cgs.clientinfo[num].position;
 			Com_sprintf( s, sizeof(s), "%i-%s", rowPosition, player );
 		}
-		CG_DrawTinyStringColor( x + HUD_TEXT_INSET, y, s, colorWhite );
+		CG_DrawIngameSmallString( (int)( x + HUD_TEXT_INSET ), (int)y, s, colorWhite );
 
-		y += TINYCHAR_HEIGHT;
+		y += height;
 	}
 
 	return y;

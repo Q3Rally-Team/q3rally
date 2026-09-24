@@ -31,8 +31,25 @@ GAME OPTIONS MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define PREFERENCES_X_POS		360
+
+#define PREFERENCES_FRAME_X          24
+#define PREFERENCES_FRAME_Y          20
+#define PREFERENCES_FRAME_WIDTH      592
+#define PREFERENCES_FRAME_HEIGHT     440
+#define PREFERENCES_LEFT_X           48
+#define PREFERENCES_RIGHT_X          332
+#define PREFERENCES_CARD_Y           104
+#define PREFERENCES_CARD_WIDTH       260
+#define PREFERENCES_CARD_HEIGHT      300
+#define PREFERENCES_ROW_HEIGHT       30
+#define PREFERENCES_ROW_GAP          4
+#define PREFERENCES_ROW_Y            150
+#define PREFERENCES_ROW_INSET        16
+#define PREFERENCES_ROW_WIDTH        ( PREFERENCES_CARD_WIDTH - 32 )
+#define PREFERENCES_ACTION_Y         420
 
 #define ID_SIMPLEITEMS			128
 #define ID_HIGHQUALITYSKY		129
@@ -76,12 +93,24 @@ typedef struct {
 
 static preferences_t s_preferences;
 
+static vec4_t preferencesScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t preferencesTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t preferencesMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t preferencesAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t preferencesFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
+static vec4_t preferencesBorderColor = UI_FRONTEND_COLOR_BORDER;
+
+static void Preferences_MenuDraw( void );
+static void Preferences_DrawRadio( void *self );
+static void Preferences_DrawChoice( void *self );
+static void Preferences_DrawAction( void *self );
+
 static const char *teamoverlay_names[] =
 {
-	"off",
-	"upper right",
-	"lower right",
-	"lower left",
+	"Off",
+	"Upper right",
+	"Lower right",
+	"Lower left",
 	0
 };
 
@@ -166,6 +195,114 @@ static void Preferences_Event( void* ptr, int notification ) {
 	}
 }
 
+static void Preferences_SetBounds( menucommon_s *item, int x, int y,
+	int width, int height, const char *label ) {
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void Preferences_DrawRow( menucommon_s *item, const char *value ) {
+	qboolean focus;
+	qboolean disabled;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+
+	if ( focus && !disabled ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top,
+			preferencesFocusColor );
+		UI_FillRect( item->left, item->top, 2,
+			item->bottom - item->top, preferencesAccentColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, preferencesBorderColor );
+
+	Vector4Copy( disabled ? preferencesMutedColor :
+		(focus ? preferencesTextColor : preferencesMutedColor), labelColor );
+	Vector4Copy( disabled ? preferencesMutedColor :
+		(focus ? preferencesAccentColor : preferencesTextColor), valueColor );
+
+	Frontend_DrawText( item->left + 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->right - 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Preferences_DrawRadio( void *self ) {
+	menuradiobutton_s *radio;
+
+	radio = (menuradiobutton_s *)self;
+	Preferences_DrawRow( &radio->generic,
+		radio->curvalue ? "On" : "Off" );
+}
+
+static void Preferences_DrawChoice( void *self ) {
+	menulist_s *choice;
+	const char *value;
+
+	choice = (menulist_s *)self;
+	value = choice->itemnames[choice->curvalue];
+	Preferences_DrawRow( &choice->generic, value ? value : "-" );
+}
+
+static void Preferences_DrawAction( void *self ) {
+	menutext_s *action;
+	qboolean focus;
+
+	action = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( action->generic.parent ) == &action->generic );
+	Frontend_DrawButton( action->generic.left, action->generic.top,
+		action->generic.right - action->generic.left,
+		action->generic.bottom - action->generic.top,
+		action->string, 1.0f, focus, UI_CENTER );
+}
+
+static void Preferences_MenuDraw( void ) {
+	Frontend_DrawBackground( preferencesScrimColor );
+	Frontend_DrawPanel( PREFERENCES_FRAME_X, PREFERENCES_FRAME_Y,
+		PREFERENCES_FRAME_WIDTH, PREFERENCES_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( PREFERENCES_FRAME_X + 24,
+		PREFERENCES_FRAME_Y + 24, "Game options",
+		UI_LEFT | UI_BIGFONT, preferencesTextColor );
+	Frontend_DrawText( PREFERENCES_FRAME_X + 24,
+		PREFERENCES_FRAME_Y + 48,
+		"Tune gameplay rules, world detail and interface behavior",
+		UI_LEFT | UI_SMALLFONT, preferencesMutedColor );
+	Frontend_DrawStatusChip( PREFERENCES_FRAME_X + PREFERENCES_FRAME_WIDTH - 104,
+		PREFERENCES_FRAME_Y + 26, "Settings",
+		preferencesAccentColor, 1.0f );
+
+	Frontend_DrawCard( PREFERENCES_LEFT_X, PREFERENCES_CARD_Y,
+		PREFERENCES_CARD_WIDTH, PREFERENCES_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( PREFERENCES_RIGHT_X, PREFERENCES_CARD_Y,
+		PREFERENCES_CARD_WIDTH, PREFERENCES_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( PREFERENCES_LEFT_X + 16, PREFERENCES_CARD_Y + 22,
+		"World & rendering", UI_LEFT | UI_SMALLFONT,
+		preferencesMutedColor );
+	Frontend_DrawText( PREFERENCES_RIGHT_X + 16, PREFERENCES_CARD_Y + 22,
+		"Player & interface", UI_LEFT | UI_SMALLFONT,
+		preferencesMutedColor );
+	Frontend_DrawText( PREFERENCES_FRAME_X + 24,
+		PREFERENCES_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, preferencesMutedColor );
+
+	Menu_Draw( &s_preferences.menu );
+}
+
 static void Preferences_MenuInit( void ) {
 	int				y;
 
@@ -173,6 +310,7 @@ static void Preferences_MenuInit( void ) {
 
 	Preferences_Cache();
 
+	s_preferences.menu.draw = Preferences_MenuDraw;
 	s_preferences.menu.wrapAround = qtrue;
 	s_preferences.menu.fullscreen = qtrue;
 
@@ -303,7 +441,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.back.style					= UI_LEFT | UI_SMALLFONT;
 
 
-	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.simpleitems );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.brass );
@@ -318,6 +455,72 @@ static void Preferences_MenuInit( void ) {
     Menu_AddItem( &s_preferences.menu, &s_preferences.sigilswitch );
 
 	Menu_AddItem( &s_preferences.menu, &s_preferences.back );
+
+	Preferences_SetBounds( &s_preferences.simpleitems.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET, PREFERENCES_ROW_Y,
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Simple items" );
+	Preferences_SetBounds( &s_preferences.wallmarks.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 1 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Marks on walls" );
+	Preferences_SetBounds( &s_preferences.brass.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 2 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Ejecting brass" );
+	Preferences_SetBounds( &s_preferences.dynamiclights.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 3 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Dynamic lights" );
+	Preferences_SetBounds( &s_preferences.highqualitysky.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 4 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "High quality sky" );
+	Preferences_SetBounds( &s_preferences.synceveryframe.generic,
+		PREFERENCES_LEFT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 5 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Sync every frame" );
+
+	Preferences_SetBounds( &s_preferences.identifytarget.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET, PREFERENCES_ROW_Y,
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Identify target" );
+	Preferences_SetBounds( &s_preferences.forcemodel.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 1 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Force player models" );
+	Preferences_SetBounds( &s_preferences.drawteamoverlay.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 2 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Team overlay" );
+	Preferences_SetBounds( &s_preferences.allowdownload.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 3 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Automatic downloads" );
+	Preferences_SetBounds( &s_preferences.drawfps.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 4 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Show FPS" );
+	Preferences_SetBounds( &s_preferences.sigilswitch.generic,
+		PREFERENCES_RIGHT_X + PREFERENCES_ROW_INSET,
+		PREFERENCES_ROW_Y + 5 * ( PREFERENCES_ROW_HEIGHT + PREFERENCES_ROW_GAP ),
+		PREFERENCES_ROW_WIDTH, PREFERENCES_ROW_HEIGHT, "Sigil switch" );
+
+	s_preferences.simpleitems.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.wallmarks.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.brass.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.dynamiclights.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.highqualitysky.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.synceveryframe.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.identifytarget.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.forcemodel.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.drawteamoverlay.generic.ownerdraw = Preferences_DrawChoice;
+	s_preferences.allowdownload.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.drawfps.generic.ownerdraw = Preferences_DrawRadio;
+	s_preferences.sigilswitch.generic.ownerdraw = Preferences_DrawRadio;
+
+	Preferences_SetBounds( &s_preferences.back.generic,
+		PREFERENCES_FRAME_X + 24, PREFERENCES_ACTION_Y, 120, 24, NULL );
+	s_preferences.back.string = "Back";
+	s_preferences.back.generic.ownerdraw = Preferences_DrawAction;
 
 	Preferences_SetMenuItems();
 }

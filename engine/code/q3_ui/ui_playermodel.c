@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 // STONELANCE
 /*
@@ -138,6 +139,36 @@ static char* playermodel_artlist[] =
 #define ID_NEXTHEADPAGE		111
 // END
 
+#define PLAYERMODEL_FRAME_X             24
+#define PLAYERMODEL_FRAME_Y             24
+#define PLAYERMODEL_FRAME_WIDTH         592
+#define PLAYERMODEL_FRAME_HEIGHT        432
+#define PLAYERMODEL_PREVIEW_X            40
+#define PLAYERMODEL_PREVIEW_Y            104
+#define PLAYERMODEL_PREVIEW_WIDTH       288
+#define PLAYERMODEL_PREVIEW_HEIGHT      248
+#define PLAYERMODEL_FAVORITES_X          40
+#define PLAYERMODEL_FAVORITES_Y         364
+#define PLAYERMODEL_FAVORITES_WIDTH     288
+#define PLAYERMODEL_FAVORITES_HEIGHT     64
+#define PLAYERMODEL_PAINT_X             344
+#define PLAYERMODEL_PAINT_Y             104
+#define PLAYERMODEL_PAINT_WIDTH         256
+#define PLAYERMODEL_PAINT_HEIGHT        128
+#define PLAYERMODEL_RIMS_X              344
+#define PLAYERMODEL_RIMS_Y              240
+#define PLAYERMODEL_RIMS_WIDTH          256
+#define PLAYERMODEL_RIMS_HEIGHT         116
+#define PLAYERMODEL_HEADS_X             344
+#define PLAYERMODEL_HEADS_Y             364
+#define PLAYERMODEL_HEADS_WIDTH         256
+#define PLAYERMODEL_HEADS_HEIGHT         64
+
+static vec4_t playerModelScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t playerModelTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t playerModelMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t playerModelStatusColor = UI_FRONTEND_COLOR_ACCENT;
+
 typedef struct
 {
 	menuframework_s	menu;
@@ -173,6 +204,8 @@ typedef struct
 	menubitmap_s	up;
 	menubitmap_s	down;
 	menutext_s		paintname;
+	menutext_s		paintPrev;
+	menutext_s		paintNext;
 
 	menubitmap_s	rimports[MAX_RIMSPERPAGE];
 	menubitmap_s	rimpics[MAX_RIMSPERPAGE];
@@ -180,12 +213,16 @@ typedef struct
 	menubitmap_s	rimup;
 	menubitmap_s	rimdown;
 	menutext_s		rimname;
+	menutext_s		rimPrev;
+	menutext_s		rimNext;
 
 	menubitmap_s	headports[MAX_HEADSPERPAGE];
 	menubitmap_s	headpics[MAX_HEADSPERPAGE];
 	menubitmap_s	headpicbuttons[MAX_HEADSPERPAGE];
 	menubitmap_s	headup;
 	menubitmap_s	headdown;
+	menutext_s		headPrev;
+	menutext_s		headNext;
 
 	menutext_s		back;
 
@@ -232,6 +269,197 @@ typedef struct
 
 static playermodel_t s_playermodel;
 
+static void PlayerModel_MenuEvent( void *ptr, int event );
+
+
+static qboolean PlayerModel_ItemFocused( int id ) {
+	menucommon_s *item;
+
+	item = (menucommon_s *)Menu_ItemAtCursor( &s_playermodel.menu );
+	return ( item && item->id == id ) ? qtrue : qfalse;
+}
+
+
+static void PlayerModel_DrawPageButton( void *self ) {
+	menutext_s *button;
+	menucommon_s *item;
+	qboolean disabled;
+	qboolean focused;
+
+	button = (menutext_s *)self;
+	item = &button->generic;
+	disabled = ( item->flags & QMF_INACTIVE ) ? qtrue : qfalse;
+	focused = ( Menu_ItemAtCursor( item->parent ) == item );
+
+	if ( disabled ) {
+		Frontend_DrawText( (item->left + item->right) / 2,
+			item->top + (item->bottom - item->top - SMALLCHAR_HEIGHT) / 2,
+			button->string, UI_CENTER | UI_SMALLFONT, playerModelMutedColor );
+		return;
+	}
+
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		button->string, uis.tFrac, focused, UI_CENTER );
+}
+
+
+static void PlayerModel_InitPageButton( menutext_s *button, int id,
+	const char *label, int x, int y, int width ) {
+	button->generic.type = MTYPE_PTEXT;
+	button->generic.flags = QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
+	button->generic.id = id;
+	button->generic.x = x + width / 2;
+	button->generic.y = y;
+	button->generic.left = x;
+	button->generic.top = y;
+	button->generic.right = x + width;
+	button->generic.bottom = y + 20;
+	button->generic.callback = PlayerModel_MenuEvent;
+	button->generic.ownerdraw = PlayerModel_DrawPageButton;
+	button->string = (char *)label;
+	button->style = UI_CENTER | UI_SMALLFONT;
+	button->color = text_color_normal;
+}
+
+
+static void PlayerModel_DrawBackButton( void *self ) {
+	menutext_s *button;
+	menucommon_s *item;
+	qboolean focused;
+
+	button = (menutext_s *)self;
+	item = &button->generic;
+	focused = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawNavButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		button->string, uis.tFrac, focused, UI_LEFT );
+}
+
+
+static void PlayerModel_DrawSelectionTile( int x, int y, int width,
+	int height, int id, qboolean selected ) {
+	Frontend_DrawCard( x - 3, y - 3, width + 6, height + 6,
+		uis.tFrac, selected || PlayerModel_ItemFocused( id ) );
+}
+
+
+static void PlayerModel_ApplyLayout( void ) {
+	int i;
+	int x;
+	int y;
+
+	for ( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 147;
+		s_playermodel.pics[i].generic.x = x + 2;
+		s_playermodel.pics[i].generic.y = y + 2;
+		s_playermodel.pics[i].width = 44;
+		s_playermodel.pics[i].height = 44;
+		s_playermodel.picbuttons[i].generic.x = x;
+		s_playermodel.picbuttons[i].generic.y = y;
+		s_playermodel.picbuttons[i].generic.left = x;
+		s_playermodel.picbuttons[i].generic.top = y;
+		s_playermodel.picbuttons[i].generic.right = x + 48;
+		s_playermodel.picbuttons[i].generic.bottom = y + 48;
+		s_playermodel.picbuttons[i].width = 48;
+		s_playermodel.picbuttons[i].height = 48;
+		s_playermodel.picbuttons[i].focuspic = NULL;
+	}
+
+	for ( i = 0; i < MAX_RIMSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 283;
+		s_playermodel.rimpics[i].generic.x = x + 2;
+		s_playermodel.rimpics[i].generic.y = y + 2;
+		s_playermodel.rimpics[i].width = 44;
+		s_playermodel.rimpics[i].height = 44;
+		s_playermodel.rimpicbuttons[i].generic.x = x;
+		s_playermodel.rimpicbuttons[i].generic.y = y;
+		s_playermodel.rimpicbuttons[i].generic.left = x;
+		s_playermodel.rimpicbuttons[i].generic.top = y;
+		s_playermodel.rimpicbuttons[i].generic.right = x + 48;
+		s_playermodel.rimpicbuttons[i].generic.bottom = y + 48;
+		s_playermodel.rimpicbuttons[i].width = 48;
+		s_playermodel.rimpicbuttons[i].height = 48;
+		s_playermodel.rimpicbuttons[i].focuspic = NULL;
+	}
+
+	for ( i = 0; i < MAX_HEADSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 392;
+		s_playermodel.headpics[i].generic.x = x + 3;
+		s_playermodel.headpics[i].generic.y = y;
+		s_playermodel.headpics[i].width = 32;
+		s_playermodel.headpics[i].height = 30;
+		s_playermodel.headpicbuttons[i].generic.x = x;
+		s_playermodel.headpicbuttons[i].generic.y = y;
+		s_playermodel.headpicbuttons[i].generic.left = x;
+		s_playermodel.headpicbuttons[i].generic.top = y;
+		s_playermodel.headpicbuttons[i].generic.right = x + 38;
+		s_playermodel.headpicbuttons[i].generic.bottom = y + 30;
+		s_playermodel.headpicbuttons[i].width = 38;
+		s_playermodel.headpicbuttons[i].height = 30;
+		s_playermodel.headpicbuttons[i].focuspic = NULL;
+	}
+
+	for ( i = 0; i < NUM_FAVORITES; i++ ) {
+		x = 50 + i * 60;
+		y = 386;
+		s_playermodel.favpics[i].generic.x = x + 2;
+		s_playermodel.favpics[i].generic.y = y + 2;
+		s_playermodel.favpics[i].width = 32;
+		s_playermodel.favpics[i].height = 32;
+		s_playermodel.favpicbuttons[i].generic.x = x;
+		s_playermodel.favpicbuttons[i].generic.y = y;
+		s_playermodel.favpicbuttons[i].generic.left = x;
+		s_playermodel.favpicbuttons[i].generic.top = y;
+		s_playermodel.favpicbuttons[i].generic.right = x + 36;
+		s_playermodel.favpicbuttons[i].generic.bottom = y + 36;
+		s_playermodel.favpicbuttons[i].width = 36;
+		s_playermodel.favpicbuttons[i].height = 36;
+		s_playermodel.favpicbuttons[i].focuspic = NULL;
+	}
+
+	s_playermodel.player.generic.x = PLAYERMODEL_PREVIEW_X + 8;
+	s_playermodel.player.generic.y = PLAYERMODEL_PREVIEW_Y + 26;
+	s_playermodel.player.generic.left = PLAYERMODEL_PREVIEW_X + 8;
+	s_playermodel.player.generic.right = PLAYERMODEL_PREVIEW_X +
+		PLAYERMODEL_PREVIEW_WIDTH - 8;
+	s_playermodel.player.generic.top = PLAYERMODEL_PREVIEW_Y + 26;
+	s_playermodel.player.generic.bottom = PLAYERMODEL_PREVIEW_Y +
+		PLAYERMODEL_PREVIEW_HEIGHT - 28;
+	s_playermodel.player.width = PLAYERMODEL_PREVIEW_WIDTH - 16;
+	s_playermodel.player.height = PLAYERMODEL_PREVIEW_HEIGHT - 54;
+
+	PlayerModel_InitPageButton( &s_playermodel.paintPrev, ID_PREVPAGE,
+		"PREV", 500, 108, 38 );
+	PlayerModel_InitPageButton( &s_playermodel.paintNext, ID_NEXTPAGE,
+		"NEXT", 546, 108, 42 );
+	PlayerModel_InitPageButton( &s_playermodel.rimPrev, ID_PREVRIMPAGE,
+		"PREV", 500, 244, 38 );
+	PlayerModel_InitPageButton( &s_playermodel.rimNext, ID_NEXTRIMPAGE,
+		"NEXT", 546, 244, 42 );
+	PlayerModel_InitPageButton( &s_playermodel.headPrev, ID_PREVHEADPAGE,
+		"PREV", 500, 368, 38 );
+	PlayerModel_InitPageButton( &s_playermodel.headNext, ID_NEXTHEADPAGE,
+		"NEXT", 546, 368, 42 );
+
+	s_playermodel.back.generic.type = MTYPE_PTEXT;
+	s_playermodel.back.generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS |
+		QMF_NODEFAULTINIT;
+	s_playermodel.back.generic.id = ID_BACK;
+	s_playermodel.back.generic.x = 56;
+	s_playermodel.back.generic.y = 433;
+	s_playermodel.back.generic.left = 40;
+	s_playermodel.back.generic.top = 430;
+	s_playermodel.back.generic.right = 136;
+	s_playermodel.back.generic.bottom = 454;
+	s_playermodel.back.generic.callback = PlayerModel_MenuEvent;
+	s_playermodel.back.generic.ownerdraw = PlayerModel_DrawBackButton;
+	s_playermodel.back.string = "< BACK";
+}
+
 
 // STONELANCE (new function)
 /*
@@ -240,9 +468,137 @@ PlayerModel_DrawBackShaders
 =================
 */
 static void PlayerModel_DrawBackShaders( void ) {
-	UI_FillRect( 40 + (84 * (1 - uis.tFrac)), 138, 240 + (152 * (1 - uis.tFrac)), 32, menu_back_color);
-	UI_FillRect( 360 + (-236 * (1 - uis.tFrac)), 138, 240 + (152 * (1 - uis.tFrac)), 32, menu_back_color);
-	UI_FillRect( 516 + (124 * (1 - uis.tFrac)), 362, 68, 32, menu_back_color);
+	int i;
+	int x;
+	int y;
+	int selected;
+
+	Frontend_DrawBackground( playerModelScrimColor );
+	Frontend_DrawPanel( PLAYERMODEL_FRAME_X, PLAYERMODEL_FRAME_Y,
+		PLAYERMODEL_FRAME_WIDTH, PLAYERMODEL_FRAME_HEIGHT, uis.tFrac,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( PLAYERMODEL_FRAME_X + 24, PLAYERMODEL_FRAME_Y + 19,
+		"Customize vehicle", UI_LEFT | UI_BIGFONT, playerModelTextColor );
+	Frontend_DrawText( PLAYERMODEL_FRAME_X + 24, PLAYERMODEL_FRAME_Y + 45,
+		"Choose a paint, wheel set and driver for your car",
+		UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+	Frontend_DrawStatusChip( PLAYERMODEL_FRAME_X + PLAYERMODEL_FRAME_WIDTH - 96,
+		PLAYERMODEL_FRAME_Y + 22, "GARAGE", playerModelStatusColor, uis.tFrac );
+
+	Frontend_DrawCard( PLAYERMODEL_PREVIEW_X, PLAYERMODEL_PREVIEW_Y,
+		PLAYERMODEL_PREVIEW_WIDTH, PLAYERMODEL_PREVIEW_HEIGHT, uis.tFrac, qtrue );
+	Frontend_DrawText( PLAYERMODEL_PREVIEW_X + 16,
+		PLAYERMODEL_PREVIEW_Y + 12, "VEHICLE PREVIEW",
+		UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+	Frontend_DrawText( PLAYERMODEL_PREVIEW_X + 16,
+		PLAYERMODEL_PREVIEW_Y + PLAYERMODEL_PREVIEW_HEIGHT - 20,
+		"DRAG TO ROTATE", UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+
+	Frontend_DrawCard( PLAYERMODEL_FAVORITES_X, PLAYERMODEL_FAVORITES_Y,
+		PLAYERMODEL_FAVORITES_WIDTH, PLAYERMODEL_FAVORITES_HEIGHT,
+		uis.tFrac, qfalse );
+	Frontend_DrawText( PLAYERMODEL_FAVORITES_X + 12,
+		PLAYERMODEL_FAVORITES_Y + 8, "SAVED BUILDS",
+		UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+
+	Frontend_DrawCard( PLAYERMODEL_PAINT_X, PLAYERMODEL_PAINT_Y,
+		PLAYERMODEL_PAINT_WIDTH, PLAYERMODEL_PAINT_HEIGHT, uis.tFrac, qfalse );
+	Frontend_DrawText( PLAYERMODEL_PAINT_X + 16, PLAYERMODEL_PAINT_Y + 12,
+		"PAINT", UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+	Frontend_DrawText( PLAYERMODEL_PAINT_X + 142,
+		PLAYERMODEL_PAINT_Y + 12,
+		va( "%d / %d", s_playermodel.modelpage + 1,
+			s_playermodel.numpages ), UI_RIGHT | UI_SMALLFONT,
+		playerModelMutedColor );
+
+	Frontend_DrawCard( PLAYERMODEL_RIMS_X, PLAYERMODEL_RIMS_Y,
+		PLAYERMODEL_RIMS_WIDTH, PLAYERMODEL_RIMS_HEIGHT, uis.tFrac, qfalse );
+	Frontend_DrawText( PLAYERMODEL_RIMS_X + 16, PLAYERMODEL_RIMS_Y + 12,
+		"WHEELS", UI_LEFT | UI_SMALLFONT, playerModelMutedColor );
+	Frontend_DrawText( PLAYERMODEL_RIMS_X + 142,
+		PLAYERMODEL_RIMS_Y + 12,
+		va( "%d / %d", s_playermodel.rimPage + 1,
+			s_playermodel.numRimPages ), UI_RIGHT | UI_SMALLFONT,
+		playerModelMutedColor );
+
+	Frontend_DrawCard( PLAYERMODEL_HEADS_X, PLAYERMODEL_HEADS_Y,
+		PLAYERMODEL_HEADS_WIDTH, PLAYERMODEL_HEADS_HEIGHT,
+		uis.tFrac, qfalse );
+	Frontend_DrawText( PLAYERMODEL_HEADS_X + 16,
+		PLAYERMODEL_HEADS_Y + 10, "DRIVER", UI_LEFT | UI_SMALLFONT,
+		playerModelMutedColor );
+	Frontend_DrawText( PLAYERMODEL_HEADS_X + 142,
+		PLAYERMODEL_HEADS_Y + 10,
+		va( "%d / %d", s_playermodel.headPage + 1,
+			s_playermodel.numHeadPages ), UI_RIGHT | UI_SMALLFONT,
+		playerModelMutedColor );
+
+	for ( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 147;
+		if ( !s_playermodel.modelIcons[i][0] ) {
+			continue;
+		}
+		selected = ( s_playermodel.selectedmodel / MAX_MODELSPERPAGE ==
+			s_playermodel.modelpage &&
+			s_playermodel.selectedmodel % MAX_MODELSPERPAGE == i );
+		PlayerModel_DrawSelectionTile( x, y, 48, 48,
+			ID_PLAYERPIC0 + i, selected );
+	}
+	Frontend_DrawText( PLAYERMODEL_PAINT_X + 16,
+		PLAYERMODEL_PAINT_Y + PLAYERMODEL_PAINT_HEIGHT - 18,
+		s_playermodel.paintname.string ? s_playermodel.paintname.string : "",
+		UI_LEFT | UI_SMALLFONT, playerModelTextColor );
+
+	for ( i = 0; i < MAX_RIMSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 283;
+		if ( !s_playermodel.rimIcons[i][0] ) {
+			continue;
+		}
+		selected = ( s_playermodel.selectedRim / MAX_RIMSPERPAGE ==
+			s_playermodel.rimPage &&
+			s_playermodel.selectedRim % MAX_RIMSPERPAGE == i );
+		PlayerModel_DrawSelectionTile( x, y, 48, 48,
+			ID_RIMPIC0 + i, selected );
+	}
+	Frontend_DrawText( PLAYERMODEL_RIMS_X + 16,
+		PLAYERMODEL_RIMS_Y + PLAYERMODEL_RIMS_HEIGHT - 18,
+		s_playermodel.rimname.string ? s_playermodel.rimname.string : "",
+		UI_LEFT | UI_SMALLFONT, playerModelTextColor );
+
+	for ( i = 0; i < MAX_HEADSPERPAGE; i++ ) {
+		x = 360 + i * 54;
+		y = 392;
+		if ( !s_playermodel.headIcons[i][0] ) {
+			continue;
+		}
+		selected = ( s_playermodel.selectedHead / MAX_HEADSPERPAGE ==
+			s_playermodel.headPage &&
+			s_playermodel.selectedHead % MAX_HEADSPERPAGE == i );
+		PlayerModel_DrawSelectionTile( x, y, 38, 30,
+			ID_HEADPIC0 + i, selected );
+	}
+	Frontend_DrawText( PLAYERMODEL_HEADS_X + 120,
+		PLAYERMODEL_HEADS_Y + PLAYERMODEL_HEADS_HEIGHT - 18,
+		s_playermodel.headskin, UI_LEFT | UI_SMALLFONT,
+		playerModelTextColor );
+
+	for ( i = 0; i < NUM_FAVORITES; i++ ) {
+		x = 50 + i * 60;
+		y = 386;
+		PlayerModel_DrawSelectionTile( x, y, 36, 36,
+			ID_FAVORITE1 + i, qfalse );
+		if ( !s_playermodel.favpics[i].generic.name ) {
+			Frontend_DrawText( x + 18, y + 12, "+",
+				UI_CENTER | UI_SMALLFONT, playerModelMutedColor );
+		}
+	}
+
+	Frontend_DrawText( PLAYERMODEL_FRAME_X + 182,
+		PLAYERMODEL_FRAME_Y + PLAYERMODEL_FRAME_HEIGHT - 24,
+		"Enter select     Esc back", UI_LEFT | UI_SMALLFONT,
+		playerModelMutedColor );
 
 	Menu_Draw( &s_playermodel.menu );
 }
@@ -372,6 +728,14 @@ static void PlayerModel_UpdateHeadGrid( void )
 		s_playermodel.headup.generic.flags |= QMF_INACTIVE;
 		s_playermodel.headdown.generic.flags |= QMF_INACTIVE;
 	}
+	if (s_playermodel.headPage > 0)
+		s_playermodel.headPrev.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.headPrev.generic.flags |= QMF_INACTIVE;
+	if (s_playermodel.headPage < s_playermodel.numHeadPages - 1)
+		s_playermodel.headNext.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.headNext.generic.flags |= QMF_INACTIVE;
 }
 
 
@@ -434,6 +798,14 @@ static void PlayerModel_UpdateRimGrid( void )
 		s_playermodel.rimup.generic.flags |= QMF_INACTIVE;
 		s_playermodel.rimdown.generic.flags |= QMF_INACTIVE;
 	}
+	if (s_playermodel.rimPage > 0)
+		s_playermodel.rimPrev.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.rimPrev.generic.flags |= QMF_INACTIVE;
+	if (s_playermodel.rimPage < s_playermodel.numRimPages - 1)
+		s_playermodel.rimNext.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.rimNext.generic.flags |= QMF_INACTIVE;
 }
 // END
 
@@ -525,6 +897,14 @@ static void PlayerModel_UpdateGrid( void )
 		s_playermodel.down.generic.flags |= QMF_INACTIVE;
 // END
 	}
+	if (s_playermodel.modelpage > 0)
+		s_playermodel.paintPrev.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.paintPrev.generic.flags |= QMF_INACTIVE;
+	if (s_playermodel.modelpage < s_playermodel.numpages - 1)
+		s_playermodel.paintNext.generic.flags &= ~QMF_INACTIVE;
+	else
+		s_playermodel.paintNext.generic.flags |= QMF_INACTIVE;
 }
 
 /*
@@ -678,52 +1058,13 @@ PlayerModel_RunTransition
 =================
 */
 void PlayerModel_RunTransition(float frac){
-	int		i, x;
-
 	uis.text_color[0] = text_color_normal[0];
 	uis.text_color[1] = text_color_normal[1];
 	uis.text_color[2] = text_color_normal[2];
 	uis.text_color[3] = text_color_normal[3] * frac;
-
-	s_playermodel.up.generic.x = 40 + (84 * (1 - frac)) - 16;
-	s_playermodel.down.generic.x = 280 + (236 * (1 - frac)) - 16;
-
-	s_playermodel.rimup.generic.x = 360 + (-236 * (1 - frac)) - 16;
-	s_playermodel.rimdown.generic.x = 600 + (-84 * (1 - frac)) - 16;
-
-	s_playermodel.headup.generic.x = 516 + (140 * (1 - frac)) - 16;
-	s_playermodel.headdown.generic.x = 584 + (140 * (1 - frac)) - 16;
-
-	s_playermodel.paintname.generic.x = 160 + (160 * (1 - frac));
-	s_playermodel.paintname.color = uis.text_color;
-	s_playermodel.rimname.generic.x = 480 + (-160 * (1 - frac));
-	s_playermodel.rimname.color = uis.text_color;
 	s_playermodel.banner.color = uis.text_color;
 	s_playermodel.favorites.color = uis.text_color;
-
-	x = 24 + (int)(-304 * (1 - frac));
-	for (i=0; i<MAX_MODELSPERPAGE; i++){
-		s_playermodel.ports[i].generic.x = x;
-		s_playermodel.pics[i].generic.x = x;
-		s_playermodel.picbuttons[i].generic.x = x;
-		x += 64 + 6;
-	}
-
-	x = 344 + (int)(296 * (1 - frac));
-	for (i=0; i<MAX_RIMSPERPAGE; i++){
-		s_playermodel.rimports[i].generic.x = x;
-		s_playermodel.rimpics[i].generic.x = x;
-		s_playermodel.rimpicbuttons[i].generic.x = x;
-		x += 64 + 6;
-	}
-
-	x = 482 + (int)(158 * (1 - frac));
-	for (i=0; i<MAX_HEADSPERPAGE; i++){
-		s_playermodel.headports[i].generic.x = x;
-		s_playermodel.headpics[i].generic.x = x;
-		s_playermodel.headpicbuttons[i].generic.x = x;
-		x += 64 + 6;
-	}
+	s_playermodel.back.color = uis.text_color;
 }
 // END
 
@@ -743,20 +1084,22 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
 			m = Menu_ItemAtCursor(&s_playermodel.menu);
-			picnum = m->id - ID_PLAYERPIC0;
-			if (picnum >= 0 && picnum <= 15)
+			picnum = m ? m->id - ID_PLAYERPIC0 : -1;
+			if (picnum >= 0 && picnum < MAX_MODELSPERPAGE)
 			{
 				if (picnum > 0)
 				{
-					Menu_SetCursor(&s_playermodel.menu,s_playermodel.menu.cursor-1);
+					Menu_SetCursorToItem(&s_playermodel.menu,
+						&s_playermodel.picbuttons[picnum - 1]);
 					return (menu_move_sound);
 					
 				}
 				else if (s_playermodel.modelpage > 0)
 				{
 					s_playermodel.modelpage--;
-					Menu_SetCursor(&s_playermodel.menu,s_playermodel.menu.cursor+15);
 					PlayerModel_UpdateGrid();
+					Menu_SetCursorToItem(&s_playermodel.menu,
+						&s_playermodel.picbuttons[MAX_MODELSPERPAGE - 1]);
 					return (menu_move_sound);
 				}
 				else
@@ -767,19 +1110,24 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
 			m = Menu_ItemAtCursor(&s_playermodel.menu);
-			picnum = m->id - ID_PLAYERPIC0;
-			if (picnum >= 0 && picnum <= 15)
+			picnum = m ? m->id - ID_PLAYERPIC0 : -1;
+			if (picnum >= 0 && picnum < MAX_MODELSPERPAGE)
 			{
-				if ((picnum < 15) && (s_playermodel.modelpage*MAX_MODELSPERPAGE + picnum+1 < s_playermodel.nummodels))
+				if ((picnum < MAX_MODELSPERPAGE - 1) &&
+					(s_playermodel.modelpage * MAX_MODELSPERPAGE + picnum + 1 <
+					s_playermodel.nummodels))
 				{
-					Menu_SetCursor(&s_playermodel.menu,s_playermodel.menu.cursor+1);
+					Menu_SetCursorToItem(&s_playermodel.menu,
+						&s_playermodel.picbuttons[picnum + 1]);
 					return (menu_move_sound);
 				}					
-				else if ((picnum == 15) && (s_playermodel.modelpage < s_playermodel.numpages-1))
+				else if ((picnum == MAX_MODELSPERPAGE - 1) &&
+					(s_playermodel.modelpage < s_playermodel.numpages - 1))
 				{
 					s_playermodel.modelpage++;
-					Menu_SetCursor(&s_playermodel.menu,s_playermodel.menu.cursor-15);
 					PlayerModel_UpdateGrid();
+					Menu_SetCursorToItem(&s_playermodel.menu,
+						&s_playermodel.picbuttons[0]);
 					return (menu_move_sound);
 				}
 				else
@@ -1792,65 +2140,34 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.back.style					= UI_LEFT | UI_SMALLFONT;
 // END
 
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.banner );
-// STONELANCE
-/*
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framel );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framer );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.ports );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.playername );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.modelname );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.skinname );
+	PlayerModel_ApplyLayout();
 
-	for (i=0; i<MAX_MODELSPERPAGE; i++)
-	{
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.pics[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.picbuttons[i] );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.player );
+	for (i = 0; i < MAX_MODELSPERPAGE; i++) {
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.picbuttons[i] );
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.pics[i] );
 	}
-*/
-	
-	for (i = 0; i < MAX_MODELSPERPAGE; i++){
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.ports[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.picbuttons[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.pics[i] );
-	}
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.paintname );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.up );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.down );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.paintPrev );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.paintNext );
 
-	for (i = 0; i < MAX_HEADSPERPAGE; i++){
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.headports[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.headpicbuttons[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.headpics[i] );
+	for (i = 0; i < MAX_RIMSPERPAGE; i++) {
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.rimpicbuttons[i] );
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.rimpics[i] );
 	}
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.headup );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.headdown );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.rimPrev );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.rimNext );
 
-	for (i = 0; i < MAX_RIMSPERPAGE; i++){
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimports[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimpicbuttons[i] );
-		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimpics[i] );
+	for (i = 0; i < MAX_HEADSPERPAGE; i++) {
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.headpicbuttons[i] );
+		Menu_AddItem( &s_playermodel.menu, &s_playermodel.headpics[i] );
 	}
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimname );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimup );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.rimdown );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.headPrev );
+	Menu_AddItem( &s_playermodel.menu, &s_playermodel.headNext );
 
-	for (i = 0; i < NUM_FAVORITES; i++){
-		Menu_AddItem( &s_playermodel.menu, &s_playermodel.favports[i] );
+	for (i = 0; i < NUM_FAVORITES; i++) {
 		Menu_AddItem( &s_playermodel.menu, &s_playermodel.favpicbuttons[i] );
 		Menu_AddItem( &s_playermodel.menu, &s_playermodel.favpics[i] );
 	}
-	Menu_AddItem( &s_playermodel.menu, &s_playermodel.favorites );
-// END
-
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.player );
-// STONELANCE
-/*
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.arrows );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.left );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.right );
-*/
-// END
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.back );
 
 	// find all available models
@@ -1926,7 +2243,8 @@ void UI_PlayerModelMenu( const char *modelName )
 
 	UI_PushMenu( &s_playermodel.menu );
 
-	Menu_SetCursorToItem( &s_playermodel.menu, &s_playermodel.pics[s_playermodel.selectedmodel % MAX_MODELSPERPAGE] );
+	Menu_SetCursorToItem( &s_playermodel.menu,
+		&s_playermodel.picbuttons[s_playermodel.selectedmodel % MAX_MODELSPERPAGE] );
 }
 
 

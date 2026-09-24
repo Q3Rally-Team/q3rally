@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "ui_local.h"
 #include "ui_rally_theme.h"
+#include "ui_rally_frontend.h"
 
 /*
 ===============================================================================
@@ -35,30 +36,61 @@ CONNECTION SCREEN
 qboolean	passwordNeeded = qtrue;
 menufield_s passwordField;
 
-static connstate_t	lastConnState;
-static char			lastLoadingText[MAX_INFO_VALUE];
+#define CONNECT_FRAME_X            48
+#define CONNECT_FRAME_Y            20
+#define CONNECT_FRAME_WIDTH        544
+#define CONNECT_FRAME_HEIGHT       420
+#define CONNECT_MAP_X              72
+#define CONNECT_MAP_Y              112
+#define CONNECT_MAP_WIDTH          224
+#define CONNECT_MAP_HEIGHT         260
+#define CONNECT_MAP_IMAGE_X        84
+#define CONNECT_MAP_IMAGE_Y        148
+#define CONNECT_MAP_IMAGE_WIDTH     200
+#define CONNECT_MAP_IMAGE_HEIGHT    112
+#define CONNECT_STATUS_X            320
+#define CONNECT_STATUS_Y            112
+#define CONNECT_STATUS_WIDTH        248
+#define CONNECT_STATUS_HEIGHT       260
+#define CONNECT_ACTION_Y            402
 
-static vec4_t connectTopScrimColor    = { 0.00f, 0.00f, 0.00f, 0.58f };
-static vec4_t connectPanelColor       = { 0.04f, 0.05f, 0.08f, 0.78f };
-static vec4_t connectPanelBandColor   = { 0.08f, 0.10f, 0.16f, 0.88f };
-static vec4_t connectBorderColor      = UI_THEME_COLOR_PANEL_BORDER;
-static vec4_t connectAccentColor      = UI_THEME_COLOR_ACCENT;
-static vec4_t connectMutedTextColor   = UI_THEME_COLOR_TEXT_HINT;
+static vec4_t connectTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t connectMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t connectScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t connectStatusColor = UI_FRONTEND_COLOR_STATUS;
+static qhandle_t connectMapShader;
+static char connectMapShaderName[MAX_QPATH];
 
-static void UI_DrawConnectFrame( qboolean overlay ) {
-	if ( overlay ) {
-		return;
+static void UI_ConnectFitText( char *out, int outSize, const char *text,
+	int maxWidth ) {
+	Q_strncpyz( out, text ? text : "", outSize );
+	while ( out[0] && Frontend_TextWidth( out, UI_SMALLFONT ) > maxWidth ) {
+		out[strlen( out ) - 1] = '\0';
+	}
+}
+
+static qhandle_t UI_ConnectMapShader( const char *mapname ) {
+	char imageName[MAX_QPATH];
+
+	if ( !mapname || !mapname[0] ) {
+		Q_strncpyz( imageName, "gfx/ui/q3rally_missing_map_shot",
+			sizeof( imageName ) );
+	} else {
+		Com_sprintf( imageName, sizeof( imageName ), "levelshots/%s", mapname );
 	}
 
-	UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, 132, connectTopScrimColor );
+	if ( Q_stricmp( imageName, connectMapShaderName ) ) {
+		Q_strncpyz( connectMapShaderName, imageName,
+			sizeof( connectMapShaderName ) );
+		connectMapShader = trap_R_RegisterShaderNoMip( imageName );
+		if ( !connectMapShader && Q_stricmp( imageName,
+			"gfx/ui/q3rally_missing_map_shot" ) ) {
+			connectMapShader = trap_R_RegisterShaderNoMip(
+				"gfx/ui/q3rally_missing_map_shot" );
+		}
+	}
 
-	UI_FillRect( 54, 100, 532, 168, connectPanelColor );
-	UI_FillRect( 54, 100, 532, 24, connectPanelBandColor );
-	UI_FillRect( 54, 100, 532, 2, connectAccentColor );
-	UI_DrawRect( 54, 100, 532, 168, connectBorderColor );
-
-	UI_DrawProportionalString( 320, 108, "CONNECTION STATUS",
-		UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, connectMutedTextColor );
+	return connectMapShader;
 }
 
 static void UI_ReadableSize ( char *buf, int bufsize, int value )
@@ -91,88 +123,77 @@ static void UI_PrintTime ( char *buf, int bufsize, int time ) {
 	}
 }
 
-static void UI_DisplayDownloadInfo( const char *downloadName ) {
-	static char dlText[]	= "Downloading:";
-	static char etaText[]	= "Estimated time left:";
-	static char xferText[]	= "Transfer rate:";
-
-	int downloadSize, downloadCount, downloadTime;
-	char dlSizeBuf[64], totalSizeBuf[64], xferRateBuf[64], dlTimeBuf[64];
+static void UI_DisplayDownloadInfo( const char *downloadName, int x, int y,
+	int width, float alpha ) {
+	int downloadSize;
+	int downloadCount;
+	int downloadTime;
 	int xferRate;
-	int width, leftWidth;
-	int baseX, valueX;
-	int style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
-	const char *s;
+	int progress;
+	char downloadLabel[64];
+	char dlSizeBuf[64];
+	char totalSizeBuf[64];
+	char xferRateBuf[64];
+	char dlTimeBuf[64];
 
 	downloadSize = trap_Cvar_VariableValue( "cl_downloadSize" );
 	downloadCount = trap_Cvar_VariableValue( "cl_downloadCount" );
 	downloadTime = trap_Cvar_VariableValue( "cl_downloadTime" );
+	progress = downloadSize > 0 ? downloadCount * 100 / downloadSize : 0;
 
-	leftWidth = UI_ProportionalStringWidth( dlText ) * UI_ProportionalSizeScale( style );
-	width = UI_ProportionalStringWidth( etaText ) * UI_ProportionalSizeScale( style );
-	if (width > leftWidth) leftWidth = width;
-	width = UI_ProportionalStringWidth( xferText ) * UI_ProportionalSizeScale( style );
-	if (width > leftWidth) leftWidth = width;
-	leftWidth += 16;
-	baseX = 72;
-	valueX = baseX + leftWidth;
+	UI_ConnectFitText( downloadLabel, sizeof( downloadLabel ), downloadName,
+		width - 32 );
+	Frontend_DrawText( x + 16, y + 48, "Downloading", UI_LEFT | UI_SMALLFONT,
+		connectMutedColor );
+	Frontend_DrawText( x + 16, y + 72, downloadLabel,
+		UI_LEFT | UI_SMALLFONT, connectTextColor );
+	Frontend_DrawProgress( x + 16, y + 94, width - 32, 7,
+		progress / 100.0f, alpha );
 
-	UI_DrawProportionalString( baseX, 138, dlText, style, color_white );
-	UI_DrawProportionalString( baseX, 178, etaText, style, color_white );
-	UI_DrawProportionalString( baseX, 232, xferText, style, color_white );
+	UI_ReadableSize( dlSizeBuf, sizeof( dlSizeBuf ), downloadCount );
+	UI_ReadableSize( totalSizeBuf, sizeof( totalSizeBuf ), downloadSize );
+	Frontend_DrawText( x + 16, y + 116,
+		va( "%d%%   %s of %s", progress, dlSizeBuf, totalSizeBuf ),
+		UI_LEFT | UI_SMALLFONT, connectMutedColor );
 
-	if (downloadSize > 0) {
-		s = va( "%s (%d%%)", downloadName, downloadCount * 100 / downloadSize );
-	} else {
-		s = downloadName;
+	if ( downloadCount < 4096 || !downloadTime ) {
+		Frontend_DrawText( x + 16, y + 146, "Estimating remaining time...",
+			UI_LEFT | UI_SMALLFONT, connectMutedColor );
+		return;
 	}
 
-	UI_DrawProportionalString( valueX, 138, s, style, color_white );
-
-	UI_ReadableSize( dlSizeBuf,		sizeof dlSizeBuf,		downloadCount );
-	UI_ReadableSize( totalSizeBuf,	sizeof totalSizeBuf,	downloadSize );
-
-	if (downloadCount < 4096 || !downloadTime) {
-		UI_DrawProportionalString( valueX, 178, "estimating", style, color_white );
-		UI_DrawProportionalString( valueX, 206,
-			va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
+	if ( ( uis.realtime - downloadTime ) / 1000 ) {
+		xferRate = downloadCount / (( uis.realtime - downloadTime ) / 1000);
 	} else {
-		if ((uis.realtime - downloadTime) / 1000) {
-			xferRate = downloadCount / ((uis.realtime - downloadTime) / 1000);
-		} else {
-			xferRate = 0;
-		}
-		UI_ReadableSize( xferRateBuf, sizeof xferRateBuf, xferRate );
-
-		// Extrapolate estimated completion time
-		if (downloadSize && xferRate) {
-			int n = downloadSize / xferRate; // estimated time for entire d/l in secs
-
-			// We do it in K (/1024) because we'd overflow around 4MB
-			UI_PrintTime ( dlTimeBuf, sizeof dlTimeBuf, 
-				(n - (((downloadCount/1024) * n) / (downloadSize/1024))) * 1000);
-
-			UI_DrawProportionalString( valueX, 178,
-				dlTimeBuf, style, color_white );
-			UI_DrawProportionalString( valueX, 206,
-				va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
-		} else {
-			UI_DrawProportionalString( valueX, 178,
-				"estimating", style, color_white );
-			if (downloadSize) {
-				UI_DrawProportionalString( valueX, 206,
-					va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
-			} else {
-				UI_DrawProportionalString( valueX, 206,
-					va("(%s copied)", dlSizeBuf), style, color_white );
-			}
-		}
-
-		if (xferRate) {
-			UI_DrawProportionalString( valueX, 232,
-				va("%s/Sec", xferRateBuf), style, color_white );
-		}
+		xferRate = 0;
 	}
+
+	if ( downloadSize && xferRate ) {
+		int remaining;
+		int totalSeconds;
+
+		totalSeconds = downloadSize / xferRate;
+		remaining = ( totalSeconds -
+			((( downloadCount / 1024 ) * totalSeconds ) /
+			(downloadSize / 1024 )) ) * 1000;
+		UI_PrintTime( dlTimeBuf, sizeof( dlTimeBuf ), remaining );
+		Frontend_DrawText( x + 16, y + 146, "Time left",
+			UI_LEFT | UI_SMALLFONT, connectMutedColor );
+		Frontend_DrawText( x + width - 16, y + 146, dlTimeBuf,
+			UI_RIGHT | UI_SMALLFONT, connectTextColor );
+	} else {
+		Frontend_DrawText( x + 16, y + 146, "Time left",
+			UI_LEFT | UI_SMALLFONT, connectMutedColor );
+		Frontend_DrawText( x + width - 16, y + 146, "Estimating",
+			UI_RIGHT | UI_SMALLFONT, connectTextColor );
+	}
+
+	UI_ReadableSize( xferRateBuf, sizeof( xferRateBuf ), xferRate );
+	Frontend_DrawText( x + 16, y + 172, "Transfer rate",
+		UI_LEFT | UI_SMALLFONT, connectMutedColor );
+	Frontend_DrawText( x + width - 16, y + 172,
+		xferRate ? va( "%s/s", xferRateBuf ) : "-",
+		UI_RIGHT | UI_SMALLFONT, connectTextColor );
 }
 
 /*
@@ -184,37 +205,153 @@ to prevent it from blinking away too rapidly on local or lan games.
 ========================
 */
 void UI_DrawConnectScreen( qboolean overlay ) {
-	char			*s;
-	uiClientState_t	cstate;
-	char			info[MAX_INFO_VALUE];
+	uiClientState_t cstate;
+	char info[MAX_INFO_VALUE];
+	char mapPathName[MAX_QPATH];
+	char mapName[MAX_QPATH];
+	char serverName[96];
+	char statusText[128];
+	char messageText[128];
+	char motd[128];
+	const char *statusLabel;
+	qhandle_t mapShader;
+	qboolean downloading;
+	float alpha;
 
 	Menu_Cache();
-
-	if ( !overlay ) {
-		// draw the dialog background
-               UI_SetColor( color_white );
-               UI_DrawBackground( uis.menuBackShader );
-        }
-	UI_DrawConnectFrame( overlay );
 
 	// see what information we should display
 	trap_GetClientState( &cstate );
 
 	info[0] = '\0';
-	if( trap_GetConfigString( CS_SERVERINFO, info, sizeof(info) ) ) {
-		UI_DrawProportionalString( 320, 16, va( "Loading %s", Info_ValueForKey( info, "mapname" ) ), UI_BIGFONT|UI_CENTER|UI_DROPSHADOW, color_white );
+	mapPathName[0] = '\0';
+	mapName[0] = '\0';
+	if ( trap_GetConfigString( CS_SERVERINFO, info, sizeof( info ) ) ) {
+		Q_strncpyz( mapPathName, Info_ValueForKey( info, "mapname" ),
+			sizeof( mapPathName ) );
+	}
+	Q_strncpyz( mapName, mapPathName, sizeof( mapName ) );
+	if ( !mapName[0] ) {
+		Q_strncpyz( mapName, "Unknown track", sizeof( mapName ) );
+	}
+	UI_ConnectFitText( mapName, sizeof( mapName ), mapName,
+		CONNECT_MAP_WIDTH - 32 );
+	UI_ConnectFitText( serverName, sizeof( serverName ), cstate.servername,
+		CONNECT_STATUS_WIDTH - 32 );
+	mapShader = UI_ConnectMapShader( mapPathName );
+	alpha = overlay ? 0.96f : 1.0f;
+
+	if ( !overlay ) {
+		Frontend_DrawBackground( connectScrimColor );
 	}
 
-	UI_DrawProportionalString( 320, 64, va("Connecting to %s", cstate.servername), UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-	//UI_DrawProportionalString( 320, 96, "Press Esc to abort", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
+	Frontend_DrawPanel( CONNECT_FRAME_X, CONNECT_FRAME_Y,
+		CONNECT_FRAME_WIDTH, CONNECT_FRAME_HEIGHT, alpha,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( CONNECT_FRAME_X + 24, CONNECT_FRAME_Y + 24,
+		"Map loading", UI_LEFT | UI_BIGFONT, connectTextColor );
+	Frontend_DrawText( CONNECT_FRAME_X + 24, CONNECT_FRAME_Y + 48,
+		"Preparing the next rally stage", UI_LEFT | UI_SMALLFONT,
+		connectMutedColor );
 
-	// display global MOTD at bottom
-	UI_DrawProportionalString( SCREEN_WIDTH/2, SCREEN_HEIGHT-32, 
-		Info_ValueForKey( cstate.updateInfoString, "motd" ), UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-	
-	// print any server info (server full, bad version, etc)
-	if ( cstate.connState < CA_CONNECTED ) {
-		UI_DrawProportionalString( 320, 214, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
+	statusLabel = "Connecting";
+	statusText[0] = '\0';
+	downloading = qfalse;
+
+	switch ( cstate.connState ) {
+	case CA_CONNECTING:
+		Com_sprintf( statusText, sizeof( statusText ),
+			"Awaiting challenge... %i", cstate.connectPacketCount );
+		break;
+	case CA_CHALLENGING:
+		Com_sprintf( statusText, sizeof( statusText ),
+			"Awaiting connection... %i", cstate.connectPacketCount );
+		break;
+	case CA_CONNECTED: {
+		char downloadName[MAX_INFO_VALUE];
+
+		trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName,
+			sizeof( downloadName ) );
+		if ( downloadName[0] ) {
+			statusLabel = "Download";
+			downloading = qtrue;
+		} else {
+			statusLabel = "Loading";
+			Q_strncpyz( statusText, "Awaiting game state...",
+				sizeof( statusText ) );
+		}
+		break;
+	}
+	case CA_LOADING:
+		statusLabel = "Loading map";
+		Q_strncpyz( statusText, "Preparing track resources...",
+			sizeof( statusText ) );
+		break;
+	case CA_PRIMED:
+		statusLabel = "Starting race";
+		Q_strncpyz( statusText, "Finalizing session...", sizeof( statusText ) );
+		break;
+	default:
+		statusLabel = "Waiting";
+		Q_strncpyz( statusText, "Waiting for the game...", sizeof( statusText ) );
+		break;
+	}
+
+	Frontend_DrawStatusChip( CONNECT_FRAME_X + CONNECT_FRAME_WIDTH - 136,
+		CONNECT_FRAME_Y + 26, statusLabel, connectStatusColor, alpha );
+
+	Frontend_DrawCard( CONNECT_MAP_X, CONNECT_MAP_Y, CONNECT_MAP_WIDTH,
+		CONNECT_MAP_HEIGHT, alpha, qfalse );
+	Frontend_DrawText( CONNECT_MAP_X + 16, CONNECT_MAP_Y + 18,
+		"Track preview", UI_LEFT | UI_SMALLFONT, connectMutedColor );
+	if ( mapShader ) {
+		UI_DrawHandlePic( CONNECT_MAP_IMAGE_X, CONNECT_MAP_IMAGE_Y,
+			CONNECT_MAP_IMAGE_WIDTH, CONNECT_MAP_IMAGE_HEIGHT, mapShader );
+	}
+	Frontend_DrawText( CONNECT_MAP_X + 16, CONNECT_MAP_Y + 174,
+		mapName, UI_LEFT | UI_SMALLFONT, connectTextColor );
+	Frontend_DrawText( CONNECT_MAP_X + 16, CONNECT_MAP_Y + 204,
+		"Server", UI_LEFT | UI_SMALLFONT, connectMutedColor );
+	Frontend_DrawText( CONNECT_MAP_X + 16, CONNECT_MAP_Y + 226,
+		serverName[0] ? serverName : "Local session",
+		UI_LEFT | UI_SMALLFONT, connectTextColor );
+
+	Frontend_DrawCard( CONNECT_STATUS_X, CONNECT_STATUS_Y,
+		CONNECT_STATUS_WIDTH, CONNECT_STATUS_HEIGHT, alpha, qfalse );
+	Frontend_DrawText( CONNECT_STATUS_X + 16, CONNECT_STATUS_Y + 18,
+		"Connection status", UI_LEFT | UI_SMALLFONT, connectMutedColor );
+
+	if ( downloading ) {
+		char downloadName[MAX_INFO_VALUE];
+
+		trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName,
+			sizeof( downloadName ) );
+		UI_DisplayDownloadInfo( downloadName, CONNECT_STATUS_X,
+			CONNECT_STATUS_Y + 30, CONNECT_STATUS_WIDTH, alpha );
+	} else {
+		UI_ConnectFitText( statusText, sizeof( statusText ), statusText,
+			CONNECT_STATUS_WIDTH - 32 );
+		Frontend_DrawText( CONNECT_STATUS_X + 16, CONNECT_STATUS_Y + 58,
+			statusText, UI_LEFT | UI_SMALLFONT, connectTextColor );
+	}
+
+	if ( cstate.connState < CA_CONNECTED && cstate.messageString[0] ) {
+		UI_ConnectFitText( messageText, sizeof( messageText ),
+			cstate.messageString, CONNECT_STATUS_WIDTH - 32 );
+		Frontend_DrawText( CONNECT_STATUS_X + 16,
+			CONNECT_STATUS_Y + ( downloading ? 228 : 104 ), messageText,
+			UI_LEFT | UI_SMALLFONT, connectMutedColor );
+	}
+
+	Q_strncpyz( motd, Info_ValueForKey( cstate.updateInfoString, "motd" ),
+		sizeof( motd ) );
+	UI_ConnectFitText( motd, sizeof( motd ), motd, CONNECT_FRAME_WIDTH - 48 );
+	Frontend_DrawText( CONNECT_FRAME_X + 24, CONNECT_ACTION_Y,
+		"Esc cancel", UI_LEFT | UI_SMALLFONT, connectMutedColor );
+	if ( motd[0] ) {
+		Frontend_DrawText( CONNECT_FRAME_X + CONNECT_FRAME_WIDTH - 24,
+			CONNECT_ACTION_Y, motd, UI_RIGHT | UI_SMALLFONT,
+			connectMutedColor );
 	}
 
 #if 0
@@ -241,40 +378,6 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	}
 #endif
 
-	if ( lastConnState > cstate.connState ) {
-		lastLoadingText[0] = '\0';
-	}
-	lastConnState = cstate.connState;
-
-	switch ( cstate.connState ) {
-	case CA_CONNECTING:
-		s = va("Awaiting challenge...%i", cstate.connectPacketCount);
-		break;
-	case CA_CHALLENGING:
-		s = va("Awaiting connection...%i", cstate.connectPacketCount);
-		break;
-	case CA_CONNECTED: {
-		char downloadName[MAX_INFO_VALUE];
-
-			trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName, sizeof(downloadName) );
-			if (*downloadName) {
-				UI_DisplayDownloadInfo( downloadName );
-				return;
-			}
-		}
-		s = "Awaiting gamestate...";
-		break;
-	case CA_LOADING:
-		return;
-	case CA_PRIMED:
-		return;
-	default:
-		return;
-	}
-
-	UI_DrawProportionalString( 320, 150, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-
-	// password required / connection rejected information goes here
 }
 
 

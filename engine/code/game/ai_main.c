@@ -1343,6 +1343,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	bs->entitynum = client;
 	bs->setupcount = 4;
 	bs->entergame_time = FloatTime();
+	bs->ghostRecoveryLastResetTime = 0.0f;
 	bs->ms = trap_BotAllocMoveState();
 	bs->walker = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_WALKER, 0, 1);
 	personalityProfile = BotPersonalityProfileForName( settings->personality );

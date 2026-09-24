@@ -44,6 +44,7 @@ written to ui_dl_indexpath so the UI can read it via trap_FS_FOpenFile.
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 // ---------------------------------------------------------------------------
@@ -52,29 +53,37 @@ written to ui_dl_indexpath so the UI can read it via trap_FS_FOpenFile.
 
 #define DL_MAX_ITEMS            64
 #define DL_ITEMS_PER_PAGE       8
-#define DL_ITEM_HEIGHT          32
-#define DL_LIST_X               20
-#define DL_LIST_Y               112
-#define DL_LIST_WIDTH           468
+#define DL_ITEM_HEIGHT          24
+#define DL_FRAME_X              24
+#define DL_FRAME_Y              20
+#define DL_FRAME_WIDTH          592
+#define DL_FRAME_HEIGHT         440
+#define DL_LIST_X               40
+#define DL_LIST_Y               132
+#define DL_LIST_WIDTH           364
+#define DL_LIST_HEIGHT          220
 #define DL_TAB_COUNT            4
 #define DL_TAB_WIDTH            ( DL_LIST_WIDTH / DL_TAB_COUNT )
-#define DL_TAB_TOP              68
-#define DL_TAB_HEIGHT           22
-#define DL_TAB_LABEL_Y          ( DL_TAB_TOP + 1 )
-#define DL_PROGRESSBAR_Y        410
-#define DL_PROGRESSBAR_WIDTH    ( DL_LIST_WIDTH + DL_PREVIEW_WIDTH + 8 )
-#define DL_PROGRESSBAR_HEIGHT   14
-#define DL_STATUS_Y             425
-#define DL_PREVIEW_X            ( DL_LIST_X + DL_LIST_WIDTH + 8 )
-#define DL_PREVIEW_Y            DL_LIST_Y
-#define DL_PREVIEW_WIDTH        144
-#define DL_PREVIEW_HEIGHT       184
+#define DL_TAB_TOP              88
+#define DL_TAB_HEIGHT           26
+#define DL_TAB_LABEL_Y          ( DL_TAB_TOP + 5 )
+#define DL_PREVIEW_X            420
+#define DL_PREVIEW_Y            88
+#define DL_PREVIEW_WIDTH        172
+#define DL_PREVIEW_HEIGHT       264
+#define DL_PROGRESSBAR_X        DL_LIST_X
+#define DL_PROGRESSBAR_Y        388
+#define DL_PROGRESSBAR_WIDTH    ( DL_FRAME_WIDTH - 32 )
+#define DL_PROGRESSBAR_HEIGHT   8
+#define DL_STATUS_Y             366
+#define DL_ACTION_Y             420
+#define DL_ACTION_HEIGHT        24
 
 // Column X offsets within the list (relative to DL_LIST_X)
-#define DL_COL_NAME_X           8
-#define DL_COL_AUTHOR_X         232
-#define DL_COL_SIZE_X           ( DL_LIST_WIDTH - 136 )
-#define DL_COL_STATUS_X         ( DL_LIST_WIDTH - 8 )
+#define DL_COL_NAME_X           12
+#define DL_COL_AUTHOR_X         172
+#define DL_COL_SIZE_X           250
+#define DL_COL_STATUS_X         ( DL_LIST_WIDTH - 12 )
 
 // Download states (mirrored from native side via ui_dl_state CVar)
 #define DL_STATE_IDLE           0
@@ -155,6 +164,12 @@ typedef struct {
 } downloadsMenu_t;
 
 static downloadsMenu_t s_dl;
+
+static vec4_t dlTextColor     = UI_FRONTEND_COLOR_TEXT;
+static vec4_t dlMutedColor    = UI_FRONTEND_COLOR_MUTED;
+static vec4_t dlAccentColor   = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t dlSuccessColor  = UI_THEME_COLOR_SUCCESS;
+static vec4_t dlErrorColor    = { 1.0f, 0.40f, 0.40f, 1.0f };
 
 
 // ---------------------------------------------------------------------------
@@ -377,47 +392,101 @@ static void DL_PollState( void ) {
 // ---------------------------------------------------------------------------
 
 static void DL_DrawProgressBar( float progress ) {
-    float   filledW;
-    int     x = DL_LIST_X;
-    int     y = DL_PROGRESSBAR_Y;
-    int     w = DL_PROGRESSBAR_WIDTH;
-    int     h = DL_PROGRESSBAR_HEIGHT;
-    vec4_t  bgColor   = { 0.1f, 0.1f, 0.1f, 0.8f };
-    vec4_t  fillColor = { 0.8f, 0.5f, 0.0f, 1.0f };  // orange, Q3-style
-    vec4_t  borderCol = { 0.5f, 0.5f, 0.5f, 1.0f };
+    Frontend_DrawProgress( DL_PROGRESSBAR_X, DL_PROGRESSBAR_Y,
+                           DL_PROGRESSBAR_WIDTH, DL_PROGRESSBAR_HEIGHT,
+                           progress / 100.0f, 1.0f );
+}
 
-    UI_FillRect( x, y, w, h, bgColor );
-    filledW = ( progress / 100.0f ) * (float)w;
-    if ( filledW > 0 ) {
-        UI_FillRect( x, y, (int)filledW, h, fillColor );
+static void DL_FitText( char *out, int outSize, const char *text, int maxWidth ) {
+    int length;
+    int ellipsisWidth;
+
+    if ( !out || outSize <= 0 ) {
+        return;
     }
-    UI_DrawRect( x, y, w, h, borderCol );
+
+    Q_strncpyz( out, text ? text : "", outSize );
+    if ( !out[0] || Frontend_TextWidth( out, UI_SMALLFONT ) <= maxWidth ) {
+        return;
+    }
+
+    ellipsisWidth = Frontend_TextWidth( "...", UI_SMALLFONT );
+    length = strlen( out );
+    while ( length > 3 &&
+            Frontend_TextWidth( out, UI_SMALLFONT ) + ellipsisWidth > maxWidth ) {
+        out[--length] = '\0';
+    }
+
+    if ( length > 3 ) {
+        out[length - 3] = '.';
+        out[length - 2] = '.';
+        out[length - 1] = '.';
+    }
+}
+
+static int DL_WrapText( const char *text, int maxWidth,
+                        char *first, int firstSize,
+                        char *second, int secondSize ) {
+    char wrappedSecond[64];
+    int i;
+
+    if ( !first || firstSize <= 0 || !second || secondSize <= 0 ) {
+        return 0;
+    }
+
+    first[0] = '\0';
+    second[0] = '\0';
+    Q_strncpyz( first, text ? text : "", firstSize );
+
+    if ( !first[0] || Frontend_TextWidth( first, UI_SMALLFONT ) <= maxWidth ) {
+        return 1;
+    }
+
+    for ( i = strlen( first ) - 1; i > 0; --i ) {
+        if ( first[i] != ' ' ) {
+            continue;
+        }
+
+        first[i] = '\0';
+        if ( Frontend_TextWidth( first, UI_SMALLFONT ) <= maxWidth ) {
+            Q_strncpyz( wrappedSecond, text + i + 1, sizeof( wrappedSecond ) );
+            DL_FitText( second, secondSize, wrappedSecond, maxWidth );
+            return 2;
+        }
+        first[i] = ' ';
+    }
+
+    DL_FitText( first, firstSize, first, maxWidth );
+    return 1;
 }
 
 static void DL_DrawItemRow( int index, int y, qboolean selected ) {
     dlItem_t    *item;
-    vec4_t      rowBg       = { 0.1f, 0.1f, 0.15f, 0.6f };
-    vec4_t      rowSelected = { 0.3f, 0.2f, 0.0f,  0.8f };
-    vec4_t      *bg;
-    vec4_t      nameColor   = { 1.0f, 1.0f, 1.0f, 1.0f };
-    vec4_t      infoColor   = { 0.7f, 0.7f, 0.7f, 1.0f };
-    vec4_t      installedColor = { 0.3f, 0.8f, 0.3f, 1.0f };
+    char        nameStr[80];
+    char        authorStr[64];
     char        sizeStr[32];
-    int         rowH        = DL_ITEM_HEIGHT;
+    int         rowX;
+    int         rowW;
 
     if ( index < 0 || index >= s_dl.numItems ) return;
     item = &s_dl.items[index];
-    bg = selected ? &rowSelected : &rowBg;
 
-    UI_FillRect( DL_LIST_X, y, DL_LIST_WIDTH, rowH - 2, *bg );
+    rowX = DL_LIST_X + 8;
+    rowW = DL_LIST_WIDTH - 16;
+    Frontend_DrawNavButton( rowX, y, rowW, DL_ITEM_HEIGHT - 2,
+                            "", 1.0f, selected, UI_FRONTEND_TEXT_LEFT );
 
-    // Name (left, normal font)
-    UI_DrawString( DL_LIST_X + DL_COL_NAME_X, y + 8, item->name,
-                   UI_LEFT | UI_SMALLFONT, nameColor );
+    DL_FitText( nameStr, sizeof( nameStr ), item->name,
+                DL_COL_AUTHOR_X - DL_COL_NAME_X - 12 );
+    DL_FitText( authorStr, sizeof( authorStr ), item->author,
+                DL_COL_SIZE_X - DL_COL_AUTHOR_X - 10 );
 
-    // Author (center area)
-    UI_DrawString( DL_LIST_X + DL_COL_AUTHOR_X, y + 8, item->author,
-                   UI_LEFT | UI_SMALLFONT, infoColor );
+    Frontend_DrawText( DL_LIST_X + DL_COL_NAME_X, y + 4, nameStr,
+                       UI_LEFT | UI_SMALLFONT,
+                       selected ? dlAccentColor : dlTextColor );
+
+    Frontend_DrawText( DL_LIST_X + DL_COL_AUTHOR_X, y + 4, authorStr,
+                       UI_LEFT | UI_SMALLFONT, dlMutedColor );
 
     // Size
     if ( item->size_kb > 1024 ) {
@@ -425,16 +494,16 @@ static void DL_DrawItemRow( int index, int y, qboolean selected ) {
     } else {
         Com_sprintf( sizeStr, sizeof( sizeStr ), "%d KB", item->size_kb );
     }
-    UI_DrawString( DL_LIST_X + DL_COL_SIZE_X, y + 8, sizeStr,
-                   UI_LEFT | UI_SMALLFONT, infoColor );
+    Frontend_DrawText( DL_LIST_X + DL_COL_SIZE_X, y + 4, sizeStr,
+                       UI_LEFT | UI_SMALLFONT, dlMutedColor );
 
     // Status column
     if ( item->installed ) {
-        UI_DrawString( DL_LIST_X + DL_COL_STATUS_X, y + 8, "INSTALLED",
-                       UI_RIGHT | UI_SMALLFONT, installedColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_STATUS_X, y + 4, "Installed",
+                           UI_RIGHT | UI_SMALLFONT, dlSuccessColor );
     } else {
-        UI_DrawString( DL_LIST_X + DL_COL_STATUS_X, y + 8, "available",
-                       UI_RIGHT | UI_SMALLFONT, infoColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_STATUS_X, y + 4, "Available",
+                           UI_RIGHT | UI_SMALLFONT, dlMutedColor );
     }
 }
 
@@ -497,105 +566,120 @@ static qhandle_t DL_GetPreviewShader( const dlItem_t *item ) {
 
 static void DL_DrawPreviewPane( void ) {
     qhandle_t    previewShader = 0;
-    vec4_t       paneBg        = { 0.08f, 0.08f, 0.10f, 0.82f };
-    vec4_t       paneBorder    = { 0.5f, 0.5f, 0.5f, 0.8f };
-    vec4_t       textColor     = { 0.85f, 0.85f, 0.85f, 1.0f };
-    vec4_t       hintColor     = { 0.55f, 0.55f, 0.55f, 1.0f };
+    char         nameStr[80];
+    char         authorLine1[64];
+    char         authorLine2[64];
+    int          authorLines;
+    int          detailY;
     int          imageX        = DL_PREVIEW_X + 10;
-    int          imageY        = DL_PREVIEW_Y + 10;
+    int          imageY        = DL_PREVIEW_Y + 40;
     int          imageW        = DL_PREVIEW_WIDTH - 20;
-    int          imageH        = 94;
+    int          imageH        = 104;
 
-    UI_FillRect( DL_PREVIEW_X, DL_PREVIEW_Y, DL_PREVIEW_WIDTH, DL_PREVIEW_HEIGHT, paneBg );
-    UI_DrawRect( DL_PREVIEW_X, DL_PREVIEW_Y, DL_PREVIEW_WIDTH, DL_PREVIEW_HEIGHT, paneBorder );
-
-    UI_DrawString( DL_PREVIEW_X + 8, DL_PREVIEW_Y - 20, "PREVIEW",
-                   UI_LEFT | UI_SMALLFONT, hintColor );
+    Frontend_DrawCard( DL_PREVIEW_X, DL_PREVIEW_Y, DL_PREVIEW_WIDTH,
+                       DL_PREVIEW_HEIGHT, 1.0f, qfalse );
+    Frontend_DrawText( DL_PREVIEW_X + 12, DL_PREVIEW_Y + 14, "Preview",
+                       UI_LEFT | UI_SMALLFONT, dlMutedColor );
 
     if ( s_dl.selectedItem >= 0 && s_dl.selectedItem < s_dl.numItems ) {
         dlItem_t *item = &s_dl.items[s_dl.selectedItem];
         previewShader = DL_GetPreviewShader( item );
+        DL_FitText( nameStr, sizeof( nameStr ), item->name,
+                    DL_PREVIEW_WIDTH - 24 );
+        authorLines = DL_WrapText( item->author, DL_PREVIEW_WIDTH - 24,
+                                   authorLine1, sizeof( authorLine1 ),
+                                   authorLine2, sizeof( authorLine2 ) );
+
+        Frontend_DrawStatusChip( DL_PREVIEW_X + 94, DL_PREVIEW_Y + 12,
+                                 item->installed ? "Installed" : "Available",
+                                 item->installed ? dlSuccessColor : dlAccentColor,
+                                 1.0f );
 
         if ( previewShader ) {
             UI_DrawHandlePic( imageX, imageY, imageW, imageH, previewShader );
         } else {
             UI_FillRect( imageX, imageY, imageW, imageH, colorBlack );
-            UI_DrawString( DL_PREVIEW_X + 26, DL_PREVIEW_Y + 50, "NO PREVIEW",
-                           UI_LEFT | UI_SMALLFONT, hintColor );
+            Frontend_DrawText( DL_PREVIEW_X + 42, imageY + 46, "No preview",
+                               UI_LEFT | UI_SMALLFONT, dlMutedColor );
         }
 
-        UI_DrawString( DL_PREVIEW_X + 8, DL_PREVIEW_Y + 116, item->name,
-                       UI_LEFT | UI_SMALLFONT, textColor );
-        UI_DrawString( DL_PREVIEW_X + 8, DL_PREVIEW_Y + 132, item->author,
-                       UI_LEFT | UI_SMALLFONT, hintColor );
-        UI_DrawString( DL_PREVIEW_X + 8, DL_PREVIEW_Y + 148, item->type,
-                       UI_LEFT | UI_SMALLFONT, hintColor );
-        UI_DrawString( DL_PREVIEW_X + DL_PREVIEW_WIDTH - 8, DL_PREVIEW_Y + 148, item->version,
-                       UI_RIGHT | UI_SMALLFONT, hintColor );
+        Frontend_DrawText( DL_PREVIEW_X + 12, DL_PREVIEW_Y + 158, nameStr,
+                           UI_LEFT | UI_SMALLFONT, dlTextColor );
+        Frontend_DrawText( DL_PREVIEW_X + 12, DL_PREVIEW_Y + 178, authorLine1,
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        if ( authorLines > 1 ) {
+            Frontend_DrawText( DL_PREVIEW_X + 12, DL_PREVIEW_Y + 198, authorLine2,
+                               UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        }
+        detailY = DL_PREVIEW_Y + 178 + authorLines * 20;
+        Frontend_DrawText( DL_PREVIEW_X + 12, detailY, item->type,
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        if ( item->version[0] ) {
+            Frontend_DrawText( DL_PREVIEW_X + DL_PREVIEW_WIDTH - 12,
+                               detailY, item->version,
+                               UI_RIGHT | UI_SMALLFONT, dlMutedColor );
+        }
     } else {
         UI_FillRect( imageX, imageY, imageW, imageH, colorBlack );
-        UI_DrawString( DL_PREVIEW_X + 18, DL_PREVIEW_Y + 50, "SELECT AN ITEM",
-                       UI_LEFT | UI_SMALLFONT, hintColor );
+        Frontend_DrawText( DL_PREVIEW_X + 42, imageY + 46, "Select an item",
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
     }
 }
 
 static void DL_DrawStatusLine( void ) {
-    vec4_t  normalColor  = { 0.7f, 0.7f, 0.7f, 1.0f };
-    vec4_t  activeColor  = { 1.0f, 0.8f, 0.2f, 1.0f };
-    vec4_t  doneColor    = { 0.3f, 0.9f, 0.3f, 1.0f };
-    vec4_t  errorColor   = { 0.9f, 0.2f, 0.2f, 1.0f };
     char    statusText[256];
+    vec4_t *statusColor = &dlMutedColor;
 
     switch ( s_dl.dlState ) {
     case DL_STATE_IDLE:
         Com_sprintf( statusText, sizeof( statusText ),
-                     "%d item(s) in list. Select and press DOWNLOAD.", s_dl.numItems );
-        UI_DrawProportionalString( 320, DL_STATUS_Y, statusText,
-                                   UI_CENTER | UI_SMALLFONT, normalColor );
+                     "%d items in the library. Select one to download.", s_dl.numItems );
         break;
 
     case DL_STATE_DONE:
-        UI_DrawProportionalString( 320, DL_STATUS_Y, "Download complete. Restart the game to use new content.",
-                                   UI_CENTER | UI_SMALLFONT, doneColor );
+        Q_strncpyz( statusText, "Download complete. Restart to use the new content.", sizeof( statusText ) );
+        statusColor = &dlSuccessColor;
         break;
 
     case DL_STATE_FETCHING:
-        UI_DrawProportionalString( 320, DL_STATUS_Y, "Fetching content index...",
-                                   UI_CENTER | UI_SMALLFONT, activeColor );
+        Q_strncpyz( statusText, "Fetching content index...", sizeof( statusText ) );
+        statusColor = &dlAccentColor;
         DL_DrawProgressBar( s_dl.dlProgress );
         break;
 
     case DL_STATE_READY:
         Com_sprintf( statusText, sizeof( statusText ),
-                     "%d item(s) available. Select and press DOWNLOAD.", s_dl.numItems );
-        UI_DrawProportionalString( 320, DL_STATUS_Y, statusText,
-                                   UI_CENTER | UI_SMALLFONT, normalColor );
+                     "%d items available. Select one to download.", s_dl.numItems );
         break;
 
     case DL_STATE_DOWNLOADING:
         DL_DrawProgressBar( s_dl.dlProgress );
         if ( s_dl.dlFilename[0] ) {
             Com_sprintf( statusText, sizeof( statusText ),
-                         "Downloading: %s  (%.0f%%)", s_dl.dlFilename, s_dl.dlProgress );
+                         "Downloading %s  (%.0f%%)", s_dl.dlFilename, s_dl.dlProgress );
         } else {
             Com_sprintf( statusText, sizeof( statusText ),
                          "Downloading...  (%.0f%%)", s_dl.dlProgress );
         }
-        UI_DrawProportionalString( 320, DL_STATUS_Y + 20, statusText,
-                                   UI_CENTER | UI_SMALLFONT, activeColor );
+        statusColor = &dlAccentColor;
         break;
-
 
     case DL_STATE_ERROR:
         if ( s_dl.dlError[0] ) {
             Com_sprintf( statusText, sizeof( statusText ), "Error: %s", s_dl.dlError );
         } else {
-            Q_strncpyz( statusText, "An error occurred. Please try again.", sizeof( statusText ) );
+            Q_strncpyz( statusText, "Something went wrong. Please try again.", sizeof( statusText ) );
         }
-        UI_DrawProportionalString( 320, DL_STATUS_Y, statusText,
-                                   UI_CENTER | UI_SMALLFONT, errorColor );
+        statusColor = &dlErrorColor;
+        break;
+
+    default:
+        Q_strncpyz( statusText, "Content manager ready.", sizeof( statusText ) );
         break;
     }
+
+    Frontend_DrawText( DL_LIST_X + 12, DL_STATUS_Y, statusText,
+                       UI_LEFT | UI_SMALLFONT, *statusColor );
 }
 
 
@@ -683,13 +767,7 @@ static void DownloadsMenu_Draw( void ) {
     int     i;
     int     visibleItems;
     int     itemY;
-    vec4_t  headerColor    = { 1.0f, 0.8f, 0.0f, 1.0f };
-    vec4_t  dividerColor   = { 0.4f, 0.4f, 0.4f, 0.5f };
-    vec4_t  colHeaderColor = { 0.6f, 0.6f, 0.6f, 1.0f };
-    vec4_t  popBg          = { 0.0f, 0.0f, 0.0f, 0.85f };
-    vec4_t  popBdr         = { 0.8f, 0.5f, 0.0f, 1.0f  };
-    vec4_t  popTxt         = { 1.0f, 1.0f, 1.0f, 1.0f  };
-    vec4_t  popOk          = { 0.3f, 0.9f, 0.3f, 1.0f  };
+    vec4_t  scrimColor     = UI_FRONTEND_COLOR_SCRIM;
     int     now = trap_Milliseconds();
 
     // Poll state every ~100ms
@@ -698,25 +776,22 @@ static void DownloadsMenu_Draw( void ) {
         s_dl.lastStateCheck = now;
     }
 
-    // Banner
-    UI_DrawProportionalString( 320, 16, "CONTENT MANAGER",
-                               UI_CENTER | UI_DROPSHADOW, headerColor );
+    Frontend_DrawBackground( scrimColor );
 
-    // Divider below title
-    UI_FillRect( DL_LIST_X, 64, DL_LIST_WIDTH, 2, dividerColor );
+    Frontend_DrawPanel( DL_FRAME_X, DL_FRAME_Y, DL_FRAME_WIDTH, DL_FRAME_HEIGHT,
+                        1.0f, UI_FRONTEND_STYLE_FRAME );
+    Frontend_DrawText( DL_FRAME_X + 24, DL_FRAME_Y + 24, "Content manager",
+                       UI_LEFT | UI_BIGFONT, dlTextColor );
+    Frontend_DrawText( DL_FRAME_X + 24, DL_FRAME_Y + 48,
+                       "Browse, preview and install community content",
+                       UI_LEFT | UI_SMALLFONT, dlMutedColor );
+    Frontend_DrawStatusChip( DL_FRAME_X + DL_FRAME_WIDTH - 100,
+                             DL_FRAME_Y + 26, "Library", dlAccentColor, 1.0f );
 
-    // Tab highlight (background only – text drawn by menu framework)
-    {
-        vec4_t activeBg   = { 0.2f, 0.15f, 0.0f, 0.85f };
-        vec4_t inactiveBg = { 0.1f, 0.1f,  0.1f, 0.6f  };
-        int t;
-
-        for ( t = 0; t < DL_TAB_COUNT; t++ ) {
-            vec4_t *bg = ( s_dl.activeTab == t ) ? &activeBg : &inactiveBg;
-            UI_FillRect( DL_LIST_X + t * DL_TAB_WIDTH, DL_TAB_TOP,
-                         DL_TAB_WIDTH - 2, DL_TAB_HEIGHT, *bg );
-        }
-    }
+    Frontend_DrawCard( DL_LIST_X, DL_LIST_Y - 20, DL_LIST_WIDTH,
+                       DL_LIST_HEIGHT + 28, 1.0f, qfalse );
+    Frontend_DrawCard( DL_LIST_X, DL_STATUS_Y - 10,
+                       DL_PROGRESSBAR_WIDTH, 44, 1.0f, qfalse );
 
     DL_DrawPreviewPane();
 
@@ -726,14 +801,14 @@ static void DownloadsMenu_Draw( void ) {
          s_dl.dlState == DL_STATE_DONE  ||
          s_dl.dlState == DL_STATE_ERROR ) {
 
-        UI_DrawString( DL_LIST_X + DL_COL_NAME_X,                  92, "NAME",
-                       UI_LEFT | UI_SMALLFONT, colHeaderColor );
-        UI_DrawString( DL_LIST_X + DL_COL_AUTHOR_X,                92, "AUTHOR",
-                       UI_LEFT | UI_SMALLFONT, colHeaderColor );
-        UI_DrawString( DL_LIST_X + DL_COL_SIZE_X,                  92, "SIZE",
-                       UI_LEFT | UI_SMALLFONT, colHeaderColor );
-        UI_DrawString( DL_LIST_X + DL_COL_STATUS_X,                92, "STATUS",
-                       UI_RIGHT | UI_SMALLFONT, colHeaderColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_NAME_X, DL_LIST_Y - 14, "Name",
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_AUTHOR_X, DL_LIST_Y - 14, "Author",
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_SIZE_X, DL_LIST_Y - 14, "Size",
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
+        Frontend_DrawText( DL_LIST_X + DL_COL_STATUS_X, DL_LIST_Y - 14, "Status",
+                           UI_RIGHT | UI_SMALLFONT, dlMutedColor );
     }
 
     // Item list
@@ -751,50 +826,32 @@ static void DownloadsMenu_Draw( void ) {
         DL_DrawItemRow( listIndex, itemY, selected );
     }
 
-    // Empty-state messages
-    {
-        vec4_t hintColor   = { 0.5f, 0.5f, 0.5f, 1.0f };
-        vec4_t scrollColor = { 0.8f, 0.8f, 0.8f, 1.0f };
-
-        if ( 0 && s_dl.numAllItems == 0 &&
-             s_dl.dlState != DL_STATE_FETCHING &&
-             s_dl.dlState != DL_STATE_DOWNLOADING ) {
-            UI_DrawProportionalString( 320, DL_LIST_Y + 60,
-                                       "Press REFRESH to load available content.",
-                                       UI_CENTER | UI_SMALLFONT, hintColor );
-        }
-
-        // Scroll indicators
-        if ( s_dl.scrollOffset > 0 ) {
-            UI_DrawString( DL_LIST_X + DL_LIST_WIDTH + 8,
-                           DL_LIST_Y,
-                           "^", UI_LEFT | UI_SMALLFONT, scrollColor );
-        }
-        if ( s_dl.scrollOffset + DL_ITEMS_PER_PAGE < s_dl.numItems ) {
-            UI_DrawString( DL_LIST_X + DL_LIST_WIDTH + 8,
-                           DL_LIST_Y + ( DL_ITEMS_PER_PAGE - 1 ) * DL_ITEM_HEIGHT,
-                           "v", UI_LEFT | UI_SMALLFONT, scrollColor );
-        }
+    if ( s_dl.numItems <= 0 && s_dl.dlState != DL_STATE_FETCHING &&
+         s_dl.dlState != DL_STATE_DOWNLOADING ) {
+        Frontend_DrawText( DL_LIST_X + 24, DL_LIST_Y + 56,
+                           "No content in this category", UI_LEFT | UI_SMALLFONT,
+                           dlMutedColor );
+    } else if ( s_dl.scrollOffset > 0 ||
+                s_dl.scrollOffset + DL_ITEMS_PER_PAGE < s_dl.numItems ) {
+        Frontend_DrawText( DL_LIST_X + DL_LIST_WIDTH - 54,
+                           DL_LIST_Y + DL_LIST_HEIGHT - 18, "Scroll",
+                           UI_LEFT | UI_SMALLFONT, dlMutedColor );
     }
-
-    // Divider above controls
-    UI_FillRect( DL_LIST_X, DL_PROGRESSBAR_Y - 8, DL_LIST_WIDTH, 2, dividerColor );
 
     // Status line + progress bar
     DL_DrawStatusLine();
 
+    // Draw the actual tab and action controls after the content surfaces.
+    Menu_Draw( &s_dl.menu );
+
     // Inline info popup
     if ( s_dl.showPopup ) {
-        UI_FillRect( 120, 190, 400, 80, popBg );
-        UI_DrawRect( 120, 190, 400, 80, popBdr );
-        UI_DrawProportionalString( 320, 204, s_dl.popupText,
-                                   UI_CENTER | UI_SMALLFONT, popTxt );
-        UI_DrawProportionalString( 320, 236, "[ OK ]",
-                                   UI_CENTER | UI_SMALLFONT, popOk );
+        Frontend_DrawCard( 126, 182, 388, 92, 1.0f, qtrue );
+        Frontend_DrawText( 320, 204, s_dl.popupText,
+                           UI_CENTER | UI_SMALLFONT, dlTextColor );
+        Frontend_DrawText( 320, 238, "Press any key to dismiss",
+                           UI_CENTER | UI_SMALLFONT, dlAccentColor );
     }
-
-    // Draw menu items (BACK, DOWNLOAD, REFRESH buttons)
-    Menu_Draw( &s_dl.menu );
 }
 
 /*
@@ -886,6 +943,59 @@ static sfxHandle_t DownloadsMenu_Key( int key ) {
 // Menu init helpers
 // ---------------------------------------------------------------------------
 
+static void DownloadsMenu_DrawTab( void *self ) {
+    menutext_s *button = (menutext_s *)self;
+    qboolean focus;
+    qboolean active;
+    int tabIndex;
+
+    focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+    tabIndex = button->generic.id - ID_DL_TAB_ALL;
+    active = ( s_dl.activeTab == tabIndex ) ? qtrue : qfalse;
+
+    Frontend_DrawButton( button->generic.left, button->generic.top,
+                         button->generic.right - button->generic.left,
+                         button->generic.bottom - button->generic.top,
+                         button->string, 1.0f, active || focus,
+                         UI_FRONTEND_TEXT_CENTER );
+}
+
+static void DownloadsMenu_DrawAction( void *self ) {
+    menutext_s *button = (menutext_s *)self;
+    qboolean focus;
+    qboolean disabled = qfalse;
+    vec4_t disabledColor;
+    int x;
+    int y;
+    int width;
+
+    focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+    x = button->generic.left;
+    y = button->generic.top;
+    width = button->generic.right - button->generic.left;
+
+    if ( button->generic.id == ID_DL_DOWNLOAD &&
+         ( s_dl.selectedItem < 0 || s_dl.selectedItem >= s_dl.numItems ||
+           s_dl.items[s_dl.selectedItem].installed ||
+           s_dl.dlState == DL_STATE_DOWNLOADING ||
+           s_dl.dlState == DL_STATE_FETCHING ) ) {
+        disabled = qtrue;
+    }
+
+    if ( disabled ) {
+        Vector4Copy( dlMutedColor, disabledColor );
+        disabledColor[3] = 0.35f;
+        Frontend_DrawText( x + width / 2, y + 6, button->string,
+                           UI_CENTER | UI_SMALLFONT, disabledColor );
+        return;
+    }
+
+    Frontend_DrawButton( x, y, width,
+                         button->generic.bottom - button->generic.top,
+                         button->string, 1.0f, focus,
+                         UI_FRONTEND_TEXT_CENTER );
+}
+
 static void InitDLTabButton( menutext_s *item, int id, char *label, int x, int y ) {
     item->generic.type     = MTYPE_PTEXT;
     item->generic.flags    = QMF_PULSEIFFOCUS | QMF_CENTER_JUSTIFY;
@@ -893,7 +1003,7 @@ static void InitDLTabButton( menutext_s *item, int id, char *label, int x, int y
     item->generic.callback = DownloadsMenu_Event;
     item->generic.x        = x;
     item->generic.y        = y;
-    item->style            = UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW;
+    item->style            = UI_CENTER | UI_SMALLFONT;
     item->string           = label;
     item->color            = text_color_normal;
 }
@@ -905,7 +1015,7 @@ static void InitDLButton( menutext_s *item, int id, char *label, int x, int y ) 
     item->generic.callback = DownloadsMenu_Event;
     item->generic.x        = x;
     item->generic.y        = y;
-    item->style            = UI_RIGHT | UI_SMALLFONT | UI_DROPSHADOW;
+    item->style            = UI_CENTER | UI_SMALLFONT;
     item->string           = label;
     item->color            = text_color_normal;
 }
@@ -925,7 +1035,7 @@ UI_Rally_DownloadsMenu
 =================
 */
 void UI_Rally_DownloadsMenu( void ) {
-    int btnY = 460;
+    int btnY = DL_ACTION_Y;
 
     memset( &s_dl, 0, sizeof( s_dl ) );
 
@@ -952,11 +1062,33 @@ void UI_Rally_DownloadsMenu( void ) {
 
     // Tab buttons
     {
-        InitDLTabButton( &s_dl.tabAll,      ID_DL_TAB_ALL,      "ALL",      DL_TabCenterX( 0 ), DL_TAB_LABEL_Y );
-        InitDLTabButton( &s_dl.tabTracks,   ID_DL_TAB_TRACKS,   "TRACKS",   DL_TabCenterX( 1 ), DL_TAB_LABEL_Y );
-        InitDLTabButton( &s_dl.tabVehicles, ID_DL_TAB_VEHICLES, "VEHICLES", DL_TabCenterX( 2 ), DL_TAB_LABEL_Y );
-        InitDLTabButton( &s_dl.tabSkins,    ID_DL_TAB_SKINS,    "SKINS",    DL_TabCenterX( 3 ), DL_TAB_LABEL_Y );
+        InitDLTabButton( &s_dl.tabAll,      ID_DL_TAB_ALL,      "All",      DL_TabCenterX( 0 ), DL_TAB_LABEL_Y );
+        InitDLTabButton( &s_dl.tabTracks,   ID_DL_TAB_TRACKS,   "Tracks",   DL_TabCenterX( 1 ), DL_TAB_LABEL_Y );
+        InitDLTabButton( &s_dl.tabVehicles, ID_DL_TAB_VEHICLES, "Vehicles", DL_TabCenterX( 2 ), DL_TAB_LABEL_Y );
+        InitDLTabButton( &s_dl.tabSkins,    ID_DL_TAB_SKINS,    "Skins",    DL_TabCenterX( 3 ), DL_TAB_LABEL_Y );
     }
+
+    s_dl.tabAll.generic.ownerdraw = DownloadsMenu_DrawTab;
+    s_dl.tabTracks.generic.ownerdraw = DownloadsMenu_DrawTab;
+    s_dl.tabVehicles.generic.ownerdraw = DownloadsMenu_DrawTab;
+    s_dl.tabSkins.generic.ownerdraw = DownloadsMenu_DrawTab;
+
+    s_dl.tabAll.generic.left = DL_LIST_X;
+    s_dl.tabAll.generic.top = DL_TAB_TOP;
+    s_dl.tabAll.generic.right = DL_LIST_X + DL_TAB_WIDTH - 2;
+    s_dl.tabAll.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabTracks.generic.left = DL_LIST_X + DL_TAB_WIDTH;
+    s_dl.tabTracks.generic.top = DL_TAB_TOP;
+    s_dl.tabTracks.generic.right = DL_LIST_X + 2 * DL_TAB_WIDTH - 2;
+    s_dl.tabTracks.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabVehicles.generic.left = DL_LIST_X + 2 * DL_TAB_WIDTH;
+    s_dl.tabVehicles.generic.top = DL_TAB_TOP;
+    s_dl.tabVehicles.generic.right = DL_LIST_X + 3 * DL_TAB_WIDTH - 2;
+    s_dl.tabVehicles.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabSkins.generic.left = DL_LIST_X + 3 * DL_TAB_WIDTH;
+    s_dl.tabSkins.generic.top = DL_TAB_TOP;
+    s_dl.tabSkins.generic.right = DL_LIST_X + DL_LIST_WIDTH - 2;
+    s_dl.tabSkins.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
 
     Menu_AddItem( &s_dl.menu, &s_dl.tabAll );
     Menu_AddItem( &s_dl.menu, &s_dl.tabTracks );
@@ -964,12 +1096,62 @@ void UI_Rally_DownloadsMenu( void ) {
     Menu_AddItem( &s_dl.menu, &s_dl.tabSkins );
 
     // Bottom-row buttons
-    InitDLButton( &s_dl.back,         ID_DL_BACK,        "BACK",        80,   btnY );
-    InitDLButton( &s_dl.downloadBtn,  ID_DL_DOWNLOAD,    "DOWNLOAD",    356,  btnY );
-    InitDLButton( &s_dl.refreshBtn,   ID_DL_REFRESH,     "REFRESH",     620,  btnY );
+    InitDLButton( &s_dl.back,         ID_DL_BACK,        "Back",        90,   btnY );
+    InitDLButton( &s_dl.downloadBtn,  ID_DL_DOWNLOAD,    "Download",    320,  btnY );
+    InitDLButton( &s_dl.refreshBtn,   ID_DL_REFRESH,     "Refresh",     550,  btnY );
+
+    s_dl.back.generic.ownerdraw = DownloadsMenu_DrawAction;
+    s_dl.downloadBtn.generic.ownerdraw = DownloadsMenu_DrawAction;
+    s_dl.refreshBtn.generic.ownerdraw = DownloadsMenu_DrawAction;
+
+    s_dl.back.generic.left = DL_FRAME_X + 16;
+    s_dl.back.generic.top = btnY;
+    s_dl.back.generic.right = DL_FRAME_X + 128;
+    s_dl.back.generic.bottom = btnY + DL_ACTION_HEIGHT;
+    s_dl.downloadBtn.generic.left = 264;
+    s_dl.downloadBtn.generic.top = btnY;
+    s_dl.downloadBtn.generic.right = 376;
+    s_dl.downloadBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
+    s_dl.refreshBtn.generic.left = 488;
+    s_dl.refreshBtn.generic.top = btnY;
+    s_dl.refreshBtn.generic.right = 600;
+    s_dl.refreshBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
     Menu_AddItem( &s_dl.menu, &s_dl.back );
     Menu_AddItem( &s_dl.menu, &s_dl.downloadBtn );
     Menu_AddItem( &s_dl.menu, &s_dl.refreshBtn );
+
+    /* PText_Init derives bounds from the label. Restore the shared hit and
+     * draw rectangles afterwards so the category tabs stay identical in
+     * width and the action row uses a consistent rhythm. */
+    s_dl.tabAll.generic.left = DL_LIST_X;
+    s_dl.tabAll.generic.top = DL_TAB_TOP;
+    s_dl.tabAll.generic.right = DL_LIST_X + DL_TAB_WIDTH - 2;
+    s_dl.tabAll.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabTracks.generic.left = DL_LIST_X + DL_TAB_WIDTH;
+    s_dl.tabTracks.generic.top = DL_TAB_TOP;
+    s_dl.tabTracks.generic.right = DL_LIST_X + 2 * DL_TAB_WIDTH - 2;
+    s_dl.tabTracks.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabVehicles.generic.left = DL_LIST_X + 2 * DL_TAB_WIDTH;
+    s_dl.tabVehicles.generic.top = DL_TAB_TOP;
+    s_dl.tabVehicles.generic.right = DL_LIST_X + 3 * DL_TAB_WIDTH - 2;
+    s_dl.tabVehicles.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+    s_dl.tabSkins.generic.left = DL_LIST_X + 3 * DL_TAB_WIDTH;
+    s_dl.tabSkins.generic.top = DL_TAB_TOP;
+    s_dl.tabSkins.generic.right = DL_LIST_X + DL_LIST_WIDTH - 2;
+    s_dl.tabSkins.generic.bottom = DL_TAB_TOP + DL_TAB_HEIGHT;
+
+    s_dl.back.generic.left = DL_FRAME_X + 16;
+    s_dl.back.generic.top = btnY;
+    s_dl.back.generic.right = DL_FRAME_X + 128;
+    s_dl.back.generic.bottom = btnY + DL_ACTION_HEIGHT;
+    s_dl.downloadBtn.generic.left = 264;
+    s_dl.downloadBtn.generic.top = btnY;
+    s_dl.downloadBtn.generic.right = 376;
+    s_dl.downloadBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
+    s_dl.refreshBtn.generic.left = 488;
+    s_dl.refreshBtn.generic.top = btnY;
+    s_dl.refreshBtn.generic.right = 600;
+    s_dl.refreshBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
 
 
     trap_Key_SetCatcher( KEYCATCH_UI );

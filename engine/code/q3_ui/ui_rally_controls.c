@@ -23,6 +23,46 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
+
+#define CONTROLS_FRAME_X             24
+#define CONTROLS_FRAME_Y             20
+#define CONTROLS_FRAME_WIDTH         592
+#define CONTROLS_FRAME_HEIGHT        440
+#define CONTROLS_NAV_X               40
+#define CONTROLS_NAV_Y               104
+#define CONTROLS_NAV_WIDTH           184
+#define CONTROLS_NAV_HEIGHT          300
+#define CONTROLS_NAV_ROW_X           ( CONTROLS_NAV_X + 16 )
+#define CONTROLS_NAV_ROW_WIDTH       ( CONTROLS_NAV_WIDTH - 32 )
+#define CONTROLS_NAV_ROW_HEIGHT      24
+#define CONTROLS_NAV_ROW_GAP         4
+#define CONTROLS_CONTENT_X           240
+#define CONTROLS_CONTENT_Y           104
+#define CONTROLS_CONTENT_WIDTH       360
+#define CONTROLS_CONTENT_HEIGHT      300
+#define CONTROLS_ROW_X               ( CONTROLS_CONTENT_X + 16 )
+#define CONTROLS_ROW_WIDTH           ( CONTROLS_CONTENT_WIDTH - 32 )
+#define CONTROLS_ROW_Y               144
+#define CONTROLS_ROW_HEIGHT          20
+#define CONTROLS_SEARCH_X            ( CONTROLS_NAV_X + 16 )
+#define CONTROLS_SEARCH_Y            354
+#define CONTROLS_SEARCH_WIDTH        ( CONTROLS_NAV_WIDTH - 32 )
+#define CONTROLS_SEARCH_HEIGHT       24
+#define CONTROLS_INPUT_X             ( CONTROLS_CONTENT_X + CONTROLS_CONTENT_WIDTH - 136 )
+#define CONTROLS_INPUT_Y             112
+#define CONTROLS_INPUT_WIDTH         120
+#define CONTROLS_INPUT_HEIGHT        24
+#define CONTROLS_ACTION_Y            420
+#define CONTROLS_ACTION_WIDTH        120
+#define CONTROLS_ACTION_HEIGHT       24
+
+static vec4_t controlsScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t controlsTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t controlsMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t controlsAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t controlsFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
+static vec4_t controlsBorderColor = UI_FRONTEND_COLOR_BORDER;
 
 typedef struct {
 	char	*command;
@@ -148,6 +188,7 @@ typedef struct
 #define ID_GEARDOWN		74
 #define ID_JOYANALOG	75
 #define ID_INPUTMODE	76
+#define ID_SEARCH	113
 
 #define CONTROLS_INPUT_KEYBOARD		0
 #define CONTROLS_INPUT_CONTROLLER	1
@@ -321,6 +362,12 @@ static float s_controlsProfileJoyAnalog[2];
 static float s_controlsProfileJoyThreshold[2];
 static qboolean s_controlsProfileLoaded[2];
 static int s_controlsActiveProfileMode;
+
+static void Controls_MenuDraw( void );
+static void Controls_DrawSection( void *self );
+static void Controls_DrawAction( void *self );
+static void Controls_DrawInputMode( void *self );
+static void Controls_SearchFieldEvent( void *self, int event );
 
 static const char *s_controlsInputModes[] = {
 	"Mouse/Keyboard",
@@ -528,6 +575,109 @@ static menucommon_s **g_controls[] = {
 	g_misc_controls,
 	g_developer_controls,
 };
+
+static qboolean Controls_SectionIsActive( int id )
+{
+	switch ( id ) {
+	case ID_MOVEMENT:
+		return s_controls.section == C_MOVEMENT;
+	case ID_LOOKING:
+		return s_controls.section == C_LOOKING;
+	case ID_COMBAT:
+		return s_controls.section == C_COMBAT;
+	case ID_WEAPONS:
+		return s_controls.section == C_WEAPONS;
+	case ID_MISC:
+		return s_controls.section == C_MISC;
+	case ID_DEVELOPER:
+		return s_controls.section == C_DEVELOPER;
+	default:
+		return qfalse;
+	}
+}
+
+static void Controls_SetSectionBounds( menutext_s *item, int id,
+	const char *label, int y )
+{
+	item->generic.id = id;
+	item->generic.x = CONTROLS_NAV_ROW_X;
+	item->generic.y = y;
+	item->generic.left = CONTROLS_NAV_ROW_X;
+	item->generic.top = y;
+	item->generic.right = CONTROLS_NAV_ROW_X + CONTROLS_NAV_ROW_WIDTH;
+	item->generic.bottom = y + CONTROLS_NAV_ROW_HEIGHT;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = Controls_DrawSection;
+}
+
+static void Controls_SetActionBounds( menutext_s *item, int id,
+	const char *label, int x )
+{
+	item->generic.id = id;
+	item->generic.x = x;
+	item->generic.y = CONTROLS_ACTION_Y;
+	item->generic.left = x;
+	item->generic.top = CONTROLS_ACTION_Y;
+	item->generic.right = x + CONTROLS_ACTION_WIDTH;
+	item->generic.bottom = CONTROLS_ACTION_Y + CONTROLS_ACTION_HEIGHT;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = Controls_DrawAction;
+}
+
+static void Controls_SetBindingBounds( menucommon_s *item, int y )
+{
+	item->x = CONTROLS_ROW_X;
+	item->y = y;
+	item->left = CONTROLS_ROW_X;
+	item->top = y;
+	item->right = CONTROLS_ROW_X + CONTROLS_ROW_WIDTH;
+	item->bottom = y + CONTROLS_ROW_HEIGHT;
+}
+
+static void Controls_DrawSection( void *self )
+{
+	menutext_s *item;
+	qboolean focus;
+	qboolean active;
+
+	item = (menutext_s *)self;
+	focus = Menu_ItemAtCursor( item->generic.parent ) == item;
+	active = Controls_SectionIsActive( item->generic.id );
+	Frontend_DrawNavButton( item->generic.left, item->generic.top,
+		item->generic.right - item->generic.left,
+		item->generic.bottom - item->generic.top,
+		item->string, 1.0f, active || focus, UI_FRONTEND_TEXT_LEFT );
+}
+
+static void Controls_DrawAction( void *self )
+{
+	menutext_s *item;
+	qboolean focus;
+
+	item = (menutext_s *)self;
+	focus = Menu_ItemAtCursor( item->generic.parent ) == item;
+	Frontend_DrawButton( item->generic.left, item->generic.top,
+		item->generic.right - item->generic.left,
+		item->generic.bottom - item->generic.top,
+		item->string, 1.0f, focus, UI_FRONTEND_TEXT_LEFT );
+}
+
+static void Controls_DrawInputMode( void *self )
+{
+	menulist_s *item;
+	qboolean focus;
+	const char *label;
+
+	item = (menulist_s *)self;
+	focus = Menu_ItemAtCursor( item->generic.parent ) == item;
+	label = item->itemnames[item->curvalue];
+	Frontend_DrawButton( item->generic.left, item->generic.top,
+		item->generic.right - item->generic.left,
+		item->generic.bottom - item->generic.top,
+		label, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
 
 static qboolean Controls_SearchActive( void )
 {
@@ -1145,15 +1295,15 @@ static void Controls_Update( void ) {
 		for ( j = 0; j < s_globalSearchControlCount; j++ ) {
 			s_globalSearchControls[j]->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
 		}
-		y = ( SCREEN_HEIGHT - s_globalSearchControlCount * SMALLCHAR_HEIGHT ) / 2;
-		for ( j = 0; j < s_globalSearchControlCount; j++, y += SMALLCHAR_HEIGHT ) {
+		y = CONTROLS_ROW_Y;
+		for ( j = 0; j < s_globalSearchControlCount; j++, y += CONTROLS_ROW_HEIGHT ) {
 			control = s_globalSearchControls[j];
-			control->x      = 410 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
+			control->x      = CONTROLS_ROW_X;
 			control->y      = y;
-			control->left   = control->x - 19*SMALLCHAR_WIDTH;
-			control->right  = control->x + 21*SMALLCHAR_WIDTH;
+			control->left   = CONTROLS_ROW_X;
+			control->right  = CONTROLS_ROW_X + CONTROLS_ROW_WIDTH;
 			control->top    = y;
-			control->bottom = y + SMALLCHAR_HEIGHT;
+			control->bottom = y + CONTROLS_ROW_HEIGHT;
 		}
 	} else {
 		controls = g_controls[s_controls.section];
@@ -1167,19 +1317,19 @@ static void Controls_Update( void ) {
 		}
 
 		// position controls
-		y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
+		y = CONTROLS_ROW_Y;
 		for( j = 0;	(control = controls[j]); j++ ) {
 			if ( !Controls_ControlVisibleForInputMode( control ) ) {
 				continue;
 			}
 
-			control->x      = 300 + (int)(((y - 240) / 14.0F) * ((y - 240) / 14.0F));
+			control->x      = CONTROLS_ROW_X;
 			control->y      = y;
-			control->left   = control->x - 19*SMALLCHAR_WIDTH;
-			control->right  = control->x + 21*SMALLCHAR_WIDTH;
+			control->left   = CONTROLS_ROW_X;
+			control->right  = CONTROLS_ROW_X + CONTROLS_ROW_WIDTH;
 			control->top    = y;
-			control->bottom = y + SMALLCHAR_HEIGHT;
-			y += SMALLCHAR_HEIGHT;
+			control->bottom = y + CONTROLS_ROW_HEIGHT;
+			y += CONTROLS_ROW_HEIGHT;
 		}
 	}
 
@@ -1306,235 +1456,204 @@ static void Controls_KeyNameForDisplay( int keynum, char *buf, int buflen )
 
 static void Controls_DrawKeyBinding( void *self )
 {
-	menuaction_s*	a;
-	int				x;
-	int				y;
-	int				fillLeft;
-	int				fillRight;
-	int				b1;
-	int				b2;
-	qboolean		c;
-	char			name[96];
-	char			label[96];
+	menuaction_s *action;
+	bind_t *binding;
+	qboolean focus;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	char name[96];
+	char label[96];
 
-	a = (menuaction_s*) self;
+	action = (menuaction_s *)self;
+	focus = Menu_ItemAtCursor( action->generic.parent ) == action;
+	binding = Controls_FindBindingById( action->generic.id );
 
-	x =	a->generic.x;
-	y = a->generic.y;
-
-	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
-
-	// find the binding
-	for (b1 = 0; g_bindings[b1].command; b1++) {
-		if (g_bindings[b1].id == a->generic.id) {
-			break;
+	if ( binding ) {
+		if ( binding->bind1 == -1 ) {
+			Q_strncpyz( name, "Unbound", sizeof( name ) );
+		} else {
+			Controls_KeyNameForDisplay( binding->bind1, name, sizeof( name ) );
 		}
-	}
-
-	if (!g_bindings[b1].command) {
-		strcpy(name, "<OUT OF RANGE>");
-		strcpy(label, "<OUT OF RANGE>");
+		if ( Controls_SearchActive() ) {
+			Com_sprintf( label, sizeof( label ), "[%s] %s",
+				Controls_SectionTagForAction( action->generic.id ),
+				binding->label );
+		} else {
+			Q_strncpyz( label, binding->label, sizeof( label ) );
+		}
 	} else {
-		b2 = g_bindings[b1].bind1;
-		if (b2 == -1) {
-			strcpy(name, "-?-");
-		} else {
-			Controls_KeyNameForDisplay( b2, name, sizeof( name ) );
-		}
-
-		if ( Controls_SearchActive() ) {
-			Com_sprintf( label, sizeof( label ), "[%s] %s", Controls_SectionTagForAction( a->generic.id ), g_bindings[b1].label );
-		} else {
-			Q_strncpyz( label, g_bindings[b1].label, sizeof( label ) );
-		}
+		Q_strncpyz( label, "Unknown action", sizeof( label ) );
+		Q_strncpyz( name, "Unbound", sizeof( name ) );
 	}
 
-	if (c)
-	{
-		fillLeft = x - SMALLCHAR_WIDTH - strlen( label ) * SMALLCHAR_WIDTH - 2;
-		fillRight = x + SMALLCHAR_WIDTH + strlen( name ) * SMALLCHAR_WIDTH + 2;
-		UI_FillRect( fillLeft, a->generic.top, fillRight - fillLeft + 1, a->generic.bottom-a->generic.top+1, listbar_color );
+	Vector4Copy( ( action->generic.flags & QMF_GRAYED ) ? controlsMutedColor :
+		(focus ? controlsTextColor : controlsMutedColor), labelColor );
+	Vector4Copy( ( action->generic.flags & QMF_GRAYED ) ? controlsMutedColor :
+		(focus ? controlsAccentColor : controlsTextColor), valueColor );
 
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_highlight );
-		UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT|UI_PULSE, text_color_highlight );
-
-		if (s_controls.waitingforkey)
-		{
-			UI_DrawChar( x, y, '=', UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "Waiting for new key ... Escape = cancel", UI_SMALLFONT|UI_CENTER|UI_PULSE, colorWhite );
-		}
-		else
-		{
-			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.84, "One input per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.88, "Enter/Click = rebind", UI_SMALLFONT|UI_CENTER, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.92, "Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
-		}
-		UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.95, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
-		if ( Controls_SearchActive() ) {
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.98, va("Search: %s", s_controlsSearchText), UI_SMALLFONT|UI_CENTER, colorWhite );
-		}
+	if ( focus ) {
+		UI_FillRect( action->generic.left, action->generic.top,
+			action->generic.right - action->generic.left,
+			action->generic.bottom - action->generic.top, controlsFocusColor );
+		UI_FillRect( action->generic.left, action->generic.top, 2,
+			action->generic.bottom - action->generic.top, controlsAccentColor );
 	}
-	else
-	{
-		if (a->generic.flags & QMF_GRAYED)
-		{
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_disabled );
-			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_disabled );
-		}
-		else
-		{
-			UI_DrawString( x - SMALLCHAR_WIDTH, y, label, UI_RIGHT|UI_SMALLFONT, text_color_normal );
-			UI_DrawString( x + SMALLCHAR_WIDTH, y, name, UI_LEFT|UI_SMALLFONT, text_color_normal );
-		}
-	}
+	UI_FillRect( action->generic.left, action->generic.bottom - 1,
+		action->generic.right - action->generic.left, 1, controlsBorderColor );
+	Frontend_DrawText( action->generic.left + 12, action->generic.top + 2,
+		label, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( action->generic.right - 12, action->generic.top + 2,
+		name, UI_RIGHT | UI_SMALLFONT, valueColor );
 }
 
 static void Controls_DrawRadioButton( void *self )
 {
-	menuradiobutton_s* rb;
-	int x;
-	int y;
-	int fillLeft;
-	int fillRight;
-	int style;
-	const char* value;
-	float* color;
+	menuradiobutton_s *rb;
+	menucommon_s *item;
 	qboolean focus;
+	qboolean disabled;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	const char *value;
 
-	rb = (menuradiobutton_s*)self;
-	x = rb->generic.x;
-	y = rb->generic.y;
-	value = rb->curvalue ? "on" : "off";
-	focus = (rb->generic.parent->cursor == rb->generic.menuPosition);
+	rb = (menuradiobutton_s *)self;
+	item = &rb->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	value = rb->curvalue ? "On" : "Off";
 
-	style = UI_LEFT|UI_SMALLFONT;
-	if ( rb->generic.flags & QMF_GRAYED ) {
-		color = text_color_disabled;
-	} else if ( focus ) {
-		color = text_color_highlight;
-		style |= UI_PULSE;
-	} else {
-		color = text_color_normal;
+	if ( focus && !disabled ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top,
+			controlsFocusColor );
+		UI_FillRect( item->left, item->top, 2,
+			item->bottom - item->top, controlsAccentColor );
 	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, controlsBorderColor );
 
-	if ( focus ) {
-		fillLeft = x - SMALLCHAR_WIDTH - strlen( rb->generic.name ) * SMALLCHAR_WIDTH - 2;
-		fillRight = x + SMALLCHAR_WIDTH + 16 + strlen( value ) * SMALLCHAR_WIDTH + 2;
-		UI_FillRect( fillLeft, rb->generic.top, fillRight - fillLeft + 1, rb->generic.bottom-rb->generic.top+1, listbar_color );
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color );
-	}
-
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT, color );
-	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y + 2, 16, 16, rb->curvalue ? uis.rb_on : uis.rb_off );
-	UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, value, style, color );
+	Vector4Copy( disabled ? controlsMutedColor :
+		(focus ? controlsTextColor : controlsMutedColor), labelColor );
+	Vector4Copy( disabled ? controlsMutedColor :
+		(focus ? controlsAccentColor : controlsTextColor), valueColor );
+	Frontend_DrawText( item->left + 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->right - 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
 }
 
 static void Controls_DrawSlider( void *self )
 {
-	menuslider_s* s;
-	int x;
-	int y;
-	int i;
-	int fillLeft;
-	int fillRight;
-	int style;
-	float* color;
+	menuslider_s *slider;
+	menucommon_s *item;
 	qboolean focus;
+	qboolean disabled;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	vec4_t trackColor;
+	float range;
+	int trackX;
+	int trackWidth;
+	int trackY;
+	char value[32];
 
-	s = (menuslider_s*)self;
-	x = s->generic.x;
-	y = s->generic.y;
-	focus = (s->generic.parent->cursor == s->generic.menuPosition);
+	slider = (menuslider_s *)self;
+	item = &slider->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
 
-	style = UI_SMALLFONT;
-	if ( s->generic.flags & QMF_GRAYED ) {
-		color = text_color_disabled;
-	} else if ( focus ) {
-		color = text_color_highlight;
-		style |= UI_PULSE;
+	if ( focus && !disabled ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top,
+			controlsFocusColor );
+		UI_FillRect( item->left, item->top, 2,
+			item->bottom - item->top, controlsAccentColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, controlsBorderColor );
+
+	Vector4Copy( disabled ? controlsMutedColor :
+		(focus ? controlsTextColor : controlsMutedColor), labelColor );
+	Vector4Copy( disabled ? controlsMutedColor :
+		(focus ? controlsAccentColor : controlsTextColor), valueColor );
+	Vector4Copy( disabled ? controlsMutedColor : controlsBorderColor, trackColor );
+
+	if ( slider->maxvalue > slider->minvalue ) {
+		range = ( slider->curvalue - slider->minvalue ) /
+			( slider->maxvalue - slider->minvalue );
 	} else {
-		color = text_color_normal;
+		range = 0.0f;
 	}
+	if ( range < 0.0f ) range = 0.0f;
+	if ( range > 1.0f ) range = 1.0f;
+	slider->range = range;
 
-	if ( focus ) {
-		fillLeft = x - SMALLCHAR_WIDTH - strlen( s->generic.name ) * SMALLCHAR_WIDTH - 2;
-		fillRight = x + (SLIDER_RANGE + 3) * SMALLCHAR_WIDTH + 2;
-		UI_FillRect( fillLeft, s->generic.top, fillRight - fillLeft + 1, s->generic.bottom-s->generic.top+1, listbar_color );
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color );
-	}
+	Com_sprintf( value, sizeof( value ), "%d%%", (int)( range * 100.0f + 0.5f ) );
+	Frontend_DrawText( item->left + 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
 
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, UI_RIGHT|style, color );
-	UI_DrawChar( x + SMALLCHAR_WIDTH, y, 128, UI_LEFT|style, color );
-	for ( i = 0; i < SLIDER_RANGE; i++ ) {
-		UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 129, UI_LEFT|style, color );
-	}
-	UI_DrawChar( x + (i+2)*SMALLCHAR_WIDTH, y, 130, UI_LEFT|style, color );
-
-	if (s->maxvalue > s->minvalue) {
-		s->range = ( s->curvalue - s->minvalue ) / ( float ) ( s->maxvalue - s->minvalue );
-		if ( s->range < 0 ) {
-			s->range = 0;
-		} else if ( s->range > 1 ) {
-			s->range = 1;
-		}
-	} else {
-		s->range = 0;
-	}
-
-	if ( style & UI_PULSE ) {
-		style &= ~UI_PULSE;
-		style |= UI_BLINK;
-	}
-	UI_DrawChar( (int)( x + 2*SMALLCHAR_WIDTH + (SLIDER_RANGE-1)*SMALLCHAR_WIDTH* s->range ), y, 131, UI_LEFT|style, color );
+	trackX = item->left + 158;
+	trackWidth = 86;
+	trackY = item->top + ( item->bottom - item->top ) / 2;
+	UI_FillRect( trackX, trackY, trackWidth, 2, trackColor );
+	UI_FillRect( trackX, trackY, (int)( trackWidth * range ), 2,
+		disabled ? controlsMutedColor : controlsAccentColor );
+	UI_FillRect( trackX + (int)( trackWidth * range ) - 2, trackY - 3,
+		4, 8, disabled ? controlsMutedColor : controlsAccentColor );
+	Frontend_DrawText( item->right - 12,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
 }
 
 static void Controls_DrawSearchField( void *self )
 {
-	menufield_s* f;
-	int x;
-	int y;
-	int w;
-	int style;
-	int visibleChars;
-	int fillRight;
-	float* color;
+	menufield_s *field;
+	menucommon_s *item;
 	qboolean focus;
+	vec4_t textColor;
+	const char *label;
+	int drawTop;
+	int drawBottom;
 
-	f = (menufield_s*)self;
-	x = f->generic.x;
-	y = f->generic.y;
-	w = SMALLCHAR_WIDTH;
-	style = UI_SMALLFONT;
-	focus = (Menu_ItemAtCursor( f->generic.parent ) == f);
+	field = (menufield_s *)self;
+	item = &field->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	drawTop = CONTROLS_SEARCH_Y;
+	drawBottom = CONTROLS_SEARCH_Y + CONTROLS_SEARCH_HEIGHT;
 
 	if ( focus ) {
-		style |= UI_PULSE;
+		UI_FillRect( CONTROLS_SEARCH_X, drawTop,
+			CONTROLS_SEARCH_WIDTH, CONTROLS_SEARCH_HEIGHT,
+			controlsFocusColor );
+		UI_FillRect( CONTROLS_SEARCH_X, drawTop, 2,
+			CONTROLS_SEARCH_HEIGHT, controlsAccentColor );
 	}
+	UI_FillRect( CONTROLS_SEARCH_X, drawBottom - 1,
+		CONTROLS_SEARCH_WIDTH, 1, controlsBorderColor );
 
-	if ( f->generic.flags & QMF_GRAYED ) {
-		color = text_color_disabled;
-	} else if ( focus ) {
-		color = text_color_highlight;
+	if ( field->field.buffer[0] ) {
+		label = field->field.buffer;
 	} else {
-		color = text_color_normal;
+		label = "Search controls";
 	}
-
+	Vector4Copy( focus ? controlsTextColor : controlsMutedColor, textColor );
+	Frontend_DrawText( CONTROLS_SEARCH_X + 12,
+		drawTop + ( CONTROLS_SEARCH_HEIGHT - SMALLCHAR_HEIGHT ) / 2,
+		label, UI_LEFT | UI_SMALLFONT, textColor );
 	if ( focus ) {
-		visibleChars = strlen( f->field.buffer ) - f->field.scroll;
-		if ( visibleChars < 1 ) {
-			visibleChars = 1;
-		}
-		if ( visibleChars > f->field.widthInChars ) {
-			visibleChars = f->field.widthInChars;
-		}
-
-		fillRight = x + w + visibleChars * w + 2;
-		UI_FillRect( x - 2, f->generic.top, fillRight - x + 3, f->generic.bottom-f->generic.top+1, listbar_color );
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|style, color );
+		UI_FillRect( CONTROLS_SEARCH_X + 12 + Frontend_TextWidth( label,
+			UI_LEFT | UI_SMALLFONT ), drawTop + 6, 1, 12, controlsAccentColor );
 	}
+}
 
-	MField_Draw( &f->field, x + w, y, style, color );
+static void Controls_SearchFieldEvent( void *self, int event )
+{
+	if ( event == QM_ACTIVATED ) {
+		Menu_SetCursorToItem( &s_controls.menu, &s_controls.search );
+	}
 }
 
 
@@ -1545,13 +1664,56 @@ Controls_StatusBar
 */
 static void Controls_StatusBar( void *self )
 {
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "One input per action.", UI_SMALLFONT|UI_CENTER, colorWhite );
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.86, "Enter/Click = rebind | Backspace = clear | Escape = cancel", UI_SMALLFONT|UI_CENTER, colorWhite );
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.90, "Use Arrow Keys or Click to change options", UI_SMALLFONT|UI_CENTER, colorWhite );
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.94, "Type to search (across all categories)", UI_SMALLFONT|UI_CENTER, colorWhite );
-	if ( Controls_SearchActive() ) {
-		UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.98, va("Search: %s", s_controlsSearchText), UI_SMALLFONT|UI_CENTER, colorWhite );
+	const char *status;
+
+	if ( s_controls.waitingforkey ) {
+		status = "Waiting for input  /  Esc cancels";
+	} else if ( Controls_SearchFieldHasFocus() ) {
+		status = "Type to filter bindings  /  Backspace clears";
+	} else {
+		status = "Enter or click to rebind  /  Arrows adjust  /  Esc back";
 	}
+	Frontend_DrawText( CONTROLS_FRAME_X + 24, CONTROLS_FRAME_Y + 384,
+		status, UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+	if ( Controls_SearchActive() ) {
+		Frontend_DrawText( CONTROLS_FRAME_X + CONTROLS_FRAME_WIDTH - 24,
+			CONTROLS_FRAME_Y + 384, va( "Filter: %s", s_controlsSearchText ),
+			UI_RIGHT | UI_SMALLFONT, controlsAccentColor );
+	}
+}
+
+static void Controls_MenuDraw( void )
+{
+	Frontend_DrawBackground( controlsScrimColor );
+	Frontend_DrawPanel( CONTROLS_FRAME_X, CONTROLS_FRAME_Y,
+		CONTROLS_FRAME_WIDTH, CONTROLS_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( CONTROLS_FRAME_X + 24, CONTROLS_FRAME_Y + 24,
+		"Controls", UI_LEFT | UI_BIGFONT, controlsTextColor );
+	Frontend_DrawText( CONTROLS_FRAME_X + 24, CONTROLS_FRAME_Y + 48,
+		"Tune your input layout and driving feel",
+		UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+	Frontend_DrawStatusChip( CONTROLS_FRAME_X + CONTROLS_FRAME_WIDTH - 112,
+		CONTROLS_FRAME_Y + 26,
+		s_controls.inputmode.curvalue == CONTROLS_INPUT_CONTROLLER ?
+			"Controller" : "Keyboard", controlsAccentColor, 1.0f );
+
+	Frontend_DrawCard( CONTROLS_NAV_X, CONTROLS_NAV_Y,
+		CONTROLS_NAV_WIDTH, CONTROLS_NAV_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( CONTROLS_CONTENT_X, CONTROLS_CONTENT_Y,
+		CONTROLS_CONTENT_WIDTH, CONTROLS_CONTENT_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( CONTROLS_NAV_X + 16, CONTROLS_NAV_Y + 22,
+		"Categories", UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+	Frontend_DrawText( CONTROLS_CONTENT_X + 16, CONTROLS_CONTENT_Y + 22,
+		Controls_SearchActive() ? "Search results" : "Bindings",
+		UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+	Frontend_DrawText( CONTROLS_NAV_X + 16, CONTROLS_NAV_Y + 226,
+		"Search controls", UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+	Frontend_DrawText( CONTROLS_FRAME_X + 24, CONTROLS_FRAME_Y + 384,
+		"Select a category   Enter / click to rebind   Esc back",
+		UI_LEFT | UI_SMALLFONT, controlsMutedColor );
+
+	Menu_Draw( &s_controls.menu );
 }
 
 
@@ -1848,7 +2010,10 @@ static void Controls_RebindConflict_Action( qboolean result )
 
 static void Controls_RebindConflict_Draw( void )
 {
-	UI_DrawString( SCREEN_WIDTH / 2, 210, s_rebindConfirmQuestion, UI_CENTER|UI_SMALLFONT, text_color_normal );
+	vec4_t warningColor = UI_THEME_COLOR_WARNING;
+
+	Frontend_DrawText( 320, 222, s_rebindConfirmQuestion,
+		UI_CENTER | UI_SMALLFONT, warningColor );
 }
 
 static void Controls_ExitConfirm_MenuEvent( void* ptr, int event )
@@ -2073,8 +2238,13 @@ Controls_ResetDefaults_Draw
 =================
 */
 static void Controls_ResetDefaults_Draw( void ) {
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This will reset all", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "controls to their default values.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	vec4_t warningColor = UI_THEME_COLOR_WARNING;
+	vec4_t mutedColor = UI_FRONTEND_COLOR_MUTED;
+
+	Frontend_DrawText( 320, 222, "This will reset all controls.",
+		UI_CENTER | UI_SMALLFONT, warningColor );
+	Frontend_DrawText( 320, 244, "Default bindings will be restored.",
+		UI_CENTER | UI_SMALLFONT, mutedColor );
 }
 
 /*
@@ -2288,6 +2458,7 @@ static void Controls_MenuInit( void )
 	Controls_Cache();
 
 	s_controls.menu.key        = Controls_MenuKey;
+	s_controls.menu.draw       = Controls_MenuDraw;
 	s_controls.menu.wrapAround = qtrue;
 	s_controls.menu.fullscreen = qtrue;
 
@@ -2967,12 +3138,17 @@ static void Controls_MenuInit( void )
 
 	s_controls.inputmode.generic.type      = MTYPE_SPINCONTROL;
 	s_controls.inputmode.generic.flags	   = QMF_SMALLFONT;
-	s_controls.inputmode.generic.x	       = SCREEN_WIDTH/2;
-	s_controls.inputmode.generic.y	       = 240 - 4 * PROP_HEIGHT;
+	s_controls.inputmode.generic.x	       = CONTROLS_INPUT_X;
+	s_controls.inputmode.generic.y	       = CONTROLS_INPUT_Y;
+	s_controls.inputmode.generic.left      = CONTROLS_INPUT_X;
+	s_controls.inputmode.generic.top       = CONTROLS_INPUT_Y;
+	s_controls.inputmode.generic.right     = CONTROLS_INPUT_X + CONTROLS_INPUT_WIDTH;
+	s_controls.inputmode.generic.bottom    = CONTROLS_INPUT_Y + CONTROLS_INPUT_HEIGHT;
 	s_controls.inputmode.generic.name	   = "input mode";
 	s_controls.inputmode.generic.id        = ID_INPUTMODE;
 	s_controls.inputmode.generic.callback  = Controls_MenuEvent;
 	s_controls.inputmode.generic.statusbar = Controls_StatusBar;
+	s_controls.inputmode.generic.ownerdraw = Controls_DrawInputMode;
 	s_controls.inputmode.itemnames         = s_controlsInputModes;
 
 	s_controls.joyenable.generic.type      = MTYPE_RADIOBUTTON;
@@ -3015,8 +3191,14 @@ static void Controls_MenuInit( void )
 
 		s_controls.search.generic.type			= MTYPE_FIELD;
 		s_controls.search.generic.flags			= QMF_SMALLFONT;
-		s_controls.search.generic.x				= x + 24;
-		s_controls.search.generic.y				= s_controls.searchLabel.generic.y + 5;
+		s_controls.search.generic.x				= CONTROLS_SEARCH_X;
+		s_controls.search.generic.y				= CONTROLS_SEARCH_Y;
+		s_controls.search.generic.left			= CONTROLS_SEARCH_X;
+		s_controls.search.generic.top			= CONTROLS_SEARCH_Y;
+		s_controls.search.generic.right			= CONTROLS_SEARCH_X + CONTROLS_SEARCH_WIDTH;
+		s_controls.search.generic.bottom			= CONTROLS_SEARCH_Y + CONTROLS_SEARCH_HEIGHT;
+		s_controls.search.generic.id				= ID_SEARCH;
+		s_controls.search.generic.callback		= Controls_SearchFieldEvent;
 		s_controls.search.generic.ownerdraw	= Controls_DrawSearchField;
 		s_controls.search.field.widthInChars	= 24;
 		s_controls.search.field.maxchars		= sizeof( s_controlsSearchText ) - 1;
@@ -3024,12 +3206,12 @@ static void Controls_MenuInit( void )
 	}
 
 
-	Menu_AddItem( &s_controls.menu, &s_controls.banner );
+	/* The brand/player are intentionally omitted: the frontend frame owns the
+	 * visual hierarchy, while the actual menu items keep input and focus. */
 // STONELANCE
 //	Menu_AddItem( &s_controls.menu, &s_controls.framel );
 //	Menu_AddItem( &s_controls.menu, &s_controls.framer );
 // END
-	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.movement );
 	Menu_AddItem( &s_controls.menu, &s_controls.looking );
@@ -3037,8 +3219,13 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.weapons );
 	Menu_AddItem( &s_controls.menu, &s_controls.misc );
 	Menu_AddItem( &s_controls.menu, &s_controls.developer );
-	Menu_AddItem( &s_controls.menu, &s_controls.searchLabel );
 	Menu_AddItem( &s_controls.menu, &s_controls.search );
+	/* MenuField_Init calculates a legacy text-sized hitbox. Replace it with
+	 * the complete modern search control, including its small label area. */
+	s_controls.search.generic.left	= CONTROLS_SEARCH_X;
+	s_controls.search.generic.top	= CONTROLS_SEARCH_Y - 20;
+	s_controls.search.generic.right	= CONTROLS_SEARCH_X + CONTROLS_SEARCH_WIDTH;
+	s_controls.search.generic.bottom	= CONTROLS_SEARCH_Y + CONTROLS_SEARCH_HEIGHT;
 	Menu_AddItem( &s_controls.menu, &s_controls.inputmode );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.sensitivity );
@@ -3139,6 +3326,21 @@ static void Controls_MenuInit( void )
 // END
 
 	Menu_AddItem( &s_controls.menu, &s_controls.back );
+
+	Controls_SetSectionBounds( &s_controls.movement, ID_MOVEMENT,
+		"Drive", CONTROLS_NAV_Y + 44 );
+	Controls_SetSectionBounds( &s_controls.looking, ID_LOOKING,
+		"View", CONTROLS_NAV_Y + 72 );
+	Controls_SetSectionBounds( &s_controls.combat, ID_COMBAT,
+		"Combat", CONTROLS_NAV_Y + 100 );
+	Controls_SetSectionBounds( &s_controls.weapons, ID_WEAPONS,
+		"Weapons", CONTROLS_NAV_Y + 128 );
+	Controls_SetSectionBounds( &s_controls.misc, ID_MISC,
+		"System", CONTROLS_NAV_Y + 156 );
+	Controls_SetSectionBounds( &s_controls.developer, ID_DEVELOPER,
+		"Developer", CONTROLS_NAV_Y + 184 );
+	Controls_SetActionBounds( &s_controls.back, ID_BACK, "Back",
+		CONTROLS_FRAME_X + 24 );
 
 
 	// initialize the configurable cvars

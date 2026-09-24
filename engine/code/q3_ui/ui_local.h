@@ -465,7 +465,9 @@ extern void UI_Rally_DownloadsMenu( void );
 // ui_rally_ladder_wizard.c
 extern void UI_LadderWizardMenu( void );
 extern void UI_LadderWizard_MaybeShow( void );
-extern void UI_LadderWizard_OnSuccess( const char *key );
+extern void UI_LadderWizard_MarkProfileRegistered( void );
+extern void UI_LadderWizard_MarkProfileDismissed( void );
+extern void UI_LadderWizard_OnSuccess( void );
 extern void UI_LadderWizard_OnError( const char *msg );
 
 /* Profile creation wizard */
@@ -570,7 +572,10 @@ extern void PlayerModel_Cache( void );
 // ui_playersettings.c
 //
 extern void UI_PlayerSettingsMenu( void );
+extern void UI_PlayerStatsMenu( void );
 extern void PlayerSettings_Cache( void );
+extern int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
+								char *shaderPath, int shaderPathSize );
 // STONELANCE
 extern void PlayerSettings_Update( void );
 extern void UI_PlateSelectionMenu( void );
@@ -938,6 +943,7 @@ void			trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void			trap_FS_FCloseFile( fileHandle_t f );
 int				trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
+int				trap_UI_ImportAvatar( const char *profileName, char *shaderPath, int shaderPathSize );
 qhandle_t		trap_R_RegisterModel( const char *name );
 qhandle_t		trap_R_RegisterSkin( const char *name );
 qhandle_t		trap_R_RegisterShader( const char *name );

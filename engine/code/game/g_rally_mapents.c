@@ -42,6 +42,12 @@ static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 		return;
 	}
 
+	/* Keep a short shared split history on clients for leaderboard time gaps. */
+	if ( isRallyRace() && ent->currentLap > 0 && ent->number > 0 ) {
+		trap_SendServerCommand( -1, va( "raceSplit %i %i %i %i",
+			ent->s.clientNum, ent->currentLap, ent->number, timestamp ) );
+	}
+
 	splitDuration = timestamp - client->lastCheckpointTime;
 	if ( splitDuration < 0 ) {
 		splitDuration = 0;
@@ -56,6 +62,45 @@ static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 
 	client->lapTimes[ client->lapTimeCount ] = splitDuration;
 	client->lapTimeCount++;
+}
+
+static void G_RallyCompleteCleanSegment( gentity_t *ent ) {
+	gclient_t *client;
+	int turboValue;
+	int turboRemaining;
+	qboolean awardedNos;
+
+	if ( !ent || !ent->client ) {
+		return;
+	}
+
+	client = ent->client;
+	if ( client->lastCheckpointTime > 0 && client->cleanCheckpointSegment ) {
+		turboValue = client->ps.powerups[PW_TURBO];
+		if ( turboValue > level.time ) {
+			turboRemaining = turboValue - level.time;
+		} else if ( turboValue < 0 ) {
+			turboRemaining = -turboValue;
+		} else {
+			turboRemaining = 0;
+		}
+
+		awardedNos = turboRemaining < RALLY_TURBO_MAX_MSEC;
+		turboRemaining += RALLY_TURBO_CLEAN_SPLIT_MSEC;
+		if ( turboRemaining > RALLY_TURBO_MAX_MSEC ) {
+			turboRemaining = RALLY_TURBO_MAX_MSEC;
+		}
+		if ( turboValue > level.time ) {
+			client->ps.powerups[PW_TURBO] = level.time + turboRemaining;
+		} else {
+			client->ps.powerups[PW_TURBO] = -turboRemaining;
+		}
+		if ( awardedNos ) {
+			trap_SendServerCommand( ent->s.number, "cleanSector" );
+		}
+	}
+
+	client->cleanCheckpointSegment = qtrue;
 }
 
 static void G_RallyCompleteLap( gentity_t *ent, int timestamp, qboolean allowRankProgress ) {
@@ -126,6 +171,26 @@ static void G_TriggerEliminationExplosion( gentity_t *ent ) {
         }
 }
 
+static void G_HideEliminatedVehicle( gentity_t *ent ) {
+        if ( !ent || !ent->client ) {
+                return;
+        }
+
+        ent->client->ps.eFlags |= EF_NODRAW;
+        ent->s.eFlags |= EF_NODRAW;
+        ent->r.contents = 0;
+        trap_LinkEntity( ent );
+
+        if ( ent->frontBounds ) {
+                ent->frontBounds->r.contents = 0;
+                trap_UnlinkEntity( ent->frontBounds );
+        }
+        if ( ent->rearBounds ) {
+                ent->rearBounds->r.contents = 0;
+                trap_UnlinkEntity( ent->rearBounds );
+        }
+}
+
 static void G_CompleteElimination( gentity_t *ent ) {
         if ( !ent || !ent->client || !ent->inuse ) {
                 return;
@@ -139,6 +204,7 @@ static void G_CompleteElimination( gentity_t *ent ) {
         }
 
         SetTeam( ent, "racerSpectator" );
+	G_HideEliminatedVehicle( ent );
 }
 
 static void G_SendEliminationTimelineEvent( int clientNum, int round, int remaining ) {
@@ -302,6 +368,7 @@ static void G_EliminationProcessLap( gentity_t *finisher, int completedLap ) {
 
         // Trigger a big explosion before moving the player to the scoreboard.
         G_TriggerEliminationExplosion( last );
+	G_HideEliminatedVehicle( last );
 
         // Keep the player frozen until they are moved to the scoreboard.
         VectorClear( last->client->ps.velocity );
@@ -380,6 +447,7 @@ void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
         G_RallyRecordSplitTime( other, level.time );
         other->client->lapStartTime = level.time;
         other->client->lastCheckpointTime = level.time;
+        other->client->cleanCheckpointSegment = qtrue;
         other->number = 1;
         other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
         other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
@@ -514,6 +582,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
                 return;
         }
 
+        G_RallyCompleteCleanSegment( other );
         G_RallyRecordSplitTime( other, level.time );
         G_RallyCompleteLap( other, level.time, qtrue );
         other->client->lastCheckpointTime = level.time;
@@ -574,6 +643,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	}
 
         if (self->number == other->number){
+                G_RallyCompleteCleanSegment( other );
                 G_RallyRecordSplitTime( other, level.time );
                 {
                         qboolean allowRankProgress = ( level.numberOfLaps > 0 && other->currentLap >= level.numberOfLaps );
@@ -671,6 +741,14 @@ void Think_StartFinish( gentity_t *self ){
 		self->target = 0;
 	}
 
+	// Cache the route endpoints before publishing its distance. For Sprint,
+	// the two separate entities define the open start-to-finish route.
+	if ( self->touch == Touch_Start ) {
+		level.startEnt = self;
+	} else {
+		level.finishEnt = self;
+	}
+
 	if( self->s.origin2[0] == 0.0f &&
 		self->s.origin2[1] == 0.0f &&
 		self->s.origin2[2] == 0.0f && 
@@ -708,6 +786,7 @@ void Think_StartFinish( gentity_t *self ){
         }
 
         level.trackLength = 0.0f;
+        level.sprintFinishDistance = 0.0f;
         if ( level.numCheckpoints > 0 ) {
                 vec3_t last, first, delta, center;
                 int i;
@@ -730,22 +809,32 @@ void Think_StartFinish( gentity_t *self ){
                         level.cpDist[i] = level.cpDist[i-1] + VectorLength( delta );
                         VectorCopy( center, last );
                 }
-                CP_BOUNDS_CENTER( level.checkpoints[0], center );
-                VectorSubtract( last, center, delta );
-                level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+
+                if ( g_gametype.integer == GT_SPRINT && level.startEnt && level.finishEnt ) {
+                        vec3_t startCenter, finishCenter;
+
+                        CP_BOUNDS_CENTER( level.finishEnt, finishCenter );
+                        VectorSubtract( finishCenter, last, delta );
+                        level.sprintFinishDistance = VectorLength( delta );
+
+                        CP_BOUNDS_CENTER( level.startEnt, startCenter );
+                        VectorSubtract( first, startCenter, delta );
+                        level.trackLength = VectorLength( delta ) +
+                                            level.cpDist[level.numCheckpoints-1] +
+                                            level.sprintFinishDistance;
+                } else {
+                        CP_BOUNDS_CENTER( level.checkpoints[0], center );
+                        VectorSubtract( last, center, delta );
+                        level.trackLength = level.cpDist[level.numCheckpoints-1] + VectorLength( delta );
+                }
 
 #undef CP_BOUNDS_CENTER
-        }
-
-        // Cache the finish entity for the final-segment distance display in g_active.c.
-        // rally_start (A2B) uses Touch_Start and is not a valid finish target.
-        if ( self->touch != Touch_Start ) {
-                level.finishEnt = self;
         }
 
         trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
 
         self->s.weapon = self->number;
+	G_Ghost_BuildBotRoutes();
 }
 
 void Think_Finish( gentity_t *self ){
@@ -786,6 +875,8 @@ void SP_rally_startfinish( gentity_t *ent ) {
 
 void SP_rally_start( gentity_t *ent ) {
 trap_SetBrushModel( ent, ent->model );
+
+level.startEnt = ent;
 
 level.numberOfLaps = 1;
 trap_Cvar_Set( "laplimit", "1" );
@@ -833,6 +924,7 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 		G_Printf( "Client %i touched checkpoint number %i\n", other->s.clientNum, self->number );
 
 	if (self->number == other->number){
+		G_RallyCompleteCleanSegment( other );
 		G_RallyRecordSplitTime( other, level.time );
 		other->client->lastCheckpointTime = level.time;
 		other->number++;	// FIXME: get rid of number? use s.weapon instead?

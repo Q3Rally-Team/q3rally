@@ -24,12 +24,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 #define MAX_GHOST_FILE_SIZE ( 2 * 1024 * 1024 )
+#define CG_RACE_SPLIT_HISTORY 32
+#define CG_GHOST_SAMPLE_MIN_DISTANCE 72.0f
+#define CG_GHOST_SAMPLE_MAX_INTERVAL 150
+#define CG_GHOST_SAMPLE_MIN_TURN_INTERVAL 20
+#define CG_GHOST_SAMPLE_TURN_DEGREES 8.0f
+
+typedef struct {
+	int lap;
+	int checkpoint;
+	int time;
+} cgRaceSplit_t;
+
+typedef struct {
+	cgRaceSplit_t splits[CG_RACE_SPLIT_HISTORY];
+	int next;
+	int count;
+} cgRaceSplitHistory_t;
+
+static cgRaceSplitHistory_t s_raceSplitHistory[MAX_CLIENTS];
+/* Also allow clients that joined after the raceTime command to show standings. */
+static qboolean s_raceOrderActive = qtrue;
 
 static qboolean CG_LoadGhostFile( const char *path, const char *expectedMap, int expectedTrackLength, int expectedTrackReversed, const char *expectedVehicle, int declaredBestTime,
                 ghostRecording_t *target, int *bestTimeOut, char *vehicleOut, int vehicleOutSize, char *pathOut, int pathOutSize );
 static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, const ghostRecording_t *recording );
-static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLength, int trackReversed );
-static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trackLength, int trackReversed, char *pathOut, int pathOutSize );
+static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle );
+static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle, char *pathOut, int pathOutSize );
 
 typedef struct ghostRetentionEntry_s {
         char path[MAX_QPATH];
@@ -147,7 +168,7 @@ static int CG_GhostRetentionCompare( const ghostRetentionEntry_t *a, const ghost
         return Q_stricmp( a->path, b->path );
 }
 
-static int CG_CollectGhostRetentionEntriesForVariant( const char *mapname, int trackLength, int trackReversed ) {
+static int CG_CollectGhostRetentionEntriesForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle ) {
         int fileCount;
         int offset;
         int i;
@@ -183,7 +204,7 @@ static int CG_CollectGhostRetentionEntriesForVariant( const char *mapname, int t
                 }
 
                 Com_sprintf( fullPath, sizeof( fullPath ), "ghosts/%s", filename );
-                if ( !CG_LoadGhostFile( fullPath, mapname, trackLength, trackReversed, NULL, 0, &s_ghostRetentionScratchRecording, &bestTimeMs, NULL, 0, NULL, 0 ) ) {
+                if ( !CG_LoadGhostFile( fullPath, mapname, trackLength, trackReversed, vehicle, 0, &s_ghostRetentionScratchRecording, &bestTimeMs, NULL, 0, NULL, 0 ) ) {
                         continue;
                 }
 
@@ -228,7 +249,7 @@ static void CG_DeactivateGhostFile( const char *path, int bestTimeMs ) {
         trap_FS_FCloseFile( file );
 }
 
-static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLength, int trackReversed ) {
+static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle ) {
         int entryCount;
         int i;
 
@@ -236,7 +257,7 @@ static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLe
                 return;
         }
 
-        entryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed );
+        entryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed, vehicle );
         CG_SortGhostRetentionEntries( entryCount );
 
         for ( i = 5; i < entryCount; ++i ) {
@@ -244,7 +265,7 @@ static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLe
         }
 }
 
-static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trackLength, int trackReversed, char *pathOut, int pathOutSize ) {
+static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle, char *pathOut, int pathOutSize ) {
         int entryCount;
 
         if ( !pathOut || pathOutSize <= 0 ) {
@@ -256,7 +277,7 @@ static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trac
                 return qfalse;
         }
 
-        entryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed );
+        entryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed, vehicle );
 
         if ( entryCount < 5 ) {
                 return qfalse;
@@ -324,6 +345,13 @@ static ghostRecording_t *CG_GetActiveGhostRecording( void ) {
 void CG_ResetBaseGhost( void ) {
         memset( &cg.baseGhost, 0, sizeof( cg.baseGhost ) );
         cg.baseGhostAvailable = qfalse;
+        cg.baseGhostStatusKnown = qfalse;
+        cg.baseGhostTransferPending = qfalse;
+        cg.baseGhostTransferFailed = qfalse;
+        cg.baseGhostTransferExpected = 0;
+        cg.baseGhostTransferReceived = 0;
+        cg.baseGhostTransferFirstTime = 0;
+        cg.baseGhostTransferBestTime = 0;
         cg.baseGhostBestTime = 0;
         cg.baseGhostVehicle[0] = '\0';
         cg.baseGhostPath[0] = '\0';
@@ -339,7 +367,9 @@ void CG_LoadPersonalGhost( void ) {
         int trackLength = 0;
         int trackReversed = 0;
         int bestTime = 0;
+        const char *vehicle;
         qboolean foundRecording = qfalse;
+        qboolean sameSearchKey;
 
         if ( !cg.snap || cg.snap->ps.clientNum >= MAX_CLIENTS ) {
                 return;
@@ -348,16 +378,55 @@ void CG_LoadPersonalGhost( void ) {
         if ( !cgs.clientinfo[cg.snap->ps.clientNum].infoValid ) {
                 return;
         }
-
-        CG_ResetPersonalGhost();
+        vehicle = cgs.clientinfo[cg.snap->ps.clientNum].modelName;
+        if ( !vehicle || !vehicle[0] ) {
+                return;
+        }
 
         COM_StripExtension( COM_SkipPath( cgs.mapname ), mapname, sizeof( mapname ) );
         if ( !mapname[0] ) {
                 return;
         }
 
-
         CG_GetGhostTrackVariant( &trackLength, &trackReversed );
+
+        sameSearchKey = cg.personalGhostSearchValid &&
+                !Q_stricmp( cg.personalGhostSearchMap, mapname ) &&
+                cg.personalGhostSearchTrackLength == trackLength &&
+                cg.personalGhostSearchTrackReversed == trackReversed &&
+                !Q_stricmp( cg.personalGhostSearchVehicle, vehicle );
+        if ( sameSearchKey ) {
+                if ( !cg.personalGhostSearchFound ) {
+                        return;
+                }
+                if ( cg.personalGhostAvailable && cg.ghostPlayback.valid ) {
+                        return;
+                }
+
+                if ( CG_LoadGhostFile( cg.personalGhostSearchPath, mapname, trackLength, trackReversed,
+                        cg.personalGhostSearchVehicle, cg.personalGhostSearchBestTime,
+                        &candidateRecording, &bestTime, cg.personalGhostVehicle, sizeof( cg.personalGhostVehicle ),
+                        cg.personalGhostPath, sizeof( cg.personalGhostPath ) ) ) {
+                        cg.ghostPlayback = candidateRecording;
+                        cg.personalGhostAvailable = qtrue;
+                        cg.personalGhostBestTime = bestTime;
+                        return;
+                }
+
+                CG_GhostDebugPrint( "Cached personal ghost unavailable; refreshing lookup for %s/tl%d/rev%d/vehicle=%s",
+                        mapname, trackLength, trackReversed, vehicle );
+                cg.personalGhostSearchValid = qfalse;
+        }
+
+        CG_ResetPersonalGhost();
+        cg.personalGhostSearchValid = qtrue;
+        cg.personalGhostSearchFound = qfalse;
+        cg.personalGhostSearchTrackLength = trackLength;
+        cg.personalGhostSearchTrackReversed = trackReversed;
+        cg.personalGhostSearchBestTime = 0;
+        Q_strncpyz( cg.personalGhostSearchMap, mapname, sizeof( cg.personalGhostSearchMap ) );
+        Q_strncpyz( cg.personalGhostSearchVehicle, vehicle, sizeof( cg.personalGhostSearchVehicle ) );
+        cg.personalGhostSearchPath[0] = '\0';
 
         fileCount = trap_FS_GetFileList( "ghosts", ".ghost", fileList, sizeof( fileList ) );
         offset = 0;
@@ -385,7 +454,7 @@ void CG_LoadPersonalGhost( void ) {
 
                 Com_sprintf( path, sizeof( path ), "ghosts/%s", filename );
 
-                if ( !CG_LoadGhostFile( path, mapname, trackLength, trackReversed, NULL, 0, &candidateRecording, &candidateTime, candidateVehicle, sizeof( candidateVehicle ), candidatePath, sizeof( candidatePath ) ) ) {
+                if ( !CG_LoadGhostFile( path, mapname, trackLength, trackReversed, vehicle, 0, &candidateRecording, &candidateTime, candidateVehicle, sizeof( candidateVehicle ), candidatePath, sizeof( candidatePath ) ) ) {
                         continue;
                 }
 
@@ -394,6 +463,9 @@ void CG_LoadPersonalGhost( void ) {
                         bestTime = candidateTime;
                         Q_strncpyz( cg.personalGhostVehicle, candidateVehicle, sizeof( cg.personalGhostVehicle ) );
                         Q_strncpyz( cg.personalGhostPath, candidatePath, sizeof( cg.personalGhostPath ) );
+                        Q_strncpyz( cg.personalGhostSearchVehicle, candidateVehicle, sizeof( cg.personalGhostSearchVehicle ) );
+                        Q_strncpyz( cg.personalGhostSearchPath, candidatePath, sizeof( cg.personalGhostSearchPath ) );
+                        cg.personalGhostSearchBestTime = candidateTime;
                         foundRecording = qtrue;
                 }
         }
@@ -401,6 +473,7 @@ void CG_LoadPersonalGhost( void ) {
         if ( foundRecording ) {
                 cg.personalGhostAvailable = qtrue;
                 cg.personalGhostBestTime = bestTime;
+                cg.personalGhostSearchFound = qtrue;
         }
 }
 
@@ -545,6 +618,7 @@ static qboolean CG_LoadGhostFile( const char *path, const char *expectedMap, int
                         }
 
                         frame = &target->frames[frameCount];
+                        frame->required = qfalse;
                         parseCursor = cursor;
 
                         while ( parsed < 13 ) {
@@ -664,6 +738,11 @@ nextLine:
 		return qfalse;
 	}
 
+	if ( expectedVehicle && expectedVehicle[0] && ( !vehicle[0] || Q_stricmp( vehicle, expectedVehicle ) ) ) {
+		CG_GhostDebugPrint( "%s vehicle '%s' does not match required vehicle '%s'", path, vehicle[0] ? vehicle : "<missing>", expectedVehicle );
+		return qfalse;
+	}
+
 	if ( frameCount <= 1 ) {
 		CG_Printf( "CG_Ghost: %s has no usable frames\n", path );
 		return qfalse;
@@ -692,91 +771,184 @@ nextLine:
 qboolean CG_LoadGhostFromFile( const char *path, const char *expectedMap, const char *expectedVehicle, int declaredBestTime ) {
         int trackLength = 0;
         int trackReversed = 0;
-        (void)expectedVehicle;
+        const char *vehicleFilter = expectedVehicle;
+
+        if ( vehicleFilter && !Q_stricmp( vehicleFilter, "any" ) ) {
+                vehicleFilter = NULL;
+        }
 
         CG_ResetBaseGhost();
 
         CG_GetGhostTrackVariant( &trackLength, &trackReversed );
 
-        cg.baseGhostAvailable = CG_LoadGhostFile( path, expectedMap, trackLength, trackReversed, NULL, declaredBestTime, &cg.baseGhost, &cg.baseGhostBestTime, cg.baseGhostVehicle, sizeof( cg.baseGhostVehicle ), cg.baseGhostPath, sizeof( cg.baseGhostPath ) );
+        cg.baseGhostAvailable = CG_LoadGhostFile( path, expectedMap, trackLength, trackReversed, vehicleFilter, declaredBestTime, &cg.baseGhost, &cg.baseGhostBestTime, cg.baseGhostVehicle, sizeof( cg.baseGhostVehicle ), cg.baseGhostPath, sizeof( cg.baseGhostPath ) );
+        cg.baseGhostStatusKnown = qtrue;
+        cg.baseGhostTransferFailed = !cg.baseGhostAvailable;
 
         return cg.baseGhostAvailable;
 }
 
-void CG_BeginGhostRecording( int startTime ) {
-	memset( &cg.ghostRecording, 0, sizeof( cg.ghostRecording ) );
+static void CG_CompactGhostRecording( void ) {
+	int readIndex;
+	int writeIndex = 0;
+	int ordinaryIndex = 0;
+	int originalCount = cg.ghostRecording.frameCount;
+
+	if ( originalCount < 4 ) {
+		return;
+	}
+
+	for ( readIndex = 0; readIndex < originalCount; ++readIndex ) {
+		ghostFrame_t *frame = &cg.ghostRecording.frames[readIndex];
+		qboolean keep = frame->required || readIndex == 0 || readIndex == originalCount - 1;
+
+		if ( !keep ) {
+			keep = ( ordinaryIndex % 2 == 0 ) ? qtrue : qfalse;
+			ordinaryIndex++;
+		}
+
+		if ( keep ) {
+			if ( writeIndex != readIndex ) {
+				cg.ghostRecording.frames[writeIndex] = *frame;
+			}
+			writeIndex++;
+		}
+	}
+
+	cg.ghostRecording.frameCount = writeIndex;
+	cg.ghostRecording.writeIndex = writeIndex;
 	cg.ghostRecording.startIndex = 0;
-	cg.ghostRecording.writeIndex = 0;
-	cg.ghostRecording.frameCount = 0;
-	cg.ghostRecording.duration = 0;
-	cg.ghostRecording.valid = qfalse;
-
-	cg.ghostRecordingActive = qtrue;
-	cg.ghostRecordingStartTime = startTime;
+	cg.ghostRecording.duration = cg.ghostRecording.frames[writeIndex - 1].timeOffset;
 }
 
-void CG_EndGhostRecording( int finishTime ) {
-        if ( !cg.ghostRecordingActive ) {
-                return;
-        }
+static qboolean CG_StoreGhostRecordingFrame( int timeOffset, const playerState_t *ps, qboolean required ) {
+	usercmd_t cmd;
+	ghostFrame_t *frame;
 
-        cg.ghostRecordingActive = qfalse;
-
-        if ( cg.ghostRecording.frameCount > 1 ) {
-                int duration = finishTime > cg.ghostRecordingStartTime
-                        ? finishTime - cg.ghostRecordingStartTime
-                        : cg.ghostRecording.duration;
-
-                cg.ghostRecording.duration = duration;
-                cg.ghostRecording.valid = qtrue;
-        }
-}
-
-void CG_RecordGhostFrame( void ) {
-        usercmd_t cmd;
-        ghostFrame_t *frame;
-
-	if ( !cg.ghostRecordingActive ) {
-		return;
+	if ( !ps || cg.ghostRecordingOverflowed ) {
+		return qfalse;
 	}
 
-	if ( !isRallyRace() ) {
-		return;
+	if ( cg.ghostRecording.frameCount >= MAX_GHOST_FRAMES ) {
+		CG_CompactGhostRecording();
+		if ( cg.ghostRecording.frameCount >= MAX_GHOST_FRAMES ) {
+			cg.ghostRecordingOverflowed = qtrue;
+			cg.ghostRecording.valid = qfalse;
+			CG_Printf( "CG_Ghost: recording buffer full of required anchors; refusing to save an incomplete ghost\n" );
+			return qfalse;
+		}
 	}
 
-	if ( !cg.snap || cg.snap->ps.clientNum >= MAX_CLIENTS ) {
-		return;
+	if ( cg.ghostRecording.frameCount > 0 &&
+		timeOffset < cg.ghostRecordingLastSampleTime ) {
+		timeOffset = cg.ghostRecordingLastSampleTime;
 	}
 
-	if ( cg_entities[cg.snap->ps.clientNum].finishRaceTime ) {
-		return;
-	}
-
-	if ( cg.time < cg.ghostRecordingStartTime ) {
-		return;
-	}
-
-	frame = &cg.ghostRecording.frames[cg.ghostRecording.writeIndex];
-
-	frame->timeOffset = cg.time - cg.ghostRecordingStartTime;
-	VectorCopy( cg.predictedPlayerState.origin, frame->origin );
-	VectorCopy( cg.predictedPlayerState.viewangles, frame->angles );
-	VectorCopy( cg.predictedPlayerState.velocity, frame->velocity );
-
+	frame = &cg.ghostRecording.frames[cg.ghostRecording.frameCount];
+	frame->timeOffset = timeOffset;
+	frame->required = required;
+	VectorCopy( ps->origin, frame->origin );
+	VectorCopy( ps->viewangles, frame->angles );
+	VectorCopy( ps->velocity, frame->velocity );
 	trap_GetUserCmd( trap_GetCurrentCmdNumber(), &cmd );
 	frame->buttons = cmd.buttons;
 	frame->forwardmove = cmd.forwardmove;
 	frame->upmove = cmd.upmove;
 
-	cg.ghostRecording.writeIndex = ( cg.ghostRecording.writeIndex + 1 ) % MAX_GHOST_FRAMES;
-	if ( cg.ghostRecording.frameCount < MAX_GHOST_FRAMES ) {
-		cg.ghostRecording.frameCount++;
-	} else {
-		cg.ghostRecording.startIndex = cg.ghostRecording.writeIndex;
+	cg.ghostRecording.frameCount++;
+	cg.ghostRecording.writeIndex = cg.ghostRecording.frameCount;
+	cg.ghostRecording.startIndex = 0;
+	cg.ghostRecording.duration = timeOffset;
+	cg.ghostRecording.valid = cg.ghostRecording.frameCount > 1;
+	cg.ghostRecordingHasLastSample = qtrue;
+	cg.ghostRecordingLastSampleTime = timeOffset;
+	cg.ghostRecordingLastCheckpoint = ps->stats[STAT_NEXT_CHECKPOINT];
+	VectorCopy( ps->origin, cg.ghostRecordingLastSampleOrigin );
+	VectorCopy( ps->viewangles, cg.ghostRecordingLastSampleAngles );
+	return qtrue;
+}
+
+void CG_BeginGhostRecording( int startTime ) {
+	memset( &cg.ghostRecording, 0, sizeof( cg.ghostRecording ) );
+	cg.ghostRecordingHasLastSample = qfalse;
+	cg.ghostRecordingOverflowed = qfalse;
+	cg.ghostRecordingLastSampleTime = 0;
+	cg.ghostRecordingLastCheckpoint = -1;
+	VectorClear( cg.ghostRecordingLastSampleOrigin );
+	VectorClear( cg.ghostRecordingLastSampleAngles );
+	cg.ghostRecordingActive = qtrue;
+	cg.ghostRecordingStartTime = startTime;
+
+	/* Record the grid position as the exact start anchor when a snapshot is ready. */
+	if ( cg.snap && cg.snap->ps.clientNum >= 0 && cg.snap->ps.clientNum < MAX_CLIENTS ) {
+		CG_StoreGhostRecordingFrame( 0, &cg.predictedPlayerState, qtrue );
+	}
+}
+
+void CG_EndGhostRecording( int finishTime ) {
+	int finishOffset;
+
+	if ( !cg.ghostRecordingActive ) {
+		return;
 	}
 
-        cg.ghostRecording.duration = frame->timeOffset;
-        cg.ghostRecording.valid = cg.ghostRecording.frameCount > 1;
+	finishOffset = finishTime - cg.ghostRecordingStartTime;
+	if ( finishOffset < cg.ghostRecording.duration ) {
+		finishOffset = cg.ghostRecording.duration;
+	}
+
+	if ( !cg.ghostRecordingOverflowed && cg.snap &&
+		cg.snap->ps.clientNum >= 0 && cg.snap->ps.clientNum < MAX_CLIENTS ) {
+		CG_StoreGhostRecordingFrame( finishOffset, &cg.predictedPlayerState, qtrue );
+	}
+
+	cg.ghostRecordingActive = qfalse;
+	cg.ghostRecording.valid = !cg.ghostRecordingOverflowed && cg.ghostRecording.frameCount > 1;
+	if ( cg.ghostRecording.valid ) {
+		cg.ghostRecording.duration = finishOffset;
+	}
+}
+
+void CG_RecordGhostFrame( void ) {
+	const playerState_t *ps;
+	int timeOffset;
+	int elapsed;
+	float distance;
+	float turn;
+	qboolean checkpointChanged;
+	qboolean shouldCapture;
+
+	if ( !cg.ghostRecordingActive || cg.ghostRecordingOverflowed || !isRallyRace() ) {
+		return;
+	}
+
+	if ( !cg.snap || cg.snap->ps.clientNum < 0 || cg.snap->ps.clientNum >= MAX_CLIENTS ||
+		cg_entities[cg.snap->ps.clientNum].finishRaceTime || cg.time < cg.ghostRecordingStartTime ) {
+		return;
+	}
+
+	ps = &cg.predictedPlayerState;
+	timeOffset = cg.time - cg.ghostRecordingStartTime;
+	if ( !cg.ghostRecordingHasLastSample ) {
+		CG_StoreGhostRecordingFrame( timeOffset, ps, qtrue );
+		return;
+	}
+
+	elapsed = timeOffset - cg.ghostRecordingLastSampleTime;
+	if ( elapsed <= 0 ) {
+		return;
+	}
+
+	checkpointChanged = ps->stats[STAT_NEXT_CHECKPOINT] != cg.ghostRecordingLastCheckpoint;
+	distance = Distance( ps->origin, cg.ghostRecordingLastSampleOrigin );
+	turn = fabs( AngleSubtract( ps->viewangles[YAW], cg.ghostRecordingLastSampleAngles[YAW] ) );
+	shouldCapture = checkpointChanged || distance >= CG_GHOST_SAMPLE_MIN_DISTANCE ||
+		elapsed >= CG_GHOST_SAMPLE_MAX_INTERVAL ||
+		( elapsed >= CG_GHOST_SAMPLE_MIN_TURN_INTERVAL && turn >= CG_GHOST_SAMPLE_TURN_DEGREES );
+
+	if ( shouldCapture ) {
+		CG_StoreGhostRecordingFrame( timeOffset, ps, checkpointChanged );
+	}
 }
 
 void CG_AttemptSavePersonalGhost( int finishTime ) {
@@ -850,7 +1022,7 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
                 return;
         }
 
-        retentionEntryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed );
+        retentionEntryCount = CG_CollectGhostRetentionEntriesForVariant( mapname, trackLength, trackReversed, vehicle );
         if ( retentionEntryCount >= 5 ) {
                 worstQualifiedBestTime = 0;
 
@@ -980,7 +1152,7 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
                 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday,
                 now.tm_hour, now.tm_min, now.tm_sec );
 
-        if ( CG_FindGhostRecyclePathForVariant( mapname, trackLength, trackReversed, recyclePath, sizeof( recyclePath ) ) ) {
+        if ( CG_FindGhostRecyclePathForVariant( mapname, trackLength, trackReversed, vehicle, recyclePath, sizeof( recyclePath ) ) ) {
                 Q_strncpyz( path, recyclePath, sizeof( path ) );
         } else {
                 Com_sprintf( path, sizeof( path ), "ghosts/%s_tl%d_rev%d_%s.ghost", mapname, trackLength, trackReversed, timestamp );
@@ -999,13 +1171,21 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         CG_GhostDebugPrint( "AttemptSavePersonalGhost saved (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s path=%s)",
                 bestLapTime, cg.personalGhostBestTime, mapname, trackLength, trackReversed, top5Result, top5Reason, path );
 
-        CG_CleanupPersonalGhostsForVariant( mapname, trackLength, trackReversed );
+        CG_CleanupPersonalGhostsForVariant( mapname, trackLength, trackReversed, vehicle );
 
         cg.ghostPlayback = lapRecording;
         cg.personalGhostAvailable = qtrue;
         cg.personalGhostBestTime = bestLapTime;
         Q_strncpyz( cg.personalGhostVehicle, vehicle, sizeof( cg.personalGhostVehicle ) );
         Q_strncpyz( cg.personalGhostPath, path, sizeof( cg.personalGhostPath ) );
+        cg.personalGhostSearchValid = qtrue;
+        cg.personalGhostSearchFound = qtrue;
+        cg.personalGhostSearchTrackLength = trackLength;
+        cg.personalGhostSearchTrackReversed = trackReversed;
+        cg.personalGhostSearchBestTime = bestLapTime;
+        Q_strncpyz( cg.personalGhostSearchMap, mapname, sizeof( cg.personalGhostSearchMap ) );
+        Q_strncpyz( cg.personalGhostSearchVehicle, vehicle, sizeof( cg.personalGhostSearchVehicle ) );
+        Q_strncpyz( cg.personalGhostSearchPath, path, sizeof( cg.personalGhostSearchPath ) );
 }
 
 static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, const ghostRecording_t *recording ) {
@@ -1179,10 +1359,7 @@ void CG_AddGhostEntity( void ) {
 
 
 
-static qboolean CG_PointInsideCheckpointBounds( const centity_t *checkpoint, const vec3_t point ) {
-        vec3_t mins, maxs;
-        int i;
-
+static qboolean CG_GetCheckpointBounds( const centity_t *checkpoint, vec3_t mins, vec3_t maxs ) {
         if ( !checkpoint || checkpoint->currentState.eType != ET_CHECKPOINT ) {
                 return qfalse;
         }
@@ -1194,12 +1371,74 @@ static qboolean CG_PointInsideCheckpointBounds( const centity_t *checkpoint, con
                 VectorAdd( maxs, checkpoint->currentState.origin, maxs );
         }
 
+        return qtrue;
+}
+
+static qboolean CG_PointInsideCheckpointBounds( const centity_t *checkpoint, const vec3_t point ) {
+        vec3_t mins, maxs;
+        int i;
+
+        if ( !CG_GetCheckpointBounds( checkpoint, mins, maxs ) ) {
+                return qfalse;
+        }
+
         for ( i = 0; i < 3; i++ ) {
                 if ( point[i] < mins[i] || point[i] > maxs[i] ) {
                         return qfalse;
                 }
         }
 
+        return qtrue;
+}
+
+static qboolean CG_GetCheckpointCrossingFraction( const centity_t *checkpoint,
+        const vec3_t from, const vec3_t to, float *fractionOut ) {
+        vec3_t mins, maxs;
+        float enterFraction = 0.0f;
+        float exitFraction = 1.0f;
+        int axis;
+
+        if ( !fractionOut || !CG_GetCheckpointBounds( checkpoint, mins, maxs ) ||
+                CG_PointInsideCheckpointBounds( checkpoint, from ) ) {
+                return qfalse;
+        }
+
+        for ( axis = 0; axis < 3; ++axis ) {
+                float start = from[axis];
+                float delta = to[axis] - start;
+                float first;
+                float second;
+
+                if ( fabs( delta ) < 0.001f ) {
+                        if ( start < mins[axis] || start > maxs[axis] ) {
+                                return qfalse;
+                        }
+                        continue;
+                }
+
+                first = ( mins[axis] - start ) / delta;
+                second = ( maxs[axis] - start ) / delta;
+                if ( first > second ) {
+                        float swap = first;
+                        first = second;
+                        second = swap;
+                }
+                if ( first > enterFraction ) {
+                        enterFraction = first;
+                }
+                if ( second < exitFraction ) {
+                        exitFraction = second;
+                }
+                if ( enterFraction > exitFraction ) {
+                        return qfalse;
+                }
+        }
+
+        if ( enterFraction < 0.0f || enterFraction > 1.0f || exitFraction < 0.0f ) {
+                return qfalse;
+        }
+
+        *fractionOut = enterFraction;
         return qtrue;
 }
 
@@ -1234,12 +1473,16 @@ static qboolean CG_GetGhostCheckpointSplitMs( ghostRecording_t *recording, int c
                 return qfalse;
         }
 
-        for ( i = 0; i < recording->frameCount; i++ ) {
-                int index = ( recording->startIndex + i ) % MAX_GHOST_FRAMES;
-                ghostFrame_t *frame = &recording->frames[index];
+        for ( i = 1; i < recording->frameCount; i++ ) {
+                int previousIndex = ( recording->startIndex + i - 1 ) % MAX_GHOST_FRAMES;
+                int currentIndex = ( recording->startIndex + i ) % MAX_GHOST_FRAMES;
+                ghostFrame_t *previous = &recording->frames[previousIndex];
+                ghostFrame_t *current = &recording->frames[currentIndex];
+                float crossingFraction;
 
-                if ( CG_PointInsideCheckpointBounds( checkpoint, frame->origin ) ) {
-                        *splitMsOut = frame->timeOffset;
+                if ( CG_GetCheckpointCrossingFraction( checkpoint, previous->origin, current->origin, &crossingFraction ) ) {
+                        *splitMsOut = previous->timeOffset +
+                                (int)( ( current->timeOffset - previous->timeOffset ) * crossingFraction + 0.5f );
                         return qtrue;
                 }
         }
@@ -1317,6 +1560,82 @@ void CG_UpdateGhostSplitDelta( void ) {
         cg.ghostSplitLastNextCheckpoint = nextCheckpoint;
 }
 
+void CG_RecordRaceSplit( int client, int lap, int checkpoint, int time ) {
+	cgRaceSplitHistory_t *history;
+	cgRaceSplit_t *split;
+	int i;
+	int index;
+
+	if ( client < 0 || client >= MAX_CLIENTS || lap <= 0 ||
+	     checkpoint <= 0 || time <= 0 ) {
+		return;
+	}
+
+	history = &s_raceSplitHistory[client];
+	for ( i = 0; i < history->count; i++ ) {
+		index = history->next - 1 - i;
+		while ( index < 0 ) {
+			index += CG_RACE_SPLIT_HISTORY;
+		}
+		split = &history->splits[index];
+		if ( split->lap == lap && split->checkpoint == checkpoint ) {
+			split->time = time;
+			return;
+		}
+	}
+
+	split = &history->splits[history->next];
+	split->lap = lap;
+	split->checkpoint = checkpoint;
+	split->time = time;
+	history->next = ( history->next + 1 ) % CG_RACE_SPLIT_HISTORY;
+	if ( history->count < CG_RACE_SPLIT_HISTORY ) {
+		history->count++;
+	}
+}
+
+qboolean CG_GetRaceSplitGap( int aheadClient, int behindClient, int *gapMs ) {
+	cgRaceSplitHistory_t *aheadHistory;
+	cgRaceSplitHistory_t *behindHistory;
+	cgRaceSplit_t *behindSplit;
+	int i, j;
+	int behindIndex, aheadIndex;
+
+	if ( !gapMs || aheadClient < 0 || aheadClient >= MAX_CLIENTS ||
+	     behindClient < 0 || behindClient >= MAX_CLIENTS ||
+	     aheadClient == behindClient ) {
+		return qfalse;
+	}
+
+	aheadHistory = &s_raceSplitHistory[aheadClient];
+	behindHistory = &s_raceSplitHistory[behindClient];
+	for ( i = 0; i < behindHistory->count; i++ ) {
+		behindIndex = behindHistory->next - 1 - i;
+		while ( behindIndex < 0 ) {
+			behindIndex += CG_RACE_SPLIT_HISTORY;
+		}
+		behindSplit = &behindHistory->splits[behindIndex];
+
+		for ( j = 0; j < aheadHistory->count; j++ ) {
+			aheadIndex = aheadHistory->next - 1 - j;
+			while ( aheadIndex < 0 ) {
+				aheadIndex += CG_RACE_SPLIT_HISTORY;
+			}
+			if ( aheadHistory->splits[aheadIndex].lap == behindSplit->lap &&
+			     aheadHistory->splits[aheadIndex].checkpoint == behindSplit->checkpoint ) {
+				*gapMs = behindSplit->time - aheadHistory->splits[aheadIndex].time;
+				return qtrue;
+			}
+		}
+	}
+
+	return qfalse;
+}
+
+qboolean CG_RaceOrderIsActive( void ) {
+	return s_raceOrderActive;
+}
+
 void CG_NewLapTime( int client, int lap, int time ) {
 	centity_t	*cent;
 	char		*t;
@@ -1373,11 +1692,24 @@ void CG_FinishedRace( int client, int time ) {
 		remaining = CG_GetPlayersRemaining( &lastClient );
 		CG_CheckEliminationWarning( remaining );
 	}
+
+	/* Hide the completed race's order until the next start and clear its gaps.
+	   Keep cached positions as a seed: the server only sends a new positions
+	   command when the order changes, so clearing them here can hide the next
+	   race's list indefinitely if the grid order stays the same. */
+	if ( isRallyRace() && cgs.gametype != GT_ELIMINATION &&
+	     cgs.gametype != GT_LCS && CG_GetPlayersRemaining( NULL ) == 0 ) {
+		s_raceOrderActive = qfalse;
+		memset( s_raceSplitHistory, 0, sizeof( s_raceSplitHistory ) );
+	}
 }
 
 void CG_StartRace( int time ) {
 	int			i;
 	centity_t	*player;
+
+	s_raceOrderActive = qtrue;
+	memset( s_raceSplitHistory, 0, sizeof( s_raceSplitHistory ) );
 
         for (i = 0; i < MAX_CLIENTS; i++){
                 player = &cg_entities[i];
@@ -1385,6 +1717,7 @@ void CG_StartRace( int time ) {
 
                 player->startRaceTime = time;
                 player->finishRaceTime = 0;
+                player->eliminationOut = qfalse;
                 player->startLapTime = time;
                 player->currentLap = 1;
                 player->bestLapTime = 0;

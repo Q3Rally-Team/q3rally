@@ -1078,28 +1078,33 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 //		return;
 //	}
 
-	if (uis.spinView){
-		deltaYaw = ((uis.cursorx - uis.cursorpx) / (uis.frametime / 1000.0f)) / 5.0f;
-		deltaRoll = ((uis.cursory - uis.cursorpy) / (uis.frametime / 1000.0f)) / 10.0f;
+	/* The redesigned main menu owns its preview rotation.  Keep the active
+	 * vehicle fixed between drags; other model previews retain the legacy
+	 * spinView behaviour below. */
+	if ( !uis.mainMenu ) {
+		if (uis.spinView){
+			deltaYaw = ((uis.cursorx - uis.cursorpx) / (uis.frametime / 1000.0f)) / 5.0f;
+			deltaRoll = ((uis.cursory - uis.cursorpy) / (uis.frametime / 1000.0f)) / 10.0f;
+		}
+
+		yaw += deltaYaw * (uis.frametime / 1000.0f);
+		roll += deltaRoll * (uis.frametime / 1000.0f);
+
+		yaw = AngleNormalize360(yaw);
+		roll = AngleNormalize180(roll);
+
+		if (fabs(deltaYaw) > 60.0f)
+			deltaYaw *= 0.99f;
+
+		if (deltaRoll != 0.0f)
+			deltaRoll *= 0.98f;
+
+		if (roll != 0.00)
+			roll *= 0.95f;
+
+		pi->moveAngles[YAW] = yaw;
+		pi->moveAngles[ROLL] = roll;
 	}
-
-	yaw += deltaYaw * (uis.frametime / 1000.0f);
-	roll += deltaRoll * (uis.frametime / 1000.0f);
-
-	yaw = AngleNormalize360(yaw);
-	roll = AngleNormalize180(roll);
-
-	if (fabs(deltaYaw) > 60.0f)
-		deltaYaw *= 0.99f;
-
-	if (deltaRoll != 0.0f)
-		deltaRoll *= 0.98f;
-
-	if (roll != 0.00)
-		roll *= 0.95f;
-
-	pi->moveAngles[YAW] = yaw;
-	pi->moveAngles[ROLL] = roll;
 // END
 
 	dp_realtime = time;
@@ -1453,7 +1458,10 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	//
 	// add the spinning barrel
 	//
-	if ( pi->realWeapon == WP_MACHINEGUN || pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
+	/* Some weapons (notably the Chainsaw/Gauntlet) do not have a barrel
+	 * submodel. Never submit an empty model handle to the renderer. */
+	if ( pi->barrelModel &&
+		( pi->realWeapon == WP_MACHINEGUN || pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) ) {
 		vec3_t	angles;
 
 		memset( &barrel, 0, sizeof(barrel) );

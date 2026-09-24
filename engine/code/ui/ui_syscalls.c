@@ -129,6 +129,15 @@ int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
 	return syscall( UI_FS_SEEK, f, offset, origin );
 }
 
+int trap_UI_ImportAvatar( const char *profileName, char *shaderPath, int shaderPathSize ) {
+	return syscall( UI_IMPORT_AVATAR, profileName, shaderPath, shaderPathSize );
+}
+
+int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
+								char *shaderPath, int shaderPathSize ) {
+	return syscall( UI_IMPORT_AVATAR_PATH, profileName, sourcePath, shaderPath, shaderPathSize );
+}
+
 qhandle_t trap_R_RegisterModel( const char *name ) {
 	return syscall( UI_R_REGISTERMODEL, name );
 }

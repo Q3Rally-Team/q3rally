@@ -59,25 +59,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	MUZZLE_FLASH_TIME	20
 #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
 #define	ATTACKER_HEAD_TIME	10000
-#define	REWARD_TIME			3000
-#define ACHIEVEMENT_DISPLAY_TIME        3600
 #define ACHIEVEMENT_LOCKED_TIME         650
-#define ACHIEVEMENT_FADE_TIME           400
-#define ACHIEVEMENT_MAX_QUEUE           4
-#define RANK_DISPLAY_TIME               3600
-#define RANK_FADE_TIME                  400
-#define RANK_MAX_QUEUE                  4
+#define HUD_TOAST_QUEUE_SIZE            12
+#define HUD_TOAST_DISPLAY_TIME          1100
+#define HUD_TOAST_FADE_TIME             300
+#define HUD_TOAST_ANNOUNCEMENT_TIME     2200
+#define HUD_TOAST_CLEAN_SECTOR_ITEM     -1
 #define ELIM_TIMELINE_MAX_EVENTS         5
 
 #define	PULSE_SCALE			1.5			// amount to scale up the icons when activating
 
 #define	MAX_STEP_CHANGE		32
-
-typedef struct {
-    bgAchievementCategory_t category;
-    int tierIndex;
-    int startTime;
-} cgAchievementAnnouncement_t;
 
 typedef struct {
     int clientNum;
@@ -86,13 +78,32 @@ typedef struct {
     int timestamp;
 } cgElimTimelineEvent_t;
 
+typedef enum {
+    CG_HUD_TOAST_PICKUP,
+    CG_HUD_TOAST_CLEAN_SECTOR,
+    CG_HUD_TOAST_REWARD,
+    CG_HUD_TOAST_ACHIEVEMENT,
+    CG_HUD_TOAST_RANK,
+    CG_HUD_TOAST_MESSAGE
+} cgHudToastType_t;
+
 typedef struct {
-    int rankIndex;
-    char name[PROFILE_MAX_NAME];
-    char nextName[PROFILE_MAX_NAME];
-    qboolean rankUp;
+    cgHudToastType_t type;
+    int itemNum;
     int startTime;
-} cgRankAnnouncement_t;
+    int eventTime;
+    int duration;
+    int rewardCount;
+    qhandle_t iconShader;
+    sfxHandle_t sound;
+    qboolean soundPlayed;
+    bgAchievementCategory_t achievementCategory;
+    int achievementTier;
+    int rankIndex;
+    qboolean rankUp;
+    char name[PROFILE_MAX_NAME];
+    char message[128];
+} cgHudToast_t;
 
 
 #define	MAX_VERTS_ON_POLY	10
@@ -278,6 +289,7 @@ typedef struct centity_s {
 	int				currentPosition;
 	int				currentLap;
 	int				bestLap;
+	qboolean		eliminationOut;
 
 	// variables for car graphics and physics
 	float			steeringAngle;
@@ -398,9 +410,11 @@ typedef enum {
 
 // ghost playback ---------------------------------------------------------------
 #define MAX_GHOST_FRAMES 16384
+#define MAX_BASE_GHOST_TRANSFER_FRAMES 512
 
 typedef struct ghostFrame_s {
         int                     timeOffset;
+        qboolean        required;       // recording anchor: start, checkpoint, or finish
         vec3_t          origin;
         vec3_t          angles;
         vec3_t          velocity;
@@ -470,10 +484,13 @@ typedef struct {
 	int				team;
 	int				damageDealt;
 	int				damageTaken;
+	int				integrity;
 	int				position;
-	int				kothHillKills;
-	int				kothContestTimeMs;
-	int				rankTier;
+				int				kothHillKills;
+				int				kothTeamHoldTimeMs;
+				int				kothContestTimeMs;
+				int				kothHoldTimeMs;
+				int				rankTier;
 } score_t;
 
 // each client has an associated clientInfo_t
@@ -660,7 +677,6 @@ typedef struct {
 } skulltrail_t;
 
 
-#define MAX_REWARDSTACK		15
 #define MAX_SOUNDBUFFER		25
 
 //======================================================================
@@ -809,16 +825,8 @@ typedef struct {
 	int			attackerTime;
 	int			voiceTime;
 
-	// reward medals
-	int			rewardStack;
-	int			rewardTime;
-	int			rewardCount[MAX_REWARDSTACK];
-	qhandle_t	rewardShader[MAX_REWARDSTACK];
-	qhandle_t	rewardSound[MAX_REWARDSTACK];
-        cgAchievementAnnouncement_t achievementQueue[ACHIEVEMENT_MAX_QUEUE];
-        int                     achievementQueueCount;
-        cgRankAnnouncement_t    rankQueue[RANK_MAX_QUEUE];
-        int                     rankQueueCount;
+        cgHudToast_t            hudToastQueue[HUD_TOAST_QUEUE_SIZE];
+        int                     hudToastQueueCount;
 
 	// sound buffer mainly for announcer sounds
 	int			soundBufferIn;
@@ -891,7 +899,20 @@ typedef struct {
 	ghostRecording_t	baseGhost;
 	qboolean	ghostRecordingActive;
 	int			ghostRecordingStartTime;
+	qboolean	ghostRecordingHasLastSample;
+	qboolean	ghostRecordingOverflowed;
+	int			ghostRecordingLastSampleTime;
+	int			ghostRecordingLastCheckpoint;
+	vec3_t		ghostRecordingLastSampleOrigin;
+	vec3_t		ghostRecordingLastSampleAngles;
 	qboolean	baseGhostAvailable;
+	qboolean	baseGhostStatusKnown;
+	qboolean	baseGhostTransferPending;
+	qboolean	baseGhostTransferFailed;
+	int			baseGhostTransferExpected;
+	int			baseGhostTransferReceived;
+	int			baseGhostTransferFirstTime;
+	int			baseGhostTransferBestTime;
 	int			baseGhostBestTime;
 	char			baseGhostVehicle[MAX_QPATH];
 	char			baseGhostPath[MAX_QPATH];
@@ -899,6 +920,14 @@ typedef struct {
 	int			personalGhostBestTime;
 	char			personalGhostVehicle[MAX_QPATH];
 	char			personalGhostPath[MAX_QPATH];
+	qboolean	personalGhostSearchValid;
+	qboolean	personalGhostSearchFound;
+	int			personalGhostSearchTrackLength;
+	int			personalGhostSearchTrackReversed;
+	int			personalGhostSearchBestTime;
+	char			personalGhostSearchMap[MAX_QPATH];
+	char			personalGhostSearchVehicle[MAX_QPATH];
+	char			personalGhostSearchPath[MAX_QPATH];
 	int			ghostSplitLastNextCheckpoint;
 	int			ghostSplitLastLapStartTime;
 	int			ghostSplitDeltaMs;
@@ -913,6 +942,8 @@ typedef struct {
 // stored in the clientInfo_t, itemInfo_t, weaponInfo_t, and powerupInfo_t
 typedef struct {
 	qhandle_t	charsetShader;
+	qhandle_t	frontendCharset;
+	qhandle_t	ingameCharset;
 	qhandle_t	charsetProp;
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;
@@ -2056,6 +2087,19 @@ void CG_DrawTinyDigitalStringColor( int x, int y, const char *s, vec4_t color );
 
 void CG_DrawTinyString( int x, int y, const char *s, float alpha );
 void CG_DrawTinyStringColor( int x, int y, const char *s, vec4_t color );
+int  CG_FrontendStringWidth( const char *text, int style, float scale );
+void CG_DrawFrontendString( int x, int y, const char *text, int style,
+	                        float scale, const float *color );
+int  CG_IngameStringWidth( const char *text, int style, float scale );
+void CG_DrawIngameString( int x, int y, const char *text, int style,
+	                        float scale, const float *color );
+void CG_DrawIngameSmallString( int x, int y, const char *text,
+	                             const float *color );
+void CG_QueueHudToast( int itemNum );
+void CG_QueueRewardToast( qhandle_t icon, sfxHandle_t sound, int rewardCount );
+void CG_QueueAchievementToast( bgAchievementCategory_t category, int tierIndex );
+void CG_QueueRankToast( int rankIndex, const char *name, qboolean rankUp );
+void CG_QueueMessageToast( const char *message );
 
 //
 // cg_rally_tools.c
@@ -2097,6 +2141,9 @@ qboolean CG_InsideBox( const vec3_t mins, const vec3_t maxs, const vec3_t pos );
 // cg_rally_race_tools.c
 //
 void CG_NewLapTime( int client, int lap, int time );
+void CG_RecordRaceSplit( int client, int lap, int checkpoint, int time );
+qboolean CG_GetRaceSplitGap( int aheadClient, int behindClient, int *gapMs );
+qboolean CG_RaceOrderIsActive( void );
 void CG_UpdateGhostSplitDelta( void );
 void CG_FinishedRace( int client, int time );
 void CG_StartRace( int time );

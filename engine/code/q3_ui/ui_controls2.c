@@ -31,6 +31,7 @@ CONTROLS MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"
@@ -1061,8 +1062,13 @@ Controls_ResetDefaults_Draw
 =================
 */
 static void Controls_ResetDefaults_Draw( void ) {
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This will reset all", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "controls to their default values.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	vec4_t warningColor = UI_THEME_COLOR_WARNING;
+	vec4_t mutedColor = UI_FRONTEND_COLOR_MUTED;
+
+	Frontend_DrawText( 320, 222, "This will reset all controls.",
+		UI_CENTER | UI_SMALLFONT, warningColor );
+	Frontend_DrawText( 320, 244, "Default bindings will be restored.",
+		UI_CENTER | UI_SMALLFONT, mutedColor );
 }
 
 /*

@@ -88,7 +88,9 @@ equ trap_LAN_GetServerPing					-85
 equ trap_LAN_ServerIsVisible				-86
 equ trap_LAN_CompareServers					-87
 equ trap_FS_Seek		-88
-equ trap_SetPbClStatus -89
+equ trap_UI_ImportAvatar	-89
+equ trap_UI_ImportAvatarPath	-90
+equ trap_SetPbClStatus -91
 
 equ	memset						-101
 equ	memcpy						-102

@@ -316,6 +316,7 @@ typedef struct bot_state_s
 	float ghostDecisionLateralOffset;			//smoothed temporary lateral route offset
 	int ghostRecoveryState;					//current recovery state for route rejoin
 	float ghostRecoveryStateTime;				//time recovery state was entered
+	float ghostRecoveryLastResetTime;			//time of the last emergency route-reset attempt
 	vec3_t ghostRecoveryLastOrigin;				//origin sample for stuck-distance checks
 	float ghostRecoveryLastSampleTime;			//timestamp for movement sampling
 	float ghostRecoveryThrottleIntentTime;		//last timestamp where bot requested acceleration

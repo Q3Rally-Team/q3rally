@@ -30,6 +30,7 @@ SOUND OPTIONS MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 // STONELANCE
@@ -55,6 +56,34 @@ SOUND OPTIONS MENU
 //#define ID_A3D				18
 #define ID_BACK				19
 #define ID_APPLY			20
+
+#define SOUND_FRAME_X               24
+#define SOUND_FRAME_Y               20
+#define SOUND_FRAME_WIDTH           592
+#define SOUND_FRAME_HEIGHT          440
+#define SOUND_NAV_X                 40
+#define SOUND_NAV_Y                 104
+#define SOUND_NAV_WIDTH             164
+#define SOUND_NAV_HEIGHT            292
+#define SOUND_DETAIL_X              40
+#define SOUND_DETAIL_Y              104
+#define SOUND_DETAIL_WIDTH          556
+#define SOUND_DETAIL_HEIGHT         292
+#define SOUND_ROW_HEIGHT            24
+#define SOUND_ROW_GAP               4
+#define SOUND_ROW_START_Y           148
+#define SOUND_COLUMN_X              236
+#define SOUND_COLUMN_WIDTH          344
+#define SOUND_ACTION_Y              420
+#define SOUND_ACTION_WIDTH          120
+#define SOUND_ACTION_HEIGHT         24
+
+static vec4_t soundScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t soundAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t soundTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t soundMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t soundBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t soundFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 /*
  * Keep the UI's implicit-default mapping in sync with the SDL backend:
@@ -111,6 +140,222 @@ typedef struct {
 
 static soundOptionsInfo_t	soundOptionsInfo;
 
+static void UI_SoundOptionsMenu_Event( void *ptr, int event );
+
+static const char *Sound_ListValue( menulist_s *item ) {
+	int i;
+
+	if ( !item->itemnames || item->curvalue < 0 ) {
+		return "-";
+	}
+
+	for ( i = 0; item->itemnames[i]; i++ ) {
+		if ( i == item->curvalue ) {
+			return item->itemnames[i];
+		}
+	}
+
+	return "-";
+}
+
+static void Sound_DrawNavItem( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+	qboolean active;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	active = ( item->id == ID_SOUND );
+	Frontend_DrawNavButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, active || focus, UI_LEFT );
+}
+
+static void Sound_DrawSetting( void *self ) {
+	menucommon_s *item;
+	const char *value;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	item = (menucommon_s *)self;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+	value = Sound_ListValue( (menulist_s *)item );
+
+	Vector4Copy( soundFocusColor, fillColor );
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	Vector4Copy( soundBorderColor, lineColor );
+	lineColor[3] = 0.55f;
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( soundAccentColor, lineColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		Vector4Copy( soundMutedColor, labelColor );
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( soundAccentColor, labelColor );
+		Vector4Copy( soundTextColor, valueColor );
+	} else {
+		Vector4Copy( soundMutedColor, labelColor );
+		Vector4Copy( soundTextColor, valueColor );
+	}
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->right - UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Sound_DrawSlider( void *self ) {
+	menuslider_s *slider;
+	menucommon_s *item;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	float range;
+	int trackX;
+	int trackWidth;
+	int trackY;
+	char value[32];
+
+	slider = (menuslider_s *)self;
+	item = &slider->generic;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+
+	Vector4Copy( soundFocusColor, fillColor );
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	Vector4Copy( soundBorderColor, lineColor );
+	lineColor[3] = 0.55f;
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( soundAccentColor, lineColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		Vector4Copy( soundMutedColor, labelColor );
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( soundAccentColor, labelColor );
+		Vector4Copy( soundTextColor, valueColor );
+	} else {
+		Vector4Copy( soundMutedColor, labelColor );
+		Vector4Copy( soundTextColor, valueColor );
+	}
+
+	if ( slider->maxvalue > slider->minvalue ) {
+		range = ( slider->curvalue - slider->minvalue ) /
+			( slider->maxvalue - slider->minvalue );
+	} else {
+		range = 0.0f;
+	}
+	if ( range < 0.0f ) range = 0.0f;
+	if ( range > 1.0f ) range = 1.0f;
+	Com_sprintf( value, sizeof( value ), "%d%%", (int)( slider->curvalue * 10.0f ) );
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	trackX = item->left + 144;
+	trackWidth = 80;
+	trackY = item->top + ( item->bottom - item->top ) / 2;
+	UI_FillRect( trackX, trackY, trackWidth, 2, lineColor );
+	UI_FillRect( trackX, trackY, (int)( trackWidth * range ), 2,
+		disabled ? soundMutedColor : soundAccentColor );
+	UI_FillRect( trackX + (int)( trackWidth * range ) - 2, trackY - 3,
+		4, 8, disabled ? soundMutedColor : soundAccentColor );
+	Frontend_DrawText( item->right - UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Sound_DrawAction( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, focus, UI_CENTER );
+}
+
+static void Sound_SetBounds( menucommon_s *item, int id,
+	int x, int y, int width, int height, const char *label ) {
+	item->id = id;
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void Sound_SetNavBounds( menutext_s *item, int id,
+	const char *label, int y ) {
+	item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	item->generic.callback = UI_SoundOptionsMenu_Event;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = Sound_DrawNavItem;
+	Sound_SetBounds( &item->generic, id, SOUND_NAV_X + 16, y,
+		SOUND_NAV_WIDTH - 32, SOUND_ROW_HEIGHT, NULL );
+}
+
+static void Sound_SetSettingBounds( menucommon_s *item, int id,
+	const char *label, int y ) {
+	item->ownerdraw = Sound_DrawSetting;
+	Sound_SetBounds( item, id, SOUND_COLUMN_X, y,
+		SOUND_COLUMN_WIDTH, SOUND_ROW_HEIGHT, label );
+}
+
+static void Sound_SetSliderBounds( menuslider_s *item, int id,
+	const char *label, int y ) {
+	item->generic.ownerdraw = Sound_DrawSlider;
+	Sound_SetBounds( &item->generic, id, SOUND_COLUMN_X, y,
+		SOUND_COLUMN_WIDTH, SOUND_ROW_HEIGHT, label );
+	/* Slider_Key uses x as the start of its legacy ten-step input range. */
+	item->generic.x = SOUND_COLUMN_X + 128;
+}
+
 
 /*
 =================
@@ -123,28 +368,6 @@ static void UI_SoundOptionsMenu_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_GRAPHICS:
-		UI_PopMenu();
-		UI_GraphicsOptionsMenu();
-		break;
-
-	case ID_ADVANCED_GRAPHICS:
-		UI_PopMenu();
-		UI_AdvancedGraphicsOptionsMenu();
-		break;
-
-	case ID_DISPLAY:
-		UI_PopMenu();
-		UI_DisplayOptionsMenu();
-		break;
-
-	case ID_SOUND:
-		break;
-
-	case ID_NETWORK:
-		UI_PopMenu();
-		UI_NetworkOptionsMenu();
-		break;
 /*
 	case ID_A3D:
 		if( soundOptionsInfo.a3d.curvalue ) {
@@ -246,10 +469,30 @@ SoundOptions_MenuDraw
 */
 void SoundOptions_MenuDraw (void)
 {
-//APSFIX - rework this
 	SoundOptions_UpdateMenuItems();
 
+	Frontend_DrawBackground( soundScrimColor );
+	Frontend_DrawPanel( SOUND_FRAME_X, SOUND_FRAME_Y,
+		SOUND_FRAME_WIDTH, SOUND_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( SOUND_FRAME_X + 24, SOUND_FRAME_Y + 24,
+		"Sound", UI_LEFT | UI_BIGFONT, soundTextColor );
+	Frontend_DrawText( SOUND_FRAME_X + 24, SOUND_FRAME_Y + 48,
+		"Balance music, effects and output",
+		UI_LEFT | UI_SMALLFONT, soundMutedColor );
+	Frontend_DrawStatusChip( SOUND_FRAME_X + SOUND_FRAME_WIDTH - 104,
+		SOUND_FRAME_Y + 26, "Settings", soundAccentColor, 1.0f );
+
+	Frontend_DrawCard( SOUND_DETAIL_X, SOUND_DETAIL_Y,
+		SOUND_DETAIL_WIDTH, SOUND_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( SOUND_DETAIL_X + 16, SOUND_DETAIL_Y + 22,
+		"Audio mix", UI_LEFT | UI_SMALLFONT, soundMutedColor );
+
 	Menu_Draw( &soundOptionsInfo.menu );
+
+	Frontend_DrawText( SOUND_FRAME_X + 24, SOUND_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, soundMutedColor );
 }
 
 /*
@@ -458,18 +701,12 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.apply.color				= text_color_normal;
 	soundOptionsInfo.apply.style				= UI_RIGHT | UI_SMALLFONT;
 
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.banner );
 // STONELANCE
 /*
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framel );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framer );
 */
 // END
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.graphics );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.advanced_graphics );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.display );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.sound );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.network );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.sfxvolume );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.musicvolume );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.soundSystem );
@@ -499,6 +736,29 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	else // 44100
 		soundOptionsInfo.quality_original = 2;
 	soundOptionsInfo.quality.curvalue = soundOptionsInfo.quality_original;
+
+	/* Menu_AddItem initializes the legacy widgets and overwrites their
+	 * default bounds. Apply the frontend layout after that initialization. */
+	Sound_SetSliderBounds( &soundOptionsInfo.sfxvolume,
+		ID_EFFECTSVOLUME, "Effects volume", SOUND_ROW_START_Y );
+	Sound_SetSliderBounds( &soundOptionsInfo.musicvolume,
+		ID_MUSICVOLUME, "Music volume",
+		SOUND_ROW_START_Y + SOUND_ROW_HEIGHT + SOUND_ROW_GAP );
+	Sound_SetSettingBounds( &soundOptionsInfo.soundSystem.generic,
+		ID_SOUNDSYSTEM, "Sound system",
+		SOUND_ROW_START_Y + 2 * ( SOUND_ROW_HEIGHT + SOUND_ROW_GAP ) );
+	Sound_SetSettingBounds( &soundOptionsInfo.quality.generic,
+		ID_QUALITY, "SDL quality",
+		SOUND_ROW_START_Y + 3 * ( SOUND_ROW_HEIGHT + SOUND_ROW_GAP ) );
+
+	Sound_SetBounds( &soundOptionsInfo.back.generic, ID_BACK,
+		SOUND_NAV_X, SOUND_ACTION_Y, SOUND_ACTION_WIDTH,
+		SOUND_ACTION_HEIGHT, NULL );
+	soundOptionsInfo.back.generic.ownerdraw = Sound_DrawAction;
+	Sound_SetBounds( &soundOptionsInfo.apply.generic, ID_APPLY,
+		SOUND_FRAME_X + SOUND_FRAME_WIDTH - SOUND_ACTION_WIDTH,
+		SOUND_ACTION_Y, SOUND_ACTION_WIDTH, SOUND_ACTION_HEIGHT, NULL );
+	soundOptionsInfo.apply.generic.ownerdraw = Sound_DrawAction;
 
 //	soundOptionsInfo.a3d.curvalue = (int)trap_Cvar_VariableValue( "s_usingA3D" );
 }
@@ -535,5 +795,5 @@ void UI_SoundOptionsMenu( void ) {
 
 	UI_SoundOptionsMenu_Init();
 	UI_PushMenu( &soundOptionsInfo.menu );
-	Menu_SetCursorToItem( &soundOptionsInfo.menu, &soundOptionsInfo.sound );
+	Menu_SetCursorToItem( &soundOptionsInfo.menu, &soundOptionsInfo.sfxvolume );
 }

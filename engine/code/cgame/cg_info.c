@@ -240,6 +240,7 @@ void CG_DrawInformation( void ) {
 	const char	*s;
 	const char	*info;
 	const char	*sysInfo;
+	char		legacyLoading[16];
 	int			y;
 	int			value;
 	qhandle_t	levelshot;
@@ -260,6 +261,18 @@ void CG_DrawInformation( void ) {
 	// blend a detail texture over it
 	detail = trap_R_RegisterShader( "levelShotDetail" );
 	trap_R_DrawStretchPic( 0, 0, cgs.glconfig.vidWidth, cgs.glconfig.vidHeight, 0, 0, 1, 1, detail );
+
+	/*
+	 * The UI VM owns the loading presentation now.  Keep the levelshot and
+	 * detail texture as the visual backdrop, but do not draw the legacy
+	 * loading frame, status text, icons, or map-details panel underneath it.
+	 * The old block remains available only as an explicit debug fallback.
+	 */
+	trap_Cvar_VariableStringBuffer( "ui_legacyLoadingScreen", legacyLoading,
+		sizeof( legacyLoading ) );
+	if ( !atoi( legacyLoading ) ) {
+		return;
+	}
 
 	CG_DrawLoadingFrame();
 

@@ -5,17 +5,26 @@
 #define GHOST_DIRECTORY "ghosts"
 #define MAX_GHOST_FILE_SIZE ( 2 * 1024 * 1024 )
 
-// Ghost frames are recorded at ~6ms intervals. At up to 200 km/h (~2200 units/s)
-// consecutive frames are only ~13 units apart, which causes bots to crawl.
-// Keep every Nth frame to get ~240 units between waypoints for smooth navigation.
-#define GHOST_WAYPOINT_STRIDE 10
+#define GHOST_WAYPOINT_MIN_DISTANCE 96.0f
+#define GHOST_WAYPOINT_MAX_INTERVAL 250
+#define GHOST_WAYPOINT_TURN_DEGREES 10.0f
+#define MAX_GHOST_CLIENT_SAMPLES 512
+#define GHOST_CLIENT_SAMPLES_PER_COMMAND 16
 
 static ghostRecord_t s_levelGhosts[MAX_GHOST_RECORDS_PER_MAP];
 static int s_levelGhostCount = 0;
-static ghostBotRoute_t s_botRoutePool[MAX_GHOST_BOT_ROUTE_VARIANTS];
-static int s_botRoutePoolCount = 0;
-static int s_bestBotRouteIndex = -1;
+static ghostBotRoute_t s_botRoute;
+static qboolean s_botRoutesBuilt = qfalse;
 static ghostBotRoute_t s_botRouteScratch;
+static qboolean s_clientGhostTransferPending[MAX_CLIENTS];
+static qboolean s_clientGhostTransferStarted[MAX_CLIENTS];
+static qboolean s_clientGhostTransferSent[MAX_CLIENTS];
+static int s_clientGhostTransferNext[MAX_CLIENTS];
+static int s_clientGhostTransferQueuedAt[MAX_CLIENTS];
+static int s_clientGhostSampleCount;
+static int s_clientGhostSampleIndices[MAX_GHOST_CLIENT_SAMPLES];
+static qboolean s_clientGhostSamplesBuilt;
+static byte s_clientGhostSampleSelected[MAX_GHOST_BOT_WAYPOINTS];
 
 // Shared read buffer for ghost file loading. Declared once at module level to
 // avoid a 2 MB static allocation inside each function that reads ghost files.
@@ -24,8 +33,6 @@ static ghostBotRoute_t s_botRouteScratch;
 static char s_ghostFileBuffer[MAX_GHOST_FILE_SIZE + 1];
 static int G_Ghost_Strlen( const char *text );
 static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const ghostBotRoute_t *currentBest );
-static int G_Ghost_FindRoutePoolIndexByVariant( const char *variantKey );
-static int G_Ghost_SelectRoutePoolSlot( const ghostBotRoute_t *route );
 static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs );
 static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *record );
 static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route );
@@ -150,11 +157,17 @@ static float G_Ghost_ParseFloat( const char **text ) {
 
 static void G_Ghost_Reset( void ) {
     Com_Memset( s_levelGhosts, 0, sizeof( s_levelGhosts ) );
-    Com_Memset( s_botRoutePool, 0, sizeof( s_botRoutePool ) );
+    Com_Memset( &s_botRoute, 0, sizeof( s_botRoute ) );
     Com_Memset( &s_botRouteScratch, 0, sizeof( s_botRouteScratch ) );
+    Com_Memset( s_clientGhostTransferPending, 0, sizeof( s_clientGhostTransferPending ) );
+    Com_Memset( s_clientGhostTransferStarted, 0, sizeof( s_clientGhostTransferStarted ) );
+    Com_Memset( s_clientGhostTransferSent, 0, sizeof( s_clientGhostTransferSent ) );
+    Com_Memset( s_clientGhostTransferNext, 0, sizeof( s_clientGhostTransferNext ) );
+    Com_Memset( s_clientGhostTransferQueuedAt, 0, sizeof( s_clientGhostTransferQueuedAt ) );
+    s_clientGhostSampleCount = 0;
+    s_clientGhostSamplesBuilt = qfalse;
     s_levelGhostCount = 0;
-    s_botRoutePoolCount = 0;
-    s_bestBotRouteIndex = -1;
+    s_botRoutesBuilt = qfalse;
 }
 
 static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const ghostBotRoute_t *currentBest ) {
@@ -173,39 +186,6 @@ static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const g
     }
 
     return qfalse;
-}
-
-static int G_Ghost_FindRoutePoolIndexByVariant( const char *variantKey ) {
-    int i;
-    const char *lookupKey = variantKey && variantKey[0] ? variantKey : "any";
-
-    for ( i = 0; i < s_botRoutePoolCount; ++i ) {
-        const char *candidateKey = s_botRoutePool[i].vehicleClass[0] ? s_botRoutePool[i].vehicleClass : "any";
-        if ( !Q_stricmp( lookupKey, candidateKey ) ) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-static int G_Ghost_SelectRoutePoolSlot( const ghostBotRoute_t *route ) {
-    int existingIndex;
-
-    if ( !route || !route->valid ) {
-        return -1;
-    }
-
-    existingIndex = G_Ghost_FindRoutePoolIndexByVariant( route->vehicleClass );
-    if ( existingIndex >= 0 ) {
-        return existingIndex;
-    }
-
-    if ( s_botRoutePoolCount < MAX_GHOST_BOT_ROUTE_VARIANTS ) {
-        return s_botRoutePoolCount++;
-    }
-
-    return -1;
 }
 
 static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs ) {
@@ -376,6 +356,183 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, int 
     return qtrue;
 }
 
+static void G_Ghost_CompactBotRoute( ghostBotRoute_t *route ) {
+    int readIndex;
+    int writeIndex = 0;
+    int ordinaryIndex = 0;
+    int originalCount;
+
+    if ( !route || route->numWaypoints < 4 ) {
+        return;
+    }
+
+    originalCount = route->numWaypoints;
+    for ( readIndex = 0; readIndex < originalCount; ++readIndex ) {
+        ghostWaypoint_t *waypoint = &route->waypoints[readIndex];
+        qboolean keep = waypoint->required || readIndex == 0 || readIndex == originalCount - 1;
+
+        if ( !keep ) {
+            keep = ( ordinaryIndex % 2 == 0 ) ? qtrue : qfalse;
+            ordinaryIndex++;
+        }
+
+        if ( keep ) {
+            if ( writeIndex != readIndex ) {
+                route->waypoints[writeIndex] = *waypoint;
+            }
+            writeIndex++;
+        }
+    }
+
+    route->numWaypoints = writeIndex;
+}
+
+static qboolean G_Ghost_AppendBotWaypoint( ghostBotRoute_t *route, const ghostWaypoint_t *waypoint, qboolean required ) {
+    ghostWaypoint_t candidate;
+    ghostWaypoint_t *lastWaypoint;
+    float distance;
+
+    if ( !route || !waypoint ) {
+        return qfalse;
+    }
+
+    candidate = *waypoint;
+    candidate.required = required;
+
+    if ( route->numWaypoints > 0 ) {
+        lastWaypoint = &route->waypoints[route->numWaypoints - 1];
+        distance = Distance( candidate.origin, lastWaypoint->origin );
+        if ( distance < 0.5f && candidate.timeOffset <= lastWaypoint->timeOffset ) {
+            if ( required ) {
+                lastWaypoint->required = qtrue;
+            }
+            return qtrue;
+        }
+
+        if ( candidate.timeOffset <= lastWaypoint->timeOffset ) {
+            candidate.timeOffset = lastWaypoint->timeOffset + 1;
+        }
+    }
+
+    if ( route->numWaypoints >= MAX_GHOST_BOT_WAYPOINTS ) {
+        G_Ghost_CompactBotRoute( route );
+    }
+    if ( route->numWaypoints >= MAX_GHOST_BOT_WAYPOINTS ) {
+        return qfalse;
+    }
+
+    route->waypoints[route->numWaypoints++] = candidate;
+    return qtrue;
+}
+
+static qboolean G_Ghost_PointInsideBounds( const vec3_t point, const vec3_t mins, const vec3_t maxs ) {
+    int axis;
+
+    for ( axis = 0; axis < 3; ++axis ) {
+        if ( point[axis] < mins[axis] || point[axis] > maxs[axis] ) {
+            return qfalse;
+        }
+    }
+    return qtrue;
+}
+
+static qboolean G_Ghost_CheckpointCrossingFraction( const ghostWaypoint_t *from, const ghostWaypoint_t *to,
+    const gentity_t *checkpoint, float *fractionOut ) {
+    float enterFraction = 0.0f;
+    float exitFraction = 1.0f;
+    int axis;
+
+    if ( !from || !to || !checkpoint || !checkpoint->inuse || !fractionOut ||
+        G_Ghost_PointInsideBounds( from->origin, checkpoint->r.absmin, checkpoint->r.absmax ) ) {
+        return qfalse;
+    }
+
+    for ( axis = 0; axis < 3; ++axis ) {
+        float start = from->origin[axis];
+        float delta = to->origin[axis] - start;
+        float first;
+        float second;
+
+        if ( fabs( delta ) < 0.001f ) {
+            if ( start < checkpoint->r.absmin[axis] || start > checkpoint->r.absmax[axis] ) {
+                return qfalse;
+            }
+            continue;
+        }
+
+        first = ( checkpoint->r.absmin[axis] - start ) / delta;
+        second = ( checkpoint->r.absmax[axis] - start ) / delta;
+        if ( first > second ) {
+            float swap = first;
+            first = second;
+            second = swap;
+        }
+        if ( first > enterFraction ) {
+            enterFraction = first;
+        }
+        if ( second < exitFraction ) {
+            exitFraction = second;
+        }
+        if ( enterFraction > exitFraction ) {
+            return qfalse;
+        }
+    }
+
+    if ( enterFraction < 0.0f || enterFraction > 1.0f || exitFraction < 0.0f ) {
+        return qfalse;
+    }
+
+    *fractionOut = enterFraction;
+    return qtrue;
+}
+
+static void G_Ghost_AppendCheckpointCrossings( ghostBotRoute_t *route,
+    const ghostWaypoint_t *from, const ghostWaypoint_t *to ) {
+    float previousFraction = -0.001f;
+    int crossingCount;
+
+    if ( !route || !from || !to || level.numCheckpoints <= 0 ) {
+        return;
+    }
+
+    for ( crossingCount = 0; crossingCount < level.numCheckpoints; ++crossingCount ) {
+        int checkpointIndex;
+        int nearestCheckpoint = -1;
+        float nearestFraction = 2.0f;
+
+        for ( checkpointIndex = 0; checkpointIndex < level.numCheckpoints; ++checkpointIndex ) {
+            float fraction;
+            gentity_t *checkpoint = level.checkpoints[checkpointIndex];
+
+            if ( G_Ghost_CheckpointCrossingFraction( from, to, checkpoint, &fraction ) &&
+                fraction > previousFraction + 0.0001f && fraction < nearestFraction ) {
+                nearestFraction = fraction;
+                nearestCheckpoint = checkpointIndex;
+            }
+        }
+
+        if ( nearestCheckpoint < 0 ) {
+            break;
+        }
+
+        {
+            ghostWaypoint_t checkpointWaypoint;
+            int axis;
+
+            checkpointWaypoint.required = qtrue;
+            checkpointWaypoint.timeOffset = from->timeOffset +
+                (int)( ( to->timeOffset - from->timeOffset ) * nearestFraction + 0.5f );
+            for ( axis = 0; axis < 3; ++axis ) {
+                checkpointWaypoint.origin[axis] = from->origin[axis] +
+                    nearestFraction * ( to->origin[axis] - from->origin[axis] );
+            }
+            G_Ghost_AppendBotWaypoint( route, &checkpointWaypoint, qtrue );
+        }
+
+        previousFraction = nearestFraction;
+    }
+}
+
 static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghostBotRoute_t *outRoute ) {
     fileHandle_t f;
     int length;
@@ -464,35 +621,68 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
             wp.origin[0] = G_Ghost_ParseFloat( &p );
             wp.origin[1] = G_Ghost_ParseFloat( &p );
             wp.origin[2] = G_Ghost_ParseFloat( &p );
+            wp.required = qfalse;
 
             if ( *p != ' ' && *p != '\t' && *p != '\0' ) {
                 continue;
             }
 
-            // Keep every GHOST_WAYPOINT_STRIDE-th frame; always keep the first
-            if ( frameCount == 0 || ( frameCount % GHOST_WAYPOINT_STRIDE ) == 0 ) {
-                if ( outRoute->numWaypoints < MAX_GHOST_BOT_WAYPOINTS ) {
-                    outRoute->waypoints[outRoute->numWaypoints] = wp;
-                    outRoute->numWaypoints++;
-                }
+            if ( hasLastWp && wp.timeOffset < lastWp.timeOffset ) {
+                continue;
             }
 
-            // Track the very last valid frame so we can append it as the final waypoint
+            if ( hasLastWp ) {
+                vec3_t rawDirection;
+                vec3_t selectedDirection;
+                float rawDistance;
+                float selectedDistance;
+                float turnDegrees = 0.0f;
+                int timeSinceSelected;
+
+                G_Ghost_AppendCheckpointCrossings( outRoute, &lastWp, &wp );
+
+                VectorSubtract( wp.origin, lastWp.origin, rawDirection );
+                rawDirection[2] = 0.0f;
+                rawDistance = VectorNormalize( rawDirection );
+
+                if ( rawDistance > 1.0f && outRoute->numWaypoints > 1 ) {
+                    vec3_t rawAngles;
+                    vec3_t selectedAngles;
+
+                    VectorSubtract( outRoute->waypoints[outRoute->numWaypoints - 1].origin,
+                        outRoute->waypoints[outRoute->numWaypoints - 2].origin, selectedDirection );
+                    selectedDirection[2] = 0.0f;
+                    if ( VectorNormalize( selectedDirection ) > 1.0f ) {
+                        vectoangles( rawDirection, rawAngles );
+                        vectoangles( selectedDirection, selectedAngles );
+                        turnDegrees = fabs( AngleSubtract( rawAngles[YAW], selectedAngles[YAW] ) );
+                    }
+                }
+
+                if ( outRoute->numWaypoints > 0 ) {
+                    ghostWaypoint_t *lastRouteWaypoint = &outRoute->waypoints[outRoute->numWaypoints - 1];
+
+                    selectedDistance = Distance( wp.origin, lastRouteWaypoint->origin );
+                    timeSinceSelected = wp.timeOffset - lastRouteWaypoint->timeOffset;
+                    if ( selectedDistance >= GHOST_WAYPOINT_MIN_DISTANCE ||
+                        timeSinceSelected >= GHOST_WAYPOINT_MAX_INTERVAL ||
+                        turnDegrees >= GHOST_WAYPOINT_TURN_DEGREES ) {
+                        G_Ghost_AppendBotWaypoint( outRoute, &wp, qfalse );
+                    }
+                }
+            } else {
+                G_Ghost_AppendBotWaypoint( outRoute, &wp, qtrue );
+            }
+
             lastWp = wp;
             hasLastWp = qtrue;
             frameCount++;
         }
     }
 
-    // Always append the last frame so the route ends exactly at the finish line
-    if ( hasLastWp && outRoute->numWaypoints > 0 ) {
-        ghostWaypoint_t *prev = &outRoute->waypoints[outRoute->numWaypoints - 1];
-        if ( prev->timeOffset != lastWp.timeOffset ) {
-            if ( outRoute->numWaypoints < MAX_GHOST_BOT_WAYPOINTS ) {
-                outRoute->waypoints[outRoute->numWaypoints] = lastWp;
-                outRoute->numWaypoints++;
-            }
-        }
+    // Keep the exact finish anchor even when it falls below the normal sampling thresholds.
+    if ( hasLastWp ) {
+        G_Ghost_AppendBotWaypoint( outRoute, &lastWp, qtrue );
     }
 
     if ( outRoute->numWaypoints < 2 ) {
@@ -511,10 +701,10 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
 
     G_Ghost_BuildRouteSegments( outRoute );
     outRoute->valid = qtrue;
-    G_Printf( "G_Ghost: Bot route ready from %s (%d waypoints, vehicle=%s, map=%s)\n",
+    G_Printf( "G_Ghost: Bot route candidate from %s (%d waypoints from %d samples, map=%s)\n",
         record->path,
         outRoute->numWaypoints,
-        outRoute->vehicleClass[0] ? outRoute->vehicleClass : "any",
+        frameCount,
         mapName[0] ? mapName : "unknown" );
 
     return qtrue;
@@ -540,8 +730,6 @@ static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route ) {
         float dt;
         float segSpeed = 0.0f;
         float curvature = 0.0f;
-        float turnSign = 0.0f;
-        float baseWindow;
         float straightness;
 
         VectorSubtract( route->waypoints[i + 1].origin, route->waypoints[i].origin, seg );
@@ -567,7 +755,6 @@ static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route ) {
                     segDot = -1.0f;
                 }
                 curvature = ( 1.0f - segDot );
-                turnSign = prevSeg[0] * nextSeg[1] - prevSeg[1] * nextSeg[0];
             }
         }
 
@@ -580,23 +767,12 @@ static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route ) {
         route->segments[i].recommendedSpeed = segSpeed * straightness;
         route->segments[i].curvature = curvature;
 
-        baseWindow = 60.0f + ( 1.0f - curvature ) * 45.0f;
-        if ( baseWindow < 28.0f ) {
-            baseWindow = 28.0f;
-        }
-        route->segments[i].overtakeWindowInside = baseWindow;
-        route->segments[i].overtakeWindowOutside = baseWindow * ( 0.82f + curvature * 0.12f );
-
-        route->segments[i].lines[GHOST_LINE_BASE].lateralOffset = 0.0f;
         route->segments[i].lines[GHOST_LINE_BASE].speedScale = 1.0f;
 
-        route->segments[i].lines[GHOST_LINE_RACE].lateralOffset = ( turnSign >= 0.0f ) ? -baseWindow : baseWindow;
         route->segments[i].lines[GHOST_LINE_RACE].speedScale = 1.04f - curvature * 0.16f;
 
-        route->segments[i].lines[GHOST_LINE_DEFENSIVE].lateralOffset = ( turnSign >= 0.0f ) ? baseWindow * 0.72f : -baseWindow * 0.72f;
         route->segments[i].lines[GHOST_LINE_DEFENSIVE].speedScale = 0.96f - curvature * 0.05f;
 
-        route->segments[i].lines[GHOST_LINE_SAFE].lateralOffset = 0.0f;
         route->segments[i].lines[GHOST_LINE_SAFE].speedScale = 0.88f - curvature * 0.10f;
     }
 }
@@ -749,42 +925,53 @@ void G_Ghost_InitForMap( const char *mapname ) {
         }
     } else {
         G_Printf( "G_Ghost: Loaded %d ghost record(s) for %s\n", s_levelGhostCount, mapname );
+    }
+}
 
-        for ( i = 0; i < s_levelGhostCount; ++i ) {
-            int poolSlot;
+void G_Ghost_BuildBotRoutes( void ) {
+    int i;
+    const botPathRoute_t *mapRoute;
 
-            if ( s_levelGhosts[i].ambiguousLegacy ) {
-                continue;
-            }
+    if ( s_botRoutesBuilt ) {
+        return;
+    }
+    s_botRoutesBuilt = qtrue;
 
-            if ( !G_Ghost_LoadBotRouteFromFile( &s_levelGhosts[i], &s_botRouteScratch ) ) {
-                continue;
-            }
-
-            poolSlot = G_Ghost_SelectRoutePoolSlot( &s_botRouteScratch );
-            if ( poolSlot < 0 ) {
-                G_Printf( "G_Ghost: route pool full, dropping variant %s from %s\n",
-                    s_botRouteScratch.vehicleClass[0] ? s_botRouteScratch.vehicleClass : "any",
-                    s_botRouteScratch.path );
-                continue;
-            }
-
-            if ( G_Ghost_IsRouteBetter( &s_botRouteScratch, &s_botRoutePool[poolSlot] ) ) {
-                s_botRoutePool[poolSlot] = s_botRouteScratch;
-            }
-
-            if ( s_bestBotRouteIndex < 0 || G_Ghost_IsRouteBetter( &s_botRoutePool[poolSlot], &s_botRoutePool[s_bestBotRouteIndex] ) ) {
-                s_bestBotRouteIndex = poolSlot;
-            }
+    for ( i = 0; i < s_levelGhostCount; ++i ) {
+        if ( s_levelGhosts[i].ambiguousLegacy ) {
+            continue;
         }
 
-        if ( s_bestBotRouteIndex >= 0 ) {
-            G_Printf( "G_Ghost: Bot route ready (%d route(s), fallback=%s)\n",
-                s_botRoutePoolCount,
-                s_botRoutePool[s_bestBotRouteIndex].path );
-        } else {
-            G_Printf( "G_Ghost: Bot route unavailable for map %s\n", mapname );
+        if ( !G_Ghost_LoadBotRouteFromFile( &s_levelGhosts[i], &s_botRouteScratch ) ) {
+            continue;
         }
+
+        if ( G_Ghost_IsRouteBetter( &s_botRouteScratch, &s_botRoute ) ) {
+            s_botRoute = s_botRouteScratch;
+        }
+    }
+
+    mapRoute = G_BotPath_GetRouteByIndex( 0 );
+    if ( s_botRoute.valid ) {
+        G_Printf( "G_Ghost: usable fallback loaded from %s (%d ms, track length=%d, reversed=%d)\n",
+            s_botRoute.path,
+            s_botRoute.bestTimeMs,
+            G_Ghost_GetTrackLengthVariant(),
+            G_Ghost_GetTrackReversedVariant() );
+    } else {
+        G_Printf( "G_Ghost: no usable fallback route found for track length=%d, reversed=%d\n",
+            G_Ghost_GetTrackLengthVariant(),
+            G_Ghost_GetTrackReversedVariant() );
+    }
+
+    if ( mapRoute && mapRoute->numNodes > 1 ) {
+        G_Printf( "G_RouteSelect: active=map:%s usable=yes; ghostFallback=%s\n",
+            mapRoute->name,
+            s_botRoute.valid ? s_botRoute.path : "unavailable" );
+    } else if ( s_botRoute.valid ) {
+        G_Printf( "G_RouteSelect: active=ghost:%s usable=yes; mapRoute=unavailable\n", s_botRoute.path );
+    } else {
+        G_Printf( "G_RouteSelect: active=none usable=no; mapRoute=unavailable ghostRoute=unavailable\n" );
     }
 }
 
@@ -862,30 +1049,147 @@ const ghostRecord_t *G_Ghost_FindBestRecord( void ) {
 }
 
 qboolean G_Ghost_GetBotRoute( const ghostBotRoute_t **outRoute ) {
-    return G_Ghost_GetBotRouteForVariant( NULL, outRoute );
+    if ( !outRoute || !s_botRoute.valid ) {
+        return qfalse;
+    }
+
+    *outRoute = &s_botRoute;
+    return qtrue;
 }
 
-qboolean G_Ghost_GetBotRouteForVariant( const char *variantKey, const ghostBotRoute_t **outRoute ) {
-    int poolIndex = -1;
+static void G_Ghost_BuildClientTransferSamples( void ) {
+    int i;
+    int sampleCount = 0;
 
-    if ( !outRoute ) {
-        return qfalse;
+    if ( s_clientGhostSamplesBuilt ) {
+        return;
+    }
+    s_clientGhostSamplesBuilt = qtrue;
+    s_clientGhostSampleCount = 0;
+
+    if ( !s_botRoute.valid || s_botRoute.numWaypoints < 2 ) {
+        return;
     }
 
-    if ( variantKey && variantKey[0] ) {
-        poolIndex = G_Ghost_FindRoutePoolIndexByVariant( variantKey );
+    if ( s_botRoute.numWaypoints <= MAX_GHOST_CLIENT_SAMPLES ) {
+        for ( i = 0; i < s_botRoute.numWaypoints; ++i ) {
+            s_clientGhostSampleIndices[sampleCount++] = i;
+        }
+    } else {
+        int target;
+
+        Com_Memset( s_clientGhostSampleSelected, 0, sizeof( s_clientGhostSampleSelected ) );
+        s_clientGhostSampleSelected[0] = 1;
+        s_clientGhostSampleSelected[s_botRoute.numWaypoints - 1] = 1;
+        sampleCount = 2;
+
+        /* Keep checkpoint crossings and the route endpoints whenever possible. */
+        for ( i = 1; i < s_botRoute.numWaypoints - 1 && sampleCount < MAX_GHOST_CLIENT_SAMPLES; ++i ) {
+            if ( s_botRoute.waypoints[i].required ) {
+                s_clientGhostSampleSelected[i] = 1;
+                sampleCount++;
+            }
+        }
+
+        /* Fill remaining slots with evenly spaced points for smooth playback. */
+        for ( target = 0; target < MAX_GHOST_CLIENT_SAMPLES && sampleCount < MAX_GHOST_CLIENT_SAMPLES; ++target ) {
+            int index = target * ( s_botRoute.numWaypoints - 1 ) / ( MAX_GHOST_CLIENT_SAMPLES - 1 );
+            if ( !s_clientGhostSampleSelected[index] ) {
+                s_clientGhostSampleSelected[index] = 1;
+                sampleCount++;
+            }
+        }
+        for ( i = 0; i < s_botRoute.numWaypoints && sampleCount < MAX_GHOST_CLIENT_SAMPLES; ++i ) {
+            if ( !s_clientGhostSampleSelected[i] ) {
+                s_clientGhostSampleSelected[i] = 1;
+                sampleCount++;
+            }
+        }
+        sampleCount = 0;
+        for ( i = 0; i < s_botRoute.numWaypoints; ++i ) {
+            if ( s_clientGhostSampleSelected[i] ) {
+                s_clientGhostSampleIndices[sampleCount++] = i;
+            }
+        }
     }
 
-    if ( poolIndex < 0 ) {
-        poolIndex = s_bestBotRouteIndex;
-    }
+    s_clientGhostSampleCount = sampleCount;
+}
 
-    if ( poolIndex < 0 || poolIndex >= s_botRoutePoolCount || !s_botRoutePool[poolIndex].valid ) {
-        return qfalse;
-    }
+void G_Ghost_ProcessClientTransfers( void ) {
+    int clientNum;
 
-    *outRoute = &s_botRoutePool[poolIndex];
-    return qtrue;
+    for ( clientNum = 0; clientNum < level.maxclients; ++clientNum ) {
+        gclient_t *client = &level.clients[clientNum];
+
+        if ( client->pers.connected != CON_CONNECTED ) {
+            s_clientGhostTransferPending[clientNum] = qfalse;
+            s_clientGhostTransferStarted[clientNum] = qfalse;
+            s_clientGhostTransferSent[clientNum] = qfalse;
+            s_clientGhostTransferNext[clientNum] = 0;
+            continue;
+        }
+        if ( !s_clientGhostTransferPending[clientNum] ) {
+            continue;
+        }
+        if ( !s_botRoutesBuilt ) {
+            if ( level.time - s_clientGhostTransferQueuedAt[clientNum] > 5000 ) {
+                trap_SendServerCommand( clientNum, "ghostmeta none 0" );
+                s_clientGhostTransferPending[clientNum] = qfalse;
+                s_clientGhostTransferSent[clientNum] = qtrue;
+            }
+            continue;
+        }
+        if ( !s_clientGhostTransferStarted[clientNum] ) {
+            G_Ghost_BuildClientTransferSamples();
+            if ( !s_botRoute.valid || s_clientGhostSampleCount < 2 ) {
+                trap_SendServerCommand( clientNum, "ghostmeta none 0" );
+                s_clientGhostTransferPending[clientNum] = qfalse;
+                s_clientGhostTransferSent[clientNum] = qtrue;
+                continue;
+            }
+
+            trap_SendServerCommand( clientNum, va( "ghostmeta base %d %d", s_botRoute.bestTimeMs, s_clientGhostSampleCount ) );
+            s_clientGhostTransferStarted[clientNum] = qtrue;
+            continue;
+        }
+
+        if ( s_clientGhostTransferNext[clientNum] < s_clientGhostSampleCount ) {
+            char command[MAX_STRING_CHARS];
+            int first = s_clientGhostTransferNext[clientNum];
+            int count = s_clientGhostSampleCount - first;
+            int offset;
+            int i;
+
+            if ( count > GHOST_CLIENT_SAMPLES_PER_COMMAND ) {
+                count = GHOST_CLIENT_SAMPLES_PER_COMMAND;
+            }
+            offset = Com_sprintf( command, sizeof( command ), "ghostdata %d %d", first, count );
+            for ( i = 0; i < count && offset > 0 && offset < (int)sizeof( command ); ++i ) {
+                const ghostWaypoint_t *waypoint = &s_botRoute.waypoints[s_clientGhostSampleIndices[first + i]];
+                int written = Com_sprintf( command + offset, sizeof( command ) - offset,
+                    " %d %.1f %.1f %.1f", waypoint->timeOffset,
+                    waypoint->origin[0], waypoint->origin[1], waypoint->origin[2] );
+                if ( written <= 0 || written >= (int)( sizeof( command ) - offset ) ) {
+                    break;
+                }
+                offset += written;
+            }
+            if ( i != count ) {
+                s_clientGhostTransferPending[clientNum] = qfalse;
+                trap_SendServerCommand( clientNum, "ghostmeta none 0" );
+                s_clientGhostTransferSent[clientNum] = qtrue;
+                continue;
+            }
+            trap_SendServerCommand( clientNum, command );
+            s_clientGhostTransferNext[clientNum] += count;
+            continue;
+        }
+
+        trap_SendServerCommand( clientNum, "ghostdone" );
+        s_clientGhostTransferPending[clientNum] = qfalse;
+        s_clientGhostTransferSent[clientNum] = qtrue;
+    }
 }
 
 #ifdef UNIT_TEST
@@ -902,17 +1206,19 @@ const ghostRecord_t *G_Ghost_Test_GetLevelGhost( int index ) {
 #endif
 
 void G_Ghost_AnnounceForClient( gentity_t *ent ) {
-    const ghostRecord_t *record;
+    int clientNum;
 
     if ( !ent || !ent->client || ent->client->pers.connected != CON_CONNECTED ) {
         return;
     }
 
-    record = G_Ghost_FindBestRecord();
-
-    if ( record ) {
-        trap_SendServerCommand( ent - g_entities, va( "ghostmeta any %d %s", record->bestTimeMs, record->path ) );
-    } else {
-        trap_SendServerCommand( ent - g_entities, "ghostmeta none 0" );
+    clientNum = ent - g_entities;
+    if ( clientNum < 0 || clientNum >= MAX_CLIENTS || s_clientGhostTransferSent[clientNum] || s_clientGhostTransferPending[clientNum] ) {
+        return;
     }
+
+    s_clientGhostTransferPending[clientNum] = qtrue;
+    s_clientGhostTransferStarted[clientNum] = qfalse;
+    s_clientGhostTransferNext[clientNum] = 0;
+    s_clientGhostTransferQueuedAt[clientNum] = level.time;
 }

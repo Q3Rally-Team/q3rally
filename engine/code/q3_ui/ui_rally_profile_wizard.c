@@ -23,6 +23,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 
 #include "ui_local.h"
 #include "ui_rally_theme.h"
+#include "ui_rally_frontend.h"
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -30,21 +31,27 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_H            480
 #define PW_CX           ( PW_W / 2 )
 
-#define PW_PANEL_W      480
-#define PW_PANEL_H      370
-#define PW_PANEL_X      ( ( PW_W - PW_PANEL_W ) / 2 )
-#define PW_PANEL_Y      ( ( PW_H - PW_PANEL_H ) / 2 )
+#define PW_PANEL_W      496
+#define PW_PANEL_H      270
+#define PW_PANEL_X      72
+#define PW_PANEL_Y      112
+
+#define PW_FRAME_X      48
+#define PW_FRAME_Y      28
+#define PW_FRAME_W      544
+#define PW_FRAME_H      420
 
 #define PW_PAD          28
 #define PW_CONTENT_X    ( PW_PANEL_X + PW_PAD )
 #define PW_CONTENT_W    ( PW_PANEL_W - PW_PAD * 2 )
-#define PW_TITLE_Y      ( PW_PANEL_Y + 20 )
-#define PW_BODY_Y       ( PW_PANEL_Y + 62 )    // extra line under heading
+#define PW_TITLE_Y      54
+#define PW_BODY_Y       ( PW_PANEL_Y + 48 )
 
-#define PW_BTN_Y        ( PW_PANEL_Y + PW_PANEL_H - 40 )
-#define PW_BTN_NEXT_X   ( PW_PANEL_X + PW_PANEL_W - PW_PAD )
-#define PW_BTN_BACK_X   ( PW_PANEL_X + PW_PAD )
-#define PW_BTN_SKIP_X   ( PW_CX )
+#define PW_BTN_Y        414
+#define PW_BTN_WIDTH    104
+#define PW_BTN_NEXT_X   472
+#define PW_BTN_BACK_X   64
+#define PW_BTN_SKIP_X   268
 
 // Page 2 field layout — starts lower to give heading room
 #define PW_P2_LABEL_X   ( PW_PANEL_X + PW_PAD )
@@ -61,9 +68,11 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_AVATAR_X     ( PW_PANEL_X + PW_PANEL_W - PW_PAD - PW_AVATAR_SIZE )
 #define PW_AVATAR_Y     ( PW_P2_ROW_5 - 4 )
 
-#define PW_DOT_Y        ( PW_PANEL_Y + PW_PANEL_H + 10 )
+#define PW_DOT_Y        394
 #define PW_DOT_SPACING  14
 #define PW_PAGES        3
+#define PW_STATUS_Y     ( PW_DOT_Y - 22 )
+#define PW_HINT_Y       ( PW_FRAME_Y + PW_FRAME_H + 8 )
 
 // ── IDs ───────────────────────────────────────────────────────────────────────
 
@@ -96,18 +105,16 @@ typedef enum {
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
-static vec4_t pwBg       = UI_THEME_COLOR_PANEL_BG;
-static vec4_t pwDim      = UI_THEME_COLOR_PANEL_DIM;
-static vec4_t pwBorder   = UI_THEME_COLOR_PANEL_BORDER;
-static vec4_t pwTitle    = UI_THEME_COLOR_TEXT_TITLE;
-static vec4_t pwText     = UI_THEME_COLOR_TEXT_BODY;
-static vec4_t pwMuted    = UI_THEME_COLOR_TEXT_MUTED;
-static vec4_t pwAccent   = UI_THEME_COLOR_ACCENT;
-static vec4_t pwSuccess  = UI_THEME_COLOR_SUCCESS;
-static vec4_t pwError    = UI_THEME_COLOR_ERROR;
-static vec4_t pwDotOn    = UI_THEME_COLOR_ACCENT;
-static vec4_t pwDotOff   = UI_THEME_COLOR_TEXT_MUTED;
-static vec4_t pwAvatarBg = UI_THEME_COLOR_PANEL_SUBBG;
+static vec4_t pwScrim    = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t pwText     = UI_FRONTEND_COLOR_TEXT;
+static vec4_t pwMuted    = UI_FRONTEND_COLOR_MUTED;
+static vec4_t pwAccent   = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t pwStatus   = UI_FRONTEND_COLOR_STATUS;
+static vec4_t pwSuccess  = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t pwError    = UI_FRONTEND_COLOR_STATUS;
+static vec4_t pwDotOn    = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t pwDotOff   = UI_FRONTEND_COLOR_MUTED;
+static vec4_t pwAvatarBg = UI_FRONTEND_COLOR_PANEL_ALT;
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
 
@@ -243,7 +250,11 @@ static sfxHandle_t PW_MenuKey( int key );
 static void PW_SetPage( pwPage_t page );
 static void PW_SetPageItems( pwPage_t page );
 static void PW_UpdateButtons( void );
+static void PW_SetChoiceBounds( void );
 static void PW_LoadAvatarShader( int idx );
+static void PW_DrawField( void *self );
+static void PW_DrawChoice( void *self );
+static void PW_DrawButton( void *self );
 
 // ── Item visibility control ───────────────────────────────────────────────────
 //
@@ -444,7 +455,6 @@ static void PW_StartLadderRegister( void ) {
      * ownerEmail uses the in-game placeholder recognised by register.php
      * (Accept: application/json path auto-approves offline keys).          */
     PW_BuildOfflineServerName( s_pw.profileName, s_pw.offlineServerName, sizeof( s_pw.offlineServerName ) );
-    trap_Cvar_Set( "sv_ladderEnabled", "1" );
     trap_Cvar_Set( "sv_ladderUrl", "https://ladder.q3rally.com/index.php/matches" );
     trap_Cvar_Set( "sv_hostname", s_pw.offlineServerName );
 
@@ -559,9 +569,119 @@ static void PW_UpdateButtons( void ) {
     UI_ReflowPTextBounds( &s_pw.btnNext );
     UI_ReflowPTextBounds( &s_pw.btnBack );
     UI_ReflowPTextBounds( &s_pw.btnSkip );
+
+    /* The frontend buttons use generous, stable mouse hitboxes rather than
+     * the narrow legacy proportional-text bounds. */
+    s_pw.btnBack.generic.left = PW_BTN_BACK_X;
+    s_pw.btnBack.generic.top = PW_BTN_Y;
+    s_pw.btnBack.generic.right = PW_BTN_BACK_X + PW_BTN_WIDTH;
+    s_pw.btnBack.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_pw.btnSkip.generic.left = PW_BTN_SKIP_X;
+    s_pw.btnSkip.generic.top = PW_BTN_Y;
+    s_pw.btnSkip.generic.right = PW_BTN_SKIP_X + PW_BTN_WIDTH;
+    s_pw.btnSkip.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_pw.btnNext.generic.left = PW_BTN_NEXT_X;
+    s_pw.btnNext.generic.top = PW_BTN_Y;
+    s_pw.btnNext.generic.right = PW_BTN_NEXT_X + PW_BTN_WIDTH;
+    s_pw.btnNext.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+}
+
+/* The choice rows are custom drawn across the full content width.  The
+ * default SpinControl_Init bounds only cover the old value text, so mouse
+ * clicks on the visible label/underline could miss the control entirely. */
+static void PW_SetChoiceBounds( void ) {
+    menulist_s *choices[] = {
+        &s_pw.genderSpin,
+        &s_pw.bDaySpin,
+        &s_pw.bMonthSpin,
+        &s_pw.bYearSpin,
+        &s_pw.avatarSpin,
+        &s_pw.countrySpin
+    };
+    int i;
+    int right = PW_PANEL_X + PW_PANEL_W - PW_PAD;
+
+    for ( i = 0; i < ARRAY_LEN( choices ); ++i ) {
+        choices[i]->generic.left   = PW_P2_LABEL_X;
+        choices[i]->generic.right  = right;
+        choices[i]->generic.top    = choices[i]->generic.y;
+        choices[i]->generic.bottom = choices[i]->generic.y + PW_P2_ROW_H - 1;
+    }
 }
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
+
+static qboolean PW_ItemHasFocus( const menucommon_s *item ) {
+    return ( item && item->parent &&
+             Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+}
+
+static void PW_DrawField( void *self ) {
+    menufield_s *field = (menufield_s *)self;
+    qboolean focus = PW_ItemHasFocus( &field->generic );
+    int valueX = field->generic.x + 116;
+    int right = PW_PANEL_X + PW_PANEL_W - PW_PAD;
+    vec4_t labelColor;
+    vec4_t valueColor;
+
+    Vector4Copy( focus ? pwAccent : pwMuted, labelColor );
+    Vector4Copy( pwText, valueColor );
+    Frontend_DrawText( field->generic.x, field->generic.y,
+                       field->generic.name ? field->generic.name : "Name",
+                       UI_LEFT | UI_SMALLFONT, labelColor );
+    Frontend_DrawText( valueX, field->generic.y, field->field.buffer,
+                       UI_LEFT | UI_SMALLFONT, valueColor );
+    UI_FillRect( valueX, field->generic.y + 18, right - valueX, 2,
+                 focus ? pwAccent : pwMuted );
+    if ( focus ) {
+        UI_DrawChar( valueX + field->field.cursor * SMALLCHAR_WIDTH,
+                     field->generic.y, trap_Key_GetOverstrikeMode() ? 11 : 10,
+                     UI_BLINK | UI_SMALLFONT, pwAccent );
+    }
+}
+
+static void PW_DrawChoice( void *self ) {
+    menulist_s *choice = (menulist_s *)self;
+    qboolean focus = PW_ItemHasFocus( &choice->generic );
+    const char *value = "Not specified";
+    char buffer[96];
+    int right = PW_PANEL_X + PW_PANEL_W - PW_PAD;
+    vec4_t labelColor;
+    vec4_t valueColor;
+
+    if ( choice->itemnames && choice->curvalue >= 0 &&
+         choice->curvalue < choice->numitems &&
+         choice->itemnames[choice->curvalue] ) {
+        value = choice->itemnames[choice->curvalue];
+    }
+    Com_sprintf( buffer, sizeof( buffer ), "< %s >", value );
+    if ( choice == &s_pw.avatarSpin ) {
+        right = PW_AVATAR_X - PW_PAD / 2;
+    }
+
+    Vector4Copy( focus ? pwAccent : pwMuted, labelColor );
+    Vector4Copy( pwText, valueColor );
+    Frontend_DrawText( PW_P2_LABEL_X, choice->generic.y,
+                       choice->generic.name ? choice->generic.name : "Option",
+                       UI_LEFT | UI_SMALLFONT, labelColor );
+    Frontend_DrawText( right, choice->generic.y, buffer,
+                       UI_RIGHT | UI_SMALLFONT, valueColor );
+    UI_FillRect( PW_P2_LABEL_X, choice->generic.y + 18,
+                 right - PW_P2_LABEL_X, 2, focus ? pwAccent : pwMuted );
+}
+
+static void PW_DrawButton( void *self ) {
+    menutext_s *button = (menutext_s *)self;
+    qboolean focus = PW_ItemHasFocus( &button->generic );
+    qboolean active = !( button->generic.flags & QMF_INACTIVE );
+    int align = ( button == &s_pw.btnSkip ) ? UI_CENTER : UI_LEFT;
+
+    Frontend_DrawNavButton( button->generic.left, button->generic.top,
+                            button->generic.right - button->generic.left,
+                            button->generic.bottom - button->generic.top,
+                            button->string ? button->string : "", 1.0f,
+                            active && focus, align );
+}
 
 static void PW_DrawDots( void ) {
     int i;
@@ -576,52 +696,72 @@ static void PW_DrawDots( void ) {
 }
 
 static void PW_DrawPage1( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "CREATE YOUR PROFILE", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
-    UI_DrawString( PW_CX, PW_BODY_Y,      "Choose a display name for your profile.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 16, "Letters, numbers, _ - . only.",           UI_CENTER | UI_THEME_STYLE_HINT_FONT, pwMuted );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 46, "Name:", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Create profile",
+                       UI_LEFT | UI_BIGFONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
+                       "Choose a display name for your profile",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
+    Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y,
+                       "Letters, numbers, _ - . only.",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
     if ( s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 18, s_pw.statusLine, UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwError );
+        Frontend_DrawText( PW_CX, PW_STATUS_Y, s_pw.statusLine,
+                           UI_CENTER | UI_SMALLFONT, pwError );
     }
 }
 
 static void PW_DrawPage2( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "PERSONALISE", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
-    UI_DrawString( PW_CX, PW_BODY_Y, "All fields are optional. You can change them later in Settings.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_1 + 2, "Gender:",    UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_2 + 2, "Birth day:", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_3 + 2, "Month:",     UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_4 + 2, "Year:",      UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_5 + 2, "Avatar:",    UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_P2_LABEL_X, PW_P2_ROW_6 + 2, "Country:",   UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Personalise",
+                       UI_LEFT | UI_BIGFONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
+                       "Optional details for your driver profile",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
     UI_FillRect( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, pwAvatarBg );
     if ( s_pw.avatarShader ) {
         UI_DrawHandlePic( PW_AVATAR_X, PW_AVATAR_Y, PW_AVATAR_SIZE, PW_AVATAR_SIZE, s_pw.avatarShader );
     } else {
-        UI_DrawString( PW_AVATAR_X + PW_AVATAR_SIZE / 2, PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4, "?", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
+        Frontend_DrawText( PW_AVATAR_X + PW_AVATAR_SIZE / 2,
+                           PW_AVATAR_Y + PW_AVATAR_SIZE / 2 - 4, "?",
+                           UI_CENTER | UI_SMALLFONT, pwMuted );
     }
 }
 
 static void PW_DrawPage3( void ) {
-    UI_DrawProportionalString( PW_CX, PW_TITLE_Y, "Q3RALLY LADDER", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Ladder tracking",
+                       UI_LEFT | UI_BIGFONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
+                       "Keep your offline results connected to your profile",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
 
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
-        UI_DrawString( PW_CX, PW_BODY_Y,      "You're on the ladder!",                           UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwSuccess );
-        UI_DrawString( PW_CX, PW_BODY_Y + 18, "Profile and offline tracking are both active.",   UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
-        UI_DrawString( PW_CX, PW_BODY_Y + 34, "Stats update automatically after each match.",    UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
+        Frontend_DrawText( PW_CX, PW_BODY_Y + 12, "You're on the ladder!",
+                           UI_CENTER | UI_SMALLFONT, pwSuccess );
+        Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
+                           "Profile and offline tracking are both active.",
+                           UI_CENTER | UI_SMALLFONT, pwText );
+        Frontend_DrawText( PW_CX, PW_BODY_Y + 52,
+                           "Stats update automatically after each match.",
+                           UI_CENTER | UI_SMALLFONT, pwMuted );
         return;
     }
 
-    UI_DrawString( PW_CX, PW_BODY_Y,      "Track your race results on the Q3Rally online ladder.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_CX, PW_BODY_Y + 18, "Covers both online and offline matches. No password needed.", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwMuted );
-    UI_DrawString( PW_CX, PW_BODY_Y + 36, "ladder.q3rally.com", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwAccent );
+    Frontend_DrawText( PW_CX, PW_BODY_Y + 12,
+                       "Track your race results on the Q3Rally ladder.",
+                       UI_CENTER | UI_SMALLFONT, pwText );
+    Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
+                       "Online and offline matches. No password needed.",
+                       UI_CENTER | UI_SMALLFONT, pwMuted );
+    Frontend_DrawText( PW_CX, PW_BODY_Y + 54, "ladder.q3rally.com",
+                       UI_CENTER | UI_SMALLFONT, pwAccent );
 
     if ( s_pw.submitting ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22, "Registering...", UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwAccent );
+        Frontend_DrawText( PW_CX, PW_STATUS_Y, "Registering...",
+                           UI_CENTER | UI_SMALLFONT, pwAccent );
     } else if ( ( s_pw.ladderResult     == PW_RESULT_ERROR ||
                   s_pw.offlineKeyResult == PW_RESULT_ERROR ) && s_pw.statusLine[0] ) {
-        UI_DrawString( PW_CX, PW_BTN_Y - 22, s_pw.statusLine, UI_CENTER | UI_THEME_STYLE_BODY_FONT, pwError );
+        Frontend_DrawText( PW_CX, PW_STATUS_Y, s_pw.statusLine,
+                           UI_CENTER | UI_SMALLFONT, pwError );
     }
 }
 
@@ -638,19 +778,37 @@ static void PW_DrawPageDone( void ) {
     }
 
     /* Text — left column */
-    UI_DrawProportionalString( PW_CX - 60, PW_TITLE_Y, "YOU'RE ALL SET !!!", UI_CENTER | UI_THEME_STYLE_TITLE_FONT, pwTitle );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y,      va( "Welcome, %s!", s_pw.profileName ), UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwAccent );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 28, "Your profile is ready.",               UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 58, "Start here:",                          UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwText );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 76, "PLAY OFFLINE for a first Solo Race",            UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwAccent );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 94, "CONFIG > CONTROLS for Key Bindings",     UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwMuted );
-    UI_DrawString( PW_CONTENT_X, PW_BODY_Y + 118, "Ladder tracking starts after admin key activation.", UI_LEFT | UI_THEME_STYLE_BODY_FONT, pwMuted );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Profile ready",
+                       UI_LEFT | UI_BIGFONT, pwText );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
+                       "Your driver identity is ready to race",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
+    Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y,
+                       va( "Welcome, %s!", s_pw.profileName ),
+                       UI_LEFT | UI_SMALLFONT, pwAccent );
+    Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y + 28,
+                       "Start with PLAY OFFLINE for a first solo race.",
+                       UI_LEFT | UI_SMALLFONT, pwText );
+    Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y + 52,
+                       "Use CONFIG > CONTROLS to set your key bindings.",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
+    Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y + 76,
+                       "You can change profile details later in Settings.",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
 }
 
 static void PW_Draw( void ) {
-    UI_FillRect( 0, 0, PW_W, PW_H, pwDim );
-    UI_FillRect( PW_PANEL_X, PW_PANEL_Y, PW_PANEL_W, PW_PANEL_H, pwBg );
-    UI_DrawRect( PW_PANEL_X, PW_PANEL_Y, PW_PANEL_W, PW_PANEL_H, pwBorder );
+    const char *statusLabel;
+
+    Frontend_DrawBackground( pwScrim );
+    Frontend_DrawPanel( PW_FRAME_X, PW_FRAME_Y, PW_FRAME_W, PW_FRAME_H,
+                        uis.tFrac, UI_FRONTEND_STYLE_FRAME );
+    statusLabel = ( s_pw.page == PW_PAGE_LADDER ) ? "Ladder" : "Profile";
+    Frontend_DrawStatusChip( PW_FRAME_X + PW_FRAME_W - 112,
+                             PW_FRAME_Y + 26, statusLabel, pwStatus,
+                             uis.tFrac );
+    Frontend_DrawCard( PW_PANEL_X, PW_PANEL_Y, PW_PANEL_W, PW_PANEL_H,
+                       uis.tFrac, qfalse );
     switch ( s_pw.page ) {
     case PW_PAGE_NAME:    PW_DrawPage1();    break;
     case PW_PAGE_DETAILS: PW_DrawPage2();    break;
@@ -659,6 +817,9 @@ static void PW_Draw( void ) {
     }
     PW_DrawDots();
     Menu_Draw( &s_pw.menu );
+    Frontend_DrawText( PW_FRAME_X + 24, PW_HINT_Y,
+                       "Enter select    Tab switch    Esc back",
+                       UI_LEFT | UI_SMALLFONT, pwMuted );
 }
 
 // ── Event handler ─────────────────────────────────────────────────────────────
@@ -757,6 +918,8 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.nameField.generic.type       = MTYPE_FIELD;
     s_pw.nameField.generic.id         = ID_PW_NAME;
+    s_pw.nameField.generic.name       = "Name";
+    s_pw.nameField.generic.ownerdraw  = PW_DrawField;
     s_pw.nameField.generic.x          = fieldX;
     s_pw.nameField.generic.y          = PW_BODY_Y + 62;
     s_pw.nameField.field.widthInChars = fieldW;
@@ -766,7 +929,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.genderSpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.genderSpin.generic.id       = ID_PW_GENDER;
+    s_pw.genderSpin.generic.name     = "Gender";
     s_pw.genderSpin.generic.callback = PW_MenuEvent;
+    s_pw.genderSpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.genderSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.genderSpin.generic.y        = PW_P2_ROW_1;
     s_pw.genderSpin.itemnames        = (const char **)s_pwGenderItems;
@@ -774,7 +939,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.bDaySpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.bDaySpin.generic.id       = ID_PW_BDAY;
+    s_pw.bDaySpin.generic.name     = "Day";
     s_pw.bDaySpin.generic.callback = PW_MenuEvent;
+    s_pw.bDaySpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.bDaySpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bDaySpin.generic.y        = PW_P2_ROW_2;
     s_pw.bDaySpin.itemnames        = (const char **)s_pwBirthDayItems;
@@ -782,7 +949,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.bMonthSpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.bMonthSpin.generic.id       = ID_PW_BMONTH;
+    s_pw.bMonthSpin.generic.name     = "Month";
     s_pw.bMonthSpin.generic.callback = PW_MenuEvent;
+    s_pw.bMonthSpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.bMonthSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bMonthSpin.generic.y        = PW_P2_ROW_3;
     s_pw.bMonthSpin.itemnames        = (const char **)s_pwBirthMonthItems;
@@ -790,7 +959,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.bYearSpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.bYearSpin.generic.id       = ID_PW_BYEAR;
+    s_pw.bYearSpin.generic.name     = "Year";
     s_pw.bYearSpin.generic.callback = PW_MenuEvent;
+    s_pw.bYearSpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.bYearSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.bYearSpin.generic.y        = PW_P2_ROW_4;
     s_pw.bYearSpin.itemnames        = (const char **)s_pwBirthYearItems;
@@ -798,7 +969,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.avatarSpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.avatarSpin.generic.id       = ID_PW_AVATAR;
+    s_pw.avatarSpin.generic.name     = "Avatar";
     s_pw.avatarSpin.generic.callback = PW_MenuEvent;
+    s_pw.avatarSpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.avatarSpin.generic.x        = PW_P2_SPIN_X;
     s_pw.avatarSpin.generic.y        = PW_P2_ROW_5;
     s_pw.avatarSpin.itemnames        = (const char **)s_avatarDisplayNames;
@@ -806,7 +979,9 @@ void UI_ProfileWizard_Show( void ) {
 
     s_pw.countrySpin.generic.type     = MTYPE_SPINCONTROL;
     s_pw.countrySpin.generic.id       = ID_PW_COUNTRY;
+    s_pw.countrySpin.generic.name     = "Country";
     s_pw.countrySpin.generic.callback = PW_MenuEvent;
+    s_pw.countrySpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.countrySpin.generic.x        = PW_P2_SPIN_X;
     s_pw.countrySpin.generic.y        = PW_P2_ROW_6;
     s_pw.countrySpin.itemnames        = (const char **)s_countryNames;
@@ -817,6 +992,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnNext.generic.type     = MTYPE_PTEXT;
     s_pw.btnNext.generic.id       = ID_PW_NEXT;
     s_pw.btnNext.generic.callback = PW_MenuEvent;
+    s_pw.btnNext.generic.ownerdraw = PW_DrawButton;
     s_pw.btnNext.generic.x        = PW_BTN_NEXT_X;
     s_pw.btnNext.generic.y        = PW_BTN_Y;
     s_pw.btnNext.string           = "NEXT";
@@ -826,6 +1002,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnBack.generic.type     = MTYPE_PTEXT;
     s_pw.btnBack.generic.id       = ID_PW_BACK;
     s_pw.btnBack.generic.callback = PW_MenuEvent;
+    s_pw.btnBack.generic.ownerdraw = PW_DrawButton;
     s_pw.btnBack.generic.x        = PW_BTN_BACK_X;
     s_pw.btnBack.generic.y        = PW_BTN_Y;
     s_pw.btnBack.string           = "BACK";
@@ -835,6 +1012,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnSkip.generic.type     = MTYPE_PTEXT;
     s_pw.btnSkip.generic.id       = ID_PW_SKIP;
     s_pw.btnSkip.generic.callback = PW_MenuEvent;
+    s_pw.btnSkip.generic.ownerdraw = PW_DrawButton;
     s_pw.btnSkip.generic.x        = PW_BTN_SKIP_X;
     s_pw.btnSkip.generic.y        = PW_BTN_Y;
     s_pw.btnSkip.string           = "SKIP";
@@ -855,6 +1033,22 @@ void UI_ProfileWizard_Show( void ) {
     Menu_AddItem( &s_pw.menu, &s_pw.btnBack     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnSkip     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnNext     );
+
+    /* Keep mouse hitboxes aligned with the custom full-width choice rows. */
+    PW_SetChoiceBounds();
+
+    s_pw.btnBack.generic.left = PW_BTN_BACK_X;
+    s_pw.btnBack.generic.top = PW_BTN_Y;
+    s_pw.btnBack.generic.right = PW_BTN_BACK_X + PW_BTN_WIDTH;
+    s_pw.btnBack.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_pw.btnSkip.generic.left = PW_BTN_SKIP_X;
+    s_pw.btnSkip.generic.top = PW_BTN_Y;
+    s_pw.btnSkip.generic.right = PW_BTN_SKIP_X + PW_BTN_WIDTH;
+    s_pw.btnSkip.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_pw.btnNext.generic.left = PW_BTN_NEXT_X;
+    s_pw.btnNext.generic.top = PW_BTN_Y;
+    s_pw.btnNext.generic.right = PW_BTN_NEXT_X + PW_BTN_WIDTH;
+    s_pw.btnNext.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
 
     uis.transitionIn  = 0;
     uis.transitionOut = 0;
@@ -895,6 +1089,7 @@ void UI_ProfileWizard_OnRegisterResult( qboolean success, const char *errorMsg )
     s_pw.submitting = qfalse;
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
+        UI_LadderWizard_MarkProfileRegistered();
         trap_Cvar_SetValue( "ladder_wizard_completed", 1 );
         PW_SetPage( PW_PAGE_DONE );
         return;
@@ -910,6 +1105,7 @@ void UI_ProfileWizard_OnOfflineKeyResult( qboolean success, const char *errorMsg
     s_pw.submitting = qfalse;
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
+        UI_LadderWizard_MarkProfileRegistered();
         trap_Cvar_SetValue( "ladder_wizard_completed", 1 );
         PW_SetPage( PW_PAGE_DONE );
         return;

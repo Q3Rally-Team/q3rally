@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 qboolean isRaceObserver( int clientNum )
 {
@@ -59,6 +60,41 @@ qboolean isRaceObserver( int clientNum )
 #define Q3ROPTIONS_TAB_HEIGHT        32
 #define Q3ROPTIONS_BACK_BUTTON_LEFT  24
 #define Q3ROPTIONS_BACK_BUTTON_Y     ( Q3ROPTIONS_TAB_TOP + Q3ROPTIONS_TAB_HEIGHT + 14 )
+
+#define Q3R_OPTIONS_FRAME_X          24
+#define Q3R_OPTIONS_FRAME_Y          20
+#define Q3R_OPTIONS_FRAME_WIDTH      592
+#define Q3R_OPTIONS_FRAME_HEIGHT     440
+#define Q3R_OPTIONS_LEFT_X           40
+#define Q3R_OPTIONS_RIGHT_X          332
+#define Q3R_OPTIONS_CARD_Y           104
+#define Q3R_OPTIONS_CARD_WIDTH       268
+#define Q3R_OPTIONS_CARD_HEIGHT      300
+#define Q3R_OPTIONS_ROW_X_INSET      12
+#define Q3R_OPTIONS_ROW_WIDTH        ( Q3R_OPTIONS_CARD_WIDTH - 24 )
+#define Q3R_OPTIONS_ROW_HEIGHT       18
+#define Q3R_OPTIONS_ROW_STEP         20
+#define Q3R_OPTIONS_TOP_ROW_Y        148
+#define Q3R_OPTIONS_MAIN_HEADING_Y   288
+#define Q3R_OPTIONS_MAIN_ROW_Y       310
+#define Q3R_OPTIONS_MAIN_ROW_STEP    18
+#define Q3R_OPTIONS_REAR_HEADING_Y   260
+#define Q3R_OPTIONS_REAR_ROW_Y       280
+#define Q3R_OPTIONS_REAR_ROW_STEP    18
+#define Q3R_OPTIONS_ACTION_Y         420
+
+static vec4_t q3rOptionsScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t q3rOptionsTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t q3rOptionsMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t q3rOptionsAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t q3rOptionsFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
+static vec4_t q3rOptionsBorderColor = UI_FRONTEND_COLOR_BORDER;
+
+static void Q3ROptions_MenuDraw( void );
+static void Q3ROptions_DrawRadio( void *self );
+static void Q3ROptions_DrawChoice( void *self );
+static void Q3ROptions_DrawSlider( void *self );
+static void Q3ROptions_DrawAction( void *self );
 
 typedef struct {
 	menuframework_s	menu;
@@ -129,8 +165,8 @@ static const char *q3roptions_atmospheric[] = {
 
 static const char *q3roptions_ghostPlayback[] = {
         "Off",
-        "Personal ghost",
-        "Base ghost",
+        "Personal",
+        "Server base",
         0
 };
 
@@ -259,64 +295,60 @@ Q3ROptions_StatusBar
 */
 static void Q3ROptions_StatusBar( void *self )
 {
-	char	*text;
+	const char *text;
 
-	text = "Use Arrow Keys or CLICK to change.";
+	text = "Left / right adjust   Enter select   Esc back";
 
 	switch( ((menucommon_s*)self)->id )
 	{
         case ID_UNITS:
-                text = "Use KPH or MPH on the speedometer.";
+                text = "Choose metric or imperial speed units.";
                 break;
 
         case ID_SPEEDOMETER_MODE:
-                text = "Select analog or digital speedometer.";
+                text = "Choose an analog or digital speedometer.";
                 break;
 
 	case ID_TRANSMISSION_MODE:
-		if( s_q3roptions.transmissionMode.curvalue == 0 )
-			text = "Automatic keeps the existing gearbox and auto-shift behaviour.";
-		else if( s_q3roptions.transmissionMode.curvalue == 1 )
-			text = "Manual shifts gears R/N/1-6 with gear up and gear down.";
-		else
-			text = "Manual + Clutch requires the up/clutch key while shifting.";
+		text = "Choose automatic, manual or manual + clutch.";
 		break;
 
 	case ID_ATMOSPHERIC_LEVEL:
-		text = "Determines the relative number of environment particles to show.";
+		text = "Set the amount of atmospheric effects.";
 		break;
 
 
 
 	case ID_MANUAL_SHIFT:
-		if( s_q3roptions.manualShift.curvalue == 0 )
-			text = "Automatic transmission switches between forward and reverse when you stop.";
-		else
-			text = "Automatic transmission uses gear up and gear down for forward/reverse.";
+		text = "Choose how forward and reverse are selected.";
 		break;
 
 	case ID_POSITION_SPRITES:
-		text = "Draw position sprites above cars when their position changes.";
+		text = "Show race position markers above vehicles.";
 		break;
 
 	case ID_SKID_LENGTH:
-		text = "The length of the skid segments.  A lower value will make the skid marks look smoother.";
+		text = "Set the length of each skid segment.";
 		break;
 
 	case ID_CAM_TRACKING:
-		text = "Tightness of the joystick camera tracking mode.  A higher value makes the camera stay behind the car more.";
+		text = "Set how tightly the camera follows the vehicle.";
 		break;
 
 	case ID_ENGINE_SOUNDS:
-		text = "Choose engine sound mode: off, classic legacy, or experimental synthesis.";
+		text = "Choose off, legacy or experimental engine audio.";
+		break;
+
+	case ID_GHOST_PLAYBACK:
+		text = "Personal uses a saved ghost for this vehicle; Server base uses the route provided by the server.";
 		break;
 
 	case ID_FUEL_CONSUMPTION:
-		text = "Toggle fuel consumption for vehicles.";
+		text = "Toggle fuel consumption during races.";
 		break;
 
 	case ID_LADDER_OFFLINE:
-		text = "Enable or disable automatic upload of offline match results to the Q3Rally Ladder.";
+		text = "Allow offline results to sync to the Q3Rally Ladder.";
 		break;
 
 	case ID_RVRL_PLAYERS:
@@ -354,7 +386,180 @@ static void Q3ROptions_StatusBar( void *self )
 		break;
 	}
 
-	UI_DrawString( SCREEN_WIDTH * 0.50f, SCREEN_HEIGHT * 0.875f, text, UI_SMALLFONT|UI_CENTER, colorWhite );
+	Frontend_DrawText( Q3R_OPTIONS_FRAME_X + 24,
+		Q3R_OPTIONS_FRAME_Y + 384, text,
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+}
+
+static void Q3ROptions_SetBounds( menucommon_s *item, int x, int y,
+	int width, int height, const char *label ) {
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void Q3ROptions_DrawRow( menucommon_s *item, const char *value ) {
+	qboolean focus;
+	qboolean disabled;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+
+	if ( focus && !disabled ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top,
+			q3rOptionsFocusColor );
+		UI_FillRect( item->left, item->top, 2,
+			item->bottom - item->top, q3rOptionsAccentColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, q3rOptionsBorderColor );
+
+	Vector4Copy( disabled ? q3rOptionsMutedColor :
+		(focus ? q3rOptionsTextColor : q3rOptionsMutedColor), labelColor );
+	Vector4Copy( disabled ? q3rOptionsMutedColor :
+		(focus ? q3rOptionsAccentColor : q3rOptionsTextColor), valueColor );
+	Frontend_DrawText( item->left + 10,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->right - 10,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Q3ROptions_DrawRadio( void *self ) {
+	menuradiobutton_s *radio;
+
+	radio = (menuradiobutton_s *)self;
+	Q3ROptions_DrawRow( &radio->generic,
+		radio->curvalue ? "On" : "Off" );
+}
+
+static void Q3ROptions_DrawChoice( void *self ) {
+	menulist_s *choice;
+	const char *value;
+
+	choice = (menulist_s *)self;
+	value = choice->itemnames[choice->curvalue];
+	Q3ROptions_DrawRow( &choice->generic, value ? value : "-" );
+}
+
+static void Q3ROptions_DrawSlider( void *self ) {
+	menuslider_s *slider;
+	menucommon_s *item;
+	qboolean focus;
+	qboolean disabled;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	vec4_t trackColor;
+	float range;
+	int trackX;
+	int trackWidth;
+	int trackY;
+	char value[32];
+
+	slider = (menuslider_s *)self;
+	item = &slider->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+
+	if ( focus && !disabled ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top,
+			q3rOptionsFocusColor );
+		UI_FillRect( item->left, item->top, 2,
+			item->bottom - item->top, q3rOptionsAccentColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, q3rOptionsBorderColor );
+
+	Vector4Copy( disabled ? q3rOptionsMutedColor :
+		(focus ? q3rOptionsTextColor : q3rOptionsMutedColor), labelColor );
+	Vector4Copy( disabled ? q3rOptionsMutedColor :
+		(focus ? q3rOptionsAccentColor : q3rOptionsTextColor), valueColor );
+	Vector4Copy( disabled ? q3rOptionsMutedColor : q3rOptionsBorderColor, trackColor );
+
+	if ( slider->maxvalue > slider->minvalue ) {
+		range = ( slider->curvalue - slider->minvalue ) /
+			( slider->maxvalue - slider->minvalue );
+	} else {
+		range = 0.0f;
+	}
+	if ( range < 0.0f ) range = 0.0f;
+	if ( range > 1.0f ) range = 1.0f;
+	slider->range = range;
+
+	Com_sprintf( value, sizeof( value ), "%d", (int)( slider->curvalue + 0.5f ) );
+	Frontend_DrawText( item->left + 10,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+
+	trackX = item->left + 132;
+	trackWidth = 76;
+	trackY = item->top + ( item->bottom - item->top ) / 2;
+	UI_FillRect( trackX, trackY, trackWidth, 2, trackColor );
+	UI_FillRect( trackX, trackY, (int)( trackWidth * range ), 2,
+		disabled ? q3rOptionsMutedColor : q3rOptionsAccentColor );
+	UI_FillRect( trackX + (int)( trackWidth * range ) - 2, trackY - 3,
+		4, 8, disabled ? q3rOptionsMutedColor : q3rOptionsAccentColor );
+	Frontend_DrawText( item->right - 10,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Q3ROptions_DrawAction( void *self ) {
+	menutext_s *action;
+	qboolean focus;
+
+	action = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( action->generic.parent ) == &action->generic );
+	Frontend_DrawButton( action->generic.left, action->generic.top,
+		action->generic.right - action->generic.left,
+		action->generic.bottom - action->generic.top,
+		action->string, 1.0f, focus, UI_CENTER );
+}
+
+static void Q3ROptions_MenuDraw( void ) {
+	Frontend_DrawBackground( q3rOptionsScrimColor );
+	Frontend_DrawPanel( Q3R_OPTIONS_FRAME_X, Q3R_OPTIONS_FRAME_Y,
+		Q3R_OPTIONS_FRAME_WIDTH, Q3R_OPTIONS_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( Q3R_OPTIONS_FRAME_X + 24,
+		Q3R_OPTIONS_FRAME_Y + 24, "Q3Rally options",
+		UI_LEFT | UI_BIGFONT, q3rOptionsTextColor );
+	Frontend_DrawText( Q3R_OPTIONS_FRAME_X + 24,
+		Q3R_OPTIONS_FRAME_Y + 48,
+		"Personalize driving feel, HUD and vehicle rendering",
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+	Frontend_DrawStatusChip( Q3R_OPTIONS_FRAME_X + Q3R_OPTIONS_FRAME_WIDTH - 88,
+		Q3R_OPTIONS_FRAME_Y + 26, "Q3R",
+		q3rOptionsAccentColor, 1.0f );
+
+	Frontend_DrawCard( Q3R_OPTIONS_LEFT_X, Q3R_OPTIONS_CARD_Y,
+		Q3R_OPTIONS_CARD_WIDTH, Q3R_OPTIONS_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( Q3R_OPTIONS_RIGHT_X, Q3R_OPTIONS_CARD_Y,
+		Q3R_OPTIONS_CARD_WIDTH, Q3R_OPTIONS_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( Q3R_OPTIONS_LEFT_X + 12,
+		Q3R_OPTIONS_CARD_Y + 22, "Driving & simulation",
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+	Frontend_DrawText( Q3R_OPTIONS_RIGHT_X + 12,
+		Q3R_OPTIONS_CARD_Y + 22, "HUD & audio",
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+	Frontend_DrawText( Q3R_OPTIONS_LEFT_X + 12,
+		Q3R_OPTIONS_MAIN_HEADING_Y, "Main view",
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+	Frontend_DrawText( Q3R_OPTIONS_RIGHT_X + 12,
+		Q3R_OPTIONS_REAR_HEADING_Y, "Rear view",
+		UI_LEFT | UI_SMALLFONT, q3rOptionsMutedColor );
+	Menu_Draw( &s_q3roptions.menu );
 }
 
 
@@ -367,6 +572,7 @@ void Q3ROptions_MenuInit( void ) {
 //	int				y;
 
 	memset( &s_q3roptions, 0, sizeof(q3roptionsmenu_t) );
+	s_q3roptions.menu.draw = Q3ROptions_MenuDraw;
 	s_q3roptions.menu.wrapAround = qtrue;
 	s_q3roptions.menu.fullscreen = qtrue;
 
@@ -687,29 +893,26 @@ void Q3ROptions_MenuInit( void ) {
 
 
 
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.banner );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.transmissionMode );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.manualShift );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.atomspheric );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ghostPlayback );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.fuelConsumption );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.speedometer );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.units );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ladderOffline ); /* Q3RALLY LADDER */
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
 
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_heading );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_players );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_objects );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_smoke );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_marks );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_sparks );
 
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_heading );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_players );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_objects );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_smoke );
@@ -717,6 +920,132 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.rvrl_sparks );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.back );
+
+	Q3ROptions_SetBounds( &s_q3roptions.transmissionMode.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 0 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Transmission" );
+	Q3ROptions_SetBounds( &s_q3roptions.manualShift.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Manual F/R select" );
+	Q3ROptions_SetBounds( &s_q3roptions.atomspheric.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Atmospheric effects" );
+	Q3ROptions_SetBounds( &s_q3roptions.ghostPlayback.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Ghost playback" );
+	Q3ROptions_SetBounds( &s_q3roptions.fuelConsumption.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 4 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Fuel consumption" );
+	Q3ROptions_SetBounds( &s_q3roptions.skidlength.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 5 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Skid segment length" );
+	Q3ROptions_SetBounds( &s_q3roptions.camtracking.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 6 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Camera tracking" );
+
+	Q3ROptions_SetBounds( &s_q3roptions.speedometer.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 0 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Speedometer" );
+	Q3ROptions_SetBounds( &s_q3roptions.units.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Unit type" );
+	Q3ROptions_SetBounds( &s_q3roptions.engineSounds.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Engine sounds" );
+	Q3ROptions_SetBounds( &s_q3roptions.positionSprites.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Race position sprites" );
+	Q3ROptions_SetBounds( &s_q3roptions.ladderOffline.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 4 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Offline ladder sync" );
+
+	Q3ROptions_SetBounds( &s_q3roptions.mvrl_players.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET, Q3R_OPTIONS_MAIN_ROW_Y,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Players" );
+	Q3ROptions_SetBounds( &s_q3roptions.mvrl_objects.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_MAIN_ROW_Y + 1 * Q3R_OPTIONS_MAIN_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Objects" );
+	Q3ROptions_SetBounds( &s_q3roptions.mvrl_smoke.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_MAIN_ROW_Y + 2 * Q3R_OPTIONS_MAIN_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Smoke" );
+	Q3ROptions_SetBounds( &s_q3roptions.mvrl_marks.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_MAIN_ROW_Y + 3 * Q3R_OPTIONS_MAIN_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Marks" );
+	Q3ROptions_SetBounds( &s_q3roptions.mvrl_sparks.generic,
+		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_MAIN_ROW_Y + 4 * Q3R_OPTIONS_MAIN_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Sparks" );
+
+	Q3ROptions_SetBounds( &s_q3roptions.rvrl_players.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET, Q3R_OPTIONS_REAR_ROW_Y,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Players" );
+	Q3ROptions_SetBounds( &s_q3roptions.rvrl_objects.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_REAR_ROW_Y + 1 * Q3R_OPTIONS_REAR_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Objects" );
+	Q3ROptions_SetBounds( &s_q3roptions.rvrl_smoke.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_REAR_ROW_Y + 2 * Q3R_OPTIONS_REAR_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Smoke" );
+	Q3ROptions_SetBounds( &s_q3roptions.rvrl_marks.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_REAR_ROW_Y + 3 * Q3R_OPTIONS_REAR_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Marks" );
+	Q3ROptions_SetBounds( &s_q3roptions.rvrl_sparks.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_REAR_ROW_Y + 4 * Q3R_OPTIONS_REAR_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Sparks" );
+
+	s_q3roptions.transmissionMode.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.manualShift.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.atomspheric.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.ghostPlayback.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.fuelConsumption.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.skidlength.generic.ownerdraw = Q3ROptions_DrawSlider;
+	s_q3roptions.camtracking.generic.ownerdraw = Q3ROptions_DrawSlider;
+	s_q3roptions.speedometer.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.units.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.engineSounds.generic.ownerdraw = Q3ROptions_DrawChoice;
+	s_q3roptions.positionSprites.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.ladderOffline.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.mvrl_players.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.mvrl_objects.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.mvrl_smoke.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.mvrl_marks.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.mvrl_sparks.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.rvrl_players.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.rvrl_objects.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.rvrl_smoke.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.rvrl_marks.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.rvrl_sparks.generic.ownerdraw = Q3ROptions_DrawRadio;
+
+	/* Slider_Key uses x as the start of its legacy input range. Keep that
+	 * interaction aligned with the modern track drawn by Q3ROptions_DrawSlider. */
+	s_q3roptions.skidlength.generic.x =
+		s_q3roptions.skidlength.generic.left + 116;
+	s_q3roptions.camtracking.generic.x =
+		s_q3roptions.camtracking.generic.left + 116;
+
+	Q3ROptions_SetBounds( &s_q3roptions.back.generic,
+		Q3R_OPTIONS_FRAME_X + 24, Q3R_OPTIONS_ACTION_Y, 120, 24, NULL );
+	s_q3roptions.back.string = "Back";
+	s_q3roptions.back.generic.statusbar = Q3ROptions_StatusBar;
+	s_q3roptions.back.generic.ownerdraw = Q3ROptions_DrawAction;
 }
 
 

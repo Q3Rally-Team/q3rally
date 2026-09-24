@@ -3731,6 +3731,10 @@ void CG_Player( centity_t *cent ) {
 #endif
 	vec3_t			dir;
 // END
+	if ( cgs.gametype == GT_ELIMINATION &&
+	     ( cent->eliminationOut || ( cent->currentState.eFlags & EF_NODRAW ) ) ) {
+		return;
+	}
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have

@@ -31,6 +31,7 @@ ADD BOTS MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_BACK0			"menu/art/back_0"
@@ -57,6 +58,37 @@ ADD BOTS MENU
 #define ID_BOTNAME5			25
 #define ID_BOTNAME6			26
 
+#define ADDBOTS_FRAME_X             48
+#define ADDBOTS_FRAME_Y             24
+#define ADDBOTS_FRAME_WIDTH         544
+#define ADDBOTS_FRAME_HEIGHT        432
+#define ADDBOTS_BOT_CARD_X          72
+#define ADDBOTS_BOT_CARD_Y          112
+#define ADDBOTS_BOT_CARD_WIDTH      296
+#define ADDBOTS_BOT_CARD_HEIGHT     280
+#define ADDBOTS_OPTION_CARD_X       384
+#define ADDBOTS_OPTION_CARD_Y       112
+#define ADDBOTS_OPTION_CARD_WIDTH   184
+#define ADDBOTS_OPTION_CARD_HEIGHT  280
+#define ADDBOTS_BOT_ROW_X           88
+#define ADDBOTS_BOT_ROW_Y           144
+#define ADDBOTS_BOT_ROW_WIDTH       264
+#define ADDBOTS_BOT_ROW_HEIGHT      22
+#define ADDBOTS_BOT_ROW_GAP         2
+#define ADDBOTS_NAV_Y               352
+#define ADDBOTS_NAV_WIDTH           104
+#define ADDBOTS_NAV_HEIGHT          24
+#define ADDBOTS_ACTION_Y            420
+#define ADDBOTS_ACTION_WIDTH        104
+#define ADDBOTS_ACTION_HEIGHT       24
+#define ADDBOTS_OPTION_X            400
+#define ADDBOTS_OPTION_WIDTH        152
+#define ADDBOTS_OPTION_HEIGHT       28
+
+static vec4_t addBotsTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t addBotsMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t addBotsAccentColor = UI_FRONTEND_COLOR_ACCENT;
+
 
 typedef struct {
 	menuframework_s	menu;
@@ -78,6 +110,183 @@ typedef struct {
 } addBotsMenuInfo_t;
 
 static addBotsMenuInfo_t	addBotsMenuInfo;
+
+static void UI_AddBotsMenu_DrawAction( void *self ) {
+	menucommon_s *item;
+	qboolean focus;
+	qboolean disabled;
+	const char *label;
+	const float *textColor;
+
+	item = (menucommon_s *)self;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	disabled = ( item->flags & QMF_GRAYED ) ? qtrue : qfalse;
+	label = "";
+	switch ( item->id ) {
+	case ID_UP:
+		label = "Prev";
+		break;
+	case ID_DOWN:
+		label = "Next";
+		break;
+	case ID_GO:
+		label = "Add bot";
+		break;
+	case ID_BACK:
+		label = "Back";
+		break;
+	}
+	textColor = disabled ? addBotsMutedColor :
+		( focus ? addBotsAccentColor : addBotsTextColor );
+
+	Frontend_DrawCard( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		1.0f, focus );
+	Frontend_DrawText( ( item->left + item->right ) / 2,
+		item->top + 5, label, UI_CENTER | UI_SMALLFONT, textColor );
+}
+
+static void UI_AddBotsMenu_DrawBot( void *self ) {
+	menutext_s *bot;
+	int index;
+	int y;
+	qboolean focus;
+	qboolean selected;
+	const char *name;
+	const float *textColor;
+
+	bot = (menutext_s *)self;
+	index = bot->generic.id - ID_BOTNAME0;
+	y = ADDBOTS_BOT_ROW_Y + index *
+		( ADDBOTS_BOT_ROW_HEIGHT + ADDBOTS_BOT_ROW_GAP );
+	focus = ( Menu_ItemAtCursor( bot->generic.parent ) == bot );
+	selected = ( index == addBotsMenuInfo.selectedBotNum );
+	name = bot->string && bot->string[0] ? bot->string : "Unknown bot";
+	textColor = focus || selected ? addBotsAccentColor : addBotsTextColor;
+
+	Frontend_DrawCard( ADDBOTS_BOT_ROW_X, y, ADDBOTS_BOT_ROW_WIDTH,
+		ADDBOTS_BOT_ROW_HEIGHT, 1.0f, focus || selected );
+	Frontend_DrawText( ADDBOTS_BOT_ROW_X + 12, y + 4, name,
+		UI_LEFT | UI_SMALLFONT, textColor );
+}
+
+static void UI_AddBotsMenu_DrawOption( void *self ) {
+	menulist_s *list;
+	qboolean focus;
+	qboolean disabled;
+	const char *value;
+	const float *textColor;
+
+	list = (menulist_s *)self;
+	focus = ( Menu_ItemAtCursor( list->generic.parent ) == &list->generic );
+	disabled = ( list->generic.flags & QMF_GRAYED ) ? qtrue : qfalse;
+	value = "";
+	if ( list->itemnames && list->curvalue >= 0 &&
+		list->itemnames[list->curvalue] ) {
+		value = list->itemnames[list->curvalue];
+	}
+	textColor = disabled ? addBotsMutedColor :
+		( focus ? addBotsAccentColor : addBotsTextColor );
+
+	Frontend_DrawCard( list->generic.left, list->generic.top,
+		list->generic.right - list->generic.left,
+		list->generic.bottom - list->generic.top, 1.0f, focus );
+	Frontend_DrawText( list->generic.left + 10,
+		list->generic.top + 6, list->generic.name,
+		UI_LEFT | UI_SMALLFONT, addBotsMutedColor );
+	Frontend_DrawText( list->generic.right - 10,
+		list->generic.top + 6, value,
+		UI_RIGHT | UI_SMALLFONT, textColor );
+}
+
+static void UI_AddBotsMenu_Layout( int count ) {
+	int n;
+
+	addBotsMenuInfo.arrows.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+	addBotsMenuInfo.up.generic.left = ADDBOTS_BOT_ROW_X;
+	addBotsMenuInfo.up.generic.top = ADDBOTS_NAV_Y;
+	addBotsMenuInfo.up.generic.right = ADDBOTS_BOT_ROW_X + ADDBOTS_NAV_WIDTH;
+	addBotsMenuInfo.up.generic.bottom = ADDBOTS_NAV_Y + ADDBOTS_NAV_HEIGHT;
+	addBotsMenuInfo.up.generic.x = ( addBotsMenuInfo.up.generic.left +
+		addBotsMenuInfo.up.generic.right ) / 2;
+	addBotsMenuInfo.up.generic.y = ADDBOTS_NAV_Y + 4;
+	addBotsMenuInfo.up.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.up.generic.ownerdraw = UI_AddBotsMenu_DrawAction;
+
+	addBotsMenuInfo.down.generic.left = ADDBOTS_BOT_ROW_X +
+		ADDBOTS_BOT_ROW_WIDTH - ADDBOTS_NAV_WIDTH;
+	addBotsMenuInfo.down.generic.top = ADDBOTS_NAV_Y;
+	addBotsMenuInfo.down.generic.right = ADDBOTS_BOT_ROW_X + ADDBOTS_BOT_ROW_WIDTH;
+	addBotsMenuInfo.down.generic.bottom = ADDBOTS_NAV_Y + ADDBOTS_NAV_HEIGHT;
+	addBotsMenuInfo.down.generic.x = ( addBotsMenuInfo.down.generic.left +
+		addBotsMenuInfo.down.generic.right ) / 2;
+	addBotsMenuInfo.down.generic.y = ADDBOTS_NAV_Y + 4;
+	addBotsMenuInfo.down.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.down.generic.ownerdraw = UI_AddBotsMenu_DrawAction;
+
+	for ( n = 0; n < count; n++ ) {
+		addBotsMenuInfo.bots[n].generic.left = ADDBOTS_BOT_ROW_X;
+		addBotsMenuInfo.bots[n].generic.top = ADDBOTS_BOT_ROW_Y + n *
+			( ADDBOTS_BOT_ROW_HEIGHT + ADDBOTS_BOT_ROW_GAP );
+		addBotsMenuInfo.bots[n].generic.right = ADDBOTS_BOT_ROW_X +
+			ADDBOTS_BOT_ROW_WIDTH;
+		addBotsMenuInfo.bots[n].generic.bottom =
+			addBotsMenuInfo.bots[n].generic.top + ADDBOTS_BOT_ROW_HEIGHT;
+		addBotsMenuInfo.bots[n].generic.x = ADDBOTS_BOT_ROW_X +
+			ADDBOTS_BOT_ROW_WIDTH / 2;
+		addBotsMenuInfo.bots[n].generic.y =
+			addBotsMenuInfo.bots[n].generic.top + 4;
+		addBotsMenuInfo.bots[n].generic.flags |= QMF_NODEFAULTINIT;
+		addBotsMenuInfo.bots[n].generic.ownerdraw = UI_AddBotsMenu_DrawBot;
+	}
+
+	addBotsMenuInfo.skill.generic.left = ADDBOTS_OPTION_X;
+	addBotsMenuInfo.skill.generic.top = 168;
+	addBotsMenuInfo.skill.generic.right = ADDBOTS_OPTION_X +
+		ADDBOTS_OPTION_WIDTH;
+	addBotsMenuInfo.skill.generic.bottom = 168 + ADDBOTS_OPTION_HEIGHT;
+	addBotsMenuInfo.skill.generic.x = ADDBOTS_OPTION_X +
+		ADDBOTS_OPTION_WIDTH / 2;
+	addBotsMenuInfo.skill.generic.y = 174;
+	addBotsMenuInfo.skill.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.skill.generic.ownerdraw = UI_AddBotsMenu_DrawOption;
+
+	addBotsMenuInfo.team.generic.left = ADDBOTS_OPTION_X;
+	addBotsMenuInfo.team.generic.top = 220;
+	addBotsMenuInfo.team.generic.right = ADDBOTS_OPTION_X +
+		ADDBOTS_OPTION_WIDTH;
+	addBotsMenuInfo.team.generic.bottom = 220 + ADDBOTS_OPTION_HEIGHT;
+	addBotsMenuInfo.team.generic.x = ADDBOTS_OPTION_X +
+		ADDBOTS_OPTION_WIDTH / 2;
+	addBotsMenuInfo.team.generic.y = 226;
+	addBotsMenuInfo.team.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.team.generic.ownerdraw = UI_AddBotsMenu_DrawOption;
+
+	addBotsMenuInfo.go.generic.left = ADDBOTS_FRAME_X + ADDBOTS_FRAME_WIDTH -
+		16 - ADDBOTS_ACTION_WIDTH;
+	addBotsMenuInfo.go.generic.top = ADDBOTS_ACTION_Y;
+	addBotsMenuInfo.go.generic.right = addBotsMenuInfo.go.generic.left +
+		ADDBOTS_ACTION_WIDTH;
+	addBotsMenuInfo.go.generic.bottom = ADDBOTS_ACTION_Y +
+		ADDBOTS_ACTION_HEIGHT;
+	addBotsMenuInfo.go.generic.x = ( addBotsMenuInfo.go.generic.left +
+		addBotsMenuInfo.go.generic.right ) / 2;
+	addBotsMenuInfo.go.generic.y = ADDBOTS_ACTION_Y + 4;
+	addBotsMenuInfo.go.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.go.generic.ownerdraw = UI_AddBotsMenu_DrawAction;
+
+	addBotsMenuInfo.back.generic.left = ADDBOTS_FRAME_X + 16;
+	addBotsMenuInfo.back.generic.top = ADDBOTS_ACTION_Y;
+	addBotsMenuInfo.back.generic.right = addBotsMenuInfo.back.generic.left +
+		ADDBOTS_ACTION_WIDTH;
+	addBotsMenuInfo.back.generic.bottom = ADDBOTS_ACTION_Y +
+		ADDBOTS_ACTION_HEIGHT;
+	addBotsMenuInfo.back.generic.x = ( addBotsMenuInfo.back.generic.left +
+		addBotsMenuInfo.back.generic.right ) / 2;
+	addBotsMenuInfo.back.generic.y = ADDBOTS_ACTION_Y + 4;
+	addBotsMenuInfo.back.generic.flags |= QMF_NODEFAULTINIT;
+	addBotsMenuInfo.back.generic.ownerdraw = UI_AddBotsMenu_DrawAction;
+}
 
 
 /*
@@ -223,10 +432,36 @@ UI_AddBotsMenu_Draw
 =================
 */
 static void UI_AddBotsMenu_Draw( void ) {
-	UI_DrawBannerString( 320, 16, "ADD BOTS", UI_CENTER, color_white );
-	UI_DrawNamedPic( 320-233, 240-166, 466, 332, ART_BACKGROUND );
+	vec4_t overlayColor = UI_FRONTEND_COLOR_SCRIM;
 
-	// standard menu drawing
+	UI_SetColor( NULL );
+	UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2,
+		SCREEN_HEIGHT, overlayColor );
+	Frontend_DrawPanel( ADDBOTS_FRAME_X, ADDBOTS_FRAME_Y,
+		ADDBOTS_FRAME_WIDTH, ADDBOTS_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( ADDBOTS_FRAME_X + 24, ADDBOTS_FRAME_Y + 24,
+		"Add bots", UI_LEFT | UI_BIGFONT, addBotsTextColor );
+	Frontend_DrawText( ADDBOTS_FRAME_X + 24, ADDBOTS_FRAME_Y + 48,
+		"Choose a bot and configure its starting settings",
+		UI_LEFT | UI_SMALLFONT, addBotsMutedColor );
+	Frontend_DrawStatusChip( ADDBOTS_FRAME_X + ADDBOTS_FRAME_WIDTH - 128,
+		ADDBOTS_FRAME_Y + 26, "Bot roster", addBotsAccentColor, 1.0f );
+
+	Frontend_DrawCard( ADDBOTS_BOT_CARD_X, ADDBOTS_BOT_CARD_Y,
+		ADDBOTS_BOT_CARD_WIDTH, ADDBOTS_BOT_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( ADDBOTS_BOT_CARD_X + 16, ADDBOTS_BOT_CARD_Y + 16,
+		"Available bots", UI_LEFT | UI_SMALLFONT, addBotsMutedColor );
+	Frontend_DrawCard( ADDBOTS_OPTION_CARD_X, ADDBOTS_OPTION_CARD_Y,
+		ADDBOTS_OPTION_CARD_WIDTH, ADDBOTS_OPTION_CARD_HEIGHT,
+		1.0f, qfalse );
+	Frontend_DrawText( ADDBOTS_OPTION_CARD_X + 16,
+		ADDBOTS_OPTION_CARD_Y + 16, "Bot settings",
+		UI_LEFT | UI_SMALLFONT, addBotsMutedColor );
+	Frontend_DrawText( ADDBOTS_FRAME_X + 24, ADDBOTS_FRAME_Y + 376,
+		"Select a bot   Left / right adjust", UI_LEFT | UI_SMALLFONT,
+		addBotsMutedColor );
+
 	Menu_Draw( &addBotsMenuInfo.menu );
 }
 
@@ -400,6 +635,7 @@ static void UI_AddBotsMenu_Init( void ) {
 
 	UI_AddBotsMenu_GetSortedBotNums();
 	UI_AddBotsMenu_SetBotNames();
+	UI_AddBotsMenu_Layout( count );
 
 	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.arrows );
 

@@ -81,6 +81,7 @@ float CG_DrawCarAheadAndBehind( float y );
 
 /* cg_hud_derby.c */
 void  CG_DrawHUD_DerbyList( float x, float y );
+float CG_DrawHUD_LCSList( float x, float y );
 void  CG_DrawHUD_DerbyHitImpact( void );
 void  CG_DrawHUD_DerbyVehicleState( void );
 

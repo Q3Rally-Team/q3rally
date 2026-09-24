@@ -30,6 +30,7 @@ SINGLE PLAYER LEVEL SELECT MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_LEVELFRAME_FOCUS		"menu/art/maps_select"
@@ -357,10 +358,13 @@ UI_SPLevelMenu_ResetEvent
 =================
 */
 static void UI_SPLevelMenu_ResetDraw( void ) {
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This resets all of the", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "single player game variables.", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 2, "Do this only if you want to", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 3, "start over from the beginning.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	vec4_t warningColor = UI_THEME_COLOR_WARNING;
+	vec4_t mutedColor = UI_FRONTEND_COLOR_MUTED;
+
+	Frontend_DrawText( 320, 210, "This resets all single-player progress.",
+		UI_CENTER | UI_SMALLFONT, warningColor );
+	Frontend_DrawText( 320, 232, "Use this only if you want to start over.",
+		UI_CENTER | UI_SMALLFONT, mutedColor );
 }
 
 static void UI_SPLevelMenu_ResetAction( qboolean result ) {

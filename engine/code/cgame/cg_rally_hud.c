@@ -626,7 +626,6 @@ static float CG_DrawTimes( float y ) {
 	return y;
 }
 
-
 static float CG_DrawGhostSplitDelta( float y ) {
 	char		s[64];
 	float		x;

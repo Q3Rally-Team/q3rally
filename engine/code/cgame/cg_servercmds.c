@@ -98,32 +98,37 @@ static void CG_ParseScores( void ) {
 // END
 
 	memset( cg.scores, 0, sizeof( cg.scores ) );
+	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+		cg.scores[i].integrity = -1;
+	}
 	for ( i = 0 ; i < cg.numScores ; i++ ) {
 //
-// STONELANCE changed i * 14 to i * 20, added 6 (now 21 with KOTH extras + rank tier)
-cg.scores[i].client = atoi( CG_Argv( i * 21 + 6 ) );
-cg.scores[i].score = atoi( CG_Argv( i * 21 + 7 ) );
-cg.scores[i].ping = atoi( CG_Argv( i * 21 + 8 ) );
-cg.scores[i].time = atoi( CG_Argv( i * 21 + 9 ) );
-cg.scores[i].scoreFlags = atoi( CG_Argv( i * 21 + 10 ) );
-powerups = atoi( CG_Argv( i * 21 + 11 ) );
-cg.scores[i].accuracy = atoi(CG_Argv(i * 21 + 12));
-cg.scores[i].impressiveCount = atoi(CG_Argv(i * 21 + 13));
-cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * 21 + 14));
-cg.scores[i].excellentCount = atoi(CG_Argv(i * 21 + 15));
-cg.scores[i].guantletCount = atoi(CG_Argv(i * 21 + 16));
-cg.scores[i].defendCount = atoi(CG_Argv(i * 21 + 17));
-cg.scores[i].assistCount = atoi(CG_Argv(i * 21 + 18));
-cg.scores[i].perfect = atoi(CG_Argv(i * 21 + 19));
-cg.scores[i].captures = atoi(CG_Argv(i * 21 + 20));
+// Current server command format: SCOREBOARD_FIELDS_PER_CLIENT fields per player.
+cg.scores[i].client = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 6 ) );
+cg.scores[i].score = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 7 ) );
+cg.scores[i].ping = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 8 ) );
+cg.scores[i].time = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 9 ) );
+cg.scores[i].scoreFlags = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 10 ) );
+powerups = atoi( CG_Argv( i * SCOREBOARD_FIELDS_PER_CLIENT + 11 ) );
+cg.scores[i].accuracy = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 12));
+cg.scores[i].impressiveCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 13));
+cg.scores[i].impressiveTelefragCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 14));
+cg.scores[i].excellentCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 15));
+cg.scores[i].guantletCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 16));
+cg.scores[i].defendCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 17));
+cg.scores[i].assistCount = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 18));
+cg.scores[i].perfect = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 19));
+cg.scores[i].captures = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 20));
 // END
-// STONELANCE add four more score parts
-cg.scores[i].damageDealt = atoi(CG_Argv(i * 21 + 21));
-cg.scores[i].damageTaken = atoi(CG_Argv(i * 21 + 22));
-cg.scores[i].position = atoi(CG_Argv(i * 21 + 23));
-cg.scores[i].kothHillKills = atoi(CG_Argv(i * 21 + 24));
-cg.scores[i].kothContestTimeMs = atoi(CG_Argv(i * 21 + 25));
-cg.scores[i].rankTier = atoi(CG_Argv(i * 21 + 26));
+// Extended combat and KOTH statistics.
+cg.scores[i].damageDealt = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 21));
+cg.scores[i].damageTaken = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 22));
+cg.scores[i].position = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 23));
+cg.scores[i].kothHillKills = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 24));
+cg.scores[i].kothContestTimeMs = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 25));
+cg.scores[i].rankTier = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 26));
+cg.scores[i].kothTeamHoldTimeMs = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 27));
+cg.scores[i].kothHoldTimeMs = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 28));
 // END
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
@@ -149,6 +154,7 @@ cg.scores[i].rankTier = atoi(CG_Argv(i * 21 + 26));
 		cg.scores[i].ping = 0;
 		cg.scores[i].time = 0;
 		cg.scores[i].scoreFlags = -1;
+		cg.scores[i].integrity = -1;
 		cg.scores[i].position = -1;
 		cg.scores[i].rankTier = -1;
 	}
@@ -158,6 +164,32 @@ cg.scores[i].rankTier = atoi(CG_Argv(i * 21 + 26));
 	CG_SetScoreSelection(NULL);
 #endif
 
+}
+
+static void CG_ParseDerbyIntegrity( void ) {
+	int count, i, clientNum, integrity, scoreIndex;
+
+	if ( trap_Argc() < 2 ) return;
+	count = atoi( CG_Argv( 1 ) );
+	if ( count < 0 ) return;
+	if ( count > ( trap_Argc() - 2 ) / 2 ) {
+		count = ( trap_Argc() - 2 ) / 2;
+	}
+
+	for ( i = 0; i < count; i++ ) {
+		clientNum = atoi( CG_Argv( i * 2 + 2 ) );
+		integrity = atoi( CG_Argv( i * 2 + 3 ) );
+		if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) continue;
+		if ( integrity < 0 ) integrity = 0;
+		if ( integrity > 100 ) integrity = 100;
+
+		for ( scoreIndex = 0; scoreIndex < cg.numScores; scoreIndex++ ) {
+			if ( cg.scores[scoreIndex].client == clientNum ) {
+				cg.scores[scoreIndex].integrity = integrity;
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -821,18 +853,14 @@ static void CG_MapRestart( void ) {
 	// scores3/4 would stay at SCORE_NOT_PRESENT (-9999) until the first
 	// capture event.
 	CG_SetConfigValues();
-	cg.rewardTime = 0;
-	cg.rewardStack = 0;
 	cg.intermissionStarted = qfalse;
 	cg.levelShot = qfalse;
-	cg.achievementQueueCount = 0;
-	cg.rankQueueCount = 0;
+	cg.hudToastQueueCount = 0;
 	cg.soundBufferIn = 0;
 	cg.soundBufferOut = 0;
 	cg.soundTime = 0;
 	memset( cg.soundBuffer, 0, sizeof( cg.soundBuffer ) );
-	memset( cg.achievementQueue, 0, sizeof( cg.achievementQueue ) );
-	memset( cg.rankQueue, 0, sizeof( cg.rankQueue ) );
+	memset( cg.hudToastQueue, 0, sizeof( cg.hudToastQueue ) );
 
 	cgs.voteTime = 0;
 
@@ -842,11 +870,6 @@ static void CG_MapRestart( void ) {
 	cg.ghostRecordingActive = qfalse;
 	cg.ghostRecording.valid = qfalse;
 	cg.ghostPlayback.valid = qfalse;
-	cg.baseGhost.valid = qfalse;
-	cg.baseGhostAvailable = qfalse;
-	cg.baseGhostBestTime = 0;
-        cg.baseGhostVehicle[0] = '\0';
-        cg.baseGhostPath[0] = '\0';
         cg.personalGhostAvailable = qfalse;
         cg.personalGhostBestTime = 0;
         cg.personalGhostVehicle[0] = '\0';
@@ -1441,37 +1464,17 @@ static void CG_ParsePositions( void ) {
 //			cgs.clientinfo[atoi(CG_Argv(i*2 + 2))].name, atoi(CG_Argv(i*2 + 3)));
 	}
 }
-// END
 
-
-static void CG_AddAchievementAnnouncement( bgAchievementCategory_t category, int tierIndex ) {
-        cgAchievementAnnouncement_t *slot;
-        int queueCount;
-
-	if ( category < 0 || category >= BG_ACHIEVEMENT_CATEGORY_COUNT ) {
+static void CG_ParseRaceSplit( void ) {
+	if ( trap_Argc() < 5 ) {
 		return;
 	}
 
-	queueCount = cg.achievementQueueCount;
-	if ( queueCount >= ACHIEVEMENT_MAX_QUEUE ) {
-		int i;
-		queueCount = ACHIEVEMENT_MAX_QUEUE - 1;
-
-		for ( i = 0; i < queueCount; ++i ) {
-			cg.achievementQueue[i] = cg.achievementQueue[i + 1];
-		}
-	}
-
-	slot = &cg.achievementQueue[queueCount];
-	slot->category = category;
-	slot->tierIndex = tierIndex;
-	slot->startTime = cg.time;
-	cg.achievementQueueCount = queueCount + 1;
-
-	if ( cgs.media.achievementUnlockSound ) {
-		trap_S_StartLocalSound( cgs.media.achievementUnlockSound, CHAN_LOCAL_SOUND );
-	}
+	CG_RecordRaceSplit( atoi( CG_Argv( 1 ) ), atoi( CG_Argv( 2 ) ),
+	                    atoi( CG_Argv( 3 ) ), atoi( CG_Argv( 4 ) ) );
 }
+// END
+
 
 static void CG_ParseAchievementUnlock( void ) {
         int categoryIndex;
@@ -1492,49 +1495,13 @@ static void CG_ParseAchievementUnlock( void ) {
 		return;
 	}
 
-        CG_AddAchievementAnnouncement( (bgAchievementCategory_t) categoryIndex, tierIndex );
-}
-
-static void CG_AddRankAnnouncement( int rankIndex, const char *name, const char *nextName, qboolean rankUp ) {
-                cgRankAnnouncement_t *slot;
-                int queueCount;
-
-		if ( rankIndex < 0 ) {
-			return;
-		}
-
-		queueCount = cg.rankQueueCount;
-		if ( queueCount >= RANK_MAX_QUEUE ) {
-			int i;
-			queueCount = RANK_MAX_QUEUE - 1;
-
-			for ( i = 0; i < queueCount; ++i ) {
-				cg.rankQueue[i] = cg.rankQueue[i + 1];
-			}
-		}
-
-                slot = &cg.rankQueue[queueCount];
-                slot->rankIndex = rankIndex;
-                Q_strncpyz( slot->name, name ? name : "", sizeof( slot->name ) );
-                Q_strncpyz( slot->nextName, nextName ? nextName : "", sizeof( slot->nextName ) );
-                slot->rankUp = rankUp;
-                slot->startTime = cg.time;
-                cg.rankQueueCount = queueCount + 1;
-
-		/*
-		 * Rank changes are shown via the dedicated rank banner. Reusing the
-		 * achievement VO here makes intermission/scoreboard transitions sound
-		 * like a fresh achievement unlock when the profile score changes at the
-		 * end of a match.
-		 */
+	CG_QueueAchievementToast( (bgAchievementCategory_t) categoryIndex, tierIndex );
 }
 
 static void CG_ParseRankUp( void ) {
                 int rankIndex;
                 const char *name;
-                const char *nextName = "";
                 const profile_rank_def_t *rankDef;
-                const profile_rank_def_t *nextDef;
 
                 if ( trap_Argc() < 3 ) {
                         return;
@@ -1543,30 +1510,19 @@ static void CG_ParseRankUp( void ) {
                 rankIndex = atoi( CG_Argv( 1 ) );
 
                 name = CG_Argv( 2 );
-                if ( trap_Argc() >= 4 ) {
-                        nextName = CG_Argv( 3 );
-                }
-
                 rankDef = CG_GetRankDef( rankIndex );
-                nextDef = CG_GetRankDef( rankIndex + 1 );
 
                 if ( rankDef && rankDef->name ) {
                         name = rankDef->name;
                 }
 
-                if ( nextDef && nextDef->name ) {
-                        nextName = nextDef->name;
-                }
-
-                CG_AddRankAnnouncement( rankIndex, name, nextName, qtrue );
+                CG_QueueRankToast( rankIndex, name, qtrue );
 }
 
 static void CG_ParseRankDown( void ) {
                 int rankIndex;
                 const char *name;
-                const char *nextName = "";
                 const profile_rank_def_t *rankDef;
-                const profile_rank_def_t *nextDef;
 
                 if ( trap_Argc() < 3 ) {
                         return;
@@ -1575,36 +1531,75 @@ static void CG_ParseRankDown( void ) {
                 rankIndex = atoi( CG_Argv( 1 ) );
 
                 name = CG_Argv( 2 );
-                if ( trap_Argc() >= 4 ) {
-                        nextName = CG_Argv( 3 );
-                }
-
                 rankDef = CG_GetRankDef( rankIndex );
-                nextDef = CG_GetRankDef( rankIndex + 1 );
 
                 if ( rankDef && rankDef->name ) {
                         name = rankDef->name;
                 }
 
-                if ( nextDef && nextDef->name ) {
-                        nextName = nextDef->name;
-                }
-
-                CG_AddRankAnnouncement( rankIndex, name, nextName, qfalse );
+                CG_QueueRankToast( rankIndex, name, qfalse );
 }
 
 static void CG_ParseGhostMeta( void ) {
+        const char *kind;
         const char *vehicle;
         const char *path;
         int bestTime;
         char mapname[MAX_QPATH];
 
-        if ( trap_Argc() < 4 ) {
+        if ( trap_Argc() < 2 ) {
                 CG_ResetBaseGhost();
+                cg.baseGhostStatusKnown = qtrue;
+                cg.baseGhostTransferFailed = qtrue;
                 return;
         }
 
-        vehicle = CG_Argv( 1 );
+        kind = CG_Argv( 1 );
+        if ( !Q_stricmp( kind, "none" ) ) {
+                CG_ResetBaseGhost();
+                cg.baseGhostStatusKnown = qtrue;
+                return;
+        }
+
+        if ( !Q_stricmp( kind, "base" ) ) {
+                int sampleCount;
+
+                if ( trap_Argc() < 4 ) {
+                        CG_ResetBaseGhost();
+                        cg.baseGhostStatusKnown = qtrue;
+                        cg.baseGhostTransferFailed = qtrue;
+                        CG_Printf( "Base ghost transfer failed: incomplete header from server.\n" );
+                        return;
+                }
+
+                bestTime = atoi( CG_Argv( 2 ) );
+                sampleCount = atoi( CG_Argv( 3 ) );
+                CG_ResetBaseGhost();
+                cg.baseGhostStatusKnown = qtrue;
+                if ( sampleCount < 2 || sampleCount > MAX_BASE_GHOST_TRANSFER_FRAMES || bestTime < 0 ) {
+                        cg.baseGhostTransferFailed = qtrue;
+                        CG_Printf( "Base ghost transfer failed: invalid route size or time.\n" );
+                        return;
+                }
+
+                cg.baseGhostTransferPending = qtrue;
+                cg.baseGhostTransferExpected = sampleCount;
+                cg.baseGhostTransferBestTime = bestTime;
+                cg.baseGhostBestTime = bestTime;
+                Q_strncpyz( cg.baseGhostVehicle, "server", sizeof( cg.baseGhostVehicle ) );
+                Q_strncpyz( cg.baseGhostPath, "server route", sizeof( cg.baseGhostPath ) );
+                return;
+        }
+
+        /* Backward compatibility with servers that still send a local file path. */
+        if ( trap_Argc() < 4 ) {
+                CG_ResetBaseGhost();
+                cg.baseGhostStatusKnown = qtrue;
+                cg.baseGhostTransferFailed = qtrue;
+                return;
+        }
+
+        vehicle = kind;
         bestTime = atoi( CG_Argv( 2 ) );
         path = CG_Argv( 3 );
 
@@ -1612,6 +1607,8 @@ static void CG_ParseGhostMeta( void ) {
 
         if ( !vehicle[0] || !path || !path[0] ) {
                 CG_ResetBaseGhost();
+                cg.baseGhostStatusKnown = qtrue;
+                cg.baseGhostTransferFailed = qtrue;
                 return;
         }
 
@@ -1620,12 +1617,101 @@ static void CG_ParseGhostMeta( void ) {
         }
 }
 
+static void CG_FailBaseGhostTransfer( const char *reason ) {
+        CG_ResetBaseGhost();
+        cg.baseGhostStatusKnown = qtrue;
+        cg.baseGhostTransferFailed = qtrue;
+        CG_Printf( "Base ghost transfer failed: %s.\n", reason ? reason : "invalid route data" );
+}
+
+static void CG_ParseGhostData( void ) {
+        int first;
+        int count;
+        int i;
+
+        if ( !cg.baseGhostTransferPending || trap_Argc() < 3 ) {
+                CG_FailBaseGhostTransfer( "unexpected route data" );
+                return;
+        }
+
+        first = atoi( CG_Argv( 1 ) );
+        count = atoi( CG_Argv( 2 ) );
+        if ( count < 1 || count > 16 || first != cg.baseGhostTransferReceived ||
+             first + count > cg.baseGhostTransferExpected || trap_Argc() != 3 + count * 4 ) {
+                CG_FailBaseGhostTransfer( "invalid chunk sequence" );
+                return;
+        }
+
+        for ( i = 0; i < count; ++i ) {
+                int arg = 3 + i * 4;
+                ghostFrame_t *frame = &cg.baseGhost.frames[cg.baseGhostTransferReceived];
+                int timeOffset = atoi( CG_Argv( arg ) );
+
+                if ( cg.baseGhostTransferReceived == 0 ) {
+                        cg.baseGhostTransferFirstTime = timeOffset;
+                }
+                if ( timeOffset < cg.baseGhostTransferFirstTime ||
+                     ( cg.baseGhostTransferReceived > 0 && timeOffset < cg.baseGhost.frames[cg.baseGhostTransferReceived - 1].timeOffset + cg.baseGhostTransferFirstTime ) ) {
+                        CG_FailBaseGhostTransfer( "route timestamps are not ordered" );
+                        return;
+                }
+
+                memset( frame, 0, sizeof( *frame ) );
+                frame->timeOffset = timeOffset - cg.baseGhostTransferFirstTime;
+                frame->origin[0] = atof( CG_Argv( arg + 1 ) );
+                frame->origin[1] = atof( CG_Argv( arg + 2 ) );
+                frame->origin[2] = atof( CG_Argv( arg + 3 ) );
+                cg.baseGhostTransferReceived++;
+        }
+}
+
+static void CG_ParseGhostDone( void ) {
+        int i;
+
+        if ( !cg.baseGhostTransferPending ||
+             cg.baseGhostTransferReceived != cg.baseGhostTransferExpected ||
+             cg.baseGhostTransferReceived < 2 ) {
+                CG_FailBaseGhostTransfer( "route is incomplete" );
+                return;
+        }
+
+        for ( i = 0; i < cg.baseGhostTransferReceived; ++i ) {
+                vec3_t direction;
+                if ( i + 1 < cg.baseGhostTransferReceived ) {
+                        VectorSubtract( cg.baseGhost.frames[i + 1].origin, cg.baseGhost.frames[i].origin, direction );
+                } else {
+                        VectorSubtract( cg.baseGhost.frames[i].origin, cg.baseGhost.frames[i - 1].origin, direction );
+                }
+                vectoangles( direction, cg.baseGhost.frames[i].angles );
+        }
+
+        cg.baseGhost.frameCount = cg.baseGhostTransferReceived;
+        cg.baseGhost.startIndex = 0;
+        cg.baseGhost.writeIndex = cg.baseGhost.frameCount % MAX_GHOST_FRAMES;
+        cg.baseGhost.duration = cg.baseGhost.frames[cg.baseGhost.frameCount - 1].timeOffset;
+        cg.baseGhost.valid = qtrue;
+        cg.baseGhostBestTime = cg.baseGhostTransferBestTime;
+        cg.baseGhostAvailable = qtrue;
+        cg.baseGhostStatusKnown = qtrue;
+        cg.baseGhostTransferPending = qfalse;
+        cg.baseGhostTransferFailed = qfalse;
+        if ( cg_developer.integer ) {
+                CG_Printf( "Received base ghost from server (%d samples, %d ms).\n",
+                        cg.baseGhost.frameCount, cg.baseGhostBestTime );
+        }
+}
+
 
 static int cgLastElimStatusTime = -1;
 
 void CG_ResetEliminationTimeline( void ) {
+	int i;
+
         memset( cg.elimTimelineEvents, 0, sizeof( cg.elimTimelineEvents ) );
         cg.elimTimelineCount = 0;
+	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+		cg_entities[i].eliminationOut = qfalse;
+	}
 }
 
 void CG_AddEliminationTimelineEvent( int clientNum, int round, int remaining, int timestamp ) {
@@ -1697,6 +1783,9 @@ static void CG_ParseEliminationStatus( void ) {
         if ( remaining < 0 ) {
                 remaining = 0;
         }
+	if ( eventType == 1 && clientNum >= 0 && clientNum < MAX_CLIENTS ) {
+		cg_entities[clientNum].eliminationOut = qtrue;
+	}
 
         if ( cg.snap && clientNum == cg.snap->ps.clientNum ) {
                 isLocal = qtrue;
@@ -1744,6 +1833,10 @@ static void CG_ServerCommand( void ) {
 		// server claimed the command
 		return;
 	}
+	if ( !strcmp( cmd, "cleanSector" ) ) {
+		CG_QueueHudToast( HUD_TOAST_CLEAN_SECTOR_ITEM );
+		return;
+	}
 
         if ( !strcmp( cmd, "achv" ) ) {
                 CG_ParseAchievementUnlock();
@@ -1762,6 +1855,16 @@ static void CG_ServerCommand( void ) {
 
         if ( !strcmp( cmd, "ghostmeta" ) ) {
                 CG_ParseGhostMeta();
+                return;
+        }
+
+        if ( !strcmp( cmd, "ghostdata" ) ) {
+                CG_ParseGhostData();
+                return;
+        }
+
+        if ( !strcmp( cmd, "ghostdone" ) ) {
+                CG_ParseGhostDone();
                 return;
         }
 
@@ -1917,6 +2020,11 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
+	if ( !strcmp( cmd, "derbyIntegrity" ) ) {
+		CG_ParseDerbyIntegrity();
+		return;
+	}
+
 	if ( !strcmp( cmd, "tinfo" ) ) {
 		CG_ParseTeamInfo();
 		return;
@@ -1981,6 +2089,11 @@ static void CG_ServerCommand( void ) {
 
 	if ( !strcmp( cmd, "positions" ) ) {
 		CG_ParsePositions();
+		return;
+	}
+
+	if ( !strcmp( cmd, "raceSplit" ) ) {
+		CG_ParseRaceSplit();
 		return;
 	}
 

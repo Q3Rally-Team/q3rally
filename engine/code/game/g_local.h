@@ -294,13 +294,13 @@ typedef struct ghostRecord_s {
 } ghostRecord_t;
 
 #define MAX_GHOST_BOT_WAYPOINTS 4096
-#define MAX_GHOST_BOT_ROUTE_VARIANTS 8
 #define MAX_BOT_PATH_NODES 4096
 #define MAX_BOT_PATH_ROUTES 64
 
 typedef struct ghostWaypoint_s {
 	vec3_t	origin;
 	int	timeOffset;
+	qboolean required;	// start, finish, or interpolated checkpoint crossing
 } ghostWaypoint_t;
 
 typedef enum {
@@ -312,21 +312,17 @@ typedef enum {
 } ghostRouteLineFamily_t;
 
 typedef struct ghostRouteLineProfile_s {
-	float lateralOffset;
 	float speedScale;
 } ghostRouteLineProfile_t;
 
 typedef struct ghostRouteSegment_s {
 	float recommendedSpeed;
 	float curvature;
-	float overtakeWindowInside;
-	float overtakeWindowOutside;
 	ghostRouteLineProfile_t lines[GHOST_LINE_FAMILY_COUNT];
 } ghostRouteSegment_t;
 
 typedef struct ghostBotRoute_s {
 	char	path[MAX_QPATH];
-	char	vehicleClass[MAX_QPATH];
 	int	bestTimeMs;
 	int	numWaypoints;
 	int	numSegments;
@@ -530,6 +526,7 @@ struct gclient_s {
 	int			horn_sound_time;
 
 	int			lastCheckpointTime;
+	qboolean	cleanCheckpointSegment;
 	int			lapStartTime;
 	int			bestLapMs;
 	int			lapTimes[LADDER_MAX_LAP_TIMES];
@@ -546,6 +543,7 @@ struct gclient_s {
 	/* Q3Rally KOTH post-match stats */
 	int			kothHillKills;
 	int			kothContestTimeMs;
+	int			kothHoldTimeMs;
 	int			dominationZoneHoldMs;   /* cumulative ms a player held any sigil zone (GT_DOMINATION) */
 
 	// profileLastCmdTime wird nicht mehr benötigt - kann entfernt werden
@@ -583,6 +581,8 @@ typedef struct {
 	int			startTime;				// level.time the map was started
 
 	int			teamScores[TEAM_NUM_TEAMS];
+	int			kothTeamHoldTimeMs[TEAM_NUM_TEAMS];
+	qboolean	kothMapInvalid;
 // STONELANCE
 	int			teamTimes[TEAM_NUM_TEAMS];
 // END
@@ -674,6 +674,8 @@ typedef struct {
         float                   cpDist[MAX_GENTITIES];
         gentity_t       *checkpoints[MAX_GENTITIES];
         float                   trackLength;
+        float                   sprintFinishDistance; // final checkpoint-to-finish leg for A2B sprint
+        gentity_t               *startEnt;            // separate rally_start for A2B sprint
         gentity_t               *finishEnt;     // rally_startfinish or rally_finish entity, cached in Think_StartFinish
 
         qtime_t         ladderStartTime;
@@ -956,10 +958,11 @@ qboolean isRallyDMRace( void );
 qboolean isRaceObserver( int clientNum );
 void G_PrintMapStats( gentity_t *player, qboolean generateArenaFile, char *longname );
 void G_Ghost_InitForMap( const char *mapname );
+void G_Ghost_BuildBotRoutes( void );
 const ghostRecord_t *G_Ghost_FindBestRecord( void );
 void G_Ghost_AnnounceForClient( gentity_t *ent );
+void G_Ghost_ProcessClientTransfers( void );
 qboolean G_Ghost_GetBotRoute( const ghostBotRoute_t **outRoute );
-qboolean G_Ghost_GetBotRouteForVariant( const char *variantKey, const ghostBotRoute_t **outRoute );
 int G_Ghost_SelectClosestWaypoint( const ghostBotRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow );
 void G_BotPath_ClearAllRoutes( void );
 int G_BotPath_RegisterRoute( const char *name, const botPathNode_t *nodes, int numNodes );
@@ -1062,6 +1065,7 @@ qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker );
 void KOTH_Think( void ); /* Q3Rally KOTH */
 qboolean KOTH_HandleOvertime( void ); /* Q3Rally KOTH */
 qboolean KOTH_IsClientInHill( int clientNum ); /* Q3Rally KOTH */
+qboolean KOTH_MapHasValidHill( void ); /* exactly one non-degenerate hill brush */
 
 //
 // g_mem.c

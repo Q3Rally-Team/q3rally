@@ -2398,7 +2398,13 @@ Menu_Cache
 */
 void Menu_Cache( void )
 {
-	uis.charset			= trap_R_RegisterShaderNoMip( "gfx/2d/bigchars" );
+	/* The frontend uses a clean UI font atlas instead of the stock Q3
+	 * bitmap charset. Keep the original as a safe fallback for installations
+	 * that do not yet contain the new asset. */
+	uis.charset			= trap_R_RegisterShaderNoMip( "gfx/ui/frontend_charset.png" );
+	if ( !uis.charset ) {
+		uis.charset		= trap_R_RegisterShaderNoMip( "gfx/2d/bigchars" );
+	}
 	uis.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.tga" );
 	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.tga" );
 	uis.charsetPropB	= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.tga" );

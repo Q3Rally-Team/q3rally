@@ -22,8 +22,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 void GraphicsOptions_MenuInit( void );
+static void GraphicsOptions_Event( void *ptr, int event );
 
 /*
 =======================================================================
@@ -54,6 +56,30 @@ static char* driverinfo_artlist[] =
 
 #define ID_DRIVERINFOBACK	100
 
+#define DRIVERINFO_FRAME_X		24
+#define DRIVERINFO_FRAME_Y		20
+#define DRIVERINFO_FRAME_WIDTH	592
+#define DRIVERINFO_FRAME_HEIGHT	440
+#define DRIVERINFO_SUMMARY_X	40
+#define DRIVERINFO_SUMMARY_Y	104
+#define DRIVERINFO_SUMMARY_WIDTH	560
+#define DRIVERINFO_SUMMARY_HEIGHT	72
+#define DRIVERINFO_PIXEL_X		40
+#define DRIVERINFO_PIXEL_Y		196
+#define DRIVERINFO_PIXEL_WIDTH	200
+#define DRIVERINFO_PIXEL_HEIGHT	190
+#define DRIVERINFO_EXT_X		256
+#define DRIVERINFO_EXT_Y		196
+#define DRIVERINFO_EXT_WIDTH	344
+#define DRIVERINFO_EXT_HEIGHT	190
+#define DRIVERINFO_EXT_LIST_X	272
+#define DRIVERINFO_EXT_LIST_Y	248
+#define DRIVERINFO_EXT_LIST_WIDTH	36
+#define DRIVERINFO_EXT_LIST_HEIGHT	7
+#define DRIVERINFO_ACTION_Y	420
+#define DRIVERINFO_ACTION_WIDTH	120
+#define DRIVERINFO_ACTION_HEIGHT	24
+
 typedef struct
 {
 	menuframework_s	menu;
@@ -76,6 +102,108 @@ typedef struct
 } driverinfo_t;
 
 static driverinfo_t	s_driverinfo;
+static vec4_t driverInfoScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t driverInfoTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t driverInfoMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t driverInfoAccentColor = UI_FRONTEND_COLOR_ACCENT;
+
+static void DriverInfo_FitText( char *out, int outSize, const char *text,
+	int maxWidth )
+{
+	int len;
+
+	Q_strncpyz( out, text ? text : "-", outSize );
+	if ( Frontend_TextWidth( out, UI_SMALLFONT ) <= maxWidth ) {
+		return;
+	}
+
+	len = (int)strlen( out );
+	while ( len > 3 && Frontend_TextWidth( out, UI_SMALLFONT ) > maxWidth ) {
+		len--;
+		out[len] = '\0';
+	}
+	if ( len >= 3 ) {
+		out[len - 3] = '.';
+		out[len - 2] = '.';
+		out[len - 1] = '.';
+	}
+}
+
+static void DriverInfo_DrawField( int x, int y, const char *label,
+	const char *value, int maxWidth )
+{
+	char fitted[128];
+
+	DriverInfo_FitText( fitted, sizeof( fitted ), value, maxWidth );
+	Frontend_DrawText( x, y, label, UI_LEFT | UI_SMALLFONT,
+		driverInfoMutedColor );
+	Frontend_DrawText( x, y + 16, fitted, UI_LEFT | UI_SMALLFONT,
+		driverInfoTextColor );
+}
+
+static void DriverInfo_DrawValueRow( int x, int y, const char *label,
+	const char *value )
+{
+	Frontend_DrawText( x, y, label, UI_LEFT | UI_SMALLFONT,
+		driverInfoMutedColor );
+	Frontend_DrawText( x + 104, y, value, UI_LEFT | UI_BIGFONT,
+		driverInfoTextColor );
+}
+
+static void DriverInfo_DrawExtensions( void *self )
+{
+	menulist_s *list;
+	int i;
+
+	list = (menulist_s *)self;
+	if ( s_driverinfo.numstrings <= 0 ) {
+		Frontend_DrawText( DRIVERINFO_EXT_LIST_X, DRIVERINFO_EXT_LIST_Y,
+			"No extensions reported", UI_LEFT | UI_SMALLFONT,
+			driverInfoMutedColor );
+		return;
+	}
+
+	for ( i = 0; i < DRIVERINFO_EXT_LIST_HEIGHT; i++ ) {
+		int index;
+		int y;
+		qboolean active;
+		vec4_t textColor;
+		char fitted[128];
+
+		index = list->top + i;
+		if ( index < 0 || index >= s_driverinfo.numstrings ) {
+			break;
+		}
+
+		y = DRIVERINFO_EXT_LIST_Y + i * SMALLCHAR_HEIGHT;
+		active = ( index == list->curvalue ) ? qtrue : qfalse;
+		if ( active ) {
+			UI_FillRect( DRIVERINFO_EXT_LIST_X, y, 2, SMALLCHAR_HEIGHT,
+				driverInfoAccentColor );
+			Vector4Copy( driverInfoAccentColor, textColor );
+		} else {
+			Vector4Copy( driverInfoMutedColor, textColor );
+		}
+
+		DriverInfo_FitText( fitted, sizeof( fitted ),
+			s_driverinfo.strings[index], 288 );
+		Frontend_DrawText( DRIVERINFO_EXT_LIST_X + 10, y, fitted,
+			UI_LEFT | UI_SMALLFONT, textColor );
+	}
+}
+
+static void DriverInfo_DrawAction( void *self )
+{
+	menutext_s *button;
+	qboolean focus;
+
+	button = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+	Frontend_DrawButton( button->generic.left, button->generic.top,
+		button->generic.right - button->generic.left,
+		button->generic.bottom - button->generic.top,
+		button->string, 1.0f, focus, UI_FRONTEND_TEXT_LEFT );
+}
 
 /*
 =================
@@ -102,36 +230,61 @@ DriverInfo_MenuDraw
 */
 static void DriverInfo_MenuDraw( void )
 {
-// STONELANCE
-//	int	i;
-//	int	y;
-// END
+	char colorBits[32];
+	char depthBits[32];
+	char stencilBits[32];
+	char extensionCount[32];
+
+	Frontend_DrawBackground( driverInfoScrimColor );
+	Frontend_DrawPanel( DRIVERINFO_FRAME_X, DRIVERINFO_FRAME_Y,
+		DRIVERINFO_FRAME_WIDTH, DRIVERINFO_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( DRIVERINFO_FRAME_X + 24, DRIVERINFO_FRAME_Y + 24,
+		"Driver info", UI_LEFT | UI_BIGFONT, driverInfoTextColor );
+	Frontend_DrawText( DRIVERINFO_FRAME_X + 24, DRIVERINFO_FRAME_Y + 48,
+		"Renderer, display capabilities and extensions",
+		UI_LEFT | UI_SMALLFONT, driverInfoMutedColor );
+	Frontend_DrawStatusChip( DRIVERINFO_FRAME_X + DRIVERINFO_FRAME_WIDTH - 112,
+		DRIVERINFO_FRAME_Y + 26, "Renderer", driverInfoAccentColor, 1.0f );
+
+	Frontend_DrawCard( DRIVERINFO_SUMMARY_X, DRIVERINFO_SUMMARY_Y,
+		DRIVERINFO_SUMMARY_WIDTH, DRIVERINFO_SUMMARY_HEIGHT, 1.0f, qfalse );
+	DriverInfo_DrawField( DRIVERINFO_SUMMARY_X + 16,
+		DRIVERINFO_SUMMARY_Y + 12, "Vendor", uis.glconfig.vendor_string, 150 );
+	DriverInfo_DrawField( DRIVERINFO_SUMMARY_X + 200,
+		DRIVERINFO_SUMMARY_Y + 12, "Renderer", uis.glconfig.renderer_string, 150 );
+	DriverInfo_DrawField( DRIVERINFO_SUMMARY_X + 384,
+		DRIVERINFO_SUMMARY_Y + 12, "Version", uis.glconfig.version_string, 150 );
+
+	Frontend_DrawCard( DRIVERINFO_PIXEL_X, DRIVERINFO_PIXEL_Y,
+		DRIVERINFO_PIXEL_WIDTH, DRIVERINFO_PIXEL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( DRIVERINFO_PIXEL_X + 16, DRIVERINFO_PIXEL_Y + 20,
+		"Pixel format", UI_LEFT | UI_SMALLFONT, driverInfoMutedColor );
+	Com_sprintf( colorBits, sizeof( colorBits ), "%d bit", uis.glconfig.colorBits );
+	Com_sprintf( depthBits, sizeof( depthBits ), "%d bit", uis.glconfig.depthBits );
+	Com_sprintf( stencilBits, sizeof( stencilBits ), "%d bit", uis.glconfig.stencilBits );
+	DriverInfo_DrawValueRow( DRIVERINFO_PIXEL_X + 16,
+		DRIVERINFO_PIXEL_Y + 62, "Color", colorBits );
+	DriverInfo_DrawValueRow( DRIVERINFO_PIXEL_X + 16,
+		DRIVERINFO_PIXEL_Y + 94, "Depth", depthBits );
+	DriverInfo_DrawValueRow( DRIVERINFO_PIXEL_X + 16,
+		DRIVERINFO_PIXEL_Y + 126, "Stencil", stencilBits );
+
+	Frontend_DrawCard( DRIVERINFO_EXT_X, DRIVERINFO_EXT_Y,
+		DRIVERINFO_EXT_WIDTH, DRIVERINFO_EXT_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( DRIVERINFO_EXT_X + 16, DRIVERINFO_EXT_Y + 20,
+		"Extensions", UI_LEFT | UI_SMALLFONT, driverInfoMutedColor );
+	Com_sprintf( extensionCount, sizeof( extensionCount ), "%d detected",
+		s_driverinfo.numstrings );
+	Frontend_DrawText( DRIVERINFO_EXT_X + DRIVERINFO_EXT_WIDTH - 16,
+		DRIVERINFO_EXT_Y + 20, extensionCount, UI_RIGHT | UI_SMALLFONT,
+		driverInfoAccentColor );
 
 	Menu_Draw( &s_driverinfo.menu );
 
-	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT, color_red );
-
-	UI_DrawString( 320, 80+16, uis.glconfig.vendor_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 96+16, uis.glconfig.version_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 112+16, uis.glconfig.renderer_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 152+16, va ("color(%d-bits) Z(%d-bits) stencil(%d-bits)", uis.glconfig.colorBits, uis.glconfig.depthBits, uis.glconfig.stencilBits), UI_CENTER|UI_SMALLFONT, text_color_normal );
-
-	// double column
-// STONELANCE
-/*
-	y = 192+16;
-	for (i=0; i<s_driverinfo.numstrings/2; i++) {
-		UI_DrawString( 320-4, y, s_driverinfo.strings[i*2], UI_RIGHT|UI_SMALLFONT, text_color_normal );
-		UI_DrawString( 320+4, y, s_driverinfo.strings[i*2+1], UI_LEFT|UI_SMALLFONT, text_color_normal );
-		y += SMALLCHAR_HEIGHT;
-	}
-
-	if (s_driverinfo.numstrings & 1)
-		UI_DrawString( 320, y, s_driverinfo.strings[s_driverinfo.numstrings-1], UI_CENTER|UI_SMALLFONT, text_color_normal );
-*/
-// END
+	Frontend_DrawText( DRIVERINFO_FRAME_X + 24, DRIVERINFO_FRAME_Y + 384,
+		"Select an extension   Up / down scroll   Esc back",
+		UI_LEFT | UI_SMALLFONT, driverInfoMutedColor );
 }
 
 /*
@@ -213,12 +366,12 @@ static void UI_DriverInfo_Menu( void )
 */
 	s_driverinfo.back.generic.type				= MTYPE_PTEXT;
 	s_driverinfo.back.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_driverinfo.back.generic.x					= 20;
-	s_driverinfo.back.generic.y					= 480 - 50;
+	s_driverinfo.back.generic.x					= DRIVERINFO_FRAME_X + 24;
+	s_driverinfo.back.generic.y					= DRIVERINFO_ACTION_Y;
 	s_driverinfo.back.generic.id				= ID_DRIVERINFOBACK;
 	s_driverinfo.back.generic.callback			= DriverInfo_Event; 
-	s_driverinfo.back.string					= "< BACK";
-	s_driverinfo.back.color						= text_color_normal;
+	s_driverinfo.back.string					= "Back";
+	s_driverinfo.back.color						= driverInfoTextColor;
 	s_driverinfo.back.style						= UI_LEFT | UI_SMALLFONT;
 // END
 
@@ -262,15 +415,17 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.extensionList.generic.type			= MTYPE_LISTBOX;
 	s_driverinfo.extensionList.generic.flags		= QMF_CENTER_JUSTIFY | QMF_HIGHLIGHT_IF_FOCUS | QMF_SCROLL_ONLY;
 	s_driverinfo.extensionList.scrollbarAlignment	= SB_RIGHT | SB_HIDE;
-	s_driverinfo.extensionList.generic.x			= 320;
-	s_driverinfo.extensionList.generic.y			= 208;
-	s_driverinfo.extensionList.width				= 44;
-	s_driverinfo.extensionList.height				= 13;
+	s_driverinfo.extensionList.generic.x			= DRIVERINFO_EXT_LIST_X +
+				(DRIVERINFO_EXT_LIST_WIDTH * SMALLCHAR_WIDTH) / 2;
+	s_driverinfo.extensionList.generic.y			= DRIVERINFO_EXT_LIST_Y;
+	s_driverinfo.extensionList.width				= DRIVERINFO_EXT_LIST_WIDTH;
+	s_driverinfo.extensionList.height				= DRIVERINFO_EXT_LIST_HEIGHT;
 	s_driverinfo.extensionList.itemnames			= (const char **)s_driverinfo.strings;
 	s_driverinfo.extensionList.numitems				= s_driverinfo.numstrings;
+	s_driverinfo.extensionList.generic.ownerdraw		= DriverInfo_DrawExtensions;
 // END
 
-	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.banner );
+// The modern header is drawn by DriverInfo_MenuDraw.
 // STONELANCE
 /*
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.framel );
@@ -280,7 +435,16 @@ static void UI_DriverInfo_Menu( void )
 // END
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.back );
 
+	s_driverinfo.back.generic.ownerdraw = DriverInfo_DrawAction;
+	s_driverinfo.back.generic.left = DRIVERINFO_FRAME_X + 24;
+	s_driverinfo.back.generic.top = DRIVERINFO_ACTION_Y;
+	s_driverinfo.back.generic.right = DRIVERINFO_FRAME_X + 24 +
+		DRIVERINFO_ACTION_WIDTH;
+	s_driverinfo.back.generic.bottom = DRIVERINFO_ACTION_Y +
+		DRIVERINFO_ACTION_HEIGHT;
+
 	UI_PushMenu( &s_driverinfo.menu );
+	Menu_SetCursorToItem( &s_driverinfo.menu, &s_driverinfo.extensionList );
 }
 
 /*
@@ -316,6 +480,46 @@ GRAPHICS OPTIONS MENU
 
 #define ID_ANISOTROPY	112
 #define ID_MSAA			113
+#define ID_DRIVER		114
+#define ID_EXTENSIONS	115
+#define ID_COLORDEPTH	116
+#define ID_LIGHTING		117
+#define ID_GEOMETRY		118
+#define ID_TEXTUREDETAIL	119
+#define ID_TEXTUREQUALITY	120
+#define ID_FILTER		121
+#define ID_APPLY		122
+
+#define GRAPHICS_FRAME_X		24
+#define GRAPHICS_FRAME_Y		20
+#define GRAPHICS_FRAME_WIDTH	592
+#define GRAPHICS_FRAME_HEIGHT	440
+#define GRAPHICS_NAV_X		40
+#define GRAPHICS_NAV_Y		104
+#define GRAPHICS_NAV_WIDTH	164
+#define GRAPHICS_NAV_HEIGHT	292
+#define GRAPHICS_DETAIL_X	220
+#define GRAPHICS_DETAIL_Y	104
+#define GRAPHICS_DETAIL_WIDTH	376
+#define GRAPHICS_DETAIL_HEIGHT	292
+#define GRAPHICS_ROW_HEIGHT	24
+#define GRAPHICS_ROW_GAP		4
+#define GRAPHICS_ROW_START_Y	148
+#define GRAPHICS_COLUMN_WIDTH	176
+#define GRAPHICS_COLUMN_GAP	8
+#define GRAPHICS_COLUMN_LEFT_X	236
+#define GRAPHICS_COLUMN_RIGHT_X	420
+#define GRAPHICS_VALUE_OFFSET	112
+#define GRAPHICS_ACTION_Y		420
+#define GRAPHICS_ACTION_HEIGHT	24
+#define GRAPHICS_ACTION_WIDTH	120
+
+static vec4_t graphicsScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t graphicsAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t graphicsTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t graphicsMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t graphicsBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t graphicsFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 typedef struct {
 	menuframework_s	menu;
@@ -748,6 +952,136 @@ static void GraphicsOptions_UpdateMenuItems( void )
 	GraphicsOptions_CheckConfig();
 }	
 
+static const char *GraphicsOptions_ListValue( menulist_s *item )
+{
+	int i;
+
+	if ( !item->itemnames || item->curvalue < 0 ) {
+		return "-";
+	}
+
+	for ( i = 0; item->itemnames[i]; i++ ) {
+		if ( i == item->curvalue ) {
+			return item->itemnames[i];
+		}
+	}
+
+	return "-";
+}
+
+static const char *GraphicsOptions_CurrentValue( menucommon_s *item )
+{
+	if ( item->id == ID_LIST ) {
+		switch ( s_graphicsoptions.list.curvalue ) {
+		case 0:
+			return "Very high";
+		case 1:
+			return "High";
+		case 2:
+			return "Normal";
+		case 3:
+			return "Fast";
+		case 4:
+			return "Fastest";
+		default:
+			return "Custom";
+		}
+	}
+
+	if ( item->id == ID_TEXTUREDETAIL ) {
+		switch ( (int)s_graphicsoptions.tq.curvalue ) {
+		case 0:
+			return "Low";
+		case 1:
+			return "Medium";
+		case 2:
+			return "High";
+		default:
+			return "Ultra";
+		}
+	}
+
+	return GraphicsOptions_ListValue( (menulist_s *)item );
+}
+
+static void GraphicsOptions_DrawSetting( void *self )
+{
+	menucommon_s *item;
+	const char *value;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	item = (menucommon_s *)self;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+	value = GraphicsOptions_CurrentValue( item );
+
+	fillColor[0] = graphicsFocusColor[0];
+	fillColor[1] = graphicsFocusColor[1];
+	fillColor[2] = graphicsFocusColor[2];
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	lineColor[0] = graphicsBorderColor[0];
+	lineColor[1] = graphicsBorderColor[1];
+	lineColor[2] = graphicsBorderColor[2];
+	lineColor[3] = 0.55f;
+
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		lineColor[0] = graphicsAccentColor[0];
+		lineColor[1] = graphicsAccentColor[1];
+		lineColor[2] = graphicsAccentColor[2];
+		lineColor[3] = 1.0f;
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		labelColor[0] = graphicsMutedColor[0];
+		labelColor[1] = graphicsMutedColor[1];
+		labelColor[2] = graphicsMutedColor[2];
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( graphicsAccentColor, labelColor );
+		Vector4Copy( graphicsTextColor, valueColor );
+	} else {
+		Vector4Copy( graphicsMutedColor, labelColor );
+		Vector4Copy( graphicsTextColor, valueColor );
+	}
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->left + GRAPHICS_VALUE_OFFSET,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_LEFT | UI_SMALLFONT, valueColor );
+}
+
+static void GraphicsOptions_DrawAction( void *self )
+{
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, focus, UI_CENTER );
+}
+
 /*
 =================
 GraphicsOptions_ApplyChanges
@@ -875,7 +1209,12 @@ static void GraphicsOptions_ApplyChanges( void *unused, int notification )
 		}
 	}
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
+	/* A video restart reloads the UI VM and therefore clears the menu stack.
+	 * Remember that this Apply came from Config so the freshly initialized
+	 * frontend can restore the user to the Config hub instead of the main
+	 * menu. */
+	trap_Cmd_ExecuteText( EXEC_APPEND,
+		"set q3r_ui_return_config 1\nvid_restart\n" );
 }
 
 /*
@@ -934,27 +1273,8 @@ static void GraphicsOptions_Event( void* ptr, int event ) {
 		UI_PopMenu();
 		break;
 
-	case ID_GRAPHICS:
-		break;
-
 	case ID_ADVANCED_GRAPHICS:
-		UI_PopMenu();
 		UI_AdvancedGraphicsOptionsMenu();
-		break;
-
-	case ID_DISPLAY:
-		UI_PopMenu();
-		UI_DisplayOptionsMenu();
-		break;
-
-	case ID_SOUND:
-		UI_PopMenu();
-		UI_SoundOptionsMenu();
-		break;
-
-	case ID_NETWORK:
-		UI_PopMenu();
-		UI_NetworkOptionsMenu();
 		break;
 	}
 }
@@ -980,10 +1300,35 @@ GraphicsOptions_MenuDraw
 */
 void GraphicsOptions_MenuDraw (void)
 {
-//APSFIX - rework this
 	GraphicsOptions_UpdateMenuItems();
 
+	Frontend_DrawBackground( graphicsScrimColor );
+	Frontend_DrawPanel( GRAPHICS_FRAME_X, GRAPHICS_FRAME_Y,
+		GRAPHICS_FRAME_WIDTH, GRAPHICS_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( GRAPHICS_FRAME_X + 24, GRAPHICS_FRAME_Y + 24,
+		"Graphics", UI_LEFT | UI_BIGFONT, graphicsTextColor );
+	Frontend_DrawText( GRAPHICS_FRAME_X + 24, GRAPHICS_FRAME_Y + 48,
+		"Tune display mode, quality and rendering",
+		UI_LEFT | UI_SMALLFONT, graphicsMutedColor );
+	Frontend_DrawStatusChip( GRAPHICS_FRAME_X + GRAPHICS_FRAME_WIDTH - 104,
+		GRAPHICS_FRAME_Y + 26, "Settings", graphicsAccentColor, 1.0f );
+
+	Frontend_DrawCard( GRAPHICS_NAV_X, GRAPHICS_NAV_Y,
+		GRAPHICS_NAV_WIDTH, GRAPHICS_NAV_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( GRAPHICS_DETAIL_X, GRAPHICS_DETAIL_Y,
+		GRAPHICS_DETAIL_WIDTH, GRAPHICS_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( GRAPHICS_NAV_X + 16, GRAPHICS_NAV_Y + 22,
+		"Submenu", UI_LEFT | UI_SMALLFONT, graphicsMutedColor );
+	Frontend_DrawText( GRAPHICS_DETAIL_X + 16, GRAPHICS_DETAIL_Y + 22,
+		"Display & quality", UI_LEFT | UI_SMALLFONT,
+		graphicsMutedColor );
+
 	Menu_Draw( &s_graphicsoptions.menu );
+
+	Frontend_DrawText( GRAPHICS_FRAME_X + 24, GRAPHICS_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, graphicsMutedColor );
 }
 
 /*
@@ -1128,6 +1473,41 @@ static void GraphicsOptions_SetMenuItems( void )
 	{
 		s_graphicsoptions.colordepth.curvalue = 1;
 	}
+}
+
+static void GraphicsOptions_SetBounds( menucommon_s *item, int id,
+	int x, int y, int width, int height, const char *label )
+{
+	item->id = id;
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void GraphicsOptions_SetChildActionBounds( menutext_s *item,
+	int id, const char *label, int y )
+{
+	item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	item->generic.callback = GraphicsOptions_Event;
+	item->string = (char *)label;
+	item->style = UI_CENTER | UI_SMALLFONT;
+	item->generic.ownerdraw = GraphicsOptions_DrawAction;
+	GraphicsOptions_SetBounds( &item->generic, id, GRAPHICS_NAV_X + 16, y,
+		GRAPHICS_NAV_WIDTH - 32, GRAPHICS_ROW_HEIGHT, NULL );
+}
+
+static void GraphicsOptions_SetSettingBounds( menucommon_s *item, int id,
+	const char *label, int x, int y )
+{
+	item->ownerdraw = GraphicsOptions_DrawSetting;
+	GraphicsOptions_SetBounds( item, id, x, y, GRAPHICS_COLUMN_WIDTH,
+		GRAPHICS_ROW_HEIGHT, label );
 }
 
 /*
@@ -1514,7 +1894,6 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.apply.style					= UI_RIGHT | UI_SMALLFONT;
 // END
 
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.banner );
 // STONELANCE
 /*
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.framel );
@@ -1522,11 +1901,7 @@ void GraphicsOptions_MenuInit( void )
 */
 // END
 
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.graphics );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.advanced_graphics );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.display );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.sound );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.network );
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.list );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driver );
@@ -1546,6 +1921,66 @@ void GraphicsOptions_MenuInit( void )
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.back );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.apply );
+
+	/* Menu_AddItem initializes the legacy widgets and overwrites their
+	 * default bounds. Apply the frontend layout after that initialization so
+	 * the custom ownerdraw positions are the ones used for drawing and input. */
+	GraphicsOptions_SetChildActionBounds( &s_graphicsoptions.advanced_graphics,
+		ID_ADVANCED_GRAPHICS, "Advanced graphics", 152 );
+	GraphicsOptions_SetChildActionBounds( &s_graphicsoptions.driverinfo,
+		ID_DRIVERINFO, "Driver info", 184 );
+
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.list.generic,
+		ID_LIST, "Preset", GRAPHICS_COLUMN_LEFT_X, GRAPHICS_ROW_START_Y );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.driver.generic,
+		ID_DRIVER, "Renderer", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.ratio.generic,
+		ID_RATIO, "Aspect ratio", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + 2 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.mode.generic,
+		ID_MODE, "Resolution", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + 3 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.colordepth.generic,
+		ID_COLORDEPTH, "Color depth", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + 4 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.fs.generic,
+		ID_FULLSCREEN, "Fullscreen", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + 5 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.msaa.generic,
+		ID_MSAA, "MSAA", GRAPHICS_COLUMN_LEFT_X,
+		GRAPHICS_ROW_START_Y + 6 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.allow_extensions.generic,
+		ID_EXTENSIONS, "Extensions", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.lighting.generic,
+		ID_LIGHTING, "Lighting", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.geometry.generic,
+		ID_GEOMETRY, "Geometry", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + 2 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.tq.generic,
+		ID_TEXTUREDETAIL, "Texture detail", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + 3 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.texturebits.generic,
+		ID_TEXTUREQUALITY, "Tex. quality", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + 4 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.filter.generic,
+		ID_FILTER, "Tex. filter", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + 5 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+	GraphicsOptions_SetSettingBounds( &s_graphicsoptions.anisotropy.generic,
+		ID_ANISOTROPY, "Anisotropic", GRAPHICS_COLUMN_RIGHT_X,
+		GRAPHICS_ROW_START_Y + 6 * ( GRAPHICS_ROW_HEIGHT + GRAPHICS_ROW_GAP ) );
+
+	s_graphicsoptions.back.generic.ownerdraw = GraphicsOptions_DrawAction;
+	GraphicsOptions_SetBounds( &s_graphicsoptions.back.generic, ID_BACK2,
+		GRAPHICS_NAV_X, GRAPHICS_ACTION_Y, GRAPHICS_ACTION_WIDTH,
+		GRAPHICS_ACTION_HEIGHT, NULL );
+	s_graphicsoptions.apply.generic.ownerdraw = GraphicsOptions_DrawAction;
+	GraphicsOptions_SetBounds( &s_graphicsoptions.apply.generic, ID_APPLY,
+		GRAPHICS_FRAME_X + GRAPHICS_FRAME_WIDTH - GRAPHICS_ACTION_WIDTH,
+		GRAPHICS_ACTION_Y, GRAPHICS_ACTION_WIDTH, GRAPHICS_ACTION_HEIGHT, NULL );
 
 	GraphicsOptions_SetMenuItems();
 	GraphicsOptions_GetInitialVideo();
@@ -1589,5 +2024,5 @@ void UI_GraphicsOptionsMenu( void ) {
 
 	GraphicsOptions_MenuInit();
 	UI_PushMenu( &s_graphicsoptions.menu );
-	Menu_SetCursorToItem( &s_graphicsoptions.menu, &s_graphicsoptions.graphics );
+	Menu_SetCursorToItem( &s_graphicsoptions.menu, &s_graphicsoptions.list );
 }

@@ -2452,6 +2452,8 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
+	pm->breakableDamage.damage = 0;
+	pm->breakableDamage.otherEnt = -1;
 
 // STONELANCE
 /*
@@ -2795,6 +2797,7 @@ void Pmove (pmove_t *pmove) {
 		pmove->ps->commandTime = finalTime - 1000;
 	}
 
+	pmove->collisionDetected = qfalse;
 	pmove->ps->pmove_framecount = (pmove->ps->pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
 
 // STONELANCE

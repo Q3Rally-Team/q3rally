@@ -121,12 +121,13 @@ global pain sound events for all clients.
 void P_DamageFeedback( gentity_t *player ) {
 	gclient_t	*client;
 	float	count;
+    vec3_t	angles;
 // STONELANCE
 //	vec3_t	angles;
 // END
 
 	client = player->client;
-	if ( client->ps.pm_type == PM_DEAD ) {
+	if ( client->ps.pm_type == PM_DEAD && g_gametype.integer != GT_DERBY ) {
 		return;
 	}
 
@@ -138,6 +139,23 @@ void P_DamageFeedback( gentity_t *player ) {
 
 	if ( count > 255 ) {
 		count = 255;
+	}
+
+	/* Derby's cgame uses the damage event for its hit flash and zone marker.
+	   Send the actual source direction so impacts can be mapped to the correct
+	   vehicle side without guessing from the car's current motion. */
+	if ( g_gametype.integer == GT_DERBY ) {
+		if ( client->damage_fromWorld ) {
+			client->ps.damagePitch = 255;
+			client->ps.damageYaw = 255;
+		} else {
+			vectoangles( client->damage_from, angles );
+			client->ps.damagePitch = (int)( angles[PITCH] / 360.0f * 256.0f );
+			client->ps.damageYaw = (int)( angles[YAW] / 360.0f * 256.0f );
+		}
+		client->damage_fromWorld = qfalse;
+		client->ps.damageCount = (int)count;
+		client->ps.damageEvent++;
 	}
 
 	// send the information to the client
@@ -160,7 +178,8 @@ void P_DamageFeedback( gentity_t *player ) {
 // END
 
 	// play an appropriate pain sound
-	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
+	if ( client->ps.pm_type != PM_DEAD &&
+	     (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
 		player->pain_debounce_time = level.time + 700;
 		G_AddEvent( player, EV_PAIN, player->health );
 // STONELANCE
@@ -1298,7 +1317,12 @@ void ClientThink_real( gentity_t *ent ) {
 
 		ent->s.weapon = WP_NONE;
 		ent->s.powerups = 0;
-		ent->r.contents = CONTENTS_CORPSE;
+		if ( g_gametype.integer == GT_ELIMINATION &&
+		     ( client->ps.eFlags & EF_NODRAW ) ) {
+			ent->r.contents = 0;
+		} else {
+			ent->r.contents = CONTENTS_CORPSE;
+		}
 
 		ucmd->weapon = ent->s.weapon;
 		ucmd->buttons = BUTTON_HANDBRAKE;
@@ -1563,6 +1587,10 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 	} /* end fuel snapshot block */
 
+	if ( pm.collisionDetected ) {
+		client->cleanCheckpointSegment = qfalse;
+	}
+
 // STONELANCE
 	AnglesSubtract( client->ps.viewangles, oldAngles, ent->s.apos.trDelta );
 	VectorScale( ent->s.apos.trDelta, 1000.0f / ( client->ps.commandTime - oldTime ), ent->s.apos.trDelta );
@@ -1763,6 +1791,26 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 // END
 
+	if ( pm.breakableDamage.damage && pm.breakableDamage.otherEnt >= 0 &&
+		pm.breakableDamage.otherEnt < MAX_GENTITIES ) {
+		gentity_t	*hit;
+		float		damage;
+
+		hit = &g_entities[pm.breakableDamage.otherEnt];
+		damage = pm.breakableDamage.damage;
+
+		if( !(pm.breakableDamage.dflags & DAMAGE_NO_PROTECTION) ) {
+			if ( !( g_gametype.integer == GT_DERBY && g_derbyIgnoreDamageScale.integer ) ) {
+				damage *= g_damageScale.value;
+			}
+		}
+
+		if( damage > 0 && hit->inuse && hit->takedamage ) {
+			G_Damage( hit, ent, ent, pm.breakableDamage.dir, pm.breakableDamage.origin,
+				damage, pm.breakableDamage.dflags, pm.breakableDamage.mod );
+		}
+	}
+
 	// link entity now, after any personal teleporters have been used
 	trap_LinkEntity (ent);
 	if ( !ent->client->noclip ) {
@@ -1796,7 +1844,9 @@ void ClientThink_real( gentity_t *ent ) {
                                 dist = VectorLength( v );
                                 segs = level.cpDist[level.numCheckpoints-1] - level.cpDist[next-1];
                                 dist += segs;
-                                if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
+                                if ( g_gametype.integer == GT_SPRINT ) {
+                                        dist += level.sprintFinishDistance;
+                                } else if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
                                         int lapsRemaining = level.numberOfLaps - ent->currentLap;
                                         dist += lapsRemaining * level.trackLength;
                                 }

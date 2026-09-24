@@ -179,3 +179,242 @@ void CG_DrawTinyString( int x, int y, const char *s, float alpha ) {
 void CG_DrawTinyStringColor( int x, int y, const char *s, vec4_t color ) {
 	CG_DrawStringExt( x, y, s, color, qtrue, qfalse, TINYCHAR_WIDTH+2, TINYCHAR_HEIGHT, 0 );
 }
+
+
+/*
+==============================
+CG_FrontendStringWidth
+
+Measure text using the same compact atlas and tracking as the modern
+frontend.  Keeping this in CGame lets the in-game HUD share the menu's
+visual language without pulling UI code into the renderer.
+==============================
+*/
+int CG_FrontendStringWidth( const char *text, int style, float scale ) {
+	const char *s;
+	int advance;
+	int width;
+
+	if ( !text ) {
+		return 0;
+	}
+
+	advance = ( style & UI_SMALLFONT ) ? 7 : 12;
+	width = 0;
+	for ( s = text; *s; s++ ) {
+		if ( Q_IsColorString( s ) ) {
+			s++;
+			continue;
+		}
+
+		if ( *s == ' ' ) {
+			width += ( advance + 1 ) / 2;
+		} else if ( *s == 'I' || *s == 'i' || *s == 'l' || *s == 'L' ||
+		           *s == '!' || *s == '|' || *s == '.' || *s == ',' ||
+		           *s == ':' || *s == ';' ) {
+			width += advance - 2;
+		} else {
+			width += advance;
+		}
+	}
+
+	return (int)( width * scale + 0.5f );
+}
+
+
+/*
+==============================
+CG_DrawFrontendString
+
+Draw the compact Q3Rally frontend atlas in virtual 640x480 coordinates.
+UI_LEFT/UI_CENTER/UI_RIGHT are honoured so HUD labels can use the same
+alignment rules as the menu.  The screen placement selected by the caller
+is respected through CG_AdjustFrom640, which keeps the HUD correct on
+wide-screen displays as well.
+==============================
+*/
+void CG_DrawFrontendString( int x, int y, const char *text, int style,
+	                        float scale, const float *color ) {
+	const char *s;
+	int cursorX;
+	int textWidth;
+	int advance;
+	int charHeight;
+	int quadWidth;
+	vec4_t shadowColor;
+
+	if ( !text || !text[0] || !color || !cgs.media.frontendCharset ) {
+		return;
+	}
+
+	advance = ( style & UI_SMALLFONT ) ? 7 : 12;
+	charHeight = ( style & UI_SMALLFONT ) ? 14 : 20;
+	textWidth = CG_FrontendStringWidth( text, style, scale );
+	cursorX = x;
+
+	if ( ( style & UI_FORMATMASK ) == UI_CENTER ) {
+		cursorX -= textWidth / 2;
+	} else if ( ( style & UI_FORMATMASK ) == UI_RIGHT ) {
+		cursorX -= textWidth;
+	}
+
+	if ( style & UI_DROPSHADOW ) {
+		shadowColor[0] = 0.0f;
+		shadowColor[1] = 0.0f;
+		shadowColor[2] = 0.0f;
+		shadowColor[3] = color[3];
+		CG_DrawFrontendString( cursorX + 2, y + 2, text,
+		                       UI_LEFT, scale, shadowColor );
+	}
+
+	trap_R_SetColor( color );
+	for ( s = text; *s; s++ ) {
+		int ch;
+		float drawX, drawY, drawW, drawH;
+		float frow, fcol;
+
+		if ( Q_IsColorString( s ) ) {
+			s++;
+			continue;
+		}
+
+		ch = *s & 255;
+		if ( ch == ' ' ) {
+			cursorX += (int)( ( ( advance + 1 ) / 2 ) * scale + 0.5f );
+			continue;
+		}
+
+		if ( ch == 'I' || ch == 'i' || ch == 'l' || ch == 'L' ||
+		     ch == '!' || ch == '|' || ch == '.' || ch == ',' ||
+		     ch == ':' || ch == ';' ) {
+			quadWidth = ( ch == 'l' || ch == 'L' ) ? advance - 1 : advance - 2;
+		} else {
+			quadWidth = advance;
+		}
+
+		drawX = (float)cursorX;
+		drawY = (float)y;
+		drawW = (float)quadWidth * scale;
+		drawH = (float)charHeight * scale;
+		CG_AdjustFrom640( &drawX, &drawY, &drawW, &drawH );
+
+		frow = (float)( ch >> 4 ) * 0.0625f;
+		fcol = (float)( ch & 15 ) * 0.0625f;
+		trap_R_DrawStretchPic( drawX, drawY, drawW, drawH,
+		                       fcol, frow, fcol + 0.0625f,
+		                       frow + 0.0625f, cgs.media.frontendCharset );
+		cursorX += (int)( advance * scale + 0.5f );
+	}
+	trap_R_SetColor( NULL );
+}
+
+
+/*
+==============================
+CG_IngameStringWidth / CG_DrawIngameString
+
+The driving HUD intentionally uses a separate bitmap face.  It is a little
+more technical and less letter-spaced than the frontend face, which keeps
+large telemetry values readable while the menu can retain its own identity.
+==============================
+*/
+int CG_IngameStringWidth( const char *text, int style, float scale ) {
+	const char *s;
+	int advance;
+	int width;
+
+	if ( !text ) {
+		return 0;
+	}
+
+	/* Keep destination glyphs square like the 16x16 atlas cells, but leave
+	 * a little breathing room around the source pixels. */
+	advance = ( style & UI_SMALLFONT ) ? 14 : 24;
+	width = 0;
+	for ( s = text; *s; s++ ) {
+		if ( Q_IsColorString( s ) ) {
+			s++;
+			continue;
+		}
+
+		if ( *s == ' ' ) {
+			width += advance / 2;
+		} else {
+			width += advance;
+		}
+	}
+
+	return (int)( width * scale + 0.5f );
+}
+
+void CG_DrawIngameString( int x, int y, const char *text, int style,
+	                       float scale, const float *color ) {
+	const char *s;
+	int cursorX;
+	int textWidth;
+	int advance;
+	int charHeight;
+	vec4_t shadowColor;
+
+	if ( !text || !text[0] || !color || !cgs.media.ingameCharset ) {
+		return;
+	}
+
+	advance = ( style & UI_SMALLFONT ) ? 14 : 24;
+	charHeight = advance;
+	textWidth = CG_IngameStringWidth( text, style, scale );
+	cursorX = x;
+
+	if ( ( style & UI_FORMATMASK ) == UI_CENTER ) {
+		cursorX -= textWidth / 2;
+	} else if ( ( style & UI_FORMATMASK ) == UI_RIGHT ) {
+		cursorX -= textWidth;
+	}
+
+	if ( style & UI_DROPSHADOW ) {
+		shadowColor[0] = 0.0f;
+		shadowColor[1] = 0.0f;
+		shadowColor[2] = 0.0f;
+		shadowColor[3] = color[3];
+		CG_DrawIngameString( cursorX + 2, y + 2, text,
+		                     UI_LEFT | ( style & UI_SMALLFONT ),
+		                     scale, shadowColor );
+	}
+
+	trap_R_SetColor( color );
+	for ( s = text; *s; s++ ) {
+		int ch;
+		float drawX, drawY, drawW, drawH;
+		float frow, fcol;
+
+		if ( Q_IsColorString( s ) ) {
+			s++;
+			continue;
+		}
+
+		ch = *s & 255;
+		if ( ch == ' ' ) {
+			cursorX += (int)( ( advance / 2 ) * scale + 0.5f );
+			continue;
+		}
+
+		drawX = (float)cursorX;
+		drawY = (float)y;
+		drawW = (float)advance * scale;
+		drawH = (float)charHeight * scale;
+		CG_AdjustFrom640( &drawX, &drawY, &drawW, &drawH );
+
+		frow = (float)( ch >> 4 ) * 0.0625f;
+		fcol = (float)( ch & 15 ) * 0.0625f;
+		trap_R_DrawStretchPic( drawX, drawY, drawW, drawH,
+		                       fcol, frow, fcol + 0.0625f,
+		                       frow + 0.0625f, cgs.media.ingameCharset );
+		cursorX += (int)( advance * scale + 0.5f );
+	}
+	trap_R_SetColor( NULL );
+}
+
+void CG_DrawIngameSmallString( int x, int y, const char *text,
+	                            const float *color ) {
+	CG_DrawIngameString( x, y, text, UI_SMALLFONT, 0.75f, color );
+}

@@ -30,6 +30,7 @@ ADVANCED GRAPHICS OPTIONS MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define ID_GRAPHICS                 10
 #define ID_ADVANCED_GRAPHICS        17
@@ -59,6 +60,36 @@ ADVANCED GRAPHICS OPTIONS MENU
 #define ADV_PRESET_MIDDLE           2
 #define ADV_PRESET_HIGH             3
 #define ADV_PRESET_ULTRA            4
+
+#define ADV_FRAME_X                24
+#define ADV_FRAME_Y                20
+#define ADV_FRAME_WIDTH            592
+#define ADV_FRAME_HEIGHT           440
+#define ADV_NAV_X                  40
+#define ADV_NAV_Y                  104
+#define ADV_NAV_WIDTH              164
+#define ADV_NAV_HEIGHT             292
+#define ADV_DETAIL_X               220
+#define ADV_DETAIL_Y               104
+#define ADV_DETAIL_WIDTH           376
+#define ADV_DETAIL_HEIGHT          292
+#define ADV_ROW_HEIGHT             24
+#define ADV_ROW_GAP                4
+#define ADV_ROW_START_Y            148
+#define ADV_COLUMN_WIDTH           176
+#define ADV_COLUMN_LEFT_X          236
+#define ADV_COLUMN_RIGHT_X         420
+#define ADV_VALUE_OFFSET           112
+#define ADV_ACTION_Y               420
+#define ADV_ACTION_WIDTH           120
+#define ADV_ACTION_HEIGHT          24
+
+static vec4_t advancedScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t advancedAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t advancedTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t advancedMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t advancedBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t advancedFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 static const char *enabled_items[] = {
 	"Off", "On", NULL
@@ -319,29 +350,6 @@ static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_GRAPHICS:
-		UI_PopMenu();
-		UI_GraphicsOptionsMenu();
-		break;
-
-	case ID_ADVANCED_GRAPHICS:
-		break;
-
-	case ID_DISPLAY:
-		UI_PopMenu();
-		UI_DisplayOptionsMenu();
-		break;
-
-	case ID_SOUND:
-		UI_PopMenu();
-		UI_SoundOptionsMenu();
-		break;
-
-	case ID_NETWORK:
-		UI_PopMenu();
-		UI_NetworkOptionsMenu();
-		break;
-
 	case ID_PRESET:
 		UI_AdvancedGraphicsOptionsMenu_ApplyPreset( advancedGraphicsOptionsInfo.preset.curvalue );
 		break;
@@ -407,6 +415,166 @@ static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
 	}
 }
 
+static const char *AdvancedGraphics_ListValue( menulist_s *item ) {
+	int i;
+
+	if ( !item->itemnames || item->curvalue < 0 ) {
+		return "-";
+	}
+
+	for ( i = 0; item->itemnames[i]; i++ ) {
+		if ( i == item->curvalue ) {
+			return item->itemnames[i];
+		}
+	}
+
+	return "-";
+}
+
+static void AdvancedGraphics_DrawNavItem( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+	qboolean active;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	active = ( item->id == ID_ADVANCED_GRAPHICS );
+	Frontend_DrawNavButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, active || focus, UI_LEFT );
+}
+
+static void AdvancedGraphics_DrawSetting( void *self ) {
+	menucommon_s *item;
+	const char *value;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+
+	item = (menucommon_s *)self;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+	value = AdvancedGraphics_ListValue( (menulist_s *)item );
+
+	Vector4Copy( advancedFocusColor, fillColor );
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	Vector4Copy( advancedBorderColor, lineColor );
+	lineColor[3] = 0.55f;
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( advancedAccentColor, lineColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		Vector4Copy( advancedMutedColor, labelColor );
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( advancedAccentColor, labelColor );
+		Vector4Copy( advancedTextColor, valueColor );
+	} else {
+		Vector4Copy( advancedMutedColor, labelColor );
+		Vector4Copy( advancedTextColor, valueColor );
+	}
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+	Frontend_DrawText( item->left + ADV_VALUE_OFFSET,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_LEFT | UI_SMALLFONT, valueColor );
+}
+
+static void AdvancedGraphics_DrawAction( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, focus, UI_CENTER );
+}
+
+static void AdvancedGraphics_SetBounds( menucommon_s *item, int id,
+	int x, int y, int width, int height, const char *label ) {
+	item->id = id;
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void AdvancedGraphics_SetNavBounds( menutext_s *item, int id,
+	const char *label, int y ) {
+	item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	item->generic.callback = UI_AdvancedGraphicsOptionsMenu_Event;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = AdvancedGraphics_DrawNavItem;
+	AdvancedGraphics_SetBounds( &item->generic, id, ADV_NAV_X + 16, y,
+		ADV_NAV_WIDTH - 32, ADV_ROW_HEIGHT, NULL );
+}
+
+static void AdvancedGraphics_SetSettingBounds( menucommon_s *item, int id,
+	const char *label, int x, int y ) {
+	item->ownerdraw = AdvancedGraphics_DrawSetting;
+	AdvancedGraphics_SetBounds( item, id, x, y, ADV_COLUMN_WIDTH,
+		ADV_ROW_HEIGHT, label );
+}
+
+static void UI_AdvancedGraphicsOptionsMenu_Draw( void ) {
+	Frontend_DrawBackground( advancedScrimColor );
+	Frontend_DrawPanel( ADV_FRAME_X, ADV_FRAME_Y,
+		ADV_FRAME_WIDTH, ADV_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 24,
+		"Advanced graphics", UI_LEFT | UI_BIGFONT, advancedTextColor );
+	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 48,
+		"Tune lighting, shadows and post-processing",
+		UI_LEFT | UI_SMALLFONT, advancedMutedColor );
+	Frontend_DrawStatusChip( ADV_FRAME_X + ADV_FRAME_WIDTH - 104,
+		ADV_FRAME_Y + 26, "Settings", advancedAccentColor, 1.0f );
+
+	Frontend_DrawCard( ADV_NAV_X, ADV_NAV_Y,
+		ADV_NAV_WIDTH, ADV_NAV_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( ADV_DETAIL_X, ADV_DETAIL_Y,
+		ADV_DETAIL_WIDTH, ADV_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( ADV_NAV_X + 16, ADV_NAV_Y + 22,
+		"Parent", UI_LEFT | UI_SMALLFONT, advancedMutedColor );
+	Frontend_DrawText( ADV_NAV_X + 16, ADV_NAV_Y + 54,
+		"Graphics", UI_LEFT | UI_SMALLFONT, advancedTextColor );
+	Frontend_DrawText( ADV_DETAIL_X + 16, ADV_DETAIL_Y + 22,
+		"Lighting & effects", UI_LEFT | UI_SMALLFONT, advancedMutedColor );
+
+	Menu_Draw( &advancedGraphicsOptionsInfo.menu );
+
+	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, advancedMutedColor );
+}
+
 
 static sfxHandle_t UI_AdvancedGraphicsOptionsMenu_Key( int key ) {
 	if( key == K_MOUSE2 || key == K_ESCAPE ) {
@@ -425,6 +593,7 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	UI_AdvancedGraphicsOptionsMenu_Cache();
 	advancedGraphicsOptionsInfo.menu.wrapAround = qtrue;
 	advancedGraphicsOptionsInfo.menu.fullscreen = qtrue;
+	advancedGraphicsOptionsInfo.menu.draw = UI_AdvancedGraphicsOptionsMenu_Draw;
 	advancedGraphicsOptionsInfo.menu.key = UI_AdvancedGraphicsOptionsMenu_Key;
 
 	advancedGraphicsOptionsInfo.banner.generic.type      = MTYPE_BTEXT;
@@ -714,12 +883,6 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.back.color                = text_color_normal;
 	advancedGraphicsOptionsInfo.back.style                = UI_LEFT | UI_SMALLFONT;
 
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.banner );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.graphics );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.advanced_graphics );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.display );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sound );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.network );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.preset );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.hdr );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.postprocess );
@@ -737,6 +900,61 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.pshadowdist );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunlightmode );
 	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.back );
+
+	/* Menu_AddItem initializes the legacy widgets and overwrites their
+	 * default bounds. Apply the frontend layout after that initialization so
+	 * the custom ownerdraw positions are the ones used for drawing and input. */
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.preset.generic,
+		ID_PRESET, "Preset", ADV_COLUMN_LEFT_X, ADV_ROW_START_Y );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.hdr.generic,
+		ID_HDR, "HDR", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + ADV_ROW_HEIGHT + ADV_ROW_GAP );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.postprocess.generic,
+		ID_POSTPROCESS, "Post process", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 2 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.tonemap.generic,
+		ID_TONEMAP, "Tone map", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 3 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.autoexposure.generic,
+		ID_AUTOEXPOSURE, "Auto exposure", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 4 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.ssao.generic,
+		ID_SSAO, "SSAO", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 5 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunrays.generic,
+		ID_SUNRAYS, "Sun rays", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 6 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.dynamic_reflections.generic,
+		ID_DYNAMIC_REFLECTIONS, "Dynamic refl.", ADV_COLUMN_LEFT_X,
+		ADV_ROW_START_Y + 7 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunshadows.generic,
+		ID_SUNSHADOWS, "Sun shadows", ADV_COLUMN_RIGHT_X, ADV_ROW_START_Y );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowquality.generic,
+		ID_SHADOWQUALITY, "Shadow quality", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + ADV_ROW_HEIGHT + ADV_ROW_GAP );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowblur.generic,
+		ID_SHADOWBLUR, "Shadow blur", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 2 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_near.generic,
+		ID_SHADOWCASCADE_NEAR, "Cascade near", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 3 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_far.generic,
+		ID_SHADOWCASCADE_FAR, "Cascade far", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 4 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_bias.generic,
+		ID_SHADOWCASCADE_BIAS, "Cascade bias", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 5 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.pshadowdist.generic,
+		ID_PSHADOWDIST, "Projected shadow", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 6 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunlightmode.generic,
+		ID_SUNLIGHTMODE, "Sunlight mode", ADV_COLUMN_RIGHT_X,
+		ADV_ROW_START_Y + 7 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
+
+	AdvancedGraphics_SetBounds( &advancedGraphicsOptionsInfo.back.generic, ID_BACK,
+		ADV_NAV_X, ADV_ACTION_Y, ADV_ACTION_WIDTH, ADV_ACTION_HEIGHT, NULL );
+	advancedGraphicsOptionsInfo.back.generic.ownerdraw = AdvancedGraphics_DrawAction;
 }
 
 void UI_AdvancedGraphicsOptionsMenu_Cache( void ) {

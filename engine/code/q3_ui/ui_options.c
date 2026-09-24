@@ -200,6 +200,6 @@ void UI_SystemConfigMenu( void ) {
 	uis.transitionIn = 0;
 // END
 
-	Options_MenuInit();
-	UI_PushMenu ( &s_options.menu );
+	/* Keep the legacy entry point on the same hierarchy as the main menu. */
+	UI_SetupMenu();
 }

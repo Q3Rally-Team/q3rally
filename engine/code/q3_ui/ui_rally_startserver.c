@@ -31,10 +31,12 @@ START SERVER MENU *****
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define GAMESERVER_SELECT		"menu/art/maps_select"
 #define GAMESERVER_SELECTED		"menu/art/maps_selected"
 #define GAMESERVER_UNKNOWNMAP	"menu/art/unknownmap"
+#define GAMESERVER_MISSING_MAP_SHOT "gfx/ui/q3rally_missing_map_shot"
 
 #define MAX_MAPSPERPAGE		20
 
@@ -54,6 +56,34 @@ START SERVER MENU *****
 #define ID_STARTSERVERBACK		17
 #define ID_STARTSERVERNEXT		18
 #define ID_LIST					19
+
+#define STARTSERVER_FRAME_X          24
+#define STARTSERVER_FRAME_Y          20
+#define STARTSERVER_FRAME_WIDTH      592
+#define STARTSERVER_FRAME_HEIGHT     440
+#define STARTSERVER_FILTER_X         40
+#define STARTSERVER_FILTER_Y         88
+#define STARTSERVER_FILTER_WIDTH     280
+#define STARTSERVER_FILTER_HEIGHT    24
+#define STARTSERVER_LIST_X           40
+#define STARTSERVER_LIST_Y           154
+#define STARTSERVER_LIST_WIDTH       260
+#define STARTSERVER_LIST_HEIGHT      244
+#define STARTSERVER_ROW_X            48
+#define STARTSERVER_ROW_HEIGHT       24
+#define STARTSERVER_ROW_GAP          3
+#define STARTSERVER_VISIBLE_ROWS     8
+#define STARTSERVER_DETAIL_X         320
+#define STARTSERVER_DETAIL_Y         88
+#define STARTSERVER_DETAIL_WIDTH     256
+#define STARTSERVER_DETAIL_HEIGHT    304
+#define STARTSERVER_ACTION_Y         420
+#define STARTSERVER_ACTION_WIDTH     112
+#define STARTSERVER_ACTION_HEIGHT    24
+
+static vec4_t startServerTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t startServerMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t startServerAccentColor = UI_FRONTEND_COLOR_ACCENT;
 
 
 typedef struct {
@@ -84,6 +114,220 @@ typedef struct {
         } startserver_t;
 
 static startserver_t s_startserver;
+
+static void StartServer_MenuEvent( void *ptr, int event );
+static void StartServer_Update( void );
+static const char *gametype_items[15];
+
+static int StartServer_CvarIntOrDefault( const char *name, int defaultValue ) {
+	char value[32];
+	trap_Cvar_VariableStringBuffer( name, value, sizeof( value ) );
+	return value[0] ? atoi( value ) : defaultValue;
+}
+
+static qboolean StartServer_IsKothSelection( void );
+
+static void StartServer_FitText( char *out, int outSize, const char *text,
+                                 int maxWidth ) {
+        int len;
+
+        Q_strncpyz( out, text ? text : "", outSize );
+        if ( Frontend_TextWidth( out, UI_SMALLFONT ) <= maxWidth ) {
+                return;
+        }
+
+        len = (int)strlen( out );
+        while ( len > 3 && Frontend_TextWidth( out, UI_SMALLFONT ) > maxWidth ) {
+                len--;
+                out[len] = '\0';
+        }
+        if ( len >= 3 ) {
+                out[len - 3] = '.';
+                out[len - 2] = '.';
+                out[len - 1] = '.';
+        }
+}
+
+static void StartServer_DrawAction( void *self ) {
+        menutext_s *button;
+        qboolean focus;
+        qboolean disabled;
+        vec4_t disabledColor;
+
+        button = (menutext_s *)self;
+        focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+        disabled = ( button->generic.flags & QMF_GRAYED ) ? qtrue : qfalse;
+        if ( disabled ) {
+                Vector4Copy( startServerMutedColor, disabledColor );
+                disabledColor[3] = 0.35f;
+                Frontend_DrawText( ( button->generic.left + button->generic.right ) / 2,
+                        button->generic.top + 4, button->string,
+                        UI_CENTER | UI_SMALLFONT, disabledColor );
+                return;
+        }
+
+        Frontend_DrawButton( button->generic.left, button->generic.top,
+                button->generic.right - button->generic.left,
+                button->generic.bottom - button->generic.top,
+                button->string, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
+
+static void StartServer_DrawGametype( void *self ) {
+        menulist_s *list;
+        qboolean focus;
+        char label[64];
+
+        list = (menulist_s *)self;
+        focus = ( Menu_ItemAtCursor( list->generic.parent ) == list );
+        Com_sprintf( label, sizeof( label ), "Game type  %s",
+                gametype_items[list->curvalue] );
+        Frontend_DrawButton( list->generic.left, list->generic.top,
+                list->generic.right - list->generic.left,
+                list->generic.bottom - list->generic.top,
+                label, 1.0f, focus, UI_FRONTEND_TEXT_LEFT );
+}
+
+static void StartServer_DrawMapList( void *self ) {
+        menulist_s *list;
+        int i;
+
+        list = (menulist_s *)self;
+        if ( !s_startserver.nummaps ) {
+                Frontend_DrawText( STARTSERVER_ROW_X,
+                        STARTSERVER_LIST_Y + 16,
+                        StartServer_IsKothSelection() ?
+                                "No KOTH-ready maps; add a hill zone to a map." : "No maps found",
+                        UI_LEFT | UI_SMALLFONT, startServerMutedColor );
+                return;
+        }
+
+        for ( i = 0; i < STARTSERVER_VISIBLE_ROWS; i++ ) {
+                int index;
+                int y;
+                char name[64];
+
+                index = list->top + i;
+                if ( index < 0 || index >= s_startserver.nummaps ) {
+                        break;
+                }
+                y = STARTSERVER_LIST_Y + i *
+                        ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP );
+                StartServer_FitText( name, sizeof( name ),
+                        s_startserver.maplistname[index], 220 );
+                Frontend_DrawNavButton( STARTSERVER_ROW_X, y,
+                        STARTSERVER_LIST_WIDTH - 16, STARTSERVER_ROW_HEIGHT,
+                        name, 1.0f, index == list->curvalue,
+                        UI_FRONTEND_TEXT_LEFT );
+        }
+}
+
+static sfxHandle_t StartServer_MenuKey( int key ) {
+        int row;
+        int index;
+
+        if ( key == K_MOUSE1 &&
+             uis.cursorx >= STARTSERVER_ROW_X &&
+             uis.cursorx <= STARTSERVER_ROW_X + STARTSERVER_LIST_WIDTH - 16 &&
+             uis.cursory >= STARTSERVER_LIST_Y &&
+             uis.cursory < STARTSERVER_LIST_Y + STARTSERVER_VISIBLE_ROWS *
+                 ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP ) ) {
+                row = ( uis.cursory - STARTSERVER_LIST_Y ) /
+                        ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP );
+                if ( uis.cursory >= STARTSERVER_LIST_Y + row *
+                        ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP ) +
+                        STARTSERVER_ROW_HEIGHT ) {
+                        return menu_null_sound;
+                }
+
+                index = s_startserver.list.top + row;
+                if ( index >= 0 && index < s_startserver.nummaps ) {
+                        s_startserver.list.oldvalue =
+                                s_startserver.list.curvalue;
+                        s_startserver.list.curvalue = index;
+                        s_startserver.currentmap = index;
+                        StartServer_Update();
+                        return s_startserver.list.oldvalue == index ?
+                                menu_null_sound : menu_move_sound;
+                }
+                return menu_null_sound;
+        }
+
+        return Menu_DefaultKey( &s_startserver.menu, key );
+}
+
+static void StartServer_Draw( void ) {
+        vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
+        char imageName[64];
+        qhandle_t mapShader;
+        int i;
+
+        Frontend_DrawBackground( scrimColor );
+        Frontend_DrawPanel( STARTSERVER_FRAME_X, STARTSERVER_FRAME_Y,
+                STARTSERVER_FRAME_WIDTH, STARTSERVER_FRAME_HEIGHT, 1.0f,
+                UI_FRONTEND_STYLE_FRAME );
+        Frontend_DrawText( STARTSERVER_FRAME_X + 24, STARTSERVER_FRAME_Y + 24,
+                "Create server", UI_LEFT | UI_BIGFONT, startServerTextColor );
+        Frontend_DrawText( STARTSERVER_FRAME_X + 24, STARTSERVER_FRAME_Y + 48,
+                "Choose a game type and track", UI_LEFT | UI_SMALLFONT,
+                startServerMutedColor );
+        Frontend_DrawStatusChip( STARTSERVER_FRAME_X + STARTSERVER_FRAME_WIDTH - 96,
+                STARTSERVER_FRAME_Y + 26, "Host", startServerAccentColor, 1.0f );
+
+        Frontend_DrawCard( STARTSERVER_LIST_X, STARTSERVER_LIST_Y - 22,
+                STARTSERVER_LIST_WIDTH, STARTSERVER_LIST_HEIGHT + 22,
+                1.0f, qfalse );
+        Frontend_DrawCard( STARTSERVER_DETAIL_X, STARTSERVER_DETAIL_Y,
+                STARTSERVER_DETAIL_WIDTH, STARTSERVER_DETAIL_HEIGHT,
+                1.0f, qfalse );
+        Frontend_DrawText( STARTSERVER_LIST_X + 16, STARTSERVER_LIST_Y - 20,
+                "Available tracks", UI_LEFT | UI_SMALLFONT,
+                startServerMutedColor );
+        Frontend_DrawText( STARTSERVER_DETAIL_X + 16, STARTSERVER_DETAIL_Y + 18,
+                "Track preview", UI_LEFT | UI_SMALLFONT,
+                startServerMutedColor );
+
+        Menu_Draw( &s_startserver.menu );
+
+        if ( s_startserver.nummaps > 0 && s_startserver.currentmap >= 0 &&
+             s_startserver.currentmap < s_startserver.nummaps ) {
+                Com_sprintf( imageName, sizeof( imageName ), "levelshots/%s",
+                        s_startserver.maplist[s_startserver.currentmap] );
+                mapShader = trap_R_RegisterShaderNoMip( imageName );
+                if ( !mapShader ) {
+                        mapShader = trap_R_RegisterShaderNoMip(
+                                GAMESERVER_MISSING_MAP_SHOT );
+                }
+                if ( mapShader ) {
+                        UI_DrawHandlePic( STARTSERVER_DETAIL_X + 16,
+                                STARTSERVER_DETAIL_Y + 42, 224, 126,
+                                mapShader );
+                }
+                StartServer_FitText( imageName, sizeof( imageName ),
+                        s_startserver.maplistname[s_startserver.currentmap],
+                        STARTSERVER_DETAIL_WIDTH - 32 );
+                Frontend_DrawText( STARTSERVER_DETAIL_X + 16,
+                        STARTSERVER_DETAIL_Y + 188, imageName,
+                        UI_LEFT | UI_BIGFONT, startServerTextColor );
+                for ( i = 0; i < s_startserver.numstats && i < 5; i++ ) {
+                Frontend_DrawText( STARTSERVER_DETAIL_X + 16,
+                                STARTSERVER_DETAIL_Y + 216 + i * 18,
+                                s_startserver.statitems[i],
+                                UI_LEFT | UI_SMALLFONT, startServerMutedColor );
+                }
+        } else {
+                Frontend_DrawText( STARTSERVER_DETAIL_X + 16,
+                        STARTSERVER_DETAIL_Y + 80, "No track available",
+                        UI_LEFT | UI_SMALLFONT, startServerMutedColor );
+        }
+
+        Frontend_DrawText( STARTSERVER_FRAME_X + 24,
+                STARTSERVER_FRAME_Y + 384,
+                "Select a track to continue", UI_LEFT | UI_SMALLFONT,
+                startServerMutedColor );
+        Frontend_DrawText( STARTSERVER_FRAME_X + STARTSERVER_FRAME_WIDTH - 24,
+                STARTSERVER_FRAME_Y + 384, "Enter next   Esc back",
+                UI_RIGHT | UI_SMALLFONT, startServerMutedColor );
+}
 
 static const char *gametype_items[] = {
 
@@ -675,6 +919,8 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 
 	s_startserver.menu.wrapAround = qtrue;
 	s_startserver.menu.fullscreen = qtrue;
+	s_startserver.menu.draw = StartServer_Draw;
+	s_startserver.menu.key = StartServer_MenuKey;
 
 	s_startserver.banner.generic.type  = MTYPE_BTEXT;
 	s_startserver.banner.generic.x	   = 320;
@@ -765,6 +1011,69 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.item_null.width			= 640;
 	s_startserver.item_null.height			= 480;
 
+	/* Keep the legacy data widgets for navigation and callbacks, but render
+	 * them through the shared frontend components. */
+	s_startserver.banner.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+
+	s_startserver.gametype.generic.x = STARTSERVER_FILTER_X +
+		STARTSERVER_FILTER_WIDTH / 2;
+	s_startserver.gametype.generic.y = STARTSERVER_FILTER_Y + 12;
+	s_startserver.gametype.generic.left = STARTSERVER_FILTER_X;
+	s_startserver.gametype.generic.top = STARTSERVER_FILTER_Y;
+	s_startserver.gametype.generic.right = STARTSERVER_FILTER_X +
+		STARTSERVER_FILTER_WIDTH;
+	s_startserver.gametype.generic.bottom = STARTSERVER_FILTER_Y +
+		STARTSERVER_FILTER_HEIGHT;
+	s_startserver.gametype.generic.flags |= QMF_NODEFAULTINIT;
+	s_startserver.gametype.numitems = ARRAY_LEN( gametype_items ) - 1;
+	s_startserver.gametype.generic.ownerdraw = StartServer_DrawGametype;
+
+	s_startserver.list.generic.x = STARTSERVER_ROW_X +
+		( STARTSERVER_LIST_WIDTH - 16 ) / 2;
+	s_startserver.list.generic.y = STARTSERVER_LIST_Y;
+	s_startserver.list.generic.left = STARTSERVER_ROW_X;
+	s_startserver.list.generic.top = STARTSERVER_LIST_Y;
+	s_startserver.list.generic.right = STARTSERVER_ROW_X +
+		STARTSERVER_LIST_WIDTH - 16;
+	s_startserver.list.generic.bottom = STARTSERVER_LIST_Y +
+		STARTSERVER_VISIBLE_ROWS * ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP );
+	s_startserver.list.generic.flags |= QMF_NODEFAULTINIT;
+	s_startserver.list.generic.ownerdraw = StartServer_DrawMapList;
+	s_startserver.list.height = STARTSERVER_VISIBLE_ROWS;
+
+	s_startserver.mappic.generic.flags |= QMF_HIDDEN;
+	s_startserver.mapname.generic.flags |= QMF_HIDDEN;
+	s_startserver.statlist.generic.flags |= QMF_HIDDEN;
+	s_startserver.item_null.generic.flags |= QMF_HIDDEN;
+
+	s_startserver.back.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_startserver.back.generic.x = 96;
+	s_startserver.back.generic.y = STARTSERVER_ACTION_Y +
+		STARTSERVER_ACTION_HEIGHT / 2;
+	s_startserver.back.generic.left = 40;
+	s_startserver.back.generic.top = STARTSERVER_ACTION_Y;
+	s_startserver.back.generic.right = 40 + STARTSERVER_ACTION_WIDTH;
+	s_startserver.back.generic.bottom = STARTSERVER_ACTION_Y +
+		STARTSERVER_ACTION_HEIGHT;
+	s_startserver.back.generic.flags |= QMF_NODEFAULTINIT;
+	s_startserver.back.generic.ownerdraw = StartServer_DrawAction;
+	s_startserver.back.string = "Back";
+	s_startserver.back.style = UI_CENTER | UI_SMALLFONT;
+
+	s_startserver.next.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_startserver.next.generic.x = 544;
+	s_startserver.next.generic.y = STARTSERVER_ACTION_Y +
+		STARTSERVER_ACTION_HEIGHT / 2;
+	s_startserver.next.generic.left = 488;
+	s_startserver.next.generic.top = STARTSERVER_ACTION_Y;
+	s_startserver.next.generic.right = 488 + STARTSERVER_ACTION_WIDTH;
+	s_startserver.next.generic.bottom = STARTSERVER_ACTION_Y +
+		STARTSERVER_ACTION_HEIGHT;
+	s_startserver.next.generic.flags |= QMF_NODEFAULTINIT;
+	s_startserver.next.generic.ownerdraw = StartServer_DrawAction;
+	s_startserver.next.string = "Next";
+	s_startserver.next.style = UI_CENTER | UI_SMALLFONT;
+
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.list );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.statlist );
@@ -794,6 +1103,7 @@ void StartServer_Cache( void )
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECT );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECTED );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_UNKNOWNMAP );
+	trap_R_RegisterShaderNoMip( GAMESERVER_MISSING_MAP_SHOT );
 
 	precache = trap_Cvar_VariableValue("com_buildscript");
 
@@ -856,6 +1166,42 @@ SERVER OPTIONS MENU *****
 #define ID_GHOST_ONLY		17
 #define PLAYER_SLOTS			12
 
+/* Modern host-options surface. The original menu items remain the source of
+ * truth for cvars and events; these coordinates only define their new visual
+ * presentation and mouse hitboxes. */
+#define SERVEROPT_FRAME_X             24
+#define SERVEROPT_FRAME_Y             20
+#define SERVEROPT_FRAME_WIDTH         592
+#define SERVEROPT_FRAME_HEIGHT        440
+#define SERVEROPT_PLAYER_X            40
+#define SERVEROPT_PLAYER_Y            112
+#define SERVEROPT_PLAYER_WIDTH        248
+#define SERVEROPT_PLAYER_HEIGHT       286
+#define SERVEROPT_PLAYER_ROW_X        40
+#define SERVEROPT_PLAYER_ROW_Y        140
+#define SERVEROPT_PLAYER_ROW_WIDTH    248
+#define SERVEROPT_PLAYER_ROW_HEIGHT   20
+#define SERVEROPT_PLAYER_ROW_GAP      1
+#define SERVEROPT_OPTION_X            304
+#define SERVEROPT_OPTION_Y            112
+#define SERVEROPT_OPTION_WIDTH        272
+#define SERVEROPT_OPTION_HEIGHT       286
+#define SERVEROPT_OPTION_START_Y      212
+#define SERVEROPT_OPTION_ROW_HEIGHT   19
+#define SERVEROPT_OPTION_ROW_GAP      1
+#define SERVEROPT_OPTION_COLUMN_WIDTH 240
+#define SERVEROPT_BOT_X               40
+#define SERVEROPT_BOT_Y               86
+#define SERVEROPT_BOT_WIDTH           248
+#define SERVEROPT_BOT_HEIGHT          24
+#define SERVEROPT_ACTION_Y            420
+#define SERVEROPT_ACTION_WIDTH        112
+#define SERVEROPT_ACTION_HEIGHT       24
+
+static vec4_t serverOptionsTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t serverOptionsMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t serverOptionsAccentColor = UI_FRONTEND_COLOR_ACCENT;
+
 
 typedef struct {
 	menuframework_s		menu;
@@ -897,7 +1243,6 @@ typedef struct {
 	char				playerNameBuffers[PLAYER_SLOTS][16];
 
 	int					ghostPlaybackRestore;
-	qboolean			ghostPlaybackStored;
 
 	qboolean			newBot;
 	int					newBotIndex;
@@ -941,6 +1286,12 @@ static const char *playerTeam_list[] = {
 	"Yellow",
 	0
 };
+
+static qboolean StartServer_IsKothSelection( void ) {
+	int index = s_startserver.gametype.curvalue;
+	return ( index >= 0 && index < sizeof( gametype_remap ) / sizeof( gametype_remap[0] ) &&
+		gametype_remap[index] == GT_KOTH ) ? qtrue : qfalse;
+}
 
 static const char *playerTeam_twoTeam_list[] = {
 	"Blue",
@@ -990,7 +1341,8 @@ static int ServerOptions_TrackLengthIndexFromValue( int trackLengthValue ) {
 }
 
 static qboolean ServerOptions_AllowsFourTeams( void ) {
-	return ( s_serveroptions.gametype == GT_CTF4 ) ? qtrue : qfalse;
+	return ( s_serveroptions.gametype == GT_CTF4 ||
+		s_serveroptions.gametype == GT_DOMINATION ) ? qtrue : qfalse;
 }
 
 static void ServerOptions_ClampPlayerTeams( void ) {
@@ -1009,12 +1361,23 @@ static void ServerOptions_ClampPlayerTeams( void ) {
 
 static void ServerOptions_UpdatePlayerTeamLists( void ) {
 	int n;
+	int teamCount;
 	const char **teamList;
 
 	teamList = ServerOptions_AllowsFourTeams() ? playerTeam_list : playerTeam_twoTeam_list;
+	// Menu_AddItem caches numitems before the gametype-specific list is set.
+	teamCount = 0;
+	while ( teamList[teamCount] ) {
+		teamCount++;
+	}
 
 	for ( n = 0; n < PLAYER_SLOTS; n++ ) {
 		s_serveroptions.playerTeam[n].itemnames = teamList;
+		s_serveroptions.playerTeam[n].numitems = teamCount;
+		if ( s_serveroptions.playerTeam[n].curvalue < 0 ||
+			s_serveroptions.playerTeam[n].curvalue >= teamCount ) {
+			s_serveroptions.playerTeam[n].curvalue = 0;
+		}
 	}
 
 	ServerOptions_ClampPlayerTeams();
@@ -1158,57 +1521,42 @@ default:
 		break;
 		
 	    // Q3Rally Code Start - KOTH
-	    case GT_KOTH:
-		{
-			int kothScoreWin = flaglimit;
-			int kothTick = kothPtsTick;
-			int kothCapture = kothPtsCapture;
-			int kothDefend = kothPtsDefend;
-			int kothOtEnabled = kothOvertime;
-			int kothOtHoldMs = kothOvertimeHoldSec * 1000;
-			if ( kothScoreWin <= 0 ) {
-				kothScoreWin = (int)trap_Cvar_VariableValue( "ui_koth_scorelimit" );
-			}
-			if ( kothScoreWin <= 0 ) {
-				kothScoreWin = 100;
-			}
+	case GT_KOTH:
+	{
+		int kothScoreWin = flaglimit;
+		int kothTick = kothPtsTick;
+		int kothCapture = kothPtsCapture;
+		int kothDefend = kothPtsDefend;
+		int kothOtEnabled = kothOvertime;
+		int kothOtHoldMs = kothOvertimeHoldSec * 1000;
 
-			if ( kothTick < 0 ) {
-				kothTick = (int)trap_Cvar_VariableValue( "ui_koth_pts_tick" );
-			}
-			if ( kothCapture < 0 ) {
-				kothCapture = (int)trap_Cvar_VariableValue( "ui_koth_pts_capture" );
-			}
-			if ( kothDefend < 0 ) {
-				kothDefend = (int)trap_Cvar_VariableValue( "ui_koth_pts_defend" );
-			}
-			if ( kothOtHoldMs <= 0 ) {
-				kothOtHoldMs = (int)trap_Cvar_VariableValue( "ui_koth_overtime_hold" );
-			}
-			if ( kothOtHoldMs <= 0 ) {
-				kothOtHoldMs = (int)trap_Cvar_VariableValue( "koth_overtime_hold" );
-			}
-			if ( kothOtHoldMs <= 0 ) {
-				kothOtHoldMs = 10000;
-			}
+		if ( kothScoreWin <= 0 ) kothScoreWin = 100;
+		if ( kothOtHoldMs <= 0 ) kothOtHoldMs = 10000;
 
-			trap_Cvar_SetValue( "g_kothScoreWin",    Com_Clamp( 1, 9999, kothScoreWin ) );
-			trap_Cvar_SetValue( "g_kothCaptureTime", 3000 );
-			trap_Cvar_SetValue( "g_kothRespawnWave", 5000 );
-			trap_Cvar_SetValue( "koth_pts_tick", Com_Clamp( 0, 999, kothTick ) );
-			trap_Cvar_SetValue( "koth_pts_capture", Com_Clamp( 0, 999, kothCapture ) );
-			trap_Cvar_SetValue( "koth_pts_defend", Com_Clamp( 0, 999, kothDefend ) );
-			trap_Cvar_SetValue( "koth_overtime", Com_Clamp( 0, 1, kothOtEnabled ) );
-			trap_Cvar_SetValue( "koth_overtime_hold", Com_Clamp( 1000, 120000, kothOtHoldMs ) );
-			trap_Cvar_SetValue( "ui_koth_scorelimit", kothScoreWin );
-			trap_Cvar_SetValue( "ui_koth_pts_tick", Com_Clamp( 0, 999, kothTick ) );
-			trap_Cvar_SetValue( "ui_koth_pts_capture", Com_Clamp( 0, 999, kothCapture ) );
-			trap_Cvar_SetValue( "ui_koth_pts_defend", Com_Clamp( 0, 999, kothDefend ) );
-			trap_Cvar_SetValue( "ui_koth_overtime", Com_Clamp( 0, 1, kothOtEnabled ) );
-			trap_Cvar_SetValue( "ui_koth_overtime_hold", Com_Clamp( 1000, 120000, kothOtHoldMs ) );
-			trap_Cvar_SetValue( "ui_koth_timelimit",  timelimit );
-			trap_Cvar_SetValue( "ui_koth_friendly",   friendlyfire );
-			break;
+		kothScoreWin = (int)Com_Clamp( 1, 999, kothScoreWin );
+		kothTick = (int)Com_Clamp( 0, 999, kothTick );
+		kothCapture = (int)Com_Clamp( 0, 999, kothCapture );
+		kothDefend = (int)Com_Clamp( 0, 999, kothDefend );
+		kothOtEnabled = (int)Com_Clamp( 0, 1, kothOtEnabled );
+		kothOtHoldMs = (int)Com_Clamp( 1000, 120000, kothOtHoldMs );
+
+		trap_Cvar_SetValue( "g_kothScoreWin", kothScoreWin );
+		trap_Cvar_SetValue( "g_kothCaptureTime", 3000 );
+		trap_Cvar_SetValue( "g_kothRespawnWave", 5000 );
+		trap_Cvar_SetValue( "g_kothPtsTick", kothTick );
+		trap_Cvar_SetValue( "g_kothPtsCapture", kothCapture );
+		trap_Cvar_SetValue( "g_kothPtsDefend", kothDefend );
+		trap_Cvar_SetValue( "g_kothOvertime", kothOtEnabled );
+		trap_Cvar_SetValue( "g_kothOvertimeHoldTime", kothOtHoldMs );
+		trap_Cvar_SetValue( "ui_koth_scorelimit", kothScoreWin );
+		trap_Cvar_SetValue( "ui_koth_pts_tick", kothTick );
+		trap_Cvar_SetValue( "ui_koth_pts_capture", kothCapture );
+		trap_Cvar_SetValue( "ui_koth_pts_defend", kothDefend );
+		trap_Cvar_SetValue( "ui_koth_overtime", kothOtEnabled );
+		trap_Cvar_SetValue( "ui_koth_overtime_hold", kothOtHoldMs );
+		trap_Cvar_SetValue( "ui_koth_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_koth_friendly", friendlyfire );
+		break;
 	}
     // Q3Rally Code END - KOTH
 
@@ -1248,12 +1596,9 @@ default:
 
 			playbackValue = s_serveroptions.ghostPlaybackRestore > 0 ? s_serveroptions.ghostPlaybackRestore : 1;
 			trap_Cvar_SetValue( "cg_ghostPlayback", playbackValue );
-		} else {
-			trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 		}
 	} else {
 		trap_Cvar_SetValue( "ui_ghostonly", 0 );
-		trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
 	}
 
         if ( s_serveroptions.gametype == GT_ELIMINATION ) {
@@ -1439,7 +1784,7 @@ static void ServerOptions_Event( void* ptr, int event ) {
 			ServerOptions_InitPlayerItems();
 		}
 		else {
-			trap_Cvar_SetValue( "cg_ghostPlayback", 0 );
+			trap_Cvar_SetValue( "cg_ghostPlayback", s_serveroptions.ghostPlaybackRestore );
 			ServerOptions_InitPlayerItems();
 			ServerOptions_InitBotNames();
 		}
@@ -1485,6 +1830,11 @@ static void ServerOptions_StatusBar( void* ptr ) {
 	UI_DrawString( 320, 440, "0 = NO LIMIT", UI_CENTER|UI_SMALLFONT, colorWhite );
 }
 
+static void ServerOptions_GhostOnlyStatusBar( void* ptr ) {
+	(void)ptr;
+	UI_DrawString( 320, 440, "Starts without AI drivers and enables the selected ghost playback.", UI_CENTER|UI_SMALLFONT, colorWhite );
+}
+
 /*
 ===========================
 ServerOptions_LevelshotDraw
@@ -1501,12 +1851,6 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	int				h;
 //	int				n;
 
-	// strange place for this, but it works
-	if( s_serveroptions.newBot ) {
-		Q_strncpyz( s_serveroptions.playerNameBuffers[s_serveroptions.newBotIndex], s_serveroptions.newBotName, 16 );
-		s_serveroptions.newBot = qfalse;
-	}
-
 	b = (menubitmap_s *)self;
 
 	if( !b->generic.name ) {
@@ -1517,6 +1861,10 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 		b->shader = trap_R_RegisterShaderNoMip( b->generic.name );
 		if( !b->shader && b->errorpic ) {
 			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
+		}
+		if( !b->shader ) {
+			b->shader = trap_R_RegisterShaderNoMip(
+				GAMESERVER_MISSING_MAP_SHOT );
 		}
 	}
 
@@ -1751,6 +2099,11 @@ static void ServerOptions_SetMenuItems( void ) {
 	case GT_KOTH:
 	{
 		int kothScoreLimit = (int)trap_Cvar_VariableValue( "ui_koth_scorelimit" );
+		int kothTick;
+		int kothCapture;
+		int kothDefend;
+		int kothOtEnable;
+		int kothOtHoldMs;
 		if ( kothScoreLimit <= 0 ) {
 			kothScoreLimit = (int)trap_Cvar_VariableValue( "g_kothScoreWin" );
 		}
@@ -1760,45 +2113,37 @@ static void ServerOptions_SetMenuItems( void ) {
 			kothScoreLimit = (int)Com_Clamp( 1, 999, kothScoreLimit );
 			trap_Cvar_SetValue( "ui_koth_scorelimit", kothScoreLimit );
 			Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", kothScoreLimit );
-			{
-				int kothTick = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_tick" ) );
-				int kothCapture = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_capture" ) );
-				int kothDefend = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_pts_defend" ) );
+			kothTick = StartServer_CvarIntOrDefault( "ui_koth_pts_tick", -1 );
+			if ( kothTick < 0 ) kothTick = StartServer_CvarIntOrDefault( "koth_pts_tick", -1 );
+			if ( kothTick < 0 ) kothTick = StartServer_CvarIntOrDefault( "g_kothPtsTick", 1 );
+			kothCapture = StartServer_CvarIntOrDefault( "ui_koth_pts_capture", -1 );
+			if ( kothCapture < 0 ) kothCapture = StartServer_CvarIntOrDefault( "koth_pts_capture", -1 );
+			if ( kothCapture < 0 ) kothCapture = StartServer_CvarIntOrDefault( "g_kothPtsCapture", 5 );
+			kothDefend = StartServer_CvarIntOrDefault( "ui_koth_pts_defend", -1 );
+			if ( kothDefend < 0 ) kothDefend = StartServer_CvarIntOrDefault( "koth_pts_defend", -1 );
+			if ( kothDefend < 0 ) kothDefend = StartServer_CvarIntOrDefault( "g_kothPtsDefend", 3 );
+		kothTick = (int)Com_Clamp( 0, 999, kothTick );
+		kothCapture = (int)Com_Clamp( 0, 999, kothCapture );
+		kothDefend = (int)Com_Clamp( 0, 999, kothDefend );
+		trap_Cvar_SetValue( "ui_koth_pts_tick", kothTick );
+		trap_Cvar_SetValue( "ui_koth_pts_capture", kothCapture );
+		trap_Cvar_SetValue( "ui_koth_pts_defend", kothDefend );
+		Com_sprintf( s_serveroptions.kothPtsTick.field.buffer, 4, "%i", kothTick );
+		Com_sprintf( s_serveroptions.kothPtsCapture.field.buffer, 4, "%i", kothCapture );
+		Com_sprintf( s_serveroptions.kothPtsDefend.field.buffer, 4, "%i", kothDefend );
 
-				if ( kothTick == 0 && trap_Cvar_VariableValue( "koth_pts_tick" ) > 0 ) {
-					kothTick = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_tick" ) );
-				}
-				if ( kothCapture == 0 && trap_Cvar_VariableValue( "koth_pts_capture" ) > 0 ) {
-					kothCapture = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_capture" ) );
-				}
-				if ( kothDefend == 0 && trap_Cvar_VariableValue( "koth_pts_defend" ) > 0 ) {
-					kothDefend = (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "koth_pts_defend" ) );
-				}
-
-				if ( kothTick == 0 ) kothTick = 1;
-				if ( kothCapture == 0 ) kothCapture = 5;
-				if ( kothDefend == 0 ) kothDefend = 3;
-
-				trap_Cvar_SetValue( "ui_koth_pts_tick", kothTick );
-				trap_Cvar_SetValue( "ui_koth_pts_capture", kothCapture );
-				trap_Cvar_SetValue( "ui_koth_pts_defend", kothDefend );
-				Com_sprintf( s_serveroptions.kothPtsTick.field.buffer, 4, "%i", kothTick );
-				Com_sprintf( s_serveroptions.kothPtsCapture.field.buffer, 4, "%i", kothCapture );
-				Com_sprintf( s_serveroptions.kothPtsDefend.field.buffer, 4, "%i", kothDefend );
-			}
-			{
-				int kothOtEnable = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_koth_overtime" ) );
-				int kothOtHoldMs = (int)Com_Clamp( 1000, 120000, trap_Cvar_VariableValue( "ui_koth_overtime_hold" ) );
-
-				if ( trap_Cvar_VariableValue( "ui_koth_overtime_hold" ) <= 0 ) {
-					kothOtHoldMs = (int)Com_Clamp( 1000, 120000, trap_Cvar_VariableValue( "koth_overtime_hold" ) );
-				}
-
-				trap_Cvar_SetValue( "ui_koth_overtime", kothOtEnable );
-				trap_Cvar_SetValue( "ui_koth_overtime_hold", kothOtHoldMs );
-				s_serveroptions.kothOvertime.curvalue = kothOtEnable;
-				Com_sprintf( s_serveroptions.kothOvertimeHold.field.buffer, 4, "%i", kothOtHoldMs / 1000 );
-			}
+		kothOtEnable = StartServer_CvarIntOrDefault( "ui_koth_overtime", -1 );
+		if ( kothOtEnable < 0 ) kothOtEnable = StartServer_CvarIntOrDefault( "koth_overtime", -1 );
+		if ( kothOtEnable < 0 ) kothOtEnable = StartServer_CvarIntOrDefault( "g_kothOvertime", 1 );
+		kothOtEnable = (int)Com_Clamp( 0, 1, kothOtEnable );
+		kothOtHoldMs = StartServer_CvarIntOrDefault( "ui_koth_overtime_hold", -1 );
+		if ( kothOtHoldMs <= 0 ) kothOtHoldMs = StartServer_CvarIntOrDefault( "koth_overtime_hold", -1 );
+		if ( kothOtHoldMs <= 0 ) kothOtHoldMs = StartServer_CvarIntOrDefault( "g_kothOvertimeHoldTime", 10000 );
+		kothOtHoldMs = (int)Com_Clamp( 1000, 120000, kothOtHoldMs );
+		trap_Cvar_SetValue( "ui_koth_overtime", kothOtEnable );
+		trap_Cvar_SetValue( "ui_koth_overtime_hold", kothOtHoldMs );
+		s_serveroptions.kothOvertime.curvalue = kothOtEnable;
+		Com_sprintf( s_serveroptions.kothOvertimeHold.field.buffer, 4, "%i", kothOtHoldMs / 1000 );
 			Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_koth_timelimit" ) ) );
 			s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_koth_friendly" ) );
 			break;
@@ -1825,14 +2170,11 @@ static void ServerOptions_SetMenuItems( void ) {
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
 	s_serveroptions.trackLength.curvalue = ServerOptions_TrackLengthIndexFromValue( (int)trap_Cvar_VariableValue( "ui_racing_tracklength" ) );
 	s_serveroptions.reversed.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_racing_trackreversed" ) );
+	s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
 	if ( ServerOptions_IsRacingGametype( s_serveroptions.gametype ) ) {
 		s_serveroptions.ghostOnly.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ghostonly" ) );
-		s_serveroptions.ghostPlaybackRestore = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_ghostPlayback" ) );
-		s_serveroptions.ghostPlaybackStored = qfalse;
 	} else {
 		s_serveroptions.ghostOnly.curvalue = 0;
-		s_serveroptions.ghostPlaybackRestore = 0;
-		s_serveroptions.ghostPlaybackStored = qfalse;
 	}
 
 	// set the map pic
@@ -1900,6 +2242,379 @@ static void PlayerName_Draw( void *item ) {
 	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->string, style|UI_LEFT, color );
 }
 
+static int ServerOptions_PlayerSlotForItem( menucommon_s *item, int kind ) {
+        int n;
+
+        for ( n = 0; n < PLAYER_SLOTS; n++ ) {
+                if ( kind == 0 && item == (menucommon_s *)&s_serveroptions.playerName[n] ) {
+                        return n;
+                }
+                if ( kind == 1 && item == (menucommon_s *)&s_serveroptions.playerType[n] ) {
+                        return n;
+                }
+                if ( kind == 2 && item == (menucommon_s *)&s_serveroptions.playerTeam[n] ) {
+                        return n;
+                }
+        }
+
+        return -1;
+}
+
+static void ServerOptions_DrawOptionCard( menucommon_s *item,
+                                           const char *value ) {
+        qboolean focus;
+        qboolean disabled;
+        vec4_t textColor;
+        char label[64];
+        char displayValue[64];
+        int width;
+
+        focus = ( Menu_ItemAtCursor( item->parent ) == item );
+        disabled = ( item->flags & QMF_GRAYED ) ? qtrue : qfalse;
+        width = item->right - item->left;
+        Frontend_DrawCard( item->left, item->top, width,
+                item->bottom - item->top, 1.0f,
+                focus && !disabled );
+
+        StartServer_FitText( label, sizeof( label ), item->name ? item->name : "Option",
+                width / 2 - 12 );
+        StartServer_FitText( displayValue, sizeof( displayValue ), value ? value : "",
+                width / 2 - 12 );
+
+        if ( disabled ) {
+                Vector4Copy( serverOptionsMutedColor, textColor );
+                textColor[3] *= 0.45f;
+        } else if ( focus ) {
+                Vector4Copy( serverOptionsAccentColor, textColor );
+        } else {
+                Vector4Copy( serverOptionsMutedColor, textColor );
+        }
+
+        Frontend_DrawText( item->left + 8,
+                item->top + ( ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2 ), label,
+                UI_LEFT | UI_SMALLFONT, textColor );
+        Frontend_DrawText( item->right - 8,
+                item->top + ( ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2 ),
+                displayValue,
+                UI_RIGHT | UI_SMALLFONT,
+                disabled ? textColor : serverOptionsTextColor );
+}
+
+static void ServerOptions_DrawField( void *self ) {
+        menufield_s *field;
+
+        field = (menufield_s *)self;
+        ServerOptions_DrawOptionCard( &field->generic, field->field.buffer );
+}
+
+static void ServerOptions_DrawList( void *self ) {
+        menulist_s *list;
+        const char *value;
+
+        list = (menulist_s *)self;
+        value = "";
+        if ( list->itemnames && list->curvalue >= 0 &&
+             list->itemnames[list->curvalue] ) {
+                value = list->itemnames[list->curvalue];
+        }
+        ServerOptions_DrawOptionCard( &list->generic, value );
+}
+
+static void ServerOptions_DrawToggle( void *self ) {
+        menuradiobutton_s *toggle;
+
+        toggle = (menuradiobutton_s *)self;
+        ServerOptions_DrawOptionCard( &toggle->generic,
+                toggle->curvalue ? "On" : "Off" );
+}
+
+static void ServerOptions_DrawPlayerName( void *self ) {
+        menutext_s *nameItem;
+        int slot;
+        int y;
+        qboolean focus;
+        char name[32];
+        char type[16];
+
+        nameItem = (menutext_s *)self;
+        slot = nameItem->generic.id;
+        if ( slot < 0 || slot >= PLAYER_SLOTS ) {
+                return;
+        }
+
+        y = SERVEROPT_PLAYER_ROW_Y + slot *
+                ( SERVEROPT_PLAYER_ROW_HEIGHT + SERVEROPT_PLAYER_ROW_GAP );
+        focus = ( Menu_ItemAtCursor( nameItem->generic.parent ) == nameItem );
+        Frontend_DrawCard( SERVEROPT_PLAYER_ROW_X, y,
+                SERVEROPT_PLAYER_ROW_WIDTH, SERVEROPT_PLAYER_ROW_HEIGHT,
+                1.0f, focus );
+
+        if ( slot == 0 ) {
+                Q_strncpyz( type, "Human", sizeof( type ) );
+        } else if ( s_serveroptions.playerType[slot].itemnames &&
+                    s_serveroptions.playerType[slot].curvalue >= 0 &&
+                    s_serveroptions.playerType[slot].itemnames[
+                            s_serveroptions.playerType[slot].curvalue] ) {
+                Q_strncpyz( type,
+                        s_serveroptions.playerType[slot].itemnames[
+                                s_serveroptions.playerType[slot].curvalue],
+                        sizeof( type ) );
+        } else {
+                Q_strncpyz( type, "Open", sizeof( type ) );
+        }
+
+        Q_strncpyz( name, s_serveroptions.playerNameBuffers[slot], sizeof( name ) );
+        if ( !name[0] ) {
+                Q_strncpyz( name, "Open slot", sizeof( name ) );
+        }
+        StartServer_FitText( name, sizeof( name ), name, 128 );
+
+        Frontend_DrawText( SERVEROPT_PLAYER_ROW_X + 8, y + 3, type,
+                UI_LEFT | UI_SMALLFONT,
+                focus ? serverOptionsAccentColor : serverOptionsMutedColor );
+        Frontend_DrawText( SERVEROPT_PLAYER_ROW_X + 58, y + 3, name,
+                UI_LEFT | UI_SMALLFONT, serverOptionsTextColor );
+}
+
+static void ServerOptions_DrawPlayerType( void *self ) {
+        menulist_s *typeItem;
+        int slot;
+        const char *value;
+        qboolean focus;
+
+        typeItem = (menulist_s *)self;
+        slot = ServerOptions_PlayerSlotForItem( &typeItem->generic, 1 );
+        if ( slot < 0 ) {
+                return;
+        }
+        value = "Open";
+        if ( typeItem->itemnames && typeItem->curvalue >= 0 &&
+             typeItem->itemnames[typeItem->curvalue] ) {
+                value = typeItem->itemnames[typeItem->curvalue];
+        }
+        focus = ( Menu_ItemAtCursor( typeItem->generic.parent ) == typeItem );
+        Frontend_DrawText( typeItem->generic.left + 4,
+                typeItem->generic.top + 3, value,
+                UI_LEFT | UI_SMALLFONT,
+                focus ? serverOptionsAccentColor : serverOptionsMutedColor );
+}
+
+static void ServerOptions_DrawPlayerTeam( void *self ) {
+        menulist_s *teamItem;
+        const char *value;
+        qboolean focus;
+
+        teamItem = (menulist_s *)self;
+        value = "";
+        if ( teamItem->itemnames && teamItem->curvalue >= 0 &&
+             teamItem->itemnames[teamItem->curvalue] ) {
+                value = teamItem->itemnames[teamItem->curvalue];
+        }
+        focus = ( Menu_ItemAtCursor( teamItem->generic.parent ) == teamItem );
+        Frontend_DrawText( teamItem->generic.left,
+                teamItem->generic.top + 3, value,
+                UI_RIGHT | UI_SMALLFONT,
+                focus ? serverOptionsAccentColor : serverOptionsMutedColor );
+}
+
+static void ServerOptions_DrawAction( void *self ) {
+        menutext_s *button;
+        qboolean focus;
+
+        button = (menutext_s *)self;
+        focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+        Frontend_DrawButton( button->generic.left, button->generic.top,
+                button->generic.right - button->generic.left,
+                button->generic.bottom - button->generic.top,
+                button->string, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
+
+static void ServerOptions_LayoutFrontend( void ) {
+        menucommon_s *item;
+        int n;
+        int slot;
+        int optionIndex;
+        int row;
+        int x;
+        int y;
+
+        s_serveroptions.banner.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+        s_serveroptions.mappic.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+        s_serveroptions.player0.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+
+        s_serveroptions.botSkill.generic.left = SERVEROPT_BOT_X;
+        s_serveroptions.botSkill.generic.top = SERVEROPT_BOT_Y;
+        s_serveroptions.botSkill.generic.right = SERVEROPT_BOT_X + SERVEROPT_BOT_WIDTH;
+        s_serveroptions.botSkill.generic.bottom = SERVEROPT_BOT_Y + SERVEROPT_BOT_HEIGHT;
+        s_serveroptions.botSkill.generic.x = SERVEROPT_BOT_X + 8;
+        s_serveroptions.botSkill.generic.y = SERVEROPT_BOT_Y + 4;
+        s_serveroptions.botSkill.generic.ownerdraw = ServerOptions_DrawList;
+
+        for ( slot = 0; slot < PLAYER_SLOTS; slot++ ) {
+                y = SERVEROPT_PLAYER_ROW_Y + slot *
+                        ( SERVEROPT_PLAYER_ROW_HEIGHT + SERVEROPT_PLAYER_ROW_GAP );
+
+                s_serveroptions.playerName[slot].generic.left =
+                        SERVEROPT_PLAYER_ROW_X + 54;
+                s_serveroptions.playerName[slot].generic.top = y;
+                s_serveroptions.playerName[slot].generic.right =
+                        SERVEROPT_PLAYER_ROW_X + 190;
+                s_serveroptions.playerName[slot].generic.bottom =
+                        y + SERVEROPT_PLAYER_ROW_HEIGHT;
+                s_serveroptions.playerName[slot].generic.x =
+                        s_serveroptions.playerName[slot].generic.left;
+                s_serveroptions.playerName[slot].generic.y = y + 3;
+                s_serveroptions.playerName[slot].generic.ownerdraw =
+                        ServerOptions_DrawPlayerName;
+
+                s_serveroptions.playerType[slot].generic.left =
+                        SERVEROPT_PLAYER_ROW_X + 4;
+                s_serveroptions.playerType[slot].generic.top = y;
+                s_serveroptions.playerType[slot].generic.right =
+                        SERVEROPT_PLAYER_ROW_X + 52;
+                s_serveroptions.playerType[slot].generic.bottom =
+                        y + SERVEROPT_PLAYER_ROW_HEIGHT;
+                s_serveroptions.playerType[slot].generic.x =
+                        s_serveroptions.playerType[slot].generic.left;
+                s_serveroptions.playerType[slot].generic.y = y + 3;
+                s_serveroptions.playerType[slot].generic.ownerdraw =
+                        ServerOptions_DrawPlayerType;
+
+                s_serveroptions.playerTeam[slot].generic.left =
+                        SERVEROPT_PLAYER_ROW_X + 196;
+                s_serveroptions.playerTeam[slot].generic.top = y;
+                s_serveroptions.playerTeam[slot].generic.right =
+                        SERVEROPT_PLAYER_ROW_X + SERVEROPT_PLAYER_ROW_WIDTH - 8;
+                s_serveroptions.playerTeam[slot].generic.bottom =
+                        y + SERVEROPT_PLAYER_ROW_HEIGHT;
+                s_serveroptions.playerTeam[slot].generic.x =
+                        s_serveroptions.playerTeam[slot].generic.right;
+                s_serveroptions.playerTeam[slot].generic.y = y + 3;
+                s_serveroptions.playerTeam[slot].generic.ownerdraw =
+                        ServerOptions_DrawPlayerTeam;
+        }
+
+        optionIndex = 0;
+        for ( n = 0; n < s_serveroptions.menu.nitems; n++ ) {
+                item = (menucommon_s *)s_serveroptions.menu.items[n];
+                if ( item == (menucommon_s *)&s_serveroptions.banner ||
+                     item == (menucommon_s *)&s_serveroptions.mappic ||
+                     item == (menucommon_s *)&s_serveroptions.player0 ||
+                     item == (menucommon_s *)&s_serveroptions.botSkill ||
+                     item == (menucommon_s *)&s_serveroptions.back ||
+                     item == (menucommon_s *)&s_serveroptions.go ) {
+                        continue;
+                }
+
+                if ( item->flags & QMF_HIDDEN ) {
+                        continue;
+                }
+
+                if ( ServerOptions_PlayerSlotForItem( item, 0 ) >= 0 ||
+                     ServerOptions_PlayerSlotForItem( item, 1 ) >= 0 ||
+                     ServerOptions_PlayerSlotForItem( item, 2 ) >= 0 ) {
+                        continue;
+                }
+
+                row = optionIndex;
+                x = SERVEROPT_OPTION_X + 16;
+                y = SERVEROPT_OPTION_START_Y + row *
+                        ( SERVEROPT_OPTION_ROW_HEIGHT + SERVEROPT_OPTION_ROW_GAP );
+                item->left = x;
+                item->top = y;
+                item->right = x + SERVEROPT_OPTION_COLUMN_WIDTH;
+                item->bottom = y + SERVEROPT_OPTION_ROW_HEIGHT;
+                item->x = x + 8;
+                item->y = y + 7;
+
+                if ( item->type == MTYPE_FIELD ) {
+                        item->ownerdraw = ServerOptions_DrawField;
+                } else if ( item->type == MTYPE_SPINCONTROL ) {
+                        item->ownerdraw = ServerOptions_DrawList;
+                } else if ( item->type == MTYPE_RADIOBUTTON ) {
+                        item->ownerdraw = ServerOptions_DrawToggle;
+                }
+                optionIndex++;
+        }
+
+        s_serveroptions.back.generic.left = SERVEROPT_FRAME_X + 16;
+        s_serveroptions.back.generic.top = SERVEROPT_ACTION_Y;
+        s_serveroptions.back.generic.right = s_serveroptions.back.generic.left +
+                SERVEROPT_ACTION_WIDTH;
+        s_serveroptions.back.generic.bottom = SERVEROPT_ACTION_Y +
+                SERVEROPT_ACTION_HEIGHT;
+        s_serveroptions.back.generic.x = ( s_serveroptions.back.generic.left +
+                s_serveroptions.back.generic.right ) / 2;
+        s_serveroptions.back.generic.y = SERVEROPT_ACTION_Y + 4;
+        s_serveroptions.back.generic.ownerdraw = ServerOptions_DrawAction;
+
+        s_serveroptions.go.generic.left = SERVEROPT_FRAME_X + SERVEROPT_FRAME_WIDTH -
+                24 - SERVEROPT_ACTION_WIDTH;
+        s_serveroptions.go.generic.top = SERVEROPT_ACTION_Y;
+        s_serveroptions.go.generic.right = s_serveroptions.go.generic.left +
+                SERVEROPT_ACTION_WIDTH;
+        s_serveroptions.go.generic.bottom = SERVEROPT_ACTION_Y +
+                SERVEROPT_ACTION_HEIGHT;
+        s_serveroptions.go.generic.x = ( s_serveroptions.go.generic.left +
+                s_serveroptions.go.generic.right ) / 2;
+        s_serveroptions.go.generic.y = SERVEROPT_ACTION_Y + 4;
+        s_serveroptions.go.generic.ownerdraw = ServerOptions_DrawAction;
+}
+
+static void ServerOptions_Draw( void ) {
+        vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
+        char subtitle[128];
+        qhandle_t mapShader;
+
+        Frontend_DrawBackground( scrimColor );
+        Frontend_DrawPanel( SERVEROPT_FRAME_X, SERVEROPT_FRAME_Y,
+                SERVEROPT_FRAME_WIDTH, SERVEROPT_FRAME_HEIGHT, 1.0f,
+                UI_FRONTEND_STYLE_FRAME );
+        Frontend_DrawText( SERVEROPT_FRAME_X + 24, SERVEROPT_FRAME_Y + 24,
+                "Host race", UI_LEFT | UI_BIGFONT, serverOptionsTextColor );
+        Com_sprintf( subtitle, sizeof( subtitle ), "%s  ·  %s",
+                s_serveroptions.mapnamebuffer,
+                gametype_items[gametype_remap2[s_serveroptions.gametype]] );
+        Frontend_DrawText( SERVEROPT_FRAME_X + 24, SERVEROPT_FRAME_Y + 48,
+                subtitle, UI_LEFT | UI_SMALLFONT, serverOptionsMutedColor );
+        Frontend_DrawStatusChip( SERVEROPT_FRAME_X + 310,
+                SERVEROPT_FRAME_Y + 26, "Server options", serverOptionsAccentColor,
+                1.0f );
+
+        mapShader = 0;
+        if ( s_serveroptions.mappic.generic.name ) {
+                mapShader = trap_R_RegisterShaderNoMip(
+                        s_serveroptions.mappic.generic.name );
+        }
+        if ( !mapShader ) {
+                mapShader = trap_R_RegisterShaderNoMip(
+                        GAMESERVER_MISSING_MAP_SHOT );
+        }
+        Frontend_DrawCard( SERVEROPT_PLAYER_X, SERVEROPT_PLAYER_Y,
+                SERVEROPT_PLAYER_WIDTH, SERVEROPT_PLAYER_HEIGHT, 1.0f, qfalse );
+        Frontend_DrawCard( SERVEROPT_OPTION_X, SERVEROPT_OPTION_Y,
+                SERVEROPT_OPTION_WIDTH, SERVEROPT_OPTION_HEIGHT, 1.0f, qfalse );
+        Frontend_DrawText( SERVEROPT_PLAYER_X + 16, SERVEROPT_PLAYER_Y + 16,
+                "Players", UI_LEFT | UI_SMALLFONT, serverOptionsMutedColor );
+        Frontend_DrawText( SERVEROPT_OPTION_X + 16, SERVEROPT_OPTION_Y + 16,
+                "Server options", UI_LEFT | UI_SMALLFONT, serverOptionsMutedColor );
+        Frontend_DrawText( SERVEROPT_OPTION_X + 16, SERVEROPT_OPTION_Y + 48,
+                "Track preview", UI_LEFT | UI_SMALLFONT, serverOptionsMutedColor );
+        if ( mapShader ) {
+                UI_DrawHandlePic( SERVEROPT_OPTION_X + SERVEROPT_OPTION_WIDTH -
+                        16 - 112, SERVEROPT_OPTION_Y + 32, 112, 64, mapShader );
+        }
+
+        Menu_Draw( &s_serveroptions.menu );
+
+        Frontend_DrawText( SERVEROPT_FRAME_X + 24, SERVEROPT_FRAME_Y + 384,
+                "Select a player or option", UI_LEFT | UI_SMALLFONT,
+                serverOptionsMutedColor );
+        Frontend_DrawText( SERVEROPT_FRAME_X + SERVEROPT_FRAME_WIDTH - 24,
+                SERVEROPT_FRAME_Y + 384, "Enter start   Esc back",
+                UI_RIGHT | UI_SMALLFONT, serverOptionsMutedColor );
+}
+
 
 /*
 =================
@@ -1927,6 +2642,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	s_serveroptions.menu.wrapAround = qtrue;
 	s_serveroptions.menu.fullscreen = qtrue;
+	s_serveroptions.menu.draw = ServerOptions_Draw;
 
 	s_serveroptions.banner.generic.type			= MTYPE_BTEXT;
 	s_serveroptions.banner.generic.x			= 320;
@@ -1941,7 +2657,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.mappic.generic.y			= 80;
 	s_serveroptions.mappic.width				= 170;
 	s_serveroptions.mappic.height				= 96;
-	s_serveroptions.mappic.errorpic				= GAMESERVER_UNKNOWNMAP;
+	s_serveroptions.mappic.errorpic				= GAMESERVER_MISSING_MAP_SHOT;
 	s_serveroptions.mappic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
 	y = 272;
 
@@ -2099,9 +2815,10 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
                 s_serveroptions.ghostOnly.generic.flags         = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
                 s_serveroptions.ghostOnly.generic.x                     = OPTIONS_X;
                 s_serveroptions.ghostOnly.generic.y                     = y;
-                s_serveroptions.ghostOnly.generic.name          = "Ghost Mode:";
+                s_serveroptions.ghostOnly.generic.name          = "Ghost-Only Race:";
                 s_serveroptions.ghostOnly.generic.id                    = ID_GHOST_ONLY;
                 s_serveroptions.ghostOnly.generic.callback      = ServerOptions_Event;
+                s_serveroptions.ghostOnly.generic.statusbar     = ServerOptions_GhostOnlyStatusBar;
         } else {
                 s_serveroptions.ghostOnly.generic.type                  = MTYPE_RADIOBUTTON;
                 s_serveroptions.ghostOnly.generic.flags         = QMF_INACTIVE|QMF_HIDDEN;
@@ -2375,6 +3092,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );
 
 	ServerOptions_SetMenuItems();
+	ServerOptions_LayoutFrontend();
 }
 
 /*
@@ -2385,6 +3103,7 @@ ServerOptions_Cache
 void ServerOptions_Cache( void ) {
 
 	trap_R_RegisterShaderNoMip( GAMESERVER_UNKNOWNMAP );
+	trap_R_RegisterShaderNoMip( GAMESERVER_MISSING_MAP_SHOT );
 }
 
 
@@ -2422,6 +3141,26 @@ BOT SELECT MENU *****
 #define PLAYERGRID_COLS			4
 #define PLAYERGRID_ROWS			4
 #define MAX_MODELSPERPAGE		(PLAYERGRID_ROWS * PLAYERGRID_COLS)
+
+#define BOTSELECT_FRAME_X            24
+#define BOTSELECT_FRAME_Y            20
+#define BOTSELECT_FRAME_WIDTH        592
+#define BOTSELECT_FRAME_HEIGHT       440
+#define BOTSELECT_GRID_X             48
+#define BOTSELECT_GRID_Y             108
+#define BOTSELECT_CARD_WIDTH         120
+#define BOTSELECT_CARD_HEIGHT        44
+#define BOTSELECT_CARD_GAP           8
+#define BOTSELECT_GRID_WIDTH         512
+#define BOTSELECT_GRID_HEIGHT        232
+#define BOTSELECT_ACTION_Y           420
+#define BOTSELECT_ACTION_WIDTH       112
+#define BOTSELECT_ACTION_HEIGHT      24
+#define BOTSELECT_PAGE_WIDTH         96
+
+static vec4_t botSelectTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t botSelectMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t botSelectAccentColor = UI_FRONTEND_COLOR_ACCENT;
 
 
 typedef struct {
@@ -2715,10 +3454,14 @@ static void UI_BotSelectMenu_SelectEvent( void* ptr, int event ) {
 	if( event != QM_ACTIVATED ) {
 		return;
 	}
-	UI_PopMenu();
 
-	s_serveroptions.newBot = qtrue;
-	Q_strncpyz( s_serveroptions.newBotName, botSelectInfo.botnames[botSelectInfo.selectedmodel % MAX_MODELSPERPAGE], 16 );
+	/* Commit the selection while returning from the modal menu.  This used to
+	 * happen from the level-shot ownerdraw, but that widget is hidden by the
+	 * modern server-options layout and therefore never ran. */
+	Q_strncpyz( s_serveroptions.playerNameBuffers[s_serveroptions.newBotIndex],
+		botSelectInfo.botnames[botSelectInfo.selectedmodel % MAX_MODELSPERPAGE],
+		16 );
+	UI_PopMenu();
 }
 
 
@@ -2739,6 +3482,170 @@ void UI_BotSelectMenu_Cache( void ) {
 	trap_R_RegisterShaderNoMip( BOTSELECT_ARROWSR );
 }
 
+static void UI_BotSelectMenu_DrawAction( void *self ) {
+        menucommon_s *item;
+        qboolean focus;
+        const char *label;
+
+        item = (menucommon_s *)self;
+        focus = ( Menu_ItemAtCursor( item->parent ) == item );
+        if ( item == (menucommon_s *)&botSelectInfo.left ) {
+                label = "Prev";
+        } else if ( item == (menucommon_s *)&botSelectInfo.right ) {
+                label = "Next";
+        } else if ( item == (menucommon_s *)&botSelectInfo.go ) {
+                label = "Select";
+        } else {
+                label = "Back";
+        }
+
+        Frontend_DrawButton( item->left, item->top,
+                item->right - item->left, item->bottom - item->top,
+                label, 1.0f, focus, UI_FRONTEND_TEXT_CENTER );
+}
+
+static void UI_BotSelectMenu_DrawBot( void *self ) {
+        menubitmap_s *button;
+        int index;
+        int column;
+        int row;
+        int x;
+        int y;
+        int absoluteIndex;
+        qboolean focus;
+        qboolean selected;
+        qhandle_t shader;
+        char name[32];
+
+        button = (menubitmap_s *)self;
+        index = button->generic.id;
+        if ( index < 0 || index >= MAX_MODELSPERPAGE ||
+             !botSelectInfo.botnames[index][0] ) {
+                return;
+        }
+
+        column = index % PLAYERGRID_COLS;
+        row = index / PLAYERGRID_COLS;
+        x = BOTSELECT_GRID_X + column *
+                ( BOTSELECT_CARD_WIDTH + BOTSELECT_CARD_GAP );
+        y = BOTSELECT_GRID_Y + row *
+                ( BOTSELECT_CARD_HEIGHT + BOTSELECT_CARD_GAP );
+        absoluteIndex = botSelectInfo.modelpage * MAX_MODELSPERPAGE + index;
+        focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+        selected = ( absoluteIndex == botSelectInfo.selectedmodel );
+
+        Frontend_DrawCard( x, y, BOTSELECT_CARD_WIDTH, BOTSELECT_CARD_HEIGHT,
+                1.0f, focus || selected );
+        shader = trap_R_RegisterShaderNoMip( botSelectInfo.boticons[index] );
+        if ( shader ) {
+                UI_DrawHandlePic( x + 6, y + 4, 36, 36, shader );
+        }
+
+        Q_strncpyz( name, botSelectInfo.botnames[index], sizeof( name ) );
+        StartServer_FitText( name, sizeof( name ), name, 66 );
+        Frontend_DrawText( x + 50, y + 14, name,
+                UI_LEFT | UI_SMALLFONT,
+                focus || selected ? botSelectAccentColor : botSelectTextColor );
+}
+
+static void UI_BotSelectMenu_Draw( void ) {
+        vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
+        char pageText[32];
+
+        Frontend_DrawBackground( scrimColor );
+        Frontend_DrawPanel( BOTSELECT_FRAME_X, BOTSELECT_FRAME_Y,
+                BOTSELECT_FRAME_WIDTH, BOTSELECT_FRAME_HEIGHT, 1.0f,
+                UI_FRONTEND_STYLE_FRAME );
+        Frontend_DrawText( BOTSELECT_FRAME_X + 24, BOTSELECT_FRAME_Y + 24,
+                "Select bot", UI_LEFT | UI_BIGFONT, botSelectTextColor );
+        Frontend_DrawText( BOTSELECT_FRAME_X + 24, BOTSELECT_FRAME_Y + 48,
+                "Choose a driver for this player", UI_LEFT | UI_SMALLFONT,
+                botSelectMutedColor );
+        Frontend_DrawStatusChip( BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH - 104,
+                BOTSELECT_FRAME_Y + 26, "Roster", botSelectAccentColor, 1.0f );
+
+        Frontend_DrawCard( BOTSELECT_GRID_X - 8, BOTSELECT_GRID_Y - 12,
+                BOTSELECT_GRID_WIDTH, BOTSELECT_GRID_HEIGHT, 1.0f, qfalse );
+        Frontend_DrawText( BOTSELECT_GRID_X + 8, BOTSELECT_GRID_Y - 26,
+                "Available drivers", UI_LEFT | UI_SMALLFONT,
+                botSelectMutedColor );
+
+        Menu_Draw( &botSelectInfo.menu );
+
+        Com_sprintf( pageText, sizeof( pageText ), "Page %d / %d",
+                botSelectInfo.numpages ? botSelectInfo.modelpage + 1 : 0,
+                botSelectInfo.numpages );
+        Frontend_DrawText( BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH / 2,
+                BOTSELECT_FRAME_Y + 368, pageText,
+                UI_CENTER | UI_SMALLFONT, botSelectAccentColor );
+        Frontend_DrawText( BOTSELECT_FRAME_X + 24, BOTSELECT_FRAME_Y + 384,
+                "Select a driver   Enter accept   Esc back",
+                UI_LEFT | UI_SMALLFONT, botSelectMutedColor );
+}
+
+static void UI_BotSelectMenu_Layout( void ) {
+        int i;
+        int column;
+        int row;
+        int x;
+        int y;
+
+        botSelectInfo.banner.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+        botSelectInfo.arrows.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+
+        for ( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
+                column = i % PLAYERGRID_COLS;
+                row = i / PLAYERGRID_COLS;
+                x = BOTSELECT_GRID_X + column *
+                        ( BOTSELECT_CARD_WIDTH + BOTSELECT_CARD_GAP );
+                y = BOTSELECT_GRID_Y + row *
+                        ( BOTSELECT_CARD_HEIGHT + BOTSELECT_CARD_GAP );
+
+                botSelectInfo.pics[i].generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+                botSelectInfo.picnames[i].generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+                botSelectInfo.picbuttons[i].generic.flags |= QMF_NODEFAULTINIT;
+                botSelectInfo.picbuttons[i].generic.x = x;
+                botSelectInfo.picbuttons[i].generic.y = y;
+                botSelectInfo.picbuttons[i].generic.left = x;
+                botSelectInfo.picbuttons[i].generic.top = y;
+                botSelectInfo.picbuttons[i].generic.right = x + BOTSELECT_CARD_WIDTH;
+                botSelectInfo.picbuttons[i].generic.bottom = y + BOTSELECT_CARD_HEIGHT;
+                botSelectInfo.picbuttons[i].width = BOTSELECT_CARD_WIDTH;
+                botSelectInfo.picbuttons[i].height = BOTSELECT_CARD_HEIGHT;
+                botSelectInfo.picbuttons[i].generic.ownerdraw =
+                        UI_BotSelectMenu_DrawBot;
+        }
+
+        botSelectInfo.left.generic.flags |= QMF_NODEFAULTINIT;
+        botSelectInfo.left.generic.left = 220;
+        botSelectInfo.left.generic.top = BOTSELECT_ACTION_Y;
+        botSelectInfo.left.generic.right = 220 + BOTSELECT_PAGE_WIDTH;
+        botSelectInfo.left.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
+        botSelectInfo.left.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
+
+        botSelectInfo.right.generic.flags |= QMF_NODEFAULTINIT;
+        botSelectInfo.right.generic.left = 324;
+        botSelectInfo.right.generic.top = BOTSELECT_ACTION_Y;
+        botSelectInfo.right.generic.right = 324 + BOTSELECT_PAGE_WIDTH;
+        botSelectInfo.right.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
+        botSelectInfo.right.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
+
+        botSelectInfo.back.generic.flags |= QMF_NODEFAULTINIT;
+        botSelectInfo.back.generic.left = 40;
+        botSelectInfo.back.generic.top = BOTSELECT_ACTION_Y;
+        botSelectInfo.back.generic.right = 40 + BOTSELECT_ACTION_WIDTH;
+        botSelectInfo.back.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
+        botSelectInfo.back.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
+
+        botSelectInfo.go.generic.flags |= QMF_NODEFAULTINIT;
+        botSelectInfo.go.generic.left = BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH -
+                24 - BOTSELECT_ACTION_WIDTH;
+        botSelectInfo.go.generic.top = BOTSELECT_ACTION_Y;
+        botSelectInfo.go.generic.right = BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH - 24;
+        botSelectInfo.go.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
+        botSelectInfo.go.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
+}
+
 
 static void UI_BotSelectMenu_Init( char *bot ) {
 	int		i, j, k;
@@ -2747,6 +3654,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	memset( &botSelectInfo, 0 ,sizeof(botSelectInfo) );
 	botSelectInfo.menu.wrapAround = qtrue;
 	botSelectInfo.menu.fullscreen = qtrue;
+	botSelectInfo.menu.draw = UI_BotSelectMenu_Draw;
 
 	UI_BotSelectMenu_Cache();
 
@@ -2757,9 +3665,9 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.banner.color			= color_white;
 	botSelectInfo.banner.style			= UI_CENTER;
 
-	y =	80;
+	y = BOTSELECT_GRID_Y;
 	for( i = 0, k = 0; i < PLAYERGRID_ROWS; i++) {
-		x =	180;
+		x = BOTSELECT_GRID_X;
 		for( j = 0; j < PLAYERGRID_COLS; j++, k++ ) {
 			botSelectInfo.pics[k].generic.type				= MTYPE_BITMAP;
 			botSelectInfo.pics[k].generic.flags				= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -2856,6 +3764,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.left );
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.right );
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.go );
+	UI_BotSelectMenu_Layout();
 
 	UI_BotSelectMenu_BuildList();
 	UI_BotSelectMenu_Default( bot );

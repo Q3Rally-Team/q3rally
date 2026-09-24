@@ -6,14 +6,23 @@ Copyright (C) 2002-2026 Q3Rally Team
 // ui_rally_ladder_wizard.c – Offline tracking registration wizard
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define WIZARD_SCREEN_W     640
 #define WIZARD_SCREEN_H     480
-#define WIZARD_PANEL_W      460
-#define WIZARD_PANEL_H      260
-#define WIZARD_PANEL_X      ( ( WIZARD_SCREEN_W - WIZARD_PANEL_W ) / 2 )
-#define WIZARD_PANEL_Y      ( ( WIZARD_SCREEN_H - WIZARD_PANEL_H ) / 2 )
-#define WIZARD_BTN_Y        ( WIZARD_PANEL_Y + WIZARD_PANEL_H - 48 )
+#define WIZARD_FRAME_X      48
+#define WIZARD_FRAME_Y      28
+#define WIZARD_FRAME_W      544
+#define WIZARD_FRAME_H      420
+#define WIZARD_PANEL_W      496
+#define WIZARD_PANEL_H      270
+#define WIZARD_PANEL_X      72
+#define WIZARD_PANEL_Y      112
+#define WIZARD_BTN_Y        388
+#define WIZARD_BTN_WIDTH    120
+#define WIZARD_BTN_CANCEL_X 64
+#define WIZARD_BTN_REGISTER_X 256
+#define WIZARD_BTN_NEVER_X  448
 
 #define ID_WIZARD_YES       10
 #define ID_WIZARD_NO        11
@@ -42,18 +51,16 @@ static struct {
     char            serverName[65];
     char            serverNameCompareKey[65];
     char            serverNameNotice[128];
-    char            apiKey[256];
     char            statusLine[128];
     qboolean        submitting;
 } s_wizard;
 
-static vec4_t wizardBg     = { 0.08f, 0.08f, 0.12f, 0.97f };
-static vec4_t wizardDim    = { 0.00f, 0.00f, 0.00f, 0.45f };
-static vec4_t wizardBorder = { 0.35f, 0.45f, 0.75f, 0.60f };
-static vec4_t wizardTitle  = { 0.72f, 0.82f, 1.00f, 1.00f };
-static vec4_t wizardText   = { 0.75f, 0.78f, 0.88f, 1.00f };
-static vec4_t wizardAccent = { 0.50f, 0.65f, 1.00f, 1.00f };
-static vec4_t wizardError  = { 1.00f, 0.42f, 0.42f, 1.00f };
+static vec4_t wizardScrim  = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t wizardText   = UI_FRONTEND_COLOR_TEXT;
+static vec4_t wizardMuted  = UI_FRONTEND_COLOR_MUTED;
+static vec4_t wizardAccent = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t wizardStatus = UI_FRONTEND_COLOR_STATUS;
+static vec4_t wizardError  = UI_FRONTEND_COLOR_STATUS;
 
 static void LadderWizard_MenuEvent( void *ptr, int event );
 static void LadderWizard_Draw( void );
@@ -64,6 +71,8 @@ static void LadderWizard_ComputeFormLayout( int *contentLeft,
                                             int *contentRight,
                                             int *fieldX,
                                             int *fieldWidthChars );
+static void LadderWizard_DrawField( void *self );
+static void LadderWizard_DrawButton( void *self );
 
 /* ── Localized UI strings (English default) ─────────────────────────────────── */
 #define WIZARD_TEXT_REGISTER                 "REGISTER"
@@ -79,12 +88,13 @@ static void LadderWizard_ComputeFormLayout( int *contentLeft,
 #define WIZARD_TEXT_CANCEL_HINT              "Cancel only closes this dialog."
 #define WIZARD_TEXT_NEVER_HINT               "\"Never show again\" suppresses it permanently."
 #define WIZARD_TEXT_SUCCESS                  "Registration successful!"
+#define WIZARD_TEXT_PENDING_APPROVAL         "Offline profile pending ladder admin approval."
 #define WIZARD_TEXT_FAILED                   "Registration failed."
 #define WIZARD_TEXT_FAILED_HINT              "Please check data/connection and try again."
 #define WIZARD_TEXT_DISMISSED_LOG            "Ladder wizard permanently dismissed via 'Never show again'.\n"
 
 #define WIZARD_CONTENT_PAD_X        24
-#define WIZARD_FORM_TOP_Y           ( WIZARD_PANEL_Y + 108 )
+#define WIZARD_FORM_TOP_Y           ( WIZARD_PANEL_Y + 116 )
 #define WIZARD_FORM_ROW_H           28
 #define WIZARD_FORM_LABEL_OFFSET_Y  -12
 #define WIZARD_FIELD_SAFE_PAD_PX    ( SMALLCHAR_WIDTH * 2 )
@@ -94,6 +104,8 @@ static void LadderWizard_ComputeFormLayout( int *contentLeft,
 
 static vmCvar_t ui_ladderWizardDismissed;
 static vmCvar_t ui_ladderWizardCompleted;
+static vmCvar_t ui_ladderWizardProfiles;
+static vmCvar_t ui_ladderWizardDismissedProfiles;
 
 static void LadderWizard_RegisterCvars( void ) {
     trap_Cvar_Register( &ui_ladderWizardDismissed,
@@ -102,6 +114,12 @@ static void LadderWizard_RegisterCvars( void ) {
     trap_Cvar_Register( &ui_ladderWizardCompleted,
                         "ladder_wizard_completed", "0",
                         CVAR_ARCHIVE | CVAR_USERINFO );
+    trap_Cvar_Register( &ui_ladderWizardProfiles,
+                        "ladder_wizard_profiles", "",
+                        CVAR_ARCHIVE );
+    trap_Cvar_Register( &ui_ladderWizardDismissedProfiles,
+                        "ladder_wizard_dismissed_profiles", "",
+                        CVAR_ARCHIVE );
 }
 
 static qboolean LadderWizard_ValidateEmail( const char *email ) {
@@ -168,6 +186,47 @@ static void LadderWizard_ComputeFormLayout( int *contentLeft,
     if ( fieldWidthChars ) {
         *fieldWidthChars = widthChars;
     }
+}
+
+static qboolean LadderWizard_ItemHasFocus( const menucommon_s *item ) {
+    return ( item && item->parent &&
+             Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+}
+
+static void LadderWizard_DrawField( void *self ) {
+    menufield_s *field = (menufield_s *)self;
+    qboolean focus = LadderWizard_ItemHasFocus( &field->generic );
+    int valueX = field->generic.x + 112;
+    int right = WIZARD_PANEL_X + WIZARD_PANEL_W - WIZARD_CONTENT_PAD_X;
+    vec4_t labelColor;
+    vec4_t valueColor;
+
+    Vector4Copy( focus ? wizardAccent : wizardMuted, labelColor );
+    Vector4Copy( wizardText, valueColor );
+    Frontend_DrawText( field->generic.x, field->generic.y,
+                       field->generic.name ? field->generic.name : "Field",
+                       UI_LEFT | UI_SMALLFONT, labelColor );
+    Frontend_DrawText( valueX, field->generic.y, field->field.buffer,
+                       UI_LEFT | UI_SMALLFONT, valueColor );
+    UI_FillRect( valueX, field->generic.y + 18, right - valueX, 2,
+                 focus ? wizardAccent : wizardMuted );
+    if ( focus ) {
+        UI_DrawChar( valueX + field->field.cursor * SMALLCHAR_WIDTH,
+                     field->generic.y, trap_Key_GetOverstrikeMode() ? 11 : 10,
+                     UI_BLINK | UI_SMALLFONT, wizardAccent );
+    }
+}
+
+static void LadderWizard_DrawButton( void *self ) {
+    menutext_s *button = (menutext_s *)self;
+    qboolean focus = LadderWizard_ItemHasFocus( &button->generic );
+    qboolean active = !( button->generic.flags & QMF_INACTIVE );
+
+    Frontend_DrawNavButton( button->generic.left, button->generic.top,
+                            button->generic.right - button->generic.left,
+                            button->generic.bottom - button->generic.top,
+                            button->string ? button->string : "", 1.0f,
+                            active && focus, UI_CENTER );
 }
 
 static void LadderWizard_MakeCompareKey( const char *src, char *dst, size_t dstSize ) {
@@ -266,6 +325,80 @@ static void LadderWizard_NormalizeServerName( const char *src,
     dst[len] = '\0';
 }
 
+static qboolean LadderWizard_ProfileListContains( const char *list,
+                                                  const char *profileName ) {
+    const char *cursor;
+    int profileLength;
+
+    if ( !list || !profileName || !profileName[0] ) {
+        return qfalse;
+    }
+
+    profileLength = strlen( profileName );
+    cursor = list;
+    while ( *cursor ) {
+        const char *separator = strchr( cursor, ',' );
+        int tokenLength = separator ? (int)( separator - cursor ) : strlen( cursor );
+
+        if ( tokenLength == profileLength &&
+             Q_stricmpn( cursor, profileName, tokenLength ) == 0 ) {
+            return qtrue;
+        }
+        if ( !separator ) {
+            break;
+        }
+        cursor = separator + 1;
+    }
+
+    return qfalse;
+}
+
+static void LadderWizard_ProfileListAdd( const char *cvarName,
+                                         const char *profileName ) {
+    char list[1024];
+
+    if ( !cvarName || !cvarName[0] || !profileName || !profileName[0] ) {
+        return;
+    }
+
+    trap_Cvar_VariableStringBuffer( cvarName, list, sizeof( list ) );
+    if ( LadderWizard_ProfileListContains( list, profileName ) ) {
+        return;
+    }
+    if ( list[0] ) {
+        Q_strcat( list, sizeof( list ), "," );
+    }
+    Q_strcat( list, sizeof( list ), profileName );
+    trap_Cvar_Set( cvarName, list );
+}
+
+static void LadderWizard_GetActiveProfile( char *profileName, int profileNameSize ) {
+    if ( !profileName || profileNameSize <= 0 ) {
+        return;
+    }
+    trap_Cvar_VariableStringBuffer( "profile_active", profileName,
+                                    profileNameSize );
+}
+
+void UI_LadderWizard_MarkProfileRegistered( void ) {
+    char profileName[PROFILE_MAX_NAME];
+
+    LadderWizard_RegisterCvars();
+    LadderWizard_GetActiveProfile( profileName, sizeof( profileName ) );
+    LadderWizard_ProfileListAdd( "ladder_wizard_profiles", profileName );
+    trap_Cvar_Update( &ui_ladderWizardProfiles );
+}
+
+void UI_LadderWizard_MarkProfileDismissed( void ) {
+    char profileName[PROFILE_MAX_NAME];
+
+    LadderWizard_RegisterCvars();
+    LadderWizard_GetActiveProfile( profileName, sizeof( profileName ) );
+    LadderWizard_ProfileListAdd( "ladder_wizard_dismissed_profiles",
+                                 profileName );
+    trap_Cvar_Update( &ui_ladderWizardDismissedProfiles );
+}
+
 static void LadderWizard_SanitizeArg( const char *src, char *dst, size_t dstSize ) {
     size_t i;
     size_t j;
@@ -335,7 +468,6 @@ static void LadderWizard_StartRegistration( void ) {
         return;
     }
 
-    trap_Cvar_Set( "sv_ladderEnabled", "1" );
     trap_Cvar_Set( "sv_ladderUrl", "https://ladder.q3rally.com/index.php/matches" );
     trap_Cvar_Set( "sv_hostname", s_wizard.serverName );
 
@@ -414,6 +546,21 @@ static void LadderWizard_UpdateButtons( void ) {
     UI_ReflowPTextBounds( &s_wizard.btnYes );
     UI_ReflowPTextBounds( &s_wizard.btnNo );
     UI_ReflowPTextBounds( &s_wizard.btnNever );
+
+    /* Use stable frontend-sized hitboxes instead of the narrow legacy text
+     * bounds, so the three footer actions are easy to reach with the mouse. */
+    s_wizard.btnNo.generic.left = WIZARD_BTN_CANCEL_X;
+    s_wizard.btnNo.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnNo.generic.right = WIZARD_BTN_CANCEL_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnNo.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_wizard.btnYes.generic.left = WIZARD_BTN_REGISTER_X;
+    s_wizard.btnYes.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnYes.generic.right = WIZARD_BTN_REGISTER_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnYes.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_wizard.btnNever.generic.left = WIZARD_BTN_NEVER_X;
+    s_wizard.btnNever.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnNever.generic.right = WIZARD_BTN_NEVER_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnNever.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
 }
 
 static qboolean LadderWizard_IsFocusableItem( const menucommon_s *item ) {
@@ -494,23 +641,32 @@ static sfxHandle_t LadderWizard_MenuKey( int key ) {
 
 void UI_LadderWizard_MaybeShow( void ) {
     char profileName[PROFILE_MAX_NAME];
-    char apiKey[256];
+    char dismissedProfiles[1024];
 
     LadderWizard_RegisterCvars();
     trap_Cvar_Update( &ui_ladderWizardDismissed );
-    trap_Cvar_Update( &ui_ladderWizardCompleted );
+    trap_Cvar_Update( &ui_ladderWizardDismissedProfiles );
 
-    trap_Cvar_VariableStringBuffer( "profile_active", profileName, sizeof( profileName ) );
-    trap_Cvar_VariableStringBuffer( "sv_ladderApiKey", apiKey,     sizeof( apiKey ) );
+    LadderWizard_GetActiveProfile( profileName, sizeof( profileName ) );
 
     if ( !profileName[0] ) return;
-    if ( apiKey[0] )       return;
-    /* Product decision: once completed, don't auto-show again even if API key is removed later. */
-    if ( ui_ladderWizardCompleted.integer != 0 ) return;
-    if ( ui_ladderWizardDismissed.integer != 0 ) return;
     /* Don't show standalone wizard while the new profile wizard is active —
      * it handles offline key registration as part of its Page 3 flow.      */
     if ( UI_ProfileWizard_IsActive() ) return;
+
+    /* The engine activates the profile's protected key/name pair before this
+     * check. A completion flag from another profile must never suppress setup. */
+    if ( trap_Cvar_VariableValue( "sv_ladderProfileReady" ) != 0 ) {
+        return;
+    }
+
+    trap_Cvar_VariableStringBuffer( "ladder_wizard_dismissed_profiles",
+                                    dismissedProfiles,
+                                    sizeof( dismissedProfiles ) );
+
+    if ( LadderWizard_ProfileListContains( dismissedProfiles, profileName ) ) {
+        return;
+    }
 
     UI_LadderWizardMenu();
 }
@@ -578,6 +734,8 @@ void UI_LadderWizardMenu( void ) {
     s_wizard.ownerName.generic.type = MTYPE_FIELD;
     s_wizard.ownerName.generic.flags = QMF_SMALLFONT;
     s_wizard.ownerName.generic.id = ID_OWNER_NAME;
+    s_wizard.ownerName.generic.name = "Owner";
+    s_wizard.ownerName.generic.ownerdraw = LadderWizard_DrawField;
     LadderWizard_ComputeFormLayout( NULL, NULL, &fieldX, &fieldWidthChars );
 
     s_wizard.ownerName.generic.x = fieldX;
@@ -589,6 +747,8 @@ void UI_LadderWizardMenu( void ) {
     s_wizard.ownerEmail.generic.type = MTYPE_FIELD;
     s_wizard.ownerEmail.generic.flags = QMF_SMALLFONT;
     s_wizard.ownerEmail.generic.id = ID_OWNER_EMAIL;
+    s_wizard.ownerEmail.generic.name = "Email";
+    s_wizard.ownerEmail.generic.ownerdraw = LadderWizard_DrawField;
     s_wizard.ownerEmail.generic.x = fieldX;
     s_wizard.ownerEmail.generic.y = WIZARD_FORM_TOP_Y + WIZARD_FORM_ROW_H;
     s_wizard.ownerEmail.field.widthInChars = fieldWidthChars;
@@ -599,7 +759,8 @@ void UI_LadderWizardMenu( void ) {
     s_wizard.btnYes.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     s_wizard.btnYes.generic.id       = ID_WIZARD_YES;
     s_wizard.btnYes.generic.callback = LadderWizard_MenuEvent;
-    s_wizard.btnYes.generic.x        = WIZARD_SCREEN_W / 2 - 145;
+    s_wizard.btnYes.generic.ownerdraw = LadderWizard_DrawButton;
+    s_wizard.btnYes.generic.x        = WIZARD_BTN_REGISTER_X;
     s_wizard.btnYes.generic.y        = WIZARD_BTN_Y;
     s_wizard.btnYes.string           = WIZARD_TEXT_REGISTER;
     s_wizard.btnYes.style            = UI_CENTER | UI_SMALLFONT;
@@ -610,7 +771,8 @@ void UI_LadderWizardMenu( void ) {
     s_wizard.btnNo.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     s_wizard.btnNo.generic.id       = ID_WIZARD_NO;
     s_wizard.btnNo.generic.callback = LadderWizard_MenuEvent;
-    s_wizard.btnNo.generic.x        = WIZARD_SCREEN_W / 2;
+    s_wizard.btnNo.generic.ownerdraw = LadderWizard_DrawButton;
+    s_wizard.btnNo.generic.x        = WIZARD_BTN_CANCEL_X;
     s_wizard.btnNo.generic.y        = WIZARD_BTN_Y;
     s_wizard.btnNo.string           = WIZARD_TEXT_CANCEL;
     s_wizard.btnNo.style            = UI_CENTER | UI_SMALLFONT;
@@ -621,7 +783,8 @@ void UI_LadderWizardMenu( void ) {
     s_wizard.btnNever.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
     s_wizard.btnNever.generic.id       = ID_WIZARD_NEVER;
     s_wizard.btnNever.generic.callback = LadderWizard_MenuEvent;
-    s_wizard.btnNever.generic.x        = WIZARD_SCREEN_W / 2 + 135;
+    s_wizard.btnNever.generic.ownerdraw = LadderWizard_DrawButton;
+    s_wizard.btnNever.generic.x        = WIZARD_BTN_NEVER_X;
     s_wizard.btnNever.generic.y        = WIZARD_BTN_Y;
     s_wizard.btnNever.string           = WIZARD_TEXT_NEVER_SHOW;
     s_wizard.btnNever.style            = UI_CENTER | UI_SMALLFONT;
@@ -632,6 +795,24 @@ void UI_LadderWizardMenu( void ) {
     Menu_AddItem( &s_wizard.menu, &s_wizard.btnYes );
     Menu_AddItem( &s_wizard.menu, &s_wizard.btnNo );
     Menu_AddItem( &s_wizard.menu, &s_wizard.btnNever );
+
+    /* MenuField_Init clears the edit buffer, so restore the profile name
+     * after the fields have been registered. */
+    Q_strncpyz( s_wizard.ownerName.field.buffer, s_wizard.playerName,
+                sizeof( s_wizard.ownerName.field.buffer ) );
+
+    s_wizard.btnNo.generic.left = WIZARD_BTN_CANCEL_X;
+    s_wizard.btnNo.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnNo.generic.right = WIZARD_BTN_CANCEL_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnNo.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_wizard.btnYes.generic.left = WIZARD_BTN_REGISTER_X;
+    s_wizard.btnYes.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnYes.generic.right = WIZARD_BTN_REGISTER_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnYes.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    s_wizard.btnNever.generic.left = WIZARD_BTN_NEVER_X;
+    s_wizard.btnNever.generic.top = WIZARD_BTN_Y;
+    s_wizard.btnNever.generic.right = WIZARD_BTN_NEVER_X + WIZARD_BTN_WIDTH;
+    s_wizard.btnNever.generic.bottom = WIZARD_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
 
     LadderWizard_UpdateButtons();
     Menu_SetCursorToItem( &s_wizard.menu, &s_wizard.ownerName );
@@ -646,88 +827,87 @@ void UI_LadderWizardMenu( void ) {
 
 static void LadderWizard_Draw( void ) {
     int cx = WIZARD_SCREEN_W / 2;
-    int ty = WIZARD_PANEL_Y + 60;
-    int contentLeft;
-    int labelY = WIZARD_FORM_TOP_Y + WIZARD_FORM_LABEL_OFFSET_Y;
 
-    LadderWizard_ComputeFormLayout( &contentLeft, NULL, NULL, NULL );
-
-    /* modal backdrop: static menu background + wizard-owned dimming */
-    UI_FillRect( 0, 0, WIZARD_SCREEN_W, WIZARD_SCREEN_H, wizardDim );
-
-    UI_FillRect( WIZARD_PANEL_X, WIZARD_PANEL_Y,
-                 WIZARD_PANEL_W, WIZARD_PANEL_H, wizardBg );
-    UI_DrawRect( WIZARD_PANEL_X, WIZARD_PANEL_Y,
-                 WIZARD_PANEL_W, WIZARD_PANEL_H, wizardBorder );
-
-    UI_DrawProportionalString( cx, WIZARD_PANEL_Y + 18,
-                               "Q3RALLY LADDER",
-                               UI_CENTER | UI_SMALLFONT, wizardTitle );
-
-    Menu_Draw( &s_wizard.menu );
+    Frontend_DrawBackground( wizardScrim );
+    Frontend_DrawPanel( WIZARD_FRAME_X, WIZARD_FRAME_Y,
+                        WIZARD_FRAME_W, WIZARD_FRAME_H, uis.tFrac,
+                        UI_FRONTEND_STYLE_FRAME );
+    Frontend_DrawText( WIZARD_FRAME_X + 24, WIZARD_FRAME_Y + 24,
+                       "Ladder setup", UI_LEFT | UI_BIGFONT, wizardText );
+    Frontend_DrawText( WIZARD_FRAME_X + 24, WIZARD_FRAME_Y + 48,
+                       "Register offline results and keep your profile connected",
+                       UI_LEFT | UI_SMALLFONT, wizardMuted );
+    Frontend_DrawStatusChip( WIZARD_FRAME_X + WIZARD_FRAME_W - 104,
+                             WIZARD_FRAME_Y + 26, "Ladder", wizardStatus,
+                             uis.tFrac );
+    Frontend_DrawCard( WIZARD_PANEL_X, WIZARD_PANEL_Y,
+                       WIZARD_PANEL_W, WIZARD_PANEL_H, uis.tFrac, qfalse );
 
     if ( s_wizard.page == WIZARD_PAGE_CONFIRM ) {
-        UI_DrawString( cx, ty,
-            WIZARD_TEXT_CONFIRM_QUESTION,
-            UI_CENTER | UI_SMALLFONT, wizardText );
-        UI_DrawString( cx, ty + 16,
-            va( "Server name: %s", s_wizard.serverName ),
-            UI_CENTER | UI_SMALLFONT, wizardAccent );
+        Frontend_DrawText( WIZARD_PANEL_X + 24, WIZARD_PANEL_Y + 26,
+                           "Offline match tracking", UI_LEFT | UI_SMALLFONT,
+                           wizardAccent );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 52,
+                           WIZARD_TEXT_CONFIRM_QUESTION,
+                           UI_CENTER | UI_SMALLFONT, wizardText );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 72,
+                           va( "Server: %s", s_wizard.serverName ),
+                           UI_CENTER | UI_SMALLFONT, wizardMuted );
         if ( s_wizard.serverNameNotice[0] ) {
-            UI_DrawString( cx, ty + 32,
-                s_wizard.serverNameNotice,
-                UI_CENTER | UI_SMALLFONT, wizardError );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 90,
+                               s_wizard.serverNameNotice,
+                               UI_CENTER | UI_SMALLFONT, wizardError );
         }
-
-        UI_DrawString( contentLeft, labelY,
-            WIZARD_TEXT_OWNER_LABEL, UI_LEFT | UI_SMALLFONT, wizardText );
-        UI_DrawString( contentLeft, labelY + WIZARD_FORM_ROW_H,
-            WIZARD_TEXT_EMAIL_LABEL, UI_LEFT | UI_SMALLFONT, wizardText );
 
         if ( s_wizard.submitting ) {
-            UI_DrawString( cx, ty + 96,
-                WIZARD_TEXT_SUBMITTING,
-                UI_CENTER | UI_SMALLFONT, wizardText );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 194,
+                               WIZARD_TEXT_SUBMITTING,
+                               UI_CENTER | UI_SMALLFONT, wizardAccent );
         } else if ( s_wizard.statusLine[0] ) {
-            UI_DrawString( cx, ty + 96,
-                s_wizard.statusLine,
-                UI_CENTER | UI_SMALLFONT,
-                s_wizard.result == WIZARD_RESULT_PENDING ? wizardText : wizardError );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 194,
+                               s_wizard.statusLine,
+                               UI_CENTER | UI_SMALLFONT,
+                               s_wizard.result == WIZARD_RESULT_PENDING ?
+                               wizardAccent : wizardError );
         } else {
-            UI_DrawString( cx, ty + 96,
-                WIZARD_TEXT_CANCEL_HINT,
-                UI_CENTER | UI_SMALLFONT, wizardText );
-            UI_DrawString( cx, ty + 110,
-                WIZARD_TEXT_NEVER_HINT,
-                UI_CENTER | UI_SMALLFONT, wizardText );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 194,
+                               WIZARD_TEXT_CANCEL_HINT,
+                               UI_CENTER | UI_SMALLFONT, wizardMuted );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 212,
+                               WIZARD_TEXT_NEVER_HINT,
+                               UI_CENTER | UI_SMALLFONT, wizardMuted );
         }
     } else if ( s_wizard.result == WIZARD_RESULT_SUCCESS ) {
-        /* Vertically center the three lines in the panel.
-         * Panel content area: WIZARD_PANEL_Y+40 … WIZARD_BTN_Y
-         * Three lines at 0 / +20 / +36, total height ~46px            */
-        int sty = WIZARD_PANEL_Y + ( WIZARD_PANEL_H - 48 - 40 - 46 ) / 2 + 40;
-        UI_DrawString( cx, sty,
-            "Registration successful!",
-            UI_CENTER | UI_SMALLFONT, wizardAccent );
-        UI_DrawString( cx, sty + 20,
-            "Your client is now registered with the ladder.",
-            UI_CENTER | UI_SMALLFONT, wizardText );
-        UI_DrawString( cx, sty + 36,
-            "Settings have been saved automatically.",
-            UI_CENTER | UI_SMALLFONT, wizardText );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 92,
+                           "Registration successful!",
+                           UI_CENTER | UI_BIGFONT, wizardAccent );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 132,
+                           "Your client is now registered with the ladder.",
+                           UI_CENTER | UI_SMALLFONT, wizardText );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 154,
+                           "Settings have been saved automatically.",
+                           UI_CENTER | UI_SMALLFONT, wizardMuted );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 184,
+                           WIZARD_TEXT_PENDING_APPROVAL,
+                           UI_CENTER | UI_SMALLFONT, wizardStatus );
     } else {
-        UI_DrawString( cx, ty,
-            WIZARD_TEXT_FAILED,
-            UI_CENTER | UI_SMALLFONT, wizardError );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 80,
+                           WIZARD_TEXT_FAILED,
+                           UI_CENTER | UI_BIGFONT, wizardError );
         if ( s_wizard.statusLine[0] ) {
-            UI_DrawString( cx, ty + 16,
-                s_wizard.statusLine,
-                UI_CENTER | UI_SMALLFONT, wizardText );
+            Frontend_DrawText( cx, WIZARD_PANEL_Y + 122,
+                               s_wizard.statusLine,
+                               UI_CENTER | UI_SMALLFONT, wizardText );
         }
-        UI_DrawString( cx, ty + 46,
-            WIZARD_TEXT_FAILED_HINT,
-            UI_CENTER | UI_SMALLFONT, wizardText );
+        Frontend_DrawText( cx, WIZARD_PANEL_Y + 154,
+                           WIZARD_TEXT_FAILED_HINT,
+                           UI_CENTER | UI_SMALLFONT, wizardMuted );
     }
+
+    Menu_Draw( &s_wizard.menu );
+    Frontend_DrawText( WIZARD_FRAME_X + 24, WIZARD_FRAME_Y + WIZARD_FRAME_H - 24,
+                       "Enter select    Tab switch    Esc back",
+                       UI_LEFT | UI_SMALLFONT, wizardMuted );
 }
 
 /* ── Event handler ───────────────────────────────────────────────────────────── */
@@ -765,6 +945,7 @@ static void LadderWizard_MenuEvent( void *ptr, int event ) {
 
     case ID_WIZARD_NEVER:
         if ( s_wizard.page == WIZARD_PAGE_CONFIRM && s_wizard.result != WIZARD_RESULT_PENDING ) {
+            UI_LadderWizard_MarkProfileDismissed();
             trap_Cvar_SetValue( "ladder_wizard_dismissed", 1 );
             trap_Cvar_Update( &ui_ladderWizardDismissed );
             trap_Print( S_COLOR_YELLOW WIZARD_TEXT_DISMISSED_LOG );
@@ -775,22 +956,15 @@ static void LadderWizard_MenuEvent( void *ptr, int event ) {
 }
 
 /* Called by engine when ladder_register succeeds */
-void UI_LadderWizard_OnSuccess( const char *key ) {
-    if ( !key || !key[0] ) {
-        trap_Print( S_COLOR_YELLOW "Ladder wizard: registration response missing API key.\n" );
-        UI_LadderWizard_OnError( "Server returned no API key." );
-        return;
-    }
-
+void UI_LadderWizard_OnSuccess( void ) {
     /* sv_ladderEnabled, sv_ladderUrl, sv_ladderApiKey and sv_hostname are
      * set by SV_LadderFinishRegister in engine code – the UI VM lacks write
      * access to protected server cvars.  writeconfig is also triggered from
      * there, after all cvars are set.                                       */
     trap_Cvar_SetValue( "ladder_wizard_completed", 1 );
     trap_Cvar_Update( &ui_ladderWizardCompleted );
+    UI_LadderWizard_MarkProfileRegistered();
 
-    Q_strncpyz( s_wizard.apiKey, key, sizeof( s_wizard.apiKey ) );
-    trap_Print( va( "Ladder wizard: registration succeeded, key prefix=%.8s...\n", key ) );
     LadderWizard_FinishSubmission( WIZARD_RESULT_SUCCESS, "" );
 }
 

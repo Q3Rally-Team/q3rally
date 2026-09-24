@@ -340,10 +340,10 @@ static void CG_Obituary( entityState_t *ent ) {
 		}
 #ifdef MISSIONPACK
 		if (!(cg_singlePlayerActive.integer && cg_cameraOrbit.integer)) {
-			CG_CenterPrint( s, SCREEN_HEIGHT * 0.35, BIGCHAR_WIDTH );
+			CG_QueueMessageToast( s );
 		} 
 #else
-		CG_CenterPrint( s, SCREEN_HEIGHT * 0.35, BIGCHAR_WIDTH );
+		CG_QueueMessageToast( s );
 #endif
 
 		// print the text message as well
@@ -510,10 +510,10 @@ static void CG_UseItem( centity_t *cent ) {
 	// print a message if the local player
 	if ( es->number == cg.snap->ps.clientNum ) {
 		if ( !itemNum ) {
-			CG_CenterPrint( "No item in your trunk", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+			CG_QueueMessageToast( "NO ITEM IN YOUR TRUNK" );
 		} else {
 			item = BG_FindItemForHoldable( itemNum );
-			CG_CenterPrint( va("Use %s", item->pickup_name), SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+			CG_QueueMessageToast( va("USE %s", item->pickup_name) );
 		}
 	}
 
@@ -566,6 +566,7 @@ static void CG_ItemPickup( int itemNum ) {
 	cg.itemPickup = itemNum;
 	cg.itemPickupTime = cg.time;
 	cg.itemPickupBlendTime = cg.time;
+	CG_QueueHudToast( itemNum );
 	// see if it should be the grabbed weapon
 	if ( bg_itemlist[itemNum].giType == IT_WEAPON ) {
 		// select it immediately

@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LADDER_RESPONSE_LIMIT           512
 #define LADDER_SPOOL_MAX_SIZE           (512 * 1024)
 #define LADDER_MATCH_ID_FALLBACK        "pending"
+#define LADDER_REGISTER_KEY_MAX         128  /* hex key is 64 chars + margin  */
 
 #ifdef USE_CURL
 #ifdef USE_LOCAL_HEADERS
@@ -69,6 +70,9 @@ typedef struct ladderRequest_s {
         char            *json;
         size_t  jsonLength;
         char            matchId[LADDER_MAX_MATCH_ID];
+        char            profileName[PROFILE_MAX_NAME];
+        char            apiKey[LADDER_REGISTER_KEY_MAX];
+        char            serverName[68];
         char            spoolPath[MAX_OSPATH];
         char            spoolName[64];
         int             attempt;
@@ -90,7 +94,6 @@ typedef struct ladderRequest_s {
 #define LADDER_REGISTER_BODY_MAX        512
 #define LADDER_REGISTER_RESPONSE_MAX    2048  /* JSON response is ~60 bytes; 2 KB gives ample margin */
 #define LADDER_REGISTER_URL_MAX         256
-#define LADDER_REGISTER_KEY_MAX         128  /* hex key is 64 chars + margin  */
 
 typedef struct {
         qboolean        active;                                 /* request in flight    */
@@ -103,6 +106,7 @@ typedef struct {
         size_t          bodyLength;
         char            url[LADDER_REGISTER_URL_MAX];
         char            serverName[68];                         /* registered server name */
+        char            profileName[PROFILE_MAX_NAME];
         char            response[LADDER_REGISTER_RESPONSE_MAX];
         size_t          responseLength;
 } svLadderRegState_t;
@@ -128,6 +132,245 @@ typedef struct {
 } svLadderState_t;
 
 static svLadderState_t sv_ladder;
+
+static unsigned int SV_LadderProfileHash( const char *profileName ) {
+        unsigned int hash = 2166136261u;
+
+        while ( profileName && *profileName ) {
+                unsigned char c = (unsigned char)*profileName++;
+                if ( c >= 'A' && c <= 'Z' ) {
+                        c = (unsigned char)( c + ( 'a' - 'A' ) );
+                }
+                hash ^= c;
+                hash *= 16777619u;
+        }
+
+        return hash;
+}
+
+static void SV_LadderProfileCvarNames( const char *profileName,
+                                       char *identityCvar, size_t identitySize,
+                                       char *keyCvar, size_t keySize,
+                                       char *serverCvar, size_t serverSize ) {
+        unsigned int hash = SV_LadderProfileHash( profileName );
+
+        Com_sprintf( identityCvar, identitySize, "sv_ladderProfile_%08x_profile", hash );
+        Com_sprintf( keyCvar, keySize, "sv_ladderProfile_%08x_key", hash );
+        Com_sprintf( serverCvar, serverSize, "sv_ladderProfile_%08x_server", hash );
+}
+
+static void SV_LadderStoreProfileCredentials( const char *profileName,
+                                               const char *apiKey,
+                                               const char *serverName ) {
+        char identityCvar[64];
+        char keyCvar[64];
+        char serverCvar[64];
+
+        if ( !profileName || !profileName[0] || !apiKey || !apiKey[0] ||
+             !serverName || !serverName[0] ) {
+                return;
+        }
+
+        SV_LadderProfileCvarNames( profileName,
+                                   identityCvar, sizeof( identityCvar ),
+                                   keyCvar, sizeof( keyCvar ),
+                                   serverCvar, sizeof( serverCvar ) );
+        Cvar_Get( identityCvar, "", CVAR_ARCHIVE );
+        Cvar_Get( keyCvar, "", CVAR_ARCHIVE | CVAR_PROTECTED );
+        Cvar_Get( serverCvar, "", CVAR_ARCHIVE );
+        Cvar_Set( identityCvar, profileName );
+        Cvar_Set( keyCvar, apiKey );
+        Cvar_Set( serverCvar, serverName );
+}
+
+static qboolean SV_LadderLoadProfileCredentials( const char *profileName,
+                                                 char *apiKey, size_t apiKeySize,
+                                                 char *serverName, size_t serverSize ) {
+        char identityCvar[64];
+        char keyCvar[64];
+        char serverCvar[64];
+        char storedProfile[PROFILE_MAX_NAME];
+
+        if ( apiKey && apiKeySize ) {
+                apiKey[0] = '\0';
+        }
+        if ( serverName && serverSize ) {
+                serverName[0] = '\0';
+        }
+        if ( !profileName || !profileName[0] || !apiKey || apiKeySize <= 0 ||
+             !serverName || serverSize <= 0 ) {
+                return qfalse;
+        }
+
+        SV_LadderProfileCvarNames( profileName,
+                                   identityCvar, sizeof( identityCvar ),
+                                   keyCvar, sizeof( keyCvar ),
+                                   serverCvar, sizeof( serverCvar ) );
+        Cvar_VariableStringBuffer( identityCvar, storedProfile, sizeof( storedProfile ) );
+        if ( Q_stricmp( storedProfile, profileName ) != 0 ) {
+                return qfalse;
+        }
+
+        Cvar_VariableStringBuffer( keyCvar, apiKey, apiKeySize );
+        Cvar_VariableStringBuffer( serverCvar, serverName, serverSize );
+        if ( !apiKey[0] || !serverName[0] ) {
+                apiKey[0] = '\0';
+                serverName[0] = '\0';
+                return qfalse;
+        }
+
+        return qtrue;
+}
+
+static qboolean SV_LadderLegacyProfileWasRegistered( const char *profileName ) {
+        char registeredProfiles[1024];
+        const char *cursor;
+
+        Cvar_VariableStringBuffer( "ladder_wizard_profiles",
+                                   registeredProfiles, sizeof( registeredProfiles ) );
+        if ( registeredProfiles[0] ) {
+                cursor = registeredProfiles;
+                while ( *cursor ) {
+                        const char *separator = strchr( cursor, ',' );
+                        int tokenLength = separator ? (int)( separator - cursor ) : (int)strlen( cursor );
+                        if ( tokenLength == (int)strlen( profileName ) &&
+                             Q_stricmpn( cursor, profileName, tokenLength ) == 0 ) {
+                                return qtrue;
+                        }
+                        if ( !separator ) {
+                                break;
+                        }
+                        cursor = separator + 1;
+                }
+                return qfalse;
+        }
+
+        /* Compatibility with builds that only stored a global completion bit. */
+        return Cvar_VariableIntegerValue( "ladder_wizard_completed" ) ? qtrue : qfalse;
+}
+
+static void SV_LadderApplyProfileCredentials( const char *profileName ) {
+        char apiKey[LADDER_REGISTER_KEY_MAX];
+        char registeredName[68];
+
+        if ( !profileName || !profileName[0] ) {
+                Cvar_Set( "sv_ladderApiKey", "" );
+                Cvar_Set( "sv_ladderEnabled", "0" );
+                Cvar_Set( "sv_ladderProfileReady", "0" );
+                return;
+        }
+
+        if ( !SV_LadderLoadProfileCredentials( profileName,
+                                               apiKey, sizeof( apiKey ),
+                                               registeredName, sizeof( registeredName ) ) ) {
+                char expectedName[68];
+                char currentKey[LADDER_REGISTER_KEY_MAX];
+                char currentName[68];
+
+                /* Migrate only a legacy key whose hostname and old profile-
+                 * registration marker agree. Never inherit a previous
+                 * profile's global key just because it happens to exist. */
+                Com_sprintf( expectedName, sizeof( expectedName ), "%s_OFFLINE", profileName );
+                Cvar_VariableStringBuffer( "sv_ladderApiKey", currentKey, sizeof( currentKey ) );
+                Cvar_VariableStringBuffer( "sv_hostname", currentName, sizeof( currentName ) );
+                if ( currentKey[0] && Q_stricmp( currentName, expectedName ) == 0 &&
+                     SV_LadderLegacyProfileWasRegistered( profileName ) ) {
+                        SV_LadderStoreProfileCredentials( profileName, currentKey, currentName );
+                        Cbuf_AddText( "writeconfig\n" );
+                        Q_strncpyz( apiKey, currentKey, sizeof( apiKey ) );
+                        Q_strncpyz( registeredName, currentName, sizeof( registeredName ) );
+                } else {
+                        Cvar_Set( "sv_ladderApiKey", "" );
+                        Cvar_Set( "sv_ladderEnabled", "0" );
+                        Cvar_Set( "sv_hostname", expectedName );
+                        Cvar_Set( "sv_ladderProfileReady", "0" );
+                        return;
+                }
+        }
+
+        Cvar_Set( "sv_ladderApiKey", apiKey );
+        Cvar_Set( "sv_ladderEnabled", "1" );
+        Cvar_Set( "sv_hostname", registeredName );
+        Cvar_Set( "sv_ladderProfileReady", "1" );
+}
+
+static void SV_LadderProfileActivate_f( void ) {
+        char profileName[PROFILE_MAX_NAME];
+
+        if ( Cmd_Argc() < 2 ) {
+                Com_Printf( "Usage: ladder_profile_activate <profile>\n" );
+                return;
+        }
+
+        Cmd_ArgvBuffer( 1, profileName, sizeof( profileName ) );
+        SV_LadderApplyProfileCredentials( profileName );
+}
+
+static void SV_LadderRemoveProfileFromList( const char *cvarName,
+                                            const char *profileName ) {
+        char list[1024];
+        char updated[1024];
+        char token[PROFILE_MAX_NAME];
+        const char *cursor;
+
+        updated[0] = '\0';
+        Cvar_VariableStringBuffer( cvarName, list, sizeof( list ) );
+        cursor = list;
+        while ( *cursor ) {
+                const char *separator = strchr( cursor, ',' );
+                int tokenLength = separator ? (int)( separator - cursor ) : (int)strlen( cursor );
+                if ( tokenLength > 0 && tokenLength < sizeof( token ) ) {
+                        Q_strncpyz( token, cursor, tokenLength + 1 );
+                        if ( Q_stricmp( token, profileName ) != 0 ) {
+                                if ( updated[0] ) {
+                                        Q_strcat( updated, sizeof( updated ), "," );
+                                }
+                                Q_strcat( updated, sizeof( updated ), token );
+                        }
+                }
+                if ( !separator ) {
+                        break;
+                }
+                cursor = separator + 1;
+        }
+        Cvar_Set( cvarName, updated );
+}
+
+static void SV_LadderProfileForget_f( void ) {
+        char profileName[PROFILE_MAX_NAME];
+        char activeProfile[PROFILE_MAX_NAME];
+        char identityCvar[64];
+        char keyCvar[64];
+        char serverCvar[64];
+
+        if ( Cmd_Argc() < 2 ) {
+                Com_Printf( "Usage: ladder_profile_forget <profile>\n" );
+                return;
+        }
+
+        Cmd_ArgvBuffer( 1, profileName, sizeof( profileName ) );
+        if ( !profileName[0] ) {
+                return;
+        }
+
+        SV_LadderProfileCvarNames( profileName,
+                                   identityCvar, sizeof( identityCvar ),
+                                   keyCvar, sizeof( keyCvar ),
+                                   serverCvar, sizeof( serverCvar ) );
+        Cvar_Set( identityCvar, "" );
+        Cvar_Set( keyCvar, "" );
+        Cvar_Set( serverCvar, "" );
+        SV_LadderRemoveProfileFromList( "ladder_wizard_profiles", profileName );
+        SV_LadderRemoveProfileFromList( "ladder_wizard_dismissed_profiles", profileName );
+
+        Cvar_VariableStringBuffer( "profile_active", activeProfile, sizeof( activeProfile ) );
+        if ( Q_stricmp( activeProfile, profileName ) == 0 ) {
+                Cvar_Set( "sv_ladderApiKey", "" );
+                Cvar_Set( "sv_ladderEnabled", "0" );
+                Cvar_Set( "sv_ladderProfileReady", "0" );
+        }
+        Cbuf_AddText( "writeconfig\n" );
+}
 
 #ifdef USE_CURL
 #ifdef USE_CURL_DLOPEN
@@ -603,7 +846,8 @@ static qboolean SV_LadderJsonAppendLapArray( ladderJsonBuilder_t *builder, const
         return qtrue;
 }
 
-static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const ladderPlayerPayload_t *player ) {
+static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder,
+        const ladderPlayerPayload_t *player, qboolean isKoth ) {
         qboolean first = qtrue;
         const char *teamName = SV_LadderTeamName( player->team );
 
@@ -771,6 +1015,11 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder, const l
         }
         if ( !SV_LadderJsonAppendKey( builder, "zoneHoldMs", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->zoneHoldMs ) ) {
+                return qfalse;
+        }
+        if ( isKoth &&
+             ( !SV_LadderJsonAppendKey( builder, "kothContestTimeMs", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->kothContestTimeMs ) ) ) {
                 return qfalse;
         }
         if ( !SV_LadderJsonAppendKey( builder, "zoneActiveSigil", &first ) ||
@@ -1173,6 +1422,12 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                 Z_Free( builder.data );
                 return NULL;
         }
+        if ( payload->gametype == GT_KOTH &&
+             ( !SV_LadderJsonAppendKey( &builder, "teamHoldMs", &first ) ||
+               !SV_LadderJsonAppendTeamArray( &builder, payload->teamHoldMs, TEAM_NUM_TEAMS ) ) ) {
+                Z_Free( builder.data );
+                return NULL;
+        }
 
         {
                 int playerCount = payload->playerCount;
@@ -1204,7 +1459,8 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                                         return NULL;
                                 }
                         }
-                        if ( !SV_LadderJsonAppendPlayer( &builder, &payload->players[i] ) ) {
+                        if ( !SV_LadderJsonAppendPlayer( &builder, &payload->players[i],
+                                payload->gametype == GT_KOTH ? qtrue : qfalse ) ) {
                                 Z_Free( builder.data );
                                 return NULL;
                         }
@@ -1313,6 +1569,146 @@ static void SV_LadderExtractMatchIdFromJson( ladderRequest_t *request ) {
         }
 }
 
+static void SV_LadderExtractServerNameFromJson( ladderRequest_t *request ) {
+        const char *needle = "\"server\":{\"name\":\"";
+        char *found;
+
+        if ( !request || !request->json ) {
+                return;
+        }
+
+        found = strstr( request->json, needle );
+        if ( found ) {
+                char *cursor = found + strlen( needle );
+                size_t length = 0;
+                while ( *cursor && *cursor != '"' && length + 1 < sizeof( request->serverName ) ) {
+                        if ( *cursor == '\\' && cursor[1] ) {
+                                ++cursor;
+                        }
+                        request->serverName[length++] = *cursor++;
+                }
+                request->serverName[length] = '\0';
+        }
+}
+
+static void SV_LadderBuildSpoolProfilePath( const ladderRequest_t *request,
+                                            char *path, size_t pathSize ) {
+        Com_sprintf( path, pathSize, "%s.profile", request->spoolPath );
+}
+
+static qboolean SV_LadderWriteSpoolProfile( const ladderRequest_t *request ) {
+        char path[MAX_OSPATH];
+        FILE *file;
+        size_t nameLength;
+
+        if ( !request->profileName[0] ) {
+                return qtrue;
+        }
+
+        nameLength = strlen( request->profileName );
+        if ( nameLength == 0 || nameLength >= sizeof( request->profileName ) ) {
+                return qfalse;
+        }
+
+        SV_LadderBuildSpoolProfilePath( request, path, sizeof( path ) );
+        file = Sys_FOpen( path, "wb" );
+        if ( !file ) {
+                return qfalse;
+        }
+        if ( fwrite( request->profileName, 1, nameLength, file ) != nameLength ) {
+                fclose( file );
+                remove( path );
+                return qfalse;
+        }
+        fclose( file );
+        return qtrue;
+}
+
+static void SV_LadderReadSpoolProfile( ladderRequest_t *request ) {
+        char path[MAX_OSPATH];
+        FILE *file;
+        size_t length;
+        size_t i;
+
+        if ( !request || !request->spoolPath[0] ) {
+                return;
+        }
+
+        SV_LadderBuildSpoolProfilePath( request, path, sizeof( path ) );
+        file = Sys_FOpen( path, "rb" );
+        if ( !file ) {
+                return;
+        }
+
+        length = fread( request->profileName, 1,
+                        sizeof( request->profileName ) - 1, file );
+        fclose( file );
+        request->profileName[length] = '\0';
+        while ( length > 0 && ( request->profileName[length - 1] == '\r' ||
+                                request->profileName[length - 1] == '\n' ) ) {
+                request->profileName[--length] = '\0';
+        }
+        for ( i = 0; i < length; ++i ) {
+                char c = request->profileName[i];
+                if ( !( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) ||
+                        ( c >= '0' && c <= '9' ) || c == '_' || c == '-' ) ) {
+                        request->profileName[0] = '\0';
+                        return;
+                }
+        }
+}
+
+static qboolean SV_LadderResolveRequestApiKey( ladderRequest_t *request ) {
+        char activeProfile[PROFILE_MAX_NAME];
+        char apiKey[LADDER_REGISTER_KEY_MAX];
+        char registeredName[68];
+        char currentName[68];
+
+        if ( !request ) {
+                return qfalse;
+        }
+        if ( request->apiKey[0] ) {
+                return qtrue;
+        }
+
+        Cvar_VariableStringBuffer( "profile_active", activeProfile, sizeof( activeProfile ) );
+        if ( request->profileName[0] ) {
+                if ( !SV_LadderLoadProfileCredentials( request->profileName,
+                                                       apiKey, sizeof( apiKey ),
+                                                       registeredName, sizeof( registeredName ) ) ||
+                     ( request->serverName[0] && Q_stricmp( request->serverName, registeredName ) != 0 ) ) {
+                        return qfalse;
+                }
+                Q_strncpyz( request->apiKey, apiKey, sizeof( request->apiKey ) );
+                return qtrue;
+        }
+
+        /* Legacy outbox entries have no profile sidecar. Resolve them only
+         * when the active profile's registered name matches the report. */
+        if ( activeProfile[0] ) {
+                if ( !SV_LadderLoadProfileCredentials( activeProfile,
+                                                       apiKey, sizeof( apiKey ),
+                                                       registeredName, sizeof( registeredName ) ) ||
+                     !request->serverName[0] ||
+                     Q_stricmp( request->serverName, registeredName ) != 0 ) {
+                        return qfalse;
+                }
+                Q_strncpyz( request->profileName, activeProfile, sizeof( request->profileName ) );
+                Q_strncpyz( request->apiKey, apiKey, sizeof( request->apiKey ) );
+                return qtrue;
+        }
+
+        Cvar_VariableStringBuffer( "sv_hostname", currentName, sizeof( currentName ) );
+        if ( request->serverName[0] && Q_stricmp( request->serverName, currentName ) != 0 ) {
+                return qfalse;
+        }
+        if ( sv_ladderApiKey && sv_ladderApiKey->string[0] ) {
+                Q_strncpyz( request->apiKey, sv_ladderApiKey->string, sizeof( request->apiKey ) );
+                return qtrue;
+        }
+        return qfalse;
+}
+
 static qboolean SV_LadderWriteSpool( ladderRequest_t *request ) {
         char pathCopy[MAX_OSPATH];
         FILE *file;
@@ -1335,9 +1731,20 @@ static qboolean SV_LadderWriteSpool( ladderRequest_t *request ) {
                 return qfalse;
         }
 
+        if ( !SV_LadderWriteSpoolProfile( request ) ) {
+                Com_Printf( "Ladder: failed to store profile identity for queued match %s\n",
+                        request->matchId[0] ? request->matchId : "<unknown>" );
+                return qfalse;
+        }
+
         file = Sys_FOpen( request->spoolPath, "wb" );
         if ( !file ) {
                 Com_Printf( "Ladder: failed to open spool file '%s' (%s)\n", request->spoolPath, strerror( errno ) );
+                if ( request->profileName[0] ) {
+                        char profilePath[MAX_OSPATH];
+                        SV_LadderBuildSpoolProfilePath( request, profilePath, sizeof( profilePath ) );
+                        remove( profilePath );
+                }
                 return qfalse;
         }
 
@@ -1346,6 +1753,12 @@ static qboolean SV_LadderWriteSpool( ladderRequest_t *request ) {
 
         if ( written != request->jsonLength ) {
                 Com_Printf( "Ladder: failed to write spool file '%s' (%s)\n", request->spoolPath, strerror( errno ) );
+                remove( request->spoolPath );
+                if ( request->profileName[0] ) {
+                        char profilePath[MAX_OSPATH];
+                        SV_LadderBuildSpoolProfilePath( request, profilePath, sizeof( profilePath ) );
+                        remove( profilePath );
+                }
                 return qfalse;
         }
 
@@ -1409,6 +1822,14 @@ static void SV_LadderFreeRequest( ladderRequest_t *request, qboolean keepSpool )
                 if ( remove( request->spoolPath ) != 0 && errno != ENOENT ) {
                         Com_DPrintf( "Ladder: failed to remove spool file '%s' (%s)\n",
                                 request->spoolPath, strerror( errno ) );
+            }
+                {
+                        char profilePath[MAX_OSPATH];
+                        SV_LadderBuildSpoolProfilePath( request, profilePath, sizeof( profilePath ) );
+                        if ( remove( profilePath ) != 0 && errno != ENOENT ) {
+                                Com_DPrintf( "Ladder: failed to remove profile metadata for spool file (%s)\n",
+                                        strerror( errno ) );
+                        }
                 }
         }
 
@@ -1515,6 +1936,8 @@ static void SV_LadderLoadSpool( void ) {
                 request->json[request->jsonLength] = '\0';
 
                 SV_LadderExtractMatchIdFromJson( request );
+                SV_LadderExtractServerNameFromJson( request );
+                SV_LadderReadSpoolProfile( request );
 
                 SV_LadderQueuePush( request );
                 loaded++;
@@ -1715,11 +2138,16 @@ static qboolean SV_LadderStartRequest( ladderRequest_t *request ) {
         struct curl_slist *headers = NULL;
         char authHeader[256];
         const char *url = sv_ladderUrl ? sv_ladderUrl->string : "";
-        const char *apiKey = sv_ladderApiKey ? sv_ladderApiKey->string : "";
+        const char *apiKey;
 
         if ( !url || !url[0] ) {
                 return qfalse;
         }
+
+        if ( !SV_LadderResolveRequestApiKey( request ) ) {
+                return qfalse;
+        }
+        apiKey = request->apiKey;
 
         if ( !SV_LadderEnsureCurl() ) {
                 return qfalse;
@@ -2169,7 +2597,7 @@ static void SV_LadderExtractJsonString( const char *json,
  *
  * Sends a synchronous (blocking) HTTP POST to register.php using an
  * independent curl easy handle so it doesn't touch the upload queue.
- * On success  → fires  "ladder_register_result ok <key>"  into the cmd buffer.
+ * On success  → fires  "ladder_register_result ok"  into the cmd buffer.
  * On failure  → fires  "ladder_register_result err <message>".
  *
  * The UI module picks both up via UI_ConsoleCommand.
@@ -2284,10 +2712,12 @@ static void SV_LadderFinishRegister( CURLcode result, long responseCode ) {
                 }
         }
 
-        Com_Printf( "Ladder: registration succeeded (key prefix=%.8s...).\n", apiKey );
-
         /* Set the ladder cvars from engine code – the UI VM does not have
          * write permission for protected server cvars.                      */
+        if ( reg->profileName[0] ) {
+                SV_LadderStoreProfileCredentials( reg->profileName, apiKey,
+                                                  reg->serverName );
+        }
         if ( sv_ladderApiKey ) {
                 Cvar_Set( "sv_ladderApiKey", apiKey );
         }
@@ -2305,13 +2735,26 @@ static void SV_LadderFinishRegister( CURLcode result, long responseCode ) {
                 Cvar_Set( "sv_hostname", sv_ladder.reg.serverName );
         }
 
+        if ( reg->profileName[0] ) {
+                char activeProfile[PROFILE_MAX_NAME];
+                Cvar_VariableStringBuffer( "profile_active", activeProfile,
+                                           sizeof( activeProfile ) );
+                if ( Q_stricmp( activeProfile, reg->profileName ) == 0 ) {
+                        Cvar_Set( "sv_ladderProfileReady", "1" );
+                } else {
+                        SV_LadderApplyProfileCredentials( activeProfile );
+                }
+        } else {
+                Cvar_Set( "sv_ladderProfileReady", "0" );
+        }
+
         /* Persist all cvar changes to q3config.cfg.  This runs in engine
          * code before the UI VM receives ladder_register_result, so there
          * is no risk of a VM reload tearing the wizard stack.               */
         Cbuf_AddText( "writeconfig\n" );
 
         Com_sprintf( cbufCmd, sizeof( cbufCmd ),
-                     "ladder_register_result ok \"%s\"\n", apiKey );
+                     "ladder_register_result ok\n" );
         Cbuf_AddText( cbufCmd );
 }
 #endif /* USE_CURL */
@@ -2388,6 +2831,9 @@ void SV_LadderRegister_f( void ) {
         }
 
         Q_strncpyz( reg->serverName, serverName, sizeof( reg->serverName ) );
+        reg->profileName[0] = '\0';
+        Cvar_VariableStringBuffer( "profile_active", reg->profileName,
+                                   sizeof( reg->profileName ) );
 
         SV_LadderUrlEncode( ownerName,  encName,   sizeof( encName   ) );
         SV_LadderUrlEncode( ownerEmail, encEmail,  sizeof( encEmail  ) );
@@ -2463,9 +2909,12 @@ void SV_LadderInit( void ) {
         Com_Memset( &sv_ladder, 0, sizeof( sv_ladder ) );
         SV_LadderRefreshQueueLimit();
         sv_ladder.initialized = qtrue;
+        Cvar_Get( "sv_ladderProfileReady", "0", 0 );
 
         Cmd_AddCommand( "ladder_register",       SV_LadderRegister_f );
         Cmd_AddCommand( "ladder_register_abort", SV_LadderRegisterAbort_f );
+        Cmd_AddCommand( "ladder_profile_activate", SV_LadderProfileActivate_f );
+        Cmd_AddCommand( "ladder_profile_forget",   SV_LadderProfileForget_f );
 
         if ( SV_LadderEnsureSpoolDirectory() ) {
                 SV_LadderLoadSpool();
@@ -2479,6 +2928,8 @@ void SV_LadderShutdown( void ) {
 
         Cmd_RemoveCommand( "ladder_register" );
         Cmd_RemoveCommand( "ladder_register_abort" );
+        Cmd_RemoveCommand( "ladder_profile_activate" );
+        Cmd_RemoveCommand( "ladder_profile_forget" );
 
 #ifdef USE_CURL
         SV_LadderAbortRegister();
@@ -2499,6 +2950,9 @@ void SV_LadderShutdown( void ) {
 void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         ladderRequest_t *request;
         ladderMatchPayload_t validatedPayload;
+        char activeProfile[PROFILE_MAX_NAME];
+        char profileApiKey[LADDER_REGISTER_KEY_MAX];
+        char registeredServerName[68];
         char *json;
         size_t length = 0;
         int total;
@@ -2520,6 +2974,31 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         }
 
         Com_Memcpy( &validatedPayload, payload, sizeof( validatedPayload ) );
+        Cvar_VariableStringBuffer( "profile_active", activeProfile,
+                                   sizeof( activeProfile ) );
+        profileApiKey[0] = '\0';
+        registeredServerName[0] = '\0';
+        if ( activeProfile[0] ) {
+                char previousServerName[68];
+
+                if ( !SV_LadderLoadProfileCredentials( activeProfile,
+                                                       profileApiKey, sizeof( profileApiKey ),
+                                                       registeredServerName, sizeof( registeredServerName ) ) ) {
+                        Com_Printf( "Ladder: no registered credentials for active profile; skipping match %s\n",
+                                validatedPayload.matchId[0] ? validatedPayload.matchId : "<unknown>" );
+                        return;
+                }
+
+                Q_strncpyz( previousServerName, validatedPayload.serverName,
+                            sizeof( previousServerName ) );
+                Q_strncpyz( validatedPayload.serverName, registeredServerName,
+                            sizeof( validatedPayload.serverName ) );
+                if ( Q_stricmp( validatedPayload.serverHost, previousServerName ) == 0 ) {
+                        Q_strncpyz( validatedPayload.serverHost, registeredServerName,
+                                    sizeof( validatedPayload.serverHost ) );
+                }
+        }
+
         if ( !G_LadderValidatePayload( &validatedPayload, qtrue ) ) {
                 Com_Printf( "Ladder: blocking submit for match %s (errors=%d reason=%s)\n",
                         validatedPayload.matchId[0] ? validatedPayload.matchId : "<unknown>",
@@ -2576,6 +3055,13 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         request->json = json;
         request->jsonLength = length;
         Q_strncpyz( request->matchId, validatedPayload.matchId, sizeof( request->matchId ) );
+        Q_strncpyz( request->profileName, activeProfile, sizeof( request->profileName ) );
+        Q_strncpyz( request->serverName, validatedPayload.serverName, sizeof( request->serverName ) );
+        if ( activeProfile[0] ) {
+                Q_strncpyz( request->apiKey, profileApiKey, sizeof( request->apiKey ) );
+        } else if ( sv_ladderApiKey && sv_ladderApiKey->string[0] ) {
+                Q_strncpyz( request->apiKey, sv_ladderApiKey->string, sizeof( request->apiKey ) );
+        }
         request->nextAttemptTime = 0;
         request->attempt = 0;
 

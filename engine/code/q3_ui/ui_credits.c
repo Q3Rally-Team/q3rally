@@ -34,6 +34,7 @@ Scrolling credits combining Q3Rally team and original iD Software credits.
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 /* -------------------------------------------------------------------------
    Constants
@@ -42,21 +43,15 @@ Scrolling credits combining Q3Rally team and original iD Software credits.
 #define SCROLL_SPEED        2.80f   /* pixels per 100ms (uis.realtime units) */
 #define FADE_ZONE_HEIGHT    60      /* px over which alpha fades at top/bottom edges */
 
-#define BACKGROUND_SHADER   /* use background art; comment out for solid fill */
-#define BACKGROUND_DIM      0.45f   /* 0.0 = invisible, 1.0 = original brightness */
-
 /* -------------------------------------------------------------------------
    Colours
    ------------------------------------------------------------------------- */
 
-#ifndef BACKGROUND_SHADER
-static vec4_t color_background = { 0.00f, 0.00f, 0.00f, 1.00f };
-#endif
-static vec4_t color_header     = { 1.00f, 0.55f, 0.10f, 1.00f }; /* Q3Rally orange */
-static vec4_t color_name       = { 0.90f, 0.90f, 0.90f, 1.00f }; /* soft white      */
-static vec4_t color_id_header  = { 0.75f, 0.75f, 0.75f, 1.00f }; /* grey for iD section */
-static vec4_t color_id_name    = { 0.65f, 0.65f, 0.65f, 1.00f };
-static vec4_t color_title      = { 1.00f, 0.65f, 0.00f, 1.00f }; /* bright orange title */
+static vec4_t color_header     = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t color_name       = UI_FRONTEND_COLOR_TEXT;
+static vec4_t color_id_header  = UI_FRONTEND_COLOR_MUTED;
+static vec4_t color_id_name    = UI_FRONTEND_COLOR_MUTED;
+static vec4_t color_title      = UI_FRONTEND_COLOR_TEXT;
 
 /* -------------------------------------------------------------------------
    Credit line structure
@@ -197,11 +192,20 @@ typedef struct {
     menuframework_s menu;
     int             startTime;   /* uis.realtime when credits began          */
     float           mvolume;     /* original music volume, restored on exit  */
-    qhandle_t       background;  /* background shader handle (optional)      */
     int             totalHeight; /* pre-calculated total pixel height        */
 } creditsmenu_t;
 
 static creditsmenu_t s_credits;
+
+static int Credits_LineHeight( int style ) {
+    if ( style & UI_GIANTFONT ) {
+        return GIANTCHAR_HEIGHT + UI_FRONTEND_SPACE_SM;
+    }
+    if ( style & UI_BIGFONT ) {
+        return BIGCHAR_HEIGHT + UI_FRONTEND_SPACE_SM;
+    }
+    return SMALLCHAR_HEIGHT + UI_FRONTEND_SPACE_SM;
+}
 
 /* -------------------------------------------------------------------------
    Helper: calculate total pixel height of all credit lines
@@ -211,12 +215,7 @@ static int Credits_CalcTotalHeight( void ) {
     int n, h = 0;
 
     for ( n = 0; credits[n].string != NULL; n++ ) {
-        if ( credits[n].style & UI_BIGFONT )
-            h += PROP_HEIGHT;
-        else if ( credits[n].style & UI_GIANTFONT )
-            h += (int)( PROP_HEIGHT * ( 1.0f / PROP_SMALL_SIZE_SCALE ) );
-        else
-            h += (int)( PROP_HEIGHT * PROP_SMALL_SIZE_SCALE );
+        h += Credits_LineHeight( credits[n].style );
     }
     return h;
 }
@@ -266,18 +265,14 @@ static sfxHandle_t UI_CreditMenu_Key( int key ) {
 static void UI_CreditMenu_Draw( void ) {
     int     n, y, scrollY;
     vec4_t  drawColor;
-    vec4_t  dimColor = { 0.0f, 0.0f, 0.0f, 1.0f - BACKGROUND_DIM };
+    vec4_t  scrimColor = UI_FRONTEND_COLOR_SCRIM;
+    vec4_t  lineColor = UI_FRONTEND_COLOR_ACCENT;
+    vec4_t  mutedColor = UI_FRONTEND_COLOR_MUTED;
 
-    /* --- background: always drawn, even after text is gone --- */
-#ifdef BACKGROUND_SHADER
-    UI_DrawHandlePic( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, SCREEN_HEIGHT,
-                      s_credits.background );
-    /* darken the shader to the desired brightness */
-    UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, SCREEN_HEIGHT, dimColor );
-#else
-    UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2, SCREEN_HEIGHT,
-                 color_background );
-#endif
+    /* The shared cover background also selects one of the two frontend
+     * images for this menu and keeps it stable until the menu changes. */
+    scrimColor[3] = 0.82f;
+    Frontend_DrawBackground( scrimColor );
 
     /* --- scroll position: start of first line --- */
     scrollY = 480 - (int)( SCROLL_SPEED * (float)( uis.realtime - s_credits.startTime ) / 100.0f );
@@ -287,13 +282,7 @@ static void UI_CreditMenu_Draw( void ) {
     for ( n = 0; credits[n].string != NULL; n++ ) {
         int lineTop, lineH;
 
-        /* determine line height */
-        if ( credits[n].style & UI_BIGFONT )
-            lineH = PROP_HEIGHT;
-        else if ( credits[n].style & UI_GIANTFONT )
-            lineH = (int)( PROP_HEIGHT * ( 1.0f / PROP_SMALL_SIZE_SCALE ) );
-        else
-            lineH = (int)( PROP_HEIGHT * PROP_SMALL_SIZE_SCALE );
+        lineH = Credits_LineHeight( credits[n].style );
 
         lineTop = y;
         y += lineH;
@@ -309,10 +298,19 @@ static void UI_CreditMenu_Draw( void ) {
             Vector4Copy( *credits[n].colour, drawColor );
             drawColor[3] *= alpha;
 
-            UI_DrawProportionalString( 320, lineTop, credits[n].string,
-                                       credits[n].style, drawColor );
+            Frontend_DrawText( 320, lineTop, credits[n].string,
+                               credits[n].style, drawColor );
         }
     }
+
+    /* Fixed chrome keeps the otherwise open credits view anchored in the
+     * same visual language as the other modern frontend screens. */
+    UI_FillRect( 32, 20, 576, UI_FRONTEND_PANEL_TOPBAR, lineColor );
+    Frontend_DrawText( 32, 28, "Q3RALLY", UI_LEFT | UI_BIGFONT | UI_DROPSHADOW,
+                       color_title );
+    Frontend_DrawStatusChip( 520, 28, "Credits", lineColor, 1.0f );
+    Frontend_DrawText( 32, 452, "Press any key to exit",
+                       UI_LEFT | UI_SMALLFONT, mutedColor );
 
     /* --- end of credits: last line has scrolled off the top --- */
     if ( y < 0 ) {
@@ -338,10 +336,6 @@ void UI_CreditMenu( void ) {
     if ( s_credits.mvolume < 0.5f )
         trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );
     trap_Cmd_ExecuteText( EXEC_APPEND, "music music/credits\n" );
-
-#ifdef BACKGROUND_SHADER
-    s_credits.background = trap_R_RegisterShaderNoMip( "menu/art/menu_back" );
-#endif
 
     uis.transitionIn = 0;
     UI_PushMenu( &s_credits.menu );

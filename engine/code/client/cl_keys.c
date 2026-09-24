@@ -1171,6 +1171,13 @@ static qboolean CL_BindUICommand( const char *cmd ) {
 	if ( !Q_stricmp( cmd, "togglemenu" ) )
 		return qtrue;
 
+	/* Screenshot commands are renderer-side and do not affect gameplay.
+	 * Allow them through the UI catcher so a normal bind works in the main
+	 * menu, loading screen, configuration screens, and in-game UI alike. */
+	if ( !Q_stricmp( cmd, "screenshot" ) ||
+		 !Q_stricmp( cmd, "screenshotJPEG" ) )
+		return qtrue;
+
 	return qfalse;
 }
 

@@ -668,6 +668,11 @@ static void CG_Auxent( centity_t *cent ) {
 	entityState_t		*s1;
 
 	s1 = &cent->currentState;
+	if ( cgs.gametype == GT_ELIMINATION &&
+	     s1->otherEntityNum >= 0 && s1->otherEntityNum < MAX_CLIENTS &&
+	     cg_entities[s1->otherEntityNum].eliminationOut ) {
+		return;
+	}
 
 	if ( s1->otherEntityNum == cg.snap->ps.clientNum && !cg.newSnap )
 		return;

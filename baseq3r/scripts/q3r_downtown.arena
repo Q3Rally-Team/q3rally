@@ -9,10 +9,7 @@ longname "DownTown"
 author "OliverV"
 
 //GAME TYPE SUPPORTS
-type "q3r_racing q3r_team_racing q3r_elimination"
-
-//ELIMINATION READY
-elimination "1"
+type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm q3r_elimination"
 
 //CUSTOM BOTS
 bots "Tobias Josh Bee Paul Ivan"
@@ -24,7 +21,7 @@ starts "8"
 laps "3"
 
 //LAPTIME
-laptime "1 min 04 sec"
+laptime "0 min 57 sec"
 
 //CHECKPOINTS
 checkpoints "25"
@@ -33,10 +30,10 @@ checkpoints "25"
 observerspots "0"
 
 //WEAPONS
-weapons "0"
+weapons "8"
 
 //POWERUPS
-powerups "0"
+powerups "4"
 
 //REVERSABLE
 reversable "0"
@@ -45,7 +42,7 @@ reversable "0"
 tracklengths "1"
 
 //BOT SUPPORTS
-botsupport "Very bad"
+botsupport "Good"
 
 //TEAMS
 teams "All"

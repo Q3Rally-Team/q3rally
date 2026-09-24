@@ -31,6 +31,7 @@ INGAME MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define INGAME_FRAME					"menu/art/addbotframe"
@@ -47,6 +48,24 @@ INGAME MENU
 #define ID_QUIT					17
 #define ID_RESUME				18
 #define ID_TEAMORDERS			19
+
+#define INGAME_FRAME_X              72
+#define INGAME_FRAME_Y              32
+#define INGAME_FRAME_WIDTH          496
+#define INGAME_FRAME_HEIGHT         416
+#define INGAME_CARD_X               96
+#define INGAME_CARD_Y               112
+#define INGAME_CARD_WIDTH           448
+#define INGAME_CARD_HEIGHT          286
+#define INGAME_ROW_X                112
+#define INGAME_ROW_Y                124
+#define INGAME_ROW_WIDTH            416
+#define INGAME_ROW_HEIGHT           24
+#define INGAME_ROW_GAP              2
+
+static vec4_t ingameTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t ingameMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t ingameAccentColor = UI_FRONTEND_COLOR_ACCENT;
 
 
 typedef struct {
@@ -66,6 +85,66 @@ typedef struct {
 } ingamemenu_t;
 
 static ingamemenu_t	s_ingame;
+
+static void InGame_DrawAction( void *self ) {
+	menutext_s *button;
+	qboolean focus;
+	qboolean disabled;
+	const float *textColor;
+
+	button = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+	disabled = ( button->generic.flags & QMF_GRAYED ) ? qtrue : qfalse;
+	textColor = disabled ? ingameMutedColor :
+		( focus ? ingameAccentColor : ingameTextColor );
+
+	Frontend_DrawCard( button->generic.left, button->generic.top,
+		button->generic.right - button->generic.left,
+		button->generic.bottom - button->generic.top, 1.0f, focus );
+	Frontend_DrawText( button->generic.left + 16,
+		button->generic.top + 5, button->string,
+		UI_LEFT | UI_SMALLFONT, textColor );
+}
+
+static void InGame_LayoutAction( menutext_s *button, int row ) {
+	button->generic.left = INGAME_ROW_X;
+	button->generic.top = INGAME_ROW_Y + row *
+		( INGAME_ROW_HEIGHT + INGAME_ROW_GAP );
+	button->generic.right = INGAME_ROW_X + INGAME_ROW_WIDTH;
+	button->generic.bottom = button->generic.top + INGAME_ROW_HEIGHT;
+	button->generic.x = INGAME_ROW_X + INGAME_ROW_WIDTH / 2;
+	button->generic.y = button->generic.top + INGAME_ROW_HEIGHT / 2;
+	button->generic.flags |= QMF_NODEFAULTINIT;
+	button->generic.ownerdraw = InGame_DrawAction;
+}
+
+static void InGame_Draw( void ) {
+	vec4_t overlayColor = UI_FRONTEND_COLOR_SCRIM;
+
+	UI_SetColor( NULL );
+	UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2,
+		SCREEN_HEIGHT, overlayColor );
+	Frontend_DrawPanel( INGAME_FRAME_X, INGAME_FRAME_Y,
+		INGAME_FRAME_WIDTH, INGAME_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( INGAME_FRAME_X + 24, INGAME_FRAME_Y + 24,
+		"Paused", UI_LEFT | UI_BIGFONT, ingameTextColor );
+	Frontend_DrawText( INGAME_FRAME_X + 24, INGAME_FRAME_Y + 48,
+		"Race control and session options", UI_LEFT | UI_SMALLFONT,
+		ingameMutedColor );
+	Frontend_DrawStatusChip( INGAME_FRAME_X + INGAME_FRAME_WIDTH - 104,
+		INGAME_FRAME_Y + 26, "In race", ingameAccentColor, 1.0f );
+
+	Frontend_DrawCard( INGAME_CARD_X, INGAME_CARD_Y,
+		INGAME_CARD_WIDTH, INGAME_CARD_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( INGAME_CARD_X + 16, INGAME_CARD_Y + 16,
+		"Session", UI_LEFT | UI_SMALLFONT, ingameMutedColor );
+	Frontend_DrawText( INGAME_FRAME_X + 24, INGAME_FRAME_Y + 376,
+		"Enter select   Esc resume", UI_LEFT | UI_SMALLFONT,
+		ingameMutedColor );
+
+	Menu_Draw( &s_ingame.menu );
+}
 
 
 /*
@@ -99,6 +178,15 @@ static void InGame_QuitAction( qboolean result ) {
 	UI_CreditMenu();
 }
 
+static void InGame_LeaveAction( qboolean result ) {
+	if( !result ) {
+		return;
+	}
+
+	UI_PopMenu();
+	trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
+}
+
 
 /*
 =================
@@ -120,7 +208,7 @@ void InGame_Event( void *ptr, int notification ) {
 		break;
 
 	case ID_LEAVEARENA:
-		trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
+		UI_ConfirmMenu( "LEAVE RACE?", 0, InGame_LeaveAction );
 		break;
 
 	case ID_RESTART:
@@ -171,6 +259,7 @@ void InGame_MenuInit( void ) {
 
 	s_ingame.menu.wrapAround = qtrue;
 	s_ingame.menu.fullscreen = qfalse;
+	s_ingame.menu.draw = InGame_Draw;
 
 	s_ingame.frame.generic.type			= MTYPE_BITMAP;
 	s_ingame.frame.generic.flags		= QMF_INACTIVE;
@@ -310,6 +399,18 @@ void InGame_MenuInit( void ) {
 	s_ingame.quit.string				= "EXIT GAME";
 	s_ingame.quit.color					= color_red;
 	s_ingame.quit.style					= UI_CENTER|UI_SMALLFONT;
+
+	s_ingame.frame.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
+	InGame_LayoutAction( &s_ingame.team, 0 );
+	InGame_LayoutAction( &s_ingame.addbots, 1 );
+	InGame_LayoutAction( &s_ingame.removebots, 2 );
+	InGame_LayoutAction( &s_ingame.teamorders, 3 );
+	InGame_LayoutAction( &s_ingame.setup, 4 );
+	InGame_LayoutAction( &s_ingame.server, 5 );
+	InGame_LayoutAction( &s_ingame.restart, 6 );
+	InGame_LayoutAction( &s_ingame.resume, 7 );
+	InGame_LayoutAction( &s_ingame.leave, 8 );
+	InGame_LayoutAction( &s_ingame.quit, 9 );
 
 	Menu_AddItem( &s_ingame.menu, &s_ingame.frame );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.team );

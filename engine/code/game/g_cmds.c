@@ -101,7 +101,6 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		} else {
 			ping = cl->ps.ping < 999 ? cl->ps.ping : 999;
 		}
-
 		if( cl->accuracy_shots ) {
 			accuracy = cl->accuracy_hits * 100 / cl->accuracy_shots;
 		}
@@ -116,10 +115,10 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 			rankTier = G_GetScoreboardRankTier( cl->ps.persistant[PERS_SCORE] );
 		}
 		
-		// STONELANCE changed to 21 fields to include KOTH post-match stats + rank tier
+		// Scores protocol: 23 fields per player (including KOTH team and player hold times).
 		Com_sprintf (entry, sizeof(entry),
 		
-		" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
+		" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
 		cl->ps.persistant[PERS_SCORE], ping, time,
 		scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy,
 		cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
@@ -135,7 +134,11 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		cl->ps.stats[STAT_POSITION],
 		cl->kothHillKills,
 		cl->kothContestTimeMs,
-		rankTier
+		rankTier,
+		(g_gametype.integer == GT_KOTH &&
+		 (cl->sess.sessionTeam == TEAM_RED || cl->sess.sessionTeam == TEAM_BLUE)) ?
+			level.kothTeamHoldTimeMs[cl->sess.sessionTeam] : 0,
+		(g_gametype.integer == GT_KOTH) ? cl->kothHoldTimeMs : 0
 		);
 
 
@@ -155,6 +158,32 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		level.teamScores[TEAM_GREEN], level.teamScores[TEAM_YELLOW],
 		string ) );
 // END
+
+	/* Send Derby integrity separately so the long-standing `scores` row format
+	   remains compatible with older clients and servers. */
+	if ( g_gametype.integer == GT_DERBY ) {
+		string[0] = '\0';
+		stringlength = 0;
+		for ( j = 0; j < i; j++ ) {
+			int maxHealth;
+			int integrity;
+
+			cl = &level.clients[level.sortedClients[j]];
+			maxHealth = cl->ps.stats[STAT_MAX_HEALTH];
+			integrity = maxHealth > 0
+				? cl->ps.stats[STAT_HEALTH] * 100 / maxHealth
+				: cl->ps.stats[STAT_HEALTH];
+			if ( integrity < 0 ) integrity = 0;
+			if ( integrity > 100 ) integrity = 100;
+
+			Com_sprintf( entry, sizeof(entry), " %i %i", level.sortedClients[j], integrity );
+			if ( stringlength + strlen(entry) >= sizeof(string) ) break;
+			strcpy( string + stringlength, entry );
+			stringlength += strlen(entry);
+		}
+		trap_SendServerCommand( ent-g_entities,
+			va( "derbyIntegrity %i%s", j, string ) );
+	}
 }
 
 
@@ -691,12 +720,16 @@ void SetTeam( gentity_t *ent, const char *s ) {
 		}
 // STONELANCE
 		else if ( !Q_stricmp( s, "green" ) || !Q_stricmp( s, "g" ) ) {
-			if (g_gametype.integer != GT_CTF4)
-				return; // green only in CTF4
+			if ( g_gametype.integer != GT_CTF4 &&
+				g_gametype.integer != GT_DOMINATION ) {
+				return; // green is only available in four-team modes
+			}
 			team = TEAM_GREEN;
 		} else if ( !Q_stricmp( s, "yellow" ) || !Q_stricmp( s, "y" ) ) {
-			if (g_gametype.integer != GT_CTF4)
-				return; // yellow only in CTF4
+			if ( g_gametype.integer != GT_CTF4 &&
+				g_gametype.integer != GT_DOMINATION ) {
+				return; // yellow is only available in four-team modes
+			}
 			team = TEAM_YELLOW;
 		}
 // END

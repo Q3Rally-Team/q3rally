@@ -49,18 +49,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 	int			quantity;
+	int			turboValue;
+	int			turboRemaining;
 	int			i;
 	gclient_t	*client;
-
-// STONELANCE
-//	if ( !other->client->ps.powerups[ent->item->giTag] ) {
-	if ( !other->client->ps.powerups[ent->item->giTag] && ent->item->giTag != PW_TURBO) {
-// END
-		// round timing to seconds to make multiple powerup timers
-		// count in sync
-		other->client->ps.powerups[ent->item->giTag] = 
-			level.time - ( level.time % 1000 );
-	}
 
 	if ( ent->count ) {
 		quantity = ent->count;
@@ -68,13 +60,32 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		quantity = ent->item->quantity;
 	}
 
-// STONELANCE
-	if (ent->item->giTag == PW_TURBO && other->client->ps.powerups[ent->item->giTag] <= 0){
-		other->client->ps.powerups[ent->item->giTag] += -(quantity * 1000);
-	}
-	else
-// END
+	if ( ent->item->giTag == PW_TURBO ) {
+		turboValue = other->client->ps.powerups[PW_TURBO];
+		if ( turboValue > level.time ) {
+			turboRemaining = turboValue - level.time;
+		} else if ( turboValue < 0 ) {
+			turboRemaining = -turboValue;
+		} else {
+			turboRemaining = 0;
+		}
+		turboRemaining += RALLY_TURBO_ITEM_MSEC;
+		if ( turboRemaining > RALLY_TURBO_MAX_MSEC ) {
+			turboRemaining = RALLY_TURBO_MAX_MSEC;
+		}
+		if ( turboValue > level.time ) {
+			other->client->ps.powerups[PW_TURBO] = level.time + turboRemaining;
+		} else {
+			other->client->ps.powerups[PW_TURBO] = -turboRemaining;
+		}
+	} else {
+		if ( !other->client->ps.powerups[ent->item->giTag] ) {
+			// round timing to seconds to make multiple powerup timers count in sync
+			other->client->ps.powerups[ent->item->giTag] =
+				level.time - ( level.time % 1000 );
+		}
 		other->client->ps.powerups[ent->item->giTag] += quantity * 1000;
+	}
 
 	// give any nearby players a "denied" anti-reward
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
@@ -482,6 +493,8 @@ Touch_Item
 */
 void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
     int			respawn;
+	int			turboValue;
+	int			turboRemaining;
 	qboolean	predict;
 // Q3Rally Code Start
 	int			i;
@@ -512,6 +525,23 @@ break;
 	}
 
 // END
+
+	/* Use authoritative server time here as a guard for the turbo cap.  The
+	 * shared prediction rule uses playerState.commandTime, which can lag by a
+	 * few milliseconds. */
+	if ( ent->item->giType == IT_POWERUP && ent->item->giTag == PW_TURBO ) {
+		turboValue = other->client->ps.powerups[PW_TURBO];
+		if ( turboValue > level.time ) {
+			turboRemaining = turboValue - level.time;
+		} else if ( turboValue < 0 ) {
+			turboRemaining = -turboValue;
+		} else {
+			turboRemaining = 0;
+		}
+		if ( turboRemaining >= RALLY_TURBO_MAX_MSEC ) {
+			return;
+		}
+	}
 
 	// the same pickup rules are used for client side and server side
        if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps, other->client->car.maxFuel ) ) {

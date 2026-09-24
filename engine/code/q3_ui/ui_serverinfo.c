@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 static char* serverinfo_artlist[] =
 {
@@ -30,6 +31,128 @@ static char* serverinfo_artlist[] =
 
 #define ID_ADD	 100
 #define ID_BACK	 101
+
+#define SERVERINFO_FRAME_X             24
+#define SERVERINFO_FRAME_Y             20
+#define SERVERINFO_FRAME_WIDTH         592
+#define SERVERINFO_FRAME_HEIGHT        440
+#define SERVERINFO_CARD_X              48
+#define SERVERINFO_CARD_Y              112
+#define SERVERINFO_CARD_WIDTH          544
+#define SERVERINFO_CARD_HEIGHT         260
+#define SERVERINFO_COLUMN_WIDTH        256
+#define SERVERINFO_ROW_Y               144
+#define SERVERINFO_ROW_HEIGHT          24
+#define SERVERINFO_ROW_GAP             2
+#define SERVERINFO_ROWS_PER_COLUMN     8
+#define SERVERINFO_ACTION_Y            420
+#define SERVERINFO_ACTION_WIDTH        144
+#define SERVERINFO_ACTION_HEIGHT       24
+
+static vec4_t serverInfoTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t serverInfoMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t serverInfoAccentColor = UI_FRONTEND_COLOR_ACCENT;
+
+/*
+ * The server info string also contains implementation details used by the
+ * engine.  Showing that complete string makes the card grow sideways and is
+ * not useful to a player.  Keep the main page focused on settings that help
+ * decide whether to join the server.
+ */
+typedef struct
+{
+	const char *key;
+	const char *label;
+} serverInfoField_t;
+
+static const serverInfoField_t serverInfoFields[] = {
+	{ "sv_hostname",          "Server" },
+	{ "g_gametype",           "Mode" },
+	{ "mapname",              "Map" },
+	{ "clients",              "Players" },
+	{ "sv_maxclients",        "Max players" },
+	{ "timelimit",            "Time limit" },
+	{ "fraglimit",            "Score limit" },
+	{ "capturelimit",         "Capture limit" },
+	{ "laplimit",             "Lap limit" },
+	{ "g_timeTrialLaps",      "Time trial laps" },
+	{ "g_trackLength",        "Track length" },
+	{ "g_trackReversed",      "Reverse track" },
+	{ "g_useFuel",            "Fuel" },
+	{ "g_eliminationWeapons", "Weapons" },
+	{ "g_needpass",           "Password" },
+	{ "sv_pure",              "Pure server" },
+	{ NULL,                    NULL }
+};
+
+static const char *ServerInfo_GameTypeName( int gametype )
+{
+	switch ( gametype ) {
+	case GT_RACING:          return "Racing";
+	case GT_RACING_DM:       return "Racing DM";
+	case GT_SINGLE_PLAYER:   return "Single Player";
+	case GT_DERBY:           return "Demolition Derby";
+	case GT_LCS:             return "Last Car Standing";
+	case GT_ELIMINATION:     return "Elimination";
+	case GT_DEATHMATCH:      return "Deathmatch";
+	case GT_SPRINT:          return "Sprint";
+	case GT_TEAM:            return "Team Deathmatch";
+	case GT_TEAM_RACING:     return "Team Racing";
+	case GT_TEAM_RACING_DM:  return "Team Racing DM";
+	case GT_CTF:             return "Capture the Flag";
+	case GT_CTF4:            return "4-Team CTF";
+	case GT_DOMINATION:      return "Domination";
+	case GT_KOTH:            return "King of the Hill";
+	default:                 return NULL;
+	}
+}
+
+static qboolean ServerInfo_FormatValue( const serverInfoField_t *field,
+	const char *raw, char *formatted, int formattedSize )
+{
+	int value;
+	const char *name;
+
+	if ( !raw || !raw[0] ) {
+		return qfalse;
+	}
+
+	if ( !Q_stricmp( field->key, "g_gametype" ) ) {
+		name = ServerInfo_GameTypeName( atoi( raw ) );
+		if ( name ) {
+			Q_strncpyz( formatted, name, formattedSize );
+		} else {
+			Q_strncpyz( formatted, raw, formattedSize );
+		}
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( field->key, "g_trackLength" ) ) {
+		value = atoi( raw );
+		if ( value == 0 ) {
+			Q_strncpyz( formatted, "Short", formattedSize );
+		} else if ( value == 1 ) {
+			Q_strncpyz( formatted, "Medium", formattedSize );
+		} else if ( value == 2 ) {
+			Q_strncpyz( formatted, "Long", formattedSize );
+		} else {
+			Q_strncpyz( formatted, raw, formattedSize );
+		}
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( field->key, "g_trackReversed" ) ||
+		!Q_stricmp( field->key, "g_useFuel" ) ||
+		!Q_stricmp( field->key, "g_eliminationWeapons" ) ||
+		!Q_stricmp( field->key, "g_needpass" ) ||
+		!Q_stricmp( field->key, "sv_pure" ) ) {
+		Q_strncpyz( formatted, atoi( raw ) ? "On" : "Off", formattedSize );
+		return qtrue;
+	}
+
+	Q_strncpyz( formatted, raw, formattedSize );
+	return qtrue;
+}
 
 typedef struct
 {
@@ -42,6 +165,41 @@ typedef struct
 } serverinfo_t;
 
 static serverinfo_t	s_serverinfo;
+
+static const char *ServerInfo_FieldValue( const char *key )
+{
+	const char *value;
+
+	value = Info_ValueForKey( s_serverinfo.info, key );
+	if ( value[0] || Q_stricmp( key, "sv_hostname" ) ) {
+		return value;
+	}
+
+	/* Browser responses use the shorter key, while CS_SERVERINFO normally
+	 * exposes sv_hostname.  Accept both so the panel also works for local
+	 * and older servers. */
+	return Info_ValueForKey( s_serverinfo.info, "hostname" );
+}
+
+static void ServerInfo_DrawAction( void *self ) {
+	menutext_s *button;
+	qboolean focus;
+	qboolean disabled;
+	const float *textColor;
+
+	button = (menutext_s *)self;
+	focus = ( Menu_ItemAtCursor( button->generic.parent ) == button );
+	disabled = ( button->generic.flags & QMF_GRAYED ) ? qtrue : qfalse;
+	textColor = disabled ? serverInfoMutedColor :
+		( focus ? serverInfoAccentColor : serverInfoTextColor );
+
+	Frontend_DrawCard( button->generic.left, button->generic.top,
+		button->generic.right - button->generic.left,
+		button->generic.bottom - button->generic.top, 1.0f, focus );
+	Frontend_DrawText( button->generic.left + 12,
+		button->generic.top + 5, button->string,
+		UI_LEFT | UI_SMALLFONT, textColor );
+}
 
 
 /*
@@ -110,32 +268,70 @@ static void ServerInfo_Event( void* ptr, int event )
 
 /*
 =================
-ServerInfo_MenuDraw
+ServerInfo_MenuDrawFrontend
 =================
 */
-static void ServerInfo_MenuDraw( void )
+static void ServerInfo_MenuDrawFrontend( void )
 {
-	const char		*s;
-	char			key[MAX_INFO_KEY];
-	char			value[MAX_INFO_VALUE];
-	int				y;
+	const serverInfoField_t *field;
+	const char *rawValue;
+	char formattedValue[MAX_INFO_VALUE];
+	int fieldIndex;
+	int shown;
+	int column;
+	int row;
+	int x;
+	int y;
+	vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
 
-	y = SCREEN_HEIGHT/2 - s_serverinfo.numlines*(SMALLCHAR_HEIGHT)/2 - 20;
-	s = s_serverinfo.info;
-	while ( s ) {
-		Info_NextPair( &s, key, value );
-		if ( !key[0] ) {
-			break;
+	Frontend_DrawBackground( scrimColor );
+	Frontend_DrawPanel( SERVERINFO_FRAME_X, SERVERINFO_FRAME_Y,
+		SERVERINFO_FRAME_WIDTH, SERVERINFO_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( SERVERINFO_FRAME_X + 24, SERVERINFO_FRAME_Y + 24,
+		"Server info", UI_LEFT | UI_BIGFONT, serverInfoTextColor );
+	Frontend_DrawText( SERVERINFO_FRAME_X + 24, SERVERINFO_FRAME_Y + 48,
+		"Player-relevant settings and connection details",
+		UI_LEFT | UI_SMALLFONT, serverInfoMutedColor );
+	Frontend_DrawStatusChip( SERVERINFO_FRAME_X + SERVERINFO_FRAME_WIDTH - 112,
+		SERVERINFO_FRAME_Y + 26, "Online", serverInfoAccentColor, 1.0f );
+	Frontend_DrawCard( SERVERINFO_CARD_X, SERVERINFO_CARD_Y,
+		SERVERINFO_CARD_WIDTH, SERVERINFO_CARD_HEIGHT, 1.0f, qfalse );
+
+	fieldIndex = 0;
+	shown = 0;
+	while ( serverInfoFields[fieldIndex].key &&
+		shown < SERVERINFO_ROWS_PER_COLUMN * 2 ) {
+		field = &serverInfoFields[fieldIndex];
+		rawValue = ServerInfo_FieldValue( field->key );
+		if ( ServerInfo_FormatValue( field, rawValue, formattedValue,
+			sizeof(formattedValue) ) ) {
+			column = shown / SERVERINFO_ROWS_PER_COLUMN;
+			row = shown % SERVERINFO_ROWS_PER_COLUMN;
+		x = SERVERINFO_CARD_X + 16 + column *
+			( SERVERINFO_COLUMN_WIDTH + 16 );
+		y = SERVERINFO_ROW_Y + row *
+			( SERVERINFO_ROW_HEIGHT + SERVERINFO_ROW_GAP );
+		Frontend_DrawCard( x, y, SERVERINFO_COLUMN_WIDTH,
+			SERVERINFO_ROW_HEIGHT, 1.0f, qfalse );
+		Frontend_DrawText( x + 8, y + 5, field->label,
+			UI_LEFT | UI_SMALLFONT, serverInfoMutedColor );
+		Frontend_DrawText( x + SERVERINFO_COLUMN_WIDTH - 8, y + 5,
+			formattedValue, UI_RIGHT | UI_SMALLFONT, serverInfoTextColor );
+			shown++;
 		}
-
-		Q_strcat( key, MAX_INFO_KEY, ":" ); 
-
-		UI_DrawString(SCREEN_WIDTH*0.25 - 8,y,key,UI_RIGHT|UI_SMALLFONT,text_color_normal);
-		UI_DrawString(SCREEN_WIDTH*0.25 + 8,y,value,UI_LEFT|UI_SMALLFONT,text_color_normal);
-
-		y += SMALLCHAR_HEIGHT/1.18;
+		fieldIndex++;
 	}
 
+	if ( !shown ) {
+		Frontend_DrawText( SERVERINFO_CARD_X + 16, SERVERINFO_CARD_Y + 24,
+			"No server information available", UI_LEFT | UI_SMALLFONT,
+			serverInfoMutedColor );
+	}
+
+	Frontend_DrawText( SERVERINFO_FRAME_X + 24, SERVERINFO_FRAME_Y + 376,
+		"Enter select   Esc back", UI_LEFT | UI_SMALLFONT,
+		serverInfoMutedColor );
 	Menu_Draw( &s_serverinfo.menu );
 }
 
@@ -183,7 +379,7 @@ void UI_ServerInfoMenu( void )
 
 	ServerInfo_Cache();
 
-	s_serverinfo.menu.draw       = ServerInfo_MenuDraw;
+	s_serverinfo.menu.draw       = ServerInfo_MenuDrawFrontend;
 	s_serverinfo.menu.key        = ServerInfo_MenuKey;
 	s_serverinfo.menu.wrapAround = qtrue;
 	s_serverinfo.menu.fullscreen = qtrue;
@@ -194,6 +390,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.banner.string		  = "SERVER INFO";
 	s_serverinfo.banner.color	      = color_white;
 	s_serverinfo.banner.style	      = UI_CENTER;
+	s_serverinfo.banner.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
 
 	s_serverinfo.add.generic.type	  = MTYPE_PTEXT;
 	s_serverinfo.add.generic.flags    = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -207,6 +404,17 @@ void UI_ServerInfoMenu( void )
 	if( trap_Cvar_VariableValue( "sv_running" ) ) {
 		s_serverinfo.add.generic.flags |= QMF_GRAYED;
 	}
+	s_serverinfo.add.generic.left = SERVERINFO_FRAME_X + 16;
+	s_serverinfo.add.generic.top = SERVERINFO_ACTION_Y;
+	s_serverinfo.add.generic.right = s_serverinfo.add.generic.left +
+		SERVERINFO_ACTION_WIDTH;
+	s_serverinfo.add.generic.bottom = SERVERINFO_ACTION_Y +
+		SERVERINFO_ACTION_HEIGHT;
+	s_serverinfo.add.generic.x = ( s_serverinfo.add.generic.left +
+		s_serverinfo.add.generic.right ) / 2;
+	s_serverinfo.add.generic.y = SERVERINFO_ACTION_Y + 4;
+	s_serverinfo.add.generic.flags |= QMF_NODEFAULTINIT;
+	s_serverinfo.add.generic.ownerdraw = ServerInfo_DrawAction;
 
 	s_serverinfo.back.generic.type	   = MTYPE_PTEXT;
 	s_serverinfo.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -215,8 +423,20 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.back.generic.x		   = 0;
 	s_serverinfo.back.generic.y		   = 416;
     s_serverinfo.back.string           = "<BACK";
-	s_serverinfo.back.style            = UI_LEFT|UI_SMALLFONT;
+    s_serverinfo.back.style            = UI_LEFT|UI_SMALLFONT;
     s_serverinfo.back.color            = color_red;
+	s_serverinfo.back.generic.left = SERVERINFO_FRAME_X + SERVERINFO_FRAME_WIDTH -
+		16 - SERVERINFO_ACTION_WIDTH;
+	s_serverinfo.back.generic.top = SERVERINFO_ACTION_Y;
+	s_serverinfo.back.generic.right = s_serverinfo.back.generic.left +
+		SERVERINFO_ACTION_WIDTH;
+	s_serverinfo.back.generic.bottom = SERVERINFO_ACTION_Y +
+		SERVERINFO_ACTION_HEIGHT;
+	s_serverinfo.back.generic.x = ( s_serverinfo.back.generic.left +
+		s_serverinfo.back.generic.right ) / 2;
+	s_serverinfo.back.generic.y = SERVERINFO_ACTION_Y + 4;
+	s_serverinfo.back.generic.flags |= QMF_NODEFAULTINIT;
+	s_serverinfo.back.generic.ownerdraw = ServerInfo_DrawAction;
 
 	trap_GetConfigString( CS_SERVERINFO, s_serverinfo.info, MAX_INFO_STRING );
 

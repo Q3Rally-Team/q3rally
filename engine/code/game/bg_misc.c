@@ -699,7 +699,7 @@ Refills vehicle fuel.
 		"holdable_medkit", 
 		"sound/items/holdable.ogg",
         { 
-		"models/powerups/holdable/medkit.md3", 
+		"models/powerups/holdable/repairkit.md3",
 		"models/powerups/holdable/medkit_sphere.md3",
 		NULL, NULL},
 /* icon */		"icons/medkit",
@@ -1430,6 +1430,8 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 // STONELANCE
 	int		i;
 // END
+	int		turboValue;
+	int		turboRemaining;
 
 	if ( ent->modelindex < 1 || ent->modelindex >= bg_numItems ) {
 		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: index out of range" );
@@ -1523,8 +1525,20 @@ return qfalse;
 // STONELANCE
 //		return qtrue;	// powerups are always picked up
 
+		if ( item->giTag == PW_TURBO ) {
+			turboValue = ps->powerups[PW_TURBO];
+			if ( turboValue < 0 ) {
+				turboRemaining = -turboValue;
+			} else if ( turboValue > ps->commandTime ) {
+				turboRemaining = turboValue - ps->commandTime;
+			} else {
+				turboRemaining = 0;
+			}
+			return turboRemaining < RALLY_TURBO_MAX_MSEC;
+		}
+
 		// powerups past turbo can always be picked up
-		if (item->giTag >= PW_TURBO)
+		if (item->giTag > PW_TURBO)
 			return qtrue;
 
 		// can only have one powerup below turbo

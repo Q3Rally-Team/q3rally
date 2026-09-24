@@ -44,7 +44,33 @@ static derbyHitIntensity_t CG_DerbyHitIntensityForDamage( int damage ) {
 	return DERBY_HIT_LIGHT;
 }
 
-static void CG_ApplyDerbyHitImpact( int damage ) {
+static int CG_DerbyHitSegmentForDamage( int yawByte, int pitchByte ) {
+	vec3_t incomingAngles, incomingDir, sourceDir, vehicleAngles;
+	vec3_t vehicleForward, vehicleRight;
+	float frontDot, rightDot;
+
+	if ( yawByte == 255 && pitchByte == 255 ) {
+		return -1;
+	}
+
+	VectorSet( incomingAngles, 0.0f, yawByte * ( 360.0f / 256.0f ), 0.0f );
+	AngleVectors( incomingAngles, incomingDir, NULL, NULL );
+	VectorSubtract( vec3_origin, incomingDir, sourceDir );
+
+	VectorSet( vehicleAngles, 0.0f,
+	            cg.snap ? cg.snap->ps.viewangles[YAW] : cg.predictedPlayerState.viewangles[YAW],
+	            0.0f );
+	AngleVectors( vehicleAngles, vehicleForward, vehicleRight, NULL );
+	frontDot = DotProduct( sourceDir, vehicleForward );
+	rightDot = DotProduct( sourceDir, vehicleRight );
+
+	if ( fabs( frontDot ) >= fabs( rightDot ) ) {
+		return frontDot >= 0.0f ? 0 : 3; /* front / rear */
+	}
+	return rightDot >= 0.0f ? 2 : 1; /* right / left */
+}
+
+static void CG_ApplyDerbyHitImpact( int damage, int yawByte, int pitchByte ) {
 	float shakeScale;
 	derbyHitIntensity_t intensity;
 
@@ -56,6 +82,7 @@ static void CG_ApplyDerbyHitImpact( int damage ) {
 	cg.derbyHitFxTime = cg.time;
 	cg.derbyHitFxDamage = damage;
 	cg.derbyHitFxLevel = intensity;
+	cg.derbyHitFxDir = CG_DerbyHitSegmentForDamage( yawByte, pitchByte );
 
 	shakeScale = cg_derbyHitShakeScale.value;
 	if ( shakeScale < 0.0f ) {
@@ -353,12 +380,9 @@ pushReward
 ==================
 */
 static void pushReward(sfxHandle_t sfx, qhandle_t shader, int rewardCount) {
-	if (cg.rewardStack < (MAX_REWARDSTACK-1)) {
-		cg.rewardStack++;
-		cg.rewardSound[cg.rewardStack] = sfx;
-		cg.rewardShader[cg.rewardStack] = shader;
-		cg.rewardCount[cg.rewardStack] = rewardCount;
-	}
+	/* Medal icons and announcer cues share the same serialized HUD lane as
+	 * pickups and profile notifications. */
+	CG_QueueRewardToast( shader, sfx, rewardCount );
 }
 
 /*
@@ -611,7 +635,7 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	// damage events (player is getting wounded)
 	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
 
-		CG_ApplyDerbyHitImpact( ps->damageCount );
+		CG_ApplyDerbyHitImpact( ps->damageCount, ps->damageYaw, ps->damagePitch );
 	}
 
 	// Q3Rally KOTH: remember when local player died so client can show wave-respawn ETA

@@ -174,6 +174,7 @@ typedef struct ladderPlayerPayload_s {
         int                     kills;
         int                     deaths;
         int                     zoneHoldMs;
+        int                     kothContestTimeMs;
         int                     zoneActiveSigil;
         int                     survivalMs;
         int                     eliminationRound;
@@ -217,6 +218,7 @@ typedef struct ladderMatchPayload_s {
         int                     eliminationWarning;
         int                     teamScores[TEAM_NUM_TEAMS];
         int                     teamTimes[TEAM_NUM_TEAMS];
+        int                     teamHoldMs[TEAM_NUM_TEAMS];
         int                     playerCount;
         qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];

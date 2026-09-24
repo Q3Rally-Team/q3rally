@@ -30,6 +30,7 @@ DISPLAY OPTIONS MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 // STONELANCE
@@ -49,6 +50,34 @@ DISPLAY OPTIONS MENU
 #define ID_BRIGHTNESS		14
 #define ID_SCREENSIZE		15
 #define ID_BACK				16
+
+#define DISPLAY_FRAME_X             24
+#define DISPLAY_FRAME_Y             20
+#define DISPLAY_FRAME_WIDTH         592
+#define DISPLAY_FRAME_HEIGHT        440
+#define DISPLAY_NAV_X               40
+#define DISPLAY_NAV_Y               104
+#define DISPLAY_NAV_WIDTH           164
+#define DISPLAY_NAV_HEIGHT          292
+#define DISPLAY_DETAIL_X            40
+#define DISPLAY_DETAIL_Y            104
+#define DISPLAY_DETAIL_WIDTH        556
+#define DISPLAY_DETAIL_HEIGHT       292
+#define DISPLAY_ROW_HEIGHT          24
+#define DISPLAY_ROW_GAP             4
+#define DISPLAY_ROW_START_Y         148
+#define DISPLAY_COLUMN_X            236
+#define DISPLAY_COLUMN_WIDTH        344
+#define DISPLAY_ACTION_Y            420
+#define DISPLAY_ACTION_WIDTH        120
+#define DISPLAY_ACTION_HEIGHT       24
+
+static vec4_t displayScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t displayAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t displayTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t displayMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t displayBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t displayFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 
 typedef struct {
@@ -79,6 +108,177 @@ typedef struct {
 
 static displayOptionsInfo_t	displayOptionsInfo;
 
+static void UI_DisplayOptionsMenu_Event( void *ptr, int event );
+
+static void Display_DrawNavItem( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+	qboolean active;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	active = ( item->id == ID_DISPLAY );
+	Frontend_DrawNavButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, active || focus, UI_LEFT );
+}
+
+static void Display_DrawSlider( void *self ) {
+	menuslider_s *slider;
+	menucommon_s *item;
+	qboolean disabled;
+	qboolean focus;
+	qboolean hovered;
+	qboolean highlighted;
+	vec4_t fillColor;
+	vec4_t lineColor;
+	vec4_t labelColor;
+	vec4_t valueColor;
+	float range;
+	int trackX;
+	int trackWidth;
+	int trackY;
+	char value[32];
+
+	slider = (menuslider_s *)self;
+	item = &slider->generic;
+	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
+	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
+	hovered = ( !disabled && uis.cursorx >= item->left &&
+		uis.cursorx <= item->right && uis.cursory >= item->top &&
+		uis.cursory <= item->bottom ) ? qtrue : qfalse;
+	highlighted = ( focus || hovered ) ? qtrue : qfalse;
+
+	Vector4Copy( displayFocusColor, fillColor );
+	fillColor[3] = highlighted ? 0.72f : 0.0f;
+	Vector4Copy( displayBorderColor, lineColor );
+	lineColor[3] = 0.55f;
+	if ( highlighted ) {
+		UI_FillRect( item->left, item->top,
+			item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( displayAccentColor, lineColor );
+	}
+	UI_FillRect( item->left, item->bottom - 1,
+		item->right - item->left, 1, lineColor );
+
+	if ( disabled ) {
+		Vector4Copy( displayMutedColor, labelColor );
+		labelColor[3] = 0.65f;
+		Vector4Copy( labelColor, valueColor );
+	} else if ( highlighted ) {
+		Vector4Copy( displayAccentColor, labelColor );
+		Vector4Copy( displayTextColor, valueColor );
+	} else {
+		Vector4Copy( displayMutedColor, labelColor );
+		Vector4Copy( displayTextColor, valueColor );
+	}
+
+	if ( slider->maxvalue > slider->minvalue ) {
+		range = ( slider->curvalue - slider->minvalue ) /
+			( slider->maxvalue - slider->minvalue );
+	} else {
+		range = 0.0f;
+	}
+	if ( range < 0.0f ) range = 0.0f;
+	if ( range > 1.0f ) range = 1.0f;
+
+	if ( item->id == ID_BRIGHTNESS ) {
+		Com_sprintf( value, sizeof( value ), "%.1f", slider->curvalue / 10.0f );
+	} else {
+		Com_sprintf( value, sizeof( value ), "%d%%", (int)( slider->curvalue * 10.0f ) );
+	}
+
+	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
+
+	trackX = item->left + 144;
+	trackWidth = 80;
+	trackY = item->top + ( item->bottom - item->top ) / 2;
+	UI_FillRect( trackX, trackY, trackWidth, 2, lineColor );
+	UI_FillRect( trackX, trackY, (int)( trackWidth * range ), 2,
+		disabled ? displayMutedColor : displayAccentColor );
+	UI_FillRect( trackX + (int)( trackWidth * range ) - 2, trackY - 3,
+		4, 8, disabled ? displayMutedColor : displayAccentColor );
+	Frontend_DrawText( item->right - UI_FRONTEND_SPACE_SM,
+		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
+		value, UI_RIGHT | UI_SMALLFONT, valueColor );
+}
+
+static void Display_DrawAction( void *self ) {
+	menutext_s *text;
+	menucommon_s *item;
+	qboolean focus;
+
+	text = (menutext_s *)self;
+	item = &text->generic;
+	focus = ( Menu_ItemAtCursor( item->parent ) == item );
+	Frontend_DrawButton( item->left, item->top,
+		item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, focus, UI_CENTER );
+}
+
+static void Display_SetBounds( menucommon_s *item, int id,
+	int x, int y, int width, int height, const char *label ) {
+	item->id = id;
+	item->x = x;
+	item->y = y;
+	item->left = x;
+	item->top = y;
+	item->right = x + width;
+	item->bottom = y + height;
+	if ( label ) {
+		item->name = (char *)label;
+	}
+}
+
+static void Display_SetNavBounds( menutext_s *item, int id,
+	const char *label, int y ) {
+	item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	item->generic.callback = UI_DisplayOptionsMenu_Event;
+	item->string = (char *)label;
+	item->style = UI_LEFT | UI_SMALLFONT;
+	item->generic.ownerdraw = Display_DrawNavItem;
+	Display_SetBounds( &item->generic, id, DISPLAY_NAV_X + 16, y,
+		DISPLAY_NAV_WIDTH - 32, DISPLAY_ROW_HEIGHT, NULL );
+}
+
+static void Display_SetSliderBounds( menuslider_s *item, int id,
+	const char *label, int y ) {
+	item->generic.ownerdraw = Display_DrawSlider;
+	Display_SetBounds( &item->generic, id, DISPLAY_COLUMN_X, y,
+		DISPLAY_COLUMN_WIDTH, DISPLAY_ROW_HEIGHT, label );
+	/* Slider_Key uses x as the start of its legacy ten-step input range. */
+	item->generic.x = DISPLAY_COLUMN_X + 128;
+}
+
+static void UI_DisplayOptionsMenu_Draw( void ) {
+	Frontend_DrawBackground( displayScrimColor );
+	Frontend_DrawPanel( DISPLAY_FRAME_X, DISPLAY_FRAME_Y,
+		DISPLAY_FRAME_WIDTH, DISPLAY_FRAME_HEIGHT, 1.0f,
+		UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( DISPLAY_FRAME_X + 24, DISPLAY_FRAME_Y + 24,
+		"Display", UI_LEFT | UI_BIGFONT, displayTextColor );
+	Frontend_DrawText( DISPLAY_FRAME_X + 24, DISPLAY_FRAME_Y + 48,
+		"Tune brightness, screen size and framing",
+		UI_LEFT | UI_SMALLFONT, displayMutedColor );
+	Frontend_DrawStatusChip( DISPLAY_FRAME_X + DISPLAY_FRAME_WIDTH - 104,
+		DISPLAY_FRAME_Y + 26, "Settings", displayAccentColor, 1.0f );
+
+	Frontend_DrawCard( DISPLAY_DETAIL_X, DISPLAY_DETAIL_Y,
+		DISPLAY_DETAIL_WIDTH, DISPLAY_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( DISPLAY_DETAIL_X + 16, DISPLAY_DETAIL_Y + 22,
+		"Display calibration", UI_LEFT | UI_SMALLFONT, displayMutedColor );
+
+	Menu_Draw( &displayOptionsInfo.menu );
+
+	Frontend_DrawText( DISPLAY_FRAME_X + 24, DISPLAY_FRAME_Y + 384,
+		"Select an option   Left / right adjust   Esc back",
+		UI_LEFT | UI_SMALLFONT, displayMutedColor );
+}
+
 
 /*
 =================
@@ -91,29 +291,6 @@ static void UI_DisplayOptionsMenu_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_GRAPHICS:
-		UI_PopMenu();
-		UI_GraphicsOptionsMenu();
-		break;
-
-	case ID_ADVANCED_GRAPHICS:
-		UI_PopMenu();
-		UI_AdvancedGraphicsOptionsMenu();
-		break;
-
-	case ID_DISPLAY:
-		break;
-
-	case ID_SOUND:
-		UI_PopMenu();
-		UI_SoundOptionsMenu();
-		break;
-
-	case ID_NETWORK:
-		UI_PopMenu();
-		UI_NetworkOptionsMenu();
-		break;
-
 	case ID_BRIGHTNESS:
 		trap_Cvar_SetValue( "r_gamma", displayOptionsInfo.brightness.curvalue / 10.0f );
 		break;
@@ -142,6 +319,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	UI_DisplayOptionsMenu_Cache();
 	displayOptionsInfo.menu.wrapAround = qtrue;
 	displayOptionsInfo.menu.fullscreen = qtrue;
+	displayOptionsInfo.menu.draw = UI_DisplayOptionsMenu_Draw;
 
 	displayOptionsInfo.banner.generic.type		= MTYPE_BTEXT;
 	displayOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY;
@@ -285,24 +463,31 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END
 
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.banner );
 // STONELANCE
 /*
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.framel );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.framer );
 */
 // END
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.graphics );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.advanced_graphics );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.display );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.sound );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.network );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.brightness );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.screensize );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.back );
 
 	displayOptionsInfo.brightness.curvalue  = trap_Cvar_VariableValue("r_gamma") * 10;
 	displayOptionsInfo.screensize.curvalue  = trap_Cvar_VariableValue( "cg_viewsize")/10;
+
+	/* Menu_AddItem initializes the legacy widgets and overwrites their
+	 * default bounds. Apply the frontend layout after that initialization. */
+	Display_SetSliderBounds( &displayOptionsInfo.brightness,
+		ID_BRIGHTNESS, "Brightness", DISPLAY_ROW_START_Y );
+	Display_SetSliderBounds( &displayOptionsInfo.screensize,
+		ID_SCREENSIZE, "Screen size",
+		DISPLAY_ROW_START_Y + DISPLAY_ROW_HEIGHT + DISPLAY_ROW_GAP );
+
+	Display_SetBounds( &displayOptionsInfo.back.generic, ID_BACK,
+		DISPLAY_NAV_X, DISPLAY_ACTION_Y, DISPLAY_ACTION_WIDTH,
+		DISPLAY_ACTION_HEIGHT, NULL );
+	displayOptionsInfo.back.generic.ownerdraw = Display_DrawAction;
 }
 
 
@@ -335,5 +520,5 @@ void UI_DisplayOptionsMenu( void ) {
 
 	UI_DisplayOptionsMenu_Init();
 	UI_PushMenu( &displayOptionsInfo.menu );
-	Menu_SetCursorToItem( &displayOptionsInfo.menu, &displayOptionsInfo.display );
+	Menu_SetCursorToItem( &displayOptionsInfo.menu, &displayOptionsInfo.brightness );
 }

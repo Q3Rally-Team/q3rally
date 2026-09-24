@@ -51,6 +51,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LIGHTNING_RANGE         768
 
 #define SCORE_NOT_PRESENT       -9999   // for the CS_SCORES[12] when only one player is present
+#define SCOREBOARD_FIELDS_PER_CLIENT 23 // scores server-command fields per player
 
 #define VOTE_TIME                       30000   // 30 seconds before vote times out
 
@@ -296,6 +297,8 @@ typedef struct {
         qboolean        manualShift;
         int                     transmissionMode;
         collisionDamage_t       damage;
+        collisionDamage_t       breakableDamage;
+        qboolean        collisionDetected;      // meaningful wall or car/car impact this move
 
         qboolean        useFuel;
 
@@ -424,6 +427,10 @@ typedef enum {
         PW_NUM_POWERUPS
 
 } powerup_t;
+
+#define RALLY_TURBO_MAX_MSEC             25000
+#define RALLY_TURBO_ITEM_MSEC             5000
+#define RALLY_TURBO_CLEAN_SPLIT_MSEC      500
 
 typedef enum {
         HI_NONE,
