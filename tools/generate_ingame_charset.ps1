@@ -1,5 +1,8 @@
 param(
-    [string]$OutputPath = ""
+    [string]$OutputPath = "",
+    # 0.5, 1 and 2 generate 256, 512 and 1024 square atlases respectively.
+    [ValidateSet('0.5', '1', '2')]
+    [string]$Scale = '1'
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -11,8 +14,9 @@ if (-not $OutputPath) {
 $outputDirectory = Split-Path -Parent $OutputPath
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 
-$size = 512
-$cell = 32
+$scaleFactor = [double]::Parse($Scale, [System.Globalization.CultureInfo]::InvariantCulture)
+$size = [int](512 * $scaleFactor)
+$cell = [int](32 * $scaleFactor)
 $bitmap = New-Object System.Drawing.Bitmap $size, $size,
     ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
@@ -24,7 +28,7 @@ $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
 # from the frontend atlas so menu typography can evolve independently.
 $font = New-Object System.Drawing.Font(
     "Bahnschrift",
-    29,
+    (29 * $scaleFactor),
     [System.Drawing.FontStyle]::Bold,
     [System.Drawing.GraphicsUnit]::Pixel
 )
@@ -45,6 +49,11 @@ for ($code = 32; $code -le 126; $code++) {
         $cell,
         $cell
     )
+    # Bahnschrift's M and W have shorter ink bounds; align their cap baseline
+    # with the rest of the uppercase glyphs rather than centering them higher.
+    if ($char -eq 'M' -or $char -eq 'W') {
+        $rect.Y += 3 * $scaleFactor
+    }
     $graphics.DrawString($char.ToString(), $font, $brush, $rect, $format)
 }
 

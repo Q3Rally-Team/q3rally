@@ -1,5 +1,8 @@
 param(
-    [string]$OutputPath = ""
+    [string]$OutputPath = "",
+    # 0.5, 1 and 2 generate 256, 512 and 1024 square atlases respectively.
+    [ValidateSet('0.5', '1', '2')]
+    [string]$Scale = '1'
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -11,8 +14,9 @@ if ( -not $OutputPath ) {
 $outputDirectory = Split-Path -Parent $OutputPath
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 
-$size = 512
-$cell = 32
+$scaleFactor = [double]::Parse($Scale, [System.Globalization.CultureInfo]::InvariantCulture)
+$size = [int](512 * $scaleFactor)
+$cell = [int](32 * $scaleFactor)
 $bitmap = New-Object System.Drawing.Bitmap(
     $size,
     $size,
@@ -21,7 +25,7 @@ $bitmap = New-Object System.Drawing.Bitmap(
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 $font = New-Object System.Drawing.Font(
     "Bahnschrift SemiCondensed",
-        26,
+        (26 * $scaleFactor),
     [System.Drawing.FontStyle]::Bold,
     [System.Drawing.GraphicsUnit]::Pixel
 )

@@ -1033,6 +1033,7 @@ float CG_DrawUpperRightHUD( float y ) {
 
     if ( !isRallyNonDMRace() && cgs.gametype != GT_DERBY &&
          cgs.gametype != GT_LCS && cgs.gametype != GT_DEATHMATCH &&
+         cgs.gametype != GT_RACING_DM && cgs.gametype != GT_TEAM_RACING_DM &&
          cgs.gametype != GT_TEAM && cgs.gametype != GT_CTF &&
          cgs.gametype != GT_CTF4 && cgs.gametype != GT_DOMINATION &&
          cgs.gametype != GT_KOTH ) {

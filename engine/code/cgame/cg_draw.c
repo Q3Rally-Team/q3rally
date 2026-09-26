@@ -1437,14 +1437,14 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	CG_FillRect( HUD_X(432), 422, 1, 50, lineColor );
 
 	/* Left: integrity and the two combat counters. */
-	CG_DrawIngameString( HUD_X(74), 414, "INTEGRITY",
+	CG_DrawIngameString( HUD_X(74), 418, "INTEGRITY",
 	                     UI_CENTER | UI_SMALLFONT, 0.75f, mutedColor );
 	Com_sprintf( healthText, sizeof(healthText), "%d", health );
-	CG_DrawIngameString( HUD_X(74), 426, healthText, UI_CENTER,
+	CG_DrawIngameString( HUD_X(74), 430, healthText, UI_CENTER,
 	                     1.1f, healthColor );
 	if ( health <= 25 && cgs.media.derbyHudWarningShader ) {
 		trap_R_SetColor( dangerColor );
-		CG_DrawPic( HUD_X(136), 414, 14, 14, cgs.media.derbyHudWarningShader );
+		CG_DrawPic( HUD_X(136), 418, 14, 14, cgs.media.derbyHudWarningShader );
 		trap_R_SetColor( NULL );
 	}
 	CG_DrawIngameString( HUD_X(114), 432, "ARMOR", UI_SMALLFONT, 0.45f, mutedColor );
@@ -1483,7 +1483,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	}
 
 	if ( cgs.gametype == GT_DERBY ) {
-		CG_DrawIngameSmallString( HUD_X(190), 414, "ZONES", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 418, "ZONES", mutedColor );
 		centerX = 208.0f;
 		centerY = 431.0f;
 		zoneColorAlpha = 0.82f;
@@ -1542,7 +1542,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		damageFrac = damageTaken / 100.0f;
 		if ( damageFrac < 0.0f ) damageFrac = 0.0f;
 		if ( damageFrac > 1.0f ) damageFrac = 1.0f;
-		CG_DrawIngameSmallString( HUD_X(284), 414, "DAMAGE", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(284), 418, "DAMAGE", mutedColor );
 		CG_FillRect( HUD_X(284), 432, 126 * spreadFactor, 5, darkSegment );
 		CG_FillRect( HUD_X(284), 432, 126 * damageFrac * spreadFactor, 5, dangerColor );
 		CG_DrawIngameString( HUD_X(284), 441, va("IN %d", damageTaken),
@@ -1569,8 +1569,8 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			default: break;
 			}
 		}
-		CG_DrawIngameSmallString( HUD_X(190), 414, "DOMINATION", mutedColor );
-		CG_DrawIngameSmallString( HUD_X(190), 428, "ZONES", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 418, "DOMINATION", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 432, "ZONES", mutedColor );
 		if ( zoneCount > 0 ) {
 			zoneChipW = 18.0f;
 			for ( zoneChip = 0; zoneChip < 5; zoneChip++ ) {
@@ -1583,50 +1583,50 @@ static void CG_DrawRallyTelemetryHud( void ) {
 				}
 				zoneTeamColor[3] = 0.24f;
 				zoneChipX = HUD_X(190 + zoneChip * 20);
-				CG_FillRect( zoneChipX, 439, zoneChipW, 13, zoneTeamColor );
+				CG_FillRect( zoneChipX, 443, zoneChipW, 13, zoneTeamColor );
 				zoneTeamColor[3] = 0.95f;
-				CG_FillRect( zoneChipX, 439, 2, 13, zoneTeamColor );
-				CG_DrawRect( zoneChipX, 439, zoneChipW, 13, 1.0f, lineColor );
+				CG_FillRect( zoneChipX, 443, 2, 13, zoneTeamColor );
+				CG_DrawRect( zoneChipX, 443, zoneChipW, 13, 1.0f, lineColor );
 				Com_sprintf( zoneChipText, sizeof(zoneChipText), "%s%d",
 				             zoneCodes[zoneChip], zoneCounts[zoneChip] );
-				CG_DrawIngameString( zoneChipX + zoneChipW * 0.5f, 442,
+				CG_DrawIngameString( zoneChipX + zoneChipW * 0.5f, 446,
 				                     zoneChipText, UI_CENTER | UI_SMALLFONT,
 				                     0.32f, colorWhite );
 			}
 		} else {
-			CG_DrawIngameString( HUD_X(294), 439, "NO ZONES",
+			CG_DrawIngameString( HUD_X(294), 443, "NO ZONES",
 			                     UI_RIGHT | UI_SMALLFONT, 0.38f, mutedColor );
 		}
 		if ( cg_hudShowScores.integer ) {
 			Com_sprintf( modeValue, sizeof(modeValue), "SCORE %d", ps->persistant[PERS_SCORE] );
-			CG_DrawIngameString( HUD_X(216), 457, modeValue,
+			CG_DrawIngameString( HUD_X(216), 461, modeValue,
 			                     UI_CENTER | UI_SMALLFONT, 0.34f, colorWhite );
-			CG_FillRect( HUD_X(242), 456, 1, 12, lineColor );
+			CG_FillRect( HUD_X(242), 460, 1, 12, lineColor );
 			if ( team >= TEAM_RED && team <= TEAM_YELLOW ) {
 				teamScore = cg.teamScores[team - TEAM_RED];
 				Com_sprintf( modeValue, sizeof(modeValue), "TEAM %d", teamScore );
-				CG_DrawIngameString( HUD_X(268), 457, modeValue,
+				CG_DrawIngameString( HUD_X(268), 461, modeValue,
 				                     UI_CENTER | UI_SMALLFONT, 0.34f, accentColor );
 			}
 		}
 	} else if ( cgs.gametype == GT_KOTH ) {
-		CG_DrawIngameString( HUD_X(190), 414, "KING OF THE HILL",
+		CG_DrawIngameString( HUD_X(190), 418, "KING OF THE HILL",
 		                     UI_SMALLFONT, 0.42f, mutedColor );
 		if ( cg_hudShowScores.integer ) {
 			Com_sprintf( modeValue, sizeof(modeValue), "SCORE %d", ps->persistant[PERS_SCORE] );
-			CG_DrawIngameString( HUD_X(216), 457, modeValue,
+			CG_DrawIngameString( HUD_X(216), 461, modeValue,
 			                     UI_CENTER | UI_SMALLFONT, 0.34f, colorWhite );
-			CG_FillRect( HUD_X(242), 456, 1, 12, lineColor );
+			CG_FillRect( HUD_X(242), 460, 1, 12, lineColor );
 			if ( team >= TEAM_RED && team <= TEAM_YELLOW ) {
 				teamScore = cg.teamScores[team - TEAM_RED];
 				Com_sprintf( modeValue, sizeof(modeValue), "TEAM %d", teamScore );
-				CG_DrawIngameString( HUD_X(268), 457, modeValue,
+				CG_DrawIngameString( HUD_X(268), 461, modeValue,
 				                     UI_CENTER | UI_SMALLFONT, 0.34f, accentColor );
 			}
 		}
 	} else if ( cgs.gametype == GT_LCS ) {
 		playersRemaining = CG_GetPlayersRemaining( NULL );
-		CG_DrawIngameSmallString( HUD_X(190), 414, "LCS MATCH", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 418, "LCS MATCH", mutedColor );
 		if ( playersRemaining > 0 )
 			Com_sprintf( modeValue, sizeof(modeValue), "LEFT %d", playersRemaining );
 		else
@@ -1654,7 +1654,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	} else if ( cgs.gametype == GT_ELIMINATION ) {
 		playersRemaining = CG_GetPlayersRemaining( NULL );
 		Q_strncpyz( modeTitle, "ELIMINATION", sizeof(modeTitle) );
-		CG_DrawIngameSmallString( HUD_X(190), 414, modeTitle, mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 418, modeTitle, mutedColor );
 		if ( cg_hudShowPosition.integer && position > 0 ) {
 			Com_sprintf( modeValue, sizeof(modeValue), "POS %d/%d", position, racers );
 		} else if ( cg_hudShowPosition.integer ) {
@@ -1701,7 +1701,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		} else {
 			lapTime = totalTime = 0;
 		}
-		CG_DrawIngameSmallString( HUD_X(190), 414, "RACE COMBAT", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(190), 418, "RACE COMBAT", mutedColor );
 		if ( cg_hudShowLaps.integer ) {
 			if ( cgs.laplimit > 1 )
 				Com_sprintf( modeValue, sizeof(modeValue), "LAP %d/%d", lap, cgs.laplimit );
@@ -1752,7 +1752,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			else
 				Com_sprintf( modeValue, sizeof(modeValue), "LAP %d", lap );
 		}
-		CG_DrawIngameSmallString( 190, 414, modeTitle, mutedColor );
+		CG_DrawIngameSmallString( 190, 418, modeTitle, mutedColor );
 		if ( cg_ghostPlayback.integer ) {
 			const char *ghostStatus;
 			vec4_t ghostStatusColor;
@@ -1788,7 +1788,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 				ghostStatus = "GHOST OFF";
 			}
 
-			CG_DrawIngameString( HUD_X(410), 414, ghostStatus,
+			CG_DrawIngameString( HUD_X(410), 418, ghostStatus,
 			                     UI_RIGHT | UI_SMALLFONT, 0.42f, ghostStatusColor );
 		}
 		if ( position > 0 )
@@ -1844,7 +1844,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			Q_strncpyz( modeTitle, "DEATHMATCH", sizeof(modeTitle) );
 			break;
 		}
-		CG_DrawIngameSmallString( 190, 414, modeTitle, mutedColor );
+		CG_DrawIngameSmallString( 190, 418, modeTitle, mutedColor );
 		if ( cg_hudShowScores.integer ) {
 			Com_sprintf( modeValue, sizeof(modeValue), "SCORE %d", ps->persistant[PERS_SCORE] );
 			CG_DrawIngameSmallString( 190, 432, modeValue, colorWhite );
@@ -1894,7 +1894,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		qboolean previewingWeapon;
 
 		CG_FillRect( HUD_X(302), 422, 1, 50, lineColor );
-		CG_DrawIngameSmallString( HUD_X(310), 414, "WEAPONS", mutedColor );
+		CG_DrawIngameSmallString( HUD_X(310), 418, "WEAPONS", mutedColor );
 		Vector4Copy( colorWhite, weaponColor );
 
 		frontWeapon = ps->weapon;
@@ -1911,7 +1911,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			frontWeapon = 0;
 		}
 
-		CG_DrawIngameString( HUD_X(310), 430, "FRONT",
+		CG_DrawIngameString( HUD_X(310), 434, "FRONT",
 		                     UI_SMALLFONT, 0.40f, mutedColor );
 		weaponIcon = 0;
 		frontAmmo = -1;
@@ -1922,14 +1922,14 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		}
 		if ( weaponIcon ) {
 			trap_R_SetColor( weaponColor );
-			CG_DrawPic( HUD_X(350), 426, 16, 16, weaponIcon );
+			CG_DrawPic( HUD_X(350), 430, 16, 16, weaponIcon );
 			trap_R_SetColor( NULL );
 		}
 		if ( frontAmmo >= 0 )
 			Com_sprintf( ammoText, sizeof(ammoText), "%d", frontAmmo );
 		else
 			Q_strncpyz( ammoText, "--", sizeof(ammoText) );
-		CG_DrawIngameString( HUD_X(424), 430, ammoText,
+		CG_DrawIngameString( HUD_X(424), 434, ammoText,
 		                     UI_RIGHT | UI_SMALLFONT, 0.62f, weaponColor );
 
 		rearWeapon = 0;
@@ -1947,7 +1947,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		if ( !rearWeapon )
 			rearWeapon = fallbackRearWeapon;
 
-		CG_DrawIngameString( HUD_X(310), 446, "REAR",
+		CG_DrawIngameString( HUD_X(310), 450, "REAR",
 		                     UI_SMALLFONT, 0.40f, mutedColor );
 		weaponIcon = 0;
 		rearAmmo = -1;
@@ -1958,17 +1958,17 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		}
 		if ( weaponIcon ) {
 			trap_R_SetColor( colorWhite );
-			CG_DrawPic( HUD_X(350), 442, 16, 16, weaponIcon );
+			CG_DrawPic( HUD_X(350), 446, 16, 16, weaponIcon );
 			trap_R_SetColor( NULL );
 		}
 		if ( rearWeapon > 0 && rearAmmo >= 0 )
 			Com_sprintf( ammoText, sizeof(ammoText), "%d", rearAmmo );
 		else
 			Q_strncpyz( ammoText, "--", sizeof(ammoText) );
-		CG_DrawIngameString( HUD_X(424), 446, ammoText,
+		CG_DrawIngameString( HUD_X(424), 450, ammoText,
 		                     UI_RIGHT | UI_SMALLFONT, 0.62f, colorWhite );
 
-		CG_DrawIngameString( HUD_X(310), 462, "PWRUP",
+		CG_DrawIngameString( HUD_X(310), 466, "PWRUP",
 		                     UI_SMALLFONT, 0.40f, mutedColor );
 	}
 

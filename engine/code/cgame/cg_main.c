@@ -2309,8 +2309,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	// load a few needed things before we do any screen updates
 	cgs.media.charsetShader		= trap_R_RegisterShader( "gfx/2d/bigchars" );
 	cgs.media.whiteShader		= trap_R_RegisterShader( "white" );
-	cgs.media.frontendCharset	= trap_R_RegisterShaderNoMip( "gfx/ui/frontend_charset.png" );
-	cgs.media.ingameCharset		= trap_R_RegisterShaderNoMip( "gfx/ui/ingame_charset.png" );
+	cgs.media.frontendCharset[RALLY_FONT_ATLAS_512] = trap_R_RegisterShaderNoMip( "gfx/ui/frontend_charset.png" );
+	cgs.media.ingameCharset[RALLY_FONT_ATLAS_512] = trap_R_RegisterShaderNoMip( "gfx/ui/ingame_charset.png" );
 	cgs.media.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.tga" );
 	cgs.media.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.tga" );
 	cgs.media.charsetPropB		= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.tga" );

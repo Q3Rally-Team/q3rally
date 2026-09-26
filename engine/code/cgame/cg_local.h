@@ -940,10 +940,17 @@ typedef struct {
 // loaded at gamestate time are stored in cgMedia_t
 // Other media that can be tied to clients, weapons, or items are
 // stored in the clientInfo_t, itemInfo_t, weaponInfo_t, and powerupInfo_t
+typedef enum {
+	RALLY_FONT_ATLAS_256,
+	RALLY_FONT_ATLAS_512,
+	RALLY_FONT_ATLAS_1024,
+	RALLY_FONT_ATLAS_COUNT
+} rallyFontAtlas_t;
+
 typedef struct {
 	qhandle_t	charsetShader;
-	qhandle_t	frontendCharset;
-	qhandle_t	ingameCharset;
+	qhandle_t	frontendCharset[RALLY_FONT_ATLAS_COUNT];
+	qhandle_t	ingameCharset[RALLY_FONT_ATLAS_COUNT];
 	qhandle_t	charsetProp;
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;

@@ -224,6 +224,47 @@ int CG_FrontendStringWidth( const char *text, int style, float scale ) {
 
 /*
 ==============================
+CG_RallyFontAtlas
+
+Select a bitmap atlas whose source glyph resolution is appropriate for the
+final on-screen glyph height.  256 and 1024 variants are registered lazily;
+the 1024 variant is the largest runtime atlas because 2048 RGBA textures can
+exhaust the engine's main zone during map startup.
+==============================
+*/
+static qhandle_t CG_RallyFontAtlas( qhandle_t *atlases, const char *fontName,
+	                                float glyphHeight, float baseRasterHeight ) {
+	int tier;
+	qhandle_t shader;
+	char shaderName[MAX_QPATH];
+
+	tier = RALLY_FONT_ATLAS_512;
+	if ( glyphHeight < baseRasterHeight * 0.70710678f ) {
+		tier = RALLY_FONT_ATLAS_256;
+	} else if ( glyphHeight > baseRasterHeight * 1.41421356f ) {
+		tier = RALLY_FONT_ATLAS_1024;
+	}
+
+	while ( tier >= RALLY_FONT_ATLAS_256 ) {
+		shader = atlases[tier];
+		if ( !shader && tier != RALLY_FONT_ATLAS_512 ) {
+			Com_sprintf( shaderName, sizeof( shaderName ), "gfx/ui/%s_charset_%d.png",
+			             fontName, tier == RALLY_FONT_ATLAS_256 ? 256 : 1024 );
+			shader = trap_R_RegisterShaderNoMip( shaderName );
+			atlases[tier] = shader;
+		}
+		if ( shader ) {
+			return shader;
+		}
+		tier--;
+	}
+
+	return atlases[RALLY_FONT_ATLAS_512];
+}
+
+
+/*
+==============================
 CG_DrawFrontendString
 
 Draw the compact Q3Rally frontend atlas in virtual 640x480 coordinates.
@@ -241,14 +282,21 @@ void CG_DrawFrontendString( int x, int y, const char *text, int style,
 	int advance;
 	int charHeight;
 	int quadWidth;
+	qhandle_t charset;
 	vec4_t shadowColor;
 
-	if ( !text || !text[0] || !color || !cgs.media.frontendCharset ) {
+	if ( !text || !text[0] || !color ) {
 		return;
 	}
 
 	advance = ( style & UI_SMALLFONT ) ? 7 : 12;
 	charHeight = ( style & UI_SMALLFONT ) ? 14 : 20;
+	/* Keep the 26px source glyph height in sync with generate_frontend_charset.ps1. */
+	charset = CG_RallyFontAtlas( cgs.media.frontendCharset, "frontend",
+	                             charHeight * scale * cgs.screenYScale, 26.0f );
+	if ( !charset ) {
+		return;
+	}
 	textWidth = CG_FrontendStringWidth( text, style, scale );
 	cursorX = x;
 
@@ -302,7 +350,7 @@ void CG_DrawFrontendString( int x, int y, const char *text, int style,
 		fcol = (float)( ch & 15 ) * 0.0625f;
 		trap_R_DrawStretchPic( drawX, drawY, drawW, drawH,
 		                       fcol, frow, fcol + 0.0625f,
-		                       frow + 0.0625f, cgs.media.frontendCharset );
+		                       frow + 0.0625f, charset );
 		cursorX += (int)( advance * scale + 0.5f );
 	}
 	trap_R_SetColor( NULL );
@@ -354,14 +402,21 @@ void CG_DrawIngameString( int x, int y, const char *text, int style,
 	int textWidth;
 	int advance;
 	int charHeight;
+	qhandle_t charset;
 	vec4_t shadowColor;
 
-	if ( !text || !text[0] || !color || !cgs.media.ingameCharset ) {
+	if ( !text || !text[0] || !color ) {
 		return;
 	}
 
 	advance = ( style & UI_SMALLFONT ) ? 14 : 24;
 	charHeight = advance;
+	/* Keep the 29px source glyph height in sync with generate_ingame_charset.ps1. */
+	charset = CG_RallyFontAtlas( cgs.media.ingameCharset, "ingame",
+	                             charHeight * scale * cgs.screenYScale, 29.0f );
+	if ( !charset ) {
+		return;
+	}
 	textWidth = CG_IngameStringWidth( text, style, scale );
 	cursorX = x;
 
@@ -408,7 +463,7 @@ void CG_DrawIngameString( int x, int y, const char *text, int style,
 		fcol = (float)( ch & 15 ) * 0.0625f;
 		trap_R_DrawStretchPic( drawX, drawY, drawW, drawH,
 		                       fcol, frow, fcol + 0.0625f,
-		                       frow + 0.0625f, cgs.media.ingameCharset );
+		                       frow + 0.0625f, charset );
 		cursorX += (int)( advance * scale + 0.5f );
 	}
 	trap_R_SetColor( NULL );
