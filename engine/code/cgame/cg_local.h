@@ -309,7 +309,7 @@ typedef struct centity_s {
 	int				engineSoundIndex;
 
 	// scripted object variables
-	int				scriptLoadTime;
+	qboolean		scriptLoadAttempted;
 
 	qhandle_t		hitSound;
 	qhandle_t		preSoundLoop;

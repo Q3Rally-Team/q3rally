@@ -69,7 +69,7 @@ PM_AddTouchEnt
 */
 // STONELANCE
 // void PM_AddTouchEnt( int entityNum ) {
-void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin ) {
+void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin, vec3_t hitNormal, vec3_t hitVelocity ) {
 // END
 	int		i;
 
@@ -83,6 +83,14 @@ void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin ) {
 	// see if it is already added
 	for ( i = 0 ; i < pm->numtouch ; i++ ) {
 		if ( pm->touchents[ i ] == entityNum ) {
+			/* Keep the strongest incoming contact when several car points hit
+			 * the same prop during this movement step. */
+			if ( DotProduct( hitVelocity, hitNormal ) <
+				DotProduct( pm->touchVelocity[i], pm->touchNormal[i] ) ) {
+				VectorCopy( hitOrigin, pm->touchPos[i] );
+				VectorCopy( hitNormal, pm->touchNormal[i] );
+				VectorCopy( hitVelocity, pm->touchVelocity[i] );
+			}
 			return;
 		}
 	}
@@ -91,6 +99,8 @@ void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin ) {
 	pm->touchents[pm->numtouch] = entityNum;
 // STONELANCE
 	VectorCopy(hitOrigin, pm->touchPos[pm->numtouch]);
+	VectorCopy(hitNormal, pm->touchNormal[pm->numtouch]);
+	VectorCopy(hitVelocity, pm->touchVelocity[pm->numtouch]);
 // END
 	pm->numtouch++;
 }

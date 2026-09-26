@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +11,33 @@ level_locals_t level;
 gentity_t g_entities[MAX_GENTITIES];
 vmCvar_t g_trackLength;
 vmCvar_t g_trackReversed;
+
+vec_t VectorNormalize( vec3_t vector ) {
+    float length = sqrtf( VectorLengthSquared( vector ) );
+
+    if ( length > 0.0f ) {
+        VectorScale( vector, 1.0f / length, vector );
+    }
+    return length;
+}
+
+void vectoangles( const vec3_t vector, vec3_t angles ) {
+    angles[PITCH] = atan2f( -vector[2], sqrtf( vector[0] * vector[0] + vector[1] * vector[1] ) ) * ( 180.0f / (float)M_PI );
+    angles[YAW] = atan2f( vector[1], vector[0] ) * ( 180.0f / (float)M_PI );
+    angles[ROLL] = 0.0f;
+}
+
+float AngleSubtract( float a1, float a2 ) {
+    float delta = a1 - a2;
+
+    while ( delta > 180.0f ) {
+        delta -= 360.0f;
+    }
+    while ( delta < -180.0f ) {
+        delta += 360.0f;
+    }
+    return delta;
+}
 
 static char vaBuffer[4][256];
 static int vaIndex;
@@ -66,6 +94,11 @@ void COM_StripExtension( const char *in, char *out, int destsize ) {
 
 void G_Printf(const char *fmt, ...) {
     (void)fmt;
+}
+
+const botPathRoute_t *G_BotPath_GetRouteByIndex( int routeIndex ) {
+    (void)routeIndex;
+    return NULL;
 }
 
 void trap_SendServerCommand( int clientNum, const char *text ) {
@@ -183,24 +216,33 @@ static void reset_fs(void) {
     s_fileCount = 0;
 }
 
-static void test_variant_matching_and_pool_selection(void) {
+static void test_shared_route_ignores_legacy_vehicle_metadata(void) {
     const ghostBotRoute_t *route = NULL;
+    const ghostBotRoute_t *sameRoute = NULL;
+    const ghostRecord_t *record;
 
     reset_fs();
     g_trackLength.integer = 1;
     g_trackReversed.integer = 0;
 
-    add_file("ghosts/mymap_tl1_rev0_a.ghost", build_ghost("mymap", "sport", 900, 1, 1, 0));
-    add_file("ghosts/mymap_tl1_rev0_b.ghost", build_ghost("mymap", "truck", 1100, 1, 1, 0));
+    add_file("ghosts/mymap_tl1_rev0_a.ghost", build_ghost("mymap", "truck", 900, 1, 1, 0));
+    add_file("ghosts/mymap_tl1_rev0_b.ghost", build_ghost("mymap", "sport", 1100, 1, 1, 0));
 
     G_Ghost_InitForMap("mymap");
+    assert(G_Ghost_Test_GetLevelGhostCount() == 2);
 
-    assert(G_Ghost_GetBotRouteForVariant("sport", &route) == qtrue);
-    assert(route->vehicleClass[0] == '\0');
+    record = G_Ghost_Test_GetLevelGhost(0);
+    assert(record != NULL);
+    assert(strcmp(record->vehicleClass, "truck") == 0);
+    record = G_Ghost_Test_GetLevelGhost(1);
+    assert(record != NULL);
+    assert(strcmp(record->vehicleClass, "sport") == 0);
+
+    G_Ghost_BuildBotRoutes();
+    assert(G_Ghost_GetBotRoute(&route) == qtrue);
     assert(route->bestTimeMs == 900);
-
-    assert(G_Ghost_GetBotRouteForVariant("unknown", &route) == qtrue);
-    assert(route->vehicleClass[0] == '\0');
+    assert(G_Ghost_GetBotRoute(&sameRoute) == qtrue);
+    assert(sameRoute == route);
     assert(route->bestTimeMs == 900);
 }
 
@@ -249,7 +291,7 @@ static void test_top5_retention_per_track_variant(void) {
     assert(worstBestTime == 1400);
 }
 
-static void test_legacy_ghosts_are_track_routes(void) {
+static void test_legacy_ghosts_can_supply_the_shared_track_route(void) {
     const ghostBotRoute_t *route = NULL;
 
     reset_fs();
@@ -267,8 +309,30 @@ static void test_legacy_ghosts_are_track_routes(void) {
         assert(record->ambiguousLegacy == qfalse);
     }
 
-    assert(G_Ghost_GetBotRouteForVariant("sport", &route) == qtrue);
+    G_Ghost_BuildBotRoutes();
+    assert(G_Ghost_GetBotRoute(&route) == qtrue);
     assert(route->bestTimeMs == 1500);
+}
+
+static void test_best_usable_ghost_supplies_shared_route(void) {
+    static const char unusableGhost[] =
+        "map mymap\nvehicle racecar\nbest_time_ms 800\n"
+        "track_length 1\ntrack_reversed 0\nframes\n";
+    const ghostBotRoute_t *route = NULL;
+
+    reset_fs();
+    g_trackLength.integer = 1;
+    g_trackReversed.integer = 0;
+
+    add_file("ghosts/mymap_tl1_rev0_fast.ghost", unusableGhost);
+    add_file("ghosts/mymap_tl1_rev0_valid.ghost", build_ghost("mymap", "truck", 1000, 1, 1, 0));
+
+    G_Ghost_InitForMap("mymap");
+    G_Ghost_BuildBotRoutes();
+
+    assert(G_Ghost_GetBotRoute(&route) == qtrue);
+    assert(route->bestTimeMs == 1000);
+    assert(strstr(route->path, "valid.ghost") != NULL);
 }
 
 static void test_stable_navigation_at_overlap(void) {
@@ -292,10 +356,11 @@ static void test_stable_navigation_at_overlap(void) {
 }
 
 int main(void) {
-    test_variant_matching_and_pool_selection();
+    test_shared_route_ignores_legacy_vehicle_metadata();
     test_header_keys_require_delimiter();
     test_top5_retention_per_track_variant();
-    test_legacy_ghosts_are_track_routes();
+    test_legacy_ghosts_can_supply_the_shared_track_route();
+    test_best_usable_ghost_supplies_shared_route();
     test_stable_navigation_at_overlap();
     puts("ok");
     return 0;

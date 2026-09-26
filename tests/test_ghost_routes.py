@@ -24,7 +24,7 @@ COMPILE_ARGS = [
 ]
 
 
-def test_ghost_routes_behaviour() -> None:
+def test_ghost_routes_share_one_best_usable_track_route() -> None:
     subprocess.run(COMPILE_ARGS, check=True)
     try:
         result = subprocess.run([str(TEST_BINARY)], check=True, capture_output=True, text=True)

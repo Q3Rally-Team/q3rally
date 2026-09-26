@@ -47,6 +47,15 @@ equ trap_TraceCapsule		-44
 equ trap_EntityContactCapsule	-45
 equ trap_FS_Seek -46
 equ     trap_LadderSubmit -47
+equ trap_TraceConvex -48
+equ trap_RallyPhysicsInit -49
+equ trap_RallyPhysicsShutdown -50
+equ trap_RallyPhysicsStep -51
+equ trap_RallyPhysicsCreateBody -52
+equ trap_RallyPhysicsRemoveBody -53
+equ trap_RallyPhysicsGetBodyState -54
+equ trap_RallyPhysicsVehicleContact -55
+equ trap_RallyPhysicsApplyImpulse -56
 
 equ	memset					-101
 equ	memcpy					-102

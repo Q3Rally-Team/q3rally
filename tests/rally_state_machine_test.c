@@ -30,6 +30,11 @@ static const char *centerPrintLog[16];
 static int centerPrintCount;
 static vec3_t mockPlayerMins = {-16.0f, -16.0f, -24.0f};
 static vec3_t mockPlayerMaxs = {16.0f, 16.0f, 40.0f};
+static qboolean mockGroundAvailable = qtrue;
+static float mockGroundMaxX = 999999.0f;
+static float mockGroundZ = 0.0f;
+static float mockGroundNormalZ = 1.0f;
+static qboolean mockTraceStartSolid = qfalse;
 
 static char vaBuffer[4][256];
 static int vaIndex;
@@ -78,6 +83,31 @@ void trap_SendServerCommand( int clientNum, const char *text ) {
         snprintf(commandLog[commandLogCount], sizeof(commandLog[commandLogCount]), "%d:%s", clientNum, text);
         commandLogCount++;
     }
+}
+
+void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask ) {
+    (void)maxs;
+    (void)passEntityNum;
+    (void)contentmask;
+
+    memset(results, 0, sizeof(*results));
+    results->fraction = 1.0f;
+    VectorCopy(end, results->endpos);
+
+    if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
+        results->startsolid = mockTraceStartSolid;
+        results->allsolid = mockTraceStartSolid;
+        return;
+    }
+
+    if (!mockGroundAvailable || start[0] > mockGroundMaxX) {
+        return;
+    }
+
+    results->fraction = 0.5f;
+    VectorCopy(start, results->endpos);
+    results->endpos[2] = mockGroundZ - (mins ? mins[2] : 0.0f);
+    VectorSet(results->plane.normal, 0.0f, 0.0f, mockGroundNormalZ);
 }
 
 void G_LogPrintf(const char *fmt, ...) {
@@ -198,6 +228,11 @@ void reset_environment(void) {
     centerPrintCount = 0;
     lastSoundIndex = 0;
     rallyMode = qtrue;
+    mockGroundAvailable = qtrue;
+    mockGroundMaxX = 999999.0f;
+    mockGroundZ = 0.0f;
+    mockGroundNormalZ = 1.0f;
+    mockTraceStartSolid = qfalse;
     checkpoint.number = 1;
     checkpoint.classname = "rally_checkpoint";
     checkpoint.inuse = qtrue;
@@ -427,6 +462,84 @@ void test_overflow_grid_spawn_adds_spacing_and_message(void) {
     assert(origin[0] != g_entities[1].s.origin[0] || origin[1] != g_entities[1].s.origin[1]);
 }
 
+void test_overflow_grid_spawn_skips_slots_without_ground(void) {
+    reset_environment();
+    g_gametype.integer = GT_RACING;
+
+    g_entities[1].inuse = qtrue;
+    g_entities[1].classname = "info_player_start";
+    g_entities[1].number = 1;
+    VectorSet(g_entities[1].s.origin, 0.0f, 0.0f, 0.0f);
+    VectorSet(g_entities[1].s.angles, 0.0f, 0.0f, 0.0f);
+
+    g_entities[2].inuse = qtrue;
+    g_entities[2].classname = "info_player_start";
+    g_entities[2].number = 2;
+    VectorSet(g_entities[2].s.origin, 0.0f, 192.0f, 0.0f);
+    VectorSet(g_entities[2].s.angles, 0.0f, 0.0f, 0.0f);
+
+    g_entities[3].inuse = qtrue;
+    g_entities[3].classname = "player";
+    g_entities[3].client = &levelClients[3];
+    VectorSet(g_entities[3].s.origin, 0.0f, 0.0f, 0.0f);
+
+    g_entities[4].inuse = qtrue;
+    g_entities[4].classname = "player";
+    g_entities[4].client = &levelClients[4];
+    VectorSet(g_entities[4].s.origin, 0.0f, 192.0f, 0.0f);
+
+    g_entities[5].inuse = qtrue;
+    g_entities[5].classname = "player";
+    g_entities[5].client = &levelClients[5];
+
+    mockGroundMaxX = -300.0f;
+
+    vec3_t origin;
+    vec3_t angles;
+    gentity_t *selected = SelectGridPositionSpawn(&g_entities[5], origin, angles, qfalse);
+
+    assert(selected != NULL);
+    assert(origin[0] <= -300.0f);
+    assert(origin[2] > mockGroundZ);
+}
+
+void test_unnumbered_grid_starts_use_map_order_before_overflow(void) {
+    reset_environment();
+    g_gametype.integer = GT_RACING;
+
+    g_entities[1].inuse = qtrue;
+    g_entities[1].classname = "info_player_start";
+    VectorSet(g_entities[1].s.origin, 0.0f, 0.0f, 0.0f);
+    VectorSet(g_entities[1].s.angles, 0.0f, 180.0f, 0.0f);
+
+    g_entities[2].inuse = qtrue;
+    g_entities[2].classname = "info_player_start";
+    VectorSet(g_entities[2].s.origin, 192.0f, 0.0f, 0.0f);
+    VectorSet(g_entities[2].s.angles, 0.0f, 180.0f, 0.0f);
+
+    g_entities[3].inuse = qtrue;
+    g_entities[3].classname = "info_player_start";
+    VectorSet(g_entities[3].s.origin, 384.0f, 0.0f, 0.0f);
+    VectorSet(g_entities[3].s.angles, 0.0f, 180.0f, 0.0f);
+
+    g_entities[4].inuse = qtrue;
+    g_entities[4].classname = "player";
+    g_entities[4].client = &levelClients[4];
+    VectorSet(g_entities[4].s.origin, 0.0f, 0.0f, 0.0f);
+
+    g_entities[5].inuse = qtrue;
+    g_entities[5].classname = "player";
+    g_entities[5].client = &levelClients[5];
+
+    vec3_t origin;
+    vec3_t angles;
+    gentity_t *selected = SelectGridPositionSpawn(&g_entities[5], origin, angles, qfalse);
+
+    assert(selected == &g_entities[2]);
+    assert(origin[0] == g_entities[2].s.origin[0]);
+    assert(commandLogCount == 0);
+}
+
 int main(void) {
     test_elimination_configuration_initial_setup();
     test_elimination_configuration_minimum_laps();
@@ -436,6 +549,8 @@ int main(void) {
     test_checkpointless_map_waits_for_player_before_start();
     test_checkpointless_map_starts_with_non_spectator_even_if_marked_observer();
     test_overflow_grid_spawn_adds_spacing_and_message();
+    test_overflow_grid_spawn_skips_slots_without_ground();
+    test_unnumbered_grid_starts_use_map_order_before_overflow();
     printf("ok\n");
     return 0;
 }

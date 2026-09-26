@@ -162,6 +162,10 @@ typedef struct {
 	vec3_t		modelOrigin;// origin of the model tracing through
 	int			contents;	// ored contents of the model tracing through
 	qboolean	isPoint;	// optimized case
+	qboolean	useConvex;
+	const vec3_t	*convexVerts;
+	int		numConvexVerts;
+	vec3_t	convexAxis[3];
 	trace_t		trace;		// returned from trace call
 	sphere_t	sphere;		// sphere for oriendted capsule collision
 } traceWork_t;
@@ -178,6 +182,10 @@ typedef struct leafList_s {
 
 
 int CM_BoxBrushes( const vec3_t mins, const vec3_t maxs, cbrush_t **list, int listsize );
+float CM_TraceOffsetForPlane( traceWork_t *tw, const vec3_t normal );
+void CM_ConvexTrace( trace_t *results, const vec3_t start, const vec3_t end,
+	vec3_t mins, vec3_t maxs, const vec3_t *vertices, int numVertices,
+	const vec3_t angles, int brushmask );
 
 void CM_StoreLeafs( leafList_t *ll, int nodenum );
 void CM_StoreBrushes( leafList_t *ll, int nodenum );

@@ -1,4 +1,6 @@
 <?xml version="1.0"?>
+<!-- Q3RallyRadiant loads Quake III entity classes from baseq3r/*.def and
+     baseq3r/*.ent. entities.ent uses the typed model field for the model picker. -->
 <game
   type="q3"
   index="1"

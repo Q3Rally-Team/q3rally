@@ -84,6 +84,7 @@ static cr_line_t credits[] = {
     { "Eddy Valdez aka. 'TheBigBuu'",     UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_name   },
     { "ZTurtleMan from TurtleArena",      UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_name   },
     { "Eraser from EntityPlus",           UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_name   },
+    { "Noire",                            UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, &color_name   },
     { "",                                 UI_CENTER|UI_SMALLFONT,               &color_name   },
 
     /* ----- Mapping ----- */

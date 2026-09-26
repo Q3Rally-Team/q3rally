@@ -484,6 +484,9 @@ int SV_PointContents( const vec3_t p, int passEntityNum );
 
 
 void SV_Trace( trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule );
+void SV_TraceConvex( trace_t *results, const vec3_t start, const vec3_t end,
+	vec3_t mins, vec3_t maxs, const vec3_t *vertices, int numVertices,
+	const vec3_t angles, int passEntityNum, int contentmask );
 // mins and maxs are relative
 
 // if the entire move stays in a solid volume, trace.allsolid will be set,

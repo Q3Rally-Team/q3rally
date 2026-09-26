@@ -288,6 +288,22 @@ Q3UIDIR=$(MOUNT_DIR)/q3_ui
 JPDIR=$(MOUNT_DIR)/jpeg-8c
 OGGDIR=$(MOUNT_DIR)/libogg-1.3.3
 VORBISDIR=$(MOUNT_DIR)/libvorbis-1.3.6
+
+# Bullet 3.25 is linked into the native engine server only.  Game modules,
+# including QVM builds, communicate with it through game syscalls.
+BULLET_SRC_DIR=$(MOUNT_DIR)/thirdparty/bullet3-3.25/src
+BULLET_COMPONENTS=BulletCollision BulletDynamics LinearMath
+BULLET_SOURCES=$(shell find $(addprefix $(BULLET_SRC_DIR)/,$(BULLET_COMPONENTS)) -type f -name '*.cpp')
+BULLET_OBJECTS=$(patsubst $(BULLET_SRC_DIR)/%.cpp,$(B)/bullet/%.o,$(BULLET_SOURCES))
+BULLET_CXX=$(if $(filter %gcc,$(CC)),$(patsubst %gcc,%g++,$(CC)),$(CXX))
+BULLET_TARGET_FLAGS=$(filter -m32 -m64 -arch% -DWINVER%,$(BASE_CFLAGS))
+ifeq ($(PLATFORM),darwin)
+BULLET_LINK_LIBS=-lc++
+else ifneq ($(findstring mingw,$(PLATFORM)),)
+BULLET_LINK_LIBS=-static-libstdc++ -static-libgcc
+else
+BULLET_LINK_LIBS=-lstdc++
+endif
 OPUSDIR=$(MOUNT_DIR)/opus-1.2.1
 OPUSFILEDIR=$(MOUNT_DIR)/opusfile-0.9
 THEORADIR=$(MOUNT_DIR)/libtheora-1.1.1
@@ -2521,12 +2537,14 @@ ifeq ($(USE_MUMBLE),1)
     $(B)/client/libmumblelink.o
 endif
 
+Q3OBJ += $(BULLET_OBJECTS) $(B)/client/sv_rally_physics.o
+
 ifneq ($(USE_RENDERER_DLOPEN),0)
 $(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
+	$(Q)$(BULLET_CXX) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
 		-o $@ $(Q3OBJ) \
-		$(LIBSDLMAIN) $(CLIENT_LIBS) $(LIBS)
+		$(LIBSDLMAIN) $(CLIENT_LIBS) $(LIBS) $(BULLET_LINK_LIBS)
 
 $(B)/renderer_opengl1_$(SHLIBNAME): $(Q3ROBJ) $(JPGOBJ)
 	$(echo_cmd) "LD $@"
@@ -2540,15 +2558,15 @@ $(B)/renderer_opengl2_$(SHLIBNAME): $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(JPGOBJ)
 else
 $(B)/$(CLIENTBIN)$(FULLBINEXT): $(Q3OBJ) $(Q3ROBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
+	$(Q)$(BULLET_CXX) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
 		-o $@ $(Q3OBJ) $(Q3ROBJ) $(JPGOBJ) \
-		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
+		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS) $(BULLET_LINK_LIBS)
 
 $(B)/$(CLIENTBIN)_opengl2$(FULLBINEXT): $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(JPGOBJ) $(LIBSDLMAIN)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
+	$(Q)$(BULLET_CXX) $(CLIENT_CFLAGS) $(CFLAGS) $(CLIENT_LDFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) \
 		-o $@ $(Q3OBJ) $(Q3R2OBJ) $(Q3R2STRINGOBJ) $(JPGOBJ) \
-		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS)
+		$(LIBSDLMAIN) $(CLIENT_LIBS) $(RENDERER_LIBS) $(LIBS) $(BULLET_LINK_LIBS)
 endif
 
 ifneq ($(strip $(LIBSDLMAIN)),)
@@ -2695,9 +2713,11 @@ ifeq ($(PLATFORM),darwin)
     $(B)/ded/sys_osx.o
 endif
 
+Q3DOBJ += $(BULLET_OBJECTS) $(B)/ded/sv_rally_physics.o
+
 $(B)/$(SERVERBIN)$(FULLBINEXT): $(Q3DOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) -o $@ $(Q3DOBJ) $(SERVER_LIBS) $(LIBS)
+	$(Q)$(BULLET_CXX) $(CFLAGS) $(LDFLAGS) $(NOTSHLIBLDFLAGS) -o $@ $(Q3DOBJ) $(SERVER_LIBS) $(LIBS) $(BULLET_LINK_LIBS)
 
 
 
@@ -3171,6 +3191,16 @@ $(B)/ded/win_resource.o: $(SYSDIR)/win_resource.rc $(SYSDIR)/win_manifest.xml
 
 $(B)/ded/%.o: $(NDIR)/%.c
 	$(DO_DED_CC)
+
+$(B)/bullet/%.o: $(BULLET_SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(Q)$(BULLET_CXX) $(BULLET_TARGET_FLAGS) -O2 -fno-fast-math -std=c++11 -w -I$(BULLET_SRC_DIR) -o $@ -c $<
+
+$(B)/client/sv_rally_physics.o: $(SDIR)/sv_rally_physics.cpp $(SDIR)/sv_rally_physics.h
+	$(Q)$(BULLET_CXX) $(BULLET_TARGET_FLAGS) -O2 -fno-fast-math -std=c++11 -w -I$(BULLET_SRC_DIR) -o $@ -c $<
+
+$(B)/ded/sv_rally_physics.o: $(SDIR)/sv_rally_physics.cpp $(SDIR)/sv_rally_physics.h
+	$(Q)$(BULLET_CXX) $(BULLET_TARGET_FLAGS) -O2 -fno-fast-math -std=c++11 -w -DDEDICATED -I$(BULLET_SRC_DIR) -o $@ -c $<
 
 # Extra dependencies to ensure the git version is incorporated
 ifeq ($(USE_GIT),1)

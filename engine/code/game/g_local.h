@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // g_local.h -- local definitions for game module
 
 #include "../qcommon/q_shared.h"
+#include "../qcommon/rally_physics.h"
 #include "bg_public.h"
 #include "bg_ladder.h"
 #include "profile_shared.h"
@@ -116,6 +117,14 @@ typedef struct {
 
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
+
+typedef enum {
+	RALLY_OBJECT_INERTIA_BOX = 0,
+	RALLY_OBJECT_INERTIA_SPHERE,
+	RALLY_OBJECT_INERTIA_CYLINDER_X,
+	RALLY_OBJECT_INERTIA_CYLINDER_Y,
+	RALLY_OBJECT_INERTIA_CYLINDER_Z
+} rallyObjectInertiaShape_t;
 
 struct gentity_s {
 	entityState_t	s;				// communicated by server to clients
@@ -258,11 +267,28 @@ struct gentity_s {
 	vec3_t		lastNonZeroVelocity;
 	vec3_t		netForce;
 	vec3_t		netMoment;
+	int			physicsAccumulatorMsec;
+	int			physicsQuietSince;
+	int			scriptedDebugImpactLogTime;
+	int			scriptedDebugTraceLogTime;
+	int			scriptedDebugGroundLogTime;
+	qboolean	physicsSleeping;
+	qboolean	physicsGrounded;
 
 	// general scripted objects
 	qboolean	moveable;
 	int			mass;
+	rallyObjectInertiaShape_t inertiaShape;
 	float		elasticity;
+	float		friction;
+	float		rollingFriction;
+	float		spinningFriction;
+	float		vehicleImpactScale;
+	float		weaponImpactScale;
+	vec3_t		*collisionHullVerts;
+	int		collisionHullVertCount;
+	vec3_t	collisionHullMins;
+	vec3_t	collisionHullMaxs;
 	char		*script;
 	int			maxHealth;
 
@@ -1008,9 +1034,30 @@ void CreateSmokeHazard (gentity_t *owner, vec3_t origin);
 // g_rally_object_physics.c
 //
 void G_RallyObject_ApplyForce( gentity_t *self, vec3_t force, vec3_t at );
-qboolean G_RallyObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t normal, float elasticity );
+qboolean G_RallyObject_ApplyCollision( gentity_t *self, vec3_t at, vec3_t normal,
+		float elasticity, float *normalImpulseMagnitude );
+qboolean G_RallyObject_ApplyCollisionScaled( gentity_t *self, vec3_t at, vec3_t normal,
+		float elasticity, float impulseScale, float *normalImpulseMagnitude );
+qboolean G_RallyObject_ApplyCollisionWithOtherInverseMass( gentity_t *self, vec3_t at,
+		vec3_t normal, float elasticity, float impulseScale, float otherInverseMass,
+		float *normalImpulseMagnitude );
+void G_RallyObject_ApplyContactFriction( gentity_t *self, vec3_t at, vec3_t normal,
+		float normalImpulseMagnitude, float friction );
+void G_RallyObject_ApplyAngularContactResistance( gentity_t *self, vec3_t normal,
+		float normalImpulseMagnitude );
+void G_RallyObject_SupportContact( gentity_t *self, vec3_t origin, vec3_t normal, vec3_t contact );
+qboolean G_RallyObject_ApplyGroundSupport( gentity_t *self, float time );
+void G_RallyObject_Wake( gentity_t *self );
 void G_RallyObject_TracePhysics( gentity_t *self, float time );
 void G_RallyObject_IntegratePhysics( gentity_t *self, float time );
+void G_RallyObject_ResetCollisionCache( void );
+void G_ScriptedObject_TouchWithVelocity( gentity_t *self, gentity_t *other, trace_t *trace, vec3_t vehicleVelocity );
+void G_RallyPhysics_Init( void );
+void G_RallyPhysics_Shutdown( void );
+void G_RallyPhysics_RunFrame( void );
+qboolean G_RallyPhysics_Enabled( void );
+void G_ScriptedObject_ApplyWeaponImpact( gentity_t *target, gentity_t *inflictor,
+	gentity_t *attacker, const vec3_t direction, const vec3_t point, int damage );
 // END
 
 
@@ -1294,7 +1341,22 @@ void	trap_GetUserinfo( int num, char *buffer, int bufferSize );
 void	trap_SetUserinfo( int num, const char *buffer );
 void	trap_GetServerinfo( char *buffer, int bufferSize );
 void	trap_SetBrushModel( gentity_t *ent, const char *name );
-void	trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
+	void	trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
+	void	trap_TraceConvex( trace_t *results, const vec3_t start, const vec3_t end,
+		const vec3_t mins, const vec3_t maxs, vec3_t *vertices, int numVertices,
+		const vec3_t angles, int passEntityNum, int contentmask );
+void trap_RallyPhysicsInit( float gravity );
+void trap_RallyPhysicsShutdown( void );
+void trap_RallyPhysicsStep( float frameSeconds );
+qboolean trap_RallyPhysicsCreateBody( int entityNum,
+	const rallyPhysicsBodyDesc_t *desc, const vec3_t *vertices, int numVertices );
+void trap_RallyPhysicsRemoveBody( int entityNum );
+qboolean trap_RallyPhysicsGetBodyState( int entityNum, rallyPhysicsBodyState_t *state );
+void trap_RallyPhysicsVehicleContact( int entityNum, const vec3_t point,
+	const vec3_t normal, const vec3_t vehicleVelocity, float vehicleMass,
+	float impactScale, vec3_t objectImpulse );
+void trap_RallyPhysicsApplyImpulse( int entityNum, const vec3_t point,
+	const vec3_t impulse );
 // STONELANCE
 void	trap_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
 // END

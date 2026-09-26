@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // world.c -- world query functions
 
 #include "server.h"
+#include "sv_rally_physics.h"
 
 /*
 ================
@@ -548,6 +549,12 @@ static void SV_ClipMoveToEntities( moveclip_t *clip ) {
 			continue;
 		}
 
+		/* Bullet owns scripted-object hulls while its backend is active. Avoid
+		 * also clipping their old axis-aligned network bounds here. */
+		if ( SV_RallyPhysics_HasBody( touch->s.number ) ) {
+			continue;
+		}
+
 		// might intersect, so do an exact clip
 		clipHandle = SV_ClipHandleForEntity (touch);
 
@@ -595,7 +602,9 @@ passEntityNum and entities owned by passEntityNum are explicitly not checked.
 */
 void SV_Trace( trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule ) {
 	moveclip_t	clip;
+	trace_t		bulletTrace;
 	int			i;
+	qboolean	hasBulletTrace;
 
 	if ( !mins ) {
 		mins = vec3_origin;
@@ -640,6 +649,87 @@ void SV_Trace( trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, c
 	// clip to other solid entities
 	SV_ClipMoveToEntities ( &clip );
 
+	/* Scripted props use their live Bullet convex hull for weapon/player traces;
+	 * map geometry and ordinary entities continue through the stock trace path. */
+	hasBulletTrace = SV_RallyPhysics_Trace( start, mins, maxs, end,
+		passEntityNum, contentmask, &bulletTrace );
+	if ( hasBulletTrace && ( bulletTrace.fraction < clip.trace.fraction ||
+		( bulletTrace.startsolid && !clip.trace.startsolid ) ) ) {
+		clip.trace = bulletTrace;
+	}
+
+	*results = clip.trace;
+}
+
+
+/*
+==================
+SV_TraceConvex
+
+Trace a model-space convex hull through world geometry. Ordinary linked entities
+use the hull's rotated enclosing box; Bullet scripted props use their live
+physics hull through the shared Bullet trace query.
+==================
+*/
+void SV_TraceConvex( trace_t *results, const vec3_t start, const vec3_t end,
+						 vec3_t mins, vec3_t maxs, const vec3_t *vertices, int numVertices,
+						 const vec3_t angles, int passEntityNum, int contentmask ) {
+	moveclip_t clip;
+	trace_t bulletTrace;
+	vec3_t axis[3];
+	vec3_t worldMins, worldMaxs;
+	float localExtent, worldExtent;
+	qboolean hasBulletTrace;
+	int i, j;
+
+	if ( !vertices || numVertices < 4 || !mins || !maxs ) {
+		SV_Trace( results, start, mins, maxs, end, passEntityNum, contentmask, qfalse );
+		return;
+	}
+
+	AnglesToAxis( angles, axis );
+	for ( i = 0; i < 3; i++ ) {
+		worldExtent = 0.0f;
+		for ( j = 0; j < 3; j++ ) {
+			localExtent = ( fabs( mins[j] ) > fabs( maxs[j] ) ) ? fabs( mins[j] ) : fabs( maxs[j] );
+			worldExtent += fabs( axis[j][i] ) * localExtent;
+		}
+		worldMins[i] = -worldExtent;
+		worldMaxs[i] = worldExtent;
+	}
+
+	Com_Memset( &clip, 0, sizeof( clip ) );
+	CM_ConvexTrace( &clip.trace, start, end, mins, maxs, vertices, numVertices,
+		angles, contentmask );
+	clip.trace.entityNum = clip.trace.fraction != 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	if ( clip.trace.fraction == 0.0f ) {
+		*results = clip.trace;
+		return;
+	}
+
+	clip.contentmask = contentmask;
+	clip.start = start;
+	VectorCopy( end, clip.end );
+	clip.mins = worldMins;
+	clip.maxs = worldMaxs;
+	clip.passEntityNum = passEntityNum;
+	clip.capsule = qfalse;
+	for ( i = 0; i < 3; i++ ) {
+		if ( end[i] > start[i] ) {
+			clip.boxmins[i] = start[i] + worldMins[i] - 1.0f;
+			clip.boxmaxs[i] = end[i] + worldMaxs[i] + 1.0f;
+		} else {
+			clip.boxmins[i] = end[i] + worldMins[i] - 1.0f;
+			clip.boxmaxs[i] = start[i] + worldMaxs[i] + 1.0f;
+		}
+	}
+	SV_ClipMoveToEntities( &clip );
+	hasBulletTrace = SV_RallyPhysics_Trace( start, worldMins, worldMaxs, end,
+		passEntityNum, contentmask, &bulletTrace );
+	if ( hasBulletTrace && ( bulletTrace.fraction < clip.trace.fraction ||
+		( bulletTrace.startsolid && !clip.trace.startsolid ) ) ) {
+		clip.trace = bulletTrace;
+	}
 	*results = clip.trace;
 }
 

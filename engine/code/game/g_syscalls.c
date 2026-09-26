@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "g_local.h"
+#include "../qcommon/rally_physics.h"
 
 // this file is only included when building a dll
 // g_syscalls.asm is included instead when building a qvm
@@ -156,6 +157,50 @@ void trap_SetBrushModel( gentity_t *ent, const char *name ) {
 
 void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask ) {
 	syscall( G_TRACE, results, start, mins, maxs, end, passEntityNum, contentmask );
+}
+
+void trap_TraceConvex( trace_t *results, const vec3_t start, const vec3_t end,
+	const vec3_t mins, const vec3_t maxs, vec3_t *vertices, int numVertices,
+	const vec3_t angles, int passEntityNum, int contentmask ) {
+	syscall( G_TRACECONVEX, results, start, end, mins, maxs, vertices,
+		numVertices, angles, passEntityNum, contentmask );
+}
+
+void trap_RallyPhysicsInit( float gravity ) {
+	syscall( G_RALLY_PHYSICS_INIT, PASSFLOAT( gravity ) );
+}
+
+void trap_RallyPhysicsShutdown( void ) {
+	syscall( G_RALLY_PHYSICS_SHUTDOWN );
+}
+
+void trap_RallyPhysicsStep( float frameSeconds ) {
+	syscall( G_RALLY_PHYSICS_STEP, PASSFLOAT( frameSeconds ) );
+}
+
+qboolean trap_RallyPhysicsCreateBody( int entityNum,
+	const rallyPhysicsBodyDesc_t *desc, const vec3_t *vertices, int numVertices ) {
+	return syscall( G_RALLY_PHYSICS_CREATE_BODY, entityNum, desc, vertices, numVertices );
+}
+
+void trap_RallyPhysicsRemoveBody( int entityNum ) {
+	syscall( G_RALLY_PHYSICS_REMOVE_BODY, entityNum );
+}
+
+qboolean trap_RallyPhysicsGetBodyState( int entityNum, rallyPhysicsBodyState_t *state ) {
+	return syscall( G_RALLY_PHYSICS_GET_BODY_STATE, entityNum, state );
+}
+
+void trap_RallyPhysicsVehicleContact( int entityNum, const vec3_t point,
+	const vec3_t normal, const vec3_t vehicleVelocity, float vehicleMass,
+	float impactScale, vec3_t objectImpulse ) {
+	syscall( G_RALLY_PHYSICS_VEHICLE_CONTACT, entityNum, point, normal,
+		vehicleVelocity, PASSFLOAT( vehicleMass ), PASSFLOAT( impactScale ), objectImpulse );
+}
+
+void trap_RallyPhysicsApplyImpulse( int entityNum, const vec3_t point,
+	const vec3_t impulse ) {
+	syscall( G_RALLY_PHYSICS_APPLY_IMPULSE, entityNum, point, impulse );
 }
 
 void trap_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask ) {

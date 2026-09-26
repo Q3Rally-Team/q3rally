@@ -1516,6 +1516,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	G_ProcessIPBans();
 
 	G_InitMemory();
+	G_RallyObject_ResetCollisionCache();
 
 	// set some level globals
 	memset( &level, 0, sizeof( level ) );
@@ -1531,6 +1532,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
         level.startTime = levelTime;
         level.ladderStartEpoch = trap_RealTime( &level.ladderStartTime );
         G_LadderBuildMatchId( randomSeed );
+	G_RallyPhysics_Init();
 
 	level.snd_fry = G_SoundIndex("sound/player/fry.ogg");	// FIXME standing in lava / slime
 
@@ -1679,6 +1681,7 @@ G_ShutdownGame
 */
 void G_ShutdownGame( int restart ) {
 	G_Printf ("==== ShutdownGame ====\n");
+	G_RallyPhysics_Shutdown();
 
 	if ( level.logFile ) {
 		G_LogPrintf("ShutdownGame:\n" );
@@ -3489,6 +3492,7 @@ void G_RunFrame( int levelTime ) {
 	level.framenum++;
 	level.previousTime = level.time;
 	level.time = levelTime;
+	G_RallyPhysics_RunFrame();
 
 	// get any cvar changes
 	G_UpdateCvars();

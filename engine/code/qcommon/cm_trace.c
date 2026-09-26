@@ -153,6 +153,32 @@ POSITION TESTING
 ===============================================================================
 */
 
+float CM_TraceOffsetForPlane( traceWork_t *tw, const vec3_t normal ) {
+	int i;
+	int signbits;
+	float minimum;
+	float projection;
+	vec3_t localNormal;
+
+	if ( tw->useConvex ) {
+		localNormal[0] = DotProduct( normal, tw->convexAxis[0] );
+		localNormal[1] = DotProduct( normal, tw->convexAxis[1] );
+		localNormal[2] = DotProduct( normal, tw->convexAxis[2] );
+		minimum = 1e30f;
+		for ( i = 0; i < tw->numConvexVerts; i++ ) {
+			projection = DotProduct( localNormal, tw->convexVerts[i] );
+			if ( projection < minimum )
+				minimum = projection;
+		}
+		return minimum;
+	}
+
+	signbits = ( normal[0] < 0 ? 1 : 0 ) |
+		( normal[1] < 0 ? 2 : 0 ) |
+		( normal[2] < 0 ? 4 : 0 );
+	return DotProduct( tw->offsets[signbits], normal );
+}
+
 /*
 ================
 CM_TestBoxInBrush
@@ -160,6 +186,7 @@ CM_TestBoxInBrush
 */
 void CM_TestBoxInBrush( traceWork_t *tw, cbrush_t *brush ) {
 	int			i;
+	int			firstPlane;
 	cplane_t	*plane;
 	float		dist;
 	float		d1;
@@ -208,14 +235,15 @@ void CM_TestBoxInBrush( traceWork_t *tw, cbrush_t *brush ) {
 			}
 		}
 	} else {
-		// the first six planes are the axial planes, so we only
-		// need to test the remainder
-		for ( i = 6 ; i < brush->numsides ; i++ ) {
+		/* A convex model hull can be thinner than its enclosing box, so its
+		 * axial planes must also be checked after the conservative bounds test. */
+		firstPlane = tw->useConvex ? 0 : 6;
+		for ( i = firstPlane ; i < brush->numsides ; i++ ) {
 			side = brush->sides + i;
 			plane = side->plane;
 
-			// adjust the plane distance appropriately for mins/maxs
-			dist = plane->dist - DotProduct( tw->offsets[ plane->signbits ], plane->normal );
+			/* Expand the brush by the shape's support in the opposite direction. */
+			dist = plane->dist - CM_TraceOffsetForPlane( tw, plane->normal );
 
 			d1 = DotProduct( tw->start, plane->normal ) - dist;
 
@@ -585,7 +613,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush ) {
 			plane = side->plane;
 
 			// adjust the plane distance appropriately for mins/maxs
-			dist = plane->dist - DotProduct( tw->offsets[ plane->signbits ], plane->normal );
+			dist = plane->dist - CM_TraceOffsetForPlane( tw, plane->normal );
 
 			d1 = DotProduct( tw->start, plane->normal ) - dist;
 			d2 = DotProduct( tw->end, plane->normal ) - dist;
@@ -1069,6 +1097,8 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, float p1f, float p2f, vec3_t
 		t2 = DotProduct (plane->normal, p2) - plane->dist;
 		if ( tw->isPoint ) {
 			offset = 0;
+		} else if ( tw->useConvex ) {
+			offset = tw->maxOffset;
 		} else {
 			// this is silly
 			offset = 2048;
@@ -1146,7 +1176,8 @@ CM_Trace
 ==================
 */
 void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end, vec3_t mins, vec3_t maxs,
-						  clipHandle_t model, const vec3_t origin, int brushmask, int capsule, sphere_t *sphere ) {
+						  clipHandle_t model, const vec3_t origin, int brushmask, int capsule, sphere_t *sphere,
+						  const vec3_t *convexVerts, int numConvexVerts, const vec3_t convexAngles ) {
 	int			i;
 	traceWork_t	tw;
 	vec3_t		offset;
@@ -1263,6 +1294,49 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end, vec3_t mi
 		}
 	}
 
+	if ( convexVerts && numConvexVerts >= 4 ) {
+		vec3_t localExtents;
+		float extent;
+		int axisIndex;
+
+		tw.useConvex = qtrue;
+		tw.convexVerts = convexVerts;
+		tw.numConvexVerts = numConvexVerts;
+		AnglesToAxis( convexAngles, tw.convexAxis );
+		VectorCopy( start, tw.start );
+		VectorCopy( end, tw.end );
+		tw.sphere.use = qfalse;
+		tw.isPoint = qfalse;
+		tw.maxOffset = 0.0f;
+		for ( i = 0; i < 3; i++ ) {
+			localExtents[i] = ( fabs( mins[i] ) > fabs( maxs[i] ) ) ? fabs( mins[i] ) : fabs( maxs[i] );
+		}
+		for ( i = 0; i < 3; i++ ) {
+			extent = 0.0f;
+			for ( axisIndex = 0; axisIndex < 3; axisIndex++ )
+				extent += fabs( tw.convexAxis[axisIndex][i] ) * localExtents[axisIndex];
+			tw.size[0][i] = -extent;
+			tw.size[1][i] = extent;
+			tw.extents[i] = extent;
+			tw.maxOffset += extent;
+		}
+		/* Keep the legacy corner table valid for the patch tracing helpers. */
+		for ( i = 0; i < 8; i++ ) {
+			tw.offsets[i][0] = ( i & 1 ) ? tw.size[1][0] : tw.size[0][0];
+			tw.offsets[i][1] = ( i & 2 ) ? tw.size[1][1] : tw.size[0][1];
+			tw.offsets[i][2] = ( i & 4 ) ? tw.size[1][2] : tw.size[0][2];
+		}
+		for ( i = 0; i < 3; i++ ) {
+			if ( tw.start[i] < tw.end[i] ) {
+				tw.bounds[0][i] = tw.start[i] - tw.extents[i];
+				tw.bounds[1][i] = tw.end[i] + tw.extents[i];
+			} else {
+				tw.bounds[0][i] = tw.end[i] - tw.extents[i];
+				tw.bounds[1][i] = tw.start[i] + tw.extents[i];
+			}
+		}
+	}
+
 	//
 	// check for position test special case
 	//
@@ -1366,7 +1440,16 @@ CM_BoxTrace
 void CM_BoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
 						  vec3_t mins, vec3_t maxs,
 						  clipHandle_t model, int brushmask, int capsule ) {
-	CM_Trace( results, start, end, mins, maxs, model, vec3_origin, brushmask, capsule, NULL );
+	CM_Trace( results, start, end, mins, maxs, model, vec3_origin, brushmask, capsule, NULL,
+		NULL, 0, vec3_origin );
+}
+
+void CM_ConvexTrace( trace_t *results, const vec3_t start, const vec3_t end,
+						  vec3_t mins, vec3_t maxs,
+						  const vec3_t *vertices, int numVertices, const vec3_t angles,
+						  int brushmask ) {
+	CM_Trace( results, start, end, mins, maxs, 0, vec3_origin,
+		brushmask, qfalse, NULL, vertices, numVertices, angles );
 }
 
 /*
@@ -1451,7 +1534,8 @@ void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t 
 	}
 
 	// sweep the box through the model
-	CM_Trace( &trace, start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, &sphere );
+	CM_Trace( &trace, start_l, end_l, symetricSize[0], symetricSize[1], model, origin,
+		brushmask, capsule, &sphere, NULL, 0, vec3_origin );
 
 	// if the bmodel was rotated and there was a collision
 	if ( rotated && trace.fraction != 1.0 ) {

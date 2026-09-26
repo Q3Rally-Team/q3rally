@@ -391,24 +391,24 @@ void CG_Scripted_Object( centity_t *cent ){
 
 //	CG_LogPrintf("Spawning a rally_scripted_object\n");
 
-	// if no script file for it then return
-	if (!s1->modelindex) {
+	/* A script supplies optional destroyed-state assets; a direct model-index
+	 * prop is valid without a script file. */
+	if ( !s1->modelindex && !s1->modelindex2 ) {
 		return;
 	}
 
-        if ( !cent->scriptLoadTime ){
-                scriptName = CG_ConfigString( CS_SCRIPTS + s1->modelindex );
-                if ( !scriptName[0] ) {
-                        return;
-                }
-
-		if ( CG_ParseScriptedObject( cent, scriptName ) )
-			cent->scriptLoadTime = cg.time;
-		else
+	if ( s1->modelindex && !cent->scriptLoadAttempted ) {
+		cent->scriptLoadAttempted = qtrue;
+		scriptName = CG_ConfigString( CS_SCRIPTS + s1->modelindex );
+		if ( !scriptName[0] ) {
+			if ( !s1->modelindex2 )
+				return;
+		} else if ( !CG_ParseScriptedObject( cent, scriptName ) && !s1->modelindex2 ) {
 			return;
-        }
+		}
+	}
 
-       if ( (cent->currentState.eFlags & EF_DEAD) && !cent->gibsSpawned ) {
+	if ( (cent->currentState.eFlags & EF_DEAD) && !cent->gibsSpawned ) {
                int i;
                vec3_t velocity;
 
@@ -421,14 +421,16 @@ void CG_Scripted_Object( centity_t *cent ){
                        CG_LaunchGib( cent->lerpOrigin, velocity, cent->gibModels[i], -1, 0, qfalse );
                        if ( cent->gibSounds[i] ) {
                                trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_WORLD, CHAN_AUTO, cent->gibSounds[i] );
-                       }
+	}
                }
        }
 
-        memset (&ent, 0, sizeof(ent));
+	memset (&ent, 0, sizeof(ent));
 
 	if ( cent->currentState.eFlags & EF_DEAD )
 		ent.hModel = cent->deadModelHandle;
+	else if ( s1->modelindex2 > 0 && s1->modelindex2 < MAX_MODELS )
+		ent.hModel = cgs.gameModels[s1->modelindex2];
 	else
 		ent.hModel = cent->modelHandle;
 

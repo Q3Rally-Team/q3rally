@@ -41,6 +41,9 @@ int			CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec
 void		CM_BoxTrace ( trace_t *results, const vec3_t start, const vec3_t end,
 						  vec3_t mins, vec3_t maxs,
 						  clipHandle_t model, int brushmask, int capsule );
+void		CM_ConvexTrace ( trace_t *results, const vec3_t start, const vec3_t end,
+						  vec3_t mins, vec3_t maxs, const vec3_t *vertices,
+						  int numVertices, const vec3_t angles, int brushmask );
 void		CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
 						  vec3_t mins, vec3_t maxs,
 						  clipHandle_t model, int brushmask,

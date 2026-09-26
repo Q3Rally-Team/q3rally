@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classes>
+  <list name="physics_mode">
+    <item name="Use script/default" value=""/>
+    <item name="Static" value="static"/>
+    <item name="Dynamic" value="dynamic"/>
+  </list>
+  <list name="inertia_shape">
+    <item name="Box (default)" value="box"/>
+    <item name="Sphere" value="sphere"/>
+    <item name="Cylinder along X" value="cylinder_x"/>
+    <item name="Cylinder along Y" value="cylinder_y"/>
+    <item name="Cylinder along Z" value="cylinder_z"/>
+  </list>
+
+  <point name="rally_scripted_object" color="0 0.9 0.1" box="-16 -16 -16 16 16 16">
+    <model key="model" name="Model" value="">Model to display in Radiant and in-game. Choosing this field opens the model browser. Scripted props use their MD3 convex hull for Bullet physics and server traces; unsupported/oversized models fall back to mins/maxs.</model>
+    <string key="script" name="Script">Optional scripted-object file, with or without the .script extension. Leave empty for a prop defined entirely by map keys.</string>
+    <physics_mode key="physics" name="Physics">Static objects do not move. Dynamic objects use physics. Use script/default to preserve the script's moveable setting; model-only props default to static.</physics_mode>
+    <integer key="mass" name="Mass">Dynamic-object mass. Default 100; valid range 1-100000.</integer>
+    <inertia_shape key="inertia_shape" name="Mass distribution" value="box">Approximation used only for rotational inertia. It does not change the MD3 collision hull. A barrel standing upright usually uses Cylinder along Z.</inertia_shape>
+    <real key="elasticity" name="Elasticity">Bounce response. Default 0.1; valid range 0-1.</real>
+    <real key="friction" name="Friction">Contact friction couples sliding and rotation at impacts against the world and other scripted props. Default 0.6; valid range 0-4.</real>
+    <real key="rolling_friction" name="Rolling friction">Resistance against rolling after contact. Default 0.1; valid range 0-1. Set to 0 for ideal rolling.</real>
+    <real key="spinning_friction" name="Spinning friction">Resistance against spinning around the contact normal. Default 0.05; valid range 0-1.</real>
+    <real key="vehicle_impact_scale" name="Vehicle impact scale">Fraction of the calculated vehicle-to-prop impact impulse. Default 0.5; valid range 0-1. Lower values make the prop react less to ramming. Does not affect map collisions.</real>
+    <real key="weapon_impact_scale" name="Weapon impact scale">Multiplier for physical impulses from player weapons and projectiles. Default 1; valid range 0-5. Weak hits have a mass-relative minimum knockback. Set to 0 to disable weapon-driven movement.</real>
+    <integer key="health" name="Health">Hit points. Default 0 (indestructible); values above 0 make the prop damageable.</integer>
+    <real3 key="mins" name="Collision mins">Minimum network/broadphase and fallback box corner relative to the entity origin. The MD3 convex hull is used by Bullet when available; set together with maxs.</real3>
+    <real3 key="maxs" name="Collision maxs">Maximum network/broadphase and fallback box corner relative to the entity origin. Without script bounds, defaults are mins -16 -16 -16 and maxs 16 16 16.</real3>
+    <angle key="angle" name="Angle" value="0">Yaw orientation of the model.</angle>
+  </point>
+</classes>

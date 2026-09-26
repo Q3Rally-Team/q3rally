@@ -230,7 +230,16 @@ typedef enum {
 	
         // 1.32
         G_FS_SEEK,
-        G_LADDER_SUBMIT,
+	G_LADDER_SUBMIT,
+	G_TRACECONVEX, // ( trace_t *results, start, end, mins, maxs, vertices, numVertices, angles, passEntityNum, contentmask );
+	G_RALLY_PHYSICS_INIT,
+	G_RALLY_PHYSICS_SHUTDOWN,
+	G_RALLY_PHYSICS_STEP,
+	G_RALLY_PHYSICS_CREATE_BODY,
+	G_RALLY_PHYSICS_REMOVE_BODY,
+	G_RALLY_PHYSICS_GET_BODY_STATE,
+	G_RALLY_PHYSICS_VEHICLE_CONTACT,
+	G_RALLY_PHYSICS_APPLY_IMPULSE,
 
         BOTLIB_SETUP = 200,				// ( void );
 	BOTLIB_SHUTDOWN,				// ( void );

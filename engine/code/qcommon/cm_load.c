@@ -536,6 +536,132 @@ void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 	}
 }
 
+/*
+=====================
+CMod_InlineModelNumber
+
+Parse the inline BSP model notation used by brush entities ("*1", "*2", ...).
+=====================
+*/
+static int CMod_InlineModelNumber( const char *modelName ) {
+	int modelNumber = 0;
+	const char *p;
+
+	if ( !modelName || modelName[0] != '*' || !modelName[1] )
+		return -1;
+
+	for ( p = modelName + 1; *p; p++ ) {
+		int digit;
+		if ( *p < '0' || *p > '9' )
+			return -1;
+		digit = *p - '0';
+		if ( modelNumber > ( MAX_SUBMODELS - digit ) / 10 )
+			return -1;
+		modelNumber = modelNumber * 10 + digit;
+	}
+	return modelNumber;
+}
+
+/*
+===========================
+CMod_MarkTriggerModelContents
+
+Some map compilers leave trigger brush models with solid shader contents.
+Their runtime entity is a trigger volume, not world collision: normalize the
+inline model contents before either the stock CM traces or the Bullet BSP
+conversion can mistake them for walls.
+===========================
+*/
+static void CMod_MarkTriggerModelContents( void ) {
+	char *entityText;
+	char *parseText;
+	char *token;
+	int triggerModels = 0;
+	int triggerBrushes = 0;
+	int triggerPatches = 0;
+	int changedBrushes = 0;
+	int changedPatches = 0;
+
+	if ( !cm.entityString || cm.numEntityChars <= 0 || !cm.cmodels ||
+		cm.numSubModels <= 1 )
+		return;
+
+	/* The BSP entity lump is not guaranteed to have spare NUL padding. */
+	entityText = Z_Malloc( cm.numEntityChars + 1 );
+	Com_Memcpy( entityText, cm.entityString, cm.numEntityChars );
+	entityText[cm.numEntityChars] = '\0';
+	parseText = entityText;
+
+	while ( ( token = COM_ParseExt( &parseText, qtrue ) )[0] ) {
+		char classname[MAX_TOKENLENGTH];
+		char modelName[MAX_TOKENLENGTH];
+		qboolean entityEnd = qfalse;
+		int modelNumber;
+		cmodel_t *model;
+		int i;
+
+		if ( strcmp( token, "{" ) )
+			continue;
+		classname[0] = '\0';
+		modelName[0] = '\0';
+
+		while ( ( token = COM_ParseExt( &parseText, qtrue ) )[0] ) {
+			char key[MAX_TOKENLENGTH];
+			const char *value;
+
+			if ( !strcmp( token, "}" ) ) {
+				entityEnd = qtrue;
+				break;
+			}
+			Q_strncpyz( key, token, sizeof( key ) );
+			value = COM_ParseExt( &parseText, qtrue );
+			if ( !value[0] )
+				break;
+			if ( !Q_stricmp( key, "classname" ) )
+				Q_strncpyz( classname, value, sizeof( classname ) );
+			else if ( !Q_stricmp( key, "model" ) )
+				Q_strncpyz( modelName, value, sizeof( modelName ) );
+		}
+
+		if ( !entityEnd || Q_stricmpn( classname, "trigger_", 8 ) )
+			continue;
+		modelNumber = CMod_InlineModelNumber( modelName );
+		if ( modelNumber <= 0 || modelNumber >= cm.numSubModels )
+			continue;
+
+		model = &cm.cmodels[modelNumber];
+		triggerModels++;
+		for ( i = 0; i < model->leaf.numLeafBrushes; i++ ) {
+			int brushNumber = cm.leafbrushes[model->leaf.firstLeafBrush + i];
+			if ( brushNumber < 0 || brushNumber >= cm.numBrushes )
+				continue;
+			if ( cm.brushes[brushNumber].contents != CONTENTS_TRIGGER )
+				changedBrushes++;
+			cm.brushes[brushNumber].contents = CONTENTS_TRIGGER;
+			triggerBrushes++;
+		}
+		for ( i = 0; i < model->leaf.numLeafSurfaces; i++ ) {
+			int surfaceNumber = cm.leafsurfaces[model->leaf.firstLeafSurface + i];
+			cPatch_t *patch;
+			if ( surfaceNumber < 0 || surfaceNumber >= cm.numSurfaces ||
+				!cm.surfaces[surfaceNumber] )
+				continue;
+			patch = cm.surfaces[surfaceNumber];
+			if ( patch->contents != CONTENTS_TRIGGER )
+				changedPatches++;
+			patch->contents = CONTENTS_TRIGGER;
+			triggerPatches++;
+		}
+	}
+
+	Z_Free( entityText );
+	if ( changedBrushes || changedPatches ) {
+		Com_Printf( "CM_LoadMap: normalized %d trigger brush models (%d brushes, %d patches; changed %d/%d contents)\n",
+			triggerModels, triggerBrushes, triggerPatches,
+			changedBrushes, changedPatches );
+	}
+}
+
 //==================================================================
 
 unsigned CM_LumpChecksum(lump_t *lump) {
@@ -646,6 +772,7 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 	CMod_LoadEntityString (&header.lumps[LUMP_ENTITIES]);
 	CMod_LoadVisibility( &header.lumps[LUMP_VISIBILITY] );
 	CMod_LoadPatches( &header.lumps[LUMP_SURFACES], &header.lumps[LUMP_DRAWVERTS] );
+	CMod_MarkTriggerModelContents();
 
 	// we are NOT freeing the file, because it is cached for the ref
 	FS_FreeFile (buf.v);

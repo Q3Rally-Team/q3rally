@@ -54,7 +54,7 @@ static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, co
         (void)stats; (void)table; (void)count; if ( outRank ) { outRank->index = 0; outRank->current = NULL; } return qtrue; }
 
 #define MAX_CLIENTS 64
-#define TEAM_NUM_TEAMS 4
+#define TEAM_NUM_TEAMS 6
 #define MAX_QPATH 64
 #define MAX_NAME_LENGTH 32
 #define MAX_INFO_STRING 1024
@@ -64,7 +64,12 @@ static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, co
 #define TEAM_FREE 0
 #define TEAM_RED 1
 #define TEAM_BLUE 2
-#define TEAM_SPECTATOR 3
+#define TEAM_GREEN 3
+#define TEAM_YELLOW 4
+#define TEAM_SPECTATOR 5
+#define PROFILE_MAX_NAME 32
+#define CVAR_ARCHIVE 1
+#define CVAR_PROTECTED 2
 
 #define GT_RACING 0
 #define GT_RACING_DM 1
@@ -185,6 +190,7 @@ typedef struct ladderPlayerPayload_s {
         int                     kills;
         int                     deaths;
         int                     zoneHoldMs;
+        int                     kothContestTimeMs;
         int                     zoneActiveSigil;
         int                     survivalMs;
         int                     eliminationRound;
@@ -202,6 +208,7 @@ typedef struct ladderMatchPayload_s {
         int                     validationErrors;
         char            validationReason[LADDER_MAX_VALIDATION_REASON];
         char            matchId[LADDER_MAX_MATCH_ID];
+        int                     serverMatchSeq;
         char            mode[LADDER_MAX_MODE];
         int                     gametype;
         char            mapName[MAX_QPATH];
@@ -227,6 +234,7 @@ typedef struct ladderMatchPayload_s {
         int                     eliminationWarning;
         int                     teamScores[TEAM_NUM_TEAMS];
         int                     teamTimes[TEAM_NUM_TEAMS];
+        int                     teamHoldMs[TEAM_NUM_TEAMS];
         int                     playerCount;
         qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];
@@ -236,6 +244,23 @@ typedef struct cvar_s {
         int integer;
         char string[128];
 } cvar_t, vmCvar_t;
+
+static inline cvar_t *Cvar_Get( const char *name, const char *value, int flags ) {
+        static cvar_t stub;
+        (void)name; (void)value; (void)flags;
+        return &stub;
+}
+static inline void Cvar_Set( const char *name, const char *value ) { (void)name; (void)value; }
+static inline void Cvar_VariableStringBuffer( const char *name, char *buffer, int size ) {
+        (void)name;
+        if ( buffer && size > 0 ) buffer[0] = '\0';
+}
+static inline int Cvar_VariableIntegerValue( const char *name ) { (void)name; return 0; }
+static inline int Cmd_Argc( void ) { return 0; }
+static inline void Cmd_ArgvBuffer( int index, char *buffer, int size ) {
+        (void)index;
+        if ( buffer && size > 0 ) buffer[0] = '\0';
+}
 
 extern cvar_t *sv_ladderUrl;
 extern cvar_t *sv_ladderApiKey;
@@ -346,6 +371,10 @@ static inline void Q_strncpyz( char *dest, const char *src, int destsize ) {
 
 static inline int Q_stricmp( const char *s1, const char *s2 ) {
         return strcasecmp( s1 ? s1 : "", s2 ? s2 : "" );
+}
+
+static inline int Q_stricmpn( const char *s1, const char *s2, int n ) {
+        return strncasecmp( s1 ? s1 : "", s2 ? s2 : "", (size_t)n );
 }
 
 static inline void Q_strcat( char *dest, int size, const char *src ) {

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // sv_game.c -- interface to the game dll
 
 #include "server.h"
+#include "sv_rally_physics.h"
 
 #include "../botlib/botlib.h"
 
@@ -364,6 +365,33 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 	case G_TRACECAPSULE:
 		SV_Trace( VMA(1), VMA(2), VMA(3), VMA(4), VMA(5), args[6], args[7], /*int capsule*/ qtrue );
+		return 0;
+	case G_TRACECONVEX:
+		SV_TraceConvex( VMA(1), VMA(2), VMA(3), VMA(4), VMA(5), VMA(6),
+			args[7], VMA(8), args[9], args[10] );
+		return 0;
+	case G_RALLY_PHYSICS_INIT:
+		SV_RallyPhysics_Init( VMF(1) );
+		return 0;
+	case G_RALLY_PHYSICS_SHUTDOWN:
+		SV_RallyPhysics_Shutdown();
+		return 0;
+	case G_RALLY_PHYSICS_STEP:
+		SV_RallyPhysics_Step( VMF(1) );
+		return 0;
+	case G_RALLY_PHYSICS_CREATE_BODY:
+		return SV_RallyPhysics_CreateBody( args[1], VMA(2), VMA(3), args[4] );
+	case G_RALLY_PHYSICS_REMOVE_BODY:
+		SV_RallyPhysics_RemoveBody( args[1] );
+		return 0;
+	case G_RALLY_PHYSICS_GET_BODY_STATE:
+		return SV_RallyPhysics_GetBodyState( args[1], VMA(2) );
+	case G_RALLY_PHYSICS_VEHICLE_CONTACT:
+		SV_RallyPhysics_ApplyVehicleContact( args[1], VMA(2), VMA(3), VMA(4),
+			VMF(5), VMF(6), VMA(7) );
+		return 0;
+	case G_RALLY_PHYSICS_APPLY_IMPULSE:
+		SV_RallyPhysics_ApplyImpulse( args[1], VMA(2), VMA(3) );
 		return 0;
 	case G_POINT_CONTENTS:
 		return SV_PointContents( VMA(1), args[2] );

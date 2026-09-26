@@ -734,50 +734,35 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
   </table></div>
   <p>All flags are defined in <code>custinfoparms.txt</code> and can be combined freely on a single texture.</p>
 
-  <h3>Scripted Objects — Full Reference</h3>
-  <p>Scripted objects allow interactive, destructible, and moveable props to be placed in a map. They require a <code>.script</code> file and a <code>rally_scripted_object</code> entity in the editor.</p>
+  <h3>Map-Authored Physics Props</h3>
+  <p>Place <code>rally_scripted_object</code> entities directly in Radiant. A model and physical properties can be set on each map instance; an optional <code>.script</code> file supplies reusable defaults and optional destroyed-state assets. Map keys override values from the script.</p>
 
-  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 1 — Create the script file</h4>
-  <p>Create a <code>*.script</code> file describing the object. The <code>rally_scripted_object</code> block defines the model, destroyed model, mass, health, bounds, and sounds.</p>
-<pre>rally_scripted_object {
-    type         0
-    model        "hydrant"        // direct path or named section reference
-    deadmodel    "waterspray"     // shown after destruction
-    moveable     0                // 1 = subject to physics
-    mass         50
-    health       1000             // 0 = indestructible
-    mins         "-8 -8 -8"
-    maxs         "8 8 8"
-    presound     "sound/hydrant/metalcreak"
-    hitsound     "sound/hydrant/solidmetalbang"
-    destroysound "sound/hydrant/solidmetalbreak"
-    postsound    "sound/hydrant/waterspray"
-    gibs {
-        "models/mapobjects/hydrant/piece1" -3
-        "models/mapobjects/hydrant/piece2"  2
-        "models/mapobjects/hydrant/piece3"  1
-        "models/mapobjects/hydrant/piece4"  4
-    }
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Direct map entity</h4>
+<pre>{
+    "classname"  "rally_scripted_object"
+    "model"      "models/mapobjects/cones/cone01.md3"
+    "origin"     "256 128 32"
+    "angles"     "0 45 0"
+    "physics"    "dynamic"       // static or dynamic
+    "mass"       "4"
+    "elasticity" "0.2"           // bounce, clamped to 0..1
+    "friction"   "0.7"           // contact friction, clamped to 0..4
+    "mins"       "-4 -4 -8"      // local collision-box bounds
+    "maxs"       "4 4 8"
+    "health"     "0"             // 0 = indestructible
 }</pre>
-  <p>The <code>model</code> and <code>deadmodel</code> values can either be a direct model path (e.g. <code>"models/mapobjects/hydrant/hydrant"</code>) or the name of another section in the same script file that contains a <code>model</code> token — in that case the path is loaded from that section automatically.</p>
+  <p><code>model</code> is a normal Radiant model path. If the entity has no <code>script</code>, this is all that is needed to create a basic physical prop. The default collision box is a 32-unit cube centered on the entity; set <code>mins</code> and <code>maxs</code> to fit the visible model. Collision currently uses a local axis-aligned box, not the rendered mesh.</p>
 
-  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 2 — Place the entity in Radiant</h4>
-  <p>Select entity class <code>rally_scripted_object</code> and set these key/value pairs:</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Key</th><th>Value</th><th>Notes</th></tr></thead>
-    <tbody>
-      <tr><td>script</td><td>path/to/file</td><td>Path to the script file, without the <code>.script</code> extension. Required.</td></tr>
-      <tr><td>angle / angles</td><td>yaw / pitch yaw roll</td><td>Optional orientation.</td></tr>
-      <tr><td>targetname</td><td>string</td><td>Optional — allows triggers to reference the object.</td></tr>
-    </tbody>
-  </table></div>
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Optional reusable archetype</h4>
+  <p>Set <code>script</code> to a path without the <code>.script</code> extension to load its existing object defaults (model, health, bounds, mass, elasticity, friction, and optional destruction assets). On the map entity, <code>model</code>, <code>physics</code>, <code>mass</code>, <code>elasticity</code>, <code>friction</code>, <code>health</code>, <code>mins</code>, and <code>maxs</code> override those defaults. The legacy <code>moveable 0/1</code> key is still accepted; prefer <code>physics static/dynamic</code> for new maps.</p>
 
-  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Step 3 — In-game behaviour</h4>
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Physics and limits</h4>
   <ul>
-    <li>On map load the game reads the <code>script</code> path and loads the file. Objects without a valid script are discarded with a console warning.</li>
-    <li><code>moveable 1</code> subjects the object to the physics simulation.</li>
-    <li><code>health &gt; 0</code> makes the object destructible — on death the <code>deadmodel</code> is shown and <code>gibs</code> are spawned.</li>
-    <li>All defined sounds (<code>hitsound</code>, <code>presound</code>, <code>postsound</code>, <code>destroysound</code>) are played automatically at the appropriate moments.</li>
+    <li><code>physics static</code> creates a solid prop without a simulation tick. <code>physics dynamic</code> enables gravity, collision response, and rigid-body rotation.</li>
+    <li><code>mass</code> is clamped to 1..100000. <code>elasticity</code> is clamped to 0..1; <code>friction</code> is clamped to 0..4.</li>
+    <li><code>health &gt; 0</code> enables damage. Zero (and legacy negative values) mean indestructible.</li>
+    <li>Dynamic props are simulated in fixed 10 ms steps on the server, with a bounded catch-up budget, then replicated to clients.</li>
+    <li>Collision uses the mapper-defined axis-aligned box. This is intentionally cheaper and more stable than tracing the render mesh, but it is an approximation for rotated or irregular models.</li>
   </ul>
 
   <h3>Runtime Hazard Fields</h3>

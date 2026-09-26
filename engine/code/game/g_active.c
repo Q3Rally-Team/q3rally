@@ -335,7 +335,14 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
 		other = &g_entities[ pm->touchents[i] ];
 
 // STONELANCE
-		VectorSubtract( other->s.origin, pm->touchPos[i], trace.plane.normal );
+		if ( other->s.eType == ET_SCRIPTED &&
+			VectorLengthSquared( pm->touchNormal[i] ) > 0.0001f ) {
+			/* The trace plane points from the prop toward the car; scripted
+			 * object impulses need the opposite direction, into the prop. */
+			VectorScale( pm->touchNormal[i], -1.0f, trace.plane.normal );
+		} else {
+			VectorSubtract( other->s.origin, pm->touchPos[i], trace.plane.normal );
+		}
 		VectorNormalize( trace.plane.normal );
 		VectorCopy(pm->touchPos[i], trace.endpos);
 // END
@@ -348,7 +355,11 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
 			continue;
 		}
 
-		other->touch( other, ent, &trace );
+		if ( other->s.eType == ET_SCRIPTED ) {
+			G_ScriptedObject_TouchWithVelocity( other, ent, &trace, pm->touchVelocity[i] );
+		} else {
+			other->touch( other, ent, &trace );
+		}
 	}
 
 }

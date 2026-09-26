@@ -115,7 +115,7 @@ qboolean	PM_SlideMove( qboolean gravity ) {
 		// save entity for contact
 // STONELANCE
 //		PM_AddTouchEnt( trace.entityNum );
-		PM_AddTouchEnt( trace.entityNum, trace.endpos );
+		PM_AddTouchEnt( trace.entityNum, trace.endpos, trace.plane.normal, pm->ps->velocity );
 // END
 
 		time_left -= time_left * trace.fraction;

@@ -990,6 +990,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( !attacker ) {
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
+	if ( targ->s.eType == ET_SCRIPTED ) {
+		G_ScriptedObject_ApplyWeaponImpact( targ, inflictor, attacker, dir,
+			point, damage );
+		if ( targ->maxHealth <= 0 ) {
+			/* Healthless Bullet props react physically but are not destructible. */
+			return;
+		}
+	}
 
 	// shootable doors / buttons don't actually have any health
 	if ( targ->s.eType == ET_MOVER ) {

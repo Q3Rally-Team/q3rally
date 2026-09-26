@@ -1918,6 +1918,13 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 	//int			l;
 	float		time_left;
 	float		into;
+	vec3_t		clipPlanes[MAX_CLIP_PLANES];
+	int			contactPlaneCount;
+#ifdef QAGAME
+	qboolean	scriptedObjectPlane;
+	qboolean	hitScriptedObject;
+	vec3_t	pointCorrection;
+#endif
 	
 	numbumps = 4;
 // end
@@ -2072,9 +2079,16 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		VectorScale( vel, 1 / time, vel );
 
 		numplanes = 0;
+		contactPlaneCount = 0;
 		time_left = time;
+#ifdef QAGAME
+		hitScriptedObject = qfalse;
+#endif
 
 		for ( bumpcount=0 ; bumpcount < numbumps ; bumpcount++ ) {
+#ifdef QAGAME
+			scriptedObjectPlane = qfalse;
+#endif
 			VectorMA( start, time_left, vel, dest );
 
 			// see if we can make it there
@@ -2103,10 +2117,34 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 				break;
 			}
 
+#ifdef QAGAME
+			/* Identify movable scripted props before advancing the traced point;
+			 * the response below needs the exact contact position, not the legacy
+			 * world-origin-scaled endpoint used for static surfaces. */
+			if ( trace.fraction < 1.0f && ( trace.contents & CONTENTS_BODY ) &&
+				trace.entityNum >= 0 && trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
+				hitFirst = trace.entityNum;
+				if ( g_entities[hitFirst].flags & FL_EXTRA_BBOX )
+					hitFirst = g_entities[hitFirst].r.ownerNum;
+				if ( hitFirst >= 0 && hitFirst < level.num_entities &&
+					hitFirst != pm->ps->clientNum &&
+					g_entities[hitFirst].s.eType == ET_SCRIPTED &&
+					g_entities[hitFirst].moveable ) {
+					scriptedObjectPlane = qtrue;
+					hitScriptedObject = qtrue;
+				}
+			}
+#endif
+
 			if (trace.fraction > 0) {
 				// actually covered some distance
 //				VectorCopy ( trace.endpos, start );
-				VectorScale ( trace.endpos, 0.999f, start );
+#ifdef QAGAME
+				if ( scriptedObjectPlane || hitScriptedObject )
+					VectorCopy( trace.endpos, start );
+				else
+#endif
+					VectorScale ( trace.endpos, 0.999f, start );
 			}
 
 			if ( trace.fraction == 1 ) {
@@ -2135,7 +2173,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 			//
 
 			for ( j = 0 ; j < numplanes; j++ ) {
-				if ( DotProduct( trace.plane.normal, tPoint->normals[j] ) > 0.99 ) {
+				if ( DotProduct( trace.plane.normal, clipPlanes[j] ) > 0.99 ) {
 					VectorAdd( trace.plane.normal, vel, vel );
 					break;
 				}
@@ -2211,10 +2249,21 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 				}
 				else {
 //					Com_Printf( "hit non player CONTENTS_BODY\n" );
-					PM_AddTouchEnt( trace.entityNum, trace.endpos );
-
-					pm->tracemask &= ~CONTENTS_BODY;
-					continue;
+					PM_AddTouchEnt( trace.entityNum, trace.endpos, trace.plane.normal, vel );
+					/* A dynamic scripted prop still blocks this swept point, but its
+					 * plane must not become a persistent car support/contact force.
+					 * Otherwise the car resolves a movable barrel as a static wall and
+					 * can accumulate lethal chassis stress before ClientImpacts applies
+					 * the paired object impulse. */
+					if ( g_entities[hitFirst].s.eType == ET_SCRIPTED &&
+						g_entities[hitFirst].moveable ) {
+						scriptedObjectPlane = qtrue;
+						hitScriptedObject = qtrue;
+					}
+					if ( g_entities[hitFirst].s.eType != ET_SCRIPTED ) {
+						pm->tracemask &= ~CONTENTS_BODY;
+						continue;
+					}
 				}
 			}
 #endif
@@ -2222,9 +2271,16 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 #ifdef QAGAME
 			PM_RecordBreakableImpact( &trace, vel );
 #endif
-			VectorCopy ( trace.plane.normal, tPoint->normals[numplanes] );
-			tPoint->onGround = qtrue;
-			PM_CheckSurfaceFlags( &trace, tPoint );
+			VectorCopy( trace.plane.normal, clipPlanes[numplanes] );
+#ifdef QAGAME
+			if ( !scriptedObjectPlane )
+#endif
+			{
+				VectorCopy( trace.plane.normal, tPoint->normals[contactPlaneCount] );
+				contactPlaneCount++;
+				tPoint->onGround = qtrue;
+				PM_CheckSurfaceFlags( &trace, tPoint );
+			}
 			numplanes++;
 
 			//
@@ -2233,7 +2289,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 
 			// find a plane that it enters
 			for ( j = 0 ; j < numplanes ; j++ ) {
-				into = DotProduct( vel, tPoint->normals[j] );
+				into = DotProduct( vel, clipPlanes[j] );
 				if ( into > 0.01f ) {
 					continue;		// move doesn't interact with the plane
 				}
@@ -2244,7 +2300,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 //				}
 
 				// slide along the plane
-				VectorMA( vel, -into * OVERCLIP, tPoint->normals[j], clipVelocity );
+				VectorMA( vel, -into * OVERCLIP, clipPlanes[j], clipVelocity );
 //				PM_ClipVelocity ( vel, tPoints[i].normals[j], clipVelocity, OVERCLIP );
 
 				// see if there is a second plane that the new move enters
@@ -2253,22 +2309,22 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 						continue;
 					}
 
-					into = DotProduct( clipVelocity, tPoint->normals[k] );
+					into = DotProduct( clipVelocity, clipPlanes[k] );
 					if ( into > 0.01f ) {
 						continue;		// move doesn't interact with the plane
 					}
 
 					// try clipping the move to the plane
-					VectorMA( clipVelocity, -into * OVERCLIP, tPoint->normals[j], clipVelocity );
+					VectorMA( clipVelocity, -into * OVERCLIP, clipPlanes[j], clipVelocity );
 //					PM_ClipVelocity( clipVelocity, tPoints[i].normals[k], clipVelocity, OVERCLIP );
 
 					// see if it goes back into the first clip plane
-					if ( DotProduct( clipVelocity, tPoint->normals[j] ) >= 0 ) {
+					if ( DotProduct( clipVelocity, clipPlanes[j] ) >= 0 ) {
 						continue;
 					}
 
 					// slide the original velocity along the crease
-					CrossProduct ( tPoint->normals[j], tPoint->normals[k], dir );
+					CrossProduct ( clipPlanes[j], clipPlanes[k], dir );
 					VectorNormalize( dir );
 					d = DotProduct( dir, vel );
 					VectorScale( dir, d, clipVelocity );
@@ -2301,6 +2357,22 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 
 		// NEW- copy final position to the point
 //		VectorCopy( start, tPoints[i].r );
+
+#ifdef QAGAME
+		/* Keep the scripted prop out of the vehicle's predicted rigid-body
+		 * volume without treating it as static road/support force. Swept-point
+		 * velocity clipping alone is local to this trace, so at high speed the
+		 * chassis otherwise advances through the prop before ClientImpacts runs. */
+		if ( hitScriptedObject ) {
+			VectorSubtract( start, tPoint->r, pointCorrection );
+			if ( VectorLengthSquared( pointCorrection ) > 0.0001f ) {
+				VectorAdd( car->tBody.r, pointCorrection, car->tBody.r );
+				VectorAdd( car->tBody.CoM, pointCorrection, car->tBody.CoM );
+				for ( j = 0; j < NUM_CAR_POINTS; j++ )
+					VectorAdd( tPoints[j].r, pointCorrection, tPoints[j].r );
+			}
+		}
+#endif
 
 		PM_SetFluidDensity( tPoints, i );
 	}

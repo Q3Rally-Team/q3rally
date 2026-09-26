@@ -267,6 +267,8 @@ typedef struct {
         int                     touchents[MAXTOUCH];
 // STONELANCE
         vec3_t          touchPos[MAXTOUCH];
+        vec3_t          touchNormal[MAXTOUCH];
+        vec3_t          touchVelocity[MAXTOUCH];
 // END
 
         vec3_t          mins, maxs;                     // bounding box size

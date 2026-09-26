@@ -80,7 +80,7 @@ extern	int		c_pmove;
 void PM_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce );
 // STONELANCE
 // void PM_AddTouchEnt( int entityNum );
-void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin );
+void PM_AddTouchEnt( int entityNum, vec3_t hitOrigin, vec3_t hitNormal, vec3_t hitVelocity );
 // END
 void PM_AddEvent( int newEvent );
 

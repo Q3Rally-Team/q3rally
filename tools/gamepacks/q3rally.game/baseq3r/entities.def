@@ -2521,8 +2521,31 @@ Q3Rally Entities
 =================================
 //
 
-/*QUAKED rally_scripted_object (0 .9 .1) ?
-
+/*
+Scripted-object keys (documentation only; intentionally not a QUAKED declaration).
+Q3RallyRadiant registers this class from entities.ent so its typed model field
+opens the model browser. Declaring the same classname here shadows that field.
+-------- KEYS --------
+"model" : model path to display, e.g. models/mapobjects/barrels/b_bio.md3. Overrides the script model.
+"script" : optional scripted-object file, with or without the .script suffix. May be empty for map-defined props.
+"physics" : "static" or "dynamic". If omitted, preserves the script setting; model-only props default to static.
+"mass" : dynamic-object mass (default 100, range 1-100000).
+"inertia_shape" : rotational-inertia approximation: "box" (default), "sphere", "cylinder_x", "cylinder_y", or "cylinder_z". Does not change collision bounds; an upright Z-axis barrel usually uses "cylinder_z".
+"elasticity" : bounce response (default 0.1, range 0-1).
+"friction" : contact friction coupling sliding and rotation (default 0.6, range 0-4).
+"rolling_friction" : resistance to rolling after contact (default 0.1, range 0-1; 0 gives ideal rolling).
+"spinning_friction" : resistance to spin around the contact normal (default 0.05, range 0-1).
+"vehicle_impact_scale" : fraction of vehicle-to-prop impact impulse (default 0.5, range 0-1). Lower values soften ramming; map collisions are unaffected.
+"weapon_impact_scale" : multiplier for physical impulses from player weapons and projectiles (default 1, range 0-5); weak hits get a mass-relative minimum knockback; 0 disables weapon-driven movement.
+"health" : hit points; 0 (default) is indestructible, values above 0 are damageable.
+"mins" : minimum network/broadphase and fallback box corner relative to the entity origin; set together with "maxs".
+"maxs" : maximum network/broadphase and fallback box corner relative to the entity origin (without script bounds, defaults are -16 -16 -16 and 16 16 16).
+"angle" : yaw orientation of the model.
+-------- NOTES --------
+When Bullet is enabled, the MD3 convex hull is used for prop physics and server traces;
+unsupported/oversized model hulls fall back to mins/maxs. Healthless Bullet props are
+indestructible but react physically to player weapons. Weapon impact scale only affects
+weapon/projectile impulses; vehicle impact scale only affects ramming.
 */
 
 /*QUAKED rally_startfinish (0 .9 .1) ?
