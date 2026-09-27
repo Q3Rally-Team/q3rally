@@ -39,12 +39,12 @@ static void *S_CodecGetSound(const char *filename, snd_info_t *info)
 	snd_codec_t *codec;
 	snd_codec_t *orgCodec = NULL;
 	qboolean	orgNameFailed = qfalse;
-	char		localName[ MAX_QPATH ];
+	char		localName[ MAX_OSPATH ];
 	const char	*ext;
-	char		altName[ MAX_QPATH ];
+	char		altName[ MAX_OSPATH ];
 	void		*rtn = NULL;
 
-	Q_strncpyz(localName, filename, MAX_QPATH);
+	Q_strncpyz(localName, filename, sizeof(localName));
 
 	ext = COM_GetExtension(localName);
 
@@ -73,7 +73,7 @@ static void *S_CodecGetSound(const char *filename, snd_info_t *info)
 				// try again without the extension
 				orgNameFailed = qtrue;
 				orgCodec = codec;
-				COM_StripExtension( filename, localName, MAX_QPATH );
+				COM_StripExtension( filename, localName, sizeof(localName) );
 			}
 			else
 			{
@@ -130,6 +130,10 @@ void S_CodecInit()
 
 #ifdef USE_CODEC_VORBIS
 	S_CodecRegister(&ogg_codec);
+#endif
+
+#ifdef USE_CODEC_MP3
+	S_CodecRegister(&mp3_codec);
 #endif
 
 // Register wav codec last so that it is always tried first when a file extension was not found
@@ -239,8 +243,11 @@ qboolean S_CodecGetMetadata( const char *filename,
         if ( ext && !Q_stricmp( ext, "ogg" ) ) {
                 return S_OGG_CodecGetMetadata( filename, title, titleSize, artist, artistSize, album, albumSize );
         }
-#else
-        (void)ext;
+#endif
+#ifdef USE_CODEC_MP3
+	if ( ext && !Q_stricmp( ext, "mp3" ) ) {
+		return S_MP3_CodecGetMetadata( filename, title, titleSize, artist, artistSize, album, albumSize );
+	}
 #endif
 
         return qfalse;

@@ -10,6 +10,16 @@ extern "C" {
 #include "../qcommon/cm_patch.h"
 #include "../qcommon/qfiles.h"
 }
+
+// q_shared.h defines min/max macros which collide with the C++ standard
+// library's std::min/std::max (notably with the Emscripten toolchain).
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 #include "sv_rally_physics.h"
 #include "../thirdparty/bullet3-3.25/src/btBulletDynamicsCommon.h"
 

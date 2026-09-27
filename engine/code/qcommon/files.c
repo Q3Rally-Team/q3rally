@@ -567,7 +567,7 @@ qboolean FS_CreatePath (char *OSPath) {
 	
 	// make absolutely sure that it can't back up the path
 	// FIXME: is c: allowed???
-	if ( strstr( OSPath, ".." ) || strstr( OSPath, "::" ) ) {
+	if ( FS_CheckDirTraversal( OSPath ) || strstr( OSPath, "::" ) ) {
 		Com_Printf( "WARNING: refusing to create relative path \"%s\"\n", OSPath );
 		return qtrue;
 	}
@@ -1227,7 +1227,7 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 	// make absolutely sure that it can't back up the path.
 	// The searchpaths do guarantee that something will always
 	// be prepended, so we don't need to worry about "c:" or "//limbo" 
-	if(strstr(filename, ".." ) || strstr(filename, "::"))
+	if(FS_CheckDirTraversal(filename) || strstr(filename, "::"))
 	{
 		if(file == NULL)
 			return qfalse;
@@ -1846,7 +1846,7 @@ int	FS_FileIsInPAK(const char *filename, int *pChecksum ) {
 	// make absolutely sure that it can't back up the path.
 	// The searchpaths do guarantee that something will always
 	// be prepended, so we don't need to worry about "c:" or "//limbo" 
-	if ( strstr( filename, ".." ) || strstr( filename, "::" ) ) {
+	if ( FS_CheckDirTraversal(filename) || strstr(filename, "::" ) ) {
 		return -1;
 	}
 
@@ -3195,9 +3195,26 @@ and return qtrue if it does.
 
 qboolean FS_CheckDirTraversal(const char *checkdir)
 {
-	if(strstr(checkdir, "../") || strstr(checkdir, "..\\"))
-		return qtrue;
-	
+	const char *component = checkdir;
+	const char *cursor;
+
+	if(!checkdir)
+		return qfalse;
+
+	for(cursor = checkdir; ; cursor++)
+	{
+		if(*cursor == '/' || *cursor == '\\' || *cursor == '\0')
+		{
+			if(cursor - component == 2 && component[0] == '.' && component[1] == '.')
+				return qtrue;
+
+			if(*cursor == '\0')
+				break;
+
+			component = cursor + 1;
+		}
+	}
+
 	return qfalse;
 }
 

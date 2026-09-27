@@ -27,6 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 #include "cg_hud_elements.h"
 
+/* Keep the three compact notices aligned just above the telemetry strip. */
+#define RALLY_HUD_OVERLAY_BOTTOM 410
+
 #ifdef MISSIONPACK
 #include "../ui/ui_shared.h"
 
@@ -1104,6 +1107,7 @@ static void CG_DrawHudToast( void ) {
 	int textWidth;
 	int panelWidth;
 	int panelX;
+	int panelY;
 	int textX;
 	int i;
 	float alpha;
@@ -1113,7 +1117,7 @@ static void CG_DrawHudToast( void ) {
 	char message[128];
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.76f };
 	vec4_t borderColor = { 0.24f, 0.34f, 0.36f, 0.78f };
-	vec4_t accentColor = { 0.72f, 1.00f, 0.06f, 1.00f };
+	vec4_t accentColor = { 0.58f, 0.76f, 0.12f, 0.78f };
 	vec4_t textColor = { 0.88f, 0.95f, 0.97f, 1.00f };
 	vec4_t iconColor = { 1.00f, 1.00f, 1.00f, 1.00f };
 
@@ -1156,7 +1160,6 @@ static void CG_DrawHudToast( void ) {
 		Q_strncpyz( message, "CLEAN SECTOR +0.5S NOS", sizeof( message ) );
 		item = BG_FindItemForPowerup( PW_TURBO );
 		if ( item ) itemNum = item - bg_itemlist;
-		accentColor[0] = 0.30f; accentColor[1] = 0.60f; accentColor[2] = 1.00f;
 		break;
 	case CG_HUD_TOAST_PICKUP:
 		if ( itemNum < 1 || itemNum >= bg_numItems ) {
@@ -1176,7 +1179,6 @@ static void CG_DrawHudToast( void ) {
 			            sizeof( message ) );
 		}
 		icon = toast->iconShader;
-		accentColor[0] = 1.00f; accentColor[1] = 0.78f; accentColor[2] = 0.20f;
 		break;
 	case CG_HUD_TOAST_ACHIEVEMENT:
 		category = BG_AchievementGetCategory( toast->achievementCategory );
@@ -1191,16 +1193,10 @@ static void CG_DrawHudToast( void ) {
 			       cgs.media.achievementMedalLocked[category->icon] :
 			       cgs.media.achievementMedalUnlocked[category->icon];
 		}
-		accentColor[0] = 0.72f; accentColor[1] = 1.00f; accentColor[2] = 0.06f;
 		break;
 	case CG_HUD_TOAST_RANK:
 		Com_sprintf( message, sizeof( message ), "%s: %s",
 		             toast->rankUp ? "RANK UP" : "RANK DOWN", toast->name );
-		if ( toast->rankUp ) {
-			accentColor[0] = 0.30f; accentColor[1] = 0.88f; accentColor[2] = 0.42f;
-		} else {
-			accentColor[0] = 1.00f; accentColor[1] = 0.38f; accentColor[2] = 0.28f;
-		}
 		hasIcon = qfalse;
 		break;
 	case CG_HUD_TOAST_MESSAGE:
@@ -1240,15 +1236,16 @@ static void CG_DrawHudToast( void ) {
 	textColor[3] *= alpha;
 	iconColor[3] *= alpha;
 
-	CG_FillRect( panelX, 386, panelWidth, 24, panelColor );
-	CG_FillRect( panelX, 386, panelWidth, 2, accentColor );
-	CG_DrawRect( panelX, 386, panelWidth, 24, 1.0f, borderColor );
+	panelY = RALLY_HUD_OVERLAY_BOTTOM - 24;
+	CG_FillRect( panelX, panelY, panelWidth, 24, panelColor );
+	CG_DrawRect( panelX, panelY, panelWidth, 24, 1.0f, borderColor );
+	CG_FillRect( panelX, panelY, panelWidth, 1, accentColor );
 	if ( hasIcon && icon ) {
 		trap_R_SetColor( iconColor );
-		CG_DrawPic( panelX + 7, 390, 16, 16, icon );
+		CG_DrawPic( panelX + 7, panelY + 4, 16, 16, icon );
 		trap_R_SetColor( NULL );
 	}
-	CG_DrawIngameString( textX, 393, message, UI_SMALLFONT, textScale, textColor );
+	CG_DrawIngameString( textX, panelY + 7, message, UI_SMALLFONT, textScale, textColor );
 }
 
 static int CG_RallyTelemetryX( float x, float spreadFactor ) {
@@ -1263,6 +1260,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	centity_t *cent;
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.50f };
 	vec4_t lineColor = { 0.300f, 0.390f, 0.430f, 0.78f };
+	vec4_t healthDividerColor = { 0.300f, 0.390f, 0.430f, 0.42f };
 	vec4_t mutedColor = { 0.480f, 0.610f, 0.650f, 1.00f };
 	vec4_t accentColor = { 0.720f, 1.000f, 0.060f, 1.00f };
 	vec4_t blueColor = { 0.380f, 0.650f, 1.000f, 1.00f };
@@ -1436,24 +1434,26 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	CG_FillRect( HUD_X(174), 422, 1, 50, lineColor );
 	CG_FillRect( HUD_X(432), 422, 1, 50, lineColor );
 
-	/* Left: integrity and the two combat counters. */
-	CG_DrawIngameString( HUD_X(74), 418, "INTEGRITY",
-	                     UI_CENTER | UI_SMALLFONT, 0.75f, mutedColor );
+	/* Left: give integrity and armor their own aligned, balanced columns. */
+	CG_DrawIngameString( HUD_X(65), 418, "INTEGRITY",
+	                     UI_CENTER | UI_SMALLFONT, 0.62f, mutedColor );
+	CG_DrawIngameString( HUD_X(143), 418, "ARMOR",
+	                     UI_CENTER | UI_SMALLFONT, 0.50f, mutedColor );
+	CG_FillRect( HUD_X(112), 424, 1, 32, healthDividerColor );
 	Com_sprintf( healthText, sizeof(healthText), "%d", health );
-	CG_DrawIngameString( HUD_X(74), 430, healthText, UI_CENTER,
-	                     1.1f, healthColor );
+	CG_DrawIngameString( HUD_X(65), 430, healthText, UI_CENTER,
+	                     1.0f, healthColor );
 	if ( health <= 25 && cgs.media.derbyHudWarningShader ) {
 		trap_R_SetColor( dangerColor );
-		CG_DrawPic( HUD_X(136), 418, 14, 14, cgs.media.derbyHudWarningShader );
+		CG_DrawPic( HUD_X(102), 435, 9, 9, cgs.media.derbyHudWarningShader );
 		trap_R_SetColor( NULL );
 	}
-	CG_DrawIngameString( HUD_X(114), 432, "ARMOR", UI_SMALLFONT, 0.45f, mutedColor );
-	CG_DrawIngameString( HUD_X(166), 432, va("%d", armor), UI_RIGHT | UI_SMALLFONT,
-	                     0.45f, blueColor );
+	CG_DrawIngameString( HUD_X(143), 434, va("%d", armor),
+	                     UI_CENTER | UI_SMALLFONT, 0.78f, blueColor );
 	barX = 22.0f;
-	CG_FillRect( HUD_X(barX), 469, 104 * spreadFactor, 5, darkSegment );
-	CG_FillRect( HUD_X(barX), 469, 104 * healthFrac * spreadFactor, 5, healthColor );
-	CG_FillRect( HUD_X(barX + 104 * healthFrac), 469, 1, 5, colorWhite );
+	CG_FillRect( HUD_X(barX), 466, 130 * spreadFactor, 4, darkSegment );
+	CG_FillRect( HUD_X(barX), 466, 130 * healthFrac * spreadFactor, 4, healthColor );
+	CG_FillRect( HUD_X(barX + 130 * healthFrac), 466, 1, 4, colorWhite );
 
 	/* Centre: use the mode's objective as the primary telemetry. */
 	team = ps->persistant[PERS_TEAM];
@@ -1922,7 +1922,8 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		}
 		if ( weaponIcon ) {
 			trap_R_SetColor( weaponColor );
-			CG_DrawPic( HUD_X(350), 430, 16, 16, weaponIcon );
+			/* Keep the smaller icon centered in the existing 16px row slot. */
+			CG_DrawPic( HUD_X(352), 432, 12, 12, weaponIcon );
 			trap_R_SetColor( NULL );
 		}
 		if ( frontAmmo >= 0 )
@@ -1958,7 +1959,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		}
 		if ( weaponIcon ) {
 			trap_R_SetColor( colorWhite );
-			CG_DrawPic( HUD_X(350), 446, 16, 16, weaponIcon );
+			CG_DrawPic( HUD_X(352), 448, 12, 12, weaponIcon );
 			trap_R_SetColor( NULL );
 		}
 		if ( rearWeapon > 0 && rearAmmo >= 0 )
@@ -2581,10 +2582,10 @@ static float CG_DrawRallyPowerups( float y ) {
 			if ( i != displayPowerupIndex || !item || !item->icon ) {
 				continue;
 			}
-			powerupX = CG_RallyTelemetryX( 350.0f, spreadFactor );
-			powerupY = 458.0f;
+			powerupX = CG_RallyTelemetryX( 352.0f, spreadFactor );
+			powerupY = 460.0f;
 			trap_R_SetColor( NULL );
-			CG_DrawPic( powerupX, powerupY, 16.0f, 16.0f,
+			CG_DrawPic( powerupX, powerupY, 12.0f, 12.0f,
 					trap_R_RegisterShader( item->icon ) );
 			Com_sprintf( powerupTimeText, sizeof( powerupTimeText ), "%dS",
 							( sortedTime[i] + 999 ) / 1000 );
@@ -3492,6 +3493,7 @@ static void CG_DrawHoldableItem( void ) {
 	screenPlacement_e savedHorizontalPlacement;
 	screenPlacement_e savedVerticalPlacement;
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.50f };
+	vec4_t accentColor = { 0.58f, 0.76f, 0.12f, 0.78f };
 	vec4_t useColor = { 0.650f, 0.780f, 0.810f, 0.90f };
 
 	value = cg.snap->ps.stats[STAT_HOLDABLE_ITEM];
@@ -3512,10 +3514,12 @@ static void CG_DrawHoldableItem( void ) {
 	savedHorizontalPlacement = CG_GetScreenHorizontalPlacement();
 	savedVerticalPlacement = CG_GetScreenVerticalPlacement();
 	CG_SetScreenPlacement( PLACE_CENTER, PLACE_BOTTOM );
-	CG_FillRect( 570, 394, 60, 18, panelColor );
+	CG_FillRect( 570, RALLY_HUD_OVERLAY_BOTTOM - 18, 60, 18, panelColor );
+	CG_FillRect( 570, RALLY_HUD_OVERLAY_BOTTOM - 18, 60, 1,
+	             accentColor );
 	trap_R_SetColor( NULL );
-	CG_DrawPic( 576, 397, 12, 12, cg_items[value].icon );
-	CG_DrawIngameString( 625, 398, "USE",
+	CG_DrawPic( 576, RALLY_HUD_OVERLAY_BOTTOM - 15, 12, 12, cg_items[value].icon );
+	CG_DrawIngameString( 625, RALLY_HUD_OVERLAY_BOTTOM - 14, "USE",
 	                     UI_RIGHT | UI_SMALLFONT, 0.46f, useColor );
 	CG_SetScreenPlacement( savedHorizontalPlacement, savedVerticalPlacement );
 
@@ -4492,7 +4496,7 @@ static void CG_DrawIntermission( stereoFrame_t stereoFrame ) {
 
 	if ( stereoFrame == STEREO_CENTER ) {
 		CG_JukeboxFrame();
-		CG_JukeboxDraw( 170.0f, 90.0f, 300.0f, 54.0f );
+		CG_JukeboxDraw( 8.0f, (float)(RALLY_HUD_OVERLAY_BOTTOM - 42), 252.0f, 42.0f );
 	}
 
 	if (!cg.scoreBoardShowing)
@@ -4817,7 +4821,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 	if ( stereoFrame == STEREO_CENTER ) {
 		CG_JukeboxFrame();
-		CG_JukeboxDraw( 170.0f, 90.0f, 300.0f, 54.0f );
+		CG_JukeboxDraw( 8.0f, (float)(RALLY_HUD_OVERLAY_BOTTOM - 42), 252.0f, 42.0f );
 	}
 
 #ifdef MISSIONPACK

@@ -38,7 +38,7 @@ void S_Base_StopAllSounds(void);
 void S_Base_StopBackgroundTrack( void );
 
 snd_stream_t	*s_backgroundStream = NULL;
-static char		s_backgroundLoop[MAX_QPATH];
+static char		s_backgroundLoop[MAX_OSPATH];
 //static char		s_backgroundMusic[MAX_QPATH]; //TTimo: unused
 
 

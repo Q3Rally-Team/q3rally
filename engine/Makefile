@@ -202,6 +202,10 @@ ifndef USE_CODEC_OPUS
 USE_CODEC_OPUS=1
 endif
 
+ifndef USE_CODEC_MP3
+USE_CODEC_MP3=1
+endif
+
 ifndef USE_CODEC_THEORA
 USE_CODEC_THEORA=1
 endif
@@ -288,6 +292,9 @@ Q3UIDIR=$(MOUNT_DIR)/q3_ui
 JPDIR=$(MOUNT_DIR)/jpeg-8c
 OGGDIR=$(MOUNT_DIR)/libogg-1.3.3
 VORBISDIR=$(MOUNT_DIR)/libvorbis-1.3.6
+MADDIR=$(MOUNT_DIR)/thirdparty/libmad-0.15.1b
+MAD_SOURCES=$(wildcard $(MADDIR)/*.c)
+MAD_OBJECTS=$(patsubst $(MADDIR)/%.c,$(B)/client/libmad/%.o,$(MAD_SOURCES))
 
 # Bullet 3.25 is linked into the native engine server only.  Game modules,
 # including QVM builds, communicate with it through game syscalls.
@@ -296,7 +303,10 @@ BULLET_COMPONENTS=BulletCollision BulletDynamics LinearMath
 BULLET_SOURCES=$(shell find $(addprefix $(BULLET_SRC_DIR)/,$(BULLET_COMPONENTS)) -type f -name '*.cpp')
 BULLET_OBJECTS=$(patsubst $(BULLET_SRC_DIR)/%.cpp,$(B)/bullet/%.o,$(BULLET_SOURCES))
 BULLET_CXX=$(if $(filter %gcc,$(CC)),$(patsubst %gcc,%g++,$(CC)),$(CXX))
-BULLET_TARGET_FLAGS=$(filter -m32 -m64 -arch% -DWINVER%,$(BASE_CFLAGS))
+BULLET_TARGET_FLAGS=$(filter -m32 -m64 -DWINVER%,$(BASE_CFLAGS)) -DARCH_STRING=\\\"$(ARCH)\\\"
+ifeq ($(PLATFORM),darwin)
+BULLET_TARGET_FLAGS += -arch $(MACOSX_ARCH)
+endif
 ifeq ($(PLATFORM),darwin)
 BULLET_LINK_LIBS=-lc++
 else ifneq ($(findstring mingw,$(PLATFORM)),)
@@ -833,6 +843,14 @@ ifdef MINGW
   CLIENT_LIBS += -lmingw32
   RENDERER_LIBS += -lmingw32
 
+  # Recent MinGW runtimes may make engine binaries depend on this DLL. Include
+  # it in the package so Windows builds run outside the MSYS2 shell.
+  MINGW_COMPILER_DIR=$(dir $(call bin_path,$(CC)))
+  MINGW_WINPTHREAD_DLL=$(MINGW_COMPILER_DIR)libwinpthread-1.dll
+  ifneq ($(wildcard $(MINGW_WINPTHREAD_DLL)),)
+    EXTRA_FILES += $(MINGW_WINPTHREAD_DLL)
+  endif
+
   ifeq ($(USE_LOCAL_HEADERS),1)
     CLIENT_CFLAGS += -I$(SDLHDIR)/include
     ifeq ($(ARCH),x86)
@@ -1357,6 +1375,10 @@ ifeq ($(USE_CODEC_OPUS),1)
   NEED_OPUS=1
 endif
 
+ifeq ($(USE_CODEC_MP3),1)
+  CLIENT_CFLAGS += -DUSE_CODEC_MP3 -DUSE_INTERNAL_MP3 -DFPM_DEFAULT -I$(MADDIR)/include -I$(MADDIR)
+endif
+
 ifeq ($(NEED_OPUS),1)
   ifeq ($(USE_INTERNAL_OPUS),1)
     OPUS_CFLAGS = -DOPUS_BUILD -DHAVE_LRINTF -DFLOATING_POINT -DFLOAT_APPROX -DUSE_ALLOCA \
@@ -1725,6 +1747,7 @@ endif
 makedirs:
 	@$(MKDIR) $(B)/autoupdater
 	@$(MKDIR) $(B)/client/opus
+	@$(MKDIR) $(B)/client/libmad
 	@$(MKDIR) $(B)/client/theora
 	@$(MKDIR) $(B)/client/vorbis
 	@$(MKDIR) $(B)/renderergl1
@@ -2308,6 +2331,10 @@ ifeq ($(ARCH),x86_64)
 endif
 endif
 endif
+ifeq ($(USE_CODEC_MP3),1)
+Q3OBJ += $(B)/client/snd_codec_mp3.o $(MAD_OBJECTS)
+endif
+
 ifeq ($(NEED_OPUS),1)
 ifeq ($(USE_INTERNAL_OPUS),1)
 Q3OBJ += \
@@ -3076,6 +3103,9 @@ $(B)/client/snd_altivec.o: $(CDIR)/snd_altivec.c
 	$(DO_CC_ALTIVEC)
 
 $(B)/client/%.o: $(CDIR)/%.c
+	$(DO_CC)
+
+$(B)/client/libmad/%.o: $(MADDIR)/%.c
 	$(DO_CC)
 
 $(B)/client/%.o: $(SDIR)/%.c
