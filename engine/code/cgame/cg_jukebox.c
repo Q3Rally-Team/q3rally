@@ -444,7 +444,8 @@ void CG_JukeboxFrame( void ) {
 void CG_JukeboxDraw( float x, float y, float w, float h ) {
     vec4_t backgroundColor = { 0.008f, 0.012f, 0.016f, 0.82f };
     vec4_t borderColor = { 0.300f, 0.390f, 0.430f, 0.78f };
-    vec4_t accentColor = { 0.580f, 0.760f, 0.120f, 0.78f };
+    vec4_t accentColor = { Q3RALLY_ACCENT_RED, Q3RALLY_ACCENT_GREEN,
+                           Q3RALLY_ACCENT_BLUE, 0.78f };
     vec4_t textColor = { 0.900f, 0.960f, 0.980f, 1.00f };
     vec4_t mutedColor = { 0.480f, 0.640f, 0.680f, 1.00f };
     vec4_t progressBackgroundColor = { 0.040f, 0.060f, 0.065f, 0.96f };

@@ -267,7 +267,8 @@ float CG_DrawHUD_LCSList( float x, float y ) {
 	playersRemaining = CG_GetPlayersRemaining( NULL );
 	panelColor[0] = 0.008f; panelColor[1] = 0.012f; panelColor[2] = 0.016f; panelColor[3] = 0.42f;
 	edgeColor[0] = 0.24f; edgeColor[1] = 0.34f; edgeColor[2] = 0.36f; edgeColor[3] = 0.52f;
-	accentColor[0] = 0.72f; accentColor[1] = 1.00f; accentColor[2] = 0.06f; accentColor[3] = 1.00f;
+	accentColor[0] = Q3RALLY_ACCENT_RED; accentColor[1] = Q3RALLY_ACCENT_GREEN;
+	accentColor[2] = Q3RALLY_ACCENT_BLUE; accentColor[3] = 1.00f;
 	mutedColor[0] = 0.47f; mutedColor[1] = 0.62f; mutedColor[2] = 0.61f; mutedColor[3] = 1.00f;
 	headerColor[0] = 0.008f; headerColor[1] = 0.012f; headerColor[2] = 0.016f; headerColor[3] = 0.72f;
 
@@ -321,7 +322,7 @@ float CG_DrawHUD_LCSList( float x, float y ) {
 		rowColor[0] = 0.018f; rowColor[1] = 0.027f; rowColor[2] = 0.031f;
 		rowColor[3] = 0.28f;
 		if ( isLocal ) {
-			rowColor[0] = 0.060f; rowColor[1] = 0.140f; rowColor[2] = 0.088f; rowColor[3] = 0.45f;
+			rowColor[0] = 0.060f; rowColor[1] = 0.100f; rowColor[2] = 0.160f; rowColor[3] = 0.45f;
 		}
 		CG_FillRect( x + 1.0f, rowY, panelW - 2.0f, rowH, rowColor );
 		if ( isLocal ) CG_FillRect( x + 1.0f, rowY, 2.0f, rowH, accentColor );
@@ -399,7 +400,8 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 
 	panelColor[0] = 0.008f; panelColor[1] = 0.012f; panelColor[2] = 0.016f; panelColor[3] = 0.42f;
 	edgeColor[0] = 0.24f; edgeColor[1] = 0.34f; edgeColor[2] = 0.36f; edgeColor[3] = 0.52f;
-	accentColor[0] = 0.72f; accentColor[1] = 1.00f; accentColor[2] = 0.06f; accentColor[3] = 1.00f;
+	accentColor[0] = Q3RALLY_ACCENT_RED; accentColor[1] = Q3RALLY_ACCENT_GREEN;
+	accentColor[2] = Q3RALLY_ACCENT_BLUE; accentColor[3] = 1.00f;
 	mutedColor[0] = 0.47f; mutedColor[1] = 0.62f; mutedColor[2] = 0.61f; mutedColor[3] = 1.00f;
 	barBackColor[0] = 0.008f; barBackColor[1] = 0.012f; barBackColor[2] = 0.016f; barBackColor[3] = 0.72f;
 
@@ -454,7 +456,7 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 		rowColor[0] = 0.018f; rowColor[1] = 0.027f; rowColor[2] = 0.031f;
 		rowColor[3] = 0.28f;
 		if ( isLocal ) {
-			rowColor[0] = 0.060f; rowColor[1] = 0.140f; rowColor[2] = 0.088f; rowColor[3] = 0.45f;
+			rowColor[0] = 0.060f; rowColor[1] = 0.100f; rowColor[2] = 0.160f; rowColor[3] = 0.45f;
 		}
 		CG_FillRect( x + 1.0f, rowY, panelW - 2.0f, rowH, rowColor );
 		if ( isLocal ) CG_FillRect( x + 1.0f, rowY, 2.0f, rowH, accentColor );

@@ -10,10 +10,13 @@ Copyright (C) 2002-2026 Q3Rally Team
 #include "ui_rally_theme.h"
 
 int Frontend_TextWidth( const char *text, int style );
+int Frontend_TextVisualWidth( const char *text, int style );
 qhandle_t Frontend_BackgroundShader( void );
 void Frontend_DrawBackground( const float *scrimColor );
 void Frontend_DrawText( int x, int y, const char *text, int style,
                         const float *color );
+void Frontend_DrawTextScaled( int x, int y, const char *text, int style,
+                              float scale, const float *color );
 void Frontend_DrawPanel( int x, int y, int width, int height,
                          float alpha, int style );
 void Frontend_DrawCard( int x, int y, int width, int height,

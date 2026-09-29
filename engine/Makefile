@@ -2988,6 +2988,7 @@ $(B)/$(MISSIONPACK)/vm/qagame.qvm: $(MPGVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
 
 Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_main.o \
+  $(B)/$(BASEGAME)/ui/bg_achievements.o \
   $(B)/$(BASEGAME)/ui/bg_misc.o \
   $(B)/$(BASEGAME)/ui/bg_lib.o \
   $(B)/$(BASEGAME)/ui/ui_addbots.o \

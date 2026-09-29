@@ -310,7 +310,7 @@ static void MainMenu_DrawProfileStat( float heroX, float heroWidth,
                 Com_sprintf( value, sizeof( value ), "%d", stats->wins );
                 break;
         case 2:
-                label = "Races";
+                label = "Games";
                 Com_sprintf( value, sizeof( value ), "%d", stats->gamesPlayed );
                 break;
         case 3:

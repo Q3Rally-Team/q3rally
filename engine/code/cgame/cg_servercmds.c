@@ -83,11 +83,23 @@ CG_ParseScores
 =================
 */
 static void CG_ParseScores( void ) {
-	int		i, powerups;
+	int		i, powerups, availableScores;
 
 	cg.numScores = atoi( CG_Argv( 1 ) );
+	if ( cg.numScores < 0 ) {
+		cg.numScores = 0;
+	}
 	if ( cg.numScores > MAX_CLIENTS ) {
 		cg.numScores = MAX_CLIENTS;
+	}
+	availableScores = ( trap_Argc() - 6 ) / SCOREBOARD_FIELDS_PER_CLIENT;
+	if ( availableScores < 0 ) {
+		availableScores = 0;
+	}
+	if ( cg.numScores > availableScores ) {
+		CG_Printf( "^3CG_ParseScores: scoreboard says %d rows, but command contains only %d complete rows\n",
+			cg.numScores, availableScores );
+		cg.numScores = availableScores;
 	}
 
 	cg.teamScores[0] = atoi( CG_Argv( 2 ) );
@@ -132,7 +144,10 @@ cg.scores[i].kothHoldTimeMs = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 28
 // END
 
 		if ( cg.scores[i].client < 0 || cg.scores[i].client >= MAX_CLIENTS ) {
-			cg.scores[i].client = 0;
+			CG_Printf( "^3CG_ParseScores: dropping row %d with invalid client %d\n",
+				i, cg.scores[i].client );
+			cg.numScores = i;
+			break;
 		}
 		cgs.clientinfo[ cg.scores[i].client ].score = cg.scores[i].score;
 		cgs.clientinfo[ cg.scores[i].client ].powerups = powerups;
@@ -2111,6 +2126,11 @@ static void CG_ServerCommand( void ) {
 
 	if ( !strcmp( cmd, "introCamStart" ) ) {
 		CG_IntroCam_SetStartTime( atoi( CG_Argv( 1 ) ) );
+		return;
+	}
+
+	if ( !strcmp( cmd, "introCamSkip" ) ) {
+		CG_IntroCam_Skip();
 		return;
 	}
 // END

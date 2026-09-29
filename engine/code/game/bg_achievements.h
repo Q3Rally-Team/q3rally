@@ -8,6 +8,7 @@ typedef enum {
     BG_ACHIEVEMENT_ICON_DRIVEN = 0,
     BG_ACHIEVEMENT_ICON_KILLS,
     BG_ACHIEVEMENT_ICON_WINS,
+    BG_ACHIEVEMENT_ICON_SPRINT,
     BG_ACHIEVEMENT_ICON_FLAGS,
     BG_ACHIEVEMENT_ICON_FLAG_ASSISTS,
     BG_ACHIEVEMENT_ICON_FUEL,
@@ -63,6 +64,7 @@ extern const bgAchievementTierDef_t bg_perfectAchievementTiers[];
 
 extern const char *const bg_achievementMedalLockedPaths[BG_ACHIEVEMENT_ICON_COUNT];
 extern const char *const bg_achievementMedalUnlockedPaths[BG_ACHIEVEMENT_ICON_COUNT];
+extern const char *const bg_achievementMedalTierPaths[BG_ACHIEVEMENT_ICON_COUNT][BG_ACHIEVEMENT_MAX_TIERS];
 
 extern const bgAchievementCategoryDef_t bg_achievementCategories[BG_ACHIEVEMENT_CATEGORY_COUNT];
 

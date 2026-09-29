@@ -253,7 +253,6 @@ vmCvar_t	cg_obeliskRespawnDelay;
 
 // Q3Rally Code Start
 vmCvar_t	cg_metricUnits;
-vmCvar_t        cg_speedometerMode;
 vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
 vmCvar_t	cg_transmissionMode;
@@ -296,7 +295,6 @@ vmCvar_t	cg_ghostAlpha;
 vmCvar_t	cg_ghostSplitAudio;
 vmCvar_t	cg_useFuel;
 
-vmCvar_t        cg_fuelWarningLevel;
 vmCvar_t	cg_drawBotPaths;
 vmCvar_t	cg_jukeboxShuffle;
 vmCvar_t	cg_jukeboxRepeatMode;
@@ -390,7 +388,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
-        { &cg_speedometerMode, "cg_speedometerMode", "0", CVAR_ARCHIVE },
 	{ &cg_minSkidLength, "cg_minSkidLength", "20", CVAR_ARCHIVE },
 	{ &cg_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
 	{ &cg_drawMMap, "cg_drawMMap", "1", CVAR_ARCHIVE }, //TBB minimap - default on
@@ -441,7 +438,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_ghostSplitAudio, "cg_ghostSplitAudio", "1", CVAR_ARCHIVE },
         { &cg_useFuel, "g_useFuel", "1", CVAR_SERVERINFO },
 
-        { &cg_fuelWarningLevel, "cg_fuelWarningLevel", "10", CVAR_ARCHIVE },
 	{ &cg_drawBotPaths, "cg_drawBotPaths", "0", 0 },
 // END
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
@@ -1171,8 +1167,6 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.SMIceShader = trap_R_RegisterShader("gfx/skidmarks/ice" );
 
 	cgs.media.checkpointArrow = trap_R_RegisterModel("gfx/hud/arrow.md3");
-    cgs.media.gaugeImperial = trap_R_RegisterShaderNoMip("gfx/hud/gauge01" );
-    cgs.media.gaugeMetric = trap_R_RegisterShaderNoMip("gfx/hud/gauge_metric" );
 	cgs.media.derbyHudPanelShader = trap_R_RegisterShaderNoMip("gfx/hud/derby_panel");
 	cgs.media.derbyHudVehicleShader = trap_R_RegisterShaderNoMip("gfx/hud/derby_vehicle");
 	cgs.media.derbyHudWarningShader = trap_R_RegisterShaderNoMip("gfx/hud/derby_warning");

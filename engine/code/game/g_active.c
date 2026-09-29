@@ -517,10 +517,15 @@ static qboolean G_ClientShouldUseIntroCam( gentity_t *ent ) {
 }
 
 static void G_ApplyIntroInputLock( gentity_t *ent, usercmd_t *ucmd ) {
-	int secondsLeft;
-
 	if ( !ent || !ent->client || !ucmd || !G_ClientShouldUseIntroCam( ent ) ) {
 		return;
+	}
+
+	/* Fire skips this client's camera presentation only; the shared race
+	 * intro/countdown remains synchronized for everyone else. */
+	if ( ( ucmd->buttons & BUTTON_ATTACK ) && !ent->client->introCamSkipSent ) {
+		ent->client->introCamSkipSent = qtrue;
+		trap_SendServerCommand( ent - g_entities, "introCamSkip" );
 	}
 
 	ucmd->buttons &= ~( BUTTON_ATTACK | BUTTON_REARATTACK | BUTTON_USE_HOLDABLE );
@@ -528,16 +533,6 @@ static void G_ApplyIntroInputLock( gentity_t *ent, usercmd_t *ucmd ) {
 	ucmd->rightmove = 0;
 	ucmd->upmove = 0;
 	ucmd->weapon = WP_NONE;
-
-	if ( ent->updateTime <= level.time ) {
-		secondsLeft = ( level.raceIntroEndTime - level.time + 999 ) / 1000;
-		if ( secondsLeft < 1 ) {
-			secondsLeft = 1;
-		}
-		trap_SendServerCommand( ent - g_entities,
-			va( "cp \"Track Preview - Race starts in %i...\"", secondsLeft ) );
-		ent->updateTime = level.time + 1000;
-	}
 }
 
 static void G_DebugIntroCamGuard( gentity_t *ent, const char *context ) {
@@ -2041,6 +2036,8 @@ static qboolean G_IntroCam_DisableSequence( gentity_t *ent, const char *reason )
 	}
 
 	level.raceIntroHasSequence = qfalse;
+	level.raceIntroUsesGhostRoute = qfalse;
+	level.raceIntroGhostRoute[0] = '\0';
 	level.raceIntroFallback = qtrue;
 	level.raceIntroEndTime = 0;
 	level.raceState = RACE_STATE_COUNTDOWN;
@@ -2074,11 +2071,6 @@ static qboolean G_ApplyIntroCamSequence( gentity_t *ent ) {
 		return qfalse;
 	}
 
-	nodeCount = level.introCamNodeCount;
-	if ( nodeCount <= 0 || nodeCount > MAX_INTRO_CAM_NODES ) {
-		return G_IntroCam_DisableSequence( ent, "empty or out-of-range node count" );
-	}
-
 	if ( level.raceIntroDurationMs <= 0 ) {
 		return G_IntroCam_DisableSequence( ent, "invalid total duration" );
 	}
@@ -2091,6 +2083,17 @@ static qboolean G_ApplyIntroCamSequence( gentity_t *ent ) {
 		ent->updateTime = 0;
 		G_DebugRaceStateTransition( ent, "G_ApplyIntroCamSequence timeout", oldRaceState, level.raceState );
 		return qfalse;
+	}
+
+	/* The Ghost-route camera is evaluated locally by cgame. Keep the
+	   intro handover active without overwriting the client's camera state. */
+	if ( level.raceIntroUsesGhostRoute ) {
+		return qtrue;
+	}
+
+	nodeCount = level.introCamNodeCount;
+	if ( nodeCount <= 0 || nodeCount > MAX_INTRO_CAM_NODES ) {
+		return G_IntroCam_DisableSequence( ent, "empty or out-of-range node count" );
 	}
 
 	seqStartTime = level.raceIntroEndTime - level.raceIntroDurationMs;

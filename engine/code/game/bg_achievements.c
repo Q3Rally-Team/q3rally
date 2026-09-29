@@ -125,6 +125,7 @@ const char *const bg_achievementMedalLockedPaths[BG_ACHIEVEMENT_ICON_COUNT] = {
     "menu/achievements/medal_driven_locked",
     "menu/achievements/medal_kills_locked",
     "menu/achievements/medal_wins_locked",
+    "menu/achievements/medal_sprint_locked",
     "menu/achievements/medal_flags_locked",
     "menu/achievements/medal_assists_locked",
     "menu/achievements/medal_fuel_locked",
@@ -138,6 +139,7 @@ const char *const bg_achievementMedalUnlockedPaths[BG_ACHIEVEMENT_ICON_COUNT] = 
     "menu/achievements/medal_driven_unlocked",
     "menu/achievements/medal_kills_unlocked",
     "menu/achievements/medal_wins_unlocked",
+    "menu/achievements/medal_sprint_unlocked",
     "menu/achievements/medal_flags_unlocked",
     "menu/achievements/medal_assists_unlocked",
     "menu/achievements/medal_fuel_unlocked",
@@ -147,11 +149,80 @@ const char *const bg_achievementMedalUnlockedPaths[BG_ACHIEVEMENT_ICON_COUNT] = 
     "menu/achievements/medal_perfect_unlocked"
 };
 
+const char *const bg_achievementMedalTierPaths[BG_ACHIEVEMENT_ICON_COUNT][BG_ACHIEVEMENT_MAX_TIERS] = {
+    {
+        "menu/achievements/medal_driven_t1", "menu/achievements/medal_driven_t2",
+        "menu/achievements/medal_driven_t3", "menu/achievements/medal_driven_t4",
+        "menu/achievements/medal_driven_t5", "menu/achievements/medal_driven_t6",
+        "menu/achievements/medal_driven_t7", "menu/achievements/medal_driven_t8"
+    },
+    {
+        "menu/achievements/medal_kills_t1", "menu/achievements/medal_kills_t2",
+        "menu/achievements/medal_kills_t3", "menu/achievements/medal_kills_t4",
+        "menu/achievements/medal_kills_t5", "menu/achievements/medal_kills_t6",
+        "menu/achievements/medal_kills_t7", "menu/achievements/medal_kills_t8"
+    },
+    {
+        "menu/achievements/medal_wins_t1", "menu/achievements/medal_wins_t2",
+        "menu/achievements/medal_wins_t3", "menu/achievements/medal_wins_t4",
+        "menu/achievements/medal_wins_t5", "menu/achievements/medal_wins_t6",
+        "menu/achievements/medal_wins_t7", "menu/achievements/medal_wins_t8"
+    },
+    {
+        "menu/achievements/medal_sprint_t1", "menu/achievements/medal_sprint_t2",
+        "menu/achievements/medal_sprint_t3", "menu/achievements/medal_sprint_t4",
+        "menu/achievements/medal_sprint_t5", "menu/achievements/medal_sprint_t6",
+        "menu/achievements/medal_sprint_t7", "menu/achievements/medal_sprint_t8"
+    },
+    {
+        "menu/achievements/medal_flags_t1", "menu/achievements/medal_flags_t2",
+        "menu/achievements/medal_flags_t3", "menu/achievements/medal_flags_t4",
+        "menu/achievements/medal_flags_t5", "menu/achievements/medal_flags_t6",
+        "menu/achievements/medal_flags_t7", "menu/achievements/medal_flags_t8"
+    },
+    {
+        "menu/achievements/medal_assists_t1", "menu/achievements/medal_assists_t2",
+        "menu/achievements/medal_assists_t3", "menu/achievements/medal_assists_t4",
+        "menu/achievements/medal_assists_t5", "menu/achievements/medal_assists_t6",
+        "menu/achievements/medal_assists_t7", "menu/achievements/medal_assists_t8"
+    },
+    {
+        "menu/achievements/medal_fuel_t1", "menu/achievements/medal_fuel_t2",
+        "menu/achievements/medal_fuel_t3", "menu/achievements/medal_fuel_t4",
+        "menu/achievements/medal_fuel_t5", "menu/achievements/medal_fuel_t6",
+        "menu/achievements/medal_fuel_t7", "menu/achievements/medal_fuel_t8"
+    },
+    {
+        "menu/achievements/medal_accuracy_t1", "menu/achievements/medal_accuracy_t2",
+        "menu/achievements/medal_accuracy_t3", "menu/achievements/medal_accuracy_t4",
+        "menu/achievements/medal_accuracy_t5", "menu/achievements/medal_accuracy_t6",
+        "menu/achievements/medal_accuracy_t7", "menu/achievements/medal_accuracy_t8"
+    },
+    {
+        "menu/achievements/medal_excellent_t1", "menu/achievements/medal_excellent_t2",
+        "menu/achievements/medal_excellent_t3", "menu/achievements/medal_excellent_t4",
+        "menu/achievements/medal_excellent_t5", "menu/achievements/medal_excellent_t6",
+        "menu/achievements/medal_excellent_t7", "menu/achievements/medal_excellent_t8"
+    },
+    {
+        "menu/achievements/medal_impressive_t1", "menu/achievements/medal_impressive_t2",
+        "menu/achievements/medal_impressive_t3", "menu/achievements/medal_impressive_t4",
+        "menu/achievements/medal_impressive_t5", "menu/achievements/medal_impressive_t6",
+        "menu/achievements/medal_impressive_t7", "menu/achievements/medal_impressive_t8"
+    },
+    {
+        "menu/achievements/medal_perfect_t1", "menu/achievements/medal_perfect_t2",
+        "menu/achievements/medal_perfect_t3", "menu/achievements/medal_perfect_t4",
+        "menu/achievements/medal_perfect_t5", "menu/achievements/medal_perfect_t6",
+        "menu/achievements/medal_perfect_t7", "menu/achievements/medal_perfect_t8"
+    }
+};
+
 const bgAchievementCategoryDef_t bg_achievementCategories[BG_ACHIEVEMENT_CATEGORY_COUNT] = {
     { "Distance Driven", bg_distanceAchievementTiers, ARRAY_LEN( bg_distanceAchievementTiers ), BG_ACHIEVEMENT_ICON_DRIVEN },
     { "Kills", bg_killAchievementTiers, ARRAY_LEN( bg_killAchievementTiers ), BG_ACHIEVEMENT_ICON_KILLS },
     { "Races Won", bg_winAchievementTiers, ARRAY_LEN( bg_winAchievementTiers ), BG_ACHIEVEMENT_ICON_WINS },
-    { "Sprint Wins", bg_sprintWinAchievementTiers, ARRAY_LEN( bg_sprintWinAchievementTiers ), BG_ACHIEVEMENT_ICON_WINS },
+    { "Sprint Wins", bg_sprintWinAchievementTiers, ARRAY_LEN( bg_sprintWinAchievementTiers ), BG_ACHIEVEMENT_ICON_SPRINT },
     { "Flags Captured", bg_flagCaptureAchievementTiers, ARRAY_LEN( bg_flagCaptureAchievementTiers ), BG_ACHIEVEMENT_ICON_FLAGS },
     { "Flag Assists", bg_flagAssistAchievementTiers, ARRAY_LEN( bg_flagAssistAchievementTiers ), BG_ACHIEVEMENT_ICON_FLAG_ASSISTS },
     { "Fuel Consumed", bg_fuelAchievementTiers, ARRAY_LEN( bg_fuelAchievementTiers ), BG_ACHIEVEMENT_ICON_FUEL },

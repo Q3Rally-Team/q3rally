@@ -7,6 +7,8 @@ Copyright (C) 2002-2026 Q3Rally Team
 #ifndef UI_RALLY_THEME_H
 #define UI_RALLY_THEME_H
 
+#include "../qcommon/rally_colors.h"
+
 /* Shared Q3Rally UI theme for wizard/loading style surfaces and text. */
 
 #define UI_THEME_COLOR_PANEL_BG         { 0.07f, 0.08f, 0.12f, 0.98f }
@@ -19,7 +21,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define UI_THEME_COLOR_TEXT_HINT        { 0.60f, 0.66f, 0.77f, 1.00f }
 #define UI_THEME_COLOR_TEXT_MUTED       { 0.52f, 0.58f, 0.68f, 1.00f }
 
-#define UI_THEME_COLOR_ACCENT           { 0.50f, 0.70f, 1.00f, 1.00f }
+#define UI_THEME_COLOR_ACCENT           Q3RALLY_ACCENT_COLOR
 #define UI_THEME_COLOR_SUCCESS          { 0.45f, 0.88f, 0.60f, 1.00f }
 #define UI_THEME_COLOR_ERROR            { 1.00f, 0.45f, 0.45f, 1.00f }
 #define UI_THEME_COLOR_WARNING          { 0.90f, 0.78f, 0.33f, 1.00f }
@@ -46,16 +48,17 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define UI_FRONTEND_COLOR_PANEL        { 0.025f, 0.032f, 0.040f, 0.94f }
 #define UI_FRONTEND_COLOR_PANEL_ALT    { 0.055f, 0.065f, 0.072f, 0.88f }
 #define UI_FRONTEND_COLOR_HERO_OVERLAY { 0.025f, 0.032f, 0.040f, 0.60f }
-#define UI_FRONTEND_COLOR_BORDER       { 0.18f, 0.24f, 0.23f, 0.36f }
-#define UI_FRONTEND_COLOR_ACCENT       { 0.72f, 1.00f, 0.06f, 1.00f }
+#define UI_FRONTEND_COLOR_BORDER       { 0.18f, 0.24f, 0.31f, 0.36f }
+#define UI_FRONTEND_COLOR_ACCENT       Q3RALLY_ACCENT_COLOR
 #define UI_FRONTEND_COLOR_TEXT         { 0.92f, 0.96f, 0.95f, 1.00f }
 #define UI_FRONTEND_COLOR_MUTED        { 0.44f, 0.51f, 0.51f, 1.00f }
-#define UI_FRONTEND_COLOR_FOCUS_BG     { 0.10f, 0.18f, 0.12f, 0.72f }
+#define UI_FRONTEND_COLOR_FOCUS_BG     { 0.08f, 0.13f, 0.20f, 0.72f }
 #define UI_FRONTEND_COLOR_STATUS       { 0.96f, 0.42f, 0.12f, 1.00f }
 #define UI_FRONTEND_COLOR_SHADOW       { 0.00f, 0.00f, 0.00f, 0.18f }
 #define UI_FRONTEND_COLOR_PROGRESS     { 0.11f, 0.14f, 0.15f, 0.82f }
 
 /* Shared layout tokens. The UI still renders in the 640x480 virtual space. */
+#define UI_FRONTEND_SMALL_GLYPH_SIZE  8
 #define UI_FRONTEND_SPACE_XS           4
 #define UI_FRONTEND_SPACE_SM           8
 #define UI_FRONTEND_SPACE_MD           16

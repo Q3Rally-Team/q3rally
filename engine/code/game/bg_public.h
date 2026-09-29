@@ -110,7 +110,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CS_SIGILSTATUS                  30
 #define CS_TRACKLENGTH                  31
 #define CS_KOTHSTATUS                   32  // "owner contested capture_pct [x y z]" for KOTH hill state
-#define CS_INTRO_CAM                    33  // intro camera sequence: node data for client-side evaluation
+#define CS_INTRO_CAM                    33  // intro camera node sequence or packaged Ghost route reference
 // Q3Rally Code END
 
 #define CS_MODELS                               34

@@ -429,76 +429,6 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 }
 
 /*
-====================
-CG_DrawStatusBarHead
-====================
-*/
-#ifndef MISSIONPACK
-#if 0 // ZTM: Not used by Q3Rally
-static void CG_DrawStatusBarHead( float x ) {
-	vec3_t		angles;
-	float		size, stretch;
-	float		frac;
-
-	VectorClear( angles );
-
-	if ( cg.damageTime && cg.time - cg.damageTime < DAMAGE_TIME ) {
-		frac = (float)(cg.time - cg.damageTime ) / DAMAGE_TIME;
-		size = ICON_SIZE * 1.25 * ( 1.5 - frac * 0.5 );
-
-		stretch = size - ICON_SIZE * 1.25;
-		// kick in the direction of damage
-		x -= stretch * 0.5 + cg.damageX * stretch * 0.5;
-
-		cg.headStartYaw = 180 + cg.damageX * 45;
-
-		cg.headEndYaw = 180 + 20 * cos( crandom()*M_PI );
-		cg.headEndPitch = 5 * cos( crandom()*M_PI );
-
-		cg.headStartTime = cg.time;
-		cg.headEndTime = cg.time + 100 + random() * 2000;
-	} else {
-		if ( cg.time >= cg.headEndTime ) {
-			// select a new head angle
-			cg.headStartYaw = cg.headEndYaw;
-			cg.headStartPitch = cg.headEndPitch;
-			cg.headStartTime = cg.headEndTime;
-			cg.headEndTime = cg.time + 100 + random() * 2000;
-
-			cg.headEndYaw = 180 + 20 * cos( crandom()*M_PI );
-			cg.headEndPitch = 5 * cos( crandom()*M_PI );
-		}
-
-		size = ICON_SIZE * 1.25;
-	}
-
-	// if the server was frozen for a while we may have a bad head start time
-	if ( cg.headStartTime > cg.time ) {
-		cg.headStartTime = cg.time;
-	}
-
-	frac = ( cg.time - cg.headStartTime ) / (float)( cg.headEndTime - cg.headStartTime );
-	frac = frac * frac * ( 3 - 2 * frac );
-	angles[YAW] = cg.headStartYaw + ( cg.headEndYaw - cg.headStartYaw ) * frac;
-	angles[PITCH] = cg.headStartPitch + ( cg.headEndPitch - cg.headStartPitch ) * frac;
-
-}
-#endif
-#endif // MISSIONPACK
-
-/*
-====================
-CG_DrawStatusBarFlag
-====================
-*/
-#ifndef MISSIONPACK
-static void CG_DrawStatusBarFlag( float x, int team ) {
-	int iconSize = ICON_SIZE*cg_statusScale.value;
-	CG_DrawFlagModel( x+(1.0f-cg_statusScale.value)*ICON_SIZE*0.5f, 480 - iconSize, iconSize, iconSize, team, qfalse );
-}
-#endif // MISSIONPACK
-
-/*
 =====================
 CG_DrawTeamBackground
 =====================
@@ -610,7 +540,7 @@ static void CG_DrawKOTH_RespawnWave_Internal( void ) {
 	char msg[32];
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.78f };
 	vec4_t lineColor = { 0.24f, 0.34f, 0.36f, 0.85f };
-	vec4_t accentColor = { 0.72f, 1.00f, 0.06f, 1.00f };
+	vec4_t accentColor = Q3RALLY_ACCENT_COLOR;
 
 	if ( cgs.gametype != GT_KOTH ) return;
 	if ( !cg_hudShowKothRespawnWave.integer ) return;
@@ -677,253 +607,7 @@ static void CG_DrawKOTH_LossFlash( void ) {
 }
 // Q3Rally Code END - KOTH
 
-/*
-===============
-CG_DrawSigilHUD
-===============
-*/
-
-void CG_DrawSigilHUD( void ) {
-
-                      int i, x=440, y=0;
-                      for (i=0; i<MAX_SIGILS; i++) {
-                      switch ( cgs.sigil[i] )
-                      
-                {
-
-                case SIGIL_ISRED:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.redsigilShader );
-                    break;
-        
-                case SIGIL_ISBLUE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.bluesigilShader );
-                    break;
-                  
-                case SIGIL_ISGREEN:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.greensigilShader );
-                    break;
-                    
-                case SIGIL_ISYELLOW:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.yellowsigilShader );
-                    break;
-                
-                case SIGIL_ISWHITE:
-                    CG_DrawPic( x, y, 18, 18, cgs.media.sigilShader );
-                    break;
-                    
-                case SIGIL_NONE:
-                    break;
-                }
-                
-              x+= 19;
-            }
-}
-
-/*
-================
-CG_DrawStatusBar
-================
-*/
 #ifndef MISSIONPACK
-#if 0
-static void CG_DrawStatusBar( void ) {
-	int			color;
-	centity_t	*cent;
-	playerState_t	*ps;
-	int			value;
-	vec4_t		hcolor;
-	vec3_t		angles;
-	vec3_t		origin;
-    float		scale, iconSize;
-
-	static float colors[4][4] = { 
-//		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
-		{ 1.0f, 0.69f, 0.0f, 1.0f },    // normal
-		{ 1.0f, 0.2f, 0.2f, 1.0f },     // low health
-		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
-		{ 1.0f, 1.0f, 1.0f, 1.0f } };   // health > 100
-
-	if ( cg_drawStatus.integer == 0 ) {
-		return;
-	}
-
-	CG_SetScreenPlacement(PLACE_CENTER, PLACE_BOTTOM);
-
-	scale = Com_Clamp( 0.1f, 2, cg_statusScale.value);
-
-	iconSize = scale * ICON_SIZE;
-
-	// draw the team background
-	CG_DrawTeamBackground( 0, 480 - 60*scale, 640, 60*scale, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
-
-	cent = &cg_entities[cg.snap->ps.clientNum];
-	ps = &cg.snap->ps;
-
-	VectorClear( angles );
-
-	// draw any 3D icons first, so the changes back to 2D are minimized
-	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
-		origin[0] = 70;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480-iconSize, iconSize, iconSize,
-					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
-	}
-
-		if ( cg_drawStatusHead.integer == 2 ) {
-		origin[0] = 60;
-		origin[1] = 0;
-		origin[2] = -5;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 4096.0;
-		CG_DrawHealthModel( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480-iconSize, iconSize, iconSize,
-					   cg_items[ 6 /*item_health_large*/].models[0], 0, cg_items[ 6 /*item_health_large*/].models[1], origin, angles, 0 );
-
-		// if we didn't draw a 3D icon, draw a 2D icon for health
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480 - iconSize, iconSize, iconSize, cg_items[6/*item_health_large*/].icon );
-		}
-	}
-	else if ( cg_drawStatusHead.integer == 1 )
-		CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
-
-	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
-		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
-	} else if( cg.predictedPlayerState.powerups[PW_BLUEFLAG] ) {
-		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_BLUE );
-	} else if( cg.predictedPlayerState.powerups[PW_NEUTRALFLAG] ) {
-		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
-	}
-
-	if ( ps->stats[ STAT_ARMOR ] ) {
-		origin[0] = 90;
-		origin[1] = 0;
-		origin[2] = -10;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-        CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480 - iconSize, iconSize, iconSize,
-					   cgs.media.armorModel, 0, origin, angles );
-	}
-	//
-	// ammo
-	//
-	if ( cent->currentState.weapon ) {
-		value = ps->ammo[cent->currentState.weapon];
-		if ( value > -1 ) {
-			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-
-				&& (cg.predictedPlayerState.weaponTime & NORMAL_WEAPON_TIME_MASK) > 100 ) {
-
-				// draw as dark grey when reloading
-				color = 2;	// dark grey
-			} else {
-				if ( value >= 0 ) {
-					color = 0;	// green
-				} else {
-					color = 1;	// red
-				}
-			}
-			trap_R_SetColor( colors[color] );
-			
-			CG_DrawField (0, 432, 3, value);
-			trap_R_SetColor( NULL );
-
-			// if we didn't draw a 3D icon, draw a 2D icon for ammo
-			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-				qhandle_t	icon;
-
-				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
-				if ( icon ) {
-					CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480 - iconSize, iconSize, iconSize, icon );
-				}
-			}
-		}
-
-		// draw green
-		if (cgs.gametype == GT_CTF4) {
-			color[0] = 0.0f;
-			color[1] = 1.0f;
-			color[2] = 0.0f;
-			color[3] = 0.33f;
-			s = va( "%2i", s3 );
-			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-			x -= w;
-			CG_FillRect( x+1, y+1, w-2, 16, color );
-			if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_GREEN ) {
-				CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-			}
-			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-
-			if( cgs.greenflag >= 0 && cgs.greenflag <= 2 ) {
-				item = BG_FindItemForPowerup( PW_GREENFLAG );
-				if (item) {
-					y1 = y + TINYCHAR_HEIGHT + 8;
-					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.greenFlagShader[cgs.greenflag] );
-				}
-			}
-		}
-
-		// draw yellow
-		if (cgs.gametype == GT_CTF4) {
-			color[0] = 1.0f;
-			color[1] = 1.0f;
-			color[2] = 0.0f;
-			color[3] = 0.33f;
-			s = va( "%2i", s4 );
-			w = CG_DrawStrlen( s ) * TINYCHAR_WIDTH + 8;
-			x -= w;
-			CG_FillRect( x+1, y+1, w-2, 16, color );
-			if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_YELLOW ) {
-				CG_DrawPic( x+1, y+1, w-2, 16, cgs.media.selectShader );
-			}
-			CG_DrawTinyDigitalString( x + 4, y+4, s, 1.0F);
-
-			if( cgs.yellowflag >= 0 && cgs.yellowflag <= 2 ) {
-				item = BG_FindItemForPowerup( PW_YELLOWFLAG );
-				if (item) {
-					y1 = y + TINYCHAR_HEIGHT + 8;
-					CG_DrawPic( x+1, y1+1, w-2, 16, cgs.media.yellowFlagShader[cgs.yellowflag] );
-				}
-			}
-		}
-	}
-
-	//
-	// health
-	//
-	value = ps->stats[STAT_HEALTH];
-	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );		// white
-	} else if (value > 25) {
-		trap_R_SetColor( colors[0] );	// green
-	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;	// flash
-		trap_R_SetColor( colors[color] );
-	} else {
-		trap_R_SetColor( colors[1] );	// red
-	}
-
-	// stretch the health up when taking damage
-	CG_DrawField ( 185, 432, 3, value);
-	CG_ColorForHealth( hcolor );
-	trap_R_SetColor( hcolor );
-
-
-	//
-	// armor
-	//
-	value = ps->stats[STAT_ARMOR];
-	if (value > 0 ) {
-		trap_R_SetColor( colors[0] );
-		CG_DrawField (370, 432, 3, value);
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 480 - iconSize, iconSize, iconSize, cgs.media.armorIcon );
-		}
-
-	}
-}
-#endif
 
 
 /*
@@ -1096,6 +780,22 @@ static const char *CG_GetRewardToastLabel( qhandle_t icon ) {
 	return "MEDAL EARNED";
 }
 
+static qhandle_t CG_GetAchievementTierMedal( bgAchievementIcon_t icon, int tierIndex ) {
+	qhandle_t *handle;
+
+	if ( icon < 0 || icon >= BG_ACHIEVEMENT_ICON_COUNT ||
+	     tierIndex < 0 || tierIndex >= BG_ACHIEVEMENT_MAX_TIERS ) {
+		return 0;
+	}
+
+	handle = &cgs.media.achievementMedalTiers[icon][tierIndex];
+	if ( !*handle ) {
+		*handle = trap_R_RegisterShaderNoMip( bg_achievementMedalTierPaths[icon][tierIndex] );
+	}
+
+	return *handle;
+}
+
 static void CG_DrawHudToast( void ) {
 	cgHudToast_t *toast;
 	gitem_t *item;
@@ -1117,7 +817,8 @@ static void CG_DrawHudToast( void ) {
 	char message[128];
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.76f };
 	vec4_t borderColor = { 0.24f, 0.34f, 0.36f, 0.78f };
-	vec4_t accentColor = { 0.58f, 0.76f, 0.12f, 0.78f };
+	vec4_t accentColor = { Q3RALLY_ACCENT_RED, Q3RALLY_ACCENT_GREEN,
+	                        Q3RALLY_ACCENT_BLUE, 0.78f };
 	vec4_t textColor = { 0.88f, 0.95f, 0.97f, 1.00f };
 	vec4_t iconColor = { 1.00f, 1.00f, 1.00f, 1.00f };
 
@@ -1191,7 +892,10 @@ static void CG_DrawHudToast( void ) {
 		if ( category->icon >= 0 && category->icon < BG_ACHIEVEMENT_ICON_COUNT ) {
 			icon = ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ?
 			       cgs.media.achievementMedalLocked[category->icon] :
-			       cgs.media.achievementMedalUnlocked[category->icon];
+			       CG_GetAchievementTierMedal( category->icon, toast->achievementTier );
+			if ( !icon ) {
+				icon = cgs.media.achievementMedalUnlocked[category->icon];
+			}
 		}
 		break;
 	case CG_HUD_TOAST_RANK:
@@ -1262,7 +966,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	vec4_t lineColor = { 0.300f, 0.390f, 0.430f, 0.78f };
 	vec4_t healthDividerColor = { 0.300f, 0.390f, 0.430f, 0.42f };
 	vec4_t mutedColor = { 0.480f, 0.610f, 0.650f, 1.00f };
-	vec4_t accentColor = { 0.720f, 1.000f, 0.060f, 1.00f };
+	vec4_t accentColor = Q3RALLY_ACCENT_COLOR;
 	vec4_t blueColor = { 0.380f, 0.650f, 1.000f, 1.00f };
 	vec4_t dangerColor = { 1.000f, 0.150f, 0.080f, 1.00f };
 	vec4_t healthColor;
@@ -2030,412 +1734,15 @@ static void CG_DrawRallyTelemetryHud( void ) {
 }
 
 static void CG_DrawRallyStatusBar( void ) {
-	int			color;
-	centity_t	*cent;
-	playerState_t	*ps;
-	int			value;
-	vec4_t		hcolor;
-	vec3_t		angles;
-	vec3_t		origin;
-	qhandle_t	healthModel;
-	vec4_t		bg_color;
-	vec4_t		statusPanelColor;
-	vec4_t		statusCellColor;
-	vec4_t		statusAccentColor;
-	int			weapon, i;
-
 	if ( !cg_drawStatus.integer ) {
 		return;
 	}
 
 	CG_DrawRallyTelemetryHud();
-	return;
 
-#if 0 /* legacy card status bar replaced by CG_DrawRallyTelemetryHud */
-	CG_SetScreenPlacement(PLACE_CENTER, PLACE_BOTTOM);
-
-// draw the dtf sigils
-
-    if ( cgs.gametype == GT_DOMINATION )
-
-    CG_DrawSigilHUD();
-
-	cent = &cg_entities[cg.snap->ps.clientNum];
-	ps = &cg.snap->ps;
-
-	VectorClear( angles );
-
-	statusPanelColor[0] = 0.018f;
-	statusPanelColor[1] = 0.025f;
-	statusPanelColor[2] = 0.030f;
-	statusPanelColor[3] = 0.86f;
-	statusCellColor[0] = 0.050f;
-	statusCellColor[1] = 0.070f;
-	statusCellColor[2] = 0.070f;
-	statusCellColor[3] = 0.78f;
-
-	switch (cgs.clientinfo[cg.snap->ps.clientNum].team){
-	case TEAM_RED:
-		Vector4Copy(colorRed, statusAccentColor);
-		break;
-
-	case TEAM_BLUE:
-		Vector4Copy(colorBlue, statusAccentColor);
-		break;
-
-	case TEAM_GREEN:
-		Vector4Copy(colorGreen, statusAccentColor);
-		break;
-
-	case TEAM_YELLOW:
-		Vector4Copy(colorYellow, statusAccentColor);
-		break;
-	
-	default:
-		statusAccentColor[0] = 0.720f;
-		statusAccentColor[1] = 1.000f;
-		statusAccentColor[2] = 0.060f;
-		statusAccentColor[3] = 1.00f;
-	}
-
-	CG_FillRect( 16, 440, 386, 34, statusPanelColor );
-	CG_DrawRect( 16, 440, 386, 34, 1.0f, statusAccentColor );
-	CG_FillRect( 16, 440, 386, 2, statusAccentColor );
-	CG_FillRect( 20, 446, 90, 24, statusCellColor );
-	CG_FillRect( 115, 446, 90, 24, statusCellColor );
-	CG_FillRect( 210, 446, 90, 24, statusCellColor );
-	CG_FillRect( 305, 446, 90, 24, statusCellColor );
-	Vector4Copy( statusCellColor, bg_color );
-
-	// draw ammo background
-	value = ps->ammo[cent->currentState.weapon];
-	if ( cent->currentState.weapon && value > -1 )
-		CG_FillRect( 20, 476 - 30, 90, 24, bg_color );
-
-	// health background
-	   CG_FillRect( 210, 476 - 30, 90, 24, bg_color );
-
-       // armor background
-       if ( ps->stats[ STAT_ARMOR ] )
-
-       CG_FillRect( 305, 476 - 30, 90, 24, bg_color );
-
-       // rearammo background
-       weapon = 0;
-for (i = RWP_SMOKE; i < WP_NUM_WEAPONS; i++){
-if (ps->stats[STAT_WEAPONS] & ( 1u << i )){
-			if (ps->ammo[ i ]){
-				weapon = i;
-				break;
-			}
-		}
-	}
-
-	if ( weapon )
-		CG_FillRect( 115, 476 - 30, 90, 24, bg_color );
-
-	// draw any 3D icons now, so the changes back to 2D are minimized
-	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
-		origin[0] = 70;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 26, 476 - 28, 19, 19,
-					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
-	}
-
-	// Replace head with '+' sign.
-	VectorClear( angles );
-	if (ps->stats[STAT_HEALTH] < 25)
-		healthModel = trap_R_RegisterModel( "models/powerups/health/large_cross.md3" );
-	else if (ps->stats[STAT_HEALTH] < 50)
-		healthModel = trap_R_RegisterModel( "models/powerups/health/medium_cross.md3" );
-	else
-		healthModel = trap_R_RegisterModel( "models/powerups/health/small_cross.md3" );
-
-	if ( healthModel ) {
-		origin[0] = 68;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 212, 476 - 26, 19, 19,
-					   healthModel, 0, origin, angles );
-	}
-
-	CG_DrawRallyPowerups( 476 );
-
-	if (cg.predictedPlayerState.powerups[PW_REDFLAG])
-		CG_DrawStatusBarFlag( 495, TEAM_RED);
-	else if (cg.predictedPlayerState.powerups[PW_BLUEFLAG])
-		CG_DrawStatusBarFlag( 495, TEAM_BLUE);
-	else if (cg.predictedPlayerState.powerups[PW_GREENFLAG])
-		CG_DrawStatusBarFlag( 495, TEAM_GREEN);
-	else if (cg.predictedPlayerState.powerups[PW_YELLOWFLAG])
-		CG_DrawStatusBarFlag( 495, TEAM_YELLOW);
-	else if (cg_entities[cg.snap->ps.clientNum].finishRaceTime &&
-		cg_entities[cg.snap->ps.clientNum].currentPosition == 1){
-
-		CG_DrawStatusBarFlag( 495, 15);
-	}
-
-	if ( ps->stats[ STAT_ARMOR ] ) {
-		origin[0] = 45;
-		origin[1] = 0;
-		origin[2] = -10;
-		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-//		CG_Draw3DModel( 196, 476 - 64, 26, 26,
-        CG_Draw3DModel( 311, 476 - 28, 19, 19,
-					   cgs.media.armorModel, 0, origin, angles );
-	}
-
-
-	//
-	// Draw numbers and 2D icons now
-	//
-	CG_DrawFrontendString( 48, 450, "AMMO",
-	                       UI_SMALLFONT | UI_DROPSHADOW, 1.0f, colorWhite );
-	CG_DrawFrontendString( 143, 450, "REAR",
-	                       UI_SMALLFONT | UI_DROPSHADOW, 1.0f, colorWhite );
-	CG_DrawFrontendString( 238, 450, "HEALTH",
-	                       UI_SMALLFONT | UI_DROPSHADOW, 1.0f, colorWhite );
-	CG_DrawFrontendString( 333, 450, "ARMOR",
-	                       UI_SMALLFONT | UI_DROPSHADOW, 1.0f, colorWhite );
-
-	//
-	// ammo
-	//
-	if ( cent->currentState.weapon ) {
-		value = ps->ammo[cent->currentState.weapon];
-		if ( value > -1 ) {
-			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-				&& (cg.predictedPlayerState.weaponTime & NORMAL_WEAPON_TIME_MASK) > 100 ) {
-				// draw as dark grey when reloading
-				color = 2;	// dark grey
-			} else {
-				if ( value >= 0 ) {
-					color = 0;	// green
-				} else {
-					color = 1;	// red
-				}
-			}
-			trap_R_SetColor( colors[color] );
-			
-			CG_DrawFrontendString( 102, 450, va("%i", value),
-			                       UI_RIGHT | UI_SMALLFONT | UI_DROPSHADOW,
-			                       1.0f, colors[color] );
-			trap_R_SetColor( NULL );
-
-			// if we didn't draw a 3D icon, draw a 2D icon for ammo
-			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-				qhandle_t	icon;
-
-				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
-				if ( icon ) {
-					CG_DrawPic( 10, 476 - 28, 26, 26, icon );
-				}
-			}
-		}
-	}
-
-
-	//
-	// rear ammo
-	//
-	if ( weapon && cg_weapons[ weapon ].weaponModel ) {
-		origin[0] = 70;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 270 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( 120, 476 - 28, 19, 19,
-					   cg_weapons[ weapon ].weaponModel, 0, origin, angles );
-	}
-
-	if ( weapon ) {
-		value = ps->ammo[weapon];
-		if ( value > -1 ) {
-			if ( cg.predictedPlayerState.weaponstate == WEAPON_REARFIRING
-				&& ((cg.predictedPlayerState.weaponTime & REAR_WEAPON_TIME_MASK) >> 16) > 100 ) {
-				// draw as dark grey when reloading
-				color = 2;	// dark grey
-			} else {
-				if ( value >= 0 ) {
-					color = 0;	// green
-				} else {
-					color = 1;	// red
-				}
-			}
-			trap_R_SetColor( colors[color] );
-			
-			CG_DrawFrontendString( 197, 450, va("%i", value),
-			                       UI_RIGHT | UI_SMALLFONT | UI_DROPSHADOW,
-			                       1.0f, colors[color] );
-			trap_R_SetColor( NULL );
-
-			// if we didn't draw a 3D icon, draw a 2D icon for ammo
-			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-				qhandle_t	icon;
-
-				icon = cg_weapons[ weapon ].weaponIcon;
-				if ( icon ) {
-					CG_DrawPic( 6, 480 - 67, 26, 26, icon );
-				}
-			}
-		}
-	}
-
-
-	//
-	// health
-	//
-	value = ps->stats[STAT_HEALTH];
-	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );		// white
-	} else if (value > 25) {
-		trap_R_SetColor( colors[0] );	// green
-	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;	// flash
-		trap_R_SetColor( colors[color] );
-	} else {
-		trap_R_SetColor( colors[1] );	// red
-	}
-
-	// stretch the health up when taking damage
-	CG_ColorForHealth( hcolor );
-	trap_R_SetColor( hcolor );
-	CG_DrawFrontendString( 292, 450, va("%i", value),
-	                       UI_RIGHT | UI_SMALLFONT | UI_DROPSHADOW,
-	                       1.0f, hcolor );
-
-
-	//
-	// armor
-	//
-	value = ps->stats[STAT_ARMOR];
-	if (value > 0 ) {
-		trap_R_SetColor( colors[0] );
-//		CG_DrawField ( 242, 476 - 64, 3, value);
-		CG_DrawFrontendString( 387, 450, va("%i", value),
-		                       UI_RIGHT | UI_SMALLFONT | UI_DROPSHADOW,
-		                       1.0f, colors[0] );
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 196, 476 - 64, 26, 26, cgs.media.armorIcon );
-		}
-	}
-}
-#endif
 }
 #endif
 
-/*
-================
-CG_DrawPowerups
-================
-
-#ifndef MISSIONPACK
-#if 0 // ZTM: Not used by Q3Rally
-static float CG_DrawPowerups( float y ) {
-	int		sorted[MAX_POWERUPS];
-	int		sortedTime[MAX_POWERUPS];
-	int		i, j, k;
-	int		active;
-	playerState_t	*ps;
-	int		t;
-	gitem_t	*item;
-	int		x;
-	int		color;
-	float	size;
-	float	f;
-	static float colors[2][4] = { 
-    { 0.2f, 1.0f, 0.2f, 1.0f } , 
-    { 1.0f, 0.2f, 0.2f, 1.0f } 
-  };
-
-	ps = &cg.snap->ps;
-
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		return y;
-	}
-
-	// sort the list by time remaining
-	active = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( !ps->powerups[ i ] ) {
-			continue;
-		}
-
-		// ZOID--don't draw if the power up has unlimited time
-		// This is true of the CTF flags
-		if ( ps->powerups[ i ] == INT_MAX ) {
-			continue;
-		}
-
-		t = ps->powerups[ i ] - cg.time;
-		if ( t <= 0 ) {
-			continue;
-		}
-
-		// insert into the list
-		for ( j = 0 ; j < active ; j++ ) {
-			if ( sortedTime[j] >= t ) {
-				for ( k = active - 1 ; k >= j ; k-- ) {
-					sorted[k+1] = sorted[k];
-					sortedTime[k+1] = sortedTime[k];
-				}
-				break;
-			}
-		}
-		sorted[j] = i;
-		sortedTime[j] = t;
-		active++;
-	}
-
-	// draw the icons and timers
-	x = 640 - ICON_SIZE - CHAR_WIDTH * 2;
-	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
-
-    if (item) {
-
-		  color = 1;
-
-		  y -= ICON_SIZE;
-
-		  trap_R_SetColor( colors[color] );
-		  CG_DrawField( x, y, 2, sortedTime[ i ] / 1000 );
-
-		  t = ps->powerups[ sorted[i] ];
-		  if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
-			  trap_R_SetColor( NULL );
-		  } else {
-			  vec4_t	modulate;
-
-			  f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
-			  f -= (int)f;
-			  modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
-			  trap_R_SetColor( modulate );
-		  }
-
-		  if ( cg.powerupActive == sorted[i] && 
-			  cg.time - cg.powerupTime < PULSE_TIME ) {
-			  f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
-			  size = ICON_SIZE * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
-		  } else {
-			  size = ICON_SIZE;
-		  }
-
-		  CG_DrawPic( 640 - size, y + ICON_SIZE / 2 - size / 2, 
-			  size, size, trap_R_RegisterShader( item->icon ) );
-    }
-	}
-	trap_R_SetColor( NULL );
-
-	return y;
-}
-#endif
-
-*/
 
 /*
 ====================
@@ -2751,13 +2058,15 @@ CG_DrawFPS
 #define	FPS_FRAMES	4
 static float CG_DrawFPS( float y ) {
 	char		*s;
-	int			w;
 	static int	previousTimes[FPS_FRAMES];
 	static int	index;
 	int		i, total;
 	int		fps;
 	static	int	previous;
 	int		t, frameTime;
+	screenPlacement_e savedHorizontalPlacement;
+	screenPlacement_e savedVerticalPlacement;
+	vec4_t fpsColor = { 0.480f, 0.610f, 0.650f, 0.90f };
 
 	// don't use serverTime, because that will be drifting to
 	// correct for internet lag changes, timescales, timedemos, etc
@@ -2778,10 +2087,15 @@ static float CG_DrawFPS( float y ) {
 		}
 		fps = 1000 * FPS_FRAMES / total;
 
-		s = va( "%ifps", fps );
-		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-
-		CG_DrawBigString( 621 - w, 355 - 25 + 2, s, 1.0F );
+		s = va( "FPS %i", fps );
+		savedHorizontalPlacement = CG_GetScreenHorizontalPlacement();
+		savedVerticalPlacement = CG_GetScreenVerticalPlacement();
+		/* Keep the small readout in the upper-right margin, above the driver
+		 * order panel, and clear of the bottom telemetry strip. */
+		CG_SetScreenPlacement( PLACE_RIGHT, PLACE_TOP );
+		CG_DrawIngameString( 632, 0, s, UI_SMALLFONT | UI_RIGHT,
+		                     0.42f, fpsColor );
+		CG_SetScreenPlacement( savedHorizontalPlacement, savedVerticalPlacement );
 	}
 
 	return y + BIGCHAR_HEIGHT + 4;
@@ -3327,8 +2641,6 @@ static void CG_DrawLowerRight( void ) {
 	if ( isRaceObserver( cg.snap->ps.clientNum ) )
 		return;
 
-	y = CG_DrawLowerRightHUD( y );
-
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 2 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
@@ -3493,7 +2805,8 @@ static void CG_DrawHoldableItem( void ) {
 	screenPlacement_e savedHorizontalPlacement;
 	screenPlacement_e savedVerticalPlacement;
 	vec4_t panelColor = { 0.008f, 0.012f, 0.016f, 0.50f };
-	vec4_t accentColor = { 0.58f, 0.76f, 0.12f, 0.78f };
+	vec4_t accentColor = { Q3RALLY_ACCENT_RED, Q3RALLY_ACCENT_GREEN,
+	                        Q3RALLY_ACCENT_BLUE, 0.78f };
 	vec4_t useColor = { 0.650f, 0.780f, 0.810f, 0.90f };
 
 	value = cg.snap->ps.stats[STAT_HOLDABLE_ITEM];
@@ -3526,224 +2839,8 @@ static void CG_DrawHoldableItem( void ) {
 }
 #endif // MISSIONPACK
 
-#ifdef MISSIONPACK
-/*
-========================
-CG_DrawPersistantPowerup
-========================
-*/
-#if 0 // sos001208 - DEAD
-static void CG_DrawPersistantPowerup( void ) { 
-	int		value;
-
-    CG_SetScreenPlacement(PLACE_RIGHT, PLACE_CENTER);
-
-	value = cg.snap->ps.stats[STAT_PERSISTANT_POWERUP];
-	if ( value ) {
-		CG_RegisterItemVisuals( value );
-		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2 - ICON_SIZE, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
-	}
-}
-#endif
-#endif // MISSIONPACK
 
 
-#if 0 /* Legacy center-frame banners; all announcements use the HUD toast lane. */
-static void CG_ShiftAchievementQueue( void ) {
-    int i;
-
-    if ( cg.achievementQueueCount <= 0 ) {
-        cg.achievementQueueCount = 0;
-        return;
-    }
-
-    for ( i = 1; i < cg.achievementQueueCount; ++i ) {
-        cg.achievementQueue[i - 1] = cg.achievementQueue[i];
-    }
-
-    cg.achievementQueueCount--;
-}
-
-static void CG_ShiftRankQueue( void ) {
-    int i;
-
-    if ( cg.rankQueueCount <= 0 ) {
-        cg.rankQueueCount = 0;
-        return;
-    }
-
-    for ( i = 1; i < cg.rankQueueCount; ++i ) {
-        cg.rankQueue[i - 1] = cg.rankQueue[i];
-    }
-
-    cg.rankQueueCount--;
-}
-
-static qboolean CG_IsAchievementNotificationActive( void ) {
-    const cgAchievementAnnouncement_t *announcement;
-    const bgAchievementCategoryDef_t *category;
-    const bgAchievementTierDef_t *tier;
-    int elapsed;
-
-    if ( cg.achievementQueueCount <= 0 ) {
-        return qfalse;
-    }
-
-    announcement = &cg.achievementQueue[0];
-    category = BG_AchievementGetCategory( announcement->category );
-    tier = BG_AchievementGetTier( announcement->category, announcement->tierIndex );
-
-    if ( !category || !tier ) {
-        return qfalse;
-    }
-
-    elapsed = cg.time - announcement->startTime;
-    return ( elapsed < ACHIEVEMENT_DISPLAY_TIME );
-}
-
-static void CG_DrawAchievementNotifications( void ) {
-    const bgAchievementCategoryDef_t *category;
-    const bgAchievementTierDef_t *tier;
-    cgAchievementAnnouncement_t *announcement;
-    int elapsed;
-    float alpha;
-    float x, y;
-    float width = 260.0f;
-    float height = 60.0f;
-    float iconSize = 36.0f;
-    vec4_t bgColor = { 0.0f, 0.0f, 0.0f, 0.45f };
-    vec4_t borderColor = { 1.0f, 1.0f, 1.0f, 0.25f };
-    vec4_t lockedColor = { 0.7f, 0.7f, 0.7f, 1.0f };
-    vec4_t unlockedColor = { 0.6f, 1.0f, 0.6f, 1.0f };
-    vec4_t textColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-    qhandle_t icon;
-
-    if ( cg.achievementQueueCount <= 0 ) {
-        return;
-    }
-
-    announcement = &cg.achievementQueue[0];
-    category = BG_AchievementGetCategory( announcement->category );
-    tier = BG_AchievementGetTier( announcement->category, announcement->tierIndex );
-
-    if ( !category || !tier ) {
-        CG_ShiftAchievementQueue();
-        return;
-    }
-
-    elapsed = cg.time - announcement->startTime;
-    if ( elapsed >= ACHIEVEMENT_DISPLAY_TIME ) {
-        CG_ShiftAchievementQueue();
-        return;
-    }
-
-    alpha = 1.0f;
-    if ( elapsed > ACHIEVEMENT_DISPLAY_TIME - ACHIEVEMENT_FADE_TIME ) {
-        alpha = (float)( ACHIEVEMENT_DISPLAY_TIME - elapsed ) / ACHIEVEMENT_FADE_TIME;
-    }
-
-    if ( alpha < 0.0f ) {
-        alpha = 0.0f;
-    }
-
-    bgColor[3] *= alpha;
-    borderColor[3] *= alpha;
-    lockedColor[3] *= alpha;
-    unlockedColor[3] *= alpha;
-    textColor[3] *= alpha;
-
-    // Position the achievement notification inside the rearview mirror frame
-    x = 170.0f + ( 300.0f - width ) * 0.5f;
-    y = 10.0f + ( 75.0f - height ) * 0.5f;
-
-    CG_FillRect( x, y, width, height, bgColor );
-    CG_DrawRect( x, y, width, height, 1.0f, borderColor );
-
-    icon = ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? cgs.media.achievementMedalLocked[category->icon] : cgs.media.achievementMedalUnlocked[category->icon];
-    if ( icon ) {
-        CG_DrawPic( x + 10.0f, y + ( height - iconSize ) * 0.5f, iconSize, iconSize, icon );
-    }
-
-    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 12.0f ), tier->name,
-                      ( elapsed < ACHIEVEMENT_LOCKED_TIME ) ? lockedColor : unlockedColor,
-                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-
-    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 30.0f ), tier->description,
-                      textColor, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-
-    CG_DrawStringExt( (int)( x + iconSize + 22.0f ), (int)( y + 44.0f ), category->title,
-                      textColor, qfalse, qtrue, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
-
-    trap_R_SetColor( NULL );
-}
-
-static void CG_DrawRankNotifications( void ) {
-    cgRankAnnouncement_t *announcement;
-    int elapsed;
-    float alpha;
-    float x, y;
-    float width = 260.0f;
-    float height = 60.0f;
-    vec4_t bgColor = { 0.0f, 0.0f, 0.0f, 0.45f };
-    vec4_t borderColor = { 1.0f, 1.0f, 1.0f, 0.25f };
-    vec4_t highlightColor = { 0.6f, 1.0f, 0.6f, 1.0f };
-    vec4_t demotionColor = { 1.0f, 0.4f, 0.4f, 1.0f };
-    vec4_t textColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-    if ( cg.rankQueueCount <= 0 ) {
-        return;
-    }
-
-    announcement = &cg.rankQueue[0];
-
-    if ( !announcement->name[0] ) {
-        CG_ShiftRankQueue();
-        return;
-    }
-
-    elapsed = cg.time - announcement->startTime;
-    if ( elapsed >= RANK_DISPLAY_TIME ) {
-        CG_ShiftRankQueue();
-        return;
-    }
-
-    alpha = 1.0f;
-    if ( elapsed > RANK_DISPLAY_TIME - RANK_FADE_TIME ) {
-        alpha = (float)( RANK_DISPLAY_TIME - elapsed ) / RANK_FADE_TIME;
-    }
-
-    if ( alpha < 0.0f ) {
-        alpha = 0.0f;
-    }
-
-    bgColor[3] *= alpha;
-    borderColor[3] *= alpha;
-    highlightColor[3] *= alpha;
-    demotionColor[3] *= alpha;
-    textColor[3] *= alpha;
-
-    x = 170.0f + ( 300.0f - width ) * 0.5f;
-    y = 10.0f + ( 75.0f - height ) * 0.5f;
-
-    CG_FillRect( x, y, width, height, bgColor );
-    CG_DrawRect( x, y, width, height, 1.0f, borderColor );
-
-    CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 10.0f ), announcement->rankUp ? "Rank Up!" : "Rank Down!",
-                      announcement->rankUp ? highlightColor : demotionColor,
-                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-
-    CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 26.0f ), announcement->name,
-                      announcement->rankUp ? highlightColor : demotionColor,
-                      qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-
-    if ( announcement->nextName[0] && Q_stricmp( announcement->nextName, announcement->name ) ) {
-        CG_DrawStringExt( (int)( x + 12.0f ), (int)( y + 42.0f ), va( "Next: %s", announcement->nextName ),
-                          textColor, qfalse, qtrue, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
-    }
-
-    trap_R_SetColor( NULL );
-}
-#endif
 
 /*
 =========
@@ -3812,6 +2909,11 @@ static void CG_DrawDisconnect( void ) {
 	usercmd_t	cmd;
 	const char		*s;
 	int			w;
+
+	/* The intro camera is an intentional pre-race pause, not a connection loss. */
+	if ( CG_IntroCam_IsRaceIntroPending() ) {
+		return;
+	}
 
 	// draw the phone jack if we are completely past our buffers
 	cmdNum = trap_GetCurrentCmdNumber() - CMD_BACKUP + 1;
@@ -4735,6 +3837,23 @@ void CG_DrawTimedMenus( void ) {
 CG_Draw2D
 =========
 */
+static void CG_DrawIntroCamOverlay( void ) {
+	static const vec4_t accentColor = { Q3RALLY_ACCENT_RED, Q3RALLY_ACCENT_GREEN,
+	                                    Q3RALLY_ACCENT_BLUE, 0.96f };
+	static const vec4_t mutedColor = { 0.63f, 0.80f, 0.84f, 0.92f };
+	int secondsLeft;
+
+	secondsLeft = CG_IntroCam_RemainingSeconds();
+	CG_DrawIngameString( 320, 38, "TRACK PREVIEW",
+		UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.82f, accentColor );
+	if ( secondsLeft > 0 ) {
+		CG_DrawIngameString( 320, 57, va( "RACE STARTS IN %02d", secondsLeft ),
+			UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.52f, mutedColor );
+	}
+	CG_DrawIngameString( 320, 434, "PRESS FIRE TO SKIP",
+		UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.68f, mutedColor );
+}
+
 static void CG_Draw2D(stereoFrame_t stereoFrame)
 {
 #ifdef MISSIONPACK
@@ -4753,6 +3872,15 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		CG_DrawIntermission( stereoFrame );
+		return;
+	}
+
+	/* During the cinematic, replace the entire gameplay HUD with two
+	 * unobtrusive custom-font prompts. */
+	if ( CG_IntroCam_IsActive() ) {
+		if ( stereoFrame == STEREO_CENTER ) {
+			CG_DrawIntroCamOverlay();
+		}
 		return;
 	}
 
@@ -4882,10 +4010,12 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	trap_R_RenderScene( &cg.refdef );
 
 // Q3Rally Code Start
-	if ( !cg.scoreBoardShowing )
-		CG_DrawRearviewMirror( 170, 10, 300, 75);
-	
-	CG_DrawMMap( 0, 0, 160, 120); //TBB draw minimap function
+	if ( !CG_IntroCam_IsActive() ) {
+		if ( !cg.scoreBoardShowing )
+			CG_DrawRearviewMirror( 170, 10, 300, 75);
+
+		CG_DrawMMap( 0, 0, 160, 120); //TBB draw minimap function
+	}
 		
 // Q3Rally Code END
 

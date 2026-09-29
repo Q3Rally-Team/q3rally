@@ -354,15 +354,14 @@ void CalculatePlayerPositions( void )
 	leader = ent = last = NULL;
 	while ( (ent = G_Find (ent, FOFS(classname), "player")) != NULL )
 	{
+		if ( !ent->client ) continue;
+		/* Remove stale links even for racers that leave the active field. */
+		ent->carBehind = NULL;
 		if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
-//		if ( isRaceObserver(ent->s.number) ) continue;
 
 		if ( g_gametype.integer == GT_ELIMINATION && ent->client->finishRaceTime ) {
-			ent->carBehind = NULL;
 			continue;
 		}
-
-		ent->carBehind = NULL;
 
 		if ( leader == NULL )
 		{
@@ -370,6 +369,8 @@ void CalculatePlayerPositions( void )
 			continue;
 		}
 
+		/* Insert from the list head to keep each link local to this racer. */
+		last = NULL;
 		cur = leader;
 		if ( IsCarAhead( ent, cur ) )
 		{
@@ -378,32 +379,17 @@ void CalculatePlayerPositions( void )
 			continue;
 		}
 
-		while ( cur->carBehind != NULL )
+		while ( cur && !IsCarAhead( ent, cur ) )
 		{
-			if ( IsCarAhead( ent, cur->carBehind ) )
-			{
-//				ent->carBehind = cur->carBehind;
-//				cur->carBehind = ent;
-				last = cur;
-				cur = cur->carBehind;
-				break;
-			}
-
 			last = cur;
 			cur = cur->carBehind;
 		}
 
-		if ( IsCarAhead( ent, cur ) )
-		{
-//			cur->carBehind = NULL;
-			ent->carBehind = cur;
-			if (last) {
-				last->carBehind = ent;
-			}
-		}
-		else {
-			cur->carBehind = ent;
-			ent->carBehind = NULL;
+		ent->carBehind = cur;
+		if ( last ) {
+			last->carBehind = ent;
+		} else {
+			leader = ent;
 		}
 	}
 
@@ -564,6 +550,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		for ( i = 0; i < MAX_CLIENTS; i++ ) {
 			player = &g_entities[i];
 			if ( !player->inuse || !player->client ) continue;
+			player->client->introCamSkipSent = qfalse;
 			if ( player->client->sess.sessionTeam == TEAM_SPECTATOR ) continue;
 			if ( (player->r.svFlags & SVF_BOT) && ignoreBots ) continue;
 			introCount++;

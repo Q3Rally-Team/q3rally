@@ -43,7 +43,6 @@ qboolean isRaceObserver( int clientNum )
 #define ID_RVRL_MARKS           24
 #define ID_RVRL_SPARKS          25
 
-#define ID_SPEEDOMETER_MODE     28
 #define ID_FUEL_CONSUMPTION     29
 
 #define ID_MVRL_PLAYERS         30
@@ -102,7 +101,6 @@ typedef struct {
 	menutext_s		banner;
 
 	menulist_s		units;
-        menulist_s              speedometer;
 	menulist_s		transmissionMode;
 	menulist_s		atomspheric;
 
@@ -139,12 +137,6 @@ static q3roptionsmenu_t	s_q3roptions;
 static const char *q3roptions_units[] = {
         "Imperial",
         "Metric",
-        0
-};
-
-static const char *q3roptions_speedometer_mode[] = {
-        "Analog",
-        "Digital",
         0
 };
 
@@ -195,10 +187,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 	{
         case ID_UNITS:
                 trap_Cvar_SetValue( "cg_metricUnits", s_q3roptions.units.curvalue );
-                break;
-
-        case ID_SPEEDOMETER_MODE:
-                trap_Cvar_SetValue( "cg_speedometerMode", s_q3roptions.speedometer.curvalue );
                 break;
 
 	case ID_TRANSMISSION_MODE:
@@ -303,10 +291,6 @@ static void Q3ROptions_StatusBar( void *self )
 	{
         case ID_UNITS:
                 text = "Choose metric or imperial speed units.";
-                break;
-
-        case ID_SPEEDOMETER_MODE:
-                text = "Choose an analog or digital speedometer.";
                 break;
 
 	case ID_TRANSMISSION_MODE:
@@ -578,8 +562,7 @@ void Q3ROptions_MenuInit( void ) {
 
 
 	// load current values
-        s_q3roptions.units.curvalue = ui_metricUnits.integer;
-        s_q3roptions.speedometer.curvalue = ui_speedometerMode.integer;
+	s_q3roptions.units.curvalue = ui_metricUnits.integer;
 	s_q3roptions.transmissionMode.curvalue = (int)Com_Clamp( 0, 2, ui_transmissionMode.integer );
 	s_q3roptions.atomspheric.curvalue = ui_atmosphericLevel.integer;
 
@@ -715,16 +698,6 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.generic.statusbar	= Q3ROptions_StatusBar;
 
 	// ---- RIGHT COLUMN: Visual / Audio ----
-
-	s_q3roptions.speedometer.generic.type		= MTYPE_SPINCONTROL;
-	s_q3roptions.speedometer.generic.name		= "Speedometer Mode:";
-	s_q3roptions.speedometer.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_q3roptions.speedometer.generic.callback	= Q3ROptions_MenuEvent;
-	s_q3roptions.speedometer.generic.statusbar	= Q3ROptions_StatusBar;
-	s_q3roptions.speedometer.generic.id			= ID_SPEEDOMETER_MODE;
-	s_q3roptions.speedometer.generic.x			= LAY_R;
-	s_q3roptions.speedometer.generic.y			= LAY_TOP + LAY_STEP * 0;
-	s_q3roptions.speedometer.itemnames			= q3roptions_speedometer_mode;
 
 	s_q3roptions.units.generic.type				= MTYPE_SPINCONTROL;
 	s_q3roptions.units.generic.name				= "Unit Type:";
@@ -901,7 +874,6 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.skidlength );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
 
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.speedometer );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.units );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
@@ -950,25 +922,21 @@ void Q3ROptions_MenuInit( void ) {
 		Q3R_OPTIONS_TOP_ROW_Y + 6 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Camera tracking" );
 
-	Q3ROptions_SetBounds( &s_q3roptions.speedometer.generic,
-		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 0 * Q3R_OPTIONS_ROW_STEP,
-		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Speedometer" );
 	Q3ROptions_SetBounds( &s_q3roptions.units.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 0 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Unit type" );
 	Q3ROptions_SetBounds( &s_q3roptions.engineSounds.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Engine sounds" );
 	Q3ROptions_SetBounds( &s_q3roptions.positionSprites.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Race position sprites" );
 	Q3ROptions_SetBounds( &s_q3roptions.ladderOffline.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 4 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Offline ladder sync" );
 
 	Q3ROptions_SetBounds( &s_q3roptions.mvrl_players.generic,
@@ -1018,7 +986,6 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.fuelConsumption.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.skidlength.generic.ownerdraw = Q3ROptions_DrawSlider;
 	s_q3roptions.camtracking.generic.ownerdraw = Q3ROptions_DrawSlider;
-	s_q3roptions.speedometer.generic.ownerdraw = Q3ROptions_DrawChoice;
 	s_q3roptions.units.generic.ownerdraw = Q3ROptions_DrawChoice;
 	s_q3roptions.engineSounds.generic.ownerdraw = Q3ROptions_DrawChoice;
 	s_q3roptions.positionSprites.generic.ownerdraw = Q3ROptions_DrawRadio;

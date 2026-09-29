@@ -18,6 +18,8 @@ vmCvar_t g_rallyIgnoreBots;
 vmCvar_t g_eliminationStartDelay;
 vmCvar_t g_eliminationInterval;
 vmCvar_t g_eliminationWarning;
+vmCvar_t g_derbyMinPlayers;
+vmCvar_t g_debugIntroCam;
 
 static char lastCvarName[64];
 static char lastCvarValue[64];
@@ -54,6 +56,27 @@ int Com_sprintf(char *dest, int size, const char *fmt, ...) {
     int written = vsnprintf(dest, size, fmt, args);
     va_end(args);
     return written;
+}
+
+void Q_strncpyz(char *dest, const char *src, int destsize) {
+    if (destsize <= 0) {
+        return;
+    }
+    strncpy(dest, src, destsize - 1);
+    dest[destsize - 1] = '\0';
+}
+
+void G_SetOrigin(gentity_t *ent, vec3_t origin) {
+    VectorCopy(origin, ent->r.currentOrigin);
+    VectorCopy(origin, ent->s.pos.trBase);
+}
+
+void SetClientViewAngle(gentity_t *ent, vec3_t angle) {
+    (void)ent;
+    (void)angle;
+}
+
+void G_RallyUpdateAllTeamTimes(void) {
 }
 
 int TeamCount(int ignoreClientNum, team_t team) {
@@ -318,6 +341,45 @@ void test_race_countdown_sequence(void) {
     assert(lastSoundIndex != 0);
 }
 
+void test_race_positions_remain_unique_after_sorted_insertions(void) {
+    int client;
+    int expectedPositions[4] = { 3, 1, 2, 4 };
+    float distances[4] = { 100.0f, 0.0f, 40.0f, 150.0f };
+
+    reset_environment();
+    g_gametype.integer = GT_ELIMINATION;
+    VectorClear(checkpoint.s.origin);
+
+    for (client = 0; client < 4; ++client) {
+        g_entities[client].inuse = qtrue;
+        g_entities[client].classname = "player";
+        g_entities[client].number = 1;
+        g_entities[client].currentLap = 1;
+        g_entities[client].s.clientNum = client;
+        g_entities[client].client = &levelClients[client];
+        g_entities[client].client->sess.sessionTeam = TEAM_FREE;
+        g_entities[client].client->ps.stats[STAT_POSITION] = 0;
+        VectorSet(g_entities[client].r.currentOrigin, distances[client], 0.0f, 0.0f);
+    }
+
+    /* An eliminated driver must leave no stale link in the live order. */
+    g_entities[4].inuse = qtrue;
+    g_entities[4].classname = "player";
+    g_entities[4].client = &levelClients[4];
+    g_entities[4].client->sess.sessionTeam = TEAM_FREE;
+    g_entities[4].client->finishRaceTime = 1000;
+    g_entities[4].client->ps.stats[STAT_POSITION] = 5;
+    g_entities[4].carBehind = &g_entities[0];
+
+    CalculatePlayerPositions();
+
+    for (client = 0; client < 4; ++client) {
+        assert(g_entities[client].client->ps.stats[STAT_POSITION] == expectedPositions[client]);
+    }
+    assert(g_entities[4].carBehind == NULL);
+    assert(g_entities[4].client->ps.stats[STAT_POSITION] == 5);
+}
+
 void test_single_player_skips_ready_check(void) {
     reset_environment();
     g_gametype.integer = GT_SINGLE_PLAYER;
@@ -544,6 +606,7 @@ int main(void) {
     test_elimination_configuration_initial_setup();
     test_elimination_configuration_minimum_laps();
     test_race_countdown_sequence();
+    test_race_positions_remain_unique_after_sorted_insertions();
     test_single_player_skips_ready_check();
     test_ignoring_bots_prevents_ready_count();
     test_checkpointless_map_waits_for_player_before_start();

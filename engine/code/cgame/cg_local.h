@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CG_LOCAL_H
 #define CG_LOCAL_H
 #include "../qcommon/q_shared.h"
+#include "../qcommon/rally_colors.h"
 #include "../qcommon/engine_audio_shared.h"
 #include "../qcommon/rally_plate_tools.h"
 #include "../renderercommon/tr_types.h"
@@ -1211,6 +1212,7 @@ typedef struct {
 	qhandle_t	medalCapture;
         qhandle_t       achievementMedalLocked[BG_ACHIEVEMENT_ICON_COUNT];
         qhandle_t       achievementMedalUnlocked[BG_ACHIEVEMENT_ICON_COUNT];
+        qhandle_t       achievementMedalTiers[BG_ACHIEVEMENT_ICON_COUNT][BG_ACHIEVEMENT_MAX_TIERS];
 	qhandle_t	headLightGlow;
 	qhandle_t	brakeLightGlow;
 	qhandle_t	reverseLightGlow;
@@ -1369,8 +1371,6 @@ sfxHandle_t neutralFlagReturnedSound;
 
 // Q3Rally Code Start
 
-    qhandle_t       gaugeImperial;
-    qhandle_t       gaugeMetric;
 	// car sounds
 	sfxHandle_t	damage100[2];
 	sfxHandle_t	damage75[2];
@@ -1647,7 +1647,6 @@ extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
 // Q3Rally Code Start
 extern	vmCvar_t		cg_metricUnits;
-extern  vmCvar_t                cg_speedometerMode;
 extern	vmCvar_t		cg_minSkidLength;
 extern	vmCvar_t		cg_controlMode;
 extern	vmCvar_t		cg_manualShift;
@@ -1690,7 +1689,6 @@ extern	vmCvar_t		cg_ghostAlpha;
 extern	vmCvar_t		cg_ghostSplitAudio;
 extern  vmCvar_t                cg_useFuel;
 
-extern  vmCvar_t                cg_fuelWarningLevel;
 extern	vmCvar_t		cg_drawBotPaths;
 extern	vmCvar_t		cg_jukeboxShuffle;
 extern	vmCvar_t		cg_jukeboxRepeatMode;
@@ -2166,23 +2164,21 @@ void CG_DrawRaceCountDown( void );
 void CG_RaceCountDown( const char *str, int secondsLeft );
 
 //
-// cg_rally_hud.c
+// Modular HUD interfaces (cg_hud_core.c and HUD element modules)
 //
 
 extern float colors[4][4];
 void CG_DrawRearviewMirror( float x, float y, float w, float h);
 float CG_DrawUpperRightHUD( float y );
-float CG_DrawLowerRightHUD( float y );
 float CG_DrawLowerLeftHUD( float y );
 void CG_DrawMMap( float x, float y, float w, float h );
 void CG_DrawHUD_DerbyList(float x, float y);
-void CG_DrawFuelGauge( float x, float y, float w, float h );
 void CG_DrawKOTH_HillStatus( void ); /* Q3Rally KOTH */
 void CG_DrawKOTH_RespawnWave( void ); /* Q3Rally KOTH */
 
 
 //
-// cg_rally_hud2.c
+// Main HUD dispatcher
 //
 qboolean CG_DrawHUD( void );
 
@@ -2205,7 +2201,10 @@ void CG_DropBio( centity_t *cent );
 //
 void        CG_IntroCam_ParseConfigstring( void );
 void        CG_IntroCam_SetStartTime( int serverTime );
+void        CG_IntroCam_Skip( void );
 qboolean    CG_IntroCam_IsActive( void );
+qboolean    CG_IntroCam_IsRaceIntroPending( void );
+int         CG_IntroCam_RemainingSeconds( void );
 qboolean    CG_IntroCam_CalcView( vec3_t originOut, vec3_t anglesOut, float *fovOut );
 
 // Q3Rally Code END

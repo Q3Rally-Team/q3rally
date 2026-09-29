@@ -477,6 +477,7 @@ struct gclient_s {
 	clientSession_t		sess;
 
 	qboolean	readyToExit;		// wishes to leave the intermission
+	qboolean	introCamSkipSent;	// prevents repeated client skip commands while Fire is held
 
 	qboolean	noclip;
 
@@ -681,6 +682,8 @@ typedef struct {
 	int			raceIntroEndTime;
 	int			raceIntroDurationMs;
 	qboolean		raceIntroHasSequence;
+	qboolean	raceIntroUsesGhostRoute;
+	char		raceIntroGhostRoute[MAX_QPATH];
 	qboolean		raceIntroFallback;
 	qboolean		raceIntroSequenceWarned;
 	int			startRaceTime;

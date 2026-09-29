@@ -66,13 +66,11 @@ void Frontend_DrawBackground( const float *scrimColor ) {
     }
 }
 
-/* The legacy UI text path treats every glyph as a full 8/16 pixel cell.
- * The modern screens use the same atlas, but with a tighter advance and a
- * slightly wider glyph quad. This keeps the type readable without the wide,
- * arcade-menu tracking of the original renderer. */
+/* The legacy UI small cell is 6x16, which visibly stretches this square-cell
+ * atlas vertically. Frontend text uses square cells at every size instead. */
 static int Frontend_TextHeight( int style ) {
     if ( style & UI_SMALLFONT ) {
-        return SMALLCHAR_HEIGHT;
+        return UI_FRONTEND_SMALL_GLYPH_SIZE;
     }
     if ( style & UI_GIANTFONT ) {
         return GIANTCHAR_HEIGHT;
@@ -80,107 +78,123 @@ static int Frontend_TextHeight( int style ) {
     return BIGCHAR_HEIGHT;
 }
 
-static qboolean Frontend_IsNarrowGlyph( int ch ) {
-    return ( ch == 'I' || ch == 'i' || ch == 'l' || ch == 'L' || ch == '!' ||
-             ch == '|' || ch == '.' || ch == ',' || ch == ':' || ch == ';' )
-               ? qtrue : qfalse;
+static int Frontend_TextCellWidth( int style ) {
+    return Frontend_TextHeight( style );
 }
 
 static int Frontend_TextAdvance( int ch, int style ) {
-    int advance;
+    int cellWidth;
+    int tracking;
 
-    if ( style & UI_SMALLFONT ) {
-        advance = 6;
-    } else if ( style & UI_GIANTFONT ) {
-        advance = 18;
-    } else {
-        advance = 12;
-    }
-
+    cellWidth = Frontend_TextCellWidth( style );
     if ( ch == ' ' ) {
-        return ( advance + 1 ) / 2;
-    }
-
-    /* Keep narrow glyphs compact, but do not collapse them into the next
-     * character. Their draw quad is reduced by the matching function below. */
-    if ( Frontend_IsNarrowGlyph( ch ) ) {
-        if ( ch == 'l' || ch == 'L' ) {
-            return advance - 1;
-        }
-        return advance - 2;
-    }
-
-    return advance;
-}
-
-static int Frontend_TextQuadWidth( int ch, int style ) {
-    if ( Frontend_IsNarrowGlyph( ch ) ) {
-        if ( ch == 'l' || ch == 'L' ) {
-            if ( style & UI_SMALLFONT ) {
-                return 8;
-            }
-            if ( style & UI_GIANTFONT ) {
-                return 20;
-            }
-            return 16;
-        }
-        if ( style & UI_SMALLFONT ) {
-            return 6;
-        }
-        if ( style & UI_GIANTFONT ) {
-            return 16;
-        }
-        return 12;
+        return ( cellWidth + 1 ) / 2;
     }
 
     if ( style & UI_SMALLFONT ) {
-        return 10;
+        tracking = 2;
+    } else if ( style & UI_GIANTFONT ) {
+        tracking = 5;
+    } else {
+        tracking = 3;
     }
-    if ( style & UI_GIANTFONT ) {
-        return 28;
-    }
-    return 20;
+
+    return cellWidth - tracking;
 }
 
 static int Frontend_TextWidthRaw( const char *text, int style ) {
     const char *s;
-    int width;
+    int cursorX;
+    int visualWidth;
 
     if ( !text ) {
         return 0;
     }
 
-    width = 0;
+    cursorX = 0;
+    visualWidth = 0;
     for ( s = text; *s; s++ ) {
+        int ch;
+        int glyphRight;
+
         if ( Q_IsColorString( s ) ) {
             s++;
             continue;
         }
-        width += Frontend_TextAdvance( *s & 255, style );
+
+        ch = *s & 255;
+        if ( ch != ' ' ) {
+            glyphRight = cursorX + Frontend_TextCellWidth( style );
+            if ( glyphRight > visualWidth ) {
+                visualWidth = glyphRight;
+            }
+        }
+        cursorX += Frontend_TextAdvance( ch, style );
     }
-    return width;
+
+    if ( cursorX > visualWidth ) {
+        visualWidth = cursorX;
+    }
+    return visualWidth;
 }
 
-static void Frontend_DrawTextRaw( int x, int y, const char *text,
-                                  int style, const float *color ) {
+static int Frontend_TextVisualWidthRaw( const char *text, int style ) {
     const char *s;
-    int charHeight;
     int cursorX;
+    int visualWidth;
+
+    if ( !text ) {
+        return 0;
+    }
+
+    cursorX = 0;
+    visualWidth = 0;
+    for ( s = text; *s; s++ ) {
+        int ch;
+        int glyphRight;
+
+        if ( Q_IsColorString( s ) ) {
+            s++;
+            continue;
+        }
+
+        ch = *s & 255;
+        if ( ch != ' ' ) {
+            glyphRight = cursorX + Frontend_TextCellWidth( style );
+            if ( glyphRight > visualWidth ) {
+                visualWidth = glyphRight;
+            }
+        }
+        cursorX += Frontend_TextAdvance( ch, style );
+    }
+
+    if ( cursorX > visualWidth ) {
+        visualWidth = cursorX;
+    }
+    return visualWidth;
+}
+
+static void Frontend_DrawTextRaw( float x, int y, const char *text,
+                                  int style, float scale,
+                                  const float *color ) {
+    const char *s;
+    float charHeight;
+    float cursorX;
     vec4_t drawColor;
 
     if ( !text || !text[0] ) {
         return;
     }
 
-    charHeight = Frontend_TextHeight( style );
+    charHeight = Frontend_TextHeight( style ) * scale;
     cursorX = x;
     Vector4Copy( color, drawColor );
 
     trap_R_SetColor( drawColor );
     for ( s = text; *s; s++ ) {
         int ch;
-        int advance;
-        int quadWidth;
+        float advance;
+        float quadWidth;
         float ax;
         float ay;
         float aw;
@@ -194,8 +208,8 @@ static void Frontend_DrawTextRaw( int x, int y, const char *text,
         }
 
         ch = *s & 255;
-        advance = Frontend_TextAdvance( ch, style );
-        quadWidth = Frontend_TextQuadWidth( ch, style );
+        advance = Frontend_TextAdvance( ch, style ) * scale;
+        quadWidth = Frontend_TextCellWidth( style ) * scale;
         if ( ch == ' ' ) {
             cursorX += advance;
             continue;
@@ -219,14 +233,19 @@ int Frontend_TextWidth( const char *text, int style ) {
     return Frontend_TextWidthRaw( text, style );
 }
 
-void Frontend_DrawText( int x, int y, const char *text, int style,
-                        const float *color ) {
-    int width;
+int Frontend_TextVisualWidth( const char *text, int style ) {
+    return Frontend_TextVisualWidthRaw( text, style );
+}
+
+void Frontend_DrawTextScaled( int x, int y, const char *text, int style,
+                              float scale, const float *color ) {
+    float width;
     int format;
+    float drawX;
     vec4_t drawColor;
     vec4_t dropColor;
 
-    if ( !text || !color ) {
+    if ( !text || !color || scale <= 0.0f ) {
         return;
     }
 
@@ -242,12 +261,13 @@ void Frontend_DrawText( int x, int y, const char *text, int style,
                       0.5f + 0.5f * sin( uis.realtime / PULSE_DIVISOR ) );
     }
 
-    width = Frontend_TextWidthRaw( text, style );
+    width = Frontend_TextWidthRaw( text, style ) * scale;
     format = style & UI_FORMATMASK;
+    drawX = (float)x;
     if ( format == UI_CENTER ) {
-        x -= width / 2;
+        drawX -= width * 0.5f;
     } else if ( format == UI_RIGHT ) {
-        x -= width;
+        drawX -= width;
     }
 
     if ( style & UI_DROPSHADOW ) {
@@ -255,9 +275,15 @@ void Frontend_DrawText( int x, int y, const char *text, int style,
         dropColor[1] = 0.0f;
         dropColor[2] = 0.0f;
         dropColor[3] = drawColor[3];
-        Frontend_DrawTextRaw( x + 2, y + 2, text, style, dropColor );
+        Frontend_DrawTextRaw( drawX + 2.0f, y + 2, text, style,
+                              scale, dropColor );
     }
-    Frontend_DrawTextRaw( x, y, text, style, drawColor );
+    Frontend_DrawTextRaw( drawX, y, text, style, scale, drawColor );
+}
+
+void Frontend_DrawText( int x, int y, const char *text, int style,
+                        const float *color ) {
+    Frontend_DrawTextScaled( x, y, text, style, 1.0f, color );
 }
 
 static void Frontend_ColorWithAlpha( vec4_t out, const float *baseColor,
@@ -347,7 +373,7 @@ static qboolean Frontend_DrawButtonInternal( int x, int y, int width, int height
     }
 
     Frontend_DrawText( x + ( textAlign == UI_CENTER ? width / 2 : UI_FRONTEND_SPACE_MD ),
-                       y + ( height - SMALLCHAR_HEIGHT ) / 2,
+                       y + ( height - Frontend_TextHeight( UI_SMALLFONT ) ) / 2,
                        label, textAlign | UI_SMALLFONT, textColor );
 
     return hovered;
@@ -393,7 +419,7 @@ qboolean Frontend_DrawNavButton( int x, int y, int width, int height,
     }
 
     Frontend_DrawText( x + ( textAlign == UI_CENTER ? width / 2 : UI_FRONTEND_SPACE_MD ),
-                       y + ( height - SMALLCHAR_HEIGHT ) / 2,
+                       y + ( height - Frontend_TextHeight( UI_SMALLFONT ) ) / 2,
                        label, textAlign | UI_SMALLFONT, textColor );
     return hovered;
 }

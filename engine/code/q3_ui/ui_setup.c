@@ -313,7 +313,8 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 static void UI_SetupMenu_InitAction( menutext_s *item, int id,
                                      const char *label, int x ) {
     item->generic.type = MTYPE_PTEXT;
-    item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+    item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS |
+                          QMF_NODEFAULTINIT;
     item->generic.id = id;
     item->generic.callback = UI_SetupMenu_Event;
     item->generic.x = x + CONFIG_ACTION_WIDTH / 2;
@@ -343,7 +344,8 @@ static void UI_SetupMenu_Init( void ) {
 
         y = CONFIG_LIST_Y + i * ( CONFIG_ROW_HEIGHT + CONFIG_ROW_GAP );
         item->generic.type = MTYPE_PTEXT;
-        item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+        item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS |
+                              QMF_NODEFAULTINIT;
         item->generic.id = configCategoryIds[i];
         item->generic.callback = UI_SetupMenu_Event;
         item->generic.x = CONFIG_ROW_X;

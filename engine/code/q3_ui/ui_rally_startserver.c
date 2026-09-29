@@ -63,13 +63,13 @@ START SERVER MENU *****
 #define STARTSERVER_FRAME_HEIGHT     440
 #define STARTSERVER_FILTER_X         40
 #define STARTSERVER_FILTER_Y         88
-#define STARTSERVER_FILTER_WIDTH     280
 #define STARTSERVER_FILTER_HEIGHT    24
 #define STARTSERVER_LIST_X           40
 #define STARTSERVER_LIST_Y           154
 #define STARTSERVER_LIST_WIDTH       260
 #define STARTSERVER_LIST_HEIGHT      244
 #define STARTSERVER_ROW_X            48
+#define STARTSERVER_BUTTON_WIDTH     ( STARTSERVER_LIST_WIDTH - 16 )
 #define STARTSERVER_ROW_HEIGHT       24
 #define STARTSERVER_ROW_GAP          3
 #define STARTSERVER_VISIBLE_ROWS     8
@@ -181,6 +181,9 @@ static void StartServer_DrawGametype( void *self ) {
         focus = ( Menu_ItemAtCursor( list->generic.parent ) == list );
         Com_sprintf( label, sizeof( label ), "Game type  %s",
                 gametype_items[list->curvalue] );
+        Frontend_DrawCard( list->generic.left, list->generic.top,
+                list->generic.right - list->generic.left,
+                list->generic.bottom - list->generic.top, 1.0f, qfalse );
         Frontend_DrawButton( list->generic.left, list->generic.top,
                 list->generic.right - list->generic.left,
                 list->generic.bottom - list->generic.top,
@@ -215,7 +218,7 @@ static void StartServer_DrawMapList( void *self ) {
                 StartServer_FitText( name, sizeof( name ),
                         s_startserver.maplistname[index], 220 );
                 Frontend_DrawNavButton( STARTSERVER_ROW_X, y,
-                        STARTSERVER_LIST_WIDTH - 16, STARTSERVER_ROW_HEIGHT,
+                        STARTSERVER_BUTTON_WIDTH, STARTSERVER_ROW_HEIGHT,
                         name, 1.0f, index == list->curvalue,
                         UI_FRONTEND_TEXT_LEFT );
         }
@@ -227,7 +230,7 @@ static sfxHandle_t StartServer_MenuKey( int key ) {
 
         if ( key == K_MOUSE1 &&
              uis.cursorx >= STARTSERVER_ROW_X &&
-             uis.cursorx <= STARTSERVER_ROW_X + STARTSERVER_LIST_WIDTH - 16 &&
+             uis.cursorx <= STARTSERVER_ROW_X + STARTSERVER_BUTTON_WIDTH &&
              uis.cursory >= STARTSERVER_LIST_Y &&
              uis.cursory < STARTSERVER_LIST_Y + STARTSERVER_VISIBLE_ROWS *
                  ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP ) ) {
@@ -1015,13 +1018,13 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	 * them through the shared frontend components. */
 	s_startserver.banner.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
 
-	s_startserver.gametype.generic.x = STARTSERVER_FILTER_X +
-		STARTSERVER_FILTER_WIDTH / 2;
+	s_startserver.gametype.generic.x = STARTSERVER_ROW_X +
+		STARTSERVER_BUTTON_WIDTH / 2;
 	s_startserver.gametype.generic.y = STARTSERVER_FILTER_Y + 12;
-	s_startserver.gametype.generic.left = STARTSERVER_FILTER_X;
+	s_startserver.gametype.generic.left = STARTSERVER_ROW_X;
 	s_startserver.gametype.generic.top = STARTSERVER_FILTER_Y;
-	s_startserver.gametype.generic.right = STARTSERVER_FILTER_X +
-		STARTSERVER_FILTER_WIDTH;
+	s_startserver.gametype.generic.right = STARTSERVER_ROW_X +
+		STARTSERVER_BUTTON_WIDTH;
 	s_startserver.gametype.generic.bottom = STARTSERVER_FILTER_Y +
 		STARTSERVER_FILTER_HEIGHT;
 	s_startserver.gametype.generic.flags |= QMF_NODEFAULTINIT;
@@ -1029,12 +1032,12 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.gametype.generic.ownerdraw = StartServer_DrawGametype;
 
 	s_startserver.list.generic.x = STARTSERVER_ROW_X +
-		( STARTSERVER_LIST_WIDTH - 16 ) / 2;
+		STARTSERVER_BUTTON_WIDTH / 2;
 	s_startserver.list.generic.y = STARTSERVER_LIST_Y;
 	s_startserver.list.generic.left = STARTSERVER_ROW_X;
 	s_startserver.list.generic.top = STARTSERVER_LIST_Y;
 	s_startserver.list.generic.right = STARTSERVER_ROW_X +
-		STARTSERVER_LIST_WIDTH - 16;
+		STARTSERVER_BUTTON_WIDTH;
 	s_startserver.list.generic.bottom = STARTSERVER_LIST_Y +
 		STARTSERVER_VISIBLE_ROWS * ( STARTSERVER_ROW_HEIGHT + STARTSERVER_ROW_GAP );
 	s_startserver.list.generic.flags |= QMF_NODEFAULTINIT;

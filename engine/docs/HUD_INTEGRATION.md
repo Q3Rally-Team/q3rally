@@ -73,7 +73,7 @@ if ( CG_HUDOptions_MouseEvent( cx, cy, clicked ) ) {
 
 ## Toggle-CVars Übersicht
 
-Alle CVars sind `CVAR_ARCHIVE` – Einstellungen bleiben nach Neustart erhalten.
+Alle hier aufgeführten CVars sind `CVAR_ARCHIVE`; die Defaults stehen in der Tabelle.
 
 ### Racing
 | CVar | Standard | Beschreibung |
@@ -82,27 +82,32 @@ Alle CVars sind `CVAR_ARCHIVE` – Einstellungen bleiben nach Neustart erhalten.
 | `cg_hudShowLaps` | 1 | Runden-Zähler |
 | `cg_hudShowPosition` | 1 | Rennposition |
 | `cg_hudShowDistToFinish` | 1 | Distanz zum Ziel |
-| `cg_hudShowGhostDelta` | 1 | Ghost-Split-Delta |
-| `cg_hudShowArrow` | 1 | Checkpoint-Pfeil |
-| `cg_hudShowCarAheadBehind` | 1 | Gegner-Liste (vor/hinter) |
-| `cg_hudShowElimTimeline` | 1 | Elimination-Timeline |
-| `cg_hudShowOpponentList` | 1 | Opponent-Liste (Elim/LCS) |
+| `cg_ghostPlayback` | 0 | Ghost-Wiedergabe und HUD-Status |
+| `cg_checkpointArrowMode` | 1 | Checkpoint-Pfeil-Modus |
+| `cg_elimTimeline` | 1 | LCS-Elimination-Timeline |
+| `cg_hudShowOpponentList` | 1 | Rang-/Gegnerliste (Rennen/Elim/LCS) |
 | `cg_hudShowScores` | 1 | DM/Team-Scores |
 
 ### Fahrzeug
 | CVar | Standard | Beschreibung |
 |---|---|---|
-| `cg_hudShowSpeed` | 1 | Tachometer/RPM |
-| `cg_hudShowFuelGauge` | 1 | Tankanzeige |
-| `cg_hudShowRearView` | 1 | Rückspiegel |
-| `cg_hudShowMiniMap` | 1 | Mini-Karte |
+| `cg_drawStatus` | 1 | Digitaler Status-/Telemetry-HUD (Speed, Gear, Fuel, RPM) |
+| `cg_drawRearView` | 0 | Rückspiegel |
+| `cg_drawMMap` | 1 | Mini-Karte |
 
 ### Derby
 | CVar | Standard | Beschreibung |
 |---|---|---|
 | `cg_hudShowDerbyVehicle` | 1 | Fahrzeugzustand-Panel |
 | `cg_hudShowDerbyList` | 1 | Derby-Scoreboard |
-| `cg_hudShowDerbyHitImpact` | 1 | Treffer-Flash |
+| `cg_derbyHitFxEnable` | 1 | Treffer-Flash |
+
+### KOTH
+
+| CVar | Standard | Beschreibung |
+|---|---|---|
+| `cg_hudShowKothHillStatus` | 1 | Hill-Status |
+| `cg_hudShowKothRespawnWave` | 1 | Respawn-Wellentimer |
 
 ## Aufgelöste Probleme
 

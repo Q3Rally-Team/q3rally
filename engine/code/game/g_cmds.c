@@ -118,7 +118,7 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		// Scores protocol: 23 fields per player (including KOTH team and player hold times).
 		Com_sprintf (entry, sizeof(entry),
 		
-		" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
+		" %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
 		cl->ps.persistant[PERS_SCORE], ping, time,
 		scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy,
 		cl->ps.persistant[PERS_IMPRESSIVE_COUNT],

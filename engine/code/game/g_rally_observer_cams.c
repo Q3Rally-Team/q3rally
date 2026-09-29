@@ -29,6 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define INTRO_CAM_DEFAULT_FOV 90.0f
 #define INTRO_CAM_MIN_FOV 10.0f
 #define INTRO_CAM_MAX_FOV 170.0f
+#define INTRO_GHOST_CAM_DURATION_MS 15000
+#define INTRO_GHOST_ROUTE_MAX_FILE_SIZE ( 64 * 1024 )
+#define INTRO_GHOST_ROUTE_MAX_FRAMES 256
 
 static int G_ParseIntroCamBlendType( const char *blendName ) {
 	if ( !blendName || !blendName[0] ) {
@@ -247,12 +250,134 @@ void G_ObserverCamSequence_RegisterSpot( gentity_t *ent ) {
 	level.introCamNodeCount++;
 }
 
+/*
+ * Packaged intro routes are camera-only derivatives of Ghost recordings.
+ * The client loads the route itself so the full path never has to fit into
+ * a configstring. Keep the server-side check cheap: validate the map/variant
+ * filename and the route header before advertising it.
+ */
+static qboolean G_ObserverCamSequence_FindGhostRoute( void ) {
+	char mapName[MAX_QPATH];
+	char routePath[MAX_QPATH];
+	char routeHeader[256];
+	char *headerCursor;
+	char *token;
+	fileHandle_t routeFile;
+	int routeFileLength;
+	int trackReversed;
+	int headerReadLength;
+	int routeTrackLength, routeTrackReversed, routeFrames;
+	int i;
+
+	level.raceIntroUsesGhostRoute = qfalse;
+	level.raceIntroGhostRoute[0] = '\0';
+
+	if ( g_trackLength.integer < 0 || g_trackLength.integer > 2 ) {
+		return qfalse;
+	}
+
+	trap_Cvar_VariableStringBuffer( "mapname", mapName, sizeof( mapName ) );
+	Q_strlwr( mapName );
+	if ( !mapName[0] ) {
+		return qfalse;
+	}
+
+	/* Do not allow a cvar value to escape the intro_routes directory. */
+	for ( i = 0; mapName[i]; i++ ) {
+		if ( ( mapName[i] < 'a' || mapName[i] > 'z' )
+			&& ( mapName[i] < '0' || mapName[i] > '9' )
+			&& mapName[i] != '_' && mapName[i] != '-' ) {
+			return qfalse;
+		}
+	}
+	trackReversed = ( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0;
+
+	if ( Com_sprintf( routePath, sizeof( routePath ),
+		"intro_routes/%s_tl%d_rev%d.route", mapName,
+		g_trackLength.integer, trackReversed ) >= sizeof( routePath ) ) {
+		return qfalse;
+	}
+
+	routeFileLength = trap_FS_FOpenFile( routePath, &routeFile, FS_READ );
+	if ( routeFileLength < 0 ) {
+		return qfalse;
+	}
+	if ( routeFileLength == 0 ) {
+		trap_FS_FCloseFile( routeFile );
+		return qfalse;
+	}
+	if ( routeFileLength > INTRO_GHOST_ROUTE_MAX_FILE_SIZE ) {
+		trap_FS_FCloseFile( routeFile );
+		G_Printf( "Warning: intro Ghost route '%s' is too large (%d bytes); ignoring it.\n",
+			routePath, routeFileLength );
+		return qfalse;
+	}
+	headerReadLength = ( routeFileLength < sizeof( routeHeader ) - 1 ) ? routeFileLength : sizeof( routeHeader ) - 1;
+	trap_FS_Read( routeHeader, headerReadLength, routeFile );
+	trap_FS_FCloseFile( routeFile );
+	routeHeader[headerReadLength] = '\0';
+	headerCursor = routeHeader;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, "Q3RALLY_INTRO_ROUTE" ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || atoi( token ) != 1 ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, "map" ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, mapName ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, "track_length" ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] ) return qfalse;
+	routeTrackLength = atoi( token );
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, "track_reversed" ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] ) return qfalse;
+	routeTrackReversed = atoi( token ) ? 1 : 0;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] || Q_stricmp( token, "frames" ) ) return qfalse;
+	token = COM_ParseExt( &headerCursor, qtrue );
+	if ( !token[0] ) return qfalse;
+	routeFrames = atoi( token );
+	if ( routeTrackLength != g_trackLength.integer || routeTrackReversed != trackReversed
+		|| routeFrames < 2 || routeFrames > INTRO_GHOST_ROUTE_MAX_FRAMES ) {
+		return qfalse;
+	}
+
+	Q_strncpyz( level.raceIntroGhostRoute, routePath, sizeof( level.raceIntroGhostRoute ) );
+	level.raceIntroUsesGhostRoute = qtrue;
+	return qtrue;
+}
+
 void G_ObserverCamSequence_WriteConfigstring( void ) {
 	char	buf[MAX_INFO_STRING];
 	char	node_buf[128];
 	int		pos, i, len, remaining;
 
-	if ( !level.raceIntroHasSequence || level.introCamNodeCount <= 0 ) {
+	if ( !level.raceIntroHasSequence ) {
+		trap_SetConfigstring( CS_INTRO_CAM, "" );
+		return;
+	}
+
+	if ( level.raceIntroUsesGhostRoute ) {
+		pos = Com_sprintf( buf, sizeof( buf ), "ghost %s %d %d",
+			level.raceIntroGhostRoute, level.raceIntroDurationMs,
+			( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0 );
+		if ( pos >= sizeof( buf ) ) {
+			G_Printf( "Warning: intro Ghost route configstring overflow; using observer camera fallback.\n" );
+			level.raceIntroUsesGhostRoute = qfalse;
+			level.raceIntroHasSequence = ( level.introCamNodeCount > 0 ) ? qtrue : qfalse;
+			trap_SetConfigstring( CS_INTRO_CAM, "" );
+			return;
+		}
+		trap_SetConfigstring( CS_INTRO_CAM, buf );
+		G_Printf( "Info: CS_INTRO_CAM selects Ghost route '%s' (%d ms).\n",
+			level.raceIntroGhostRoute, level.raceIntroDurationMs );
+		return;
+	}
+
+	if ( level.introCamNodeCount <= 0 ) {
 		trap_SetConfigstring( CS_INTRO_CAM, "" );
 		return;
 	}
@@ -298,6 +423,17 @@ void G_ObserverCamSequence_Finalize( void ) {
 
 	level.raceIntroDurationMs = 0;
 	level.raceIntroSequenceWarned = qfalse;
+	level.raceIntroUsesGhostRoute = qfalse;
+	level.raceIntroGhostRoute[0] = '\0';
+
+	if ( G_ObserverCamSequence_FindGhostRoute() ) {
+		level.raceIntroDurationMs = INTRO_GHOST_CAM_DURATION_MS;
+		level.raceIntroHasSequence = qtrue;
+		G_ObserverCamSequence_WriteConfigstring();
+		G_Printf( "Info: using packaged Ghost route for the automatic track preview; observer spots are not required.\n" );
+		return;
+	}
+
 	level.raceIntroHasSequence = ( level.introCamNodeCount > 0 ) ? qtrue : qfalse;
 
 	if ( !level.raceIntroHasSequence ) {
