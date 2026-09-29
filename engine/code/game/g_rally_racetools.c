@@ -29,7 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TESTABLE_STATIC static
 #endif
 
-#define RALLY_INTRO_CAM_DURATION_MS 3000
 
 static int CountRaceGridStarts( void );
 
@@ -516,7 +515,7 @@ void RallyStarter_Think( gentity_t *ent ){
 		|| g_gametype.integer == GT_TEAM_RACING_DM
 		|| g_gametype.integer == GT_SPRINT
 		|| g_gametype.integer == GT_ELIMINATION ) ? qtrue : qfalse;
-	introDurationMs = level.raceIntroDurationMs > 0 ? level.raceIntroDurationMs : RALLY_INTRO_CAM_DURATION_MS;
+	introDurationMs = level.raceIntroDurationMs;
 	ignoreBots = g_rallyIgnoreBots.integer;
 
 	if ( !ent->count ) {
@@ -543,7 +542,7 @@ void RallyStarter_Think( gentity_t *ent ){
 	   so the intro only plays on the initial map load, not after every race.
 	   We count connected non-spectator clients independently of the
 	   main ready-check loop below. */
-	if ( useIntroRaceState && level.raceIntroHasSequence
+	if ( useIntroRaceState && level.raceIntroHasRoute
 		&& level.raceState != RACE_STATE_INTRO_CAM
 		&& !level.raceIntroFallback ) {
 		int introCount = 0;
@@ -557,9 +556,12 @@ void RallyStarter_Think( gentity_t *ent ){
 		}
 		if ( introCount > 0 ) {
 			int oldRaceState = level.raceState;
+			G_RallyIntroRoute_UpdateDuration();
+			introDurationMs = level.raceIntroDurationMs;
 			level.raceState = RACE_STATE_INTRO_CAM;
 			level.raceIntroEndTime = level.time + introDurationMs;
 			level.raceIntroFallback = qtrue;  /* prevent re-trigger after expiry */
+			G_RallyIntroRoute_SetPending( qfalse );
 			G_DebugRaceStateTransitionRally( ent, "RallyRace_Stage early intro -> INTRO_CAM", oldRaceState, level.raceState );
 			trap_SendServerCommand( -1, va( "introCamStart %d", level.time ) );
 			G_RallySnapshotIntroGridPositions();
@@ -648,8 +650,8 @@ void RallyStarter_Think( gentity_t *ent ){
 			return;
 		}
 		/* Intro is now triggered early (before the 7500ms grid guard) if a
-		   sequence exists. If we reach here and INTRO_CAM is already active,
-		   do nothing -- the intro expiry block below handles the handover. */
+		   packaged route exists. If INTRO_CAM is active, the expiry block below
+		   handles the handover. */
 		if ( level.raceState == RACE_STATE_INTRO_CAM ) {
 			/* waiting for intro to finish */
 		}
@@ -658,7 +660,7 @@ void RallyStarter_Think( gentity_t *ent ){
 				{
 					int oldRaceState = level.raceState;
 
-					if ( useIntroRaceState && !level.raceIntroHasSequence ) {
+					if ( useIntroRaceState && !level.raceIntroHasRoute ) {
 						level.raceIntroFallback = qtrue;
 					}
 					level.raceState = RACE_STATE_COUNTDOWN;
@@ -674,7 +676,7 @@ void RallyStarter_Think( gentity_t *ent ){
 				{
 					int oldRaceState = level.raceState;
 
-					if ( useIntroRaceState && !level.raceIntroHasSequence ) {
+					if ( useIntroRaceState && !level.raceIntroHasRoute ) {
 						level.raceIntroFallback = qtrue;
 					}
 					level.raceState = RACE_STATE_COUNTDOWN;

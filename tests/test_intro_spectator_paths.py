@@ -12,7 +12,7 @@ def _load_g_active() -> str:
 def test_intro_path_runs_before_follow_observe_paths() -> None:
     source = _load_g_active()
 
-    intro_guard = "if ( G_ApplyIntroCamSequence( ent ) ) {\n\t\treturn;\n\t}"
+    intro_guard = "if ( G_HoldIntroCamView( ent ) ) {\n\t\treturn;\n\t}"
     follow_branch = "if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {"
     observe_branch = "else if ( ent->client->sess.spectatorState == SPECTATOR_OBSERVE )"
 

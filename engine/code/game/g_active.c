@@ -664,8 +664,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 	if ( G_ClientShouldUseIntroCam( ent ) ) {
 		G_ApplyIntroInputLock( ent, ucmd );
 		/*
-		 * Hard guard: while intro camera is active, only G_ApplyIntroCamSequence
-		 * may author camera state (ps.origin/ps.viewangles/pm_flags).
+		 * Hold spectator movement while cgame evaluates the selected Ghost
+		 * route. The server leaves spectator camera state untouched.
 		 */
 		G_DebugIntroCamGuard( ent, "SpectatorThink early exit" );
 		client->oldbuttons = client->buttons;
@@ -2311,208 +2311,25 @@ void G_RunClient( gentity_t *ent ) {
 }
 
 
-static float G_IntroCam_BlendFraction( int blendType, float t ) {
-	if ( t <= 0.0f ) {
-		return 0.0f;
-	}
-	if ( t >= 1.0f ) {
-		return 1.0f;
-	}
+static qboolean G_HoldIntroCamView( gentity_t *ent ) {
+	int oldRaceState;
 
-	switch ( blendType ) {
-	default:
-	case INTRO_CAM_BLEND_CUT:
-		return 0.0f;
-	case INTRO_CAM_BLEND_LINEAR:
-		return t;
-	case INTRO_CAM_BLEND_EASE_IN_OUT:
-		return t * t * ( 3.0f - 2.0f * t );
-	}
-}
-
-static qboolean G_IntroCam_GetNodeLookAt( const intro_cam_node_t *node, vec3_t lookAtOut ) {
-	gentity_t *targetEnt;
-
-	if ( !node ) {
+	if ( !ent || !ent->client || level.raceState != RACE_STATE_INTRO_CAM || !level.raceIntroHasRoute ) {
 		return qfalse;
 	}
 
-	if ( node->lookAtTargetName && node->lookAtTargetName[0] ) {
-		targetEnt = G_Find( NULL, FOFS( targetname ), node->lookAtTargetName );
-		if ( targetEnt ) {
-			VectorCopy( targetEnt->s.origin, lookAtOut );
-			return qtrue;
-		}
-	}
-
-	if ( node->hasLookAt ) {
-		VectorCopy( node->lookAt, lookAtOut );
+	if ( level.raceIntroEndTime > 0 && level.time < level.raceIntroEndTime ) {
 		return qtrue;
 	}
 
-	return qfalse;
-}
-
-static qboolean G_IntroCam_DisableSequence( gentity_t *ent, const char *reason ) {
-	int oldRaceState = level.raceState;
-
-	if ( !level.raceIntroSequenceWarned ) {
-		G_Printf( "Warning: Intro camera sequence invalid (%s); switching to countdown fallback.\n",
-			( reason && reason[0] ) ? reason : "unknown error" );
-		level.raceIntroSequenceWarned = qtrue;
-	}
-
-	level.raceIntroHasSequence = qfalse;
-	level.raceIntroUsesGhostRoute = qfalse;
-	level.raceIntroGhostRoute[0] = '\0';
-	level.raceIntroFallback = qtrue;
-	level.raceIntroEndTime = 0;
+	oldRaceState = level.raceState;
 	level.raceState = RACE_STATE_COUNTDOWN;
-	G_DebugRaceStateTransition( ent, "G_IntroCam_DisableSequence", oldRaceState, level.raceState );
-
-	if ( ent && ent->client ) {
-		G_RallyIntroCountdownHandover();
-		ent->updateTime = 0;
-	}
-
+	level.raceIntroEndTime = 0;
+	G_RallyIntroCountdownHandover();
+	ent->updateTime = 0;
+	G_DebugRaceStateTransition( ent, "G_HoldIntroCamView timeout", oldRaceState, level.raceState );
 	return qfalse;
 }
-
-static qboolean G_ApplyIntroCamSequence( gentity_t *ent ) {
-	int nodeIndex;
-	int nextNodeIndex;
-	int seqStartTime;
-	int elapsed;
-	int segmentStart;
-	int nodeCount;
-	qboolean foundSegment;
-	float t;
-	float blend;
-	vec3_t origin;
-	vec3_t angles;
-	const intro_cam_node_t *node;
-	const intro_cam_node_t *nextNode;
-	vec3_t lookAt;
-
-	if ( !ent || !ent->client || level.raceState != RACE_STATE_INTRO_CAM || !level.raceIntroHasSequence ) {
-		return qfalse;
-	}
-
-	if ( level.raceIntroDurationMs <= 0 ) {
-		return G_IntroCam_DisableSequence( ent, "invalid total duration" );
-	}
-
-	if ( level.raceIntroEndTime > 0 && level.time >= level.raceIntroEndTime ) {
-		int oldRaceState = level.raceState;
-		level.raceState = RACE_STATE_COUNTDOWN;
-		level.raceIntroEndTime = 0;
-		G_RallyIntroCountdownHandover();
-		ent->updateTime = 0;
-		G_DebugRaceStateTransition( ent, "G_ApplyIntroCamSequence timeout", oldRaceState, level.raceState );
-		return qfalse;
-	}
-
-	/* The Ghost-route camera is evaluated locally by cgame. Keep the
-	   intro handover active without overwriting the client's camera state. */
-	if ( level.raceIntroUsesGhostRoute ) {
-		return qtrue;
-	}
-
-	nodeCount = level.introCamNodeCount;
-	if ( nodeCount <= 0 || nodeCount > MAX_INTRO_CAM_NODES ) {
-		return G_IntroCam_DisableSequence( ent, "empty or out-of-range node count" );
-	}
-
-	seqStartTime = level.raceIntroEndTime - level.raceIntroDurationMs;
-	if ( seqStartTime < 0 ) {
-		seqStartTime = 0;
-	}
-
-	elapsed = level.time - seqStartTime;
-	if ( elapsed < 0 ) {
-		elapsed = 0;
-	}
-	if ( elapsed >= level.raceIntroDurationMs ) {
-		nodeIndex = nodeCount - 1;
-		nextNodeIndex = nodeIndex;
-		t = 1.0f;
-	} else {
-		segmentStart = 0;
-		nodeIndex = 0;
-		nextNodeIndex = 0;
-		t = 0.0f;
-		foundSegment = qfalse;
-
-		for ( nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++ ) {
-			int segmentDuration = level.introCamNodes[nodeIndex].durationMs;
-			if ( segmentDuration <= 0 ) {
-				continue;
-			}
-
-			if ( nodeIndex == nodeCount - 1 || elapsed < segmentStart + segmentDuration ) {
-				nextNodeIndex = ( nodeIndex + 1 < nodeCount ) ? nodeIndex + 1 : nodeIndex;
-				t = (float)( elapsed - segmentStart ) / (float)segmentDuration;
-				if ( t < 0.0f ) {
-					t = 0.0f;
-				} else if ( t > 1.0f ) {
-					t = 1.0f;
-				}
-				foundSegment = qtrue;
-				break;
-			}
-
-			segmentStart += segmentDuration;
-		}
-
-		if ( !foundSegment ) {
-			return G_IntroCam_DisableSequence( ent, "no valid segment in sequence" );
-		}
-	}
-
-	if ( nodeIndex < 0 || nodeIndex >= nodeCount || nextNodeIndex < 0 || nextNodeIndex >= nodeCount ) {
-		return G_IntroCam_DisableSequence( ent, "node index out of bounds" );
-	}
-
-	node = &level.introCamNodes[nodeIndex];
-	nextNode = &level.introCamNodes[nextNodeIndex];
-	blend = G_IntroCam_BlendFraction( node->blendType, t );
-
-	origin[0] = node->position[0] + ( nextNode->position[0] - node->position[0] ) * blend;
-	origin[1] = node->position[1] + ( nextNode->position[1] - node->position[1] ) * blend;
-	origin[2] = node->position[2] + ( nextNode->position[2] - node->position[2] ) * blend;
-
-	if ( G_IntroCam_GetNodeLookAt( node, lookAt ) ) {
-		vec3_t delta;
-		VectorSubtract( lookAt, origin, delta );
-		if ( VectorLengthSquared( delta ) > 0.001f ) {
-			vectoangles( delta, angles );
-		} else {
-			VectorCopy( node->angles, angles );
-		}
-	} else {
-		angles[0] = LerpAngle( node->angles[0], nextNode->angles[0], blend );
-		angles[1] = LerpAngle( node->angles[1], nextNode->angles[1], blend );
-		angles[2] = LerpAngle( node->angles[2], nextNode->angles[2], blend );
-	}
-
-	VectorCopy( origin, ent->client->ps.origin );
-	VectorCopy( angles, ent->client->ps.viewangles );
-	VectorCopy( origin, ent->s.origin );
-	VectorCopy( origin, ent->r.currentOrigin );
-	VectorCopy( angles, ent->s.angles );
-	VectorCopy( angles, ent->r.currentAngles );
-	ent->client->ps.pm_flags &= ~( PMF_FOLLOW | PMF_OBSERVE );
-	ent->client->ps.pm_flags |= ( PMF_FOLLOW | PMF_OBSERVE );
-	G_DebugClientRaceSnapshot( ent, "G_ApplyIntroCamSequence wrote camera state" );
-
-	if ( g_debugIntroCam.integer ) {
-		G_Printf( "IntroCam: node=%d next=%d elapsed=%dms/%dms t=%.3f blend=%.3f\n",
-			nodeIndex, nextNodeIndex, elapsed, level.raceIntroDurationMs, t, blend );
-	}
-
-	return qtrue;
-}
-
 
 /*
 ==================
@@ -2532,9 +2349,10 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 
 	/*
 	 * Camera path selection order (race/spectator clients):
-	 * 1) Intro sequence path (G_ApplyIntroCamSequence): active only while
+	 * 1) Packaged Ghost route intro (G_HoldIntroCamView): active only while
 	 *    level.raceState == RACE_STATE_INTRO_CAM and raceIntroEndTime > now.
-	 *    While active, it owns origin/viewangles and we return early.
+	 *    While active, the server preserves the view handover and returns early;
+	 *    cgame supplies the camera transform from the route.
 	 * 2) Normal spectator paths:
 	 *    - SPECTATOR_FOLLOW: chase target player state.
 	 *    - SPECTATOR_OBSERVE: observer spot + optional tracking/zoom.
@@ -2542,10 +2360,10 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 	 * After intro finishes (or is disabled), execution falls through to the
 	 * existing follow/observe/free logic unchanged.
 	 */
-	if ( G_ApplyIntroCamSequence( ent ) ) {
+	if ( G_HoldIntroCamView( ent ) ) {
 		return;
 	}
-	G_DebugClientRaceSnapshot( ent, "After G_ApplyIntroCamSequence (fallthrough)" );
+	G_DebugClientRaceSnapshot( ent, "After G_HoldIntroCamView (fallthrough)" );
 
 	// if we are doing a chase cam or a remote view, grab the latest info
 	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {

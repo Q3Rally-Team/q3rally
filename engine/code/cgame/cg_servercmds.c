@@ -746,7 +746,7 @@ static void CG_ConfigStringModified( void ) {
 	}
 	// Q3Rally Code END - KOTH
 	// Q3Rally Code Start - Intro Camera
-	else if ( num == CS_INTRO_CAM ) {
+	else if ( num == CS_INTRO_ROUTE ) {
 		CG_IntroCam_ParseConfigstring();
 	}
 	// Q3Rally Code END - Intro Camera

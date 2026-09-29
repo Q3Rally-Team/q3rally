@@ -14,55 +14,29 @@ or (at your option) any later version.
 
 /*
 ===========================================================================
-cg_rally_intro_cam.c  --  client-side intro camera sequence evaluator
+cg_rally_intro_cam.c  --  client-side packaged Ghost route camera
 
-WHY THIS EXISTS
----------------
-The server evaluates G_ApplyIntroCamSequence() once per game frame
-(~20 Hz at sv_fps 20) and writes the result into ps.origin /
-ps.viewangles.  The Q3 snapshot system then ships those values to the
-client, which interpolates between two consecutive snapshots.
+The server selects a route matching the active map, track length, and
+travel direction, then broadcasts the synchronized intro start time. Each
+client loads that packaged camera-only route and evaluates its view from
+cg.time every render frame. This keeps the camera smooth at any client
+framerate while the server owns the shared race-start countdown.
 
-That gives two problems:
-  1. The camera only updates at 20 Hz regardless of client framerate,
-     causing visible stutter on fast movements.
-  2. EASE_IN_OUT blending is computed on the server; the client then
-     linearly interpolates between already-eased samples, distorting
-     the curve and producing small jumps where the ease gradient changes
-     quickly.
-
-SOLUTION
---------
-The server serialises the full sequence into CS_INTRO_CAM once at
-map load (G_ObserverCamSequence_WriteConfigstring).  When the intro
-starts the server broadcasts "introCamStart <level.time>" to all clients.
-
-This module reads the configstring, stores the nodes locally, and
-evaluates the correct camera position using cg.time every render frame.
-The result is written directly into cg.refdef, bypassing ps.origin
-entirely.  The camera now runs at whatever framerate the client achieves
-and blend curves are mathematically exact.
-
-CONFIGSTRING FORMAT  (CS_INTRO_CAM)
+CONFIGSTRING FORMAT (CS_INTRO_ROUTE)
 ------------------------------------
-Mapper-authored sequence:
-  "<N> px py pz ax ay az durMs blend fov hasLookAt [lx ly lz] ..."
+  "ghost <route-file> <preview-duration-ms> <effective-reversed> <pending-start>"
 
-Packaged Ghost route:
-  "ghost <route-file> <preview-duration-ms> <effective-reversed>"
-
-The route reference keeps long paths out of configstrings; cgame loads and
-evaluates the matching camera-only route from the packaged intro_routes folder.
+Routes live in the packaged intro_routes folder. The route file contains
+only timed positions and angles; it contains no player identity, vehicle,
+lap time, or control input.
 
 PUBLIC API
 ----------
-  CG_IntroCam_ParseConfigstring()    call from CG_SetConfigValues and
-                                     whenever CS_INTRO_CAM changes
-  CG_IntroCam_SetStartTime(t)        call when "introCamStart" cmd arrives
-  CG_IntroCam_IsActive()             qtrue while sequence is running
-  CG_IntroCam_CalcView(o,a,fov)      fills output; returns qtrue when
-                                     active -- caller must return
-                                     CG_CalcFov() immediately after
+  CG_IntroCam_ParseConfigstring()    called when CS_INTRO_ROUTE changes
+  CG_IntroCam_SetStartTime(t)        called for the synchronized server time
+  CG_IntroCam_IsActive()             true while this client's preview runs
+  CG_IntroCam_CalcView(o,a,fov)      evaluates the current camera view
+  CG_IntroCam_FadeAlpha()            returns the black transition alpha; holds black while a race intro is pending
 ===========================================================================
 */
 
@@ -72,23 +46,12 @@ PUBLIC API
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-#define CG_MAX_INTRO_CAM_NODES  64
 #define CG_MAX_INTRO_GHOST_ROUTE_FRAMES 256
 #define CG_MAX_INTRO_GHOST_ROUTE_FILE_SIZE ( 64 * 1024 )
 
 /* ------------------------------------------------------------------ */
 /* Local types                                                         */
 /* ------------------------------------------------------------------ */
-
-typedef struct {
-	vec3_t		position;
-	vec3_t		angles;
-	int			durationMs;
-	int			blendType;      /* 0=cut, 1=linear, 2=ease-in-out */
-	float		fov;
-	qboolean	hasLookAt;
-	vec3_t		lookAt;
-} cgIntroCamNode_t;
 
 typedef struct {
 	int		timeMs;
@@ -100,30 +63,18 @@ typedef struct {
 /* Module state                                                        */
 /* ------------------------------------------------------------------ */
 
-static cgIntroCamNode_t		s_nodes[CG_MAX_INTRO_CAM_NODES];
-static int					s_nodeCount       = 0;
-static int					s_totalDurationMs = 0;
+static int					s_previewDurationMs = 0;
 static int					s_startTime       = 0;
-static qboolean				s_hasSequence     = qfalse;
-static qboolean				s_useGhostRoute   = qfalse;
+static qboolean				s_hasRoute          = qfalse;
+static qboolean				s_waitingForStart    = qfalse;
 static qboolean				s_skipped         = qfalse;
-static cgIntroGhostRouteFrame_t s_ghostFrames[CG_MAX_INTRO_GHOST_ROUTE_FRAMES];
-static int					s_ghostFrameCount = 0;
-static int					s_ghostRouteDurationMs = 0;
+static cgIntroGhostRouteFrame_t s_routeFrames[CG_MAX_INTRO_GHOST_ROUTE_FRAMES];
+static int					s_routeFrameCount = 0;
+static int					s_routeDurationMs = 0;
 
 /* ------------------------------------------------------------------ */
 /* Internal helpers                                                    */
 /* ------------------------------------------------------------------ */
-
-static float CG_IntroCam_Ease( int blendType, float t ) {
-	if ( t <= 0.0f ) return 0.0f;
-	if ( t >= 1.0f ) return 1.0f;
-	switch ( blendType ) {
-	case 1:  return t;
-	case 2:  return t * t * ( 3.0f - 2.0f * t );
-	default: return 0.0f;   /* cut: snap to start of segment */
-	}
-}
 
 /* Read one whitespace-delimited token from *p, advance *p. */
 static qboolean CG_IntroCam_NextToken( const char **p, char *buf, int bufSize ) {
@@ -154,9 +105,8 @@ static qboolean CG_IntroCam_LoadGhostRoute( const char *path, int previewDuratio
 	int routeTrackLength, routeTrackReversed, expectedTrackLength;
 	int frameCount, i, previousTime;
 
-	s_ghostFrameCount = 0;
-	s_ghostRouteDurationMs = 0;
-	s_useGhostRoute = qfalse;
+	s_routeFrameCount = 0;
+	s_routeDurationMs = 0;
 
 	if ( !path || Q_stricmpn( path, "intro_routes/", 13 ) ) {
 		CG_Printf( "^3CG_IntroCam: invalid Ghost route path\n" );
@@ -230,7 +180,7 @@ static qboolean CG_IntroCam_LoadGhostRoute( const char *path, int previewDuratio
 
 	previousTime = -1;
 	for ( i = 0; i < frameCount; i++ ) {
-		cgIntroGhostRouteFrame_t *frame = &s_ghostFrames[i];
+		cgIntroGhostRouteFrame_t *frame = &s_routeFrames[i];
 		int axis;
 
 		if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
@@ -255,18 +205,17 @@ static qboolean CG_IntroCam_LoadGhostRoute( const char *path, int previewDuratio
 		}
 	}
 
-	s_ghostFrameCount = frameCount;
-	s_ghostRouteDurationMs = s_ghostFrames[frameCount - 1].timeMs;
-	if ( s_ghostRouteDurationMs <= 0 ) {
-		s_ghostFrameCount = 0;
+	s_routeFrameCount = frameCount;
+	s_routeDurationMs = s_routeFrames[frameCount - 1].timeMs;
+	if ( s_routeDurationMs <= 0 ) {
+		s_routeFrameCount = 0;
 		return qfalse;
 	}
-	s_totalDurationMs = previewDurationMs;
-	s_useGhostRoute = qtrue;
-	s_hasSequence = qtrue;
+	s_previewDurationMs = previewDurationMs;
+	s_hasRoute = qtrue;
 	if ( cg_developer.integer ) {
 		CG_Printf( "CG_IntroCam: loaded %d route points from %s (%d ms preview)\n",
-			s_ghostFrameCount, path, s_totalDurationMs );
+			s_routeFrameCount, path, s_previewDurationMs );
 	}
 	return qtrue;
 }
@@ -276,111 +225,46 @@ static qboolean CG_IntroCam_LoadGhostRoute( const char *path, int previewDuratio
 /* ------------------------------------------------------------------ */
 
 void CG_IntroCam_ParseConfigstring( void ) {
-	const char	*cs;
-	const char	*p;
-	char		tok[64];
-	int			i, count, totalMs;
+	const char *p;
+	const char *cs;
+	char token[64];
+	char routePath[MAX_QPATH];
+	int previewDurationMs;
+	int expectedTrackReversed;
+	qboolean waitingForStart;
 
-	s_nodeCount       = 0;
-	s_totalDurationMs = 0;
-	s_hasSequence     = qfalse;
-	s_useGhostRoute   = qfalse;
-	s_ghostFrameCount = 0;
-	s_ghostRouteDurationMs = 0;
-	/* Do NOT reset s_startTime here: a late-joining client may receive
-	   the configstring after the start command already arrived. */
+	s_previewDurationMs = 0;
+	s_hasRoute = qfalse;
+	s_waitingForStart = qfalse;
+	s_routeFrameCount = 0;
+	s_routeDurationMs = 0;
+	/* A late-joining client may receive the route config after the start command. */
 
-	cs = CG_ConfigString( CS_INTRO_CAM );
+	cs = CG_ConfigString( CS_INTRO_ROUTE );
 	if ( !cs || !cs[0] ) {
 		return;
 	}
 
 	p = cs;
-
-	if ( !CG_IntroCam_NextToken( &p, tok, sizeof( tok ) ) ) {
-		CG_Printf( "^3CG_IntroCam: empty configstring\n" );
+	if ( !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) || Q_stricmp( token, "ghost" )
+		|| !CG_IntroCam_NextToken( &p, routePath, sizeof( routePath ) )
+		|| !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
+		CG_Printf( "^3CG_IntroCam: malformed Ghost route configstring\n" );
 		return;
 	}
-	if ( !Q_stricmp( tok, "ghost" ) ) {
-		char routePath[MAX_QPATH];
-		int previewDurationMs;
-		int expectedTrackReversed;
-
-		if ( !CG_IntroCam_NextToken( &p, routePath, sizeof( routePath ) )
-			|| !CG_IntroCam_NextToken( &p, tok, sizeof( tok ) ) ) {
-			CG_Printf( "^3CG_IntroCam: malformed Ghost route configstring\n" );
-			return;
-		}
-		previewDurationMs = atoi( tok );
-		if ( !CG_IntroCam_NextToken( &p, tok, sizeof( tok ) ) ) {
-			CG_Printf( "^3CG_IntroCam: missing Ghost route direction\n" );
-			return;
-		}
-		expectedTrackReversed = atoi( tok ) ? 1 : 0;
-		CG_IntroCam_LoadGhostRoute( routePath, previewDurationMs, expectedTrackReversed );
+	previewDurationMs = atoi( token );
+	if ( !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
+		CG_Printf( "^3CG_IntroCam: missing Ghost route direction\n" );
 		return;
 	}
-	count = atoi( tok );
-	if ( count <= 0 || count > CG_MAX_INTRO_CAM_NODES ) {
-		CG_Printf( "^3CG_IntroCam: invalid node count %d\n", count );
-		return;
+	expectedTrackReversed = atoi( token ) ? 1 : 0;
+	waitingForStart = qfalse;
+	if ( CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
+		waitingForStart = atoi( token ) ? qtrue : qfalse;
 	}
-
-	totalMs = 0;
-
-	for ( i = 0; i < count; i++ ) {
-		cgIntroCamNode_t *n = &s_nodes[i];
-		int hl;
-
-#define RDF( field ) \
-		if ( !CG_IntroCam_NextToken( &p, tok, sizeof(tok) ) ) { \
-			CG_Printf( "^3CG_IntroCam: parse error node %d\n", i ); \
-			s_nodeCount = 0; return; \
-		} (field) = (float)atof( tok );
-
-#define RDI( field ) \
-		if ( !CG_IntroCam_NextToken( &p, tok, sizeof(tok) ) ) { \
-			CG_Printf( "^3CG_IntroCam: parse error node %d\n", i ); \
-			s_nodeCount = 0; return; \
-		} (field) = atoi( tok );
-
-		RDF( n->position[0] )  RDF( n->position[1] )  RDF( n->position[2] )
-		RDF( n->angles[0]   )  RDF( n->angles[1]   )  RDF( n->angles[2]   )
-		RDI( n->durationMs  )
-		RDI( n->blendType   )
-		RDF( n->fov         )
-		RDI( hl             )
-		n->hasLookAt = hl ? qtrue : qfalse;
-
-		if ( n->hasLookAt ) {
-			RDF( n->lookAt[0] )  RDF( n->lookAt[1] )  RDF( n->lookAt[2] )
-		} else {
-			VectorClear( n->lookAt );
-		}
-
-#undef RDF
-#undef RDI
-
-		if ( n->durationMs <= 0 ) {
-			CG_Printf( "^3CG_IntroCam: node %d zero duration\n", i );
-			s_nodeCount = 0;
-			return;
-		}
-		totalMs += n->durationMs;
-	}
-
-	if ( totalMs <= 0 ) {
-		CG_Printf( "^3CG_IntroCam: zero total duration\n" );
-		return;
-	}
-
-	s_nodeCount       = count;
-	s_totalDurationMs = totalMs;
-	s_hasSequence     = qtrue;
-
-	if (cg_developer.integer) CG_Printf( "CG_IntroCam: %d nodes, %d ms\n", s_nodeCount, s_totalDurationMs );
+	CG_IntroCam_LoadGhostRoute( routePath, previewDurationMs, expectedTrackReversed );
+	s_waitingForStart = waitingForStart;
 }
-
 /* ------------------------------------------------------------------ */
 /* Start time                                                          */
 /* ------------------------------------------------------------------ */
@@ -393,6 +277,7 @@ so serverTime is used directly as the elapsed-time base.
 */
 void CG_IntroCam_SetStartTime( int serverTime ) {
 	s_startTime = serverTime;
+	s_waitingForStart = qfalse;
 	s_skipped = qfalse;
 	if (cg_developer.integer) CG_Printf( "CG_IntroCam: startTime=%d cg.time=%d\n", s_startTime, cg.time );
 }
@@ -412,9 +297,9 @@ void CG_IntroCam_Skip( void ) {
 
 qboolean CG_IntroCam_IsRaceIntroPending( void ) {
 	int elapsed;
-	if ( !s_hasSequence || ( !s_useGhostRoute && s_nodeCount <= 0 ) || s_startTime <= 0 ) return qfalse;
+	if ( !s_hasRoute || ( s_routeFrameCount < 2 ) || s_startTime <= 0 ) return qfalse;
 	elapsed = cg.time - s_startTime;
-	return ( elapsed >= 0 && elapsed < s_totalDurationMs ) ? qtrue : qfalse;
+	return ( elapsed >= 0 && elapsed < s_previewDurationMs ) ? qtrue : qfalse;
 }
 
 qboolean CG_IntroCam_IsActive( void ) {
@@ -428,7 +313,7 @@ int CG_IntroCam_RemainingSeconds( void ) {
 		return 0;
 	}
 
-	remainingMs = s_totalDurationMs - ( cg.time - s_startTime );
+	remainingMs = s_previewDurationMs - ( cg.time - s_startTime );
 	return ( remainingMs + 999 ) / 1000;
 }
 
@@ -437,23 +322,23 @@ static void CG_IntroCam_SampleGhostRoute( int targetTime, vec3_t origin, vec3_t 
 	const cgIntroGhostRouteFrame_t *from, *to;
 	float fraction;
 
-	if ( targetTime <= s_ghostFrames[0].timeMs ) {
-		VectorCopy( s_ghostFrames[0].origin, origin );
-		VectorCopy( s_ghostFrames[0].angles, angles );
+	if ( targetTime <= s_routeFrames[0].timeMs ) {
+		VectorCopy( s_routeFrames[0].origin, origin );
+		VectorCopy( s_routeFrames[0].angles, angles );
 		return;
 	}
-	if ( targetTime >= s_ghostFrames[s_ghostFrameCount - 1].timeMs ) {
-		VectorCopy( s_ghostFrames[s_ghostFrameCount - 1].origin, origin );
-		VectorCopy( s_ghostFrames[s_ghostFrameCount - 1].angles, angles );
+	if ( targetTime >= s_routeFrames[s_routeFrameCount - 1].timeMs ) {
+		VectorCopy( s_routeFrames[s_routeFrameCount - 1].origin, origin );
+		VectorCopy( s_routeFrames[s_routeFrameCount - 1].angles, angles );
 		return;
 	}
 
-	for ( i = 0; i < s_ghostFrameCount - 1; i++ ) {
-		if ( targetTime > s_ghostFrames[i + 1].timeMs ) {
+	for ( i = 0; i < s_routeFrameCount - 1; i++ ) {
+		if ( targetTime > s_routeFrames[i + 1].timeMs ) {
 			continue;
 		}
-		from = &s_ghostFrames[i];
-		to = &s_ghostFrames[i + 1];
+		from = &s_routeFrames[i];
+		to = &s_routeFrames[i + 1];
 		fraction = (float)( targetTime - from->timeMs ) / (float)( to->timeMs - from->timeMs );
 		origin[0] = from->origin[0] + ( to->origin[0] - from->origin[0] ) * fraction;
 		origin[1] = from->origin[1] + ( to->origin[1] - from->origin[1] ) * fraction;
@@ -464,8 +349,8 @@ static void CG_IntroCam_SampleGhostRoute( int targetTime, vec3_t origin, vec3_t 
 		return;
 	}
 
-	VectorCopy( s_ghostFrames[s_ghostFrameCount - 1].origin, origin );
-	VectorCopy( s_ghostFrames[s_ghostFrameCount - 1].angles, angles );
+	VectorCopy( s_routeFrames[s_routeFrameCount - 1].origin, origin );
+	VectorCopy( s_routeFrames[s_routeFrameCount - 1].angles, angles );
 }
 
 static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, vec3_t anglesOut, float *fovOut ) {
@@ -478,11 +363,11 @@ static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, v
 	float forwardX, forwardY, rightX, rightY;
 	int routeTime;
 
-	if ( s_ghostFrameCount < 2 || s_ghostRouteDurationMs <= 0 || s_totalDurationMs <= 0 ) {
+	if ( s_routeFrameCount < 2 || s_routeDurationMs <= 0 || s_previewDurationMs <= 0 ) {
 		return qfalse;
 	}
 
-	routeTime = (int)( ( (float)elapsed / (float)s_totalDurationMs ) * (float)s_ghostRouteDurationMs );
+	routeTime = (int)( ( (float)elapsed / (float)s_previewDurationMs ) * (float)s_routeDurationMs );
 	CG_IntroCam_SampleGhostRoute( routeTime, routeOrigin, routeAngles );
 
 	yawRadians = DEG2RAD( routeAngles[YAW] );
@@ -522,64 +407,62 @@ static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, v
 /* ------------------------------------------------------------------ */
 
 qboolean CG_IntroCam_CalcView( vec3_t originOut, vec3_t anglesOut, float *fovOut ) {
-	int		elapsed, segStart, ni, nNext;
-	float	t, blend;
-	const cgIntroCamNode_t *node, *next;
-	vec3_t	origin, angles;
+	int elapsed;
 
-	if ( s_skipped || !s_hasSequence || ( !s_useGhostRoute && s_nodeCount <= 0 ) || s_startTime <= 0 ) return qfalse;
+	if ( s_skipped || !s_hasRoute || s_startTime <= 0 ) {
+		return qfalse;
+	}
 
 	elapsed = cg.time - s_startTime;
-	if ( elapsed < 0 )                  elapsed = 0;
-	if ( elapsed >= s_totalDurationMs ) return qfalse;
-	if ( s_useGhostRoute ) {
-		return CG_IntroCam_CalcGhostRouteView( elapsed, originOut, anglesOut, fovOut );
+	if ( elapsed < 0 ) {
+		elapsed = 0;
+	}
+	if ( elapsed >= s_previewDurationMs ) {
+		return qfalse;
 	}
 
-	segStart = 0;
-	ni       = 0;
-	nNext    = 0;
-	t        = 0.0f;
+	return CG_IntroCam_CalcGhostRouteView( elapsed, originOut, anglesOut, fovOut );
+}
 
-	for ( ni = 0; ni < s_nodeCount; ni++ ) {
-		int dur = s_nodes[ni].durationMs;
-		if ( ni == s_nodeCount - 1 || elapsed < segStart + dur ) {
-			nNext = ( ni + 1 < s_nodeCount ) ? ni + 1 : ni;
-			t     = ( dur > 0 ) ? (float)( elapsed - segStart ) / (float)dur : 0.0f;
-			if ( t < 0.0f ) t = 0.0f;
-			if ( t > 1.0f ) t = 1.0f;
-			break;
+float CG_IntroCam_FadeAlpha( void ) {
+	const int fadeDurationMs = 2500;
+	const int revealDurationMs = 2500;
+	int elapsed;
+	float fadeIn, fadeOut, alpha, transition;
+
+	if ( !s_hasRoute || s_skipped ) {
+		return 0.0f;
+	}
+	if ( s_waitingForStart ) {
+		if ( cg.snap && cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+			return 0.0f;
 		}
-		segStart += dur;
+		return 1.0f;
+	}
+	if ( s_startTime <= 0 ) {
+		return 0.0f;
 	}
 
-	node  = &s_nodes[ni];
-	next  = &s_nodes[nNext];
-	blend = CG_IntroCam_Ease( node->blendType, t );
-
-	origin[0] = node->position[0] + ( next->position[0] - node->position[0] ) * blend;
-	origin[1] = node->position[1] + ( next->position[1] - node->position[1] ) * blend;
-	origin[2] = node->position[2] + ( next->position[2] - node->position[2] ) * blend;
-
-	if ( node->hasLookAt ) {
-		vec3_t delta;
-		VectorSubtract( node->lookAt, origin, delta );
-		if ( VectorLengthSquared( delta ) > 0.001f ) {
-			vectoangles( delta, angles );
-		} else {
-			VectorCopy( node->angles, angles );
-		}
-	} else {
-		angles[0] = LerpAngle( node->angles[0], next->angles[0], blend );
-		angles[1] = LerpAngle( node->angles[1], next->angles[1], blend );
-		angles[2] = LerpAngle( node->angles[2], next->angles[2], blend );
+	elapsed = cg.time - s_startTime;
+	if ( elapsed < 0 ) {
+		return 1.0f;
+	}
+	if ( elapsed >= s_previewDurationMs ) {
+		transition = (float)( elapsed - s_previewDurationMs ) / (float)revealDurationMs;
+		if ( transition > 1.0f ) transition = 1.0f;
+		return 1.0f - transition * transition * ( 3.0f - 2.0f * transition );
 	}
 
-	if ( fovOut ) {
-		*fovOut = node->fov + ( next->fov - node->fov ) * blend;
-	}
+	fadeIn = (float)elapsed / (float)fadeDurationMs;
+	if ( fadeIn < 0.0f ) fadeIn = 0.0f;
+	if ( fadeIn > 1.0f ) fadeIn = 1.0f;
+	fadeIn = 1.0f - fadeIn * fadeIn * ( 3.0f - 2.0f * fadeIn );
 
-	VectorCopy( origin, originOut );
-	VectorCopy( angles, anglesOut );
-	return qtrue;
+	fadeOut = (float)( elapsed - ( s_previewDurationMs - fadeDurationMs ) ) / (float)fadeDurationMs;
+	if ( fadeOut < 0.0f ) fadeOut = 0.0f;
+	if ( fadeOut > 1.0f ) fadeOut = 1.0f;
+	fadeOut = fadeOut * fadeOut * ( 3.0f - 2.0f * fadeOut );
+
+	alpha = ( fadeIn > fadeOut ) ? fadeIn : fadeOut;
+	return alpha;
 }

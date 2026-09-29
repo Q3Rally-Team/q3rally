@@ -23,240 +23,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-#define INTRO_CAM_DEFAULT_DURATION_MS 1000
-#define INTRO_CAM_MIN_DURATION_MS 100
-#define INTRO_CAM_MAX_DURATION_MS 60000
-#define INTRO_CAM_DEFAULT_FOV 90.0f
-#define INTRO_CAM_MIN_FOV 10.0f
-#define INTRO_CAM_MAX_FOV 170.0f
-#define INTRO_GHOST_CAM_DURATION_MS 15000
 #define INTRO_GHOST_ROUTE_MAX_FILE_SIZE ( 64 * 1024 )
 #define INTRO_GHOST_ROUTE_MAX_FRAMES 256
-
-static int G_ParseIntroCamBlendType( const char *blendName ) {
-	if ( !blendName || !blendName[0] ) {
-		return INTRO_CAM_BLEND_CUT;
-	}
-
-	if ( !Q_stricmp( blendName, "linear" ) ) {
-		return INTRO_CAM_BLEND_LINEAR;
-	}
-
-	if ( !Q_stricmp( blendName, "ease" ) || !Q_stricmp( blendName, "easeinout" ) ) {
-		return INTRO_CAM_BLEND_EASE_IN_OUT;
-	}
-
-	return INTRO_CAM_BLEND_CUT;
-}
-
-static qboolean G_ObserverCamSequence_ShouldRegisterSpot( void ) {
-	char *sequenceName;
-	char *introValue;
-
-	G_SpawnString( "sequence", "", &sequenceName );
-	if ( sequenceName[0] ) {
-		return ( Q_stricmp( sequenceName, "intro" ) == 0 ) ? qtrue : qfalse;
-	}
-
-	G_SpawnString( "intro", "", &introValue );
-	if ( !introValue[0] ) {
-		return qtrue;
-	}
-
-	if ( !Q_stricmp( introValue, "0" ) || !Q_stricmp( introValue, "false" ) || !Q_stricmp( introValue, "no" ) ) {
-		return qfalse;
-	}
-
-	if ( !Q_stricmp( introValue, "1" ) || !Q_stricmp( introValue, "true" ) || !Q_stricmp( introValue, "yes" ) ) {
-		return qtrue;
-	}
-
-	return ( Q_stricmp( introValue, "intro" ) == 0 ) ? qtrue : qfalse;
-}
-
-static void G_ObserverCamSequence_SortNodesByOrder( void ) {
-	int i, j;
-
-	for ( i = 1; i < level.introCamNodeCount; i++ ) {
-		intro_cam_node_t key = level.introCamNodes[i];
-		j = i - 1;
-		while ( j >= 0 && level.introCamNodes[j].order > key.order ) {
-			level.introCamNodes[j + 1] = level.introCamNodes[j];
-			j--;
-		}
-		level.introCamNodes[j + 1] = key;
-	}
-}
-
-static void G_ObserverCamSequence_ResolveLookAtTargets( void ) {
-	int i;
-
-	for ( i = 0; i < level.introCamNodeCount; i++ ) {
-		gentity_t *targetEnt;
-		intro_cam_node_t *node;
-
-		node = &level.introCamNodes[i];
-		if ( !node->lookAtTargetName || !node->lookAtTargetName[0] ) {
-			continue;
-		}
-
-		targetEnt = G_Find( NULL, FOFS( targetname ), node->lookAtTargetName );
-		if ( !targetEnt ) {
-			G_Printf( "Warning: Intro observer spot order=%d references unknown lookat_target '%s'.\n",
-				node->order, node->lookAtTargetName );
-			continue;
-		}
-
-		VectorCopy( targetEnt->s.origin, node->lookAt );
-		node->hasLookAt = qtrue;
-	}
-}
-
-static qboolean G_ObserverCamSequence_NodeHasValidData( const intro_cam_node_t *node ) {
-	if ( !node ) {
-		return qfalse;
-	}
-
-	if ( node->durationMs <= 0 ) {
-		return qfalse;
-	}
-
-	if ( node->fov < INTRO_CAM_MIN_FOV || node->fov > INTRO_CAM_MAX_FOV ) {
-		return qfalse;
-	}
-
-	if ( IS_NAN( node->position[0] ) || IS_NAN( node->position[1] ) || IS_NAN( node->position[2] ) ) {
-		return qfalse;
-	}
-
-	if ( IS_NAN( node->angles[0] ) || IS_NAN( node->angles[1] ) || IS_NAN( node->angles[2] ) ) {
-		return qfalse;
-	}
-
-	if ( node->hasLookAt &&
-		( IS_NAN( node->lookAt[0] ) || IS_NAN( node->lookAt[1] ) || IS_NAN( node->lookAt[2] ) ) ) {
-		return qfalse;
-	}
-
-	return qtrue;
-}
-
-static void G_ObserverCamSequence_RemoveInvalidNodes( void ) {
-	int readIndex;
-	int writeIndex;
-
-	writeIndex = 0;
-	for ( readIndex = 0; readIndex < level.introCamNodeCount; readIndex++ ) {
-		const intro_cam_node_t *node = &level.introCamNodes[readIndex];
-
-		if ( !G_ObserverCamSequence_NodeHasValidData( node ) ) {
-			G_Printf( "Warning: Intro observer spot order=%d has invalid data; skipping node.\n", node->order );
-			continue;
-		}
-
-		if ( writeIndex != readIndex ) {
-			level.introCamNodes[writeIndex] = level.introCamNodes[readIndex];
-		}
-		writeIndex++;
-	}
-
-	level.introCamNodeCount = writeIndex;
-}
-
-void G_ObserverCamSequence_RegisterSpot( gentity_t *ent ) {
-	int				nodeIndex;
-	int				order;
-	float				durationSeconds;
-	char				*blendName;
-	int				durationMs;
-	int				lookAtProvided;
-	int				hasOrder;
-	int				orderValue;
-	float				fov;
-	char				*lookAtTargetName;
-
-	if ( !ent ) {
-		return;
-	}
-
-	if ( !G_ObserverCamSequence_ShouldRegisterSpot() ) {
-		return;
-	}
-
-	if ( level.introCamNodeCount >= MAX_INTRO_CAM_NODES ) {
-		G_Printf( "Warning: Too many intro observer spots (max %i); ignoring '%s'\n",
-			MAX_INTRO_CAM_NODES, vtos( ent->s.origin ) );
-		level.raceIntroFallback = qtrue;
-		return;
-	}
-
-	order = level.introCamNodeCount;
-	hasOrder = G_SpawnInt( "order", "0", &orderValue );
-	if ( hasOrder ) {
-		order = orderValue;
-	}
-	if ( order < 0 ) {
-		G_Printf( "Warning: Intro observer spot at %s has invalid order=%d; clamping to 0.\n",
-			vtos( ent->s.origin ), order );
-		order = 0;
-	}
-
-	durationSeconds = 0.0f;
-	G_SpawnFloat( "duration", "0", &durationSeconds );
-	durationMs = ( durationSeconds > 0.0f ) ? (int)( durationSeconds * 1000.0f ) : INTRO_CAM_DEFAULT_DURATION_MS;
-	if ( durationMs < INTRO_CAM_MIN_DURATION_MS || durationMs > INTRO_CAM_MAX_DURATION_MS ) {
-		G_Printf( "Warning: Intro observer spot at %s has invalid duration=%.3fs; using default %.3fs.\n",
-			vtos( ent->s.origin ), durationSeconds, INTRO_CAM_DEFAULT_DURATION_MS / 1000.0f );
-		durationMs = INTRO_CAM_DEFAULT_DURATION_MS;
-	}
-
-	fov = INTRO_CAM_DEFAULT_FOV;
-	G_SpawnFloat( "fov", "90", &fov );
-	if ( fov < INTRO_CAM_MIN_FOV || fov > INTRO_CAM_MAX_FOV ) {
-		G_Printf( "Warning: Intro observer spot at %s has invalid fov=%.1f; clamping to %.1f.\n",
-			vtos( ent->s.origin ), fov,
-			(fov < INTRO_CAM_MIN_FOV) ? INTRO_CAM_MIN_FOV : INTRO_CAM_MAX_FOV );
-		fov = (fov < INTRO_CAM_MIN_FOV) ? INTRO_CAM_MIN_FOV : INTRO_CAM_MAX_FOV;
-	}
-
-	nodeIndex = level.introCamNodeCount;
-	VectorCopy( ent->s.origin, level.introCamNodes[nodeIndex].position );
-	VectorCopy( ent->s.angles, level.introCamNodes[nodeIndex].angles );
-	level.introCamNodes[nodeIndex].durationMs = durationMs;
-	level.introCamNodes[nodeIndex].order = order;
-	level.introCamNodes[nodeIndex].fov = fov;
-	level.introCamNodes[nodeIndex].hasLookAt = qfalse;
-	level.introCamNodes[nodeIndex].lookAtTargetName = NULL;
-
-	G_SpawnString( "blend", "", &blendName );
-	level.introCamNodes[nodeIndex].blendType = G_ParseIntroCamBlendType( blendName );
-
-	lookAtProvided = G_SpawnVector( "lookat", "0 0 0", level.introCamNodes[nodeIndex].lookAt );
-	if ( lookAtProvided ) {
-		level.introCamNodes[nodeIndex].hasLookAt = qtrue;
-	}
-
-	G_SpawnString( "lookat_target", "", &lookAtTargetName );
-	if ( lookAtTargetName[0] ) {
-		if ( level.introCamNodes[nodeIndex].hasLookAt ) {
-			G_Printf( "Warning: Intro observer spot at %s has both lookat and lookat_target; keeping lookat vector.\n",
-				vtos( ent->s.origin ) );
-		} else {
-			/* CopyString: spawn strings are temporary; we need a persistent copy. */
-			level.introCamNodes[nodeIndex].lookAtTargetName = G_NewString( lookAtTargetName );
-		}
-	}
-
-	level.introCamNodeCount++;
-}
+/* Fallback duration by track class, used only if checkpoint distance is missing. */
+#define INTRO_GHOST_CAM_BASE_DURATION_MS 10000
+#define INTRO_GHOST_CAM_DURATION_STEP_MS 5000
+#define INTRO_GHOST_CAM_MIN_DURATION_MS 10000
+#define INTRO_GHOST_CAM_MAX_DURATION_MS 30000
+#define INTRO_GHOST_CAM_MS_PER_METER 30.0f
 
 /*
- * Packaged intro routes are camera-only derivatives of Ghost recordings.
- * The client loads the route itself so the full path never has to fit into
- * a configstring. Keep the server-side check cheap: validate the map/variant
- * filename and the route header before advertising it.
+ * Intro routes are camera-only derivatives of Ghost recordings. The client
+ * loads the selected route and evaluates it locally at full render rate.
  */
-static qboolean G_ObserverCamSequence_FindGhostRoute( void ) {
+static qboolean G_RallyIntroRoute_Find( void ) {
 	char mapName[MAX_QPATH];
 	char routePath[MAX_QPATH];
 	char routeHeader[256];
@@ -269,8 +49,8 @@ static qboolean G_ObserverCamSequence_FindGhostRoute( void ) {
 	int routeTrackLength, routeTrackReversed, routeFrames;
 	int i;
 
-	level.raceIntroUsesGhostRoute = qfalse;
-	level.raceIntroGhostRoute[0] = '\0';
+	level.raceIntroHasRoute = qfalse;
+	level.raceIntroRoute[0] = '\0';
 
 	if ( g_trackLength.integer < 0 || g_trackLength.integer > 2 ) {
 		return qfalse;
@@ -282,7 +62,7 @@ static qboolean G_ObserverCamSequence_FindGhostRoute( void ) {
 		return qfalse;
 	}
 
-	/* Do not allow a cvar value to escape the intro_routes directory. */
+	/* Keep the cvar-derived filename inside the intro_routes directory. */
 	for ( i = 0; mapName[i]; i++ ) {
 		if ( ( mapName[i] < 'a' || mapName[i] > 'z' )
 			&& ( mapName[i] < '0' || mapName[i] > '9' )
@@ -345,157 +125,85 @@ static qboolean G_ObserverCamSequence_FindGhostRoute( void ) {
 		return qfalse;
 	}
 
-	Q_strncpyz( level.raceIntroGhostRoute, routePath, sizeof( level.raceIntroGhostRoute ) );
-	level.raceIntroUsesGhostRoute = qtrue;
+	Q_strncpyz( level.raceIntroRoute, routePath, sizeof( level.raceIntroRoute ) );
+	level.raceIntroDurationMs = INTRO_GHOST_CAM_BASE_DURATION_MS
+		+ g_trackLength.integer * INTRO_GHOST_CAM_DURATION_STEP_MS;
 	return qtrue;
 }
 
-void G_ObserverCamSequence_WriteConfigstring( void ) {
-	char	buf[MAX_INFO_STRING];
-	char	node_buf[128];
-	int		pos, i, len, remaining;
+void G_RallyIntroRoute_UpdateDuration( void ) {
+	float trackLengthMeters;
+	int durationMs;
 
-	if ( !level.raceIntroHasSequence ) {
-		trap_SetConfigstring( CS_INTRO_CAM, "" );
+	if ( !level.raceIntroHasRoute || level.trackLength <= 0.0f ) {
 		return;
 	}
 
-	if ( level.raceIntroUsesGhostRoute ) {
-		pos = Com_sprintf( buf, sizeof( buf ), "ghost %s %d %d",
-			level.raceIntroGhostRoute, level.raceIntroDurationMs,
-			( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0 );
-		if ( pos >= sizeof( buf ) ) {
-			G_Printf( "Warning: intro Ghost route configstring overflow; using observer camera fallback.\n" );
-			level.raceIntroUsesGhostRoute = qfalse;
-			level.raceIntroHasSequence = ( level.introCamNodeCount > 0 ) ? qtrue : qfalse;
-			trap_SetConfigstring( CS_INTRO_CAM, "" );
-			return;
-		}
-		trap_SetConfigstring( CS_INTRO_CAM, buf );
-		G_Printf( "Info: CS_INTRO_CAM selects Ghost route '%s' (%d ms).\n",
-			level.raceIntroGhostRoute, level.raceIntroDurationMs );
-		return;
+	trackLengthMeters = level.trackLength / CP_M_2_QU;
+	durationMs = (int)( trackLengthMeters * INTRO_GHOST_CAM_MS_PER_METER + 0.5f );
+	if ( durationMs < INTRO_GHOST_CAM_MIN_DURATION_MS ) {
+		durationMs = INTRO_GHOST_CAM_MIN_DURATION_MS;
+	} else if ( durationMs > INTRO_GHOST_CAM_MAX_DURATION_MS ) {
+		durationMs = INTRO_GHOST_CAM_MAX_DURATION_MS;
 	}
-
-	if ( level.introCamNodeCount <= 0 ) {
-		trap_SetConfigstring( CS_INTRO_CAM, "" );
-		return;
-	}
-
-	pos       = Com_sprintf( buf, sizeof( buf ), "%d", level.introCamNodeCount );
-	remaining = (int)sizeof( buf ) - pos - 1;
-
-	for ( i = 0; i < level.introCamNodeCount; i++ ) {
-		const intro_cam_node_t *n = &level.introCamNodes[i];
-
-		if ( n->hasLookAt ) {
-			len = Com_sprintf( node_buf, sizeof( node_buf ),
-				" %.1f %.1f %.1f %.1f %.1f %.1f %d %d %.1f 1 %.1f %.1f %.1f",
-				n->position[0], n->position[1], n->position[2],
-				n->angles[0],   n->angles[1],   n->angles[2],
-				n->durationMs,  n->blendType,   n->fov,
-				n->lookAt[0],   n->lookAt[1],   n->lookAt[2] );
-		} else {
-			len = Com_sprintf( node_buf, sizeof( node_buf ),
-				" %.1f %.1f %.1f %.1f %.1f %.1f %d %d %.1f 0",
-				n->position[0], n->position[1], n->position[2],
-				n->angles[0],   n->angles[1],   n->angles[2],
-				n->durationMs,  n->blendType,   n->fov );
-		}
-
-		if ( len >= remaining ) {
-			G_Printf( "Warning: CS_INTRO_CAM overflow at node %d/%d. "
-				"Reduce node count.\n", i, level.introCamNodeCount );
-			break;
-		}
-
-		Q_strcat( buf, sizeof( buf ), node_buf );
-		remaining -= len;
-	}
-
-	trap_SetConfigstring( CS_INTRO_CAM, buf );
-	G_Printf( "Info: CS_INTRO_CAM written (%d bytes, %d nodes).\n",
-		(int)strlen( buf ), level.introCamNodeCount );
+	level.raceIntroDurationMs = durationMs;
+	G_Printf( "Info: intro Ghost route duration %d ms for %.0f m track.\n",
+		durationMs, trackLengthMeters );
 }
 
-void G_ObserverCamSequence_Finalize( void ) {
-	int i;
+static qboolean G_RallyIntroRoute_UsesRaceState( void ) {
+	return ( g_gametype.integer == GT_RACING
+		|| g_gametype.integer == GT_RACING_DM
+		|| g_gametype.integer == GT_TEAM_RACING
+		|| g_gametype.integer == GT_TEAM_RACING_DM
+		|| g_gametype.integer == GT_SPRINT
+		|| g_gametype.integer == GT_ELIMINATION ) ? qtrue : qfalse;
+}
 
+void G_RallyIntroRoute_SetPending( qboolean pending ) {
+	char configString[MAX_INFO_STRING];
+	int configLength;
+	int trackReversed;
+
+	if ( !level.raceIntroHasRoute ) {
+		return;
+	}
+
+	trackReversed = ( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0;
+	configLength = Com_sprintf( configString, sizeof( configString ), "ghost %s %d %d %d",
+		level.raceIntroRoute, level.raceIntroDurationMs, trackReversed, pending ? 1 : 0 );
+	if ( configLength < 0 || configLength >= sizeof( configString ) ) {
+		return;
+	}
+
+	trap_SetConfigstring( CS_INTRO_ROUTE, configString );
+}
+
+void G_RallyIntroRoute_Init( void ) {
 	level.raceIntroDurationMs = 0;
-	level.raceIntroSequenceWarned = qfalse;
-	level.raceIntroUsesGhostRoute = qfalse;
-	level.raceIntroGhostRoute[0] = '\0';
+	level.raceIntroHasRoute = qfalse;
+	level.raceIntroRoute[0] = '\0';
+	trap_SetConfigstring( CS_INTRO_ROUTE, "" );
 
-	if ( G_ObserverCamSequence_FindGhostRoute() ) {
-		level.raceIntroDurationMs = INTRO_GHOST_CAM_DURATION_MS;
-		level.raceIntroHasSequence = qtrue;
-		G_ObserverCamSequence_WriteConfigstring();
-		G_Printf( "Info: using packaged Ghost route for the automatic track preview; observer spots are not required.\n" );
-		return;
-	}
-
-	level.raceIntroHasSequence = ( level.introCamNodeCount > 0 ) ? qtrue : qfalse;
-
-	if ( !level.raceIntroHasSequence ) {
+	if ( !G_RallyIntroRoute_Find() ) {
 		level.raceIntroFallback = qtrue;
-		G_Printf( "Info: No intro camera sequence found; using countdown fallback.\n" );
+		G_Printf( "Info: No packaged intro Ghost route found; using countdown fallback.\n" );
 		return;
 	}
 
-	G_ObserverCamSequence_SortNodesByOrder();
-	G_ObserverCamSequence_ResolveLookAtTargets();
-	G_ObserverCamSequence_RemoveInvalidNodes();
-
-	if ( level.introCamNodeCount <= 0 ) {
-		level.raceIntroFallback = qtrue;
-		level.raceIntroHasSequence = qfalse;
-		G_Printf( "Warning: Intro camera sequence only contained invalid spots; using countdown fallback.\n" );
-		return;
-	}
-
-	for ( i = 0; i < level.introCamNodeCount; i++ ) {
-		level.raceIntroDurationMs += level.introCamNodes[i].durationMs;
-	}
-
-	if ( level.raceIntroDurationMs <= 0 ) {
-		level.raceIntroFallback = qtrue;
-		level.raceIntroHasSequence = qfalse;
-		G_Printf( "Warning: Intro camera sequence has invalid duration; using countdown fallback.\n" );
-		return;
-	}
-
-	/* Serialise sequence into CS_INTRO_CAM for client-side evaluation.
-	   The client reads this once and evaluates it at full framerate,
-	   eliminating the 20 Hz stutter from server-driven ps updates. */
-	G_ObserverCamSequence_WriteConfigstring();
+	level.raceIntroHasRoute = qtrue;
+	G_RallyIntroRoute_SetPending( !level.raceIntroFallback && G_RallyIntroRoute_UsesRaceState() );
+	G_Printf( "Info: using packaged Ghost route '%s' for the automatic track preview.\n",
+		level.raceIntroRoute );
 }
 
-/*
-==============
-SP_info_observer_spot
-
-Intro sequence keys (all optional):
- - sequence / intro: sequence selector. Defaults to intro when omitted.
-   `sequence` supports "intro"; `intro` supports 1/0, true/false, yes/no, or "intro".
- - order: playback order. Default: spawn order index.
- - duration: node duration in seconds. Default: 1.0.
- - lookat_target: targetname of an entity to look at. Default: unused.
- - lookat: explicit world position override. Default: unused.
- - fov: node field-of-view. Default: 90.
-==============
-*/
-void SP_info_observer_spot( gentity_t *ent ){
-	G_SetOrigin(ent, ent->s.origin);
-
-	if( ent->target )
-	{
+/* Observer spots remain for live spectating; race intros use packaged routes. */
+void SP_info_observer_spot( gentity_t *ent ) {
+	G_SetOrigin( ent, ent->s.origin );
+	if ( ent->target ) {
 		ent->spawnflags |= OBSERVERCAM_FIXED;
 	}
-
-	G_ObserverCamSequence_RegisterSpot( ent );
 }
-
-
 gentity_t *FindBestObserverSpot( gentity_t *self, gentity_t *target, vec3_t spot, vec3_t angles){
 	gentity_t		*ent;
 	trace_t			tr;
