@@ -74,7 +74,7 @@ Bottom-left panel: integrity bar + coloured zone diagram + critical pulse.
 void CG_DrawHUD_DerbyVehicleState( void ) {
 	const int   health      = cg.snap->ps.stats[STAT_HEALTH];
 	const float maxHealth   = 100.0f;
-	const int   lastHitFlashMs = 1100;
+	const int   lastHitFlashMs = 2200;
 	float   healthFrac;
 	float   hitFrac;
 	float   x, y, scale;
@@ -362,12 +362,12 @@ Compact modern right-side scoreboard with true current integrity.
 ====================
 */
 void CG_DrawHUD_DerbyList( float x, float y ) {
-	const float panelW = 224.0f;
+	const float panelW = 190.0f;
 	const float titleH = 20.0f;
 	const float labelsH = 14.0f;
 	const float rowH = 16.0f;
 	const int maxRows = 8;
-	int i, rows, panelH, totalTime;
+	int i, rows, panelH, totalTime, rank;
 	float rowY, integrity, barW;
 	qboolean isDead, isSpectator, isLocal;
 	char name[MAX_QPATH];
@@ -424,9 +424,9 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 	rowY = y + titleH;
 	CG_DrawIngameString( (int)(x + 8.0f), (int)(rowY + 2.0f), "POS",
 	                     UI_SMALLFONT, 0.44f, mutedColor );
-	CG_DrawIngameString( (int)(x + 43.0f), (int)(rowY + 2.0f), "DRIVER",
+	CG_DrawIngameString( (int)(x + 41.0f), (int)(rowY + 2.0f), "DRIVER",
 	                     UI_SMALLFONT, 0.44f, mutedColor );
-	CG_DrawIngameString( (int)(x + 143.0f), (int)(rowY + 2.0f), "INT",
+	CG_DrawIngameString( (int)(x + 108.0f), (int)(rowY + 2.0f), "INT",
 	                     UI_SMALLFONT, 0.44f, mutedColor );
 	CG_DrawIngameString( (int)(x + panelW - 7.0f), (int)(rowY + 2.0f), "STATE",
 	                     UI_RIGHT | UI_SMALLFONT, 0.44f, mutedColor );
@@ -439,8 +439,13 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 		cent = &cg_entities[cg.scores[i].client];
 		isLocal = cg.scores[i].client == cg.snap->ps.clientNum;
 		isSpectator = ci->team == TEAM_SPECTATOR;
+		rank = cg.scores[i].position > 0 ? cg.scores[i].position : i + 1;
 		isDead = !isSpectator && ( cg.scores[i].integrity == 0 ||
-		                             ( cent->currentState.eFlags & EF_DEAD ) );
+		                             ( cent->currentState.eFlags & EF_DEAD ) ||
+		                             ( isLocal && ( cg.snap->ps.pm_type == PM_DEAD ||
+		                                            cg.snap->ps.stats[STAT_HEALTH] <= 0 ) ) ||
+		                             ( cent->finishRaceTime > 0 &&
+		                               !( cg.predictedPlayerState.pm_type == PM_INTERMISSION && rank == 1 ) ) );
 
 		if ( isSpectator ) {
 			stateText = "SPEC";
@@ -470,27 +475,27 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 			Vector4Copy( colorWhite, nameColor );
 		}
 
-		CG_DrawIngameString( (int)(x + 8.0f), (int)(rowY + 3.0f), va("%02d", i + 1),
-		                     UI_SMALLFONT, 0.52f, ( i == 0 ) ? accentColor : mutedColor );
+		CG_DrawIngameString( (int)(x + 8.0f), (int)(rowY + 3.0f), va("%02d", rank),
+		                     UI_SMALLFONT, 0.52f, ( rank == 1 ) ? accentColor : mutedColor );
 		if ( ci->modelIcon ) {
-			CG_DrawPic( x + 29.0f, rowY + 1.0f, 14.0f, 14.0f, ci->modelIcon );
+			CG_DrawPic( x + 26.0f, rowY + 2.0f, 12.0f, 12.0f, ci->modelIcon );
 		}
 
 		Q_strncpyz( name, ci->name, sizeof(name) );
-		while ( name[0] && CG_IngameStringWidth( name, UI_SMALLFONT, 0.52f ) > 82.0f ) {
+		while ( name[0] && CG_IngameStringWidth( name, UI_SMALLFONT, 0.48f ) > 57.0f ) {
 			int nameLength = strlen( name );
 			name[--nameLength] = '\0';
 			if ( nameLength > 0 && name[nameLength - 1] == '^' ) name[nameLength - 1] = '\0';
 		}
-		CG_DrawIngameString( (int)(x + 48.0f), (int)(rowY + 3.0f), name,
-		                     UI_SMALLFONT, 0.52f, nameColor );
+		CG_DrawIngameString( (int)(x + 41.0f), (int)(rowY + 3.0f), name,
+		                     UI_SMALLFONT, 0.48f, nameColor );
 
 		integrity = ( isSpectator || cg.scores[i].integrity < 0 )
 			? 0.0f : cg.scores[i].integrity / 100.0f;
 		if ( integrity < 0.0f ) integrity = 0.0f;
 		if ( integrity > 1.0f ) integrity = 1.0f;
-		barW = 38.0f;
-		CG_FillRect( x + 142.0f, rowY + 5.0f, barW, 6.0f, barBackColor );
+		barW = 26.0f;
+		CG_FillRect( x + 108.0f, rowY + 5.0f, barW, 6.0f, barBackColor );
 		if ( integrity > 0.0f ) {
 			if ( integrity > 0.50f ) {
 				integrityColor[0] = 0.22f; integrityColor[1] = 0.82f; integrityColor[2] = 0.36f;
@@ -500,10 +505,10 @@ void CG_DrawHUD_DerbyList( float x, float y ) {
 				integrityColor[0] = 1.00f; integrityColor[1] = 0.25f; integrityColor[2] = 0.14f;
 			}
 			integrityColor[3] = 0.96f;
-			CG_FillRect( x + 142.0f, rowY + 5.0f, barW * integrity, 6.0f, integrityColor );
+			CG_FillRect( x + 108.0f, rowY + 5.0f, barW * integrity, 6.0f, integrityColor );
 		}
 		CG_DrawIngameString( (int)(x + panelW - 7.0f), (int)(rowY + 3.0f), stateText,
-		                     UI_RIGHT | UI_SMALLFONT, 0.52f, stateColor );
+		                     UI_RIGHT | UI_SMALLFONT, 0.48f, stateColor );
 		rowY += rowH;
 	}
 

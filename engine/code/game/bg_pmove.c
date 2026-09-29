@@ -2797,6 +2797,17 @@ Can be called by either the server or the client
 void Pmove (pmove_t *pmove) {
 	int			finalTime;
 
+	pmove->vehicleCollision.valid = qfalse;
+	pmove->vehicleCollision.otherEnt = -1;
+	pmove->vehicleCollision.normalImpulse = 0.0f;
+	pmove->vehicleCollision.selfZone = CAR_HIT_ZONE_NONE;
+	pmove->vehicleCollision.otherZone = CAR_HIT_ZONE_NONE;
+	pmove->vehicleCollision.selfWasRamming = qfalse;
+	pmove->vehicleCollision.otherWasRamming = qfalse;
+	VectorClear( pmove->vehicleCollision.point );
+	VectorClear( pmove->vehicleCollision.normal );
+	pmove->vehicleWorldContactLogged = qfalse;
+
 	finalTime = pmove->cmd.serverTime;
 
 	if ( finalTime < pmove->ps->commandTime ) {

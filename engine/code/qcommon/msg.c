@@ -1094,6 +1094,7 @@ netField_t	playerStateFields[] =
 { PSF(damageYaw), 8 },
 { PSF(damagePitch), 8 },
 { PSF(damageCount), 8 },
+{ PSF(damageZone), 3 },
 { PSF(generic1), 8 },
 { PSF(pm_type), 8 },					
 { PSF(delta_angles[0]), 16 },

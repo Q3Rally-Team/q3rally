@@ -300,7 +300,10 @@ typedef struct {
         int                     transmissionMode;
         collisionDamage_t       damage;
         collisionDamage_t       breakableDamage;
+        vehicleCollisionContact_t vehicleCollision;
         qboolean        collisionDetected;      // meaningful wall or car/car impact this move
+        qboolean        vehicleCollisionLog;     // server-side derby physics diagnostics enabled
+        qboolean        vehicleWorldContactLogged; // one post-impact wall trace per Pmove
 
         qboolean        useFuel;
 
@@ -325,7 +328,7 @@ typedef struct {
         float           car_air_frac_to_df;
         float           car_friction_scale;
 
-        float           car_impact_transfer;   /* mass-split factor for vehicle vs. vehicle impulse */
+        float           car_impact_transfer;   /* pair-wide scale for vehicle impact impulse */
         float           car_impact_elasticity; /* elasticity of vehicle vs. vehicle bounce */
 // END
 } pmove_t;
@@ -363,7 +366,9 @@ typedef enum {
         STAT_POSITION,
         STAT_FRAC_TO_NEXT_CHECKPOINT,
         STAT_DISTANCE_REMAIN,
-        STAT_FUEL
+        STAT_FUEL,
+        /* Derby reuses the race-only fraction slot to preserve the wire layout. */
+        STAT_DERBY_NORAM = STAT_FRAC_TO_NEXT_CHECKPOINT
 // END
 } statIndex_t;
 
@@ -813,7 +818,8 @@ typedef enum {
         MOD_POISON,
         MOD_FIRE,
         MOD_GRAPPLE,
-        MOD_BREAKABLE_SPLASH
+        MOD_BREAKABLE_SPLASH,
+        MOD_DERBY_NO_RAM
 } meansOfDeath_t;
 
 #define MOD_CAR_COLLISION MOD_VEHICLE_COLLISION

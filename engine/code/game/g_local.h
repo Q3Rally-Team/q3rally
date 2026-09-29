@@ -458,6 +458,9 @@ typedef struct {
 	qboolean	manualShift;		// shift manually?
 	int			transmissionMode;	// automatic/manual gearbox mode
 	char                    vehicleClass[MAX_QPATH];
+	vec3_t                  vehicleCollisionMins;
+	vec3_t                  vehicleCollisionMaxs;
+	qboolean                vehicleCollisionBoundsFromMD3;
         qboolean        profileRacePlacementPenalized; // profile penalty for poor race placement already applied
         qboolean        profileRacePlacementRecorded;  // race placement score/podium already processed for this match
         qboolean        profileMatchOutcomeRecorded;   // win/loss scoring already processed for this match
@@ -489,6 +492,12 @@ struct gclient_s {
 	int			latched_buttons;
 
 	vec3_t		oldOrigin;
+
+	// Exact zone and applied amount of the strongest Derby car impact this frame.
+	carHitZone_t derbyDamageZone;
+	int derbyDamageZoneDamage;
+	int derbyLastRamTime;
+	int derbyNoRamWarningSecond;
 
 	// sum up damage over an entire frame, so
 	// shotgun blasts give a single big kick
@@ -538,7 +547,6 @@ struct gclient_s {
 
 // STONELANCE
 	car_t		car;
-
 	gentity_t	*carPoints[4];
 
 	int			frameNum;
@@ -602,6 +610,11 @@ typedef struct {
 	int			maxclients;
 
 	int			framenum;
+	/* Pairwise frame stamps prevent duplicate Derby collision damage when both
+	 * drivers' Pmoves report the same contact, including crowded multi-car hits. */
+	int			vehicleCollisionDamageFrame[MAX_CLIENTS][MAX_CLIENTS];
+	/* Last impact frame per pair; consecutive contacts form one ram event. */
+	int			vehicleCollisionImpactFrame[MAX_CLIENTS][MAX_CLIENTS];
 	int			time;					// in msec
 	int			previousTime;			// so movers can back up when blocked
 
@@ -940,7 +953,6 @@ qboolean G_FilterPacket (char *from);
 //
 // g_weapon.c
 //
-void Weapon_DerbyRam( gentity_t *ent );
 void FireWeapon( gentity_t *ent );
 void FireAltWeapon( gentity_t *ent );
 #ifdef MISSIONPACK
@@ -1277,16 +1289,14 @@ extern	vmCvar_t	g_vehicleDamageScale;
 extern  vmCvar_t        g_vehicleDamageOffset;
 extern	vmCvar_t	g_vehicleHealth;
 extern  vmCvar_t        g_derbyDamageFactor;
-extern  vmCvar_t        g_derbyRammerDamageRatio;
 extern  vmCvar_t        g_derbyIgnoreDamageScale;
-extern  vmCvar_t        g_derbyRamRadius;
-extern  vmCvar_t        g_derbyRamDamage;
-extern  vmCvar_t        g_derbyRamDamageScale;
-extern  vmCvar_t        g_derbyRamDamageMax;
 extern  vmCvar_t        g_derbyCollisionFrontWeight;
 extern  vmCvar_t        g_derbyCollisionSideWeight;
 extern  vmCvar_t        g_derbyCollisionRearWeight;
 extern  vmCvar_t        g_derbyCollisionLog;
+extern  vmCvar_t        g_derbyHitFuelReward;
+extern  vmCvar_t        g_derbyHitNosReward;
+extern  vmCvar_t        g_derbyNoRamTime;
 extern  vmCvar_t        g_fuelKillReward;
 extern  vmCvar_t        g_useFuel;
 

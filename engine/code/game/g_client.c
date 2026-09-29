@@ -68,6 +68,136 @@ static vec3_t	carMins = {-CAR_LENGTH/2, -CAR_LENGTH/2, -CAR_HEIGHT/2};
 static vec3_t	carMaxs = {CAR_LENGTH/2, CAR_LENGTH/2, CAR_HEIGHT/2};
 // END
 
+/* Minimal MD3 header/frame definitions. We only need the per-frame mesh
+ * bounds; the renderer remains responsible for loading the actual model. */
+#define G_MD3_IDENT		0x33504449
+#define G_MD3_VERSION	15
+typedef struct {
+	int		ident;
+	int		version;
+	char	name[64];
+	int		flags;
+	int		numFrames;
+	int		numTags;
+	int		numSurfaces;
+	int		numSkins;
+	int		ofsFrames;
+	int		ofsTags;
+	int		ofsSurfaces;
+	int		ofsEnd;
+} g_md3Header_t;
+
+typedef struct {
+	float	bounds[2][3];
+	float	localOrigin[3];
+	float	radius;
+	char	name[16];
+} g_md3Frame_t;
+
+static void G_SetDefaultVehicleCollisionBounds( gclient_t *client ) {
+	VectorSet( client->pers.vehicleCollisionMins,
+		-CAR_LENGTH * 0.5f, -CAR_WIDTH * 0.5f, -CAR_HEIGHT * 0.5f );
+	VectorSet( client->pers.vehicleCollisionMaxs,
+		CAR_LENGTH * 0.5f, CAR_WIDTH * 0.5f, CAR_HEIGHT * 0.5f );
+	client->pers.vehicleCollisionBoundsFromMD3 = qfalse;
+}
+
+static qboolean G_LoadVehicleCollisionBounds( gclient_t *client,
+												 const char *modelValue ) {
+	char		modelName[MAX_QPATH];
+	char		filename[MAX_QPATH];
+	char		*skin;
+	char		*character;
+	fileHandle_t file;
+	g_md3Header_t header;
+	g_md3Frame_t frame;
+	int			fileLength, numFrames, ofsFrames, ofsEnd, frameIndex, axis;
+	float		mins[3], maxs[3], frameMin, frameMax;
+	qboolean	valid;
+
+	G_SetDefaultVehicleCollisionBounds( client );
+	Q_strncpyz( modelName, modelValue, sizeof( modelName ) );
+	skin = strchr( modelName, '/' );
+	if ( skin )
+		*skin = '\0';
+	if ( !modelName[0] )
+		Q_strncpyz( modelName, "sidepipe", sizeof( modelName ) );
+
+	/* Do not let an untrusted userinfo model name escape the virtual model
+	 * directory when constructing the MD3 path. */
+	for ( character = modelName; *character; character++ ) {
+		if ( !( (*character >= 'a' && *character <= 'z') ||
+			(*character >= 'A' && *character <= 'Z') ||
+			(*character >= '0' && *character <= '9') ||
+			*character == '_' || *character == '-' ) )
+			return qfalse;
+	}
+
+	Com_sprintf( filename, sizeof( filename ),
+		"models/players/%s/body.md3", modelName );
+	fileLength = trap_FS_FOpenFile( filename, &file, FS_READ );
+	if ( fileLength < (int)sizeof( header ) ) {
+		if ( fileLength >= 0 )
+			trap_FS_FCloseFile( file );
+		return qfalse;
+	}
+	trap_FS_Read( &header, sizeof( header ), file );
+
+	header.ident = LittleLong( header.ident );
+	header.version = LittleLong( header.version );
+	header.numFrames = LittleLong( header.numFrames );
+	header.ofsFrames = LittleLong( header.ofsFrames );
+	header.ofsEnd = LittleLong( header.ofsEnd );
+	numFrames = header.numFrames;
+	ofsFrames = header.ofsFrames;
+	ofsEnd = header.ofsEnd;
+	valid = header.ident == G_MD3_IDENT &&
+		header.version == G_MD3_VERSION && numFrames > 0 &&
+		numFrames <= 1024 && ofsFrames >= (int)sizeof( header ) &&
+		ofsEnd >= ofsFrames && ofsEnd <= fileLength &&
+		numFrames <= ( ofsEnd - ofsFrames ) / (int)sizeof( frame );
+	if ( !valid || trap_FS_Seek( file, ofsFrames, FS_SEEK_SET ) < 0 ) {
+		trap_FS_FCloseFile( file );
+		return qfalse;
+	}
+
+	for ( axis = 0; axis < 3; axis++ ) {
+		mins[axis] = 1e30f;
+		maxs[axis] = -1e30f;
+	}
+	for ( frameIndex = 0; frameIndex < numFrames; frameIndex++ ) {
+		trap_FS_Read( &frame, sizeof( frame ), file );
+		for ( axis = 0; axis < 3; axis++ ) {
+			frameMin = LittleFloat( frame.bounds[0][axis] );
+			frameMax = LittleFloat( frame.bounds[1][axis] );
+			if ( frameMin < mins[axis] )
+				mins[axis] = frameMin;
+			if ( frameMax > maxs[axis] )
+				maxs[axis] = frameMax;
+		}
+	}
+	trap_FS_FCloseFile( file );
+
+	/* Reject empty or implausible model bounds and keep the shared proxy as
+	 * fallback. A small pad covers the bumper edge and MD3 quantization. */
+	valid = qtrue;
+	for ( axis = 0; axis < 3; axis++ ) {
+		if ( !( mins[axis] >= -512.0f && mins[axis] <= 512.0f &&
+			maxs[axis] >= -512.0f && maxs[axis] <= 512.0f &&
+			maxs[axis] - mins[axis] >= 8.0f ) )
+			valid = qfalse;
+		mins[axis] -= 1.5f;
+		maxs[axis] += 1.5f;
+	}
+	if ( !valid )
+		return qfalse;
+
+	VectorCopy( mins, client->pers.vehicleCollisionMins );
+	VectorCopy( maxs, client->pers.vehicleCollisionMaxs );
+	client->pers.vehicleCollisionBoundsFromMD3 = qtrue;
+	return qtrue;
+}
+
 void G_ResetClientLapData( gclient_t *client ) {
         if ( !client ) {
                 return;
@@ -1097,6 +1227,7 @@ void ClientUserinfoChanged( int clientNum ) {
         } else {
                 client->pers.vehicleClass[0] = '\0';
         }
+	G_LoadVehicleCollisionBounds( client, model );
 
 
         // team task (0 = none, 1 = offence, 2 = defence)
@@ -1689,6 +1820,11 @@ trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 
 	client->frameNum = 0;
 	client->pmoveTime = 0;
+	client->derbyDamageZone = CAR_HIT_ZONE_NONE;
+	client->derbyDamageZoneDamage = 0;
+	client->derbyLastRamTime = 0;
+	client->derbyNoRamWarningSecond = -1;
+	client->ps.stats[STAT_DERBY_NORAM] = 0;
 
 //	PM_InitializeVehicle(&client->car, client->ps.origin, spawn_angles /*client->ps.viewangles*/, vec3_origin, car_frontweight_dist.value );
 	if ( client->sess.sessionTeam != TEAM_SPECTATOR && !isRaceObserver( ent->s.number ) ) {

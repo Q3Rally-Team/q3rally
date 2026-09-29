@@ -390,9 +390,10 @@ char	*modNames[] = {
 	"MOD_MINE",
 	"MOD_POISON",
 	"MOD_FIRE",
-	"MOD_FLAME_THROWER",
 // Q3Rally Code END
-	"MOD_GRAPPLE"
+	"MOD_GRAPPLE",
+	"MOD_BREAKABLE_SPLASH",
+	"MOD_DERBY_NO_RAM"
         };
 
 #ifdef MISSIONPACK
@@ -1056,9 +1057,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		return;
 	}
 #endif
-	// reduce damage by the attacker's handicap value
-	// unless they are rocket jumping
-	if ( attacker->client && attacker != targ ) {
+	// Weapon damage follows the attacker's handicap. Derby collision damage is
+	// based on the physics impact and must not be rounded away by bot handicap.
+	if ( attacker->client && attacker != targ &&
+		!( g_gametype.integer == GT_DERBY && mod == MOD_VEHICLE_COLLISION ) ) {
 
 max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 

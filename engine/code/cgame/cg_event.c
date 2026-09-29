@@ -292,6 +292,9 @@ static void CG_Obituary( entityState_t *ent ) {
 		case MOD_FLAME_THROWER:
 			message = "was flame grilled by";
 			break;
+		case MOD_DERBY_NO_RAM:
+			message = "ran out of time without a ram";
+			break;
 #ifdef MISSIONPACK
 		case MOD_PROXIMITY_MINE:
 			if( gender == GENDER_FEMALE ) {

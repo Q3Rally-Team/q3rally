@@ -1336,6 +1336,8 @@ typedef struct playerState_s {
 
 	// STONELANCE - 8 bits over the net
 	int			damageCount;
+	// Exact Derby collision region; CAR_HIT_ZONE_NONE falls back to direction.
+	int			damageZone;
 
 	int			stats[MAX_STATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death

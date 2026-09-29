@@ -244,6 +244,31 @@ typedef struct {
 	vec3_t	dir;
 } collisionDamage_t;
 
+/* Coarse vehicle regions for collision damage and Derby gameplay. */
+typedef enum {
+	CAR_HIT_ZONE_NONE,
+	CAR_HIT_ZONE_FRONT,
+	CAR_HIT_ZONE_REAR,
+	CAR_HIT_ZONE_LEFT,
+	CAR_HIT_ZONE_RIGHT,
+	CAR_HIT_ZONE_ROOF,
+	CAR_HIT_ZONE_UNDERBODY
+} carHitZone_t;
+
+/* Server-authoritative contact data for the strongest car-to-car impact in
+ * one Pmove call. The normal points from otherEnt toward this vehicle. */
+typedef struct {
+	qboolean	valid;
+	int			otherEnt;
+	float		normalImpulse;
+	vec3_t		point;
+	vec3_t		normal;
+	carHitZone_t	selfZone;
+	carHitZone_t	otherZone;
+	qboolean	selfWasRamming;
+	qboolean	otherWasRamming;
+} vehicleCollisionContact_t;
+
 
 typedef struct {
 	float	inverseWorldInertiaTensor[3][3];
@@ -267,6 +292,10 @@ typedef struct {
 	vec3_t	forward;
 	vec3_t	right;
 	vec3_t	up;
+	/* Server-side OBB proxy fitted from the selected body.md3 bounds. The
+	 * center offset remains in model-local (forward, left, up) coordinates. */
+	vec3_t	collisionHalfExtents;
+	vec3_t	collisionCenterOffset;
 
 	float	curSpringLengths[FIRST_FRAME_POINT];
 

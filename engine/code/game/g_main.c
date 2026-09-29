@@ -156,16 +156,14 @@ vmCvar_t	g_vehicleDamageScale;
 vmCvar_t        g_vehicleDamageOffset;
 vmCvar_t	g_vehicleHealth;
 vmCvar_t        g_derbyDamageFactor;
-vmCvar_t        g_derbyRammerDamageRatio;
 vmCvar_t        g_derbyIgnoreDamageScale;
-vmCvar_t        g_derbyRamRadius;
-vmCvar_t        g_derbyRamDamage;
-vmCvar_t        g_derbyRamDamageScale;
-vmCvar_t        g_derbyRamDamageMax;
 vmCvar_t        g_derbyCollisionFrontWeight;
 vmCvar_t        g_derbyCollisionSideWeight;
 vmCvar_t        g_derbyCollisionRearWeight;
 vmCvar_t        g_derbyCollisionLog;
+vmCvar_t        g_derbyHitFuelReward;
+vmCvar_t        g_derbyHitNosReward;
+vmCvar_t        g_derbyNoRamTime;
 vmCvar_t  g_humanplayers;
 vmCvar_t        g_fuelKillReward;
 vmCvar_t        g_useFuel;
@@ -343,26 +341,24 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &car_friction_scale, "car_friction_scale", "1.1", CVAR_SYSTEMINFO | CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 
 	/* Vehicle vs. vehicle collision tuning. Both are LIVE (no LATCH) so they
-	 * can be tweaked from the console without a map change. Defaults give
-	 * roughly equal-mass elastic exchange in the normal direction. */
-	{ &g_carImpactTransfer,    "g_carImpactTransfer",    "0.5",  CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
+	 * can be tweaked from the console without a map change. Transfer is now a
+	 * pair-wide impulse scale (1.0 = full response); elasticity controls bounce. */
+	{ &g_carImpactTransfer,    "g_carImpactTransfer",    "1.0",  CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
 	{ &g_carImpactElasticity,  "g_carImpactElasticity",  "0.25", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
 
         { &g_damageScale, "g_damageScale", "0.3", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageScale, "g_vehicleDamageScale", "5.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageOffset, "g_vehicleDamageOffset", "0", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleHealth, "g_vehicleHealth", "100", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyDamageFactor, "g_derbyDamageFactor", "1.0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRammerDamageRatio, "g_derbyRammerDamageRatio", "1.0", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyDamageFactor, "g_derbyDamageFactor", "15.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyIgnoreDamageScale, "g_derbyIgnoreDamageScale", "0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamRadius, "g_derbyRamRadius", "0", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamage, "g_derbyRamDamage", "100", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamageScale, "g_derbyRamDamageScale", "0.05", CVAR_ARCHIVE, 0, qfalse },
-        { &g_derbyRamDamageMax, "g_derbyRamDamageMax", "50", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyCollisionFrontWeight, "g_derbyCollisionFrontWeight", "1.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyCollisionSideWeight, "g_derbyCollisionSideWeight", "0.65", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyCollisionRearWeight, "g_derbyCollisionRearWeight", "0.35", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyCollisionLog, "g_derbyCollisionLog", "0", 0, 0, qfalse },
+        { &g_derbyHitFuelReward, "g_derbyHitFuelReward", "2.0", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyHitNosReward, "g_derbyHitNosReward", "500", CVAR_ARCHIVE, 0, qfalse },
+        { &g_derbyNoRamTime, "g_derbyNoRamTime", "45", CVAR_ARCHIVE, 0, qfalse },
         // END
 
         { &g_rankings, "g_rankings", "0", 0, 0, qfalse},
@@ -613,27 +609,7 @@ G_UpdateCvars
 */
 static void G_ValidateDerbyDamageCvars( void ) {
         float clamped;
-
-        clamped = Com_Clamp( 0.0f, 2.0f, g_derbyRammerDamageRatio.value );
-        if ( clamped != g_derbyRammerDamageRatio.value ) {
-                trap_Cvar_Set( "g_derbyRammerDamageRatio", va( "%.3f", clamped ) );
-                trap_Cvar_Update( &g_derbyRammerDamageRatio );
-        }
-
-        if ( g_derbyRamDamage.value < 0.0f ) {
-                trap_Cvar_Set( "g_derbyRamDamage", "0" );
-                trap_Cvar_Update( &g_derbyRamDamage );
-        }
-
-        if ( g_derbyRamDamageScale.value < 0.0f ) {
-                trap_Cvar_Set( "g_derbyRamDamageScale", "0" );
-                trap_Cvar_Update( &g_derbyRamDamageScale );
-        }
-
-        if ( g_derbyRamDamageMax.value < 1.0f ) {
-                trap_Cvar_Set( "g_derbyRamDamageMax", "1" );
-                trap_Cvar_Update( &g_derbyRamDamageMax );
-        }
+        int intClamped;
 
         if ( g_derbyDamageFactor.value < 0.0f ) {
                 trap_Cvar_Set( "g_derbyDamageFactor", "0" );
@@ -655,6 +631,29 @@ static void G_ValidateDerbyDamageCvars( void ) {
         if ( clamped != g_derbyCollisionRearWeight.value ) {
                 trap_Cvar_Set( "g_derbyCollisionRearWeight", va( "%.3f", clamped ) );
                 trap_Cvar_Update( &g_derbyCollisionRearWeight );
+        }
+
+        clamped = Com_Clamp( 0.0f, 10.0f, g_derbyHitFuelReward.value );
+        if ( clamped != g_derbyHitFuelReward.value ) {
+                trap_Cvar_Set( "g_derbyHitFuelReward", va( "%.3f", clamped ) );
+                trap_Cvar_Update( &g_derbyHitFuelReward );
+        }
+
+        intClamped = g_derbyHitNosReward.integer;
+        if ( intClamped < 0 ) intClamped = 0;
+        if ( intClamped > RALLY_TURBO_MAX_MSEC )
+                intClamped = RALLY_TURBO_MAX_MSEC;
+        if ( intClamped != g_derbyHitNosReward.integer ) {
+                trap_Cvar_Set( "g_derbyHitNosReward", va( "%d", intClamped ) );
+                trap_Cvar_Update( &g_derbyHitNosReward );
+        }
+
+        intClamped = g_derbyNoRamTime.integer;
+        if ( intClamped < 0 ) intClamped = 0;
+        if ( intClamped > 600 ) intClamped = 600;
+        if ( intClamped != g_derbyNoRamTime.integer ) {
+                trap_Cvar_Set( "g_derbyNoRamTime", va( "%d", intClamped ) );
+                trap_Cvar_Update( &g_derbyNoRamTime );
         }
 }
 
@@ -1492,6 +1491,7 @@ G_InitGame
 */
 void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	int					i;
+	int					j;
 
 	G_Printf ("------- Game Initialization -------\n");
 	G_Printf ("gamename: %s\n", GAMEVERSION);
@@ -1520,6 +1520,10 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// set some level globals
 	memset( &level, 0, sizeof( level ) );
+	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+		for ( j = 0; j < MAX_CLIENTS; j++ )
+			level.vehicleCollisionImpactFrame[i][j] = -2;
+	}
 	level.raceState = RACE_STATE_NONE;
 	level.raceIntroEndTime = 0;
 	/* Preserve restart flag so the intro camera knows not to play again.
@@ -2904,14 +2908,58 @@ void CheckExitRules( void ) {
 		gclient_t	*winner = NULL;
 
 		for ( i=0, count = 0 ; i< g_maxclients.integer ; i++ ) {
+			gentity_t *playerEnt;
+			int noRamLimitMs, noRamRemainingMs, noRamSeconds;
+
 			cl = level.clients + i;
 			if ( cl->pers.connected != CON_CONNECTED ) continue;
 			if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) continue;
 			if ( isRaceObserver( cl->ps.clientNum ) ) continue;
 			if ( cl->ps.stats[STAT_HEALTH] <= 0 ) continue;
 
+			noRamLimitMs = g_derbyNoRamTime.integer * 1000;
+			if ( noRamLimitMs > 0 ) {
+				if ( cl->derbyLastRamTime < level.startRaceTime ) {
+					cl->derbyLastRamTime = level.startRaceTime;
+					cl->derbyNoRamWarningSecond = -1;
+				}
+				noRamRemainingMs = noRamLimitMs -
+					( level.time - cl->derbyLastRamTime );
+				noRamSeconds = noRamRemainingMs > 0
+					? ( noRamRemainingMs + 999 ) / 1000 : 0;
+				cl->ps.stats[STAT_DERBY_NORAM] = noRamSeconds;
+
+				if ( noRamRemainingMs <= 0 ) {
+					playerEnt = &g_entities[i];
+					G_TempEntity( cl->ps.origin, EV_EXPLOSION );
+					G_Damage( playerEnt, playerEnt, playerEnt, NULL,
+						cl->ps.origin, 100000, DAMAGE_NO_PROTECTION,
+						MOD_DERBY_NO_RAM );
+					continue;
+				}
+
+				if ( noRamSeconds <= 10 &&
+					noRamSeconds != cl->derbyNoRamWarningSecond ) {
+					trap_SendServerCommand( i, va(
+						"cp \"NO RAM! HIT AN OPPONENT - %d\"",
+						noRamSeconds ) );
+					cl->derbyNoRamWarningSecond = noRamSeconds;
+				}
+			} else {
+				cl->ps.stats[STAT_DERBY_NORAM] = 0;
+			}
+
 			count++;
 			winner = cl;
+		}
+
+		if ( !count && level.derbyStartPlayerCount > 0 ) {
+			if ( !level.intermissionQueued ) {
+				trap_SendServerCommand( -1,
+					"print \"All demolition derby cars were eliminated.\n\"" );
+				LogExit( "All demolition derby cars were eliminated." );
+			}
+			return;
 		}
 
 		// Only declare a winner when more than one player participated.

@@ -569,19 +569,19 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
 </table>
 <div class="cvar-group-label">Damage &amp; Health</div>
 <table class="cvar-table">
-<tr><td class="cvar-name">g_vehicleHealth</td><td class="cvar-default">100</td><td class="cvar-desc">Base hit points for all vehicles at spawn.</td></tr>
-<tr><td class="cvar-name">g_vehicleDamageScale</td><td class="cvar-default">5.0</td><td class="cvar-desc">Global collision damage multiplier.</td></tr>
-<tr><td class="cvar-name">g_vehicleDamageOffset</td><td class="cvar-default">0</td><td class="cvar-desc">Flat damage added to every collision hit.</td></tr>
+<tr><td class="cvar-name">g_vehicleHealth</td><td class="cvar-default">100</td><td class="cvar-desc">Fuel-leak and health-pickup thresholds; vehicle spawn health comes from the player's handicap.</td></tr>
 </table>
 <div class="cvar-group-label">Demolition Derby</div>
 <table class="cvar-table">
-<tr><td class="cvar-name">g_derbyDamageFactor</td><td class="cvar-default">1.0</td><td class="cvar-desc">Overall Derby damage scaling multiplier.</td></tr>
-<tr><td class="cvar-name">g_derbyRamDamage</td><td class="cvar-default">100</td><td class="cvar-desc">Base ram damage before velocity scaling is applied.</td></tr>
-<tr><td class="cvar-name">g_derbyRamDamageScale</td><td class="cvar-default">0.05</td><td class="cvar-desc">Velocity-based damage scaling coefficient.</td></tr>
-<tr><td class="cvar-name">g_derbyRamDamageMax</td><td class="cvar-default">50</td><td class="cvar-desc">Maximum ram damage cap per single hit.</td></tr>
-<tr><td class="cvar-name">g_derbyCollisionFrontWeight</td><td class="cvar-default">1.0</td><td class="cvar-desc">Damage weight for front-end collisions. Clamped 0–2.</td></tr>
-<tr><td class="cvar-name">g_derbyCollisionSideWeight</td><td class="cvar-default">0.65</td><td class="cvar-desc">Damage weight for side impacts. Clamped 0–2.</td></tr>
-<tr><td class="cvar-name">g_derbyCollisionRearWeight</td><td class="cvar-default">0.35</td><td class="cvar-desc">Damage weight for rear-end hits. Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_damageScale</td><td class="cvar-default">0.3</td><td class="cvar-desc">Global damage multiplier used by Derby unless g_derbyIgnoreDamageScale is 1.</td></tr>
+<tr><td class="cvar-name">g_derbyDamageFactor</td><td class="cvar-default">5.0</td><td class="cvar-desc">Derby impact multiplier. With the default g_damageScale of 0.3, this gives an effective multiplier of 1.5. Damage is capped at 15 per vehicle contact.</td></tr>
+<tr><td class="cvar-name">g_derbyIgnoreDamageScale</td><td class="cvar-default">0</td><td class="cvar-desc">Set to 1 to skip g_damageScale for Derby collisions; the 15-point contact cap still applies.</td></tr>
+<tr><td class="cvar-name">g_carImpactTransfer</td><td class="cvar-default">1.0</td><td class="cvar-desc">Scales the physical car-to-car impulse, which also affects calculated damage. Values above 1 are capped at 1; nonpositive values use 1.</td></tr>
+<tr><td class="cvar-name">g_carImpactElasticity</td><td class="cvar-default">0.25</td><td class="cvar-desc">Controls the car-to-car bounce impulse; values outside 0–1 fall back to 0.25.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionFrontWeight</td><td class="cvar-default">1.0</td><td class="cvar-desc">Front damage weight (effective value 0.65 by default). Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionSideWeight</td><td class="cvar-default">0.65</td><td class="cvar-desc">Side damage weight (effective value 1.0 by default). Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionRearWeight</td><td class="cvar-default">0.35</td><td class="cvar-desc">Rear damage weight (effective value 0.5 by default). Clamped 0–2.</td></tr>
+<tr><td class="cvar-name">g_derbyCollisionLog</td><td class="cvar-default">0</td><td class="cvar-desc">Set to 1 to log each accepted car contact, its impulse, and the damage applied.</td></tr>
 </table>
 <div class="cvar-group-label">Domination</div>
 <table class="cvar-table">

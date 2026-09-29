@@ -884,8 +884,17 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             } else if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "SPEC", 1, width, textColor, qfalse);
             } else if (cgs.gametype == GT_DERBY) {
-                qboolean wrecked = (score->integrity == 0 ||
-                                    (cg_entities[score->client].currentState.eFlags & EF_DEAD));
+				qboolean matchEnded;
+				qboolean wrecked;
+
+				matchEnded = cg.predictedPlayerState.pm_type == PM_INTERMISSION;
+				wrecked = (score->integrity == 0 ||
+				           (cg_entities[score->client].currentState.eFlags & EF_DEAD) ||
+				           (score->client == cg.snap->ps.clientNum &&
+				            (cg.snap->ps.pm_type == PM_DEAD ||
+				             cg.snap->ps.stats[STAT_HEALTH] <= 0)) ||
+				           (cg_entities[score->client].finishRaceTime > 0 &&
+				            !(matchEnded && rank == 1)));
                 if (cg.predictedPlayerState.pm_type == PM_INTERMISSION && rank == 1 && !wrecked) {
                     CG_DrawModernText(x, y, "WINNER", 1, width, readyColor, qfalse);
                 } else if (wrecked) {
