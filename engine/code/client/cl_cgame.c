@@ -522,15 +522,6 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
        case CG_S_SETENTITYPITCH:
                S_SetEntityPitch( args[1], VMF(2) );
                return 0;
-       case CG_S_REGISTERENGINEEMITTER:
-               S_RegisterEngineEmitter( args[1], args[2] );
-               return 0;
-       case CG_S_REMOVEENGINEEMITTER:
-               S_RemoveEngineEmitter( args[1] );
-               return 0;
-       case CG_S_UPDATEENGINEEMITTERSTATE:
-               S_UpdateEngineEmitterState( args[1], VMA(2), VMA(3), VMA(4), VMA(5), args[6] );
-               return 0;
         case CG_S_UPDATEENTITYPOSITION:
                 S_UpdateEntityPosition( args[1], VMA(2) );
                 return 0;

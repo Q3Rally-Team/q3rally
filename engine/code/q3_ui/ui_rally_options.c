@@ -164,8 +164,7 @@ static const char *q3roptions_ghostPlayback[] = {
 
 static const char *q3roptions_engine_sounds[] = {
 	"Off",
-	"Legacy",
-	"Experimental",
+	"On",
 	0
 };
 
@@ -216,12 +215,7 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 		break;
 
 	case ID_ENGINE_SOUNDS:
-		if ( s_q3roptions.engineSounds.curvalue <= 0 ) {
-			trap_Cvar_SetValue( "cg_engineSounds", 0 );
-		} else {
-			trap_Cvar_SetValue( "cg_engineSounds", 1 );
-			trap_Cvar_SetValue( "cg_engineAudioMode", ( s_q3roptions.engineSounds.curvalue == 2 ) ? 2 : 1 );
-		}
+		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
 		break;
 
 	case ID_GHOST_PLAYBACK:
@@ -320,7 +314,7 @@ static void Q3ROptions_StatusBar( void *self )
 		break;
 
 	case ID_ENGINE_SOUNDS:
-		text = "Choose off, legacy or experimental engine audio.";
+		text = "Toggle engine sounds on or off.";
 		break;
 
 	case ID_GHOST_PLAYBACK:
@@ -572,11 +566,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
 
-	if ( !ui_engineSounds.integer ) {
-		s_q3roptions.engineSounds.curvalue = 0;
-	} else {
-		s_q3roptions.engineSounds.curvalue = ( Com_Clamp( 1, 2, ui_engineAudioMode.integer ) == 2 ) ? 2 : 1;
-	}
+	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer ? 1 : 0;
 	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
 	s_q3roptions.ladderOffline.curvalue = trap_Cvar_VariableValue( "sv_ladderEnabled" ) != 0 ? 1 : 0;

@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
 #include "cg_hud_elements.h"
-#include "cg_engine_audio.h"
 #include "../client/keycodes.h"
 
 #ifdef MISSIONPACK
@@ -288,7 +287,6 @@ vmCvar_t	cg_kothBeamAlphaBase;
 vmCvar_t	cg_kothBeamAlphaPulse;
 
 vmCvar_t	cg_engineSounds;
-vmCvar_t	cg_engineAudioMode;
 vmCvar_t	cg_ghostPlayback;
 vmCvar_t	cg_ghostDebug;
 vmCvar_t	cg_ghostAlpha;
@@ -431,7 +429,6 @@ static cvarTable_t cvarTable[] = {
         { &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
         { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
-        { &cg_engineAudioMode, "cg_engineAudioMode", "1", CVAR_ARCHIVE },
         { &cg_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
 	{ &cg_ghostAlpha, "cg_ghostAlpha", "160", CVAR_ARCHIVE },
 	{ &cg_ghostDebug, "cg_ghostDebug", "0", CVAR_TEMP },
@@ -2461,8 +2458,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	CG_ShaderStateChanged();
 
-	CG_EngineAudio_Init();
-
 	trap_S_ClearLoopingSounds( qtrue );
 }
 
@@ -2475,7 +2470,6 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void ) {
 	CG_Atmospheric_Shutdown();
-	CG_EngineAudio_Shutdown();
 
 	// some mods may need to do cleanup work here,
 	// like closing files or archiving session data
