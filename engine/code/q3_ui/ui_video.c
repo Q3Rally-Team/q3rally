@@ -77,8 +77,8 @@ static char* driverinfo_artlist[] =
 #define DRIVERINFO_EXT_LIST_WIDTH	36
 #define DRIVERINFO_EXT_LIST_HEIGHT	7
 #define DRIVERINFO_ACTION_Y	420
-#define DRIVERINFO_ACTION_WIDTH	120
-#define DRIVERINFO_ACTION_HEIGHT	24
+#define DRIVERINFO_ACTION_WIDTH	UI_FRONTEND_ACTION_WIDTH
+#define DRIVERINFO_ACTION_HEIGHT	UI_FRONTEND_BUTTON_HEIGHT
 
 typedef struct
 {
@@ -511,8 +511,8 @@ GRAPHICS OPTIONS MENU
 #define GRAPHICS_COLUMN_RIGHT_X	420
 #define GRAPHICS_VALUE_OFFSET	112
 #define GRAPHICS_ACTION_Y		420
-#define GRAPHICS_ACTION_HEIGHT	24
-#define GRAPHICS_ACTION_WIDTH	120
+#define GRAPHICS_ACTION_HEIGHT	UI_FRONTEND_BUTTON_HEIGHT
+#define GRAPHICS_ACTION_WIDTH	UI_FRONTEND_ACTION_WIDTH
 
 static vec4_t graphicsScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t graphicsAccentColor = UI_FRONTEND_COLOR_ACCENT;
@@ -1880,7 +1880,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.back.generic.y				= 480 - 50;
 	s_graphicsoptions.back.generic.id				= ID_BACK2;
 	s_graphicsoptions.back.generic.callback			= GraphicsOptions_Event; 
-	s_graphicsoptions.back.string					= "< BACK";
+	s_graphicsoptions.back.string					= "Back";
 	s_graphicsoptions.back.color					= text_color_normal;
 	s_graphicsoptions.back.style					= UI_LEFT | UI_SMALLFONT;
 

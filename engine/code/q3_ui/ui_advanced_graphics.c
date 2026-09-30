@@ -81,8 +81,8 @@ ADVANCED GRAPHICS OPTIONS MENU
 #define ADV_COLUMN_RIGHT_X         420
 #define ADV_VALUE_OFFSET           112
 #define ADV_ACTION_Y               420
-#define ADV_ACTION_WIDTH           120
-#define ADV_ACTION_HEIGHT          24
+#define ADV_ACTION_WIDTH           UI_FRONTEND_ACTION_WIDTH
+#define ADV_ACTION_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t advancedScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t advancedAccentColor = UI_FRONTEND_COLOR_ACCENT;
@@ -879,7 +879,7 @@ static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
 	advancedGraphicsOptionsInfo.back.generic.y            = 480 - 50;
 	advancedGraphicsOptionsInfo.back.generic.id           = ID_BACK;
 	advancedGraphicsOptionsInfo.back.generic.callback     = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.back.string               = "< BACK";
+	advancedGraphicsOptionsInfo.back.string               = "Back";
 	advancedGraphicsOptionsInfo.back.color                = text_color_normal;
 	advancedGraphicsOptionsInfo.back.style                = UI_LEFT | UI_SMALLFONT;
 

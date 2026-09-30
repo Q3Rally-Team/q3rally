@@ -850,7 +850,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.back.generic.y				= 480 - 40;
 	s_q3roptions.back.generic.id			= ID_BACK;
 	s_q3roptions.back.generic.callback		= Q3ROptions_MenuEvent; 
-	s_q3roptions.back.string				= "< BACK";
+	s_q3roptions.back.string				= "Back";
 	s_q3roptions.back.color					= text_color_normal;
 	s_q3roptions.back.style					= UI_LEFT | UI_SMALLFONT;
 
@@ -999,7 +999,8 @@ void Q3ROptions_MenuInit( void ) {
 		s_q3roptions.camtracking.generic.left + 116;
 
 	Q3ROptions_SetBounds( &s_q3roptions.back.generic,
-		Q3R_OPTIONS_FRAME_X + 24, Q3R_OPTIONS_ACTION_Y, 120, 24, NULL );
+		Q3R_OPTIONS_FRAME_X + 24, Q3R_OPTIONS_ACTION_Y,
+		UI_FRONTEND_ACTION_WIDTH, UI_FRONTEND_BUTTON_HEIGHT, NULL );
 	s_q3roptions.back.string = "Back";
 	s_q3roptions.back.generic.statusbar = Q3ROptions_StatusBar;
 	s_q3roptions.back.generic.ownerdraw = Q3ROptions_DrawAction;

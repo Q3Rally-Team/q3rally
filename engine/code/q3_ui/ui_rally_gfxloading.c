@@ -770,12 +770,18 @@ static void UI_GFX_Loading_MenuDraw(void) {
                           UI_LEFT | UI_SMALLFONT, gfxWarningColor);
 
         if (!s_gfxloading.updateAcked) {
-            qboolean hoverNow = Frontend_DrawButton(updateX + updateW - 185,
-                                                     textY + 43, 102, 24,
+            qboolean hoverNow = Frontend_DrawButton(updateX + updateW - 16 -
+                                                     2 * UI_FRONTEND_ACTION_WIDTH - 8,
+                                                     textY + 43,
+                                                     UI_FRONTEND_ACTION_WIDTH,
+                                                     UI_FRONTEND_BUTTON_HEIGHT,
                                                      "Update", 1.0f, qfalse,
                                                      UI_FRONTEND_TEXT_CENTER);
-            qboolean hoverSkip = Frontend_DrawButton(updateX + updateW - 80,
-                                                      textY + 43, 64, 24,
+            qboolean hoverSkip = Frontend_DrawButton(updateX + updateW - 16 -
+                                                      UI_FRONTEND_ACTION_WIDTH,
+                                                      textY + 43,
+                                                      UI_FRONTEND_ACTION_WIDTH,
+                                                      UI_FRONTEND_BUTTON_HEIGHT,
                                                       "Skip", 1.0f, qfalse,
                                                       UI_FRONTEND_TEXT_CENTER);
             if (hoverNow)       s_gfxloading.hoveredBtn = UPD_BTN_NOW;

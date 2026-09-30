@@ -73,14 +73,14 @@ ADD BOTS MENU
 #define ADDBOTS_BOT_ROW_X           88
 #define ADDBOTS_BOT_ROW_Y           144
 #define ADDBOTS_BOT_ROW_WIDTH       264
-#define ADDBOTS_BOT_ROW_HEIGHT      22
+#define ADDBOTS_BOT_ROW_HEIGHT      UI_FRONTEND_BUTTON_HEIGHT
 #define ADDBOTS_BOT_ROW_GAP         2
 #define ADDBOTS_NAV_Y               352
-#define ADDBOTS_NAV_WIDTH           104
-#define ADDBOTS_NAV_HEIGHT          24
+#define ADDBOTS_NAV_WIDTH           UI_FRONTEND_ACTION_WIDTH
+#define ADDBOTS_NAV_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
 #define ADDBOTS_ACTION_Y            420
-#define ADDBOTS_ACTION_WIDTH        104
-#define ADDBOTS_ACTION_HEIGHT       24
+#define ADDBOTS_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define ADDBOTS_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 #define ADDBOTS_OPTION_X            400
 #define ADDBOTS_OPTION_WIDTH        152
 #define ADDBOTS_OPTION_HEIGHT       28
@@ -626,7 +626,7 @@ static void UI_AddBotsMenu_Init( void ) {
 	addBotsMenuInfo.back.generic.callback	= UI_AddBotsMenu_BackEvent;
 	addBotsMenuInfo.back.generic.x			= 320-128;
 	addBotsMenuInfo.back.generic.y			= 256+128-64;
-  addBotsMenuInfo.back.string					= "< BACK";
+  addBotsMenuInfo.back.string					= "Back";
 	addBotsMenuInfo.back.color					= text_color_normal;
 	addBotsMenuInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 	addBotsMenuInfo.baseBotNum = 0;

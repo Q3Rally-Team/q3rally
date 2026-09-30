@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CONTROLS_NAV_HEIGHT          300
 #define CONTROLS_NAV_ROW_X           ( CONTROLS_NAV_X + 16 )
 #define CONTROLS_NAV_ROW_WIDTH       ( CONTROLS_NAV_WIDTH - 32 )
-#define CONTROLS_NAV_ROW_HEIGHT      24
+#define CONTROLS_NAV_ROW_HEIGHT      UI_FRONTEND_BUTTON_HEIGHT
 #define CONTROLS_NAV_ROW_GAP         4
 #define CONTROLS_CONTENT_X           240
 #define CONTROLS_CONTENT_Y           104
@@ -54,8 +54,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CONTROLS_INPUT_WIDTH         120
 #define CONTROLS_INPUT_HEIGHT        24
 #define CONTROLS_ACTION_Y            420
-#define CONTROLS_ACTION_WIDTH        120
-#define CONTROLS_ACTION_HEIGHT       24
+#define CONTROLS_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define CONTROLS_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t controlsScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t controlsTextColor = UI_FRONTEND_COLOR_TEXT;
@@ -2601,7 +2601,7 @@ static void Controls_MenuInit( void )
 	s_controls.back.generic.y			= 480 - 50;
 	s_controls.back.generic.id			= ID_BACK;
 	s_controls.back.generic.callback	= Controls_MenuEvent; 
-	s_controls.back.string				= "< BACK";
+	s_controls.back.string				= "Back";
 	s_controls.back.color				= text_color_normal;
 	s_controls.back.style				= UI_LEFT | UI_SMALLFONT;
 // END

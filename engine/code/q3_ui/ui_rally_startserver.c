@@ -70,16 +70,16 @@ START SERVER MENU *****
 #define STARTSERVER_LIST_HEIGHT      244
 #define STARTSERVER_ROW_X            48
 #define STARTSERVER_BUTTON_WIDTH     ( STARTSERVER_LIST_WIDTH - 16 )
-#define STARTSERVER_ROW_HEIGHT       24
+#define STARTSERVER_ROW_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 #define STARTSERVER_ROW_GAP          3
 #define STARTSERVER_VISIBLE_ROWS     8
 #define STARTSERVER_DETAIL_X         320
 #define STARTSERVER_DETAIL_Y         88
 #define STARTSERVER_DETAIL_WIDTH     256
-#define STARTSERVER_DETAIL_HEIGHT    304
+#define STARTSERVER_DETAIL_HEIGHT    ( STARTSERVER_LIST_Y + STARTSERVER_LIST_HEIGHT - STARTSERVER_DETAIL_Y )
 #define STARTSERVER_ACTION_Y         420
-#define STARTSERVER_ACTION_WIDTH     112
-#define STARTSERVER_ACTION_HEIGHT    24
+#define STARTSERVER_ACTION_WIDTH     UI_FRONTEND_ACTION_WIDTH
+#define STARTSERVER_ACTION_HEIGHT    UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t startServerTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t startServerMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -993,7 +993,7 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.back.generic.y			= 480 - 50;
 	s_startserver.back.generic.id			= ID_STARTSERVERBACK;
 	s_startserver.back.generic.callback		= StartServer_MenuEvent; 
-	s_startserver.back.string				= "< BACK";
+	s_startserver.back.string				= "Back";
 	s_startserver.back.color				= text_color_normal;
 	s_startserver.back.style				= UI_LEFT | UI_SMALLFONT;
 
@@ -1018,13 +1018,13 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	 * them through the shared frontend components. */
 	s_startserver.banner.generic.flags = QMF_INACTIVE | QMF_HIDDEN;
 
-	s_startserver.gametype.generic.x = STARTSERVER_ROW_X +
-		STARTSERVER_BUTTON_WIDTH / 2;
+	s_startserver.gametype.generic.x = STARTSERVER_LIST_X +
+		STARTSERVER_LIST_WIDTH / 2;
 	s_startserver.gametype.generic.y = STARTSERVER_FILTER_Y + 12;
-	s_startserver.gametype.generic.left = STARTSERVER_ROW_X;
+	s_startserver.gametype.generic.left = STARTSERVER_LIST_X;
 	s_startserver.gametype.generic.top = STARTSERVER_FILTER_Y;
-	s_startserver.gametype.generic.right = STARTSERVER_ROW_X +
-		STARTSERVER_BUTTON_WIDTH;
+	s_startserver.gametype.generic.right = STARTSERVER_LIST_X +
+		STARTSERVER_LIST_WIDTH;
 	s_startserver.gametype.generic.bottom = STARTSERVER_FILTER_Y +
 		STARTSERVER_FILTER_HEIGHT;
 	s_startserver.gametype.generic.flags |= QMF_NODEFAULTINIT;
@@ -1050,7 +1050,7 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.item_null.generic.flags |= QMF_HIDDEN;
 
 	s_startserver.back.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
-	s_startserver.back.generic.x = 96;
+	s_startserver.back.generic.x = 40 + STARTSERVER_ACTION_WIDTH / 2;
 	s_startserver.back.generic.y = STARTSERVER_ACTION_Y +
 		STARTSERVER_ACTION_HEIGHT / 2;
 	s_startserver.back.generic.left = 40;
@@ -1064,12 +1064,12 @@ static char mapnamebuffer[MAPNAMEBUFFER_SIZE];
 	s_startserver.back.style = UI_CENTER | UI_SMALLFONT;
 
 	s_startserver.next.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
-	s_startserver.next.generic.x = 544;
+	s_startserver.next.generic.x = 540;
 	s_startserver.next.generic.y = STARTSERVER_ACTION_Y +
 		STARTSERVER_ACTION_HEIGHT / 2;
-	s_startserver.next.generic.left = 488;
+	s_startserver.next.generic.left = 480;
 	s_startserver.next.generic.top = STARTSERVER_ACTION_Y;
-	s_startserver.next.generic.right = 488 + STARTSERVER_ACTION_WIDTH;
+	s_startserver.next.generic.right = 480 + STARTSERVER_ACTION_WIDTH;
 	s_startserver.next.generic.bottom = STARTSERVER_ACTION_Y +
 		STARTSERVER_ACTION_HEIGHT;
 	s_startserver.next.generic.flags |= QMF_NODEFAULTINIT;
@@ -1198,8 +1198,8 @@ SERVER OPTIONS MENU *****
 #define SERVEROPT_BOT_WIDTH           248
 #define SERVEROPT_BOT_HEIGHT          24
 #define SERVEROPT_ACTION_Y            420
-#define SERVEROPT_ACTION_WIDTH        112
-#define SERVEROPT_ACTION_HEIGHT       24
+#define SERVEROPT_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define SERVEROPT_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t serverOptionsTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t serverOptionsMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -3002,7 +3002,7 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 	s_serveroptions.back.generic.y			= 480 - 50;
 	s_serveroptions.back.generic.id			= ID_BACK;
 	s_serveroptions.back.generic.callback	= ServerOptions_Event; 
-	s_serveroptions.back.string				= "< BACK";
+	s_serveroptions.back.string				= "Back";
 	s_serveroptions.back.color				= text_color_normal;
 	s_serveroptions.back.style				= UI_LEFT | UI_SMALLFONT;
 
@@ -3157,9 +3157,12 @@ BOT SELECT MENU *****
 #define BOTSELECT_GRID_WIDTH         512
 #define BOTSELECT_GRID_HEIGHT        232
 #define BOTSELECT_ACTION_Y           420
-#define BOTSELECT_ACTION_WIDTH       112
-#define BOTSELECT_ACTION_HEIGHT      24
-#define BOTSELECT_PAGE_WIDTH         96
+#define BOTSELECT_ACTION_WIDTH       UI_FRONTEND_ACTION_WIDTH
+#define BOTSELECT_ACTION_HEIGHT      UI_FRONTEND_BUTTON_HEIGHT
+#define BOTSELECT_PAGE_WIDTH         UI_FRONTEND_ACTION_WIDTH
+#define BOTSELECT_PAGE_GAP           8
+#define BOTSELECT_PAGE_LEFT_X        ( ( 640 - 2 * BOTSELECT_PAGE_WIDTH - BOTSELECT_PAGE_GAP ) / 2 )
+#define BOTSELECT_PAGE_RIGHT_X       ( BOTSELECT_PAGE_LEFT_X + BOTSELECT_PAGE_WIDTH + BOTSELECT_PAGE_GAP )
 
 static vec4_t botSelectTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t botSelectMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -3620,16 +3623,16 @@ static void UI_BotSelectMenu_Layout( void ) {
         }
 
         botSelectInfo.left.generic.flags |= QMF_NODEFAULTINIT;
-        botSelectInfo.left.generic.left = 220;
+	botSelectInfo.left.generic.left = BOTSELECT_PAGE_LEFT_X;
         botSelectInfo.left.generic.top = BOTSELECT_ACTION_Y;
-        botSelectInfo.left.generic.right = 220 + BOTSELECT_PAGE_WIDTH;
+	botSelectInfo.left.generic.right = BOTSELECT_PAGE_LEFT_X + BOTSELECT_PAGE_WIDTH;
         botSelectInfo.left.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
         botSelectInfo.left.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
 
         botSelectInfo.right.generic.flags |= QMF_NODEFAULTINIT;
-        botSelectInfo.right.generic.left = 324;
+	botSelectInfo.right.generic.left = BOTSELECT_PAGE_RIGHT_X;
         botSelectInfo.right.generic.top = BOTSELECT_ACTION_Y;
-        botSelectInfo.right.generic.right = 324 + BOTSELECT_PAGE_WIDTH;
+	botSelectInfo.right.generic.right = BOTSELECT_PAGE_RIGHT_X + BOTSELECT_PAGE_WIDTH;
         botSelectInfo.right.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
         botSelectInfo.right.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
 
@@ -3721,8 +3724,8 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.left.generic.type			= MTYPE_BITMAP;
 	botSelectInfo.left.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	botSelectInfo.left.generic.callback		= UI_BotSelectMenu_LeftEvent;
-	botSelectInfo.left.generic.x			= 260;
-	botSelectInfo.left.generic.y			= 440;
+	botSelectInfo.left.generic.x			= BOTSELECT_PAGE_LEFT_X + BOTSELECT_PAGE_WIDTH / 2;
+	botSelectInfo.left.generic.y			= BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT / 2;
 	botSelectInfo.left.width  				= 64;
 	botSelectInfo.left.height  				= 32;
 	botSelectInfo.left.focuspic				= BOTSELECT_ARROWSL;
@@ -3730,8 +3733,8 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.right.generic.type	    = MTYPE_BITMAP;
 	botSelectInfo.right.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	botSelectInfo.right.generic.callback	= UI_BotSelectMenu_RightEvent;
-	botSelectInfo.right.generic.x			= 321;
-	botSelectInfo.right.generic.y			= 440;
+	botSelectInfo.right.generic.x			= BOTSELECT_PAGE_RIGHT_X + BOTSELECT_PAGE_WIDTH / 2;
+	botSelectInfo.right.generic.y			= BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT / 2;
 	botSelectInfo.right.width  				= 64;
 	botSelectInfo.right.height  		    = 32;
 	botSelectInfo.right.focuspic			= BOTSELECT_ARROWSR;
@@ -3739,18 +3742,19 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.back.generic.type		= MTYPE_PTEXT;
 	botSelectInfo.back.generic.name		= BOTSELECT_BACK0;
 	botSelectInfo.back.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	botSelectInfo.back.generic.x		= 20;
-	botSelectInfo.back.generic.y		= 480 - 50;
+	botSelectInfo.back.generic.x		= 40 + BOTSELECT_ACTION_WIDTH / 2;
+	botSelectInfo.back.generic.y		= BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT / 2;
 	botSelectInfo.back.generic.callback	= UI_BotSelectMenu_BackEvent; 
-	botSelectInfo.back.string			= "< BACK";
+	botSelectInfo.back.string			= "Back";
 	botSelectInfo.back.color			= text_color_normal;
 	botSelectInfo.back.style			= UI_LEFT | UI_SMALLFONT;
 
 	botSelectInfo.go.generic.type		= MTYPE_PTEXT;
 	botSelectInfo.go.generic.name		= BOTSELECT_ACCEPT0;
 	botSelectInfo.go.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	botSelectInfo.go.generic.x			= 640 - 20;
-	botSelectInfo.go.generic.y			= 480 - 50;
+	botSelectInfo.go.generic.x			= BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH -
+		24 - BOTSELECT_ACTION_WIDTH / 2;
+	botSelectInfo.go.generic.y			= BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT / 2;
 	botSelectInfo.go.generic.callback	= UI_BotSelectMenu_SelectEvent; 
 	botSelectInfo.go.string				= "ACCEPT";
 	botSelectInfo.go.color				= text_color_normal;

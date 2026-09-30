@@ -48,10 +48,10 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_BODY_Y       ( PW_PANEL_Y + 48 )
 
 #define PW_BTN_Y        414
-#define PW_BTN_WIDTH    104
-#define PW_BTN_NEXT_X   472
+#define PW_BTN_WIDTH    UI_FRONTEND_ACTION_WIDTH
+#define PW_BTN_NEXT_X   456
 #define PW_BTN_BACK_X   64
-#define PW_BTN_SKIP_X   268
+#define PW_BTN_SKIP_X   260
 
 // Page 2 field layout — starts lower to give heading room
 #define PW_P2_LABEL_X   ( PW_PANEL_X + PW_PAD )
@@ -524,7 +524,7 @@ static void PW_UpdateButtons( void ) {
     case PW_PAGE_DETAILS:
         s_pw.btnNext.string        = "NEXT";
         s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY  | QMF_PULSEIFFOCUS;
-        s_pw.btnBack.string        = "BACK";
+        s_pw.btnBack.string        = "Back";
         s_pw.btnBack.generic.flags = QMF_LEFT_JUSTIFY   | QMF_PULSEIFFOCUS;
         s_pw.btnSkip.string        = "SKIP";
         s_pw.btnSkip.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
@@ -534,7 +534,7 @@ static void PW_UpdateButtons( void ) {
         if ( s_pw.submitting ) {
             s_pw.btnNext.string        = "JOIN LADDER";
             s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY  | QMF_INACTIVE;
-            s_pw.btnBack.string        = "BACK";
+            s_pw.btnBack.string        = "Back";
             s_pw.btnBack.generic.flags = QMF_LEFT_JUSTIFY   | QMF_INACTIVE;
             s_pw.btnSkip.string        = "SKIP";
             s_pw.btnSkip.generic.flags = QMF_CENTER_JUSTIFY | QMF_INACTIVE;
@@ -546,14 +546,14 @@ static void PW_UpdateButtons( void ) {
                     s_pw.offlineKeyResult == PW_RESULT_ERROR ) {
             s_pw.btnNext.string        = "RETRY";
             s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY  | QMF_PULSEIFFOCUS;
-            s_pw.btnBack.string        = "BACK";
+            s_pw.btnBack.string        = "Back";
             s_pw.btnBack.generic.flags = QMF_LEFT_JUSTIFY   | QMF_PULSEIFFOCUS;
             s_pw.btnSkip.string        = "SKIP";
             s_pw.btnSkip.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
         } else {
             s_pw.btnNext.string        = "JOIN LADDER";
             s_pw.btnNext.generic.flags = QMF_RIGHT_JUSTIFY  | QMF_PULSEIFFOCUS;
-            s_pw.btnBack.string        = "BACK";
+            s_pw.btnBack.string        = "Back";
             s_pw.btnBack.generic.flags = QMF_LEFT_JUSTIFY   | QMF_PULSEIFFOCUS;
             s_pw.btnSkip.string        = "SKIP";
             s_pw.btnSkip.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
@@ -1005,7 +1005,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnBack.generic.ownerdraw = PW_DrawButton;
     s_pw.btnBack.generic.x        = PW_BTN_BACK_X;
     s_pw.btnBack.generic.y        = PW_BTN_Y;
-    s_pw.btnBack.string           = "BACK";
+    s_pw.btnBack.string           = "Back";
     s_pw.btnBack.style            = UI_LEFT | UI_THEME_STYLE_BUTTON_FONT;
     s_pw.btnBack.color            = pwText;
 

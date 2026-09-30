@@ -69,8 +69,8 @@ DISPLAY OPTIONS MENU
 #define DISPLAY_COLUMN_X            236
 #define DISPLAY_COLUMN_WIDTH        344
 #define DISPLAY_ACTION_Y            420
-#define DISPLAY_ACTION_WIDTH        120
-#define DISPLAY_ACTION_HEIGHT       24
+#define DISPLAY_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define DISPLAY_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t displayScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t displayAccentColor = UI_FRONTEND_COLOR_ACCENT;
@@ -458,7 +458,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.back.generic.y				= 480 - 50;
 	displayOptionsInfo.back.generic.id				= ID_BACK;
 	displayOptionsInfo.back.generic.callback		= UI_DisplayOptionsMenu_Event; 
-	displayOptionsInfo.back.string					= "< BACK";
+	displayOptionsInfo.back.string					= "Back";
 	displayOptionsInfo.back.color					= text_color_normal;
 	displayOptionsInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END

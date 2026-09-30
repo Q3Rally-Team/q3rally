@@ -49,7 +49,8 @@
 #define PROFILE_FRONTEND_ROW_W          242
 #define PROFILE_FRONTEND_ROW_H          24
 #define PROFILE_FRONTEND_ROW_GAP        5
-#define PROFILE_FRONTEND_BUTTON_H       24
+#define PROFILE_FRONTEND_LIST_ACTION_GAP 8
+#define PROFILE_FRONTEND_BUTTON_H       UI_FRONTEND_BUTTON_HEIGHT
 #define PROFILE_FRONTEND_STATUS_Y       414
 #define PROFILE_FRONTEND_HINT_Y         432
 
@@ -1434,19 +1435,30 @@ static void UI_ProfileOverlay_SetupMenu( void ) {
     overlay->nameField.generic.right = PROFILE_FRONTEND_CREATE_X + PROFILE_FRONTEND_CREATE_W - 20;
     overlay->nameField.generic.bottom = overlay->nameField.generic.top + 34;
 
-    overlay->createButton.generic.left = PROFILE_FRONTEND_CREATE_X + 28;
+    overlay->createButton.generic.left = PROFILE_FRONTEND_CREATE_X +
+        ( PROFILE_FRONTEND_CREATE_W - UI_FRONTEND_ACTION_WIDTH ) / 2;
     overlay->createButton.generic.top = PROFILE_FRONTEND_CREATE_Y + 128;
-    overlay->createButton.generic.right = PROFILE_FRONTEND_CREATE_X + PROFILE_FRONTEND_CREATE_W - 28;
+    overlay->createButton.generic.right = overlay->createButton.generic.left +
+        UI_FRONTEND_ACTION_WIDTH;
     overlay->createButton.generic.bottom = overlay->createButton.generic.top + PROFILE_FRONTEND_BUTTON_H;
 
-    overlay->selectButton.generic.left = PROFILE_FRONTEND_LIST_X + 14;
+    overlay->selectButton.generic.left = PROFILE_FRONTEND_LIST_X +
+        ( PROFILE_FRONTEND_LIST_W - 2 * UI_FRONTEND_ACTION_WIDTH -
+          PROFILE_FRONTEND_LIST_ACTION_GAP ) / 2;
     overlay->selectButton.generic.top = PROFILE_FRONTEND_LIST_Y + 230;
-    overlay->selectButton.generic.right = PROFILE_FRONTEND_LIST_X + 132;
+    overlay->selectButton.generic.right = overlay->selectButton.generic.left +
+        UI_FRONTEND_ACTION_WIDTH;
+    overlay->selectButton.generic.x = ( overlay->selectButton.generic.left +
+        overlay->selectButton.generic.right ) / 2;
     overlay->selectButton.generic.bottom = overlay->selectButton.generic.top + PROFILE_FRONTEND_BUTTON_H;
 
-    overlay->deleteButton.generic.left = PROFILE_FRONTEND_LIST_X + 140;
+    overlay->deleteButton.generic.left = overlay->selectButton.generic.right +
+        PROFILE_FRONTEND_LIST_ACTION_GAP;
     overlay->deleteButton.generic.top = PROFILE_FRONTEND_LIST_Y + 230;
-    overlay->deleteButton.generic.right = PROFILE_FRONTEND_LIST_X + PROFILE_FRONTEND_LIST_W - 14;
+    overlay->deleteButton.generic.right = overlay->deleteButton.generic.left +
+        UI_FRONTEND_ACTION_WIDTH;
+    overlay->deleteButton.generic.x = ( overlay->deleteButton.generic.left +
+        overlay->deleteButton.generic.right ) / 2;
     overlay->deleteButton.generic.bottom = overlay->deleteButton.generic.top + PROFILE_FRONTEND_BUTTON_H;
 }
 

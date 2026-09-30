@@ -52,8 +52,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SPECIFY_ADDRESS_Y      168
 #define SPECIFY_PORT_Y         224
 #define SPECIFY_ACTION_Y       420
-#define SPECIFY_ACTION_WIDTH   96
-#define SPECIFY_ACTION_HEIGHT  24
+#define SPECIFY_ACTION_WIDTH   UI_FRONTEND_ACTION_WIDTH
+#define SPECIFY_ACTION_HEIGHT  UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t specifyTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t specifyMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -233,7 +233,7 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.back.generic.id	      = ID_SPECIFYSERVERBACK; 
 	s_specifyserver.back.generic.x			  = 20;
 	s_specifyserver.back.generic.y			  = 480 - 50;
-	s_specifyserver.back.string				    = "< BACK";
+	s_specifyserver.back.string				    = "Back";
 	s_specifyserver.back.color				    = text_color_normal;
 	s_specifyserver.back.style				    = UI_LEFT | UI_SMALLFONT;
 

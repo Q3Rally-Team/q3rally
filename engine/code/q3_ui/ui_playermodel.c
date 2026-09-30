@@ -93,6 +93,7 @@ static char* playermodel_artlist[] =
 #define NUM_FAVORITES		4
 #define MAX_HEADMODELS		256
 #define MAX_RIMMODELS		256
+#define PLAYERMODEL_PAGE_BUTTON_WIDTH	42
 // END
 
 #define MAX_PLAYERMODELS	256
@@ -314,7 +315,7 @@ static void PlayerModel_InitPageButton( menutext_s *button, int id,
 	button->generic.left = x;
 	button->generic.top = y;
 	button->generic.right = x + width;
-	button->generic.bottom = y + 20;
+	button->generic.bottom = y + UI_FRONTEND_BUTTON_HEIGHT;
 	button->generic.callback = PlayerModel_MenuEvent;
 	button->generic.ownerdraw = PlayerModel_DrawPageButton;
 	button->string = (char *)label;
@@ -433,31 +434,31 @@ static void PlayerModel_ApplyLayout( void ) {
 	s_playermodel.player.height = PLAYERMODEL_PREVIEW_HEIGHT - 54;
 
 	PlayerModel_InitPageButton( &s_playermodel.paintPrev, ID_PREVPAGE,
-		"PREV", 500, 108, 38 );
+		"PREV", 500, 108, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 	PlayerModel_InitPageButton( &s_playermodel.paintNext, ID_NEXTPAGE,
-		"NEXT", 546, 108, 42 );
+		"NEXT", 546, 108, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 	PlayerModel_InitPageButton( &s_playermodel.rimPrev, ID_PREVRIMPAGE,
-		"PREV", 500, 244, 38 );
+		"PREV", 500, 244, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 	PlayerModel_InitPageButton( &s_playermodel.rimNext, ID_NEXTRIMPAGE,
-		"NEXT", 546, 244, 42 );
+		"NEXT", 546, 244, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 	PlayerModel_InitPageButton( &s_playermodel.headPrev, ID_PREVHEADPAGE,
-		"PREV", 500, 368, 38 );
+		"PREV", 500, 368, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 	PlayerModel_InitPageButton( &s_playermodel.headNext, ID_NEXTHEADPAGE,
-		"NEXT", 546, 368, 42 );
+		"NEXT", 546, 368, PLAYERMODEL_PAGE_BUTTON_WIDTH );
 
 	s_playermodel.back.generic.type = MTYPE_PTEXT;
 	s_playermodel.back.generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS |
 		QMF_NODEFAULTINIT;
 	s_playermodel.back.generic.id = ID_BACK;
-	s_playermodel.back.generic.x = 56;
+	s_playermodel.back.generic.x = 100;
 	s_playermodel.back.generic.y = 433;
 	s_playermodel.back.generic.left = 40;
 	s_playermodel.back.generic.top = 430;
-	s_playermodel.back.generic.right = 136;
-	s_playermodel.back.generic.bottom = 454;
+	s_playermodel.back.generic.right = 40 + UI_FRONTEND_ACTION_WIDTH;
+	s_playermodel.back.generic.bottom = 430 + UI_FRONTEND_BUTTON_HEIGHT;
 	s_playermodel.back.generic.callback = PlayerModel_MenuEvent;
 	s_playermodel.back.generic.ownerdraw = PlayerModel_DrawBackButton;
-	s_playermodel.back.string = "< BACK";
+	s_playermodel.back.string = "Back";
 }
 
 
@@ -2135,7 +2136,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.back.generic.y				= 480 - 50;
 	s_playermodel.back.generic.id				= ID_BACK;
 	s_playermodel.back.generic.callback			= PlayerModel_MenuEvent; 
-	s_playermodel.back.string					= "< BACK";
+	s_playermodel.back.string					= "Back";
 	s_playermodel.back.color					= text_color_normal;
 	s_playermodel.back.style					= UI_LEFT | UI_SMALLFONT;
 // END

@@ -127,7 +127,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define SERVERS_ROW_X               48
 #define SERVERS_ROW_Y               174
 #define SERVERS_ROW_WIDTH           384
-#define SERVERS_ROW_HEIGHT          22
+#define SERVERS_ROW_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
 #define SERVERS_ROW_GAP             3
 #define SERVERS_VISIBLE_ROWS        8
 #define SERVERS_DETAIL_X            456
@@ -136,7 +136,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define SERVERS_DETAIL_HEIGHT       304
 #define SERVERS_ACTION_Y            420
 #define SERVERS_ACTION_WIDTH        80
-#define SERVERS_ACTION_HEIGHT       24
+#define SERVERS_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t serversTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t serversMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -2235,7 +2235,7 @@ static void ArenaServers_MenuInit( void ) {
         g_arenaservers.back.generic.y                   = 480 - 50;
         g_arenaservers.back.generic.id                  = ID_BACK;
         g_arenaservers.back.generic.callback    = ArenaServers_Event;
-        g_arenaservers.back.string                              = "< BACK";
+        g_arenaservers.back.string                              = "Back";
         g_arenaservers.back.color                               = text_color_normal;
         g_arenaservers.back.style                               = UI_LEFT | UI_SMALLFONT;
 

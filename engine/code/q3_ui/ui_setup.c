@@ -58,17 +58,17 @@ logic remains unchanged while each screen is migrated separately.
 #define CONFIG_LIST_HEIGHT      268
 #define CONFIG_ROW_X            ( CONFIG_LIST_X + 16 )
 #define CONFIG_ROW_WIDTH        ( CONFIG_LIST_WIDTH - 32 )
-#define CONFIG_ROW_HEIGHT       26
+#define CONFIG_ROW_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 #define CONFIG_ROW_GAP          2
 #define CONFIG_DETAIL_X         266
 #define CONFIG_DETAIL_Y         104
 #define CONFIG_DETAIL_WIDTH     334
 #define CONFIG_DETAIL_HEIGHT    292
 #define CONFIG_ACTION_Y         420
-#define CONFIG_ACTION_HEIGHT    24
-#define CONFIG_ACTION_WIDTH     144
+#define CONFIG_ACTION_HEIGHT    UI_FRONTEND_BUTTON_HEIGHT
+#define CONFIG_ACTION_WIDTH     UI_FRONTEND_ACTION_WIDTH
 #define CONFIG_DEFAULTS_X       40
-#define CONFIG_BACK_X           448
+#define CONFIG_BACK_X           ( CONFIG_FRAME_X + CONFIG_FRAME_WIDTH - 24 - CONFIG_ACTION_WIDTH )
 
 typedef struct {
     menuframework_s menu;

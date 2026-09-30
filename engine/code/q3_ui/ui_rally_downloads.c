@@ -53,7 +53,7 @@ written to ui_dl_indexpath so the UI can read it via trap_FS_FOpenFile.
 
 #define DL_MAX_ITEMS            64
 #define DL_ITEMS_PER_PAGE       8
-#define DL_ITEM_HEIGHT          24
+#define DL_ITEM_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
 #define DL_FRAME_X              24
 #define DL_FRAME_Y              20
 #define DL_FRAME_WIDTH          592
@@ -65,7 +65,7 @@ written to ui_dl_indexpath so the UI can read it via trap_FS_FOpenFile.
 #define DL_TAB_COUNT            4
 #define DL_TAB_WIDTH            ( DL_LIST_WIDTH / DL_TAB_COUNT )
 #define DL_TAB_TOP              88
-#define DL_TAB_HEIGHT           26
+#define DL_TAB_HEIGHT           UI_FRONTEND_BUTTON_HEIGHT
 #define DL_TAB_LABEL_Y          ( DL_TAB_TOP + 5 )
 #define DL_PREVIEW_X            420
 #define DL_PREVIEW_Y            88
@@ -77,7 +77,7 @@ written to ui_dl_indexpath so the UI can read it via trap_FS_FOpenFile.
 #define DL_PROGRESSBAR_HEIGHT   8
 #define DL_STATUS_Y             366
 #define DL_ACTION_Y             420
-#define DL_ACTION_HEIGHT        24
+#define DL_ACTION_HEIGHT        UI_FRONTEND_BUTTON_HEIGHT
 
 // Column X offsets within the list (relative to DL_LIST_X)
 #define DL_COL_NAME_X           12
@@ -1096,9 +1096,9 @@ void UI_Rally_DownloadsMenu( void ) {
     Menu_AddItem( &s_dl.menu, &s_dl.tabSkins );
 
     // Bottom-row buttons
-    InitDLButton( &s_dl.back,         ID_DL_BACK,        "Back",        90,   btnY );
+    InitDLButton( &s_dl.back,         ID_DL_BACK,        "Back",        100,  btnY );
     InitDLButton( &s_dl.downloadBtn,  ID_DL_DOWNLOAD,    "Download",    320,  btnY );
-    InitDLButton( &s_dl.refreshBtn,   ID_DL_REFRESH,     "Refresh",     550,  btnY );
+    InitDLButton( &s_dl.refreshBtn,   ID_DL_REFRESH,     "Refresh",     540,  btnY );
 
     s_dl.back.generic.ownerdraw = DownloadsMenu_DrawAction;
     s_dl.downloadBtn.generic.ownerdraw = DownloadsMenu_DrawAction;
@@ -1106,15 +1106,15 @@ void UI_Rally_DownloadsMenu( void ) {
 
     s_dl.back.generic.left = DL_FRAME_X + 16;
     s_dl.back.generic.top = btnY;
-    s_dl.back.generic.right = DL_FRAME_X + 128;
+    s_dl.back.generic.right = s_dl.back.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.back.generic.bottom = btnY + DL_ACTION_HEIGHT;
-    s_dl.downloadBtn.generic.left = 264;
+    s_dl.downloadBtn.generic.left = 260;
     s_dl.downloadBtn.generic.top = btnY;
-    s_dl.downloadBtn.generic.right = 376;
+    s_dl.downloadBtn.generic.right = s_dl.downloadBtn.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.downloadBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
-    s_dl.refreshBtn.generic.left = 488;
+    s_dl.refreshBtn.generic.left = 480;
     s_dl.refreshBtn.generic.top = btnY;
-    s_dl.refreshBtn.generic.right = 600;
+    s_dl.refreshBtn.generic.right = s_dl.refreshBtn.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.refreshBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
     Menu_AddItem( &s_dl.menu, &s_dl.back );
     Menu_AddItem( &s_dl.menu, &s_dl.downloadBtn );
@@ -1142,15 +1142,15 @@ void UI_Rally_DownloadsMenu( void ) {
 
     s_dl.back.generic.left = DL_FRAME_X + 16;
     s_dl.back.generic.top = btnY;
-    s_dl.back.generic.right = DL_FRAME_X + 128;
+    s_dl.back.generic.right = s_dl.back.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.back.generic.bottom = btnY + DL_ACTION_HEIGHT;
-    s_dl.downloadBtn.generic.left = 264;
+    s_dl.downloadBtn.generic.left = 260;
     s_dl.downloadBtn.generic.top = btnY;
-    s_dl.downloadBtn.generic.right = 376;
+    s_dl.downloadBtn.generic.right = s_dl.downloadBtn.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.downloadBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
-    s_dl.refreshBtn.generic.left = 488;
+    s_dl.refreshBtn.generic.left = 480;
     s_dl.refreshBtn.generic.top = btnY;
-    s_dl.refreshBtn.generic.right = 600;
+    s_dl.refreshBtn.generic.right = s_dl.refreshBtn.generic.left + UI_FRONTEND_ACTION_WIDTH;
     s_dl.refreshBtn.generic.bottom = btnY + DL_ACTION_HEIGHT;
 
 

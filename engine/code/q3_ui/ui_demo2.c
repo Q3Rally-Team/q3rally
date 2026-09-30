@@ -53,7 +53,7 @@ DEMOS MENU
 #define DEMOS_ROW_X             ( DEMOS_LIST_X + 16 )
 #define DEMOS_ROW_Y             DEMOS_LIST_Y
 #define DEMOS_ROW_WIDTH         ( DEMOS_LIST_WIDTH - 32 )
-#define DEMOS_ROW_HEIGHT        22
+#define DEMOS_ROW_HEIGHT        UI_FRONTEND_BUTTON_HEIGHT
 #define DEMOS_ROW_GAP           3
 #define DEMOS_VISIBLE_ITEMS     9
 #define DEMOS_DETAIL_X          412
@@ -61,8 +61,8 @@ DEMOS MENU
 #define DEMOS_DETAIL_WIDTH      188
 #define DEMOS_DETAIL_HEIGHT     300
 #define DEMOS_ACTION_Y          420
-#define DEMOS_ACTION_HEIGHT     24
-#define DEMOS_ACTION_WIDTH      112
+#define DEMOS_ACTION_HEIGHT     UI_FRONTEND_BUTTON_HEIGHT
+#define DEMOS_ACTION_WIDTH      UI_FRONTEND_ACTION_WIDTH
 #define DEMOS_BACK_X            40
 #define DEMOS_PREVIOUS_X        168
 #define DEMOS_NEXT_X            296

@@ -1685,11 +1685,11 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	else Com_sprintf( gearText, sizeof(gearText), "%d", gear );
 	Com_sprintf( fuelText, sizeof(fuelText), "FUEL %d%%", fuel );
 	Com_sprintf( speedText, sizeof(speedText), "%d", speedValue );
-	/* Keep the speed display aligned with its previous right-hand layout. */
-	speedRight = HUD_X(594);
+	/* Fit three-digit speeds beside the NOS bar with a small visual gap. */
+	speedRight = HUD_X(604);
 	vehicleInfoRight = HUD_X(630);
 	CG_DrawIngameString( speedRight, 421, speedText, UI_RIGHT,
-	                     1.2f, colorWhite );
+	                     1.0f, colorWhite );
 	CG_DrawIngameString( vehicleInfoRight, 433,
 	                     cg_metricUnits.integer ? "KPH" : "MPH",
 	                     UI_RIGHT | UI_SMALLFONT, 0.75f, blueColor );

@@ -1714,7 +1714,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.back.generic.y			= 480 - 50;
 	g_arenaservers.back.generic.id			= ID_BACK;
 	g_arenaservers.back.generic.callback	= ArenaServers_Event; 
-	g_arenaservers.back.string				= "< BACK";
+	g_arenaservers.back.string				= "Back";
 	g_arenaservers.back.color				= text_color_normal;
 	g_arenaservers.back.style				= UI_LEFT | UI_SMALLFONT;
 

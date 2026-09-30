@@ -19,7 +19,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define WIZARD_PANEL_X      72
 #define WIZARD_PANEL_Y      112
 #define WIZARD_BTN_Y        388
-#define WIZARD_BTN_WIDTH    120
+#define WIZARD_BTN_WIDTH    UI_FRONTEND_ACTION_WIDTH
 #define WIZARD_BTN_CANCEL_X 64
 #define WIZARD_BTN_REGISTER_X 256
 #define WIZARD_BTN_NEVER_X  448
@@ -534,7 +534,7 @@ static void LadderWizard_UpdateButtons( void ) {
         } else {
             s_wizard.btnYes.string    = "RETRY";
             s_wizard.btnYes.generic.x = WIZARD_SCREEN_W / 2 - 145;
-            s_wizard.btnNo.string     = "BACK";
+            s_wizard.btnNo.string     = "Back";
             s_wizard.btnNo.generic.flags    = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
             s_wizard.btnNever.string        = "";
             s_wizard.btnNever.generic.flags = QMF_INACTIVE | QMF_HIDDEN;

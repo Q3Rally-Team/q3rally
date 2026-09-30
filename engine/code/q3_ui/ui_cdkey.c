@@ -274,7 +274,7 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.back.generic.y				= 480 - 50;
 	cdkeyMenuInfo.back.generic.id				= ID_BACK;
 	cdkeyMenuInfo.back.generic.callback			= UI_CDKeyMenu_Event; 
-	cdkeyMenuInfo.back.string					= "< BACK";
+	cdkeyMenuInfo.back.string					= "Back";
 	cdkeyMenuInfo.back.color					= text_color_normal;
 	cdkeyMenuInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END

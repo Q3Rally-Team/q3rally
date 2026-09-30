@@ -236,6 +236,10 @@ static void PM_UpdateRPM(car_t *car, carPoint_t *points, float sec){
 					rpmTemp = CP_RPM_MAX;
 					break;
 				}
+				else {
+					// No higher gear is available; keep the current RPM for the limiter.
+					break;
+				}
 
 				rpmTemp = PM_WheelSpeedtoRPM(car, points);
 				if (rpmTemp < CP_RPM_MIN)

@@ -46,8 +46,8 @@ static char* serverinfo_artlist[] =
 #define SERVERINFO_ROW_GAP             2
 #define SERVERINFO_ROWS_PER_COLUMN     8
 #define SERVERINFO_ACTION_Y            420
-#define SERVERINFO_ACTION_WIDTH        144
-#define SERVERINFO_ACTION_HEIGHT       24
+#define SERVERINFO_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define SERVERINFO_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t serverInfoTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t serverInfoMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -398,7 +398,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.add.generic.id	      = ID_ADD;
 	s_serverinfo.add.generic.x		  = 350;
 	s_serverinfo.add.generic.y		  = 416;
-	s_serverinfo.add.string  		  = "ADD TO FAVORITES";
+	s_serverinfo.add.string  		  = "Add favorite";
 	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT;
 	s_serverinfo.add.color			  =	color_red;
 	if( trap_Cvar_VariableValue( "sv_running" ) ) {
@@ -422,7 +422,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.back.generic.id	   = ID_BACK;
 	s_serverinfo.back.generic.x		   = 0;
 	s_serverinfo.back.generic.y		   = 416;
-    s_serverinfo.back.string           = "<BACK";
+    s_serverinfo.back.string           = "Back";
     s_serverinfo.back.style            = UI_LEFT|UI_SMALLFONT;
     s_serverinfo.back.color            = color_red;
 	s_serverinfo.back.generic.left = SERVERINFO_FRAME_X + SERVERINFO_FRAME_WIDTH -

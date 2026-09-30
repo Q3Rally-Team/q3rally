@@ -5378,15 +5378,15 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.back.generic.type				= MTYPE_PTEXT;
 	s_playersettings.back.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_playersettings.back.generic.ownerdraw				= PlayerSettings_DrawBackItem;
-	s_playersettings.back.generic.x					= PLAYERSETTINGS_BACK_BUTTON_LEFT;
+	s_playersettings.back.generic.x					= PLAYERSETTINGS_BACK_BUTTON_LEFT + UI_FRONTEND_ACTION_WIDTH / 2;
 	s_playersettings.back.generic.y					= PLAYERSETTINGS_BACK_BUTTON_Y;
 	s_playersettings.back.generic.left					= PLAYERSETTINGS_BACK_BUTTON_LEFT;
 	s_playersettings.back.generic.top					= PLAYERSETTINGS_BACK_BUTTON_Y;
-	s_playersettings.back.generic.right					= PLAYERSETTINGS_BACK_BUTTON_LEFT + 112;
-	s_playersettings.back.generic.bottom					= PLAYERSETTINGS_BACK_BUTTON_Y + 24;
+	s_playersettings.back.generic.right					= PLAYERSETTINGS_BACK_BUTTON_LEFT + UI_FRONTEND_ACTION_WIDTH;
+	s_playersettings.back.generic.bottom					= PLAYERSETTINGS_BACK_BUTTON_Y + UI_FRONTEND_BUTTON_HEIGHT;
 	s_playersettings.back.generic.id				= ID_BACK;
 	s_playersettings.back.generic.callback			= PlayerSettings_MenuEvent; 
-	s_playersettings.back.string					= "< BACK";
+	s_playersettings.back.string					= "Back";
 	s_playersettings.back.color						= text_color_normal;
 	s_playersettings.back.style						= UI_LEFT | UI_SMALLFONT;
 

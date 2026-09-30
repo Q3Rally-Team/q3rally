@@ -18,9 +18,12 @@ a normalized preview time followed by origin and angles:
   frames <count>
   <time-ms> <x> <y> <z> <pitch> <yaw> <roll>
 
-Frame times must increase from 0 to the route duration. The intro camera
-retimes every route to a fixed 15-second preview and collision-traces its
-chase position. If a matching route is not packaged, the existing
-info_observer_spot intro sequence remains the fallback.
+Frame times must increase from 0 to the route duration. The server measures
+the lap length from the map checkpoints, then retimes each route at 30 ms per
+meter, clamped to 10-30 seconds. The `g_trackLength` variant selects a route
+file; it does not determine the preview duration. The camera collision-traces
+its chase position. A race intro is shown only when a matching packaged route
+is available.
+Packaged route heights are lowered by 24 units from the source Ghost route.
 
 No A-to-B route variants are included for the v0.8 release yet.

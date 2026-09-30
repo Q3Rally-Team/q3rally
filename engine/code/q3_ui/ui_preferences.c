@@ -436,7 +436,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.back.generic.y				= 480 - 50;
 	s_preferences.back.generic.id				= ID_BACK;
 	s_preferences.back.generic.callback			= Preferences_Event; 
-	s_preferences.back.string					= "< BACK";
+	s_preferences.back.string					= "Back";
 	s_preferences.back.color					= text_color_normal;
 	s_preferences.back.style					= UI_LEFT | UI_SMALLFONT;
 
@@ -518,7 +518,8 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.sigilswitch.generic.ownerdraw = Preferences_DrawRadio;
 
 	Preferences_SetBounds( &s_preferences.back.generic,
-		PREFERENCES_FRAME_X + 24, PREFERENCES_ACTION_Y, 120, 24, NULL );
+		PREFERENCES_FRAME_X + 24, PREFERENCES_ACTION_Y,
+		UI_FRONTEND_ACTION_WIDTH, UI_FRONTEND_BUTTON_HEIGHT, NULL );
 	s_preferences.back.string = "Back";
 	s_preferences.back.generic.ownerdraw = Preferences_DrawAction;
 

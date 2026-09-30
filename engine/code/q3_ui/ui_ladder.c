@@ -405,7 +405,7 @@ static void LadderMenu_MenuInit( void ) {
         s_ladderMenu.back.generic.id = ID_BACK;
         s_ladderMenu.back.generic.x = 20;
         s_ladderMenu.back.generic.y = 410;
-        s_ladderMenu.back.string = "< BACK";
+        s_ladderMenu.back.string = "Back";
         s_ladderMenu.back.style = UI_LEFT|UI_SMALLFONT;
         s_ladderMenu.back.color = text_color_normal;
 

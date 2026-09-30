@@ -68,8 +68,8 @@ NETWORK OPTIONS MENU
 #define NETWORK_COLUMN_X            236
 #define NETWORK_COLUMN_WIDTH        344
 #define NETWORK_ACTION_Y            420
-#define NETWORK_ACTION_WIDTH        120
-#define NETWORK_ACTION_HEIGHT       24
+#define NETWORK_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define NETWORK_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t networkScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t networkAccentColor = UI_FRONTEND_COLOR_ACCENT;
@@ -445,7 +445,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.back.generic.y				= 480 - 50;
 	networkOptionsInfo.back.generic.id				= ID_BACK;
 	networkOptionsInfo.back.generic.callback		= UI_NetworkOptionsMenu_Event; 
-	networkOptionsInfo.back.string					= "< BACK";
+	networkOptionsInfo.back.string					= "Back";
 	networkOptionsInfo.back.color					= text_color_normal;
 	networkOptionsInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END

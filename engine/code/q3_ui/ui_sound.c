@@ -75,8 +75,8 @@ SOUND OPTIONS MENU
 #define SOUND_COLUMN_X              236
 #define SOUND_COLUMN_WIDTH          344
 #define SOUND_ACTION_Y              420
-#define SOUND_ACTION_WIDTH          120
-#define SOUND_ACTION_HEIGHT         24
+#define SOUND_ACTION_WIDTH          UI_FRONTEND_ACTION_WIDTH
+#define SOUND_ACTION_HEIGHT         UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t soundScrimColor = UI_FRONTEND_COLOR_SCRIM;
 static vec4_t soundAccentColor = UI_FRONTEND_COLOR_ACCENT;
@@ -686,7 +686,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.back.generic.y				= 480 - 50;
 	soundOptionsInfo.back.generic.id			= ID_BACK;
 	soundOptionsInfo.back.generic.callback		= UI_SoundOptionsMenu_Event; 
-	soundOptionsInfo.back.string				= "< BACK";
+	soundOptionsInfo.back.string				= "Back";
 	soundOptionsInfo.back.color					= text_color_normal;
 	soundOptionsInfo.back.style					= UI_LEFT | UI_SMALLFONT;
 // END

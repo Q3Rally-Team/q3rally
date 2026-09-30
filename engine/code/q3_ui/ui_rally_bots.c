@@ -264,7 +264,7 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 #define RIVALS_ROW_X         32
 #define RIVALS_ROW_Y         134
 #define RIVALS_ROW_W         180
-#define RIVALS_ROW_H         22
+#define RIVALS_ROW_H         UI_FRONTEND_BUTTON_HEIGHT
 #define RIVALS_ROW_GAP       3
 #define RIVALS_HERO_X        236
 #define RIVALS_HERO_Y        88
@@ -273,8 +273,8 @@ static void UI_DrawWrappedProportional( int x, int y, int maxWidth, int lineHeig
 #define RIVALS_DETAIL_X      252
 #define RIVALS_DETAIL_Y      316
 #define RIVALS_ACTION_Y      424
-#define RIVALS_ACTION_H      24
-#define RIVALS_ACTION_W      112
+#define RIVALS_ACTION_H      UI_FRONTEND_BUTTON_HEIGHT
+#define RIVALS_ACTION_W      UI_FRONTEND_ACTION_WIDTH
 #define RIVALS_BACK_X        20
 #define RIVALS_PREV_X        264
 #define RIVALS_NEXT_X        504
@@ -765,7 +765,7 @@ static void UI_BotsMenu_Init(void) {
 
     prevButton.generic.type = MTYPE_PTEXT;
     prevButton.generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
-    prevButton.generic.x = 320;
+    prevButton.generic.x = RIVALS_PREV_X + RIVALS_ACTION_W / 2;
     prevButton.generic.y = RIVALS_ACTION_Y;
     prevButton.generic.id = ID_PREV;
     prevButton.generic.callback = UI_BotsMenu_PrevPage;
@@ -776,7 +776,7 @@ static void UI_BotsMenu_Init(void) {
 
     nextButton.generic.type = MTYPE_PTEXT;
     nextButton.generic.flags = QMF_RIGHT_JUSTIFY | QMF_PULSEIFFOCUS;
-    nextButton.generic.x = 544;
+    nextButton.generic.x = RIVALS_NEXT_X + RIVALS_ACTION_W / 2;
     nextButton.generic.y = RIVALS_ACTION_Y;
     nextButton.generic.id = ID_NEXT;
     nextButton.generic.callback = UI_BotsMenu_NextPage;
@@ -787,7 +787,7 @@ static void UI_BotsMenu_Init(void) {
 
     s_bots.back.generic.type     = MTYPE_PTEXT;
     s_bots.back.generic.flags    = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
-    s_bots.back.generic.x        = RIVALS_FRAME_X + 72;
+    s_bots.back.generic.x        = RIVALS_BACK_X + RIVALS_ACTION_W / 2;
     s_bots.back.generic.y        = RIVALS_ACTION_Y;
     s_bots.back.generic.id       = ID_BACK;
     s_bots.back.generic.callback = UI_BotsMenu_BackEvent;

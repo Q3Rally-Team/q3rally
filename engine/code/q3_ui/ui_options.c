@@ -177,7 +177,7 @@ void Options_MenuInit( void ) {
 	s_options.back.generic.y			= 480 - 50;
 	s_options.back.generic.id			= ID_BACK;
 	s_options.back.generic.callback		= Options_Event; 
-	s_options.back.string				= "< BACK";
+	s_options.back.string				= "Back";
 	s_options.back.color				= text_color_normal;
 	s_options.back.style				= UI_LEFT | UI_SMALLFONT;
 

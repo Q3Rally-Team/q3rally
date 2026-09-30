@@ -70,14 +70,14 @@ REMOVE BOTS MENU
 #define REMOVEBOTS_BOT_ROW_X           88
 #define REMOVEBOTS_BOT_ROW_Y           144
 #define REMOVEBOTS_BOT_ROW_WIDTH       264
-#define REMOVEBOTS_BOT_ROW_HEIGHT      22
+#define REMOVEBOTS_BOT_ROW_HEIGHT      UI_FRONTEND_BUTTON_HEIGHT
 #define REMOVEBOTS_BOT_ROW_GAP         2
 #define REMOVEBOTS_NAV_Y               352
-#define REMOVEBOTS_NAV_WIDTH           104
-#define REMOVEBOTS_NAV_HEIGHT          24
+#define REMOVEBOTS_NAV_WIDTH           UI_FRONTEND_ACTION_WIDTH
+#define REMOVEBOTS_NAV_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
 #define REMOVEBOTS_ACTION_Y            420
-#define REMOVEBOTS_ACTION_WIDTH        112
-#define REMOVEBOTS_ACTION_HEIGHT       24
+#define REMOVEBOTS_ACTION_WIDTH        UI_FRONTEND_ACTION_WIDTH
+#define REMOVEBOTS_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t removeBotsTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t removeBotsMutedColor = UI_FRONTEND_COLOR_MUTED;
@@ -519,7 +519,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
 	removeBotsMenuInfo.back.generic.x			= 320-64;
 	removeBotsMenuInfo.back.generic.y			= 256+128-64;
-  removeBotsMenuInfo.back.string			= "< BACK";
+  removeBotsMenuInfo.back.string			= "Back";
 	removeBotsMenuInfo.back.color			= color_orange;
 	removeBotsMenuInfo.back.style			= UI_RIGHT|UI_SMALLFONT;
 	UI_RemoveBotsMenu_Layout( count );
