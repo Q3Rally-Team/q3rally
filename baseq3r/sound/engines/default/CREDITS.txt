@@ -1,0 +1,30 @@
+Q3Rally default engine sound - asset sources
+=============================================
+
+on_00.wav .. on_10.wav
+    Engine loops at constant rpm. Re-cut on 2026-10-01 from the former
+    sound/player/sidepipe/engine0..10.wav (Q3Rally project assets) to whole
+    repeating patterns with a 10 ms crossfade. Fundamentals are listed in
+    engine.cfg.
+
+pop1.wav .. pop4.wav
+    Backfires. Synthetic placeholders generated on 2026-10-01 (filtered noise
+    and a decaying sine, numpy). No third-party material.
+
+shift1.wav, shift2.wav
+    Gear change clack, cut from the Pixabay sound effect
+    "car gear shift park chevrolet equinox" (Pixabay ID 267611,
+    original file nsqke_sfx-car-gear-shift-park-chevrolet-equinox-267611.mp3).
+    Edited for Q3Rally: two single clacks cut out (at 0.83 s and 3.50 s),
+    110 Hz high-pass against the engine rumble, noise gate after the clack,
+    normalized to -6 dBFS, 44.1 kHz mono.
+
+    License: Pixabay Content License
+    https://pixabay.com/service/license-summary/
+    - free to use, no attribution required (credited here anyway)
+    - may be modified and used in new works
+    - must not be sold or distributed as a standalone file in essentially
+      unmodified form; here it is edited and part of the game
+    - no use with trademarks/logos for commercial goods, not misleading,
+      not illegal
+    The full license text on pixabay.com is the legally binding version.

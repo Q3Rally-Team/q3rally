@@ -36,7 +36,6 @@ qboolean isRaceObserver( int clientNum )
 #define ID_ATMOSPHERIC_LEVEL	16
 #define ID_POSITION_SPRITES     17
 #define ID_CAM_TRACKING         18
-#define ID_ENGINE_SOUNDS        19
 #define ID_RVRL_PLAYERS         21
 #define ID_RVRL_OBJECTS         22
 #define ID_RVRL_SMOKE           23
@@ -124,7 +123,6 @@ typedef struct {
 	menutext_s		rvrl_heading;
 	menutext_s		mvrl_heading;
 
-	menulist_s		engineSounds;
 	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
 	menuradiobutton_s	ladderOffline;
@@ -162,11 +160,6 @@ static const char *q3roptions_ghostPlayback[] = {
         0
 };
 
-static const char *q3roptions_engine_sounds[] = {
-	"Off",
-	"On",
-	0
-};
 
 
 /*
@@ -212,10 +205,6 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 
 	case ID_CAM_TRACKING:
 		trap_Cvar_SetValue( "cg_tightCamTracking", s_q3roptions.camtracking.curvalue );
-		break;
-
-	case ID_ENGINE_SOUNDS:
-		trap_Cvar_SetValue( "cg_engineSounds", s_q3roptions.engineSounds.curvalue );
 		break;
 
 	case ID_GHOST_PLAYBACK:
@@ -311,10 +300,6 @@ static void Q3ROptions_StatusBar( void *self )
 
 	case ID_CAM_TRACKING:
 		text = "Set how tightly the camera follows the vehicle.";
-		break;
-
-	case ID_ENGINE_SOUNDS:
-		text = "Toggle engine sounds on or off.";
 		break;
 
 	case ID_GHOST_PLAYBACK:
@@ -566,7 +551,6 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
 
-	s_q3roptions.engineSounds.curvalue = ui_engineSounds.integer ? 1 : 0;
 	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
 	s_q3roptions.ladderOffline.curvalue = trap_Cvar_VariableValue( "sv_ladderEnabled" ) != 0 ? 1 : 0;
@@ -698,16 +682,6 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.units.generic.x				= LAY_R;
 	s_q3roptions.units.generic.y				= LAY_TOP + LAY_STEP * 1;
 	s_q3roptions.units.itemnames				= q3roptions_units;
-
-	s_q3roptions.engineSounds.generic.type		= MTYPE_SPINCONTROL;
-	s_q3roptions.engineSounds.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_q3roptions.engineSounds.generic.x			= LAY_R;
-	s_q3roptions.engineSounds.generic.y			= LAY_TOP + LAY_STEP * 2;
-	s_q3roptions.engineSounds.generic.name		= "Engine Sounds:";
-	s_q3roptions.engineSounds.generic.id		= ID_ENGINE_SOUNDS;
-	s_q3roptions.engineSounds.generic.callback	= Q3ROptions_MenuEvent;
-	s_q3roptions.engineSounds.generic.statusbar	= Q3ROptions_StatusBar;
-	s_q3roptions.engineSounds.itemnames			= q3roptions_engine_sounds;
 
 	s_q3roptions.positionSprites.generic.type	= MTYPE_RADIOBUTTON;
 	s_q3roptions.positionSprites.generic.flags	= QMF_SMALLFONT;
@@ -865,7 +839,7 @@ void Q3ROptions_MenuInit( void ) {
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.camtracking );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.units );
-	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.engineSounds );
+	// engine sounds moved to the sound menu
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ladderOffline ); /* Q3RALLY LADDER */
 
@@ -916,17 +890,13 @@ void Q3ROptions_MenuInit( void ) {
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
 		Q3R_OPTIONS_TOP_ROW_Y + 0 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Unit type" );
-	Q3ROptions_SetBounds( &s_q3roptions.engineSounds.generic,
-		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
-		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Engine sounds" );
 	Q3ROptions_SetBounds( &s_q3roptions.positionSprites.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 1 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Race position sprites" );
 	Q3ROptions_SetBounds( &s_q3roptions.ladderOffline.generic,
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
-		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Offline ladder sync" );
 
 	Q3ROptions_SetBounds( &s_q3roptions.mvrl_players.generic,
@@ -977,7 +947,6 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.generic.ownerdraw = Q3ROptions_DrawSlider;
 	s_q3roptions.camtracking.generic.ownerdraw = Q3ROptions_DrawSlider;
 	s_q3roptions.units.generic.ownerdraw = Q3ROptions_DrawChoice;
-	s_q3roptions.engineSounds.generic.ownerdraw = Q3ROptions_DrawChoice;
 	s_q3roptions.positionSprites.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.ladderOffline.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.mvrl_players.generic.ownerdraw = Q3ROptions_DrawRadio;

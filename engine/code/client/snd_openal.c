@@ -605,6 +605,8 @@ typedef struct sentity_s
 	alSrcPriority_t	loopPriority;
 	sfxHandle_t			loopSfx;
 	qboolean				startLoopingSound;
+	float				loopPitch;
+	float				loopVolume;
 } sentity_t;
 
 static sentity_t entityList[MAX_GENTITIES];
@@ -650,6 +652,18 @@ Adapt the gain if necessary to get a quicker fadeout when the source is too far 
 static void S_AL_ScaleGain(src_t *chksrc, vec3_t origin)
 {
 	float distance;
+	float gain;
+
+	gain = chksrc->curGain;
+	if ( chksrc->isLooping && chksrc->entity >= 0 && chksrc->entity < MAX_GENTITIES ) {
+		gain *= entityList[chksrc->entity].loopVolume;
+	}
+	if ( chksrc->sfx >= 0 ) {
+		gain *= S_SfxGroupGain( chksrc->sfx );	// Q3Rally volume groups
+	}
+	if ( chksrc->channel == CHAN_ANNOUNCER ) {
+		gain *= S_AnnouncerVolume();
+	}
 	
 	if(!chksrc->local)
 		distance = Distance(origin, lastListenerOrigin);
@@ -665,7 +679,7 @@ static void S_AL_ScaleGain(src_t *chksrc, vec3_t origin)
 		else
 			scaleFactor = 1.0f - distance / s_alGraceDistance->value;
 		
-		scaleFactor *= chksrc->curGain;
+		scaleFactor *= gain;
 		
 		if(chksrc->scaleGain != scaleFactor)
 		{
@@ -673,9 +687,9 @@ static void S_AL_ScaleGain(src_t *chksrc, vec3_t origin)
 			S_AL_Gain(chksrc->alSource, chksrc->scaleGain);
 		}
 	}
-	else if(chksrc->scaleGain != chksrc->curGain)
+	else if(chksrc->scaleGain != gain)
 	{
-		chksrc->scaleGain = chksrc->curGain;
+		chksrc->scaleGain = gain;
 		S_AL_Gain(chksrc->alSource, chksrc->scaleGain);
 	}
 }
@@ -1188,13 +1202,31 @@ static void S_AL_SetEntityPitch( int entityNum, float pitch )
         if( entityNum < 0 || entityNum >= MAX_GENTITIES )
                 return;
 
+	if ( pitch < 0.1f )
+		pitch = 0.1f;
+	entityList[entityNum].loopPitch = pitch;
+
         if( !entityList[entityNum].srcAllocated )
                 return;
 
-        if( pitch < 0.1f )
-                pitch = 0.1f;
-
         qalSourcef( srcList[ entityList[entityNum].srcIndex ].alSource, AL_PITCH, pitch );
+}
+
+static void S_AL_SetEntityVolume( int entityNum, float volume )
+{
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES )
+		return;
+	if ( volume < 0.0f )
+		volume = 0.0f;
+	else if ( volume > 1.0f )
+		volume = 1.0f;
+
+	entityList[entityNum].loopVolume = volume;
+	if ( !entityList[entityNum].srcAllocated )
+		return;
+
+	S_AL_ScaleGain( &srcList[entityList[entityNum].srcIndex],
+		srcList[entityList[entityNum].srcIndex].loopSpeakerPos );
 }
 
 /*
@@ -1241,6 +1273,7 @@ void S_AL_StartLocalSound(sfxHandle_t sfx, int channel)
 
 	// Set up the effect
 	S_AL_SrcSetup(src, sfx, SRCPRI_LOCAL, -1, channel, qtrue);
+	S_AL_ScaleGain(&srcList[src], lastListenerOrigin);	// Q3Rally: group and announcer volume
 
 	// Start it playing
 	srcList[src].isPlaying = qtrue;
@@ -1346,6 +1379,8 @@ static void S_AL_SrcLoop( alSrcPriority_t priority, sfxHandle_t sfx,
 	// Do we need to allocate a new source for this entity
 	if( !sent->srcAllocated )
 	{
+		sent->loopPitch = 1.0f;
+		sent->loopVolume = 1.0f;
 		// Try to get a channel
 		src = S_AL_SrcAlloc( priority, entityNum, -1 );
 		if( src == -1 )
@@ -1512,6 +1547,7 @@ void S_AL_SrcUpdate( void )
 					S_AL_SrcSetup(i, sent->loopSfx, sent->loopPriority,
 							entityNum, -1, curSource->local);
 					curSource->isLooping = qtrue;
+					qalSourcef(curSource->alSource, AL_PITCH, sent->loopPitch);
 					
 					knownSfx[curSource->sfx].loopCnt++;
 					sent->startLoopingSound = qfalse;
@@ -2167,7 +2203,7 @@ void S_AL_StartBackgroundTrack( const char *intro, const char *loop )
 	qalSourceQueueBuffers(musicSource, NUM_MUSIC_BUFFERS, musicBuffers);
 
 	// Set the initial gain property
-	S_AL_Gain(musicSource, s_alGain->value * s_musicVolume->value);
+	S_AL_Gain(musicSource, s_alGain->value * S_MusicVolume());
 	
 	// Start playing
 	qalSourcePlay(musicSource);
@@ -2210,7 +2246,7 @@ void S_AL_MusicUpdate( void )
 	}
 
 	// Set the gain property
-	S_AL_Gain(musicSource, s_alGain->value * s_musicVolume->value);
+	S_AL_Gain(musicSource, s_alGain->value * S_MusicVolume());
 }
 
 
@@ -2285,6 +2321,108 @@ void S_AL_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int 
 
 /*
 =================
+S_AL_EngineStreamUpdate
+
+Streams every engine sound emitter on its own source: the own car
+unspatialized, other cars positioned at their car. The sources are locked,
+so one-shot sounds can't steal them, and the queue grows with the frame
+time, so long frames (busy server, many bots) don't run the streams dry.
+=================
+*/
+#define ENGINE_STREAM_RATE			44100
+#define ENGINE_STREAM_BLOCK			1024	// ~23 ms
+#define ENGINE_STREAM_MIN_QUEUED	3
+#define ENGINE_STREAM_MAX_QUEUED	12		// < MAX_STREAM_BUFFERS
+static int engineStreamEntity[ENGINE_MAX_EMITTERS];
+static qboolean engineStreamWasActive[ENGINE_MAX_EMITTERS];
+static cvar_t *s_engineDebugAL;
+static int engineStreamUnderruns;
+static void S_AL_EngineStreamUpdate( void )
+{
+	static short engineBlock[ENGINE_STREAM_BLOCK];
+	static int lastTime, maxGap, nextDebug;
+	int i, stream, entityNum, wantEntity, now, gap, target, handle;
+	qboolean local;
+	vec3_t origin;
+	ALint queued;
+
+	// frame gap, slowly forgotten: the queue must outlast the longest recent frame
+	now = Sys_Milliseconds( );
+	gap = lastTime ? now - lastTime : 0;
+	lastTime = now;
+	if( gap > 1000 )
+		gap = 1000;
+	maxGap = ( gap > maxGap ) ? gap : maxGap - 1;
+	if( maxGap < 0 )
+		maxGap = 0;
+	target = ( 2 * maxGap + 30 ) * ENGINE_STREAM_RATE / ( 1000 * ENGINE_STREAM_BLOCK ) + 1;
+	if( target < ENGINE_STREAM_MIN_QUEUED )
+		target = ENGINE_STREAM_MIN_QUEUED;
+	else if( target > ENGINE_STREAM_MAX_QUEUED )
+		target = ENGINE_STREAM_MAX_QUEUED;
+
+	for( i = 0; i < ENGINE_MAX_EMITTERS; i++ )
+	{
+		if( !S_Engine_EmitterInfo( i, &entityNum, &local, origin ) )
+		{
+			engineStreamWasActive[i] = qfalse;	// inactive: the stream runs dry and is released
+			continue;
+		}
+
+		stream = ENGINE_RAW_STREAM_BASE + i;
+		wantEntity = local ? -1 : entityNum;
+
+		// emitter slot now plays another car: restart its stream
+		if( streamSourceHandles[stream] != -1 && engineStreamEntity[i] != wantEntity )
+			S_AL_StreamDie( stream );
+		engineStreamEntity[i] = wantEntity;
+
+		queued = 0;
+		if( streamSourceHandles[stream] != -1 )
+		{
+			ALint state;
+
+			qalGetSourcei( streamSources[stream], AL_BUFFERS_QUEUED, &queued );
+			qalGetSourcei( streamSources[stream], AL_SOURCE_STATE, &state );
+			if( state == AL_STOPPED && engineStreamWasActive[i] )
+				engineStreamUnderruns++;
+		}
+		else if( engineStreamWasActive[i] )
+			engineStreamUnderruns++;
+
+		while( queued < target )
+		{
+			S_Engine_RenderEmitterPCM16( i, engineBlock, ENGINE_STREAM_BLOCK, ENGINE_STREAM_RATE );
+			S_AL_RawSamples( stream, ENGINE_STREAM_BLOCK, ENGINE_STREAM_RATE, 2, 1,
+				(const byte *)engineBlock, 1.0f, wantEntity );
+			if( streamSourceHandles[stream] == -1 )
+				break;
+			queued++;
+		}
+
+		handle = streamSourceHandles[stream];
+		engineStreamWasActive[i] = ( handle != -1 ) ? qtrue : qfalse;
+		if( handle == -1 || wantEntity < 0 )
+			continue;
+
+		// other cars: keep the source to ourselves and place it at the car
+		if( !srcList[handle].isLocked )
+			S_AL_SrcLock( handle );
+		S_AL_SanitiseVector( origin );
+		qalSource3f( streamSources[stream], AL_POSITION, origin[0], origin[1], origin[2] );
+		S_AL_Gain( streamSources[stream], s_volume->value * s_alGain->value );
+	}
+
+	if( s_engineDebugAL && s_engineDebugAL->integer >= 2 && now >= nextDebug )
+	{
+		nextDebug = now + 500;
+		Com_Printf( "engine streams: queue %i blocks (max frame gap %i ms), underruns %i\n",
+			target, maxGap, engineStreamUnderruns );
+	}
+}
+
+/*
+=================
 S_AL_Update
 =================
 */
@@ -2311,6 +2449,7 @@ void S_AL_Update( void )
 	// Update streams
 	for (i = 0; i < MAX_RAW_STREAMS; i++)
 		S_AL_StreamUpdate(i);
+	S_AL_EngineStreamUpdate();
 	S_AL_MusicUpdate();
 
 	// Doppler
@@ -2527,6 +2666,7 @@ qboolean S_AL_Init( soundInterface_t *si )
 	s_alPrecache = Cvar_Get( "s_alPrecache", "1", CVAR_ARCHIVE );
 	s_alGain = Cvar_Get( "s_alGain", "1.0", CVAR_ARCHIVE );
 	s_alSources = Cvar_Get( "s_alSources", "96", CVAR_ARCHIVE );
+	s_engineDebugAL = Cvar_Get( "s_engineDebug", "0", CVAR_TEMP );
 	s_alDopplerFactor = Cvar_Get( "s_alDopplerFactor", "1.0", CVAR_ARCHIVE );
 	s_alDopplerSpeed = Cvar_Get( "s_alDopplerSpeed", "9000", CVAR_ARCHIVE );
 	s_alMinDistance = Cvar_Get( "s_alMinDistance", "120", CVAR_CHEAT );
@@ -2730,6 +2870,7 @@ qboolean S_AL_Init( soundInterface_t *si )
         si->Respatialize = S_AL_Respatialize;
         si->UpdateEntityPosition = S_AL_UpdateEntityPosition;
         si->SetEntityPitch = S_AL_SetEntityPitch;
+        si->SetEntityVolume = S_AL_SetEntityVolume;
         si->Update = S_AL_Update;
         si->DisableSounds = S_AL_DisableSounds;
 	si->BeginRegistration = S_AL_BeginRegistration;

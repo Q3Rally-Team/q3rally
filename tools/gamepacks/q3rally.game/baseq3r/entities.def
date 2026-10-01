@@ -2556,11 +2556,14 @@ weapon/projectile impulses; vehicle impact scale only affects ramming.
 
 */
 
-/*QUAKED rally_checkpoint (0 .9 .1) ?
+/*QUAKED rally_checkpoint (0 .9 .1) ? SOUND MESSAGES SILENT
 
 "number"	number of the checkpoint, default is 1
 "origin"	position of the player when they respawn
 "angle"	angle of player when they respawn after death
+
+With no spawnflags, play the checkpoint sound. MESSAGES enables checkpoint gap messages,
+SOUND enables the checkpoint sound, and SILENT explicitly disables the checkpoint sound.
 
 */
 

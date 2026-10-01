@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/rally_plate_tools.h"
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_public.h"
+#include "../qcommon/q_engine_sound.h"
 #include "../game/bg_achievements.h"
 #include "../game/profile_shared.h"
 #include "cg_public.h"
@@ -139,6 +140,7 @@ typedef struct {
 // Q3Rally Code Start - update to sidepipe
 // #define	DEFAULT_MODEL			"sarge"
 #define	DEFAULT_MODEL			"sidepipe"
+#define	CG_DEFAULT_ENGINE_SOUND	"sound/engines/default"	// used by every car without its own engine.cfg
 #define	DEFAULT_SKIN			"red"
 // Q3Rally Code END
 #ifdef MISSIONPACK
@@ -303,10 +305,21 @@ typedef struct centity_s {
 	int				wetSprayTime[4];
 	float			engineSmokeTime;
 	float			engineSoundFrac;
+	qboolean		engineSoundInitialized;
+	float			engineLoad;
+	float			engineDoppler;
+	float			engineLastRpm;
+	float			engineLastThrottle;
+	int				engineLastGear;
+	int				engineCutTime;		// ignition cut after a gear change ends here
+	int				enginePopsLeft;
+	int				enginePopTime;
+	int				engineLastPop;
+	int				engineHeardTime;	// last frame this car was handed to the mixer
+	int				engineLastShift;
+	int				engineNextBurst;	// no new backfire burst before this time
 
 	int				skidSoundTime;
-	int				engineSoundEntity;
-	int				engineSoundIndex;
 
 	// scripted object variables
 	qboolean		scriptLoadAttempted;
@@ -601,6 +614,11 @@ typedef struct {
 	animation_t		animations[MAX_TOTALANIMATIONS];
 
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
+	int				engineSound;		// Q3Rally engine sound handle, 0 = none
+	sfxHandle_t		enginePops[4];		// backfires, sound/.../pop1..4.wav
+	int				engineNumPops;
+	sfxHandle_t		engineShift[2];		// gear change clack, shift1..2.wav
+	int				engineNumShift;
 
 // Q3Rally Code Start
 	int				clientNum;
@@ -1656,6 +1674,7 @@ extern	vmCvar_t		cg_mmap_fov;
 extern	vmCvar_t		cg_mmap_size;
 extern	vmCvar_t		cg_mmap_renderLevel;
 extern	vmCvar_t		cg_checkpointArrowMode;
+extern	vmCvar_t		cg_checkpointSound;
 extern      vmCvar_t                cg_distanceFormat;
 
 
@@ -1892,6 +1911,7 @@ void CG_AddCEntity( centity_t *cent );
 
 void CG_SetEntitySoundPosition( centity_t *cent );
 void CG_AddPacketEntities( void );
+void CG_EngineSoundFrame( void );
 void CG_Beam( centity_t *cent );
 void CG_AdjustPositionForMover(const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out, vec3_t angles_in, vec3_t angles_out);
 
@@ -2304,6 +2324,10 @@ void		trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t v
 void		trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void		trap_S_SetEntityPitch( int entityNum, float pitch );
+void		trap_S_SetEntityVolume( int entityNum, float volume );
+int		trap_S_RegisterEngine( const char *dir );
+void		trap_S_UpdateEngine( int entityNum, int handle, const engineSoundParams_t *params );
+void		trap_S_SetSfxGroup( sfxHandle_t sfx, int group );
 
 // respatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position

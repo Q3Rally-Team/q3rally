@@ -522,6 +522,17 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
        case CG_S_SETENTITYPITCH:
                S_SetEntityPitch( args[1], VMF(2) );
                return 0;
+       case CG_S_SETENTITYVOLUME:
+               S_SetEntityVolume( args[1], VMF(2) );
+               return 0;
+       case CG_S_REGISTERENGINE:
+               return S_Engine_Register( VMA(1) );
+       case CG_S_UPDATEENGINE:
+               S_Engine_Update( args[1], args[2], VMA(3) );
+               return 0;
+       case CG_S_SETSFXGROUP:
+               S_SetSfxGroup( args[1], args[2] );
+               return 0;
         case CG_S_UPDATEENTITYPOSITION:
                 S_UpdateEntityPosition( args[1], VMA(2) );
                 return 0;

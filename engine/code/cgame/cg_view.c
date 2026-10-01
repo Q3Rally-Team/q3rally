@@ -1097,6 +1097,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	if ( !cg.hyperspace ) {
 		CG_AddGhostEntity();
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
+		CG_EngineSoundFrame();			// Q3Rally: engine sounds of all audible cars
 		CG_AddMarks();
 		CG_AddParticles ();
 		CG_AddLocalEntities();

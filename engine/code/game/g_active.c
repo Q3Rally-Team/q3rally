@@ -2062,6 +2062,11 @@ void ClientThink_real( gentity_t *ent ) {
 	else {
 		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	}
+// Q3Rally Code Start
+	// engine sound state for remote clients
+	ent->s.time2 = BG_PackEngineState( client->car.rpm,
+		client->ps.stats[STAT_HEALTH] > 0 ? client->car.throttle : 0.0f, client->car.gear );
+// END
         SendPendingPredictableEvents( &ent->client->ps );
 
         G_Profile_UpdateClientFrame( ent );

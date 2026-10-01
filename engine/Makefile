@@ -2030,6 +2030,7 @@ Q3OBJ = \
   $(B)/client/snd_dma.o \
   $(B)/client/snd_mem.o \
   $(B)/client/snd_mix.o \
+  $(B)/client/snd_engine.o \
   $(B)/client/snd_wavelet.o \
   \
   $(B)/client/snd_main.o \

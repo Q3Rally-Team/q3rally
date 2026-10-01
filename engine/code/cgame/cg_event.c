@@ -1257,6 +1257,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_GENERAL_SOUND:
                 DEBUGNAME("EV_GENERAL_SOUND");
                 if ( cgs.gameSounds[ es->eventParm ] ) {
+                        if ( es->eType == ET_SPEAKER ) {
+                                // Q3Rally: triggered map speakers follow the ambience volume
+                                trap_S_SetSfxGroup( cgs.gameSounds[ es->eventParm ], SOUND_GROUP_AMBIENT );
+                        }
                         trap_S_StartSound (NULL, es->number, CHAN_VOICE, cgs.gameSounds[ es->eventParm ] );
                 } else {
                         s = CG_ConfigString( CS_SOUNDS + es->eventParm );
@@ -1270,6 +1274,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_GLOBAL_SOUND:	// play from the player's head so it never diminishes
                 DEBUGNAME("EV_GLOBAL_SOUND");
                 if ( cgs.gameSounds[ es->eventParm ] ) {
+                        if ( es->eType == ET_SPEAKER ) {
+                                trap_S_SetSfxGroup( cgs.gameSounds[ es->eventParm ], SOUND_GROUP_AMBIENT );
+                        }
                         trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, cgs.gameSounds[ es->eventParm ] );
                 } else {
                         s = CG_ConfigString( CS_SOUNDS + es->eventParm );
@@ -1279,6 +1286,27 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
                         }
                 }
                 break;
+
+	case EV_GLOBAL_ANNOUNCER_SOUND:
+		DEBUGNAME("EV_GLOBAL_ANNOUNCER_SOUND");
+		// Q3Rally: lap and checkpoint calls belong to one player (own or followed)
+		if ( es->otherEntityNum2 > 0 && es->otherEntityNum2 - 1 != cg.snap->ps.clientNum ) {
+			break;
+		}
+		if ( !cg_checkpointSound.integer &&
+			!Q_stricmp( CG_ConfigString( CS_SOUNDS + es->eventParm ), "sound/rally/race/checkpoint.ogg" ) ) {
+			break;
+		}
+		if ( cgs.gameSounds[ es->eventParm ] ) {
+			trap_S_StartLocalSound( cgs.gameSounds[ es->eventParm ], CHAN_ANNOUNCER );
+		} else {
+			s = CG_ConfigString( CS_SOUNDS + es->eventParm );
+			sfx = CG_CustomSound( es->number, s );
+			if ( sfx ) {
+				trap_S_StartLocalSound( sfx, CHAN_ANNOUNCER );
+			}
+		}
+		break;
 
 	case EV_GLOBAL_TEAM_SOUND:	// play from the player's head so it never diminishes
 		{

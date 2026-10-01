@@ -638,6 +638,7 @@ typedef enum {
 		EV_PARTICLES_LINEAR,
 		EV_PARTICLES_LINEAR_UP,
 		EV_PARTICLES_LINEAR_DOWN,
+		EV_GLOBAL_ANNOUNCER_SOUND,
 
 } entity_event_t;
 
@@ -961,6 +962,16 @@ void    BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboole
 // STONELANCE
 // void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s, int time, qboolean snap );
 void    BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s, int time, int sv_fps, qboolean snap );
+
+// Q3Rally engine sound state of a car, sent in entityState_t.time2 (ET_PLAYER only)
+//   bits  0-7   rpm / ENGINE_STATE_RPM_STEP
+//   bits  8-11  throttle 0..15
+//   bits 12-14  gear + 1 (reverse = 0, neutral = 1, 1st = 2 ...)
+//   bit  15     valid
+#define ENGINE_STATE_RPM_STEP	25
+#define ENGINE_STATE_VALID		0x8000
+int     BG_PackEngineState( float rpm, float throttle, int gear );
+qboolean BG_UnpackEngineState( int packed, float *rpm, float *throttle, int *gear );
 // END
 
 qboolean        BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );

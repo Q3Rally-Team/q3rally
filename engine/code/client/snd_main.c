@@ -29,6 +29,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 cvar_t *s_volume;
 cvar_t *s_muted;
 cvar_t *s_musicVolume;
+cvar_t *s_ambientVolume;
+cvar_t *s_weatherVolume;
+cvar_t *s_announcerVolume;
+
+// Q3Rally volume groups, indexed by sfx handle (both backends use indices < 4096)
+#define MAX_SFX_GROUPS	4096
+static byte s_sfxGroup[MAX_SFX_GROUPS];
+static qboolean s_backgroundAmbient;	// map ambience played as background track
 cvar_t *s_doppler;
 cvar_t *s_backend;
 cvar_t *s_muteWhenMinimized;
@@ -102,11 +110,67 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 
 /*
 =================
+S_SetSfxGroup / S_SfxGroupGain / S_MusicVolume
+
+Q3Rally: separate volumes for map ambience and weather.
+=================
+*/
+void S_SetSfxGroup( sfxHandle_t sfx, int group )
+{
+	if( sfx < 0 || sfx >= MAX_SFX_GROUPS )
+		return;
+	s_sfxGroup[sfx] = (byte)group;
+}
+
+static float S_GroupVolume( cvar_t *cv )
+{
+	if( !cv )
+		return 1.0f;
+	if( cv->value < 0.0f )
+		return 0.0f;
+	if( cv->value > 1.0f )
+		return 1.0f;
+	return cv->value;
+}
+
+float S_SfxGroupGain( int sfx )
+{
+	if( sfx < 0 || sfx >= MAX_SFX_GROUPS )
+		return 1.0f;
+	switch( s_sfxGroup[sfx] )
+	{
+		case SOUND_GROUP_AMBIENT:
+			return S_GroupVolume( s_ambientVolume );
+		case SOUND_GROUP_WEATHER:
+			return S_GroupVolume( s_weatherVolume );
+		default:
+			return 1.0f;
+	}
+}
+
+// everything played on CHAN_ANNOUNCER (countdown, lap and checkpoint calls, awards)
+float S_AnnouncerVolume( void )
+{
+	return S_GroupVolume( s_announcerVolume );
+}
+
+float S_MusicVolume( void )
+{
+	if( s_backgroundAmbient )
+		return S_GroupVolume( s_ambientVolume );
+	return s_musicVolume ? s_musicVolume->value : 0.0f;
+}
+
+/*
+=================
 S_StartBackgroundTrack
 =================
 */
 void S_StartBackgroundTrack( const char *intro, const char *loop )
 {
+	// a background track from sound/ is map ambience (rain, wind), not music
+	s_backgroundAmbient = ( intro && !Q_stricmpn( intro, "sound/", 6 ) ) ? qtrue : qfalse;
+
 	if( si.StartBackgroundTrack ) {
 		si.StartBackgroundTrack( intro, loop );
 	}
@@ -143,6 +207,8 @@ S_StopAllSounds
 */
 void S_StopAllSounds( void )
 {
+	S_Engine_StopAll( );
+
 	if( si.StopAllSounds ) {
 		si.StopAllSounds( );
 	}
@@ -232,6 +298,18 @@ void S_SetEntityPitch( int entityNum, float pitch )
 {
         if( si.SetEntityPitch ) {
                 si.SetEntityPitch( entityNum, pitch );
+        }
+}
+
+/*
+=================
+S_SetEntityVolume
+=================
+*/
+void S_SetEntityVolume( int entityNum, float volume )
+{
+        if( si.SetEntityVolume ) {
+                si.SetEntityVolume( entityNum, volume );
         }
 }
 
@@ -491,11 +569,15 @@ void S_Init( void )
 
 	s_volume = Cvar_Get( "s_volume", "1", CVAR_ARCHIVE );
 	s_musicVolume = Cvar_Get( "s_musicvolume", "0.5", CVAR_ARCHIVE );
+	s_ambientVolume = Cvar_Get( "s_ambientVolume", "1", CVAR_ARCHIVE );
+	s_weatherVolume = Cvar_Get( "s_weatherVolume", "1", CVAR_ARCHIVE );
+	s_announcerVolume = Cvar_Get( "s_announcerVolume", "1", CVAR_ARCHIVE );
 	s_muted = Cvar_Get("s_muted", "0", CVAR_ROM);
 	s_doppler = Cvar_Get( "s_doppler", "1", CVAR_ARCHIVE );
 	s_backend = Cvar_Get( "s_backend", "", CVAR_ROM );
 	s_muteWhenMinimized = Cvar_Get( "s_muteWhenMinimized", "0", CVAR_ARCHIVE );
 	s_muteWhenUnfocused = Cvar_Get( "s_muteWhenUnfocused", "0", CVAR_ARCHIVE );
+	S_Engine_Init( );
 	cv = Cvar_Get( "s_initsound", "1", 0 );
 	if( !cv->integer ) {
 		Com_Printf( "Sound disabled.\n" );
@@ -544,6 +626,9 @@ S_Shutdown
 */
 void S_Shutdown( void )
 {
+	S_Engine_Shutdown( );
+	Com_Memset( s_sfxGroup, 0, sizeof( s_sfxGroup ) );
+
 	if( si.Shutdown ) {
 		si.Shutdown( );
 	}

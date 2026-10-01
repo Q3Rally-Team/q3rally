@@ -645,6 +645,16 @@ static void S_Base_StartSoundEx( vec3_t origin, int entityNum, int entchannel, s
 	ch->rightvol = ch->master_vol;		// unless the game isn't running
 	ch->doppler = qfalse;
 	ch->fullVolume = fullVolume;
+	// Q3Rally: apply volume groups right away, not only at the next spatialize
+	{
+		float groupGain = S_SfxGroupGain( (int)( sfx - s_knownSfx ) );
+
+		if ( entchannel == CHAN_ANNOUNCER ) {
+			groupGain *= S_AnnouncerVolume();
+		}
+		ch->leftvol = (int)( ch->leftvol * groupGain );
+		ch->rightvol = (int)( ch->rightvol * groupGain );
+	}
 }
 
 /*
@@ -795,6 +805,7 @@ void S_Base_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t ve
 	loopSounds[entityNum].oldDopplerScale = 1.0;
 	loopSounds[entityNum].dopplerScale = 1.0;
 	loopSounds[entityNum].sfx = sfx;
+	loopSounds[entityNum].volume = 1.0f;
 
 	if (s_doppler->integer && VectorLengthSquared(velocity)>0.0) {
 		vec3_t	out;
@@ -855,6 +866,7 @@ void S_Base_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_
 	loopSounds[entityNum].active = qtrue;
 	loopSounds[entityNum].kill = qfalse;
 	loopSounds[entityNum].doppler = qfalse;
+	loopSounds[entityNum].volume = 1.0f;
 }
 
 
@@ -892,6 +904,8 @@ void S_AddLoopSounds (void) {
 		} else {
 			S_SpatializeOrigin( loop->origin, 90,  &left_total, &right_total);			// sphere
 		}
+		left_total = (int)( left_total * loop->volume * S_SfxGroupGain( (int)( loop->sfx - s_knownSfx ) ) );
+		right_total = (int)( right_total * loop->volume * S_SfxGroupGain( (int)( loop->sfx - s_knownSfx ) ) );
 
 		loop->sfx->lastTimeUsed = time;
 
@@ -909,8 +923,8 @@ void S_AddLoopSounds (void) {
 			}
 
 			loop2->sfx->lastTimeUsed = time;
-			left_total += left;
-			right_total += right;
+			left_total += (int)( left * loop2->volume * S_SfxGroupGain( (int)( loop2->sfx - s_knownSfx ) ) );
+			right_total += (int)( right * loop2->volume * S_SfxGroupGain( (int)( loop2->sfx - s_knownSfx ) ) );
 		}
 		if (left_total == 0 && right_total == 0) {
 			continue;		// not audible
@@ -1120,6 +1134,18 @@ void S_Base_SetEntityPitch( int entityNum, float pitch ) {
         // base sound backend does not support pitch adjustment
 }
 
+void S_Base_SetEntityVolume( int entityNum, float volume ) {
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		return;
+	}
+	if ( volume < 0.0f ) {
+		volume = 0.0f;
+	} else if ( volume > 1.0f ) {
+		volume = 1.0f;
+	}
+	loopSounds[entityNum].volume = volume;
+}
+
 
 /*
 ============
@@ -1161,6 +1187,19 @@ void S_Base_Respatialize( int entityNum, const vec3_t head, vec3_t axis[3], int 
 			}
 
 			S_SpatializeOrigin (origin, ch->master_vol, &ch->leftvol, &ch->rightvol);
+		}
+		// Q3Rally volume groups (ambience, weather)
+		{
+			float groupGain = S_SfxGroupGain( (int)( ch->thesfx - s_knownSfx ) );
+
+			if ( ch->entchannel == CHAN_ANNOUNCER ) {
+				groupGain *= S_AnnouncerVolume();
+			}
+
+			if ( groupGain < 1.0f ) {
+				ch->leftvol = (int)( ch->leftvol * groupGain );
+				ch->rightvol = (int)( ch->rightvol * groupGain );
+			}
 		}
 	}
 
@@ -1449,7 +1488,7 @@ void S_UpdateBackgroundTrack( void ) {
 	}
 
 	// don't bother playing anything if musicvolume is 0
-	if ( s_musicVolume->value <= 0 ) {
+	if ( S_MusicVolume() <= 0 ) {
 		return;
 	}
 
@@ -1485,7 +1524,7 @@ void S_UpdateBackgroundTrack( void ) {
 		{
 			// add to raw buffer
 			S_Base_RawSamples(0, fileSamples, s_backgroundStream->info.rate,
-				s_backgroundStream->info.width, s_backgroundStream->info.channels, raw, s_musicVolume->value, -1);
+				s_backgroundStream->info.width, s_backgroundStream->info.channels, raw, S_MusicVolume(), -1);
 		}
 		else
 		{
@@ -1609,6 +1648,7 @@ qboolean S_Base_Init( soundInterface_t *si ) {
         si->Respatialize = S_Base_Respatialize;
         si->UpdateEntityPosition = S_Base_UpdateEntityPosition;
         si->SetEntityPitch = S_Base_SetEntityPitch;
+        si->SetEntityVolume = S_Base_SetEntityVolume;
         si->Update = S_Base_Update;
         si->DisableSounds = S_Base_DisableSounds;
 	si->BeginRegistration = S_Base_BeginRegistration;

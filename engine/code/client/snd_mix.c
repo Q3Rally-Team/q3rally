@@ -620,6 +620,9 @@ void S_PaintChannels( int endtime ) {
 			} while ( ltime < end);
 		}
 
+		// Q3Rally engine sounds keep their own phase and pitch
+		S_Engine_PaintDMA( paintbuffer, end - s_paintedtime, snd_vol );
+
 		// transfer out according to DMA format
 		S_TransferPaintBuffer( end );
 		s_paintedtime = end;

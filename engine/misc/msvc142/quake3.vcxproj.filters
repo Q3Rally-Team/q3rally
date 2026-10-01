@@ -24,6 +24,7 @@
     <ClCompile Include="..\..\code\client\snd_main.c" />
     <ClCompile Include="..\..\code\client\snd_mem.c" />
     <ClCompile Include="..\..\code\client\snd_mix.c" />
+    <ClCompile Include="..\..\code\client\snd_engine.c" />
     <ClCompile Include="..\..\code\client\snd_openal.c" />
     <ClCompile Include="..\..\code\client\snd_wavelet.c" />
     <ClCompile Include="..\..\code\qcommon\cmd.c" />

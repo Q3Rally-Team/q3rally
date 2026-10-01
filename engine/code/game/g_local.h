@@ -774,6 +774,7 @@ void SaveRegisteredItems( void );
 // STONELANCE
 int		G_ScriptIndex( char *name );
 void	Rally_Sound( gentity_t *ent, int event, int channel, int soundIndex );
+void	Rally_PlayerAnnouncerSound( gentity_t *ent, gentity_t *player, int soundIndex );
 // END
 int		G_ModelIndex( char *name );
 int		G_SoundIndex( char *name );

@@ -222,6 +222,22 @@ void    trap_S_SetEntityPitch( int entityNum, float pitch ) {
         syscall( CG_S_SETENTITYPITCH, entityNum, PASSFLOAT( pitch ) );
 }
 
+void    trap_S_SetEntityVolume( int entityNum, float volume ) {
+        syscall( CG_S_SETENTITYVOLUME, entityNum, PASSFLOAT( volume ) );
+}
+
+int     trap_S_RegisterEngine( const char *dir ) {
+        return syscall( CG_S_REGISTERENGINE, dir );
+}
+
+void    trap_S_UpdateEngine( int entityNum, int handle, const engineSoundParams_t *params ) {
+        syscall( CG_S_UPDATEENGINE, entityNum, handle, params );
+}
+
+void    trap_S_SetSfxGroup( sfxHandle_t sfx, int group ) {
+        syscall( CG_S_SETSFXGROUP, sfx, group );
+}
+
 void	trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater ) {
 	syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater );
 }

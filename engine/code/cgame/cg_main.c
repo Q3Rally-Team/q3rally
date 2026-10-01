@@ -258,6 +258,7 @@ vmCvar_t	cg_transmissionMode;
 vmCvar_t	cg_minSkidLength;
 vmCvar_t	cg_drawRearView;
 vmCvar_t        cg_checkpointArrowMode;
+vmCvar_t        cg_checkpointSound;
 vmCvar_t        cg_distanceFormat;
 vmCvar_t        cg_drawMMap;	//TBB - minimap cvar
 vmCvar_t	cg_mmap_fov;
@@ -396,6 +397,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_manualShift, "cg_manualShift", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_transmissionMode, "cg_transmissionMode", "0", CVAR_ARCHIVE | CVAR_USERINFO },
 	{ &cg_checkpointArrowMode, "cg_checkpointArrowMode", "1", CVAR_ARCHIVE },
+	{ &cg_checkpointSound, "cg_checkpointSound", "1", CVAR_ARCHIVE },
         { &cg_distanceFormat, "cg_distanceFormat", "0", CVAR_ARCHIVE },
 	{ &cg_jukeboxShuffle, "cg_jukeboxShuffle", "0", CVAR_ARCHIVE },
 	{ &cg_jukeboxRepeatMode, "cg_jukeboxRepeatMode", "off", CVAR_ARCHIVE },
@@ -428,7 +430,7 @@ static cvarTable_t cvarTable[] = {
 
         { &cg_debugpredict, "cg_debugpredict", "0", 0 },
 
-        { &cg_engineSounds, "cg_engineSounds", "0", CVAR_ARCHIVE },
+        { &cg_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
         { &cg_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
 	{ &cg_ghostAlpha, "cg_ghostAlpha", "160", CVAR_ARCHIVE },
 	{ &cg_ghostDebug, "cg_ghostDebug", "0", CVAR_TEMP },
@@ -850,6 +852,8 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.skidSound = trap_S_RegisterSound( "sound/rally/car/skid.ogg", qfalse );
 	cgs.media.weatherRainLoopSound = trap_S_RegisterSound( "sound/weather/rain_loop_heavy.wav", qfalse );
 	cgs.media.weatherSnowLoopSound = trap_S_RegisterSound( "sound/weather/snow_wind_loop.wav", qfalse );
+	trap_S_SetSfxGroup( cgs.media.weatherRainLoopSound, SOUND_GROUP_WEATHER );
+	trap_S_SetSfxGroup( cgs.media.weatherSnowLoopSound, SOUND_GROUP_WEATHER );
 // Q3Rally Code END
 	cgs.media.wearOffSound = trap_S_RegisterSound( "sound/items/wearoff.ogg", qfalse );
 	cgs.media.useNothingSound = trap_S_RegisterSound( "sound/items/use_nothing.ogg", qfalse );

@@ -662,9 +662,36 @@ void G_Sound( gentity_t *ent, int channel, int soundIndex ) {
 // STONELANCE
 void Rally_Sound( gentity_t *ent, int event, int channel, int soundIndex ) {
 	gentity_t	*te;
+	int soundEvent;
 
-	te = G_TempEntity( ent->r.currentOrigin, event );
+	soundEvent = event;
+	if ( event == EV_GLOBAL_SOUND && channel == CHAN_ANNOUNCER ) {
+		soundEvent = EV_GLOBAL_ANNOUNCER_SOUND;
+	}
+
+	te = G_TempEntity( ent->r.currentOrigin, soundEvent );
 	te->s.eventParm = soundIndex;
+	if ( soundEvent == EV_GLOBAL_SOUND || soundEvent == EV_GLOBAL_ANNOUNCER_SOUND ) {
+		te->r.svFlags |= SVF_BROADCAST;
+	}
+}
+
+/*
+================
+Rally_PlayerAnnouncerSound
+
+Announcer sound that belongs to one player (checkpoint, final lap). It is
+broadcast, so spectators following that player hear it too, and cgame only
+plays it when the followed or own player is this one.
+================
+*/
+void Rally_PlayerAnnouncerSound( gentity_t *ent, gentity_t *player, int soundIndex ) {
+	gentity_t	*te;
+
+	te = G_TempEntity( ent->r.currentOrigin, EV_GLOBAL_ANNOUNCER_SOUND );
+	te->s.eventParm = soundIndex;
+	te->s.otherEntityNum2 = player->s.number + 1;	// 0 = everybody
+	te->r.svFlags |= SVF_BROADCAST;
 }
 // END
 

@@ -56,6 +56,16 @@ void S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inw
 // let the sound system know where an entity currently is
 void S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void S_SetEntityPitch( int entityNum, float pitch );
+void S_SetEntityVolume( int entityNum, float volume );
+
+// Q3Rally engine sounds: dir is e.g. "sound/player/sidepipe", 0 = no engine sound
+#include "../qcommon/q_engine_sound.h"
+int S_Engine_Register( const char *dir );
+void S_SetSfxGroup( sfxHandle_t sfx, int group );
+float S_SfxGroupGain( int sfx );
+float S_MusicVolume( void );
+float S_AnnouncerVolume( void );
+void S_Engine_Update( int entityNum, int handle, const engineSoundParams_t *params );
 
 void S_Update( void );
 

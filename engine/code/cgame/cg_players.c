@@ -26,17 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 // Q3Rally Code Start
-	"*engine0.wav",
-	"*engine1.wav",
-	"*engine2.wav",
-	"*engine3.wav",
-	"*engine4.wav",
-	"*engine5.wav",
-	"*engine6.wav",
-	"*engine7.wav",
-        "*engine8.wav",
-        "*engine9.wav",
-        "*engine10.wav",
         "*horn.wav",
 // END
         "*death1.wav",
@@ -939,6 +928,39 @@ static void CG_ColorFromString( const char *v, vec3_t color ) {
 
 /*
 ===================
+CG_RegisterEngineEventSounds
+
+Registers <dir>/<base>1.wav .. <base><max>.wav (or .ogg) that exist.
+===================
+*/
+static int CG_RegisterEngineEventSounds( const char *dir, const char *base, sfxHandle_t *out, int max ) {
+	char path[MAX_QPATH];
+	fileHandle_t f;
+	int i, n, len;
+
+	n = 0;
+	for ( i = 1; i <= max; i++ ) {
+		Com_sprintf( path, sizeof( path ), "%s/%s%i.wav", dir, base, i );
+		len = trap_FS_FOpenFile( path, &f, FS_READ );
+		if ( f ) {
+			trap_FS_FCloseFile( f );
+		}
+		if ( len <= 0 ) {
+			Com_sprintf( path, sizeof( path ), "%s/%s%i.ogg", dir, base, i );
+			len = trap_FS_FOpenFile( path, &f, FS_READ );
+			if ( f ) {
+				trap_FS_FCloseFile( f );
+			}
+		}
+		if ( len > 0 ) {
+			out[n++] = trap_S_RegisterSound( path, qfalse );
+		}
+	}
+	return n;
+}
+
+/*
+===================
 CG_LoadClientInfo
 
 Load it now, taking the disk hits.
@@ -1060,6 +1082,31 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 		}
 	}
 
+// Q3Rally Code Start
+	// engine sound: the car's own engine.cfg (or legacy engine0..engine10),
+	// else the shared default engine
+	ci->engineSound = 0;
+	if ( modelloaded ) {
+		ci->engineSound = trap_S_RegisterEngine( va( "sound/player/%s", dir ) );
+	}
+	if ( !ci->engineSound ) {
+		ci->engineSound = trap_S_RegisterEngine( CG_DEFAULT_ENGINE_SOUND );
+	}
+	{
+		char carDir[MAX_QPATH];
+
+		Com_sprintf( carDir, sizeof( carDir ), "sound/player/%s", dir );
+		ci->engineNumPops = modelloaded ? CG_RegisterEngineEventSounds( carDir, "pop", ci->enginePops, 4 ) : 0;
+		if ( !ci->engineNumPops ) {
+			ci->engineNumPops = CG_RegisterEngineEventSounds( CG_DEFAULT_ENGINE_SOUND, "pop", ci->enginePops, 4 );
+		}
+		ci->engineNumShift = modelloaded ? CG_RegisterEngineEventSounds( carDir, "shift", ci->engineShift, 2 ) : 0;
+		if ( !ci->engineNumShift ) {
+			ci->engineNumShift = CG_RegisterEngineEventSounds( CG_DEFAULT_ENGINE_SOUND, "shift", ci->engineShift, 2 );
+		}
+	}
+// END
+
 	ci->deferred = qfalse;
 
 	// reset any existing players and bodies, because they might be in bad
@@ -1109,6 +1156,11 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
 //	memcpy( to->animations, from->animations, sizeof( to->animations ) );
 // END
 	memcpy( to->sounds, from->sounds, sizeof( to->sounds ) );
+	to->engineSound = from->engineSound;
+	memcpy( to->enginePops, from->enginePops, sizeof( to->enginePops ) );
+	to->engineNumPops = from->engineNumPops;
+	memcpy( to->engineShift, from->engineShift, sizeof( to->engineShift ) );
+	to->engineNumShift = from->engineNumShift;
 }
 
 /*
@@ -2604,48 +2656,313 @@ static float CG_CalcEngineSoundFrac( int rpm ) {
 	return frac;
 }
 
+#define CG_ENGINE_RPM_TAU		0.03f	// seconds, own car (predicted every frame)
+#define CG_ENGINE_REMOTE_TAU	0.06f	// seconds, other cars (snapshot data)
+#define CG_ENGINE_LOAD_ATTACK	0.05f
+#define CG_ENGINE_LOAD_RELEASE	0.15f
+#define CG_ENGINE_REMOTE_ATTACK	0.15f	// bots pump the throttle: smooth other cars more
+#define CG_ENGINE_REMOTE_RELEASE	0.30f
+#define CG_ENGINE_SHIFT_DEBOUNCE	300		// msec, ignore gear hunting
+#define CG_ENGINE_POP_COOLDOWN	1500	// msec between two backfire bursts of one car
+#define CG_ENGINE_DOPPLER_TAU	0.10f
+#define CG_ENGINE_FOLLOW_LOAD	0.7f	// no usercmd when following another player
+#define CG_ENGINE_SOUND_SPEED	9000.0f	// units per second, same as s_alDopplerSpeed
+#define CG_ENGINE_MAX_DIST		3000.0f	// cars further away are not handed to the mixer
+#define CG_ENGINE_NEAR_CARS		3		// opponents with two voices
+#define CG_ENGINE_FAR_CARS		5		// further opponents with one voice
+#define CG_ENGINE_CUT_MSEC		90		// ignition cut while changing gear
+#define CG_ENGINE_CUT_VOLUME	0.35f
+#define CG_ENGINE_LIMITER_BAND	330.0f	// rpm below CP_RPM_MAX where the rev limiter saws
+#define CG_ENGINE_FORGET_MSEC	250		// a car not heard for this long starts fresh
+
+static float CG_EngineSmooth( float cur, float target, float tau ) {
+	float dt;
+
+	dt = (float)( cg.frametime > 0 ? cg.frametime : 16 ) / 1000.0f;
+	return cur + ( target - cur ) * ( dt / ( tau + dt ) );
+}
+
 /*
 =================
-CG_UpdateEngineSoundState
+CG_EngineLocalThrottle
 
-Smooth the RPM input and add hysteresis to loop changes. This gives
-OpenAL a steadier pitch curve and acts as a clear fallback for the base
-backend, which cannot pitch-shift a running loop at all.
+Throttle of the local player from the current usercmd (as in PM_AddRoadForces).
 =================
 */
-static void CG_UpdateEngineSoundState( centity_t *cent, float targetFrac,
-	int *soundIndex, float *pitch ) {
-	float frameScale;
-	float targetIndex;
-	float hysteresis;
+static float CG_EngineLocalThrottle( const playerState_t *ps ) {
+	usercmd_t cmd;
+	float throttle;
 
-	if ( cent->engineSoundIndex < 0 ) {
-		cent->engineSoundFrac = targetFrac;
-		cent->engineSoundIndex = (int)( targetFrac * 10.0f + 0.5f );
+	if ( cg.demoPlayback || ( ps->pm_flags & PMF_FOLLOW ) ) {
+		return CG_ENGINE_FOLLOW_LOAD;
+	}
+	if ( !trap_GetUserCmd( trap_GetCurrentCmdNumber(), &cmd ) ) {
+		return 0.0f;
 	}
 
-	frameScale = (float)( cg.frametime > 0 ? cg.frametime : 16 ) / 1000.0f;
-	frameScale *= 8.0f;
-	if ( frameScale > 1.0f ) {
-		frameScale = 1.0f;
+	throttle = cmd.forwardmove / 127.0f;
+	if ( ps->stats[STAT_GEAR] < 0 ) {
+		// reverse: either pedal direction drives the engine
+		throttle = fabs( throttle );
+	}
+	if ( throttle < 0.0f ) {
+		return 0.0f;	// braking
+	}
+	if ( throttle > 1.0f ) {
+		return 1.0f;
+	}
+	return throttle;
+}
+
+/*
+=================
+CG_EngineRemoteState
+
+Engine state of another car from the snapshot, rpm interpolated between snapshots.
+=================
+*/
+static qboolean CG_EngineRemoteState( centity_t *cent, float *rpm, float *throttle, int *gear ) {
+	float nextRpm, nextThrottle;
+	int nextGear;
+
+	if ( !BG_UnpackEngineState( cent->currentState.time2, rpm, throttle, gear ) ) {
+		return qfalse;
+	}
+	if ( cent->interpolate && BG_UnpackEngineState( cent->nextState.time2, &nextRpm, &nextThrottle, &nextGear ) ) {
+		*rpm += ( nextRpm - *rpm ) * cg.frameInterpolation;
+	}
+	return qtrue;
+}
+
+/*
+=================
+CG_EngineEvents
+
+Gear change (ignition cut + clack) and backfires on lift-off.
+=================
+*/
+static void CG_EngineEvents( centity_t *cent, clientInfo_t *ci, float rpm, float throttle, int gear, int rank ) {
+	qboolean audible;
+	int pop;
+
+	// one-shots only for the own car and the nearest opponents
+	audible = ( rank <= ENGINE_RANK_NEAR ) ? qtrue : qfalse;
+
+	if ( gear != cent->engineLastGear && gear > 0 && cent->engineLastGear > 0 &&
+		cg.time - cent->engineLastShift > CG_ENGINE_SHIFT_DEBOUNCE ) {
+		cent->engineLastShift = cg.time;
+		cent->engineCutTime = cg.time + CG_ENGINE_CUT_MSEC;
+		if ( audible && ci->engineNumShift ) {
+			trap_S_StartSound( NULL, cent->currentState.number, CHAN_AUTO,
+				ci->engineShift[rand() % ci->engineNumShift] );
+		}
 	}
 
-	cent->engineSoundFrac += ( targetFrac - cent->engineSoundFrac ) * frameScale;
-	targetIndex = cent->engineSoundFrac * 10.0f;
-	hysteresis = 0.35f;
-
-	while ( cent->engineSoundIndex < 10 &&
-		targetIndex > cent->engineSoundIndex + 1.0f - hysteresis ) {
-		cent->engineSoundIndex++;
+	if ( throttle > 0.5f ) {
+		cent->enginePopsLeft = 0;
+	} else if ( audible && ci->engineNumPops && !cent->enginePopsLeft && cg.time >= cent->engineNextBurst &&
+		cent->engineLastThrottle >= 0.8f && throttle <= 0.1f && CG_CalcEngineSoundFrac( rpm ) >= 0.6f ) {
+		cent->enginePopsLeft = 1 + rand() % 3;
+		cent->enginePopTime = cg.time + 30 + rand() % 80;
+		cent->engineNextBurst = cg.time + CG_ENGINE_POP_COOLDOWN;
 	}
 
-	while ( cent->engineSoundIndex > 0 &&
-		targetIndex < cent->engineSoundIndex - hysteresis ) {
-		cent->engineSoundIndex--;
+	if ( cent->enginePopsLeft > 0 && ci->engineNumPops && cg.time >= cent->enginePopTime ) {
+		pop = rand() % ci->engineNumPops;
+		if ( ci->engineNumPops > 1 && pop == cent->engineLastPop ) {
+			pop = ( pop + 1 ) % ci->engineNumPops;
+		}
+		trap_S_StartSound( NULL, cent->currentState.number, CHAN_AUTO, ci->enginePops[pop] );
+		cent->engineLastPop = pop;
+		cent->enginePopsLeft--;
+		cent->enginePopTime = cg.time + 60 + rand() % 120;
+	}
+}
+
+/*
+=================
+CG_EngineSoundCar
+
+Smooths the engine state of one car and hands it to the engine sound mixer.
+=================
+*/
+static void CG_EngineSoundCar( centity_t *cent, clientInfo_t *ci, qboolean local,
+	float rpm, float throttle, int gear, vec3_t origin, vec3_t velocity, int rank ) {
+	engineSoundParams_t params;
+	float targetFrac, targetLoad, doppler;
+	qboolean limiterCut, shifting;
+	vec3_t dir;
+
+	if ( !ci->engineSound ) {
+		return;
 	}
 
-	*soundIndex = cent->engineSoundIndex;
-	*pitch = 0.75f + 0.9f * cent->engineSoundFrac;
+	if ( !cent->engineSoundInitialized || cg.time - cent->engineHeardTime > CG_ENGINE_FORGET_MSEC ||
+		cent->engineHeardTime > cg.time ) {
+		cent->engineSoundFrac = CG_CalcEngineSoundFrac( rpm );
+		cent->engineLoad = throttle;
+		cent->engineDoppler = 1.0f;
+		cent->engineLastRpm = rpm;
+		cent->engineLastThrottle = throttle;
+		cent->engineLastGear = gear;
+		cent->engineCutTime = 0;
+		cent->enginePopsLeft = 0;
+		cent->engineLastShift = 0;
+		cent->engineNextBurst = 0;
+		cent->engineSoundInitialized = qtrue;
+	}
+	cent->engineHeardTime = cg.time;
+
+	CG_EngineEvents( cent, ci, rpm, throttle, gear, rank );
+
+	// rev limiter: the falling half of the saw tooth is a fuel cut
+	// (own car only: snapshot rpm of other cars is too coarse and would cut all the time)
+	limiterCut = ( local && rpm >= CP_RPM_MAX - CG_ENGINE_LIMITER_BAND && rpm < cent->engineLastRpm - 1.0f &&
+		throttle > 0.01f ) ? qtrue : qfalse;
+	shifting = ( cg.time < cent->engineCutTime ) ? qtrue : qfalse;
+
+	targetFrac = CG_CalcEngineSoundFrac( rpm );
+	targetLoad = ( limiterCut || shifting ) ? 0.0f : throttle;
+
+	cent->engineSoundFrac = CG_EngineSmooth( cent->engineSoundFrac, targetFrac,
+		local ? CG_ENGINE_RPM_TAU : CG_ENGINE_REMOTE_TAU );
+	if ( limiterCut || shifting ) {
+		cent->engineLoad = 0.0f;	// a cut is instant, the mixer ramps it over one block
+	} else {
+		if ( local ) {
+			cent->engineLoad = CG_EngineSmooth( cent->engineLoad, targetLoad,
+				targetLoad > cent->engineLoad ? CG_ENGINE_LOAD_ATTACK : CG_ENGINE_LOAD_RELEASE );
+		} else {
+			cent->engineLoad = CG_EngineSmooth( cent->engineLoad, targetLoad,
+				targetLoad > cent->engineLoad ? CG_ENGINE_REMOTE_ATTACK : CG_ENGINE_REMOTE_RELEASE );
+		}
+	}
+
+	// doppler from the motion of car and listener along the line between them
+	doppler = 1.0f;
+	if ( !local ) {
+		float num, den;
+
+		VectorSubtract( cg.refdef.vieworg, origin, dir );
+		if ( VectorNormalize( dir ) > 1.0f ) {
+			num = CG_ENGINE_SOUND_SPEED - DotProduct( cg.predictedPlayerState.velocity, dir );
+			den = CG_ENGINE_SOUND_SPEED - DotProduct( velocity, dir );
+			if ( den > 1.0f ) {
+				doppler = num / den;
+			}
+		}
+		if ( doppler < 0.8f ) {
+			doppler = 0.8f;
+		} else if ( doppler > 1.25f ) {
+			doppler = 1.25f;
+		}
+	}
+	cent->engineDoppler = CG_EngineSmooth( cent->engineDoppler, doppler, CG_ENGINE_DOPPLER_TAU );
+
+	memset( &params, 0, sizeof( params ) );
+	params.rpm = rpm;
+	params.rpmFrac = cent->engineSoundFrac;
+	params.load = cent->engineLoad;
+	params.gear = gear;
+	params.flags = local ? ENGINE_SOUND_LOCAL : 0;
+	if ( limiterCut ) {
+		params.flags |= ENGINE_SOUND_LIMITER;
+	}
+	if ( shifting ) {
+		params.flags |= ENGINE_SOUND_SHIFTING;
+	}
+	VectorCopy( origin, params.origin );
+	VectorCopy( velocity, params.velocity );
+	params.rank = rank;
+	params.doppler = cent->engineDoppler;
+	params.volume = shifting ? CG_ENGINE_CUT_VOLUME : 1.0f;
+
+	trap_S_UpdateEngine( cent->currentState.number, ci->engineSound, &params );
+
+	cent->engineLastRpm = rpm;
+	cent->engineLastThrottle = throttle;
+	cent->engineLastGear = gear;
+}
+
+/*
+=================
+CG_EngineSoundFrame
+
+Called once per frame after the packet entities: the own (or followed) car
+with the full model, the nearest opponents with fewer voices.
+=================
+*/
+typedef struct {
+	centity_t	*cent;
+	float		dist;
+} cgEngineCandidate_t;
+
+void CG_EngineSoundFrame( void ) {
+	cgEngineCandidate_t cands[MAX_CLIENTS], tmp;
+	playerState_t *ps;
+	entityState_t *es;
+	centity_t *cent;
+	clientInfo_t *ci;
+	float rpm, throttle, dist;
+	int i, j, num, gear, localNum;
+
+	if ( !cg_engineSounds.integer || !cg.snap ) {
+		return;
+	}
+
+	ps = &cg.predictedPlayerState;
+	localNum = ps->clientNum;
+
+	// own or followed car
+	if ( ( ps->persistant[PERS_TEAM] != TEAM_SPECTATOR || ( ps->pm_flags & PMF_FOLLOW ) ) &&
+		ps->pm_type != PM_INTERMISSION && ps->stats[STAT_HEALTH] > 0 &&
+		localNum >= 0 && localNum < MAX_CLIENTS ) {
+		CG_EngineSoundCar( &cg_entities[localNum], &cgs.clientinfo[localNum], qtrue,
+			ps->stats[STAT_RPM], CG_EngineLocalThrottle( ps ), ps->stats[STAT_GEAR],
+			ps->origin, ps->velocity, ENGINE_RANK_FULL );
+	}
+
+	// opponents, nearest first
+	num = 0;
+	for ( i = 0; i < cg.snap->numEntities && num < MAX_CLIENTS; i++ ) {
+		es = &cg.snap->entities[i];
+		if ( es->eType != ET_PLAYER || ( es->eFlags & EF_DEAD ) ) {
+			continue;
+		}
+		if ( es->clientNum < 0 || es->clientNum >= MAX_CLIENTS || es->clientNum == localNum ) {
+			continue;
+		}
+		ci = &cgs.clientinfo[es->clientNum];
+		if ( !ci->infoValid || !ci->engineSound ) {
+			continue;
+		}
+		cent = &cg_entities[es->number];
+		dist = Distance( cent->lerpOrigin, cg.refdef.vieworg );
+		if ( dist > CG_ENGINE_MAX_DIST ) {
+			continue;
+		}
+		cands[num].cent = cent;
+		cands[num].dist = dist;
+		num++;
+	}
+
+	for ( i = 1; i < num; i++ ) {
+		tmp = cands[i];
+		for ( j = i - 1; j >= 0 && cands[j].dist > tmp.dist; j-- ) {
+			cands[j + 1] = cands[j];
+		}
+		cands[j + 1] = tmp;
+	}
+
+	for ( i = 0; i < num && i < CG_ENGINE_NEAR_CARS + CG_ENGINE_FAR_CARS; i++ ) {
+		cent = cands[i].cent;
+		if ( !CG_EngineRemoteState( cent, &rpm, &throttle, &gear ) ) {
+			continue;
+		}
+		CG_EngineSoundCar( cent, &cgs.clientinfo[cent->currentState.clientNum], qfalse,
+			rpm, throttle, gear, cent->lerpOrigin, cent->currentState.pos.trDelta,
+			i < CG_ENGINE_NEAR_CARS ? ENGINE_RANK_NEAR : ENGINE_RANK_FAR );
+	}
 }
 
 /*
@@ -3841,26 +4158,7 @@ void CG_Player( centity_t *cent ) {
 		CG_AddRefEntityWithPowerups( &body, &cent->currentState, ci->team );
 
 
-	// engine sounds
-
-       if( cent->currentState.clientNum == cg.predictedPlayerState.clientNum &&
-               cg_engineSounds.integer )
-       {
-               float rpmFrac;
-               float pitch;
-               int index;
-
-               cent->engineSoundEntity = cg.predictedPlayerState.clientNum;
-               rpmFrac = CG_CalcEngineSoundFrac( cg.predictedPlayerState.stats[STAT_RPM] );
-               CG_UpdateEngineSoundState( cent, rpmFrac, &index, &pitch );
-               trap_S_AddRealLoopingSound( cent->engineSoundEntity,
-                               cg.predictedPlayerState.origin,
-                               cg.predictedPlayerState.velocity,
-                               cgs.clientinfo[cent->engineSoundEntity].sounds[index] );
-
-               trap_S_SetEntityPitch( cent->engineSoundEntity, pitch );
-       }
-
+	// engine sounds: see CG_EngineSoundFrame
 
 	if (ci->controlMode == CT_MOUSE){
 		wheelAngle = WheelAngle(cent->currentState.apos.trBase[YAW], cent->currentState.angles2[YAW]);
@@ -4485,7 +4783,8 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 	cent->errorTime = -99999;		// guarantee no error decay added
 	cent->extrapolated = qfalse;	
 	cent->engineSoundFrac = 0.0f;
-	cent->engineSoundIndex = -1;
+	cent->engineLoad = 0.0f;
+	cent->engineSoundInitialized = qfalse;
 
 // SKWID( removed functions )
 //	CG_ClearLerpFrame( &cgs.clientinfo[ cent->currentState.clientNum ], &cent->pe.legs, cent->currentState.legsAnim );

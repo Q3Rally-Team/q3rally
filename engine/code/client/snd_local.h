@@ -85,6 +85,7 @@ typedef struct loopSound_s {
 	vec3_t		origin;
 	vec3_t		velocity;
 	sfx_t		*sfx;
+	float		volume;
 	int			mergeFrame;
 	qboolean	active;
 	qboolean	kill;
@@ -142,6 +143,7 @@ typedef struct
         void (*Respatialize)( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
         void (*UpdateEntityPosition)( int entityNum, const vec3_t origin );
         void (*SetEntityPitch)( int entityNum, float pitch );
+        void (*SetEntityVolume)( int entityNum, float volume );
         void (*Update)( void );
         void (*DisableSounds)( void );
 	void (*BeginRegistration)( void );
@@ -207,7 +209,10 @@ extern	dma_t	dma;
 // this as a power of two. 32768 sample-pairs buffer ~743 ms at 44.1 kHz,
 // which keeps cinematic/audio preload safely above 500 ms.
 #define	MAX_RAW_SAMPLES	32768
-#define MAX_RAW_STREAMS (MAX_CLIENTS * 2 + 1)
+// VoIP uses streams 1 .. 2 * MAX_CLIENTS; the OpenAL backend streams every
+// engine sound emitter on its own stream behind them
+#define ENGINE_RAW_STREAM_BASE (MAX_CLIENTS * 2 + 1)
+#define MAX_RAW_STREAMS (ENGINE_RAW_STREAM_BASE + ENGINE_MAX_EMITTERS + 1)
 #define CIN_RAW_STREAM (MAX_RAW_STREAMS - 1)
 extern	portable_samplepair_t s_rawsamples[MAX_RAW_STREAMS][MAX_RAW_SAMPLES];
 extern	int		s_rawend[MAX_RAW_STREAMS];
@@ -231,6 +236,15 @@ void S_PaintChannels(int endtime);
 void S_memoryLoad(sfx_t *sfx);
 
 void S_SpatializeOrigin( vec3_t origin, int master_vol, int *left_vol, int *right_vol );
+
+// Q3Rally engine sounds (snd_engine.c)
+void S_Engine_Init( void );
+void S_Engine_Shutdown( void );
+void S_Engine_StopAll( void );
+qboolean S_Engine_Active( void );
+void S_Engine_PaintDMA( portable_samplepair_t *paintbuffer, int count, int sndVol );
+qboolean S_Engine_EmitterInfo( int index, int *entityNum, qboolean *local, vec3_t origin );
+void S_Engine_RenderEmitterPCM16( int index, short *out, int count, int outRate );
 
 // spatializes a channel
 void S_Spatialize(channel_t *ch);
