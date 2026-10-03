@@ -421,6 +421,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
         case G_LADDER_SUBMIT:
                 SV_LadderSubmit( VMA(1) );
                 return 0;
+        case G_LADDER_SUBMIT_GHOST:
+                SV_LadderSubmitGhost( VMA(1), VMA(2) );
+                return 0;
+        case G_LADDER_FETCH_GHOSTS:
+                SV_LadderFetchGhosts( VMA(1) );
+                return 0;
         case G_ADJUST_AREA_PORTAL_STATE:
                 SV_AdjustAreaPortalState( VMA(1), args[2] );
                 return 0;

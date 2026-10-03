@@ -179,6 +179,11 @@ static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const g
         return qtrue;
     }
 
+    /* Clean Ghost Race laps (no reset, no other cars) make the best routes. */
+    if ( candidate->clean != currentBest->clean ) {
+        return candidate->clean ? qtrue : qfalse;
+    }
+
     if ( candidate->bestTimeMs > 0 ) {
         if ( currentBest->bestTimeMs <= 0 || candidate->bestTimeMs < currentBest->bestTimeMs ) {
             return qtrue;
@@ -197,6 +202,14 @@ static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs ) {
     return qfalse;
 }
 
+/* Clean Ghost Race laps rank before all others, then the faster lap. */
+static qboolean G_Ghost_RecordIsBetter( const ghostRecord_t *lhs, const ghostRecord_t *rhs ) {
+    if ( lhs->clean != rhs->clean ) {
+        return lhs->clean ? qtrue : qfalse;
+    }
+    return G_Ghost_RecordTimeIsBetter( lhs->bestTimeMs, rhs->bestTimeMs );
+}
+
 static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *record ) {
     int i;
     int worstIndex = -1;
@@ -206,7 +219,7 @@ static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *recor
     }
 
     for ( i = 0; i < s_levelGhostCount; ++i ) {
-        if ( worstIndex < 0 || G_Ghost_RecordTimeIsBetter( s_levelGhosts[worstIndex].bestTimeMs, s_levelGhosts[i].bestTimeMs ) ) {
+        if ( worstIndex < 0 || G_Ghost_RecordIsBetter( &s_levelGhosts[worstIndex], &s_levelGhosts[i] ) ) {
             worstIndex = i;
         }
     }
@@ -220,7 +233,7 @@ static qboolean G_Ghost_AddRecordTop5ForTrackVariant( const ghostRecord_t *recor
         return qtrue;
     }
 
-    if ( worstIndex < 0 || !G_Ghost_RecordTimeIsBetter( record->bestTimeMs, s_levelGhosts[worstIndex].bestTimeMs ) ) {
+    if ( worstIndex < 0 || !G_Ghost_RecordIsBetter( record, &s_levelGhosts[worstIndex] ) ) {
         return qfalse;
     }
 
@@ -328,6 +341,8 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, int 
             }
             trackReversed = G_Ghost_ParseInt( value ) ? 1 : 0;
             hasTrackReversed = qtrue;
+        } else if ( G_Ghost_LineMatchesKey( line, "clean" ) ) {
+            outRecord->clean = G_Ghost_ParseInt( line + 5 ) ? qtrue : qfalse;
         } else if ( G_Ghost_LineMatchesKey( line, "frames" ) ) {
             break;
         }
@@ -945,6 +960,7 @@ void G_Ghost_BuildBotRoutes( void ) {
         if ( !G_Ghost_LoadBotRouteFromFile( &s_levelGhosts[i], &s_botRouteScratch ) ) {
             continue;
         }
+        s_botRouteScratch.clean = s_levelGhosts[i].clean;
 
         if ( G_Ghost_IsRouteBetter( &s_botRouteScratch, &s_botRoute ) ) {
             s_botRoute = s_botRouteScratch;
@@ -953,9 +969,10 @@ void G_Ghost_BuildBotRoutes( void ) {
 
     mapRoute = G_BotPath_GetRouteByIndex( 0 );
     if ( s_botRoute.valid ) {
-        G_Printf( "G_Ghost: usable fallback loaded from %s (%d ms, track length=%d, reversed=%d)\n",
+        G_Printf( "G_Ghost: usable fallback loaded from %s (%d ms%s, track length=%d, reversed=%d)\n",
             s_botRoute.path,
             s_botRoute.bestTimeMs,
+            s_botRoute.clean ? ", clean Ghost Race lap" : "",
             G_Ghost_GetTrackLengthVariant(),
             G_Ghost_GetTrackReversedVariant() );
     } else {
@@ -1038,10 +1055,8 @@ const ghostRecord_t *G_Ghost_FindBestRecord( void ) {
             continue;
         }
 
-        if ( candidate->bestTimeMs > 0 ) {
-            if ( best->bestTimeMs <= 0 || candidate->bestTimeMs < best->bestTimeMs ) {
-                best = candidate;
-            }
+        if ( G_Ghost_RecordIsBetter( candidate, best ) ) {
+            best = candidate;
         }
     }
 

@@ -147,6 +147,8 @@ vmCvar_t	g_derbyMinPlayers;
 vmCvar_t	g_rallyIntroCamClients;
 vmCvar_t	g_debugIntroCam;
 vmCvar_t	g_rallyIgnoreBots;
+vmCvar_t	g_ghostUpload;
+vmCvar_t	g_ghostDownload;
 vmCvar_t	g_aiDmnetDebugExport;
 vmCvar_t	g_aiDmnetDebugExportPath;
 vmCvar_t	g_ladderMatchSeq;
@@ -312,6 +314,8 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_rallyIntroCamClients, "g_rallyIntroCamClients", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_debugIntroCam, "g_debugIntroCam", "0", CVAR_ARCHIVE, 0, qfalse },
 { &g_rallyIgnoreBots, "g_rallyIgnoreBots", "0", CVAR_ARCHIVE, 0, qfalse },
+{ &g_ghostUpload, "g_ghostUpload", "1", CVAR_ARCHIVE, 0, qfalse },
+{ &g_ghostDownload, "g_ghostDownload", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_aiDmnetDebugExport, "g_aiDmnetDebugExport", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_aiDmnetDebugExportPath, "g_aiDmnetDebugExportPath", "logs/ai_dmnet_debug.csv", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_ladderMatchSeq, "sv_ladderMatchSeq", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
@@ -1302,6 +1306,12 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
 		return;
 	}
 
+	/* Ghost races are solo time trials without opponents; they never
+	   produce a ladder result. */
+	if ( g_gametype.integer == GT_GHOST ) {
+		return;
+	}
+
         if ( trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) == 0 ) {
                 return;
         }
@@ -1400,8 +1410,12 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
                 payload->eliminationInterval = g_eliminationInterval.integer;
                 payload->eliminationWarning = g_eliminationWarning.integer;
         } else {
-                if ( g_eliminationStartDelay.integer || g_eliminationInterval.integer || g_eliminationWarning.integer ) {
-                        Com_Printf( "Ladder: warning - elimination settings present in mode %s; emitting optional neutral values\n",
+                /* The g_elimination* cvars are global and non-zero by default, so
+                   this is the normal case for every non-elimination match. The
+                   values are neutralised below; only mention it for developers. */
+                if ( g_developer.integer &&
+                     ( g_eliminationStartDelay.integer || g_eliminationInterval.integer || g_eliminationWarning.integer ) ) {
+                        Com_Printf( "Ladder: info - elimination settings ignored in mode %s; emitting neutral values\n",
                                 payload->mode );
                 }
                 payload->eliminationStartDelay = 0;
@@ -1568,6 +1582,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 		trap_Cvar_VariableStringBuffer( "mapname", mapname, sizeof( mapname ) );
 		G_Ghost_InitForMap( mapname );
 	}
+	G_GhostRecord_Init();
+	G_GhostLadder_Init();
 
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof(g_entities[0]) );
@@ -3545,6 +3561,7 @@ void G_RunFrame( int levelTime ) {
 	// get any cvar changes
 	G_UpdateCvars();
 	G_Ghost_ProcessClientTransfers();
+	G_GhostLadder_Frame();
 
 // STONELANCE
 //	RunRallyPhysics(); // map object physics

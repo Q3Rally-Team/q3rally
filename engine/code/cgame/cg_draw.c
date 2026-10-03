@@ -1058,9 +1058,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 
 	ps = &cg.snap->ps;
 	cent = &cg_entities[ps->clientNum];
-	raceMode = ( cgs.gametype == GT_RACING || cgs.gametype == GT_RACING_DM ||
-	             cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING ||
-	             cgs.gametype == GT_TEAM_RACING_DM || cgs.gametype == GT_SINGLE_PLAYER );
+	raceMode = BG_GametypeHasRaceFinish( cgs.gametype );
 	raceCombatMode = ( cgs.gametype == GT_RACING_DM ||
 	                   cgs.gametype == GT_TEAM_RACING_DM );
 	showWeaponTelemetry = raceCombatMode || cgs.gametype == GT_LCS ||
@@ -1166,10 +1164,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	raceProgress = 0.0f;
 	raceDistanceTotal = 0.0f;
 	raceDistanceRemain = ps->stats[STAT_DISTANCE_REMAIN];
-	raceLaps = cgs.laplimit;
-	if ( cgs.gametype == GT_SPRINT && raceLaps <= 0 ) {
-		raceLaps = 1;
-	}
+	raceLaps = CG_RaceLapLimit();
 	raceDistanceTotal = cgs.trackLength * raceLaps;
 	showRaceProgress = raceMode && raceDistanceTotal > 0.0f;
 	if ( showRaceProgress ) {
@@ -1442,26 +1437,27 @@ static void CG_DrawRallyTelemetryHud( void ) {
 		} else {
 			lapTime = totalTime = 0;
 		}
-		if ( cgs.gametype == GT_SPRINT ) {
-			Q_strncpyz( modeTitle, "SPRINT", sizeof(modeTitle) );
+		if ( CG_IsSprintTrack() ) {
+			Q_strncpyz( modeTitle, cgs.gametype == GT_GHOST ? "GHOST SPRINT" : "SPRINT", sizeof(modeTitle) );
 			Com_sprintf( modeValue, sizeof(modeValue), "DIST %dM",
 			             (int)ps->stats[STAT_DISTANCE_REMAIN] );
 		} else {
 			Q_strncpyz( modeTitle,
 			            ( cgs.gametype == GT_RACING_DM || cgs.gametype == GT_TEAM_RACING_DM )
-			            ? "RACE COMBAT" : "RACE STATUS", sizeof(modeTitle) );
+			            ? "RACE COMBAT"
+			            : ( cgs.gametype == GT_GHOST ? "GHOST RACE" : "RACE STATUS" ), sizeof(modeTitle) );
 			if ( cgs.laplimit > 1 )
 				Com_sprintf( modeValue, sizeof(modeValue), "LAP %d/%d", lap, cgs.laplimit );
 			else
 				Com_sprintf( modeValue, sizeof(modeValue), "LAP %d", lap );
 		}
 		CG_DrawIngameSmallString( 190, 418, modeTitle, mutedColor );
-		if ( cg_ghostPlayback.integer ) {
+		if ( CG_GhostPlaybackMode() ) {
 			const char *ghostStatus;
 			vec4_t ghostStatusColor;
 
 			Vector4Copy( mutedColor, ghostStatusColor );
-			if ( cg_ghostPlayback.integer == 1 ) {
+			if ( CG_GhostPlaybackMode() == 1 ) {
 				CG_LoadPersonalGhost();
 				if ( cg.personalGhostAvailable ) {
 					ghostStatus = "PERSONAL GHOST";
@@ -1472,7 +1468,7 @@ static void CG_DrawRallyTelemetryHud( void ) {
 				} else {
 					ghostStatus = "SEARCHING GHOST";
 				}
-			} else if ( cg_ghostPlayback.integer == 2 ) {
+			} else if ( CG_GhostPlaybackMode() == 2 ) {
 				if ( cg.baseGhostAvailable ) {
 					ghostStatus = "SERVER BASE";
 					Vector4Copy( blueColor, ghostStatusColor );
@@ -1487,6 +1483,14 @@ static void CG_DrawRallyTelemetryHud( void ) {
 				} else {
 					ghostStatus = "WAITING FOR BASE";
 				}
+			} else if ( CG_GhostPlaybackMode() == 3 ) {
+				qboolean ladderError;
+
+				ghostStatus = CG_LadderGhost_StatusText( &ladderError );
+				Vector4Copy( ladderError ? dangerColor : blueColor, ghostStatusColor );
+				if ( !ladderError && !cg.ladderGhostAvailable ) {
+					Vector4Copy( mutedColor, ghostStatusColor );
+				}
 			} else {
 				ghostStatus = "GHOST OFF";
 			}
@@ -1498,15 +1502,26 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			Com_sprintf( modeExtra, sizeof(modeExtra), "POS %d/%d", position, racers );
 		else
 			Q_strncpyz( modeExtra, "POS --", sizeof(modeExtra) );
-		if ( cgs.gametype == GT_SPRINT ? cg_hudShowDistToFinish.integer
+		if ( CG_IsSprintTrack() ? cg_hudShowDistToFinish.integer
 		                               : cg_hudShowLaps.integer ) {
 			CG_DrawIngameSmallString( 190, 432, modeValue, colorWhite );
 		}
-		if ( cg_hudShowPosition.integer ) {
+		if ( cgs.gametype == GT_GHOST && CG_GhostPlaybackMode() && cg.ghostSplitDeltaValid ) {
+			/* Ghost Race: gap to the ghost at the last checkpoint instead of
+			 * the (always 1/1) position. Negative = ahead of the ghost. */
+			static vec4_t aheadColor = { 0.35f, 0.85f, 0.45f, 1.00f };
+			int gap = cg.ghostSplitDeltaMs;
+			int absGap = gap < 0 ? -gap : gap;
+
+			Com_sprintf( modeExtra, sizeof(modeExtra), "GAP %c%d.%02d", gap < 0 ? '-' : '+',
+			             absGap / 1000, ( absGap % 1000 ) / 10 );
+			CG_DrawIngameString( 410, 432, modeExtra,
+			                     UI_RIGHT | UI_SMALLFONT, 0.75f, gap < 0 ? aheadColor : dangerColor );
+		} else if ( cg_hudShowPosition.integer ) {
 			CG_DrawIngameString( 410, 432, modeExtra,
 			                     UI_RIGHT | UI_SMALLFONT, 0.75f, accentColor );
 		}
-		if ( cgs.gametype == GT_SPRINT ) {
+		if ( CG_IsSprintTrack() ) {
 			Q_strncpyz( timeText, getStringForTime( totalTime ), sizeof(timeText) );
 			Q_strncpyz( bestText, getStringForTime( cent->bestLapTime ), sizeof(bestText) );
 			Com_sprintf( modeValue, sizeof(modeValue), "TIME %s", timeText );
@@ -1842,11 +1857,7 @@ static float CG_DrawRallyPowerups( float y ) {
 	}
 
 	// draw the icons and timers
-	raceTelemetryMode = ( cgs.gametype == GT_RACING ||
-		cgs.gametype == GT_RACING_DM || cgs.gametype == GT_SPRINT ||
-		cgs.gametype == GT_TEAM_RACING ||
-		cgs.gametype == GT_TEAM_RACING_DM ||
-		cgs.gametype == GT_SINGLE_PLAYER );
+	raceTelemetryMode = BG_GametypeHasRaceFinish( cgs.gametype );
 	loadoutTelemetryMode = ( cgs.gametype == GT_DEATHMATCH ||
 		cgs.gametype == GT_RACING_DM ||
 		cgs.gametype == GT_TEAM_RACING_DM ||
@@ -3595,6 +3606,8 @@ static void CG_DrawIntermission( stereoFrame_t stereoFrame ) {
 // Q3Rally Code Start
 	cg.scoreBoardShowing = CG_DrawHUD();
 	CG_DrawHUDOptionsMenu();
+	CG_LadderGhost_DrawPicker();
+	CG_GhostRace_DrawResultBanner();
 
 	if ( stereoFrame == STEREO_CENTER ) {
 		CG_JukeboxFrame();
@@ -3896,6 +3909,9 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		if ( stereoFrame == STEREO_CENTER ) {
 			CG_DrawIntroCamOverlay();
 		}
+		/* Ghost Race: the ladder ghost is picked while the intro runs; the
+		 * race usually starts right when the intro ends. */
+		CG_LadderGhost_DrawPicker();
 		return;
 	}
 
@@ -3984,6 +4000,8 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 	cg.scoreBoardShowing = CG_DrawHUD();
 	CG_DrawHUDOptionsMenu();
+	CG_LadderGhost_DrawPicker();
+	CG_GhostRace_DrawResultBanner();
 
 	// don't draw center string if scoreboard is up
 

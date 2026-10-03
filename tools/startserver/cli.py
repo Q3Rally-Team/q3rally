@@ -13,22 +13,25 @@ import argparse
 from typing import Iterable, Tuple
 
 
-# Numeric values must stay in sync with ``gametype_t`` in bg_public.h.
+# Numeric values must stay in sync with ``gametype_t`` in bg_public.h, which
+# uses explicit values (non-team modes 0-15, team modes 16+).
 GAMETYPES: dict[str, int] = {
     "racing": 0,
     "racing_dm": 1,
-    "sprint": 2,
-    "single_player": 3,
-    "derby": 4,
-    "lcs": 5,
-    "elimination": 6,
-    "deathmatch": 7,
-    "team": 8,
-    "team_racing": 9,
-    "team_racing_dm": 10,
-    "ctf": 11,
-    "ctf4": 12,
-    "domination": 13,
+    "single_player": 2,
+    "derby": 3,
+    "lcs": 4,
+    "elimination": 5,
+    "deathmatch": 6,
+    "sprint": 7,
+    "ghost": 8,
+    "team": 16,
+    "team_racing": 17,
+    "team_racing_dm": 18,
+    "ctf": 19,
+    "ctf4": 20,
+    "domination": 21,
+    "koth": 22,
 }
 
 
@@ -45,6 +48,10 @@ ALIASES: dict[str, str] = {
     "team-racing-dm": "team_racing_dm",
     "capture_the_flag": "ctf",
     "ctf_4": "ctf4",
+    "ghost_race": "ghost",
+    "ghostrace": "ghost",
+    "ghost_only": "ghost",
+    "king_of_the_hill": "koth",
 }
 
 

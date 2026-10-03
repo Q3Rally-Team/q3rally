@@ -152,6 +152,7 @@ extern vmCvar_t	ui_atmosphericLevel;
 extern vmCvar_t	ui_drawPositionSprites;
 extern vmCvar_t	ui_engineSounds;
 extern vmCvar_t	ui_ghostPlayback;
+extern vmCvar_t	ui_ghostShare;
 extern vmCvar_t	ui_useFuel;
 extern vmCvar_t ui_drawMinimap;
 extern vmCvar_t ui_controls_showDeveloper;

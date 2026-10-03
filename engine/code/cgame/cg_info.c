@@ -382,6 +382,9 @@ void CG_DrawInformation( void ) {
         case GT_SPRINT:
                 s = "Sprint";
                 break;
+        case GT_GHOST:
+                s = "Ghost Race";
+                break;
         case GT_DERBY:
                 s = "Demolition Derby";
                 break;
@@ -444,6 +447,11 @@ void CG_DrawInformation( void ) {
 // Q3Rally Code Start
 	else if (isRallyRace()){
 		value = atoi( Info_ValueForKey( info, "laplimit" ) );
+		// A2B courses run one lap regardless of laplimit (e.g. Ghost Race on Sprint maps)
+		CG_ParseTrackLength( CG_ConfigString( CS_TRACKLENGTH ) );
+		if ( CG_IsSprintTrack() ) {
+			value = 1;
+		}
 		if ( value ) {
 			CG_DrawLoadingDetailLine( y, va( "laps %i", value ) );
 			y += LOADING_DETAILS_LINE_H;

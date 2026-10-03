@@ -281,29 +281,23 @@ void CenterPrint_All( const char *s ){
 }
 
 qboolean isRallyRace( void ){
-        if ( g_gametype.integer == GT_RACING
-                || g_gametype.integer == GT_RACING_DM
-                || g_gametype.integer == GT_SPRINT
-                || g_gametype.integer == GT_TEAM_RACING
-                || g_gametype.integer == GT_TEAM_RACING_DM
-                || g_gametype.integer == GT_ELIMINATION
-                || g_gametype.integer == GT_SINGLE_PLAYER ){
-                return qtrue;
-        }
-
-	return qfalse;
+	return BG_GametypeIsRace( g_gametype.integer );
 }
 
 qboolean isRallyNonDMRace( void ){
-        if ( g_gametype.integer == GT_RACING
-                || g_gametype.integer == GT_SPRINT
-                || g_gametype.integer == GT_TEAM_RACING
-                || g_gametype.integer == GT_SINGLE_PLAYER
-                || ( g_gametype.integer == GT_ELIMINATION && !g_eliminationWeapons.integer ) ){
-                return qtrue;
-        }
+	return BG_GametypeIsNonDMRace( g_gametype.integer, g_eliminationWeapons.integer ? qtrue : qfalse );
+}
 
-	return qfalse;
+/*
+=================
+G_IsSprintTrack
+
+True for point-to-point (A2B) courses: always in GT_SPRINT, and in any other
+gametype (e.g. GT_GHOST) when the map has a separate rally_start entity.
+=================
+*/
+qboolean G_IsSprintTrack( void ){
+	return ( g_gametype.integer == GT_SPRINT || level.sprintTrack ) ? qtrue : qfalse;
 }
 
 qboolean isRallyDMRace( void ){

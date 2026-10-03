@@ -217,39 +217,27 @@ static const char *sortkey_items[] = {
         0
 };
 
-static char* gamenames[] = {
-// STONELANCE
-/*
-        "DM ",  // deathmatch
-        "1v1",  // tournament
-        "SP ",  // single player
-        "Team DM",      // team deathmatch
-        "CTF",  // capture the flag
-        "One Flag CTF",         // one flag ctf
-        "OverLoad",                             // Overload
-        "Harvester",                    // Harvester
-        "Rocket Arena 3",       // Rocket Arena 3
-        "Q3F",                                          // Q3F
-        "Urban Terror",         // Urban Terror
-        "OSP",                                          // Orange Smoothie Productions
-*/
-        "Race",
-        "Race DM",
-        "SP ",
-        "Derby",
-        "LCS",
-        "ELIM",
-        "DM ",
-        "TRace",
-        "TRace DM",
-        "Team DM",      // team deathmatch
-        "CTF",  // capture the flag
-        "Domination",   // domination
-        "KOTH",         // king of the hill
-// END
-        "???",                  // unknown
-        0
-};
+static const char *ArenaServers_GametypeShortName( int gametype ) {
+        switch ( gametype ) {
+        case GT_RACING:         return "Race";
+        case GT_RACING_DM:      return "Race DM";
+        case GT_SPRINT:         return "Sprint";
+        case GT_SINGLE_PLAYER:  return "SP ";
+        case GT_DERBY:          return "Derby";
+        case GT_LCS:            return "LCS";
+        case GT_ELIMINATION:    return "ELIM";
+        case GT_DEATHMATCH:     return "DM ";
+        case GT_GHOST:          return "Ghost";
+        case GT_TEAM:           return "Team DM";
+        case GT_TEAM_RACING:    return "TRace";
+        case GT_TEAM_RACING_DM: return "TRace DM";
+        case GT_CTF:            return "CTF";
+        case GT_CTF4:           return "CTF4";
+        case GT_DOMINATION:     return "Domination";
+        case GT_KOTH:           return "KOTH";
+        default:                return "???";
+        }
+}
 
 static char* netnames[] = {
         "??? ",
@@ -1063,7 +1051,8 @@ static void ArenaServers_UpdateMenu( void ) {
 
                 gametype = ArenaServers_GametypeForGames(g_gametype);
                 if ( gametype == -2 ) {
-                        if ( servernodeptr->gametype != GT_RACING && servernodeptr->gametype != GT_SPRINT ) {
+                        if ( servernodeptr->gametype != GT_RACING && servernodeptr->gametype != GT_SPRINT &&
+                             servernodeptr->gametype != GT_GHOST ) {
                                 continue;
                         }
                 }
@@ -1287,7 +1276,7 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
         }
         else {
                 servernodeptr->gametype = i;
-                Q_strncpyz( servernodeptr->gamename, gamenames[i], sizeof(servernodeptr->gamename) );
+                Q_strncpyz( servernodeptr->gamename, ArenaServers_GametypeShortName( i ), sizeof(servernodeptr->gamename) );
         }
 }
 

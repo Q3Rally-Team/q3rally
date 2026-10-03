@@ -773,21 +773,44 @@ float Q3DistanceToRL( float length ) {
 }
 
 qboolean isRallyRace( void ){
-        return (cgs.gametype == GT_RACING
-                || cgs.gametype == GT_RACING_DM
-                || cgs.gametype == GT_SPRINT
-                || cgs.gametype == GT_TEAM_RACING
-                || cgs.gametype == GT_TEAM_RACING_DM
-                || cgs.gametype == GT_ELIMINATION
-                || cgs.gametype == GT_SINGLE_PLAYER);
+	return BG_GametypeIsRace( cgs.gametype );
+}
+
+/*
+=================
+CG_IsSprintTrack
+
+Point-to-point (A2B) course: always in GT_SPRINT, otherwise announced by the
+server for maps with a separate start line (e.g. Ghost Race on Sprint maps).
+=================
+*/
+qboolean CG_IsSprintTrack( void ){
+	return ( cgs.gametype == GT_SPRINT || cgs.sprintTrack ) ? qtrue : qfalse;
+}
+
+/* Lap count of the current race; A2B courses always run a single lap. */
+int CG_RaceLapLimit( void ){
+	if ( CG_IsSprintTrack() ) {
+		return 1;
+	}
+	return cgs.laplimit;
+}
+
+/* CS_TRACKLENGTH: "<length in metres> [<sprint track 0|1>]" */
+void CG_ParseTrackLength( const char *str ){
+	const char *p;
+
+	cgs.trackLength = atof( str );
+	cgs.sprintTrack = qfalse;
+
+	p = strchr( str, ' ' );
+	if ( p ) {
+		cgs.sprintTrack = atoi( p + 1 ) ? qtrue : qfalse;
+	}
 }
 
 qboolean isRallyNonDMRace( void ){
-        return (cgs.gametype == GT_RACING
-                || cgs.gametype == GT_SPRINT
-                || cgs.gametype == GT_TEAM_RACING
-                || cgs.gametype == GT_SINGLE_PLAYER
-                || (cgs.gametype == GT_ELIMINATION && !cgs.eliminationWeapons));
+	return BG_GametypeIsNonDMRace( cgs.gametype, cgs.eliminationWeapons ? qtrue : qfalse );
 }
 
 /*

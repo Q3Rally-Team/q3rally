@@ -171,6 +171,7 @@ float CG_GetEliminationColumnWidth( void ) {
 #define HUDOPT_MODE_RACE_OR_LCS         -4
 #define HUDOPT_MODE_RACE_LCS_DERBY      -5
 #define HUDOPT_MODE_RACE_WITH_LAPS      -6
+#define HUDOPT_MODE_SPRINT_TRACK        -7
 
 typedef struct {
     const char  *label;
@@ -183,7 +184,7 @@ typedef struct {
 } hudToggleEntry_t;
 
 static const char *const hudGhostPlaybackLabels[] = {
-    "OFF", "PERSONAL", "SERVER BASE", NULL
+    "OFF", "PERSONAL", "SERVER BASE", "LADDER", NULL
 };
 
 static const char *const hudCheckpointArrowLabels[] = {
@@ -195,8 +196,8 @@ static const hudToggleEntry_t hudToggleTable[] = {
     { "TIMES PANEL",         "cg_hudShowTimes",          &cg_hudShowTimes,          1, HUDOPT_MODE_RACE_LCS_DERBY,      qfalse, NULL },
     { "LAP COUNTER",         "cg_hudShowLaps",           &cg_hudShowLaps,           1, HUDOPT_MODE_RACE_WITH_LAPS,      qfalse, NULL },
     { "RACE POSITION",       "cg_hudShowPosition",       &cg_hudShowPosition,       1, HUDOPT_MODE_RALLY_RACE,           qfalse, NULL },
-    { "DISTANCE TO FINISH",  "cg_hudShowDistToFinish",   &cg_hudShowDistToFinish,   1, GT_SPRINT,                       qfalse, NULL },
-    { "GHOST PLAYBACK",      "cg_ghostPlayback",         &cg_ghostPlayback,         2, HUDOPT_MODE_RALLY_RACE,           qtrue,  hudGhostPlaybackLabels },
+    { "DISTANCE TO FINISH",  "cg_hudShowDistToFinish",   &cg_hudShowDistToFinish,   1, HUDOPT_MODE_SPRINT_TRACK,        qfalse, NULL },
+    { "GHOST PLAYBACK",      "cg_ghostPlayback",         &cg_ghostPlayback,         3, HUDOPT_MODE_RALLY_RACE,           qtrue,  hudGhostPlaybackLabels },
     { "CHECKPOINT ARROW",    "cg_checkpointArrowMode",   &cg_checkpointArrowMode,   2, HUDOPT_MODE_RALLY_RACE,           qtrue,  hudCheckpointArrowLabels },
     { "ELIM. TIMELINE",      "cg_elimTimeline",          &cg_elimTimeline,          1, GT_LCS,                           qfalse, NULL },
     { "OPPONENT LIST",       "cg_hudShowOpponentList",   &cg_hudShowOpponentList,   1, HUDOPT_MODE_RACE_OR_LCS,          qfalse, NULL },
@@ -302,7 +303,8 @@ static void HUDOpt_DrawSlider( float x, float y, const char *label, float value,
 HUDEntry_IsUnavail
 Returns qtrue when a toggle entry is not applicable in the current gametype.
   -1 is always available; -2 applies where the score panel is drawn.
-  -3 is rally race, -4 rally race/LCS, -5 race/LCS/Derby, -6 race with laps.
+  -3 is rally race, -4 rally race/LCS, -5 race/LCS/Derby, -6 race with laps,
+  -7 point-to-point (A2B) course.
   Non-negative values are exact GT_* matches.
 ================
 */
@@ -310,8 +312,7 @@ static qboolean HUDEntry_IsUnavail( const hudToggleEntry_t *e ) {
     if ( e->gameTypeOnly == HUDOPT_MODE_ANY )
         return qfalse;
     if ( e->gameTypeOnly == HUDOPT_MODE_SCORE_PANEL )
-        return ( ( cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT ||
-                   cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_SINGLE_PLAYER ) ||
+        return ( BG_GametypeIsTimedRace( cgs.gametype ) ||
                  cgs.gametype == GT_DERBY );
     if ( e->gameTypeOnly == HUDOPT_MODE_RALLY_RACE )
         return !isRallyRace();
@@ -319,6 +320,8 @@ static qboolean HUDEntry_IsUnavail( const hudToggleEntry_t *e ) {
         return ( !isRallyRace() && cgs.gametype != GT_LCS );
     if ( e->gameTypeOnly == HUDOPT_MODE_RACE_LCS_DERBY )
         return ( !isRallyRace() && cgs.gametype != GT_LCS && cgs.gametype != GT_DERBY );
+    if ( e->gameTypeOnly == HUDOPT_MODE_SPRINT_TRACK )
+        return !CG_IsSprintTrack();
     if ( e->gameTypeOnly == HUDOPT_MODE_RACE_WITH_LAPS )
         return ( !isRallyRace() || cgs.gametype == GT_ELIMINATION );
     return ( cgs.gametype != e->gameTypeOnly );
@@ -333,6 +336,10 @@ Returns the badge string for a given entry, reflecting cycler states.
 static const char *HUDEntry_BadgeLabel( const hudToggleEntry_t *e ) {
     if ( e->isCycler ) {
         int state = e->cvar->integer;
+        /* In Ghost Race "off" means automatic selection (see CG_GhostPlaybackMode). */
+        if ( e->cvar == &cg_ghostPlayback && cgs.gametype == GT_GHOST && state == 0 ) {
+            return "AUTO";
+        }
         if ( e->cycleLabels && state >= 0 && state <= e->onValue &&
              e->cycleLabels[state] ) {
             return e->cycleLabels[state];

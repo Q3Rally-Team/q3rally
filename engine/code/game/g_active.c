@@ -1475,6 +1475,71 @@ static void G_ApplyDerbyVehicleCollisionDamage( gentity_t *self,
 	}
 }
 
+/*
+==============
+Ghost Race: no collisions between drivers
+
+In GT_GHOST every driver races the clock and a ghost, so the cars pass
+through each other. Around the server Pmove of one driver the other cars
+(and their front/rear bounding entities) are made non-solid; the trace code
+reads r.contents at trace time, so no relink is needed. Client prediction
+already ignores other cars.
+==============
+*/
+static int      s_ghostRaceSavedContents[MAX_CLIENTS][3];
+static qboolean s_ghostRaceCarsHidden;
+
+static void G_GhostRace_HideOtherCars( gentity_t *self ) {
+	int i;
+
+	s_ghostRaceCarsHidden = qfalse;
+	if ( g_gametype.integer != GT_GHOST ) {
+		return;
+	}
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *other = &g_entities[i];
+
+		s_ghostRaceSavedContents[i][0] = -1;
+		if ( other == self || !other->inuse || !other->client ) {
+			continue;
+		}
+		s_ghostRaceSavedContents[i][0] = other->r.contents;
+		s_ghostRaceSavedContents[i][1] = other->frontBounds ? other->frontBounds->r.contents : 0;
+		s_ghostRaceSavedContents[i][2] = other->rearBounds ? other->rearBounds->r.contents : 0;
+		other->r.contents = 0;
+		if ( other->frontBounds ) {
+			other->frontBounds->r.contents = 0;
+		}
+		if ( other->rearBounds ) {
+			other->rearBounds->r.contents = 0;
+		}
+	}
+	s_ghostRaceCarsHidden = qtrue;
+}
+
+static void G_GhostRace_RestoreOtherCars( void ) {
+	int i;
+
+	if ( !s_ghostRaceCarsHidden ) {
+		return;
+	}
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t *other = &g_entities[i];
+
+		if ( s_ghostRaceSavedContents[i][0] < 0 ) {
+			continue;
+		}
+		other->r.contents = s_ghostRaceSavedContents[i][0];
+		if ( other->frontBounds ) {
+			other->frontBounds->r.contents = s_ghostRaceSavedContents[i][1];
+		}
+		if ( other->rearBounds ) {
+			other->rearBounds->r.contents = s_ghostRaceSavedContents[i][2];
+		}
+	}
+	s_ghostRaceCarsHidden = qfalse;
+}
+
 void ClientThink_real( gentity_t *ent ) {
 	gclient_t	*client;
 	pmove_t		pm;
@@ -1883,6 +1948,8 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( ent->rearBounds )
 		trap_UnlinkEntity( ent->rearBounds );
 
+	G_GhostRace_HideOtherCars( ent );
+
 	/* snapshot fuel before Pmove for bot refund */
 	{
 		float fuelBeforePmove = ( g_useFuel.integer && ( ent->r.svFlags & SVF_BOT ) )
@@ -1905,6 +1972,7 @@ void ClientThink_real( gentity_t *ent ) {
 #else
 		Pmove (&pm);
 #endif
+		G_GhostRace_RestoreOtherCars();
 
 		/* refund 90% of fuel consumed - bots pay only 10% */
 		if ( fuelBeforePmove >= 0.0f ) {
@@ -2186,7 +2254,7 @@ void ClientThink_real( gentity_t *ent ) {
                                 dist = VectorLength( v );
                                 segs = level.cpDist[level.numCheckpoints-1] - level.cpDist[next-1];
                                 dist += segs;
-                                if ( g_gametype.integer == GT_SPRINT ) {
+                                if ( G_IsSprintTrack() ) {
                                         dist += level.sprintFinishDistance;
                                 } else if ( level.numberOfLaps && ent->currentLap < level.numberOfLaps ) {
                                         int lapsRemaining = level.numberOfLaps - ent->currentLap;
@@ -2661,6 +2729,9 @@ void ClientEndFrame( gentity_t *ent ) {
 		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	}
 	SendPendingPredictableEvents( &ent->client->ps );
+
+	// Q3Rally: sample the driver's line for the ladder lap ghost
+	G_GhostRecord_ClientFrame( ent );
 
 /*
 	if( g_entities[0].client )

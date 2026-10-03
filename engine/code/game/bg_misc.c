@@ -2299,3 +2299,111 @@ qboolean BG_UnpackEngineState( int packed, float *rpm, float *throttle, int *gea
 	*gear = ( ( packed >> 12 ) & 0x7 ) - 1;
 	return qtrue;
 }
+
+/*
+===============================================================================
+
+Q3Rally gametype classification
+
+All "which gametypes are races" decisions live here so a new gametype only
+has to be registered once. GT_GHOST is a normal race in every respect (laps,
+checkpoints, ghost recording/playback, bot route source); it only differs in
+that bots are not allowed.
+
+===============================================================================
+*/
+
+/* Every gametype that runs the rally race state machine (start, checkpoints,
+   laps, finish) and therefore records and plays back ghosts. */
+qboolean BG_GametypeIsRace( int gametype ) {
+	switch ( gametype ) {
+	case GT_RACING:
+	case GT_RACING_DM:
+	case GT_SPRINT:
+	case GT_TEAM_RACING:
+	case GT_TEAM_RACING_DM:
+	case GT_ELIMINATION:
+	case GT_SINGLE_PLAYER:
+	case GT_GHOST:
+		return qtrue;
+	default:
+		return qfalse;
+	}
+}
+
+/* Pure time races: no weapons, no elimination, only times count. */
+qboolean BG_GametypeIsTimedRace( int gametype ) {
+	switch ( gametype ) {
+	case GT_RACING:
+	case GT_SPRINT:
+	case GT_TEAM_RACING:
+	case GT_SINGLE_PLAYER:
+	case GT_GHOST:
+		return qtrue;
+	default:
+		return qfalse;
+	}
+}
+
+qboolean BG_GametypeIsNonDMRace( int gametype, qboolean eliminationWeapons ) {
+	if ( BG_GametypeIsTimedRace( gametype ) ) {
+		return qtrue;
+	}
+	return ( gametype == GT_ELIMINATION && !eliminationWeapons ) ? qtrue : qfalse;
+}
+
+/* Races where finishRaceTime means "crossed the finish line" (as opposed to
+   being eliminated). */
+qboolean BG_GametypeHasRaceFinish( int gametype ) {
+	return ( BG_GametypeIsRace( gametype ) && gametype != GT_ELIMINATION ) ? qtrue : qfalse;
+}
+
+qboolean BG_GametypeAllowsBots( int gametype ) {
+	return ( gametype != GT_GHOST ) ? qtrue : qfalse;
+}
+
+/* Name matched against the "gametype" key of map entities. GT_GHOST uses the
+   racing layout, so it shares the racing entity set. */
+const char *BG_GametypeEntityName( int gametype ) {
+	switch ( gametype ) {
+	case GT_RACING:         return "racing";
+	case GT_RACING_DM:      return "racing_dm";
+	case GT_SPRINT:         return "sprint";
+	case GT_SINGLE_PLAYER:  return "single";
+	case GT_DERBY:          return "derby";
+	case GT_LCS:            return "lcs";
+	case GT_ELIMINATION:    return "elimination";
+	case GT_DEATHMATCH:     return "dm";
+	case GT_GHOST:          return "racing";
+	case GT_TEAM:           return "team";
+	case GT_TEAM_RACING:    return "team_racing";
+	case GT_TEAM_RACING_DM: return "team_racing_dm";
+	case GT_CTF:            return "ctf";
+	case GT_CTF4:           return "ctf4";
+	case GT_DOMINATION:     return "domination";
+	case GT_KOTH:           return "koth";
+	default:                return NULL;
+	}
+}
+
+const char *BG_GametypeDisplayName( int gametype ) {
+	switch ( gametype ) {
+	case GT_RACING:         return "Racing";
+	case GT_RACING_DM:      return "Racing Deathmatch";
+	case GT_SPRINT:         return "Sprint";
+	case GT_SINGLE_PLAYER:  return "Single Player";
+	case GT_DERBY:          return "Demolition Derby";
+	case GT_LCS:            return "Last Car Standing";
+	case GT_ELIMINATION:    return "Elimination";
+	case GT_DEATHMATCH:     return "Deathmatch";
+	case GT_GHOST:          return "Ghost Race";
+	case GT_TEAM:           return "Team Deathmatch";
+	case GT_TEAM_RACING:    return "Team Racing";
+	case GT_TEAM_RACING_DM: return "Team Racing Deathmatch";
+	case GT_CTF:            return "Capture the Flag";
+	case GT_CTF4:           return "4-Team CTF";
+	case GT_DOMINATION:     return "Domination";
+	case GT_KOTH:           return "King of the Hill";
+	default:                return "Unknown";
+	}
+}

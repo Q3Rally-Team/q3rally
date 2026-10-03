@@ -335,6 +335,43 @@ static void test_best_usable_ghost_supplies_shared_route(void) {
     assert(strstr(route->path, "valid.ghost") != NULL);
 }
 
+static void test_clean_ghost_race_lap_is_preferred(void) {
+    static const char cleanGhost[] =
+        "map mymap\nvehicle evo\nbest_time_ms 1300\ntrack_length 1\ntrack_reversed 0\n"
+        "gametype 8\nclean 1\nframes\n0 0 0 0\n100 50 0 0\n200 100 0 0\n";
+    const ghostBotRoute_t *route = NULL;
+    const ghostRecord_t *best;
+    int i, cleanKept = 0;
+
+    reset_fs();
+    g_trackLength.integer = 1;
+    g_trackReversed.integer = 0;
+
+    add_file("ghosts/mymap_tl1_rev0_clean.ghost", cleanGhost);
+    for (i = 0; i < 5; i++) {
+        char name[64];
+        snprintf(name, sizeof(name), "ghosts/mymap_tl1_rev0_fast%d.ghost", i);
+        add_file(name, build_ghost("mymap", "evo", 900 + i * 10, 1, 1, 0));
+    }
+
+    G_Ghost_InitForMap("mymap");
+    /* The slower clean lap survives the top 5 against faster laps ... */
+    assert(G_Ghost_Test_GetLevelGhostCount() == 5);
+    for (i = 0; i < G_Ghost_Test_GetLevelGhostCount(); i++) {
+        if (G_Ghost_Test_GetLevelGhost(i)->clean) {
+            cleanKept++;
+        }
+    }
+    assert(cleanKept == 1);
+
+    /* ... and becomes the best record and the bot route. */
+    best = G_Ghost_FindBestRecord();
+    assert(best && best->clean && best->bestTimeMs == 1300);
+    G_Ghost_BuildBotRoutes();
+    assert(G_Ghost_GetBotRoute(&route) == qtrue);
+    assert(route->clean && strstr(route->path, "clean.ghost") != NULL);
+}
+
 static void test_stable_navigation_at_overlap(void) {
     ghostBotRoute_t route;
     vec3_t origin = {0.0f, 0.0f, 0.0f};
@@ -361,6 +398,7 @@ int main(void) {
     test_top5_retention_per_track_variant();
     test_legacy_ghosts_can_supply_the_shared_track_route();
     test_best_usable_ghost_supplies_shared_route();
+    test_clean_ghost_race_lap_is_preferred();
     test_stable_navigation_at_overlap();
     puts("ok");
     return 0;

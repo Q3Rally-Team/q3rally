@@ -56,6 +56,8 @@ equ trap_RallyPhysicsRemoveBody -53
 equ trap_RallyPhysicsGetBodyState -54
 equ trap_RallyPhysicsVehicleContact -55
 equ trap_RallyPhysicsApplyImpulse -56
+equ trap_LadderSubmitGhost -57
+equ trap_LadderFetchGhosts -58
 
 equ	memset					-101
 equ	memcpy					-102

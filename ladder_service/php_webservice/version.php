@@ -6,9 +6,33 @@
 
 declare(strict_types=1);
 
-const LADDER_VERSION = '1.0.8';
+const LADDER_VERSION = '1.0.12';
 
 const LADDER_CHANGELOG = [
+    '1.0.12' => [
+        'date'    => '2026-10-03',
+        'changes' => [
+            'New tab "Ghosts": fastest lap ghosts per map, track variant, vehicle and map version, with ghost download',
+            'New: GET /api/v1/ghosts/catalog lists maps, variants, map builds and vehicles that have ghosts',
+            'Fix: wide tables scroll inside their box on small screens instead of widening the page',
+        ],
+    ],
+    '1.0.11' => [
+        'date'    => '2026-10-03',
+        'changes' => [
+            'GET /api/v1/ghosts: perVehicle=K returns the best K ghosts per vehicle',
+            'GET /api/v1/ghosts: format=text returns a tab separated list for the game engine (Ghost Race opponents)',
+        ],
+    ],
+    '1.0.10' => [
+        'date'    => '2026-10-02',
+        'changes' => [
+            'New: lap ghosts – POST /api/v1/ghosts stores the best lap ghost per player, map, track variant and vehicle',
+            'New: GET /api/v1/ghosts ranking list and GET /api/v1/ghosts/{ghostId} (?format=raw for the .ghost text)',
+            'Ghosts are grouped by physics version and map checksum',
+            'Plausibility checks on ghost uploads; key usage counted as ghostCount',
+        ],
+    ],
     '1.0.8' => [
         'date'    => '2026-04-13',
         'changes' => [

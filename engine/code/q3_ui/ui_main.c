@@ -207,6 +207,7 @@ vmCvar_t	ui_atmosphericLevel;
 vmCvar_t	ui_drawPositionSprites;
 vmCvar_t	ui_engineSounds;
 vmCvar_t	ui_ghostPlayback;
+vmCvar_t	ui_ghostShare;
 vmCvar_t	ui_useFuel;
 vmCvar_t    ui_drawMinimap;
 vmCvar_t	ui_controls_showDeveloper;
@@ -326,6 +327,8 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_drawPositionSprites, "cg_drawPositionSprites", "1", CVAR_ARCHIVE },
         { &ui_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
         { &ui_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
+        // sent in userinfo: the server only uploads lap ghosts of drivers who share them
+        { &ui_ghostShare, "cg_ghostShare", "1", CVAR_ARCHIVE | CVAR_USERINFO },
         { &ui_useFuel, "g_useFuel", "1", CVAR_ARCHIVE | CVAR_SERVERINFO },
     { &ui_drawMinimap, "cg_drawMMap", "0", CVAR_ARCHIVE },
 	{ &ui_controls_showDeveloper, "ui_controls_showDeveloper", "0", CVAR_ARCHIVE },

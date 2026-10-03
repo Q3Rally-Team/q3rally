@@ -514,7 +514,8 @@ void RallyStarter_Think( gentity_t *ent ){
 		|| g_gametype.integer == GT_TEAM_RACING
 		|| g_gametype.integer == GT_TEAM_RACING_DM
 		|| g_gametype.integer == GT_SPRINT
-		|| g_gametype.integer == GT_ELIMINATION ) ? qtrue : qfalse;
+		|| g_gametype.integer == GT_ELIMINATION
+		|| g_gametype.integer == GT_GHOST ) ? qtrue : qfalse;
 	introDurationMs = level.raceIntroDurationMs;
 	ignoreBots = g_rallyIgnoreBots.integer;
 

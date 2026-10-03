@@ -48,7 +48,7 @@ static qboolean s_raceOrderActive = qtrue;
 
 static qboolean CG_LoadGhostFile( const char *path, const char *expectedMap, int expectedTrackLength, int expectedTrackReversed, const char *expectedVehicle, int declaredBestTime,
                 ghostRecording_t *target, int *bestTimeOut, char *vehicleOut, int vehicleOutSize, char *pathOut, int pathOutSize );
-static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, const ghostRecording_t *recording );
+static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, qboolean clean, const ghostRecording_t *recording );
 static void CG_CleanupPersonalGhostsForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle );
 static qboolean CG_FindGhostRecyclePathForVariant( const char *mapname, int trackLength, int trackReversed, const char *vehicle, char *pathOut, int pathOutSize );
 
@@ -331,12 +331,53 @@ static qboolean CG_SelectGhostFrames( ghostRecording_t *recording, int targetOff
         return qtrue;
 }
 
+/*
+=================
+CG_GhostPlaybackMode
+
+Effective ghost playback mode: 0 off, 1 personal, 2 server base,
+3 ladder opponent.
+cg_ghostPlayback is the player's archived preference and is never rewritten
+by the game. In GT_GHOST a value of 0 means "automatic": the personal ghost
+for the current car, falling back to the server base ghost when no personal
+ghost exists. A ladder ghost picked in the Ghost Race picker always wins;
+cg_ghostPlayback 3 ("ladder opponent") opens the picker like automatic mode
+and falls back to it while nothing is picked (outside Ghost Race: personal).
+=================
+*/
+int CG_GhostPlaybackMode( void ) {
+        int mode = cg_ghostPlayback.integer;
+
+        if ( mode < 0 || mode > 3 ) {
+                mode = 0;
+        }
+
+        if ( cgs.gametype == GT_GHOST && cg.ladderGhostSelected >= 0 ) {
+                return 3;
+        }
+
+        if ( mode == 3 ) {
+                mode = ( cgs.gametype == GT_GHOST ) ? 0 : 1;
+        }
+
+        if ( mode == 0 && cgs.gametype == GT_GHOST ) {
+                if ( cg.personalGhostSearchValid && !cg.personalGhostSearchFound && cg.baseGhostAvailable ) {
+                        return 2;
+                }
+                return 1;
+        }
+
+        return mode;
+}
+
 static ghostRecording_t *CG_GetActiveGhostRecording( void ) {
-        switch ( cg_ghostPlayback.integer ) {
+        switch ( CG_GhostPlaybackMode() ) {
         case 1:
                 return cg.ghostPlayback.valid ? &cg.ghostPlayback : NULL;
         case 2:
                 return cg.baseGhost.valid ? &cg.baseGhost : NULL;
+        case 3:
+                return cg.ladderGhost.valid ? &cg.ladderGhost : NULL;
         default:
                 return NULL;
         }
@@ -768,6 +809,26 @@ nextLine:
 
 	return qtrue;
 }
+/*
+=================
+CG_LoadLadderGhostFile
+
+Loads a cached ladder ghost (ghosts/ladder/...) into cg.ladderGhost. Any
+vehicle is accepted: the player picked this ghost on purpose.
+=================
+*/
+qboolean CG_LoadLadderGhostFile( const char *path, int lapMs ) {
+        char mapname[MAX_QPATH];
+        int trackLength = 0;
+        int trackReversed = 0;
+        int bestTime = 0;
+
+        COM_StripExtension( COM_SkipPath( cgs.mapname ), mapname, sizeof( mapname ) );
+        CG_GetGhostTrackVariant( &trackLength, &trackReversed );
+        return CG_LoadGhostFile( path, mapname, trackLength, trackReversed, NULL, lapMs,
+                &cg.ladderGhost, &bestTime, NULL, 0, NULL, 0 );
+}
+
 qboolean CG_LoadGhostFromFile( const char *path, const char *expectedMap, const char *expectedVehicle, int declaredBestTime ) {
         int trackLength = 0;
         int trackReversed = 0;
@@ -868,6 +929,55 @@ static qboolean CG_StoreGhostRecordingFrame( int timeOffset, const playerState_t
 	return qtrue;
 }
 
+/*
+=================
+CG_TrackGhostIncidents
+
+Remembers resets and teleports (teleport bit or a jump faster than any car)
+so a lap containing one is not marked clean.
+=================
+*/
+#define CG_GHOST_INCIDENT_SPEED         6000.0f
+#define CG_GHOST_INCIDENT_MIN_DISTANCE  256.0f
+
+static void CG_TrackGhostIncidents( const playerState_t *ps, int timeOffset ) {
+	int teleport = ps->eFlags & EF_TELEPORT_BIT;
+
+	if ( cg.ghostIncidentHavePrev ) {
+		int dt = timeOffset - cg.ghostIncidentPrevTime;
+		float distance = Distance( ps->origin, cg.ghostIncidentPrevOrigin );
+		qboolean jump = dt > 0 && distance > CG_GHOST_INCIDENT_MIN_DISTANCE &&
+			distance * 1000.0f / (float)dt > CG_GHOST_INCIDENT_SPEED;
+
+		if ( ( teleport != cg.ghostIncidentPrevTeleport || jump ) &&
+		     cg.ghostIncidentCount < (int)ARRAY_LEN( cg.ghostIncidentTimes ) ) {
+			cg.ghostIncidentTimes[cg.ghostIncidentCount++] = timeOffset;
+		} else if ( teleport != cg.ghostIncidentPrevTeleport || jump ) {
+			/* List full: the newest slot stands for "something later". */
+			cg.ghostIncidentTimes[ARRAY_LEN( cg.ghostIncidentTimes ) - 1] = timeOffset;
+		}
+	}
+	cg.ghostIncidentHavePrev = qtrue;
+	cg.ghostIncidentPrevTime = timeOffset;
+	cg.ghostIncidentPrevTeleport = teleport;
+	VectorCopy( ps->origin, cg.ghostIncidentPrevOrigin );
+}
+
+/* Clean = recorded in Ghost Race (no other cars to touch) without a reset. */
+static qboolean CG_GhostLapIsClean( int lapStartOffset, int lapEndOffset ) {
+	int i;
+
+	if ( cgs.gametype != GT_GHOST ) {
+		return qfalse;
+	}
+	for ( i = 0; i < cg.ghostIncidentCount; i++ ) {
+		if ( cg.ghostIncidentTimes[i] >= lapStartOffset && cg.ghostIncidentTimes[i] <= lapEndOffset ) {
+			return qfalse;
+		}
+	}
+	return qtrue;
+}
+
 void CG_BeginGhostRecording( int startTime ) {
 	memset( &cg.ghostRecording, 0, sizeof( cg.ghostRecording ) );
 	cg.ghostRecordingHasLastSample = qfalse;
@@ -878,6 +988,8 @@ void CG_BeginGhostRecording( int startTime ) {
 	VectorClear( cg.ghostRecordingLastSampleAngles );
 	cg.ghostRecordingActive = qtrue;
 	cg.ghostRecordingStartTime = startTime;
+	cg.ghostIncidentCount = 0;
+	cg.ghostIncidentHavePrev = qfalse;
 
 	/* Record the grid position as the exact start anchor when a snapshot is ready. */
 	if ( cg.snap && cg.snap->ps.clientNum >= 0 && cg.snap->ps.clientNum < MAX_CLIENTS ) {
@@ -929,6 +1041,7 @@ void CG_RecordGhostFrame( void ) {
 
 	ps = &cg.predictedPlayerState;
 	timeOffset = cg.time - cg.ghostRecordingStartTime;
+	CG_TrackGhostIncidents( ps, timeOffset );
 	if ( !cg.ghostRecordingHasLastSample ) {
 		CG_StoreGhostRecordingFrame( timeOffset, ps, qtrue );
 		return;
@@ -1158,7 +1271,8 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
                 Com_sprintf( path, sizeof( path ), "ghosts/%s_tl%d_rev%d_%s.ghost", mapname, trackLength, trackReversed, timestamp );
         }
 
-        if ( !CG_WriteGhostFile( path, mapname, trackLength, trackReversed, vehicle, bestLapTime, &lapRecording ) ) {
+        if ( !CG_WriteGhostFile( path, mapname, trackLength, trackReversed, vehicle, bestLapTime,
+                        CG_GhostLapIsClean( lapStartOffset, lapEndOffset ), &lapRecording ) ) {
                 top5Result = qualifiesTop5 ? "skipped" : top5Result;
                 top5Reason = qualifiesTop5 ? "file-write-failed" : top5Reason;
                 CG_GhostDebugPrint( "AttemptSavePersonalGhost skipped: file write failed (bestLapTime=%d personalBest=%d variant=%s/tl%d/rev%d top5=%s:%s path=%s)",
@@ -1188,7 +1302,7 @@ void CG_AttemptSavePersonalGhost( int finishTime ) {
         Q_strncpyz( cg.personalGhostSearchPath, path, sizeof( cg.personalGhostSearchPath ) );
 }
 
-static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, const ghostRecording_t *recording ) {
+static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int trackLength, int trackReversed, const char *vehicle, int bestLapTime, qboolean clean, const ghostRecording_t *recording ) {
         fileHandle_t file;
         int i;
 
@@ -1213,6 +1327,14 @@ static qboolean CG_WriteGhostFile( const char *path, const char *mapname, int tr
                 trap_FS_Write( header, strlen( header ), file );
 
                 Com_sprintf( header, sizeof( header ), "best_time_ms %d\n", bestLapTime );
+                trap_FS_Write( header, strlen( header ), file );
+
+                /* gametype + clean: g_ghost.c prefers clean Ghost Race laps as
+                 * bot routes. Older parsers ignore unknown keys. */
+                Com_sprintf( header, sizeof( header ), "gametype %d\n", cgs.gametype );
+                trap_FS_Write( header, strlen( header ), file );
+
+                Com_sprintf( header, sizeof( header ), "clean %d\n", clean ? 1 : 0 );
                 trap_FS_Write( header, strlen( header ), file );
 
                 Com_sprintf( header, sizeof( header ), "frames %d\n", recording->frameCount );
@@ -1244,11 +1366,96 @@ static byte CG_GetGhostAlpha( void ) {
 	return (byte)Com_Clamp( 0, 255, cg_ghostAlpha.integer );
 }
 
-static void CG_AddGhostWheels( clientInfo_t *ci, refEntity_t *body, int ghostAlpha ) {
+/*
+=================
+Ghost vehicle models
+
+A ghost of another car (ladder ghosts) is drawn with that car's body and
+wheel models. They are registered once per vehicle, ideally when the ghost
+is picked (CG_PrecacheGhostVehicle), so the race itself does not hitch.
+Unknown vehicles fall back to the player's own car.
+=================
+*/
+#define MAX_GHOST_VEHICLE_MODELS 8
+
+typedef struct {
+        char            vehicle[32];
+        qhandle_t       body;
+        qhandle_t       wheel;
+} ghostVehicleModel_t;
+
+static ghostVehicleModel_t s_ghostVehicleModels[MAX_GHOST_VEHICLE_MODELS];
+static int s_ghostVehicleModelCount;
+
+static const ghostVehicleModel_t *CG_GhostVehicleModel( const char *vehicle ) {
+        ghostVehicleModel_t *model;
+        char safe[32];
+        int i, n = 0;
+
+        if ( !vehicle || !vehicle[0] ) {
+                return NULL;
+        }
+        for ( i = 0; vehicle[i] && n < (int)sizeof( safe ) - 1; i++ ) {
+                char c = vehicle[i];
+                if ( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) || ( c >= '0' && c <= '9' ) ||
+                     c == '_' || c == '-' ) {
+                        safe[n++] = tolower( c );
+                } else if ( c == '/' ) {
+                        break;          /* model/skin: only the model counts */
+                } else {
+                        return NULL;
+                }
+        }
+        safe[n] = '\0';
+        if ( !safe[0] ) {
+                return NULL;
+        }
+
+        for ( i = 0; i < s_ghostVehicleModelCount; i++ ) {
+                if ( !Q_stricmp( s_ghostVehicleModels[i].vehicle, safe ) ) {
+                        return s_ghostVehicleModels[i].body ? &s_ghostVehicleModels[i] : NULL;
+                }
+        }
+
+        if ( s_ghostVehicleModelCount >= MAX_GHOST_VEHICLE_MODELS ) {
+                return NULL;
+        }
+        model = &s_ghostVehicleModels[s_ghostVehicleModelCount++];
+        Q_strncpyz( model->vehicle, safe, sizeof( model->vehicle ) );
+        model->body = trap_R_RegisterModel( va( "models/players/%s/body.md3", safe ) );
+        model->wheel = model->body ? trap_R_RegisterModel( va( "models/players/%s/wheel.md3", safe ) ) : 0;
+        if ( !model->body ) {
+                CG_Printf( "Ghost: no car model for vehicle '%s', using your own car\n", safe );
+                return NULL;
+        }
+        return model;
+}
+
+/* Register the car of a ghost before the race (called on pick). */
+void CG_PrecacheGhostVehicle( const char *vehicle ) {
+        CG_GhostVehicleModel( vehicle );
+}
+
+/* Vehicle of the ghost that is currently played back, "" = own car. */
+static const char *CG_ActiveGhostVehicle( void ) {
+        switch ( CG_GhostPlaybackMode() ) {
+        case 3:
+                if ( cg.ladderGhostSelected >= 0 && cg.ladderGhostSelected < cg.ladderGhostEntryCount ) {
+                        return cg.ladderGhostEntries[cg.ladderGhostSelected].vehicle;
+                }
+                return "";
+        case 1:
+                return cg.personalGhostVehicle;
+        default:
+                return "";      /* server base ghost: vehicle unknown */
+        }
+}
+
+static void CG_AddGhostWheels( clientInfo_t *ci, refEntity_t *body, int ghostAlpha, qhandle_t wheelModel ) {
         int i;
         char tags[4][12] = { "tag_wheelfl", "tag_wheelfr", "tag_wheelrl", "tag_wheelrr" };
 
-        if ( !ci || !body || !body->hModel || !ci->wheelModel ) {
+        if ( !ci || !body || !body->hModel || !wheelModel ) {
                 return;
         }
 
@@ -1263,8 +1470,8 @@ static void CG_AddGhostWheels( clientInfo_t *ci, refEntity_t *body, int ghostAlp
                 memset( &wheel, 0, sizeof( wheel ) );
                 VectorClear( wheelAngles );
 
-		wheel.hModel = ci->wheelModel;
-		wheel.customSkin = CG_TagExists( wheel.hModel, "tag_polygonwheel" ) ? 0 : ci->wheelSkin;
+		wheel.hModel = wheelModel;
+		wheel.customSkin = ( wheelModel != ci->wheelModel || CG_TagExists( wheel.hModel, "tag_polygonwheel" ) ) ? 0 : ci->wheelSkin;
 		wheel.customShader = cgs.media.ghostShader;
 		wheel.shadowPlane = body->shadowPlane;
 		wheel.renderfx = body->renderfx;
@@ -1292,8 +1499,9 @@ void CG_AddGhostEntity( void ) {
         vec3_t angles;
 	int i;
 	byte ghostAlpha;
+	qhandle_t wheelModel;
 
-        if ( cg_ghostPlayback.integer <= 0 ) {
+        if ( CG_GhostPlaybackMode() <= 0 ) {
                 return;
         }
 
@@ -1301,7 +1509,7 @@ void CG_AddGhostEntity( void ) {
                 return;
         }
 
-        if ( cg_ghostPlayback.integer == 1 && !cg.personalGhostAvailable ) {
+        if ( CG_GhostPlaybackMode() == 1 && !cg.personalGhostAvailable ) {
                 CG_LoadPersonalGhost();
         }
 
@@ -1342,6 +1550,20 @@ void CG_AddGhostEntity( void ) {
         memset( &ghost, 0, sizeof( ghost ) );
 	ghost.hModel = ci->bodyModel;
 	ghost.customSkin = ci->bodySkin;
+	wheelModel = ci->wheelModel;
+	{
+		/* A ghost of another car is drawn with that car. */
+		const char *vehicle = CG_ActiveGhostVehicle();
+
+		if ( vehicle[0] && Q_stricmp( vehicle, ci->modelName ) ) {
+			const ghostVehicleModel_t *model = CG_GhostVehicleModel( vehicle );
+			if ( model ) {
+				ghost.hModel = model->body;
+				ghost.customSkin = 0;
+				wheelModel = model->wheel ? model->wheel : ci->wheelModel;
+			}
+		}
+	}
 	ghost.customShader = cgs.media.ghostShader;
 	VectorCopy( origin, ghost.origin );
 	VectorCopy( origin, ghost.lightingOrigin );
@@ -1354,7 +1576,7 @@ void CG_AddGhostEntity( void ) {
 
         trap_R_AddRefEntityToScene( &ghost );
 
-        CG_AddGhostWheels( ci, &ghost, ghostAlpha );
+        CG_AddGhostWheels( ci, &ghost, ghostAlpha, wheelModel );
 }
 
 
@@ -1681,6 +1903,8 @@ void CG_FinishedRace( int client, int time ) {
         cent->finishRaceTime = time;
 
         if ( client == cg.snap->ps.clientNum ) {
+                /* Before the personal ghost is replaced by this run. */
+                CG_GhostRace_EvaluateFinish( cent->bestLapTime );
                 CG_EndGhostRecording( time );
                 CG_AttemptSavePersonalGhost( time );
         }
@@ -1710,6 +1934,8 @@ void CG_StartRace( int time ) {
 
 	s_raceOrderActive = qtrue;
 	memset( s_raceSplitHistory, 0, sizeof( s_raceSplitHistory ) );
+	CG_LadderGhost_ClosePicker();
+	CG_GhostRace_ResetRace();
 
         for (i = 0; i < MAX_CLIENTS; i++){
                 player = &cg_entities[i];
@@ -1728,6 +1954,8 @@ void CG_StartRace( int time ) {
         if ( isRallyRace() ) {
                 CG_LoadPersonalGhost();
                 CG_BeginGhostRecording( time );
+                /* Ghost Race: tell the server which ghost is raced. */
+                CG_GhostRace_ReportOpponent();
         } else {
                 CG_ResetPersonalGhost();
                 cg.ghostRecordingActive = qfalse;

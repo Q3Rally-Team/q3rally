@@ -52,6 +52,7 @@ qboolean isRaceObserver( int clientNum )
 #define ID_GHOST_PLAYBACK       35
 
 #define ID_LADDER_OFFLINE       41
+#define ID_GHOST_SHARE          42
 #define ID_BACK                 40
 
 #define Q3ROPTIONS_TAB_TOP           64
@@ -126,6 +127,7 @@ typedef struct {
 	menulist_s		ghostPlayback;
 	menuradiobutton_s	fuelConsumption;
 	menuradiobutton_s	ladderOffline;
+	menuradiobutton_s	ghostShare;
 
 	menutext_s		back;
 } q3roptionsmenu_t;
@@ -157,6 +159,7 @@ static const char *q3roptions_ghostPlayback[] = {
         "Off",
         "Personal",
         "Server base",
+        "Ladder opponent",
         0
 };
 
@@ -217,6 +220,10 @@ static void Q3ROptions_MenuEvent( void* ptr, int event ) {
 
 	case ID_LADDER_OFFLINE:
 		trap_Cvar_SetValue( "sv_ladderEnabled", s_q3roptions.ladderOffline.curvalue );
+		break;
+
+	case ID_GHOST_SHARE:
+		trap_Cvar_SetValue( "cg_ghostShare", s_q3roptions.ghostShare.curvalue );
 		break;
 
 	case ID_RVRL_PLAYERS:
@@ -303,7 +310,7 @@ static void Q3ROptions_StatusBar( void *self )
 		break;
 
 	case ID_GHOST_PLAYBACK:
-		text = "Personal uses a saved ghost for this vehicle; Server base uses the route provided by the server.";
+		text = "Personal: your saved ghost; Server base: server route; Ladder: pick a ladder ghost in Ghost Race.";
 		break;
 
 	case ID_FUEL_CONSUMPTION:
@@ -312,6 +319,10 @@ static void Q3ROptions_StatusBar( void *self )
 
 	case ID_LADDER_OFFLINE:
 		text = "Allow offline results to sync to the Q3Rally Ladder.";
+		break;
+
+	case ID_GHOST_SHARE:
+		text = "Upload your best lap ghosts to the Q3Rally Ladder for other drivers.";
 		break;
 
 	case ID_RVRL_PLAYERS:
@@ -551,9 +562,10 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.skidlength.curvalue = ui_minSkidLength.integer;
 	s_q3roptions.camtracking.curvalue = ui_tightCamTracking.integer;
 
-	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 2, ui_ghostPlayback.integer );
+	s_q3roptions.ghostPlayback.curvalue = Com_Clamp( 0, 3, ui_ghostPlayback.integer );
 	s_q3roptions.fuelConsumption.curvalue = ui_useFuel.integer;
 	s_q3roptions.ladderOffline.curvalue = trap_Cvar_VariableValue( "sv_ladderEnabled" ) != 0 ? 1 : 0;
+	s_q3roptions.ghostShare.curvalue = trap_Cvar_VariableValue( "cg_ghostShare" ) != 0 ? 1 : 0;
 
 	s_q3roptions.rvrl_players.curvalue = ( ui_rearViewRenderLevel.integer & RL_PLAYERS ) ? 1 : 0;
 	s_q3roptions.rvrl_objects.curvalue = ( ui_rearViewRenderLevel.integer & RL_OBJECTS ) ? 1 : 0;
@@ -657,6 +669,15 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.ladderOffline.generic.id		= ID_LADDER_OFFLINE;
 	s_q3roptions.ladderOffline.generic.callback	= Q3ROptions_MenuEvent;
 	s_q3roptions.ladderOffline.generic.statusbar	= Q3ROptions_StatusBar;
+
+	s_q3roptions.ghostShare.generic.type		= MTYPE_RADIOBUTTON;
+	s_q3roptions.ghostShare.generic.flags		= QMF_SMALLFONT;
+	s_q3roptions.ghostShare.generic.x		= LAY_R;
+	s_q3roptions.ghostShare.generic.y		= LAY_TOP + LAY_STEP * 5;
+	s_q3roptions.ghostShare.generic.name		= "Share Lap Ghosts:";
+	s_q3roptions.ghostShare.generic.id		= ID_GHOST_SHARE;
+	s_q3roptions.ghostShare.generic.callback	= Q3ROptions_MenuEvent;
+	s_q3roptions.ghostShare.generic.statusbar	= Q3ROptions_StatusBar;
 	/* Q3RALLY LADDER END */
 
 	s_q3roptions.skidlength.generic.type		= MTYPE_SLIDER;
@@ -842,6 +863,7 @@ void Q3ROptions_MenuInit( void ) {
 	// engine sounds moved to the sound menu
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.positionSprites );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ladderOffline ); /* Q3RALLY LADDER */
+	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.ghostShare );
 
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_players );
 	Menu_AddItem( &s_q3roptions.menu, ( void * ) &s_q3roptions.mvrl_objects );
@@ -898,6 +920,10 @@ void Q3ROptions_MenuInit( void ) {
 		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
 		Q3R_OPTIONS_TOP_ROW_Y + 2 * Q3R_OPTIONS_ROW_STEP,
 		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Offline ladder sync" );
+	Q3ROptions_SetBounds( &s_q3roptions.ghostShare.generic,
+		Q3R_OPTIONS_RIGHT_X + Q3R_OPTIONS_ROW_X_INSET,
+		Q3R_OPTIONS_TOP_ROW_Y + 3 * Q3R_OPTIONS_ROW_STEP,
+		Q3R_OPTIONS_ROW_WIDTH, Q3R_OPTIONS_ROW_HEIGHT, "Share lap ghosts" );
 
 	Q3ROptions_SetBounds( &s_q3roptions.mvrl_players.generic,
 		Q3R_OPTIONS_LEFT_X + Q3R_OPTIONS_ROW_X_INSET, Q3R_OPTIONS_MAIN_ROW_Y,
@@ -949,6 +975,7 @@ void Q3ROptions_MenuInit( void ) {
 	s_q3roptions.units.generic.ownerdraw = Q3ROptions_DrawChoice;
 	s_q3roptions.positionSprites.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.ladderOffline.generic.ownerdraw = Q3ROptions_DrawRadio;
+	s_q3roptions.ghostShare.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.mvrl_players.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.mvrl_objects.generic.ownerdraw = Q3ROptions_DrawRadio;
 	s_q3roptions.mvrl_smoke.generic.ownerdraw = Q3ROptions_DrawRadio;

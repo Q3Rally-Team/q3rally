@@ -769,7 +769,10 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// UPDATE : change these
 // STONELANCE
 //	static char *gametypeNames[] = {"ffa", "tournament", "single", "team", "ctf", "oneflag", "obelisk", "harvester"};
-	        static char *gametypeNames[] = {"racing", "racing_dm", "sprint", "single", "derby", "lcs", "elimination", "dm", "team", "team_racing", "team_racing_dm", "ctf", "ctf4", "domination", "koth"};
+	// Q3Rally Fix: gametype entity names come from BG_GametypeEntityName().
+	// The old array was indexed by g_gametype but did not follow the explicit
+	// GT_* values (wrong names from GT_SINGLE_PLAYER on, out of bounds for
+	// team modes).
 // END
 
 	// get the next free entity
@@ -810,9 +813,9 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 //		if( g_gametype.integer >= GT_FFA && g_gametype.integer < GT_MAX_GAME_TYPE ) {
 		if( g_gametype.integer >= GT_RACING && g_gametype.integer < GT_MAX_GAME_TYPE ) {
 // END
-			gametypeName = gametypeNames[g_gametype.integer];
+			gametypeName = (char *)BG_GametypeEntityName( g_gametype.integer );
 
-			s = strstr( value, gametypeName );
+			s = gametypeName ? strstr( value, gametypeName ) : NULL;
 			if( !s ) {
 				ADJUST_AREAPORTAL();
 				G_FreeEntity( ent );

@@ -104,25 +104,14 @@ Helper function to determine if current gametype is racing-based
 =================
 */
 static qboolean CG_IsRacingGametype(void) {
-    return (cgs.gametype == GT_RACING ||
-            cgs.gametype == GT_SPRINT ||
-            cgs.gametype == GT_TEAM_RACING ||
-            cgs.gametype == GT_RACING_DM ||
-            cgs.gametype == GT_TEAM_RACING_DM ||
-            cgs.gametype == GT_ELIMINATION ||
-            cgs.gametype == GT_LCS ||
-            cgs.gametype == GT_DERBY ||
-            cgs.gametype == GT_SINGLE_PLAYER);
+    return ( BG_GametypeIsRace( cgs.gametype ) ||
+             cgs.gametype == GT_LCS ||
+             cgs.gametype == GT_DERBY );
 }
 
 /* Gametypes where finishRaceTime means a race finish, not an elimination. */
 static qboolean CG_HasRaceFinishStatus(void) {
-    return (cgs.gametype == GT_RACING ||
-            cgs.gametype == GT_SPRINT ||
-            cgs.gametype == GT_TEAM_RACING ||
-            cgs.gametype == GT_RACING_DM ||
-            cgs.gametype == GT_TEAM_RACING_DM ||
-            cgs.gametype == GT_SINGLE_PLAYER);
+    return BG_GametypeHasRaceFinish( cgs.gametype );
 }
 
 /*
@@ -177,6 +166,7 @@ static void CG_InitScoreboardColumns(void) {
         case GT_SPRINT:
         case GT_TEAM_RACING:
         case GT_SINGLE_PLAYER:
+        case GT_GHOST:
             /* Pure racing - only times matter */
             showTimes = qtrue;
             showLapTimes = qtrue;
@@ -223,7 +213,7 @@ static void CG_InitScoreboardColumns(void) {
     }
 
     /* Hide lap time column for A-to-B style races */
-    if (cgs.laplimit <= 1) {
+    if (CG_RaceLapLimit() <= 1) {
         showLapTimes = qfalse;
     }
 
@@ -291,7 +281,7 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_TOTALTIME].width = COL_TOTALTIME_WIDTH;
         
         /* Different header based on racing type */
-        if (cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_SINGLE_PLAYER) {
+        if (BG_GametypeIsTimedRace(cgs.gametype)) {
             columns[SBCOL_TOTALTIME].header = "RACE TIME";
         } else {
             columns[SBCOL_TOTALTIME].header = "TOTAL";
@@ -339,7 +329,7 @@ static void CG_InitScoreboardColumns(void) {
         cgs.gametype != GT_KOTH) {
         columns[SBCOL_STATUS].type = SBCOL_STATUS;
         columns[SBCOL_STATUS].width = COL_STATUS_WIDTH;
-        columns[SBCOL_STATUS].header = "STATUS";
+        columns[SBCOL_STATUS].header = (cgs.gametype == GT_GHOST) ? "VS GHOST" : "STATUS";
         columns[SBCOL_STATUS].visible = qtrue;
     }
     
@@ -707,6 +697,7 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
     vec4_t readyColor;
     vec4_t deltaColor;
     qboolean isRacingMode;
+    qboolean ghostWon = qfalse;
     
     if (score->client < 0 || score->client >= cgs.maxclients) {
         return;
@@ -907,6 +898,17 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
                 } else {
                     CG_DrawModernText(x, y, "ALIVE", 1, width, readyColor, qfalse);
                 }
+            } else if (cgs.gametype == GT_GHOST &&
+                       CG_GhostRace_ClientResult(score->client, &ghostWon)) {
+                /* Ghost Race: each driver against the ghost he raced. */
+                vec4_t ghostResultColor;
+                if (ghostWon) {
+                    ghostResultColor[0] = 0.35f; ghostResultColor[1] = 0.90f; ghostResultColor[2] = 0.45f;
+                } else {
+                    ghostResultColor[0] = 1.0f; ghostResultColor[1] = 0.38f; ghostResultColor[2] = 0.30f;
+                }
+                ghostResultColor[3] = fade;
+                CG_DrawModernText(x, y, ghostWon ? "WON" : "LOST", 1, width, ghostResultColor, qfalse);
             } else if (CG_HasRaceFinishStatus() &&
                        cg_entities[score->client].startRaceTime > 0) {
                 if (cg_entities[score->client].finishRaceTime > 0) {
@@ -1050,6 +1052,121 @@ static void CG_DrawModernPlayerRow(int y, score_t *score, int rank,
         
         CG_DrawColumnData(columns[i].type, columns[i].x, textY, columns[i].width,
                          score, rank, fade, isCompact);
+    }
+}
+
+/*
+=================
+CG_FitModernText
+Shortens text with "..." until it fits into maxWidth.
+=================
+*/
+static void CG_FitModernText(const char *in, char *out, int outSize, int maxWidth) {
+    char candidate[64];
+    int len;
+
+    Q_strncpyz(out, in, outSize);
+    if (CG_IngameStringWidth(out, UI_SMALLFONT, MODERN_SB_TEXT_SCALE) <= maxWidth) {
+        return;
+    }
+    len = strlen(out);
+    while (len > 1) {
+        len--;
+        out[len] = '\0';
+        Com_sprintf(candidate, sizeof(candidate), "%s...", out);
+        if (CG_IngameStringWidth(candidate, UI_SMALLFONT, MODERN_SB_TEXT_SCALE) <= maxWidth) {
+            Q_strncpyz(out, candidate, outSize);
+            return;
+        }
+    }
+}
+
+/*
+=================
+CG_DrawGhostRaceRow
+Ghost Race: the ghost the local player races against, as its own row.
+=================
+*/
+static void CG_DrawGhostRaceRow(int y, qboolean isCompact, float fade,
+                                const char *name, int ghostMs, int playerMs,
+                                qboolean finished) {
+    int rowHeight, textY, i;
+    vec4_t tint, accent, ghostColor, mutedColor, resultColor;
+    char buffer[64];
+    qboolean playerAhead;
+
+    rowHeight = isCompact ? MODERN_SB_COMPACT_HEIGHT : MODERN_SB_ROW_HEIGHT;
+    textY = y + (rowHeight - (int)(14 * MODERN_SB_TEXT_SCALE)) / 2;
+    playerAhead = (playerMs > 0 && playerMs < ghostMs) ? qtrue : qfalse;
+
+    tint[0] = 0.30f; tint[1] = 0.55f; tint[2] = 0.95f; tint[3] = 0.16f * fade;
+    accent[0] = 0.38f; accent[1] = 0.65f; accent[2] = 1.0f; accent[3] = fade;
+    ghostColor[0] = 0.62f; ghostColor[1] = 0.80f; ghostColor[2] = 1.0f; ghostColor[3] = fade;
+    mutedColor[0] = 0.47f; mutedColor[1] = 0.62f; mutedColor[2] = 0.61f; mutedColor[3] = fade;
+    if (playerAhead) {
+        resultColor[0] = 0.35f; resultColor[1] = 0.90f; resultColor[2] = 0.45f;
+    } else {
+        resultColor[0] = 1.0f; resultColor[1] = 0.38f; resultColor[2] = 0.30f;
+    }
+    resultColor[3] = fade;
+
+    CG_DrawModernBackground(scoreboardX, y, currentScoreboardWidth, rowHeight,
+                            MODERN_SB_ALPHA * fade, qfalse);
+    CG_FillRect(scoreboardX, y, currentScoreboardWidth, rowHeight, tint);
+    CG_FillRect(scoreboardX, y, 2, rowHeight, accent);
+
+    for (i = 0; i < SBCOL_MAX; i++) {
+        int x = columns[i].x;
+        int width = columns[i].width;
+
+        if (!columns[i].visible) {
+            continue;
+        }
+
+        switch (columns[i].type) {
+            case SBCOL_RANK:
+                CG_DrawModernText(x, textY, "G", 1, width, ghostColor, qfalse);
+                break;
+            case SBCOL_NAME:
+                /* The blue row and the "G" rank mark the ghost; the name
+                 * must stay inside its column. */
+                CG_FitModernText(name, buffer, sizeof(buffer), width - 2 * MODERN_SB_PADDING);
+                CG_DrawModernText(x, textY, buffer, 0, width, ghostColor, qfalse);
+                break;
+            case SBCOL_LAPTIME:
+                CG_DrawModernText(x, textY, getStringForTimePrecise(ghostMs), 1, width, ghostColor, qfalse);
+                break;
+            case SBCOL_DELTA:
+                /* Ghost relative to the player's best lap, like the other rows. */
+                if (playerMs > 0) {
+                    int deltaMs = ghostMs - playerMs;
+                    int absMs = deltaMs < 0 ? -deltaMs : deltaMs;
+                    Com_sprintf(buffer, sizeof(buffer), "%c%d.%03d",
+                                deltaMs < 0 ? '-' : '+', absMs / 1000, absMs % 1000);
+                    CG_DrawModernText(x, textY, buffer, 1, width, resultColor, qfalse);
+                } else {
+                    CG_DrawModernText(x, textY, "--", 1, width, mutedColor, qfalse);
+                }
+                break;
+            case SBCOL_TOTALTIME:
+                /* A2B: the ghost's lap is the whole run. */
+                if (CG_RaceLapLimit() <= 1) {
+                    CG_DrawModernText(x, textY, getStringForTimePrecise(ghostMs), 1, width, ghostColor, qfalse);
+                } else {
+                    CG_DrawModernText(x, textY, "-", 1, width, mutedColor, qfalse);
+                }
+                break;
+            case SBCOL_STATUS:
+                if (!finished) {
+                    CG_DrawModernText(x, textY, "-", 1, width, mutedColor, qfalse);
+                } else {
+                    CG_DrawModernText(x, textY, playerAhead ? "BEATEN" : "WINNER",
+                                      1, width, resultColor, qfalse);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -1222,7 +1339,7 @@ qboolean CG_DrawModernScoreboard(void) {
         /* Different message based on gametype */
         if (cgs.gametype == GT_DERBY) {
             fragMsg = va("Wrecked by %s", cg.killerName);
-        } else if (cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING) {
+        } else if (cgs.gametype == GT_RACING || cgs.gametype == GT_SPRINT || cgs.gametype == GT_TEAM_RACING || cgs.gametype == GT_GHOST) {
             fragMsg = va("Crashed by %s", cg.killerName);
         } else {
             fragMsg = va("Eliminated by %s", cg.killerName);
@@ -1390,16 +1507,42 @@ qboolean CG_DrawModernScoreboard(void) {
             drawnClients++;
         }
     } else {
-        /* Free-for-all scoreboard */
+        /* Free-for-all scoreboard. Ghost Race adds the local player's ghost
+         * as its own row, right above or below the player by best lap. */
+        char ghostName[40];
+        int ghostMs = 0, ghostPlayerMs = 0;
+        qboolean ghostFinished = qfalse;
+        qboolean hasGhostRow;
+
+        hasGhostRow = CG_GhostRace_ScoreboardGhost(ghostName, sizeof(ghostName),
+                                                   &ghostMs, &ghostPlayerMs, &ghostFinished);
+
         for (i = 0; i < cg.numScores && drawnClients < maxClients; i++) {
+            qboolean isLocal;
+            qboolean ghostAhead;
+
             score = &cg.scores[i];
             ci = &cgs.clientinfo[score->client];
+            isLocal = (score->client == cg.snap->ps.clientNum) ? qtrue : qfalse;
+            ghostAhead = !(ghostPlayerMs > 0 && ghostPlayerMs < ghostMs);
+
+            if (hasGhostRow && isLocal && ghostAhead) {
+                CG_DrawGhostRaceRow(y, isCompact, fade, ghostName, ghostMs,
+                                    ghostPlayerMs, ghostFinished);
+                y += rowHeight + rowSpacing;
+            }
 
             CG_DrawModernPlayerRow(y, score, i + 1, isCompact, fade,
                                    lastPlaceClient, lastPlacePosition,
                                    playersRemaining);
             y += rowHeight + rowSpacing;
             drawnClients++;
+
+            if (hasGhostRow && isLocal && !ghostAhead) {
+                CG_DrawGhostRaceRow(y, isCompact, fade, ghostName, ghostMs,
+                                    ghostPlayerMs, ghostFinished);
+                y += rowHeight + rowSpacing;
+            }
         }
     }
 
@@ -1469,6 +1612,7 @@ void CG_DrawScoreboardGameModeInfo(void) {
         case GT_RACING:           gametypeName = "Racing"; break;
         case GT_RACING_DM:        gametypeName = "Racing Deathmatch"; break;
         case GT_SPRINT:           gametypeName = "Sprint"; break;
+        case GT_GHOST:            gametypeName = "Ghost Race"; break;
         case GT_DERBY:            gametypeName = "Demolition Derby"; break;
         case GT_DEATHMATCH:       gametypeName = "Deathmatch"; break;
         case GT_LCS:              gametypeName = "Last Car Standing"; break;
@@ -1527,6 +1671,7 @@ const char* CG_GetGametypeScoreLabel(void) {
         case GT_RACING:
         case GT_SPRINT:
         case GT_TEAM_RACING:
+        case GT_GHOST:
             return "TIME";
         case GT_RACING_DM:
         case GT_TEAM_RACING_DM:

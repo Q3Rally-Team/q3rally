@@ -1,5 +1,96 @@
 !!! --- Q3Rally Changelog --- !!!
 
+unreleased
+
+Added:
+
+- New gametype Ghost Race (GT_GHOST, g_gametype 8). Replaces the "Ghost-Only Race"
+  checkbox of the start-server menu. Lap racing against a ghost without AI drivers;
+  works on dedicated servers, via console and in map rotations (q3r_ghost.cfg).
+  Ghost recording, personal/server-base playback, split times, intro camera and the
+  ghost-based bot racing lines work exactly as in the other race modes.
+- Bots are rejected server-side in Ghost Race (addbot, bot_minplayers, bots carried
+  over from the previous map).
+- With cg_ghostPlayback 0, Ghost Race automatically shows the personal ghost and falls
+  back to the server base ghost ("AUTO" in the HUD options).
+- Central gametype classification in bg_misc.c (BG_GametypeIsRace and friends).
+- Ghost Race also runs on Sprint (A2B) maps. A2B courses are now detected from the map
+  (separate rally_start); track length, distance to finish, the SPRINT HUD and the
+  single-lap handling follow the map instead of only GT_SPRINT. In Ghost Race the
+  archived laplimit is not overwritten on A2B maps, so mixed rotations keep their lap
+  count on the following lap tracks.
+- Create-server track list shows a scrollbar and a "first-last / total" counter when
+  there are more than eight tracks, and scrolls with the mouse wheel. Tracks below the
+  visible rows (e.g. the Sprint maps in Ghost Race on Windows) were easy to miss.
+- Lap ghosts on the ladder. The server records every driver's laps (Racing, Sprint,
+  Team Racing, Ghost Race; humans with a profile UUID) and uploads a lap to the ladder
+  when it is the driver's best of the session (POST .../ghosts, same key, queue, spool
+  and retries as match reports). The ladder keeps the best ghost per player, map,
+  track variant and vehicle. Laps with resets/teleports are discarded.
+- Ghosts carry BG_PHYSICS_VERSION (bg_public.h) and the BSP checksum; the ladder ranks
+  only ghosts of the same physics version and map build. Bump BG_PHYSICS_VERSION when
+  handling changes make old laps incomparable.
+- cg_ghostShare (default 1, "Share Lap Ghosts" in the Q3Rally options) lets drivers opt
+  out of ghost uploads; g_ghostUpload 0 disables uploads on a server.
+- PHP ladder webservice 1.0.10: POST /api/v1/ghosts with plausibility checks,
+  GET /api/v1/ghosts?map=&tl=&rev=&vehicle= ranking list, GET /api/v1/ghosts/{ghostId}
+  (?format=raw returns the .ghost text). New file ghosts.php.
+- Ladder ghosts as opponents in Ghost Race. The server fetches the ladder ranking of the
+  map, track variant and physics/map bucket and sends it to the clients. Before the
+  race an overlay lists the ghosts of your own car (TAB: all cars); ENTER picks one,
+  the first row goes back to the personal / server base ghost. The picked ghost is
+  streamed with position and angles (up to 2048 samples). The HUD shows "VS <name>"
+  and the gap at the last checkpoint ("GAP -0.42"). Console command "ghostpicker"
+  reopens the overlay; the pick is kept for vid_restart and map restarts.
+- The engine stores the ladder list and every downloaded ghost in
+  baseq3r/ghosts/ladder/, so the ghosts stay available offline or when the ladder is
+  down. Downloads run on their own curl handle, without the ladder key and without
+  sv_ladderEnabled (sv_ladderUrl is used to find the ladder).
+- cg_ghostPlayback 3 "Ladder opponent" (Q3Rally options / HUD options "LADDER"):
+  opens the picker in Ghost Race like automatic mode; outside Ghost Race it plays
+  the personal ghost. g_ghostDownload 0 turns ladder ghosts off on a server.
+- Ghost Race result: at the finish the best lap (A2B: the whole run) is compared with
+  the lap of the ghost you raced (ladder, personal or server ghost). A banner shows
+  "GHOST BEATEN BY 0.420" or "GHOST WINS BY ..." with both times and stays on the
+  intermission scoreboard. The scoreboard lists the ghost as its own row (name, lap
+  time, gap, BEATEN/WINNER) right above or below you.
+- Ghost Race: drivers do not collide with each other (cars pass through).
+- Personal ghost files store "gametype" and "clean" (no reset/teleport during the lap).
+  Bot routes and the top-5 ghost pool prefer clean Ghost Race laps over faster laps
+  with resets or from races with other cars.
+- Ghosts of another car (ladder ghosts) are drawn with that car's body and wheels;
+  the model is loaded when the ghost is picked. Unknown cars fall back to your own.
+- Ghost Race results for all drivers: each client reports the ghost it races
+  ("ghostopp"), the server rates every finish with its own lap times and sends the
+  result to everyone. The scoreboard column "VS GHOST" shows WON/LOST per driver;
+  the server log gets a "GhostRace:" line.
+- Ghost Race without a ghost shows a neutral finish banner ("FINISHED", best lap).
+- PHP ladder webservice 1.0.12: new "Ghosts" tab on the ladder page with the fastest
+  lap ghosts per map, track variant, vehicle and map version (download as .ghost);
+  GET /api/v1/ghosts/catalog. Wide tables no longer widen the page on phones.
+- Lap ghosts (ghosts/, ghosts/ladder/) are read from disk on pure servers too, so
+  personal and ladder ghosts work with sv_pure 1 (engine, files.c).
+- PHP ladder webservice 1.0.11: GET /api/v1/ghosts accepts perVehicle=K (best K per
+  vehicle) and format=text (tab separated list for the game engine).
+
+Changed:
+
+- The start-server menu no longer overwrites the archived cg_ghostPlayback setting.
+- Ghost Race counts no wins/losses and no rank score and sends no match report to the
+  ladder; best lap times are still recorded and lap ghosts are uploaded.
+- tools/startserver/cli.py now uses the real g_gametype values (sprint 7, team modes
+  16+, koth 22, ghost 8).
+
+Fixed:
+
+- Unit tests test_ctf4_team_score and test_rally_state_machine build again (stubs for
+  newer functions, new Team_TakeFlagSound signature).
+- Map entity "gametype" filter used a table that did not match the GT_* values
+  (wrong names from Single Player on, out-of-bounds read for team modes).
+- callvote g_gametype read past the end of an old Quake III name table and accepted
+  unused gametype numbers.
+- Server browser game type labels were looked up by index and wrong for most modes.
+
 new in v0.8a
 
 Added:

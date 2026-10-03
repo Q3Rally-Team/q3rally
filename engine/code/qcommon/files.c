@@ -1163,6 +1163,24 @@ qboolean FS_IsExt(const char *filename, const char *ext, int namelen)
 
 /*
 ===========
+FS_IsGhostPath
+
+Q3Rally: lap ghosts (ghosts/, ghosts/ladder/) are recorded and downloaded at
+runtime and only drive the ghost display and bot routes, so they may come
+from the directory even on pure servers.
+===========
+*/
+static qboolean FS_IsGhostPath( const char *path )
+{
+	if ( !path ) {
+		return qfalse;
+	}
+	return ( !Q_stricmpn( path, "ghosts/", 7 ) || !Q_stricmp( path, "ghosts" ) ) &&
+		!strstr( path, ".." );
+}
+
+/*
+===========
 FS_IsDemoExt
 
 Return qtrue if filename has a demo extension
@@ -1413,7 +1431,8 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 			   !FS_IsExt(filename, ".menu", len) &&		// menu files
 			   !FS_IsExt(filename, ".game", len) &&		// menu files
 			   !FS_IsExt(filename, ".dat", len) &&		// for journal files
-			   !FS_IsDemoExt(filename, len))			// demos
+			   !FS_IsDemoExt(filename, len) &&			// demos
+			   !FS_IsGhostPath(filename))			// Q3Rally lap ghosts
 			{
 				*file = 0;
 				return -1;
@@ -2432,7 +2451,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 			char	*name;
 
 			// don't scan directories for files if we are pure or restricted
-			if ( fs_numServerPaks && !allowNonPureFilesOnDisk ) {
+			if ( fs_numServerPaks && !allowNonPureFilesOnDisk && !FS_IsGhostPath( path ) ) {
 				continue;
 			} else {
 				netpath = FS_BuildOSPath( search->dir->path, search->dir->gamedir, path );

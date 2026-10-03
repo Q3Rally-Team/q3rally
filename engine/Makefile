@@ -2781,6 +2781,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_hud_derby.o \
   $(B)/$(BASEGAME)/cgame/cg_hud_vehicle.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_racetools.o \
+  $(B)/$(BASEGAME)/cgame/cg_ghost_picker.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_rearweapons.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_scripted_objects.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_tools.o \
@@ -2880,6 +2881,8 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_botpath.o \
   $(B)/$(BASEGAME)/game/g_client.o \
   $(B)/$(BASEGAME)/game/g_ghost.o \
+  $(B)/$(BASEGAME)/game/g_ghost_record.o \
+  $(B)/$(BASEGAME)/game/g_ghost_ladder.o \
   $(B)/$(BASEGAME)/game/g_cmds.o \
   $(B)/$(BASEGAME)/game/g_combat.o \
   $(B)/$(BASEGAME)/game/g_items.o \

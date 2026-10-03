@@ -139,6 +139,9 @@ static void G_RallyCompleteLap( gentity_t *ent, int timestamp, qboolean allowRan
                         client->bestLapMs = lapDuration;
                         G_Profile_RecordBestLap( client, lapDuration );
                 }
+
+                // Q3Rally: upload the lap ghost if it is a new session best
+                G_GhostRecord_LapComplete( ent, client->lapStartTime, timestamp );
         }
 
 	client->lapStartTime = timestamp;
@@ -597,6 +600,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         }
 
         trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+        G_GhostLadder_ClientFinished( other );
 
         if ( !level.finishRaceTime ){
                 other->client->ps.stats[STAT_POSITION] = 1;
@@ -604,7 +608,10 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
                 level.winnerNumber = other->s.clientNum;
 level.finishRaceTime = level.time;
 trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
-trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+/* Ghost Race: the cgame shows the result against the ghost instead. */
+if ( g_gametype.integer != GT_GHOST ) {
+	trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+}
 }
 else {
 place = G_RallyPlaceString( other->client->ps.stats[STAT_POSITION] );
@@ -667,6 +674,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 			}
 
 			trap_SendServerCommand( -1, va("raceFinishTime %i %i", other->s.clientNum, other->client->finishRaceTime) );
+			G_GhostLadder_ClientFinished( other );
 
 			if (!level.finishRaceTime){
 				other->client->ps.stats[STAT_POSITION] = 1; // make sure the player is first
@@ -678,7 +686,10 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 					trap_SendServerCommand( level.winnerNumber, "cp \"You won the elimination!\n\"");
 				} else {
 					trap_SendServerCommand( -1, va("print \"%s won the race!\n\"", other->client->pers.netname ));
-					trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+					/* Ghost Race: the cgame shows the result against the ghost instead. */
+					if ( g_gametype.integer != GT_GHOST ) {
+						trap_SendServerCommand( level.winnerNumber, "cp \"You won the race!\n\"");
+					}
 				}
 			}
 			else {
@@ -811,7 +822,7 @@ void Think_StartFinish( gentity_t *self ){
                         VectorCopy( center, last );
                 }
 
-                if ( g_gametype.integer == GT_SPRINT && level.startEnt && level.finishEnt ) {
+                if ( G_IsSprintTrack() && level.startEnt && level.finishEnt ) {
                         vec3_t startCenter, finishCenter;
 
                         CP_BOUNDS_CENTER( level.finishEnt, finishCenter );
@@ -832,7 +843,9 @@ void Think_StartFinish( gentity_t *self ){
 #undef CP_BOUNDS_CENTER
         }
 
-        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i", (int)( level.trackLength / CP_M_2_QU ) ) );
+        // "<length in metres> <sprint track 0|1>"; older cgames read only the length
+        trap_SetConfigstring( CS_TRACKLENGTH, va( "%i %i", (int)( level.trackLength / CP_M_2_QU ),
+                G_IsSprintTrack() ? 1 : 0 ) );
 
         self->s.weapon = self->number;
 	G_Ghost_BuildBotRoutes();
@@ -878,9 +891,15 @@ void SP_rally_start( gentity_t *ent ) {
 trap_SetBrushModel( ent, ent->model );
 
 level.startEnt = ent;
+level.sprintTrack = qtrue;
 
 level.numberOfLaps = 1;
-trap_Cvar_Set( "laplimit", "1" );
+// Q3Rally: Ghost Race rotations mix lap and A2B tracks. Keep the archived
+// laplimit there so the next lap track does not inherit "1"; the A2B course
+// itself always runs one lap via level.numberOfLaps.
+if ( g_gametype.integer != GT_GHOST ) {
+	trap_Cvar_Set( "laplimit", "1" );
+}
 
 ent->r.svFlags |= SVF_BROADCAST;
 ent->s.eType = ET_CHECKPOINT;

@@ -41,6 +41,18 @@ static qboolean mockTraceStartSolid = qfalse;
 static char vaBuffer[4][256];
 static int vaIndex;
 
+/* Intro route bookkeeping lives in g_rally_observer_cams.c. */
+static int introRoutePendingCalls;
+static qboolean introRoutePending;
+static int introRouteDurationUpdates;
+void G_RallyIntroRoute_SetPending( qboolean pending ) {
+    introRoutePendingCalls++;
+    introRoutePending = pending;
+}
+void G_RallyIntroRoute_UpdateDuration( void ) {
+    introRouteDurationUpdates++;
+}
+
 char *va(char *format, ... ) {
     va_list args;
     vaIndex = (vaIndex + 1) % 4;

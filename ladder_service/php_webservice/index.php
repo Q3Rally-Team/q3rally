@@ -37,13 +37,14 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.9';
+const LADDER_VERSION        = '1.0.12';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
 const LADDER_RATE_FILE_PREFIX  = 'rl_';   // rate-limit state file prefix
 
 require_once __DIR__ . '/keys.php';
+require_once __DIR__ . '/ghosts.php';
 
 const LADDER_RACE_MODES = [
     'GT_RACING', 'GT_RACING_DM', 'GT_SPRINT', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
@@ -612,6 +613,12 @@ try {
       text-align: center;
     }
 
+    .ghost-note {
+      margin: 12px 0 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
     .mode-levelshot-fallback {
       margin: 0;
       font-size: 0.85rem;
@@ -1015,7 +1022,9 @@ try {
       }
 
       .mode-layout {
-        grid-template-columns: 1fr;
+        /* minmax(0, …): wide tables scroll inside .table-wrapper instead of
+           widening the page */
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .mode-controls select {
@@ -1489,7 +1498,33 @@ try {
         'mode.headers.metric': 'Metrik',
         'mode.levelshot.missing': 'Kein Levelshot verfügbar.',
         'map.unknown': 'Unbekannte Map',
-        'common.unknown': 'Unbekannt'
+        'common.unknown': 'Unbekannt',
+        'ghosts.tab': 'Ghosts',
+        'ghosts.controls.map': 'Map',
+        'ghosts.controls.variant': 'Streckenvariante',
+        'ghosts.controls.vehicle': 'Fahrzeug',
+        'ghosts.controls.allVehicles': 'Alle Fahrzeuge',
+        'ghosts.controls.build': 'Map-Version',
+        'ghosts.build.current': 'Aktuell (Physik {physics})',
+        'ghosts.build.older': 'Älter (Physik {physics}, bis {date})',
+        'ghosts.length.short': 'Kurz',
+        'ghosts.length.medium': 'Mittel',
+        'ghosts.length.long': 'Lang',
+        'ghosts.reversed': 'rückwärts',
+        'ghosts.table.heading': 'Schnellste Runden-Ghosts',
+        'ghosts.headers.vehicle': 'Fahrzeug',
+        'ghosts.headers.lap': 'Runde',
+        'ghosts.headers.gap': 'Abstand',
+        'ghosts.headers.recorded': 'Gefahren am',
+        'ghosts.headers.source': 'Quelle',
+        'ghosts.headers.download': 'Ghost',
+        'ghosts.source.online': 'Online',
+        'ghosts.source.offline': 'Offline',
+        'ghosts.download.title': 'Ghost-Datei herunterladen',
+        'ghosts.status.loading': 'Lade Ghosts…',
+        'ghosts.status.empty': 'Für diese Auswahl gibt es noch keine Ghosts.',
+        'ghosts.status.error': 'Fehler beim Laden: {message}',
+        'ghosts.note': 'Je Spieler zählt der beste Ghost pro Strecke, Variante und Fahrzeug. Ghosts lassen sich in Q3Rally im Spielmodus Ghost Race als Gegner auswählen.'
       },
       en: {
         'meta.title': 'Q3Rally Ladder Monitor beta',
@@ -1649,7 +1684,33 @@ try {
         'mode.headers.metric': 'Metric',
         'mode.levelshot.missing': 'No levelshot available.',
         'map.unknown': 'Unknown map',
-        'common.unknown': 'Unknown'
+        'common.unknown': 'Unknown',
+        'ghosts.tab': 'Ghosts',
+        'ghosts.controls.map': 'Map',
+        'ghosts.controls.variant': 'Track variant',
+        'ghosts.controls.vehicle': 'Vehicle',
+        'ghosts.controls.allVehicles': 'All vehicles',
+        'ghosts.controls.build': 'Map version',
+        'ghosts.build.current': 'Current (physics {physics})',
+        'ghosts.build.older': 'Older (physics {physics}, until {date})',
+        'ghosts.length.short': 'Short',
+        'ghosts.length.medium': 'Medium',
+        'ghosts.length.long': 'Long',
+        'ghosts.reversed': 'reversed',
+        'ghosts.table.heading': 'Fastest lap ghosts',
+        'ghosts.headers.vehicle': 'Vehicle',
+        'ghosts.headers.lap': 'Lap',
+        'ghosts.headers.gap': 'Gap',
+        'ghosts.headers.recorded': 'Driven on',
+        'ghosts.headers.source': 'Source',
+        'ghosts.headers.download': 'Ghost',
+        'ghosts.source.online': 'Online',
+        'ghosts.source.offline': 'Offline',
+        'ghosts.download.title': 'Download ghost file',
+        'ghosts.status.loading': 'Loading ghosts…',
+        'ghosts.status.empty': 'No ghosts for this selection yet.',
+        'ghosts.status.error': 'Failed to load: {message}',
+        'ghosts.note': 'Each player counts with their best ghost per track, variant and vehicle. In Q3Rally you can race these ghosts in the Ghost Race game mode.'
       }
     };
 
@@ -2130,6 +2191,9 @@ function applyLanguage(lang) {
   MODE_CONFIG.forEach(({ key }) => {
     renderModeTable(key);
   });
+  if (state.activeMode === GHOST_TAB_KEY) {
+    renderGhostPanel();
+  }
   if (state.modeStatus.key) {
     setModeStatus(state.modeStatus.key, state.modeStatus.params, state.modeStatus.isError, false);
   }
@@ -2282,12 +2346,17 @@ function setActiveMode(modeKey) {
     refs.button.setAttribute('tabindex', isActive ? '0' : '-1');
     refs.panel.classList.toggle('active', isActive);
   });
+  /* The online/offline switch filters match data only. */
+  const sourceToggle = document.getElementById('source-toggle');
+  if (sourceToggle) {
+    sourceToggle.style.display = modeKey === GHOST_TAB_KEY ? 'none' : 'inline-flex';
+  }
   renderModeTable(modeKey);
 }
 
 function updateModeTabsLanguage() {
   modeElements.forEach((refs, key) => {
-    refs.button.textContent = humanizeMode(key);
+    refs.button.textContent = refs.isGhostTab ? t('ghosts.tab') : humanizeMode(key);
   });
 }
 
@@ -2379,6 +2448,10 @@ function updateModeOptionsForMode(modeKey) {
 }
 
 function renderModeTable(modeKey) {
+  if (modeKey === GHOST_TAB_KEY) {
+    renderGhostPanel();
+    return;
+  }
   const refs = modeElements.get(modeKey);
   if (!refs) {
     return;
@@ -3232,6 +3305,9 @@ function renderSourceToggle() {
 
   panel.insertBefore(bar, panel.firstChild);
   updateSourceToggleUI();
+  if (state.activeMode === GHOST_TAB_KEY) {
+    bar.style.display = 'none';
+  }
 }
 
 function updateSourceToggleUI() {
@@ -4768,6 +4844,34 @@ async function showMatchDetails(matchId) {
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
   {
+    version: '1.0.12',
+    date: '2026-10-03',
+    changes: [
+      'New tab "Ghosts": fastest lap ghosts per map, track variant, vehicle and map version, with ghost download',
+      'New: GET /api/v1/ghosts/catalog lists maps, variants, map builds and vehicles that have ghosts',
+      'Fix: wide tables scroll inside their box on small screens instead of widening the page'
+    ],
+  },
+  {
+    version: '1.0.11',
+    date: '2026-10-03',
+    changes: [
+      'GET /api/v1/ghosts: perVehicle=K returns the best K ghosts per vehicle',
+      'GET /api/v1/ghosts: format=text returns a tab separated list for the game engine (Ghost Race opponents)',
+    ],
+  },
+  {
+    version: '1.0.10',
+    date: '2026-10-02',
+    changes: [
+      'New: lap ghosts – POST /api/v1/ghosts stores the best lap ghost per player, map, track variant and vehicle',
+      'New: GET /api/v1/ghosts?map=&tl=&rev=&vehicle= ranking list, GET /api/v1/ghosts/{ghostId} single ghost (?format=raw for the .ghost text)',
+      'Ghosts are grouped by physics version and map checksum; older recordings stay archived but are not ranked against current ones',
+      'Plausibility checks on uploads: lap start/finish, sample gaps, segment and average speed, driven distance vs. course length',
+      'Server keys count ghost uploads separately (ghostCount) instead of matchCount',
+    ]
+  },
+  {
     version: '1.0.9',
     date: '2026-04-14',
     changes: [
@@ -4910,7 +5014,434 @@ function showChangelog() {
 
 document.getElementById('version-badge')?.addEventListener('click', showChangelog);
 
+// ── Lap ghost rankings (tab "Ghosts") ─────────────────────────────────────────
+// Data: GET /ghosts/catalog (maps → track variants → map builds → vehicles) and
+// GET /ghosts?map=&tl=&rev=&physics=&checksum=[&vehicle=] (ranking per bucket).
+const GHOST_TAB_KEY = 'ghosts';
+const ghostState = {
+  catalog: null,
+  loading: false,
+  error: null,
+  map: '',
+  variant: '',
+  bucket: '',
+  vehicle: '',
+  lists: new Map()
+};
+
+function ghostVariantLabel(variant) {
+  const lengthKeys = ['ghosts.length.short', 'ghosts.length.medium', 'ghosts.length.long'];
+  const length = t(lengthKeys[variant.trackLength] || 'ghosts.length.medium');
+  return variant.trackReversed ? `${length} · ${t('ghosts.reversed')}` : length;
+}
+
+function ghostFindMap() {
+  return (ghostState.catalog || []).find((m) => m.map === ghostState.map) || null;
+}
+
+function ghostFindVariant() {
+  const map = ghostFindMap();
+  return map ? (map.variants.find((v) => v.variant === ghostState.variant) || null) : null;
+}
+
+function ghostFindBucket() {
+  const variant = ghostFindVariant();
+  return variant ? (variant.buckets.find((b) => b.bucket === ghostState.bucket) || null) : null;
+}
+
+function ghostFillSelect(select, options, value) {
+  select.innerHTML = '';
+  options.forEach(({ value: optionValue, label }) => {
+    const option = document.createElement('option');
+    option.value = optionValue;
+    option.textContent = label;
+    select.appendChild(option);
+  });
+  select.value = value;
+  select.disabled = options.length === 0;
+}
+
+/* Keeps map → variant → build → vehicle consistent with the catalog. */
+function ghostNormalizeSelection() {
+  const maps = ghostState.catalog || [];
+  if (!maps.some((m) => m.map === ghostState.map)) {
+    ghostState.map = maps.length ? maps[0].map : '';
+  }
+  const map = ghostFindMap();
+  const variants = map ? map.variants : [];
+  if (!variants.some((v) => v.variant === ghostState.variant)) {
+    const best = variants.slice().sort((a, b) => b.count - a.count)[0];
+    ghostState.variant = best ? best.variant : '';
+  }
+  const variant = ghostFindVariant();
+  const buckets = variant ? variant.buckets : [];
+  if (!buckets.some((b) => b.bucket === ghostState.bucket)) {
+    ghostState.bucket = buckets.length ? buckets[0].bucket : '';   // newest build first
+  }
+  const bucket = ghostFindBucket();
+  if (ghostState.vehicle && !(bucket && bucket.vehicles[ghostState.vehicle])) {
+    ghostState.vehicle = '';
+  }
+}
+
+function createGhostTab() {
+  const button = document.createElement('button');
+  button.className = 'tab-button';
+  button.type = 'button';
+  button.dataset.mode = GHOST_TAB_KEY;
+  button.id = `mode-tab-${GHOST_TAB_KEY}`;
+  button.setAttribute('role', 'tab');
+  button.setAttribute('aria-controls', `mode-panel-${GHOST_TAB_KEY}`);
+  button.setAttribute('aria-selected', 'false');
+  button.setAttribute('tabindex', '-1');
+  button.textContent = t('ghosts.tab');
+  button.addEventListener('click', () => setActiveMode(GHOST_TAB_KEY));
+
+  const panel = document.createElement('div');
+  panel.className = 'mode-panel tab-panel';
+  panel.id = `mode-panel-${GHOST_TAB_KEY}`;
+  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('aria-labelledby', button.id);
+
+  const controls = document.createElement('div');
+  controls.className = 'mode-controls';
+  const selects = {};
+  [
+    ['map', 'ghosts.controls.map'],
+    ['variant', 'ghosts.controls.variant'],
+    ['vehicle', 'ghosts.controls.vehicle'],
+    ['bucket', 'ghosts.controls.build']
+  ].forEach(([key, labelKey]) => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.setAttribute('for', `ghost-${key}`);
+    label.dataset.i18n = labelKey;
+    label.textContent = t(labelKey);
+    const select = document.createElement('select');
+    select.id = `ghost-${key}`;
+    select.disabled = true;
+    select.addEventListener('change', () => {
+      ghostState[key] = select.value;
+      ghostNormalizeSelection();
+      renderGhostPanel();
+    });
+    wrapper.appendChild(label);
+    wrapper.appendChild(select);
+    controls.appendChild(wrapper);
+    selects[key] = { wrapper, select };
+  });
+  panel.appendChild(controls);
+
+  const layout = document.createElement('div');
+  layout.className = 'mode-layout';
+  const figure = document.createElement('figure');
+  figure.className = 'mode-levelshot';
+  const shot = document.createElement('img');
+  shot.alt = '';
+  shot.loading = 'lazy';
+  shot.decoding = 'async';
+  const fallback = document.createElement('p');
+  fallback.className = 'mode-levelshot-fallback';
+  fallback.dataset.i18n = 'mode.levelshot.missing';
+  fallback.textContent = t('mode.levelshot.missing');
+  fallback.hidden = true;
+  shot.addEventListener('error', () => { shot.hidden = true; fallback.hidden = false; });
+  shot.addEventListener('load', () => { shot.hidden = false; fallback.hidden = true; });
+  const caption = document.createElement('figcaption');
+  figure.appendChild(shot);
+  figure.appendChild(fallback);
+  figure.appendChild(caption);
+  layout.appendChild(figure);
+
+  const tableWrapper = document.createElement('div');
+  tableWrapper.className = 'mode-table-wrapper';
+  const heading = document.createElement('h3');
+  heading.dataset.i18n = 'ghosts.table.heading';
+  heading.textContent = t('ghosts.table.heading');
+  tableWrapper.appendChild(heading);
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'table-wrapper';
+  const table = document.createElement('table');
+  table.className = 'leaderboard-table';
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+  tableContainer.appendChild(table);
+  tableWrapper.appendChild(tableContainer);
+  const empty = document.createElement('p');
+  empty.className = 'empty-state';
+  empty.hidden = true;
+  tableWrapper.appendChild(empty);
+  const note = document.createElement('p');
+  note.className = 'ghost-note';
+  note.dataset.i18n = 'ghosts.note';
+  note.textContent = t('ghosts.note');
+  tableWrapper.appendChild(note);
+  layout.appendChild(tableWrapper);
+  panel.appendChild(layout);
+
+  elements.modeTabs.appendChild(button);
+  elements.modePanels.appendChild(panel);
+
+  modeElements.set(GHOST_TAB_KEY, {
+    button,
+    panel,
+    mapSelect: selects.map.select,
+    ghostSelects: selects,
+    table,
+    tableHeadRow: headerRow,
+    tableBody: tbody,
+    tableContainer,
+    empty,
+    levelshot: shot,
+    levelshotFallback: fallback,
+    levelshotCaption: caption,
+    tableHeading: heading,
+    isGhostTab: true
+  });
+}
+
+async function loadGhostCatalog() {
+  if (ghostState.catalog || ghostState.loading) {
+    return;
+  }
+  ghostState.loading = true;
+  ghostState.error = null;
+  renderGhostPanel();
+  try {
+    const response = await fetch(`${API_BASE}/ghosts/catalog`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    ghostState.catalog = Array.isArray(data.maps) ? data.maps : [];
+  } catch (error) {
+    ghostState.error = error.message || String(error);
+  } finally {
+    ghostState.loading = false;
+  }
+  ghostNormalizeSelection();
+  renderGhostPanel();
+}
+
+function ghostListKey() {
+  return [ghostState.map, ghostState.variant, ghostState.bucket, ghostState.vehicle].join('|');
+}
+
+async function loadGhostList() {
+  const key = ghostListKey();
+  const variant = ghostFindVariant();
+  const bucket = ghostFindBucket();
+  if (!variant || !bucket || ghostState.lists.has(key)) {
+    return;
+  }
+  ghostState.lists.set(key, { loading: true, ghosts: [] });
+  const params = new URLSearchParams({
+    map: ghostState.map,
+    tl: String(variant.trackLength),
+    rev: String(variant.trackReversed),
+    physics: String(bucket.physicsVersion),
+    checksum: String(bucket.mapChecksum),
+    limit: '100'
+  });
+  if (ghostState.vehicle) {
+    params.set('vehicle', ghostState.vehicle);
+  }
+  try {
+    const response = await fetch(`${API_BASE}/ghosts?${params.toString()}`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    ghostState.lists.set(key, { loading: false, ghosts: Array.isArray(data.ghosts) ? data.ghosts : [] });
+  } catch (error) {
+    ghostState.lists.set(key, { loading: false, ghosts: [], error: error.message || String(error) });
+  }
+  if (ghostListKey() === key) {
+    renderGhostPanel();
+  }
+}
+
+function ghostFormatDay(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return '–';
+  }
+  return date.toLocaleDateString(getLocale(), { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function ghostFormatGap(ms) {
+  if (!ms) {
+    return '–';
+  }
+  return `+${(ms / 1000).toFixed(3)}`;
+}
+
+function renderGhostPanel() {
+  const refs = modeElements.get(GHOST_TAB_KEY);
+  if (!refs) {
+    return;
+  }
+  refs.button.textContent = t('ghosts.tab');
+  if (!ghostState.catalog) {
+    refs.tableContainer.hidden = true;
+    refs.empty.hidden = false;
+    refs.empty.textContent = ghostState.error
+      ? t('ghosts.status.error', { message: ghostState.error })
+      : t('ghosts.status.loading');
+    Object.values(refs.ghostSelects).forEach(({ select }) => { select.disabled = true; });
+    if (!ghostState.loading && !ghostState.error) {
+      loadGhostCatalog();
+    }
+    return;
+  }
+
+  const maps = ghostState.catalog;
+  const map = ghostFindMap();
+  const variant = ghostFindVariant();
+  const bucket = ghostFindBucket();
+  const s = refs.ghostSelects;
+
+  ghostFillSelect(s.map.select, maps.map((m) => ({ value: m.map, label: humanizeMapName(m.map) })), ghostState.map);
+  ghostFillSelect(s.variant.select, (map ? map.variants : []).map((v) => ({
+    value: v.variant, label: `${ghostVariantLabel(v)} (${v.count})`
+  })), ghostState.variant);
+  const vehicleOptions = [{ value: '', label: t('ghosts.controls.allVehicles') }];
+  if (bucket) {
+    Object.keys(bucket.vehicles).forEach((vehicle) => {
+      vehicleOptions.push({ value: vehicle, label: `${vehicle} (${bucket.vehicles[vehicle]})` });
+    });
+  }
+  ghostFillSelect(s.vehicle.select, vehicleOptions, ghostState.vehicle);
+  s.vehicle.select.disabled = !bucket;
+  const buckets = variant ? variant.buckets : [];
+  ghostFillSelect(s.bucket.select, buckets.map((b, index) => ({
+    value: b.bucket,
+    label: index === 0
+      ? t('ghosts.build.current', { physics: b.physicsVersion })
+      : t('ghosts.build.older', { physics: b.physicsVersion, date: ghostFormatDay(b.lastReceivedAt) })
+  })), ghostState.bucket);
+  /* Only worth showing when a map was updated or the physics changed. */
+  s.bucket.wrapper.hidden = buckets.length < 2;
+
+  updateLevelshot(GHOST_TAB_KEY, map ? { map: map.map } : null);
+
+  const columns = [
+    ['rank', 'leaderboard.headers.rank'],
+    ['player', 'leaderboard.headers.player'],
+    ['vehicle', 'ghosts.headers.vehicle'],
+    ['time', 'ghosts.headers.lap'],
+    ['gap', 'ghosts.headers.gap'],
+    ['recorded', 'ghosts.headers.recorded'],
+    ['download', 'ghosts.headers.download']
+  ];
+  refs.tableHeadRow.innerHTML = '';
+  columns.forEach(([, labelKey]) => {
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.dataset.i18n = labelKey;
+    th.textContent = t(labelKey);
+    refs.tableHeadRow.appendChild(th);
+  });
+
+  if (!maps.length || !bucket) {
+    refs.tableBody.innerHTML = '';
+    refs.tableContainer.hidden = true;
+    refs.empty.hidden = false;
+    refs.empty.textContent = t('ghosts.status.empty');
+    return;
+  }
+
+  const list = ghostState.lists.get(ghostListKey());
+  if (!list) {
+    loadGhostList();
+  }
+  if (!list || list.loading || list.error) {
+    refs.tableBody.innerHTML = '';
+    refs.tableContainer.hidden = true;
+    refs.empty.hidden = false;
+    refs.empty.textContent = list && list.error
+      ? t('ghosts.status.error', { message: list.error })
+      : t('ghosts.status.loading');
+    return;
+  }
+  if (!list.ghosts.length) {
+    refs.tableBody.innerHTML = '';
+    refs.tableContainer.hidden = true;
+    refs.empty.hidden = false;
+    refs.empty.textContent = t('ghosts.status.empty');
+    return;
+  }
+
+  refs.tableContainer.hidden = false;
+  refs.empty.hidden = true;
+  refs.tableBody.innerHTML = '';
+  const bestMs = list.ghosts[0].lapMs;
+  list.ghosts.forEach((ghost, index) => {
+    const tr = document.createElement('tr');
+    columns.forEach(([key]) => {
+      const td = document.createElement('td');
+      switch (key) {
+        case 'rank':
+          td.textContent = String(index + 1);
+          break;
+        case 'player': {
+          td.classList.add('leaderboard-player');
+          const strong = document.createElement('strong');
+          if (ghost.playerId) {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.className = 'player-link';
+            link.textContent = ghost.playerName || t('common.unknown');
+            link.addEventListener('click', (event) => {
+              event.preventDefault();
+              showPlayerProfile(ghost.playerId, ghost.playerName);
+            });
+            strong.appendChild(link);
+          } else {
+            strong.textContent = ghost.playerName || t('common.unknown');
+          }
+          td.appendChild(strong);
+          break;
+        }
+        case 'vehicle':
+          td.textContent = ghost.vehicle || '–';
+          break;
+        case 'time':
+          td.textContent = formatRaceTime(ghost.lapMs / 1000);
+          break;
+        case 'gap':
+          td.textContent = ghostFormatGap(ghost.lapMs - bestMs);
+          break;
+        case 'recorded':
+          td.textContent = ghostFormatDay(ghost.receivedAt);
+          break;
+        case 'source':
+          td.textContent = ghost.source === 'online' ? t('ghosts.source.online') : t('ghosts.source.offline');
+          break;
+        case 'download': {
+          const link = document.createElement('a');
+          link.href = `${API_BASE}/ghosts/${encodeURIComponent(ghost.ghostId)}?format=raw&download=1`;
+          link.download = `${ghost.ghostId}.ghost`;
+          link.textContent = '.ghost';
+          link.title = t('ghosts.download.title');
+          td.appendChild(link);
+          break;
+        }
+        default:
+          td.textContent = '';
+      }
+      tr.appendChild(td);
+    });
+    refs.tableBody.appendChild(tr);
+  });
+}
+
 createModeTabs();
+createGhostTab();
 const _savedLang = localStorage.getItem('q3rally_lang');
 applyLanguage((_savedLang === 'de' || _savedLang === 'en') ? _savedLang : state.language);
 setActiveMode(state.activeMode);
@@ -6444,6 +6975,11 @@ function handle_post(array $segments): void
         return;
     }
 
+    if ($segments === ['ghosts']) {
+        handle_ghost_post();
+        return;
+    }
+
     if ($segments !== ['matches']) {
         send_error(404, 'Endpoint not found.');
     }
@@ -6606,6 +7142,20 @@ function handle_get(array $segments): void
         header('Cache-Control: public, max-age=300');
         echo json_encode($manifest, JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    // Lap ghosts: ranking list and single ghost (see ghosts.php)
+    if ($segments === ['ghosts']) {
+        handle_ghost_list();
+        return;
+    }
+    if ($segments === ['ghosts', 'catalog']) {
+        handle_ghost_catalog();
+        return;
+    }
+    if (count($segments) === 2 && $segments[0] === 'ghosts') {
+        handle_ghost_get($segments[1]);
+        return;
     }
 
     // Fast leaderboard index endpoint – returns only fields needed by the frontend

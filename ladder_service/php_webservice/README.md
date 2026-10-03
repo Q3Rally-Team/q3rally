@@ -35,6 +35,10 @@ kurzen Pfade ohne Prefix, `/api/v1` ist aber die empfohlene Form.
 | `GET` | `/api/v1/matches/{matchId}` | nein | Gibt das öffentliche Match-JSON zu einer Match-ID zurück. |
 | `GET` | `/api/v1/matches/index` | nein | Liefert den kompakten Frontend-Index. |
 | `GET` | `/api/v1/players/{playerId}` | nein | Liefert ein öffentliches Spielerprofil. |
+| `POST` | `/api/v1/ghosts` | Bearer-Key | Speichert einen Runden-Ghost (nur wenn schneller als der bisherige Ghost des Spielers). |
+| `GET` | `/api/v1/ghosts?map=&tl=&rev=&vehicle=&physics=&checksum=&limit=&perVehicle=&format=` | nein | Rangliste der Ghosts einer Strecken-Variante, ohne Ghost-Daten. `perVehicle=K`: beste K je Fahrzeug; `format=text`: eine Zeile je Ghost (`ghostId`, `lapMs`, Fahrzeug, Name, tab-getrennt) für die Spiel-Engine. |
+| `GET` | `/api/v1/ghosts/catalog` | nein | Übersicht für die Ranglisten-Seite: Maps, Streckenvarianten, Map-Versionen (Physik + Prüfsumme, aktuelle zuerst) und Fahrzeuge mit Anzahl. |
+| `GET` | `/api/v1/ghosts/{ghostId}` | nein | Ein Ghost inkl. Daten; `?format=raw` liefert die `.ghost`-Datei als Text. |
 | `DELETE` | `/api/v1/matches/{matchId}` | Bearer-Key | Löscht ein Match dauerhaft. |
 
 ## Beispiel-Aufrufe
@@ -57,6 +61,42 @@ curl https://example.com/ladder/index.php/api/v1/matches/srv-20240405-183011-42
 curl -X DELETE https://example.com/ladder/index.php/api/v1/matches/srv-20240405-183011-42 \
      -H "Authorization: Bearer $LADDER_API_KEY"
 ```
+
+## Runden-Ghosts
+
+Spielserver (dedizierte Server und registrierte Offline-Clients) zeichnen die Runden
+ihrer Fahrer selbst auf und melden eine Runde, wenn sie die beste der Sitzung ist.
+`ghosts.php` speichert pro Spieler den besten Ghost je
+
+* Map und Strecken-Variante (`tl0..2`, `rev0/1`)
+* Fahrzeug
+* Physik-Version (`BG_PHYSICS_VERSION` im Spiel) und BSP-Prüfsumme der Map
+
+Ghosts anderer Physik-Versionen oder Map-Stände landen in eigenen Buckets und werden
+nicht gegeneinander gewertet. Ablage:
+`data/ghosts/<map>/tl<n>_rev<r>/<fahrzeug>/p<physik>_c<prüfsumme>/` mit `index.json`
+und einer Datei pro Spieler. Pro Bucket bleiben höchstens 200 Ghosts erhalten.
+
+Plausibilitätsprüfungen beim Upload (HTTP 422 bei Verstoß):
+
+* Kopfzeilen der Ghost-Daten passen zu den Metadaten (Map, Fahrzeug, Variante, Zeit, Frames)
+* erster Messpunkt am Rundenstart, letzter bei der Rundenzeit
+* keine Lücken über 5 s, keine Sprünge (Segmentgeschwindigkeit über 6000 Units/s)
+* Durchschnittsgeschwindigkeit plausibel, gefahrene Strecke 0,6- bis 4-fach der Kurslänge
+
+Uploads zählen beim Server-Key als `ghostCount`, nicht als `matchCount`.
+
+Die Startseite hat einen Reiter **Ghosts** mit den schnellsten Runden-Ghosts je Map,
+Streckenvariante (Kurz/Mittel/Lang, vorwärts/rückwärts), Fahrzeug und Map-Version,
+inklusive Download der `.ghost`-Datei. Gibt es zu einer Variante mehrere Map-Versionen
+oder Physik-Stände, ist die aktuelle vorausgewählt (höchste Physik-Version, dann die
+Version, deren erster Ghost am jüngsten ist).
+
+Im Spielmodus Ghost Race holt der Spielserver die Rangliste mit
+`?map=…&tl=…&rev=…&physics=…&checksum=…&perVehicle=5&limit=100&format=text`
+und einzelne Ghosts mit `/ghosts/{ghostId}?format=raw` (ohne Key). Beides legt er
+unter `baseq3r/ghosts/ladder/` ab und nutzt den Cache, wenn die Ladder nicht
+erreichbar ist.
 
 ## Datenablage
 

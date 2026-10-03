@@ -27,6 +27,13 @@ vmCvar_t g_blueteam;
 vmCvar_t g_maxclients;
 vmCvar_t g_dominationScoreInterval;
 vmCvar_t g_dominationCaptureDelay;
+/* KOTH cvars referenced by g_team.c */
+vmCvar_t g_kothCaptureTime;
+vmCvar_t g_kothOvertime;
+vmCvar_t g_kothOvertimeHoldTime;
+vmCvar_t g_kothPtsCapture;
+vmCvar_t g_kothPtsDefend;
+vmCvar_t g_kothPtsTick;
 vec3_t vec3_origin = { 0.0f, 0.0f, 0.0f };
 gitem_t bg_itemlist[1];
 
@@ -175,6 +182,14 @@ void RespawnItem( gentity_t *ent ) {
 
 void G_Printf( const char *fmt, ... ) {
     (void)fmt;
+}
+
+void G_LogPrintf( const char *fmt, ... ) {
+    (void)fmt;
+}
+
+void G_Profile_RecordDominationCapture( struct gclient_s *client ) {
+    (void)client;
 }
 
 void trap_Printf( const char *fmt, ... ) {
@@ -340,9 +355,10 @@ void test_green_taken_event_emits_new_id(void) {
     teamgame.flagTakenTime[TEAM_GREEN] = 0;
     level.time = 0;
 
-    Team_TakeFlagSound(&base, TEAM_GREEN);
+    Team_TakeFlagSound(&base, TEAM_GREEN, TEAM_RED);
 
     assert(tempEntity.s.eventParm == GTS_GREEN_TAKEN);
+    assert(tempEntity.s.otherEntityNum == TEAM_RED);
 }
 
 int main(void) {

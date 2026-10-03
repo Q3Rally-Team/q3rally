@@ -1912,6 +1912,11 @@ void G_Profile_RecordLapComplete( gclient_t *client, qboolean isLeader, qboolean
         return;
     }
 
+    /* Ghost races are solo time trials: no rank progress from laps. */
+    if ( g_gametype.integer == GT_GHOST ) {
+        return;
+    }
+
     if ( !allowRankProgress ) {
         return;
     }
@@ -2109,6 +2114,12 @@ void G_Profile_RecordWin( gclient_t *client ) {
     }
     client->pers.profileMatchOutcomeRecorded = qtrue;
 
+    /* Ghost races have no opponents: neither a win nor a loss. Best lap
+       times are still recorded via G_Profile_RecordBestLap. */
+    if ( g_gametype.integer == GT_GHOST ) {
+        return;
+    }
+
     s_profileState.stats.wins++;
     s_profileState.stats.gamesPlayed++;
     s_profileState.dirty = qtrue;
@@ -2198,6 +2209,10 @@ void G_Profile_RecordLoss( gclient_t *client ) {
         return;
     }
     client->pers.profileMatchOutcomeRecorded = qtrue;
+
+    if ( g_gametype.integer == GT_GHOST ) {
+        return;
+    }
 
     s_profileState.stats.losses++;
     s_profileState.stats.gamesPlayed++;

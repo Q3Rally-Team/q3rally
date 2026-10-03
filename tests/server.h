@@ -240,17 +240,77 @@ typedef struct ladderMatchPayload_s {
         ladderPlayerPayload_t players[MAX_CLIENTS];
 } ladderMatchPayload_t;
 
+/* Mirrors ladderGhostMeta_t from bg_ladder.h */
+#define LADDER_GHOST_MAX_DATA           ( 448 * 1024 )
+#define LADDER_GHOST_MAX_ID             96
+#define LADDER_GHOST_MAX_NAME           64
+
+typedef struct ladderGhostMeta_s {
+        int             valid;
+        char            ghostId[LADDER_GHOST_MAX_ID];
+        char            map[MAX_QPATH];
+        char            vehicle[LADDER_MAX_VEHICLE];
+        char            playerId[LADDER_MAX_PLAYER_ID];
+        char            playerName[LADDER_GHOST_MAX_NAME];
+        int             trackLength;
+        int             trackReversed;
+        int             lapMs;
+        int             frameCount;
+        int             gametype;
+        int             physicsVersion;
+        int             mapChecksum;
+        int             courseLengthUnits;
+        int             sprintTrack;
+        int             dataLength;
+} ladderGhostMeta_t;
+
+/* Mirrors ladderGhostFetch_t from bg_ladder.h.
+ * ── Ghost download ──────────────────────────────────────────────────────────
+ * The game module asks the engine to fetch ghost data from the ladder
+ * (trap_LadderFetchGhosts). The engine writes the results into the
+ * ghosts/ladder/ cache below the game directory, so the game can read them
+ * with trap_FS_* and they keep working offline later.
+ *   LADDER_FETCH_LIST : ranking for map/variant/bucket -> list file `target`,
+ *                       status in cvar sv_ladderGhostList "<requestId> ok|fail <n>"
+ *   LADDER_FETCH_GHOST: one ghost (raw .ghost text) -> file `target` */
+#define LADDER_FETCH_LIST               1
+#define LADDER_FETCH_GHOST              2
+#define LADDER_FETCH_MAX_ID             160
+
+typedef struct ladderGhostFetch_s {
+        int             kind;
+        int             requestId;
+        char            map[MAX_QPATH];
+        int             trackLength;
+        int             trackReversed;
+        int             physicsVersion;
+        int             mapChecksum;
+        char            ghostId[LADDER_FETCH_MAX_ID];
+        char            target[MAX_QPATH];
+} ladderGhostFetch_t;
+
+#ifndef Q3_VERSION
+#define Q3_VERSION "q3rally-test"
+#endif
+
 typedef struct cvar_s {
         int integer;
         char string[128];
 } cvar_t, vmCvar_t;
+
+static cvar_t *com_dedicated = NULL;
 
 static inline cvar_t *Cvar_Get( const char *name, const char *value, int flags ) {
         static cvar_t stub;
         (void)name; (void)value; (void)flags;
         return &stub;
 }
-static inline void Cvar_Set( const char *name, const char *value ) { (void)name; (void)value; }
+static char test_cvarSetName[64];
+static char test_cvarSetValue[256];
+static inline void Cvar_Set( const char *name, const char *value ) {
+        snprintf( test_cvarSetName, sizeof( test_cvarSetName ), "%s", name );
+        snprintf( test_cvarSetValue, sizeof( test_cvarSetValue ), "%s", value );
+}
 static inline void Cvar_VariableStringBuffer( const char *name, char *buffer, int size ) {
         (void)name;
         if ( buffer && size > 0 ) buffer[0] = '\0';
@@ -384,5 +444,40 @@ static inline void Q_strcat( char *dest, int size, const char *src ) {
 static inline void Cbuf_AddText( const char *text ) { (void)text; }
 static inline void Cmd_AddCommand( const char *name, void (*fn)(void) ) { (void)name; (void)fn; }
 static inline void Cmd_RemoveCommand( const char *name ) { (void)name; }
+
+static inline char *va( const char *fmt, ... ) {
+        static char buffer[1024];
+        va_list args;
+        va_start( args, fmt );
+        vsnprintf( buffer, sizeof( buffer ), fmt, args );
+        va_end( args );
+        return buffer;
+}
+
+/* File writes are captured in memory so tests can inspect them. */
+static char test_fsLastPath[256];
+static char test_fsLastData[256 * 1024];
+static int test_fsLastLength;
+static int test_fsWriteCount;
+
+static inline fileHandle_t FS_FOpenFileWrite( const char *qpath ) {
+        strncpy( test_fsLastPath, qpath, sizeof( test_fsLastPath ) - 1 );
+        test_fsLastPath[sizeof( test_fsLastPath ) - 1] = '\0';
+        test_fsLastLength = 0;
+        test_fsLastData[0] = '\0';
+        test_fsWriteCount++;
+        return 1;
+}
+static inline int FS_Write( const void *buffer, int len, fileHandle_t f ) {
+        (void)f;
+        if ( test_fsLastLength + len >= (int)sizeof( test_fsLastData ) ) {
+                return 0;
+        }
+        memcpy( test_fsLastData + test_fsLastLength, buffer, (size_t)len );
+        test_fsLastLength += len;
+        test_fsLastData[test_fsLastLength] = '\0';
+        return len;
+}
+static inline void FS_FCloseFile( fileHandle_t f ) { (void)f; }
 
 #endif /* TEST_SERVER_H */

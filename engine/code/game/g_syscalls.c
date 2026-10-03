@@ -93,6 +93,14 @@ void trap_LadderSubmit( const ladderMatchPayload_t *payload ) {
         syscall( G_LADDER_SUBMIT, payload );
 }
 
+void trap_LadderSubmitGhost( const ladderGhostMeta_t *meta, const char *data ) {
+        syscall( G_LADDER_SUBMIT_GHOST, meta, data );
+}
+
+void trap_LadderFetchGhosts( const ladderGhostFetch_t *request ) {
+        syscall( G_LADDER_FETCH_GHOSTS, request );
+}
+
 void	trap_SendConsoleCommand( int exec_when, const char *text ) {
 	syscall( G_SEND_CONSOLE_COMMAND, exec_when, text );
 }

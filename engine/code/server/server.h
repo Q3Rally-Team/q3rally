@@ -353,6 +353,8 @@ void SV_LadderShutdown( void );
 void SV_LadderRegister_f( void );
 void SV_LadderRegisterAbort_f( void );
 void SV_LadderSubmit( const ladderMatchPayload_t *payload );
+void SV_LadderSubmitGhost( const ladderGhostMeta_t *meta, const char *data );
+void SV_LadderFetchGhosts( const ladderGhostFetch_t *request );
 void SV_LadderFrame( void );
 
 

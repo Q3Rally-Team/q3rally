@@ -2297,6 +2297,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	cg.clientNum = clientNum;
 	cg.showHUD = qtrue;	// modular HUD should be visible by default
+	CG_LadderGhost_Reset();
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.serverCommandSequence = serverCommandSequence;
@@ -2463,6 +2464,10 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_ShaderStateChanged();
 
 	trap_S_ClearLoopingSounds( qtrue );
+
+	/* Ghost Race: the server pushes the ladder ghost list on ClientBegin;
+	 * after a cgame restart it has to be asked again. */
+	CG_LadderGhost_RequestList();
 }
 
 /*
@@ -2491,12 +2496,21 @@ CG_EventHandling
 */
 #ifndef MISSIONPACK
 void CG_EventHandling(int type) {
+	/* ESC clears KEYCATCH_CGAME in the engine and reports CGAME_EVENT_NONE. */
+	if ( type == CGAME_EVENT_NONE ) {
+		CG_LadderGhost_CatcherCleared();
+	}
 }
 
 
 
 void CG_KeyEvent(int key, qboolean down) {
 	if ( !down ) return;
+
+	/* Ghost Race: the ladder ghost picker owns the keys while it is open. */
+	if ( CG_LadderGhost_KeyEvent( key ) ) {
+		return;
+	}
 
 	/* F9 toggles the HUD options menu and manages the key catcher */
 	if ( key == K_F9 ) {

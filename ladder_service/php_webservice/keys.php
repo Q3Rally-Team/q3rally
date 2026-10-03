@@ -98,7 +98,7 @@ function keys_normalize_server_name(string $name): string
  * Authenticate an incoming API request.
  * Returns the matching key record or exits with 401/403.
  */
-function keys_require_auth(string $incomingServerName): array
+function keys_require_auth(string $incomingServerName, bool $countMatch = true): array
 {
     $header   = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $provided = strncasecmp($header, 'Bearer ', 7) === 0 ? trim(substr($header, 7)) : '';
@@ -144,16 +144,16 @@ function keys_require_auth(string $incomingServerName): array
         exit;
     }
 
-    // Update last-used metadata
-    keys_touch($provided);
+    // Update last-used metadata (ghost uploads do not count as matches)
+    keys_touch($provided, $countMatch);
 
     return $record;
 }
 
 /**
- * Update lastUsedAt, lastUsedIp and matchCount for a key.
+ * Update lastUsedAt, lastUsedIp and matchCount (or ghostCount) for a key.
  */
-function keys_touch(string $key): void
+function keys_touch(string $key, bool $countMatch = true): void
 {
     $keys = keys_load();
     $idx  = -1;
@@ -168,7 +168,11 @@ function keys_touch(string $key): void
     }
     $keys[$idx]['lastUsedAt']  = gmdate('c');
     $keys[$idx]['lastUsedIp']  = $_SERVER['REMOTE_ADDR'] ?? null;
-    $keys[$idx]['matchCount']  = (int)($keys[$idx]['matchCount'] ?? 0) + 1;
+    if ($countMatch) {
+        $keys[$idx]['matchCount'] = (int)($keys[$idx]['matchCount'] ?? 0) + 1;
+    } else {
+        $keys[$idx]['ghostCount'] = (int)($keys[$idx]['ghostCount'] ?? 0) + 1;
+    }
     keys_save($keys);
 }
 

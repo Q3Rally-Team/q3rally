@@ -430,6 +430,8 @@ void G_CheckMinimumPlayers( void ) {
 	trap_Cvar_Update(&bot_minplayers);
 	minplayers = bot_minplayers.integer;
 	if (minplayers <= 0) return;
+	// Q3Rally: no bot fill-up in human-only gametypes (GT_GHOST)
+	if ( !BG_GametypeAllowsBots( g_gametype.integer ) ) return;
 
 	if (g_gametype.integer >= GT_TEAM) {
 		if (minplayers >= g_maxclients.integer / 2) {
@@ -580,6 +582,12 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 	char			*model;
 	char			*headmodel;
 	char			userinfo[MAX_INFO_STRING];
+
+	// Q3Rally: some gametypes (GT_GHOST) are human-only
+	if ( !BG_GametypeAllowsBots( g_gametype.integer ) ) {
+		G_Printf( S_COLOR_YELLOW "Bots are not allowed in %s.\n", BG_GametypeDisplayName( g_gametype.integer ) );
+		return;
+	}
 
 	// have the server allocate a client slot
 	clientNum = trap_BotAllocateClient();

@@ -565,7 +565,7 @@ cgs.scores3 = atoi( CG_ConfigString( CS_SCORES3 ) );
 cgs.scores4 = atoi( CG_ConfigString( CS_SCORES4 ) );
 // END
 cgs.levelStartTime = atoi( CG_ConfigString( CS_LEVEL_START_TIME ) );
-cgs.trackLength = atof( CG_ConfigString( CS_TRACKLENGTH ) );
+CG_ParseTrackLength( CG_ConfigString( CS_TRACKLENGTH ) );
 // Q3Rally Code Start - Intro Camera
 CG_IntroCam_ParseConfigstring();
 // Q3Rally Code END
@@ -674,7 +674,7 @@ static void CG_ConfigStringModified( void ) {
 		cgs.scores4 = atoi( str );
 // END
 	} else if ( num == CS_TRACKLENGTH ) {
-		cgs.trackLength = atof( str );
+		CG_ParseTrackLength( str );
 	} else if ( num == CS_LEVEL_START_TIME ) {
 		cgs.levelStartTime = atoi( str );
 	} else if ( num == CS_VOTE_TIME ) {
@@ -1870,6 +1870,10 @@ static void CG_ServerCommand( void ) {
 
         if ( !strcmp( cmd, "ghostmeta" ) ) {
                 CG_ParseGhostMeta();
+                return;
+        }
+
+        if ( !Q_stricmpn( cmd, "lghost", 6 ) && CG_LadderGhost_ServerCommand( cmd ) ) {
                 return;
         }
 
