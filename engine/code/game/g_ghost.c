@@ -30,7 +30,10 @@ static byte s_clientGhostSampleSelected[MAX_GHOST_BOT_WAYPOINTS];
 // avoid a 2 MB static allocation inside each function that reads ghost files.
 // Safe to share: G_Ghost_ParseHeader, G_Ghost_LoadBotRouteFromFile, and the
 // scan loop in G_Ghost_LoadForMap are never called concurrently (single-thread QVM).
-static char s_ghostFileBuffer[MAX_GHOST_FILE_SIZE + 1];
+// The buffer itself is g_ghostTextBuffer (g_local.h), shared with the ghost
+// recorder and the ladder ghost cache.
+char g_ghostTextBuffer[G_GHOST_TEXT_BUFFER_SIZE];
+#define s_ghostFileBuffer g_ghostTextBuffer
 static int G_Ghost_Strlen( const char *text );
 static qboolean G_Ghost_IsRouteBetter( const ghostBotRoute_t *candidate, const ghostBotRoute_t *currentBest );
 static qboolean G_Ghost_RecordTimeIsBetter( int lhsTimeMs, int rhsTimeMs );

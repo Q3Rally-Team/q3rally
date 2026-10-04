@@ -426,6 +426,12 @@ typedef enum {
 #define MAX_BASE_GHOST_TRANSFER_FRAMES 512
 #define MAX_LADDER_GHOST_ENTRIES 64
 
+// Ghost Race client commands that are repeated until the server answers
+#define GHOSTCMD_LIST   0       // lghostlistreq -> lghostlist
+#define GHOSTCMD_PICK   1       // lghostpick    -> lghostpickok / lghostmeta / lghostfail
+#define GHOSTCMD_OPP    2       // ghostopp      -> lghostoppok
+#define GHOSTCMD_KINDS  3
+
 typedef struct ladderGhostEntry_s {
         int                     lapMs;
         char            vehicle[32];
@@ -982,6 +988,21 @@ typedef struct {
 		char		name[40];
 	} ghostRaceResults[MAX_CLIENTS];
 	char		ghostOpponentReported[64];	// last "ghostopp" sent
+	// Ghost commands with retry (cg_ghost_picker.c): a dedicated server
+	// drops a client command that follows the previous one within a second
+	// (sv_floodProtect), e.g. right after the HUD's "score" request.
+	struct {
+		char		text[96];
+		qboolean	pending;		// not answered yet
+		qboolean	sent;
+		int			sentAt;
+		int			tries;
+	} ghostCmds[GHOSTCMD_KINDS];
+	qboolean	ghostCmdAnySent;
+	int			ghostCmdLastSent;
+	int			ghostOpponentPendingMs;		// lap time in the unanswered "ghostopp"
+	qboolean	ladderGhostPickAcked;		// server took the pick, ghost data follows
+	int			ladderGhostPickAckedAt;
 	qboolean	ladderPickerManual;		// opened with "ghostpicker": stays open in the race
 	qboolean	ladderPickerAutoShown;
 	qboolean	ladderPickerAllVehicles;
@@ -2242,6 +2263,7 @@ void CG_PrecacheGhostVehicle( const char *vehicle );
 // cg_ghost_picker.c
 void CG_LadderGhost_Reset( void );
 void CG_LadderGhost_RequestList( void );
+void CG_LadderGhost_NetFrame( void );
 void CG_LadderGhost_Pick( int entryIndex );
 qboolean CG_LadderGhost_ServerCommand( const char *cmd );
 qboolean CG_LadderGhost_PickerIsOpen( void );

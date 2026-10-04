@@ -29,10 +29,15 @@ or (at your option) any later version.
 //   lghostdata <first> <count> ( <t> <x> <y> <z> <pitch> <yaw> <roll> )*  (whole units/degrees)
 //   lghostdone <idx>
 //   lghostfail <idx> <reason>
-// client -> server:
-//   lghostlistreq           send the list again (cgame restart)
+//   lghostpickok <idx>      pick taken (meta/data or fail follow)
+//   lghostoppok <lapMs>     "ghostopp" taken (echoes the client's lap time)
+// client -> server (the client repeats them until the answer arrives,
+// a dedicated server drops commands that come within a second):
+//   lghostlistreq           send the list again (cgame restart), answer: lghostlist
 //   lghostpick <idx>        stream this ghost
-//   ghostopp <lapMs> "<name>"  the ghost this driver races (any ghost type)
+//   ghostopp <lapMs> "<name>" [<idx>]  the ghost this driver races (any ghost
+//                           type); idx >= 0: ladder entry, the server uses the
+//                           lap time and name of its own list
 // Result at the finish (server -> all clients):
 //   lghostresult <client> <won 0|1> <bestLapMs> <ghostLapMs> "<name>"
 
@@ -113,7 +118,7 @@ static int              s_entryCount;
 static lghostParsed_t   s_pool[LGHOST_POOL_SIZE];
 static lghostClient_t   s_clients[MAX_CLIENTS];
 static int              s_nextRequestId;
-static char             s_fileBuffer[LADDER_GHOST_MAX_DATA + 1];
+#define s_fileBuffer     g_ghostTextBuffer   /* shared, see g_local.h */
 
 static qboolean G_GhostLadder_Enabled( void ) {
 	return g_gametype.integer == GT_GHOST && g_ghostDownload.integer != 0;
@@ -458,23 +463,36 @@ static void G_GhostLadder_RequestList( void ) {
 	trap_LadderFetchGhosts( &request );
 }
 
-/* "<requestId> ok|fail <count>" from the engine; returns 1 ok, -1 fail, 0 pending. */
+/* Status from the engine: "<requestId> ok|fail <count>" entries separated by
+ * ';' (newest first; ghost downloads keep the last few results).
+ * Returns 1 ok, -1 fail, 0 pending. */
 static int G_GhostLadder_FetchStatus( const char *cvarName, int requestId ) {
-	char status[64];
+	char status[MAX_CVAR_VALUE_STRING];
 	char *cursor;
 
 	trap_Cvar_VariableStringBuffer( cvarName, status, sizeof( status ) );
-	if ( !status[0] || atoi( status ) != requestId ) {
-		return 0;
-	}
 	cursor = status;
-	while ( *cursor && *cursor != ' ' ) {
-		cursor++;
+	while ( *cursor ) {
+		char *next = cursor;
+
+		while ( *next && *next != ';' ) {
+			next++;
+		}
+		if ( *next ) {
+			*next++ = '\0';
+		}
+		if ( atoi( cursor ) == requestId ) {
+			while ( *cursor && *cursor != ' ' ) {
+				cursor++;
+			}
+			while ( *cursor == ' ' ) {
+				cursor++;
+			}
+			return !Q_stricmpn( cursor, "ok", 2 ) ? 1 : -1;
+		}
+		cursor = next;
 	}
-	while ( *cursor == ' ' ) {
-		cursor++;
-	}
-	return !Q_stricmpn( cursor, "ok", 2 ) ? 1 : -1;
+	return 0;
 }
 
 static void G_GhostLadder_ListReady( qboolean fromCache ) {
@@ -496,6 +514,33 @@ static void G_GhostLadder_ListReady( qboolean fromCache ) {
 		}
 	}
 	G_Printf( "Ladder ghosts: %d for %s%s\n", s_entryCount, s_mapName, fromCache ? " (cached)" : "" );
+}
+
+/*
+ * Map name as a path component of at most maxLen characters. Longer names
+ * become "<prefix>~<8 hex FNV-1a of the full name>", so the list path never
+ * exceeds MAX_QPATH (it was cut off silently for map names > ~17 chars).
+ * Short names stay unchanged, existing cache files keep their names.
+ */
+static void G_GhostLadder_MapComponent( const char *map, char *out, int outSize, int maxLen ) {
+	unsigned int hash = 2166136261u;
+	const char *p;
+	int keep;
+
+	if ( (int)strlen( map ) <= maxLen ) {
+		Q_strncpyz( out, map, outSize );
+		return;
+	}
+	for ( p = map; *p; p++ ) {
+		hash ^= (unsigned char)*p;
+		hash *= 16777619u;
+	}
+	keep = maxLen - 9;
+	if ( keep >= outSize ) {
+		keep = outSize - 1;
+	}
+	Q_strncpyz( out, map, keep + 1 );
+	Com_sprintf( out + keep, outSize - keep, "~%08x", hash );
 }
 
 /*
@@ -531,9 +576,15 @@ void G_GhostLadder_Init( void ) {
 	Q_strlwr( s_mapName );
 	trackLength = ( g_trackLength.integer >= 0 && g_trackLength.integer <= 2 ) ? g_trackLength.integer : 0;
 	trackReversed = g_trackReversed.integer ? 1 : 0;
-	Com_sprintf( s_listPath, sizeof( s_listPath ), "ghosts/ladder/%s_tl%d_rev%d_p%d_c%d.list",
-		s_mapName, trackLength, trackReversed, BG_PHYSICS_VERSION,
-		trap_Cvar_VariableIntegerValue( "sv_mapChecksum" ) );
+	{
+		char mapPart[MAX_QPATH];
+
+		/* "ghosts/ladder/" + map + "_tl0_rev0_p<3>_c-2147483648.list" */
+		G_GhostLadder_MapComponent( s_mapName, mapPart, sizeof( mapPart ), 16 );
+		Com_sprintf( s_listPath, sizeof( s_listPath ), "ghosts/ladder/%s_tl%d_rev%d_p%d_c%d.list",
+			mapPart, trackLength, trackReversed, BG_PHYSICS_VERSION,
+			trap_Cvar_VariableIntegerValue( "sv_mapChecksum" ) );
+	}
 
 	/* Offer what the cache holds right away; the download refreshes it. */
 	G_GhostLadder_LoadList();
@@ -824,20 +875,34 @@ qboolean G_GhostLadder_ClientCommand( gentity_t *ent, const char *cmd ) {
 
 	if ( !Q_stricmp( cmd, "ghostopp" ) ) {
 		char name[64];
+		int reportedMs;
 		int lapMs;
+		int ladderEntry = -1;
 
 		if ( clientNum < 0 || clientNum >= MAX_CLIENTS || g_gametype.integer != GT_GHOST ) {
 			return qtrue;
 		}
 		trap_Argv( 1, arg, sizeof( arg ) );
 		trap_Argv( 2, name, sizeof( name ) );
-		lapMs = atoi( arg );
+		reportedMs = atoi( arg );
+		lapMs = reportedMs;
+		if ( trap_Argc() > 3 ) {
+			trap_Argv( 3, arg, sizeof( arg ) );
+			ladderEntry = atoi( arg );
+		}
 		if ( lapMs < 1000 || lapMs > 3600000 ) {
 			lapMs = 0;
+		}
+		if ( lapMs > 0 && ladderEntry >= 0 && ladderEntry < s_entryCount && s_listState == LGHOST_LIST_READY ) {
+			/* Ladder ghost: lap time and name from the server's list, not
+			 * from the client. */
+			lapMs = s_entries[ladderEntry].lapMs;
+			Q_strncpyz( name, s_entries[ladderEntry].name, sizeof( name ) );
 		}
 		s_clients[clientNum].opponentLapMs = lapMs;
 		G_GhostLadder_SafeName( name, s_clients[clientNum].opponentName,
 			sizeof( s_clients[clientNum].opponentName ) );
+		trap_SendServerCommand( clientNum, va( "lghostoppok %d", reportedMs ) );
 		return qtrue;
 	}
 
@@ -865,6 +930,12 @@ qboolean G_GhostLadder_ClientCommand( gentity_t *ent, const char *cmd ) {
 	entry = atoi( arg );
 	if ( s_listState != LGHOST_LIST_READY || entry < 0 || entry >= s_entryCount ) {
 		G_GhostLadder_SendFail( clientNum, entry, "invalid" );
+		return qtrue;
+	}
+
+	trap_SendServerCommand( clientNum, va( "lghostpickok %d", entry ) );
+	if ( client->pickState != LGHOST_PICK_IDLE && client->pickEntry == entry ) {
+		/* The client repeated the pick: the running one goes on. */
 		return qtrue;
 	}
 

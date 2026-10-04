@@ -13,10 +13,6 @@ cvar_t *sv_ladderApiKey = NULL;
 cvar_t *sv_ladderEnabled = NULL;
 cvar_t *sv_telemetryMaxBatch = NULL;
 
-static void SV_LadderLogSubmitSnapshot( const ladderMatchPayload_t *payload ) {
-	(void)payload;
-}
-
 #include "sv_ladder_ghost_for_test.c"
 
 static cvar_t s_urlCvar;
@@ -176,6 +172,55 @@ int main( void ) {
 		assert( !strcmp( test_fsLastPath, cacheA ) );
 		assert( !strcmp( test_fsLastData, data ) );
 		assert( !strcmp( test_cvarSetValue, "9 ok 1" ) );
+
+		/* A queued download keeps the result of the one before it. */
+		fetch.requestId = 10;
+		SV_LadderFetchFinish( &fetch, NULL, 404 );
+		assert( !strcmp( test_cvarSetValue, "10 fail 0;9 ok 1" ) );
+
+		/* Long map names are shortened with a hash (MAX_QPATH). */
+		{
+			char longA[MAX_QPATH];
+			char longB[MAX_QPATH];
+			SV_LadderFetchCacheName( "q3r_an_extremely_long_map_name_v2", "a.b", 1000, longA, sizeof( longA ) );
+			SV_LadderFetchCacheName( "q3r_an_extremely_long_map_name_v3", "a.b", 1000, longB, sizeof( longB ) );
+			assert( strlen( longA ) < MAX_QPATH - 1 );
+			assert( strchr( longA, '~' ) && strcmp( longA, longB ) );
+			assert( !strncmp( longA, "ghosts/ladder/q3r_an_extremel~", 30 ) );
+		}
+
+		/* Ghost cache: pruned to the fresh list once it grows too large. */
+		{
+			static char names[70][32];
+			char keepPath[MAX_QPATH];
+			const char *keep = keepPath + 25;   /* file name of a listed ghost */
+			int i;
+
+			SV_LadderFetchCacheName( "q3r_valley",
+				"q3r_valley.tl1_rev0.evo.p1_c-5.1234abcd-0000-4000-8000-000000000001", 61234,
+				keepPath, sizeof( keepPath ) );
+
+			for ( i = 0; i < 70; i++ ) {
+				snprintf( names[i], sizeof( names[i] ), "%016d.ghost", i );
+				test_fsListFiles[i] = names[i];
+			}
+			snprintf( names[0], sizeof( names[0] ), "%s", keep );
+			test_fsListCount = 70;
+			test_fsRemoveCount = 0;
+			fetch.kind = LADDER_FETCH_LIST;
+			fetch.requestId = 11;
+			Q_strncpyz( fetch.target, "ghosts/ladder/q3r_valley_tl1_rev0.list", sizeof( fetch.target ) );
+			SV_LadderFetchFinish( &fetch, body, 200 );
+			assert( !strcmp( test_fsListDir, "ghosts/ladder/q3r_valley" ) );
+			assert( test_fsRemoveCount == 69 );
+			assert( strcmp( test_fsLastRemoved + 25, keep ) );
+
+			test_fsListCount = 10;     /* small cache: nothing removed */
+			test_fsRemoveCount = 0;
+			SV_LadderFetchFinish( &fetch, body, 200 );
+			assert( test_fsRemoveCount == 0 );
+			test_fsListCount = 0;
+		}
 	}
 
 	puts( "ok" );

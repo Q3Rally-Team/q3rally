@@ -1535,6 +1535,7 @@ void ClientBegin( int clientNum ) {
 
         G_Ghost_AnnounceForClient( ent );
         G_GhostLadder_ClientBegin( clientNum );
+        G_LadderRules_ClientBegin( clientNum );
 
         // count current clients and rank for scoreboard
         CalculateRanks();

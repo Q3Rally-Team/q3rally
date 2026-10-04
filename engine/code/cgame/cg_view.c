@@ -764,7 +764,7 @@ static int CG_CalcViewValues( void ) {
 		cg.refdefViewAngles[PITCH] = 0;
 		cg.refdefViewAngles[ROLL] = 0;
 
-		angle = abs(AngleDifference(cg.refdefViewAngles[YAW], oldAngles[YAW]));
+		angle = fabs(AngleDifference(cg.refdefViewAngles[YAW], oldAngles[YAW])); // same scale steps as the former int abs()
 		scale = floor(angle / 10 + 1); //changed back to 10 from 5
 
 		scale *= (1 + cg_tightCamTracking.value); // changed from 1 to 2
@@ -1067,6 +1067,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// let the client system know what our weapon and zoom settings are
 	trap_SetUserCmdValue( cg.weaponSelect, cg.zoomSensitivity );
+
+	// Ghost Race: (re)send ghost commands the server has not answered yet
+	CG_LadderGhost_NetFrame();
 
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;

@@ -385,7 +385,7 @@ static bind_t g_bindings[] =
         {"drop",                          "drop item",                   ID_DROPITEM,           ANIM_IDLE,              'g',                   -1,             -1, -1},
 	{"+forward", 		  "accelerate",		      ID_ACCEL,		      ANIM_WALK,		  'w',		        K_UPARROW,		-1, -1},
 	{"+back", 			  "brake",			      ID_BRAKE,		      ANIM_BACK,		  's',	            K_DOWNARROW,		-1, -1},
-	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		K_CTRL,		-1, -1},
+	{"+button14", 		"handbrake",		ID_HANDBRAKE,	ANIM_BACK,		K_SPACE,		-1,		-1, -1},
 	{"+speed", 			"turbo",			ID_TURBO,		ANIM_TURBO,		K_SHIFT,		-1,		-1,	-1},
 	{"gearUp",			"gear up",			ID_GEARUP,		ANIM_IDLE,		K_PGUP,			-1,		-1, -1},
 	{"gearDown",		"gear down",		ID_GEARDOWN,	ANIM_IDLE,		K_PGDN,			-1,		-1, -1},

@@ -815,16 +815,17 @@ ifdef MINGW
     CLIENT_CFLAGS += $(CURL_CFLAGS)
     SERVER_CFLAGS += $(CURL_CFLAGS)
     ifneq ($(USE_CURL_DLOPEN),1)
-      ifeq ($(USE_LOCAL_HEADERS),1)
+      ifneq ($(CURL_PREFIX),)
+        # Static libcurl from misc/build-curl-mingw.sh: TLS through Windows
+        # Schannel, only Windows system libraries. Its version matches the
+        # headers in code/curl-<version>.
         CLIENT_CFLAGS += -DCURL_STATICLIB
         SERVER_CFLAGS += -DCURL_STATICLIB
-        ifeq ($(ARCH),x86_64)
-          CLIENT_LIBS += $(LIBSDIR)/win64/libcurl.a -lcrypt32
-          SERVER_LIBS += $(LIBSDIR)/win64/libcurl.a -lcrypt32
-        else
-          CLIENT_LIBS += $(LIBSDIR)/win32/libcurl.a -lcrypt32
-          SERVER_LIBS += $(LIBSDIR)/win32/libcurl.a -lcrypt32
-        endif
+        CURL_WIN_LIBS = $(CURL_PREFIX)/lib/libcurl.a -lbcrypt -ladvapi32 -lcrypt32 -lsecur32 -lws2_32 -liphlpapi
+        CLIENT_LIBS += $(CURL_WIN_LIBS)
+        SERVER_LIBS += $(CURL_WIN_LIBS)
+      else ifeq ($(USE_LOCAL_HEADERS),1)
+        $(error Windows builds link libcurl statically: run misc/build-curl-mingw.sh and pass CURL_PREFIX=<its install dir>, or build with USE_CURL_DLOPEN=1 or USE_CURL=0)
       else
         CLIENT_LIBS += $(CURL_LIBS)
         SERVER_LIBS += $(CURL_LIBS)
@@ -2883,6 +2884,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_ghost.o \
   $(B)/$(BASEGAME)/game/g_ghost_record.o \
   $(B)/$(BASEGAME)/game/g_ghost_ladder.o \
+  $(B)/$(BASEGAME)/game/g_ladder_rules.o \
   $(B)/$(BASEGAME)/game/g_cmds.o \
   $(B)/$(BASEGAME)/game/g_combat.o \
   $(B)/$(BASEGAME)/game/g_items.o \
@@ -2982,7 +2984,6 @@ $(B)/$(MISSIONPACK)/vm/qagame.qvm: $(MPGVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
 ## Q3RALLY UI
 #############################################################################
 
-#  $(B)/$(BASEGAME)/ui/ui_controls2.o
 #  $(B)/$(BASEGAME)/ui/ui_servers2.o
 #  $(B)/$(BASEGAME)/ui/ui_startserver.o
 

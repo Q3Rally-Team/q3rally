@@ -22,6 +22,9 @@ Sie ist auf der Soll-Semantik aus `docs/ladder_payload_semantics.md` aufgebaut.
 | GT_DOMINATION | pflichtig | ❌ | ❌ | ✅ | `teams=null` (muss Python-seitig reject) |
 | GT_SINGLE_PLAYER | verboten | ❌ | ❌ | ❌ | `teams` gesetzt (muss Python-seitig reject) |
 
+`GT_GHOST` (8, Ghost Race) taucht hier bewusst nicht auf: Der Spielserver meldet Ghost-Rennen
+nicht an die Ladder (`G_LadderSubmitMatchReport` bricht für diesen Modus ab).
+
 ## Golden-Payloads
 
 Für **jeden Modus** erzeugt der Testlauf automatisch einen Golden-Payload über den Game-Generator

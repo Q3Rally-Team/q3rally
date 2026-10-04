@@ -10,6 +10,9 @@
 
 #include "../engine/code/game/g_ghost_record.c"
 
+/* Shared ghost text buffer, defined in g_ghost.c in the game module. */
+char g_ghostTextBuffer[G_GHOST_TEXT_BUFFER_SIZE];
+
 level_locals_t level;
 gentity_t g_entities[MAX_GENTITIES];
 static gclient_t s_clients[2];
@@ -32,6 +35,8 @@ qboolean BG_GametypeIsTimedRace( int gametype ) {
 	return ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_GHOST ) ? qtrue : qfalse;
 }
 qboolean G_IsSprintTrack( void ) { return qfalse; }
+static const char *s_rulesViolation;
+const char *G_LadderRulesViolation( void ) { return s_rulesViolation; }
 
 void trap_Cvar_VariableStringBuffer( const char *name, char *buffer, int size ) {
 	if ( !strcmp( name, "mapname" ) ) {
@@ -186,6 +191,34 @@ int main( void ) {
 	g_gametype.integer = GT_RACING;
 	DriveLap( 1, 100000, 40000, 0 );
 	assert( s_submitCount == 3 && s_lastMeta.lapMs == 40000 );
+
+	/* Non-standard rules (cheats, timescale, physics): no upload. */
+	s_rulesViolation = "timescale 0.5";
+	DriveLap( 1, 150000, 30000, 0 );
+	assert( s_submitCount == 3 );
+	/* Rules back to standard in the middle of a lap: that lap is never
+	 * uploaded (recording did not start at the lap start), the next one is. */
+	{
+		gentity_t *ent = &g_entities[1];
+		int t;
+
+		ent->client->lapStartTime = 190000;
+		for ( t = 190000; t < 220000; t += 50 ) {
+			float a = 2.0f * (float)M_PI * (float)( t - 190000 ) / 30000.0f;
+			if ( t == 200000 ) {
+				s_rulesViolation = NULL;
+			}
+			level.time = t;
+			ent->client->ps.origin[0] = cos( a ) * 3000.0f;
+			ent->client->ps.origin[1] = sin( a ) * 3000.0f;
+			G_GhostRecord_ClientFrame( ent );
+		}
+		level.time = 220000;
+		G_GhostRecord_LapComplete( ent, 190000, 220000 );
+		assert( s_submitCount == 3 );
+	}
+	DriveLap( 1, 220000, 30000, 0 );
+	assert( s_submitCount == 4 && s_lastMeta.lapMs == 30000 );
 
 	puts( "ok" );
 	return 0;

@@ -146,6 +146,77 @@ static qboolean UI_Profile_IsValidUUID( const char *s ) {
     return qtrue;
 }
 
+/*
+ * UUID-Ereignisse in profiles/uuid_history.log anhängen. qconsole.log wird bei
+ * jedem Start überschrieben; diese Datei bleibt, damit ein Wechsel der
+ * Spieler-ID (neue Ladder-Identität) später nachvollziehbar ist.
+ */
+void UI_Profile_LogUuidEvent( const char *event, const char *name, const char *uuid ) {
+    fileHandle_t file;
+    char line[192];
+    int len;
+
+    trap_FS_FOpenFile( "profiles/uuid_history.log", &file, FS_APPEND );
+    if ( !file ) {
+        return;
+    }
+    len = Com_sprintf( line, sizeof( line ), "ui t=%d %s profile=\"%s\" uuid=%s\n",
+                       trap_Milliseconds(), event ? event : "?",
+                       name ? name : "", ( uuid && uuid[0] ) ? uuid : "-" );
+    if ( len > 0 ) {
+        trap_FS_Write( line, len, file );
+    }
+    trap_FS_FCloseFile( file );
+}
+
+/*
+ * Sucht ein vorhandenes (nicht gelöschtes) Profil mit gleichem Namen,
+ * ohne Groß-/Kleinschreibung. out bekommt die Schreibweise auf der Platte.
+ */
+qboolean UI_Profile_FindExisting( const char *name, char *out, int outSize ) {
+    static char fileBuffer[4096];
+    char *ptr;
+    int total;
+    int i;
+
+    if ( out && outSize > 0 ) {
+        out[0] = '\0';
+    }
+    if ( !name || !name[0] ) {
+        return qfalse;
+    }
+
+    total = trap_FS_GetFileList( "profiles", ".json", fileBuffer, sizeof( fileBuffer ) );
+    ptr = fileBuffer;
+    for ( i = 0; i < total; ++i ) {
+        char existing[MAX_QPATH];
+        int len = strlen( ptr );
+
+        if ( len <= 0 ) {
+            ptr++;
+            continue;
+        }
+        COM_StripExtension( ptr, existing, sizeof( existing ) );
+        ptr += len + 1;
+
+        if ( !Q_stricmp( existing, name ) ) {
+            fileHandle_t file;
+            int fileLen = trap_FS_FOpenFile( va( "profiles/%s.json", existing ), &file, FS_READ );
+            if ( file ) {
+                trap_FS_FCloseFile( file );
+            }
+            if ( fileLen > 0 ) {
+                if ( out && outSize > 0 ) {
+                    Q_strncpyz( out, existing, outSize );
+                }
+                return qtrue;
+            }
+        }
+    }
+
+    return qfalse;
+}
+
 static qboolean UI_Profile_GetArchivedUUID( char *out, int outSize ) {
     char uuid[PROFILE_MAX_UUID];
 
@@ -1045,6 +1116,13 @@ qboolean UI_Profile_WriteDefaultFile( const char *name ) {
         return qfalse;
     }
 
+    /* Never overwrite an existing profile: that would replace its UUID
+     * (= Ladder identity) and reset all stats. */
+    if ( UI_Profile_FindExisting( name, NULL, 0 ) ) {
+        trap_Print( va( "Q3Rally Profile: '%s' already exists, not overwriting it\n", name ) );
+        return qfalse;
+    }
+
     Com_Memset( &info,  0, sizeof( info  ) );
     Com_Memset( &stats, 0, sizeof( stats ) );
 
@@ -1083,7 +1161,11 @@ qboolean UI_Profile_WriteDefaultFile( const char *name ) {
         hex[b[15]>>4], hex[b[15]&0xF]
     );
 
-    return UI_Profile_WriteFile( name, &info, &stats );
+    if ( !UI_Profile_WriteFile( name, &info, &stats ) ) {
+        return qfalse;
+    }
+    UI_Profile_LogUuidEvent( "created", name, info.uuid );
+    return qtrue;
 }
 
 static void UI_ProfileOverlay_EnsureSelectionVisible( void ) {
@@ -1933,6 +2015,7 @@ void UI_ProfileOverlay_InitSession( void ) {
                 if ( UI_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
                     Q_strncpyz( info.uuid, archivedUuid, sizeof( info.uuid ) );
                     UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+                    UI_Profile_LogUuidEvent( "restored-from-cl_uuid", uis.activeProfile, info.uuid );
                 } else {
                     static const char hex[] = "0123456789abcdef";
                     unsigned char b[16];
@@ -1958,7 +2041,10 @@ void UI_ProfileOverlay_InitSession( void ) {
                     hex[b[10]>>4],hex[b[10]&0xF], hex[b[11]>>4],hex[b[11]&0xF],
                     hex[b[12]>>4],hex[b[12]&0xF], hex[b[13]>>4],hex[b[13]&0xF],
                     hex[b[14]>>4],hex[b[14]&0xF], hex[b[15]>>4],hex[b[15]&0xF] );
+                    trap_Print( va( "^3Q3Rally Profile: '%s' had no valid UUID, generated a NEW one (new Ladder identity)\n",
+                                    uis.activeProfile ) );
                     UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+                    UI_Profile_LogUuidEvent( "generated", uis.activeProfile, info.uuid );
                 }
             }
             if ( UI_Profile_IsValidUUID( info.uuid ) ) {
@@ -2050,6 +2136,7 @@ static qboolean UI_Profile_EnsureDataFresh( void ) {
              UI_Profile_GetArchivedUUID( archivedUuid, sizeof( archivedUuid ) ) ) {
             Q_strncpyz( info.uuid, archivedUuid, sizeof( info.uuid ) );
             UI_Profile_WriteFile( uis.activeProfile, &info, &stats );
+            UI_Profile_LogUuidEvent( "restored-from-cl_uuid", uis.activeProfile, info.uuid );
         }
 
         uis.activeProfileStats = stats;

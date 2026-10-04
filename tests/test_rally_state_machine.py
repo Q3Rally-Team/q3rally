@@ -1,8 +1,14 @@
+import atexit
 import pathlib
+import shutil
+import tempfile
 import subprocess
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-TEST_BINARY = REPO_ROOT / "tests" / "rally_state_machine_test"
+# Build output goes to a temporary directory, never into tests/.
+BUILD_DIR = pathlib.Path(tempfile.mkdtemp(prefix="q3rally-test-"))
+atexit.register(shutil.rmtree, BUILD_DIR, True)
+TEST_BINARY = BUILD_DIR / "rally_state_machine_test"
 
 COMPILE_ARGS = [
     "gcc",

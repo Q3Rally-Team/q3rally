@@ -1,13 +1,20 @@
+import atexit
 import pathlib
+import shutil
+import tempfile
 import subprocess
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+# Build output goes to a temporary directory, never into tests/.
+BUILD_DIR = pathlib.Path(tempfile.mkdtemp(prefix="q3rally-test-"))
+atexit.register(shutil.rmtree, BUILD_DIR, True)
 SOURCE_FILE = REPO_ROOT / "engine" / "code" / "server" / "sv_ladder.c"
-GENERATED_SOURCE = REPO_ROOT / "tests" / "sv_ladder_for_test.c"
-TEST_BINARY = REPO_ROOT / "tests" / "ladder_payload_validation_test"
+GENERATED_SOURCE = BUILD_DIR / "sv_ladder_for_test.c"
+TEST_BINARY = BUILD_DIR / "ladder_payload_validation_test"
 
 COMPILE_ARGS = [
     "gcc",
+    "-I" + str(BUILD_DIR),
     "-I" + str(REPO_ROOT / "tests"),
     "-I" + str(REPO_ROOT / "engine" / "code" / "server"),
     "-I" + str(REPO_ROOT / "engine" / "code" / "qcommon"),

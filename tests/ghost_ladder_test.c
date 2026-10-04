@@ -12,6 +12,9 @@
 
 #include "../engine/code/game/g_ghost_ladder.c"
 
+/* Shared ghost text buffer, defined in g_ghost.c in the game module. */
+char g_ghostTextBuffer[G_GHOST_TEXT_BUFFER_SIZE];
+
 level_locals_t level;
 gentity_t g_entities[MAX_GENTITIES];
 static gclient_t s_testClients[2];
@@ -73,6 +76,8 @@ static ladderGhostFetch_t s_requests[16];
 static int s_requestCount;
 static char s_argv1[32];
 static char s_argv2[64];
+static char s_argv3[16];
+static int s_argc = 3;
 
 void trap_Cvar_VariableStringBuffer( const char *name, char *buffer, int size ) {
 	if ( !strcmp( name, "mapname" ) ) {
@@ -99,8 +104,9 @@ void trap_LadderFetchGhosts( const ladderGhostFetch_t *request ) {
 	s_requests[s_requestCount++] = *request;
 }
 void trap_Argv( int n, char *buffer, int bufferLength ) {
-	Q_strncpyz( buffer, n == 1 ? s_argv1 : ( n == 2 ? s_argv2 : "" ), bufferLength );
+	Q_strncpyz( buffer, n == 1 ? s_argv1 : ( n == 2 ? s_argv2 : ( n == 3 ? s_argv3 : "" ) ), bufferLength );
 }
+int trap_Argc( void ) { return s_argc; }
 
 /* ---- server commands ----------------------------------------------------- */
 static char s_commands[512][MAX_STRING_CHARS];
@@ -211,12 +217,26 @@ int main( void ) {
 	s_commandCount = 0;
 	strcpy( s_argv1, "1" );
 	assert( G_GhostLadder_ClientCommand( &g_entities[0], "lghostpick" ) );
+	assert( s_commandCount == 1 && !strcmp( s_commands[0], "lghostpickok 1" ) );
+	s_commandCount = 0;
 	RunFrames( 1 );
 	assert( s_requestCount == 2 );
+	{
+		/* The client repeats the pick (answer still on the way): only a
+		 * new answer, the waiting pick and its download go on. */
+		int queuedAt = s_clients[0].pickQueuedAt;
+		RunFrames( 1 );
+		assert( G_GhostLadder_ClientCommand( &g_entities[0], "lghostpick" ) );
+		assert( s_commandCount == 1 && !strcmp( s_commands[0], "lghostpickok 1" ) );
+		assert( s_clients[0].pickState == LGHOST_PICK_WAITING && s_clients[0].pickQueuedAt == queuedAt );
+		s_commandCount = 0;
+		RunFrames( 1 );
+		assert( s_requestCount == 2 );
+	}
 	assert( s_requests[1].kind == LADDER_FETCH_GHOST );
 	assert( !strcmp( s_requests[1].ghostId, "q3r_testtrack.tl1_rev0.sidepipe.p1_c-4242.p3" ) );
 	assert( !strcmp( s_requests[1].target, "ghosts/ladder/q3r_testtrack/cccc.ghost" ) );
-	RunFrames( 3 );
+	RunFrames( 1 );
 	assert( s_commandCount == 0 );
 
 	/* Download arrives: 3000 recorded samples are thinned out to 2048. */
@@ -240,6 +260,8 @@ int main( void ) {
 	/* Second pick of the same ghost comes straight from the pool. */
 	s_commandCount = 0;
 	assert( G_GhostLadder_ClientCommand( &g_entities[0], "lghostpick" ) );
+	assert( !strcmp( s_commands[0], "lghostpickok 1" ) );
+	s_commandCount = 0;
 	RunFrames( 200 );
 	assert( s_requestCount == 2 );
 	assert( !strcmp( s_commands[0], "lghostmeta 1 59500 2048" ) );
@@ -278,6 +300,8 @@ int main( void ) {
 	s_commandCount = 0;
 	strcpy( s_argv1, "1" );
 	assert( G_GhostLadder_ClientCommand( &g_entities[0], "lghostpick" ) );
+	assert( !strcmp( s_commands[0], "lghostpickok 1" ) );
+	s_commandCount = 0;
 	RunFrames( 200 );
 	assert( s_requestCount == 1 );
 	assert( !strcmp( s_commands[0], "lghostmeta 1 59500 2048" ) );
@@ -296,6 +320,8 @@ int main( void ) {
 	strcpy( s_argv2, "Gamma \"Ray\";" );
 	assert( G_GhostLadder_ClientCommand( &g_entities[0], "ghostopp" ) );
 	assert( s_clients[0].opponentLapMs == 59500 && !strcmp( s_clients[0].opponentName, "Gamma Ray" ) );
+	assert( s_commandCount == 1 && !strcmp( s_commands[0], "lghostoppok 59500" ) );
+	s_commandCount = 0;
 	s_testClients[0].bestLapMs = 59000;
 	G_GhostLadder_ClientFinished( &g_entities[0] );
 	assert( !strcmp( s_commands[0], "lghostresult 0 1 59000 59500 \"Gamma Ray\"" ) );
@@ -306,8 +332,33 @@ int main( void ) {
 	strcpy( s_argv1, "0" );
 	strcpy( s_argv2, "-" );
 	assert( G_GhostLadder_ClientCommand( &g_entities[0], "ghostopp" ) );
+	assert( !strcmp( s_commands[2], "lghostoppok 0" ) );
 	G_GhostLadder_ClientFinished( &g_entities[0] );
-	assert( s_commandCount == 2 );
+	assert( s_commandCount == 3 );
+
+	/* Ladder ghost: lap time and name come from the server's list, a
+	 * client claiming a slower ghost cannot win by it. */
+	s_commandCount = 0;
+	s_argc = 4;
+	strcpy( s_argv1, "3599999" );
+	strcpy( s_argv2, "Slow Fake" );
+	strcpy( s_argv3, "1" );
+	assert( G_GhostLadder_ClientCommand( &g_entities[0], "ghostopp" ) );
+	assert( s_clients[0].opponentLapMs == 59500 && !strcmp( s_clients[0].opponentName, "Gamma Ray" ) );
+	assert( !strcmp( s_commands[0], "lghostoppok 3599999" ) );
+	s_testClients[0].bestLapMs = 60000;
+	G_GhostLadder_ClientFinished( &g_entities[0] );
+	assert( !strcmp( s_commands[1], "lghostresult 0 0 60000 59500 \"Gamma Ray\"" ) );
+	/* Unknown entry index: the client's values stay (personal ghost). */
+	strcpy( s_argv1, "61000" );
+	strcpy( s_argv2, "Personal Ghost" );
+	strcpy( s_argv3, "-1" );
+	assert( G_GhostLadder_ClientCommand( &g_entities[0], "ghostopp" ) );
+	assert( s_clients[0].opponentLapMs == 61000 && !strcmp( s_clients[0].opponentName, "Personal Ghost" ) );
+	strcpy( s_argv3, "17" );
+	assert( G_GhostLadder_ClientCommand( &g_entities[0], "ghostopp" ) );
+	assert( s_clients[0].opponentLapMs == 61000 );
+	s_argc = 3;
 
 	/* Other gametypes do nothing. */
 	s_commandCount = 0;

@@ -20,6 +20,13 @@ or (at your option) any later version.
 //
 // The pick is remembered in cg_ladderGhostLast for the rest of the session,
 // so a vid_restart or a restart of the same map selects it again.
+//
+// Client commands to the server (lghostlistreq, lghostpick, ghostopp) are
+// repeated until the server answers: a dedicated server drops every client
+// command that arrives within a second of the previous one (sv_floodProtect),
+// and the HUD asks for "score" every two seconds. A command is only sent when
+// the last client command is GHOSTCMD_GAP_MS old; the next "score" request is
+// pushed back by the same amount.
 
 #include "cg_local.h"
 #include "cg_hud_elements.h"
@@ -30,6 +37,97 @@ or (at your option) any later version.
 #define LADDER_PICKER_Y         96.0f
 #define LADDER_PICKER_W         340.0f
 #define LADDER_PICKER_ROW_H     18.0f
+
+#define GHOSTCMD_GAP_MS         1200    // distance to the previous client command
+#define GHOSTCMD_RETRY_MS       3000    // resend when there is no answer by then
+#define GHOSTCMD_PICK_WAIT_MS   45000   // pick taken: ghost data has to start by then
+
+static const int ghostCmdMaxTries[GHOSTCMD_KINDS] = { 5, 5, 8 };
+
+static void CG_LadderGhost_FailTransfer( const char *reason );
+
+/* Time since an earlier cg.time; a cg.time that went backwards counts as long ago. */
+static int CG_GhostCmd_Since( int then ) {
+	return cg.time >= then ? cg.time - then : 0x7fffffff;
+}
+
+static qboolean CG_GhostCmd_GapFree( void ) {
+	if ( cg.ghostCmdAnySent && CG_GhostCmd_Since( cg.ghostCmdLastSent ) < GHOSTCMD_GAP_MS ) {
+		return qfalse;
+	}
+	/* "score" from the HUD, the scoreboard or +scores */
+	return CG_GhostCmd_Since( cg.scoresRequestTime ) >= GHOSTCMD_GAP_MS;
+}
+
+/* Sends the first due ghost command, at most one per call. */
+static void CG_GhostCmd_Pump( void ) {
+	int kind;
+
+	if ( !CG_GhostCmd_GapFree() ) {
+		return;
+	}
+	for ( kind = 0; kind < GHOSTCMD_KINDS; kind++ ) {
+		qboolean due;
+
+		if ( !cg.ghostCmds[kind].pending ) {
+			continue;
+		}
+		due = !cg.ghostCmds[kind].sent || CG_GhostCmd_Since( cg.ghostCmds[kind].sentAt ) >= GHOSTCMD_RETRY_MS;
+		if ( !due ) {
+			continue;
+		}
+		if ( cg.ghostCmds[kind].tries >= ghostCmdMaxTries[kind] ) {
+			cg.ghostCmds[kind].pending = qfalse;
+			if ( kind == GHOSTCMD_PICK && cg.ladderGhostPending ) {
+				CG_LadderGhost_FailTransfer( "no answer from the server" );
+			}
+			continue;
+		}
+		trap_SendClientCommand( cg.ghostCmds[kind].text );
+		cg.ghostCmds[kind].sent = qtrue;
+		cg.ghostCmds[kind].sentAt = cg.time;
+		cg.ghostCmds[kind].tries++;
+		cg.ghostCmdAnySent = qtrue;
+		cg.ghostCmdLastSent = cg.time;
+		/* The next "score" request waits until this one is through. */
+		cg.scoresRequestTime = cg.time - 2000 + GHOSTCMD_GAP_MS;
+		return;
+	}
+}
+
+/* Queues a command (replacing an older one of the same kind) and sends it
+ * right away when the gap to the last client command allows. */
+static void CG_GhostCmd_Set( int kind, const char *text ) {
+	Q_strncpyz( cg.ghostCmds[kind].text, text, sizeof( cg.ghostCmds[kind].text ) );
+	cg.ghostCmds[kind].pending = qtrue;
+	cg.ghostCmds[kind].sent = qfalse;
+	cg.ghostCmds[kind].sentAt = 0;
+	cg.ghostCmds[kind].tries = 0;
+	CG_GhostCmd_Pump();
+}
+
+static void CG_GhostCmd_Done( int kind ) {
+	cg.ghostCmds[kind].pending = qfalse;
+}
+
+/*
+=================
+CG_LadderGhost_NetFrame
+
+Called every frame from CG_DrawActiveFrame: resends unanswered ghost
+commands and gives up on a pick whose ghost data never comes.
+=================
+*/
+void CG_LadderGhost_NetFrame( void ) {
+	if ( cgs.gametype != GT_GHOST ) {
+		return;
+	}
+	if ( cg.ladderGhostPending && cg.ladderGhostPickAcked && !cg.ladderGhostTransferExpected &&
+	     CG_GhostCmd_Since( cg.ladderGhostPickAckedAt ) >= GHOSTCMD_PICK_WAIT_MS ) {
+		CG_LadderGhost_FailTransfer( "timeout" );
+	}
+	CG_GhostCmd_Pump();
+}
 
 static void CG_LadderGhost_OwnVehicle( char *out, int outSize ) {
 	const char *model = "";
@@ -79,6 +177,9 @@ static void CG_LadderGhost_ClearRecording( void ) {
 	cg.ladderGhostFailed = qfalse;
 	cg.ladderGhostTransferExpected = 0;
 	cg.ladderGhostTransferReceived = 0;
+	/* A running pick is answered or abandoned with the recording. */
+	CG_GhostCmd_Done( GHOSTCMD_PICK );
+	cg.ladderGhostPickAcked = qfalse;
 }
 
 /*
@@ -100,12 +201,14 @@ void CG_LadderGhost_Reset( void ) {
 	cg.ladderPickerCursor = 0;
 	cg.ladderPickerScroll = 0;
 	CG_LadderGhost_ClearRecording();
+	memset( cg.ghostCmds, 0, sizeof( cg.ghostCmds ) );
+	cg.ghostOpponentPendingMs = 0;
 }
 
 /* Asks the server for the list again; covers a cgame restart (vid_restart). */
 void CG_LadderGhost_RequestList( void ) {
 	if ( cgs.gametype == GT_GHOST ) {
-		trap_SendClientCommand( "lghostlistreq" );
+		CG_GhostCmd_Set( GHOSTCMD_LIST, "lghostlistreq" );
 	}
 }
 
@@ -182,7 +285,7 @@ void CG_LadderGhost_Pick( int entryIndex ) {
 	}
 
 	cg.ladderGhostPending = qtrue;
-	trap_SendClientCommand( va( "lghostpick %d", entryIndex ) );
+	CG_GhostCmd_Set( GHOSTCMD_PICK, va( "lghostpick %d", entryIndex ) );
 }
 
 /* -------------------------------------------------------------------------
@@ -224,6 +327,7 @@ qboolean CG_LadderGhost_ServerCommand( const char *cmd ) {
 	if ( !Q_stricmp( cmd, "lghostlist" ) ) {
 		int total = atoi( CG_Argv( 1 ) );
 
+		CG_GhostCmd_Done( GHOSTCMD_LIST );
 		cg.ladderGhostEntryCount = 0;
 		cg.ladderGhostListExpected = total < 0 ? 0 : ( total > MAX_LADDER_GHOST_ENTRIES ? MAX_LADDER_GHOST_ENTRIES : total );
 		cg.ladderGhostListFromCache = atoi( CG_Argv( 2 ) ) ? qtrue : qfalse;
@@ -264,6 +368,10 @@ qboolean CG_LadderGhost_ServerCommand( const char *cmd ) {
 		int count = atoi( CG_Argv( 3 ) );
 
 		if ( entry != cg.ladderGhostSelected ) {
+			return qtrue;
+		}
+		/* A repeated pick crossed the finished transfer: keep the ghost. */
+		if ( !cg.ladderGhostPending && cg.ladderGhostAvailable && cg.ladderGhost.valid ) {
 			return qtrue;
 		}
 		CG_LadderGhost_ClearRecording();
@@ -347,6 +455,22 @@ qboolean CG_LadderGhost_ServerCommand( const char *cmd ) {
 			CG_Printf( "Received ladder ghost (%d samples).\n", cg.ladderGhost.frameCount );
 		}
 		CG_GhostRace_ReportOpponent();
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( cmd, "lghostpickok" ) ) {
+		if ( atoi( CG_Argv( 1 ) ) == cg.ladderGhostSelected && cg.ladderGhostPending ) {
+			CG_GhostCmd_Done( GHOSTCMD_PICK );
+			cg.ladderGhostPickAcked = qtrue;
+			cg.ladderGhostPickAckedAt = cg.time;
+		}
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( cmd, "lghostoppok" ) ) {
+		if ( cg.ghostCmds[GHOSTCMD_OPP].pending && atoi( CG_Argv( 1 ) ) == cg.ghostOpponentPendingMs ) {
+			CG_GhostCmd_Done( GHOSTCMD_OPP );
+		}
 		return qtrue;
 	}
 
@@ -582,7 +706,7 @@ void CG_LadderGhost_DrawPicker( void ) {
 	}
 
 	CG_SetScreenPlacement( PLACE_CENTER, PLACE_CENTER );
-	h = 62.0f + LADDER_PICKER_ROWS * LADDER_PICKER_ROW_H + 22.0f;
+	h = 62.0f + LADDER_PICKER_ROWS * LADDER_PICKER_ROW_H + 38.0f;
 	CG_FillRect( x, y, w, h, bgColor );
 	CG_FillRect( x, y, w, 26.0f, bandColor );
 	CG_FillRect( x, y, w, 2.0f, accentColor );
@@ -644,6 +768,27 @@ void CG_LadderGhost_DrawPicker( void ) {
 		CG_DrawIngameString( (int)( x + w * 0.5f ), (int)( y + 50.0f + LADDER_PICKER_ROW_H * 1.5f ),
 			cg.ladderPickerAllVehicles ? "NO LADDER GHOSTS FOR THIS TRACK" : "NO GHOSTS FOR YOUR CAR - TAB: ALL CARS",
 			UI_CENTER | UI_SMALLFONT, 0.45f, mutedColor );
+	}
+
+	/* The centre print ("Press FIRE or USE when ready to race.") would sit
+	 * on top of the panel: while the picker is open it is shown here, small,
+	 * above the key help (CG_DrawCenterString skips it). */
+	if ( cg.centerPrintTime && CG_FadeColor( cg.centerPrintTime, (int)( 1000 * cg_centertime.value ) ) ) {
+		char hint[96];
+		int i;
+
+		Q_strncpyz( hint, cg.centerPrint, sizeof( hint ) );
+		for ( i = 0; hint[i]; i++ ) {
+			if ( hint[i] == '\n' ) {
+				hint[i] = '\0';
+				break;
+			}
+		}
+		Q_strupr( hint );
+		if ( hint[0] ) {
+			CG_DrawIngameString( (int)( x + w * 0.5f ), (int)( y + h - 34 ), hint,
+				UI_CENTER | UI_SMALLFONT, 0.45f, accentColor );
+		}
 	}
 
 	CG_DrawIngameString( (int)( x + w * 0.5f ), (int)( y + h - 16 ),
@@ -728,15 +873,16 @@ qboolean CG_GhostRace_Opponent( char *name, int nameSize, int *lapMs ) {
 =================
 CG_GhostRace_ReportOpponent
 
-Tells the server which ghost this driver races (name + lap time), so the
-server can rate every driver at the finish. Sent only on changes: the
-server ignores more than one client command per second.
+Tells the server which ghost this driver races (name + lap time, ladder
+entry index or -1), so the server can rate every driver at the finish.
+Sent on changes and repeated until the server answers with lghostoppok.
 =================
 */
 void CG_GhostRace_ReportOpponent( void ) {
 	char name[40];
 	char report[64];
 	int lapMs = 0;
+	int ladderEntry = -1;
 
 	if ( cgs.gametype != GT_GHOST ) {
 		return;
@@ -744,13 +890,17 @@ void CG_GhostRace_ReportOpponent( void ) {
 	if ( !CG_GhostRace_Opponent( name, sizeof( name ), &lapMs ) ) {
 		Q_strncpyz( name, "-", sizeof( name ) );
 		lapMs = 0;
+	} else if ( CG_GhostPlaybackMode() == 3 ) {
+		/* Ladder ghost: the server takes the lap time from its own list. */
+		ladderEntry = cg.ladderGhostSelected;
 	}
-	Com_sprintf( report, sizeof( report ), "%d %s", lapMs, name );
+	Com_sprintf( report, sizeof( report ), "%d %s %d", lapMs, name, ladderEntry );
 	if ( !strcmp( report, cg.ghostOpponentReported ) ) {
 		return;
 	}
 	Q_strncpyz( cg.ghostOpponentReported, report, sizeof( cg.ghostOpponentReported ) );
-	trap_SendClientCommand( va( "ghostopp %d \"%s\"", lapMs, name ) );
+	cg.ghostOpponentPendingMs = lapMs;
+	CG_GhostCmd_Set( GHOSTCMD_OPP, va( "ghostopp %d \"%s\" %d", lapMs, name, ladderEntry ) );
 }
 
 /* Result of one driver from the server; the local driver falls back to

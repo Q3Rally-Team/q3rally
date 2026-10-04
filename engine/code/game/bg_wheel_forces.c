@@ -519,7 +519,11 @@ static void PM_TireEngineForces( car_t *car, carPoint_t *points, int i, vec3_t f
 		ratio = CP_GEAR_RATIOS[car->gear-1];
 
 	friction = 0;
-	if (fabs(car->throttle < 0.01f) && car->gear)
+	/* Engine braking whenever the throttle is (nearly) released, including
+	 * while braking (negative throttle). This is the long-standing behaviour
+	 * of the former "fabs(car->throttle < 0.01f)" expression; kept on purpose
+	 * because changing it alters the driving physics (and ghost buckets). */
+	if (car->throttle < 0.01f && car->gear)
 		friction = (CP_M_2_QU * CP_M_2_QU * (car->rpm - CP_RPM_MIN) / 10.0f / ratio);// frictional torque
 
 	ratio *= CP_AXLEGEAR;

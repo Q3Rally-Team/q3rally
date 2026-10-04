@@ -162,7 +162,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
     <div class="mode-card"><div class="mode-num">g_gametype 2</div><div class="mode-name">Single Player</div><div class="mode-tag">GT_SINGLE_PLAYER</div><div class="mode-desc">Solo time-trial. Lap count via <code>g_timeTrialLaps</code>. Frags +1, suicides −1.</div></div>
     <div class="mode-card"><div class="mode-num">g_gametype 3</div><div class="mode-name">Derby</div><div class="mode-tag">GT_DERBY</div><div class="mode-desc">Last running car wins. Scoreboard shows "wrecks." Heavy collision damage encouraged.</div></div>
     <div class="mode-card"><div class="mode-num">g_gametype 4</div><div class="mode-name">Last Car Standing</div><div class="mode-tag">GT_LCS</div><div class="mode-desc">Survival without respawns. One surviving car ends the round immediately.</div></div>
-    <div class="mode-card"><div class="mode-num">g_gametype 5</div><div class="mode-name">Elimination</div><div class="mode-tag">GT_ELIMINATION</div><div class="mode-desc">Lap racing with knockout waves at set intervals. Maps must carry <code>elimination "1"</code>.</div></div>
+    <div class="mode-card"><div class="mode-num">g_gametype 5</div><div class="mode-name">Elimination</div><div class="mode-tag">GT_ELIMINATION</div><div class="mode-desc">Lap racing with a knockout every lap: the last driver still on a lap that everyone else has completed is eliminated. Maps must list <code>q3r_elimination</code> in their <code>.arena</code> type.</div></div>
     <div class="mode-card"><div class="mode-num">g_gametype 6</div><div class="mode-name">Deathmatch</div><div class="mode-tag">GT_DEATHMATCH</div><div class="mode-desc">Classic FFA. Kills +1, suicides −1. Ends at frag or time limit.</div></div>
     <div class="mode-card"><div class="mode-num">g_gametype 7</div><div class="mode-name">Sprint</div><div class="mode-tag">GT_SPRINT</div><div class="mode-desc">Point-to-point single-lap race. <code>laplimit</code> is forced to 1 automatically.</div></div>
   </div>
@@ -233,7 +233,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
       <tr><td>q3r_mk</td><td>Warehouse Playground</td><td>insellium</td><td>DM, Team DM, Domination</td><td>All</td></tr>
     </tbody>
   </table></div>
-  <div class="callout"><strong>Elimination Flag</strong>Maps supporting Elimination carry <code>elimination "1"</code> in their <code>.arena</code> file. Use this in rotation scripts to auto-filter eligible tracks.</div>
+  <div class="callout"><strong>Elimination Flag</strong>Maps supporting Elimination list <code>q3r_elimination</code> in the <code>type</code> key of their <code>.arena</code> file — this is what the menu filters on. The additional <code>elimination "1"</code> key is a marker for rotation scripts and tools.</div>
 </section>
 
 <!-- ═══════════════ VEHICLES ═══════════════ -->
@@ -337,9 +337,9 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
   <div class="table-wrap"><table>
     <thead><tr><th>Platform</th><th>Command</th></tr></thead>
     <tbody>
-      <tr><td>Windows (manual)</td><td><code>q3rally.x86_64.exe +set dedicated 1 +exec racing_server.cfg</code></td></tr>
-      <tr><td>Windows (.bat)</td><td>Double-click <code>baseq3r/start_racing_server.bat</code> — picks the correct executable automatically. Each multiplayer gametype has its own batch file.</td></tr>
-      <tr><td>Linux</td><td><code>./ioq3rallyded.x86_64 +set dedicated 1 +exec racing_server.cfg</code></td></tr>
+      <tr><td>Windows</td><td><code>q3rally-server.x86_64.exe +exec q3r_racing.cfg</code></td></tr>
+      <tr><td>Linux</td><td><code>./q3rally-server.x86_64 +exec q3r_racing.cfg</code></td></tr>
+      <tr><td>Configs</td><td>Ready-made configs for every mode ship in <code>baseq3r/</code>: <code>q3r_racing.cfg</code>, <code>q3r_elimination.cfg</code>, <code>q3r_derby.cfg</code>, <code>q3r_ctf.cfg</code> … plus several <code>*_rotation.cfg</code> files.</td></tr>
     </tbody>
   </table></div>
   <div class="callout"><strong>Note</strong>GT_SINGLE_PLAYER is local-only. Its batch file notes that a dedicated server is not available for this mode.</div>
@@ -392,9 +392,8 @@ vstr d1</pre>
 
   <h3>Elimination Server Config</h3>
 <pre>seta g_gametype              5    // Elimination
-seta g_eliminationStartDelay 30
-seta g_eliminationInterval   15
-seta g_eliminationWarning    5
+seta laplimit                0    // 0 = use the map's lap count
+seta g_eliminationWeapons    0    // 1 = weapons enabled
 
 set d1 "map q3r_country01  ; set nextmap vstr d2"
 set d2 "map q3r_valley     ; set nextmap vstr d1"
@@ -402,7 +401,7 @@ vstr d1</pre>
 
   <h3>Racing Server Config</h3>
 <pre>seta g_gametype          0    // Racing
-seta g_laplimit          3
+seta laplimit            3
 seta g_forceEngineStart  60
 seta g_finishRaceDelay   30
 seta g_rallyReadyCheck   1    // Wait for all players ready
@@ -445,7 +444,7 @@ vstr d1</pre>
     <thead><tr><th>CVar</th><th>Default</th><th>Flags</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td>sv_ladderEnabled</td><td>0</td><td>ARCHIVE</td><td>Globally enable or disable the HTTP reporter. Set to 1 to activate.</td></tr>
-      <tr><td>sv_ladderUrl</td><td>—</td><td>ARCHIVE</td><td>Target endpoint. Example: <code>https://ladder.q3rally.com/index.php</code></td></tr>
+      <tr><td>sv_ladderUrl</td><td>—</td><td>ARCHIVE</td><td>Target endpoint. Example: <code>https://ladder.q3rally.com/index.php/matches</code> (must end in <code>/matches</code>)</td></tr>
       <tr><td>sv_ladderApiKey</td><td>—</td><td>ARCHIVE · PROTECTED</td><td>Bearer token for authentication. Never appears in status output or logs.</td></tr>
     </tbody>
   </table></div>
@@ -454,7 +453,7 @@ vstr d1</pre>
 
   <h3>Minimal Ladder Config</h3>
 <pre>seta sv_ladderEnabled  1
-seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
+seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
 // sv_ladderApiKey is set at runtime, never saved to a public config file:
 // seta sv_ladderApiKey "your-secret-key-here"</pre>
 
@@ -540,7 +539,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
   <p>Key server-side variables for tuning gameplay. All physics CVars are latched (<code>CVAR_LATCH</code>) and published via <code>CVAR_SERVERINFO</code> for deterministic client prediction.</p>
 <div class="cvar-group-label">Racing</div>
 <table class="cvar-table">
-<tr><td class="cvar-name">g_laplimit</td><td class="cvar-default">5</td><td class="cvar-desc">Default lap count. Individual maps may override via their <code>.arena</code> file.</td></tr>
+<tr><td class="cvar-name">laplimit</td><td class="cvar-default">5</td><td class="cvar-desc">Lap count. <code>0</code> uses the <code>laps</code> key of the map's <code>rally_startfinish</code>. Sprint maps always run 1 lap.</td></tr>
 <tr><td class="cvar-name">g_forceEngineStart</td><td class="cvar-default">60 s</td><td class="cvar-desc">Forces race start after this many seconds with a 10 s countdown warning.</td></tr>
 <tr><td class="cvar-name">g_finishRaceDelay</td><td class="cvar-default">30 s</td><td class="cvar-desc">Grace period after first finisher before the race ends.</td></tr>
 <tr><td class="cvar-name">g_timeTrialLaps</td><td class="cvar-default">3</td><td class="cvar-desc">Lap count in GT_SINGLE_PLAYER time-trial mode.</td></tr>
@@ -550,9 +549,9 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
 </table>
 <div class="cvar-group-label">Elimination</div>
 <table class="cvar-table">
-<tr><td class="cvar-name">g_eliminationStartDelay</td><td class="cvar-default">30 s</td><td class="cvar-desc">Delay before the first knockout wave fires after race start.</td></tr>
-<tr><td class="cvar-name">g_eliminationInterval</td><td class="cvar-default">15 s</td><td class="cvar-desc">Time between successive elimination rounds.</td></tr>
-<tr><td class="cvar-name">g_eliminationWarning</td><td class="cvar-default">5 s</td><td class="cvar-desc">Warning countdown shown before the next elimination fires.</td></tr>
+<tr><td class="cvar-name">g_eliminationStartDelay</td><td class="cvar-default">30000 ms</td><td class="cvar-desc">Reserved. Currently only included in the ladder payload — elimination is lap-based and does not use timers.</td></tr>
+<tr><td class="cvar-name">g_eliminationInterval</td><td class="cvar-default">15000 ms</td><td class="cvar-desc">Reserved. Currently only included in the ladder payload.</td></tr>
+<tr><td class="cvar-name">g_eliminationWarning</td><td class="cvar-default">5000 ms</td><td class="cvar-desc">Reserved. Currently only included in the ladder payload.</td></tr>
 <tr><td class="cvar-name">g_eliminationWeapons</td><td class="cvar-default">0</td><td class="cvar-desc">Enable weapons in Elimination mode.</td></tr>
 </table>
 <div class="cvar-group-label">Vehicle Physics (latched + serverinfo)</div>
@@ -574,7 +573,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
 <div class="cvar-group-label">Demolition Derby</div>
 <table class="cvar-table">
 <tr><td class="cvar-name">g_damageScale</td><td class="cvar-default">0.3</td><td class="cvar-desc">Global damage multiplier used by Derby unless g_derbyIgnoreDamageScale is 1.</td></tr>
-<tr><td class="cvar-name">g_derbyDamageFactor</td><td class="cvar-default">5.0</td><td class="cvar-desc">Derby impact multiplier. With the default g_damageScale of 0.3, this gives an effective multiplier of 1.5. Damage is capped at 15 per vehicle contact.</td></tr>
+<tr><td class="cvar-name">g_derbyDamageFactor</td><td class="cvar-default">15.0</td><td class="cvar-desc">Derby impact multiplier. With the default g_damageScale of 0.3, this gives an effective multiplier of 4.5. Damage is capped at 15 per vehicle contact.</td></tr>
 <tr><td class="cvar-name">g_derbyIgnoreDamageScale</td><td class="cvar-default">0</td><td class="cvar-desc">Set to 1 to skip g_damageScale for Derby collisions; the 15-point contact cap still applies.</td></tr>
 <tr><td class="cvar-name">g_carImpactTransfer</td><td class="cvar-default">1.0</td><td class="cvar-desc">Scales the physical car-to-car impulse, which also affects calculated damage. Values above 1 are capped at 1; nonpositive values use 1.</td></tr>
 <tr><td class="cvar-name">g_carImpactElasticity</td><td class="cvar-default">0.25</td><td class="cvar-desc">Controls the car-to-car bounce impulse; values outside 0–1 fall back to 0.25.</td></tr>
@@ -604,17 +603,12 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
 <table class="cvar-table">
 <tr><td class="cvar-name">sv_ladderEnabled</td><td class="cvar-default">0</td><td class="cvar-desc">Globally enable the HTTP match reporter.</td></tr>
 <tr><td class="cvar-name">sv_ladderUrl</td><td class="cvar-default">—</td><td class="cvar-desc">Target endpoint URL for <code>POST /api/v1/matches</code>.</td></tr>
-<tr><td class="cvar-name">sv_ladderApiKey</td><td class="cvar-default">—</td><td class="cvar-desc">Bearer token. Protected — never logged or saved to disk.</td></tr>
+<tr><td class="cvar-name">sv_ladderApiKey</td><td class="cvar-default">—</td><td class="cvar-desc">Bearer token. Protected — never shown in logs or <code>status</code>, and not readable by mods. Archived to <code>q3config.cfg</code>.</td></tr>
 </table>
 
 <div class="cvar-group-label">Client</div>
 <table class="cvar-table">
-<tr><td class="cvar-name">cl_updateCheck</td><td class="cvar-default">1</td><td class="cvar-desc">Enable automatic version check on startup. Checks against <code>cl_updateEndpoint</code> on UI load.</td></tr>
-<tr><td class="cvar-name">cl_updateEndpoint</td><td class="cvar-default">ladder URL</td><td class="cvar-desc">URL of the version text file. Default: <code>https://ladder.q3rally.com/version.txt</code></td></tr>
 <tr><td class="cvar-name">cg_ghostAlpha</td><td class="cvar-default">160</td><td class="cvar-desc">Transparency of ghost vehicles and their wheels (0–255). Lower = more transparent.</td></tr>
-<tr><td class="cvar-name">ui_menuBackEnable</td><td class="cvar-default">1</td><td class="cvar-desc">Enable remote background image download for the main menu.</td></tr>
-<tr><td class="cvar-name">ui_menuBackUrl</td><td class="cvar-default">ladder URL</td><td class="cvar-desc">HTTP(S) URL of the background image (PNG/JPG/TGA, max 5 MiB, max 4096×4096).</td></tr>
-<tr><td class="cvar-name">ui_menuBackRefreshSec</td><td class="cvar-default">0</td><td class="cvar-desc">Auto-refresh interval in seconds for the menu background. 0 = disabled.</td></tr>
 </table>
 
 </section>
@@ -629,10 +623,10 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php"
   <div class="table-wrap"><table>
     <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td>rally_startfinish</td><td>Combined start/finish brush</td><td>If <code>g_laplimit</code> unset, the <code>laps</code> key takes control and syncs the lap limit.</td></tr>
+      <tr><td>rally_startfinish</td><td>Combined start/finish brush</td><td>If <code>laplimit</code> is 0, the <code>laps</code> key sets the lap count.</td></tr>
       <tr><td>rally_start</td><td>Sprint start volume</td><td>Forces <code>laplimit = 1</code> automatically. Use for GT_SPRINT maps.</td></tr>
       <tr><td>rally_finish</td><td>Dedicated finish trigger</td><td>Marks vehicles finished via the checkpoint system.</td></tr>
-      <tr><td>rally_checkpoint</td><td>Checkpoint volume</td><td>Auto-numbers on spawn. Spawnflag 1 = placement message; Spawnflag 2 = global checkpoint sound.</td></tr>
+      <tr><td>rally_checkpoint</td><td>Checkpoint volume</td><td>Requires a unique <code>number</code> key (1, 2, 3 … in driving order); the start/finish is counted as the last checkpoint and the order is mirrored automatically on reversed tracks. Spawnflag 1 = checkpoint sound (also the default), 2 = position message, 4 = silent.</td></tr>
     </tbody>
   </table></div>
 
@@ -813,7 +807,7 @@ elimination "1"</pre>
     <tbody>
       <tr><td>pathId</td><td>0</td><td>Route identifier. All nodes with the same <code>pathId</code> form one route. Multiple routes per map are supported.</td></tr>
       <tr><td>order</td><td>&mdash;</td><td>Sequence index within its route. Must be unique per <code>pathId</code>. Nodes are sorted by this value at load time.</td></tr>
-      <tr><td>width</td><td>500</td><td>Usable track width at this node in units. The bot steers within this corridor.</td></tr>
+      <tr><td>width</td><td>256</td><td>Usable track width at this node in units. The bot steers within this corridor.</td></tr>
       <tr><td>targetSpeed</td><td>-1</td><td>Target speed override in units/s. <code>-1</code> = auto-speed (recommended for most nodes).</td></tr>
     </tbody>
   </table></div>

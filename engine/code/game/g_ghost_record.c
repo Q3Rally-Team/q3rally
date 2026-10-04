@@ -25,8 +25,15 @@ or (at your option) any later version.
 
 #include "g_local.h"
 
-#define GHOST_REC_SLOTS                 16
-#define GHOST_REC_MAX_FRAMES            4096
+#define GHOST_REC_SLOTS                 MAX_CLIENTS
+#define GHOST_REC_MAX_FRAMES            4096    // per lap
+#define GHOST_REC_CHUNK_FRAMES          256
+#define GHOST_REC_MAX_CHUNKS            ( GHOST_REC_MAX_FRAMES / GHOST_REC_CHUNK_FRAMES )
+// Frames come from a shared pool in chunks of 256 instead of a fixed 4096
+// frames per slot: a typical lap needs 2-4 chunks, so every client can record
+// while the pool (about 2.5 MB) stays below the former 16 fixed slots
+// (3.4 MB). An exhausted pool only invalidates that lap's upload.
+#define GHOST_REC_POOL_CHUNKS           192
 #define GHOST_REC_MIN_DISTANCE          96.0f   // units between samples on straights
 #define GHOST_REC_MAX_INTERVAL          200     // ms, sample at least this often
 #define GHOST_REC_MIN_TURN_INTERVAL     40      // ms
@@ -34,6 +41,7 @@ or (at your option) any later version.
 #define GHOST_REC_TELEPORT_SPEED        6000.0f // units/s between samples => reset/teleport
 #define GHOST_REC_TELEPORT_MIN_DISTANCE 256.0f
 #define GHOST_REC_MIN_LAP_MS            5000
+#define GHOST_REC_MAX_START_OFFSET      1000    // ms; the ladder refuses later first samples
 
 typedef struct {
 	int             timeOffset;
@@ -54,15 +62,52 @@ typedef struct {
 	float           lastYaw;
 	qboolean        invalid;                // teleport/reset/overflow: lap is not uploaded
 	int             frameCount;
-	ghostRecFrame_t frames[GHOST_REC_MAX_FRAMES];
+	int             chunkCount;
+	int             chunks[GHOST_REC_MAX_CHUNKS];   // indices into s_recFramePool
 } ghostRecSlot_t;
 
 static ghostRecSlot_t   s_recSlots[GHOST_REC_SLOTS];
+static ghostRecFrame_t  s_recFramePool[GHOST_REC_POOL_CHUNKS][GHOST_REC_CHUNK_FRAMES];
+static qboolean         s_recChunkUsed[GHOST_REC_POOL_CHUNKS];
 static int              s_recClientSlot[MAX_CLIENTS];
 static int              s_recUploadedBestMs[MAX_CLIENTS];
 static char             s_recMapName[MAX_QPATH];
-static char             s_recGhostText[LADDER_GHOST_MAX_DATA];
+#define s_recGhostText  g_ghostTextBuffer       // shared, see g_local.h
 static ladderGhostMeta_t s_recMeta;
+
+static ghostRecFrame_t *G_GhostRecord_Frame( const ghostRecSlot_t *slot, int index ) {
+	return &s_recFramePool[slot->chunks[index / GHOST_REC_CHUNK_FRAMES]][index % GHOST_REC_CHUNK_FRAMES];
+}
+
+static void G_GhostRecord_FreeFrames( ghostRecSlot_t *slot ) {
+	int i;
+
+	for ( i = 0; i < slot->chunkCount; i++ ) {
+		s_recChunkUsed[slot->chunks[i]] = qfalse;
+	}
+	slot->chunkCount = 0;
+	slot->frameCount = 0;
+}
+
+/* Room for one more frame; qfalse when the lap or the pool is full. */
+static qboolean G_GhostRecord_ReserveFrame( ghostRecSlot_t *slot ) {
+	int i;
+
+	if ( slot->frameCount < slot->chunkCount * GHOST_REC_CHUNK_FRAMES ) {
+		return qtrue;
+	}
+	if ( slot->chunkCount >= GHOST_REC_MAX_CHUNKS ) {
+		return qfalse;
+	}
+	for ( i = 0; i < GHOST_REC_POOL_CHUNKS; i++ ) {
+		if ( !s_recChunkUsed[i] ) {
+			s_recChunkUsed[i] = qtrue;
+			slot->chunks[slot->chunkCount++] = i;
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
 
 /*
 =================
@@ -75,6 +120,7 @@ void G_GhostRecord_Init( void ) {
 	int i;
 
 	Com_Memset( s_recSlots, 0, sizeof( s_recSlots ) );
+	Com_Memset( s_recChunkUsed, 0, sizeof( s_recChunkUsed ) );
 	for ( i = 0; i < GHOST_REC_SLOTS; i++ ) {
 		s_recSlots[i].clientNum = -1;
 	}
@@ -94,7 +140,7 @@ static void G_GhostRecord_ReleaseSlot( int clientNum ) {
 	slotIndex = s_recClientSlot[clientNum];
 	if ( slotIndex >= 0 && slotIndex < GHOST_REC_SLOTS ) {
 		s_recSlots[slotIndex].clientNum = -1;
-		s_recSlots[slotIndex].frameCount = 0;
+		G_GhostRecord_FreeFrames( &s_recSlots[slotIndex] );
 	}
 	s_recClientSlot[clientNum] = -1;
 }
@@ -127,6 +173,11 @@ static qboolean G_GhostRecord_ClientEligible( gentity_t *ent ) {
 		return qfalse;
 	}
 	if ( !trap_Cvar_VariableIntegerValue( "sv_ladderEnabled" ) ) {
+		return qfalse;
+	}
+	/* Cheats, timescale or changed physics (g_ladder_rules.c). Checked
+	 * every frame: a lap with a change anywhere in it is never uploaded. */
+	if ( G_LadderRulesViolation() ) {
 		return qfalse;
 	}
 	if ( !BG_GametypeIsTimedRace( g_gametype.integer ) ) {
@@ -163,7 +214,7 @@ static ghostRecSlot_t *G_GhostRecord_AllocSlot( int clientNum ) {
 static void G_GhostRecord_StoreFrame( ghostRecSlot_t *slot, gclient_t *client, int timeOffset ) {
 	ghostRecFrame_t *frame;
 
-	if ( slot->frameCount >= GHOST_REC_MAX_FRAMES ) {
+	if ( slot->frameCount >= GHOST_REC_MAX_FRAMES || !G_GhostRecord_ReserveFrame( slot ) ) {
 		slot->invalid = qtrue;
 		return;
 	}
@@ -171,7 +222,7 @@ static void G_GhostRecord_StoreFrame( ghostRecSlot_t *slot, gclient_t *client, i
 		timeOffset = slot->lastSampleTime;
 	}
 
-	frame = &slot->frames[slot->frameCount++];
+	frame = G_GhostRecord_Frame( slot, slot->frameCount++ );
 	frame->timeOffset = timeOffset;
 	VectorCopy( client->ps.origin, frame->origin );
 	VectorCopy( client->ps.viewangles, frame->angles );
@@ -190,13 +241,18 @@ static void G_GhostRecord_BeginLap( ghostRecSlot_t *slot, gclient_t *client ) {
 	int offset;
 
 	slot->lapStartTime = client->lapStartTime;
-	slot->frameCount = 0;
+	G_GhostRecord_FreeFrames( slot );
 	slot->lastSampleTime = 0;
 	slot->invalid = qfalse;
 
 	offset = level.time - client->lapStartTime;
 	if ( offset < 0 ) {
 		offset = 0;
+	}
+	/* Recording started in the middle of the lap (driver became eligible
+	 * late, e.g. after the rules went back to standard): never uploaded. */
+	if ( offset > GHOST_REC_MAX_START_OFFSET ) {
+		slot->invalid = qtrue;
 	}
 	G_GhostRecord_StoreFrame( slot, client, offset );
 }
@@ -318,7 +374,7 @@ static void G_GhostRecord_SafeName( const char *in, char *out, int outSize ) {
 static qboolean G_GhostRecord_Append( int *length, const char *text ) {
 	int len = strlen( text );
 
-	if ( *length + len >= (int)sizeof( s_recGhostText ) ) {
+	if ( *length + len >= LADDER_GHOST_MAX_DATA ) {
 		return qfalse;
 	}
 	Com_Memcpy( s_recGhostText + *length, text, len );
@@ -347,7 +403,7 @@ static qboolean G_GhostRecord_BuildText( const ghostRecSlot_t *slot, const ladde
 	}
 
 	for ( i = 0; i < slot->frameCount; i++ ) {
-		const ghostRecFrame_t *f = &slot->frames[i];
+		const ghostRecFrame_t *f = G_GhostRecord_Frame( slot, i );
 		if ( !G_GhostRecord_Append( &length, va( "%d %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %d %d %d\n",
 			f->timeOffset,
 			f->origin[0], f->origin[1], f->origin[2],
@@ -401,7 +457,7 @@ void G_GhostRecord_LapComplete( gentity_t *ent, int lapStartTime, int timestamp 
 	if ( slot->invalid ) {
 		return;
 	}
-	slot->frames[slot->frameCount - 1].timeOffset = lapMs;
+	G_GhostRecord_Frame( slot, slot->frameCount - 1 )->timeOffset = lapMs;
 
 	if ( s_recUploadedBestMs[clientNum] > 0 && lapMs >= s_recUploadedBestMs[clientNum] ) {
 		return;

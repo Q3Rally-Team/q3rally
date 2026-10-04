@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef USE_CURL
 #ifdef USE_LOCAL_HEADERS
-#include "../curl-7.54.0/include/curl/curl.h"
+#include "../curl-8.22.0/include/curl/curl.h"
 #else
 #include <curl/curl.h>
 #endif
@@ -2140,6 +2140,25 @@ static void SV_LadderShutdownCurl( void ) {
         sv_ladder.curlLoaded = qfalse;
 }
 
+/* Ladder requests and their redirects use http/https only (no file://,
+ * ftp://, ... via a redirect). The *_STR options exist since libcurl
+ * 7.85; an older system libcurl (dlopen) gets the bit masks. */
+#if defined( __GNUC__ )
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"     /* the bit mask fallback */
+#endif
+static void SV_LadderRestrictProtocols( CURL *easy ) {
+        if ( sv_curl_easy_setopt( easy, CURLOPT_PROTOCOLS_STR, "http,https" ) != CURLE_OK ) {
+                sv_curl_easy_setopt( easy, CURLOPT_PROTOCOLS, (long)( CURLPROTO_HTTP | CURLPROTO_HTTPS ) );
+        }
+        if ( sv_curl_easy_setopt( easy, CURLOPT_REDIR_PROTOCOLS_STR, "http,https" ) != CURLE_OK ) {
+                sv_curl_easy_setopt( easy, CURLOPT_REDIR_PROTOCOLS, (long)( CURLPROTO_HTTP | CURLPROTO_HTTPS ) );
+        }
+}
+#if defined( __GNUC__ )
+#pragma GCC diagnostic pop
+#endif
+
 static size_t SV_LadderCurlWriteCallback( void *buffer, size_t size, size_t nmemb, void *userdata ) {
         ladderRequest_t *request = (ladderRequest_t *)userdata;
         size_t bytes = size * nmemb;
@@ -2240,6 +2259,7 @@ static qboolean SV_LadderStartRequest( ladderRequest_t *request ) {
         if ( code != CURLE_OK ) {
                 return qfalse;
         }
+        SV_LadderRestrictProtocols( easy );
 
         code = sv_curl_easy_setopt( easy, CURLOPT_MAXREDIRS, 5L );
         if ( code != CURLE_OK ) {
@@ -2909,6 +2929,7 @@ void SV_LadderRegister_f( void ) {
         sv_curl_easy_setopt( easy, CURLOPT_WRITEDATA,      reg );
         sv_curl_easy_setopt( easy, CURLOPT_FOLLOWLOCATION, 1L );
         sv_curl_easy_setopt( easy, CURLOPT_MAXREDIRS,      5L );
+        SV_LadderRestrictProtocols( easy );
         sv_curl_easy_setopt( easy, CURLOPT_CONNECTTIMEOUT, 15L );
         sv_curl_easy_setopt( easy, CURLOPT_TIMEOUT,        30L );
         sv_curl_easy_setopt( easy, CURLOPT_NOSIGNAL,       1L );
@@ -2943,19 +2964,45 @@ void SV_LadderRegister_f( void ) {
 
 
 void SV_LadderInit( void ) {
+        static qboolean commandsAdded = qfalse;
+        static svLadderRegState_t savedReg;
+#ifdef USE_CURL
+        CURLM    *savedMulti;
+        qboolean  savedCurlLoaded;
+#endif
+
         if ( sv_ladder.initialized ) {
                 SV_LadderShutdown();
         }
 
+        /* A registration started from the menu (after a server shutdown)
+         * runs before the ladder state is re-initialised; keep it and the
+         * curl handles instead of wiping them with the rest of the state. */
+        savedReg = sv_ladder.reg;
+#ifdef USE_CURL
+        savedMulti = sv_ladder.multi;
+        savedCurlLoaded = sv_ladder.curlLoaded;
+#endif
         Com_Memset( &sv_ladder, 0, sizeof( sv_ladder ) );
+        sv_ladder.reg = savedReg;
+#ifdef USE_CURL
+        sv_ladder.multi = savedMulti;
+        sv_ladder.curlLoaded = savedCurlLoaded;
+#endif
         SV_LadderRefreshQueueLimit();
         sv_ladder.initialized = qtrue;
         Cvar_Get( "sv_ladderProfileReady", "0", 0 );
 
-        Cmd_AddCommand( "ladder_register",       SV_LadderRegister_f );
-        Cmd_AddCommand( "ladder_register_abort", SV_LadderRegisterAbort_f );
-        Cmd_AddCommand( "ladder_profile_activate", SV_LadderProfileActivate_f );
-        Cmd_AddCommand( "ladder_profile_forget",   SV_LadderProfileForget_f );
+        /* The profile/registration commands are used by the menu at any
+         * time, also after a server shutdown, so they stay registered for
+         * the lifetime of the engine (SV_LadderShutdown keeps them). */
+        if ( !commandsAdded ) {
+                Cmd_AddCommand( "ladder_register",       SV_LadderRegister_f );
+                Cmd_AddCommand( "ladder_register_abort", SV_LadderRegisterAbort_f );
+                Cmd_AddCommand( "ladder_profile_activate", SV_LadderProfileActivate_f );
+                Cmd_AddCommand( "ladder_profile_forget",   SV_LadderProfileForget_f );
+                commandsAdded = qtrue;
+        }
 
         if ( SV_LadderEnsureSpoolDirectory() ) {
                 SV_LadderLoadSpool();
@@ -2966,11 +3013,6 @@ void SV_LadderShutdown( void ) {
         if ( !sv_ladder.initialized ) {
                 return;
         }
-
-        Cmd_RemoveCommand( "ladder_register" );
-        Cmd_RemoveCommand( "ladder_register_abort" );
-        Cmd_RemoveCommand( "ladder_profile_activate" );
-        Cmd_RemoveCommand( "ladder_profile_forget" );
 
 #ifdef USE_CURL
         SV_LadderAbortRegister();
@@ -2987,6 +3029,13 @@ void SV_LadderShutdown( void ) {
         sv_ladder.initialized = qfalse;
         SV_LadderResetState();
 }
+
+#ifndef USE_CURL
+/* The submit log lives in the curl part; builds without curl skip it. */
+static void SV_LadderLogSubmitSnapshot( const ladderMatchPayload_t *payload ) {
+        (void)payload;
+}
+#endif
 
 void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
         ladderRequest_t *request;
@@ -3327,7 +3376,9 @@ same player gets a new file and old files never go stale.
 */
 
 #define LADDER_FETCH_QUEUE_MAX          8
-#define LADDER_FETCH_BODY_MAX           ( 1024 * 1024 )
+#define LADDER_FETCH_BODY_MAX           ( 512 * 1024 )  /* PHP: .ghost data <= 480000 bytes */
+#define LADDER_FETCH_STATUS_KEEP        LADDER_FETCH_QUEUE_MAX
+#define LADDER_FETCH_CACHE_KEEP         64    /* .ghost files per map before pruning */
 #define LADDER_FETCH_LIST_MAX_ENTRIES   100
 #define LADDER_FETCH_LIST_LINE_MAX      ( MAX_QPATH + LADDER_FETCH_MAX_ID + 128 )
 
@@ -3357,6 +3408,8 @@ static unsigned int SV_LadderFetchHash( const char *text, unsigned int hash ) {
         return hash;
 }
 
+#define LADDER_FETCH_CACHE_MAP_MAX 24
+
 /* ghosts/ladder/<map>/<16 hex>.ghost for one ghost id + lap time. */
 static void SV_LadderFetchCacheName( const char *map, const char *ghostId, int lapMs,
                                      char *out, size_t outSize ) {
@@ -3364,6 +3417,14 @@ static void SV_LadderFetchCacheName( const char *map, const char *ghostId, int l
         char key[LADDER_FETCH_MAX_ID + 16];
 
         SV_LadderSanitizeComponent( map, safeMap, sizeof( safeMap ) );
+        /* "ghosts/ladder/" + map + "/" + 16 hex + ".ghost" must fit MAX_QPATH:
+         * long map names become "<prefix>~<8 hex hash of the full name>". */
+        if ( strlen( safeMap ) > LADDER_FETCH_CACHE_MAP_MAX ) {
+                unsigned int mapHash = SV_LadderFetchHash( safeMap, 2166136261u );
+                Com_sprintf( safeMap + LADDER_FETCH_CACHE_MAP_MAX - 9,
+                             sizeof( safeMap ) - ( LADDER_FETCH_CACHE_MAP_MAX - 9 ),
+                             "~%08x", mapHash );
+        }
         Com_sprintf( key, sizeof( key ), "%s|%d", ghostId, lapMs );
         Com_sprintf( out, outSize, "ghosts/ladder/%s/%08x%08x.ghost", safeMap,
                 SV_LadderFetchHash( key, 2166136261u ),
@@ -3541,9 +3602,83 @@ static qboolean SV_LadderFetchLooksLikeGhost( const char *body ) {
         return body && strstr( body, "\nframes " ) != NULL && strstr( body, "map " ) != NULL;
 }
 
+/* Status cvars hold "<requestId> ok|fail <count>" entries separated by ';',
+ * newest first. Ghost downloads keep the last LADDER_FETCH_STATUS_KEEP
+ * results, so a queued download does not overwrite the result of the one
+ * before it before the game has read it. */
 static void SV_LadderFetchSetStatus( const ladderGhostFetch_t *request, qboolean ok, int count ) {
-        Cvar_Set( request->kind == LADDER_FETCH_LIST ? "sv_ladderGhostList" : "sv_ladderGhostFile",
-                va( "%d %s %d", request->requestId, ok ? "ok" : "fail", count ) );
+        const char *cvarName = request->kind == LADDER_FETCH_LIST ? "sv_ladderGhostList" : "sv_ladderGhostFile";
+        char previous[MAX_CVAR_VALUE_STRING];
+        char value[MAX_CVAR_VALUE_STRING];
+        const char *cursor;
+        int kept = 1;
+
+        Com_sprintf( value, sizeof( value ), "%d %s %d", request->requestId, ok ? "ok" : "fail", count );
+        if ( request->kind != LADDER_FETCH_LIST ) {
+                Cvar_VariableStringBuffer( cvarName, previous, sizeof( previous ) );
+                cursor = previous;
+                while ( *cursor && kept < LADDER_FETCH_STATUS_KEEP ) {
+                        const char *end = strchr( cursor, ';' );
+                        int length = end ? (int)( end - cursor ) : (int)strlen( cursor );
+
+                        /* An older result of the same request is replaced. */
+                        if ( length > 0 && atoi( cursor ) != request->requestId &&
+                             (int)strlen( value ) + 1 + length < (int)sizeof( value ) ) {
+                                Q_strcat( value, sizeof( value ), ";" );
+                                Q_strncpyz( value + strlen( value ), cursor, length + 1 );
+                                kept++;
+                        }
+                        if ( !end ) {
+                                break;
+                        }
+                        cursor = end + 1;
+                }
+        }
+        Cvar_Set( cvarName, value );
+}
+
+/* Keeps the per-map ghost cache bounded: once a map directory holds more than
+ * LADDER_FETCH_CACHE_KEEP ghosts, every ghost the fresh ranking list does not
+ * reference is removed (a faster ghost of the same player gets a new file, so
+ * replaced ghosts would otherwise stay forever). Removed ghosts of other
+ * track variants are simply downloaded again when picked. */
+static void SV_LadderFetchPruneCache( const char *map, const char *list ) {
+        char cacheName[MAX_QPATH];
+        char directory[MAX_QPATH];
+        char path[MAX_QPATH];
+        char **files;
+        char *slash;
+        int count;
+        int i;
+
+        SV_LadderFetchCacheName( map, "x", 1, cacheName, sizeof( cacheName ) );
+        slash = strrchr( cacheName, '/' );
+        if ( !slash ) {
+                return;
+        }
+        *slash = '\0';
+        Q_strncpyz( directory, cacheName, sizeof( directory ) );
+
+        files = FS_ListFiles( directory, ".ghost", &count );
+        if ( !files ) {
+                return;
+        }
+        if ( count > LADDER_FETCH_CACHE_KEEP ) {
+                int removed = 0;
+
+                for ( i = 0; i < count; i++ ) {
+                        Com_sprintf( path, sizeof( path ), "%s/%s", directory, files[i] );
+                        if ( strstr( list, va( "%s\t", path ) ) ) {
+                                continue;
+                        }
+                        if ( SV_LadderFetchTargetIsSafe( path ) ) {
+                                FS_HomeRemove( path );
+                                removed++;
+                        }
+                }
+                Com_DPrintf( "Ladder: pruned %d cached ghosts in %s\n", removed, directory );
+        }
+        FS_FreeFileList( files );
 }
 
 /* Handles a finished download; body may be NULL on transport errors. */
@@ -3570,6 +3705,7 @@ static void SV_LadderFetchFinish( const ladderGhostFetch_t *request, const char 
                         SV_LadderFetchSetStatus( request, qfalse, 0 );
                         return;
                 }
+                SV_LadderFetchPruneCache( request->map, list );
                 Z_Free( list );
                 Com_DPrintf( "Ladder: %d ladder ghosts listed for %s\n", count, request->map );
                 SV_LadderFetchSetStatus( request, qtrue, count );
@@ -3608,14 +3744,11 @@ static size_t SV_LadderFetchWriteCallback( void *buffer, size_t size, size_t nme
                 if ( capacity > LADDER_FETCH_BODY_MAX ) {
                         capacity = LADDER_FETCH_BODY_MAX;
                 }
-                grown = Z_Malloc( (int)capacity );
+                /* Heap, not the zone: ghost bodies are large and short-lived. */
+                grown = realloc( sv_ladderFetch.body, capacity );
                 if ( !grown ) {
                         sv_ladderFetch.bodyOverflow = qtrue;
                         return 0;
-                }
-                if ( sv_ladderFetch.body ) {
-                        Com_Memcpy( grown, sv_ladderFetch.body, sv_ladderFetch.bodyLength );
-                        Z_Free( sv_ladderFetch.body );
                 }
                 sv_ladderFetch.body = grown;
                 sv_ladderFetch.bodyCapacity = capacity;
@@ -3635,9 +3768,7 @@ static void SV_LadderFetchReleaseHandle( void ) {
                 sv_curl_easy_cleanup( sv_ladderFetch.easy );
                 sv_ladderFetch.easy = NULL;
         }
-        if ( sv_ladderFetch.body ) {
-                Z_Free( sv_ladderFetch.body );
-        }
+        free( sv_ladderFetch.body );
         sv_ladderFetch.body = NULL;
         sv_ladderFetch.bodyLength = 0;
         sv_ladderFetch.bodyCapacity = 0;
@@ -3690,6 +3821,7 @@ static qboolean SV_LadderFetchStart( const ladderGhostFetch_t *request ) {
                 return qfalse;
         }
 
+        SV_LadderRestrictProtocols( easy );
         sv_ladderFetch.active = qtrue;
         Com_DPrintf( "Ladder: fetching %s\n", url );
         return qtrue;

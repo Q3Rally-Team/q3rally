@@ -478,6 +478,8 @@ extern void     UI_ProfileWizard_OnOfflineKeyResult( qboolean success, const cha
 
 /* Profile data helpers — used by wizard and settings screens */
 extern qboolean UI_Profile_WriteDefaultFile( const char *name );
+extern qboolean UI_Profile_FindExisting( const char *name, char *out, int outSize );
+extern void     UI_Profile_LogUuidEvent( const char *event, const char *name, const char *uuid );
 extern qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats );
 extern qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats );
 extern void     UI_Profile_MarkStatsDirty( void );
@@ -527,7 +529,7 @@ int UI_FetchDemoList( char *buffer, int bufSize, const char **list, int maxList,
 extern void UI_DrawConnectScreen( qboolean overlay );
 
 //
-// ui_controls2.c
+// ui_rally_controls.c
 //
 extern void UI_ControlsMenu( void );
 extern void Controls_Cache( void );
@@ -585,12 +587,6 @@ extern void UI_PlateSelectionMenu( void );
 //
 extern void UI_PreferencesMenu( void );
 extern void Preferences_Cache( void );
-
-//
-// ui_specifyleague.c
-//
-extern void UI_SpecifyLeagueMenu( void );
-extern void SpecifyLeague_Cache( void );
 
 //
 // ui_specifyserver.c
@@ -1111,34 +1107,5 @@ void UI_SPUnlock_f( void );
 void UI_SPUnlockMedals_f( void );
 
 void UI_InitGameinfo( void );
-
-//GRank
-
-//
-// ui_rankings.c
-//
-void Rankings_DrawText( void* self );
-void Rankings_DrawName( void* self );
-void Rankings_DrawPassword( void* self );
-void Rankings_Cache( void );
-void UI_RankingsMenu( void );
-
-//
-// ui_login.c
-//
-void Login_Cache( void );
-void UI_LoginMenu( void );
-
-//
-// ui_signup.c
-//
-void Signup_Cache( void );
-void UI_SignupMenu( void );
-
-//
-// ui_rankstatus.c
-//
-void RankStatus_Cache( void );
-void UI_RankStatusMenu( void );
 
 #endif

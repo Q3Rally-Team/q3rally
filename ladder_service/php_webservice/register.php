@@ -37,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
         }
+        if ($error === '' && !keys_register_rate_ok()) {
+            $error = 'Too many registrations from your address. Please try again later.';
+        }
         if ($error === '') {
             $newKey  = keys_register($serverNameClean, $ownerName, $ownerEmail);
             $success = true;

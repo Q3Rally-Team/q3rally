@@ -10,10 +10,6 @@ cvar_t *sv_ladderApiKey = NULL;
 cvar_t *sv_ladderEnabled = NULL;
 cvar_t *sv_telemetryMaxBatch = NULL;
 
-static void SV_LadderLogSubmitSnapshot( const ladderMatchPayload_t *payload ) {
-	(void)payload;
-}
-
 #include "sv_ladder_for_test.c"
 
 int main( void ) {

@@ -19,11 +19,27 @@ keys_require_admin();
 $message     = '';
 $messageType = 'success';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $key    = $_POST['key']    ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = is_string($_POST['action']) ? $_POST['action'] : '';
+    // Forms carry the short key id, never the key itself.
+    $key    = keys_key_by_id(is_string($_POST['keyId'] ?? null) ? $_POST['keyId'] : '') ?? '';
 
-    if ($action === 'approve' && $key !== '') {
+    if (!keys_admin_csrf_ok()) {
+        // Missing or wrong token: a form from another site or an old page.
+        $message     = 'The form has expired. Please try again.';
+        $messageType = 'error';
+        $action      = '';
+    }
+
+    if ($action === 'logout') {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: admin.php');
+        exit;
+    } elseif ($action === 'unbind' && $key !== '') {
+        keys_unbind_player($key);
+        $message = 'Player binding released.';
+    } elseif ($action === 'approve' && $key !== '') {
         keys_approve($key);
         $message = 'Key approved.';
     } elseif ($action === 'revoke' && $key !== '') {
@@ -92,24 +108,31 @@ function status_badge(string $status): string
 
 function action_buttons(array $r, bool $showDelete = false): string
 {
-    $key    = htmlspecialchars($r['key'] ?? '');
+    $key    = htmlspecialchars(keys_key_id((string)($r['key'] ?? '')));
+    $csrf   = "<input type='hidden' name='csrf' value='" . htmlspecialchars(keys_admin_csrf_token()) . "'>";
     $status = $r['status'] ?? '';
     $out    = '<div style="display:flex;gap:8px;flex-wrap:wrap">';
 
     if (in_array($status, ['pending','suspended'], true)) {
         $out .= '<form method="post"><input type="hidden" name="action" value="approve">'
-              . "<input type='hidden' name='key' value='{$key}'>"
+              . "<input type='hidden' name='keyId' value='{$key}'>{$csrf}"
               . '<button type="submit" class="btn-approve">Approve</button></form>';
     }
     if ($status !== 'revoked') {
         $out .= '<form method="post"><input type="hidden" name="action" value="revoke">'
-              . "<input type='hidden' name='key' value='{$key}'>"
+              . "<input type='hidden' name='keyId' value='{$key}'>{$csrf}"
               . '<button type="submit" class="btn-revoke">Revoke</button></form>';
+    }
+    if (!empty($r['playerId'])) {
+        $out .= '<form method="post" onsubmit="return confirm(\'Release the player binding? The next upload binds the key again.\')">'
+              . '<input type="hidden" name="action" value="unbind">'
+              . "<input type='hidden' name='keyId' value='{$key}'>{$csrf}"
+              . '<button type="submit" class="btn-revoke">Unbind player</button></form>';
     }
     if ($showDelete && $status === 'revoked') {
         $out .= '<form method="post" onsubmit="return confirm(\'Permanently delete this key? This cannot be undone.\')">'
               . '<input type="hidden" name="action" value="delete">'
-              . "<input type='hidden' name='key' value='{$key}'>"
+              . "<input type='hidden' name='keyId' value='{$key}'>{$csrf}"
               . '<button type="submit" class="btn-delete">Delete</button></form>';
     }
 
@@ -122,17 +145,20 @@ function key_row(array $r, bool $showDelete = false): string
     $serverName = htmlspecialchars($r['serverName'] ?? '–');
     $ownerName  = htmlspecialchars($r['ownerName']  ?? '–');
     $ownerEmail = htmlspecialchars($r['ownerEmail'] ?? '');
-    $keyPreview = htmlspecialchars(substr($r['key'] ?? '', 0, 12));
+    $keyPreview = htmlspecialchars(keys_key_id((string)($r['key'] ?? '')));
     $matches    = (int)($r['matchCount'] ?? 0);
     $lastUsed   = htmlspecialchars($r['lastUsedAt'] ?? '–');
     $lastIp     = htmlspecialchars($r['lastUsedIp'] ?? '–');
     $status     = $r['status'] ?? 'unknown';
+    $player     = !empty($r['playerId'])
+        ? "<br><span class='meta' title='Player bound to this key'>Player " . htmlspecialchars(substr((string)$r['playerId'], 0, 8)) . '</span>'
+        : '';
 
     return "<tr>
         <td><strong>{$serverName}</strong></td>
-        <td>{$ownerName}<br><span class='meta'>{$ownerEmail}</span></td>
+        <td>{$ownerName}<br><span class='meta'>{$ownerEmail}</span>{$player}</td>
         <td>" . status_badge($status) . "</td>
-        <td><span class='key-mono'>{$keyPreview}…</span></td>
+        <td><span class='key-mono' title='Key id (not the key)'>{$keyPreview}</span></td>
         <td>{$matches}</td>
         <td class='meta'>{$lastUsed}</td>
         <td class='meta'>{$lastIp}</td>
@@ -208,6 +234,11 @@ function key_row(array $r, bool $showDelete = false): string
   <div class="page-header">
     <h1>Q3Rally Ladder Admin</h1>
     <span class="version-badge">v<?= htmlspecialchars(LADDER_VERSION) ?></span>
+    <form method="post" style="margin-left:auto">
+      <input type="hidden" name="action" value="logout">
+      <input type="hidden" name="csrf" value="<?= htmlspecialchars(keys_admin_csrf_token()) ?>">
+      <button type="submit" class="btn-revoke">Logout</button>
+    </form>
   </div>
 
   <?php if ($message !== ''): ?>
@@ -242,7 +273,7 @@ function key_row(array $r, bool $showDelete = false): string
   $showDelete   = ($activeTab === 'revoked');
   $tableHeaders = '<tr>
       <th>Server</th><th>Owner</th><th>Status</th>
-      <th>Key (preview)</th><th>Matches</th><th>Last used</th><th>Last IP</th><th>Actions</th>
+      <th>Key id</th><th>Matches</th><th>Last used</th><th>Last IP</th><th>Actions</th>
   </tr>';
   ?>
 

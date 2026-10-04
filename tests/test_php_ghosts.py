@@ -38,11 +38,12 @@ def ladder(tmp_path):
     (root / "data").mkdir()
     (root / "data" / "server_keys.json").write_text(json.dumps([{
         "key": API_KEY, "serverName": SERVER_NAME, "ownerName": "Test", "ownerEmail": "",
-        "type": "offline", "status": "active", "createdAt": "2026-01-01T00:00:00Z",
+        "type": "server", "status": "active", "createdAt": "2026-01-01T00:00:00Z",
         "approvedAt": "2026-01-01T00:00:00Z", "lastUsedAt": None, "lastUsedIp": None, "matchCount": 0,
     }]))
     port = _free_port()
-    proc = subprocess.Popen(["php", "-S", f"127.0.0.1:{port}", "-t", str(root)],
+    # No opcache: a test patches ghosts.php while the server runs.
+    proc = subprocess.Popen(["php", "-d", "opcache.enable=0", "-S", f"127.0.0.1:{port}", "-t", str(root)],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     base = f"http://127.0.0.1:{port}/index.php/api/v1"
     for _ in range(50):
@@ -148,7 +149,7 @@ def test_ghost_upload_ranking_and_download(ladder):
     status, body = _request(base + "/ghosts?map=q3r_testtrack&tl=1&rev=0&vehicle=evo&physics=1&checksum=4242", key=None)
     assert [g["lapMs"] for g in json.loads(body)["ghosts"]] == [58000, 59000]
 
-    keys = json.loads((root / "data" / "server_keys.json").read_text())
+    keys = json.loads((root / "data" / "private" / "server_keys.json").read_text())
     assert keys[0]["matchCount"] == 0 and keys[0]["ghostCount"] == 5
 
 
@@ -236,3 +237,41 @@ def test_ghost_catalog_lists_maps_variants_builds_and_vehicles(ladder):
     # The catalog path is not mistaken for a ghost id.
     status, body = _request(base + "/ghosts/catalog?format=raw", key=None)
     assert status == 200 and body.startswith("{")
+
+
+def test_ghost_list_without_bucket_shows_current_build_only(ladder):
+    base, _ = ladder
+    for player, lap, checksum in [(PLAYER_A, 58000, 4242), (PLAYER_B, 59000, 4242)]:
+        status, body = _request(base + "/ghosts", _ghost(player_id=player, lap_ms=lap, checksum=checksum))
+        assert status == 201, body
+    time.sleep(1.1)
+    status, body = _request(base + "/ghosts", _ghost(player_id=PLAYER_C, lap_ms=62000, checksum=5555))
+    assert status == 201, body
+
+    status, body = _request(base + "/ghosts?map=q3r_testtrack&tl=1&rev=0", key=None)
+    result = json.loads(body)
+    assert result["bucket"] == "p1_c5555"
+    assert [g["lapMs"] for g in result["ghosts"]] == [62000]
+
+
+def test_full_bucket_refuses_slower_new_ghost(ladder):
+    base, root = ladder
+    ghosts_php = root / "ghosts.php"
+    ghosts_php.write_text(ghosts_php.read_text().replace(
+        "const LADDER_GHOST_MAX_PER_BUCKET     = 200;", "const LADDER_GHOST_MAX_PER_BUCKET     = 2;"))
+    for player, lap in [(PLAYER_A, 58000), (PLAYER_B, 59000)]:
+        status, body = _request(base + "/ghosts", _ghost(player_id=player, lap_ms=lap))
+        assert status == 201, body
+
+    status, body = _request(base + "/ghosts", _ghost(player_id=PLAYER_C, lap_ms=60000))
+    assert status == 200 and json.loads(body) == {
+        "ghostId": f"q3r_testtrack.tl1_rev0.evo.p1_c4242.{PLAYER_C}", "stored": False,
+        "reason": "BUCKET_FULL", "slowestLapMs": 59000}
+
+    # A faster one gets in and pushes the slowest out.
+    status, body = _request(base + "/ghosts", _ghost(player_id=PLAYER_C, lap_ms=57000))
+    assert status == 201 and json.loads(body)["rank"] == 1
+    query = "/ghosts?map=q3r_testtrack&tl=1&rev=0&physics=1&checksum=4242"
+    assert [g["lapMs"] for g in json.loads(_request(base + query, key=None)[1])["ghosts"]] == [57000, 58000]
+    bucket = next((root / "data" / "ghosts").glob("q3r_testtrack/tl1_rev0/evo/p1_c4242"))
+    assert not (bucket / f"{PLAYER_B}.json").exists()

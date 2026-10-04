@@ -206,8 +206,8 @@ void CL_cURL_Cleanup(void)
 	}
 }
 
-static int CL_cURL_CallbackProgress( void *dummy, double dltotal, double dlnow,
-	double ultotal, double ulnow )
+static int CL_cURL_CallbackProgress( void *dummy, curl_off_t dltotal, curl_off_t dlnow,
+	curl_off_t ultotal, curl_off_t ulnow )
 {
 	clc.downloadSize = (int)dltotal;
 	Cvar_SetValue( "cl_downloadSize", clc.downloadSize );
@@ -299,14 +299,29 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 		CL_cURL_CallbackWrite);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_WRITEDATA, &clc.download);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_NOPROGRESS, 0);
-	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_PROGRESSFUNCTION,
+	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_XFERINFOFUNCTION,
 		CL_cURL_CallbackProgress);
-	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_PROGRESSDATA, NULL);
+	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_XFERINFODATA, NULL);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_FAILONERROR, 1);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_FOLLOWLOCATION, 1);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_MAXREDIRS, 5);
-	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_PROTOCOLS,
-		CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP | CURLPROTO_FTPS);
+	// Allowed protocols, also for redirects. The *_STR options exist since
+	// curl 7.85; an older system libcurl (dlopen) gets the bit mask instead.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+	if(qcurl_easy_setopt(clc.downloadCURL, CURLOPT_PROTOCOLS_STR,
+		"http,https,ftp,ftps") != CURLE_OK)
+		qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_PROTOCOLS,
+			(long)(CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP | CURLPROTO_FTPS));
+	if(qcurl_easy_setopt(clc.downloadCURL, CURLOPT_REDIR_PROTOCOLS_STR,
+		"http,https,ftp,ftps") != CURLE_OK)
+		qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_REDIR_PROTOCOLS,
+			(long)(CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP | CURLPROTO_FTPS));
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
 	clc.downloadCURLM = qcurl_multi_init();	
 	if(!clc.downloadCURLM) {

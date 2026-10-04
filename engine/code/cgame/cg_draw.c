@@ -3133,6 +3133,10 @@ static void CG_DrawCenterString( void ) {
 	if ( !cg.centerPrintTime ) {
 		return;
 	}
+	/* Ghost Race picker open: the picker shows the text in its panel. */
+	if ( CG_LadderGhost_PickerIsOpen() ) {
+		return;
+	}
 
 	color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value );
 	if ( !color ) {

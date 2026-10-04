@@ -15,7 +15,7 @@ if (in_array($origin, $allowedOrigins, true)) {
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Upload-Token');
 header('Access-Control-Max-Age: 86400');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
@@ -37,14 +37,24 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.12';
+const LADDER_VERSION        = '1.0.15';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
-const LADDER_RATE_LIMIT_MAX    = 30;      // max requests per window per IP
+const LADDER_RATE_LIMIT_MAX    = 30;      // max POST requests per window per IP
+const LADDER_RATE_LIMIT_SERVER_MAX = 120; // max POST requests per window per approved server key
 const LADDER_RATE_LIMIT_WINDOW = 60;      // window in seconds
+const LADDER_WRITE_LOCK_FILE   = __DIR__ . '/data/ladder_write.lock';
 const LADDER_RATE_FILE_PREFIX  = 'rl_';   // rate-limit state file prefix
 
 require_once __DIR__ . '/keys.php';
 require_once __DIR__ . '/ghosts.php';
+
+// Move a key file from the old, web-reachable location data/server_keys.json
+// into data/private/ on the first request after an update.
+try {
+    keys_prepare_storage();
+} catch (RuntimeException $e) {
+    error_log('[ladder] key storage: ' . $e->getMessage());
+}
 
 const LADDER_RACE_MODES = [
     'GT_RACING', 'GT_RACING_DM', 'GT_SPRINT', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
@@ -99,38 +109,101 @@ final class LadderApiException extends RuntimeException
 
 function ladder_check_rate_limit(): void
 {
-    $ip      = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $safeIp  = preg_replace('/[^a-fA-F0-9:.]/', '_', $ip);
-    $rlFile  = DATA_DIR . '/' . LADDER_RATE_FILE_PREFIX . $safeIp . '.json';
-    $now     = time();
-    $windowStart = $now - LADDER_RATE_LIMIT_WINDOW;
-
-    $state = ['hits' => []];
-    if (is_file($rlFile)) {
-        $raw = file_get_contents($rlFile);
-        if ($raw !== false) {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                $state = $decoded;
-            }
+    // Approved (active, non-offline) server keys get their own, larger bucket
+    // per key: a busy dedicated server uploads matches and a ghost for every
+    // new session best and must not share the per-IP limit for players.
+    // The key is only looked up here; keys_require_auth() still checks it.
+    $header   = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $provided = strncasecmp($header, 'Bearer ', 7) === 0 ? trim(substr($header, 7)) : '';
+    $bucket   = 'post';
+    $limit    = LADDER_RATE_LIMIT_MAX;
+    $perIp    = true;
+    if ($provided !== '') {
+        $record = keys_find_by_key($provided);
+        if ($record !== null && ($record['status'] ?? '') === 'active' && !keys_is_offline($record)) {
+            $bucket = 'post_key_' . keys_key_id($provided);
+            $limit  = LADDER_RATE_LIMIT_SERVER_MAX;
+            $perIp  = false;
         }
     }
 
-    $state['hits'] = array_values(array_filter(
-        $state['hits'] ?? [],
-        static fn($t) => is_int($t) && $t > $windowStart
-    ));
-
-    if (count($state['hits']) >= LADDER_RATE_LIMIT_MAX) {
+    // Locked read-modify-write; a request over the limit is not counted.
+    $count = keys_ip_counter($bucket, LADDER_RATE_LIMIT_WINDOW, 'add', $perIp, $limit);
+    if ($count >= $limit) {
         http_response_code(429);
         header('Content-Type: application/json');
         header('Retry-After: ' . LADDER_RATE_LIMIT_WINDOW);
         echo json_encode(['error' => 'Rate limit exceeded. Try again later.']);
         exit;
     }
+}
 
-    $state['hits'][] = $now;
-    file_put_contents($rlFile, json_encode($state), LOCK_EX);
+/**
+ * Write a file atomically (temporary file + rename): readers see either the
+ * old or the new content, never a truncated or half-written file.
+ * The temporary name does not end in .json, so globs over data/ skip it.
+ */
+function ladder_write_atomic(string $path, string $data): bool
+{
+    $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
+    if (file_put_contents($tmp, $data) === false) {
+        @unlink($tmp);
+        return false;
+    }
+    if (!rename($tmp, $path)) {
+        @unlink($tmp);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Global write lock for match files, the match index and profiles.
+ * Re-entrant within one request; released at the end of the request even
+ * if a handler exits early.
+ */
+function ladder_lock_acquire(): void
+{
+    if (($GLOBALS['ladderWriteLockDepth'] ?? 0) > 0) {
+        $GLOBALS['ladderWriteLockDepth']++;
+        return;
+    }
+    if (!is_dir(DATA_DIR)) {
+        @mkdir(DATA_DIR, 0775, true);
+    }
+    $handle = fopen(LADDER_WRITE_LOCK_FILE, 'c');
+    if ($handle === false || !flock($handle, LOCK_EX)) {
+        throw new RuntimeException('Unable to lock ladder data.');
+    }
+    $GLOBALS['ladderWriteLock'] = $handle;
+    $GLOBALS['ladderWriteLockDepth'] = 1;
+}
+
+function ladder_lock_release(): void
+{
+    $depth = ($GLOBALS['ladderWriteLockDepth'] ?? 0) - 1;
+    if ($depth > 0) {
+        $GLOBALS['ladderWriteLockDepth'] = $depth;
+        return;
+    }
+    $GLOBALS['ladderWriteLockDepth'] = 0;
+    $handle = $GLOBALS['ladderWriteLock'] ?? null;
+    $GLOBALS['ladderWriteLock'] = null;
+    if (is_resource($handle)) {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
+}
+
+/** Run $fn while holding the ladder write lock. */
+function ladder_locked(callable $fn)
+{
+    ladder_lock_acquire();
+    try {
+        return $fn();
+    } finally {
+        ladder_lock_release();
+    }
 }
 
 function ladder_read_body(): string
@@ -184,6 +257,12 @@ function ladder_pipeline_log(string $event, array $fields = []): void
 
     $suffix = $parts ? (' ' . implode(' ', $parts)) : '';
     error_log('[ladder-pipeline] ' . $event . $suffix);
+}
+
+// Command line tools (merge_player.php) load this file for its functions
+// only: no frontend, no API routing.
+if (defined('LADDER_LIBRARY_ONLY')) {
+    return;
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -2529,7 +2608,7 @@ function renderModeTable(modeKey) {
             link.title = 'View player profile';
             link.addEventListener('click', (e) => {
               e.preventDefault();
-              showPlayerProfile(entry.playerId, entry.player);
+              showPlayerProfile(profileIdFor(entry), entry.player);
             });
             strong.appendChild(link);
           } else {
@@ -3420,6 +3499,33 @@ async function loadMatches() {
   }
 }
 
+// Newest player id per name. A player whose id changed (new profile id on
+// the client) has matches under both ids; leaderboard rows are grouped by
+// name and keep the id of the match with the best value, so their links would
+// open the old profile. Rows link the newest id instead.
+const latestPlayerIds = new Map();
+
+function rememberPlayerId(entry, time) {
+  if (!entry || typeof entry !== 'object' || extractIsBot(entry)) {
+    return;
+  }
+  const id = typeof entry.playerId === 'string' ? entry.playerId : '';
+  const name = extractLeaderboardPlayer(entry).toLowerCase();
+  if (!id || !name) {
+    return;
+  }
+  const known = latestPlayerIds.get(name);
+  if (!known || time >= known.time) {
+    latestPlayerIds.set(name, { id, time });
+  }
+}
+
+function profileIdFor(entry) {
+  const name = String(entry.playerLower || entry.player || '').toLowerCase();
+  const latest = name ? latestPlayerIds.get(name) : null;
+  return (latest && latest.id) || entry.playerId;
+}
+
 function ingestMatchInto(match, aggregation) {
   if (!aggregation) {
     return;
@@ -3459,6 +3565,10 @@ function ingestMatchInto(match, aggregation) {
   const entries = extractScoreboardEntries(match);
   if (!entries.length) {
     return;
+  }
+  {
+    const when = (effectiveDate instanceof Date && !Number.isNaN(effectiveDate.getTime())) ? effectiveDate.getTime() : 0;
+    entries.forEach((entry) => rememberPlayerId(entry, when));
   }
 
   const map = extractMap(match);
@@ -4487,7 +4597,7 @@ function createOverlay(content, title) {
 function statCard(label, value) {
   const card = document.createElement('div');
   card.className = 'q3-stat-card';
-  card.innerHTML = `<dt>${label}</dt><dd>${value}</dd>`;
+  card.innerHTML = `<dt>${escapeHtml(String(label))}</dt><dd>${escapeHtml(String(value))}</dd>`;
   return card;
 }
 
@@ -4538,14 +4648,14 @@ async function showPlayerProfile(playerId, playerName) {
     rankStrip.innerHTML = `
       <div style="flex:1;min-width:160px">
         <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Rank</div>
-        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${rankName}</div>
+        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${escapeHtml(String(rankName))}</div>
         <div class="q3-rank-bar" style="margin-top:6px">
           <div class="q3-rank-bar-fill" style="width:${rankPct}%"></div>
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px">Score</div>
-        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${((p.playerScore)||0).toLocaleString()}</div>
+        <div style="font-size:.95rem;font-weight:600;color:var(--text)">${escapeHtml((Number(p.playerScore) || 0).toLocaleString())}</div>
       </div>`;
     body.appendChild(rankStrip);
 
@@ -4706,10 +4816,10 @@ async function showPlayerProfile(playerId, playerName) {
         const div = document.createElement('div');
         div.className = 'q3-achv' + (tiers > 0 ? ' unlocked' : '');
         div.innerHTML = `
-          <div class="q3-achv-name">${name}</div>
-          <div class="q3-achv-tier">${tiers > 0 ? `Tier ${tiers} / ${ACHIEVEMENT_MAX_TIERS}` : 'Locked'}</div>
+          <div class="q3-achv-name">${escapeHtml(String(name))}</div>
+          <div class="q3-achv-tier">${tiers > 0 ? `Tier ${escapeHtml(String(tiers))} / ${ACHIEVEMENT_MAX_TIERS}` : 'Locked'}</div>
           <div class="q3-achv-progress">
-            <div class="q3-achv-progress-fill" style="width:${pct}%"></div>
+            <div class="q3-achv-progress-fill" style="width:${Number.isFinite(pct) ? pct : 0}%"></div>
           </div>`;
         achvGrid.appendChild(div);
       });
@@ -4762,14 +4872,14 @@ async function showMatchDetails(matchId) {
     const matchTitle = document.createElement('div');
     matchTitle.style.cssText = 'margin-bottom:6px';
     matchTitle.innerHTML = `
-      <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${displayMode}</div>
-      <div style="font-size:.88rem;color:var(--text-muted);margin-top:2px">${displayMap}</div>`;
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${escapeHtml(String(displayMode))}</div>
+      <div style="font-size:.88rem;color:var(--text-muted);margin-top:2px">${escapeHtml(String(displayMap))}</div>`;
     body.appendChild(matchTitle);
 
     // Meta row: date, server, ID
     const meta = document.createElement('div');
     meta.style.cssText = 'font-size:.82rem;color:var(--text-muted);margin-bottom:20px;margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.07)';
-    meta.innerHTML = `<span>📅 ${date}</span><span>🖥 ${server}</span><span>🆔 ${matchId}</span>`;
+    meta.innerHTML = `<span>📅 ${escapeHtml(String(date))}</span><span>🖥 ${escapeHtml(String(server))}</span><span>🆔 ${escapeHtml(String(matchId))}</span>`;
     body.appendChild(meta);
 
     // Players
@@ -4797,9 +4907,9 @@ async function showMatchDetails(matchId) {
         const row = document.createElement('div');
         row.className = 'q3-match-player';
         row.innerHTML = `
-          <span class="pos">${pos}</span>
-          <span class="pname">${name}${p.isBot ? ' <span class="bot-tag">Bot</span>' : ''}</span>
-          <span class="pstats">${stats.join(' · ') || '–'}</span>`;
+          <span class="pos">${escapeHtml(String(pos))}</span>
+          <span class="pname">${escapeHtml(String(name))}${p.isBot ? ' <span class="bot-tag">Bot</span>' : ''}</span>
+          <span class="pstats">${escapeHtml(stats.join(' · ') || '–')}</span>`;
 
         if (p.playerId && !p.isBot) {
           row.querySelector('.pname').style.cursor = 'pointer';
@@ -4843,6 +4953,39 @@ async function showMatchDetails(matchId) {
 
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
+  {
+    version: '1.0.15',
+    date: '2026-10-04',
+    changes: [
+      'Match files, the match index and profiles are written under one lock and atomically (parallel uploads lost index entries, readers could see half-written files)',
+      'Approved server keys get their own POST limit (120 per minute per key); players and unknown keys keep 30 per minute per IP; rate-limit files moved to data/private/',
+      'Ghosts: a new ghost that is slower than the slowest one in a full bucket is refused with stored:false / BUCKET_FULL instead of being stored and dropped again',
+      'Ghosts: GET /ghosts without physics/checksum lists only the current bucket (highest physics version, newest map build) instead of mixing incomparable lap times',
+      'merge_player.php --apply holds the ladder lock while merging'
+    ],
+  },
+  {
+    version: '1.0.14',
+    date: '2026-10-04',
+    changes: [
+      'Security: ladder page escapes player names, server names, modes, maps and profile values in the match and profile views (stored XSS)',
+      'Security admin.php: form tokens against cross-site requests (CSRF), new session id after login, session cookie HttpOnly + SameSite=Strict (+ Secure on HTTPS)',
+      'Security admin.php: failed logins limited (5 per IP, 30 overall per 15 minutes), no framing, no caching',
+      'admin.php shows and posts a short key id instead of the key; logout button',
+      'Leaderboard rows link the newest player id of a name (a player whose id changed opened the old profile)',
+      'New command line tool merge_player.php: moves matches, ghosts, key binding and profile of an old player id to the new one (dry run by default)',
+      'Offline keys belong to one player: the first upload binds the key to its player id; afterwards only that player is credited (other players stay in the match without profile credit, foreign ghosts are refused); admin.php shows the binding and can release it'
+    ],
+  },
+  {
+    version: '1.0.13',
+    date: '2026-10-04',
+    changes: [
+      'Security: server keys moved to data/private/ (no HTTP access), match ids can no longer name internal files',
+      'Security: POST /api/v1/register always creates a pending key request; only the reporting server may delete a match, offline keys never',
+      'Offline keys always report offline matches and ghosts; key storage is locked and written atomically'
+    ],
+  },
   {
     version: '1.0.12',
     date: '2026-10-03',
@@ -5477,14 +5620,18 @@ try {
     switch ($method) {
         case 'POST':
             ladder_check_rate_limit();
-            handle_post($segments);
+            ladder_locked(static function () use ($segments): void {
+                handle_post($segments);
+            });
             break;
         case 'GET':
             handle_get($segments);
             break;
         case 'DELETE':
-            keys_require_auth('');
-            handle_delete($segments);
+            $deleteKey = keys_require_auth('', false, false);
+            ladder_locked(static function () use ($segments, $deleteKey): void {
+                handle_delete($segments, $deleteKey);
+            });
             break;
         default:
             send_error(405, 'Method not allowed.');
@@ -5542,11 +5689,10 @@ function profile_save(string $playerId, array $data): void
     if (!is_dir(PROFILES_DIR)) {
         mkdir(PROFILES_DIR, 0775, true);
     }
-    file_put_contents(
-        profile_path($playerId),
-        json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-        LOCK_EX
-    );
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($json === false || !ladder_write_atomic(profile_path($playerId), $json)) {
+        error_log('Ladder: failed to save profile ' . $playerId);
+    }
 }
 
 /**
@@ -6667,8 +6813,10 @@ function index_extract_entry(array $payload): array
 {
     $mode = normalize_mode_value($payload['mode'] ?? '');
     $dedicated = $payload['server']['dedicated'] ?? null;
-    $source    = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
-        ? 'online' : ($payload['source'] ?? 'offline');
+    $source    = $payload['source'] ?? null;
+    if ($source !== 'online' && $source !== 'offline') {
+        $source = ($dedicated === true || $dedicated === 1 || $dedicated === '1') ? 'online' : 'offline';
+    }
 
     $winnerInfo = index_derive_winner($payload, $mode);
 
@@ -6787,7 +6935,7 @@ function index_save(array $entries): bool
     if ($json === false) {
         return false;
     }
-    return file_put_contents(INDEX_FILE, $json, LOCK_EX) !== false;
+    return ladder_write_atomic(INDEX_FILE, $json);
 }
 
 function index_append(array $payload): void
@@ -6822,6 +6970,11 @@ function index_remove(string $matchId): void
  * Returns the rebuilt entries array.
  */
 function index_rebuild(): array
+{
+    return ladder_locked('index_rebuild_unlocked');
+}
+
+function index_rebuild_unlocked(): array
 {
     $files   = glob(DATA_DIR . '/*.json');
     $entries = [];
@@ -6887,28 +7040,36 @@ function handle_register_json(): void
 
     $serverName = trim((string)($data['serverName'] ?? ''));
     $ownerName  = trim((string)($data['ownerName']  ?? ''));
-    $type       = strtolower(trim((string)($data['type'] ?? 'server')));
+    $ownerEmail = trim((string)($data['ownerEmail'] ?? ''));
+    $type       = strtolower(trim((string)($data['type'] ?? 'server'))) === 'offline' ? 'offline' : 'server';
 
     if ($serverName === '') { send_error(400, 'serverName is required.'); }
     if ($ownerName  === '') { send_error(400, 'ownerName is required.'); }
+    if (strlen($serverName) > 64 || strlen($ownerName) > 64 || strlen($ownerEmail) > 254) {
+        send_error(400, 'Field too long.', 'FIELD_TOO_LONG');
+    }
+    if (!keys_register_rate_ok()) {
+        send_error(429, 'Too many registrations. Try again later.', 'RATE_LIMITED');
+    }
 
+    // Every key starts as a request the admin has to approve (admin.php).
+    // Keys that were active right after registration could report and
+    // delete matches without anybody having looked at them.
     $key    = bin2hex(random_bytes(32));
     $record = [
         'key'        => $key,
         'serverName' => $serverName,
         'ownerName'  => $ownerName,
-        'ownerEmail' => (string)($data['ownerEmail'] ?? ''),
+        'ownerEmail' => $ownerEmail,
         'type'       => $type,
-        'status'     => ($type === 'offline') ? 'active' : 'pending',
+        'status'     => 'pending',
         'createdAt'  => gmdate('c'),
-        'approvedAt' => ($type === 'offline') ? gmdate('c') : null,
+        'approvedAt' => null,
         'lastUsedAt' => null,
         'lastUsedIp' => null,
         'matchCount' => 0,
     ];
-    $keys   = keys_load();
-    $keys[] = $record;
-    keys_save($keys);
+    keys_append($record);
 
     header('Content-Type: application/json');
     http_response_code(201);
@@ -6997,15 +7158,15 @@ function handle_post(array $segments): void
     if (isset($payload['server']['name']) && is_string($payload['server']['name'])) {
         $serverName = $payload['server']['name'];
     }
-    keys_require_auth($serverName);
+    $keyRecord = keys_require_auth($serverName);
 
     if (!isset($payload['matchId']) || !is_string($payload['matchId']) || trim($payload['matchId']) === '') {
         throw new LadderApiException(422, 'MATCH_ID_REQUIRED', 'matchId is required.');
     }
 
     $matchId = normalize_match_id($payload['matchId']);
-    if ($matchId === '') {
-        throw new LadderApiException(422, 'MATCH_ID_INVALID', 'matchId contains unsupported characters.');
+    if (!match_id_is_allowed($matchId)) {
+        throw new LadderApiException(422, 'MATCH_ID_INVALID', 'matchId contains unsupported characters or is reserved.');
     }
     if (array_key_exists('serverMatchSeq', $payload)) {
         $serverMatchSeq = ladder_parse_server_match_seq($payload['serverMatchSeq']);
@@ -7026,20 +7187,30 @@ function handle_post(array $segments): void
         return;
     }
 
+    if (keys_is_offline($keyRecord)) {
+        $payload = offline_match_restrict_players($payload, $keyRecord, $matchId);
+    }
+
     $payload['receivedAt'] = gmdate('c');
 
-    // Normalize dedicated flag → source field for frontend filtering
+    // Normalize dedicated flag → source field for frontend filtering.
+    // Offline keys (in-game wizard) always report offline matches, whatever
+    // the payload claims.
     $dedicated = $payload['server']['dedicated'] ?? null;
-    $payload['source'] = ($dedicated === true || $dedicated === 1 || $dedicated === '1')
+    $payload['source'] = (!keys_is_offline($keyRecord)
+        && ($dedicated === true || $dedicated === 1 || $dedicated === '1'))
         ? 'online'
         : 'offline';
+    // Which key reported the match (non-secret id, never published):
+    // only that key may delete it again.
+    $payload['ingestKeyId'] = keys_key_id((string)($keyRecord['key'] ?? ''));
 
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         throw new LadderApiException(500, 'ENCODE_FAILED', 'Failed to encode payload.');
     }
 
-    if (file_put_contents($matchPath, $json . "\n") === false) {
+    if (!ladder_write_atomic($matchPath, $json . "\n")) {
         throw new LadderApiException(500, 'PERSIST_FAILED', 'Unable to persist match.');
     }
 
@@ -7078,6 +7249,48 @@ function handle_post(array $segments): void
     profile_upsert_from_payload($payload);
 
     send_json(['matchId' => $payload['matchId']], 201);
+}
+
+/**
+ * Offline keys report for their own player only (keys_offline_player): a
+ * match with exactly one human player binds an unbound key to that player.
+ * Human players other than the bound one stay in the match, but without
+ * player id and profile snapshot, so no profile is credited for them.
+ */
+function offline_match_restrict_players(array $payload, array $keyRecord, string $matchId): array
+{
+    $humans = [];
+    foreach ((array)($payload['players'] ?? []) as $player) {
+        if (!is_array($player) || !empty($player['isBot'])) {
+            continue;
+        }
+        $id = strtolower((string)($player['playerId'] ?? ''));
+        if (profile_is_valid_uuid($id)) {
+            $humans[$id] = true;
+        }
+    }
+    $candidate = count($humans) === 1 ? (string)array_key_first($humans) : '';
+    $bound = keys_offline_player($keyRecord, $candidate);
+
+    $dropped = 0;
+    foreach ($payload['players'] as $i => $player) {
+        if (!is_array($player) || !empty($player['isBot'])) {
+            continue;
+        }
+        $id = strtolower((string)($player['playerId'] ?? ''));
+        if ($id !== '' && $id !== $bound) {
+            unset($payload['players'][$i]['playerId'], $payload['players'][$i]['profile'], $payload['players'][$i]['guid']);
+            $dropped++;
+        }
+    }
+    if ($dropped > 0) {
+        ladder_pipeline_log('php-offline-player-dropped', [
+            'matchId' => $matchId,
+            'dropped' => $dropped,
+            'bound'   => $bound !== '' ? 'yes' : 'no',
+        ]);
+    }
+    return $payload;
 }
 
 function normalize_api_segments(array $segments): array
@@ -7238,41 +7451,42 @@ function handle_get(array $segments): void
 
     if (count($segments) === 2 && $segments[0] === 'matches') {
         $matchId = normalize_match_id($segments[1]);
-        $matchPath = DATA_DIR . '/' . $matchId . '.json';
-        if (!is_readable($matchPath)) {
+        $payload = match_load_stored($matchId);
+        if ($payload === null) {
             send_error(404, 'Match not found.');
         }
 
-        $json = file_get_contents($matchPath);
-        if ($json === false) {
-            throw new RuntimeException('Failed to read match.');
-        }
-
-        $payload = json_decode($json, true);
-        if (!is_array($payload)) {
-            throw new RuntimeException('Stored match is corrupted.');
-        }
-
-        send_json($payload, 200);
+        send_json(sanitize_public_match_payload($payload), 200);
         return;
     }
 
     send_error(404, 'Endpoint not found.');
 }
 
-function handle_delete(array $segments): void
+function handle_delete(array $segments, array $keyRecord): void
 {
     if (count($segments) !== 2 || $segments[0] !== 'matches') {
         send_error(404, 'Endpoint not found.');
     }
 
+    if (keys_is_offline($keyRecord)) {
+        send_error(403, 'Offline keys cannot delete matches.', 'DELETE_FORBIDDEN');
+    }
+
     $matchId = normalize_match_id($segments[1]);
-    $matchPath = DATA_DIR . '/' . $matchId . '.json';
-    if (!file_exists($matchPath)) {
+    $payload = match_load_stored($matchId);
+    if ($payload === null) {
         send_error(404, 'Match not found.');
     }
 
-    if (!unlink($matchPath)) {
+    // Only the key that reported the match may delete it. Matches stored
+    // before 1.0.13 carry no reporter and can only be removed on the server.
+    $owner = (string)($payload['ingestKeyId'] ?? '');
+    if ($owner === '' || !hash_equals($owner, keys_key_id((string)($keyRecord['key'] ?? '')))) {
+        send_error(403, 'Only the server that reported a match can delete it.', 'DELETE_FORBIDDEN');
+    }
+
+    if (!unlink(DATA_DIR . '/' . $matchId . '.json')) {
         throw new RuntimeException('Failed to delete match.');
     }
 
@@ -7580,6 +7794,8 @@ function decode_match_file(string $file): ?array
  */
 function sanitize_public_match_payload(array $payload): array
 {
+    unset($payload['ingestKeyId']);
+
     if (isset($payload['server']) && is_array($payload['server'])) {
         unset($payload['server']['key']);
     }
@@ -7599,6 +7815,44 @@ function normalize_match_id(string $raw): string
 {
     $normalized = preg_replace('/[^A-Za-z0-9._-]/', '_', $raw);
     return trim((string) $normalized);
+}
+
+/**
+ * Match ids become data/<id>.json. Ids that name one of the service's own
+ * files in data/ (index, rate limit state, old key file location) or start
+ * with a dot are never a match.
+ */
+function match_id_is_allowed(string $matchId): bool
+{
+    if ($matchId === '' || strlen($matchId) > 200 || $matchId[0] === '.') {
+        return false;
+    }
+    $lower = strtolower($matchId);
+    if (in_array($lower, ['server_keys', 'match_index', 'version'], true)) {
+        return false;
+    }
+    return strncmp($lower, LADDER_RATE_FILE_PREFIX, strlen(LADDER_RATE_FILE_PREFIX)) !== 0;
+}
+
+/** A stored match by normalized id, or null when there is no such match. */
+function match_load_stored(string $matchId): ?array
+{
+    if (!match_id_is_allowed($matchId)) {
+        return null;
+    }
+    $matchPath = DATA_DIR . '/' . $matchId . '.json';
+    if (!is_file($matchPath) || !is_readable($matchPath)) {
+        return null;
+    }
+    $json = file_get_contents($matchPath);
+    if ($json === false) {
+        throw new RuntimeException('Failed to read match.');
+    }
+    $payload = json_decode($json, true);
+    if (!is_array($payload) || !isset($payload['matchId']) || !is_string($payload['matchId'])) {
+        return null;
+    }
+    return $payload;
 }
 
 function normalize_map_key(string $raw): string

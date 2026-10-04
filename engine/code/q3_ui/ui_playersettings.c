@@ -2357,7 +2357,7 @@ static void PlayerSettings_DrawCareerRank( const profile_stats_t *stats, int x, 
 	}
 
 	Com_sprintf( rankLine, sizeof( rankLine ), "RANK %d / %d  |  %d POINTS",
-	             rank.index + 1, ARRAY_LEN( s_playerSettingsRankTable ), stats->playerScore );
+	             rank.index + 1, (int)ARRAY_LEN( s_playerSettingsRankTable ), stats->playerScore );
 	Frontend_DrawText( x + 10, y + 4, rankLine, UI_LEFT | UI_SMALLFONT,
 	                   playerSettingsMutedColor );
 	PlayerSettings_DrawFittedStatsText( x + 10, y + 17, x + 184,

@@ -6,9 +6,44 @@
 
 declare(strict_types=1);
 
-const LADDER_VERSION = '1.0.12';
+const LADDER_VERSION = '1.0.15';
 
 const LADDER_CHANGELOG = [
+    '1.0.15' => [
+        'date'    => '2026-10-04',
+        'changes' => [
+            'Match files, the match index and profiles are written under one lock and atomically (parallel uploads lost index entries, readers could see half-written files)',
+            'Approved server keys get their own POST limit (120 per minute per key); players and unknown keys keep 30 per minute per IP; rate-limit files moved to data/private/',
+            'Ghosts: a new ghost that is slower than the slowest one in a full bucket is refused with stored:false / BUCKET_FULL instead of being stored and dropped again',
+            'Ghosts: GET /ghosts without physics/checksum lists only the current bucket (highest physics version, newest map build) instead of mixing incomparable lap times',
+            'merge_player.php --apply holds the ladder lock while merging',
+        ],
+    ],
+    '1.0.14' => [
+        'date'    => '2026-10-04',
+        'changes' => [
+            'Security: ladder page escapes player names, server names, modes, maps and profile values in the match and profile views (stored XSS)',
+            'Security admin.php: form tokens against cross-site requests (CSRF), new session id after login, session cookie HttpOnly + SameSite=Strict (+ Secure on HTTPS)',
+            'Security admin.php: failed logins limited (5 per IP, 30 overall per 15 minutes), no framing, no caching',
+            'admin.php shows and posts a short key id instead of the key; logout button',
+            'Leaderboard rows link the newest player id of a name (a player whose id changed opened the old profile)',
+            'New command line tool merge_player.php: moves matches, ghosts, key binding and profile of an old player id to the new one (dry run by default)',
+            'Offline keys belong to one player: the first upload binds the key to its player id; afterwards only that player is credited (other players stay in the match without profile credit, foreign ghosts are refused); admin.php shows the binding and can release it',
+        ],
+    ],
+    '1.0.13' => [
+        'date'    => '2026-10-04',
+        'changes' => [
+            'Security: server keys moved to data/private/ (deny-all .htaccess); data/server_keys.json is moved there automatically',
+            'Security: match ids can no longer name internal files (server_keys, match_index, version, rl_*)',
+            'Security: POST /api/v1/register always creates a pending key request (offline keys were active immediately)',
+            'Security: DELETE /api/v1/matches/{id} only for the key that reported the match, never for offline keys',
+            'Offline keys always report offline matches and ghosts, independent of server.dedicated',
+            'Key storage changes run under an exclusive lock and are written atomically',
+            'Registration throttle: 10 key requests per IP and hour (register.php and /api/v1/register)',
+            'GET /api/v1/matches/{id} returns the public match view (no guid, profile snapshot or reporter id)',
+        ],
+    ],
     '1.0.12' => [
         'date'    => '2026-10-03',
         'changes' => [

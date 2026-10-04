@@ -1574,6 +1574,34 @@ static void G_Profile_WriteToDisk( void ) {
     s_profileState.nextAutosaveTime = level.time + PROFILE_AUTOSAVE_INTERVAL;
 }
 
+/*
+ * UUID-Ereignisse dauerhaft in profiles/uuid_history.log anhängen
+ * (qconsole.log wird bei jedem Start überschrieben).
+ */
+static void G_Profile_LogUuidEvent( const char *event, const char *name, const char *uuid ) {
+    fileHandle_t file;
+    qtime_t now;
+    char line[192];
+    int len;
+
+    trap_FS_FOpenFile( "profiles/uuid_history.log", &file, FS_APPEND );
+    if ( !file ) {
+        return;
+    }
+    Com_Memset( &now, 0, sizeof( now ) );
+    trap_RealTime( &now );
+    len = Com_sprintf( line, sizeof( line ),
+                       "game %04d-%02d-%02d %02d:%02d:%02d %s profile=\"%s\" uuid=%s\n",
+                       now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
+                       now.tm_hour, now.tm_min, now.tm_sec,
+                       event ? event : "?", name ? name : "",
+                       ( uuid && uuid[0] ) ? uuid : "-" );
+    if ( len > 0 ) {
+        trap_FS_Write( line, len, file );
+    }
+    trap_FS_FCloseFile( file );
+}
+
 static void G_Profile_ClearState( void ) {
     Com_Memset( &s_profileState, 0, sizeof( s_profileState ) );
     Com_Memset( &s_profileVehicleUsage, 0, sizeof( s_profileVehicleUsage ) );
@@ -1613,10 +1641,12 @@ void G_Profile_Init( void ) {
             Q_strncpyz( s_profileState.info.uuid, archivedUuid, sizeof( s_profileState.info.uuid ) );
             Com_Printf( "Q3Rally Profile: restored archived UUID %s for '%s'\n",
                         s_profileState.info.uuid, s_profileState.name );
+            G_Profile_LogUuidEvent( "restored-from-cl_uuid", s_profileState.name, s_profileState.info.uuid );
         } else {
             G_Profile_GenerateUUID( s_profileState.info.uuid, sizeof( s_profileState.info.uuid ) );
-            Com_Printf( "Q3Rally Profile: generated UUID %s for '%s'\n",
-                        s_profileState.info.uuid, s_profileState.name );
+            Com_Printf( "^3Q3Rally Profile: '%s' had no valid UUID, generated a NEW one %s (new Ladder identity)\n",
+                        s_profileState.name, s_profileState.info.uuid );
+            G_Profile_LogUuidEvent( "generated", s_profileState.name, s_profileState.info.uuid );
         }
         s_profileState.dirty = qtrue;
         G_Profile_WriteToDisk();

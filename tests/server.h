@@ -60,6 +60,7 @@ static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, co
 #define MAX_INFO_STRING 1024
 #define MAX_OSPATH 256
 #define MAX_STRING_CHARS 1024
+#define MAX_CVAR_VALUE_STRING 256
 
 #define TEAM_FREE 0
 #define TEAM_RED 1
@@ -311,9 +312,13 @@ static inline void Cvar_Set( const char *name, const char *value ) {
         snprintf( test_cvarSetName, sizeof( test_cvarSetName ), "%s", name );
         snprintf( test_cvarSetValue, sizeof( test_cvarSetValue ), "%s", value );
 }
+/* Reads back the value of the cvar set last (enough for the status lists). */
 static inline void Cvar_VariableStringBuffer( const char *name, char *buffer, int size ) {
-        (void)name;
-        if ( buffer && size > 0 ) buffer[0] = '\0';
+        if ( !buffer || size <= 0 ) return;
+        buffer[0] = '\0';
+        if ( name && !strcmp( name, test_cvarSetName ) ) {
+                snprintf( buffer, (size_t)size, "%s", test_cvarSetValue );
+        }
 }
 static inline int Cvar_VariableIntegerValue( const char *name ) { (void)name; return 0; }
 static inline int Cmd_Argc( void ) { return 0; }
@@ -479,5 +484,23 @@ static inline int FS_Write( const void *buffer, int len, fileHandle_t f ) {
         return len;
 }
 static inline void FS_FCloseFile( fileHandle_t f ) { (void)f; }
+
+/* Directory listing and removals for the ghost cache pruning. */
+static char *test_fsListFiles[128];
+static int test_fsListCount;
+static char test_fsListDir[256];
+static int test_fsRemoveCount;
+static char test_fsLastRemoved[256];
+static inline char **FS_ListFiles( const char *directory, const char *extension, int *numfiles ) {
+        (void)extension;
+        snprintf( test_fsListDir, sizeof( test_fsListDir ), "%s", directory );
+        *numfiles = test_fsListCount;
+        return test_fsListCount ? test_fsListFiles : NULL;
+}
+static inline void FS_FreeFileList( char **list ) { (void)list; }
+static inline void FS_HomeRemove( const char *homePath ) {
+        snprintf( test_fsLastRemoved, sizeof( test_fsLastRemoved ), "%s", homePath );
+        test_fsRemoveCount++;
+}
 
 #endif /* TEST_SERVER_H */

@@ -353,9 +353,18 @@ static qboolean PW_CommitName( void ) {
         Q_strncpyz( s_pw.statusLine, "Name must use letters, numbers, _ - . only.", sizeof( s_pw.statusLine ) );
         return qfalse;
     }
-    if ( !UI_Profile_WriteDefaultFile( name ) ) {
-        Q_strncpyz( s_pw.statusLine, "Failed to create profile file.", sizeof( s_pw.statusLine ) );
-        return qfalse;
+    {
+        char existing[ PROFILE_MAX_NAME ];
+        /* An existing profile with this name is continued, never recreated:
+         * recreating would give it a new UUID (new Ladder identity) and
+         * reset its stats. */
+        if ( UI_Profile_FindExisting( name, existing, sizeof( existing ) ) ) {
+            Q_strncpyz( name, existing, sizeof( name ) );
+            trap_Print( va( "Q3Rally Profile: wizard continues existing profile '%s'\n", name ) );
+        } else if ( !UI_Profile_WriteDefaultFile( name ) ) {
+            Q_strncpyz( s_pw.statusLine, "Failed to create profile file.", sizeof( s_pw.statusLine ) );
+            return qfalse;
+        }
     }
     Q_strncpyz( s_pw.profileName, name, sizeof( s_pw.profileName ) );
     UI_Profile_ActivateProfile( name );
