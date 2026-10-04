@@ -2,6 +2,17 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc php-cli python3-pytest
+    - name: Run tests
+      run: python3 -m pytest -q tests
   linux:
     name: Linux ${{ matrix.arch }}
     runs-on: ubuntu-22.04
@@ -10,7 +21,7 @@ jobs:
       matrix:
         arch: [x86_64, x86]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Install Dependencies
       run: |
         if [ "${{ matrix.arch }}" = "x86" ]; then
@@ -18,7 +29,7 @@ jobs:
         fi
         sudo apt-get update
         if [ "${{ matrix.arch }}" = "x86" ]; then
-          sudo apt-get install -y gcc-multilib pkg-config libsdl2-dev:i386 libcurl4-openssl-dev:i386
+          sudo apt-get install -y gcc-multilib g++-multilib pkg-config libsdl2-dev:i386 libcurl4-openssl-dev:i386
         else
           sudo apt-get install -y pkg-config libsdl2-dev libcurl4-openssl-dev
         fi
@@ -32,7 +43,7 @@ jobs:
         fi
       env:
         ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: Linux-${{ matrix.arch }}
         path: engine/build/*.zip
@@ -40,15 +51,22 @@ jobs:
     name: Linux ARM64
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu zip
     - name: Compile
       run: make release -j$(nproc) ARCH=arm64 BUILD_CLIENT=0 BUILD_RENDERER_OPENGL1=0 BUILD_RENDERER_OPENGL2=0 CC=aarch64-linux-gnu-gcc -C engine USE_CURL=1 USE_CURL_DLOPEN=1
       env:
         ARCHIVE: 1
+    - name: Verify package
+      run: test -s engine/build/release-linux-arm64.zip
+    - uses: actions/upload-artifact@v7
+      with:
+        name: Linux-arm64
+        path: engine/build/release-linux-arm64.zip
+        if-no-files-found: error
   windows:
     name: Windows ${{ matrix.arch }}
     runs-on: windows-2022
@@ -59,14 +77,17 @@ jobs:
         - arch: x86_64
           msystem: MINGW64
           package_prefix: mingw-w64-x86_64
+          suppress_deprecation_warnings: msystem-mingw64
         - arch: x86
           msystem: MINGW32
           package_prefix: mingw-w64-i686
+          suppress_deprecation_warnings: msystem-mingw32
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ${{ matrix.msystem }}
+        suppress-deprecation-warnings: ${{ matrix.suppress_deprecation_warnings }}
         update: true
         install: >-
           base-devel
@@ -75,14 +96,19 @@ jobs:
           zip
           ${{ matrix.package_prefix }}-gcc
           ${{ matrix.package_prefix }}-binutils
+          ${{ matrix.package_prefix }}-cmake
+          ${{ matrix.package_prefix }}-ninja
+    - name: Build libcurl
+      shell: msys2 {0}
+      run: sh engine/misc/build-curl-mingw.sh ${{ matrix.arch }} "$PWD/curl-${{ matrix.arch }}"
     - name: Compile
       shell: msys2 {0}
       run: |
         command -v windres
-        make release -j$(nproc) -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} WINDRES=windres USE_CURL=1 USE_CURL_DLOPEN=0
+        make release -j$(nproc) -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} WINDRES=windres USE_CURL=1 USE_CURL_DLOPEN=0 CURL_PREFIX="$PWD/curl-${{ matrix.arch }}"
       env:
         ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: Windows-${{ matrix.arch }}
         path: engine/build/*.zip
@@ -90,20 +116,20 @@ jobs:
     name: macOS
     runs-on: macos-15
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Compile
       run: make release -j$(sysctl -n hw.logicalcpu) -C engine USE_CURL=1 USE_CURL_DLOPEN=1
       env:
         ARCHIVE: 1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: macOS
         path: engine/build/*.zip
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7
       with:
         repository: emscripten-core/emsdk
         path: emsdk
@@ -118,7 +144,7 @@ jobs:
       run: |
         source emsdk/emsdk_env.sh
         emmake make release -j$(nproc) -C engine USE_CURL=1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: Web
         path: engine/build/*.zip
