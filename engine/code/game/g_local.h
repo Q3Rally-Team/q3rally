@@ -1003,6 +1003,7 @@ void G_Ghost_InitForMap( const char *mapname );
 void G_Ghost_BuildBotRoutes( void );
 const ghostRecord_t *G_Ghost_FindBestRecord( void );
 void G_Ghost_AnnounceForClient( gentity_t *ent );
+void G_Ghost_RequestRouteForClient( gentity_t *ent );
 void G_Ghost_ProcessClientTransfers( void );
 qboolean G_Ghost_GetBotRoute( const ghostBotRoute_t **outRoute );
 int G_Ghost_SelectClosestWaypoint( const ghostBotRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow );
@@ -1325,6 +1326,9 @@ qboolean G_WeatherPointSnow( const vec3_t point );
 
 extern	vmCvar_t	g_carImpactTransfer;
 extern	vmCvar_t	g_carImpactElasticity;
+extern	vmCvar_t	g_slipstream;
+extern	vmCvar_t	g_slipstreamStrength;
+extern	vmCvar_t	g_slipstreamDistance;
 // END
 
 void	trap_Print( const char *text );

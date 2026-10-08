@@ -2528,6 +2528,9 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 	pm->ps->commandTime = pmove->cmd.serverTime;
 
+// Q3Rally: slipstream ramps per command, identically in client prediction
+	BG_SlipstreamStep( pm->ps, pml.msec );
+
 	// save old org in case we get stuck
 	VectorCopy (pm->ps->origin, pml.previous_origin);
 

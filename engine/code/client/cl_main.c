@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 #include "cl_update.h"
+#include "cl_update_util.h"
 #include <limits.h>
 
 #include "../sys/sys_local.h"
@@ -1504,6 +1505,13 @@ void CL_OpenURL_f( void ) {
         return;
     }
     const char *url = Cmd_Argv(1);
+
+    /* The URL ends up in a shell command on Linux/macOS (and in ShellExecute
+     * on Windows): only accept plain http(s) URLs without metacharacters. */
+    if ( !CL_IsSafeURL( url ) ) {
+        Com_Printf( "openURL: refusing unsafe or unsupported URL\n" );
+        return;
+    }
 
 #ifdef _WIN32
     if ( (INT_PTR)ShellExecute( NULL, "open", url, NULL, NULL, SW_SHOWNORMAL ) <= 32 ) {

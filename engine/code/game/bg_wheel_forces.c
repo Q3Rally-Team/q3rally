@@ -262,10 +262,14 @@ PM_AirFrictionForces
 */
 static void PM_AirFrictionForces( car_t *car, carBody_t *body, carPoint_t *points, float sec ){
 	vec3_t		dir, force;
-	float		v, friction, area;
+	float		v, friction, area, drag;
 	int			i;
 
 	area = fabs((float)(CAR_HEIGHT * CAR_WIDTH) / (float)(CP_M_2_QU*CP_M_2_QU));
+
+	// slipstream: a car in another car's wake meets less air. Down force is
+	// derived from the drag below, so drafting also costs grip ("dirty air").
+	drag = pm->car_air_cof * ( 1.0f - BG_SlipstreamFactor( pm->ps ) );
 
 	// dont do air friction on tires
 	for (i = FIRST_FRAME_POINT; i < NUM_CAR_POINTS; i++){
@@ -275,7 +279,7 @@ static void PM_AirFrictionForces( car_t *car, carBody_t *body, carPoint_t *point
 
 		v /= CP_M_2_QU; // m / s
 
-		friction = -0.5 * pm->car_air_cof * area * points[i].fluidDensity * v * v / (float)(NUM_CAR_POINTS);
+		friction = -0.5 * drag * area * points[i].fluidDensity * v * v / (float)(NUM_CAR_POINTS);
 
 		friction *= CP_M_2_QU; // to qforce
 //		friction = 0;

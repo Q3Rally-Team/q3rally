@@ -44,6 +44,7 @@ extern vmCvar_t  cg_hudShowOpponentList;   /* Racing/elimination order list    *
 extern vmCvar_t  cg_hudShowScores;         /* DM/team scores panel             */
 
 /* --- Vehicle HUD --- */
+extern vmCvar_t  cg_hudShowSlipstream;     /* Slipstream gauge above the strip */
 /* cg_hudShowRearView removed – use native cg_drawRearView */
 /* cg_hudShowMiniMap removed – use native cg_drawMMap */
 

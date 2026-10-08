@@ -450,6 +450,9 @@ extern void UI_CreditMenu( void );
 //
 extern void UI_GFX_Loading( void );
 
+// ui_menu.c
+extern void UI_StartMenuMusic( void );
+
 //
 // ui_rally_credits.c
 //
@@ -824,6 +827,10 @@ typedef struct {
 	profile_info_t	activeProfileInfo;
 	qboolean		activeProfileInfoValid;
 	int			activeProfileInfoLastRead;
+
+	/* hand-off from the loading screen to the main menu */
+	qboolean		menuMusicCarryOver;	/* music already started, keep it playing */
+	qboolean		frontendHandoff;	/* car stays in place during the menu fade-in */
 } uiStatic_t;
 
 extern void			UI_Init( void );

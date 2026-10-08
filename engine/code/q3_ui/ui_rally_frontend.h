@@ -13,6 +13,14 @@ int Frontend_TextWidth( const char *text, int style );
 int Frontend_TextVisualWidth( const char *text, int style );
 qhandle_t Frontend_BackgroundShader( void );
 void Frontend_DrawBackground( const float *scrimColor );
+void Frontend_DrawBackgroundZoomed( const float *scrimColor, float zoom );
+void Frontend_KeepBackgroundForNextMenu( void );
+void Frontend_DrawHeroSurface( int x, int y, int width, int height, float alpha );
+void Frontend_FitText( char *out, int outSize, const char *text, int maxWidth,
+                       int style );
+int Frontend_DrawTextWrapped( int x, int y, int maxWidth, int lineHeight,
+                              int maxLines, const char *text, int style,
+                              const float *color );
 void Frontend_DrawText( int x, int y, const char *text, int style,
                         const float *color );
 void Frontend_DrawTextScaled( int x, int y, const char *text, int style,

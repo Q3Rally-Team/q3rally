@@ -1562,6 +1562,8 @@ static void CG_ParseGhostMeta( void ) {
         int bestTime;
         char mapname[MAX_QPATH];
 
+        CG_GhostRoute_Answered();
+
         if ( trap_Argc() < 2 ) {
                 CG_ResetBaseGhost();
                 cg.baseGhostStatusKnown = qtrue;

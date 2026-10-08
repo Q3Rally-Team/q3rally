@@ -190,6 +190,9 @@ vmCvar_t	car_friction_scale;
 
 vmCvar_t	g_carImpactTransfer;
 vmCvar_t	g_carImpactElasticity;
+vmCvar_t	g_slipstream;
+vmCvar_t	g_slipstreamStrength;
+vmCvar_t	g_slipstreamDistance;
 // END
 
 // bk001129 - made static to avoid aliasing
@@ -349,6 +352,13 @@ static cvarTable_t		gameCvarTable[] = {
 	 * pair-wide impulse scale (1.0 = full response); elasticity controls bounce. */
 	{ &g_carImpactTransfer,    "g_carImpactTransfer",    "1.0",  CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
 	{ &g_carImpactElasticity,  "g_carImpactElasticity",  "0.25", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
+
+	/* Slipstream (drafting) in races: strength is the share of air drag a car
+	 * loses right behind another one, distance the wake length in qu
+	 * (1500 qu ~ 42 m). LIVE like the impact cvars; part of the ladder rules. */
+	{ &g_slipstream,           "g_slipstream",           "1",    CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse },
+	{ &g_slipstreamStrength,   "g_slipstreamStrength",   "0.25", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_slipstreamDistance,   "g_slipstreamDistance",   "1500", CVAR_ARCHIVE, 0, qfalse },
 
         { &g_damageScale, "g_damageScale", "0.3", CVAR_ARCHIVE, 0, qfalse },
         { &g_vehicleDamageScale, "g_vehicleDamageScale", "5.0", CVAR_ARCHIVE, 0, qfalse },

@@ -310,7 +310,7 @@ static void Q3ROptions_StatusBar( void *self )
 		break;
 
 	case ID_GHOST_PLAYBACK:
-		text = "Personal: your saved ghost; Server base: server route; Ladder: pick a ladder ghost in Ghost Race.";
+		text = "Ghost Race only. Personal: your saved ghost; Server base: server route; Ladder: pick a ladder ghost.";
 		break;
 
 	case ID_FUEL_CONSUMPTION:

@@ -23,47 +23,79 @@ static const char *frontendBackgroundNames[] = {
     "gfx/ui/q3rally_frontend_bg_alt3"
 };
 static qhandle_t frontendBackgroundShaders[ARRAY_LEN( frontendBackgroundNames )];
+static qboolean frontendBackgroundRegistered[ARRAY_LEN( frontendBackgroundNames )];
 static qhandle_t frontendBackgroundShader;
-static qboolean frontendBackgroundAttempted;
 static menuframework_s *frontendBackgroundMenu;
 static int frontendBackgroundIndex = -1;
+static qboolean frontendBackgroundKeep;
+
+/* The backdrops are large; only the one actually shown gets loaded. */
+static qhandle_t Frontend_BackgroundHandle( int index ) {
+    if ( !frontendBackgroundRegistered[index] ) {
+        frontendBackgroundRegistered[index] = qtrue;
+        frontendBackgroundShaders[index] = trap_R_RegisterShaderNoMip(
+            frontendBackgroundNames[index] );
+    }
+    return frontendBackgroundShaders[index];
+}
+
+/* The next frontend screen keeps the current backdrop instead of rolling a
+ * new one (used for the hand-off from the loading screen to the main menu). */
+void Frontend_KeepBackgroundForNextMenu( void ) {
+    frontendBackgroundKeep = qtrue;
+}
 
 qhandle_t Frontend_BackgroundShader( void ) {
-    int i;
     int nextIndex;
-
-    if ( !frontendBackgroundAttempted ) {
-        frontendBackgroundAttempted = qtrue;
-        for ( i = 0; i < ARRAY_LEN( frontendBackgroundNames ); i++ ) {
-            frontendBackgroundShaders[i] = trap_R_RegisterShaderNoMip(
-                frontendBackgroundNames[i] );
-        }
-    }
 
     /* Pick once when a frontend menu becomes active. This keeps the image
      * stable while a screen is open, but gives each screen a fresh backdrop. */
-    if ( !frontendBackgroundShader || uis.activemenu != frontendBackgroundMenu ) {
+    if ( frontendBackgroundIndex < 0 || uis.activemenu != frontendBackgroundMenu ) {
         frontendBackgroundMenu = uis.activemenu;
 
-        nextIndex = UI_RandomInt( ARRAY_LEN( frontendBackgroundNames ) );
-        if ( ARRAY_LEN( frontendBackgroundNames ) > 1 &&
-             nextIndex == frontendBackgroundIndex ) {
-            nextIndex = ( nextIndex + 1 ) % ARRAY_LEN( frontendBackgroundNames );
+        if ( frontendBackgroundIndex >= 0 && frontendBackgroundKeep ) {
+            frontendBackgroundKeep = qfalse;
+        } else {
+            nextIndex = UI_RandomInt( ARRAY_LEN( frontendBackgroundNames ) );
+            if ( ARRAY_LEN( frontendBackgroundNames ) > 1 &&
+                 nextIndex == frontendBackgroundIndex ) {
+                nextIndex = ( nextIndex + 1 ) % ARRAY_LEN( frontendBackgroundNames );
+            }
+            frontendBackgroundIndex = nextIndex;
         }
-        frontendBackgroundIndex = nextIndex;
-        frontendBackgroundShader = frontendBackgroundShaders[nextIndex];
+        frontendBackgroundShader = Frontend_BackgroundHandle( frontendBackgroundIndex );
     }
 
     return frontendBackgroundShader ? frontendBackgroundShader : uis.menuBackShader;
 }
 
-void Frontend_DrawBackground( const float *scrimColor ) {
+/* Screen-filling backdrop. zoom > 1 crops towards the centre; 1.0 is the
+ * framing every frontend screen uses. */
+void Frontend_DrawBackgroundZoomed( const float *scrimColor, float zoom ) {
+    float sw = uis.glconfig.vidWidth;
+    float sh = uis.glconfig.vidHeight;
+    float scale = ( sw / SCREEN_WIDTH > sh / SCREEN_HEIGHT ) ? sw / SCREEN_WIDTH : sh / SCREEN_HEIGHT;
+    float w = SCREEN_WIDTH * scale;
+    float h = SCREEN_HEIGHT * scale;
+    float inset;
+
+    if ( zoom < 1.0f ) {
+        zoom = 1.0f;
+    }
+    inset = 0.5f * ( 1.0f - 1.0f / zoom );
+
     UI_SetColor( NULL );
-    UI_DrawBackground( Frontend_BackgroundShader() );
+    trap_R_DrawStretchPic( ( sw - w ) * 0.5f, ( sh - h ) * 0.5f, w, h,
+                           inset, inset, 1.0f - inset, 1.0f - inset,
+                           Frontend_BackgroundShader() );
     if ( scrimColor ) {
         UI_FillRect( -uis.bias, 0, SCREEN_WIDTH + uis.bias * 2,
                      SCREEN_HEIGHT, scrimColor );
     }
+}
+
+void Frontend_DrawBackground( const float *scrimColor ) {
+    Frontend_DrawBackgroundZoomed( scrimColor, 1.0f );
 }
 
 /* The legacy UI small cell is 6x16, which visibly stretches this square-cell
@@ -286,6 +318,95 @@ void Frontend_DrawText( int x, int y, const char *text, int style,
     Frontend_DrawTextScaled( x, y, text, style, 1.0f, color );
 }
 
+/*
+ * Copy text into out, shortened with "..." so it fits maxWidth.
+ */
+void Frontend_FitText( char *out, int outSize, const char *text, int maxWidth,
+                       int style ) {
+    int len;
+
+    Q_strncpyz( out, text ? text : "", outSize );
+    if ( Frontend_TextWidthRaw( out, style ) <= maxWidth ) {
+        return;
+    }
+
+    len = strlen( out );
+    while ( len > 0 ) {
+        out[--len] = '\0';
+        if ( len + 4 > outSize ) {
+            continue;
+        }
+        Q_strcat( out, outSize, "..." );
+        if ( Frontend_TextWidthRaw( out, style ) <= maxWidth ) {
+            return;
+        }
+        out[len] = '\0';
+    }
+}
+
+/*
+ * Word-wrapped text. Draws at most maxLines lines; the last line is
+ * shortened with "..." if text remains. Returns the number of lines drawn.
+ */
+int Frontend_DrawTextWrapped( int x, int y, int maxWidth, int lineHeight,
+                              int maxLines, const char *text, int style,
+                              const float *color ) {
+    char line[256];
+    char candidate[256];
+    char word[128];
+    const char *s;
+    int lines = 0;
+    int n;
+
+    if ( !text || maxLines <= 0 ) {
+        return 0;
+    }
+
+    line[0] = '\0';
+    s = text;
+    while ( *s ) {
+        while ( *s == ' ' ) {
+            s++;
+        }
+        if ( !*s ) {
+            break;
+        }
+        for ( n = 0; s[n] && s[n] != ' ' && n < (int)sizeof( word ) - 1; n++ ) {
+            word[n] = s[n];
+        }
+        word[n] = '\0';
+
+        if ( line[0] ) {
+            Com_sprintf( candidate, sizeof( candidate ), "%s %s", line, word );
+        } else {
+            Q_strncpyz( candidate, word, sizeof( candidate ) );
+        }
+
+        if ( line[0] && Frontend_TextWidthRaw( candidate, style ) > maxWidth ) {
+            if ( lines == maxLines - 1 ) {
+                /* last allowed line: show what fits, then "..." */
+                Frontend_FitText( candidate, sizeof( candidate ), va( "%s %s", line, s ),
+                                  maxWidth, style );
+                Frontend_DrawText( x, y + lines * lineHeight, candidate, style, color );
+                return lines + 1;
+            }
+            Frontend_DrawText( x, y + lines * lineHeight, line, style, color );
+            lines++;
+            Q_strncpyz( line, word, sizeof( line ) );
+        } else {
+            Q_strncpyz( line, candidate, sizeof( line ) );
+        }
+        s += n;
+    }
+
+    if ( line[0] ) {
+        Frontend_FitText( candidate, sizeof( candidate ), line, maxWidth, style );
+        Frontend_DrawText( x, y + lines * lineHeight, candidate, style, color );
+        lines++;
+    }
+    return lines;
+}
+
 static void Frontend_ColorWithAlpha( vec4_t out, const float *baseColor,
                                      float alpha ) {
     out[0] = baseColor[0];
@@ -481,4 +602,44 @@ void Frontend_DrawProgress( int x, int y, int width, int height,
         UI_FillRect( x, y, fillWidth, UI_FRONTEND_PANEL_TOPBAR, borderColor );
     }
     UI_DrawRect( x, y, width, height, borderColor );
+}
+
+/* Aspect of the gfx/ui/q3rally_frontend_bg* images (about 4:3). */
+#define FRONTEND_BACKGROUND_ASPECT 1.3333f
+
+/*
+ * The large right-hand panel of frontend screens: the backdrop tinted with
+ * the hero overlay colour (cropped to the panel instead of stretched), the
+ * overlay on top and an open frame.
+ */
+void Frontend_DrawHeroSurface( int x, int y, int width, int height, float alpha ) {
+    vec4_t overlayColor;
+    float  px = x, py = y, pw = width, ph = height;
+    float  s0 = 0.0f, t0 = 0.0f, s1 = 1.0f, t1 = 1.0f;
+    float  panelAspect;
+
+    if ( width <= 0 || height <= 0 ) {
+        return;
+    }
+
+    panelAspect = (float)width / (float)height;
+    if ( panelAspect < FRONTEND_BACKGROUND_ASPECT ) {
+        float visible = panelAspect / FRONTEND_BACKGROUND_ASPECT;
+        s0 = 0.5f - visible * 0.5f;
+        s1 = 0.5f + visible * 0.5f;
+    } else {
+        float visible = FRONTEND_BACKGROUND_ASPECT / panelAspect;
+        t0 = 0.5f - visible * 0.5f;
+        t1 = 0.5f + visible * 0.5f;
+    }
+
+    Frontend_ColorWithAlpha( overlayColor, frontendHeroOverlayColor, alpha );
+
+    UI_SetColor( overlayColor );
+    UI_AdjustFrom640( &px, &py, &pw, &ph );
+    trap_R_DrawStretchPic( px, py, pw, ph, s0, t0, s1, t1, Frontend_BackgroundShader() );
+    UI_SetColor( NULL );
+
+    UI_FillRect( x, y, width, height, overlayColor );
+    Frontend_DrawPanel( x, y, width, height, alpha, UI_FRONTEND_STYLE_FRAME );
 }

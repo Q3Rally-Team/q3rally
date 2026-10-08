@@ -1068,7 +1068,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// let the client system know what our weapon and zoom settings are
 	trap_SetUserCmdValue( cg.weaponSelect, cg.zoomSensitivity );
 
-	// Ghost Race: (re)send ghost commands the server has not answered yet
+	// (re)send ghost commands the server has not answered yet
 	CG_LadderGhost_NetFrame();
 
 	// this counter will be bumped for every valid scene we generate
@@ -1099,6 +1099,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// build the render lists
 	if ( !cg.hyperspace ) {
 		CG_AddGhostEntity();
+		CG_AddRacingLine();
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
 		CG_EngineSoundFrame();			// Q3Rally: engine sounds of all audible cars
 		CG_AddMarks();

@@ -368,6 +368,7 @@ typedef enum {
         STAT_FRAC_TO_NEXT_CHECKPOINT,
         STAT_DISTANCE_REMAIN,
         STAT_FUEL,
+        STAT_SLIPSTREAM,                /* packed slipstream state, see BG_Slipstream* */
         /* Derby reuses the race-only fraction slot to preserve the wire layout. */
         STAT_DERBY_NORAM = STAT_FRAC_TO_NEXT_CHECKPOINT
 // END
@@ -993,6 +994,23 @@ qboolean        BG_GametypeHasRaceFinish( int gametype );
 qboolean        BG_GametypeAllowsBots( int gametype );
 const char      *BG_GametypeEntityName( int gametype );
 const char      *BG_GametypeDisplayName( int gametype );
+
+// Slipstream (drafting) state in ps->stats[STAT_SLIPSTREAM].
+// The server measures how deep a car sits in another car's wake and sets a
+// target (bits 8..14, 0..127). Pmove ramps the current value (bits 0..7,
+// 0..255) towards it with the command msec, so client prediction ramps
+// exactly like the server and only target changes come over the network.
+// The current value is the fraction of air drag removed (255 = all of it).
+#define SLIPSTREAM_CURRENT_MASK     0xFF
+#define SLIPSTREAM_CURRENT_MAX      255
+#define SLIPSTREAM_TARGET_SHIFT     8
+#define SLIPSTREAM_TARGET_MAX       127
+#define SLIPSTREAM_BUILD_MSEC       500     // empty to full while drafting
+#define SLIPSTREAM_DECAY_MSEC       250     // full to empty after pulling out
+#define BG_SlipstreamCurrent( ps )  ( (ps)->stats[STAT_SLIPSTREAM] & SLIPSTREAM_CURRENT_MASK )
+#define BG_SlipstreamFactor( ps )   ( BG_SlipstreamCurrent( ps ) / (float)SLIPSTREAM_CURRENT_MAX )
+void            BG_SlipstreamSetTarget( playerState_t *ps, float factor );
+void            BG_SlipstreamStep( playerState_t *ps, int msec );
 
 
 #define ARENAS_PER_TIER         4

@@ -39,6 +39,7 @@ or (at your option) any later version.
 #define GHOST_REC_MIN_TURN_INTERVAL     40      // ms
 #define GHOST_REC_TURN_DEGREES          8.0f
 #define GHOST_REC_TELEPORT_SPEED        6000.0f // units/s between samples => reset/teleport
+#define GHOST_REC_MAX_SLIPSTREAM        5       // of SLIPSTREAM_CURRENT_MAX (~2 % less drag)
 #define GHOST_REC_TELEPORT_MIN_DISTANCE 256.0f
 #define GHOST_REC_MIN_LAP_MS            5000
 #define GHOST_REC_MAX_START_OFFSET      1000    // ms; the ladder refuses later first samples
@@ -306,6 +307,12 @@ void G_GhostRecord_ClientFrame( gentity_t *ent ) {
 	}
 
 	if ( slot->invalid ) {
+		return;
+	}
+
+	if ( BG_SlipstreamCurrent( &client->ps ) > GHOST_REC_MAX_SLIPSTREAM ) {
+		// Towed along in another car's wake: not comparable to a solo lap.
+		slot->invalid = qtrue;
 		return;
 	}
 

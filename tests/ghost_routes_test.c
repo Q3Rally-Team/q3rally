@@ -10,6 +10,7 @@
 level_locals_t level;
 gentity_t g_entities[MAX_GENTITIES];
 vmCvar_t g_trackLength;
+vmCvar_t g_gametype;   /* base ghost transfer: GT_GHOST, otherwise on request (racing line) */
 vmCvar_t g_trackReversed;
 
 vec_t VectorNormalize( vec3_t vector ) {
@@ -101,9 +102,16 @@ const botPathRoute_t *G_BotPath_GetRouteByIndex( int routeIndex ) {
     return NULL;
 }
 
+static char s_lastServerCommand[256];
+static int s_lastServerCommandClient = -1;
+
 void trap_SendServerCommand( int clientNum, const char *text ) {
-    (void)clientNum;
-    (void)text;
+    s_lastServerCommandClient = clientNum;
+    snprintf( s_lastServerCommand, sizeof( s_lastServerCommand ), "%s", text );
+}
+
+qboolean BG_GametypeIsRace( int gametype ) {
+    return gametype == GT_RACING || gametype == GT_GHOST;
 }
 
 typedef struct {
@@ -392,6 +400,51 @@ static void test_stable_navigation_at_overlap(void) {
     assert(index >= 2);
 }
 
+/* Outside Ghost Race the route only goes to clients that ask for it. */
+static void test_route_on_request_outside_ghost_race(void) {
+    gentity_t *ent = &g_entities[3];
+    static gclient_t client;
+
+    memset( &client, 0, sizeof( client ) );
+    client.pers.connected = CON_CONNECTED;
+    ent->client = &client;
+    s_clientGhostTransferPending[3] = qfalse;
+    s_clientGhostTransferSent[3] = qfalse;
+
+    g_gametype.integer = GT_RACING;
+    G_Ghost_AnnounceForClient( ent );
+    assert( !s_clientGhostTransferPending[3] );
+
+    G_Ghost_RequestRouteForClient( ent );
+    assert( s_clientGhostTransferPending[3] );
+    s_clientGhostTransferNext[3] = 5;
+    G_Ghost_RequestRouteForClient( ent );   /* repeat while sending: ignored */
+    assert( s_clientGhostTransferNext[3] == 5 );
+
+    /* already sent (cgame restart): sent again */
+    s_clientGhostTransferPending[3] = qfalse;
+    s_clientGhostTransferSent[3] = qtrue;
+    G_Ghost_RequestRouteForClient( ent );
+    assert( s_clientGhostTransferPending[3] && !s_clientGhostTransferSent[3] );
+    assert( s_clientGhostTransferNext[3] == 0 );
+
+    /* no race: answered with "none" */
+    s_clientGhostTransferPending[3] = qfalse;
+    g_gametype.integer = GT_DEATHMATCH;
+    s_lastServerCommand[0] = '\0';
+    G_Ghost_RequestRouteForClient( ent );
+    assert( !s_clientGhostTransferPending[3] );
+    assert( s_lastServerCommandClient == 3 && !strcmp( s_lastServerCommand, "ghostmeta none 0" ) );
+
+    /* Ghost Race announces on its own */
+    g_gametype.integer = GT_GHOST;
+    s_clientGhostTransferSent[3] = qfalse;
+    G_Ghost_AnnounceForClient( ent );
+    assert( s_clientGhostTransferPending[3] );
+    s_clientGhostTransferPending[3] = qfalse;
+    ent->client = NULL;
+}
+
 int main(void) {
     test_shared_route_ignores_legacy_vehicle_metadata();
     test_header_keys_require_delimiter();
@@ -400,6 +453,7 @@ int main(void) {
     test_best_usable_ghost_supplies_shared_route();
     test_clean_ghost_race_lap_is_preferred();
     test_stable_navigation_at_overlap();
+    test_route_on_request_outside_ghost_race();
     puts("ok");
     return 0;
 }

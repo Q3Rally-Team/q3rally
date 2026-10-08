@@ -2009,3 +2009,18 @@ gfx/ghost/vehicle
 		alphaGen vertex
 	}
 }
+
+// Racing line on the road (cg_racingLine, cg_rally_racingline.c):
+// colour and fade come from the vertices
+gfx/misc/racingline
+{
+	nopicmip
+	polygonOffset
+	cull none
+	{
+		clampmap gfx/misc/racingline.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		rgbGen vertex
+		alphaGen vertex
+	}
+}

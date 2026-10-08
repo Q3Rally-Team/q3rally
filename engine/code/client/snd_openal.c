@@ -1316,7 +1316,8 @@ static void S_AL_StartSound( vec3_t origin, int entnum, int entchannel, sfxHandl
 	
 	S_AL_SanitiseVector(sorigin);
 	
-	if((srcActiveCnt > 5 * srcCount / 3) &&
+	// Q3Rally: was 5 * srcCount / 3, which srcActiveCnt can never exceed
+	if((srcActiveCnt > 2 * srcCount / 3) &&
 		(DistanceSquared(sorigin, lastListenerOrigin) >=
 		(s_alMaxDistance->value + s_alGraceDistance->value) * (s_alMaxDistance->value + s_alGraceDistance->value)))
 	{
@@ -1721,6 +1722,7 @@ ALuint S_AL_SrcGet(srcHandle_t src)
 static srcHandle_t streamSourceHandles[MAX_RAW_STREAMS];
 static qboolean streamPlaying[MAX_RAW_STREAMS];
 static ALuint streamSources[MAX_RAW_STREAMS];
+static qboolean streamAllocFailed[MAX_RAW_STREAMS];	// error already printed
 static ALuint streamBuffers[MAX_RAW_STREAMS][MAX_STREAM_BUFFERS];
 static int streamNumBuffers[MAX_RAW_STREAMS];
 static int streamBufIndex[MAX_RAW_STREAMS];
@@ -1741,12 +1743,18 @@ static void S_AL_AllocateStreamChannel(int stream, int entityNum)
         if(entityNum >= 0)
         {
                 // This is a stream that tracks an entity
-        	// Allocate a streamSource at normal priority
-        	cursrc = S_AL_SrcAlloc(SRCPRI_ENTITY, entityNum, 0);
+        	// Q3Rally: the engine sound of another car must win against
+        	// one-shot sounds. Maps with many auto-triggered speakers
+        	// (q3r_downtown) otherwise fill every source with ONESHOT
+        	// sounds, which an ENTITY stream can't take over.
+        	alSrcPriority_t priority = ( stream >= ENGINE_RAW_STREAM_BASE &&
+        		stream < ENGINE_RAW_STREAM_BASE + ENGINE_MAX_EMITTERS ) ? SRCPRI_LOCAL : SRCPRI_ENTITY;
+
+        	cursrc = S_AL_SrcAlloc(priority, entityNum, 0);
         	if(cursrc < 0)
 	        	return;
 
-        	S_AL_SrcSetup(cursrc, -1, SRCPRI_ENTITY, entityNum, 0, qfalse);
+        	S_AL_SrcSetup(cursrc, -1, priority, entityNum, 0, qfalse);
         	alsrc = S_AL_SrcGet(cursrc);
         	srcList[cursrc].isTracking = qtrue;
         	srcList[cursrc].isStream = qtrue;
@@ -1834,12 +1842,18 @@ void S_AL_RawSamples(int stream, int samples, int rate, int width, int channels,
 	{
 		S_AL_AllocateStreamChannel(stream, entityNum);
 	
-		// Failed?
+		// Failed? Report it once per streak; callers retry every frame.
 		if(streamSourceHandles[stream] == -1)
 		{
-			Com_Printf( S_COLOR_RED "ERROR: Can't allocate streaming streamSource\n");
+			if(!streamAllocFailed[stream])
+			{
+				Com_Printf( S_COLOR_RED "ERROR: Can't allocate streaming streamSource (stream %d, %d/%d sources active)\n",
+					stream, srcActiveCnt, srcCount );
+				streamAllocFailed[stream] = qtrue;
+			}
 			return;
 		}
+		streamAllocFailed[stream] = qfalse;
 	}
 
 	qalGetSourcei(streamSources[stream], AL_BUFFERS_QUEUED, &numBuffers);

@@ -45,7 +45,10 @@ static const char *s_ladderPhysicsCvars[] = {
 	"car_air_frac_to_df",
 	"car_friction_scale",
 	"g_carImpactTransfer",
-	"g_carImpactElasticity"
+	"g_carImpactElasticity",
+	"g_slipstream",
+	"g_slipstreamStrength",
+	"g_slipstreamDistance"
 };
 
 #define LADDER_PHYSICS_CVARS    ( (int)ARRAY_LEN( s_ladderPhysicsCvars ) )

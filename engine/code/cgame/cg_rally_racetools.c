@@ -337,30 +337,33 @@ CG_GhostPlaybackMode
 
 Effective ghost playback mode: 0 off, 1 personal, 2 server base,
 3 ladder opponent.
+Ghosts are only shown in Ghost Race (GT_GHOST); every other gametype races
+without a ghost. Laps are still recorded there (personal ghost files feed
+the bot routes, the server uploads lap ghosts to the ladder).
 cg_ghostPlayback is the player's archived preference and is never rewritten
-by the game. In GT_GHOST a value of 0 means "automatic": the personal ghost
-for the current car, falling back to the server base ghost when no personal
-ghost exists. A ladder ghost picked in the Ghost Race picker always wins;
+by the game. A value of 0 means "automatic": the personal ghost for the
+current car, falling back to the server base ghost when no personal ghost
+exists. A ladder ghost picked in the Ghost Race picker always wins;
 cg_ghostPlayback 3 ("ladder opponent") opens the picker like automatic mode
-and falls back to it while nothing is picked (outside Ghost Race: personal).
+and falls back to it while nothing is picked.
 =================
 */
 int CG_GhostPlaybackMode( void ) {
         int mode = cg_ghostPlayback.integer;
 
+        if ( cgs.gametype != GT_GHOST ) {
+                return 0;
+        }
+
         if ( mode < 0 || mode > 3 ) {
                 mode = 0;
         }
 
-        if ( cgs.gametype == GT_GHOST && cg.ladderGhostSelected >= 0 ) {
+        if ( cg.ladderGhostSelected >= 0 ) {
                 return 3;
         }
 
-        if ( mode == 3 ) {
-                mode = ( cgs.gametype == GT_GHOST ) ? 0 : 1;
-        }
-
-        if ( mode == 0 && cgs.gametype == GT_GHOST ) {
+        if ( mode == 0 || mode == 3 ) {
                 if ( cg.personalGhostSearchValid && !cg.personalGhostSearchFound && cg.baseGhostAvailable ) {
                         return 2;
                 }

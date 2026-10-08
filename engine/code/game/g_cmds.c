@@ -2176,6 +2176,11 @@ void ClientCommand( int clientNum ) {
 	if ( G_GhostLadder_ClientCommand( ent, cmd ) ) {
 		return;
 	}
+	// Q3Rally: server ghost route for the racing line (any race mode)
+	if ( Q_stricmp( cmd, "ghostroutereq" ) == 0 ) {
+		G_Ghost_RequestRouteForClient( ent );
+		return;
+	}
 #ifdef MISSIONPACK
 	if (Q_stricmp (cmd, "vsay") == 0) {
 		Cmd_Voice_f (ent, SAY_ALL, qfalse, qfalse);

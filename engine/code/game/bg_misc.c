@@ -2407,3 +2407,58 @@ const char *BG_GametypeDisplayName( int gametype ) {
 	default:                return "Unknown";
 	}
 }
+
+/*
+===============================================================================
+
+Slipstream state (see STAT_SLIPSTREAM in bg_public.h)
+
+===============================================================================
+*/
+
+/* Server side: store the wake depth measured this frame (0..1). */
+void BG_SlipstreamSetTarget( playerState_t *ps, float factor ) {
+	int target;
+
+	if ( factor < 0.0f ) {
+		factor = 0.0f;
+	} else if ( factor > 1.0f ) {
+		factor = 1.0f;
+	}
+	target = (int)( factor * SLIPSTREAM_TARGET_MAX + 0.5f );
+	ps->stats[STAT_SLIPSTREAM] = ( target << SLIPSTREAM_TARGET_SHIFT ) | BG_SlipstreamCurrent( ps );
+}
+
+/* Pmove (server and client prediction): move the current value towards the
+   target. Integer only, so both sides end up with the same value. */
+void BG_SlipstreamStep( playerState_t *ps, int msec ) {
+	int target;
+	int current;
+	int step;
+
+	target = ( ps->stats[STAT_SLIPSTREAM] >> SLIPSTREAM_TARGET_SHIFT ) & SLIPSTREAM_TARGET_MAX;
+	target = ( target * SLIPSTREAM_CURRENT_MAX + SLIPSTREAM_TARGET_MAX / 2 ) / SLIPSTREAM_TARGET_MAX;
+	current = BG_SlipstreamCurrent( ps );
+
+	if ( current < target ) {
+		step = msec * SLIPSTREAM_CURRENT_MAX / SLIPSTREAM_BUILD_MSEC;
+		if ( step < 1 ) {
+			step = 1;
+		}
+		current += step;
+		if ( current > target ) {
+			current = target;
+		}
+	} else if ( current > target ) {
+		step = msec * SLIPSTREAM_CURRENT_MAX / SLIPSTREAM_DECAY_MSEC;
+		if ( step < 1 ) {
+			step = 1;
+		}
+		current -= step;
+		if ( current < target ) {
+			current = target;
+		}
+	}
+
+	ps->stats[STAT_SLIPSTREAM] = ( ps->stats[STAT_SLIPSTREAM] & ~SLIPSTREAM_CURRENT_MASK ) | current;
+}

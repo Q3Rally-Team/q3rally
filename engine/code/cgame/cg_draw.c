@@ -1748,12 +1748,74 @@ static void CG_DrawRallyTelemetryHud( void ) {
 #undef HUD_X
 }
 
+/*
+=================
+CG_DrawSlipstreamGauge
+
+Small gauge centred above the telemetry strip while the car is drafting.
+Reads the predicted player state, so it ramps in step with the physics.
+The bar is full at CG_SLIPSTREAM_GAUGE_FULL (the server default strength);
+the text shows the actual share of air drag that is currently removed.
+=================
+*/
+#define CG_SLIPSTREAM_GAUGE_FULL    0.25f
+#define CG_SLIPSTREAM_GAUGE_W       96.0f
+
+static void CG_DrawSlipstreamGauge( void ) {
+	playerState_t *ps;
+	vec4_t labelColor = { 0.480f, 0.610f, 0.650f, 1.00f };
+	vec4_t trackColor = { 0.075f, 0.095f, 0.105f, 0.92f };
+	vec4_t fillColor = { 0.380f, 0.820f, 1.000f, 1.00f };
+	float factor;
+	float frac;
+	float alpha;
+	screenPlacement_e savedHorizontalPlacement;
+	screenPlacement_e savedVerticalPlacement;
+
+	if ( !cg_hudShowSlipstream.integer || !cg.snap || cgs.gametype == GT_DERBY ) {
+		return;
+	}
+	ps = &cg.predictedPlayerState;
+	if ( ps->stats[STAT_HEALTH] <= 0 || ps->pm_type != PM_NORMAL ) {
+		return;
+	}
+	factor = BG_SlipstreamFactor( ps );
+	if ( factor <= 0.0f ) {
+		return;
+	}
+
+	frac = factor / CG_SLIPSTREAM_GAUGE_FULL;
+	if ( frac > 1.0f ) {
+		frac = 1.0f;
+	}
+	/* fade in over the first few percent so the gauge does not pop */
+	alpha = factor / 0.03f;
+	if ( alpha > 1.0f ) {
+		alpha = 1.0f;
+	}
+	labelColor[3] *= alpha;
+	trackColor[3] *= alpha;
+	fillColor[3] *= alpha;
+
+	savedHorizontalPlacement = CG_GetScreenHorizontalPlacement();
+	savedVerticalPlacement = CG_GetScreenVerticalPlacement();
+	CG_SetScreenPlacement( PLACE_CENTER, PLACE_BOTTOM );
+
+	CG_DrawIngameString( 320, 398, va( "SLIPSTREAM -%d%% DRAG", (int)( factor * 100.0f + 0.5f ) ),
+	                     UI_CENTER | UI_SMALLFONT, 0.42f, labelColor );
+	CG_FillRect( 320.0f - CG_SLIPSTREAM_GAUGE_W * 0.5f, 408.0f, CG_SLIPSTREAM_GAUGE_W, 3.0f, trackColor );
+	CG_FillRect( 320.0f - CG_SLIPSTREAM_GAUGE_W * 0.5f, 408.0f, CG_SLIPSTREAM_GAUGE_W * frac, 3.0f, fillColor );
+
+	CG_SetScreenPlacement( savedHorizontalPlacement, savedVerticalPlacement );
+}
+
 static void CG_DrawRallyStatusBar( void ) {
 	if ( !cg_drawStatus.integer ) {
 		return;
 	}
 
 	CG_DrawRallyTelemetryHud();
+	CG_DrawSlipstreamGauge();
 
 }
 #endif

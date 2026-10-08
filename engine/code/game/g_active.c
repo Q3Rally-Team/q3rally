@@ -1540,6 +1540,120 @@ static void G_GhostRace_RestoreOtherCars( void ) {
 	s_ghostRaceCarsHidden = qfalse;
 }
 
+/*
+==============
+G_UpdateSlipstream
+
+Slipstream (drafting): measure how deep this car sits in the wake of the
+cars ahead and hand the result to pmove as the slipstream target. Pmove
+ramps the effective value and lowers the air drag with it (bg_misc.c,
+bg_wheel_forces.c). Client prediction does not know the other cars, so the
+detection has to run here.
+
+A car counts as "ahead" when it is
+  - between one car length and g_slipstreamDistance in front, measured
+    along our direction of travel,
+  - inside a wake that widens with the distance,
+  - moving in roughly the same direction and not much slower,
+  - not hidden behind world geometry (no drafting through walls or across
+    a hairpin).
+The deepest wake wins; several cars ahead do not stack.
+==============
+*/
+#define SLIPSTREAM_MIN_SPEED        ( 15.0f * CP_M_2_QU )   // ~54 km/h
+#define SLIPSTREAM_MIN_ALIGN        0.9f                    // ~25 degrees
+#define SLIPSTREAM_MIN_SPEED_RATIO  0.6f
+#define SLIPSTREAM_BASE_WIDTH       ( CAR_WIDTH * 0.75f )
+#define SLIPSTREAM_WIDTH_GROWTH     0.08f
+
+static float G_SlipstreamDepth( gentity_t *ent ) {
+	gclient_t	*client = ent->client;
+	car_t		*self = &client->car;
+	vec3_t		dir, otherDir, delta, lateral, start, end;
+	float		speed, otherSpeed, along, side, width, depth, best;
+	float		maxDistance;
+	trace_t		tr;
+	int			i;
+
+	if ( !g_slipstream.integer || g_slipstreamStrength.value <= 0.0f ) {
+		return 0.0f;
+	}
+	if ( !BG_GametypeIsRace( g_gametype.integer ) || g_gametype.integer == GT_GHOST ) {
+		return 0.0f;
+	}
+	if ( client->sess.sessionTeam == TEAM_SPECTATOR || client->ps.pm_type != PM_NORMAL ||
+		client->ps.stats[STAT_HEALTH] <= 0 ) {
+		return 0.0f;
+	}
+
+	maxDistance = g_slipstreamDistance.value;
+	if ( maxDistance <= CAR_LENGTH ) {
+		return 0.0f;
+	}
+
+	speed = VectorNormalize2( self->sBody.v, dir );
+	if ( speed < SLIPSTREAM_MIN_SPEED ) {
+		return 0.0f;
+	}
+
+	best = 0.0f;
+	for ( i = 0; i < level.maxclients; i++ ) {
+		gentity_t	*other = &g_entities[i];
+		car_t		*otherCar = level.cars[i];
+
+		if ( other == ent || !other->inuse || !other->client || !otherCar || otherCar == self ) {
+			continue;
+		}
+		if ( other->client->pers.connected != CON_CONNECTED ||
+			other->client->sess.sessionTeam == TEAM_SPECTATOR ||
+			other->client->ps.pm_type != PM_NORMAL ||
+			other->client->ps.stats[STAT_HEALTH] <= 0 ||
+			otherCar->sBody.mass <= 0.0f ) {
+			continue;
+		}
+
+		otherSpeed = VectorNormalize2( otherCar->sBody.v, otherDir );
+		if ( otherSpeed < SLIPSTREAM_MIN_SPEED_RATIO * speed ) {
+			continue;
+		}
+		if ( DotProduct( dir, otherDir ) < SLIPSTREAM_MIN_ALIGN ) {
+			continue;
+		}
+
+		VectorSubtract( otherCar->sBody.r, self->sBody.r, delta );
+		along = DotProduct( delta, dir );
+		if ( along < CAR_LENGTH || along > maxDistance ) {
+			continue;
+		}
+
+		VectorMA( delta, -along, dir, lateral );
+		side = VectorLength( lateral );
+		width = SLIPSTREAM_BASE_WIDTH + along * SLIPSTREAM_WIDTH_GROWTH;
+		if ( side >= width ) {
+			continue;
+		}
+
+		depth = ( 1.0f - along / maxDistance ) * ( 1.0f - side / width );
+		if ( depth <= best ) {
+			continue;
+		}
+
+		// only trace for a candidate that would improve the result
+		VectorCopy( self->sBody.r, start );
+		VectorCopy( otherCar->sBody.r, end );
+		start[2] += CAR_HEIGHT * 0.5f;
+		end[2] += CAR_HEIGHT * 0.5f;
+		trap_Trace( &tr, start, NULL, NULL, end, ent->s.number, MASK_SOLID );
+		if ( tr.fraction < 1.0f ) {
+			continue;
+		}
+
+		best = depth;
+	}
+
+	return best * g_slipstreamStrength.value;
+}
+
 void ClientThink_real( gentity_t *ent ) {
 	gclient_t	*client;
 	pmove_t		pm;
@@ -1947,6 +2061,8 @@ void ClientThink_real( gentity_t *ent ) {
 		trap_UnlinkEntity( ent->frontBounds );
 	if ( ent->rearBounds )
 		trap_UnlinkEntity( ent->rearBounds );
+
+	BG_SlipstreamSetTarget( &client->ps, G_SlipstreamDepth( ent ) );
 
 	G_GhostRace_HideOtherCars( ent );
 

@@ -219,6 +219,15 @@ static void CG_Speaker( centity_t *cent ) {
 		return;		// not auto triggering
 	}
 
+	/* Q3Rally: a speaker that is looping already plays its noise; loop and
+	 * auto-trigger use the same sample, so triggering stacks copies of it.
+	 * q3r_downtown has ~190 looped crowd speakers with wait/random: every
+	 * few seconds each started another 16 s one-shot and used up all sound
+	 * sources (opponent engine sounds dropped out). */
+	if ( cent->currentState.loopSound ) {
+		return;
+	}
+
 	if ( cg.time < cent->miscTime ) {
 		return;
 	}

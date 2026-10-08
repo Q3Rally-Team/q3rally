@@ -291,6 +291,8 @@ vmCvar_t	cg_engineSounds;
 vmCvar_t	cg_ghostPlayback;
 vmCvar_t	cg_ghostDebug;
 vmCvar_t	cg_ghostAlpha;
+vmCvar_t	cg_racingLine;
+vmCvar_t	cg_racingLineDistance;
 vmCvar_t	cg_ghostSplitAudio;
 vmCvar_t	cg_useFuel;
 
@@ -433,6 +435,8 @@ static cvarTable_t cvarTable[] = {
         { &cg_engineSounds, "cg_engineSounds", "1", CVAR_ARCHIVE },
         { &cg_ghostPlayback, "cg_ghostPlayback", "0", CVAR_ARCHIVE },
 	{ &cg_ghostAlpha, "cg_ghostAlpha", "160", CVAR_ARCHIVE },
+	{ &cg_racingLine, "cg_racingLine", "0", CVAR_ARCHIVE },
+	{ &cg_racingLineDistance, "cg_racingLineDistance", "150", CVAR_ARCHIVE },
 	{ &cg_ghostDebug, "cg_ghostDebug", "0", CVAR_TEMP },
 	{ &cg_ghostSplitAudio, "cg_ghostSplitAudio", "1", CVAR_ARCHIVE },
         { &cg_useFuel, "g_useFuel", "1", CVAR_SERVERINFO },
@@ -1184,6 +1188,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.battleWeaponShader = trap_R_RegisterShader("powerups/battleWeapon" );
 	cgs.media.invisShader = trap_R_RegisterShader("powerups/invisibility" );
 	cgs.media.ghostShader = trap_R_RegisterShader("gfx/ghost/vehicle" );
+	CG_RacingLine_Register();
 	cgs.media.regenShader = trap_R_RegisterShader("powerups/regen" );
 
 #ifdef MISSIONPACK
@@ -2298,6 +2303,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	cg.clientNum = clientNum;
 	cg.showHUD = qtrue;	// modular HUD should be visible by default
 	CG_LadderGhost_Reset();
+	CG_RacingLine_Reset();
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.serverCommandSequence = serverCommandSequence;

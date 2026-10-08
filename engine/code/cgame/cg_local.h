@@ -430,7 +430,8 @@ typedef enum {
 #define GHOSTCMD_LIST   0       // lghostlistreq -> lghostlist
 #define GHOSTCMD_PICK   1       // lghostpick    -> lghostpickok / lghostmeta / lghostfail
 #define GHOSTCMD_OPP    2       // ghostopp      -> lghostoppok
-#define GHOSTCMD_KINDS  3
+#define GHOSTCMD_ROUTE  3       // ghostroutereq -> ghostmeta (server route for the racing line)
+#define GHOSTCMD_KINDS  4
 
 typedef struct ladderGhostEntry_s {
         int                     lapMs;
@@ -1778,6 +1779,8 @@ extern	vmCvar_t		cg_engineSounds;
 extern	vmCvar_t		cg_ghostPlayback;
 extern	vmCvar_t		cg_ghostDebug;
 extern	vmCvar_t		cg_ghostAlpha;
+extern	vmCvar_t		cg_racingLine;
+extern	vmCvar_t		cg_racingLineDistance;
 extern	vmCvar_t		cg_ghostSplitAudio;
 extern  vmCvar_t                cg_useFuel;
 
@@ -2260,10 +2263,17 @@ int CG_GhostPlaybackMode( void );
 qboolean CG_LoadLadderGhostFile( const char *path, int lapMs );
 void CG_PrecacheGhostVehicle( const char *vehicle );
 
+// cg_rally_racingline.c
+void CG_RacingLine_Register( void );
+void CG_RacingLine_Reset( void );
+void CG_AddRacingLine( void );
+
 // cg_ghost_picker.c
 void CG_LadderGhost_Reset( void );
 void CG_LadderGhost_RequestList( void );
 void CG_LadderGhost_NetFrame( void );
+void CG_GhostRoute_Request( void );
+void CG_GhostRoute_Answered( void );
 void CG_LadderGhost_Pick( int entryIndex );
 qboolean CG_LadderGhost_ServerCommand( const char *cmd );
 qboolean CG_LadderGhost_PickerIsOpen( void );

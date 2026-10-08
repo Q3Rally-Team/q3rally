@@ -1,5 +1,6 @@
 #include "client.h"
 #include "cl_update.h"
+#include "cl_update_util.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -11,6 +12,7 @@ static cvar_t *cl_updateStateCvar;
 static cvar_t *cl_updateRemoteCvar;
 static cvar_t *cl_updateDateCvar;
 static cvar_t *cl_updateErrorCvar;
+static cvar_t *cl_updateUrlCvar;
 
 typedef struct {
     qboolean running;
@@ -50,11 +52,33 @@ static void CL_UpdateVersionCheck_SetError(const char *value) {
     }
 }
 
+static void CL_UpdateVersionCheck_SetUrl(const char *value) {
+    if (cl_updateUrlCvar) {
+        Cvar_Set(cl_updateUrlCvar->name, value);
+    }
+}
+
 static void CL_UpdateVersionCheck_ResetBuffers(void) {
     cl_updateContext.bufferLength = 0;
     cl_updateContext.buffer[0] = '\0';
 #ifdef USE_CURL
     cl_updateContext.errorText[0] = '\0';
+#endif
+}
+
+#ifdef USE_CURL
+static void CL_UpdateVersionCheck_CleanupHandles(void);
+#endif
+
+/* Also used by builds without cURL, which report the "unavailable" state. */
+static void CL_UpdateVersionCheck_Fail(const char *state, const char *message) {
+    CL_UpdateVersionCheck_SetRemote("");
+    CL_UpdateVersionCheck_SetDate("");
+    CL_UpdateVersionCheck_SetUrl("");
+    CL_UpdateVersionCheck_SetState(state && *state ? state : "failed");
+    CL_UpdateVersionCheck_SetError(message && *message ? message : "Download failed");
+#ifdef USE_CURL
+    CL_UpdateVersionCheck_CleanupHandles();
 #endif
 }
 
@@ -99,112 +123,94 @@ static void CL_UpdateVersionCheck_CleanupHandles(void) {
     cl_updateContext.running = qfalse;
 }
 
-static void CL_UpdateVersionCheck_Fail(const char *state, const char *message) {
-    CL_UpdateVersionCheck_SetRemote("");
-    CL_UpdateVersionCheck_SetDate("");
-    CL_UpdateVersionCheck_SetState(state && *state ? state : "failed");
-    CL_UpdateVersionCheck_SetError(message && *message ? message : "Download failed");
-    CL_UpdateVersionCheck_CleanupHandles();
+/*
+ * Trim whitespace, a UTF-8 BOM and one pair of surrounding quotes in place.
+ */
+static char *CL_UpdateVersionCheck_TrimLine(char *line) {
+    size_t len;
+
+    if ((unsigned char)line[0] == 0xEF &&
+        (unsigned char)line[1] == 0xBB &&
+        (unsigned char)line[2] == 0xBF) {
+        line += 3;
+    }
+
+    while (*line && isspace((unsigned char)*line)) {
+        line++;
+    }
+    len = strlen(line);
+    while (len > 0 && isspace((unsigned char)line[len - 1])) {
+        line[--len] = '\0';
+    }
+
+    if (len >= 2 &&
+        ((line[0] == '"' && line[len - 1] == '"') ||
+         (line[0] == '\'' && line[len - 1] == '\''))) {
+        line[len - 1] = '\0';
+        line++;
+        while (*line && isspace((unsigned char)*line)) {
+            line++;
+        }
+        len = strlen(line);
+        while (len > 0 && isspace((unsigned char)line[len - 1])) {
+            line[--len] = '\0';
+        }
+    }
+
+    return line;
 }
 
+/*
+ * version.txt format (one value per line, blank lines ignored):
+ *   1: latest version, e.g. "v0.7d"           (required)
+ *   2: release date, e.g. "2026-10-04"        (optional)
+ *   3: download page URL on www.q3rally.com   (optional)
+ */
 static void CL_UpdateVersionCheck_ParseBuffer(void) {
-    char *versionLine = cl_updateContext.buffer;
-    char *dateLine = NULL;
-    char *displayVersion;
-    const char *localVersion;
-    const char *remoteVersion;
+    char *lines[3] = { NULL, NULL, NULL };
+    int numLines = 0;
     char *cursor;
+    int cmp;
 
     cl_updateContext.buffer[cl_updateContext.bufferLength] = '\0';
 
-    cursor = strpbrk(versionLine, "\r\n");
-    if (cursor) {
-        *cursor = '\0';
-        cursor++;
-        while (*cursor == '\r' || *cursor == '\n') {
-            cursor++;
-        }
-        if (*cursor) {
-            dateLine = cursor;
-            cursor = strpbrk(dateLine, "\r\n");
-            if (cursor) {
-                *cursor = '\0';
-            }
-        }
-    }
+    cursor = cl_updateContext.buffer;
+    while (*cursor && numLines < (int)ARRAY_LEN(lines)) {
+        char *line = cursor;
+        char *eol = strpbrk(cursor, "\r\n");
 
-    if (versionLine && *versionLine) {
-        size_t len;
-
-        if ((unsigned char)versionLine[0] == 0xEF &&
-            (unsigned char)versionLine[1] == 0xBB &&
-            (unsigned char)versionLine[2] == 0xBF) {
-            versionLine += 3;
+        if (eol) {
+            *eol = '\0';
+            cursor = eol + 1;
+        } else {
+            cursor += strlen(cursor);
         }
 
-        while (*versionLine && isspace((unsigned char)*versionLine)) {
-            versionLine++;
-        }
-
-        len = strlen(versionLine);
-        while (len > 0 && isspace((unsigned char)versionLine[len - 1])) {
-            versionLine[--len] = '\0';
-        }
-
-        if (len >= 2 &&
-            ((versionLine[0] == '"' && versionLine[len - 1] == '"') ||
-             (versionLine[0] == '\'' && versionLine[len - 1] == '\''))) {
-            versionLine[len - 1] = '\0';
-            versionLine++;
-
-            while (*versionLine && isspace((unsigned char)*versionLine)) {
-                versionLine++;
-            }
-
-            len = strlen(versionLine);
-            while (len > 0 && isspace((unsigned char)versionLine[len - 1])) {
-                versionLine[--len] = '\0';
-            }
+        line = CL_UpdateVersionCheck_TrimLine(line);
+        if (*line) {
+            lines[numLines++] = line;
         }
     }
 
-    if (!versionLine || !*versionLine) {
+    if (!lines[0]) {
         CL_UpdateVersionCheck_Fail("failed", "Invalid version file");
         return;
     }
 
-    if (dateLine) {
-        size_t len = strlen(dateLine);
-        while (len > 0 && isspace((unsigned char)dateLine[len - 1])) {
-            dateLine[--len] = '\0';
-        }
-        while (*dateLine && isspace((unsigned char)*dateLine)) {
-            dateLine++;
-        }
-    }
-
-    displayVersion = versionLine;
-    CL_UpdateVersionCheck_SetRemote(displayVersion);
-    CL_UpdateVersionCheck_SetDate(dateLine ? dateLine : "");
+    CL_UpdateVersionCheck_SetRemote(lines[0]);
+    CL_UpdateVersionCheck_SetDate(lines[1] ? lines[1] : "");
+    CL_UpdateVersionCheck_SetUrl((lines[2] && CL_IsOfficialDownloadURL(lines[2])) ? lines[2] : "");
     CL_UpdateVersionCheck_SetError("");
 
-    remoteVersion = displayVersion;
-    localVersion = PRODUCT_VERSION;
-
-    if ((remoteVersion[0] == 'v' || remoteVersion[0] == 'V') &&
-        isalnum((unsigned char)remoteVersion[1])) {
-        remoteVersion++;
-    }
-
-    if ((localVersion[0] == 'v' || localVersion[0] == 'V') &&
-        isalnum((unsigned char)localVersion[1])) {
-        localVersion++;
-    }
-
-    if (!Q_stricmp(remoteVersion, localVersion)) {
-        CL_UpdateVersionCheck_SetState("current");
-    } else {
+    /* Only a strictly newer release counts as an update. Development builds
+     * that are ahead of the published version report "ahead". */
+    cmp = CL_UpdateVersion_Compare(lines[0], PRODUCT_VERSION);
+    if (cmp > 0) {
         CL_UpdateVersionCheck_SetState("outdated");
+    } else if (cmp < 0) {
+        CL_UpdateVersionCheck_SetState("ahead");
+    } else {
+        CL_UpdateVersionCheck_SetState("current");
     }
 }
 #endif /* USE_CURL */
@@ -214,11 +220,13 @@ void CL_UpdateVersionCheck_Register(void) {
     cl_updateRemoteCvar = Cvar_Get("cl_updateRemote", "", CVAR_TEMP);
     cl_updateDateCvar = Cvar_Get("cl_updateDate", "", CVAR_TEMP);
     cl_updateErrorCvar = Cvar_Get("cl_updateError", "", CVAR_TEMP);
+    cl_updateUrlCvar = Cvar_Get("cl_updateUrl", "", CVAR_TEMP);
 
     CL_UpdateVersionCheck_SetState("idle");
     CL_UpdateVersionCheck_SetRemote("");
     CL_UpdateVersionCheck_SetDate("");
     CL_UpdateVersionCheck_SetError("");
+    CL_UpdateVersionCheck_SetUrl("");
 
     cl_updateContext.running = qfalse;
     cl_updateContext.attempted = qfalse;
@@ -287,6 +295,7 @@ void CL_UpdateVersionCheck_Begin(void) {
     CL_UpdateVersionCheck_SetRemote("");
     CL_UpdateVersionCheck_SetDate("");
     CL_UpdateVersionCheck_SetError("");
+    CL_UpdateVersionCheck_SetUrl("");
 #endif
 }
 

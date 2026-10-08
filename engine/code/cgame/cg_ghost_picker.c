@@ -42,7 +42,7 @@ or (at your option) any later version.
 #define GHOSTCMD_RETRY_MS       3000    // resend when there is no answer by then
 #define GHOSTCMD_PICK_WAIT_MS   45000   // pick taken: ghost data has to start by then
 
-static const int ghostCmdMaxTries[GHOSTCMD_KINDS] = { 5, 5, 8 };
+static const int ghostCmdMaxTries[GHOSTCMD_KINDS] = { 5, 5, 8, 3 };
 
 static void CG_LadderGhost_FailTransfer( const char *reason );
 
@@ -115,18 +115,32 @@ static void CG_GhostCmd_Done( int kind ) {
 CG_LadderGhost_NetFrame
 
 Called every frame from CG_DrawActiveFrame: resends unanswered ghost
-commands and gives up on a pick whose ghost data never comes.
+commands (in every race mode: the racing line asks for the server route)
+and, in Ghost Race, gives up on a pick whose ghost data never comes.
 =================
 */
 void CG_LadderGhost_NetFrame( void ) {
-	if ( cgs.gametype != GT_GHOST ) {
-		return;
-	}
-	if ( cg.ladderGhostPending && cg.ladderGhostPickAcked && !cg.ladderGhostTransferExpected &&
+	if ( cgs.gametype == GT_GHOST && cg.ladderGhostPending && cg.ladderGhostPickAcked && !cg.ladderGhostTransferExpected &&
 	     CG_GhostCmd_Since( cg.ladderGhostPickAckedAt ) >= GHOSTCMD_PICK_WAIT_MS ) {
 		CG_LadderGhost_FailTransfer( "timeout" );
 	}
 	CG_GhostCmd_Pump();
+}
+
+/*
+=================
+CG_GhostRoute_Request
+
+Racing line outside Ghost Race: asks the server for its ghost route, which
+it otherwise only sends in Ghost Race. The answer is "ghostmeta".
+=================
+*/
+void CG_GhostRoute_Request( void ) {
+	CG_GhostCmd_Set( GHOSTCMD_ROUTE, "ghostroutereq" );
+}
+
+void CG_GhostRoute_Answered( void ) {
+	CG_GhostCmd_Done( GHOSTCMD_ROUTE );
 }
 
 static void CG_LadderGhost_OwnVehicle( char *out, int outSize ) {

@@ -4,6 +4,26 @@ unreleased
 
 Added:
 
+- Racing line (cg_racingLine, HUD options "Racing Line", all race modes): a band on
+  the road ahead of the car along the best known lap of this track variant, the
+  personal ghost or the server's ghost route, whichever is faster. Green = throttle,
+  yellow = off the throttle, red = braking; taken from the recorded inputs of a
+  personal ghost, from the speed change along the server route. Drawn for
+  cg_racingLineDistance metres (150, 30-500), faded in under the car and out at the
+  far end; a lap with a reset is not joined across the jump. Outside Ghost Race the
+  client asks the server for its route with the new client command "ghostroutereq".
+  New shader gfx/misc/racingline (scripts/gfx.shader, gfx/misc/racingline.tga).
+- Slipstream (drafting) in the race modes (not in Ghost Race). A car close behind
+  another one loses part of its air drag and gets faster on the straights; since the
+  down force follows the drag, it also has less grip in corners ("dirty air"). The
+  wake is about 42 m long, widens with the distance, needs both cars moving fast in
+  the same direction and is blocked by world geometry. The server measures the wake
+  and sends a target in the new STAT_SLIPSTREAM; pmove ramps the value (0.5 s in,
+  0.25 s out), so client prediction stays exact. Server cvars: g_slipstream (1),
+  g_slipstreamStrength (0.25 = up to 25 % less drag), g_slipstreamDistance (1500 qu),
+  all three part of the ladder rules. Laps driven in another car's slipstream are not
+  uploaded as ladder ghosts. HUD gauge above the telemetry strip, cg_hudShowSlipstream
+  (also in the HUD options).
 - New gametype Ghost Race (GT_GHOST, g_gametype 8). Replaces the "Ghost-Only Race"
   checkbox of the start-server menu. Lap racing against a ghost without AI drivers;
   works on dedicated servers, via console and in map rotations (q3r_ghost.cfg).
@@ -75,6 +95,11 @@ Added:
 
 Changed:
 
+- Ghosts are only shown in Ghost Race. Other race modes no longer play back a
+  personal or server base ghost (laps are still recorded for bot routes and the
+  ladder); the HUD option "Ghost Playback" is only offered in Ghost Race and the
+  server sends the base ghost route on its own only there (elsewhere only when the
+  racing line asks for it).
 - Windows builds use libcurl 8.22.0 instead of the vendored 7.54.0 from 2017. The GitHub
   Actions build compiles a static libcurl with Windows Schannel TLS and no other
   libraries (engine/misc/build-curl-mingw.sh, version and sha256 pinned there) and links
@@ -120,6 +145,12 @@ Changed:
 
 Fixed:
 
+- "ERROR: Can't allocate streaming streamSource" on q3r_downtown (OpenAL): about 190
+  looping crowd speakers also auto-triggered the same 16 s sample every few seconds and
+  filled all sound sources, so the engine sounds of other cars dropped out and the error
+  repeated every frame. Looping speakers no longer auto-trigger, opponent engine streams
+  outrank one-shot sounds, inaudible one-shots are skipped again when sources run short
+  (the ioq3 check could never trigger), and the error is printed once per stream.
 - Unit tests test_ctf4_team_score and test_rally_state_machine build again (stubs for
   newer functions, new Team_TakeFlagSound signature).
 - Map entity "gametype" filter used a table that did not match the GT_* values
