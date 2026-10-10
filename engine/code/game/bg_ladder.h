@@ -138,6 +138,11 @@ typedef struct ladderProfileSnapshot_s {
         int             kothWins;
         int             kothCompleted;
         int             kothZoneHoldMs;
+
+        /* ── GT_AUTOBALL ────────────────────────────────────────────────── */
+        int             autoballWins;
+        int             autoballCompleted;
+        int             autoballGoals;
 } ladderProfileSnapshot_t;
 
 typedef struct ladderPlayerPayload_s {
@@ -175,6 +180,11 @@ typedef struct ladderPlayerPayload_s {
         int                     deaths;
         int                     zoneHoldMs;
         int                     kothContestTimeMs;
+        int                     autoballGoals;    /* GT_AUTOBALL only */
+        int                     autoballAssists;
+        int                     autoballSaves;
+        int                     autoballShots;
+        int                     autoballDemos;
         int                     zoneActiveSigil;
         int                     survivalMs;
         int                     eliminationRound;

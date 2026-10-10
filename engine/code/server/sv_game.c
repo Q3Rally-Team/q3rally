@@ -393,6 +393,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_RALLY_PHYSICS_APPLY_IMPULSE:
 		SV_RallyPhysics_ApplyImpulse( args[1], VMA(2), VMA(3) );
 		return 0;
+	case G_RALLY_PHYSICS_RESET_BODY:
+		SV_RallyPhysics_ResetBody( args[1], VMA(2), VMA(3), VMA(4) );
+		return 0;
 	case G_POINT_CONTENTS:
 		return SV_PointContents( VMA(1), args[2] );
 	case G_SET_BRUSH_MODEL:

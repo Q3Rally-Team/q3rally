@@ -181,6 +181,34 @@ cg.scores[i].kothHoldTimeMs = atoi(CG_Argv(i * SCOREBOARD_FIELDS_PER_CLIENT + 28
 
 }
 
+/* "abStats <count> (<client> <goals> <assists> <saves> <shots> <demos> <bestShotKmh>)*" */
+static void CG_ParseAutoballStats( void ) {
+	int count, i, clientNum, scoreIndex, base;
+
+	if ( trap_Argc() < 2 ) return;
+	count = atoi( CG_Argv( 1 ) );
+	if ( count < 0 ) return;
+	if ( count > ( trap_Argc() - 2 ) / 7 ) {
+		count = ( trap_Argc() - 2 ) / 7;
+	}
+	for ( i = 0; i < count; i++ ) {
+		base = i * 7 + 2;
+		clientNum = atoi( CG_Argv( base ) );
+		if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) continue;
+		for ( scoreIndex = 0; scoreIndex < cg.numScores; scoreIndex++ ) {
+			score_t *score = &cg.scores[scoreIndex];
+			if ( score->client != clientNum ) continue;
+			score->autoballGoals = atoi( CG_Argv( base + 1 ) );
+			score->autoballAssists = atoi( CG_Argv( base + 2 ) );
+			score->autoballSaves = atoi( CG_Argv( base + 3 ) );
+			score->autoballShots = atoi( CG_Argv( base + 4 ) );
+			score->autoballDemos = atoi( CG_Argv( base + 5 ) );
+			score->autoballBestShot = atoi( CG_Argv( base + 6 ) );
+			break;
+		}
+	}
+}
+
 static void CG_ParseDerbyIntegrity( void ) {
 	int count, i, clientNum, integrity, scoreIndex;
 
@@ -590,6 +618,9 @@ if( cgs.gametype == GT_CTF ) {
 		CG_ParseKothStatus();
 	}
 	// Q3Rally Code END - KOTH
+	else if ( cgs.gametype == GT_AUTOBALL ) {
+		CG_ParseAutoballStatus();
+	}
 
 #ifdef MISSIONPACK
 	else if( cgs.gametype == GT_1FCTF ) {
@@ -742,6 +773,9 @@ static void CG_ConfigStringModified( void ) {
 	else if ( num == CS_KOTHSTATUS ) {
 		if ( cgs.gametype == GT_KOTH ) {
 			CG_ParseKothStatus();
+		} else if ( cgs.gametype == GT_AUTOBALL ) {
+			/* CS_AUTOBALLSTATUS shares this slot */
+			CG_ParseAutoballStatus();
 		}
 	}
 	// Q3Rally Code END - KOTH
@@ -2043,6 +2077,11 @@ static void CG_ServerCommand( void ) {
 
 	if ( !strcmp( cmd, "derbyIntegrity" ) ) {
 		CG_ParseDerbyIntegrity();
+		return;
+	}
+
+	if ( !strcmp( cmd, "abStats" ) ) {
+		CG_ParseAutoballStats();
 		return;
 	}
 

@@ -3196,6 +3196,12 @@ int AINode_Seek_LTG(bot_state_t *bs)
 		AIEnter_Respawn(bs, "seek ltg: bot dead");
 		return qfalse;
 	}
+// Q3Rally Code Start
+	// Autoball: direct ball driving instead of items and enemies
+	if ( gametype == GT_AUTOBALL && BotAutoball_Think( bs ) ) {
+		return qtrue;
+	}
+// END
 	//
 	if (BotChat_Random(bs)) {
 		bs->stand_time = FloatTime() + BotChatTime(bs);

@@ -131,6 +131,11 @@ typedef struct profile_stats_s {
     int    kothWins;
     int    kothCompleted;
     int    kothZoneHoldMs;
+
+    /* ── GT_AUTOBALL ─────────────────────────────────────────────────────── */
+    int    autoballWins;
+    int    autoballCompleted;
+    int    autoballGoals;
 } profile_stats_t;
 
 typedef struct profile_favorite_car_s {

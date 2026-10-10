@@ -265,6 +265,24 @@ struct gentity_s {
 	float		spinningFriction;
 	float		vehicleImpactScale;
 	float		weaponImpactScale;
+	/* Autoball / ball-style scripted objects (Bullet backend) */
+	int			collisionShape;		/* rallyPhysicsShape_t */
+	float		ballRadius;			/* sphere radius in units, 0 = unused */
+	qboolean	neverSleep;			/* keep the body awake permanently */
+	float		maxSpeed;			/* linear speed cap in units/s, 0 = none */
+	float		vehicleLift;		/* minimum upward share of a car contact, 0..1 */
+	float		vehicleVerticalScale;	/* scales the upward share of a car contact, 1 = unchanged */
+	vec3_t		ballHome;			/* reset position (kick-off spot) */
+	int			ballLastToucher;	/* client number of the last car touch, -1 = none */
+	int			ballLastTouchTime;	/* level.time of that touch */
+	int			ballTouchClient[4];	/* recent distinct touchers, newest first, -1 = empty */
+	int			ballTouchTime[4];
+	int			ballPendingClient;	/* touch whose shot/save result is judged next frame */
+	int			ballPendingTime;
+	int			ballPendingThreat;	/* goal (defending team) the ball was heading for before it */
+	int			ballHitSoundTime;
+	vec3_t		ballPrevVelocity;	/* last frame, for wall/floor bounce sounds */
+	int			ballDebugLogTime;	/* rate limit for g_autoballDebug */
 	vec3_t		*collisionHullVerts;
 	int		collisionHullVertCount;
 	vec3_t	collisionHullMins;
@@ -448,6 +466,16 @@ typedef struct {
         qboolean        profileMatchOutcomeRecorded;   // win/loss scoring already processed for this match
         char            uuid[PROFILE_MAX_UUID];         // cl_uuid aus dem Userinfo; leer wenn kein UUID-Client
 // END
+	// Autoball match stats and rate limits (survive respawns, reset per map)
+	int			autoballGoals;
+	int			autoballAssists;
+	int			autoballSaves;
+	int			autoballShots;
+	int			autoballDemos;
+	int			autoballTouchPointTime;	// last time a ball touch earned points
+	int			autoballShotTime;		// last shot award
+	int			autoballSaveTime;		// last save award
+	int			autoballBestShot;		// hardest ball speed after a touch, km/h
 } clientPersistant_t;
 
 
@@ -603,6 +631,21 @@ typedef struct {
 	int			startTime;				// level.time the map was started
 
 	int			teamScores[TEAM_NUM_TEAMS];
+	// Autoball match flow (g_autoball.c)
+	int			autoballState;			// autoballState_t
+	int			autoballStateEnd;		// level.time the goal celebration ends
+	int			autoballKickoffEnd;		// cars are released at this server time
+	int			autoballCountdown;		// last countdown second announced
+	int			autoballBallNum;		// entity number of the match ball, -1 = none
+	int			autoballGoalTeam;		// team that scored the last goal
+	int			autoballScorer;			// client who scored it, -1 = none / own goal
+	int			autoballGoalSpeed;		// ball speed at the goal in km/h
+	int			autoballPublished;		// ball number last sent to clients
+	int			autoballRamLogTime;		// g_autoballDebug rate limit
+	int			autoballIntroDone;		// the first kick-off (with intro flight) happened
+	int			autoballIntroEnd;		// level.time the intro flight ends, 0 = no intro
+	int			autoballClockStarted;	// the match clock was restarted at the first whistle
+	qboolean	matchOutcomeRecorded;	// G_RecordMatchOutcome ran for this match
 	int			kothTeamHoldTimeMs[TEAM_NUM_TEAMS];
 	qboolean	kothMapInvalid;
 // STONELANCE
@@ -1073,9 +1116,43 @@ void G_RallyPhysics_Init( void );
 void G_RallyPhysics_Shutdown( void );
 void G_RallyPhysics_RunFrame( void );
 qboolean G_RallyPhysics_Enabled( void );
+qboolean G_RallyPhysics_CreateEntity( gentity_t *ent );
 void G_ScriptedObject_ApplyWeaponImpact( gentity_t *target, gentity_t *inflictor,
 	gentity_t *attacker, const vec3_t direction, const vec3_t point, int damage );
+qboolean G_ParseScriptedObject( gentity_t *ent );
+void G_ApplyScriptedObjectMapProperties( gentity_t *ent );
+void G_ScriptedObject_FinishSpawn( gentity_t *ent );
 // END
+
+//
+// g_autoball.c
+//
+void SP_autoball_ball( gentity_t *ent );
+gentity_t *G_Autoball_SpawnBall( const vec3_t origin );
+void G_Autoball_ResetBall( gentity_t *ball );
+void G_Autoball_RemoveBall( gentity_t *ball );
+void Cmd_BallSpawn_f( gentity_t *ent );
+void Cmd_BallReset_f( gentity_t *ent );
+void Cmd_BallRemove_f( gentity_t *ent );
+void Svcmd_BallSpawnAt_f( void );
+void Svcmd_BallKick_f( void );
+void Svcmd_BallInfo_f( void );
+void Svcmd_BallTouch_f( void );
+void Svcmd_BallTurbo_f( void );
+void G_Autoball_RunFrame( void );
+void G_Autoball_InitGame( void );
+void G_Autoball_BallTouched( gentity_t *ball, gentity_t *other );
+void G_Autoball_BallHit( gentity_t *ball, gentity_t *other, const vec3_t impulse );
+void G_Autoball_VehicleContact( gentity_t *self, const vehicleCollisionContact_t *contact );
+qboolean G_Autoball_BlockDamage( gentity_t *targ, int mod );
+qboolean G_Autoball_ForceRespawn( gentity_t *ent );
+void G_Autoball_ClientSpawn( gentity_t *ent );
+qboolean G_Autoball_CarsFrozen( int serverTime );
+void G_Autoball_ForgetClient( int clientNum );
+qboolean G_Autoball_HoldMatchEnd( void );
+qboolean G_Autoball_ItemDisabled( gitem_t *item );
+void SP_autoball_goal( gentity_t *ent );
+void Svcmd_BallGoalAdd_f( void );
 
 
 //
@@ -1300,6 +1377,23 @@ extern  vmCvar_t        g_derbyCollisionRearWeight;
 extern  vmCvar_t        g_derbyCollisionLog;
 extern  vmCvar_t        g_derbyHitFuelReward;
 extern  vmCvar_t        g_derbyHitNosReward;
+extern  vmCvar_t        g_autoballDebug;
+extern  vmCvar_t        g_autoballImpactScale;
+extern  vmCvar_t        g_autoballVerticalScale;
+extern  vmCvar_t        g_autoballLift;
+extern  vmCvar_t        g_autoballMass;
+extern  vmCvar_t        g_autoballElasticity;
+extern  vmCvar_t        g_autoballKickoffDelay;
+extern  vmCvar_t        g_autoballGoalDelay;
+extern  vmCvar_t        g_autoballStartTurbo;
+extern  vmCvar_t        g_autoballWeapons;
+extern  vmCvar_t        g_autoballDemoSpeed;
+extern  vmCvar_t        g_autoballGoalPush;
+extern  vmCvar_t        g_autoballBalls;
+extern  vmCvar_t        g_autoballBallScale;
+extern  vmCvar_t        g_autoballBallGravity;
+extern  vmCvar_t        g_autoballStats;
+extern  vmCvar_t        g_autoballIntro;
 extern  vmCvar_t        g_derbyNoRamTime;
 extern  vmCvar_t        g_fuelKillReward;
 extern  vmCvar_t        g_useFuel;
@@ -1385,6 +1479,8 @@ void trap_RallyPhysicsVehicleContact( int entityNum, const vec3_t point,
 	float impactScale, vec3_t objectImpulse );
 void trap_RallyPhysicsApplyImpulse( int entityNum, const vec3_t point,
 	const vec3_t impulse );
+void trap_RallyPhysicsResetBody( int entityNum, const vec3_t origin,
+	const vec3_t angles, const vec3_t linearVelocity );
 // STONELANCE
 void	trap_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
 // END

@@ -630,6 +630,11 @@ static void CG_AddSpriteExplosion( localEntity_t *le ) {
 
 	re.reType = RT_SPRITE;
 	re.radius = 42 * ( 1.0 - c ) + 30;
+	if ( le->radius > 0 ) {
+		// scaled explosion (Autoball goal blast): grows to le->radius, stays brighter
+		re.radius = le->radius * ( 0.35f + 0.65f * ( 1.0f - c ) );
+		re.shaderRGBA[3] = 0xff * c * 0.85f;
+	}
 
 	trap_R_AddRefEntityToScene( &re );
 

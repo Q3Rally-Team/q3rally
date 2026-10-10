@@ -169,7 +169,8 @@ static vec4_t serversAccentColor = UI_FRONTEND_COLOR_ACCENT;
 #define GAMES_CTF                               10
 #define GAMES_DOMINATION                11
 #define GAMES_KOTH                      12  // Q3Rally KOTH
-#define GAMES_NUM_GAMES                 13
+#define GAMES_AUTOBALL                  13
+#define GAMES_NUM_GAMES                 14
 // END
 
 static const char *master_items[] = {
@@ -204,6 +205,8 @@ static const char *servertype_items[] = {
         "Team Deathmatch",
         "Capture the Flag",
         "Domination",
+        "King of the Hill",
+        "Autoball",
 // END
         0
 };
@@ -235,6 +238,7 @@ static const char *ArenaServers_GametypeShortName( int gametype ) {
         case GT_CTF4:           return "CTF4";
         case GT_DOMINATION:     return "Domination";
         case GT_KOTH:           return "KOTH";
+        case GT_AUTOBALL:       return "Autoball";
         default:                return "???";
         }
 }
@@ -863,6 +867,9 @@ int ArenaServers_GametypeForGames(int games) {
         // Q3Rally Code Start - KOTH
         case GAMES_KOTH:
                 gametype = GT_KOTH;
+                break;
+        case GAMES_AUTOBALL:
+                gametype = GT_AUTOBALL;
                 break;
         // Q3Rally Code END - KOTH
 	}

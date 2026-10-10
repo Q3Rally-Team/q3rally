@@ -264,7 +264,8 @@ void AddTeamScore(vec3_t origin, int team, int score) {
 	te = G_TempEntity(origin, EV_GLOBAL_TEAM_SOUND );
 	te->r.svFlags |= SVF_BROADCAST;
 
-        if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ) {
+        if ( g_gametype.integer == GT_CTF || g_gametype.integer == GT_CTF4 ||
+             g_gametype.integer == GT_AUTOBALL ) {	// Autoball: same two-team announcer logic as CTF
                 int previousScore = level.teamScores[team];
                 int newScore = previousScore + score;
 

@@ -463,6 +463,9 @@ static void CG_Obituary( entityState_t *ent ) {
                         message = "got rammed by";
                         message2 = "'s vehicle";
                         break;
+		case MOD_AUTOBALL_DEMOLITION:
+			message = "was demolished by";
+			break;
 // Q3Rally Code END
 		default:
 			message = "was killed by";
@@ -1663,6 +1666,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_EXPLOSION:
 		DEBUGNAME("EV_EXPLOSION");
+
+		// Autoball goal: big blast with team colours and camera shake
+		if ( es->eventParm & EXPLOSION_PARM_AUTOBALL_GOAL ) {
+			CG_Autoball_GoalExplosion( cent->lerpOrigin, es->eventParm & 0x0F );
+			break;
+		}
 		
 		// show plume (if enabled)
 		if ( cg_oldRocket.integer == 0 ) {

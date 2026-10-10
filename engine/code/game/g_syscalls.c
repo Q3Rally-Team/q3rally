@@ -211,6 +211,11 @@ void trap_RallyPhysicsApplyImpulse( int entityNum, const vec3_t point,
 	syscall( G_RALLY_PHYSICS_APPLY_IMPULSE, entityNum, point, impulse );
 }
 
+void trap_RallyPhysicsResetBody( int entityNum, const vec3_t origin,
+	const vec3_t angles, const vec3_t linearVelocity ) {
+	syscall( G_RALLY_PHYSICS_RESET_BODY, entityNum, origin, angles, linearVelocity );
+}
+
 void trap_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask ) {
 	syscall( G_TRACECAPSULE, results, start, mins, maxs, end, passEntityNum, contentmask );
 }

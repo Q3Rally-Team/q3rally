@@ -2221,6 +2221,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 	qboolean	scriptedObjectPlane;
 	qboolean	hitScriptedObject;
 	vec3_t	pointCorrection;
+	vec3_t	touchVel;
 #endif
 	trace_t	trace;
 	int		i, j;
@@ -2402,6 +2403,14 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 //		VectorSubtract( dest, start, vel );
 		VectorSubtract( tPoint->r, start, vel );
 		VectorScale( vel, 1 / time, vel );
+#ifdef QAGAME
+		/* Contact velocity for touched props. 'vel' is the sweep velocity and
+		 * includes the 20-unit inward start offset divided by the step time,
+		 * which inflated prop hits 2-3x and made them frame-rate dependent.
+		 * Props get the point's real movement over this step instead. */
+		VectorSubtract( tPoint->r, sPoint->r, touchVel );
+		VectorScale( touchVel, 1 / time, touchVel );
+#endif
 
 		numplanes = 0;
 		contactPlaneCount = 0;
@@ -2607,7 +2616,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 				}
 				else {
 //					Com_Printf( "hit non player CONTENTS_BODY\n" );
-					PM_AddTouchEnt( trace.entityNum, trace.endpos, trace.plane.normal, vel );
+					PM_AddTouchEnt( trace.entityNum, trace.endpos, trace.plane.normal, touchVel );
 					/* A dynamic scripted prop still blocks this swept point, but its
 					 * plane must not become a persistent car support/contact force.
 					 * Otherwise the car resolves a movable barrel as a static wall and

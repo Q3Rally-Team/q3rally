@@ -519,6 +519,13 @@ typedef struct {
 				int				kothContestTimeMs;
 				int				kothHoldTimeMs;
 				int				rankTier;
+	/* Autoball, from the "abStats" command */
+	int				autoballGoals;
+	int				autoballAssists;
+	int				autoballSaves;
+	int				autoballShots;
+	int				autoballDemos;
+	int				autoballBestShot;	/* km/h */
 } score_t;
 
 // each client has an associated clientInfo_t
@@ -1551,6 +1558,17 @@ typedef struct {
 	int				redflag, blueflag, greenflag, yellowflag;		// flag status from configstrings
 	int				flagStatus;
     int             sigil[MAX_SIGILS];
+    /* Autoball - parsed from CS_AUTOBALLSTATUS */
+    int             autoballState;      /* autoballState_t */
+    int             autoballKickoffEnd; /* server time the cars are released */
+    int             autoballBallNum;    /* match ball entity, -1 = none */
+    int             autoballGoalTeam;
+    int             autoballScorer;     /* client number, -1 = own goal / unknown */
+    int             autoballGoalSpeed;  /* km/h */
+    int             autoballGoalTime;   /* cg.time the goal state arrived */
+    qboolean        autoballHaveGoals;  /* goal centres below are valid */
+    vec3_t          autoballGoal[2];    /* [0] red goal, [1] blue goal (centres) */
+    int             autoballIntroEnd;   /* server time the kick-off camera flight ends, 0 = none */
     /* Q3Rally KOTH - parsed from CS_KOTHSTATUS */
     int             kothOwner;      /* TEAM_FREE / TEAM_RED / TEAM_BLUE */
     int             kothContested;  /* qtrue when both teams in hill */
@@ -1740,6 +1758,32 @@ extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
 // Q3Rally Code Start
 extern	vmCvar_t		cg_metricUnits;
+extern	vmCvar_t		cg_autoballPredict;
+extern	vmCvar_t		cg_autoballCam;
+extern	vmCvar_t		cg_autoballIndicator;
+extern	vmCvar_t		cg_autoballShake;
+extern	vmCvar_t		cg_autoballTrail;
+extern	vmCvar_t		cg_autoballTVCam;
+extern	vmCvar_t		cg_autoballIntro;
+
+//
+// cg_autoball.c
+//
+centity_t *CG_Autoball_FindBall( void );
+void CG_ParseAutoballStatus( void );
+void CG_Autoball_FreezeCommand( usercmd_t *cmd );
+void CG_Autoball_ToggleCam_f( void );
+void CG_Autoball_ApplyBallCam( void );
+void CG_Autoball_Draw2D( void );
+void CG_Autoball_BallShadow( centity_t *cent );
+void CG_Autoball_BallColor( const entityState_t *s, byte *rgba );
+void CG_Autoball_GoalExplosion( vec3_t origin, int team );
+void CG_Autoball_ApplyShake( void );
+void CG_Autoball_BallTrail( centity_t *cent );
+void CG_Autoball_AddSceneEffects( void );
+void CG_Autoball_OverrideView( void );
+qboolean CG_Autoball_IntroActive( void );
+void CG_Autoball_DrawAwards( int y, float fade );
 extern	vmCvar_t		cg_minSkidLength;
 extern	vmCvar_t		cg_controlMode;
 extern	vmCvar_t		cg_manualShift;
@@ -2090,6 +2134,7 @@ void CG_ScorePlum( int client, vec3_t org, int score );
 void CG_ShowDebris( vec3_t srcOrigin, int count, int evType );
 void CG_StartEarthquake(int intensity, int duration);
 void CG_Earthquake(void);
+void CG_Particles( vec3_t origin, int count, int speed, int lifetime, int radius, int type, byte r, byte g, byte b );
 void CG_ParticlesFromEntityState( vec3_t origin, int type, entityState_t *es);
 
 

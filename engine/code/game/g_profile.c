@@ -520,6 +520,9 @@ qboolean G_Profile_GetLadderSnapshot( ladderProfileSnapshot_t *outSnapshot,
     outSnapshot->kothWins = s_profileState.stats.kothWins;
     outSnapshot->kothCompleted = s_profileState.stats.kothCompleted;
     outSnapshot->kothZoneHoldMs = s_profileState.stats.kothZoneHoldMs;
+    outSnapshot->autoballWins = s_profileState.stats.autoballWins;
+    outSnapshot->autoballCompleted = s_profileState.stats.autoballCompleted;
+    outSnapshot->autoballGoals = s_profileState.stats.autoballGoals;
 
     for ( i = 0; i < BG_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
         outSnapshot->achievementTiers[i] = s_profileState.achievementsUnlocked[i];
@@ -1077,6 +1080,11 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.kothCompleted  = G_Profile_ParseInt( buffer, "kothCompleted",  0 );
     s_profileState.stats.kothZoneHoldMs = G_Profile_ParseInt( buffer, "kothZoneHoldMs", 0 );
 
+    /* GT_AUTOBALL */
+    s_profileState.stats.autoballWins      = G_Profile_ParseInt( buffer, "autoballWins",      0 );
+    s_profileState.stats.autoballCompleted = G_Profile_ParseInt( buffer, "autoballCompleted", 0 );
+    s_profileState.stats.autoballGoals     = G_Profile_ParseInt( buffer, "autoballGoals",     0 );
+
     G_Profile_ParseString( buffer, "gender", s_profileState.info.gender, sizeof( s_profileState.info.gender ), "" );
     G_Profile_ParseString( buffer, "birthDate", s_profileState.info.birthDate, sizeof( s_profileState.info.birthDate ), "" );
     G_Profile_ParseString( buffer, "avatar", s_profileState.info.avatar, sizeof( s_profileState.info.avatar ), "" );
@@ -1511,6 +1519,9 @@ static void G_Profile_WriteToDisk( void ) {
             "\t\t\"kothWins\": %d,\n"
             "\t\t\"kothCompleted\": %d,\n"
             "\t\t\"kothZoneHoldMs\": %d,\n"
+            "\t\t\"autoballWins\": %d,\n"
+            "\t\t\"autoballCompleted\": %d,\n"
+            "\t\t\"autoballGoals\": %d,\n"
             "\t\t\"vehicles\": %s\n"
             "\t}\n"
             "}\n",
@@ -1535,6 +1546,9 @@ static void G_Profile_WriteToDisk( void ) {
             s_profileState.stats.kothWins,
             s_profileState.stats.kothCompleted,
             s_profileState.stats.kothZoneHoldMs,
+            s_profileState.stats.autoballWins,
+            s_profileState.stats.autoballCompleted,
+            s_profileState.stats.autoballGoals,
             vehicleJson );
         if ( len4 < 0 || length + len4 >= (int)sizeof( buffer ) ) {
             G_PROFILE_LOG( "G_Profile: Com_sprintf part4 failed\n" );
@@ -1874,6 +1888,7 @@ void G_Profile_RecordKill( gclient_t *attacker, gclient_t *victim ) {
     case GT_CTF4:
     case GT_KOTH:
     case GT_DOMINATION:
+    case GT_AUTOBALL:
         s_profileState.stats.teamKills++;
         break;
     default:
@@ -2095,6 +2110,20 @@ void G_Profile_RecordZoneHold( gclient_t *client, int zoneHoldMs ) {
     s_profileState.dirty = qtrue;
 }
 
+/* Autoball-Tore des Matches beim Matchabschluss aufsummieren. */
+void G_Profile_RecordAutoballGoals( gclient_t *client, int goals ) {
+    if ( !G_Profile_ShouldTrackClient( client ) ) {
+        return;
+    }
+
+    if ( goals <= 0 || g_gametype.integer != GT_AUTOBALL ) {
+        return;
+    }
+
+    s_profileState.stats.autoballGoals += goals;
+    s_profileState.dirty = qtrue;
+}
+
 /* CTF-Captures für den jeweiligen Modus zählen. */
 void G_Profile_RecordCtfCapture( gclient_t *client ) {
     if ( !G_Profile_ShouldTrackClient( client ) ) {
@@ -2211,6 +2240,10 @@ void G_Profile_RecordWin( gclient_t *client ) {
         s_profileState.stats.kothWins++;
         s_profileState.stats.kothCompleted++;
         break;
+    case GT_AUTOBALL:
+        s_profileState.stats.autoballWins++;
+        s_profileState.stats.autoballCompleted++;
+        break;
     default:
         break;
     }
@@ -2292,6 +2325,9 @@ void G_Profile_RecordLoss( gclient_t *client ) {
         break;
     case GT_KOTH:
         s_profileState.stats.kothCompleted++;
+        break;
+    case GT_AUTOBALL:
+        s_profileState.stats.autoballCompleted++;
         break;
     default:
         break;

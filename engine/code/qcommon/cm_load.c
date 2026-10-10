@@ -570,8 +570,19 @@ Some map compilers leave trigger brush models with solid shader contents.
 Their runtime entity is a trigger volume, not world collision: normalize the
 inline model contents before either the stock CM traces or the Bullet BSP
 conversion can mistake them for walls.
+
+Volume entities are every trigger_* class plus autoball_goal, whose brush
+only marks the goal space the ball has to enter.
 ===========================
 */
+static qboolean CMod_IsVolumeEntityClass( const char *classname ) {
+	if ( !Q_stricmpn( classname, "trigger_", 8 ) )
+		return qtrue;
+	if ( !Q_stricmp( classname, "autoball_goal" ) )
+		return qtrue;
+	return qfalse;
+}
+
 static void CMod_MarkTriggerModelContents( void ) {
 	char *entityText;
 	char *parseText;
@@ -623,7 +634,7 @@ static void CMod_MarkTriggerModelContents( void ) {
 				Q_strncpyz( modelName, value, sizeof( modelName ) );
 		}
 
-		if ( !entityEnd || Q_stricmpn( classname, "trigger_", 8 ) )
+		if ( !entityEnd || !CMod_IsVolumeEntityClass( classname ) )
 			continue;
 		modelNumber = CMod_InlineModelNumber( modelName );
 		if ( modelNumber <= 0 || modelNumber >= cm.numSubModels )

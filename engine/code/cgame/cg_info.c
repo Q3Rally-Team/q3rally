@@ -406,6 +406,9 @@ void CG_DrawInformation( void ) {
 	case GT_KOTH:
 		s = "King of the Hill";
 		break;
+	case GT_AUTOBALL:
+		s = "Autoball";
+		break;
 	case GT_SINGLE_PLAYER:
 		s = "Time Trial";
 		break;

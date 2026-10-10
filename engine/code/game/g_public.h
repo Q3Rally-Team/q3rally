@@ -242,6 +242,7 @@ typedef enum {
 	G_RALLY_PHYSICS_APPLY_IMPULSE,
 	G_LADDER_SUBMIT_GHOST,	// ( const ladderGhostMeta_t *meta, const char *data );
 	G_LADDER_FETCH_GHOSTS,	// ( const ladderGhostFetch_t *request );
+	G_RALLY_PHYSICS_RESET_BODY,	// ( int entityNum, const vec3_t origin, const vec3_t angles, const vec3_t linearVelocity );
 
         BOTLIB_SETUP = 200,				// ( void );
 	BOTLIB_SHUTDOWN,				// ( void );

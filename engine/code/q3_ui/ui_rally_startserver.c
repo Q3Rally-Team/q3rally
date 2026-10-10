@@ -119,7 +119,7 @@ static startserver_t s_startserver;
 
 static void StartServer_MenuEvent( void *ptr, int event );
 static void StartServer_Update( void );
-static const char *gametype_items[16];
+static const char *gametype_items[17];
 
 static int StartServer_CvarIntOrDefault( const char *name, int defaultValue ) {
 	char value[32];
@@ -422,6 +422,7 @@ static const char *gametype_items[] = {
 	"4-Team CTF",
 	"Domination",
     "King of the Hill",
+    "Autoball",
 	0
 };
 
@@ -429,7 +430,7 @@ static const char *gametype_items[] = {
 // gametype_remap maps display-list index -> raw GT_ value (used when starting server)
 // gametype_remap2 maps raw GT_ value -> gametype_items display index
 // Team gametypes start at GT_TEAM=16; indices 9-15 are unused gaps filled with 0.
-static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_SPRINT, GT_GHOST, GT_DERBY, GT_LCS, GT_ELIMINATION, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH};
+static int gametype_remap[] = {GT_RACING, GT_RACING_DM, GT_SPRINT, GT_GHOST, GT_DERBY, GT_LCS, GT_ELIMINATION, GT_DEATHMATCH, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM, GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH, GT_AUTOBALL};
 static int gametype_remap2[] = {
 	0,  // GT_RACING          = 0
 	1,  // GT_RACING_DM       = 1
@@ -454,6 +455,7 @@ static int gametype_remap2[] = {
 	12, // GT_CTF4            = 20
 	13, // GT_DOMINATION      = 21
 	14, // GT_KOTH            = 22
+	15, // GT_AUTOBALL        = 23
 };
 
 
@@ -694,6 +696,7 @@ static const struct {
         { "q3r_ctf4", GT_CTF4 },
         { "q3r_dom", GT_DOMINATION },
         { "q3r_koth", GT_KOTH }, /* Q3Rally KOTH */
+        { "q3r_autoball", GT_AUTOBALL },
 };
 
 /*
@@ -1306,6 +1309,9 @@ typedef struct {
 	menufield_s			kothPtsDefend;
 	menuradiobutton_s	kothOvertime;
 	menufield_s			kothOvertimeHold;
+	menulist_s			autoballBalls;
+	menulist_s			autoballBallSize;
+	menulist_s			autoballBallGravity;
 	menuradiobutton_s	friendlyfire;
 	menufield_s			hostname;
     menulist_s          dominationSpawnStyle;
@@ -1394,6 +1400,14 @@ static const char *botSkill_list[] = {
 	"Nightmare!",
 	0
 };
+
+// Autoball mutators: menu entries and the cvar values behind them
+static const char *autoball_balls_list[] = { "1", "2", "3", 0 };
+static const char *autoball_size_list[] = { "Normal", "Small", "Big", "Giant", 0 };
+static const float autoball_size_values[] = { 1.0f, 0.7f, 1.4f, 2.0f };
+static const char *autoball_gravity_list[] = { "Normal", "Light", "Moon", "Heavy", 0 };
+static const float autoball_gravity_values[] = { 1.0f, 0.6f, 0.35f, 1.5f };
+#define AUTOBALL_UI_CHOICES 4
 
 // for dominationSpawnStyle
 static const char *dtfspawn_list[] = {
@@ -1644,6 +1658,25 @@ default:
 		break;
 	}
     // Q3Rally Code END - KOTH
+
+	case GT_AUTOBALL:
+	{
+		int balls = (int)Com_Clamp( 0, 2, s_serveroptions.autoballBalls.curvalue );
+		int size = (int)Com_Clamp( 0, AUTOBALL_UI_CHOICES - 1, s_serveroptions.autoballBallSize.curvalue );
+		int gravity = (int)Com_Clamp( 0, AUTOBALL_UI_CHOICES - 1, s_serveroptions.autoballBallGravity.curvalue );
+
+		trap_Cvar_SetValue( "ui_autoball_capturelimit", flaglimit );
+		trap_Cvar_SetValue( "ui_autoball_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_autoball_friendly", friendlyfire );
+		trap_Cvar_SetValue( "ui_autoball_balls", balls );
+		trap_Cvar_SetValue( "ui_autoball_size", size );
+		trap_Cvar_SetValue( "ui_autoball_gravity", gravity );
+		/* mutators; balls and size are latched and take effect with the map */
+		trap_Cvar_SetValue( "g_autoballBalls", balls + 1 );
+		trap_Cvar_SetValue( "g_autoballBallScale", autoball_size_values[size] );
+		trap_Cvar_SetValue( "g_autoballBallGravity", autoball_gravity_values[gravity] );
+		break;
+	}
 
     case GT_DOMINATION:
 		trap_Cvar_SetValue( "g_dominationSpawnStyle", Com_Clamp( 0, 1, dominationSpawnStyle ) );
@@ -2198,6 +2231,20 @@ static void ServerOptions_SetMenuItems( void ) {
 			break;
 		}
 
+	case GT_AUTOBALL:
+		/* goal limit 0 (off) and 5 minutes until the player picks something else */
+		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i",
+			(int)Com_Clamp( 0, 100, StartServer_CvarIntOrDefault( "ui_autoball_capturelimit", 0 ) ) );
+		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i",
+			(int)Com_Clamp( 0, 999, StartServer_CvarIntOrDefault( "ui_autoball_timelimit", 5 ) ) );
+		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_autoball_friendly" ) );
+		s_serveroptions.autoballBalls.curvalue = (int)Com_Clamp( 0, 2, trap_Cvar_VariableValue( "ui_autoball_balls" ) );
+		s_serveroptions.autoballBallSize.curvalue = (int)Com_Clamp( 0, AUTOBALL_UI_CHOICES - 1,
+			trap_Cvar_VariableValue( "ui_autoball_size" ) );
+		s_serveroptions.autoballBallGravity.curvalue = (int)Com_Clamp( 0, AUTOBALL_UI_CHOICES - 1,
+			trap_Cvar_VariableValue( "ui_autoball_gravity" ) );
+		break;
+
 	case GT_DOMINATION:
 		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_dom_capturelimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_dom_timelimit" ) ) );
@@ -2716,9 +2763,10 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 		limitFieldAdded = qtrue;
 	}
-	else if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ) {
+	else if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION ||
+		s_serveroptions.gametype == GT_AUTOBALL ) {
 		s_serveroptions.flaglimit.generic.type		= MTYPE_FIELD;
-		s_serveroptions.flaglimit.generic.name		= "Capture Limit:";
+		s_serveroptions.flaglimit.generic.name		= ( s_serveroptions.gametype == GT_AUTOBALL ) ? "Goal Limit:" : "Capture Limit:";
 		s_serveroptions.flaglimit.generic.flags		= QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 		s_serveroptions.flaglimit.generic.x			= OPTIONS_X;
 		s_serveroptions.flaglimit.generic.y			= y;
@@ -2810,6 +2858,32 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.kothOvertimeHold.generic.statusbar  = ServerOptions_StatusBar;
 		s_serveroptions.kothOvertimeHold.field.widthInChars = 3;
 		s_serveroptions.kothOvertimeHold.field.maxchars     = 3;
+		y += BIGCHAR_HEIGHT+2;
+	}
+
+	if ( s_serveroptions.gametype == GT_AUTOBALL ) {
+		s_serveroptions.autoballBalls.generic.type       = MTYPE_SPINCONTROL;
+		s_serveroptions.autoballBalls.generic.flags      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.autoballBalls.generic.x          = OPTIONS_X;
+		s_serveroptions.autoballBalls.generic.y          = y;
+		s_serveroptions.autoballBalls.generic.name       = "Balls:";
+		s_serveroptions.autoballBalls.itemnames          = autoball_balls_list;
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.autoballBallSize.generic.type    = MTYPE_SPINCONTROL;
+		s_serveroptions.autoballBallSize.generic.flags   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.autoballBallSize.generic.x       = OPTIONS_X;
+		s_serveroptions.autoballBallSize.generic.y       = y;
+		s_serveroptions.autoballBallSize.generic.name    = "Ball Size:";
+		s_serveroptions.autoballBallSize.itemnames       = autoball_size_list;
+		y += BIGCHAR_HEIGHT+2;
+
+		s_serveroptions.autoballBallGravity.generic.type  = MTYPE_SPINCONTROL;
+		s_serveroptions.autoballBallGravity.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.autoballBallGravity.generic.x     = OPTIONS_X;
+		s_serveroptions.autoballBallGravity.generic.y     = y;
+		s_serveroptions.autoballBallGravity.generic.name  = "Ball Gravity:";
+		s_serveroptions.autoballBallGravity.itemnames     = autoball_gravity_list;
 		y += BIGCHAR_HEIGHT+2;
 	}
 
@@ -3058,7 +3132,8 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		}
 	}
 
-	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION || s_serveroptions.gametype == GT_KOTH ) {
+	if( s_serveroptions.gametype == GT_CTF || s_serveroptions.gametype == GT_CTF4 || s_serveroptions.gametype == GT_DOMINATION || s_serveroptions.gametype == GT_KOTH ||
+		s_serveroptions.gametype == GT_AUTOBALL ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
 	else if( s_serveroptions.gametype != GT_DERBY && s_serveroptions.gametype != GT_LCS && s_serveroptions.gametype != GT_SPRINT &&
@@ -3072,6 +3147,12 @@ if (s_serveroptions.gametype == GT_DOMINATION) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothPtsDefend );
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothOvertime );
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.kothOvertimeHold );
+	}
+
+	if( s_serveroptions.gametype == GT_AUTOBALL ) {
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.autoballBalls );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.autoballBallSize );
+		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.autoballBallGravity );
 	}
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );

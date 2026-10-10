@@ -37,7 +37,7 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.15';
+const LADDER_VERSION        = '1.0.16';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max POST requests per window per IP
 const LADDER_RATE_LIMIT_SERVER_MAX = 120; // max POST requests per window per approved server key
@@ -69,7 +69,7 @@ const LADDER_SURVIVAL_MODES = [
     'GT_LCS',
 ];
 const LADDER_OBJECTIVE_MODES = [
-    'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_ELIMINATION',
+    'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_AUTOBALL', 'GT_ELIMINATION',
 ];
 
 final class LadderApiException extends RuntimeException
@@ -1409,7 +1409,8 @@ try {
       { key: 'gt_ctf', type: 'objective' },
       { key: 'gt_ctf4', type: 'objective' },
       { key: 'gt_domination', type: 'objective' },
-      { key: 'gt_koth', type: 'objective' }
+      { key: 'gt_koth', type: 'objective' },
+      { key: 'gt_autoball', type: 'objective' }
     ];
 
     const LEVELSHOT_EXTENSIONS = ['webp', 'png', 'jpg', 'jpeg', 'tga'];
@@ -1808,7 +1809,8 @@ try {
         gt_ctf: 'Capture the Flag',
         gt_ctf4: '4-Teams-CTF',
         gt_domination: 'Domination',
-        gt_koth: 'King of the Hill'
+        gt_koth: 'King of the Hill',
+        gt_autoball: 'Autoball'
       },
       en: {
         gt_racing: 'Racing',
@@ -1824,7 +1826,8 @@ try {
         gt_ctf: 'Capture the Flag',
         gt_ctf4: '4-Team CTF',
         gt_domination: 'Domination',
-        gt_koth: 'King of the Hill'
+        gt_koth: 'King of the Hill',
+        gt_autoball: 'Autoball'
       }
     };
 
@@ -1832,7 +1835,7 @@ try {
     const DEATHMATCH_MODE_KEYS = new Set(['gt_deathmatch', 'gt_team']);
     const DERBY_MODE_KEYS = new Set(['gt_derby']);
     const SURVIVAL_MODE_KEYS = new Set(['gt_lcs']);
-    const OBJECTIVE_MODE_KEYS = new Set(['gt_ctf', 'gt_ctf4', 'gt_elimination', 'gt_domination', 'gt_koth']);
+    const OBJECTIVE_MODE_KEYS = new Set(['gt_ctf', 'gt_ctf4', 'gt_elimination', 'gt_domination', 'gt_koth', 'gt_autoball']);
 
     const OBJECTIVE_METRIC_DEFINITIONS = {
       captures: {
@@ -1908,6 +1911,7 @@ try {
       gt_elimination: ['wins', 'score', 'captures', 'objectives'],
       gt_domination: ['objectives', 'score', 'captures', 'wins'],
       gt_koth: ['objectives', 'score', 'captures', 'wins'],
+      gt_autoball: ['score', 'wins', 'objectives', 'captures'],
       gt_lcs: ['wins', 'score', 'captures', 'objectives']
     };
 
@@ -4741,6 +4745,7 @@ async function showPlayerProfile(playerId, playerName) {
       { title: 'Team Racing DM',  primaryStat: 'teamRacingDmCompleted', alwaysVisibleWhenTracked: true, fields: [['Wins','teamRacingDmWins'],['Completed','teamRacingDmCompleted'],['Podiums','teamRacingDmPodiums']] },
       { title: 'Domination',      primaryStat: 'dominationCompleted', fields: [['Wins','dominationWins'],['Completed','dominationCompleted'],['Zone Hold',null,'dominationZoneHoldMs']] },
       { title: 'King of the Hill', primaryStat: 'kothCompleted', fields: [['Wins','kothWins'],['Completed','kothCompleted'],['Zone Hold',null,'kothZoneHoldMs']] },
+      { title: 'Autoball',        primaryStat: 'autoballCompleted', fields: [['Wins','autoballWins'],['Completed','autoballCompleted'],['Goals','autoballGoals']] },
     ];
 
     const hasTrackedField = (obj, field) => Object.prototype.hasOwnProperty.call(obj || {}, field);
@@ -4953,6 +4958,14 @@ async function showMatchDetails(matchId) {
 
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
+  {
+    version: '1.0.16',
+    date: '2026-10-10',
+    changes: [
+      'New mode Autoball (GT_AUTOBALL): leaderboard, team mode, per-player goals/assists/saves/shots/demolitions, career card (wins, completed, goals)',
+      'Fix: per-mode career counters (wins, completed, podiums, totals, awards) no longer run one match ahead for the local player – a snapshot that is ahead already contains the match and is taken as-is'
+    ],
+  },
   {
     version: '1.0.15',
     date: '2026-10-04',
@@ -5922,7 +5935,7 @@ function profile_upsert_from_payload(array $payload): void
     }
 
     $mode = $payload['mode'] ?? '';
-    $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM', 'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
+    $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM', 'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_AUTOBALL'];
     $isTeamMode = in_array($mode, $teamModes, true);
     $isTeamRaceMode = in_array($mode, ['GT_TEAM_RACING', 'GT_TEAM_RACING_DM'], true);
     $winnerClientNum = -1;
@@ -6117,14 +6130,21 @@ function profile_upsert_from_payload(array $payload): void
         $mostUsed    = $snap ? ((string)($snap['mostUsedVehicle'] ?? '') ?: $vehicleName)
                               : $vehicleName;
 
-        // ── Helper: Zählwerte immer als max(existing, snapshot) + optionales Match-Delta
+        // ── Helper: per-mode career counters (wins, completed, podiums, totals,
+        // awards). The game records the match outcome into the local profile
+        // BEFORE the payload is built (G_RecordMatchOutcome in LogExit), so a
+        // snapshot that is ahead of the stored value already contains this
+        // match. It is taken as-is; the match delta is only added when there is
+        // no snapshot (remote players) or the snapshot is not ahead.
+        // Previously max(existing, snapshot) + delta counted every match twice
+        // for the local player, so e.g. wins/completed ran one ahead.
         $pickCareer = function(string $key, int $delta = 0) use ($snap, $existing, $countThisMatch): int {
-            $base = (int)($existing[$key] ?? 0);
+            $existingValue = (int)($existing[$key] ?? 0);
             $snapValue = profile_snapshot_int($snap, $key);
-            if ($snapValue !== null) {
-                $base = max($base, $snapValue);
+            if ($snapValue !== null && $snapValue > $existingValue) {
+                return $snapValue;
             }
-            return $base + ($countThisMatch ? $delta : 0);
+            return $existingValue + ($countThisMatch ? $delta : 0);
         };
 
         $pickCareerWithBaselineDelta = $pickCareer;
@@ -6233,6 +6253,9 @@ function profile_upsert_from_payload(array $payload): void
             'kothWinsDelta' => 0,
             'kothCompletedDelta' => 0,
             'kothZoneHoldMsDelta' => 0,
+            'autoballWinsDelta' => 0,
+            'autoballCompletedDelta' => 0,
+            'autoballGoalsDelta' => 0,
         ];
 
         switch ($mode) {
@@ -6306,6 +6329,11 @@ function profile_upsert_from_payload(array $payload): void
                 $careerDeltas['kothCompletedDelta'] = 1;
                 $careerDeltas['kothZoneHoldMsDelta'] = (int)($player['zoneHoldMs'] ?? 0);
                 break;
+            case 'GT_AUTOBALL':
+                $careerDeltas['autoballWinsDelta'] = $isWinner ? 1 : 0;
+                $careerDeltas['autoballCompletedDelta'] = 1;
+                $careerDeltas['autoballGoalsDelta'] = max(0, (int)($player['autoballGoals'] ?? 0));
+                break;
         }
 
         // ── Score (Snapshot-first; Delta nur für Nicht-Snapshot-Spieler) ────
@@ -6350,6 +6378,9 @@ function profile_upsert_from_payload(array $payload): void
                 case 'GT_CTF':
                 case 'GT_CTF4':
                     $scoreDeltaDerived = max(0, (int)($player['captures'] ?? 0));
+                    break;
+                case 'GT_AUTOBALL':
+                    $scoreDeltaDerived = max(0, (int)($player['autoballGoals'] ?? 0));
                     break;
                 case 'GT_DOMINATION':
                 case 'GT_KOTH':
@@ -6518,6 +6549,11 @@ function profile_upsert_from_payload(array $payload): void
             'kothWins'       => $pickCareer('kothWins', $careerDeltas['kothWinsDelta']),
             'kothCompleted'  => $pickCareer('kothCompleted', $careerDeltas['kothCompletedDelta']),
             'kothZoneHoldMs' => $pickCareer('kothZoneHoldMs', $careerDeltas['kothZoneHoldMsDelta']),
+
+            // ── GT_AUTOBALL ──────────────────────────────────────────────
+            'autoballWins'      => $pickCareer('autoballWins', $careerDeltas['autoballWinsDelta']),
+            'autoballCompleted' => $pickCareer('autoballCompleted', $careerDeltas['autoballCompletedDelta']),
+            'autoballGoals'     => $mergeCareerCountField('autoballGoals', $careerDeltas['autoballGoalsDelta']),
 
             'achievementTiers' => (array)($snap['achievementTiers'] ?? $existing['achievementTiers'] ?? []),
             'lastSeen'         => $receivedAt,
@@ -6714,7 +6750,7 @@ function index_derive_winner(array $payload, string $mode): array
     // Mirrors the winner-detection logic of profile_upsert_from_payload().
     // Returns ['winner' => string cleanName, 'winnerTeam' => int].
     $teamModes = ['GT_TEAM', 'GT_TEAM_RACING', 'GT_TEAM_RACING_DM',
-                  'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH'];
+                  'GT_CTF', 'GT_CTF4', 'GT_DOMINATION', 'GT_KOTH', 'GT_AUTOBALL'];
     $isTeamMode = in_array($mode, $teamModes, true);
     $isTeamRaceMode = in_array($mode, ['GT_TEAM_RACING', 'GT_TEAM_RACING_DM'], true);
 

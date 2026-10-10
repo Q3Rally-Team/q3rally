@@ -848,7 +848,7 @@ static qboolean SV_LadderJsonAppendLapArray( ladderJsonBuilder_t *builder, const
 }
 
 static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder,
-        const ladderPlayerPayload_t *player, qboolean isKoth ) {
+        const ladderPlayerPayload_t *player, qboolean isKoth, qboolean isAutoball ) {
         qboolean first = qtrue;
         const char *teamName = SV_LadderTeamName( player->team );
 
@@ -1023,6 +1023,19 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder,
                !SV_LadderJsonAppendInt( builder, player->kothContestTimeMs ) ) ) {
                 return qfalse;
         }
+        if ( isAutoball &&
+             ( !SV_LadderJsonAppendKey( builder, "autoballGoals", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->autoballGoals ) ||
+               !SV_LadderJsonAppendKey( builder, "autoballAssists", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->autoballAssists ) ||
+               !SV_LadderJsonAppendKey( builder, "autoballSaves", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->autoballSaves ) ||
+               !SV_LadderJsonAppendKey( builder, "autoballShots", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->autoballShots ) ||
+               !SV_LadderJsonAppendKey( builder, "autoballDemos", &first ) ||
+               !SV_LadderJsonAppendInt( builder, player->autoballDemos ) ) ) {
+                return qfalse;
+        }
         if ( !SV_LadderJsonAppendKey( builder, "zoneActiveSigil", &first ) ||
              !SV_LadderJsonAppendInt( builder, player->zoneActiveSigil ) ) {
                 return qfalse;
@@ -1178,6 +1191,11 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder,
                         SNAP_INT( "kothWins",        kothWins        )
                         SNAP_INT( "kothCompleted",   kothCompleted   )
                         SNAP_INT( "kothZoneHoldMs",  kothZoneHoldMs  )
+
+                        /* ── GT_AUTOBALL ── */
+                        SNAP_INT( "autoballWins",       autoballWins       )
+                        SNAP_INT( "autoballCompleted",  autoballCompleted  )
+                        SNAP_INT( "autoballGoals",      autoballGoals      )
 
                         if ( !SV_LadderJsonAppendKey( builder, "achievementTiers", &profFirst ) ||
                              !SV_LadderJsonAppendChar( builder, '[' ) ) {
@@ -1461,7 +1479,8 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                                 }
                         }
                         if ( !SV_LadderJsonAppendPlayer( &builder, &payload->players[i],
-                                payload->gametype == GT_KOTH ? qtrue : qfalse ) ) {
+                                payload->gametype == GT_KOTH ? qtrue : qfalse,
+                                payload->gametype == GT_AUTOBALL ? qtrue : qfalse ) ) {
                                 Z_Free( builder.data );
                                 return NULL;
                         }

@@ -31,6 +31,7 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 - **CTF4** CTF4
 - **DOM** Domination
 - **KOTH** KOTH
+- **AB** Autoball
 
 ---
 
@@ -55,7 +56,7 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 | `numberOfLaps` | R,RDM,SPR,TR,TRDM,ELI: **P+B**; DER,LCS,DM,TEAM,CTF,CTF4,DOM,KOTH: **V+B** | `level.numberOfLaps`, Sprint default via `G_RallyApplySprintDefaults` | konfigurierte Rundenzahl | `0` |
 | `trackReversed` | R,RDM,SPR,TR,TRDM,ELI: **O+B**; sonst: **V+B** | CVar `g_trackReversed` | Strecke reversed | `false` |
 | `eliminationStartDelay`/`eliminationInterval`/`eliminationWarning` | ELI: **P+B**; alle anderen: **V+B** | CVars `g_elimination*` | Eliminations-Timerkonfiguration | `0` |
-| `teamScores[TEAM_NUM_TEAMS]` | TEAM,TRDM,CTF,CTF4,DOM,KOTH: **P+B**; R,RDM,SPR,DER,LCS,ELI,DM,TR: **O+B** | `level.teamScores[]` | Team-Score pro Teamindex | Array mit `0` |
+| `teamScores[TEAM_NUM_TEAMS]` | TEAM,TRDM,CTF,CTF4,DOM,KOTH,AB: **P+B**; R,RDM,SPR,DER,LCS,ELI,DM,TR: **O+B** | `level.teamScores[]` | Team-Score pro Teamindex (AB: Tore) | Array mit `0` |
 | `teamTimes[TEAM_NUM_TEAMS]` | TR,TRDM: **P+B**; R,RDM,SPR,DER,LCS,ELI,DM,TEAM,CTF,CTF4,DOM,KOTH: **O+B** | `level.teamTimes[]` | Team-Rennzeitenaggregat | Array mit `0` |
 | `playerCount` | alle: **P+B** | inkrementiert in `G_LadderPopulatePlayer`; im Serializer auf `[0..MAX_CLIENTS]` geclamped | Anzahl aktiver Nicht-Spectator-Clients | Clamp auf 0/MAX |
 | `players[MAX_CLIENTS]` | alle: **P+B** | befüllt via `G_LadderPopulatePlayer`, serialisiert bis `playerCount` | Teilnehmerobjekte | leeres Array |
@@ -89,16 +90,21 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 | `bestLapMs` | R,RDM,SPR,TR,TRDM,ELI: **P+B**; DER,LCS: **O+B**; DM,TEAM,CTF,CTF4,DOM,KOTH: **V+B** | `client->bestLapMs` | beste Rundenzeit (ms) | `0` |
 | `totalRaceMs` | R,RDM,SPR,DER,LCS,ELI,TR,TRDM: **P+B**; DM,TEAM,CTF,CTF4,DOM,KOTH: **V+B** | `finishRaceTime-startRaceTime` sonst `level.time-startRaceTime` | gesamte Renn-/Überlebenszeit in ms | `0` |
 | `lapCount`/`lapTimes[]` | R,RDM,SPR,TR,TRDM,ELI: **P+B**; DER,LCS: **O+B**; DM,TEAM,CTF,CTF4,DOM,KOTH: **V+B** | `recordedLapCount` + `recordedLaps[]`, im Serializer geclamped | erfasste Rundezeiten | `0` / `[]` |
-| `kills` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **P+B**; R,SPR,TR: **V+B** | **aktuell** aus `PERS_SCORE` gesetzt | Score-basierter Killwert (aktuell kein separater Fragcounter) | `0` |
-| `deaths` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **P+B**; R,SPR,TR: **V+B** | `PERS_KILLED` | Anzahl Tode | `0` |
+| `kills` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **P+B**; R,SPR,TR,AB: **V+B** | **aktuell** aus `PERS_SCORE` gesetzt | Score-basierter Killwert (aktuell kein separater Fragcounter) | `0` |
+| `deaths` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **P+B**; R,SPR,TR,AB: **V+B** | `PERS_KILLED` | Anzahl Tode | `0` |
 | `zoneHoldMs` | DOM,KOTH: **P+B**; sonst: **V+B** | DOM: `client->dominationZoneHoldMs`; KOTH: `client->kothHoldTimeMs` | pro Spieler aufsummierte, uncontested Haltezeit in ms | `0` |
 | `kothContestTimeMs` | KOTH: **O+B**; sonst: **V+B** | `client->kothContestTimeMs`; nur bei KOTH serialisiert | Zeit, die der Spieler während einer umkämpften Hill-Phase in der Zone war | `0` |
 | `teamHoldMs[]` | KOTH: **P+B**; sonst: **V+B** | `level.kothTeamHoldTimeMs[team]`; nur bei KOTH serialisiert | gesamte uncontested Team-Haltezeit über das Match in ms; nicht pro Spieler aufsummiert | `[0,0,0,0,0]` |
+| `autoballGoals` | AB: **P+B**; sonst: **V+B** | `client->pers.autoballGoals` (`g_autoball.c`); nur bei AB serialisiert | erzielte Tore des Spielers (Eigentore zählen nicht) | `0` |
+| `autoballAssists` | AB: **O+B**; sonst: **V+B** | `client->pers.autoballAssists`; nur bei AB serialisiert | Torvorlagen des Spielers | `0` |
+| `autoballSaves` | AB: **O+B**; sonst: **V+B** | `client->pers.autoballSaves`; nur bei AB serialisiert | abgewehrte Schüsse aufs eigene Tor | `0` |
+| `autoballShots` | AB: **O+B**; sonst: **V+B** | `client->pers.autoballShots`; nur bei AB serialisiert | Schüsse aufs gegnerische Tor | `0` |
+| `autoballDemos` | AB: **O+B**; sonst: **V+B** | `client->pers.autoballDemos`; nur bei AB serialisiert | per Ramming zerstörte Gegner (Demolitions) | `0` |
 | `zoneActiveSigil` | DOM: **O+B**; sonst: **V+B** | in Populate hart auf `-1` gesetzt | aktiver Sigil/Zone-Index | `-1` |
 | `survivalMs` | ELI,LCS,DER: **P+B**; R,RDM,SPR,TR,TRDM: **O+B**; DM,TEAM,CTF,CTF4,DOM,KOTH: **V+B** | aus Start-/Finish-Zeitfenster berechnet | Überlebenszeit seit Rennstart | `0` |
 | `eliminationRound`/`eliminationPlayersRemaining`/`eliminationMetric` | ELI: **P+B**; sonst: **V+B** | `client->elimination*` | Eliminations-Metadaten + Tie-Break-Metrik | `0`/`0.0` |
 | `finishRaceTime` | R,RDM,SPR,DER,LCS,ELI,TR,TRDM: **P+B**; übrige: **V+B** | `client->finishRaceTime` | absolute Finish-Tickzeit | `0` |
-| `kdRatio` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **O+B**; R,SPR,TR: **V+B** | aus `kills/deaths` berechnet | K/D Verhältnis (bei deaths=0: kills) | `0.0` |
+| `kdRatio` | DM,TEAM,DER,LCS,ELI,RDM,TRDM,CTF,CTF4,DOM,KOTH: **O+B**; R,SPR,TR,AB: **V+B** | aus `kills/deaths` berechnet | K/D Verhältnis (bei deaths=0: kills) | `0.0` |
 | `profile` | alle: **O+B** | nur für `client->pers.localClient`; sonst weggelassen | Karriere-Snapshot eingebettet | Feld omitted |
 
 ---
@@ -141,6 +147,7 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 | `teamRacingDmWins`,`teamRacingDmCompleted`,`teamRacingDmPodiums` | TRDM: **P+B**; andere: **V+B** | Profil-JSON `stats` | Team-Racing-DM-Karriere | `0` |
 | `dominationWins`,`dominationCompleted`,`dominationZoneHoldMs` | DOM: **P+B**; andere: **V+B** | Profil-JSON `stats`; Hold wird beim Matchabschluss aus `client->dominationZoneHoldMs` addiert | Domination-Karriere inkl. kumulierter Spieler-Haltezeit | `0` |
 | `kothWins`,`kothCompleted`,`kothZoneHoldMs` | KOTH: **P+B**; andere: **V+B** | Profil-JSON `stats`; Hold wird beim Matchabschluss aus `client->kothHoldTimeMs` addiert | KOTH-Karriere inkl. kumulierter persönlicher, unangefochtener Haltezeit | `0` |
+| `autoballWins`,`autoballCompleted`,`autoballGoals` | AB: **P+B**; andere: **V+B** | Profil-JSON `stats`; Tore werden beim Matchabschluss aus `client->pers.autoballGoals` addiert | Autoball-Karriere inkl. kumulierter eigener Tore | `0` |
 
 ---
 

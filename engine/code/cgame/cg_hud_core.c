@@ -850,7 +850,7 @@ float CG_DrawUpperRightHUD( float y ) {
          cgs.gametype != GT_RACING_DM && cgs.gametype != GT_TEAM_RACING_DM &&
          cgs.gametype != GT_TEAM && cgs.gametype != GT_CTF &&
          cgs.gametype != GT_CTF4 && cgs.gametype != GT_DOMINATION &&
-         cgs.gametype != GT_KOTH ) {
+         cgs.gametype != GT_KOTH && cgs.gametype != GT_AUTOBALL ) {
         if ( cg_hudShowScores.integer ) {
             y = CG_DrawScores( 636.0f, y );
         }
@@ -1390,6 +1390,7 @@ static void CG_DrawTeamDeathmatchOrderHUD( float top ) {
     int count, i, j, clientNum, localIndex, rowCount, firstRow, row;
     int teamIndex, nameLength;
     qboolean isKoth;
+    qboolean isAutoball;
     team_t playerTeam, localTeam;
     float panelX, panelY, panelH, rowY, chipX, chipY, chipW;
     screenPlacement_e savedHorizontalPlacement;
@@ -1407,10 +1408,12 @@ static void CG_DrawTeamDeathmatchOrderHUD( float top ) {
     vec4_t teamColor;
     vec4_t teamFillColor;
 
-    if ( !cg.snap || ( cgs.gametype != GT_TEAM && cgs.gametype != GT_KOTH ) ) {
+    if ( !cg.snap || ( cgs.gametype != GT_TEAM && cgs.gametype != GT_KOTH &&
+                       cgs.gametype != GT_AUTOBALL ) ) {
         return;
     }
     isKoth = ( cgs.gametype == GT_KOTH );
+    isAutoball = ( cgs.gametype == GT_AUTOBALL );
 
     count = 0;
     localIndex = -1;
@@ -1504,10 +1507,17 @@ static void CG_DrawTeamDeathmatchOrderHUD( float top ) {
                  1.0f, borderColor );
 
     CG_DrawIngameString( (int)( panelX + 8.0f ), (int)( panelY + 5.0f ),
-                         isKoth ? "KOTH DRIVER ORDER" : "TEAM FRAG ORDER",
-                         UI_SMALLFONT, isKoth ? 0.48f : 0.56f, accentColor );
+                         isKoth ? "KOTH DRIVER ORDER" :
+                         ( isAutoball ? "AUTOBALL ORDER" : "TEAM FRAG ORDER" ),
+                         UI_SMALLFONT, ( isKoth || isAutoball ) ? 0.48f : 0.56f, accentColor );
     if ( isKoth ) {
         Q_strncpyz( limitText, "HILL MODE", sizeof( limitText ) );
+    } else if ( isAutoball ) {
+        if ( cgs.capturelimit > 0 ) {
+            Com_sprintf( limitText, sizeof( limitText ), "GOALS %d", cgs.capturelimit );
+        } else {
+            Q_strncpyz( limitText, "NO LIMIT", sizeof( limitText ) );
+        }
     } else if ( cgs.fraglimit > 0 ) {
         Com_sprintf( limitText, sizeof( limitText ), "LIMIT %d", cgs.fraglimit );
     } else {
@@ -1545,7 +1555,7 @@ static void CG_DrawTeamDeathmatchOrderHUD( float top ) {
     CG_DrawIngameString( (int)( panelX + 116.0f ), (int)( panelY + 43.0f ),
                          "TEAM", UI_SMALLFONT, 0.40f, mutedColor );
     CG_DrawIngameString( (int)( panelX + TEAM_DM_ORDER_PANEL_W - 8.0f ), (int)( panelY + 43.0f ),
-                         isKoth ? "PTS" : "FRAGS",
+                         ( isKoth || isAutoball ) ? "PTS" : "FRAGS",
                          UI_RIGHT | UI_SMALLFONT, 0.40f, mutedColor );
     CG_FillRect( panelX + 7.0f, panelY + 51.0f, TEAM_DM_ORDER_PANEL_W - 14.0f,
                  1.0f, borderColor );
@@ -1958,7 +1968,8 @@ qboolean CG_DrawHUD( void ) {
          cg.predictedPlayerState.pm_type != PM_INTERMISSION ) {
         CG_DrawDeathmatchOrderHUD( 10.0f );
     }
-    if ( ( cgs.gametype == GT_TEAM || cgs.gametype == GT_KOTH ) && !cg.showScores &&
+    if ( ( cgs.gametype == GT_TEAM || cgs.gametype == GT_KOTH ||
+           cgs.gametype == GT_AUTOBALL ) && !cg.showScores &&
          cg.predictedPlayerState.pm_type != PM_INTERMISSION ) {
         CG_DrawTeamDeathmatchOrderHUD( 10.0f );
     }

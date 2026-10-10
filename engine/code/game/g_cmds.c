@@ -184,6 +184,23 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		trap_SendServerCommand( ent-g_entities,
 			va( "derbyIntegrity %i%s", j, string ) );
 	}
+
+	/* Autoball stats ride in their own command, like the Derby integrity,
+	   so the `scores` row format stays unchanged. */
+	if ( g_gametype.integer == GT_AUTOBALL ) {
+		string[0] = '\0';
+		stringlength = 0;
+		for ( j = 0; j < i; j++ ) {
+			cl = &level.clients[level.sortedClients[j]];
+			Com_sprintf( entry, sizeof(entry), " %i %i %i %i %i %i %i", level.sortedClients[j],
+				cl->pers.autoballGoals, cl->pers.autoballAssists, cl->pers.autoballSaves,
+				cl->pers.autoballShots, cl->pers.autoballDemos, cl->pers.autoballBestShot );
+			if ( stringlength + strlen(entry) >= sizeof(string) ) break;
+			strcpy( string + stringlength, entry );
+			stringlength += strlen(entry);
+		}
+		trap_SendServerCommand( ent-g_entities, va( "abStats %i%s", j, string ) );
+	}
 }
 
 
@@ -851,6 +868,7 @@ void SetTeam( gentity_t *ent, const char *s ) {
 		AddTournamentQueue(client);
 
 	client->sess.sessionTeam = team;
+	G_Autoball_ForgetClient( clientNum );	// touches before the switch don't count for the new team
 	client->sess.spectatorState = specState;
 	client->sess.spectatorClient = specClient;
 // STONELANCE
@@ -2230,6 +2248,19 @@ void ClientCommand( int clientNum ) {
 		Cmd_Notarget_f (ent);
 	else if (Q_stricmp (cmd, "noclip") == 0)
 		Cmd_Noclip_f (ent);
+	// Autoball prototype: test-ball commands, cheat-protected like noclip
+	else if (Q_stricmp (cmd, "ball_spawn") == 0) {
+		if ( CheatsOk( ent ) )
+			Cmd_BallSpawn_f (ent);
+	}
+	else if (Q_stricmp (cmd, "ball_reset") == 0) {
+		if ( CheatsOk( ent ) )
+			Cmd_BallReset_f (ent);
+	}
+	else if (Q_stricmp (cmd, "ball_remove") == 0) {
+		if ( CheatsOk( ent ) )
+			Cmd_BallRemove_f (ent);
+	}
 	else if (Q_stricmp (cmd, "kill") == 0)
 		Cmd_Kill_f (ent);
 	else if (Q_stricmp (cmd, "teamtask") == 0)

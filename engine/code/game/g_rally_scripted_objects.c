@@ -82,7 +82,7 @@ void G_RallyPhysics_Shutdown( void ) {
 	rallyBulletPhysicsActive = qfalse;
 }
 
-static qboolean G_RallyPhysics_CreateEntity( gentity_t *ent ) {
+qboolean G_RallyPhysics_CreateEntity( gentity_t *ent ) {
 	rallyPhysicsBodyDesc_t desc;
 	const vec3_t *vertices = NULL;
 	int numVertices = 0;
@@ -108,6 +108,10 @@ static qboolean G_RallyPhysics_CreateEntity( gentity_t *ent ) {
 	desc.linearDamping = 0.025f;
 	desc.angularDamping = 0.08f;
 	desc.contents = ent->r.contents;
+	desc.shapeType = ent->collisionShape;
+	desc.radius = ent->ballRadius;
+	desc.disableSleep = ent->neverSleep ? 1 : 0;
+	desc.maxLinearSpeed = ent->maxSpeed;
 	return trap_RallyPhysicsCreateBody( ent->s.number, &desc, vertices, numVertices );
 }
 
@@ -427,6 +431,12 @@ qboolean G_ParseScriptedObject( gentity_t *ent ){
 	ent->weaponImpactScale = 1.0f;
 	ent->mass = 100;
 	ent->inertiaShape = RALLY_OBJECT_INERTIA_BOX;
+	ent->collisionShape = RALLY_PHYSICS_SHAPE_AUTO;
+	ent->ballRadius = 0.0f;
+	ent->neverSleep = qfalse;
+	ent->maxSpeed = 0.0f;
+	ent->vehicleLift = 0.0f;
+	ent->vehicleVerticalScale = 1.0f;
 	ent->moveable = qfalse;
 	ent->number = 0;
 	ent->health = 0;
@@ -703,13 +713,42 @@ void G_ScriptedObject_TouchWithVelocity ( gentity_t *self, gentity_t *other, tra
 	if ( !self->moveable || !other || !trace )
 		return;
 	G_RallyObject_Wake( self );
+	G_Autoball_BallTouched( self, other );
 
 	/* ClientImpacts builds this from contact toward the touched prop; it is the
 	 * outward direction in which the car should impart momentum. */
 	VectorCopy( trace->plane.normal, outwardNormal );
 	if ( VectorNormalize( outwardNormal ) == 0.0f )
 		return;
-	G_RallyObject_SupportContact( self, self->s.pos.trBase, outwardNormal, contactPoint );
+	/* Autoball vertical scale: a car is lower than a ball's centre, so its
+	 * contacts point 35-45 degrees upward and every shot becomes a lob.
+	 * Scaling the upward share flattens shots (Rocket League does the same). */
+	if ( self->vehicleVerticalScale < 1.0f && other->client && outwardNormal[2] > 0.0f ) {
+		outwardNormal[2] *= self->vehicleVerticalScale;
+		if ( VectorNormalize( outwardNormal ) == 0.0f )
+			return;
+	}
+	/* Autoball lift: without a jump, air play needs every roughly horizontal
+	 * car contact to carry a minimum upward share. Contacts from above (car on
+	 * top of the ball) are left alone so the ball is not pushed into the car. */
+	if ( self->vehicleLift > 0.0f && other->client &&
+		outwardNormal[2] > -0.25f && outwardNormal[2] < self->vehicleLift ) {
+		float horizontal = sqrt( outwardNormal[0] * outwardNormal[0] +
+			outwardNormal[1] * outwardNormal[1] );
+		if ( horizontal > 0.001f ) {
+			float scale = sqrt( 1.0f - self->vehicleLift * self->vehicleLift ) / horizontal;
+			outwardNormal[0] *= scale;
+			outwardNormal[1] *= scale;
+			outwardNormal[2] = self->vehicleLift;
+		}
+	}
+	if ( self->collisionShape == RALLY_PHYSICS_SHAPE_SPHERE && self->ballRadius > 0.0f ) {
+		/* A sphere is touched on the line through its centre; the box support
+		 * point would sit on a corner and add spin that a real ball never gets. */
+		VectorMA( self->s.pos.trBase, -self->ballRadius, outwardNormal, contactPoint );
+	} else {
+		G_RallyObject_SupportContact( self, self->s.pos.trBase, outwardNormal, contactPoint );
+	}
 	vehicleInverseMass = G_ScriptedObject_VehicleContactInverseMass( other );
 	VectorSubtract( self->s.pos.trDelta, vehicleVelocity, relativeVelocity );
 	closingSpeed = DotProduct( relativeVelocity, outwardNormal );
@@ -722,10 +761,29 @@ void G_ScriptedObject_TouchWithVelocity ( gentity_t *self, gentity_t *other, tra
 		}
 		G_ScriptedObject_ApplyVehicleCounterImpulse( other, objectImpulse,
 			carDeltaVelocity );
+		G_Autoball_BallHit( self, other, objectImpulse );
 		if ( other->client )
 			VectorCopy( other->client->car.sBody.v, carVelocityAfter );
 		else
 			VectorCopy( vehicleVelocity, carVelocityAfter );
+		if ( g_autoballDebug.integer && self->neverSleep && self->mass > 0 &&
+			VectorLengthSquared( objectImpulse ) > 0.0f &&
+			level.time >= self->ballDebugLogTime ) {
+			vec3_t ballVelocityAfter;
+			float carSpeed;
+			VectorMA( self->s.pos.trDelta, 1.0f / (float)self->mass, objectImpulse,
+				ballVelocityAfter );
+			/* ps.velocity is what the HUD speedometer shows */
+			carSpeed = other->client ? VectorLength( other->client->ps.velocity ) : 0.0f;
+			G_Printf( "autoball: hit by %s  car %.0f km/h (%.0f mph), contact %.0f km/h -> ball %.0f km/h (was %.0f)  up %.2f  impulse %.0f\n",
+				other->client ? other->client->pers.netname : "?",
+				carSpeed / CP_M_2_QU * 3.6f, carSpeed / CP_M_2_QU * 2.23694f,
+				VectorLength( vehicleVelocity ) / CP_M_2_QU * 3.6f,
+				VectorLength( ballVelocityAfter ) / CP_M_2_QU * 3.6f,
+				VectorLength( self->s.pos.trDelta ) / CP_M_2_QU * 3.6f,
+				outwardNormal[2], VectorLength( objectImpulse ) );
+			self->ballDebugLogTime = level.time + 150;
+		}
 		if ( g_developer.integer && level.time >= self->scriptedDebugImpactLogTime ) {
 			Com_Printf( "rally_bullet: impact ent=%d car=%d close=%.2f J=(%.2f %.2f %.2f) carDv=(%.2f %.2f %.2f) point=(%.1f %.1f %.1f) normal=(%.2f %.2f %.2f)\n",
 				self->s.number, other->s.number, closingSpeed,
@@ -855,7 +913,7 @@ void G_ScriptedObject_Think ( gentity_t *self ){
 		steps++;
 	}
 
-	if ( self->physicsGrounded &&
+	if ( !self->neverSleep && self->physicsGrounded &&
 		VectorLengthSquared( self->s.pos.trDelta ) <= 4.0f &&
 		VectorLengthSquared( self->s.apos.trDelta ) <= 0.0025f ) {
 		if ( self->physicsQuietSince < 0 ) {
@@ -901,7 +959,7 @@ void G_ScriptedObject_Pain ( gentity_t *self, gentity_t *attacker, int damage ){
 	/* Com_Printf("Scripted map object %s was hit\n", self->classname); */
 }
 
-static void G_ApplyScriptedObjectMapProperties( gentity_t *ent ) {
+void G_ApplyScriptedObjectMapProperties( gentity_t *ent ) {
 	char *physics;
 	char *mapValue;
 	int value;
@@ -961,7 +1019,33 @@ static void G_ApplyScriptedObjectMapProperties( gentity_t *ent ) {
 	}
 	if ( G_SpawnString( "vehicle_impact_scale", NULL, &mapValue ) && mapValue && mapValue[0] &&
 		G_SpawnFloat( "vehicle_impact_scale", "0.5", &floatValue ) ) {
-		ent->vehicleImpactScale = Com_Clamp( 0.0f, 1.0f, floatValue );
+		/* Bullet accepts up to 2.0; balls need more than a 1:1 kick. */
+		ent->vehicleImpactScale = Com_Clamp( 0.0f, 2.0f, floatValue );
+	}
+	if ( G_SpawnString( "collision_shape", NULL, &mapValue ) && mapValue && mapValue[0] ) {
+		if ( !Q_stricmp( mapValue, "auto" ) || !Q_stricmp( mapValue, "hull" ) )
+			ent->collisionShape = RALLY_PHYSICS_SHAPE_AUTO;
+		else if ( !Q_stricmp( mapValue, "box" ) )
+			ent->collisionShape = RALLY_PHYSICS_SHAPE_BOX;
+		else if ( !Q_stricmp( mapValue, "sphere" ) )
+			ent->collisionShape = RALLY_PHYSICS_SHAPE_SPHERE;
+		else
+			Com_Printf( "rally_scripted_object: unknown collision_shape '%s' (use auto, box or sphere)\n", mapValue );
+	}
+	if ( G_SpawnString( "never_sleep", NULL, &mapValue ) && mapValue && mapValue[0] ) {
+		ent->neverSleep = atoi( mapValue ) ? qtrue : qfalse;
+	}
+	if ( G_SpawnString( "max_speed", NULL, &mapValue ) && mapValue && mapValue[0] &&
+		G_SpawnFloat( "max_speed", "0", &floatValue ) ) {
+		ent->maxSpeed = Com_Clamp( 0.0f, 20000.0f, floatValue );
+	}
+	if ( G_SpawnString( "vehicle_lift", NULL, &mapValue ) && mapValue && mapValue[0] &&
+		G_SpawnFloat( "vehicle_lift", "0", &floatValue ) ) {
+		ent->vehicleLift = Com_Clamp( 0.0f, 0.9f, floatValue );
+	}
+	if ( G_SpawnString( "vehicle_vertical_scale", NULL, &mapValue ) && mapValue && mapValue[0] &&
+		G_SpawnFloat( "vehicle_vertical_scale", "1", &floatValue ) ) {
+		ent->vehicleVerticalScale = Com_Clamp( 0.0f, 1.0f, floatValue );
 	}
 	if ( G_SpawnString( "weapon_impact_scale", NULL, &mapValue ) && mapValue && mapValue[0] &&
 		G_SpawnFloat( "weapon_impact_scale", "1.0", &floatValue ) ) {
@@ -984,13 +1068,25 @@ static void G_ApplyScriptedObjectMapProperties( gentity_t *ent ) {
 	if ( G_SpawnString( "maxs", NULL, &mapValue ) && mapValue && mapValue[0] &&
 		G_SpawnVector( "maxs", "0 0 0", vectorValue ) )
 		VectorCopy( vectorValue, ent->r.maxs );
+	/* radius describes a ball: centred bounds, sphere collision and inertia.
+	 * It overrides mins/maxs; collision_shape can still force another shape. */
+	if ( G_SpawnString( "radius", NULL, &mapValue ) && mapValue && mapValue[0] &&
+		G_SpawnFloat( "radius", "0", &floatValue ) && floatValue > 0.0f ) {
+		floatValue = Com_Clamp( 1.0f, 1024.0f, floatValue );
+		ent->ballRadius = floatValue;
+		VectorSet( ent->r.mins, -floatValue, -floatValue, -floatValue );
+		VectorSet( ent->r.maxs, floatValue, floatValue, floatValue );
+		ent->inertiaShape = RALLY_OBJECT_INERTIA_SPHERE;
+		if ( !G_SpawnString( "collision_shape", NULL, &mapValue ) || !mapValue || !mapValue[0] )
+			ent->collisionShape = RALLY_PHYSICS_SHAPE_SPHERE;
+	}
 	if ( ent->mass < 1 ) ent->mass = 1;
 	if ( ent->mass > 100000 ) ent->mass = 100000;
 	ent->elasticity = Com_Clamp( 0.0f, 1.0f, ent->elasticity );
 	ent->friction = Com_Clamp( 0.0f, 4.0f, ent->friction );
 	ent->rollingFriction = Com_Clamp( 0.0f, 1.0f, ent->rollingFriction );
 	ent->spinningFriction = Com_Clamp( 0.0f, 1.0f, ent->spinningFriction );
-	ent->vehicleImpactScale = Com_Clamp( 0.0f, 1.0f, ent->vehicleImpactScale );
+	ent->vehicleImpactScale = Com_Clamp( 0.0f, 2.0f, ent->vehicleImpactScale );
 	ent->weaponImpactScale = Com_Clamp( 0.0f, 5.0f, ent->weaponImpactScale );
 
 	if ( ent->model && ent->model[0] ) {
@@ -1092,6 +1188,15 @@ void SP_rally_scripted_object( gentity_t *ent ){
 		return;
 	}
 	G_ApplyScriptedObjectMapProperties( ent );
+	G_ScriptedObject_FinishSpawn( ent );
+}
+
+/*
+Shared tail of every scripted-object spawn. Expects the physics fields (mass,
+shape, friction, bounds, model) to be filled in, either from a script and map
+keys or directly by code such as the Autoball test-ball spawner.
+*/
+void G_ScriptedObject_FinishSpawn( gentity_t *ent ){
 	/* Bullet props remain traceable by weapons even when they have no health.
 	 * G_Damage treats healthless props as impulse-only targets. */
 	if ( G_RallyPhysics_Enabled() )
@@ -1103,7 +1208,9 @@ void SP_rally_scripted_object( gentity_t *ent ){
 	/* Static and dynamic props both participate in vehicle body traces. */
 	ent->r.contents = CONTENTS_BODY;
 	ent->clipmask = MASK_PLAYERSOLID;
-	if ( ( ent->moveable || G_RallyPhysics_Enabled() ) && ent->model && ent->model[0] &&
+	/* Explicit box or sphere shapes ignore the MD3 hull entirely. */
+	if ( ent->collisionShape == RALLY_PHYSICS_SHAPE_AUTO &&
+		( ent->moveable || G_RallyPhysics_Enabled() ) && ent->model && ent->model[0] &&
 		!G_RallyObject_LoadCollisionHull( ent ) ) {
 		Com_Printf( "rally_scripted_object: no usable MD3 collision hull for '%s'; using mins/maxs fallback\n",
 			ent->model );

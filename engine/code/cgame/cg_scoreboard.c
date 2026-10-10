@@ -78,6 +78,10 @@ typedef enum {
     SBCOL_KOTH_HILL_KILLS,
     SBCOL_KOTH_CONTEST_TIME,
     SBCOL_KOTH_HOLD_TIME,
+    SBCOL_AB_GOALS,      /* Autoball: goals */
+    SBCOL_AB_ASSISTS,    /* Autoball: assists */
+    SBCOL_AB_SAVES,      /* Autoball: saves */
+    SBCOL_AB_SHOTS,      /* Autoball: shots on goal */
     SBCOL_MAX
 } sbColumn_t;
 
@@ -127,7 +131,8 @@ static qboolean CG_IsTeamGametype(void) {
             cgs.gametype == GT_CTF ||
             cgs.gametype == GT_CTF4 ||
             cgs.gametype == GT_DOMINATION ||
-            cgs.gametype == GT_KOTH); /* Q3Rally KOTH */
+            cgs.gametype == GT_KOTH || /* Q3Rally KOTH */
+            cgs.gametype == GT_AUTOBALL);
 }
 
 /*
@@ -184,6 +189,7 @@ static void CG_InitScoreboardColumns(void) {
             break;
 
         case GT_KOTH: /* Q3Rally KOTH */
+        case GT_AUTOBALL:
             showScore = qtrue;
             showDeaths = qfalse;
             break;
@@ -322,6 +328,35 @@ static void CG_InitScoreboardColumns(void) {
         columns[SBCOL_KOTH_HOLD_TIME].width   = 68;
         columns[SBCOL_KOTH_HOLD_TIME].header  = "HOLD";
         columns[SBCOL_KOTH_HOLD_TIME].visible = qtrue;
+    }
+
+    /* Autoball: goals, assists, saves and shots, always visible. Compact
+     * cells keep the table inside the 640px canvas with the status column. */
+    if (cgs.gametype == GT_AUTOBALL) {
+        columns[SBCOL_RANK].width = 42;
+        columns[SBCOL_AVATAR].width = 34;
+        columns[SBCOL_NAME].width = 140;
+        columns[SBCOL_SCORE].width = 56;
+
+        columns[SBCOL_AB_GOALS].type    = SBCOL_AB_GOALS;
+        columns[SBCOL_AB_GOALS].width   = 42;
+        columns[SBCOL_AB_GOALS].header  = "G";
+        columns[SBCOL_AB_GOALS].visible = qtrue;
+
+        columns[SBCOL_AB_ASSISTS].type    = SBCOL_AB_ASSISTS;
+        columns[SBCOL_AB_ASSISTS].width   = 42;
+        columns[SBCOL_AB_ASSISTS].header  = "A";
+        columns[SBCOL_AB_ASSISTS].visible = qtrue;
+
+        columns[SBCOL_AB_SAVES].type    = SBCOL_AB_SAVES;
+        columns[SBCOL_AB_SAVES].width   = 42;
+        columns[SBCOL_AB_SAVES].header  = "SV";
+        columns[SBCOL_AB_SAVES].visible = qtrue;
+
+        columns[SBCOL_AB_SHOTS].type    = SBCOL_AB_SHOTS;
+        columns[SBCOL_AB_SHOTS].width   = 42;
+        columns[SBCOL_AB_SHOTS].header  = "SH";
+        columns[SBCOL_AB_SHOTS].visible = qtrue;
     }
 
     /* Status column only in intermission - no ping column */
@@ -483,6 +518,10 @@ static void CG_DrawModernHeader(int y, float fade) {
             case SBCOL_KOTH_HILL_KILLS:
             case SBCOL_KOTH_CONTEST_TIME:
             case SBCOL_KOTH_HOLD_TIME:
+            case SBCOL_AB_GOALS:
+            case SBCOL_AB_ASSISTS:
+            case SBCOL_AB_SAVES:
+            case SBCOL_AB_SHOTS:
                 /* Center-aligned columns */
                 CG_DrawModernText(columns[i].x,
                                  y + (MODERN_SB_HEADER_HEIGHT - (int)(24 * MODERN_SB_HEADING_SCALE)) / 2,
@@ -930,6 +969,22 @@ static void CG_DrawColumnData(sbColumn_t colType, int x, int y, int width,
             }
             break;
 
+        case SBCOL_AB_GOALS:
+        case SBCOL_AB_ASSISTS:
+        case SBCOL_AB_SAVES:
+        case SBCOL_AB_SHOTS:
+            if (ci->team == TEAM_SPECTATOR) {
+                CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
+            } else {
+                int value = colType == SBCOL_AB_GOALS ? score->autoballGoals :
+                            colType == SBCOL_AB_ASSISTS ? score->autoballAssists :
+                            colType == SBCOL_AB_SAVES ? score->autoballSaves :
+                            score->autoballShots;
+                Com_sprintf(buffer, sizeof(buffer), "%d", value);
+                CG_DrawModernText(x, y, buffer, 1, width, textColor, qfalse);
+            }
+            break;
+
         case SBCOL_KOTH_CAPS:
             if (ci->team == TEAM_SPECTATOR) {
                 CG_DrawModernText(x, y, "-", 1, width, textColor, qfalse);
@@ -1226,8 +1281,11 @@ static void CG_DrawModernGameInfo(int y, float fade,
             default:          teamName = "Unknown Team"; break;
         }
         
+        /* at the end of the match the leader is the winner */
         if (TiedWinner()) {
             gameInfo = va("Teams tied");
+        } else if (cg.snap->ps.pm_type == PM_INTERMISSION) {
+            gameInfo = va("%s wins", teamName);
         } else {
             gameInfo = va("%s in lead", teamName);
         }
@@ -1574,6 +1632,9 @@ qboolean CG_DrawModernScoreboard(void) {
         }
     }
     
+    /* Autoball: MVP, top scorer, keeper, hardest shot at the end */
+    CG_Autoball_DrawAwards(localClientDrawn ? y : y + rowHeight, fade);
+
     /* Load deferred models */
     if (++cg.deferredPlayerLoading > 10) {
         CG_LoadDeferredPlayers();
@@ -1624,6 +1685,7 @@ void CG_DrawScoreboardGameModeInfo(void) {
         case GT_CTF4:             gametypeName = "4-Team CTF"; break;
         case GT_DOMINATION:       gametypeName = "Domination"; break;
         case GT_KOTH:              gametypeName = "King of the Hill"; break; /* Q3Rally KOTH */
+        case GT_AUTOBALL:          gametypeName = "Autoball"; break;
         default:                  gametypeName = "Unknown"; break;
     }
     

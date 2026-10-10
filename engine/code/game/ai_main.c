@@ -1028,6 +1028,10 @@ void BotUpdateInput(bot_state_t *bs, int time, int elapsed_time) {
 	}
 	//convert the bot input to a usercmd
 	BotInputToUserCommand(&bi, &bs->lastucmd, bs->cur_ps.delta_angles, time);
+	// Autoball bots burn turbo by holding the button
+	if ( BotAutoball_WantsTurbo( bs->client ) ) {
+		bs->lastucmd.buttons |= BUTTON_TURBO;
+	}
 	//subtract the delta angles
 	for (j = 0; j < 3; j++) {
 		bs->viewangles[j] = AngleMod(bs->viewangles[j] - SHORT2ANGLE(bs->cur_ps.delta_angles[j]));

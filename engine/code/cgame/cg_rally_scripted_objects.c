@@ -382,6 +382,54 @@ void CG_ScriptedObject_Pain ( gentity_t *self, gentity_t *attacker, int damage )
 */
 
 
+/*
+Orientation between two snapshots via quaternion slerp. Interpolating the
+three Euler angles separately breaks for anything that tumbles: a rolling
+ball passes pitch +-90 all the time, where yaw and roll flip by 180 degrees,
+and the in-between frames show wild orientations.
+*/
+static void CG_ScriptedObject_LerpAxis( centity_t *cent, vec3_t axis[3] ) {
+	vec4_t from, to, q;
+	float t[3][3];
+	vec3_t right;
+	float f, cosom, omega, sinom, scale0, scale1;
+	int i;
+
+	if ( !cent->interpolate || !cg.nextSnap ||
+		cent->currentState.apos.trType != TR_INTERPOLATE ) {
+		AnglesToAxis( cent->lerpAngles, axis );
+		return;
+	}
+
+	AnglesToQuaternion( cent->currentState.apos.trBase, from );
+	AnglesToQuaternion( cent->nextState.apos.trBase, to );
+	f = cg.frameInterpolation;
+
+	cosom = from[0] * to[0] + from[1] * to[1] + from[2] * to[2] + from[3] * to[3];
+	if ( cosom < 0.0f ) {
+		/* q and -q are the same rotation; take the short way round */
+		cosom = -cosom;
+		for ( i = 0; i < 4; i++ )
+			to[i] = -to[i];
+	}
+	if ( cosom < 0.9995f ) {
+		omega = Q_acos( cosom );
+		sinom = sin( omega );
+		scale0 = sin( ( 1.0f - f ) * omega ) / sinom;
+		scale1 = sin( f * omega ) / sinom;
+	} else {
+		scale0 = 1.0f - f;
+		scale1 = f;
+	}
+	for ( i = 0; i < 4; i++ )
+		q[i] = scale0 * from[i] + scale1 * to[i];
+	QuaternionNormalize( q );
+
+	QuaternionToOrientation( q, t );
+	OrientationToVectors( t, axis[0], right, axis[2] );
+	VectorSubtract( vec3_origin, right, axis[1] );
+}
+
 void CG_Scripted_Object( centity_t *cent ){
 	refEntity_t			ent;
 	entityState_t		*s1;
@@ -447,7 +495,22 @@ void CG_Scripted_Object( centity_t *cent ){
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
 	// convert angles to axis
-	AnglesToAxis( cent->lerpAngles, ent.axis );
+	CG_ScriptedObject_LerpAxis( cent, ent.axis );
+
+	// Autoball: a shadow on the ground shows where the ball will come down,
+	// the seams glow in the colour of the last team that touched the ball
+	if ( s1->generic1 & SCRIPTED_GENERIC1_NO_PREDICT ) {
+		CG_Autoball_BallShadow( cent );
+		CG_Autoball_BallTrail( cent );
+		CG_Autoball_BallColor( s1, ent.shaderRGBA );
+		// g_autoballBallScale: the model was made for the default size
+		if ( s1->angles2[0] > 0.0f && s1->angles2[0] != 1.0f ) {
+			VectorScale( ent.axis[0], s1->angles2[0], ent.axis[0] );
+			VectorScale( ent.axis[1], s1->angles2[0], ent.axis[1] );
+			VectorScale( ent.axis[2], s1->angles2[0], ent.axis[2] );
+			ent.nonNormalizedAxes = qtrue;
+		}
+	}
 
 	// add to refresh list
 	trap_R_AddRefEntityToScene (&ent);

@@ -678,6 +678,7 @@ static consoleCommand_t	commands[] = {
 	{ "weapprev", CG_PrevWeapon_f },
 	{ "weapon", CG_Weapon_f },
 	{ "tcmd", CG_TargetCommand_f },
+	{ "ballcam", CG_Autoball_ToggleCam_f },
 	{ "tell_target", CG_TellTarget_f },
 	{ "tell_attacker", CG_TellAttacker_f },
 #ifdef MISSIONPACK

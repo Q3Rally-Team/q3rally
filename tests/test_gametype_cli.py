@@ -44,7 +44,8 @@ def test_cli_outputs_expected_lines():
     assert lines[0].startswith("0 - racing")
     assert any(line.startswith("7 - sprint") for line in lines)
     assert any(line.startswith("8 - ghost") for line in lines)
-    assert lines[-1].endswith("koth")
+    assert any(line.startswith("22 - koth") for line in lines)
+    assert lines[-1].endswith("autoball")
 
 
 def test_gametype_values_match_bg_public():
@@ -73,6 +74,7 @@ def test_gametype_values_match_bg_public():
         "CTF4": "ctf4",
         "DOMINATION": "domination",
         "KOTH": "koth",
+        "AUTOBALL": "autoball",
     }
     assert set(engine_values) == set(engine_to_cli)
     for engine_name, cli_name in engine_to_cli.items():
@@ -83,3 +85,8 @@ def test_ghost_aliases_resolve():
     assert cli.resolve_gametype("ghost") == ("ghost", 8)
     assert cli.resolve_gametype("Ghost-Race") == ("ghost", 8)
     assert cli.resolve_gametype("ghost_only") == ("ghost", 8)
+
+
+def test_autoball_aliases_resolve():
+    assert cli.resolve_gametype("autoball") == ("autoball", 23)
+    assert cli.resolve_gametype("Car-Football") == ("autoball", 23)

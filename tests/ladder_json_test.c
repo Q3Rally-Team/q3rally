@@ -34,6 +34,7 @@ int main( void ) {
         assert( strstr( json, "\"lapTimes\":[1234,1100]" ) != NULL );
         assert( strstr( json, "\"teamHoldMs\"" ) == NULL );
         assert( strstr( json, "\"kothContestTimeMs\"" ) == NULL );
+        assert( strstr( json, "\"autoballGoals\"" ) == NULL );
 
         Z_Free( json );
 
@@ -47,6 +48,34 @@ int main( void ) {
         assert( strstr( json, "\"teamHoldMs\":[0,125000,93000,0,0,0]" ) != NULL );
         assert( strstr( json, "\"zoneHoldMs\":42000" ) != NULL );
         assert( strstr( json, "\"kothContestTimeMs\":7000" ) != NULL );
+        assert( strstr( json, "\"autoballGoals\"" ) == NULL );
+        Z_Free( json );
+
+        /* Autoball counters are serialized only for GT_AUTOBALL. */
+        payload.players[0].autoballGoals = 3;
+        payload.players[0].autoballAssists = 2;
+        payload.players[0].autoballSaves = 4;
+        payload.players[0].autoballShots = 9;
+        payload.players[0].autoballDemos = 1;
+        json = SV_LadderSerializeMatch( &payload, &length );
+        assert( json != NULL );
+        assert( strstr( json, "\"autoballGoals\"" ) == NULL );
+        assert( strstr( json, "\"autoballDemos\"" ) == NULL );
+        Z_Free( json );
+
+        payload.gametype = GT_AUTOBALL;
+        payload.teamScores[TEAM_RED] = 5;
+        payload.teamScores[TEAM_BLUE] = 3;
+        json = SV_LadderSerializeMatch( &payload, &length );
+        assert( json != NULL );
+        assert( strstr( json, "\"autoballGoals\":3" ) != NULL );
+        assert( strstr( json, "\"autoballAssists\":2" ) != NULL );
+        assert( strstr( json, "\"autoballSaves\":4" ) != NULL );
+        assert( strstr( json, "\"autoballShots\":9" ) != NULL );
+        assert( strstr( json, "\"autoballDemos\":1" ) != NULL );
+        assert( strstr( json, "\"teamScores\":[0,5,3,0,0,0]" ) != NULL );
+        assert( strstr( json, "\"kothContestTimeMs\"" ) == NULL );
+        assert( strstr( json, "\"teamHoldMs\"" ) == NULL );
         Z_Free( json );
 
         puts( "ok" );

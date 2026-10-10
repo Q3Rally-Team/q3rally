@@ -140,6 +140,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_STATS_OVERVIEW_TILE_HEIGHT	50.0f
 #define PLAYERSETTINGS_STATS_OVERVIEW_TILE_GAP		8.0f
 #define PLAYERSETTINGS_STATS_MODES_COLUMNS		3
+/* Pages with more tiles than fit in three rows switch to a wider grid. */
+#define PLAYERSETTINGS_STATS_MODES_WIDE_COLUMNS	4
+#define PLAYERSETTINGS_STATS_MODES_MAX_NARROW_ITEMS	9
 #define PLAYERSETTINGS_STATS_MODE_TILE_HEIGHT		80.0f
 #define PLAYERSETTINGS_STATS_MODE_TILE_GAP		8.0f
 #define PLAYERSETTINGS_STATS_MODES_FIRST_PAGE_COUNT	5
@@ -379,6 +382,11 @@ STATS_ROW_DOM_COMPLETED,
 STATS_ROW_KOTH_HEADER,
 STATS_ROW_KOTH_WINS,
 STATS_ROW_KOTH_COMPLETED,
+/* ── GT_AUTOBALL ───────────────────── */
+STATS_ROW_AUTOBALL_HEADER,
+STATS_ROW_AUTOBALL_WINS,
+STATS_ROW_AUTOBALL_COMPLETED,
+STATS_ROW_AUTOBALL_GOALS,
 STATS_ROW_COUNT
 } statsRow_t;
 
@@ -2078,6 +2086,7 @@ for ( i = 0; i < ARRAY_LEN( pageLabels ); ++i ) {
 
 static void PlayerSettings_DrawStatsModeTile( int index, int itemCount,
 	const char *title, const char *value, const char *detail, const char *footnote ) {
+	int columns;
 	int column;
 	int row;
 	int rowCount;
@@ -2093,15 +2102,15 @@ static void PlayerSettings_DrawStatsModeTile( int index, int itemCount,
 	float gridWidth;
 	float verticalOffset;
 
-	column = index % PLAYERSETTINGS_STATS_MODES_COLUMNS;
-	row = index / PLAYERSETTINGS_STATS_MODES_COLUMNS;
-	rowCount = ( itemCount + PLAYERSETTINGS_STATS_MODES_COLUMNS - 1 ) /
-	            PLAYERSETTINGS_STATS_MODES_COLUMNS;
+	columns = ( itemCount > PLAYERSETTINGS_STATS_MODES_MAX_NARROW_ITEMS ) ?
+	          PLAYERSETTINGS_STATS_MODES_WIDE_COLUMNS : PLAYERSETTINGS_STATS_MODES_COLUMNS;
+	column = index % columns;
+	row = index / columns;
+	rowCount = ( itemCount + columns - 1 ) / columns;
 	gap = PLAYERSETTINGS_STATS_MODE_TILE_GAP;
 	gridLeft = PLAYERSETTINGS_PROFILE_FIELD_LEFT;
 	gridWidth = PLAYERSETTINGS_PROFILE_ROW_RIGHT - gridLeft;
-	tileWidth = ( gridWidth - gap * ( PLAYERSETTINGS_STATS_MODES_COLUMNS - 1 ) ) /
-	            PLAYERSETTINGS_STATS_MODES_COLUMNS;
+	tileWidth = ( gridWidth - gap * ( columns - 1 ) ) / columns;
 	tileHeight = PLAYERSETTINGS_STATS_MODE_TILE_HEIGHT;
 	maxRows = (int)( ( PLAYERSETTINGS_STATS_CARD_CONTENT_HEIGHT -
 	                    PLAYERSETTINGS_STATS_PAGINATION_RESERVED_HEIGHT + gap ) /
@@ -2111,9 +2120,9 @@ static void PlayerSettings_DrawStatsModeTile( int index, int itemCount,
 	}
 	verticalOffset = ( maxRows - rowCount ) * ( tileHeight + gap ) * 0.5f;
 	gridTop = PlayerSettings_GetScrollContentTop() + 2.0f + verticalOffset;
-	rowItems = itemCount - row * PLAYERSETTINGS_STATS_MODES_COLUMNS;
-	if ( rowItems > PLAYERSETTINGS_STATS_MODES_COLUMNS ) {
-		rowItems = PLAYERSETTINGS_STATS_MODES_COLUMNS;
+	rowItems = itemCount - row * columns;
+	if ( rowItems > columns ) {
+		rowItems = columns;
 	}
 	x = (int)( gridLeft + ( gridWidth -
 	     ( rowItems * tileWidth + ( rowItems - 1 ) * gap ) ) * 0.5f +
@@ -2227,7 +2236,7 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 			stats->teamRacingDmWins, "win", "wins", stats->teamRacingDmPodiums,
 			"podium", "podiums", stats->teamRacingDmCompleted, "race", "races", NULL );
 	} else if ( modePage == 1 ) {
-		itemCount = 9;
+		itemCount = 10;
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Derby",
 			stats->derbyWins, "win", "wins", stats->derbyKills,
 			"kill", "kills", stats->derbyCompleted, "match", "matches", NULL );
@@ -2261,6 +2270,9 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "King of the Hill",
 			stats->kothWins, "win", "wins", stats->kothCompleted,
 			"match", "matches", -1, NULL, NULL, detail );
+		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Autoball",
+			stats->autoballWins, "win", "wins", stats->autoballGoals,
+			"goal", "goals", stats->autoballCompleted, "match", "matches", NULL );
 	} else {
 		itemCount = 8;
 
@@ -2919,6 +2931,15 @@ Com_sprintf( buffer, sizeof( buffer ), "%d", stats->kothWins );
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_KOTH_WINS, "Wins", buffer );
 Com_sprintf( buffer, sizeof( buffer ), "%d", stats->kothCompleted );
 PlayerSettings_DrawStatsLabelValue( STATS_ROW_KOTH_COMPLETED, "Completed", buffer );
+
+/* ── Autoball ────────────────────────────────────────────────────── */
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_AUTOBALL_HEADER, "--- AUTOBALL ---", "" );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->autoballWins );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_AUTOBALL_WINS, "Wins", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->autoballCompleted );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_AUTOBALL_COMPLETED, "Completed", buffer );
+Com_sprintf( buffer, sizeof( buffer ), "%d", stats->autoballGoals );
+PlayerSettings_DrawStatsLabelValue( STATS_ROW_AUTOBALL_GOALS, "Goals", buffer );
 }
 
 

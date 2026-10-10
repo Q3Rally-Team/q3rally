@@ -14,6 +14,8 @@ qboolean SV_RallyPhysics_CreateBody( int entityNum,
 	const rallyPhysicsBodyDesc_t *desc, const vec3_t *vertices, int numVertices );
 void SV_RallyPhysics_RemoveBody( int entityNum );
 qboolean SV_RallyPhysics_GetBodyState( int entityNum, rallyPhysicsBodyState_t *state );
+void SV_RallyPhysics_ResetBody( int entityNum, const vec3_t origin,
+	const vec3_t angles, const vec3_t linearVelocity );
 qboolean SV_RallyPhysics_HasBody( int entityNum );
 qboolean SV_RallyPhysics_Trace( const vec3_t start, const vec3_t mins,
 	const vec3_t maxs, const vec3_t end, int passEntityNum, int contentMask,

@@ -28,7 +28,7 @@ qboolean isRaceObserver( int clientNum ) {
 static const int s_validGametypes[] = {
 	GT_RACING, GT_RACING_DM, GT_SINGLE_PLAYER, GT_DERBY, GT_LCS, GT_ELIMINATION,
 	GT_DEATHMATCH, GT_SPRINT, GT_GHOST, GT_TEAM, GT_TEAM_RACING, GT_TEAM_RACING_DM,
-	GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH
+	GT_CTF, GT_CTF4, GT_DOMINATION, GT_KOTH, GT_AUTOBALL
 };
 
 static qboolean IsValidGametype( int gametype ) {
@@ -85,6 +85,15 @@ int main( void ) {
 	assert( !strcmp( BG_GametypeEntityName( GT_SINGLE_PLAYER ), "single" ) );
 	assert( !strcmp( BG_GametypeEntityName( GT_TEAM ), "team" ) );
 	assert( !strcmp( BG_GametypeEntityName( GT_KOTH ), "koth" ) );
+
+	/* Autoball: team mode (inherits CTF spawns/sudden death), no race */
+	assert( GT_AUTOBALL == 23 );
+	assert( GT_AUTOBALL >= GT_CTF );
+	assert( !BG_GametypeIsRace( GT_AUTOBALL ) );
+	assert( !BG_GametypeHasRaceFinish( GT_AUTOBALL ) );
+	assert( BG_GametypeAllowsBots( GT_AUTOBALL ) );
+	assert( !strcmp( BG_GametypeEntityName( GT_AUTOBALL ), "autoball" ) );
+	assert( !strcmp( BG_GametypeDisplayName( GT_AUTOBALL ), "Autoball" ) );
 	for ( gt = -1; gt <= GT_MAX_GAME_TYPE; gt++ ) {
 		if ( IsValidGametype( gt ) ) {
 			assert( BG_GametypeEntityName( gt ) != NULL );

@@ -2786,6 +2786,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_rally_racingline.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_rearweapons.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_scripted_objects.o \
+  $(B)/$(BASEGAME)/cgame/cg_autoball.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_tools.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_intro_cam.o \
   $(B)/$(BASEGAME)/cgame/cg_scoreboard.o \
@@ -2870,6 +2871,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/ai_main.o \
   $(B)/$(BASEGAME)/game/ai_team.o \
   $(B)/$(BASEGAME)/game/ai_vcmd.o \
+  $(B)/$(BASEGAME)/game/ai_autoball.o \
   $(B)/$(BASEGAME)/game/bg_achievements.o \
   $(B)/$(BASEGAME)/game/bg_misc.o \
   $(B)/$(BASEGAME)/game/bg_pmove.o \
@@ -2879,6 +2881,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/bg_wheel_forces.o \
   $(B)/$(BASEGAME)/game/g_active.o \
   $(B)/$(BASEGAME)/game/g_arenas.o \
+  $(B)/$(BASEGAME)/game/g_autoball.o \
   $(B)/$(BASEGAME)/game/g_bot.o \
   $(B)/$(BASEGAME)/game/g_botpath.o \
   $(B)/$(BASEGAME)/game/g_client.o \

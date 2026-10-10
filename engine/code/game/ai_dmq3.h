@@ -144,6 +144,9 @@ int BotPopFromActivateGoalStack(bot_state_t *bs);
 void BotClearActivateGoalStack(bot_state_t *bs);
 //returns the team the bot is in
 int BotTeam(bot_state_t *bs);
+// ai_autoball.c
+qboolean BotAutoball_Think(bot_state_t *bs);
+qboolean BotAutoball_WantsTurbo(int client);
 //returns the opposite team of the bot
 int BotOppositeTeam(bot_state_t *bs);
 //returns the flag the bot is carrying (CTFFLAG_?)

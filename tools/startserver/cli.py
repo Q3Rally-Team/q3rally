@@ -32,6 +32,7 @@ GAMETYPES: dict[str, int] = {
     "ctf4": 20,
     "domination": 21,
     "koth": 22,
+    "autoball": 23,
 }
 
 
@@ -52,6 +53,8 @@ ALIASES: dict[str, str] = {
     "ghostrace": "ghost",
     "ghost_only": "ghost",
     "king_of_the_hill": "koth",
+    "car_football": "autoball",
+    "carball": "autoball",
 }
 
 

@@ -252,6 +252,13 @@ vmCvar_t	cg_obeliskRespawnDelay;
 
 // Q3Rally Code Start
 vmCvar_t	cg_metricUnits;
+vmCvar_t	cg_autoballPredict;
+vmCvar_t	cg_autoballCam;
+vmCvar_t	cg_autoballIndicator;
+vmCvar_t	cg_autoballShake;
+vmCvar_t	cg_autoballTrail;
+vmCvar_t	cg_autoballTVCam;
+vmCvar_t	cg_autoballIntro;
 vmCvar_t	cg_controlMode;
 vmCvar_t	cg_manualShift;
 vmCvar_t	cg_transmissionMode;
@@ -389,6 +396,13 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", CVAR_ROM },
 	{ &cg_metricUnits, "cg_metricUnits", "0", CVAR_ARCHIVE },
+	{ &cg_autoballPredict, "cg_autoballPredict", "0", 0 },
+	{ &cg_autoballCam, "cg_autoballCam", "0", CVAR_ARCHIVE },
+	{ &cg_autoballIndicator, "cg_autoballIndicator", "1", CVAR_ARCHIVE },
+	{ &cg_autoballShake, "cg_autoballShake", "1", CVAR_ARCHIVE },
+	{ &cg_autoballTrail, "cg_autoballTrail", "1", CVAR_ARCHIVE },
+	{ &cg_autoballTVCam, "cg_autoballTVCam", "1", CVAR_ARCHIVE },
+	{ &cg_autoballIntro, "cg_autoballIntro", "1", CVAR_ARCHIVE },
 	{ &cg_minSkidLength, "cg_minSkidLength", "20", CVAR_ARCHIVE },
 	{ &cg_drawRearView, "cg_drawRearView", "0", CVAR_ARCHIVE },
 	{ &cg_drawMMap, "cg_drawMMap", "1", CVAR_ARCHIVE }, //TBB minimap - default on
@@ -1390,6 +1404,10 @@ static void CG_RegisterGraphics( void ) {
 
 // Q3Rally Code Start - need to load it right away cause car uses it when it explodes
 	cgs.media.rocketExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
+	if ( cgs.gametype == GT_AUTOBALL ) {
+		trap_R_RegisterShader( "autoballTrail" );	// cached now, not at the first fast shot
+		trap_R_RegisterShader( "autoballShadow" );
+	}
 
 	// also used for sparks now
 	cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );

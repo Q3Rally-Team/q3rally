@@ -142,6 +142,12 @@ vmCvar_t	ui_ctf_friendly;
 vmCvar_t	ui_dom_capturelimit;
 vmCvar_t	ui_dom_timelimit;
 vmCvar_t	ui_dom_friendly;
+vmCvar_t	ui_autoball_capturelimit;
+vmCvar_t	ui_autoball_timelimit;
+vmCvar_t	ui_autoball_friendly;
+vmCvar_t	ui_autoball_balls;
+vmCvar_t	ui_autoball_size;
+vmCvar_t	ui_autoball_gravity;
 vmCvar_t	ui_sigilLocator;
 // Q3Rally Code END
 
@@ -261,6 +267,12 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_dom_capturelimit, "ui_dom_capturelimit", "300", CVAR_ARCHIVE },
 	{ &ui_dom_timelimit, "ui_dom_timelimit", "15", CVAR_ARCHIVE },
 	{ &ui_dom_friendly, "ui_dom_friendly", "1", CVAR_ARCHIVE },
+	{ &ui_autoball_capturelimit, "ui_autoball_capturelimit", "0", CVAR_ARCHIVE },
+	{ &ui_autoball_timelimit, "ui_autoball_timelimit", "5", CVAR_ARCHIVE },
+	{ &ui_autoball_friendly, "ui_autoball_friendly", "0", CVAR_ARCHIVE },
+	{ &ui_autoball_balls, "ui_autoball_balls", "0", CVAR_ARCHIVE },
+	{ &ui_autoball_size, "ui_autoball_size", "0", CVAR_ARCHIVE },
+	{ &ui_autoball_gravity, "ui_autoball_gravity", "0", CVAR_ARCHIVE },
 	{ &ui_sigilLocator, "cg_sigilLocator", "1", CVAR_ARCHIVE },
 
 	{ &ui_racing_tracklength, "ui_racing_tracklength", "1", CVAR_ARCHIVE },

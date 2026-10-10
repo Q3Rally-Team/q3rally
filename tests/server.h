@@ -87,6 +87,7 @@ static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, co
 #define GT_CTF4 20
 #define GT_DOMINATION 21
 #define GT_KOTH 22
+#define GT_AUTOBALL 23
 
 #define LADDER_MAX_MATCH_ID             64
 #define LADDER_MAX_MODE                 32
@@ -155,6 +156,7 @@ typedef struct ladderProfileSnapshot_s {
         int             teamRacingDmWins, teamRacingDmCompleted, teamRacingDmPodiums;
         int             dominationWins, dominationCompleted, dominationZoneHoldMs;
         int             kothWins, kothCompleted, kothZoneHoldMs;
+        int             autoballWins, autoballCompleted, autoballGoals;
 } ladderProfileSnapshot_t;
 
 typedef struct ladderPlayerPayload_s {
@@ -192,6 +194,11 @@ typedef struct ladderPlayerPayload_s {
         int                     deaths;
         int                     zoneHoldMs;
         int                     kothContestTimeMs;
+        int                     autoballGoals;
+        int                     autoballAssists;
+        int                     autoballSaves;
+        int                     autoballShots;
+        int                     autoballDemos;
         int                     zoneActiveSigil;
         int                     survivalMs;
         int                     eliminationRound;

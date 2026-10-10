@@ -27,6 +27,7 @@ void G_Profile_RecordSprintTime( struct gclient_s *client, int totalMs );
 void G_Profile_RecordSurvivalTime( struct gclient_s *client, int survivalMs );
 void G_Profile_RecordEliminationRound( struct gclient_s *client, int roundsLasted );
 void G_Profile_RecordZoneHold( struct gclient_s *client, int zoneHoldMs );
+void G_Profile_RecordAutoballGoals( struct gclient_s *client, int goals );
 void G_Profile_RecordCtfCapture( struct gclient_s *client );
 void G_Profile_RecordWin( struct gclient_s *client );
 void G_Profile_RecordLoss( struct gclient_s *client );

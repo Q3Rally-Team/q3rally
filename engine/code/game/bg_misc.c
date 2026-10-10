@@ -2382,6 +2382,7 @@ const char *BG_GametypeEntityName( int gametype ) {
 	case GT_CTF4:           return "ctf4";
 	case GT_DOMINATION:     return "domination";
 	case GT_KOTH:           return "koth";
+	case GT_AUTOBALL:       return "autoball";
 	default:                return NULL;
 	}
 }
@@ -2404,6 +2405,7 @@ const char *BG_GametypeDisplayName( int gametype ) {
 	case GT_CTF4:           return "4-Team CTF";
 	case GT_DOMINATION:     return "Domination";
 	case GT_KOTH:           return "King of the Hill";
+	case GT_AUTOBALL:       return "Autoball";
 	default:                return "Unknown";
 	}
 }

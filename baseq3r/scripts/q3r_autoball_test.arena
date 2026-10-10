@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_autoball_test"
+
+//IN-GAME MAP NAME
+longname "Autoball Test Arena"
+
+//AUTHOR OF THE MAP
+author "Q3Rally Team"
+
+//GAME TYPE SUPPORTS
+type "q3r_autoball"
+
+//CUSTOM BOTS
+bots "Chloe Jim Zack Paul Tobias Josh"
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime ""
+
+//CHECKPOINTS
+checkpoints ""
+
+//OBSERVER SPOTS
+observerspots ""
+
+//WEAPONS
+weapons ""
+
+//POWERUPS
+powerups "4"
+
+//REVERSABLE
+reversable ""
+
+//TRACK LENGTHS
+tracklengths ""
+
+//BOT SUPPORTS
+botsupport "None"
+
+//TEAMS
+teams "2"
+}

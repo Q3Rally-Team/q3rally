@@ -42,10 +42,11 @@ struct rallyBody_t {
 	float friction;
 	float restitution;
 	int contents;
+	float maxLinearSpeed;
 
 	rallyBody_t() : body(NULL), shape(NULL), motionState(NULL),
 		localOriginOffset(0, 0, 0), mass(0.0f), friction(0.5f), restitution(0.0f),
-		contents(0) {}
+		contents(0), maxLinearSpeed(0.0f) {}
 };
 
 struct rallyWorld_t {
@@ -253,6 +254,10 @@ static void AddBrushWorld( void ) {
 		btRigidBody::btRigidBodyConstructionInfo info( 0.0f, NULL, rallyWorld->brushes );
 		rallyWorld->brushBody = new btRigidBody( info );
 		rallyWorld->brushBody->setUserIndex( -1 );
+		/* Bullet multiplies the restitution of both bodies. With the default 0
+		 * on the world nothing ever bounced off map geometry, whatever the
+		 * object's elasticity; 1.0 makes the object's own value decide. */
+		rallyWorld->brushBody->setRestitution( 1.0f );
 		rallyWorld->world->addRigidBody( rallyWorld->brushBody );
 	}
 	Com_Printf( "rally_bullet: world BSP brush hulls=%d of %d referenced brushes\n",
@@ -366,6 +371,7 @@ static void AddPatchWorld( void ) {
 		btRigidBody::btRigidBodyConstructionInfo info( 0.0f, NULL, rallyWorld->patchShape );
 		rallyWorld->patchBody = new btRigidBody( info );
 		rallyWorld->patchBody->setUserIndex( -1 );
+		rallyWorld->patchBody->setRestitution( 1.0f );	/* see AddBrushWorld */
 		rallyWorld->world->addRigidBody( rallyWorld->patchBody );
 		Com_Printf( "rally_bullet: BSP patch collision facets=%d triangles=%d\n",
 			patchCount, triangleCount );
@@ -383,7 +389,24 @@ static btCollisionShape *CreateBodyShape( const rallyPhysicsBodyDesc_t *desc,
 	btVector3 maxPoint( -BT_LARGE_FLOAT, -BT_LARGE_FLOAT, -BT_LARGE_FLOAT );
 	localOffset.setZero();
 
-	if ( vertices && numVertices >= 4 && numVertices <= RALLY_PHYSICS_MAX_HULL_VERTS ) {
+	/* Autoball: a true sphere rolls smoothly, unlike a faceted MD3 hull. The
+	 * sphere is centred on the mins/maxs box so the entity origin can stay at
+	 * the model origin. */
+	if ( desc->shapeType == RALLY_PHYSICS_SHAPE_SPHERE ) {
+		btVector3 sphereMins = VectorToBullet( desc->mins );
+		btVector3 sphereMaxs = VectorToBullet( desc->maxs );
+		btVector3 half = ( sphereMaxs - sphereMins ) * 0.5f;
+		float radius = desc->radius;
+		if ( radius <= 0.0f )
+			radius = std::min( half.x(), std::min( half.y(), half.z() ) );
+		if ( radius < 0.5f )
+			radius = 16.0f;
+		localOffset = ( sphereMins + sphereMaxs ) * 0.5f;
+		return new btSphereShape( radius );
+	}
+
+	if ( desc->shapeType != RALLY_PHYSICS_SHAPE_BOX && vertices &&
+		numVertices >= 4 && numVertices <= RALLY_PHYSICS_MAX_HULL_VERTS ) {
 		for ( i = 0; i < numVertices; i++ ) {
 			btVector3 point = VectorToBullet( vertices[i] );
 			minPoint.setMin( point );
@@ -473,6 +496,25 @@ extern "C" void SV_RallyPhysics_Shutdown( void ) {
 	rallyWorld = NULL;
 }
 
+/* Bodies with a speed cap (Autoball) are clamped after every fixed step so a
+ * stacked impulse can never launch them through thin geometry or produce a
+ * snapshot-to-snapshot jump the clients cannot interpolate sensibly. */
+static void ClampBodySpeeds( void ) {
+	int i;
+	for ( i = 0; i < MAX_GENTITIES; i++ ) {
+		rallyBody_t &entry = rallyBodies[i];
+		btVector3 velocity;
+		float speedSquared;
+		if ( !entry.body || entry.maxLinearSpeed <= 0.0f )
+			continue;
+		velocity = entry.body->getLinearVelocity();
+		speedSquared = velocity.length2();
+		if ( speedSquared > entry.maxLinearSpeed * entry.maxLinearSpeed )
+			entry.body->setLinearVelocity( velocity *
+				( entry.maxLinearSpeed / sqrtf( speedSquared ) ) );
+	}
+}
+
 extern "C" void SV_RallyPhysics_Step( float frameSeconds ) {
 	int steps = 0;
 	if ( !rallyWorld || !rallyWorld->world || frameSeconds <= 0.0f )
@@ -481,6 +523,7 @@ extern "C" void SV_RallyPhysics_Step( float frameSeconds ) {
 	while ( rallyWorld->accumulator >= RALLY_PHYSICS_FIXED_STEP && steps < 12 ) {
 		rallyWorld->world->stepSimulation( RALLY_PHYSICS_FIXED_STEP, 0,
 			RALLY_PHYSICS_FIXED_STEP );
+		ClampBodySpeeds();
 		rallyWorld->accumulator -= RALLY_PHYSICS_FIXED_STEP;
 		steps++;
 	}
@@ -527,6 +570,11 @@ extern "C" qboolean SV_RallyPhysics_CreateBody( int entityNum,
 	entry->body->setUserIndex( entityNum );
 	entry->body->setSleepingThresholds( 1.0f, 0.15f );
 	entry->body->setDeactivationTime( 0.5f );
+	/* A game ball must react to the very first touch after resting; Bullet's
+	 * island sleeping would otherwise freeze it between contacts. */
+	if ( desc->disableSleep )
+		entry->body->setActivationState( DISABLE_DEACTIVATION );
+	entry->maxLinearSpeed = desc->maxLinearSpeed > 0.0f ? desc->maxLinearSpeed : 0.0f;
 	entry->mass = mass;
 	entry->friction = info.m_friction;
 	entry->restitution = info.m_restitution;
@@ -566,6 +614,39 @@ extern "C" qboolean SV_RallyPhysics_GetBodyState( int entityNum,
 	VectorFromBullet( entry->body->getAngularVelocity(), state->angularVelocity );
 	state->sleeping = entry->body->getActivationState() == ISLAND_SLEEPING ? qtrue : qfalse;
 	return qtrue;
+}
+
+/* Teleports a body (kick-off, debug reset) and replaces its velocity. Angular
+ * velocity and accumulated forces are cleared; a NULL velocity means rest. */
+extern "C" void SV_RallyPhysics_ResetBody( int entityNum, const vec3_t origin,
+	const vec3_t angles, const vec3_t linearVelocity ) {
+	rallyBody_t *entry;
+	btTransform transform;
+	btQuaternion rotation;
+	btVector3 velocity( 0.0f, 0.0f, 0.0f );
+	if ( !rallyWorld || !rallyWorld->world || entityNum < 0 ||
+		entityNum >= MAX_GENTITIES || !origin || !angles )
+		return;
+	entry = &rallyBodies[entityNum];
+	if ( !entry->body || entry->body->getInvMass() <= 0.0f )
+		return;
+	if ( linearVelocity )
+		velocity = VectorToBullet( linearVelocity );
+	AnglesToQuaternion( angles, rotation );
+	transform.setIdentity();
+	transform.setRotation( rotation );
+	transform.setOrigin( VectorToBullet( origin ) + quatRotate( rotation, entry->localOriginOffset ) );
+	entry->body->setWorldTransform( transform );
+	entry->body->setInterpolationWorldTransform( transform );
+	if ( entry->motionState )
+		entry->motionState->setWorldTransform( transform );
+	entry->body->setLinearVelocity( velocity );
+	entry->body->setInterpolationLinearVelocity( velocity );
+	entry->body->setAngularVelocity( btVector3( 0.0f, 0.0f, 0.0f ) );
+	entry->body->setInterpolationAngularVelocity( btVector3( 0.0f, 0.0f, 0.0f ) );
+	entry->body->clearForces();
+	entry->body->activate( true );
+	rallyWorld->world->updateSingleAabb( entry->body );
 }
 
 extern "C" qboolean SV_RallyPhysics_HasBody( int entityNum ) {

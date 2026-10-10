@@ -1156,7 +1156,8 @@ static void CG_DrawRallyTelemetryHud( void ) {
 	/* Centre: use the mode's objective as the primary telemetry. */
 	team = ps->persistant[PERS_TEAM];
 	teamMode = ( cgs.gametype == GT_TEAM || cgs.gametype == GT_CTF ||
-	             cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION );
+	             cgs.gametype == GT_CTF4 || cgs.gametype == GT_DOMINATION ||
+	             cgs.gametype == GT_AUTOBALL );
 
 	/* STAT_DISTANCE_REMAIN and CS_TRACKLENGTH are both expressed in metres.
 	 * Loop races use full-lap distance; Sprint publishes its open start-finish
@@ -1557,6 +1558,9 @@ static void CG_DrawRallyTelemetryHud( void ) {
 			break;
 		case GT_TEAM:
 			Q_strncpyz( modeTitle, "TEAM COMBAT", sizeof(modeTitle) );
+			break;
+		case GT_AUTOBALL:
+			Q_strncpyz( modeTitle, "AUTOBALL", sizeof(modeTitle) );
 			break;
 		default:
 			Q_strncpyz( modeTitle, "DEATHMATCH", sizeof(modeTitle) );
@@ -2186,6 +2190,8 @@ static float CG_DrawTimer( float y ) {
 	int			msec;
 
 	msec = cg.time - cgs.levelStartTime;
+	if ( msec < 0 )
+		msec = 0;	/* Autoball: the match clock starts at the first whistle */
 
 	seconds = msec / 1000;
 	mins = seconds / 60;
@@ -2394,6 +2400,7 @@ static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
 	if ( cgs.gametype != GT_CTF && cgs.gametype != GT_CTF4 &&
 	     cgs.gametype != GT_DOMINATION &&
 	     cgs.gametype != GT_KOTH &&
+	     cgs.gametype != GT_AUTOBALL &&
 	     cgs.gametype > GT_TEAM &&
 	     cg_drawTeamOverlay.integer == 1 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qtrue );
@@ -3738,6 +3745,10 @@ static void CG_DrawAmmoWarning( void ) {
 	if (isRallyNonDMRace() || cgs.gametype == GT_DERBY){
 		return;
 	}
+	/* Autoball is played without weapons by default: nothing to run out of */
+	if ( cgs.gametype == GT_AUTOBALL && !cg.snap->ps.stats[STAT_WEAPONS] ) {
+		return;
+	}
 // Q3Rally Code END
 
 	if ( cg_drawAmmoWarning.integer == 0 ) {
@@ -3969,6 +3980,11 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		return;
 	}
 
+	/* Autoball kick-off flight: no HUD over the camera */
+	if ( CG_Autoball_IntroActive() ) {
+		return;
+	}
+
 	/* During the cinematic, replace the entire gameplay HUD with two
 	 * unobtrusive custom-font prompts. */
 	if ( CG_IntroCam_IsActive() ) {
@@ -4029,6 +4045,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 	CG_DrawKOTH_RespawnWave_Internal();
 	CG_DrawKOTH_LossFlash();
+	CG_Autoball_Draw2D();
 
 	if ( cgs.gametype >= GT_TEAM ) {
 #ifndef MISSIONPACK

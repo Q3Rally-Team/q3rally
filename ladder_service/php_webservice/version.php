@@ -6,9 +6,16 @@
 
 declare(strict_types=1);
 
-const LADDER_VERSION = '1.0.15';
+const LADDER_VERSION = '1.0.16';
 
 const LADDER_CHANGELOG = [
+    '1.0.16' => [
+        'date'    => '2026-10-10',
+        'changes' => [
+            'New mode Autoball (GT_AUTOBALL): leaderboard, team mode, per-player goals/assists/saves/shots/demolitions, career card (wins, completed, goals)',
+            'Fix: per-mode career counters (wins, completed, podiums, totals, awards) no longer run one match ahead for the local player – a snapshot that is ahead already contains the match and is taken as-is',
+        ],
+    ],
     '1.0.15' => [
         'date'    => '2026-10-04',
         'changes' => [

@@ -165,6 +165,23 @@ vmCvar_t        g_derbyCollisionRearWeight;
 vmCvar_t        g_derbyCollisionLog;
 vmCvar_t        g_derbyHitFuelReward;
 vmCvar_t        g_derbyHitNosReward;
+vmCvar_t        g_autoballDebug;
+vmCvar_t        g_autoballImpactScale;
+vmCvar_t        g_autoballVerticalScale;
+vmCvar_t        g_autoballLift;
+vmCvar_t        g_autoballMass;
+vmCvar_t        g_autoballElasticity;
+vmCvar_t        g_autoballKickoffDelay;
+vmCvar_t        g_autoballGoalDelay;
+vmCvar_t        g_autoballStartTurbo;
+vmCvar_t        g_autoballWeapons;
+vmCvar_t        g_autoballDemoSpeed;
+vmCvar_t        g_autoballGoalPush;
+vmCvar_t        g_autoballBalls;
+vmCvar_t        g_autoballBallScale;
+vmCvar_t        g_autoballBallGravity;
+vmCvar_t        g_autoballStats;
+vmCvar_t        g_autoballIntro;
 vmCvar_t        g_derbyNoRamTime;
 vmCvar_t  g_humanplayers;
 vmCvar_t        g_fuelKillReward;
@@ -373,6 +390,24 @@ static cvarTable_t		gameCvarTable[] = {
         { &g_derbyHitFuelReward, "g_derbyHitFuelReward", "2.0", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyHitNosReward, "g_derbyHitNosReward", "500", CVAR_ARCHIVE, 0, qfalse },
         { &g_derbyNoRamTime, "g_derbyNoRamTime", "45", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballDebug, "g_autoballDebug", "0", 0, 0, qfalse },
+        { &g_autoballImpactScale, "g_autoballImpactScale", "1.6", 0, 0, qfalse },
+        { &g_autoballVerticalScale, "g_autoballVerticalScale", "0.45", 0, 0, qfalse },
+        { &g_autoballLift, "g_autoballLift", "0.15", 0, 0, qfalse },
+        { &g_autoballMass, "g_autoballMass", "400", 0, 0, qfalse },
+        { &g_autoballElasticity, "g_autoballElasticity", "0.6", 0, 0, qfalse },
+        { &g_autoballKickoffDelay, "g_autoballKickoffDelay", "3", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballGoalDelay, "g_autoballGoalDelay", "4", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballStartTurbo, "g_autoballStartTurbo", "5000", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballWeapons, "g_autoballWeapons", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+        { &g_autoballDemoSpeed, "g_autoballDemoSpeed", "110", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballGoalPush, "g_autoballGoalPush", "2200", CVAR_ARCHIVE, 0, qfalse },
+        // Autoball mutators
+        { &g_autoballBalls, "g_autoballBalls", "1", CVAR_SERVERINFO | CVAR_LATCH, 0, qfalse },
+        { &g_autoballBallScale, "g_autoballBallScale", "1", CVAR_SERVERINFO | CVAR_LATCH, 0, qfalse },
+        { &g_autoballBallGravity, "g_autoballBallGravity", "1", CVAR_SERVERINFO, 0, qfalse },
+        { &g_autoballStats, "g_autoballStats", "0", CVAR_ARCHIVE, 0, qfalse },
+        { &g_autoballIntro, "g_autoballIntro", "1", CVAR_ARCHIVE, 0, qfalse },
         // END
 
         { &g_rankings, "g_rankings", "0", 0, 0, qfalse},
@@ -810,6 +845,8 @@ static const char *G_LadderModeForGametype( int gametype ) {
                 return "GT_DOMINATION";
         case GT_KOTH:
                 return "GT_KOTH";
+        case GT_AUTOBALL:
+                return "GT_AUTOBALL";
         default:
                 break;
         }
@@ -845,7 +882,8 @@ static qboolean G_LadderGametypeIsTeamMode( int gametype ) {
                 || gametype == GT_CTF
                 || gametype == GT_CTF4
                 || gametype == GT_DOMINATION
-                || gametype == GT_KOTH ) ? qtrue : qfalse;
+                || gametype == GT_KOTH
+                || gametype == GT_AUTOBALL ) ? qtrue : qfalse;
 }
 
 static int G_LadderWinnerForGametype( int gametype ) {
@@ -898,6 +936,7 @@ static int G_LadderWinnerForGametype( int gametype ) {
         case GT_CTF4:
         case GT_DOMINATION:
         case GT_KOTH:
+        case GT_AUTOBALL:
                 return -1;
         default:
                 break;
@@ -1163,6 +1202,15 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                 player->zoneActiveSigil = -1;
         }
 
+        /* Autoball counters (g_autoball.c); serialized only for GT_AUTOBALL. */
+        if ( g_gametype.integer == GT_AUTOBALL ) {
+                player->autoballGoals = client->pers.autoballGoals;
+                player->autoballAssists = client->pers.autoballAssists;
+                player->autoballSaves = client->pers.autoballSaves;
+                player->autoballShots = client->pers.autoballShots;
+                player->autoballDemos = client->pers.autoballDemos;
+        }
+
         /* Attach career profile snapshot for the local client only.
          * Prefer runtime state (g_profile), use file-read fallback only when needed. */
         if ( client->pers.localClient ) {
@@ -1281,6 +1329,9 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         snap->kothWins = G_Profile_ParseIntPublic( statsBuf, "kothWins", 0 );
                                         snap->kothCompleted = G_Profile_ParseIntPublic( statsBuf, "kothCompleted", 0 );
                                         snap->kothZoneHoldMs = G_Profile_ParseIntPublic( statsBuf, "kothZoneHoldMs", 0 );
+                                        snap->autoballWins = G_Profile_ParseIntPublic( statsBuf, "autoballWins", 0 );
+                                        snap->autoballCompleted = G_Profile_ParseIntPublic( statsBuf, "autoballCompleted", 0 );
+                                        snap->autoballGoals = G_Profile_ParseIntPublic( statsBuf, "autoballGoals", 0 );
 
                                         {
                                                 double progress_table[BG_ACHIEVEMENT_CATEGORY_COUNT];
@@ -1668,6 +1719,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// general initialization
 	G_FindTeams();
 
+	G_Autoball_InitGame();
+
 	// make sure we have flags for CTF, etc
 	if( g_gametype.integer >= GT_TEAM ) {
 		G_CheckTeamItems();
@@ -1947,6 +2000,14 @@ static void G_RecordMatchOutcome( void ) {
 		return;
 	}
 
+	/* LogExit and BeginIntermission both call this. Only RecordWin/Loss
+	   guard themselves; sess.wins, zone hold, Autoball goals and the match
+	   achievements would otherwise be counted twice. */
+	if ( level.matchOutcomeRecorded ) {
+		return;
+	}
+	level.matchOutcomeRecorded = qtrue;
+
         if ( level.numPlayingClients <= 0 ) {
                 return;
         }
@@ -1983,6 +2044,8 @@ static void G_RecordMatchOutcome( void ) {
                                 G_Profile_RecordZoneHold( client, client->kothHoldTimeMs );
                         } else if ( g_gametype.integer == GT_DOMINATION ) {
                                 G_Profile_RecordZoneHold( client, client->dominationZoneHoldMs );
+                        } else if ( g_gametype.integer == GT_AUTOBALL ) {
+                                G_Profile_RecordAutoballGoals( client, client->pers.autoballGoals );
                         }
 
                         G_Profile_RecordMatchAchievements( client );
@@ -2946,6 +3009,10 @@ void CheckExitRules( void ) {
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
+			/* Autoball: let a ball in the air land and a goal celebration finish */
+			if ( g_gametype.integer == GT_AUTOBALL && G_Autoball_HoldMatchEnd() ) {
+				return;
+			}
 			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
 			return;
@@ -3593,6 +3660,7 @@ void G_RunFrame( int levelTime ) {
 
 	// get any cvar changes
 	G_UpdateCvars();
+	G_Autoball_RunFrame();
 	G_Ghost_ProcessClientTransfers();
 	G_GhostLadder_Frame();
 

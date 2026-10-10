@@ -104,6 +104,7 @@ static const char *ServerInfo_GameTypeName( int gametype )
 	case GT_CTF4:            return "4-Team CTF";
 	case GT_DOMINATION:      return "Domination";
 	case GT_KOTH:            return "King of the Hill";
+	case GT_AUTOBALL:        return "Autoball";
 	default:                 return NULL;
 	}
 }

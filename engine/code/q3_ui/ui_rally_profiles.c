@@ -870,6 +870,10 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
             outStats->kothWins            = UI_Profile_ParseInt( buffer, "kothWins", 0 );
             outStats->kothCompleted       = UI_Profile_ParseInt( buffer, "kothCompleted", 0 );
             outStats->kothZoneHoldMs      = UI_Profile_ParseInt( buffer, "kothZoneHoldMs", 0 );
+        /* ── GT_AUTOBALL ──────────────────────────────────────────────── */
+            outStats->autoballWins        = UI_Profile_ParseInt( buffer, "autoballWins", 0 );
+            outStats->autoballCompleted   = UI_Profile_ParseInt( buffer, "autoballCompleted", 0 );
+            outStats->autoballGoals       = UI_Profile_ParseInt( buffer, "autoballGoals", 0 );
         }
 
     if ( outInfo ) {
@@ -1069,10 +1073,15 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
             "\t\t\"dominationWins\": %d,\n\t\t\"dominationCompleted\": %d,\n\t\t\"dominationZoneHoldMs\": %d,\n",
             stats->dominationWins, stats->dominationCompleted, stats->dominationZoneHoldMs );
 
-        /* GT_KOTH — last entry: no trailing comma */
+        /* GT_KOTH */
         off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "\t\t\"kothWins\": %d,\n\t\t\"kothCompleted\": %d,\n\t\t\"kothZoneHoldMs\": %d\n",
+            "\t\t\"kothWins\": %d,\n\t\t\"kothCompleted\": %d,\n\t\t\"kothZoneHoldMs\": %d,\n",
             stats->kothWins, stats->kothCompleted, stats->kothZoneHoldMs );
+
+        /* GT_AUTOBALL — last entry: no trailing comma */
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"autoballWins\": %d,\n\t\t\"autoballCompleted\": %d,\n\t\t\"autoballGoals\": %d\n",
+            stats->autoballWins, stats->autoballCompleted, stats->autoballGoals );
 
         /* Close stats + root object */
         off += Com_sprintf( buffer + off, sizeof(buffer) - off, "\t}\n}\n" );

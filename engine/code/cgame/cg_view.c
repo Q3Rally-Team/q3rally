@@ -928,6 +928,8 @@ static int CG_CalcViewValues( void ) {
 	{
 // END
 		if ( cg.renderingThirdPerson ) {
+			// Autoball: turn the chase camera towards the ball
+			CG_Autoball_ApplyBallCam();
 			// back away from character
 			CG_OffsetThirdPersonView();
 		} else {
@@ -937,6 +939,10 @@ static int CG_CalcViewValues( void ) {
 // Q3Rally Code Start
 	}
 // END
+
+	// Autoball kick-off flight / TV camera, then the goal blast camera shake
+	CG_Autoball_OverrideView();
+	CG_Autoball_ApplyShake();
 
 	// position eye relative to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -1105,6 +1111,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddMarks();
 		CG_AddParticles ();
 		CG_AddLocalEntities();
+		CG_Autoball_AddSceneEffects();	// Autoball goal lights
 // Q3Rally Code Start
 		// used for q3f atmospheric effects
 		CG_AddAtmosphericEffects();
