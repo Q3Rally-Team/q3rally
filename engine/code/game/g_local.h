@@ -282,6 +282,9 @@ struct gentity_s {
 	int			ballPendingThreat;	/* goal (defending team) the ball was heading for before it */
 	int			ballHitSoundTime;
 	vec3_t		ballPrevVelocity;	/* last frame, for wall/floor bounce sounds */
+	int			ballStillSince;		/* level.time since no car touched it (away from its spot), 0 = active */
+	int			ballSolidSince;		/* level.time its centre got stuck in solid, 0 = free */
+	int			ballRescueTime;		/* level.time of its last rescue */
 	int			ballDebugLogTime;	/* rate limit for g_autoballDebug */
 	vec3_t		*collisionHullVerts;
 	int		collisionHullVertCount;
@@ -1152,6 +1155,7 @@ void G_Autoball_ForgetClient( int clientNum );
 qboolean G_Autoball_HoldMatchEnd( void );
 qboolean G_Autoball_ItemDisabled( gitem_t *item );
 void SP_autoball_goal( gentity_t *ent );
+void SP_autoball_reset( gentity_t *ent );
 void Svcmd_BallGoalAdd_f( void );
 
 
@@ -1394,6 +1398,7 @@ extern  vmCvar_t        g_autoballBallScale;
 extern  vmCvar_t        g_autoballBallGravity;
 extern  vmCvar_t        g_autoballStats;
 extern  vmCvar_t        g_autoballIntro;
+extern  vmCvar_t        g_autoballRescueTime;
 extern  vmCvar_t        g_derbyNoRamTime;
 extern  vmCvar_t        g_fuelKillReward;
 extern  vmCvar_t        g_useFuel;

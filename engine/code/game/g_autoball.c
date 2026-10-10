@@ -254,6 +254,8 @@ void G_Autoball_ResetBall( gentity_t *ball ) {
 	G_Autoball_ClearTouches( ball );
 	VectorClear( ball->ballPrevVelocity );
 	ball->ballHitSoundTime = level.time + 500;
+	ball->ballStillSince = 0;
+	ball->ballSolidSince = 0;
 	/* clients snap to the new spot instead of interpolating across the map */
 	ball->s.eFlags ^= EF_TELEPORT_BIT;
 	trap_LinkEntity( ball );
@@ -579,6 +581,8 @@ end while the ball is in the air or a goal is being celebrated.
 #define AUTOBALL_SCORER_WINDOW		10000	/* a touch older than this scores no one */
 #define AUTOBALL_AIRBORNE_HEIGHT	40.0f	/* above its rest height the ball is "in play" */
 #define AUTOBALL_HOLD_MAX			10000	/* ms the time limit waits for a ball in the air */
+#define AUTOBALL_RESCUE_DROP		1500.0f	/* this far below its spot the ball left the map */
+#define AUTOBALL_RESCUE_FAR			20000.0f	/* ... or this far away in any direction */
 #define AUTOBALL_ASSIST_POINTS		50
 #define AUTOBALL_SAVE_POINTS		50
 #define AUTOBALL_SHOT_POINTS		20
@@ -1421,6 +1425,106 @@ static qboolean G_Autoball_HumansLoading( void ) {
 	return qfalse;
 }
 
+/*
+QUAKED autoball_reset (1 .5 0) ?
+Ball rescue volume (brush entity, use common/trigger; never solid). A ball
+whose centre enters it is put back (match ball: new kick-off). Use it for
+places a ball can reach but no car can: roofs, gaps, outside the arena.
+*/
+void SP_autoball_reset( gentity_t *ent ) {
+	trap_SetBrushModel( ent, ent->model );
+	ent->r.contents = 0;			/* tested by hand, like the goals */
+	ent->r.svFlags = SVF_NOCLIENT;
+	trap_LinkEntity( ent );
+}
+
+static qboolean G_Autoball_InResetVolume( const vec3_t point ) {
+	gentity_t *zone = NULL;
+
+	while ( ( zone = G_Find( zone, FOFS( classname ), "autoball_reset" ) ) != NULL ) {
+		if ( point[0] >= zone->r.absmin[0] && point[0] <= zone->r.absmax[0] &&
+			point[1] >= zone->r.absmin[1] && point[1] <= zone->r.absmax[1] &&
+			point[2] >= zone->r.absmin[2] && point[2] <= zone->r.absmax[2] )
+			return qtrue;
+	}
+	return qfalse;
+}
+
+/*
+Ball rescue: a ball that left the playable space comes back. Returns the
+reason, or NULL when the ball is fine.
+  - its centre is in an autoball_reset volume
+  - it fell far below its kick-off spot (out of the map) or flew far away
+  - its centre is stuck in solid geometry (for more than half a second)
+  - no car touched it for g_autoballRescueTime seconds while it was away
+    from its spot (on top of a goal, in a gap no car reaches; 0 = off)
+*/
+static const char *G_Autoball_RescueReason( gentity_t *ball ) {
+	const float *org = ball->r.currentOrigin;
+	vec3_t delta;
+	int idle;
+
+	if ( G_Autoball_InResetVolume( org ) )
+		return "out of play";
+	if ( org[2] < ball->ballHome[2] - AUTOBALL_RESCUE_DROP )
+		return "fell out of the arena";
+	VectorSubtract( org, ball->ballHome, delta );
+	if ( VectorLength( delta ) > AUTOBALL_RESCUE_FAR )
+		return "flew out of the arena";
+
+	if ( trap_PointContents( org, ball->s.number ) & CONTENTS_SOLID ) {
+		if ( !ball->ballSolidSince )
+			ball->ballSolidSince = level.time;
+		else if ( level.time - ball->ballSolidSince > 500 )
+			return "stuck in the map";
+	} else {
+		ball->ballSolidSince = 0;
+	}
+
+	/* untouched: every car hit restarts the clock. Speed doesn't count, a
+	   ball can roll slowly or bounce on a roof for a long time. A ball on
+	   its own spot is not out of reach, a reset would not change anything. */
+	if ( ( ball->ballLastTouchTime && level.time - ball->ballLastTouchTime < 1000 ) ||
+		Distance( org, ball->ballHome ) < 2.0f * ( ball->ballRadius > 0.0f ? ball->ballRadius : AUTOBALL_DEFAULT_RADIUS ) ) {
+		ball->ballStillSince = 0;
+	} else if ( !ball->ballStillSince ) {
+		ball->ballStillSince = level.time;
+	}
+	idle = g_autoballRescueTime.integer;
+	if ( idle > 0 && ball->ballStillSince && level.time - ball->ballStillSince > idle * 1000 )
+		return "out of reach";
+	return NULL;
+}
+
+/* returns qtrue when the rescue restarted the match flow (match ball) */
+static qboolean G_Autoball_RescueBall( gentity_t *ball, gentity_t *mainBall ) {
+	const char *reason = G_Autoball_RescueReason( ball );
+
+	if ( !reason )
+		return qfalse;
+	G_LogPrintf( "AutoballRescue: %i %s\n", ball->s.number, reason );
+	if ( ball != mainBall && Q_stricmp( reason, "out of reach" ) &&
+		ball->ballRescueTime && level.time - ball->ballRescueTime < 5000 ) {
+		/* its own spot is bad (a test ball spawned in a wall): remove it */
+		trap_SendServerCommand( -1, "print \"A ball kept leaving the arena and was removed.\n\"" );
+		G_Autoball_RemoveBall( ball );
+		return qfalse;
+	}
+	ball->ballRescueTime = level.time;
+	if ( ball != mainBall ) {
+		/* an extra ball (g_autoballBalls) just goes back to its spot */
+		trap_SendServerCommand( -1, va( "print \"A ball was %s and is back on its spot.\n\"",
+			!Q_stricmp( reason, "out of reach" ) ? "out of reach" : "out of play" ) );
+		G_Autoball_ResetBall( ball );
+		return qfalse;
+	}
+	/* the match ball: a new kick-off, so nobody gets a head start */
+	trap_SendServerCommand( -1, va( "cp \"Ball %s\nNew kick-off\"", reason ) );
+	trap_SendServerCommand( -1, va( "print \"Ball %s - new kick-off.\n\"", reason ) );
+	G_Autoball_StartKickoff( ball );
+	return qtrue;
+}
+
 static void G_Autoball_MatchFrame( void ) {
 	gentity_t *ball, *goal;
 
@@ -1459,6 +1563,8 @@ static void G_Autoball_MatchFrame( void ) {
 					break;
 				}
 				G_Autoball_JudgeTouch( any );
+				if ( G_Autoball_RescueBall( any, ball ) )
+					break;
 			}
 		}
 		break;

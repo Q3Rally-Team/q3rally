@@ -578,7 +578,7 @@ only marks the goal space the ball has to enter.
 static qboolean CMod_IsVolumeEntityClass( const char *classname ) {
 	if ( !Q_stricmpn( classname, "trigger_", 8 ) )
 		return qtrue;
-	if ( !Q_stricmp( classname, "autoball_goal" ) )
+	if ( !Q_stricmp( classname, "autoball_goal" ) || !Q_stricmp( classname, "autoball_reset" ) )
 		return qtrue;
 	return qfalse;
 }

@@ -16,6 +16,7 @@ Lines used:
   AutoballShot / AutoballSave / AutoballAssist  client team
   AutoballDemo  rammer victim kmh
   AutoballSample ballKmh height x y redTurbo blueTurbo redKmh blueKmh
+  AutoballRescue ball reason              ball put back (left the arena)
 The hints at the end are rules of thumb, not truths: compare several
 matches and change one cvar at a time.
 """
@@ -29,7 +30,7 @@ LINE = re.compile(r"^\s*(\d+):(\d)(\d)\s+(\w+):\s?(.*)$")
 
 def new_match(info):
     return {"info": info, "names": {}, "plays": [], "goals": [], "touches": [], "shots": [],
-            "saves": [], "assists": [], "demos": [], "samples": [], "live_since": None,
+            "saves": [], "assists": [], "demos": [], "samples": [], "rescues": [], "live_since": None,
             "live_time": 0.0, "end": None}
 
 
@@ -67,6 +68,11 @@ def parse(paths):
                     nm = re.search(r"n\\([^\\]*)", rest)
                     if nm:
                         cur["names"][int(parts[0])] = re.sub(r"\^.", "", nm.group(1))
+                elif kind == "AutoballKickoff":
+                    # a kick-off ends a running play (e.g. after a ball rescue)
+                    if cur["live_since"] is not None:
+                        cur["live_time"] += t - cur["live_since"]
+                        cur["live_since"] = None
                 elif kind == "AutoballLive":
                     cur["live_since"] = t
                     cur["plays"].append({"start": t, "goal": None})
@@ -91,6 +97,8 @@ def parse(paths):
                     cur["assists"].append(tuple(int(x) for x in parts[:2]))
                 elif kind == "AutoballDemo":
                     cur["demos"].append(tuple(int(x) for x in parts[:3]))
+                elif kind == "AutoballRescue":
+                    cur["rescues"].append(" ".join(parts[1:]))
                 elif kind == "AutoballSample":
                     cur["samples"].append(tuple(int(x) for x in parts[:8]))
     return matches
@@ -151,6 +159,10 @@ def report(match, index):
     print(f"  demolitions {len(demos)} ({len(demos) / live_min:.2f}/min), "
           f"avg ram speed {mean([d[2] for d in demos]):.0f} km/h")
 
+    if match["rescues"]:
+        print(f"  ball rescues {len(match['rescues'])}: " + ", ".join(match["rescues"]))
+        hints.append("The ball had to be rescued: check the map for spots no car can reach "
+                     "(autoball_reset volumes) or holes in the arena.")
     samples = match["samples"]
     if samples:
         air = sum(1 for s in samples if s[1] > 40) / len(samples)

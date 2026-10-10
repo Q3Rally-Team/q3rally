@@ -2686,6 +2686,11 @@ Also needed: team_CTF_redplayer / team_CTF_blueplayer (kick-off spots), team_CTF
 "team" team that defends this goal: red or blue (default red)*/
 
 
+/*QUAKED autoball_reset (1 .5 0) ?
+Autoball ball rescue volume (brush entity, use common/trigger; it is never solid). A ball whose centre enters it is put back: the match ball with a new kick-off, an extra ball (g_autoballBalls) on its own spot.
+Use it where a ball can get but no car can: roofs, gaps, ledges, anything outside the arena. Balls that fall out of the map, get stuck in a wall, or stay untouched away from their spot for g_autoballRescueTime seconds (default 20) are rescued automatically.*/
+
+
 //ROADSIDE OBJECTS
 
 /*QUAKED rally_misc_cone (1 .5 0) (-6 -6 -7) (6 6 7)
