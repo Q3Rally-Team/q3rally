@@ -65,6 +65,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_LEFT			19
 #define ID_RIGHT		20
 #define ID_PLATE		21
+#define ID_SETUP_ROW	22
 #define ID_COUNTRY		22
 #define ID_AVATAR		23
 // END
@@ -80,6 +81,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_AVATAR_IMPORT_PATH	50
 #define ID_AVATAR_IMPORT_CONFIRM	51
 #define ID_AVATAR_IMPORT_CANCEL	52
+#define ID_AVATAR_IMPORT_BROWSE	53
+#define ID_AVATAR_PRESET0		60	/* 60 .. 60 + UI_MAX_AVATAR_PRESETS - 1 */
 
 #define TAB_PROFILE		0
 #define TAB_VEHICLE		1
@@ -121,20 +124,58 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PLAYERSETTINGS_PROFILE_ROW_HEIGHT		36
 
 #define PLAYERSETTINGS_BACK_BUTTON_LEFT			48
+
+/* Vehicle tab: showroom card (left) and setup card (right), like the profile cards. */
+#define VEHICLE_SHOW_X			48
+#define VEHICLE_SHOW_W			344
+#define VEHICLE_SETUP_X			408
+#define VEHICLE_SETUP_W			184
+#define VEHICLE_CARD_Y			126
+#define VEHICLE_CARD_H			294
+#define VEHICLE_PREVIEW_X		( VEHICLE_SHOW_X + 8 )
+#define VEHICLE_PREVIEW_Y		( VEHICLE_CARD_Y + 30 )
+#define VEHICLE_PREVIEW_W		( VEHICLE_SHOW_W - 16 )
+#define VEHICLE_PREVIEW_H		138
+#define VEHICLE_NAME_Y			( VEHICLE_PREVIEW_Y + VEHICLE_PREVIEW_H + 8 )
+#define VEHICLE_SAVED_Y			( VEHICLE_CARD_Y + 232 )
+#define VEHICLE_ROW_Y			( VEHICLE_CARD_Y + 30 )
+#define VEHICLE_ROW_H			44
+#define VEHICLE_ROW_GAP			4
 #define PLAYERSETTINGS_BACK_BUTTON_Y			440
 
 #define PLAYERSETTINGS_MAX_ACHIEVEMENT_TIERS            BG_ACHIEVEMENT_MAX_TIERS
 #define PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE            2
 #define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_ROW_HEIGHT  22
-#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_LEFT         56
-#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_WIDTH       104
-#define PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT           168
-#define PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH          416
+#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_LEFT         PLAYERSETTINGS_SPLIT_NAV_X
+#define PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_WIDTH       PLAYERSETTINGS_SPLIT_NAV_WIDTH
+#define PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT           PLAYERSETTINGS_SPLIT_DETAIL_X
+#define PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH          PLAYERSETTINGS_SPLIT_DETAIL_WIDTH
 #define PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT       46
 #define PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_GAP          4
 #define PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE            28
-#define PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP              158
-#define PLAYERSETTINGS_ACHIEVEMENT_BODY_BOTTOM           412
+#define PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP              PLAYERSETTINGS_SPLIT_BODY_TOP
+#define PLAYERSETTINGS_ACHIEVEMENT_BODY_BOTTOM           PLAYERSETTINGS_SPLIT_BODY_BOTTOM
+#define PLAYERSETTINGS_ACHIEVEMENT_TIER_TOP              ( PLAYERSETTINGS_SPLIT_BODY_TOP + 30 )
+
+/* Stats and achievements use the split layout of the settings menus
+ * (Config, Graphics): a category card on the left and a detail card on the
+ * right, aligned with the two profile cards so switching tabs keeps the
+ * same frame. */
+#define PLAYERSETTINGS_SPLIT_TOP			126
+#define PLAYERSETTINGS_SPLIT_HEIGHT			294
+#define PLAYERSETTINGS_SPLIT_BOTTOM			( PLAYERSETTINGS_SPLIT_TOP + PLAYERSETTINGS_SPLIT_HEIGHT )
+#define PLAYERSETTINGS_SPLIT_NAV_X			48
+#define PLAYERSETTINGS_SPLIT_NAV_WIDTH		112
+#define PLAYERSETTINGS_SPLIT_DETAIL_X		176
+#define PLAYERSETTINGS_SPLIT_DETAIL_WIDTH		416
+#define PLAYERSETTINGS_SPLIT_LABEL_INSET		16
+#define PLAYERSETTINGS_SPLIT_LABEL_Y			( PLAYERSETTINGS_SPLIT_TOP + 18 )
+#define PLAYERSETTINGS_SPLIT_BODY_TOP		( PLAYERSETTINGS_SPLIT_TOP + 32 )
+#define PLAYERSETTINGS_SPLIT_BODY_BOTTOM		( PLAYERSETTINGS_SPLIT_BOTTOM - 8 )
+/* Cells pad their text by 8, so cell text lines up with the card label. */
+#define PLAYERSETTINGS_SPLIT_BODY_LEFT		( PLAYERSETTINGS_SPLIT_DETAIL_X + 8 )
+#define PLAYERSETTINGS_SPLIT_BODY_RIGHT		( PLAYERSETTINGS_SPLIT_DETAIL_X + PLAYERSETTINGS_SPLIT_DETAIL_WIDTH - 8 )
+#define PLAYERSETTINGS_SPLIT_NAV_ROW_HEIGHT		21
 
 #define PLAYERSETTINGS_STATS_OVERVIEW_COLUMNS		4
 #define PLAYERSETTINGS_STATS_OVERVIEW_TILE_HEIGHT	50.0f
@@ -143,7 +184,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* Pages with more tiles than fit in three rows switch to a wider grid. */
 #define PLAYERSETTINGS_STATS_MODES_WIDE_COLUMNS	4
 #define PLAYERSETTINGS_STATS_MODES_MAX_NARROW_ITEMS	9
-#define PLAYERSETTINGS_STATS_MODE_TILE_HEIGHT		80.0f
+#define PLAYERSETTINGS_STATS_MODE_TILE_HEIGHT		76.0f
+#define PLAYERSETTINGS_STATS_MODE_TILE_ROW_GAP		6.0f
 #define PLAYERSETTINGS_STATS_MODE_TILE_GAP		8.0f
 #define PLAYERSETTINGS_STATS_MODES_FIRST_PAGE_COUNT	5
 #define PLAYERSETTINGS_STATS_CARD_BOTTOM		PLAYERSETTINGS_BACK_BUTTON_Y
@@ -168,6 +210,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 static vec4_t profileRowEvenFillColor = { 0.10f, 0.10f, 0.10f, 0.60f };
 static vec4_t profileRowOddFillColor = { 0.14f, 0.14f, 0.14f, 0.60f };
 static vec4_t profileRowBorderColor = { 0.35f, 0.35f, 0.35f, 0.85f };
+static vec4_t playerSettingsBorderColor = UI_FRONTEND_COLOR_BORDER;
 static vec4_t avatarImageBackgroundColor = { 0.05f, 0.05f, 0.05f, 0.80f };
 static vec4_t avatarImageMissingColor = { 0.6f, 0.2f, 0.2f, 1.0f };
 static vec4_t playerSettingsScrimColor = UI_FRONTEND_COLOR_SCRIM;
@@ -216,6 +259,8 @@ static void PlayerSettings_AvatarImportMenuEvent( void *ptr, int event );
 static sfxHandle_t PlayerSettings_AvatarImportKey( int key );
 static void PlayerSettings_AvatarImportDraw( void );
 static void PlayerSettings_OpenAvatarImport( void );
+static void PlayerSettings_PollDroppedAvatar( qboolean uploadScreen );
+static void PlayerSettings_DiscardDroppedFile( void );
 static void PlayerSettings_DrawVehicleControl( void *self );
 static void PlayerSettings_DrawFavoriteButton( void *self );
 static void PlayerSettings_DrawVehiclePanelBackground( void );
@@ -398,10 +443,10 @@ typedef struct {
 
 /* Keep the overview separate, then split mode records into readable groups. */
 static const playersettingsStatsCategory_t s_statsCategories[] = {
-	{ "Career Overview", STATS_ROW_PLAYER_SCORE, STATS_ROW_VEHICLE },
-	{ "Racing Modes", STATS_ROW_RACING_HEADER, STATS_ROW_TEAM_RACING_DM_COMPLETED },
-	{ "Arena & Team Modes", STATS_ROW_DERBY_HEADER, STATS_ROW_COUNT - 1 },
-	{ "Awards & Records", STATS_ROW_AWARDS, STATS_ROW_AWARDS }
+	{ "Career overview", STATS_ROW_PLAYER_SCORE, STATS_ROW_VEHICLE },
+	{ "Racing modes", STATS_ROW_RACING_HEADER, STATS_ROW_TEAM_RACING_DM_COMPLETED },
+	{ "Arena & team modes", STATS_ROW_DERBY_HEADER, STATS_ROW_COUNT - 1 },
+	{ "Awards & records", STATS_ROW_AWARDS, STATS_ROW_AWARDS }
 };
 
 #define PLAYERSETTINGS_RANK_ENTRY( name, threshold ) { name, threshold },
@@ -442,6 +487,7 @@ typedef struct {
 	menutext_s			back;
 	menutext_s			customize;
 	menutext_s			plate;
+	menutext_s			setupRows[3];	/* paint, wheels, driver */
 
 	menubitmap_s		left;
 	menutext_s			modelname;
@@ -482,10 +528,14 @@ typedef struct {
 	char		avatarDisplayPath[MAX_OSPATH];
 	char		avatarActionLine[64];
 	menuframework_s	avatarImportMenu;
+	menutext_s		avatarImportBrowse;
+	menutext_s		avatarPresetTiles[UI_MAX_AVATAR_PRESETS];
+	qhandle_t		avatarPresetShaders[UI_MAX_AVATAR_PRESETS];
 	menufield_s		avatarImportPath;
 	menutext_s		avatarImportConfirm;
 	menutext_s		avatarImportCancel;
 	char		avatarImportStatus[128];
+	int			avatarImportResult;
 	playersettingsPaginationState_t	statsPagination;
 	playersettingsPaginationState_t	achievementsPagination;
 	playersettingsPaginationInfo_t	statsPaginationInfo;
@@ -1026,7 +1076,7 @@ static void PlayerSettings_SetAvatarProfileName( const char *profileName ) {
 
 	if ( profileName[0] ) {
 		/* Read the avatar path directly from the profile JSON.
-		 * The wizard saves the full preset path (e.g. gfx/avatars/preset/driver_01)
+		 * The wizard saves the full preset path (e.g. gfx/avatars/preset/helmet_13)
 		 * into info.avatar — use that as-is as the shader name.
 		 * Only fall back to the legacy profile-name-based path if info.avatar
 		 * is empty (pre-wizard profiles or manually cleared). */
@@ -1322,23 +1372,34 @@ static void PlayerSettings_DrawAvatarImage( void *self ) {
 	     strstr( s_playersettings.profileInfo.avatar, "gfx/avatars/custom/" ) ) {
 		line1 = "Custom image";
 		line2 = "";
+	} else if ( UI_AvatarPresetIndex( s_playersettings.profileInfo.avatar ) >= 0 ) {
+		Q_strncpyz( combinedLine, uiAvatarPresets[UI_AvatarPresetIndex( s_playersettings.profileInfo.avatar )].name,
+		            sizeof( combinedLine ) );
+		line1 = combinedLine;
+		line2 = "";
 	} else if ( s_playersettings.avatarProfileName[0] ) {
-		Com_sprintf( combinedLine, sizeof( combinedLine ), "Preset: %s", s_playersettings.avatarProfileName );
+		Q_strncpyz( combinedLine, "No avatar yet", sizeof( combinedLine ) );
 		line1 = combinedLine;
 		line2 = "";
 	} else {
-		Com_sprintf( combinedLine, sizeof( combinedLine ), "No active profile. Create or select a profile to display an avatar." );
+		Q_strncpyz( combinedLine, "No active profile", sizeof( combinedLine ) );
 		line1 = combinedLine;
 		line2 = "";
 	}
 
-	Frontend_DrawText( basex, textLineY, line1, UI_LEFT | UI_SMALLFONT,
-	                   focus ? playerSettingsAccentColor : playerSettingsTextColor );
+	/* Text stays left of the preview box (textRight) instead of running into it. */
+	PlayerSettings_DrawFittedStatsText( basex, textLineY, textRight, line1, UI_SMALLFONT,
+	                                    focus ? playerSettingsAccentColor : playerSettingsTextColor );
 	actionLine = s_playersettings.avatarActionLine;
-	if ( !disabled && actionLine[0] ) {
-		Frontend_DrawText( basex, textLineY + SMALLCHAR_HEIGHT + 4, actionLine,
-		                   UI_LEFT | UI_SMALLFONT,
-		                   focus ? playerSettingsAccentColor : playerSettingsMutedColor );
+	if ( actionLine[0] ) {
+		PlayerSettings_DrawFittedStatsText( basex, textLineY + SMALLCHAR_HEIGHT + 6, textRight,
+		                                    actionLine, UI_SMALLFONT,
+		                                    focus ? playerSettingsAccentColor : playerSettingsMutedColor );
+	}
+	if ( !disabled && UI_Profile_HasActiveProfile() ) {
+		PlayerSettings_DrawFittedStatsText( basex, textLineY + SMALLCHAR_HEIGHT * 2 + 12, textRight,
+		                                    "or drop a file here", UI_SMALLFONT,
+		                                    playerSettingsMutedColor );
 	}
 
 	secondaryStyle = UI_LEFT | UI_SMALLFONT;
@@ -1476,80 +1537,159 @@ static void PlayerSettings_DrawBackItem( void *self ) {
 static void PlayerSettings_DrawVehicleControl( void *self ) {
 	menubitmap_s *item;
 	qboolean focus;
-	const char *label;
 
 	item = (menubitmap_s *)self;
 	focus = ( Menu_ItemAtCursor( item->generic.parent ) == &item->generic );
-	label = item->generic.id == ID_LEFT ? "<  Previous" : "Next  >";
 	Frontend_DrawButtonFocused( item->generic.left, item->generic.top,
 	                     item->generic.right - item->generic.left,
 	                     item->generic.bottom - item->generic.top,
-	                     label, uis.tFrac, focus, UI_CENTER );
+	                     item->generic.id == ID_LEFT ? "<" : ">", uis.tFrac, focus, UI_CENTER );
 }
 
 static void PlayerSettings_DrawFavoriteButton( void *self ) {
 	menubitmap_s *item;
 	qboolean focus;
-	qboolean disabled;
+	qboolean hovered;
+	qboolean empty;
 	int slot;
-	char label[32];
+	int x, y, w, h;
+	qhandle_t icon;
+	vec4_t line;
 
 	item = (menubitmap_s *)self;
 	focus = ( Menu_ItemAtCursor( item->generic.parent ) == &item->generic );
-	disabled = ( qboolean )( item->generic.flags & ( QMF_GRAYED | QMF_INACTIVE ) );
-	slot = item->generic.id - ID_FAVORITE1 + 1;
-	Com_sprintf( label, sizeof( label ), "Favorite %d", slot );
+	empty = ( qboolean )( item->generic.flags & ( QMF_GRAYED | QMF_INACTIVE ) );
+	slot = item->generic.id - ID_FAVORITE1;
+	x = item->generic.left; y = item->generic.top;
+	w = item->generic.right - x; h = item->generic.bottom - y;
+	hovered = !empty && UI_CursorInRect( x, y, w, h );
 
-	if ( disabled ) {
-		Frontend_DrawText( ( item->generic.left + item->generic.right ) / 2,
-		                   item->generic.top + 8, "Empty",
+	/* A saved setup is shown by its car, an empty slot as an outline. */
+	if ( empty ) {
+		Vector4Copy( playerSettingsMutedColor, line );
+		line[3] = 0.35f * uis.tFrac;
+		UI_FillRect( x, y + h - 1, w, 1, line );
+		Frontend_DrawText( x + w / 2, y + ( h - SMALLCHAR_HEIGHT ) / 2, "Empty",
 		                   UI_CENTER | UI_SMALLFONT, playerSettingsMutedColor );
 		return;
 	}
 
-	Frontend_DrawButtonFocused( item->generic.left, item->generic.top,
-	                     item->generic.right - item->generic.left,
-	                     item->generic.bottom - item->generic.top,
-	                     label, uis.tFrac, focus, UI_CENTER );
+	Frontend_DrawPanel( x, y, w, h, uis.tFrac,
+	                    ( focus || hovered ) ? UI_FRONTEND_STYLE_ACTIVE : UI_FRONTEND_STYLE_CARD );
+	icon = s_playersettings.favIcons[slot][0] ?
+	       trap_R_RegisterShaderNoMip( s_playersettings.favIcons[slot] ) : 0;
+	if ( icon ) {
+		trap_R_SetColor( NULL );
+		UI_DrawHandlePic( x + ( w - h ) / 2, y, h, h, icon );
+	}
+	Frontend_DrawText( x + 4, y + 3, va( "%d", slot + 1 ), UI_LEFT | UI_SMALLFONT,
+	                   ( focus || hovered ) ? playerSettingsAccentColor : playerSettingsMutedColor );
+}
+
+/*
+=================
+PlayerSettings_DrawSetupRow
+
+Paint / Wheels / Driver: icon, label and current choice. Selecting a row
+opens Customize vehicle.
+=================
+*/
+static void PlayerSettings_DrawSetupRow( void *self ) {
+	static const char *const labels[3] = { "Paint", "Wheels", "Driver" };
+	menutext_s *item;
+	qboolean focus;
+	qboolean hovered;
+	int row;
+	int x, y, w, h;
+	char model[MAX_QPATH];
+	char value[MAX_QPATH];
+	char iconPath[MAX_QPATH];
+	char *slash;
+	qhandle_t icon;
+	vec4_t line;
+
+	item = (menutext_s *)self;
+	row = item - s_playersettings.setupRows;
+	if ( row < 0 || row > 2 ) {
+		return;
+	}
+	focus = ( Menu_ItemAtCursor( item->generic.parent ) == &item->generic );
+	x = item->generic.left; y = item->generic.top;
+	w = item->generic.right - x; h = item->generic.bottom - y;
+	hovered = UI_CursorInRect( x, y, w, h );
+
+	if ( focus || hovered ) {
+		Frontend_DrawPanel( x, y, w, h, uis.tFrac, UI_FRONTEND_STYLE_ACTIVE );
+	}
+	Vector4Copy( playerSettingsMutedColor, line );
+	line[3] = 0.3f * uis.tFrac;
+	UI_FillRect( x, y + h - 1, w, 1, line );
+
+	value[0] = '\0';
+	iconPath[0] = '\0';
+	if ( row == 0 ) {
+		Q_strncpyz( model, s_playersettings.modelskin, sizeof( model ) );
+		slash = strchr( model, '/' );
+		if ( slash ) {
+			*slash = '\0';
+			Q_strncpyz( value, slash + 1, sizeof( value ) );
+			Com_sprintf( iconPath, sizeof( iconPath ), "models/players/%s/icon_%s", model, slash + 1 );
+		}
+	} else if ( row == 1 ) {
+		char rimModel[MAX_QPATH];
+		UI_RimModelName( s_playersettings.rimskin, rimModel, sizeof( rimModel ) );
+		Com_sprintf( value, sizeof( value ), "%s %s", UI_RimBrandName( s_playersettings.rimskin ), rimModel );
+		Com_sprintf( iconPath, sizeof( iconPath ), "models/players/wheels/icon_%s", s_playersettings.rimskin );
+	} else {
+		Q_strncpyz( value, s_playersettings.headskin, sizeof( value ) );
+		Com_sprintf( iconPath, sizeof( iconPath ), "models/players/heads/icon_%s", s_playersettings.headskin );
+	}
+
+	icon = iconPath[0] ? trap_R_RegisterShaderNoMip( iconPath ) : 0;
+	if ( icon ) {
+		trap_R_SetColor( NULL );
+		UI_DrawHandlePic( x + 4, y + 4, h - 8, h - 8, icon );
+	}
+	Frontend_DrawText( x + h + 4, y + 8, labels[row], UI_LEFT | UI_SMALLFONT,
+	                   ( focus || hovered ) ? playerSettingsAccentColor : playerSettingsMutedColor );
+	PlayerSettings_DrawFittedStatsText( x + h + 4, y + 23, x + w - 6,
+	                                    value[0] ? value : "--", UI_SMALLFONT,
+	                                    playerSettingsTextColor );
 }
 
 static void PlayerSettings_DrawVehiclePanelBackground( void ) {
+	char name[MAX_QPATH];
 	const char *modelName;
 
 	modelName = s_playersettings.modelname.string;
 	if ( !modelName || !modelName[0] ) {
 		modelName = "Unknown vehicle";
 	}
+	Q_strncpyz( name, modelName, sizeof( name ) );
+	if ( name[0] >= 'a' && name[0] <= 'z' ) {
+		name[0] -= 'a' - 'A';
+	}
 
-	Frontend_DrawCard( PLAYERSETTINGS_PROFILE_PANEL_LEFT,
-	                   PLAYERSETTINGS_PROFILE_PANEL_TOP,
-	                   PLAYERSETTINGS_PROFILE_PANEL_WIDTH, 294,
+	/* Showroom: the car, its name between the arrows, saved setups below. */
+	Frontend_DrawCard( VEHICLE_SHOW_X, VEHICLE_CARD_Y, VEHICLE_SHOW_W, VEHICLE_CARD_H,
 	                   uis.tFrac, qfalse );
-	Frontend_DrawCard( 64, 150, 330, 168, uis.tFrac, qfalse );
-	Frontend_DrawCard( 410, 150, 166, 194, uis.tFrac, qfalse );
+	Frontend_DrawText( VEHICLE_SHOW_X + 16, VEHICLE_CARD_Y + 18, "Showroom",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+	if ( s_playersettings.numModels > 0 ) {
+		Frontend_DrawText( VEHICLE_SHOW_X + VEHICLE_SHOW_W - 16, VEHICLE_CARD_Y + 18,
+		                   va( "%d / %d", s_playersettings.selectedModel + 1, s_playersettings.numModels ),
+		                   UI_RIGHT | UI_SMALLFONT, playerSettingsMutedColor );
+	}
+	Frontend_DrawText( VEHICLE_SHOW_X + VEHICLE_SHOW_W / 2, VEHICLE_NAME_Y + 4, name,
+	                   UI_CENTER | UI_BIGFONT, playerSettingsTextColor );
+	Frontend_DrawText( VEHICLE_SHOW_X + 16, VEHICLE_SAVED_Y, "Saved setups",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 
-	Frontend_DrawText( 80, 168, "Showroom", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
-	Frontend_DrawText( 229, 168, modelName, UI_CENTER | UI_SMALLFONT,
-	                   playerSettingsTextColor );
-
-	Frontend_DrawText( 426, 168, "Vehicle details", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
-	Frontend_DrawText( 426, 198, "Model", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
-	Frontend_DrawText( 560, 198, modelName, UI_RIGHT | UI_SMALLFONT,
-	                   playerSettingsTextColor );
-	Frontend_DrawText( 426, 222, "Skin", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
-	Frontend_DrawText( 560, 222, s_playersettings.modelskin,
-	                   UI_RIGHT | UI_SMALLFONT, playerSettingsTextColor );
-	Frontend_DrawText( 426, 246, "Rim", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
-	Frontend_DrawText( 560, 246, s_playersettings.rimskin,
-	                   UI_RIGHT | UI_SMALLFONT, playerSettingsTextColor );
-
-	Frontend_DrawText( 64, 340, "Saved setups", UI_LEFT | UI_SMALLFONT,
-	                   playerSettingsMutedColor );
+	/* Setup: what is fitted, each row opens Customize vehicle. */
+	Frontend_DrawCard( VEHICLE_SETUP_X, VEHICLE_CARD_Y, VEHICLE_SETUP_W, VEHICLE_CARD_H,
+	                   uis.tFrac, qfalse );
+	Frontend_DrawText( VEHICLE_SETUP_X + 16, VEHICLE_CARD_Y + 18, "Setup",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 }
 
 static void PlayerSettings_SetWidgetVisible( menucommon_s *item, qboolean visible ) {
@@ -2030,58 +2170,96 @@ static void PlayerSettings_GetStatsRowBounds( int row, int *top, int *bottom ) {
 
 
 
-static void PlayerSettings_DrawStatsPanelBackground( void ) {
-static const char *const pageLabels[] = { "OVERVIEW", "RACING", "ARENA", "RECORDS" };
-vec4_t titleColor;
-vec4_t titleAccentColor;
-int panelTop;
-int panelBottom;
-int navWidth;
-int navGap;
-int navLeft;
-int i;
-const playersettingsStatsCategory_t *category;
+/*
+=================
+PlayerSettings_DrawSplitCards
 
-PlayerSettings_UpdateStatsPaginationInfo();
-category = PlayerSettings_GetStatsCategory();
-
-panelTop = PLAYERSETTINGS_PROFILE_PANEL_TOP;
-panelBottom = (int)PlayerSettings_GetPanelBottomForContent( PlayerSettings_GetStatsPageContentHeight() );
-
-Frontend_DrawPanel( PLAYERSETTINGS_PROFILE_PANEL_LEFT, panelTop,
-                    PLAYERSETTINGS_PROFILE_PANEL_WIDTH,
-                    panelBottom - panelTop, uis.tFrac,
-                    UI_FRONTEND_STYLE_SURFACE );
-
-Vector4Copy( playerSettingsTextColor, titleColor );
-titleColor[3] *= uis.tFrac;
-Vector4Copy( playerSettingsAccentColor, titleAccentColor );
-titleAccentColor[3] *= uis.tFrac;
-UI_FillRect( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 16, panelTop + 10,
-             UI_FRONTEND_STATUS_DOT, UI_FRONTEND_STATUS_DOT, titleAccentColor );
-Frontend_DrawText( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 32,
-                   panelTop + 4,
-                   category->title, UI_LEFT | UI_BIGFONT,
-                   titleColor );
-UI_FillRect( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 32, panelTop + 24,
-             Frontend_TextWidth( category->title, UI_BIGFONT ), 2,
-             titleAccentColor );
-
-navLeft = PLAYERSETTINGS_PROFILE_PANEL_LEFT + PLAYERSETTINGS_PROFILE_PANEL_WIDTH - 300;
-navWidth = 72;
-navGap = 4;
-for ( i = 0; i < ARRAY_LEN( pageLabels ); ++i ) {
-	playersettingsRect_t *rect;
-	rect = &s_playersettings.statsCategoryRects[i];
-	rect->x = navLeft + i * ( navWidth + navGap );
-	rect->y = panelTop + 6;
-	rect->w = navWidth;
-	rect->h = 20;
-	Frontend_DrawNavButton( (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h,
-	                        pageLabels[i], uis.tFrac,
-	                        i == s_playersettings.statsPagination.currentPage,
-	                        UI_CENTER );
+Left category card and right detail card, each with a quiet section label,
+matching the profile cards and the settings menus.
+=================
+*/
+static void PlayerSettings_DrawSplitCards( const char *navLabel, const char *detailLabel ) {
+	Frontend_DrawCard( PLAYERSETTINGS_SPLIT_NAV_X, PLAYERSETTINGS_SPLIT_TOP,
+	                   PLAYERSETTINGS_SPLIT_NAV_WIDTH, PLAYERSETTINGS_SPLIT_HEIGHT,
+	                   uis.tFrac, qfalse );
+	Frontend_DrawCard( PLAYERSETTINGS_SPLIT_DETAIL_X, PLAYERSETTINGS_SPLIT_TOP,
+	                   PLAYERSETTINGS_SPLIT_DETAIL_WIDTH, PLAYERSETTINGS_SPLIT_HEIGHT,
+	                   uis.tFrac, qfalse );
+	if ( navLabel && navLabel[0] ) {
+		Frontend_DrawText( PLAYERSETTINGS_SPLIT_NAV_X + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		                   PLAYERSETTINGS_SPLIT_LABEL_Y, navLabel,
+		                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+	}
+	if ( detailLabel && detailLabel[0] ) {
+		PlayerSettings_DrawFittedStatsText(
+			PLAYERSETTINGS_SPLIT_DETAIL_X + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+			PLAYERSETTINGS_SPLIT_LABEL_Y,
+			PLAYERSETTINGS_SPLIT_DETAIL_X + PLAYERSETTINGS_SPLIT_DETAIL_WIDTH - PLAYERSETTINGS_SPLIT_LABEL_INSET,
+			detailLabel, UI_SMALLFONT, playerSettingsMutedColor );
+	}
 }
+
+/*
+=================
+PlayerSettings_DrawSplitNavEntry
+
+One row of the category list. Stores the hit rect for mouse selection.
+=================
+*/
+static void PlayerSettings_DrawSplitNavEntry( playersettingsRect_t *rect, int index,
+	const char *label, const char *count, qboolean selected ) {
+	qboolean hovered;
+	vec4_t color;
+	int textY;
+
+	rect->x = PLAYERSETTINGS_SPLIT_NAV_X + 8;
+	rect->y = PLAYERSETTINGS_SPLIT_BODY_TOP + index * PLAYERSETTINGS_SPLIT_NAV_ROW_HEIGHT;
+	rect->w = PLAYERSETTINGS_SPLIT_NAV_WIDTH - 16;
+	rect->h = PLAYERSETTINGS_SPLIT_NAV_ROW_HEIGHT - 1;
+	hovered = PlayerSettings_RectContainsCursor( rect );
+
+	Frontend_DrawNavButton( (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h,
+	                        "", uis.tFrac, selected, UI_LEFT );
+	Vector4Copy( ( selected || hovered ) ? playerSettingsAccentColor :
+	             playerSettingsMutedColor, color );
+	color[3] *= uis.tFrac;
+	textY = (int)rect->y + ( (int)rect->h - UI_FRONTEND_SMALL_GLYPH_SIZE ) / 2;
+	Frontend_DrawText( (int)rect->x + 8, textY, label, UI_LEFT | UI_SMALLFONT, color );
+	if ( count && count[0] ) {
+		Frontend_DrawText( (int)( rect->x + rect->w - 4 ), textY, count,
+		                   UI_RIGHT | UI_SMALLFONT, color );
+	}
+}
+
+/*
+=================
+PlayerSettings_DrawStatsCell
+
+Open cell with a hairline underneath, like the rows of the settings menus.
+=================
+*/
+static void PlayerSettings_DrawStatsCell( int x, int y, int width, int height ) {
+	vec4_t lineColor;
+
+	Vector4Copy( playerSettingsBorderColor, lineColor );
+	lineColor[3] = 0.55f * uis.tFrac;
+	UI_FillRect( x, y + height - 1, width, 1, lineColor );
+}
+
+static void PlayerSettings_DrawStatsPanelBackground( void ) {
+	static const char *const pageLabels[] = { "Overview", "Racing", "Arena", "Records" };
+	const playersettingsStatsCategory_t *category;
+	int i;
+
+	PlayerSettings_UpdateStatsPaginationInfo();
+	category = PlayerSettings_GetStatsCategory();
+
+	PlayerSettings_DrawSplitCards( "Categories", category->title );
+	for ( i = 0; i < (int)ARRAY_LEN( pageLabels ) &&
+	            i < (int)ARRAY_LEN( s_playersettings.statsCategoryRects ); ++i ) {
+		PlayerSettings_DrawSplitNavEntry( &s_playersettings.statsCategoryRects[i], i,
+			pageLabels[i], NULL, i == s_playersettings.statsPagination.currentPage );
+	}
 }
 
 static void PlayerSettings_DrawStatsModeTile( int index, int itemCount,
@@ -2089,56 +2267,46 @@ static void PlayerSettings_DrawStatsModeTile( int index, int itemCount,
 	int columns;
 	int column;
 	int row;
-	int rowCount;
 	int rowItems;
-	int maxRows;
 	int x;
 	int y;
 	float tileWidth;
 	float tileHeight;
 	float gap;
+	float rowGap;
 	float gridLeft;
-	float gridTop;
 	float gridWidth;
-	float verticalOffset;
 
 	columns = ( itemCount > PLAYERSETTINGS_STATS_MODES_MAX_NARROW_ITEMS ) ?
 	          PLAYERSETTINGS_STATS_MODES_WIDE_COLUMNS : PLAYERSETTINGS_STATS_MODES_COLUMNS;
 	column = index % columns;
 	row = index / columns;
-	rowCount = ( itemCount + columns - 1 ) / columns;
 	gap = PLAYERSETTINGS_STATS_MODE_TILE_GAP;
-	gridLeft = PLAYERSETTINGS_PROFILE_FIELD_LEFT;
-	gridWidth = PLAYERSETTINGS_PROFILE_ROW_RIGHT - gridLeft;
+	rowGap = PLAYERSETTINGS_STATS_MODE_TILE_ROW_GAP;
+	gridLeft = PLAYERSETTINGS_SPLIT_BODY_LEFT;
+	gridWidth = PLAYERSETTINGS_SPLIT_BODY_RIGHT - gridLeft;
 	tileWidth = ( gridWidth - gap * ( columns - 1 ) ) / columns;
 	tileHeight = PLAYERSETTINGS_STATS_MODE_TILE_HEIGHT;
-	maxRows = (int)( ( PLAYERSETTINGS_STATS_CARD_CONTENT_HEIGHT -
-	                    PLAYERSETTINGS_STATS_PAGINATION_RESERVED_HEIGHT + gap ) /
-	                  ( tileHeight + gap ) );
-	if ( maxRows < rowCount ) {
-		maxRows = rowCount;
-	}
-	verticalOffset = ( maxRows - rowCount ) * ( tileHeight + gap ) * 0.5f;
-	gridTop = PlayerSettings_GetScrollContentTop() + 2.0f + verticalOffset;
 	rowItems = itemCount - row * columns;
 	if ( rowItems > columns ) {
 		rowItems = columns;
 	}
+	/* Grid starts at the top like the settings rows; a short last row is
+	 * centred so it does not hang off to one side. */
 	x = (int)( gridLeft + ( gridWidth -
 	     ( rowItems * tileWidth + ( rowItems - 1 ) * gap ) ) * 0.5f +
 	     column * ( tileWidth + gap ) );
-	y = (int)( gridTop + row * ( tileHeight + gap ) );
+	y = (int)( PLAYERSETTINGS_SPLIT_BODY_TOP + row * ( tileHeight + rowGap ) );
 
-	Frontend_DrawPanel( x, y, (int)tileWidth, (int)tileHeight,
-	                    uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
+	PlayerSettings_DrawStatsCell( x, y, (int)tileWidth, (int)tileHeight );
 	PlayerSettings_DrawFittedStatsText( x + 8, y + 4, x + (int)tileWidth - 8,
-	                                    title, UI_SMALLFONT, playerSettingsAccentColor );
+	                                    title, UI_SMALLFONT, playerSettingsMutedColor );
 	PlayerSettings_DrawFittedStatsText( x + 8, y + 20, x + (int)tileWidth - 8,
 	                                    value, UI_BIGFONT, playerSettingsTextColor );
 	PlayerSettings_DrawFittedStatsText( x + 8, y + 44, x + (int)tileWidth - 8,
 	                                    detail, UI_SMALLFONT, playerSettingsMutedColor );
-	PlayerSettings_DrawFittedStatsText( x + 8, y + 59, x + (int)tileWidth - 8,
-	                                    footnote, UI_SMALLFONT, playerSettingsAccentColor );
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 58, x + (int)tileWidth - 8,
+	                                    footnote, UI_SMALLFONT, playerSettingsMutedColor );
 }
 
 static void PlayerSettings_FormatStatsTime( char *buffer, int bufferSize, int timeMs ) {
@@ -2168,10 +2336,18 @@ static void PlayerSettings_DrawStatsModeCountTile( int index, int itemCount,
 	const char *extraPlural, const char *footnote ) {
 	char value[64];
 	char detail[96];
+	char extra[64];
 
 	Com_sprintf( value, sizeof( value ), "%d %s", valueCount,
 	             PlayerSettings_ModePlural( valueCount, valueSingular, valuePlural ) );
-	if ( detailCount >= 0 && extraCount >= 0 ) {
+	if ( detailCount >= 0 && extraCount >= 0 && !footnote ) {
+		/* Narrow arena tiles: second count goes on the footnote line. */
+		Com_sprintf( detail, sizeof( detail ), "%d %s", detailCount,
+		             PlayerSettings_ModePlural( detailCount, detailSingular, detailPlural ) );
+		Com_sprintf( extra, sizeof( extra ), "%d %s", extraCount,
+		             PlayerSettings_ModePlural( extraCount, extraSingular, extraPlural ) );
+		footnote = extra;
+	} else if ( detailCount >= 0 && extraCount >= 0 ) {
 		Com_sprintf( detail, sizeof( detail ), "%d %s  /  %d %s",
 		             detailCount,
 	             PlayerSettings_ModePlural( detailCount, detailSingular, detailPlural ),
@@ -2208,12 +2384,12 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 	if ( modePage == 0 ) {
 		itemCount = PLAYERSETTINGS_STATS_MODES_FIRST_PAGE_COUNT;
 		PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->racingTotalMs );
-		Com_sprintf( detail, sizeof( detail ), "TOTAL %s", timeBuffer );
+		Com_sprintf( detail, sizeof( detail ), "Total %s", timeBuffer );
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Racing",
 			stats->racingWins, "win", "wins", stats->racingPodiums,
 			"podium", "podiums", stats->racingCompleted, "race", "races", detail );
 		PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->racingDmTotalMs );
-		Com_sprintf( detail, sizeof( detail ), "TOTAL %s", timeBuffer );
+		Com_sprintf( detail, sizeof( detail ), "Total %s", timeBuffer );
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Racing DM",
 			stats->racingDmWins, "win", "wins", stats->racingDmPodiums,
 			"podium", "podiums", stats->racingDmCompleted, "race", "races", detail );
@@ -2241,7 +2417,7 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 			stats->derbyWins, "win", "wins", stats->derbyKills,
 			"kill", "kills", stats->derbyCompleted, "match", "matches", NULL );
 		PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->lcsTotalSurvivalMs );
-		Com_sprintf( detail, sizeof( detail ), "SURVIVED %s", timeBuffer );
+		Com_sprintf( detail, sizeof( detail ), "Survived %s", timeBuffer );
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Last Car Standing",
 			stats->lcsWins, "win", "wins", stats->lcsCompleted,
 			"match", "matches", -1, NULL, NULL, detail );
@@ -2261,12 +2437,12 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 			stats->ctf4Wins, "win", "wins", stats->ctf4Captures,
 			"capture", "captures", stats->ctf4Completed, "match", "matches", NULL );
 		PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->dominationZoneHoldMs );
-		Com_sprintf( detail, sizeof( detail ), "ZONE TIME %s", timeBuffer );
+		Com_sprintf( detail, sizeof( detail ), "Zone time %s", timeBuffer );
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "Domination",
 			stats->dominationWins, "win", "wins", stats->dominationCompleted,
 			"match", "matches", -1, NULL, NULL, detail );
 		PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->kothZoneHoldMs );
-		Com_sprintf( detail, sizeof( detail ), "ZONE TIME %s", timeBuffer );
+		Com_sprintf( detail, sizeof( detail ), "Zone time %s", timeBuffer );
 		PlayerSettings_DrawStatsModeCountTile( tile++, itemCount, "King of the Hill",
 			stats->kothWins, "win", "wins", stats->kothCompleted,
 			"match", "matches", -1, NULL, NULL, detail );
@@ -2277,27 +2453,27 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 		itemCount = 8;
 
 		Com_sprintf( value, sizeof( value ), "%d", stats->damageDealt );
-		Com_sprintf( detail, sizeof( detail ), "TAKEN %d", stats->damageTaken );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "DAMAGE DEALT", value, detail, NULL );
+		Com_sprintf( detail, sizeof( detail ), "Taken %d", stats->damageTaken );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Damage dealt", value, detail, NULL );
 
 		Com_sprintf( value, sizeof( value ), "%d", stats->accuracyAwards );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "ACCURACY AWARDS", value,
-		                                  "75% ACCURACY MATCHES", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Accuracy awards", value,
+		                                  "75% accuracy matches", NULL );
 		Com_sprintf( value, sizeof( value ), "%d", stats->excellentAwards );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "EXCELLENT", value,
-		                                  "DOUBLE KILL AWARDS", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Excellent", value,
+		                                  "Double kill awards", NULL );
 		Com_sprintf( value, sizeof( value ), "%d", stats->impressiveAwards );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "IMPRESSIVE", value,
-		                                  "RAIL AWARDS", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Impressive", value,
+		                                  "Rail awards", NULL );
 		Com_sprintf( value, sizeof( value ), "%d", stats->perfectAwards );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "PERFECT", value,
-		                                  "DEATH-FREE MATCHES", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Perfect", value,
+		                                  "Death-free matches", NULL );
 		Com_sprintf( value, sizeof( value ), "%d", stats->flagCaptures );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "FLAGS CAPTURED", value,
-		                                  "TEAM OBJECTIVES", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Flags captured", value,
+		                                  "Team objectives", NULL );
 		Com_sprintf( value, sizeof( value ), "%d", stats->flagAssists );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "FLAG ASSISTS", value,
-		                                  "TEAM SUPPORT", NULL );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Flag assists", value,
+		                                  "Team support", NULL );
 
 		if ( stats->mostUsedVehicle[0] ) {
 			Q_strncpyz( vehicleName, stats->mostUsedVehicle, sizeof( vehicleName ) );
@@ -2321,8 +2497,8 @@ static void PlayerSettings_DrawStatsModesDashboard( const profile_stats_t *stats
 		} else {
 			Q_strncpyz( timeBuffer, "--", sizeof( timeBuffer ) );
 		}
-		Com_sprintf( detail, sizeof( detail ), "DRIVEN %s", timeBuffer );
-		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "TOP VEHICLE",
+		Com_sprintf( detail, sizeof( detail ), "Driven %s", timeBuffer );
+		PlayerSettings_DrawStatsModeTile( tile++, itemCount, "Top vehicle",
 		                                  vehicleName, detail, NULL );
 	}
 }
@@ -2361,24 +2537,24 @@ static void PlayerSettings_DrawCareerRank( const profile_stats_t *stats, int x, 
 	vec4_t partialColor;
 	vec4_t emptyColor;
 
-	Frontend_DrawPanel( x, y, width, 42, uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
+	PlayerSettings_DrawStatsCell( x, y, width, 42 );
 	if ( !UI_Profile_GetRank( stats, &rank ) || !rank.current ) {
-		Frontend_DrawText( x + 10, y + 14, "Rank unavailable", UI_LEFT | UI_SMALLFONT,
+		Frontend_DrawText( x + 8, y + 14, "Rank unavailable", UI_LEFT | UI_SMALLFONT,
 		                   playerSettingsMutedColor );
 		return;
 	}
 
-	Com_sprintf( rankLine, sizeof( rankLine ), "RANK %d / %d  |  %d POINTS",
+	Com_sprintf( rankLine, sizeof( rankLine ), "Rank %d / %d  |  %d points",
 	             rank.index + 1, (int)ARRAY_LEN( s_playerSettingsRankTable ), stats->playerScore );
-	Frontend_DrawText( x + 10, y + 4, rankLine, UI_LEFT | UI_SMALLFONT,
+	Frontend_DrawText( x + 8, y + 4, rankLine, UI_LEFT | UI_SMALLFONT,
 	                   playerSettingsMutedColor );
-	PlayerSettings_DrawFittedStatsText( x + 10, y + 17, x + 184,
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 17, x + 176,
 	                                    rank.current->name, UI_BIGFONT,
 	                                    playerSettingsTextColor );
 
-	segmentX = x + 196.0f;
+	segmentX = x + 188.0f;
 	segmentGap = 2.0f;
-	segmentWidth = ( width - 206.0f - segmentGap * ( ARRAY_LEN( s_playerSettingsRankTable ) - 1 ) ) /
+	segmentWidth = ( width - 196.0f - segmentGap * ( ARRAY_LEN( s_playerSettingsRankTable ) - 1 ) ) /
 	                ARRAY_LEN( s_playerSettingsRankTable );
 	if ( segmentWidth < 1.0f ) {
 		segmentWidth = 1.0f;
@@ -2420,25 +2596,25 @@ static void PlayerSettings_DrawCareerRank( const profile_stats_t *stats, int x, 
 	}
 
 	if ( rank.next ) {
-		Com_sprintf( nextLine, sizeof( nextLine ), "NEXT: %s  |  %d TO GO",
+		Com_sprintf( nextLine, sizeof( nextLine ), "Next: %s  |  %d to go",
 		             rank.next->name, rank.next->minimumScore - stats->playerScore );
 	} else {
-		Q_strncpyz( nextLine, "TOP RANK REACHED", sizeof( nextLine ) );
+		Q_strncpyz( nextLine, "Top rank reached", sizeof( nextLine ) );
 	}
-	PlayerSettings_DrawFittedStatsText( x + 196, y + 25, x + width - 8,
+	PlayerSettings_DrawFittedStatsText( x + 188, y + 25, x + width - 8,
 	                                    nextLine, UI_SMALLFONT,
-	                                    playerSettingsAccentColor );
+	                                    playerSettingsMutedColor );
 }
 
 static void PlayerSettings_DrawCareerMetric( int x, int y, int width,
 	const char *label, const char *value, const char *detail ) {
-	Frontend_DrawPanel( x, y, width, 45, uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-	PlayerSettings_DrawFittedStatsText( x + 7, y + 3, x + width - 7,
+	PlayerSettings_DrawStatsCell( x, y, width, 45 );
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 3, x + width - 8,
 	                                    label, UI_SMALLFONT, playerSettingsMutedColor );
-	PlayerSettings_DrawFittedStatsText( x + 7, y + 15, x + width - 7,
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 15, x + width - 8,
 	                                    value, UI_BIGFONT, playerSettingsTextColor );
-	PlayerSettings_DrawFittedStatsText( x + 7, y + 34, x + width - 7,
-	                                    detail, UI_SMALLFONT, playerSettingsAccentColor );
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 33, x + width - 8,
+	                                    detail, UI_SMALLFONT, playerSettingsMutedColor );
 }
 
 static void PlayerSettings_DrawClosestAchievement( const profile_stats_t *stats,
@@ -2458,29 +2634,28 @@ static void PlayerSettings_DrawClosestAchievement( const profile_stats_t *stats,
 	progress = PlayerSettings_GetAchievementProgress( stats, categoryIndex );
 	unlocked = BG_AchievementUnlockedTiers( category, progress );
 	if ( unlocked >= category->tierCount ) {
-		Com_sprintf( detail, sizeof( detail ), "%d / %d COMPLETE",
+		Com_sprintf( detail, sizeof( detail ), "%d / %d complete",
 		             unlocked, category->tierCount );
 	} else {
 		double remaining;
 		remaining = category->tiers[unlocked].threshold - progress;
 		if ( remaining < 0.0 ) remaining = 0.0;
 		if ( categoryIndex == BG_ACHIEVEMENT_DISTANCE ) {
-			Com_sprintf( remainingText, sizeof( remainingText ), "%.1f KM", remaining );
+			Com_sprintf( remainingText, sizeof( remainingText ), "%.1f km", remaining );
 		} else if ( categoryIndex == BG_ACHIEVEMENT_FUEL ) {
 			Com_sprintf( remainingText, sizeof( remainingText ), "%.1f L", remaining );
 		} else {
-			Com_sprintf( remainingText, sizeof( remainingText ), "%.0f LEFT", remaining );
+			Com_sprintf( remainingText, sizeof( remainingText ), "%.0f left", remaining );
 		}
 		Com_sprintf( detail, sizeof( detail ), "%s - %s",
 		             category->tiers[unlocked].name, remainingText );
 	}
 	Com_sprintf( percent, sizeof( percent ), "%d%%", (int)( fraction * 100.0f + 0.5f ) );
-	PlayerSettings_DrawFittedStatsText( x, y, x + width - 28,
+	PlayerSettings_DrawFittedStatsText( x, y, x + width - 34,
 	                                    category->title, UI_SMALLFONT,
 	                                    playerSettingsTextColor );
-	PlayerSettings_DrawFittedStatsText( x + width - 28, y, x + width,
-	                                    percent, UI_SMALLFONT,
-	                                    playerSettingsAccentColor );
+	Frontend_DrawText( x + width, y, percent, UI_RIGHT | UI_SMALLFONT,
+	                   playerSettingsAccentColor );
 	PlayerSettings_DrawFittedStatsText( x, y + 10, x + width,
 	                                    detail, UI_SMALLFONT,
 	                                    playerSettingsMutedColor );
@@ -2553,68 +2728,90 @@ static void PlayerSettings_DrawAchievementMilestoneBar(
 	}
 }
 
-static void PlayerSettings_DrawModeProgressChip( int x, int y, int width,
+/*
+=================
+PlayerSettings_DrawModeRecordRow
+
+One plain row "Mode ...... 12 / 28", like a settings row. No bar, so it
+does not read as achievement progress.
+=================
+*/
+static void PlayerSettings_DrawModeRecordRow( int x, int y, int width,
 	const char *title, int wins, int completed ) {
 	char value[32];
-	float progress;
+	int valueWidth;
 
-	Frontend_DrawPanel( x, y, width, 62, uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-	PlayerSettings_DrawFittedStatsText( x + 6, y + 4, x + width - 6,
-	                                    title, UI_SMALLFONT, playerSettingsAccentColor );
-	Com_sprintf( value, sizeof( value ), "%d W / %d", wins, completed );
-	PlayerSettings_DrawFittedStatsText( x + 6, y + 20, x + width - 6,
-	                                    value, UI_SMALLFONT, playerSettingsTextColor );
-	progress = completed > 0 ? (float)wins / completed : 0.0f;
-	Frontend_DrawProgress( x + 6, y + 44, width - 12, 4, progress, uis.tFrac );
+	PlayerSettings_DrawStatsCell( x, y, width, 16 );
+	if ( completed >= wins ) {
+		Com_sprintf( value, sizeof( value ), "%d / %d", wins, completed );
+	} else {
+		/* Older profiles did not count won races as played. */
+		Com_sprintf( value, sizeof( value ), "%d won", wins );
+	}
+	valueWidth = Frontend_TextWidth( value, UI_SMALLFONT );
+	Frontend_DrawText( x + width - 8, y + 4, value, UI_RIGHT | UI_SMALLFONT,
+	                   playerSettingsMutedColor );
+	PlayerSettings_DrawFittedStatsText( x + 8, y + 4, x + width - 14 - valueWidth,
+	                                    title, UI_SMALLFONT, playerSettingsTextColor );
 }
 
 static void PlayerSettings_DrawCareerDashboard( const profile_stats_t *stats ) {
+	static const char *const modeTitles[] = {
+		"Racing", "Sprint", "Derby", "Deathmatch", "CTF", "Elimination"
+	};
 	char value[64];
 	char detail[64];
 	char timeBuffer[16];
 	float fractions[PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT];
 	qboolean used[PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT];
+	int modeWins[ARRAY_LEN( modeTitles )];
+	int modeCompleted[ARRAY_LEN( modeTitles )];
 	int categoryCount;
 	int bestIndex;
 	float bestFraction;
-	float tileGap;
-	float tileWidth;
+	int gap;
+	int columnWidth;
 	int left;
 	int right;
-	int gridTop;
+	int metricsTop;
+	int closeTop;
+	int modesTop;
 	int i;
 
-	left = PLAYERSETTINGS_PROFILE_FIELD_LEFT;
-	right = PLAYERSETTINGS_PROFILE_ROW_RIGHT;
-	gridTop = 204;
-	PlayerSettings_DrawCareerRank( stats, left, 156,
-	                              PLAYERSETTINGS_PROFILE_PANEL_WIDTH - PLAYERSETTINGS_PROFILE_PANEL_INNER_MARGIN * 2 );
+	/* One column of content inside the detail card:
+	 * rank, two rows of three metrics, closest achievements, mode record. */
+	left = PLAYERSETTINGS_SPLIT_BODY_LEFT;
+	right = PLAYERSETTINGS_SPLIT_BODY_RIGHT;
+	gap = 8;
+	columnWidth = ( right - left - gap * 2 ) / 3;
+	metricsTop = PLAYERSETTINGS_SPLIT_BODY_TOP + 46;
+	closeTop = metricsTop + 49 * 2 + 6;
+	modesTop = closeTop + 50;
 
-	tileGap = 6.0f;
-	tileWidth = ( 365.0f - tileGap ) / 2.0f;
+	PlayerSettings_DrawCareerRank( stats, left, PLAYERSETTINGS_SPLIT_BODY_TOP, right - left );
+
 	Com_sprintf( value, sizeof( value ), "%.1f km", stats->distanceKm );
-	PlayerSettings_DrawCareerMetric( left, gridTop, (int)tileWidth,
-	                                 "DISTANCE DRIVEN", value, "CAREER TOTAL" );
+	PlayerSettings_DrawCareerMetric( left, metricsTop, columnWidth,
+	                                 "Distance driven", value, "Career total" );
 	Com_sprintf( value, sizeof( value ), "%.1f L", stats->fuelUsed );
-	PlayerSettings_DrawCareerMetric( left + (int)( tileWidth + tileGap ), gridTop, (int)tileWidth,
-	                                 "FUEL USED", value, "CAREER TOTAL" );
+	PlayerSettings_DrawCareerMetric( left + columnWidth + gap, metricsTop, columnWidth,
+	                                 "Fuel used", value, "Career total" );
+	Com_sprintf( value, sizeof( value ), "%.0f km/h", stats->topSpeedKph );
+	PlayerSettings_DrawCareerMetric( left + ( columnWidth + gap ) * 2, metricsTop, columnWidth,
+	                                 "Top speed", value, "Personal record" );
 
 	Com_sprintf( value, sizeof( value ), "%d / %d", stats->kills, stats->deaths );
 	Com_sprintf( detail, sizeof( detail ), "K/D %.2f",
 	             stats->deaths > 0 ? (float)stats->kills / stats->deaths : (float)stats->kills );
-	PlayerSettings_DrawCareerMetric( left, gridTop + 49, (int)tileWidth,
-	                                 "KILLS / DEATHS", value, detail );
+	PlayerSettings_DrawCareerMetric( left, metricsTop + 49, columnWidth,
+	                                 "Kills / deaths", value, detail );
 	Com_sprintf( value, sizeof( value ), "%d / %d", stats->wins, stats->losses );
-	Com_sprintf( detail, sizeof( detail ), "%d MATCHES", stats->gamesPlayed );
-	PlayerSettings_DrawCareerMetric( left + (int)( tileWidth + tileGap ), gridTop + 49, (int)tileWidth,
-	                                 "WINS / LOSSES", value, detail );
-
-	Com_sprintf( value, sizeof( value ), "%.0f km/h", stats->topSpeedKph );
-	PlayerSettings_DrawCareerMetric( left, gridTop + 98, (int)tileWidth,
-	                                 "TOP SPEED", value, "PERSONAL RECORD" );
+	Com_sprintf( detail, sizeof( detail ), "%d matches", stats->gamesPlayed );
+	PlayerSettings_DrawCareerMetric( left + columnWidth + gap, metricsTop + 49, columnWidth,
+	                                 "Wins / losses", value, detail );
 	PlayerSettings_FormatStatsTime( timeBuffer, sizeof( timeBuffer ), stats->bestLapMs );
-	PlayerSettings_DrawCareerMetric( left + (int)( tileWidth + tileGap ), gridTop + 98, (int)tileWidth,
-	                                 "BEST LAP", timeBuffer, "PERSONAL RECORD" );
+	PlayerSettings_DrawCareerMetric( left + ( columnWidth + gap ) * 2, metricsTop + 49, columnWidth,
+	                                 "Best lap", timeBuffer, "Personal record" );
 
 	categoryCount = BG_AchievementCategoryCount();
 	if ( categoryCount > PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT ) {
@@ -2628,10 +2825,8 @@ static void PlayerSettings_DrawCareerDashboard( const profile_stats_t *stats ) {
 			category, PlayerSettings_GetAchievementProgress( stats, i ) );
 	}
 
-	Frontend_DrawPanel( left + 371, gridTop, right - left - 371, 147,
-	                    uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-	Frontend_DrawText( left + 379, gridTop + 5, "CLOSE TO NEXT",
-	                   UI_LEFT | UI_SMALLFONT, playerSettingsAccentColor );
+	Frontend_DrawText( left + 8, closeTop, "Next achievements",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 	for ( i = 0; i < 3; ++i ) {
 		int j;
 		bestIndex = -1;
@@ -2651,39 +2846,30 @@ static void PlayerSettings_DrawCareerDashboard( const profile_stats_t *stats ) {
 		}
 		if ( bestIndex < 0 ) break;
 		used[bestIndex] = qtrue;
-		PlayerSettings_DrawClosestAchievement( stats, left + 379,
-			gridTop + 21 + i * 40, right - ( left + 379 ) - 8,
-			bestIndex, fractions[bestIndex] );
+		PlayerSettings_DrawClosestAchievement( stats,
+			left + i * ( columnWidth + gap ) + 8, closeTop + 13,
+			columnWidth - 16, bestIndex, fractions[bestIndex] );
 	}
 
-	{
-		static const char *const modeTitles[] = {
-			"RACING", "SPRINT", "DERBY", "DEATHMATCH", "CTF", "ELIMINATION"
-		};
-		int modeWins[ARRAY_LEN( modeTitles )];
-		int modeCompleted[ARRAY_LEN( modeTitles )];
-		int modeWidth;
-		int modeGap;
-
-		modeWins[0] = stats->racingWins;
-		modeCompleted[0] = stats->racingCompleted;
-		modeWins[1] = stats->sprintWins;
-		modeCompleted[1] = stats->sprintCompleted;
-		modeWins[2] = stats->derbyWins;
-		modeCompleted[2] = stats->derbyCompleted;
-		modeWins[3] = stats->dmWins;
-		modeCompleted[3] = stats->dmCompleted;
-		modeWins[4] = stats->ctfWins;
-		modeCompleted[4] = stats->ctfCompleted;
-		modeWins[5] = stats->eliminationWins;
-		modeCompleted[5] = stats->eliminationCompleted;
-		modeGap = 5;
-		modeWidth = ( right - left - modeGap * ( ARRAY_LEN( modeTitles ) - 1 ) ) / ARRAY_LEN( modeTitles );
-		for ( i = 0; i < ARRAY_LEN( modeTitles ); ++i ) {
-			PlayerSettings_DrawModeProgressChip( left + i * ( modeWidth + modeGap ),
-				gridTop + 147 + 6, modeWidth, modeTitles[i],
-				modeWins[i], modeCompleted[i] );
-		}
+	modeWins[0] = stats->racingWins;
+	modeCompleted[0] = stats->racingCompleted;
+	modeWins[1] = stats->sprintWins;
+	modeCompleted[1] = stats->sprintCompleted;
+	modeWins[2] = stats->derbyWins;
+	modeCompleted[2] = stats->derbyCompleted;
+	modeWins[3] = stats->dmWins;
+	modeCompleted[3] = stats->dmCompleted;
+	modeWins[4] = stats->ctfWins;
+	modeCompleted[4] = stats->ctfCompleted;
+	modeWins[5] = stats->eliminationWins;
+	modeCompleted[5] = stats->eliminationCompleted;
+	/* Same three columns as the metrics and achievements above. */
+	Frontend_DrawText( left + 8, modesTop, "Wins by mode  (won / played)",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+	for ( i = 0; i < (int)ARRAY_LEN( modeTitles ); ++i ) {
+		PlayerSettings_DrawModeRecordRow( left + ( i % 3 ) * ( columnWidth + gap ),
+			modesTop + 12 + ( i / 3 ) * 17, columnWidth, modeTitles[i],
+			modeWins[i], modeCompleted[i] );
 	}
 }
 
@@ -3043,8 +3229,8 @@ static void PlayerSettings_DrawStatsLabelValue( int row, const char *label, cons
 static void PlayerSettings_DrawStatsMessage( int row, const char *message ) {
         int x;
 
-        x = PLAYERSETTINGS_PROFILE_FIELD_LEFT + PLAYERSETTINGS_PROFILE_LABEL_OFFSET;
-        Frontend_DrawText( x, PLAYERSETTINGS_PROFILE_PANEL_TOP + 102 + ( row * 18 ),
+        x = PLAYERSETTINGS_SPLIT_DETAIL_X + PLAYERSETTINGS_SPLIT_LABEL_INSET;
+        Frontend_DrawText( x, PLAYERSETTINGS_SPLIT_BODY_TOP + 8 + ( row * 18 ),
                            message, UI_LEFT | UI_SMALLFONT, playerSettingsTextColor );
 }
 
@@ -3089,6 +3275,8 @@ static void PlayerSettings_DrawBackShaders( void ) {
         default:
                 statusLabel = "Driver";
                 PlayerSettings_DrawProfilePanelBackground();
+                /* An image dropped onto the window becomes the avatar. */
+                PlayerSettings_PollDroppedAvatar( qfalse );
                 break;
         }
 
@@ -3607,121 +3795,47 @@ static void PlayerSettings_DrawAchievementsPanelBackground( void ) {
 		"Driven", "Kills", "Race", "Sprint", "Flags", "Assist",
 		"Fuel", "Accur.", "Excel.", "Impr.", "Perfect"
 	};
+	const bgAchievementCategoryDef_t *current;
+	const profile_stats_t *stats;
 	int totalUnlocked;
 	int totalTiers;
 	int i;
-	int headerValueX;
 	char summary[48];
-	vec4_t titleColor;
-	vec4_t accentColor;
-	const profile_stats_t *stats;
-	PlayerSettings_UpdateAchievementsPaginationInfo();
 
-	Frontend_DrawPanel( PLAYERSETTINGS_PROFILE_PANEL_LEFT,
-	                    PLAYERSETTINGS_PROFILE_PANEL_TOP,
-	                    PLAYERSETTINGS_PROFILE_PANEL_WIDTH,
-	                    PLAYERSETTINGS_STATS_CARD_BOTTOM - PLAYERSETTINGS_PROFILE_PANEL_TOP,
-	                    uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-	Vector4Copy( playerSettingsTextColor, titleColor );
-	titleColor[3] *= uis.tFrac;
-	Vector4Copy( playerSettingsAccentColor, accentColor );
-	accentColor[3] *= uis.tFrac;
-	UI_FillRect( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 16,
-	             PLAYERSETTINGS_PROFILE_PANEL_TOP + 10,
-	             UI_FRONTEND_STATUS_DOT, UI_FRONTEND_STATUS_DOT, accentColor );
-	Frontend_DrawText( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 32,
-	                   PLAYERSETTINGS_PROFILE_PANEL_TOP + 4,
-	                   "Achievements", UI_LEFT | UI_BIGFONT, titleColor );
-	UI_FillRect( PLAYERSETTINGS_PROFILE_FIELD_LEFT + 32,
-	             PLAYERSETTINGS_PROFILE_PANEL_TOP + 24,
-	             Frontend_TextWidth( "Achievements", UI_BIGFONT ), 2, accentColor );
+	PlayerSettings_UpdateAchievementsPaginationInfo();
+	current = BG_AchievementGetCategory( s_playersettings.achievementsPagination.currentPage );
+	PlayerSettings_DrawSplitCards( "Categories", current ? current->title : NULL );
 
 	stats = UI_Profile_GetActiveStats();
 	totalUnlocked = 0;
 	totalTiers = 0;
-	if ( stats ) {
-		for ( i = 0; i < BG_AchievementCategoryCount(); ++i ) {
-			const bgAchievementCategoryDef_t *category;
-			category = BG_AchievementGetCategory( i );
-			if ( !category ) continue;
-			totalUnlocked += BG_AchievementUnlockedTiers(
-				category, PlayerSettings_GetAchievementProgress( stats, i ) );
-			totalTiers += category->tierCount;
-		}
-	} else {
-		for ( i = 0; i < BG_AchievementCategoryCount(); ++i ) {
-			const bgAchievementCategoryDef_t *category;
-			category = BG_AchievementGetCategory( i );
-			if ( category ) totalTiers += category->tierCount;
-		}
-	}
-	Com_sprintf( summary, sizeof( summary ), "%d / %d UNLOCKED", totalUnlocked, totalTiers );
-	headerValueX = PLAYERSETTINGS_PROFILE_PANEL_LEFT + PLAYERSETTINGS_PROFILE_PANEL_WIDTH - 150;
-	PlayerSettings_DrawFittedStatsText( headerValueX,
-		PLAYERSETTINGS_PROFILE_PANEL_TOP + 9,
-		PLAYERSETTINGS_PROFILE_PANEL_LEFT + PLAYERSETTINGS_PROFILE_PANEL_WIDTH - 16,
-		summary, UI_SMALLFONT, playerSettingsAccentColor );
-
-	Frontend_DrawPanel( PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_LEFT,
-	                    PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP,
-	                    PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_WIDTH,
-	                    PLAYERSETTINGS_ACHIEVEMENT_BODY_BOTTOM - PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP,
-	                    uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-	Frontend_DrawPanel( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT,
-	                    PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP,
-	                    PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH,
-	                    PLAYERSETTINGS_ACHIEVEMENT_BODY_BOTTOM - PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP,
-	                    uis.tFrac, UI_FRONTEND_STYLE_SURFACE );
-
 	for ( i = 0; i < PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT; ++i ) {
 		const bgAchievementCategoryDef_t *category;
-		playersettingsRect_t *rect;
 		char tierCount[16];
 		int unlocked;
-		double progress;
-		int y;
-		qboolean selected;
-		qboolean hovered;
-		vec4_t categoryColor;
 
 		category = BG_AchievementGetCategory( i );
 		if ( !category ) continue;
-		y = PLAYERSETTINGS_ACHIEVEMENT_BODY_TOP + 5 + i * PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_ROW_HEIGHT;
-		rect = &s_playersettings.achievementsCategoryRects[i];
-		rect->x = PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_LEFT + 4;
-		rect->y = y;
-		rect->w = PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_WIDTH - 8;
-		rect->h = PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_ROW_HEIGHT - 1;
-		selected = ( i == s_playersettings.achievementsPagination.currentPage );
-		hovered = PlayerSettings_RectContainsCursor( rect );
-		Frontend_DrawNavButton( (int)rect->x, (int)rect->y,
-		                        (int)rect->w, (int)rect->h,
-	                        "", uis.tFrac, selected,
-		                        UI_LEFT );
-		Vector4Copy( ( selected || hovered ) ? playerSettingsAccentColor :
-		             playerSettingsMutedColor, categoryColor );
-		categoryColor[3] *= uis.tFrac;
-		Frontend_DrawText( (int)rect->x + 8,
-		                   (int)rect->y + ( (int)rect->h - UI_FRONTEND_SMALL_GLYPH_SIZE ) / 2,
-		                   categoryLabels[i], UI_LEFT | UI_SMALLFONT, categoryColor );
 		unlocked = 0;
 		if ( stats ) {
-			progress = PlayerSettings_GetAchievementProgress( stats, i );
-			unlocked = BG_AchievementUnlockedTiers( category, progress );
+			unlocked = BG_AchievementUnlockedTiers( category,
+				PlayerSettings_GetAchievementProgress( stats, i ) );
 		}
+		totalUnlocked += unlocked;
+		totalTiers += category->tierCount;
 		Com_sprintf( tierCount, sizeof( tierCount ), "%d/%d", unlocked, category->tierCount );
-		Frontend_DrawText( (int)( rect->x + rect->w - 4 ),
-		                   (int)rect->y + ( (int)rect->h - UI_FRONTEND_SMALL_GLYPH_SIZE ) / 2,
-		                   tierCount, UI_RIGHT | UI_SMALLFONT,
-		                   ( selected ? playerSettingsAccentColor : playerSettingsMutedColor ) );
+		PlayerSettings_DrawSplitNavEntry( &s_playersettings.achievementsCategoryRects[i], i,
+			categoryLabels[i], tierCount,
+			i == s_playersettings.achievementsPagination.currentPage );
 	}
 
-	Com_sprintf( summary, sizeof( summary ), "CATEGORY %d / %d  |  UP / DOWN TO BROWSE",
-	             s_playersettings.achievementsPagination.currentPage + 1,
-	             PLAYERSETTINGS_ACHIEVEMENT_CATEGORY_COUNT );
-	PlayerSettings_DrawFittedStatsText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 4,
-		PLAYERSETTINGS_ACHIEVEMENT_BODY_BOTTOM + 3,
-		PLAYERSETTINGS_PROFILE_ROW_RIGHT, summary, UI_SMALLFONT, playerSettingsMutedColor );
+	/* Overall progress closes the category list, the sum of the counts above. */
+	Com_sprintf( summary, sizeof( summary ), "%d / %d unlocked", totalUnlocked, totalTiers );
+	PlayerSettings_DrawFittedStatsText(
+		PLAYERSETTINGS_SPLIT_NAV_X + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		PLAYERSETTINGS_SPLIT_BOTTOM - 20,
+		PLAYERSETTINGS_SPLIT_NAV_X + PLAYERSETTINGS_SPLIT_NAV_WIDTH - 8,
+		summary, UI_SMALLFONT, playerSettingsMutedColor );
 }
 
 static void PlayerSettings_DrawAchievementTierCard( int categoryIndex,
@@ -3750,9 +3864,12 @@ static void PlayerSettings_DrawAchievementTierCard( int categoryIndex,
 		                s_playersettings.achievementMedalLocked[iconIndex];
 	}
 
-	Frontend_DrawPanel( x, y, width, PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT,
-	                    uis.tFrac,
-	                    earned ? UI_FRONTEND_STYLE_ACTIVE : UI_FRONTEND_STYLE_SURFACE );
+	/* Earned tiers use the selection wash of the menus; open tiers are plain rows. */
+	if ( earned ) {
+		Frontend_DrawPanel( x, y, width, PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT,
+		                    uis.tFrac, UI_FRONTEND_STYLE_ACTIVE );
+	}
+	PlayerSettings_DrawStatsCell( x, y, width, PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT );
 	if ( icon ) {
 		UI_DrawHandlePic( x + 6, y + 8, PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE,
 		                  PLAYERSETTINGS_ACHIEVEMENT_MEDAL_SIZE, icon );
@@ -3789,17 +3906,20 @@ static void PlayerSettings_DrawAchievementsTab( void ) {
 	if ( !category ) return;
 
 	if ( !UI_Profile_HasActiveProfile() ) {
-		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 12, 216,
+		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		                   PLAYERSETTINGS_SPLIT_BODY_TOP + 8,
 		                   "No active profile selected.", UI_LEFT | UI_SMALLFONT,
 		                   playerSettingsTextColor );
-		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 12, 238,
+		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		                   PLAYERSETTINGS_SPLIT_BODY_TOP + 26,
 		                   "Create or select a profile from the main menu.",
 		                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 		return;
 	}
 	stats = UI_Profile_GetActiveStats();
 	if ( !stats ) {
-		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 12, 224,
+		Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		                   PLAYERSETTINGS_SPLIT_BODY_TOP + 8,
 		                   "Unable to read profile statistics.", UI_LEFT | UI_SMALLFONT,
 		                   playerSettingsTextColor );
 		return;
@@ -3810,25 +3930,28 @@ static void PlayerSettings_DrawAchievementsTab( void ) {
 	if ( unlocked < 0 ) unlocked = 0;
 	if ( unlocked > category->tierCount ) unlocked = category->tierCount;
 
-	Frontend_DrawText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 10, 163,
-	                   category->title, UI_LEFT | UI_BIGFONT, playerSettingsTextColor );
+	/* The category name is the card label; the body starts with the progress line. */
 	if ( unlocked < category->tierCount ) {
 		int remaining;
 		remaining = (int)( category->tiers[unlocked].threshold - progress + 0.999 );
 		if ( remaining < 0 ) remaining = 0;
-		Com_sprintf( summary, sizeof( summary ), "TIER %d / %d  |  NEXT: %s  |  %d TO GO",
+		Com_sprintf( summary, sizeof( summary ), "Tier %d / %d  |  Next: %s  |  %d to go",
 		             unlocked, category->tierCount, category->tiers[unlocked].name, remaining );
 	} else {
-		Com_sprintf( summary, sizeof( summary ), "ALL %d TIERS COMPLETE", category->tierCount );
+		Com_sprintf( summary, sizeof( summary ), "All %d tiers complete", category->tierCount );
 	}
-	PlayerSettings_DrawFittedStatsText( PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 10,
-		180, PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH - 10,
-		summary, UI_SMALLFONT, playerSettingsMutedColor );
+	PlayerSettings_DrawFittedStatsText(
+		PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		PLAYERSETTINGS_SPLIT_BODY_TOP + 2,
+		PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH - PLAYERSETTINGS_SPLIT_LABEL_INSET,
+		summary, UI_SMALLFONT, playerSettingsTextColor );
 	PlayerSettings_DrawAchievementMilestoneBar(
-		category, progress, PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 10, 195,
-		PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH - 20, 6 );
+		category, progress,
+		PLAYERSETTINGS_SPLIT_BODY_LEFT,
+		PLAYERSETTINGS_SPLIT_BODY_TOP + 16,
+		PLAYERSETTINGS_SPLIT_BODY_RIGHT - PLAYERSETTINGS_SPLIT_BODY_LEFT, 6 );
 
-	left = PLAYERSETTINGS_ACHIEVEMENT_DETAIL_LEFT + 8;
+	left = PLAYERSETTINGS_SPLIT_BODY_LEFT;
 	innerWidth = PLAYERSETTINGS_ACHIEVEMENT_DETAIL_WIDTH - 16;
 	tileGap = 6;
 	tileWidth = ( innerWidth - tileGap ) / PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE;
@@ -3845,7 +3968,7 @@ static void PlayerSettings_DrawAchievementsTab( void ) {
 		column = i % PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE;
 		row = i / PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE;
 		x = left + column * ( tileWidth + tileGap );
-		y = 207 + row * ( PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT +
+		y = PLAYERSETTINGS_ACHIEVEMENT_TIER_TOP + row * ( PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_HEIGHT +
 		                   PLAYERSETTINGS_ACHIEVEMENT_TIER_ROW_GAP );
 		PlayerSettings_DrawAchievementTierCard( categoryIndex, i, x, y, tileWidth, unlocked );
 	}
@@ -3891,6 +4014,9 @@ showVehicle = ( tab == TAB_VEHICLE );
 	PlayerSettings_SetWidgetVisible( &s_playersettings.modelname.generic, qfalse );
 	PlayerSettings_SetWidgetVisible( &s_playersettings.customize.generic, showVehicle );
 	PlayerSettings_SetWidgetVisible( &s_playersettings.plate.generic, showVehicle );
+	for ( i = 0; i < 3; ++i ) {
+		PlayerSettings_SetWidgetVisible( &s_playersettings.setupRows[i].generic, showVehicle );
+	}
 
 	s_playersettings.tabProfile.color = ( tab == TAB_PROFILE ) ? text_color_highlight : uis.text_color;
 	s_playersettings.tabVehicle.color = ( tab == TAB_VEHICLE ) ? text_color_highlight : uis.text_color;
@@ -4363,7 +4489,7 @@ static void PlayerSettings_SetMenuItems( void ) {
 		PlayerSettings_UpdateBirthDateDayItems();
 
 		s_playersettings.avatar.field.buffer[0] = '\0';
-		Q_strncpyz( s_playersettings.avatarActionLine, "Open import dialog",
+		Q_strncpyz( s_playersettings.avatarActionLine, "Change avatar",
 		            sizeof( s_playersettings.avatarActionLine ) );
 		PlayerSettings_SetAvatarProfileName( UI_Profile_GetActiveName() );
 		PlayerSettings_EnsureAvatarShader();
@@ -4496,44 +4622,164 @@ static void PlayerSettings_PicEvent( void* ptr, int event )
 // END
 
 
-static qboolean PlayerSettings_ImportAvatarFromPath( const char *sourcePath ) {
-	char shaderPath[MAX_QPATH];
+/*
+=================
+Avatar upload
+
+Three ways in, one result path: the native file dialog (Browse), a file
+dropped onto the game window, or a typed path. The engine copies the image
+into the game folder and returns its game path or an AVATAR_IMPORT_* code.
+=================
+*/
+
+#define AVATAR_IMPORT_ERR_PROFILE	-100	/* UI side: profile could not be saved */
+
+/* Avatar screen: preset grid (left card) and own image (right card),
+ * framed like the driver screen. */
+#define AVATAR_GRID_COLS			4
+#define AVATAR_TILE				72
+#define AVATAR_TILE_GAP			8
+#define AVATAR_LEFT_X				48
+#define AVATAR_LEFT_W				344
+#define AVATAR_RIGHT_X				408
+#define AVATAR_RIGHT_W				184
+#define AVATAR_CARD_Y				126
+#define AVATAR_CARD_H				294
+#define AVATAR_GRID_X				( AVATAR_LEFT_X + 16 )
+#define AVATAR_GRID_Y				( AVATAR_CARD_Y + 32 )
+#define AVATAR_IMPORT_PREVIEW_SIZE	96
+#define AVATAR_IMPORT_PREVIEW_X		( AVATAR_RIGHT_X + ( AVATAR_RIGHT_W - AVATAR_IMPORT_PREVIEW_SIZE ) / 2 )
+#define AVATAR_IMPORT_PREVIEW_Y		( AVATAR_CARD_Y + 30 )
+#define AVATAR_BROWSE_Y				( AVATAR_CARD_Y + 150 )
+#define AVATAR_IMPORT_PATH_Y		( AVATAR_CARD_Y + 232 )
+
+static const char *PlayerSettings_AvatarResultText( int result, qboolean compact ) {
+	switch ( result ) {
+	case AVATAR_IMPORT_OK:
+		return compact ? "Custom image ready" : "Avatar updated";
+	case AVATAR_IMPORT_ERR_FORMAT:
+		return compact ? "Not a PNG, JPG or TGA" : "That file is not a PNG, JPG or TGA image";
+	case AVATAR_IMPORT_ERR_OPEN:
+		return compact ? "File not readable" : "File not found or not readable";
+	case AVATAR_IMPORT_ERR_SIZE:
+		return compact ? "Larger than 8 MB" : "The image is larger than 8 MB";
+	case AVATAR_IMPORT_ERR_DATA:
+		return compact ? "File is empty" : "The file is empty";
+	case AVATAR_IMPORT_ERR_WRITE:
+		return compact ? "Could not save image" : "The image could not be saved";
+	case AVATAR_IMPORT_ERR_NO_DIALOG:
+		return compact ? "No file dialog" : "No file dialog here - drop the file or type its path";
+	case AVATAR_IMPORT_ERR_PROFILE:
+		return compact ? "Profile not saved" : "The profile could not be updated";
+	default:
+		return "";
+	}
+}
+
+/* Stores the copied image in the active profile and refreshes the preview. */
+static int PlayerSettings_ApplyImportedAvatar( const char *shaderPath ) {
 	const profile_info_t *activeInfo;
 	profile_info_t info;
 
-	if ( !UI_Profile_HasActiveProfile() || !sourcePath || !sourcePath[0] ) {
-		return qfalse;
-	}
-
-	if ( !trap_UI_ImportAvatarPath( UI_Profile_GetActiveName(), sourcePath,
-								shaderPath, sizeof( shaderPath ) ) ) {
-		return qfalse;
-	}
-
 	activeInfo = UI_Profile_GetActiveInfo();
 	if ( !activeInfo ) {
-		return qfalse;
+		return AVATAR_IMPORT_ERR_PROFILE;
 	}
 
 	info = *activeInfo;
 	Q_strncpyz( info.avatar, shaderPath, sizeof( info.avatar ) );
 	if ( !UI_Profile_SaveActiveInfo( &info ) ) {
-		return qfalse;
+		return AVATAR_IMPORT_ERR_PROFILE;
 	}
 
 	s_playersettings.profileInfo = info;
 	s_playersettings.avatarShader = 0;
 	s_playersettings.avatarShaderInitialized = qfalse;
 	s_playersettings.avatarShaderName[0] = '\0';
-	Q_strncpyz( s_playersettings.avatarActionLine, "Custom image ready",
-	            sizeof( s_playersettings.avatarActionLine ) );
 	PlayerSettings_EnsureAvatarShader();
-	return qtrue;
+	return AVATAR_IMPORT_OK;
+}
+
+/* sourcePath NULL opens the native file dialog. */
+static int PlayerSettings_ImportAvatar( const char *sourcePath ) {
+	char shaderPath[MAX_QPATH];
+	int result;
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return AVATAR_IMPORT_ERR_PROFILE;
+	}
+
+	if ( sourcePath ) {
+		if ( !sourcePath[0] ) {
+			return AVATAR_IMPORT_ERR_OPEN;
+		}
+		result = trap_UI_ImportAvatarPath( UI_Profile_GetActiveName(), sourcePath,
+		                                   shaderPath, sizeof( shaderPath ) );
+	} else {
+		result = trap_UI_ImportAvatar( UI_Profile_GetActiveName(),
+		                               shaderPath, sizeof( shaderPath ) );
+	}
+	if ( result != AVATAR_IMPORT_OK ) {
+		return result;
+	}
+
+	result = PlayerSettings_ApplyImportedAvatar( shaderPath );
+	if ( result == AVATAR_IMPORT_OK ) {
+		Q_strncpyz( s_playersettings.avatarActionLine,
+		            PlayerSettings_AvatarResultText( AVATAR_IMPORT_OK, qtrue ),
+		            sizeof( s_playersettings.avatarActionLine ) );
+	}
+	return result;
+}
+
+static void PlayerSettings_SetAvatarImportStatus( int result ) {
+	s_playersettings.avatarImportResult = result;
+	Q_strncpyz( s_playersettings.avatarImportStatus,
+	            PlayerSettings_AvatarResultText( result, qfalse ),
+	            sizeof( s_playersettings.avatarImportStatus ) );
+}
+
+/*
+=================
+PlayerSettings_PollDroppedAvatar
+
+Called every frame while the profile card or the upload screen is visible.
+=================
+*/
+static void PlayerSettings_PollDroppedAvatar( qboolean uploadScreen ) {
+	char path[MAX_OSPATH];
+	int result;
+
+	if ( !trap_UI_TakeDroppedFile( path, sizeof( path ) ) ) {
+		return;
+	}
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return;
+	}
+
+	result = PlayerSettings_ImportAvatar( path );
+	if ( uploadScreen ) {
+		PlayerSettings_SetAvatarImportStatus( result );
+	} else if ( result != AVATAR_IMPORT_OK ) {
+		Q_strncpyz( s_playersettings.avatarActionLine,
+		            PlayerSettings_AvatarResultText( result, qtrue ),
+		            sizeof( s_playersettings.avatarActionLine ) );
+	}
+	trap_S_StartLocalSound( result == AVATAR_IMPORT_OK ? menu_move_sound : menu_buzz_sound,
+	                        CHAN_LOCAL_SOUND );
+}
+
+/* Drops made while no avatar target was on screen are discarded. */
+static void PlayerSettings_DiscardDroppedFile( void ) {
+	char path[MAX_OSPATH];
+
+	trap_UI_TakeDroppedFile( path, sizeof( path ) );
 }
 
 static void PlayerSettings_DrawAvatarImportField( void *self ) {
 	menufield_s *field;
 	qboolean focus;
+	qboolean hovered;
 	vec4_t textColor;
 	vec4_t placeholderColor;
 	char visible[96];
@@ -4545,21 +4791,24 @@ static void PlayerSettings_DrawAvatarImportField( void *self ) {
 	int fieldX;
 	int fieldY;
 	int fieldW;
+	int fieldH;
 
 	field = (menufield_s *)self;
 	focus = ( Menu_ItemAtCursor( field->generic.parent ) == &field->generic );
-	fieldX = field->generic.x;
-	fieldY = field->generic.y;
+	hovered = UI_CursorInRect( field->generic.left, field->generic.top,
+	                           field->generic.right - field->generic.left,
+	                           field->generic.bottom - field->generic.top );
+	fieldX = field->generic.left;
+	fieldY = field->generic.top;
 	fieldW = field->generic.right - field->generic.left;
+	fieldH = field->generic.bottom - field->generic.top;
 
-	Vector4Copy( focus ? playerSettingsAccentColor : playerSettingsTextColor, textColor );
+	Vector4Copy( playerSettingsTextColor, textColor );
 	Vector4Copy( playerSettingsMutedColor, placeholderColor );
 	placeholderColor[3] = 0.75f;
 
-	Frontend_DrawText( fieldX, fieldY - 22, "Image path",
-	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
-	Frontend_DrawPanel( fieldX - 8, fieldY, fieldW, 30, 1.0f,
-	                    focus ? UI_FRONTEND_STYLE_ACTIVE : UI_FRONTEND_STYLE_CARD );
+	Frontend_DrawPanel( fieldX, fieldY, fieldW, fieldH, 1.0f,
+	                    ( focus || hovered ) ? UI_FRONTEND_STYLE_ACTIVE : UI_FRONTEND_STYLE_CARD );
 
 	start = field->field.scroll;
 	if ( start < 0 ) {
@@ -4583,22 +4832,22 @@ static void PlayerSettings_DrawAvatarImportField( void *self ) {
 	}
 
 	if ( !visible[0] ) {
-		Frontend_DrawText( fieldX, fieldY + 7,
+		Frontend_DrawText( fieldX + 8, fieldY + ( fieldH - SMALLCHAR_HEIGHT ) / 2,
 		                   "D:/Pictures/avatar.png",
 		                   UI_LEFT | UI_SMALLFONT, placeholderColor );
 	} else {
-		Frontend_DrawText( fieldX, fieldY + 7, visible,
+		Frontend_DrawText( fieldX + 8, fieldY + ( fieldH - SMALLCHAR_HEIGHT ) / 2, visible,
 		                   UI_LEFT | UI_SMALLFONT, textColor );
 	}
 
 	if ( focus && ( ( uis.realtime / 400 ) & 1 ) ) {
 		prefix[0] = '\0';
-		for ( i = start; i < cursor && i < (int)sizeof( prefix ) - 1; ++i ) {
+		for ( i = start; i < cursor && i - start < (int)sizeof( prefix ) - 1; ++i ) {
 			prefix[i - start] = field->field.buffer[i];
 			prefix[i - start + 1] = '\0';
 		}
-		UI_FillRect( fieldX + Frontend_TextWidth( prefix, UI_LEFT | UI_SMALLFONT ),
-		             fieldY + 6, 1, 13, playerSettingsAccentColor );
+		UI_FillRect( fieldX + 8 + Frontend_TextWidth( prefix, UI_LEFT | UI_SMALLFONT ),
+		             fieldY + 5, 1, fieldH - 10, playerSettingsAccentColor );
 	}
 }
 
@@ -4614,33 +4863,141 @@ static void PlayerSettings_DrawAvatarImportButton( void *self ) {
 	                     button->string, 1.0f, focus, UI_CENTER );
 }
 
-static void PlayerSettings_AvatarImportDraw( void ) {
-	Frontend_DrawBackground( playerSettingsScrimColor );
-	Frontend_DrawPanel( 92, 84, 456, 312, 1.0f, UI_FRONTEND_STYLE_FRAME );
-	Frontend_DrawText( 120, 112, "Import avatar", UI_LEFT | UI_BIGFONT,
-	                   playerSettingsTextColor );
-	Frontend_DrawStatusChip( 462, 114, "Profile", playerSettingsAccentColor, 1.0f );
-	Frontend_DrawText( 120, 142,
-	                   "Add a custom image to the active driver profile",
-	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+/* One preset picture; the fitted one carries the accent frame. */
+static void PlayerSettings_DrawAvatarPresetTile( void *self ) {
+	menutext_s *tile;
+	qboolean focus;
+	qboolean hovered;
+	qboolean selected;
+	int idx;
+	int x, y, w, h;
+	vec4_t frame;
 
-	Frontend_DrawCard( 120, 174, 400, 180, 1.0f, qfalse );
-	Frontend_DrawText( 136, 198,
-	                   "PNG, JPG or TGA up to 8 MB",
+	tile = (menutext_s *)self;
+	idx = tile->generic.id - ID_AVATAR_PRESET0;
+	if ( idx < 0 || idx >= uiAvatarPresetCount ) {
+		return;
+	}
+	focus = ( Menu_ItemAtCursor( tile->generic.parent ) == &tile->generic );
+	x = tile->generic.left; y = tile->generic.top;
+	w = tile->generic.right - x; h = tile->generic.bottom - y;
+	hovered = UI_CursorInRect( x, y, w, h );
+	selected = ( UI_AvatarPresetIndex( s_playersettings.profileInfo.avatar ) == idx );
+
+	if ( !s_playersettings.avatarPresetShaders[idx] ) {
+		s_playersettings.avatarPresetShaders[idx] = trap_R_RegisterShaderNoMip( uiAvatarPresets[idx].path );
+	}
+	UI_FillRect( x, y, w, h, avatarImageBackgroundColor );
+	if ( s_playersettings.avatarPresetShaders[idx] ) {
+		trap_R_SetColor( NULL );
+		UI_DrawHandlePic( x, y, w, h, s_playersettings.avatarPresetShaders[idx] );
+	}
+	if ( selected ) {
+		Vector4Copy( playerSettingsAccentColor, frame );
+		UI_FillRect( x - 3, y - 3, w + 6, 3, frame );
+		UI_FillRect( x - 3, y + h, w + 6, 3, frame );
+		UI_FillRect( x - 3, y, 3, h, frame );
+		UI_FillRect( x + w, y, 3, h, frame );
+	} else if ( focus || hovered ) {
+		Vector4Copy( playerSettingsTextColor, frame );
+		frame[3] = 0.6f;
+		UI_DrawRect( x - 1, y - 1, w + 2, h + 2, frame );
+	}
+}
+
+static void PlayerSettings_AvatarImportDraw( void ) {
+	vec4_t background;
+	vec4_t border;
+	const float *statusColor;
+	const char *current;
+	int presetIdx;
+	int i;
+
+	PlayerSettings_PollDroppedAvatar( qtrue );
+
+	Frontend_DrawBackground( playerSettingsScrimColor );
+	Frontend_DrawPanel( PLAYERSETTINGS_FRAME_X, PLAYERSETTINGS_FRAME_Y,
+	                    PLAYERSETTINGS_FRAME_WIDTH, PLAYERSETTINGS_FRAME_HEIGHT, 1.0f,
+	                    UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( PLAYERSETTINGS_FRAME_X + 24, PLAYERSETTINGS_FRAME_Y + 24,
+	                   "Avatar", UI_LEFT | UI_BIGFONT, playerSettingsTextColor );
+	Frontend_DrawText( PLAYERSETTINGS_FRAME_X + 24, PLAYERSETTINGS_FRAME_Y + 48,
+	                   "Pick a preset or upload your own image",
 	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
-	Frontend_DrawText( 136, 224,
-	                   "Type the full path to the image on your computer.",
+	Frontend_DrawStatusChip( PLAYERSETTINGS_FRAME_X + PLAYERSETTINGS_FRAME_WIDTH - 104,
+	                         PLAYERSETTINGS_FRAME_Y + 26, "Profile",
+	                         playerSettingsStatusColor, 1.0f );
+
+	/* Presets */
+	Frontend_DrawCard( AVATAR_LEFT_X, AVATAR_CARD_Y, AVATAR_LEFT_W, AVATAR_CARD_H, 1.0f, qfalse );
+	Frontend_DrawText( AVATAR_LEFT_X + 16, AVATAR_CARD_Y + 18, "Presets",
 	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+	presetIdx = UI_AvatarPresetIndex( s_playersettings.profileInfo.avatar );
+	if ( presetIdx >= 0 ) {
+		current = uiAvatarPresets[presetIdx].name;
+	} else if ( s_playersettings.profileInfo.avatar[0] ) {
+		current = "Custom image";
+	} else {
+		current = "No avatar";
+	}
+	Frontend_DrawText( AVATAR_LEFT_X + AVATAR_LEFT_W - 16, AVATAR_CARD_Y + 18, current,
+	                   UI_RIGHT | UI_SMALLFONT, playerSettingsTextColor );
+	for ( i = 0; i < uiAvatarPresetCount && i < UI_MAX_AVATAR_PRESETS; i++ ) {
+		menutext_s *tile = &s_playersettings.avatarPresetTiles[i];
+		if ( UI_CursorInRect( tile->generic.left, tile->generic.top,
+		                      tile->generic.right - tile->generic.left,
+		                      tile->generic.bottom - tile->generic.top ) ||
+		     Menu_ItemAtCursor( &s_playersettings.avatarImportMenu ) == &tile->generic ) {
+			Frontend_DrawText( AVATAR_LEFT_X + 16, AVATAR_CARD_Y + AVATAR_CARD_H - 20,
+			                   uiAvatarPresets[i].name, UI_LEFT | UI_SMALLFONT,
+			                   playerSettingsAccentColor );
+		}
+	}
+
+	/* Own image */
+	Frontend_DrawCard( AVATAR_RIGHT_X, AVATAR_CARD_Y, AVATAR_RIGHT_W, AVATAR_CARD_H, 1.0f, qfalse );
+	Frontend_DrawText( AVATAR_RIGHT_X + 16, AVATAR_CARD_Y + 18, "Your image",
+	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
+	PlayerSettings_EnsureAvatarShader();
+	Vector4Copy( avatarImageBackgroundColor, background );
+	Vector4Copy( profileRowBorderColor, border );
+	UI_FillRect( AVATAR_IMPORT_PREVIEW_X, AVATAR_IMPORT_PREVIEW_Y,
+	             AVATAR_IMPORT_PREVIEW_SIZE, AVATAR_IMPORT_PREVIEW_SIZE, background );
+	if ( s_playersettings.avatarShader ) {
+		trap_R_SetColor( NULL );
+		UI_DrawHandlePic( AVATAR_IMPORT_PREVIEW_X, AVATAR_IMPORT_PREVIEW_Y,
+		                  AVATAR_IMPORT_PREVIEW_SIZE, AVATAR_IMPORT_PREVIEW_SIZE,
+		                  s_playersettings.avatarShader );
+	} else {
+		Frontend_DrawText( AVATAR_IMPORT_PREVIEW_X + AVATAR_IMPORT_PREVIEW_SIZE / 2,
+		                   AVATAR_IMPORT_PREVIEW_Y + AVATAR_IMPORT_PREVIEW_SIZE / 2 - 4,
+		                   "No avatar", UI_CENTER | UI_SMALLFONT, playerSettingsMutedColor );
+	}
+	UI_DrawRect( AVATAR_IMPORT_PREVIEW_X, AVATAR_IMPORT_PREVIEW_Y,
+	             AVATAR_IMPORT_PREVIEW_SIZE, AVATAR_IMPORT_PREVIEW_SIZE, border );
+	Frontend_DrawText( AVATAR_RIGHT_X + AVATAR_RIGHT_W / 2, AVATAR_BROWSE_Y - 14,
+	                   "PNG, JPG or TGA, max 8 MB", UI_CENTER | UI_SMALLFONT,
+	                   playerSettingsMutedColor );
+	Frontend_DrawText( AVATAR_RIGHT_X + AVATAR_RIGHT_W / 2, AVATAR_BROWSE_Y + 32,
+	                   "or drop it onto the window", UI_CENTER | UI_SMALLFONT,
+	                   playerSettingsMutedColor );
+	Frontend_DrawText( AVATAR_RIGHT_X + 8, AVATAR_IMPORT_PATH_Y - 16,
+	                   "Or type the full path", UI_LEFT | UI_SMALLFONT,
+	                   playerSettingsMutedColor );
 
 	Menu_Draw( &s_playersettings.avatarImportMenu );
 
 	if ( s_playersettings.avatarImportStatus[0] ) {
-		Frontend_DrawText( 120, 366, s_playersettings.avatarImportStatus,
-		                   UI_LEFT | UI_SMALLFONT, avatarImageMissingColor );
+		statusColor = ( s_playersettings.avatarImportResult == AVATAR_IMPORT_OK ) ?
+		              playerSettingsStatusColor : avatarImageMissingColor;
+		Frontend_DrawText( PLAYERSETTINGS_FRAME_X + 166, PLAYERSETTINGS_FRAME_Y + 408,
+		                   s_playersettings.avatarImportStatus,
+		                   UI_LEFT | UI_SMALLFONT, statusColor );
+	} else {
+		Frontend_DrawText( PLAYERSETTINGS_FRAME_X + 166, PLAYERSETTINGS_FRAME_Y + 408,
+		                   "Enter select     Arrows browse     Esc back",
+		                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 	}
-	Frontend_DrawText( 120, 382,
-	                   "Enter import     Tab switch     Esc back",
-	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 }
 
 static void PlayerSettings_AvatarImportMenuEvent( void *ptr, int event ) {
@@ -4651,22 +5008,41 @@ static void PlayerSettings_AvatarImportMenuEvent( void *ptr, int event ) {
 	}
 
 	item = (menucommon_s *)ptr;
+	if ( item->id >= ID_AVATAR_PRESET0 && item->id < ID_AVATAR_PRESET0 + uiAvatarPresetCount ) {
+		int idx = item->id - ID_AVATAR_PRESET0;
+		int result = UI_Profile_HasActiveProfile() ?
+		             PlayerSettings_ApplyImportedAvatar( uiAvatarPresets[idx].path ) :
+		             AVATAR_IMPORT_ERR_PROFILE;
+		PlayerSettings_SetAvatarImportStatus( result );
+		if ( result == AVATAR_IMPORT_OK ) {
+			Com_sprintf( s_playersettings.avatarImportStatus, sizeof( s_playersettings.avatarImportStatus ),
+			             "Avatar set to %s", uiAvatarPresets[idx].name );
+		}
+		return;
+	}
 	switch ( item->id ) {
+	case ID_AVATAR_IMPORT_BROWSE:
+		{
+			int result = PlayerSettings_ImportAvatar( NULL );
+			if ( result == AVATAR_IMPORT_CANCELLED ) {
+				s_playersettings.avatarImportStatus[0] = '\0';
+			} else {
+				PlayerSettings_SetAvatarImportStatus( result );
+			}
+		}
+		break;
+
 	case ID_AVATAR_IMPORT_PATH:
 	case ID_AVATAR_IMPORT_CONFIRM:
 		if ( !s_playersettings.avatarImportPath.field.buffer[0] ) {
+			s_playersettings.avatarImportResult = AVATAR_IMPORT_ERR_OPEN;
 			Q_strncpyz( s_playersettings.avatarImportStatus,
-			            "Enter an image path first",
+			            "Type the path to an image first",
 			            sizeof( s_playersettings.avatarImportStatus ) );
 			return;
 		}
-		if ( PlayerSettings_ImportAvatarFromPath( s_playersettings.avatarImportPath.field.buffer ) ) {
-			UI_PopMenu();
-			return;
-		}
-		Q_strncpyz( s_playersettings.avatarImportStatus,
-		            "Import failed — check the path and format",
-		            sizeof( s_playersettings.avatarImportStatus ) );
+		PlayerSettings_SetAvatarImportStatus(
+			PlayerSettings_ImportAvatar( s_playersettings.avatarImportPath.field.buffer ) );
 		break;
 
 	case ID_AVATAR_IMPORT_CANCEL:
@@ -4684,65 +5060,107 @@ static sfxHandle_t PlayerSettings_AvatarImportKey( int key ) {
 	return Menu_DefaultKey( &s_playersettings.avatarImportMenu, key );
 }
 
+static void PlayerSettings_InitAvatarImportButton( menutext_s *button, int id,
+	const char *label, int left, int top, int right, int bottom ) {
+	button->generic.type = MTYPE_PTEXT;
+	button->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
+	button->generic.id = id;
+	button->generic.callback = PlayerSettings_AvatarImportMenuEvent;
+	button->generic.ownerdraw = PlayerSettings_DrawAvatarImportButton;
+	button->generic.left = left;
+	button->generic.top = top;
+	button->generic.right = right;
+	button->generic.bottom = bottom;
+	button->string = (char *)label;
+}
+
 static void PlayerSettings_OpenAvatarImport( void ) {
 	menuframework_s *menu;
+	int i;
+	int right;
 
 	menu = &s_playersettings.avatarImportMenu;
 	Com_Memset( menu, 0, sizeof( *menu ) );
+	Com_Memset( &s_playersettings.avatarImportBrowse, 0,
+	            sizeof( s_playersettings.avatarImportBrowse ) );
 	Com_Memset( &s_playersettings.avatarImportPath, 0,
 	            sizeof( s_playersettings.avatarImportPath ) );
 	Com_Memset( &s_playersettings.avatarImportConfirm, 0,
 	            sizeof( s_playersettings.avatarImportConfirm ) );
 	Com_Memset( &s_playersettings.avatarImportCancel, 0,
 	            sizeof( s_playersettings.avatarImportCancel ) );
+	Com_Memset( s_playersettings.avatarPresetTiles, 0,
+	            sizeof( s_playersettings.avatarPresetTiles ) );
 	s_playersettings.avatarImportStatus[0] = '\0';
+	s_playersettings.avatarImportResult = AVATAR_IMPORT_CANCELLED;
+	PlayerSettings_DiscardDroppedFile();
 
 	menu->fullscreen = qtrue;
-	menu->wrapAround = qfalse;
+	menu->wrapAround = qtrue;
 	menu->draw = PlayerSettings_AvatarImportDraw;
 	menu->key = PlayerSettings_AvatarImportKey;
+
+	/* preset grid */
+	for ( i = 0; i < uiAvatarPresetCount && i < UI_MAX_AVATAR_PRESETS; i++ ) {
+		menutext_s *tile = &s_playersettings.avatarPresetTiles[i];
+		int col = i % AVATAR_GRID_COLS;
+		int row = i / AVATAR_GRID_COLS;
+		tile->generic.type = MTYPE_PTEXT;
+		tile->generic.flags = QMF_NODEFAULTINIT;
+		tile->generic.id = ID_AVATAR_PRESET0 + i;
+		tile->generic.callback = PlayerSettings_AvatarImportMenuEvent;
+		tile->generic.ownerdraw = PlayerSettings_DrawAvatarPresetTile;
+		tile->generic.left = AVATAR_GRID_X + col * ( AVATAR_TILE + AVATAR_TILE_GAP );
+		tile->generic.top = AVATAR_GRID_Y + row * ( AVATAR_TILE + AVATAR_TILE_GAP );
+		tile->generic.right = tile->generic.left + AVATAR_TILE;
+		tile->generic.bottom = tile->generic.top + AVATAR_TILE;
+		tile->generic.x = tile->generic.left;
+		tile->generic.y = tile->generic.top;
+		tile->string = "";
+		tile->style = UI_LEFT | UI_SMALLFONT;
+		tile->color = text_color_normal;
+		Menu_AddItem( menu, tile );
+	}
+
+	/* own image */
+	right = AVATAR_RIGHT_X + AVATAR_RIGHT_W - 8;
+	PlayerSettings_InitAvatarImportButton( &s_playersettings.avatarImportBrowse,
+		ID_AVATAR_IMPORT_BROWSE, "Browse files",
+		AVATAR_RIGHT_X + 8, AVATAR_BROWSE_Y, right, AVATAR_BROWSE_Y + 26 );
 
 	s_playersettings.avatarImportPath.generic.type = MTYPE_FIELD;
 	s_playersettings.avatarImportPath.generic.flags = QMF_SMALLFONT | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
 	s_playersettings.avatarImportPath.generic.id = ID_AVATAR_IMPORT_PATH;
-	s_playersettings.avatarImportPath.generic.x = 144;
-	s_playersettings.avatarImportPath.generic.y = 260;
+	s_playersettings.avatarImportPath.generic.x = AVATAR_RIGHT_X + 16;
+	s_playersettings.avatarImportPath.generic.y = AVATAR_IMPORT_PATH_Y;
 	s_playersettings.avatarImportPath.generic.callback = PlayerSettings_AvatarImportMenuEvent;
 	s_playersettings.avatarImportPath.generic.ownerdraw = PlayerSettings_DrawAvatarImportField;
-	s_playersettings.avatarImportPath.field.widthInChars = 48;
+	s_playersettings.avatarImportPath.field.widthInChars = 20;
 	s_playersettings.avatarImportPath.field.maxchars = MAX_EDIT_LINE - 1;
 	MenuField_Init( &s_playersettings.avatarImportPath );
-	s_playersettings.avatarImportPath.generic.left = 144;
-	s_playersettings.avatarImportPath.generic.top = 260;
-	s_playersettings.avatarImportPath.generic.right = 496;
-	s_playersettings.avatarImportPath.generic.bottom = 290;
+	s_playersettings.avatarImportPath.generic.left = AVATAR_RIGHT_X + 8;
+	s_playersettings.avatarImportPath.generic.top = AVATAR_IMPORT_PATH_Y;
+	s_playersettings.avatarImportPath.generic.right = right;
+	s_playersettings.avatarImportPath.generic.bottom = AVATAR_IMPORT_PATH_Y + 24;
 
-	s_playersettings.avatarImportConfirm.generic.type = MTYPE_PTEXT;
-	s_playersettings.avatarImportConfirm.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
-	s_playersettings.avatarImportConfirm.generic.id = ID_AVATAR_IMPORT_CONFIRM;
-	s_playersettings.avatarImportConfirm.generic.callback = PlayerSettings_AvatarImportMenuEvent;
-	s_playersettings.avatarImportConfirm.generic.ownerdraw = PlayerSettings_DrawAvatarImportButton;
-	s_playersettings.avatarImportConfirm.generic.left = 144;
-	s_playersettings.avatarImportConfirm.generic.top = 304;
-	s_playersettings.avatarImportConfirm.generic.right = 312;
-	s_playersettings.avatarImportConfirm.generic.bottom = 332;
-	s_playersettings.avatarImportConfirm.string = "Import";
+	PlayerSettings_InitAvatarImportButton( &s_playersettings.avatarImportConfirm,
+		ID_AVATAR_IMPORT_CONFIRM, "Import",
+		AVATAR_RIGHT_X + 8, AVATAR_IMPORT_PATH_Y + 30, right, AVATAR_IMPORT_PATH_Y + 54 );
 
-	s_playersettings.avatarImportCancel.generic.type = MTYPE_PTEXT;
-	s_playersettings.avatarImportCancel.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
-	s_playersettings.avatarImportCancel.generic.id = ID_AVATAR_IMPORT_CANCEL;
-	s_playersettings.avatarImportCancel.generic.callback = PlayerSettings_AvatarImportMenuEvent;
-	s_playersettings.avatarImportCancel.generic.ownerdraw = PlayerSettings_DrawAvatarImportButton;
-	s_playersettings.avatarImportCancel.generic.left = 328;
-	s_playersettings.avatarImportCancel.generic.top = 304;
-	s_playersettings.avatarImportCancel.generic.right = 496;
-	s_playersettings.avatarImportCancel.generic.bottom = 332;
-	s_playersettings.avatarImportCancel.string = "Cancel";
+	PlayerSettings_InitAvatarImportButton( &s_playersettings.avatarImportCancel,
+		ID_AVATAR_IMPORT_CANCEL, "Back",
+		PLAYERSETTINGS_BACK_BUTTON_LEFT, PLAYERSETTINGS_BACK_BUTTON_Y,
+		PLAYERSETTINGS_BACK_BUTTON_LEFT + UI_FRONTEND_ACTION_WIDTH,
+		PLAYERSETTINGS_BACK_BUTTON_Y + UI_FRONTEND_BUTTON_HEIGHT );
 
+	Menu_AddItem( menu, &s_playersettings.avatarImportBrowse );
 	Menu_AddItem( menu, &s_playersettings.avatarImportPath );
 	Menu_AddItem( menu, &s_playersettings.avatarImportConfirm );
 	Menu_AddItem( menu, &s_playersettings.avatarImportCancel );
-	Menu_SetCursorToItem( menu, &s_playersettings.avatarImportPath );
+
+	i = UI_AvatarPresetIndex( s_playersettings.profileInfo.avatar );
+	Menu_SetCursorToItem( menu, i >= 0 ? (void *)&s_playersettings.avatarPresetTiles[i]
+	                                   : (void *)&s_playersettings.avatarImportBrowse );
 
 	/* The avatar dialog is a lightweight menu overlay. Clear any transition
 	 * timer left by the profile screen so the field is immediately editable. */
@@ -4750,7 +5168,6 @@ static void PlayerSettings_OpenAvatarImport( void ) {
 	uis.transitionOut = 0;
 	UI_PushMenu( menu );
 }
-
 
 /*
 =================
@@ -5264,12 +5681,30 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.customize.generic.flags	= QMF_NODEFAULTINIT;
 	s_playersettings.customize.generic.id		= ID_CUSTOMIZE;
 	s_playersettings.customize.generic.ownerdraw= PlayerSettings_DrawCustomize;
-	s_playersettings.customize.generic.x		= 410;
-	s_playersettings.customize.generic.y		= 272;
-	s_playersettings.customize.generic.left		= 410;
-	s_playersettings.customize.generic.top		= 272;
-	s_playersettings.customize.generic.right	= 576;
-	s_playersettings.customize.generic.bottom	= 302;
+	s_playersettings.customize.generic.x		= VEHICLE_SETUP_X + 8;
+	s_playersettings.customize.generic.y		= VEHICLE_ROW_Y + 3 * ( VEHICLE_ROW_H + VEHICLE_ROW_GAP ) + 8;
+	s_playersettings.customize.generic.left		= VEHICLE_SETUP_X + 8;
+	s_playersettings.customize.generic.top		= s_playersettings.customize.generic.y;
+	s_playersettings.customize.generic.right	= VEHICLE_SETUP_X + VEHICLE_SETUP_W - 8;
+	s_playersettings.customize.generic.bottom	= s_playersettings.customize.generic.y + 28;
+
+	for ( j = 0; j < 3; j++ ) {
+		menutext_s *row = &s_playersettings.setupRows[j];
+		row->generic.type		= MTYPE_PTEXT;
+		row->generic.flags		= QMF_NODEFAULTINIT;
+		row->generic.id			= ID_CUSTOMIZE;
+		row->generic.ownerdraw	= PlayerSettings_DrawSetupRow;
+		row->generic.callback	= PlayerSettings_MenuEvent;
+		row->generic.left		= VEHICLE_SETUP_X + 8;
+		row->generic.right		= VEHICLE_SETUP_X + VEHICLE_SETUP_W - 8;
+		row->generic.top		= VEHICLE_ROW_Y + j * ( VEHICLE_ROW_H + VEHICLE_ROW_GAP );
+		row->generic.bottom		= row->generic.top + VEHICLE_ROW_H;
+		row->generic.x			= row->generic.left;
+		row->generic.y			= row->generic.top;
+		row->string				= "";
+		row->color				= text_color_normal;
+		row->style				= UI_LEFT | UI_SMALLFONT;
+	}
 	s_playersettings.customize.generic.callback	= PlayerSettings_MenuEvent; 
 	s_playersettings.customize.color			= text_color_normal;
 	s_playersettings.customize.style			= UI_RIGHT;
@@ -5285,10 +5720,10 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.player.width				= 32*10;
 	s_playersettings.player.height				= 56*10;
 */
-	s_playersettings.player.generic.x	       = 94;
-	s_playersettings.player.generic.y	       = 184;
-	s_playersettings.player.width	           = 270;
-	s_playersettings.player.height             = 82;
+	s_playersettings.player.generic.x	       = VEHICLE_PREVIEW_X;
+	s_playersettings.player.generic.y	       = VEHICLE_PREVIEW_Y;
+	s_playersettings.player.width	           = VEHICLE_PREVIEW_W;
+	s_playersettings.player.height             = VEHICLE_PREVIEW_H;
 
 
 	y = 148;
@@ -5306,14 +5741,14 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.left.generic.ownerdraw		= PlayerSettings_DrawVehicleControl;
 	s_playersettings.left.generic.callback		= PlayerSettings_MenuEvent;
 	s_playersettings.left.generic.id			= ID_LEFT;
-	s_playersettings.left.generic.x				= 74;
-	s_playersettings.left.generic.y				= 274;
-	s_playersettings.left.generic.left			= 74;
-	s_playersettings.left.generic.top			= 274;
-	s_playersettings.left.generic.right			= 224;
-	s_playersettings.left.generic.bottom			= 306;
-	s_playersettings.left.width  				= 150;
-	s_playersettings.left.height  				= 32;
+	s_playersettings.left.generic.x				= VEHICLE_SHOW_X + 16;
+	s_playersettings.left.generic.y				= VEHICLE_NAME_Y;
+	s_playersettings.left.generic.left			= VEHICLE_SHOW_X + 16;
+	s_playersettings.left.generic.top			= VEHICLE_NAME_Y;
+	s_playersettings.left.generic.right			= VEHICLE_SHOW_X + 16 + 44;
+	s_playersettings.left.generic.bottom			= VEHICLE_NAME_Y + 28;
+	s_playersettings.left.width  				= 44;
+	s_playersettings.left.height  				= 28;
 	s_playersettings.left.focuspic				= ART_LEFT1;
 	
 	s_playersettings.right.generic.type			= MTYPE_BITMAP;
@@ -5322,14 +5757,14 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.right.generic.ownerdraw		= PlayerSettings_DrawVehicleControl;
 	s_playersettings.right.generic.callback		= PlayerSettings_MenuEvent;
 	s_playersettings.right.generic.id			= ID_RIGHT;
-	s_playersettings.right.generic.x			= 234;
-	s_playersettings.right.generic.y			= 274;
-	s_playersettings.right.generic.left			= 234;
-	s_playersettings.right.generic.top			= 274;
-	s_playersettings.right.generic.right			= 384;
-	s_playersettings.right.generic.bottom			= 306;
-	s_playersettings.right.width  				= 150;
-	s_playersettings.right.height  				= 32;
+	s_playersettings.right.generic.x			= VEHICLE_SHOW_X + VEHICLE_SHOW_W - 16 - 44;
+	s_playersettings.right.generic.y			= VEHICLE_NAME_Y;
+	s_playersettings.right.generic.left			= VEHICLE_SHOW_X + VEHICLE_SHOW_W - 16 - 44;
+	s_playersettings.right.generic.top			= VEHICLE_NAME_Y;
+	s_playersettings.right.generic.right			= VEHICLE_SHOW_X + VEHICLE_SHOW_W - 16;
+	s_playersettings.right.generic.bottom			= VEHICLE_NAME_Y + 28;
+	s_playersettings.right.width  				= 44;
+	s_playersettings.right.height  				= 28;
 	s_playersettings.right.focuspic				= ART_RIGHT1;
 
 	s_playersettings.favorites.generic.type   = MTYPE_PTEXT;
@@ -5340,8 +5775,8 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.favorites.style		  = UI_CENTER|UI_SMALLFONT;
 	s_playersettings.favorites.color          = text_color_normal;
 
-	x =	64;
-	y = 356;
+	x =	VEHICLE_SHOW_X + 16;
+	y = VEHICLE_SAVED_Y + 14;
 	for (j=0; j<NUM_FAVORITES; j++)
 	{
 		s_playersettings.ports[j].generic.type		= MTYPE_BITMAP;
@@ -5370,25 +5805,25 @@ static void PlayerSettings_MenuInit( void ) {
 		s_playersettings.favpicbuttons[j].generic.y			= y;
 		s_playersettings.favpicbuttons[j].generic.left		= x;
 		s_playersettings.favpicbuttons[j].generic.top		= y;
-		s_playersettings.favpicbuttons[j].generic.right		= x + 120;
-		s_playersettings.favpicbuttons[j].generic.bottom	= y + 28;
-		s_playersettings.favpicbuttons[j].width  		    = 120;
-		s_playersettings.favpicbuttons[j].height  			= 28;
+		s_playersettings.favpicbuttons[j].generic.right		= x + 72;
+		s_playersettings.favpicbuttons[j].generic.bottom	= y + 40;
+		s_playersettings.favpicbuttons[j].width  		    = 72;
+		s_playersettings.favpicbuttons[j].height  			= 40;
 		s_playersettings.favpicbuttons[j].focuspic  		= ART_SELECT;
 		s_playersettings.favpicbuttons[j].focuscolor  		= text_color_highlight;
 
-		x += 128;
+		x += 80;
 	}
 
 	s_playersettings.plate.generic.type				= MTYPE_PTEXT;
 	s_playersettings.plate.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_NODEFAULTINIT;
 	s_playersettings.plate.generic.ownerdraw			= PlayerSettings_DrawPlateItem;
-	s_playersettings.plate.generic.x				= 410;
-	s_playersettings.plate.generic.y				= 310;
-	s_playersettings.plate.generic.left			    = 410;
-	s_playersettings.plate.generic.top				= 310;
-	s_playersettings.plate.generic.right			= 576;
-	s_playersettings.plate.generic.bottom			= 340;
+	s_playersettings.plate.generic.x				= VEHICLE_SETUP_X + 8;
+	s_playersettings.plate.generic.y				= s_playersettings.customize.generic.bottom + 6;
+	s_playersettings.plate.generic.left			    = VEHICLE_SETUP_X + 8;
+	s_playersettings.plate.generic.top				= s_playersettings.plate.generic.y;
+	s_playersettings.plate.generic.right			= VEHICLE_SETUP_X + VEHICLE_SETUP_W - 8;
+	s_playersettings.plate.generic.bottom			= s_playersettings.plate.generic.y + 28;
 	s_playersettings.plate.generic.id				= ID_PLATE;
 	s_playersettings.plate.generic.callback			= PlayerSettings_MenuEvent; 
 	s_playersettings.plate.string					= "CHANGE PLATE";
@@ -5469,6 +5904,8 @@ static void PlayerSettings_MenuInit( void ) {
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.left );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.right );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.modelname );
+	for (i = 0; i < 3; i++)
+		Menu_AddItem( &s_playersettings.menu, &s_playersettings.setupRows[i] );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.customize );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.plate );
 // END
@@ -5545,11 +5982,13 @@ UI_PlayerSettingsMenu
 */
 void UI_PlayerSettingsMenu( void ) {
 	PlayerSettings_MenuInit();
+	PlayerSettings_DiscardDroppedFile();
 	UI_PushMenu( &s_playersettings.menu );
 }
 
 void UI_PlayerStatsMenu( void ) {
 	PlayerSettings_MenuInit();
+	PlayerSettings_DiscardDroppedFile();
 	PlayerSettings_SetTab( TAB_STATS );
 	UI_PushMenu( &s_playersettings.menu );
 }

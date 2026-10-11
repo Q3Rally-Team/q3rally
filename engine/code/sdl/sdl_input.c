@@ -434,6 +434,50 @@ static void IN_DeactivateMouse( qboolean showSystemCursor )
 }
 
 /*
+===============
+IN_BeginNativeDialog / IN_EndNativeDialog
+
+The game loop stands still while a native OS dialog (file picker) is open.
+An exclusive fullscreen window would cover it, so the window leaves
+fullscreen for that time and returns afterwards.
+===============
+*/
+static Uint32 nativeDialogFullscreen;
+
+void IN_BeginNativeDialog( void )
+{
+	Uint32 flags;
+
+	nativeDialogFullscreen = 0;
+	if( !SDL_window || !SDL_WasInit( SDL_INIT_VIDEO ) )
+		return;
+
+	IN_DeactivateMouse( qtrue );
+
+	flags = SDL_GetWindowFlags( SDL_window );
+	if( ( flags & SDL_WINDOW_FULLSCREEN_DESKTOP ) == SDL_WINDOW_FULLSCREEN )
+	{
+		if( SDL_SetWindowFullscreen( SDL_window, 0 ) == 0 )
+			nativeDialogFullscreen = SDL_WINDOW_FULLSCREEN;
+	}
+}
+
+void IN_EndNativeDialog( void )
+{
+	if( !SDL_window || !SDL_WasInit( SDL_INIT_VIDEO ) )
+		return;
+
+	if( nativeDialogFullscreen )
+	{
+		SDL_SetWindowFullscreen( SDL_window, nativeDialogFullscreen );
+		nativeDialogFullscreen = 0;
+	}
+
+	SDL_RaiseWindow( SDL_window );
+	IN_GobbleMotionEvents( );
+}
+
+/*
 ================
 SCR_AdjustTo640
 
@@ -1379,11 +1423,14 @@ static void IN_ProcessEvents( void )
 				}
 				break;
 
-#if defined(PROTOCOL_HANDLER) && defined(__APPLE__)
 			case SDL_DROPFILE:
 				{
 					char *filename = e.drop.file;
 
+					if( !filename )
+						break;
+
+#if defined(PROTOCOL_HANDLER) && defined(__APPLE__)
 					// Handle macOS open URL event. URL protocol scheme must be set in Info.plist.
 					if( !Q_strncmp( filename, PROTOCOL_HANDLER ":", strlen( PROTOCOL_HANDLER ":" ) ) )
 					{
@@ -1394,12 +1441,17 @@ static void IN_ProcessEvents( void )
 							Cbuf_ExecuteText( EXEC_APPEND, va( "%s\n", protocolCommand ) );
 							free( protocolCommand );
 						}
-					}
 
+						SDL_free( filename );
+						break;
+					}
+#endif
+
+					// A file dragged onto the window, e.g. an avatar image.
+					CL_SetDroppedFile( filename );
 					SDL_free( filename );
 				}
 				break;
-#endif
 
 			default:
 				break;
@@ -1490,9 +1542,8 @@ void IN_Init( void *windowData )
 	in_joystickAutoEnable = Cvar_Get( "in_joystickAutoEnable", "1", CVAR_ARCHIVE );
 	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
 
-#if defined(PROTOCOL_HANDLER) && defined(__APPLE__)
+	// Files dropped onto the window (avatar upload, macOS URL handler).
 	SDL_EventState( SDL_DROPFILE, SDL_ENABLE );
-#endif
 
 	SDL_StartTextInput( );
 

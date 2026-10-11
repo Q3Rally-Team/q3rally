@@ -1193,7 +1193,42 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		origin[2] = 10;
 	}
 
-	VectorMA(origin, 96, refdef.viewaxis[0], origin);
+	{
+		/* Keep the whole car inside the preview box at every angle.  The box
+		 * can be much wider than tall, and a car pointing at the camera comes
+		 * close and grows, so pull the camera back as far as the worst yaw
+		 * needs.  Large boxes keep the classic distance of 96. */
+		float	dist = 96.0f;
+
+		if ( !uis.mainMenu && pi->bodyModel ) {
+			vec3_t	bmins, bmaxs;
+			float	tx, ty, a, need;
+			int		k, c;
+
+			trap_R_ModelBounds( pi->bodyModel, bmins, bmaxs );
+			bmins[1] -= 4.0f; bmaxs[1] += 4.0f;		/* wheels stick out a little */
+			tx = tan( DEG2RAD( refdef.fov_x ) * 0.5f );
+			ty = tan( DEG2RAD( refdef.fov_y ) * 0.5f );
+			for ( k = 0; k < 24; k++ ) {
+				a = DEG2RAD( k * 15.0f );
+				for ( c = 0; c < 8; c++ ) {
+					float cx = ( c & 1 ) ? bmaxs[0] : bmins[0];
+					float cy = ( c & 2 ) ? bmaxs[1] : bmins[1];
+					float cz = ( c & 4 ) ? bmaxs[2] : bmins[2];
+					float px = cx * cos( a ) - cy * sin( a );
+					float py = cx * sin( a ) + cy * cos( a );
+					float pz = cz + origin[2];
+
+					need = fabs( py ) * 1.05f / tx - px;
+					if ( need > dist ) dist = need;
+					need = fabs( pz ) * 1.05f / ty - px;
+					if ( need > dist ) dist = need;
+				}
+			}
+		}
+
+		VectorMA(origin, dist, refdef.viewaxis[0], origin);
+	}
 // END
 
 	refdef.time = dp_realtime;

@@ -1295,6 +1295,11 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         snap->racingDmPodiums = G_Profile_ParseIntPublic( statsBuf, "racingDmPodiums", 0 );
                                         snap->racingDmCompleted = G_Profile_ParseIntPublic( statsBuf, "racingDmCompleted", 0 );
                                         snap->racingDmTotalMs = G_Profile_ParseIntPublic( statsBuf, "racingDmTotalMs", 0 );
+                                        if ( G_Profile_ParseIntPublic( statsBuf, "statsRevision", 0 ) < PROFILE_STATS_REVISION ) {
+                                                /* Same one-time correction as G_Profile load. */
+                                                snap->racingCompleted   += snap->racingWins;
+                                                snap->racingDmCompleted += snap->racingDmWins;
+                                        }
                                         snap->sprintWins = G_Profile_ParseIntPublic( statsBuf, "sprintWins", 0 );
                                         snap->sprintCompleted = G_Profile_ParseIntPublic( statsBuf, "sprintCompleted", 0 );
                                         snap->sprintBestMs = G_Profile_ParseIntPublic( statsBuf, "sprintBestMs", 0 );

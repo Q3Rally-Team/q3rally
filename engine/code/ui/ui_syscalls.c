@@ -138,6 +138,11 @@ int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
 	return syscall( UI_IMPORT_AVATAR_PATH, profileName, sourcePath, shaderPath, shaderPathSize );
 }
 
+/* Latest file dropped onto the game window (consumed), 1 if there was one. */
+int trap_UI_TakeDroppedFile( char *path, int pathSize ) {
+	return syscall( UI_TAKE_DROPPED_FILE, path, pathSize );
+}
+
 qhandle_t trap_R_RegisterModel( const char *name ) {
 	return syscall( UI_R_REGISTERMODEL, name );
 }

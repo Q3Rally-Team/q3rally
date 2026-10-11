@@ -25,18 +25,199 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../botlib/botlib.h"
 
 #ifdef _WIN32
+#include <windows.h>
 #include <commdlg.h>
 #endif
 
 extern	botlib_export_t	*botlib_export;
 
+/*
+===============================================================================
+
+AVATAR IMPORT
+
+The UI VM can only reach the game filesystem, so the client copies an image
+the player picked into gfx/avatars/custom/ and hands the game path back.
+Three sources feed the same copy routine: the native file dialog, a file
+dropped onto the game window and a typed path.
+
+===============================================================================
+*/
+
+#define CLUI_AVATAR_DIR			"gfx/avatars/custom"
+#define CLUI_AVATAR_MAX_BYTES	( 8 * 1024 * 1024 )
+
+static char	cl_droppedFile[MAX_OSPATH];
+
+/*
+====================
+CL_SetDroppedFile
+
+Called by the input code for a file dropped onto the window. Only the latest
+drop is kept; the UI takes it while an avatar target is on screen.
+====================
+*/
+void CL_SetDroppedFile( const char *path ) {
+	if ( !path ) {
+		cl_droppedFile[0] = '\0';
+		return;
+	}
+	Q_strncpyz( cl_droppedFile, path, sizeof( cl_droppedFile ) );
+}
+
+static int CLUI_TakeDroppedFile( char *out, int outSize ) {
+	if ( !out || outSize <= 0 ) {
+		cl_droppedFile[0] = '\0';
+		return 0;
+	}
+	out[0] = '\0';
+	if ( !cl_droppedFile[0] ) {
+		return 0;
+	}
+	Q_strncpyz( out, cl_droppedFile, outSize );
+	cl_droppedFile[0] = '\0';
+	return 1;
+}
+
+/*
+====================
+CLUI_CleanSourcePath
+
+Accepts what people paste: surrounding whitespace, quotes ("Copy as path" on
+Windows) and file:// URLs.
+====================
+*/
+static void CLUI_CleanSourcePath( const char *in, char *out, int outSize ) {
+	const char *start;
+	int length;
+
+	out[0] = '\0';
+	if ( !in ) {
+		return;
+	}
+	start = in;
+	while ( *start == ' ' || *start == '\t' || *start == '"' || *start == '\'' ) {
+		start++;
+	}
+	if ( !Q_stricmpn( start, "file://", 7 ) ) {
+		start += 7;
 #ifdef _WIN32
-static int CLUI_CopyAvatarFile( const char *profileName, const char *sourcePath,
-								char *shaderPath, int shaderPathSize ) {
-	char safeName[64];
-	char extension[8];
-	char destination[MAX_QPATH];
+		if ( start[0] == '/' && start[1] && start[2] == ':' ) {
+			start++;	/* file:///C:/... */
+		}
+#endif
+	}
+	Q_strncpyz( out, start, outSize );
+	length = (int)strlen( out );
+	while ( length > 0 && ( out[length - 1] == ' ' || out[length - 1] == '\t' ||
+	                        out[length - 1] == '"' || out[length - 1] == '\'' ||
+	                        out[length - 1] == '\r' || out[length - 1] == '\n' ) ) {
+		out[--length] = '\0';
+	}
+}
+
+/* Paths from the dialog and from SDL drops are UTF-8. */
+static FILE *CLUI_OpenSourceFile( const char *path ) {
+#ifdef _WIN32
+	wchar_t widePath[MAX_OSPATH];
+
+	if ( MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS, path, -1,
+	                          widePath, MAX_OSPATH ) > 0 ) {
+		FILE *file = _wfopen( widePath, L"rb" );
+		if ( file ) {
+			return file;
+		}
+	}
+#endif
+	return fopen( path, "rb" );
+}
+
+/*
+====================
+CLUI_DetectAvatarFormat
+
+The file content decides the format, so a PNG saved as .jpg still works.
+TGA has no signature; it is accepted by extension plus a sane header.
+====================
+*/
+static const char *CLUI_DetectAvatarFormat( const char *sourcePath, const byte *data, long size ) {
 	const char *dot;
+
+	if ( size >= 8 && !memcmp( data, "\x89PNG\r\n\x1a\n", 8 ) ) {
+		return ".png";
+	}
+	if ( size >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF ) {
+		return ".jpg";
+	}
+	dot = strrchr( sourcePath, '.' );
+	if ( dot && !Q_stricmp( dot, ".tga" ) && size >= 18 &&
+	     ( data[2] == 2 || data[2] == 3 || data[2] == 10 || data[2] == 11 ) ) {
+		return ".tga";
+	}
+	return NULL;
+}
+
+/*
+====================
+CLUI_RemoveOldAvatars
+
+Every import gets a fresh file name so the renderer does not show its cached
+copy of the previous image; older files of the same profile are removed.
+====================
+*/
+static void CLUI_RemoveOldAvatars( const char *safeName, const char *keepPath ) {
+	char **list;
+	char prefix[80];
+	char legacy[80];
+	char path[MAX_QPATH];
+	int count;
+	int prefixLength;
+	int legacyLength;
+	int i;
+
+	Com_sprintf( prefix, sizeof( prefix ), "%s@", safeName );
+	Com_sprintf( legacy, sizeof( legacy ), "%s.", safeName );
+	prefixLength = (int)strlen( prefix );
+	legacyLength = (int)strlen( legacy );
+
+	list = FS_ListFiles( CLUI_AVATAR_DIR, "", &count );
+	for ( i = 0; i < count; ++i ) {
+		const char *name = list[i];
+		const char *dot;
+
+		if ( Q_stricmpn( name, prefix, prefixLength ) ) {
+			/* Files from before the unique names: "<name>.<ext>" */
+			if ( Q_stricmpn( name, legacy, legacyLength ) || strchr( name + legacyLength, '.' ) ) {
+				continue;
+			}
+		}
+		dot = strrchr( name, '.' );
+		if ( !dot || ( Q_stricmp( dot, ".png" ) && Q_stricmp( dot, ".jpg" ) &&
+		               Q_stricmp( dot, ".jpeg" ) && Q_stricmp( dot, ".tga" ) ) ) {
+			continue;
+		}
+		Com_sprintf( path, sizeof( path ), "%s/%s", CLUI_AVATAR_DIR, name );
+		if ( !Q_stricmp( path, keepPath ) ) {
+			continue;
+		}
+		FS_HomeRemove( path );
+	}
+	FS_FreeFileList( list );
+}
+
+/*
+====================
+CLUI_CopyAvatarFile
+
+Returns AVATAR_IMPORT_OK and the new game path, or an AVATAR_IMPORT_ERR_*.
+====================
+*/
+static int CLUI_CopyAvatarFile( const char *profileName, const char *rawSourcePath,
+								char *shaderPath, int shaderPathSize ) {
+	char sourcePath[MAX_OSPATH];
+	char safeName[48];
+	char destination[MAX_QPATH];
+	const char *extension;
 	FILE *source;
 	fileHandle_t output;
 	byte *data;
@@ -44,36 +225,30 @@ static int CLUI_CopyAvatarFile( const char *profileName, const char *sourcePath,
 	int i;
 	int safeLength;
 
-	if ( !sourcePath || !sourcePath[0] || !shaderPath || shaderPathSize <= 0 ) {
-		return 0;
+	if ( !shaderPath || shaderPathSize <= 0 ) {
+		return AVATAR_IMPORT_ERR_OPEN;
 	}
 	shaderPath[0] = '\0';
 
-	dot = strrchr( sourcePath, '.' );
-	if ( !dot || !dot[1] ) {
-		return 0;
-	}
-	Q_strncpyz( extension, dot, sizeof( extension ) );
-	for ( i = 0; extension[i]; ++i ) {
-		if ( extension[i] >= 'A' && extension[i] <= 'Z' ) {
-			extension[i] = (char)( extension[i] - 'A' + 'a' );
-		}
-	}
-	if ( Q_stricmp( extension, ".png" ) && Q_stricmp( extension, ".jpg" ) &&
-	     Q_stricmp( extension, ".jpeg" ) && Q_stricmp( extension, ".tga" ) ) {
-		return 0;
+	CLUI_CleanSourcePath( rawSourcePath, sourcePath, sizeof( sourcePath ) );
+	if ( !sourcePath[0] ) {
+		return AVATAR_IMPORT_ERR_OPEN;
 	}
 
-	source = fopen( sourcePath, "rb" );
+	source = CLUI_OpenSourceFile( sourcePath );
 	if ( !source ) {
-		return 0;
+		return AVATAR_IMPORT_ERR_OPEN;
 	}
 	fseek( source, 0, SEEK_END );
 	size = ftell( source );
 	fseek( source, 0, SEEK_SET );
-	if ( size <= 0 || size > 8 * 1024 * 1024 ) {
+	if ( size <= 0 ) {
 		fclose( source );
-		return 0;
+		return AVATAR_IMPORT_ERR_DATA;
+	}
+	if ( size > CLUI_AVATAR_MAX_BYTES ) {
+		fclose( source );
+		return AVATAR_IMPORT_ERR_SIZE;
 	}
 
 	data = (byte *)malloc( (size_t)size );
@@ -82,9 +257,15 @@ static int CLUI_CopyAvatarFile( const char *profileName, const char *sourcePath,
 			free( data );
 		}
 		fclose( source );
-		return 0;
+		return AVATAR_IMPORT_ERR_OPEN;
 	}
 	fclose( source );
+
+	extension = CLUI_DetectAvatarFormat( sourcePath, data, size );
+	if ( !extension ) {
+		free( data );
+		return AVATAR_IMPORT_ERR_FORMAT;
+	}
 
 	safeLength = 0;
 	if ( profileName ) {
@@ -104,52 +285,140 @@ static int CLUI_CopyAvatarFile( const char *profileName, const char *sourcePath,
 		safeName[safeLength] = '\0';
 	}
 
-	Com_sprintf( destination, sizeof( destination ), "gfx/avatars/custom/%s%s", safeName, extension );
+	Com_sprintf( destination, sizeof( destination ), "%s/%s@%x%s", CLUI_AVATAR_DIR,
+	             safeName, (unsigned int)( Com_RealTime( NULL ) ^ ( Sys_Milliseconds() << 12 ) ),
+	             extension );
 	output = FS_FOpenFileWrite( destination );
 	if ( !output ) {
 		free( data );
-		return 0;
+		return AVATAR_IMPORT_ERR_WRITE;
 	}
-	FS_Write( data, (int)size, output );
+	if ( FS_Write( data, (int)size, output ) != (int)size ) {
+		FS_FCloseFile( output );
+		free( data );
+		FS_HomeRemove( destination );
+		return AVATAR_IMPORT_ERR_WRITE;
+	}
 	FS_FCloseFile( output );
 	free( data );
 
+	CLUI_RemoveOldAvatars( safeName, destination );
 	Q_strncpyz( shaderPath, destination, shaderPathSize );
-	return 1;
+	return AVATAR_IMPORT_OK;
 }
 
+/*
+====================
+CLUI_PickAvatarFile
+
+Shows the platform's file dialog. Returns AVATAR_IMPORT_OK with a UTF-8
+path, AVATAR_IMPORT_CANCELLED or AVATAR_IMPORT_ERR_NO_DIALOG.
+====================
+*/
+#ifdef _WIN32
+static int CLUI_PickAvatarFile( char *out, int outSize ) {
+	static const wchar_t filter[] =
+		L"Images (*.png; *.jpg; *.jpeg; *.tga)\0*.png;*.jpg;*.jpeg;*.tga\0"
+		L"All files (*.*)\0*.*\0";
+	OPENFILENAMEW dialog;
+	wchar_t widePath[MAX_OSPATH];
+
+	Com_Memset( &dialog, 0, sizeof( dialog ) );
+	Com_Memset( widePath, 0, sizeof( widePath ) );
+	dialog.lStructSize = sizeof( dialog );
+	dialog.hwndOwner = GetActiveWindow();
+	dialog.lpstrFilter = filter;
+	dialog.lpstrFile = widePath;
+	dialog.nMaxFile = MAX_OSPATH;
+	dialog.lpstrTitle = L"Choose an avatar image";
+	dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER;
+
+	if ( !GetOpenFileNameW( &dialog ) ) {
+		return CommDlgExtendedError() ? AVATAR_IMPORT_ERR_NO_DIALOG : AVATAR_IMPORT_CANCELLED;
+	}
+	if ( WideCharToMultiByte( CP_UTF8, 0, widePath, -1, out, outSize, NULL, NULL ) <= 0 ) {
+		return AVATAR_IMPORT_ERR_OPEN;
+	}
+	return AVATAR_IMPORT_OK;
+}
+#else
+static int CLUI_PickAvatarFile( char *out, int outSize ) {
+#ifdef __APPLE__
+	static const char command[] =
+		"osascript -e 'tell application \"System Events\"' -e 'activate' "
+		"-e 'POSIX path of (choose file with prompt \"Choose an avatar image\")' "
+		"-e 'end tell' 2>/dev/null";
+#else
+	static const char command[] =
+		"if command -v zenity >/dev/null 2>&1; then "
+			"zenity --file-selection --title='Choose an avatar image' "
+			"--file-filter='Images | *.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.tga *.TGA' "
+			"--file-filter='All files | *' 2>/dev/null; "
+		"elif command -v kdialog >/dev/null 2>&1; then "
+			"kdialog --title 'Choose an avatar image' --getopenfilename \"$HOME\" "
+			"'*.png *.jpg *.jpeg *.tga|Images' 2>/dev/null; "
+		"else echo '<nodialog>'; fi";
+#endif
+	FILE *pipe;
+	int length;
+
+	out[0] = '\0';
+	pipe = popen( command, "r" );
+	if ( !pipe ) {
+		return AVATAR_IMPORT_ERR_NO_DIALOG;
+	}
+	if ( !fgets( out, outSize, pipe ) ) {
+		out[0] = '\0';
+	}
+	pclose( pipe );
+
+	length = (int)strlen( out );
+	while ( length > 0 && ( out[length - 1] == '\n' || out[length - 1] == '\r' ) ) {
+		out[--length] = '\0';
+	}
+	if ( !strcmp( out, "<nodialog>" ) ) {
+		out[0] = '\0';
+		return AVATAR_IMPORT_ERR_NO_DIALOG;
+	}
+	return out[0] ? AVATAR_IMPORT_OK : AVATAR_IMPORT_CANCELLED;
+}
+#endif
+
+/*
+====================
+CLUI_ImportAvatar
+
+Native dialog + copy. The game loop stands still while the dialog is open,
+so sound is silenced first and held keys are released afterwards (the
+release happened inside the dialog and never reached the game).
+====================
+*/
 static int CLUI_ImportAvatar( const char *profileName, char *shaderPath, int shaderPathSize ) {
-	OPENFILENAMEA dialog;
-	HWND owner;
 	char sourcePath[MAX_OSPATH];
-	char filter[] = "Avatar images (*.png;*.jpg;*.jpeg;*.tga)\0*.png;*.jpg;*.jpeg;*.tga\0All files (*.*)\0*.*\0";
+	int result;
+	int i;
 
 	if ( !shaderPath || shaderPathSize <= 0 ) {
-		return 0;
+		return AVATAR_IMPORT_ERR_OPEN;
 	}
 	shaderPath[0] = '\0';
 
-	Com_Memset( &dialog, 0, sizeof( dialog ) );
-	Com_Memset( sourcePath, 0, sizeof( sourcePath ) );
-	owner = GetForegroundWindow();
-	if ( !owner ) {
-		owner = GetActiveWindow();
-	}
-	dialog.lStructSize = sizeof( dialog );
-	dialog.hwndOwner = owner;
-	dialog.lpstrFilter = filter;
-	dialog.lpstrFile = sourcePath;
-	dialog.nMaxFile = sizeof( sourcePath );
-	dialog.lpstrTitle = "Choose an avatar image";
-	dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+	S_ClearSoundBuffer();
+	IN_BeginNativeDialog();
+	result = CLUI_PickAvatarFile( sourcePath, sizeof( sourcePath ) );
+	IN_EndNativeDialog();
 
-	if ( !GetOpenFileNameA( &dialog ) ) {
-		return 0;
+	for ( i = 0; i < MAX_KEYS; ++i ) {
+		keys[i].down = qfalse;
+		keys[i].repeats = 0;
 	}
+	anykeydown = 0;
 
+	if ( result != AVATAR_IMPORT_OK ) {
+		return result;
+	}
 	return CLUI_CopyAvatarFile( profileName, sourcePath, shaderPath, shaderPathSize );
 }
-#endif
 
 vm_t *uivm;
 
@@ -933,18 +1202,13 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FS_Seek( args[1], args[2], args[3] );
 
 	case UI_IMPORT_AVATAR:
-#ifdef _WIN32
 		return CLUI_ImportAvatar( VMA(1), VMA(2), args[3] );
-#else
-		return 0;
-#endif
 
 	case UI_IMPORT_AVATAR_PATH:
-#ifdef _WIN32
 		return CLUI_CopyAvatarFile( VMA(1), VMA(2), VMA(3), args[4] );
-#else
-		return 0;
-#endif
+
+	case UI_TAKE_DROPPED_FILE:
+		return CLUI_TakeDroppedFile( VMA(1), args[2] );
 	
 	case UI_R_REGISTERMODEL:
 		return re.RegisterModel( VMA(1) );

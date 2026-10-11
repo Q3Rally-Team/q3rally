@@ -15,6 +15,13 @@
 /* UUID v4 als null-terminierter String: "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" = 36 Zeichen + '\0' */
 #define PROFILE_MAX_UUID 37
 
+/* Version of the counting rules behind the stats block ("statsRevision").
+ * 1: won Racing / Racing DM races count as completed. Profiles written
+ *    before that only counted lost races there, so on load the wins are
+ *    added to the completed counters once. Every writer stores the current
+ *    revision, so the correction cannot be applied twice. */
+#define PROFILE_STATS_REVISION 1
+
 typedef struct profile_rank_def_s {
     const char *name;
     int minimumScore;

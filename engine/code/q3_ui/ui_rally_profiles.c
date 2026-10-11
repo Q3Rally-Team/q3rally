@@ -762,6 +762,161 @@ static void UI_Profile_FormatJsonString( char *out, int outSize, const char *val
     *dst = '\0';
 }
 
+/*
+=================
+Avatar presets
+
+Pictures shipped in gfx/avatars/preset/. Profiles that still point at the
+retired driver_01..09 set are moved to the new set when they are read.
+=================
+*/
+const uiAvatarPreset_t uiAvatarPresets[] = {
+	{ "gfx/avatars/preset/helmet_13", "Helmet 13" },
+	{ "gfx/avatars/preset/helmet_07", "Helmet 07" },
+	{ "gfx/avatars/preset/helmet_27", "Helmet 27" },
+	{ "gfx/avatars/preset/helmet_44", "Helmet 44" },
+	{ "gfx/avatars/preset/helmet_88", "Helmet 88" },
+	{ "gfx/avatars/preset/helmet_01", "Helmet 01" },
+	{ "gfx/avatars/preset/steering", "Steering wheel" },
+	{ "gfx/avatars/preset/flags", "Checkered flags" },
+	{ "gfx/avatars/preset/tyre", "Tyre" },
+	{ "gfx/avatars/preset/shifter", "Shifter" },
+	{ "gfx/avatars/preset/tacho", "Tachometer" },
+	{ "gfx/avatars/preset/rocket", "Rocket" }
+};
+const int uiAvatarPresetCount = sizeof( uiAvatarPresets ) / sizeof( uiAvatarPresets[0] );
+
+int UI_AvatarPresetIndex( const char *path ) {
+	char clean[MAX_QPATH];
+	int i;
+
+	if ( !path || !path[0] ) {
+		return -1;
+	}
+	COM_StripExtension( path, clean, sizeof( clean ) );
+	for ( i = 0; i < uiAvatarPresetCount; i++ ) {
+		if ( !Q_stricmp( clean, uiAvatarPresets[i].path ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void UI_Profile_MigrateAvatar( char *avatar, int size ) {
+	static const char legacy[] = "gfx/avatars/preset/driver_";
+	int n;
+
+	if ( Q_stricmpn( avatar, legacy, sizeof( legacy ) - 1 ) ) {
+		return;
+	}
+	n = atoi( avatar + sizeof( legacy ) - 1 );
+	if ( n < 1 ) {
+		n = 1;
+	}
+	Q_strncpyz( avatar, uiAvatarPresets[( n - 1 ) % uiAvatarPresetCount].path, size );
+}
+
+/*
+Secret skins unlock with every second profile rank. The skin files carry the
+same name on every car (models/players/<car>/<skin>.skin), so one table covers
+all vehicles. The lock lives in the UI only: it keeps the paints as a reward,
+it is not a copy protection.
+*/
+const uiSecretSkin_t uiSecretSkins[] = {
+	{ "retro",	"Retro",	2 },	/* Weekend Racer */
+	{ "camo",	"Camo",		4 },	/* Amateur Racer */
+	{ "carbon",	"Carbon",	6 },	/* Semi-Pro Driver */
+	{ "chrome",	"Chrome",	8 },	/* Elite Driver */
+	{ "neon",	"Neon",		10 },	/* Master of Speed */
+	{ "hotrod",	"Hot Rod",	12 },	/* Asphalt King */
+	{ "gold",	"Gold",		14 }	/* Q3Rally Icon */
+};
+const int uiSecretSkinCount = sizeof( uiSecretSkins ) / sizeof( uiSecretSkins[0] );
+
+int UI_SecretSkinIndex( const char *skin ) {
+	char clean[MAX_QPATH];
+	const char *slash;
+	int i;
+
+	if ( !skin || !skin[0] ) {
+		return -1;
+	}
+	slash = strrchr( skin, '/' );
+	COM_StripExtension( slash ? slash + 1 : skin, clean, sizeof( clean ) );
+	for ( i = 0; i < uiSecretSkinCount; i++ ) {
+		if ( !Q_stricmp( clean, uiSecretSkins[i].skin ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+const char *UI_Profile_RankName( int index ) {
+	if ( index < 0 ) {
+		index = 0;
+	}
+	if ( index >= (int)UI_PROFILE_RANK_COUNT ) {
+		index = UI_PROFILE_RANK_COUNT - 1;
+	}
+	return s_uiProfileRanks[index].name;
+}
+
+int UI_Profile_UnlockedRank( void ) {
+	const profile_info_t *info;
+	const profile_stats_t *stats;
+	profile_rank_t rank;
+	int best;
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return -1;
+	}
+	best = 0;
+	info = UI_Profile_GetActiveInfo();
+	if ( info && info->highestRank > best ) {
+		best = info->highestRank;
+	}
+	stats = UI_Profile_GetActiveStats();
+	if ( stats && UI_Profile_GetRank( stats, &rank ) && rank.index > best ) {
+		best = rank.index;
+	}
+	return best;
+}
+
+qboolean UI_SkinUnlocked( const char *skin ) {
+	int idx;
+
+	idx = UI_SecretSkinIndex( skin );
+	if ( idx < 0 ) {
+		return qtrue;
+	}
+	return (qboolean)( UI_Profile_UnlockedRank() >= uiSecretSkins[idx].rank );
+}
+
+/* A locked secret paint in the model cvars falls back to the car's default skin. */
+void UI_EnforceSkinLocks( void ) {
+	static const char *names[] = { "model", "headmodel", "team_model", "team_headmodel" };
+	char value[MAX_QPATH];
+	char fixed[MAX_QPATH];
+	char *slash;
+	int i;
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return;
+	}
+	for ( i = 0; i < (int)( sizeof( names ) / sizeof( names[0] ) ); i++ ) {
+		trap_Cvar_VariableStringBuffer( names[i], value, sizeof( value ) );
+		if ( UI_SkinUnlocked( value ) ) {
+			continue;
+		}
+		slash = strchr( value, '/' );
+		if ( slash ) {
+			*slash = '\0';
+		}
+		Com_sprintf( fixed, sizeof( fixed ), "%s/%s", value, DEFAULT_SKIN );
+		trap_Cvar_Set( names[i], fixed );
+	}
+}
+
 qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
@@ -823,6 +978,12 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
             outStats->racingDmPodiums     = UI_Profile_ParseInt( buffer, "racingDmPodiums", 0 );
             outStats->racingDmCompleted   = UI_Profile_ParseInt( buffer, "racingDmCompleted", 0 );
             outStats->racingDmTotalMs     = UI_Profile_ParseInt( buffer, "racingDmTotalMs", 0 );
+            /* Older profiles counted only lost races as completed; add the wins once.
+             * UI_Profile_WriteFile stores the revision, so this runs a single time. */
+            if ( UI_Profile_ParseInt( buffer, "statsRevision", 0 ) < PROFILE_STATS_REVISION ) {
+                outStats->racingCompleted   += outStats->racingWins;
+                outStats->racingDmCompleted += outStats->racingDmWins;
+            }
         /* ── GT_SPRINT ───────────────────────────────────────────────── */
             outStats->sprintCompleted     = UI_Profile_ParseInt( buffer, "sprintCompleted", 0 );
             outStats->sprintBestMs        = UI_Profile_ParseInt( buffer, "sprintBestMs", 0 );
@@ -883,6 +1044,7 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
         UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
         UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
+        UI_Profile_MigrateAvatar( outInfo->avatar, sizeof( outInfo->avatar ) );
         UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
         outInfo->currentRank = UI_Profile_ParseInt( buffer, "currentRank", 0 );
         outInfo->highestRank = UI_Profile_ParseInt( buffer, "highestRank", 0 );
@@ -1007,6 +1169,9 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
         off += Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"mostUsedVehicle\": \"%s\",\n\t\t\"mostUsedVehicleTimeMs\": %d,\n\t\t\"gamesPlayed\": %d,\n",
             stats->mostUsedVehicle, stats->mostUsedVehicleTimeMs, stats->gamesPlayed );
+
+        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"statsRevision\": %d,\n", PROFILE_STATS_REVISION );
 
         /* GT_RACING */
         off += Com_sprintf( buffer + off, sizeof(buffer) - off,
@@ -1743,6 +1908,8 @@ void UI_Profile_ActivateProfile( const char *name ) {
     } else {
         trap_Cvar_Set( "cl_uuid", "" );
     }
+
+    UI_EnforceSkinLocks();
 }
 
 static qboolean UI_ProfileOverlay_HandleSelect( void ) {
@@ -2068,6 +2235,9 @@ void UI_ProfileOverlay_InitSession( void ) {
      * outbox request can be submitted. An empty profile intentionally clears
      * the previous profile's global server key. */
     UI_Profile_ApplyLadderState( uis.activeProfile );
+
+    /* a secret paint the profile has not unlocked falls back to the default skin */
+    UI_EnforceSkinLocks();
 }
 
 void UI_ProfileOverlay_ClearState( void ) {

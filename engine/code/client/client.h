@@ -628,6 +628,12 @@ void CL_ShaderStateChanged(void);
 
 //
 // cl_ui.c
+void CL_SetDroppedFile( const char *path );
+
+// sdl_input.c: leave exclusive fullscreen while a native OS dialog is open
+void IN_BeginNativeDialog( void );
+void IN_EndNativeDialog( void );
+
 //
 void CL_InitUI( void );
 void CL_ShutdownUI( void );

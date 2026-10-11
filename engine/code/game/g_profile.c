@@ -1021,6 +1021,13 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.racingDmCompleted = G_Profile_ParseInt( buffer, "racingDmCompleted", 0 );
     s_profileState.stats.racingDmTotalMs   = G_Profile_ParseInt( buffer, "racingDmTotalMs",   0 );
 
+    /* Older profiles counted only lost races as completed; add the wins once. */
+    if ( G_Profile_ParseInt( buffer, "statsRevision", 0 ) < PROFILE_STATS_REVISION ) {
+        s_profileState.stats.racingCompleted   += s_profileState.stats.racingWins;
+        s_profileState.stats.racingDmCompleted += s_profileState.stats.racingDmWins;
+        s_profileState.dirty = qtrue;
+    }
+
     /* GT_SPRINT */
     s_profileState.stats.sprintCompleted = G_Profile_ParseInt( buffer, "sprintCompleted", 0 );
     s_profileState.stats.sprintBestMs    = G_Profile_ParseInt( buffer, "sprintBestMs",    0 );
@@ -1444,6 +1451,7 @@ static void G_Profile_WriteToDisk( void ) {
     /* Part 3: mode-specific stats */
     {
         int len3 = Com_sprintf( buffer + length, sizeof( buffer ) - length,
+            "\t\t\"statsRevision\": %d,\n"
             "\t\t\"racingWins\": %d,\n"
             "\t\t\"racingPodiums\": %d,\n"
             "\t\t\"racingCompleted\": %d,\n"
@@ -1466,6 +1474,7 @@ static void G_Profile_WriteToDisk( void ) {
             "\t\t\"dmWins\": %d,\n"
             "\t\t\"dmCompleted\": %d,\n"
             "\t\t\"dmKills\": %d,\n",
+            PROFILE_STATS_REVISION,
             s_profileState.stats.racingWins,
             s_profileState.stats.racingPodiums,
             s_profileState.stats.racingCompleted,
@@ -2187,9 +2196,11 @@ void G_Profile_RecordWin( gclient_t *client ) {
     switch ( g_gametype.integer ) {
     case GT_RACING:
         s_profileState.stats.racingWins++;
+        s_profileState.stats.racingCompleted++;
         break;
     case GT_RACING_DM:
         s_profileState.stats.racingDmWins++;
+        s_profileState.stats.racingDmCompleted++;
         break;
     case GT_SPRINT:
         s_profileState.stats.sprintWins++;

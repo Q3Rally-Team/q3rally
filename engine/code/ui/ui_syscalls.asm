@@ -91,6 +91,7 @@ equ trap_FS_Seek		-88
 equ trap_UI_ImportAvatar	-89
 equ trap_UI_ImportAvatarPath	-90
 equ trap_SetPbClStatus -91
+equ trap_UI_TakeDroppedFile	-92
 
 equ	memset						-101
 equ	memcpy						-102

@@ -578,6 +578,32 @@ extern void PlayerModel_Cache( void );
 extern void UI_PlayerSettingsMenu( void );
 extern void UI_PlayerStatsMenu( void );
 extern void PlayerSettings_Cache( void );
+extern const char *UI_RimBrandName( const char *rim );
+
+/* Avatar presets shared by the first-start wizard and the driver profile. */
+#define UI_MAX_AVATAR_PRESETS	32
+typedef struct {
+	const char	*path;		/* shader / image path without extension */
+	const char	*name;		/* display name */
+} uiAvatarPreset_t;
+extern const uiAvatarPreset_t	uiAvatarPresets[];
+extern const int				uiAvatarPresetCount;
+int			UI_AvatarPresetIndex( const char *path );	/* -1 if not a preset */
+
+/* Secret skins: hidden paints that unlock with the profile rank. */
+typedef struct {
+	const char	*skin;		/* skin file name, same for every car */
+	const char	*name;		/* display name */
+	int			rank;		/* rank index (0 = Rookie Driver) that unlocks it */
+} uiSecretSkin_t;
+extern const uiSecretSkin_t		uiSecretSkins[];
+extern const int				uiSecretSkinCount;
+int			UI_SecretSkinIndex( const char *skin );		/* "car/skin" or "skin"; -1 if not secret */
+qboolean	UI_SkinUnlocked( const char *skin );
+int			UI_Profile_UnlockedRank( void );			/* highest rank reached, -1 without profile */
+const char	*UI_Profile_RankName( int index );
+void		UI_EnforceSkinLocks( void );
+extern void UI_RimModelName( const char *rim, char *out, int outSize );
 extern int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
 								char *shaderPath, int shaderPathSize );
 // STONELANCE
@@ -946,7 +972,9 @@ void			trap_FS_FCloseFile( fileHandle_t f );
 int				trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 int				trap_UI_ImportAvatar( const char *profileName, char *shaderPath, int shaderPathSize );
+int				trap_UI_TakeDroppedFile( char *path, int pathSize );
 qhandle_t		trap_R_RegisterModel( const char *name );
+void			trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 qhandle_t		trap_R_RegisterSkin( const char *name );
 qhandle_t		trap_R_RegisterShader( const char *name );
 qhandle_t		trap_R_RegisterShaderNoMip( const char *name );

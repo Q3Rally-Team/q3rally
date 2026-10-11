@@ -25,6 +25,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define UI_API_VERSION	6
 
+/* Results of trap_UI_ImportAvatar / trap_UI_ImportAvatarPath. */
+#define AVATAR_IMPORT_OK			1
+#define AVATAR_IMPORT_CANCELLED		0
+#define AVATAR_IMPORT_ERR_FORMAT	-1	/* not a PNG, JPG or TGA image */
+#define AVATAR_IMPORT_ERR_OPEN		-2	/* file missing or unreadable */
+#define AVATAR_IMPORT_ERR_SIZE		-3	/* larger than 8 MB */
+#define AVATAR_IMPORT_ERR_DATA		-4	/* empty file */
+#define AVATAR_IMPORT_ERR_WRITE		-5	/* could not store the copy */
+#define AVATAR_IMPORT_ERR_NO_DIALOG	-6	/* no file dialog on this system */
+
 typedef struct {
 	connstate_t		connState;
 	int				connectPacketCount;
@@ -127,6 +137,7 @@ typedef enum {
 	UI_IMPORT_AVATAR,
 	UI_IMPORT_AVATAR_PATH,
 	UI_SET_PBCLSTATUS,
+	UI_TAKE_DROPPED_FILE,
 
 	UI_MEMSET = 100,
 	UI_MEMCPY,

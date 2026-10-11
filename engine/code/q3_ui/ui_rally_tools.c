@@ -40,6 +40,21 @@ int UI_RandomInt( int max ){
 
 
 
+/*
+A directory that exists both loose and inside a pk3 can be reported twice by
+trap_FS_GetFileList ("name" and "name/"), which would list its files twice.
+*/
+static qboolean UI_FileListHas( char list[256][64], int from, int to, const char *name ) {
+	int i;
+
+	for ( i = from; i < to; i++ ) {
+		if ( !Q_stricmp( list[i], name ) ) {
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
+
 int UI_BuildFileList( const char *directory, const char *extension, const char *prefix,
 					 qboolean excludeDirectory, qboolean excludeFileNames,
 					 int specialCases, int startIndex, char list[256][64]){
@@ -133,7 +148,8 @@ int UI_BuildFileList( const char *directory, const char *extension, const char *
 					else
 						Com_sprintf( list[numListItems], maxCharacters, "%s/%s", directory, dirptr );
 
-					numListItems++;
+					if ( !UI_FileListHas( list, startIndex, numListItems, list[numListItems] ) )
+						numListItems++;
 					break;
 				}
 				else {
@@ -154,7 +170,8 @@ int UI_BuildFileList( const char *directory, const char *extension, const char *
 							Com_sprintf( list[numListItems], maxCharacters, "%s/%s/%s", directory, dirptr, name );
 					}
 
-					numListItems++;
+					if ( !UI_FileListHas( list, startIndex, numListItems, list[numListItems] ) )
+						numListItems++;
 				}
 			}
 		}
