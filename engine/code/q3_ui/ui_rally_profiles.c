@@ -816,6 +816,107 @@ static void UI_Profile_MigrateAvatar( char *avatar, int size ) {
 	Q_strncpyz( avatar, uiAvatarPresets[( n - 1 ) % uiAvatarPresetCount].path, size );
 }
 
+/*
+Secret skins unlock with every second profile rank. The skin files carry the
+same name on every car (models/players/<car>/<skin>.skin), so one table covers
+all vehicles. The lock lives in the UI only: it keeps the paints as a reward,
+it is not a copy protection.
+*/
+const uiSecretSkin_t uiSecretSkins[] = {
+	{ "retro",	"Retro",	2 },	/* Weekend Racer */
+	{ "camo",	"Camo",		4 },	/* Amateur Racer */
+	{ "carbon",	"Carbon",	6 },	/* Semi-Pro Driver */
+	{ "chrome",	"Chrome",	8 },	/* Elite Driver */
+	{ "neon",	"Neon",		10 },	/* Master of Speed */
+	{ "hotrod",	"Hot Rod",	12 },	/* Asphalt King */
+	{ "gold",	"Gold",		14 }	/* Q3Rally Icon */
+};
+const int uiSecretSkinCount = sizeof( uiSecretSkins ) / sizeof( uiSecretSkins[0] );
+
+int UI_SecretSkinIndex( const char *skin ) {
+	char clean[MAX_QPATH];
+	const char *slash;
+	int i;
+
+	if ( !skin || !skin[0] ) {
+		return -1;
+	}
+	slash = strrchr( skin, '/' );
+	COM_StripExtension( slash ? slash + 1 : skin, clean, sizeof( clean ) );
+	for ( i = 0; i < uiSecretSkinCount; i++ ) {
+		if ( !Q_stricmp( clean, uiSecretSkins[i].skin ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+const char *UI_Profile_RankName( int index ) {
+	if ( index < 0 ) {
+		index = 0;
+	}
+	if ( index >= (int)UI_PROFILE_RANK_COUNT ) {
+		index = UI_PROFILE_RANK_COUNT - 1;
+	}
+	return s_uiProfileRanks[index].name;
+}
+
+int UI_Profile_UnlockedRank( void ) {
+	const profile_info_t *info;
+	const profile_stats_t *stats;
+	profile_rank_t rank;
+	int best;
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return -1;
+	}
+	best = 0;
+	info = UI_Profile_GetActiveInfo();
+	if ( info && info->highestRank > best ) {
+		best = info->highestRank;
+	}
+	stats = UI_Profile_GetActiveStats();
+	if ( stats && UI_Profile_GetRank( stats, &rank ) && rank.index > best ) {
+		best = rank.index;
+	}
+	return best;
+}
+
+qboolean UI_SkinUnlocked( const char *skin ) {
+	int idx;
+
+	idx = UI_SecretSkinIndex( skin );
+	if ( idx < 0 ) {
+		return qtrue;
+	}
+	return (qboolean)( UI_Profile_UnlockedRank() >= uiSecretSkins[idx].rank );
+}
+
+/* A locked secret paint in the model cvars falls back to the car's default skin. */
+void UI_EnforceSkinLocks( void ) {
+	static const char *names[] = { "model", "headmodel", "team_model", "team_headmodel" };
+	char value[MAX_QPATH];
+	char fixed[MAX_QPATH];
+	char *slash;
+	int i;
+
+	if ( !UI_Profile_HasActiveProfile() ) {
+		return;
+	}
+	for ( i = 0; i < (int)( sizeof( names ) / sizeof( names[0] ) ); i++ ) {
+		trap_Cvar_VariableStringBuffer( names[i], value, sizeof( value ) );
+		if ( UI_SkinUnlocked( value ) ) {
+			continue;
+		}
+		slash = strchr( value, '/' );
+		if ( slash ) {
+			*slash = '\0';
+		}
+		Com_sprintf( fixed, sizeof( fixed ), "%s/%s", value, DEFAULT_SKIN );
+		trap_Cvar_Set( names[i], fixed );
+	}
+}
+
 qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
@@ -1807,6 +1908,8 @@ void UI_Profile_ActivateProfile( const char *name ) {
     } else {
         trap_Cvar_Set( "cl_uuid", "" );
     }
+
+    UI_EnforceSkinLocks();
 }
 
 static qboolean UI_ProfileOverlay_HandleSelect( void ) {
@@ -2132,6 +2235,9 @@ void UI_ProfileOverlay_InitSession( void ) {
      * outbox request can be submitted. An empty profile intentionally clears
      * the previous profile's global server key. */
     UI_Profile_ApplyLadderState( uis.activeProfile );
+
+    /* a secret paint the profile has not unlocked falls back to the default skin */
+    UI_EnforceSkinLocks();
 }
 
 void UI_ProfileOverlay_ClearState( void ) {

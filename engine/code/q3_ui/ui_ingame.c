@@ -56,9 +56,9 @@ INGAME MENU
 #define INGAME_CARD_X               96
 #define INGAME_CARD_Y               112
 #define INGAME_CARD_WIDTH           448
-#define INGAME_CARD_HEIGHT          286
+#define INGAME_CARD_HEIGHT          300
 #define INGAME_ROW_X                112
-#define INGAME_ROW_Y                124
+#define INGAME_ROW_Y                144
 #define INGAME_ROW_WIDTH            416
 #define INGAME_ROW_HEIGHT           24
 #define INGAME_ROW_GAP              2
@@ -139,7 +139,7 @@ static void InGame_Draw( void ) {
 		INGAME_CARD_WIDTH, INGAME_CARD_HEIGHT, 1.0f, qfalse );
 	Frontend_DrawText( INGAME_CARD_X + 16, INGAME_CARD_Y + 16,
 		"Session", UI_LEFT | UI_SMALLFONT, ingameMutedColor );
-	Frontend_DrawText( INGAME_FRAME_X + 24, INGAME_FRAME_Y + 376,
+	Frontend_DrawText( INGAME_FRAME_X + 24, INGAME_FRAME_Y + 392,
 		"Enter select   Esc resume", UI_LEFT | UI_SMALLFONT,
 		ingameMutedColor );
 

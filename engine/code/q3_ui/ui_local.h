@@ -589,6 +589,20 @@ typedef struct {
 extern const uiAvatarPreset_t	uiAvatarPresets[];
 extern const int				uiAvatarPresetCount;
 int			UI_AvatarPresetIndex( const char *path );	/* -1 if not a preset */
+
+/* Secret skins: hidden paints that unlock with the profile rank. */
+typedef struct {
+	const char	*skin;		/* skin file name, same for every car */
+	const char	*name;		/* display name */
+	int			rank;		/* rank index (0 = Rookie Driver) that unlocks it */
+} uiSecretSkin_t;
+extern const uiSecretSkin_t		uiSecretSkins[];
+extern const int				uiSecretSkinCount;
+int			UI_SecretSkinIndex( const char *skin );		/* "car/skin" or "skin"; -1 if not secret */
+qboolean	UI_SkinUnlocked( const char *skin );
+int			UI_Profile_UnlockedRank( void );			/* highest rank reached, -1 without profile */
+const char	*UI_Profile_RankName( int index );
+void		UI_EnforceSkinLocks( void );
 extern void UI_RimModelName( const char *rim, char *out, int outSize );
 extern int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
 								char *shaderPath, int shaderPathSize );

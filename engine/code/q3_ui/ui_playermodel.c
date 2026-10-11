@@ -247,6 +247,8 @@ typedef struct
 	int				nummodels;
 	char			modelList[MAX_PLAYERMODELS][MAX_QPATH];
 	char			modelIcons[MAX_MODELSPERPAGE][MAX_QPATH];
+	int				lockHintTime;		/* last click on a locked secret paint */
+	int				lockHintSkin;		/* uiSecretSkins index of that paint */
 	int				modelpage;
 	int				numpages;
 	char			modelskin[MAX_QPATH];
@@ -647,6 +649,134 @@ static void PlayerModel_ApplyLayout( void ) {
 }
 
 
+/*
+=================
+PlayerModel_SortSecretSkins
+
+Regular paints first in their usual order, then the secret paints in unlock
+order. Also drops duplicates: once a pk3 adds files to a car folder, the
+directory scan can report the folder twice and list every paint again.
+=================
+*/
+static qboolean PlayerModel_SkinListed( char list[][MAX_QPATH], int count, const char *name ) {
+	int i;
+
+	for ( i = 0; i < count; i++ ) {
+		if ( !Q_stricmp( list[i], name ) ) {
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
+
+static void PlayerModel_SortSecretSkins( void ) {
+	static char sorted[MAX_PLAYERMODELS][MAX_QPATH];
+	int i, k, n;
+
+	n = 0;
+	for ( i = 0; i < s_playermodel.nummodels; i++ ) {
+		if ( UI_SecretSkinIndex( s_playermodel.modelList[i] ) < 0 &&
+			!PlayerModel_SkinListed( sorted, n, s_playermodel.modelList[i] ) ) {
+			Q_strncpyz( sorted[n++], s_playermodel.modelList[i], MAX_QPATH );
+		}
+	}
+	for ( k = 0; k < uiSecretSkinCount; k++ ) {
+		for ( i = 0; i < s_playermodel.nummodels; i++ ) {
+			if ( UI_SecretSkinIndex( s_playermodel.modelList[i] ) == k &&
+				!PlayerModel_SkinListed( sorted, n, s_playermodel.modelList[i] ) ) {
+				Q_strncpyz( sorted[n++], s_playermodel.modelList[i], MAX_QPATH );
+			}
+		}
+	}
+	for ( i = 0; i < n; i++ ) {
+		Q_strncpyz( s_playermodel.modelList[i], sorted[i], MAX_QPATH );
+	}
+	s_playermodel.nummodels = n;
+}
+
+/*
+=================
+PlayerModel_DrawLock
+
+Dims a locked secret paint and draws a padlock over it.
+=================
+*/
+static void PlayerModel_DrawLock( int x, int y, int size ) {
+	vec4_t shade = { 0.02f, 0.03f, 0.05f, 0.68f };
+	vec4_t lock = { 0.93f, 0.95f, 0.98f, 0.95f };
+	vec4_t hole = { 0.06f, 0.08f, 0.11f, 1.0f };
+	int bw, bh, bx, by, sw, sx, sy, t;
+
+	UI_FillRect( x, y, size, size, shade );
+	t = size / 14;
+	if ( t < 2 ) {
+		t = 2;
+	}
+	bw = size * 7 / 20;
+	bh = size * 6 / 20;
+	bx = x + ( size - bw ) / 2;
+	by = y + size / 2;
+	sw = bw * 7 / 10;
+	sx = x + ( size - sw ) / 2;
+	sy = by - size / 6;
+	UI_FillRect( sx, sy, sw, t, lock );
+	UI_FillRect( sx, sy, t, by - sy, lock );
+	UI_FillRect( sx + sw - t, sy, t, by - sy, lock );
+	UI_FillRect( bx, by, bw, bh, lock );
+	UI_FillRect( bx + bw / 2 - 1, by + bh / 4, 3, bh / 2, hole );
+}
+
+/*
+=================
+PlayerModel_DrawPaintLabel
+
+Name of the chosen paint; while the cursor rests on a locked secret paint
+(or right after clicking one) it shows which rank unlocks it.
+=================
+*/
+static void PlayerModel_DrawPaintLabel( void ) {
+	char text[96];
+	char fitted[96];
+	const char *label;
+	int i, j, secret;
+	qboolean hint;
+	vec4_t lockColor = UI_FRONTEND_COLOR_ACCENT;
+
+	secret = -1;
+	for ( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
+		j = s_playermodel.modelpage * MAX_MODELSPERPAGE + i;
+		if ( j >= s_playermodel.nummodels || !s_playermodel.modelIcons[i][0] ) {
+			continue;
+		}
+		if ( PlayerModel_ItemFocused( ID_PLAYERPIC0 + i ) &&
+			!UI_SkinUnlocked( s_playermodel.modelList[j] ) ) {
+			secret = UI_SecretSkinIndex( s_playermodel.modelList[j] );
+		}
+	}
+	hint = qfalse;
+	if ( secret < 0 && s_playermodel.lockHintTime &&
+		uis.realtime - s_playermodel.lockHintTime < 4000 ) {
+		secret = s_playermodel.lockHintSkin;
+	}
+	if ( secret >= 0 && secret < uiSecretSkinCount ) {
+		Com_sprintf( text, sizeof( text ), "Secret paint - reach %s",
+			UI_Profile_RankName( uiSecretSkins[secret].rank ) );
+		hint = qtrue;
+	} else {
+		label = s_playermodel.paintname.string ? s_playermodel.paintname.string : "";
+		secret = UI_SecretSkinIndex( label );
+		if ( secret >= 0 ) {
+			Com_sprintf( text, sizeof( text ), "%s  (secret)", uiSecretSkins[secret].name );
+		} else {
+			Q_strncpyz( text, label, sizeof( text ) );
+		}
+	}
+	Frontend_FitText( fitted, sizeof( fitted ), text, PLAYERMODEL_PAINT_WIDTH - 32, UI_SMALLFONT );
+	Frontend_DrawText( PLAYERMODEL_PAINT_X + 16,
+		PLAYERMODEL_PAINT_Y + PLAYERMODEL_PAINT_HEIGHT - 18,
+		fitted, UI_LEFT | UI_SMALLFONT, hint ? lockColor : playerModelTextColor );
+}
+
 // STONELANCE (new function)
 /*
 =================
@@ -736,10 +866,7 @@ static void PlayerModel_DrawBackShaders( void ) {
 		PlayerModel_DrawSelectionTile( x, y, 48, 48,
 			ID_PLAYERPIC0 + i, selected );
 	}
-	Frontend_DrawText( PLAYERMODEL_PAINT_X + 16,
-		PLAYERMODEL_PAINT_Y + PLAYERMODEL_PAINT_HEIGHT - 18,
-		s_playermodel.paintname.string ? s_playermodel.paintname.string : "",
-		UI_LEFT | UI_SMALLFONT, playerModelTextColor );
+	PlayerModel_DrawPaintLabel();
 
 	for ( i = 0; i < MAX_RIMSPERPAGE; i++ ) {
 		x = 360 + i * 54;
@@ -798,6 +925,16 @@ static void PlayerModel_DrawBackShaders( void ) {
 		playerModelMutedColor );
 
 	Menu_Draw( &s_playermodel.menu );
+
+	for ( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
+		int j = s_playermodel.modelpage * MAX_MODELSPERPAGE + i;
+		if ( !s_playermodel.modelIcons[i][0] || j >= s_playermodel.nummodels ) {
+			continue;
+		}
+		if ( !UI_SkinUnlocked( s_playermodel.modelList[j] ) ) {
+			PlayerModel_DrawLock( 360 + i * 54, 147, 48 );
+		}
+	}
 }
 
 
@@ -1520,6 +1657,13 @@ static void PlayerModel_PicEvent( void* ptr, int event )
 
 	// get model and strip icon_
 	modelnum = s_playermodel.modelpage * MAX_MODELSPERPAGE + i;
+	if ( modelnum < s_playermodel.nummodels && !UI_SkinUnlocked( s_playermodel.modelList[modelnum] ) ) {
+		s_playermodel.lockHintTime = uis.realtime;
+		s_playermodel.lockHintSkin = UI_SecretSkinIndex( s_playermodel.modelList[modelnum] );
+		trap_S_StartLocalSound( menu_buzz_sound, CHAN_LOCAL_SOUND );
+		PlayerModel_UpdateGrid();
+		return;
+	}
 // STONELANCE
 /*
 	buffptr  = s_playermodel.modelnames[modelnum] + strlen("models/players/");
@@ -1777,6 +1921,7 @@ static void PlayerModel_BuildList( void )
 	s_playermodel.modelpage = 0;
 
 	s_playermodel.nummodels = UI_BuildFileList( va("models/players/%s", s_playermodel.modelname), "skin", "", qtrue, qfalse, qtrue, 0, s_playermodel.modelList);
+	PlayerModel_SortSecretSkins();
 
 	s_playermodel.numpages = s_playermodel.nummodels / MAX_MODELSPERPAGE;
 	if (s_playermodel.nummodels % MAX_MODELSPERPAGE)
@@ -1809,6 +1954,7 @@ static void PlayerModel_SetMenuItems( void )
 	// model
 //	trap_Cvar_VariableStringBuffer( "model", s_playermodel.modelskin, 64 );
 */
+	UI_EnforceSkinLocks();
 	trap_Cvar_VariableStringBuffer( "model", s_playermodel.modelskin, sizeof(s_playermodel.modelskin) );
 
 	pdest = strchr( s_playermodel.modelskin, '/' );
