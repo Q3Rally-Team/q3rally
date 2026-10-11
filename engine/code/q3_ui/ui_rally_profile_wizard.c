@@ -10,7 +10,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 //
 // Flow:
 //   Page 1 — Enter display name
-//   Page 2 — Gender, Birth date, Avatar, Country  (all optional, skippable)
+//   Page 2 — Gender, Birth date, Country, Avatar  (all optional, skippable)
 //   Page 3 — Ladder opt-in (optional) or skip → done
 //
 // KEY DESIGN RULES:
@@ -64,9 +64,9 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_P2_ROW_5     ( PW_P2_ROW_4 + PW_P2_ROW_H + 8 )
 #define PW_P2_ROW_6     ( PW_P2_ROW_5 + PW_P2_ROW_H )
 
-#define PW_AVATAR_SIZE  48
+#define PW_AVATAR_SIZE  40
 #define PW_AVATAR_X     ( PW_PANEL_X + PW_PANEL_W - PW_PAD - PW_AVATAR_SIZE )
-#define PW_AVATAR_Y     ( PW_P2_ROW_5 - 4 )
+#define PW_AVATAR_Y     ( PW_P2_ROW_6 - 6 )
 
 #define PW_DOT_Y        394
 #define PW_DOT_SPACING  14
@@ -164,21 +164,26 @@ static void PW_BuildBirthDateLists( void ) {
     s_pwBirthListsBuilt = qtrue;
 }
 
-#define PW_AVATAR_COUNT 10
-static const char *s_avatarShaderPaths[ PW_AVATAR_COUNT ] = {
-    "", "gfx/avatars/preset/driver_01", "gfx/avatars/preset/driver_02",
-    "gfx/avatars/preset/driver_03", "gfx/avatars/preset/driver_04",
-    "gfx/avatars/preset/driver_05", "gfx/avatars/preset/driver_06",
-    "gfx/avatars/preset/driver_07", "gfx/avatars/preset/driver_08",
-    "gfx/avatars/preset/driver_09",
-};
-static const char *s_avatarDisplayNames[ PW_AVATAR_COUNT + 1 ] = {
-    "None",
-    "Driver 01", "Driver 02", "Driver 03",
-    "Driver 04", "Driver 05", "Driver 06",
-    "Driver 07", "Driver 08", "Driver 09",
-    NULL
-};
+/* Avatar choices come from the shared preset table (ui_rally_profiles.c). */
+#define PW_AVATAR_COUNT ( uiAvatarPresetCount + 1 )
+static const char *s_avatarShaderPaths[ UI_MAX_AVATAR_PRESETS + 1 ];
+static const char *s_avatarDisplayNames[ UI_MAX_AVATAR_PRESETS + 2 ];
+
+static void PW_BuildAvatarLists( void ) {
+    int i;
+    int n = uiAvatarPresetCount;
+
+    if ( n > UI_MAX_AVATAR_PRESETS ) {
+        n = UI_MAX_AVATAR_PRESETS;
+    }
+    s_avatarShaderPaths[0] = "";
+    s_avatarDisplayNames[0] = "None";
+    for ( i = 0; i < n; i++ ) {
+        s_avatarShaderPaths[i + 1] = uiAvatarPresets[i].path;
+        s_avatarDisplayNames[i + 1] = uiAvatarPresets[i].name;
+    }
+    s_avatarDisplayNames[n + 1] = NULL;
+}
 
 #define PW_COUNTRY_COUNT 42
 static const char *s_countryCodes[ PW_COUNTRY_COUNT ] = {
@@ -982,7 +987,8 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.avatarSpin.generic.callback = PW_MenuEvent;
     s_pw.avatarSpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.avatarSpin.generic.x        = PW_P2_SPIN_X;
-    s_pw.avatarSpin.generic.y        = PW_P2_ROW_5;
+    s_pw.avatarSpin.generic.y        = PW_P2_ROW_6;
+    PW_BuildAvatarLists();
     s_pw.avatarSpin.itemnames        = (const char **)s_avatarDisplayNames;
     s_pw.avatarSpin.numitems         = PW_AVATAR_COUNT;
 
@@ -992,7 +998,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.countrySpin.generic.callback = PW_MenuEvent;
     s_pw.countrySpin.generic.ownerdraw = PW_DrawChoice;
     s_pw.countrySpin.generic.x        = PW_P2_SPIN_X;
-    s_pw.countrySpin.generic.y        = PW_P2_ROW_6;
+    s_pw.countrySpin.generic.y        = PW_P2_ROW_5;
     s_pw.countrySpin.itemnames        = (const char **)s_countryNames;
     s_pw.countrySpin.numitems         = PW_COUNTRY_COUNT;
 
@@ -1037,8 +1043,8 @@ void UI_ProfileWizard_Show( void ) {
     Menu_AddItem( &s_pw.menu, &s_pw.bDaySpin    );
     Menu_AddItem( &s_pw.menu, &s_pw.bMonthSpin  );
     Menu_AddItem( &s_pw.menu, &s_pw.bYearSpin   );
-    Menu_AddItem( &s_pw.menu, &s_pw.avatarSpin  );
     Menu_AddItem( &s_pw.menu, &s_pw.countrySpin );
+    Menu_AddItem( &s_pw.menu, &s_pw.avatarSpin  );
     Menu_AddItem( &s_pw.menu, &s_pw.btnBack     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnSkip     );
     Menu_AddItem( &s_pw.menu, &s_pw.btnNext     );

@@ -579,6 +579,16 @@ extern void UI_PlayerSettingsMenu( void );
 extern void UI_PlayerStatsMenu( void );
 extern void PlayerSettings_Cache( void );
 extern const char *UI_RimBrandName( const char *rim );
+
+/* Avatar presets shared by the first-start wizard and the driver profile. */
+#define UI_MAX_AVATAR_PRESETS	32
+typedef struct {
+	const char	*path;		/* shader / image path without extension */
+	const char	*name;		/* display name */
+} uiAvatarPreset_t;
+extern const uiAvatarPreset_t	uiAvatarPresets[];
+extern const int				uiAvatarPresetCount;
+int			UI_AvatarPresetIndex( const char *path );	/* -1 if not a preset */
 extern void UI_RimModelName( const char *rim, char *out, int outSize );
 extern int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
 								char *shaderPath, int shaderPathSize );

@@ -762,6 +762,60 @@ static void UI_Profile_FormatJsonString( char *out, int outSize, const char *val
     *dst = '\0';
 }
 
+/*
+=================
+Avatar presets
+
+Pictures shipped in gfx/avatars/preset/. Profiles that still point at the
+retired driver_01..09 set are moved to the new set when they are read.
+=================
+*/
+const uiAvatarPreset_t uiAvatarPresets[] = {
+	{ "gfx/avatars/preset/helmet_13", "Helmet 13" },
+	{ "gfx/avatars/preset/helmet_07", "Helmet 07" },
+	{ "gfx/avatars/preset/helmet_27", "Helmet 27" },
+	{ "gfx/avatars/preset/helmet_44", "Helmet 44" },
+	{ "gfx/avatars/preset/helmet_88", "Helmet 88" },
+	{ "gfx/avatars/preset/helmet_01", "Helmet 01" },
+	{ "gfx/avatars/preset/steering", "Steering wheel" },
+	{ "gfx/avatars/preset/flags", "Checkered flags" },
+	{ "gfx/avatars/preset/tyre", "Tyre" },
+	{ "gfx/avatars/preset/shifter", "Shifter" },
+	{ "gfx/avatars/preset/tacho", "Tachometer" },
+	{ "gfx/avatars/preset/rocket", "Rocket" }
+};
+const int uiAvatarPresetCount = sizeof( uiAvatarPresets ) / sizeof( uiAvatarPresets[0] );
+
+int UI_AvatarPresetIndex( const char *path ) {
+	char clean[MAX_QPATH];
+	int i;
+
+	if ( !path || !path[0] ) {
+		return -1;
+	}
+	COM_StripExtension( path, clean, sizeof( clean ) );
+	for ( i = 0; i < uiAvatarPresetCount; i++ ) {
+		if ( !Q_stricmp( clean, uiAvatarPresets[i].path ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void UI_Profile_MigrateAvatar( char *avatar, int size ) {
+	static const char legacy[] = "gfx/avatars/preset/driver_";
+	int n;
+
+	if ( Q_stricmpn( avatar, legacy, sizeof( legacy ) - 1 ) ) {
+		return;
+	}
+	n = atoi( avatar + sizeof( legacy ) - 1 );
+	if ( n < 1 ) {
+		n = 1;
+	}
+	Q_strncpyz( avatar, uiAvatarPresets[( n - 1 ) % uiAvatarPresetCount].path, size );
+}
+
 qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
@@ -889,6 +943,7 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
         UI_Profile_ParseString( buffer, "gender", outInfo->gender, sizeof( outInfo->gender ), "" );
         UI_Profile_ParseString( buffer, "birthDate", outInfo->birthDate, sizeof( outInfo->birthDate ), "" );
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
+        UI_Profile_MigrateAvatar( outInfo->avatar, sizeof( outInfo->avatar ) );
         UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
         outInfo->currentRank = UI_Profile_ParseInt( buffer, "currentRank", 0 );
         outInfo->highestRank = UI_Profile_ParseInt( buffer, "highestRank", 0 );
