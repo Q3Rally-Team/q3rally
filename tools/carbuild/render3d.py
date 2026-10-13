@@ -60,6 +60,8 @@ def env(rdir):
     sky = np.array([0.80, 0.86, 0.95]); hor = np.array([0.95, 0.95, 0.95]); gnd = np.array([0.22, 0.20, 0.19])
     return np.where(zz > 0, hor + (sky-hor)*np.clip(zz*2, 0, 1), hor*0.6 + (gnd-hor*0.6)*np.clip(-zz*4, 0, 1))
 
+TRANSPARENT = ('windscreen',)      # alpha blended, drawn last, no depth write
+items.sort(key=lambda it: any(k in it[5] for k in TRANSPARENT))
 for V, Nn, ST, T, TX, tp in items:
     rel = V - CAM; cz = rel @ fwd; cx = rel @ right; cy = rel @ up
     sx = W/2 + f*cx/cz; sy = W/2 - f*cy/cz
@@ -98,6 +100,14 @@ for V, Nn, ST, T, TX, tp in items:
             spec = np.clip(r @ L, 0, 1)[..., None]**40
             k = (1-texel[..., 3:4])
             rgb = rgb*texel[..., 3:4] + env(r)*k*(0.35+0.65*diff) + spec*0.55
+        if any(k in tp for k in TRANSPARENT):
+            a = texel[..., 3:4]
+            r = vdir - 2*(vdir*n).sum(-1, keepdims=True)*n
+            rgb = texel[..., :3]*(0.42 + 0.68*diff)*a + env(r)*0.25
+            cur = color[y0:y1+1, x0:x1+1]; al = alpha[y0:y1+1, x0:x1+1]
+            cur[mask] = np.clip(cur*(1-a) + rgb, 0, 1)[mask]
+            al[mask] = np.maximum(al, a[..., 0])[mask]
+            continue
         color[y0:y1+1, x0:x1+1][mask] = np.clip(rgb, 0, 1)[mask]
         alpha[y0:y1+1, x0:x1+1][mask] = 1
         sub[mask] = depth[mask]
