@@ -11,6 +11,9 @@ finished cars in `baseq3r/models/players/`:
 * **f360** (`f360.pk3`: photo textures with a prancing horse, a painted
   'PSIONIC' plate and a watermark, a blue skin for another UV layout, 5 tags)
   and its rim as **q3r_classic5** (badge replaced by a plain hub cap)
+* **gtr** (`GTR.ms3d`: MilkShape source with ~24k triangles, a duplicate body,
+  interior, torus/sphere projector lights, missing plate/badge images, no
+  wheels)
 
 | Script | Purpose |
 | --- | --- |
@@ -24,6 +27,9 @@ finished cars in `baseq3r/models/players/`:
 | `build_f360.py` | F360: symmetric wheel tags, upright roof weapon tag, the missing tags at positions read back from the photo texture, single frame wheel. |
 | `gen_f360_textures.py` | F360: clears unused texels, removes the horse and the painted plate, recolours the photo paint (blue/green/yellow/silver, rally schemes with stripes and hood/roof numbers through a texel -> model position map). |
 | `debadge_rim.py` | Replaces the centre badge of a 64x64 rim texture with a plain hub cap. |
+| `ms3d.py` | Minimal MilkShape 3D (.ms3d) reader. |
+| `build_gtr.py` | GT-R: keeps the outer shell (drops the duplicate body, interior, projector lights, plates and badges), converts axes/scale, sorts groups into surfaces under the MD3 vertex limit, atlas UVs for the paint, tags from the arches and the tail light planes, reuses the Viper wheel. |
+| `gen_gtr_textures.py` | GT-R paint atlases (plain, silver, rally), grille, trim, glass, chrome and round tail light textures. |
 | `render3d.py` | Small software renderer for previews and the menu icons (`icon_<skin>.tga`). |
 
 ## Rebuild
