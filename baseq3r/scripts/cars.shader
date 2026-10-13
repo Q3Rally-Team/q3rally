@@ -5428,10 +5428,10 @@ models/players/mustang/chrome
 }
 
 // ------------------------------------------------------------
-// VW TYP 82 (KUEBELWAGEN)
+// KUEBELWAGEN (VW TYP 82)
 // ------------------------------------------------------------
 
-models/players/vw_typ_82/red_main
+models/players/kuebelwagen/red_main
 {
 	{
 		map $dynamicreflection
@@ -5440,14 +5440,14 @@ models/players/vw_typ_82/red_main
 	}
 
 	{
-		map models/players/vw_typ_82/red_main.tga
+		map models/players/kuebelwagen/red_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/blue_main
+models/players/kuebelwagen/blue_main
 {
 	{
 		map $dynamicreflection
@@ -5456,14 +5456,14 @@ models/players/vw_typ_82/blue_main
 	}
 
 	{
-		map models/players/vw_typ_82/blue_main.tga
+		map models/players/kuebelwagen/blue_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/green_main
+models/players/kuebelwagen/green_main
 {
 	{
 		map $dynamicreflection
@@ -5472,14 +5472,14 @@ models/players/vw_typ_82/green_main
 	}
 
 	{
-		map models/players/vw_typ_82/green_main.tga
+		map models/players/kuebelwagen/green_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/yellow_main
+models/players/kuebelwagen/yellow_main
 {
 	{
 		map $dynamicreflection
@@ -5488,14 +5488,14 @@ models/players/vw_typ_82/yellow_main
 	}
 
 	{
-		map models/players/vw_typ_82/yellow_main.tga
+		map models/players/kuebelwagen/yellow_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/sand_main
+models/players/kuebelwagen/sand_main
 {
 	{
 		map $dynamicreflection
@@ -5504,14 +5504,14 @@ models/players/vw_typ_82/sand_main
 	}
 
 	{
-		map models/players/vw_typ_82/sand_main.tga
+		map models/players/kuebelwagen/sand_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/olive_main
+models/players/kuebelwagen/olive_main
 {
 	{
 		map $dynamicreflection
@@ -5520,14 +5520,14 @@ models/players/vw_typ_82/olive_main
 	}
 
 	{
-		map models/players/vw_typ_82/olive_main.tga
+		map models/players/kuebelwagen/olive_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally01_main
+models/players/kuebelwagen/rally01_main
 {
 	{
 		map $dynamicreflection
@@ -5536,14 +5536,14 @@ models/players/vw_typ_82/rally01_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally01_main.tga
+		map models/players/kuebelwagen/rally01_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally07_main
+models/players/kuebelwagen/rally07_main
 {
 	{
 		map $dynamicreflection
@@ -5552,14 +5552,14 @@ models/players/vw_typ_82/rally07_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally07_main.tga
+		map models/players/kuebelwagen/rally07_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally13_main
+models/players/kuebelwagen/rally13_main
 {
 	{
 		map $dynamicreflection
@@ -5568,14 +5568,14 @@ models/players/vw_typ_82/rally13_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally13_main.tga
+		map models/players/kuebelwagen/rally13_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally27_main
+models/players/kuebelwagen/rally27_main
 {
 	{
 		map $dynamicreflection
@@ -5584,14 +5584,14 @@ models/players/vw_typ_82/rally27_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally27_main.tga
+		map models/players/kuebelwagen/rally27_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally44_main
+models/players/kuebelwagen/rally44_main
 {
 	{
 		map $dynamicreflection
@@ -5600,14 +5600,14 @@ models/players/vw_typ_82/rally44_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally44_main.tga
+		map models/players/kuebelwagen/rally44_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/rally88_main
+models/players/kuebelwagen/rally88_main
 {
 	{
 		map $dynamicreflection
@@ -5616,18 +5616,18 @@ models/players/vw_typ_82/rally88_main
 	}
 
 	{
-		map models/players/vw_typ_82/rally88_main.tga
+		map models/players/kuebelwagen/rally88_main.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		depthWrite
 		rgbGen lightingdiffuse
 	}
 }
 
-models/players/vw_typ_82/windscreen
+models/players/kuebelwagen/windscreen
 {
 	cull none
 	{
-		map models/players/vw_typ_82/windscreen.tga
+		map models/players/kuebelwagen/windscreen.tga
 		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 		rgbGen lightingdiffuse
 	}

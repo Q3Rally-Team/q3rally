@@ -5,7 +5,7 @@ finished cars in `baseq3r/models/players/`:
 
 * **mustang** (`mustang.pk3`: untextured `body.md3` with 100 identical frames,
   no UVs, incomplete tags, the Mini's wheel)
-* **vw_typ_82** (`vw_typ_82.pk3`: Kuebelwagen with a flat colour template
+* **kuebelwagen** (`vw_typ_82.pk3`: Kuebelwagen with a flat colour template
   texture, mirrored UVs, uncentred body, asymmetric wheel tags, a 30-frame
   wheel and only a red skin)
 

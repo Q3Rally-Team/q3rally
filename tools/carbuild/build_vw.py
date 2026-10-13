@@ -12,7 +12,7 @@ from layout import *
 import numpy as np
 from PIL import Image, ImageDraw
 SRC, OUT = sys.argv[1], sys.argv[2]
-P = 'models/players/vw_typ_82/'
+P = 'models/players/kuebelwagen/'
 DX = -391            # 1/64 units: centres the body on the origin (-6.11 units)
 D = DX/64
 
@@ -138,7 +138,7 @@ m.tags = [[[n, [o[0] + D, o[1], o[2]], copy.deepcopy(a)] for n, o, a in tags]]
 
 allp = [p for s in m.surfs for p in verts(s)]
 mn = [min(p[k] for p in allp) for k in range(3)]; mx = [max(p[k] for p in allp) for k in range(3)]
-m.frames = [mn + mx + [0.0, 0.0, 0.0, max(math.sqrt(sum(c*c for c in p)) for p in allp), b'vw_typ_82']]
+m.frames = [mn + mx + [0.0, 0.0, 0.0, max(math.sqrt(sum(c*c for c in p)) for p in allp), b'kuebelwagen']]
 md3.save(m, OUT + '/body.md3')
 print('body bounds', [round(c, 2) for c in mn], [round(c, 2) for c in mx])
 for s in m.surfs: print('  ', s.name, len(s.st), 'verts', len(s.tris), 'tris')
