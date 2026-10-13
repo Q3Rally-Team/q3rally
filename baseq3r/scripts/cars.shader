@@ -6046,3 +6046,183 @@ models/players/gtr/hlite
 		rgbGen lightingdiffuse
 	}
 }
+
+// ------------------------------------------------------------
+// STOCKCAR
+// ------------------------------------------------------------
+
+models/players/stockcar/red
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/red.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/blue
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/blue.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/green
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/green.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/yellow
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/yellow.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/white
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/white.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally01
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally01.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally07
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally07.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally13
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally13.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally27
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally27.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally44
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally44.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/stockcar/rally88
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/stockcar/rally88.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
