@@ -1,4 +1,4 @@
-"""Paint the stock car into the model's own UV layout (STOCKCAR.BMP is lost).
+"""Paint the stock car texture (STOCKCAR.BMP is lost) for the atlas UVs of build_stockcar.py.
 usage: gen_stockcar_textures.py <body.md3> <outdir>
 
 Every texel is mapped back to its position and face normal on the body, so
@@ -18,9 +18,12 @@ s = [x for x in m.surfs if x.name == 'body'][0]
 tags = {n: o for n, o, _ in m.tags[0]}
 V = np.array([[c/64 for c in v[:3]] for v in s.frames[0]]); ST = np.array(s.st)
 pos = np.zeros((R, R, 3), np.float32); nrm = np.zeros((R, R, 3), np.float32); used = np.zeros((R, R), bool)
-for t in s.tris:
+tri_id = np.full((R, R), -1)
+TRI = []                                   # (centroid, face normal) per triangle
+for ti, t in enumerate(s.tris):
     uv = ST[t]*R; p = V[t]
     n = np.cross(p[2]-p[0], p[1]-p[0]); n /= (np.linalg.norm(n) or 1)
+    TRI.append((p.mean(0), n))
     x0, y0 = np.floor(uv.min(0)).astype(int) - 1; x1, y1 = np.ceil(uv.max(0)).astype(int) + 1
     x0, y0 = max(x0, 0), max(y0, 0); x1, y1 = min(x1, R-1), min(y1, R-1)
     gx, gy = np.meshgrid(np.arange(x0, x1+1)+0.5, np.arange(y0, y1+1)+0.5)
@@ -32,6 +35,7 @@ for t in s.tris:
     w = np.stack([a, b, c], -1)
     pos[y0:y1+1, x0:x1+1][inside] = (w @ p)[inside]
     nrm[y0:y1+1, x0:x1+1][inside] = n
+    tri_id[y0:y1+1, x0:x1+1][inside] = ti
     used[y0:y1+1, x0:x1+1] |= inside
 x, y, z = pos[..., 0], pos[..., 1], pos[..., 2]
 nx, ny, nz = nrm[..., 0], nrm[..., 1], nrm[..., 2]
@@ -39,18 +43,23 @@ front, rear, top = nx > 0.35, nx < -0.35, nz > 0.6
 side = np.abs(ny) > 0.5
 
 # ---------------- masks ---------------------------------------------------------------
-glass = used & (z > 4.6) & (
-    (side & (x > -17.5) & (x < 15.0) & (z < 10.6)) |                     # side windows
-    (front & (nz > 0.2) & (np.abs(y) < 13.2) & (x < 24)) |               # windscreen
-    (rear & (nz > 0.2) & (np.abs(y) < 13.2) & (x > -32)))               # rear window
-pillar = used & side & (z > 4.6) & (np.abs(x + 1.5) < 1.0) & (z < 10.6)  # B pillar
-glass &= ~pillar
+# windows follow the mesh: whole triangles of the greenhouse
+def is_glass(c, n):
+    cx, cy, cz = c; nx_, ny_, nz_ = n
+    if cz < 2.6 or cz > 12.0: return False
+    if abs(ny_) > 0.8 and -12 < cx < 18: return True                      # side windows
+    if nx_ > 0.3 and nz_ > 0.3 and abs(cy) < 14 and cx > 0: return True    # windscreen
+    if nx_ < -0.3 and nz_ > 0.3 and abs(cy) < 9 and cz > 4.4: return True  # rear window
+    return False
+glass_tris = np.array([is_glass(c, n) for c, n in TRI] + [False])
+glass = used & glass_tris[tri_id]
 hl = tags['tag_hlite1']
 headl = used & front & ~glass & ((((np.abs(y) - hl[1])/3.4)**2 + ((z - hl[2])/1.8)**2) < 1)
 grille = used & front & ~glass & (np.abs(y) < 8.5) & (z > -7.4) & (z < -3.6)
 bl, rl = tags['tag_blite2'], tags['tag_rlite2']
-tail = used & rear & ~glass & (np.abs(z - bl[2]) < 1.3) & (np.abs(y) > rl[1] - 1.6) & (np.abs(y) < bl[1] + 2.4)
-reverse = tail & (np.abs(np.abs(y) - rl[1]) < 1.2)
+# tail lights: band on the vertical upper tail panel
+tail = used & (nx < -0.7) & (np.abs(z - bl[2]) < 1.5) & (np.abs(y) > rl[1] - 1.6) & (np.abs(y) < bl[1] + 2.0)
+reverse = tail & (np.abs(np.abs(y) - rl[1]) < 1.1)
 sill = used & side & (z < -13.2)
 
 def decal(img, msk, u0, v0, width, rgba, U, V):
@@ -97,8 +106,12 @@ def paint(name, base, sc=None):
     img[grille, :3] = (16, 16, 18); img[grille, 3] = 245
     mesh = grille & ((np.floor(y*1.4) + np.floor(z*1.8)) % 2 == 0)
     img[mesh, :3] = (46, 46, 52)
-    img[tail, :3] = (200, 16, 14); img[tail, 3] = 255
-    img[reverse, :3] = (235, 235, 230)
+    # tail light cluster: black housing, red lamps, white reverse lamp on the inside
+    img[tail, :3] = (18, 18, 20); img[tail, 3] = 255
+    lamp = tail & (np.abs(z - bl[2]) < 1.05) & (np.abs(np.abs(y) - (bl[1] + rl[1])/2 - 0.6) < 3.1)
+    img[lamp, :3] = (215, 20, 16)
+    img[lamp & ((np.abs(y)*1.2) % 1.0 < 0.12), :3] = (150, 10, 8)          # lens ribs
+    img[reverse & (np.abs(z - bl[2]) < 1.05), :3] = (238, 238, 232)
     if sc:
         num = number_img(sc)
         L, Rr = used & side & (y > 0) & ~glass, used & side & (y < 0) & ~glass

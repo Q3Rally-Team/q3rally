@@ -3,11 +3,15 @@ usage: build_stockcar.py <stockcar.ms3d> <wheel.md3 to reuse> <outdir>
 
 The source is a clean low-poly shell (BODY + UNDERNEATH, one material whose
 STOCKCAR.BMP is lost) at 1/12 scale, nose towards -z, without wheels or tags.
-BODY keeps its UV layout (the texture is painted into it by
-gen_stockcar_textures.py); the tags are placed from ray casts on the shell."""
+Its UV layout mirrors the left and right halves of roof, hood, trunk and
+tail onto the same texels, which breaks any asymmetric livery, so BODY gets
+the unique atlas projection from layout.py instead (the texture is painted
+by gen_stockcar_textures.py); the tags are placed from ray casts on the shell."""
 import os, sys, math, copy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import md3, ms3d, measure
+import md3, ms3d, measure, layout
+layout.configure(x0=-56.5, x1=56.5, y0=-21.0, y1=21.0, z0=-16.5, z1=13.0, sc=3.66, lx=34)
+from layout import atlas
 import numpy as np
 SRC, WHEEL, OUT = sys.argv[1:4]
 P = 'models/players/stockcar/'
@@ -21,14 +25,24 @@ def to_q3n(n): return [-n[2], -n[0], n[1]]
 def norm(v):
     l = math.sqrt(sum(c*c for c in v)) or 1
     return [c/l for c in v]
+def paint_region(n):
+    nx, ny, nz = n
+    ax = max(abs(nx), abs(ny), abs(nz))
+    if nz < -0.55: return 'U'
+    if ax == abs(nz): return 'T'
+    if ax == abs(ny): return 'L' if ny > 0 else 'R'
+    return 'F' if nx > 0 else 'B'
 
 surf_tris = {'body': [], 'under': []}
 for g in src.groups:
     name = 'body' if g.name.strip() == 'BODY' else 'under'
     for ti in g.tris:
         t = src.tris[ti]
-        c = [(to_q3(src.verts[t.v[k]]), norm(to_q3n(t.n[k])), (t.s[k], t.t[k]) if name == 'body' else (0.5, 0.5))
-             for k in (0, 2, 1)]                                   # ms3d CCW -> md3 CW
+        p = [to_q3(src.verts[t.v[k]]) for k in (0, 2, 1)]          # ms3d CCW -> md3 CW
+        fn = norm(np.cross(np.subtract(p[2], p[0]), np.subtract(p[1], p[0])))
+        r = paint_region(fn)
+        c = [(p[j], norm(to_q3n(t.n[k])), tuple(atlas(r, p[j])) if name == 'body' else (0.5, 0.5))
+             for j, k in enumerate((0, 2, 1))]
         surf_tris[name].append(c)
 
 m = md3.Model(); m.name = P + 'body.md3'; m.flags = 0; m.surfs = []
@@ -85,7 +99,7 @@ WL = [[0, 1, 0], [1, 0, 0], [0, 0, -1]]
 WR = [[0, -1, 0], [-1, 0, 0], [0, 0, -1]]
 WY = round(flank - 3.3, 2)                 # tyre face flush with the flank
 HL = (12.5, -2.0)                          # painted headlights (y, z) - gen_stockcar_textures.py uses the tags
-TL = ((15.0, 1.0), (10.5, 1.0))            # painted tail lights: outer brake, inner reverse
+TL = ((15.0, -1.0), (10.5, -1.0))          # painted tail lights on the upper tail panel: outer brake, inner reverse
 roof = ray_z(-4.0, 0.0)
 hood = ray_z(36.0, 0.0)
 deck = ray_z(-46.0, 0.0)
