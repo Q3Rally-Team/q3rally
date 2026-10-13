@@ -18,7 +18,11 @@ D = DX/64
 
 def verts(s): return [[c/64 for c in v[:3]] for v in s.frames[0]]
 def tri_normal(s, t):
-    n = [sum(md3.dec_normal(s.frames[0][i][3])[k] for i in t) for k in range(3)]
+    # face normal (md3 winding is clockwise); the smoothed vertex normals of
+    # this flat-panelled body put half of the sloped tail onto the top region
+    a, b, c = [[x/64 for x in s.frames[0][i][:3]] for i in t]
+    u = [b[k]-a[k] for k in range(3)]; w = [c[k]-a[k] for k in range(3)]
+    n = [u[2]*w[1]-u[1]*w[2], u[0]*w[2]-u[2]*w[0], u[1]*w[0]-u[0]*w[1]]
     l = math.sqrt(sum(c*c for c in n)) or 1
     return [c/l for c in n]
 def paint_region(n):

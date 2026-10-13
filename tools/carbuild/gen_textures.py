@@ -47,7 +47,7 @@ def paint(name, base, sc=None):
         for y0, y1, c in bands:
             rect(dr, 'T', (X0, y0), (X1, y1), c + (215,))
             rect(dr, 'F', (y0, -9.0), (y1, Z1), c + (215,))
-            rect(dr, 'B', (-y1, -8.6), (-y0, Z1), c + (215,))
+            rect(dr, 'B', (y0, -8.6), (y1, Z1), c + (215,))
         # side stripe along the doors
         for side in 'LR':
             poly(dr, side, [(52, -4.6), (-50, -4.6), (-52, -6.6), (54, -6.6)], st + (215,))

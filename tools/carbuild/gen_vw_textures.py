@@ -26,7 +26,7 @@ def paint(name, base, sc=None):
         for y0, y1, c in [(-1.2, 6.8, st), (-3.4, -2.2, ed)]:
             rect(dr, 'T', (X0, y0), (X1, y1), c + (220,))
             rect(dr, 'F', (y0, Z0), (y1, Z1), c + (220,))
-            rect(dr, 'B', (-y1, Z0), (-y0, Z1), c + (220,))
+            rect(dr, 'B', (y0, Z0), (y1, Z1), c + (220,))
         for side in 'LR':
             rect(dr, side, (-49, -4.4), (49, -2.0), st + (220,))
             rect(dr, side, (-49, -5.6), (49, -4.9), ed + (220,))
