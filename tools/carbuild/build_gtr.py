@@ -107,46 +107,32 @@ def cluster(pts, side):
     q = [p for p in pts if p[1]*side > 0]
     return [sum(c[k] for c in q)/len(q) for k in range(3)], max(c[0] for c in q), min(c[0] for c in q)
 hlc, hlx, _ = cluster(hl, 1)
-# tail lights: two round lights per textured plane; outer = brake, inner = reverse
-tl = {}
-for g in src.groups:
-    if g.name not in ('Plane03', 'Plane04'): continue
-    for ti in g.tris:
-        t = src.tris[ti]
-        for k in range(3):
-            tl.setdefault(g.name, []).append((t.s[k], t.t[k], to_q3(src.verts[t.v[k]])))
-def at_uv(samples, u, v):
-    best = min(samples, key=lambda s: (s[0]-u)**2 + (s[1]-v)**2)
-    # nearest-corner inverse distance blend is enough on a flat quad
-    w = [(1/((s[0]-u)**2 + (s[1]-v)**2 + 1e-6), s[2]) for s in samples]
-    tot = sum(a for a, _ in w)
-    return [sum(a*p[k] for a, p in w)/tot for k in range(3)]
-lights = []
-for name, smp in tl.items():
-    a, b = at_uv(smp, 0.25, 0.5), at_uv(smp, 0.75, 0.5)
-    outer, inner = (a, b) if abs(a[1]) > abs(b[1]) else (b, a)
-    lights.append((outer, inner))
-lights.sort(key=lambda l: l[0][1])        # right side (-y) first
+# tail lights: centres of the four red rings (Box024); outer = brake, inner = reverse.
+# The ring faces stick out of the light planes, so the glows sit just behind them.
+rings = [p for g in src.groups if g.name == 'Box024' for ti in g.tris for p in (to_q3(src.verts[i]) for i in src.tris[ti].v)]
+def ring(lo, hi):
+    q = [p for p in rings if lo < p[1] < hi]
+    return [min(c[0] for c in q) - 0.1] + [sum(c[k] for c in q)/len(q) for k in (1, 2)]
+outer_r, inner_r, inner_l, outer_l = ring(-30, -14.5), ring(-14.5, 0), ring(0, 14.5), ring(14.5, 30)
 
 ID = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 BACKWARD = [[-1, 0, 0], [0, -1, 0], [0, 0, 1]]
 WL = [[0, 1, 0], [1, 0, 0], [0, 0, -1]]
 WR = [[0, -1, 0], [-1, 0, 0], [0, 0, -1]]
-FX, RX = SCALE*(79.0 - CZ), SCALE*(-47.0 - CZ)       # arch centres measured on the side silhouette
-WY, WZ = 20.0, SCALE*(2.0 - CY)
+# arch centres: circles fitted to the wheel arch openings of an orthographic side view
+FX, RX, WZ = 33.33, -33.75, -9.7
+FY, RY = 19.7, 20.3                      # tyre face flush with the flanks (y 22.8 / 23.5)
 plate = to_q3((0.0, -0.15, -89.0))
 tags = [
-    ('tag_wheelfl', [FX,  WY, WZ], WL), ('tag_wheelfr', [FX, -WY, WZ], WR),
-    ('tag_wheelrl', [RX,  WY, WZ], WL), ('tag_wheelrr', [RX, -WY, WZ], WR),
+    ('tag_wheelfl', [FX,  FY, WZ], WL), ('tag_wheelfr', [FX, -FY, WZ], WR),
+    ('tag_wheelrl', [RX,  RY, WZ], WL), ('tag_wheelrr', [RX, -RY, WZ], WR),
     ('tag_weapon',  [-2.0, 0.0, roof + 0.4], ID),
     ('tag_plate',   [plate[0] - 0.2, 0.0, plate[2]], ID),
     ('tag_turbo',   [rear_x + 1.0, 0.0, SCALE*(0.6 - CY) - 2.6], BACKWARD),   # below the low rear plate
     ('tag_smoke',   [hood_x, 0.0, hood + 0.3], BACKWARD),
     ('tag_hlite1',  [hlx + 0.2,  hlc[1], hlc[2]], ID), ('tag_hlite2', [hlx + 0.2, -hlc[1], hlc[2]], ID),
-    ('tag_blite1',  [lights[0][0][0] - 0.3, lights[0][0][1], lights[0][0][2]], ID),
-    ('tag_blite2',  [lights[1][0][0] - 0.3, lights[1][0][1], lights[1][0][2]], ID),
-    ('tag_rlite1',  [lights[0][1][0] - 0.3, lights[0][1][1], lights[0][1][2]], ID),
-    ('tag_rlite2',  [lights[1][1][0] - 0.3, lights[1][1][1], lights[1][1][2]], ID),
+    ('tag_blite1',  outer_r, ID), ('tag_blite2', outer_l, ID),
+    ('tag_rlite1',  inner_r, ID), ('tag_rlite2', inner_l, ID),
 ]
 m.tags = [[[n, [round(c, 3) for c in o], copy.deepcopy(a)] for n, o, a in tags]]
 allp = [[c/64 for c in v[:3]] for s in m.surfs for v in s.frames[0]]
