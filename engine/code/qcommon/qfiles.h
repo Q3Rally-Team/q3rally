@@ -35,7 +35,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 // surface geometry should not exceed these limits
-#define	SHADER_MAX_VERTEXES	1000
+// Q3Rally: raised from 1000 so detailed car models fit into a single surface.
+// Must stay below 65536 because renderergl2 uses 16-bit indexes.
+#define	SHADER_MAX_VERTEXES	10000
 #define	SHADER_MAX_INDEXES	(6*SHADER_MAX_VERTEXES)
 
 
@@ -82,8 +84,8 @@ typedef struct {
 
 // limits
 #define MD3_MAX_LODS		3
-#define	MD3_MAX_TRIANGLES	8192	// per surface
-#define MD3_MAX_VERTS		4096	// per surface
+#define	MD3_MAX_TRIANGLES	(SHADER_MAX_INDEXES / 3 - 1)	// per surface
+#define MD3_MAX_VERTS		(SHADER_MAX_VERTEXES - 1)	// per surface
 #define MD3_MAX_SHADERS		256		// per surface
 #define MD3_MAX_FRAMES		1024	// per model
 #define	MD3_MAX_SURFACES	32		// per model

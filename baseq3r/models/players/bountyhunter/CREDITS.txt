@@ -1,0 +1,27 @@
+Q3Rally Bountyhunter - asset sources
+====================================
+
+body.md3, wheel.md3, sheriff_main.tga, parts.tga
+    Based on PoliceCar.3DS, a rusty sheriff muscle car with its two
+    hand-painted textures (sferiff.jpg, sferiffi.jpg), provided by the
+    Q3Rally project (own model, same license as the game).
+
+    Changes for Q3Rally (tools/carbuild/bountyhunter):
+    - the original low-poly body geometry (1,074 triangles) and textures, scaled to the size of the other cars, centred on the
+      origin, tyres on the ground, normals with a crease angle
+    - tags for wheels, lights, plate, exhaust, roof and the blower; the lamps
+      and the plate are painted into the texture, their tags are placed where
+      the painted parts sit on the model
+    - wheel: a tyre turned on a lathe from the outline of the source wheel
+      with UVs for the shared Q3Rally rim and tread textures, so the rim
+      selection works; the painted rim of the source is not used
+
+highway_main.tga, redline_main.tga, desert_main.tga, ghost_main.tga
+    Recoloured from sferiff.jpg for Q3Rally (gen_textures.py): only the
+    unsaturated paint changes colour, rust and details stay.
+
+icon_*.tga
+    Made for Q3Rally (render3d.py).
+
+sound/player/bountyhunter/horn.ogg, falling1.ogg
+    Shared with the Sidepipe.

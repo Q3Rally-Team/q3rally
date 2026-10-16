@@ -730,7 +730,7 @@ void RB_CalcWaveAlpha( const waveForm_t *wf, unsigned char *dstColors )
 */
 void RB_CalcModulateColorsByFog( unsigned char *colors ) {
 	int		i;
-	float	texCoords[SHADER_MAX_VERTEXES][2];
+	static float	texCoords[SHADER_MAX_VERTEXES][2];
 
 	// calculate texcoords so we can derive density
 	// this is not wasted, because it would only have
@@ -750,7 +750,7 @@ void RB_CalcModulateColorsByFog( unsigned char *colors ) {
 */
 void RB_CalcModulateAlphasByFog( unsigned char *colors ) {
 	int		i;
-	float	texCoords[SHADER_MAX_VERTEXES][2];
+	static float	texCoords[SHADER_MAX_VERTEXES][2];
 
 	// calculate texcoords so we can derive density
 	// this is not wasted, because it would only have
@@ -768,7 +768,7 @@ void RB_CalcModulateAlphasByFog( unsigned char *colors ) {
 */
 void RB_CalcModulateRGBAsByFog( unsigned char *colors ) {
 	int		i;
-	float	texCoords[SHADER_MAX_VERTEXES][2] = {{0.0f}};
+	static float	texCoords[SHADER_MAX_VERTEXES][2];
 
 	// calculate texcoords so we can derive density
 	// this is not wasted, because it would only have

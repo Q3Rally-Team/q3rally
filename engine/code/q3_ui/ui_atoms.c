@@ -1187,7 +1187,9 @@ void UI_MouseEvent( int dx, int dy )
 	{
 		m = (menucommon_s*)uis.activemenu->items[i];
 
-		if (m->flags & (QMF_GRAYED|QMF_INACTIVE))
+		// hidden items (other tabs of a menu) must not catch the cursor either:
+		// they can't take the focus, so the item under them stayed unreachable
+		if (m->flags & (QMF_GRAYED|QMF_INACTIVE|QMF_HIDDEN))
 			continue;
 
 		if ((uis.cursorx < m->left) ||

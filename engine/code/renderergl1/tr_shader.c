@@ -1953,9 +1953,17 @@ static void FixRenderCommandList( int newShader ) {
 
 	if( cmdList ) {
 		const void *curCmd = cmdList->cmds;
+		/* The list has no end marker while a frame is being built: past
+		   'used' lie the leftovers of the previous frame, which only line up
+		   with the new commands by chance (a shader registered mid-frame read
+		   garbage there and crashed). */
+		const byte *end = cmdList->cmds + cmdList->used;
 
 		while ( 1 ) {
 			curCmd = PADP(curCmd, sizeof(void *));
+			if ( (const byte *)curCmd >= end ) {
+				return;
+			}
 
 			switch ( *(const int *)curCmd ) {
 			case RC_SET_COLOR:

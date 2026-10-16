@@ -5230,3 +5230,1355 @@ models/players/gremlin/black
 	}
          
 }
+
+// ------------------------------------------------------------
+// MUSTANG
+// ------------------------------------------------------------
+
+models/players/mustang/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/mustang/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/mustang/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+// ------------------------------------------------------------
+// SKYLINE
+// ------------------------------------------------------------
+
+models/players/skyline/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/skyline/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/skyline/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+// ------------------------------------------------------------
+// GTR
+// ------------------------------------------------------------
+
+models/players/gtr/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gtr/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gtr/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+// ------------------------------------------------------------
+// RIDGEBACK
+// ------------------------------------------------------------
+
+models/players/ridgeback/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/ridgeback/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/ridgeback/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+// ------------------------------------------------------------
+// CUTLASS
+// ------------------------------------------------------------
+
+models/players/cutlass/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/cutlass/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/cutlass/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/gt500/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/gt500/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+// ------------------------------------------------------------
+// DB12
+// ------------------------------------------------------------
+
+models/players/db12/red_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/red_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/blue_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/blue_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/green_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/green_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/yellow_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/yellow_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally01_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally01_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally07_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally07_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally13_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally13_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally27_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally27_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally44_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally44_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/rally88_main
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/rally88_main.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/glass
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/glass.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}
+
+models/players/db12/chrome
+{
+	{
+		map $dynamicreflection
+		tcGen environment
+		rgbGen lightingdiffuse
+	}
+
+	{
+		map models/players/db12/chrome.tga
+		blendFunc	GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+		rgbGen lightingdiffuse
+	}
+}

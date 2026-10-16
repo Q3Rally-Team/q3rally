@@ -546,6 +546,80 @@ typedef struct {
 
 static playersettings_t	s_playersettings;
 
+/*
+=================
+Secret cars
+
+Listed after the regular cars, in unlock order. A locked car can be looked at
+in the showroom (dimmed, with a padlock and the rank that unlocks it), but it
+is neither saved to the model cvar nor opened in Customize vehicle.
+=================
+*/
+static qboolean PlayerSettings_CarLocked( void ) {
+	return (qboolean)!UI_CarUnlocked( s_playersettings.modelskin );
+}
+
+static void PlayerSettings_SetDefaultSkin( void ) {
+	char skin[MAX_QPATH];
+	const char *car;
+
+	car = s_playersettings.modelList[s_playersettings.selectedModel];
+	UI_CarDefaultSkin( car, skin, sizeof( skin ) );
+	Com_sprintf( s_playersettings.modelskin, sizeof( s_playersettings.modelskin ), "%s/%s", car, skin );
+}
+
+static void PlayerSettings_SortSecretCars( void ) {
+	static char sorted[MAX_PLAYERMODELS][MAX_QPATH];
+	int i, k, n;
+
+	n = 0;
+	for ( i = 0; i < s_playersettings.numModels; i++ ) {
+		if ( UI_SecretCarIndex( s_playersettings.modelList[i] ) < 0 ) {
+			Q_strncpyz( sorted[n++], s_playersettings.modelList[i], MAX_QPATH );
+		}
+	}
+	for ( k = 0; k < uiSecretCarCount; k++ ) {
+		for ( i = 0; i < s_playersettings.numModels; i++ ) {
+			if ( UI_SecretCarIndex( s_playersettings.modelList[i] ) == k ) {
+				Q_strncpyz( sorted[n++], s_playersettings.modelList[i], MAX_QPATH );
+				break;
+			}
+		}
+	}
+	for ( i = 0; i < n; i++ ) {
+		Q_strncpyz( s_playersettings.modelList[i], sorted[i], MAX_QPATH );
+	}
+}
+
+/* dims the showroom preview and draws a padlock in its middle */
+static void PlayerSettings_DrawCarLock( int x, int y, int w, int h ) {
+	vec4_t shade = { 0.02f, 0.03f, 0.05f, 0.55f };
+	vec4_t lock = { 0.93f, 0.95f, 0.98f, 0.95f };
+	vec4_t hole = { 0.06f, 0.08f, 0.11f, 1.0f };
+	int size, t, bw, bh, bx, by, sw, sx, sy;
+
+	UI_FillRect( x, y, w, h, shade );
+	size = h / 2;
+	x += ( w - size ) / 2;
+	y += ( h - size ) / 2;
+	t = size / 14;
+	if ( t < 2 ) {
+		t = 2;
+	}
+	bw = size * 7 / 20;
+	bh = size * 6 / 20;
+	bx = x + ( size - bw ) / 2;
+	by = y + size / 2;
+	sw = bw * 7 / 10;
+	sx = x + ( size - sw ) / 2;
+	sy = by - size / 6;
+	UI_FillRect( sx, sy, sw, t, lock );
+	UI_FillRect( sx, sy, t, by - sy, lock );
+	UI_FillRect( sx + sw - t, sy, t, by - sy, lock );
+	UI_FillRect( bx, by, bw, bh, lock );
+	UI_FillRect( bx + bw / 2 - 1, by + bh / 4, 3, bh / 2, hole );
+}
+
 static int gamecodetoui[] = {4,2,3,0,5,1,6};
 static int uitogamecode[] = {4,6,2,3,1,5,7};
 
@@ -1507,7 +1581,8 @@ static void PlayerSettings_DrawCustomize( void *self ) {
 	Frontend_DrawButtonFocused( item->generic.left, item->generic.top,
 	                     item->generic.right - item->generic.left,
 	                     item->generic.bottom - item->generic.top,
-	                     "Customize vehicle", uis.tFrac, focus, UI_CENTER );
+	                     PlayerSettings_CarLocked() ? "Locked secret car" : "Customize vehicle",
+	                     uis.tFrac, focus, UI_CENTER );
 }
 
 static void PlayerSettings_DrawPlateItem( void *self ) {
@@ -1660,12 +1735,14 @@ static void PlayerSettings_DrawSetupRow( void *self ) {
 static void PlayerSettings_DrawVehiclePanelBackground( void ) {
 	char name[MAX_QPATH];
 	const char *modelName;
+	int secret;
 
 	modelName = s_playersettings.modelname.string;
 	if ( !modelName || !modelName[0] ) {
 		modelName = "Unknown vehicle";
 	}
-	Q_strncpyz( name, modelName, sizeof( name ) );
+	secret = UI_SecretCarIndex( modelName );
+	Q_strncpyz( name, secret >= 0 ? uiSecretCars[secret].name : modelName, sizeof( name ) );
 	if ( name[0] >= 'a' && name[0] <= 'z' ) {
 		name[0] -= 'a' - 'A';
 	}
@@ -1682,6 +1759,13 @@ static void PlayerSettings_DrawVehiclePanelBackground( void ) {
 	}
 	Frontend_DrawText( VEHICLE_SHOW_X + VEHICLE_SHOW_W / 2, VEHICLE_NAME_Y + 4, name,
 	                   UI_CENTER | UI_BIGFONT, playerSettingsTextColor );
+	if ( secret >= 0 ) {
+		Frontend_DrawText( VEHICLE_SHOW_X + VEHICLE_SHOW_W / 2, VEHICLE_NAME_Y + 34,
+		                   PlayerSettings_CarLocked()
+		                   ? va( "Secret car - reach %s", UI_Profile_RankName( uiSecretCars[secret].rank ) )
+		                   : "Secret car",
+		                   UI_CENTER | UI_SMALLFONT, playerSettingsAccentColor );
+	}
 	Frontend_DrawText( VEHICLE_SHOW_X + 16, VEHICLE_SAVED_Y, "Saved setups",
 	                   UI_LEFT | UI_SMALLFONT, playerSettingsMutedColor );
 
@@ -4091,6 +4175,9 @@ static void PlayerSettings_DrawPlayer( void *self ) {
 // END
 	b = (menubitmap_s*) self;
 	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_playersettings.playerinfo, uis.realtime );
+	if ( PlayerSettings_CarLocked() ) {
+		PlayerSettings_DrawCarLock( b->generic.x, b->generic.y, b->width, b->height );
+	}
 }
 
 
@@ -4160,6 +4247,10 @@ static void LoadFavorite( const char *favorite ) {
 	qboolean	carFound;
 
 PlayerSettings_GetFavoriteValues( favorite, modelName, skinName, rimName, headName );
+	if ( !UI_CarUnlocked( modelName ) ) {
+		trap_S_StartLocalSound( menu_buzz_sound, CHAN_LOCAL_SOUND );
+		return;
+	}
 
 	// find model in our list
 	carFound = qfalse;
@@ -4179,7 +4270,7 @@ PlayerSettings_GetFavoriteValues( favorite, modelName, skinName, rimName, headNa
 		s_playersettings.selectedModel = 0;
 
 		// get model
-		Com_sprintf(s_playersettings.modelskin, sizeof(s_playersettings.modelskin), "%s/%s", s_playersettings.modelList[s_playersettings.selectedModel], DEFAULT_SKIN);
+		PlayerSettings_SetDefaultSkin();
 
 		s_playersettings.modelname.string = s_playersettings.modelList[s_playersettings.selectedModel];
 
@@ -4326,7 +4417,7 @@ static void PlayerSettings_SaveChanges( void ) {
 	// name
 
 // STONELANCE
-	if (s_playersettings.modelChanged){
+	if (s_playersettings.modelChanged && !PlayerSettings_CarLocked()){
 		trap_Cvar_Set( "model", s_playersettings.modelskin );
 	}
 // END
@@ -4568,7 +4659,7 @@ static void PlayerSettings_SetMenuItems( void ) {
 		s_playersettings.selectedModel = 0;
 
 		// get model
-		Com_sprintf( s_playersettings.modelskin, sizeof(s_playersettings.modelskin), "%s/%s", s_playersettings.modelList[s_playersettings.selectedModel], DEFAULT_SKIN);
+		PlayerSettings_SetDefaultSkin();
 		s_playersettings.modelname.string = s_playersettings.modelList[s_playersettings.selectedModel];
 		s_playersettings.modelChanged = qtrue;
 	}
@@ -5223,6 +5314,11 @@ static void PlayerSettings_MenuEvent( void* ptr, int event ) {
 */
 
 	case ID_CUSTOMIZE:
+		if ( PlayerSettings_CarLocked() ) {
+			trap_S_StartLocalSound( menu_buzz_sound, CHAN_LOCAL_SOUND );
+			break;
+		}
+		/* fall through */
 	case ID_BACK:
 		s_playersettings.menu.transitionMenu = ((menucommon_s*)ptr)->id;
 		uis.transitionOut = uis.realtime;
@@ -5241,7 +5337,7 @@ static void PlayerSettings_MenuEvent( void* ptr, int event ) {
 			//Com_Printf("PS: Car selected, %i\n", s_playersettings.selectedmodel);
 
 			// get model
-			Com_sprintf(s_playersettings.modelskin, sizeof(s_playersettings.modelskin), "%s/%s", s_playersettings.modelList[s_playersettings.selectedModel], DEFAULT_SKIN);
+			PlayerSettings_SetDefaultSkin();
 
 			//Com_Printf("PS: modelskin set to: %s\n", s_playersettings.modelskin);
 
@@ -5264,7 +5360,7 @@ static void PlayerSettings_MenuEvent( void* ptr, int event ) {
 			//Com_Printf("PS: Car selected, %i\n", s_playersettings.selectedmodel);
 
 			// get model
-			Com_sprintf(s_playersettings.modelskin, sizeof(s_playersettings.modelskin), "%s/%s", s_playersettings.modelList[s_playersettings.selectedModel], DEFAULT_SKIN);
+			PlayerSettings_SetDefaultSkin();
 
 			//Com_Printf("PS: modelskin set to: %s\n", s_playersettings.modelskin);
 
@@ -5336,6 +5432,7 @@ static void PlayerSettings_BuildList( void ){
 	// get car list
 	s_playersettings.numModels = UI_BuildFileList("models/players", "md3", "body", qtrue, qtrue, BL_EXCLUDE, 0, s_playersettings.modelList);
 	s_playersettings.allModels = UI_BuildFileList("models/players", "md3", "body", qtrue, qtrue, BL_ONLY, s_playersettings.numModels, s_playersettings.modelList);
+	PlayerSettings_SortSecretCars();
 }
 // END
 

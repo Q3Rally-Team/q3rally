@@ -892,11 +892,104 @@ qboolean UI_SkinUnlocked( const char *skin ) {
 	return (qboolean)( UI_Profile_UnlockedRank() >= uiSecretSkins[idx].rank );
 }
 
-/* A locked secret paint in the model cvars falls back to the car's default skin. */
+/*
+Secret cars unlock with the odd profile ranks, between the secret paints, in
+order from the oldest to the newest car. Like the paints, the lock lives in
+the UI only: bots and servers can use every car.
+*/
+const uiSecretCar_t uiSecretCars[] = {
+	{ "bountyhunter",	"Bountyhunter",	1 },	/* Street Newbie */
+	{ "cutlass",		"Cutlass",		3 },	/* Track Learner */
+	{ "ridgeback",		"Ridgeback",	5 },	/* Street Racer */
+	{ "mustang",		"Mustang",		7 },	/* Pro Racer */
+	{ "gt500",			"GT500",		9 },	/* Track Dominator */
+	{ "skyline",		"Skyline",		11 },	/* Racing Legend */
+	{ "gtr",			"GT-R",			13 }	/* Grand Champion */
+};
+const int uiSecretCarCount = sizeof( uiSecretCars ) / sizeof( uiSecretCars[0] );
+
+int UI_SecretCarIndex( const char *model ) {
+	char car[MAX_QPATH];
+	char *slash;
+	int i;
+
+	if ( !model || !model[0] ) {
+		return -1;
+	}
+	Q_strncpyz( car, model, sizeof( car ) );
+	slash = strchr( car, '/' );
+	if ( slash ) {
+		*slash = '\0';
+	}
+	for ( i = 0; i < uiSecretCarCount; i++ ) {
+		if ( !Q_stricmp( car, uiSecretCars[i].car ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+qboolean UI_CarUnlocked( const char *model ) {
+	int idx;
+
+	idx = UI_SecretCarIndex( model );
+	if ( idx < 0 ) {
+		return qtrue;
+	}
+	return (qboolean)( UI_Profile_UnlockedRank() >= uiSecretCars[idx].rank );
+}
+
+/*
+The paint a car starts with: DEFAULT_SKIN where the car has it, otherwise its
+own default (the Bountyhunter has no red paint) or the first regular paint.
+*/
+void UI_CarDefaultSkin( const char *car, char *out, int outSize ) {
+	static const char *carDefaults[][2] = {
+		{ "bountyhunter", "sheriff" }
+	};
+	char list[4096];
+	char name[MAX_QPATH];
+	char *p;
+	fileHandle_t f;
+	int i, n, len;
+
+	Q_strncpyz( out, DEFAULT_SKIN, outSize );
+	if ( !car || !car[0] ) {
+		return;
+	}
+	len = trap_FS_FOpenFile( va( "models/players/%s/%s.skin", car, DEFAULT_SKIN ), &f, FS_READ );
+	if ( f ) {
+		trap_FS_FCloseFile( f );
+	}
+	if ( len > 0 ) {
+		return;
+	}
+	for ( i = 0; i < (int)( sizeof( carDefaults ) / sizeof( carDefaults[0] ) ); i++ ) {
+		if ( !Q_stricmp( car, carDefaults[i][0] ) ) {
+			Q_strncpyz( out, carDefaults[i][1], outSize );
+			return;
+		}
+	}
+	n = trap_FS_GetFileList( va( "models/players/%s", car ), "skin", list, sizeof( list ) );
+	for ( i = 0, p = list; i < n; i++, p += len + 1 ) {
+		len = strlen( p );
+		COM_StripExtension( p, name, sizeof( name ) );
+		if ( name[0] && UI_SecretSkinIndex( name ) < 0 ) {
+			Q_strncpyz( out, name, outSize );
+			return;
+		}
+	}
+}
+
+/*
+A locked secret car in the model cvars falls back to the default car, a
+locked secret paint to the car's default paint.
+*/
 void UI_EnforceSkinLocks( void ) {
 	static const char *names[] = { "model", "headmodel", "team_model", "team_headmodel" };
 	char value[MAX_QPATH];
 	char fixed[MAX_QPATH];
+	char skin[MAX_QPATH];
 	char *slash;
 	int i;
 
@@ -905,6 +998,11 @@ void UI_EnforceSkinLocks( void ) {
 	}
 	for ( i = 0; i < (int)( sizeof( names ) / sizeof( names[0] ) ); i++ ) {
 		trap_Cvar_VariableStringBuffer( names[i], value, sizeof( value ) );
+		if ( !UI_CarUnlocked( value ) ) {
+			Com_sprintf( fixed, sizeof( fixed ), "%s/%s", DEFAULT_MODEL, DEFAULT_SKIN );
+			trap_Cvar_Set( names[i], fixed );
+			continue;
+		}
 		if ( UI_SkinUnlocked( value ) ) {
 			continue;
 		}
@@ -912,7 +1010,8 @@ void UI_EnforceSkinLocks( void ) {
 		if ( slash ) {
 			*slash = '\0';
 		}
-		Com_sprintf( fixed, sizeof( fixed ), "%s/%s", value, DEFAULT_SKIN );
+		UI_CarDefaultSkin( value, skin, sizeof( skin ) );
+		Com_sprintf( fixed, sizeof( fixed ), "%s/%s", value, skin );
 		trap_Cvar_Set( names[i], fixed );
 	}
 }

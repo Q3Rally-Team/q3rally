@@ -977,7 +977,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 			uint32_t offset_blendindexes, offset_blendweights, stride;
 			uint32_t dataSize, dataOfs;
 			uint8_t *data;
-			glIndex_t indexes[SHADER_MAX_INDEXES];
+			static glIndex_t indexes[SHADER_MAX_INDEXES];
 			glIndex_t *ptr;
 			int *tri;
 
@@ -1432,8 +1432,8 @@ void RB_IQMSurfaceAnim( surfaceType_t *surface ) {
 	srfIQModel_t	*surf = (srfIQModel_t *)surface;
 	iqmData_t	*data = surf->data;
 	float		poseMats[IQM_MAX_JOINTS * 12];
-	float		influenceVtxMat[SHADER_MAX_VERTEXES * 12];
-	float		influenceNrmMat[SHADER_MAX_VERTEXES * 9];
+	static float	influenceVtxMat[SHADER_MAX_VERTEXES * 12];
+	static float	influenceNrmMat[SHADER_MAX_VERTEXES * 9];
 	int		i;
 
 	float		*xyz;

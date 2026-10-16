@@ -1,0 +1,27 @@
+Q3Rally Cutlass - asset sources
+===============================
+
+body.md3, wheel.md3, trim.tga, lights.tga
+    Based on "Oldsmobile Cutlass Supreme Sedan '71", a model provided by the
+    Q3Rally project (own model, same license as the game), with its textures
+    (M_Badge, M_Lights, resized).
+
+    Changes for Q3Rally (tools/carbuild/cutlass):
+    - only the triangles visible from outside are kept (cull.py), at full
+      detail: 35,372 triangles for the body
+    - scaled to the size of the other cars and centred on the origin
+    - manufacturer emblems and lettering, the number plates, the front plate
+      holder and the showcase ground plane left out (the game draws its own
+      plate)
+    - new UVs for the paint (five-sided projection atlas), chrome and glass
+      use the shared textures; mouldings and lamps keep their original UVs
+    - wheel: the original wheel decimated to 3,000 triangles, with UVs for
+      the shared Q3Rally rim and tread textures
+    - tags for wheels, the quad headlights (tag_hlite1-4), tail lights,
+      plate, exhaust, roof and bonnet
+
+*_main.tga, glass.tga, chrome.tga, black.tga, icon_*.tga
+    Made for Q3Rally (tools/carbuild/cutlass/gen_textures.py, render3d.py).
+
+sound/player/cutlass/horn.ogg, falling1.ogg
+    Shared with the Mustang.

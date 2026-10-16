@@ -1,0 +1,27 @@
+Q3Rally Skyline - asset sources
+===============================
+
+body.md3, wheel.md3, lights.tga, tlite.tga, grill.tga
+    Based on "Nissan Skyline R34 GT-R" by Lexyc16
+    https://skfb.ly/6TxFX (Sketchfab)
+    License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+    https://creativecommons.org/licenses/by/4.0/
+
+    Changes for Q3Rally (tools/carbuild/r34):
+    - converted from OBJ to MD3, scaled to the size of the other cars and
+      centred on the origin; the full geometry of the body is kept
+      (38,624 triangles), split into four paint surfaces to stay below the
+      engine's per-surface limit
+    - manufacturer emblem on the boot lid and the logo texture left out
+    - new UVs for the paint (five-sided projection atlas) and the trim parts;
+      lamps and grille keep their original UVs and textures (resized)
+    - wheel: the original tyre at full detail with new UVs for the shared
+      Q3Rally rim and tread textures, the rim opening closed with a dished
+      disc; the modelled rims are not used
+    - tags for wheels, lights, plate, exhaust, roof and bonnet
+
+*_main.tga, glass.tga, chrome.tga, trim.tga, under.tga, icon_*.tga
+    Made for Q3Rally (tools/carbuild/r34/gen_textures.py, render3d.py).
+
+sound/player/skyline/horn.ogg, falling1.ogg
+    Shared with the Mustang and Camaro.

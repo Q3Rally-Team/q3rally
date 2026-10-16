@@ -1,0 +1,25 @@
+Q3Rally DB12 - asset sources
+============================
+
+body.md3, wheel.md3, parts.tga
+    Based on "Aston Martin DB12 2024" (Aston Martin DB12 2024.obj with its
+    material colours), a model provided to the Q3Rally project as
+    2024-aston-martin-db12.zip. Original author and license: not stated in
+    the download - to be filled in before a release.
+
+    Changes for Q3Rally (tools/carbuild/db12):
+    - only the triangles visible from outside are kept (cull.py): the
+      interior, the brakes and the inner glass of the source are left out;
+      the parts seen only through narrow openings (grille, the gills behind
+      the front wheels, vents, lamps) are kept whole; 568,654 of 1,859,182
+      triangles remain, decimated to about 139,000 (mesh.py, pyfqmr); thin
+      parts seen from both sides (grille, gills, vents, diffuser) carry a
+      reversed copy of their triangles
+    - scaled to the size of the other cars and centred on the origin
+    - manufacturer badges and lettering, the number plates and their holders
+      left out (the game draws its own plate)
+    - the source's textures are ambient-occlusion maps over flat colours:
+      the paint gets a five-sided projection atlas, the other parts their
+      colour from a palette
+    - wheels: the shared rim selection; the tyre is turned on a lathe from
+      the outline of the source tyre

@@ -602,7 +602,19 @@ int			UI_SecretSkinIndex( const char *skin );		/* "car/skin" or "skin"; -1 if no
 qboolean	UI_SkinUnlocked( const char *skin );
 int			UI_Profile_UnlockedRank( void );			/* highest rank reached, -1 without profile */
 const char	*UI_Profile_RankName( int index );
-void		UI_EnforceSkinLocks( void );
+void		UI_EnforceSkinLocks( void );				/* also resets a locked secret car */
+
+/* Secret cars: hidden vehicles that unlock with the odd profile ranks. */
+typedef struct {
+	const char	*car;		/* folder under models/players */
+	const char	*name;		/* display name */
+	int			rank;		/* rank index (0 = Rookie Driver) that unlocks it */
+} uiSecretCar_t;
+extern const uiSecretCar_t		uiSecretCars[];
+extern const int				uiSecretCarCount;
+int			UI_SecretCarIndex( const char *model );		/* "car" or "car/skin"; -1 if not secret */
+qboolean	UI_CarUnlocked( const char *model );
+void		UI_CarDefaultSkin( const char *car, char *out, int outSize );	/* red, or the car's first paint */
 extern void UI_RimModelName( const char *rim, char *out, int outSize );
 extern int trap_UI_ImportAvatarPath( const char *profileName, const char *sourcePath,
 								char *shaderPath, int shaderPathSize );

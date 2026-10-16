@@ -1,0 +1,27 @@
+Q3Rally GT-R - asset sources
+============================
+
+body.md3, wheel.md3, parts.tga
+    Based on NissanGT-R.fbx, a Nissan GT-R (R35) model provided by the
+    Q3Rally project (own model, same license as the game).
+
+    Changes for Q3Rally (tools/carbuild/gtr):
+    - only the triangles visible from outside are kept (cull.py): the
+      interior and the engine of the source are left out; 103,341 of
+      757,016 triangles remain, decimated to 100,007 (mesh.py, pyfqmr)
+      with the borders between parts kept in place
+    - scaled to the size of the other cars and centred on the origin
+    - manufacturer badges left out
+    - the source has no textures: the paint gets a five-sided projection
+      atlas, the other parts their material colours from a palette
+      (parts.tga), headlamp and tail lamp colours brightened
+    - wheel: the source tyre decimated to 3,000 triangles with UVs for the
+      shared Q3Rally rim and tread textures, the rim opening closed with a
+      dished disc; the modelled rims, brake discs and calipers are not used
+    - tags for wheels, lights, plate, exhaust, roof and bonnet
+
+*_main.tga, glass.tga, chrome.tga, icon_*.tga
+    Made for Q3Rally (tools/carbuild/gtr/gen_textures.py, render3d.py).
+
+sound/player/gtr/horn.ogg, falling1.ogg
+    Shared with the Mustang, Camaro and Skyline.

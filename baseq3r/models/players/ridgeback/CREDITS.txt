@@ -1,0 +1,26 @@
+Q3Rally Ridgeback - asset sources
+=================================
+
+body.md3, wheel.md3, chassis.tga, interior.tga, lights.tga
+    Based on "lightbody lifted 85", a lifted 1985 pickup model provided by
+    the Q3Rally project (own model, same license as the game), with its
+    textures (UCB_BOTTOM, UCB_Interiors_1, UCB_Lights_and_Glass, resized).
+
+    Changes for Q3Rally (tools/carbuild/ridgeback):
+    - only the triangles visible from outside are kept (cull.py), at full
+      detail: 22,889 of 37,407 triangles; the interior hidden behind the
+      tinted windows is left out
+    - scaled to the size of the other cars and centred on the origin
+    - number plates and badges left out (the game draws its own plate)
+    - new UVs for the paint (five-sided projection atlas); chassis, bed,
+      bull bar, roll bar and lamps keep their original UVs
+    - wheel: the original wheel with UVs for the shared Q3Rally rim and
+      tread textures
+    - tags for wheels, lights (including the light bar on the roll bar),
+      plate, exhaust, roof and bonnet
+
+*_main.tga, glass.tga, icon_*.tga
+    Made for Q3Rally (tools/carbuild/ridgeback/gen_textures.py, render3d.py).
+
+sound/player/ridgeback/horn.ogg, falling1.ogg
+    Shared with the Raptor.

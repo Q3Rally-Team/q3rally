@@ -4,6 +4,85 @@ unreleased
 
 Added:
 
+- New car: DB12 (models/players/db12), an Aston Martin DB12 from a 1,859,182
+  triangle OBJ: only what is visible from outside is kept (no interior, brakes
+  or inner glass; the lamps stay visible behind their lenses, the parts behind
+  grille, gills and vents are kept whole and thin parts carry a reversed copy
+  of their triangles, so no opening shows the background; diffuser and rear
+  trim black), about 139,000 triangles, badges, lettering and plates left out, a
+  lathe-turned tyre for the rim selection. Skins red/blue/green/yellow and
+  rally01/07/13/27/44/88 with menu icons, the seven secret paints in
+  zz_secret_skins.pk3. Needs the raised polygon limit. Converter in
+  tools/carbuild/db12 (cull.py now works in blocks and can split its views
+  over processes).
+
+- Secret cars: Bountyhunter, Cutlass, Ridgeback, Mustang, GT500, Skyline and
+  GT-R unlock with the odd profile ranks (Street Newbie, Track Learner, Street
+  Racer, Pro Racer, Track Dominator, Racing Legend, Grand Champion), between
+  the secret paints. Locked cars stay in the showroom after the regular cars,
+  dimmed with a padlock and the rank that unlocks them; they can't be chosen,
+  customised or loaded from a saved setup, and a locked car in the model cvars
+  falls back to the default car. The lock is in the menu only: bots and
+  servers use every car (uiSecretCars in q3_ui/ui_rally_profiles.c). A car
+  picked in the showroom starts with its own default paint where it has no red
+  one (Bountyhunter: sheriff).
+
+- Bots drive the secret cars too: Steve (Bountyhunter), Dean (Cutlass), Tobias
+  (Ridgeback), Bee (Mustang), Carla (GT500), Alexandra (Skyline) and Ivan (GT-R),
+  taken from cars that had several drivers; every original car keeps at least
+  one bot.
+
+- Secret paints for the new cars: Retro, Camo, Carbon, Chrome, Neon, Hot Rod
+  and Gold for Mustang, Skyline, GT-R, Ridgeback, Cutlass, GT500 and
+  Bountyhunter in zz_secret_skins.pk3, with tint, glow and flame stages and
+  menu icons like on the original cars. Generator in
+  tools/carbuild/secret_paints.py.
+
+- New car: GT500 (models/players/gt500), a Shelby GT500 with rear wing from the
+  project's own 348,009 triangle model: only the parts visible from outside are
+  kept (no interior, engine or most of the suspension, 57,799 triangles), panels
+  wound inside out in the source turned round, badges and lettering left out, a
+  lathe-turned 1,792 triangle tyre that keeps the rim selection working. Skins
+  red/blue/green/yellow and rally01/07/13/27/44/88 with menu icons. Needs the
+  raised polygon limit. Converter in tools/carbuild/gt500.
+
+- New car: Bountyhunter (models/players/bountyhunter), a rusty sheriff muscle
+  car with a blower V8 through the bonnet, from the project's PoliceCar.3DS:
+  original low-poly model and hand-painted textures, a tyre turned from the
+  source wheel's outline that takes every rim of the rim selection. Skins
+  sheriff (original), highway,
+  redline, desert and ghost, recoloured from the original so rust and details
+  stay. Converter in tools/carbuild/bountyhunter (with a 3ds reader, tds.py).
+
+- New car: Cutlass (models/players/cutlass), a 1971 Oldsmobile Cutlass Supreme
+  sedan from the project's model: everything visible from outside at full detail
+  (35,372 triangles), chrome bumpers and mouldings, the original lamps, all four
+  headlights lit (tag_hlite1-4), a 5,303 triangle wheel that keeps the rim
+  selection working. Skins red/blue/green/yellow and rally01/07/13/27/44/88 with
+  menu icons. Converter in tools/carbuild/cutlass.
+
+- New car: Ridgeback (models/players/ridgeback), a lifted 1985 pickup with bull
+  bar, roll bar and light bar, from the project's "lightbody lifted 85" model:
+  everything visible from outside at full detail (22,889 triangles), chassis,
+  bed and lamps with the model's own textures, a 3,476 triangle wheel that keeps
+  the rim selection working. The light bar carries two extra headlights
+  (tag_hlite3/4). Skins red/blue/green/yellow and rally01/07/13/27/44/88 with
+  menu icons. Converter in tools/carbuild/ridgeback.
+
+- New car: GT-R (models/players/gtr), a Nissan GT-R (R35) from the project's own
+  757,016 triangle model: only the parts visible from outside are kept (no
+  interior or engine), decimated to a 100,007 triangle body and a 5,304 triangle
+  tyre that keeps the rim selection working. Skins red/blue/green/yellow and
+  rally01/07/13/27/44/88 with menu icons. Needs the raised polygon limit.
+  Converter in tools/carbuild/gtr (FBX reader, visibility culling, decimation).
+
+- New car: Skyline (models/players/skyline), the first high-poly car: 38,624
+  triangles body at the full detail of the source model, a 3,744 triangle tyre
+  that keeps the rim selection working. Skins red/blue/green/yellow and
+  rally01/07/13/27/44/88 with menu icons. Needs the raised polygon limit.
+  Model: "Nissan Skyline R34 GT-R" by Lexyc16 (https://skfb.ly/6TxFX), CC BY 4.0,
+  see models/players/skyline/CREDITS.txt; converter in tools/carbuild/r34.
+
 - Racing line (cg_racingLine, HUD options "Racing Line", all race modes): a band on
   the road ahead of the car along the best known lap of this track variant, the
   personal ghost or the server's ghost route, whichever is faster. Green = throttle,
@@ -95,6 +174,12 @@ Added:
 
 Changed:
 
+- Higher polygon limit for models (cars): a single model surface may now have up to
+  9999 vertices and 19999 triangles (was 999 / 1999), in both renderers and for MD3,
+  MDR and IQM (SHADER_MAX_VERTEXES 1000 -> 10000). Models above the old limit no
+  longer fail to load with "has more than 999 verts". Large per-vertex work arrays
+  in the renderers were moved off the stack.
+
 - Ghosts are only shown in Ghost Race. Other race modes no longer play back a
   personal or server base ghost (laps are still recorded for bot routes and the
   ladder); the HUD option "Ghost Playback" is only offered in Ghost Race and the
@@ -144,6 +229,37 @@ Changed:
   16+, koth 22, ghost 8).
 
 Fixed:
+
+- Crash to desktop in both renderers when a shader was registered in the
+  middle of a frame (e.g. a paint icon in the showroom, browsing from a secret
+  car back to the regular cars): FixRenderCommandList walked on past the
+  commands of the current frame into the leftovers of the previous one and
+  read garbage as draw surfaces. It now stops at the end of the used part.
+
+- Menus: hidden items (other tabs) no longer catch the mouse cursor, so the
+  left arrow of the vehicle showroom can be clicked again.
+
+- Gravelord and Gremlin did not load on Linux (or any case-sensitive file
+  system): their model was body.MD3, the game asks for body.md3, so players
+  got the default car. Renamed to body.md3; their tyres now also stand on the
+  ground like the other cars' (missed by the earlier fix because of the name).
+
+- Skyline, GT-R, Ridgeback: the light glows sat in the wrong place, mostly at
+  the edges of the lamps or beside the car. The light tags were inside the
+  lamp housings (GT-R headlights on the reflectors behind the lenses), so the
+  body hid the glow sprites. The build scripts now put every head, brake and
+  reverse light tag just in front of the lamp surface (carlib.snap_lights),
+  like the original cars (0.3-0.8 units, more on curved lamps).
+
+- All cars: the tyres now stand on the ground. Most cars sank into the ground
+  (Camaro up to 2.4 units, GT-R 2.6, Skyline 1.4, Mini, Viper, Murcielago,
+  Mustang, Alpine), some floated above it (Macdaddy, Raptor, Sidepipe,
+  Roadster, Slingshot, Reaper). Each body.md3 is moved up or down as a whole so
+  its wheel tags sit at tyre radius - 16.2, the height at which the drawn wheel
+  matches the physics wheel (radius 8; cg_players.c draws it 8.2 above the
+  spring end). The old models are patched in place
+  (tools/carbuild/ground_fix.py), Skyline, GT-R and Mustang through their
+  build scripts.
 
 - "ERROR: Can't allocate streaming streamSource" on q3r_downtown (OpenAL): about 190
   looping crowd speakers also auto-triggered the same 16 s sample every few seconds and

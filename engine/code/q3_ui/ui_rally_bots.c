@@ -564,11 +564,13 @@ static void UI_BotsMenu_Draw(void) {
 
     if ( botCount > MAX_VISIBLE_BOTS ) {
         int totalPages = ( botCount + MAX_VISIBLE_BOTS - 1 ) / MAX_VISIBLE_BOTS;
-        Com_sprintf( pageStr, sizeof(pageStr), "Page %d of %d",
+        /* in the card header like the showroom counter: the ten rows fill
+           the card down to its bottom edge */
+        Com_sprintf( pageStr, sizeof(pageStr), "%d / %d",
                      botPage + 1, totalPages );
-        Frontend_DrawText( RIVALS_LIST_X + RIVALS_LIST_W / 2,
-                           RIVALS_LIST_Y + RIVALS_LIST_H - 20, pageStr,
-                           UI_CENTER | UI_SMALLFONT, rivalsMutedColor );
+        Frontend_DrawText( RIVALS_LIST_X + RIVALS_LIST_W - 12,
+                           RIVALS_LIST_Y + 14, pageStr,
+                           UI_RIGHT | UI_SMALLFONT, rivalsMutedColor );
     }
 
     if ( botSelected >= 0 && botSelected < botCount ) {
