@@ -1052,7 +1052,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	refEntity_t		torso;
 */
 	refEntity_t		plate;
-	refEntity_t		turbo;
 	refEntity_t		headlight;
 	refEntity_t		backlight;
 	refEntity_t		brakelight;
@@ -1139,7 +1138,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
         memset( &backlight, 0, sizeof(backlight) );
 	memset( &brakelight, 0, sizeof(brakelight) );
 	memset( &reverselight, 0, sizeof(reverselight) );
-	memset( &turbo, 0, sizeof(turbo) );
 // END
 	memset( &head, 0, sizeof(head) );
 
@@ -1451,21 +1449,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		}
 	}
 
-	//
-	// add turbo flame
-	//
-	if ( pi->turbo && UI_TagExists(pi->bodyModel, "tag_turbo")){
-		turbo.hModel = uis.turboModel;
-		if (!turbo.hModel) {
-			return;
-		}
-
-		VectorCopy( origin, turbo.lightingOrigin );
-		UI_PositionEntityOnTag( &turbo, &body, pi->bodyModel, "tag_turbo");
-		turbo.renderfx = renderfx;
-
-		trap_R_AddRefEntityToScene( &turbo );
-	}
 // END
 
 

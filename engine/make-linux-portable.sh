@@ -53,7 +53,7 @@ fi
 
 SDL_LIBDIR="code/libs/linux-$ARCH"
 
-SDL_CFLAGS="-Icode/SDL2/include -D_REENTRANT"
+SDL_CFLAGS="-Icode/SDL2-2.32.8/include -D_REENTRANT"
 SDL_LIBS="-L$SDL_LIBDIR -lSDL2"
 
 # Don't pass arch ($1) to make in $*

@@ -32,7 +32,6 @@ models/items/fuelcan_box
     }
 }
 
-
 models/powerups/holdable/medkit_box
 {
 	{
@@ -120,15 +119,6 @@ models/powerups/ammo/bfgammo_new
 		rgbGen wave noise 0 1 0 5 
 	}
 }
-models/powerups/ammo/bfgammo1
-{
-        {
-	        map models/powerups/ammo/purple.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
-}
 models/powerups/ammo/bfgammo2
 {
 	{
@@ -151,15 +141,6 @@ models/powerups/ammo/grenammo_new
                 rgbGen lightingDiffuse
        }
 }
-models/powerups/ammo/grenammo1
-{
-        {
-	        map models/powerups/ammo/green.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
-}
 models/powerups/ammo/grenammo2
 {
 	{
@@ -167,16 +148,6 @@ models/powerups/ammo/grenammo2
 		rgbGen identity
 	}
 	
-}
-models/ammo/grenade
-{
-        {
-                map models/ammo/grenade.tga
-        }
-	{
-		AnimMap 7 models/ammo/grenade_r.tga models/ammo/grenade_g.tga
-	       blendfunc GL_ONE GL_ONE
-	}
 }
 models/powerups/ammo/lighammo_new
 {
@@ -205,15 +176,6 @@ models/powerups/ammo/lighammo_new
 		rgbGen wave noise 0 1 0 5 
 	}
 }
-models/powerups/ammo/lighammo1
-{
-        {
-	        map models/powerups/ammo/pale_yellow.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
-}
 models/powerups/ammo/lighammo2
 {
 	{
@@ -235,15 +197,6 @@ models/powerups/ammo/machammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
-}
-models/powerups/ammo/machammo1
-{
-        {
-	        map models/powerups/ammo/yellow.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
 }
 models/powerups/ammo/machammo2
 {
@@ -279,15 +232,6 @@ models/powerups/ammo/plasammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
-}
-models/powerups/ammo/plasammo1
-{
-        {
-	        map models/powerups/ammo/blue.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
 }
 models/powerups/ammo/plasammo2
 {
@@ -354,15 +298,6 @@ models/powerups/ammo/rockammo_new
                 rgbGen lightingDiffuse
        }
 }
-models/powerups/ammo/rockammo1
-{
-        {
-	        map models/powerups/ammo/red.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
-}
 models/powerups/ammo/rockammo2
 {
 	{
@@ -384,15 +319,6 @@ models/powerups/ammo/shotammo_new
 		blendfunc blend
                 rgbGen lightingDiffuse
        }
-}
-models/powerups/ammo/shotammo1
-{
-        {
-	        map models/powerups/ammo/orange.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
 }
 models/powerups/ammo/shotammo2
 {
@@ -429,15 +355,6 @@ models/powerups/ammo/flameammo_new
 		blendfunc gl_one_minus_dst_color gl_src_alpha
 		rgbGen wave noise 0 1 0 5 
 	}
-}
-models/powerups/ammo/flameammo1
-{
-        {
-	        map models/powerups/ammo/red.tga
-		tcGen environment
-		blendfunc GL_ONE GL_ZERO
-                rgbGen lightingDiffuse
-        }
 }
 models/powerups/ammo/flameammo2
 {

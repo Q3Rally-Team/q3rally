@@ -16,6 +16,9 @@ uniform mat4      u_ShadowMvp4;
 
 uniform vec3   u_ViewOrigin;
 uniform vec4   u_ViewInfo; // zfar / znear, zfar
+#if defined(USE_SHADOW_MODELS_ONLY)
+uniform vec4   u_ShadowParams; // xyz = map bias towards the sun, w = model bias
+#endif
 
 varying vec2   var_DepthTex;
 varying vec3   var_ViewDir;
@@ -94,6 +97,60 @@ float getLinearDepth(sampler2D depthMap, vec2 tex, float zFarDivZNear)
 	return 1.0 / mix(zFarDivZNear, 1.0, sampleZDivW);
 }
 
+#if defined(USE_SHADOW_MODELS_ONLY)
+// Q3Rally (r_sunShadowCasters 1): the camera cascades 1-3 hold only models,
+// cascade 4 holds only the map (rendered once per level). A model shadow is
+// drawn only where the map itself is in the sun, because the map's own
+// shadows are already baked into the lightmap.
+float CascadeShadow(const mat4 mvp, const sampler2DShadow map, const vec4 pos, inout float found)
+{
+	vec4 shadowpos = mvp * pos;
+
+	if (found > 0.5 || !all(lessThan(abs(shadowpos.xyz), vec3(abs(shadowpos.w)))))
+		return 1.0;
+
+	found = 1.0;
+	shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
+	return PCF(map, shadowpos.xy, shadowpos.z);
+}
+
+void main()
+{
+	float result = 1.0;
+
+	float depth = getLinearDepth(u_ScreenDepthMap, var_DepthTex, u_ViewInfo.x);
+	vec3 viewPos = u_ViewOrigin + var_ViewDir * (depth - 0.5 / u_ViewInfo.x);
+
+  #if defined(USE_SHADOW_CASCADE)
+	if (depth < 0.999)
+	{
+		vec3 sunDir = normalize(u_ShadowParams.xyz + vec3(0.0, 0.0, 1e-6));
+		vec4 modelPos = vec4(viewPos + sunDir * u_ShadowParams.w, 1.0);
+		float found = 0.0;
+		float model;
+
+		model = CascadeShadow(u_ShadowMvp, u_ShadowMap, modelPos, found);
+		model *= CascadeShadow(u_ShadowMvp2, u_ShadowMap2, modelPos, found);
+		model *= CascadeShadow(u_ShadowMvp3, u_ShadowMap3, modelPos, found);
+
+		if (model < 0.999)
+		{
+			vec4 shadowpos = u_ShadowMvp4 * vec4(viewPos + u_ShadowParams.xyz, 1.0);
+			float sun;
+
+			shadowpos.xyz = shadowpos.xyz * (0.5 / shadowpos.w) + vec3(0.5);
+			// generous: half of the taps in the sun counts as sunlit, so
+			// the coarse map cascade does not punch holes into car shadows
+			sun = clamp(PCF(u_ShadowMap4, shadowpos.xy, shadowpos.z) * 2.0, 0.0, 1.0);
+
+			result = 1.0 - (1.0 - model) * sun;
+		}
+	}
+  #endif
+
+	gl_FragColor = vec4(result, 1.0, 1.0, 1.0);	// Q3Rally: green = lamp shadows
+}
+#else
 void main()
 {
 	float result;
@@ -144,5 +201,6 @@ void main()
 	}
 #endif
 
-	gl_FragColor = vec4(vec3(result), 1.0);
+	gl_FragColor = vec4(result, 1.0, 1.0, 1.0);	// Q3Rally: green = lamp shadows
 }
+#endif

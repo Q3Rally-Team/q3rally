@@ -2251,6 +2251,18 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	} else {
 		CG_ImpactMark( mark, origin, dir, random()*360, 1,1,1,1, alphaFade, radius, qfalse );
 	}
+
+	// Q3Rally: a mine throws up dark smoke and dirt
+	if ( weapon == RWP_MINE ) {
+		int i;
+
+		for ( i = 0; i < 8; i++ ) {
+			CG_FX_TireSmoke( origin, dir, vec3_origin, FX_SMOKE_BLAST, 1.0f );
+		}
+		for ( i = 0; i < 4; i++ ) {
+			CG_FX_TireSmoke( origin, dir, vec3_origin, FX_SMOKE_DUST, 1.6f );
+		}
+	}
 }
 
 

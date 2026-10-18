@@ -492,7 +492,7 @@ void Svcmd_BallTurbo_f( void ) {
 	if ( !ent->inuse || !ent->client )
 		return;
 	ent->client->ps.powerups[PW_TURBO] = level.time + ms;
-	G_Printf( "ball_turbo: %s burns turbo for %i ms\n", ent->client->pers.netname, ms );
+	G_Printf( "ball_turbo: %s burns NOS for %i ms\n", ent->client->pers.netname, ms );
 }
 
 /* ball_touch <client>: counts as a touch of the match ball by that client
@@ -1065,7 +1065,7 @@ void G_Autoball_VehicleContact( gentity_t *self, const vehicleCollisionContact_t
 		return;
 	if ( g_autoballDebug.integer && level.time >= level.autoballRamLogTime ) {
 		level.autoballRamLogTime = level.time + 250;
-		G_Printf( "autoball: %s rams %s at %.0f km/h, turbo %s (needs %.0f km/h + turbo)\n",
+		G_Printf( "autoball: %s rams %s at %.0f km/h, NOS %s (needs %.0f km/h + NOS)\n",
 			rammer->client->pers.netname, victim->client->pers.netname,
 			VectorLength( rammer->client->ps.velocity ) / CP_M_2_QU * 3.6f,
 			rammer->client->ps.powerups[PW_TURBO] > level.time ? "on" : "off",

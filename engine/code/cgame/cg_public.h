@@ -176,6 +176,7 @@ typedef enum {
         CG_S_REGISTERENGINE,
         CG_S_UPDATEENGINE,
         CG_S_SETSFXGROUP,
+	CG_R_ADDSPOTLIGHTTOSCENE,	// Q3Rally: 98
 
 /*
 	CG_LOADCAMERA,

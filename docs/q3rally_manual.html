@@ -294,7 +294,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
   <div class="table-wrap"><table>
     <thead><tr><th>Pickup</th><th>Duration</th><th>Effect</th></tr></thead>
     <tbody>
-      <tr><td>Turbo</td><td>5 s</td><td>Afterburner — temporary boost to acceleration and top speed.</td></tr>
+      <tr><td>NOS</td><td>5 s</td><td>Nitrous oxide — temporary boost to acceleration and top speed, burned while the NOS key is held. The car glows light blue while burning it.</td></tr>
       <tr><td>Quad Damage</td><td>30 s</td><td>Quadruples all outgoing weapon damage.</td></tr>
       <tr><td>Environmental Protection</td><td>30 s</td><td>Mitigates lava, acid, and environmental hazards.</td></tr>
       <tr><td>Haste</td><td>30 s</td><td>Raises fire rate and reduces reload speed.</td></tr>
@@ -302,7 +302,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
       <tr><td>Auto Repair</td><td>30 s</td><td>Continuously regenerates vehicle hit points.</td></tr>
       <tr><td>Shielding</td><td>30 s</td><td>Extra damage absorption stacking with existing armour.</td></tr>
       <tr><td>Personal Teleporter</td><td>1 use</td><td>Instantly resets vehicle to last safe position on track.</td></tr>
-      <tr><td>Fuel Can</td><td>1 use</td><td>Refills tank to maximum without affecting turbo reserves.</td></tr>
+      <tr><td>Fuel Can</td><td>1 use</td><td>Refills tank to maximum without affecting NOS reserves.</td></tr>
       <tr><td>Medkit</td><td>1 use</td><td>On-demand health restore.</td></tr>
     </tbody>
   </table></div>
@@ -694,12 +694,246 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
         <td>Spawn variation (position, colour, flake selection) is deterministic per zone and particle index, not random per frame. Result: stable, consistent appearance across clients.</td>
       </tr>
       <tr>
-        <td>7</td>
+        <td>8</td>
+        <td>Wet ground</td>
+        <td>With OpenGL2 the ground inside an active rain volume looks wet: darker, with reflections (strongest on asphalt; dirt, sand and gravel mostly get darker, grass only a little) and puddles on every kind of ground that mirror like water, muddy on loose ground, with drop rings while it rains. It gets wet within about 20 seconds of rain and dries within about 2 minutes. For a map that is wet without rain set the worldspawn key <code>wetness</code> (0 = dry, 1 = soaked); shaders with <code>surfaceparm wet</code> are always wet. Test with <code>devmap</code> and <code>r_wetness 1</code> (cheat; <code>-1</code> = from the rain again).</td>
+      </tr>
+      <tr>
+        <td>9</td>
         <td>QA / validation</td>
         <td>Test with <code>cg_atmosphericLevel 0</code> through <code>3</code> before release. Check volume placement, transitions, tire grip and spray as well as particle density.</td>
       </tr>
     </tbody>
   </table></div>
+
+  <h3>Reflective Water — Mapper Guide</h3>
+  <p>Water surfaces can show a rippled real-time reflection of the track, the cars and the sky. With the OpenGL2 renderer (<code>cl_renderer opengl2</code>, cvar <code>r_water 1</code>, default) a shader with the <code>q3r_water</code> keyword is drawn by a GLSL water program: the scene is mirrored in the water plane, the reflection is distorted by two scrolling normal map layers and mixed with the water colour by a Fresnel term. Looking down, the water is see-through and shows the pool floor; at grazing angles it becomes a mirror. A sun glint is added from the <code>q3map_sun</code> of the map's sky shader.</p>
+  <div class="callout"><strong>Ready-made shader</strong><code>textures/q3r_liquids/q3r_water_mirror</code> (in <code>scripts/liquids.shader</code>) with the normal map <code>textures/q3r_liquids/water_normal.tga</code>. The test map <code>q3r_watertest</code> shows a pool built with it. An existing water shader can be upgraded by adding the four <code>q3r_water*</code> lines to it, without recompiling the map — see <code>textures/dip_valley/water</code> in <code>q3r_valley</code>.</div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Step</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Build the water volume</td>
+        <td>One brush per water body. Put the water shader on the <strong>top face only</strong> and <code>common/watercaulk</code> on all other faces. The top face must be flat; one water plane (height) per area of the map.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Give it a floor</td>
+        <td>The water is partly see-through, so texture the basin (floor and walls below the surface). A calm texture such as <code>q3r_ground/pebble01</code> reads better than a busy one.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Add the OpenGL1 fallback (optional)</td>
+        <td>OpenGL1 and <code>r_water 0</code> draw the shader's normal stages. The example shader uses a classic <code>portal</code> mirror there, which needs a <code>misc_portal_surface</code> entity <strong>without target</strong> within 64 units of the water surface (e.g. in its centre). Without the entity the fallback shows only the tinted water stages. OpenGL2 needs no entity.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Check the sky shader</td>
+        <td>The sun glint uses the <code>q3map_sun</code> direction and colour of the map's sky shader. Without <code>q3map_sun</code> there is no glint, the rest works.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Compile</td>
+        <td>Normal BSP, VIS and light passes; use <code>-custinfoparms</code> so <code>SURF_WET</code> is kept (tyre splashes). Nothing water-specific is baked into the BSP, so shader values can be tuned without recompiling.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Mind the depth</td>
+        <td>The volume uses <code>surfaceparm water</code>: a car that drives into deep water sinks and is destroyed (&ldquo;sank like a rock&rdquo;). For a drivable puddle or ford keep it shallow, or use a water shader without <code>surfaceparm water</code>.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>QA / validation</td>
+        <td>Test with <code>cl_renderer opengl2</code> and <code>opengl1</code>, and with <code>r_water 0</code>. <code>developer 1</code> prints a message when a <code>q3r_water</code> shader falls back to its stages (and why).</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">Shader keywords</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Keyword</th><th>Parameters (default)</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>q3r_water</code></td><td>&lt;normal map&gt; [tile size 256] [speed 0.03] [distortion 0.02]</td><td>Turns the GLSL water on. Tile size = world units per normal map repeat, speed = repeats per second, distortion = how far the reflection is shifted by the ripples (fraction of the screen).</td></tr>
+      <tr><td><code>q3r_waterColor</code></td><td>&lt;r&gt; &lt;g&gt; &lt;b&gt; [opacity] (0.03 0.09 0.11 0.55)</td><td>Water tint and how opaque the water is looking straight down. Lower opacity shows more of the floor.</td></tr>
+      <tr><td><code>q3r_waterFresnel</code></td><td>&lt;bias&gt; &lt;power&gt; (0.15 4)</td><td>Bias = reflection looking straight down; a higher power keeps the reflection to flatter angles.</td></tr>
+      <tr><td><code>q3r_waterSpecular</code></td><td>&lt;strength&gt; (1)</td><td>Strength of the sun glint, 0 turns it off.</td></tr>
+    </tbody>
+  </table></div>
+
+<pre>textures/q3r_liquids/q3r_water_mirror
+{
+	qer_editorimage textures/q3r_liquids/water.tga
+	qer_trans 0.6
+	portal                       // OpenGL1 fallback: plain mirror
+	q3r_water textures/q3r_liquids/water_normal.tga 320 0.03 0.03
+	q3r_waterColor 0.02 0.07 0.08 0.7
+	q3r_waterFresnel 0.12 4
+	q3r_waterSpecular 1.5
+	surfaceparm nomarks
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm water
+	surfaceparm nolightmap
+	surfaceparm SURF_WET
+	{
+		// stages below are only drawn by OpenGL1 / r_water 0
+		map $whiteimage
+		rgbGen const ( 0.04 0.10 0.13 )
+		alphaGen portal 3072
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+		depthWrite
+	}
+	...
+}</pre>
+
+  <div class="callout orange"><strong>Limits</strong>Only one reflection is drawn per view: if several water planes at different heights are visible at once, they all show the reflection of the first one. Objects under water are tinted but not refracted. <code>deformVertexes</code> is ignored on <code>q3r_water</code> surfaces in OpenGL2 (the plane must stay flat; waves come from the normal map) and only applies to the fallback stages. The reflection renders the scene a second time, so keep large water areas out of busy sections. A custom normal map must tile seamlessly; it is used as a plain RGB image (x/y in red/green).</div>
+
+  <h3>Real-Time Sun Shadows — Mapper Guide</h3>
+  <p>With the OpenGL2 renderer, cars, props and items cast real-time shadows from the map's sun. The map's own shadows stay baked in the lightmap: a car's shadow is only drawn where the sun reaches the ground, so a car in the shade of a cliff gets no second shadow and shaded areas are not darkened twice. The blob shadow under the cars stays as a lighter contact shadow. OpenGL1 keeps the blob shadow only.</p>
+  <div class="callout"><strong>Switching it on</strong>Add a <code>q3gl2_sun</code> line to the map's sky shader, with the same values as its <code>q3map_sun</code> line plus the shadow strength. No recompile is needed. Enabled so far: <code>textures/vsky/vsky</code> (q3r_valley), <code>textures/stecki/sub01</code> (q3r_country01), <code>textures/skies/ame_desert</code> (q3r_lcs1, q3r_mk), <code>textures/skies/ely_sunset</code> (q3r_dirtyfun), <code>textures/arctic/arc_skybox3</code> (q3r_ridgeracer), <code>textures/skies/tim_dm3_red</code> (q3r_lavafalls), <code>textures/skies/hellsky</code> (q3r_sk1), <code>textures/q3r_skies/env/mp_us/mp_us</code> (q3r_dd_02), <code>textures/q3r_skies/env/trainyard/trainyard</code> (q3r_downtown, q3r_citydom, q3r_ctf_01) and <code>textures/skies/ame_nebula</code> (q3r_battlecanyon, q3r_david4).</div>
+
+<pre>textures/vsky/vsky
+{
+	...
+	q3map_sun 0.980392 0.67451 0.372549 100 334 57
+	q3gl2_sun 0.980392 0.67451 0.372549 100 334 57 0.5
+	skyparms textures/vsky/vsky - -
+}</pre>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Parameter</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>r g b intensity degrees elevation</td><td>Exactly as in <code>q3map_sun</code>. The direction must match the sun the lightmap was compiled with, otherwise the car shadows point the wrong way.</td></tr>
+      <tr><td>shadow strength (last value)</td><td>Brightness left in a car shadow: 0.5 for a strong sun, 0.6–0.7 for a weak or coloured one. 1 = no visible shadow.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout orange"><strong>When not to use it</strong>A sun straight overhead (elevation near 90) only darkens the ground under the car, which the blob already does. Tilt it first (elevation 45&ndash;60, the azimuth where the sun is in the sky images) and relight the map: q3map2 needs the full <code>-bsp</code>, <code>-vis</code> and <code>-light</code> run for that, with the options stored in the BSP's worldspawn key <code>_q3map2_cmdline</code>. The trainyard, nebula and mp_us skies were changed this way. Check the result: a map lit through an opening in a roof (q3r_dm02) gets dark when the sun is tilted; keep the sun straight down there and use lamp shadows. Night maps with a weak moon gain little; use lamp shadows there. Maps compiled with a different sun than the one in the shader get shadows in the wrong direction.</div>
+
+  <h3>Lamp Shadows &mdash; Mapper Guide</h3>
+  <p>With the OpenGL2 renderer, the map's lamps also make cars, props and items cast real-time shadows. The renderer picks the lamps that light the models near the camera most (up to <code>r_lampShadows</code>, default 2) and lays their shadows onto the map. Like the sun shadows, a lamp shadow only falls onto the map (not onto other cars), only where the lamp's light reaches, and gets weaker with the distance to the lamp. Point lights cast downwards (a cone of 120&deg;), spotlights along their cone.</p>
+  <div class="callout"><strong>Keep the lights in the BSP</strong>q3map2 removes the <code>light</code> entities after the light stage, so the game would not know where the lamps are. Add them to the compiled map with <code>python3 tools/maptools/inject_lights.py maps/mymap.map</code>. (<code>q3map2 -bsp -keeplights</code> keeps them too, but spotlights aimed at an <code>info_null</code> lose their direction, because q3map2 removes the info_null.) The tool copies the lights from the .map into the .bsp (only the entity lump changes, the lighting stays as it is), stores the target point of spotlights in <code>_q3r_spotorigin</code> and fixes the checksum in the .aas file so the bots keep working. It can be run again after every recompile. The game frees the light entities at spawn, so they cost no entity slots.</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Light key</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><code>origin</code></td><td>Position of the shadow camera. Place the light where the lamp's bulb is; a light inside a solid brush casts no shadow.</td></tr>
+      <tr><td><code>light</code> / <code>_light</code></td><td>Brightness (default 300) &mdash; how far and how dark the shadow is. Weak fill lights rarely win against a real lamp.</td></tr>
+      <tr><td><code>target</code> + <code>radius</code></td><td>Spotlight: the shadow points at the target, the cone width follows the radius (default 64).</td></tr>
+      <tr><td><code>_sun</code></td><td>Lights with <code>_sun 1</code> are skipped (they are a sun, not a lamp).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout orange"><strong>Tips</strong>Fill lights hidden in the ceiling cast shadows like real lamps. If a map has many of them, a car can get several faint shadows in odd directions; keep fill lights weak or high up. Daylight maps with a sun gain little from lamp shadows. Maps with lamp shadows so far: q3r_nightcity, q3r_demobowl, q3r_babel, q3r_ctf_04, q3r_david5, q3r_lavafalls, q3r_dd_02, q3r_ctf_01, q3r_david4, q3r_dm02.</div>
+
+  <h3>Haze &mdash; Mapper Guide</h3>
+  <p>With the OpenGL2 renderer the air between the camera and far surfaces can be hazy: a thin haze everywhere and a ground haze that lies thick near a given height and thins out upwards (mist in valleys, dust over a desert floor). The sky only gets haze at the horizon; towards the sun the haze glows in the sun's colour (from <code>q3map_sun</code> / <code>q3gl2_sun</code>).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Where</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Sky shader</td><td><code>q3r_haze &lt;r&gt; &lt;g&gt; &lt;b&gt; &lt;distance&gt; [&lt;ground distance&gt; &lt;ground height&gt; &lt;ground thickness&gt; [&lt;sun glow&gt;]]</code> next to <code>q3gl2_sun</code>. Works on compiled maps.</td></tr>
+      <tr><td>Worldspawn</td><td>Key <code>haze</code> with the same values. Wins over the sky shader.</td></tr>
+      <tr><td>Player</td><td><code>r_haze 0</code> switches it off, <code>r_hazeDensity</code> makes it thinner or thicker (0&ndash;4).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>r g b</td><td>Colour of the haze, 0&ndash;1; take the sky's colour at the horizon.</td></tr>
+      <tr><td>distance</td><td>Units at which the thin haze hides half of what is behind it (clear day 6000, hazy 3500; 0 = none).</td></tr>
+      <tr><td>ground distance</td><td>The same for the ground haze at its height (0 = none).</td></tr>
+      <tr><td>ground height</td><td>World height (z) where the ground haze is as thick as given.</td></tr>
+      <tr><td>ground thickness</td><td>It gets e (2.7) times thinner every this many units upwards (default 128).</td></tr>
+      <tr><td>sun glow</td><td>How strongly it glows towards the sun (default 0.5).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Example</strong><code>q3r_haze 0.62 0.68 0.76 6000 3000 -150 160 0.5</code> (q3r_country01): light blue haze, half at 6000 units, ground mist at z &minus;150 that thins out over 160 units. Transparent surfaces that do not write depth (glass, particles) take the haze of what is behind them.</div>
+
+  <h3>Colour Grading &mdash; Mapper Guide</h3>
+  <p>With the OpenGL2 renderer (<code>r_hdr 1</code>, <code>r_toneMap 1</code>) every frame goes through a filmic tone curve and then through a colour grading LUT: the look of the map. Without a setting a map gets the subtle default look <code>gfx/luts/q3r_default</code>.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Where</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Sky shader</td><td><code>q3r_colorLut gfx/luts/warm</code> next to <code>q3gl2_sun</code>. Works on compiled maps, no recompile.</td></tr>
+      <tr><td>Worldspawn</td><td>Key <code>colorlut</code>, value <code>gfx/luts/warm</code>. Wins over the sky shader.</td></tr>
+      <tr><td>Player</td><td><code>r_colorLut gfx/luts/vivid</code> uses one look on every map, <code>r_colorLut none</code> switches the grading off, <code>r_colorGrade</code> sets its strength (0&ndash;1).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Look</th><th>For</th></tr></thead>
+    <tbody>
+      <tr><td><code>q3r_default</code></td><td>Default: a little more contrast and colour, slightly cool shadows and warm light.</td></tr>
+      <tr><td><code>warm</code></td><td>Desert, canyon, afternoon sun.</td></tr>
+      <tr><td><code>cold</code></td><td>Snow, winter, early morning: cooler, less colour, soft blacks.</td></tr>
+      <tr><td><code>night</code></td><td>Night city: teal shadows, orange street lights.</td></tr>
+      <tr><td><code>vivid</code></td><td>Arcade: strong colours and contrast.</td></tr>
+      <tr><td><code>overcast</code></td><td>Grey sky, rain: less colour and contrast.</td></tr>
+      <tr><td><code>dusk</code></td><td>Sunset: violet shadows, golden light.</td></tr>
+      <tr><td><code>neutral</code></td><td>No change (for comparisons).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Shipped maps</strong><code>warm</code>: q3r_sk1, q3r_lcs1, q3r_mk, q3r_valley, q3r_lavafalls. <code>night</code>: q3r_nightcity, q3r_babel, q3r_demobowl, q3r_ctf_04, q3r_dm02, q3r_battlecanyon, q3r_david4. <code>dusk</code>: q3r_dirtyfun, q3r_dd_02. <code>cold</code>: q3r_ridgeracer. All others: <code>q3r_default</code>. The look sits in the sky shader, so every map with the same sky gets the same look.</div>
+  <div class="callout"><strong>Own looks</strong>A LUT is a 1024&times;32 TGA: 32 slices of 32&times;32 side by side, red across a slice, green from top to bottom, blue from slice to slice. Add a function to <code>tools/maptools/make_color_luts.py</code> and run it, or grade a screenshot in an image editor together with <code>gfx/luts/neutral.tga</code> using the same adjustments and save the graded neutral LUT under a new name. <code>developer 1</code> prints which LUT a map uses.</div>
+
+  <h3>Waterfall Spray — Mapper Guide</h3>
+  <p>A <code>rally_fx_spray</code> entity puts spray, drifting mist and droplets where a waterfall hits the water. It also works for rapids, fountains or steam. The effect is purely client side: the server ignores the entity, cgame reads it from the map at load time and simulates the particles itself, so it uses no entity slot, no network traffic and works in demos. The mist colour is multiplied with the light grid at the origin, so it is not glowing white in a shady gorge or at night. It runs with OpenGL1 and OpenGL2.</p>
+  <div class="callout"><strong>Example</strong><code>q3r_valley</code> has three emitters along the foot of its waterfall and a looping <code>target_speaker</code> with <code>sound/world/waterfall.ogg</code>. Like any point entity, the spray can be added to a finished map by editing only the entity lump; the geometry does not need a recompile.</div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Step</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Place the entity</td>
+        <td>Put the origin on the water surface where the water lands, a few units in front of the cliff. If the origin ends up inside a rock, the game moves it up and prints a warning. A wide fall looks best with two or three emitters along its foot, the main one with the most particles where most water lands.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Point it away from the wall</td>
+        <td>Set <code>angle</code> to the direction away from the cliff and <code>push</code> to how hard the spray is thrown that way. This also keeps the mist sprites from cutting into the rock face.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Scale it to the fall</td>
+        <td><code>radius</code> = spread at the foot, <code>height</code> = how high the mist rises, <code>size</code> = puff size. A small cascade needs about half the defaults, a big fall more <code>rate</code> and <code>height</code>.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Add sound</td>
+        <td>A <code>target_speaker</code> with <code>"noise" "sound/world/waterfall.ogg"</code> and spawnflag <code>LOOPED_ON</code> (1) near the foot of the fall.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>QA / validation</td>
+        <td>Check it from the road and from close up, and with <code>cg_mapEffects 0</code>, <code>1</code> and <code>2</code>. Bot support stays intact: the AAS file does not depend on these entities (after editing only the entity lump, the AAS header checksum must match the new BSP; <code>bspc</code> or the Toolbox AAS step updates it).</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:16px 0 8px">rally_fx_spray keys</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Key</th><th>Default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>radius</code></td><td>64</td><td>Horizontal spread of the spray at the foot.</td></tr>
+      <tr><td><code>height</code></td><td>160</td><td>How high the mist rises.</td></tr>
+      <tr><td><code>size</code></td><td>96</td><td>Size of a mist puff.</td></tr>
+      <tr><td><code>rate</code></td><td>30</td><td>Mist puffs per second.</td></tr>
+      <tr><td><code>droplets</code></td><td>50</td><td>Droplets per second; they fly up and fall back into the water.</td></tr>
+      <tr><td><code>angle</code></td><td>all directions</td><td>Yaw the spray is thrown towards, usually away from the cliff.</td></tr>
+      <tr><td><code>push</code></td><td>60</td><td>Speed of the throw in that direction.</td></tr>
+      <tr><td><code>_color</code></td><td>0.92 0.96 1</td><td>Tint (0..1 or 0..255), multiplied with the light grid.</td></tr>
+      <tr><td><code>alpha</code></td><td>0.4</td><td>Opacity of the mist.</td></tr>
+      <tr><td><code>range</code></td><td>3000</td><td>No new particles beyond this view distance; beyond 40% of it the spray thins out.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Players can scale the density with <code>cg_mapEffects</code> (0 = off, 1 = default, 2 = double, archived).</p>
+
+  <div class="callout orange"><strong>Limits</strong>The particles are flat sprites: very close to a wall or the water surface they show a straight edge where they cut into it (no soft particles). At most 32 emitters per map and 640 particles at the same time; nothing is spawned outside the view distance or when the emitter is not in the PVS.</div>
+
+  <h3>Flowing &amp; Falling Water — Mapper Guide</h3>
+  <p>Two ready-made shaders in <code>scripts/liquids.shader</code> make water visibly run: <code>textures/q3r_liquids/q3r_waterfall</code> for falling water (a waterfall sheet, the jet out of a pipe) and <code>textures/q3r_liquids/q3r_waterflow</code> for water running along a channel or pipe. Both scroll a blue water layer and two layers of bright streaks (<code>waterfall_body.jpg</code>, <code>waterfall_streaks.tga</code>) in the direction of the flow, are see-through, non-solid and have no lightmap, so they keep their brightness in the shade. They work with OpenGL1 and OpenGL2.</p>
+  <div class="callout"><strong>Alignment</strong>The water runs towards the bottom of the texture. On a wall that is the default alignment (the texture's top is up). On a floor, rotate the texture so its top points upstream. Texture scale 0.5 gives one repeat per 64 &times; 128 units. Put a <code>rally_fx_spray</code> where the water lands and a looping <code>target_speaker</code> with <code>sound/world/waterfall.ogg</code> next to it.</div>
+  <div class="callout"><strong>Example</strong><code>q3r_ctf_01</code>: the water in the pipe uses <code>q3r_waterflow</code>, the jet into the pool <code>q3r_waterfall</code>, two spray emitters and a speaker sit at its foot, and the pool (<code>textures/q3r_liquids/q3r_water_03</code>) reflects with <code>q3r_water</code>.</div>
 
   <h3>Utilities &amp; Hazards</h3>
   <div class="table-wrap"><table>
@@ -967,6 +1201,25 @@ docker run --rm -it -p 27960:27960/udp \
     <li>Modified mouse handling in menus</li>
     <li>Changed invalid default pk3 checksums to use <code>sv_pure 0</code></li>
     <li>Added <code>baseq3r</code> pk3 checksums</li>
+    <li>OpenGL2: GLSL water with rippled real-time reflections for <code>q3r_water</code> shaders (cvar <code>r_water</code>)</li>
+    <li>OpenGL2: real-time sun shadows cast only by cars and other models; the map's shadows stay baked and moving shadows only appear where the map is in the sun (cvar <code>r_sunShadowCasters</code>)</li>
+    <li>OpenGL2: real-time lamp shadows: the map's lamps make cars and models cast shadows (cvars <code>r_lampShadows</code>, <code>r_lampShadowStrength</code>, <code>r_lampShadowMapSize</code>)</li>
+    <li>OpenGL2: headlights are real light cones that light the road with its colours, and the nearest ones cast shadows; tail, brake and reverse lights light the road behind the car the same way (cvars <code>r_headlights</code>, <code>r_headlightIntensity</code>, <code>r_headlightShadows</code>, <code>r_headlightShadowMapSize</code>)</li>
+    <li>OpenGL2: car paint and glass reflect the real surroundings with a clear coat on the paint (cvars <code>r_carReflections</code>, <code>r_carReflectionSize</code>, <code>r_carReflectionStrength</code>)</li>
+    <li>OpenGL2: motion blur at speed (the car itself stays sharp), much stronger while burning NOS (cvars <code>r_motionBlur</code>, <code>r_motionBlurNos</code>, <code>r_motionBlurMax</code>, <code>r_motionBlurMaxNos</code>, <code>r_motionBlurNear</code>); a car burning NOS glows in a pulsing light blue shell instead of the old rocket flame</li>
+    <li>Tyre smoke and dust are soft billowing clouds lit by the map, with their own look on asphalt, dust, dirt, gravel, sand and grass (cvar <code>cg_tireSmoke</code>); in OpenGL2 particles fade softly where they touch the ground (cvar <code>r_softParticles</code>)</li>
+    <li>The smoke screen is a thick cloud that hangs on the track, mines explode with dark smoke and dirt</li>
+    <li>OpenGL2: wet ground inside rain zones: darker, with reflections of the surroundings, lights and cars, and puddles that mirror like water (muddy on loose ground, with rain drop rings); it gets wet within about 20 seconds and dries within about 2 minutes (cvar <code>r_wetGround</code>, 2 = finer reflections); tyre spray and powder snow are soft, lit clouds</li>
+    <li>Skid marks are continuous tracks with a tread pattern that follow the line each tyre drives, with their own look on asphalt, dirt, grass, sand, snow and ice; they fade out after 20 seconds (needs <code>r_marksOnTriangleMeshes 1</code>, now the default)</li>
+    <li>OpenGL2: filmic tone mapping (soft highlights, deeper shadows) and colour grading with a look per map (cvars <code>r_toneMapCurve</code>, <code>r_filmicExposure</code>, <code>r_filmicWhite</code>, <code>r_colorGrade</code>, <code>r_colorLut</code>)</li>
+    <li>OpenGL2: ambient occlusion: soft shadows where surfaces meet, a contact shadow under the cars (cvars <code>r_ssao</code> 0/1/2, <code>r_ssaoRadius</code>, <code>r_ssaoStrength</code>, <code>r_ssaoDistance</code>)</li>
+    <li>OpenGL2: map textures get relief and gloss by material (asphalt, dirt, gravel, metal, ice ...) from normal and specular maps made when the map loads (cvars <code>r_genNormalMaps</code>, <code>r_genNormalStrength</code>; own <code>_n</code> / <code>_s</code> textures are used when present)</li>
+    <li>OpenGL2: distance and ground haze in the colour of the map's sky, glowing towards the sun (cvars <code>r_haze</code>, <code>r_hazeDensity</code>)</li>
+    <li>Graphics settings on three pages (Graphics, Effects, Lighting &amp; shadows) with one preset Low / Medium / High / Ultra for all of them; a changed option shows the preset as Custom</li>
+    <li>OpenGL2: bloom (glow around bright lights) and FXAA edge smoothing (cvars <code>r_bloom</code>, <code>r_bloomIntensity</code>, <code>r_bloomThreshold</code>, <code>r_fxaa</code>)</li>
+    <li><code>q3r_ctf_01</code>: reflective pool, running water in the pipe, waterfall with spray and sound; new shaders <code>q3r_waterfall</code> and <code>q3r_waterflow</code></li>
+    <li>Sun shadows on maps that had a sun straight overhead (q3r_dd_02, q3r_downtown, q3r_citydom, q3r_ctf_01, q3r_battlecanyon, q3r_david4; maps relit)</li>
+    <li>OpenGL1: <code>$dynamicreflection</code> stages use the static reflection image (car shaders no longer fall back to black)</li>
   </ul>
 
   <h3>Run Without Installing</h3>

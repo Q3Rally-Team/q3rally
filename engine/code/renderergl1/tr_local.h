@@ -1380,6 +1380,7 @@ void RE_AddRefEntityToScene( const refEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void RE_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
 void RE_RenderScene( const refdef_t *fd );
 
 /*
@@ -1565,8 +1566,8 @@ typedef enum {
 // these are sort of arbitrary limits.
 // the limits apply to the sum of all scenes in a frame --
 // the main view, all the 3D icons, etc
-#define	MAX_POLYS		2400
-#define	MAX_POLYVERTS	12000
+#define	MAX_POLYS		8192		// Q3Rally: was 2400 (long skid marks, particles)
+#define	MAX_POLYVERTS	40000		// Q3Rally: was 12000
 
 // all of the information needed by the back end must be
 // contained in a backEndData_t

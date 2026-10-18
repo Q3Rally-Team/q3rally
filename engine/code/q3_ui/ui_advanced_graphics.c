@@ -24,7 +24,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
 =======================================================================
 
-ADVANCED GRAPHICS OPTIONS MENU
+GRAPHICS SETTINGS PAGES
+
+Q3Rally: the three graphics pages (Graphics in ui_video.c, Effects and
+Lighting & shadows here) are built from tables. A row lists its choices;
+each choice sets some cvars ("cvar=value;cvar=value"), and the row shows the
+first choice whose cvars all match (else "Custom"). Rows with a read/apply
+function do their own thing (preset, resolution). Changes take effect at
+once; when a changed cvar needs a renderer restart, the pages show "Apply"
+(vid_restart). One preset (Low ... Ultra) sets everything.
 
 =======================================================================
 */
@@ -32,488 +40,567 @@ ADVANCED GRAPHICS OPTIONS MENU
 #include "ui_local.h"
 #include "ui_rally_frontend.h"
 
-#define ID_GRAPHICS                 10
-#define ID_ADVANCED_GRAPHICS        17
-#define ID_DISPLAY                  11
-#define ID_SOUND                    12
-#define ID_NETWORK                  13
-#define ID_HDR                      14
-#define ID_POSTPROCESS              15
-#define ID_BACK                     16
-#define ID_TONEMAP                  18
-#define ID_AUTOEXPOSURE             19
-#define ID_SSAO                     20
-#define ID_SUNRAYS                  21
-#define ID_DYNAMIC_REFLECTIONS      22
-#define ID_PRESET                   23
-#define ID_SUNSHADOWS               24
-#define ID_SHADOWQUALITY            25
-#define ID_SHADOWBLUR               26
-#define ID_SHADOWCASCADE_NEAR       27
-#define ID_SHADOWCASCADE_FAR        28
-#define ID_SHADOWCASCADE_BIAS       29
-#define ID_PSHADOWDIST              30
-#define ID_SUNLIGHTMODE             31
+#define GFX_FRAME_X				24
+#define GFX_FRAME_Y				20
+#define GFX_FRAME_WIDTH			592
+#define GFX_FRAME_HEIGHT		440
+#define GFX_NAV_X				40
+#define GFX_NAV_Y				104
+#define GFX_NAV_WIDTH			164
+#define GFX_NAV_HEIGHT			292
+#define GFX_DETAIL_X			220
+#define GFX_DETAIL_Y			104
+#define GFX_DETAIL_WIDTH		376
+#define GFX_DETAIL_HEIGHT		292
+#define GFX_ROW_HEIGHT			24
+#define GFX_ROW_GAP				4
+#define GFX_ROW_START_Y			148
+#define GFX_COLUMN_WIDTH		176
+#define GFX_COLUMN_LEFT_X		236
+#define GFX_COLUMN_RIGHT_X		420
+#define GFX_VALUE_OFFSET		100
+#define GFX_ACTION_Y			420
+#define GFX_ACTION_WIDTH		UI_FRONTEND_ACTION_WIDTH
+#define GFX_ACTION_HEIGHT		UI_FRONTEND_BUTTON_HEIGHT
 
-#define ADV_PRESET_CUSTOM           0
-#define ADV_PRESET_LOW              1
-#define ADV_PRESET_MIDDLE           2
-#define ADV_PRESET_HIGH             3
-#define ADV_PRESET_ULTRA            4
+#define GFX_MAX_PAGES			3
+#define GFX_MAX_ROWS			16
 
-#define ADV_FRAME_X                24
-#define ADV_FRAME_Y                20
-#define ADV_FRAME_WIDTH            592
-#define ADV_FRAME_HEIGHT           440
-#define ADV_NAV_X                  40
-#define ADV_NAV_Y                  104
-#define ADV_NAV_WIDTH              164
-#define ADV_NAV_HEIGHT             292
-#define ADV_DETAIL_X               220
-#define ADV_DETAIL_Y               104
-#define ADV_DETAIL_WIDTH           376
-#define ADV_DETAIL_HEIGHT          292
-#define ADV_ROW_HEIGHT             24
-#define ADV_ROW_GAP                4
-#define ADV_ROW_START_Y            148
-#define ADV_COLUMN_WIDTH           176
-#define ADV_COLUMN_LEFT_X          236
-#define ADV_COLUMN_RIGHT_X         420
-#define ADV_VALUE_OFFSET           112
-#define ADV_ACTION_Y               420
-#define ADV_ACTION_WIDTH           UI_FRONTEND_ACTION_WIDTH
-#define ADV_ACTION_HEIGHT          UI_FRONTEND_BUTTON_HEIGHT
+#define ID_GFX_ROW				100
+#define ID_GFX_NAV				200
+#define ID_GFX_BACK				300
+#define ID_GFX_APPLY			301
 
-static vec4_t advancedScrimColor = UI_FRONTEND_COLOR_SCRIM;
-static vec4_t advancedAccentColor = UI_FRONTEND_COLOR_ACCENT;
-static vec4_t advancedTextColor = UI_FRONTEND_COLOR_TEXT;
-static vec4_t advancedMutedColor = UI_FRONTEND_COLOR_MUTED;
-static vec4_t advancedBorderColor = UI_FRONTEND_COLOR_BORDER;
-static vec4_t advancedFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
-
-static const char *enabled_items[] = {
-	"Off", "On", NULL
-};
-
-static const char *preset_items[] = {
-	"Custom", "Low", "Middle", "High", "Ultra", NULL
-};
-
-static const char *shadow_quality_items[] = {
-	"Low", "Medium", "High", NULL
-};
-
-static const char *shadow_cascade_near_items[] = {
-	"4", "8", "16", NULL
-};
-
-static const char *shadow_cascade_far_items[] = {
-	"512", "1024", "2048", NULL
-};
-
-static const char *shadow_cascade_bias_items[] = {
-	"0.0", "0.25", "0.5", "1.0", NULL
-};
-
-static const char *pshadow_dist_items[] = {
-	"64", "128", "256", NULL
-};
-
-static const char *sunlight_mode_items[] = {
-	"Off", "Mode 1", "Mode 2", NULL
-};
+static vec4_t gfxPageScrimColor = UI_FRONTEND_COLOR_SCRIM;
+static vec4_t gfxPageAccentColor = UI_FRONTEND_COLOR_ACCENT;
+static vec4_t gfxPageTextColor = UI_FRONTEND_COLOR_TEXT;
+static vec4_t gfxPageMutedColor = UI_FRONTEND_COLOR_MUTED;
+static vec4_t gfxPageBorderColor = UI_FRONTEND_COLOR_BORDER;
+static vec4_t gfxPageFocusColor = UI_FRONTEND_COLOR_FOCUS_BG;
 
 typedef struct {
-	menuframework_s menu;
+	menuframework_s		menu;		// first, menu items point back to it
+	const gfxPageDef_t	*def;
+	menulist_s			rows[GFX_MAX_ROWS];
+	menutext_s			nav[4];		// gfxNav
+	menutext_s			back;
+	menutext_s			apply;
+} gfxPage_t;
 
-	menutext_s      banner;
-	menutext_s      graphics;
-	menutext_s      advanced_graphics;
-	menutext_s      display;
-	menutext_s      sound;
-	menutext_s      network;
+static void UI_GfxEffects_Open( void );
+static void UI_GfxLighting_Open( void );
 
-	menulist_s      preset;
-	menulist_s      hdr;
-	menulist_s      postprocess;
-	menulist_s      tonemap;
-	menulist_s      autoexposure;
-	menulist_s      ssao;
-	menulist_s      sunrays;
-	menulist_s      dynamic_reflections;
-	menulist_s      sunshadows;
-	menulist_s      shadowquality;
-	menulist_s      shadowblur;
-	menulist_s      shadowcascade_near;
-	menulist_s      shadowcascade_far;
-	menulist_s      shadowcascade_bias;
-	menulist_s      pshadowdist;
-	menulist_s      sunlightmode;
+typedef struct {
+	const char	*label;
+	void		(*open)( void );
+	qboolean	replace;		// a sibling page: replaces the current one
+} gfxNav_t;
 
-	menutext_s      back;
-} advancedGraphicsOptionsInfo_t;
+// the sub menu, the same on every page; the first entries in page slot order
+static const gfxNav_t gfxNav[] = {
+	{ "Graphics", UI_GraphicsOptionsMenu, qtrue },
+	{ "Effects", UI_GfxEffects_Open, qtrue },
+	{ "Lighting & shadows", UI_GfxLighting_Open, qtrue },
+	{ "Driver info", UI_DriverInfoMenu, qfalse }
+};
 
-static advancedGraphicsOptionsInfo_t advancedGraphicsOptionsInfo;
+#define GFX_NUM_NAV		ARRAY_LEN( gfxNav )
 
-static void UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars( void ) {
-	static const int shadowFilterValues[] = { 0, 1, 2 };
-	static const int shadowMapSizeValues[] = { 512, 1024, 2048 };
-	static const int shadowCascadeNearValues[] = { 4, 8, 16 };
-	static const int shadowCascadeFarValues[] = { 512, 1024, 2048 };
-	static const float shadowCascadeBiasValues[] = { 0.0f, 0.25f, 0.5f, 1.0f };
-	static const int pshadowDistValues[] = { 64, 128, 256 };
-	int qualityIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowquality.curvalue );
-	int cascadeNearIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowcascade_near.curvalue );
-	int cascadeFarIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.shadowcascade_far.curvalue );
-	int cascadeBiasIndex = Com_Clamp( 0, 3, advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue );
-	int pshadowDistIndex = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.pshadowdist.curvalue );
-	int sunlightMode = Com_Clamp( 0, 2, advancedGraphicsOptionsInfo.sunlightmode.curvalue );
+static gfxPage_t	gfxPages[GFX_MAX_PAGES];
+static qboolean		gfxRestart;		// a changed cvar needs vid_restart
 
-	trap_Cvar_SetValue( "r_sunShadows", advancedGraphicsOptionsInfo.sunshadows.curvalue );
-	trap_Cvar_SetValue( "r_shadowFilter", shadowFilterValues[qualityIndex] );
-	trap_Cvar_SetValue( "r_shadowMapSize", shadowMapSizeValues[qualityIndex] );
-	trap_Cvar_SetValue( "r_shadowBlur", advancedGraphicsOptionsInfo.shadowblur.curvalue != 0 );
-	trap_Cvar_SetValue( "r_shadowCascadeZNear", shadowCascadeNearValues[cascadeNearIndex] );
-	trap_Cvar_SetValue( "r_shadowCascadeZFar", shadowCascadeFarValues[cascadeFarIndex] );
-	trap_Cvar_SetValue( "r_shadowCascadeZBias", shadowCascadeBiasValues[cascadeBiasIndex] );
-	trap_Cvar_SetValue( "r_pshadowDist", pshadowDistValues[pshadowDistIndex] );
-	trap_Cvar_SetValue( "r_sunlightMode", sunlightMode );
+static qboolean Gfx_RendererIsGL2( void ) {
+	char buf[32];
+
+	// the renderer that runs, not the one chosen for the next restart
+	trap_Cvar_VariableStringBuffer( "cl_renderer", buf, sizeof( buf ) );
+	return !Q_stricmp( buf, "opengl2" );
 }
 
-static void UI_AdvancedGraphicsOptionsMenu_SyncPreset( void ) {
-	if (advancedGraphicsOptionsInfo.hdr.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.postprocess.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.tonemap.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.autoexposure.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunshadows.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowquality.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 0) {
-		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_LOW;
-		return;
-	}
+/*
+=======================================================================
 
-	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.ssao.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunshadows.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowquality.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 0) {
-		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_MIDDLE;
-		return;
-	}
+PRESET
 
-	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.sunrays.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.sunshadows.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowquality.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowblur.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 0 &&
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 1) {
-		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_HIGH;
-		return;
-	}
+=======================================================================
+*/
 
-	if (advancedGraphicsOptionsInfo.hdr.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.postprocess.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.tonemap.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.autoexposure.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.ssao.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.sunrays.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.sunshadows.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowquality.curvalue == 2 &&
-		advancedGraphicsOptionsInfo.shadowblur.curvalue == 1 &&
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue == 2 &&
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue == 2 &&
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue == 2 &&
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue == 2 &&
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue == 2) {
-		advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_ULTRA;
-		return;
-	}
+typedef struct {
+	const char	*cvar;
+	const char	*value[GFX_NUM_PRESETS];	// low, medium, high, ultra
+} gfxPresetCvar_t;
 
-	advancedGraphicsOptionsInfo.preset.curvalue = ADV_PRESET_CUSTOM;
-}
+static const gfxPresetCvar_t gfxPresetTable[] = {
+	// textures and geometry
+	{ "r_picmip",							{ "1", "0", "0", "0" } },
+	{ "r_textureMode",						{ "GL_LINEAR_MIPMAP_LINEAR", "GL_LINEAR_MIPMAP_LINEAR", "GL_LINEAR_MIPMAP_LINEAR", "GL_LINEAR_MIPMAP_LINEAR" } },
+	{ "r_ext_texture_filter_anisotropic",	{ "0", "1", "1", "1" } },
+	{ "r_ext_max_anisotropy",				{ "1", "4", "8", "16" } },
+	{ "r_lodBias",							{ "1", "0", "0", "0" } },
+	{ "r_subdivisions",						{ "12", "4", "4", "4" } },
+	// anti-aliasing
+	{ "r_fxaa",								{ "1", "1", "1", "1" } },
+	// tone mapping and post-processing
+	{ "r_hdr",								{ "0", "1", "1", "1" } },
+	{ "r_postProcess",						{ "1", "1", "1", "1" } },
+	{ "r_toneMap",							{ "0", "1", "1", "1" } },
+	{ "r_autoExposure",						{ "0", "1", "1", "1" } },
+	{ "r_toneMapCurve",						{ "1", "1", "1", "1" } },
+	{ "r_colorGrade",						{ "1", "1", "1", "1" } },
+	{ "r_bloom",							{ "0", "1", "1", "1" } },
+	{ "r_motionBlur",						{ "0", "0.5", "0.5", "0.5" } },
+	{ "r_drawSunRays",						{ "0", "0", "0", "0" } },
+	// effects
+	{ "r_carReflections",					{ "0", "1", "1", "2" } },
+	{ "r_carReflectionSize",				{ "128", "256", "256", "512" } },
+	{ "r_water",							{ "0", "1", "1", "1" } },
+	{ "r_wetGround",						{ "0", "1", "1", "2" } },
+	{ "r_softParticles",					{ "0", "24", "24", "24" } },
+	{ "r_ssao",								{ "0", "0", "1", "2" } },
+	{ "r_haze",								{ "0", "1", "1", "1" } },
+	{ "r_genNormalMaps",					{ "0", "0", "1", "1" } },
+	{ "r_marksOnTriangleMeshes",			{ "1", "1", "1", "1" } },
+	// lighting and shadows
+	{ "r_sunlightMode",						{ "0", "1", "1", "1" } },
+	{ "r_sunShadows",						{ "0", "1", "1", "1" } },
+	{ "r_shadowMapSize",					{ "512", "1024", "1024", "2048" } },
+	{ "r_shadowFilter",						{ "0", "1", "1", "2" } },
+	{ "r_lampShadows",						{ "0", "1", "2", "4" } },
+	{ "r_lampShadowMapSize",				{ "256", "512", "512", "1024" } },
+	{ "r_headlights",						{ "1", "1", "1", "1" } },
+	{ "r_headlightShadows",					{ "0", "1", "2", "2" } },
+	{ "r_headlightShadowMapSize",			{ "512", "1024", "1024", "2048" } },
+	{ "r_dynamiclight",						{ "1", "1", "1", "1" } }
+};
 
-static void UI_AdvancedGraphicsOptionsMenu_ApplyPreset( int preset ) {
-	switch (preset) {
-	case ADV_PRESET_LOW:
-		advancedGraphicsOptionsInfo.hdr.curvalue = 0;
-		advancedGraphicsOptionsInfo.postprocess.curvalue = 0;
-		advancedGraphicsOptionsInfo.tonemap.curvalue = 0;
-		advancedGraphicsOptionsInfo.autoexposure.curvalue = 0;
-		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunshadows.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 0;
-		break;
-	case ADV_PRESET_MIDDLE:
-		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
-		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
-		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
-		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
-		advancedGraphicsOptionsInfo.ssao.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunshadows.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 0;
-		break;
-	case ADV_PRESET_HIGH:
-		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
-		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
-		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
-		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
-		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
-		advancedGraphicsOptionsInfo.sunrays.curvalue = 0;
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 0;
-		advancedGraphicsOptionsInfo.sunshadows.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowquality.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowblur.curvalue = 0;
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 1;
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 1;
-		break;
-	case ADV_PRESET_ULTRA:
-		advancedGraphicsOptionsInfo.hdr.curvalue = 1;
-		advancedGraphicsOptionsInfo.postprocess.curvalue = 1;
-		advancedGraphicsOptionsInfo.tonemap.curvalue = 1;
-		advancedGraphicsOptionsInfo.autoexposure.curvalue = 1;
-		advancedGraphicsOptionsInfo.ssao.curvalue = 1;
-		advancedGraphicsOptionsInfo.sunrays.curvalue = 1;
-		advancedGraphicsOptionsInfo.dynamic_reflections.curvalue = 1;
-		advancedGraphicsOptionsInfo.sunshadows.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowquality.curvalue = 2;
-		advancedGraphicsOptionsInfo.shadowblur.curvalue = 1;
-		advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 2;
-		advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 2;
-		advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 2;
-		advancedGraphicsOptionsInfo.pshadowdist.curvalue = 2;
-		advancedGraphicsOptionsInfo.sunlightmode.curvalue = 2;
-		break;
-	default:
-		return;
-	}
+// multisampling per preset; see UI_GfxMsaa_Set
+static const int gfxPresetMsaa[GFX_NUM_PRESETS] = { 0, 0, 2, 4 };
 
-	trap_Cvar_SetValue( "r_hdr", advancedGraphicsOptionsInfo.hdr.curvalue );
-	trap_Cvar_SetValue( "r_postProcess", advancedGraphicsOptionsInfo.postprocess.curvalue );
-	trap_Cvar_SetValue( "r_toneMap", advancedGraphicsOptionsInfo.tonemap.curvalue );
-	trap_Cvar_SetValue( "r_autoExposure", advancedGraphicsOptionsInfo.autoexposure.curvalue );
-	trap_Cvar_SetValue( "r_ssao", advancedGraphicsOptionsInfo.ssao.curvalue );
-	trap_Cvar_SetValue( "r_drawSunRays", advancedGraphicsOptionsInfo.sunrays.curvalue );
-	trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
-	UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
-}
+const char *gfx_preset_names[] = {
+	"Low", "Medium", "High", "Ultra", NULL
+};
 
-static void UI_AdvancedGraphicsOptionsMenu_Event( void* ptr, int event ) {
-	if( event != QM_ACTIVATED ) {
-		return;
-	}
+/*
+=================
+Pending cvar values
 
-	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_PRESET:
-		UI_AdvancedGraphicsOptionsMenu_ApplyPreset( advancedGraphicsOptionsInfo.preset.curvalue );
-		break;
+A latched cvar (r_picmip, r_mode, ...) keeps reporting its old value until
+the renderer restarts. The pages remember what they set, so they show the
+new choice right away. The list is lost with the UI on vid_restart, when
+the cvars hold the new values anyway.
+=================
+*/
+#define GFX_MAX_PENDING		96
 
-	case ID_HDR:
-		trap_Cvar_SetValue( "r_hdr", advancedGraphicsOptionsInfo.hdr.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
+typedef struct {
+	char	name[32];
+	char	value[64];
+} gfxPending_t;
 
-	case ID_POSTPROCESS:
-		trap_Cvar_SetValue( "r_postProcess", advancedGraphicsOptionsInfo.postprocess.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
+static gfxPending_t	gfxPending[GFX_MAX_PENDING];
+static int			gfxNumPending;
 
-	case ID_TONEMAP:
-		trap_Cvar_SetValue( "r_toneMap", advancedGraphicsOptionsInfo.tonemap.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_AUTOEXPOSURE:
-		trap_Cvar_SetValue( "r_autoExposure", advancedGraphicsOptionsInfo.autoexposure.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_SSAO:
-		trap_Cvar_SetValue( "r_ssao", advancedGraphicsOptionsInfo.ssao.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_SUNRAYS:
-		trap_Cvar_SetValue( "r_drawSunRays", advancedGraphicsOptionsInfo.sunrays.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_DYNAMIC_REFLECTIONS:
-		trap_Cvar_SetValue( "r_dynamicReflections", advancedGraphicsOptionsInfo.dynamic_reflections.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_SUNSHADOWS:
-		trap_Cvar_SetValue( "r_sunShadows", advancedGraphicsOptionsInfo.sunshadows.curvalue );
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_SHADOWQUALITY:
-		UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_SHADOWBLUR:
-	case ID_SHADOWCASCADE_NEAR:
-	case ID_SHADOWCASCADE_FAR:
-	case ID_SHADOWCASCADE_BIAS:
-	case ID_PSHADOWDIST:
-	case ID_SUNLIGHTMODE:
-		UI_AdvancedGraphicsOptionsMenu_ApplyShadowCvars();
-		UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-		break;
-
-	case ID_BACK:
-		UI_PopMenu();
-		break;
-	}
-}
-
-static const char *AdvancedGraphics_ListValue( menulist_s *item ) {
+void UI_GfxGetCvar( const char *name, char *buf, int size ) {
 	int i;
 
-	if ( !item->itemnames || item->curvalue < 0 ) {
-		return "-";
+	for ( i = 0; i < gfxNumPending; i++ ) {
+		if ( !Q_stricmp( gfxPending[i].name, name ) ) {
+			Q_strncpyz( buf, gfxPending[i].value, size );
+			return;
+		}
+	}
+	trap_Cvar_VariableStringBuffer( name, buf, size );
+}
+
+float UI_GfxCvarValue( const char *name ) {
+	char buf[64];
+
+	UI_GfxGetCvar( name, buf, sizeof( buf ) );
+	return atof( buf );
+}
+
+void UI_GfxSetCvar( const char *name, const char *value ) {
+	int i;
+
+	trap_Cvar_Set( name, value );
+
+	for ( i = 0; i < gfxNumPending; i++ ) {
+		if ( !Q_stricmp( gfxPending[i].name, name ) ) {
+			break;
+		}
+	}
+	if ( i == gfxNumPending ) {
+		if ( gfxNumPending == GFX_MAX_PENDING ) {
+			return;
+		}
+		gfxNumPending++;
+	}
+	Q_strncpyz( gfxPending[i].name, name, sizeof( gfxPending[i].name ) );
+	Q_strncpyz( gfxPending[i].value, value, sizeof( gfxPending[i].value ) );
+}
+
+void UI_GfxSetCvarValue( const char *name, float value ) {
+	char buf[32];
+
+	if ( value == (int)value ) {
+		Com_sprintf( buf, sizeof( buf ), "%i", (int)value );
+	} else {
+		Com_sprintf( buf, sizeof( buf ), "%g", value );
+	}
+	UI_GfxSetCvar( name, buf );
+}
+
+static qboolean Gfx_CvarIs( const char *cvar, const char *value ) {
+	char current[MAX_CVAR_VALUE_STRING];
+	char *end1, *end2;
+	double a, b;
+
+	UI_GfxGetCvar( cvar, current, sizeof( current ) );
+
+	// numbers compare as numbers ("1" == "1.0")
+	a = strtod( current, &end1 );
+	b = strtod( value, &end2 );
+	if ( current[0] && value[0] && *end1 == '\0' && *end2 == '\0' ) {
+		return fabs( a - b ) < 0.0001;
 	}
 
-	for ( i = 0; item->itemnames[i]; i++ ) {
-		if ( i == item->curvalue ) {
-			return item->itemnames[i];
+	return Q_stricmp( current, value ) == 0;
+}
+
+/*
+=================
+UI_GfxMsaa_Read / UI_GfxMsaa_Set
+
+OpenGL 2 renders into a framebuffer object and multisamples that
+(r_ext_framebuffer_multisample); a multisampled window would only cost
+memory. OpenGL 1 can only multisample the window (r_ext_multisample).
+=================
+*/
+int UI_GfxMsaa_Read( void ) {
+	if ( Gfx_RendererIsGL2() ) {
+		return (int)UI_GfxCvarValue( "r_ext_framebuffer_multisample" );
+	}
+	return (int)UI_GfxCvarValue( "r_ext_multisample" );
+}
+
+void UI_GfxMsaa_Set( int samples ) {
+	if ( Gfx_RendererIsGL2() ) {
+		UI_GfxSetCvarValue( "r_ext_framebuffer_multisample", samples );
+		UI_GfxSetCvarValue( "r_ext_multisample", 0 );
+	} else {
+		UI_GfxSetCvarValue( "r_ext_multisample", samples );
+	}
+}
+
+int UI_GfxPreset_Detect( void ) {
+	int level, i;
+	int msaa = UI_GfxMsaa_Read();
+
+	for ( level = 0; level < GFX_NUM_PRESETS; level++ ) {
+		if ( msaa != gfxPresetMsaa[level] ) {
+			continue;
+		}
+		for ( i = 0; i < ARRAY_LEN( gfxPresetTable ); i++ ) {
+			if ( !Gfx_CvarIs( gfxPresetTable[i].cvar, gfxPresetTable[i].value[level] ) ) {
+				break;
+			}
+		}
+		if ( i == ARRAY_LEN( gfxPresetTable ) ) {
+			return level;
 		}
 	}
 
-	return "-";
+	return GFX_NUM_PRESETS;		// custom
 }
 
-static void AdvancedGraphics_DrawNavItem( void *self ) {
-	menutext_s *text;
-	menucommon_s *item;
-	qboolean focus;
-	qboolean active;
+void UI_GfxPreset_Apply( int level ) {
+	int i;
 
-	text = (menutext_s *)self;
-	item = &text->generic;
-	focus = ( Menu_ItemAtCursor( item->parent ) == item );
-	active = ( item->id == ID_ADVANCED_GRAPHICS );
-	Frontend_DrawNavButton( item->left, item->top,
-		item->right - item->left, item->bottom - item->top,
-		text->string, 1.0f, active || focus, UI_LEFT );
+	if ( level < 0 || level >= GFX_NUM_PRESETS ) {
+		return;
+	}
+
+	for ( i = 0; i < ARRAY_LEN( gfxPresetTable ); i++ ) {
+		if ( !Gfx_CvarIs( gfxPresetTable[i].cvar, gfxPresetTable[i].value[level] ) ) {
+			UI_GfxSetCvar( gfxPresetTable[i].cvar, gfxPresetTable[i].value[level] );
+		}
+	}
+	UI_GfxMsaa_Set( gfxPresetMsaa[level] );
+	gfxRestart = qtrue;
 }
 
-static void AdvancedGraphics_DrawSetting( void *self ) {
-	menucommon_s *item;
-	const char *value;
-	qboolean disabled;
-	qboolean focus;
-	qboolean hovered;
-	qboolean highlighted;
-	vec4_t fillColor;
-	vec4_t lineColor;
-	vec4_t labelColor;
-	vec4_t valueColor;
+void UI_GfxMarkRestart( void ) {
+	gfxRestart = qtrue;
+}
 
-	item = (menucommon_s *)self;
+/*
+=======================================================================
+
+ROWS
+
+=======================================================================
+*/
+
+// calls func for each "cvar=value" of a choice; stops when it returns qfalse
+static qboolean Gfx_ForEachSet( const char *sets, qboolean (*func)( const char *cvar, const char *value ) ) {
+	char buf[512], *s, *next, *eq;
+
+	Q_strncpyz( buf, sets, sizeof( buf ) );
+	for ( s = buf; s && *s; s = next ) {
+		next = strchr( s, ';' );
+		if ( next ) {
+			*next++ = '\0';
+		}
+		eq = strchr( s, '=' );
+		if ( !eq ) {
+			continue;
+		}
+		*eq = '\0';
+		if ( !func( s, eq + 1 ) ) {
+			return qfalse;
+		}
+	}
+	return qtrue;
+}
+
+static qboolean Gfx_SetCvar( const char *cvar, const char *value ) {
+	UI_GfxSetCvar( cvar, value );
+	return qtrue;
+}
+
+static int Gfx_ReadRow( const gfxRow_t *row ) {
+	int i;
+
+	if ( row->read ) {
+		return row->read();
+	}
+	for ( i = 0; row->names[i]; i++ ) {
+		if ( row->sets && row->sets[i] && Gfx_ForEachSet( row->sets[i], Gfx_CvarIs ) ) {
+			return i;
+		}
+	}
+	return -1;		// custom
+}
+
+static void Gfx_RefreshPage( gfxPage_t *page ) {
+	int i;
+	qboolean gl2 = Gfx_RendererIsGL2();
+
+	for ( i = 0; i < page->def->numRows; i++ ) {
+		const gfxRow_t *row = &page->def->rows[i];
+
+		page->rows[i].curvalue = Gfx_ReadRow( row );
+		if ( ( row->flags & GFXROW_GL2 ) && !gl2 ) {
+			page->rows[i].generic.flags |= QMF_GRAYED;
+		} else {
+			page->rows[i].generic.flags &= ~QMF_GRAYED;
+		}
+	}
+}
+
+static void Gfx_Event( void *ptr, int event ) {
+	menucommon_s *item = (menucommon_s *)ptr;
+	gfxPage_t *page = (gfxPage_t *)item->parent;
+	int id = item->id;
+
+	if ( event != QM_ACTIVATED ) {
+		return;
+	}
+
+	if ( id >= ID_GFX_ROW && id < ID_GFX_ROW + page->def->numRows ) {
+		const gfxRow_t *row = &page->def->rows[id - ID_GFX_ROW];
+		int choice = page->rows[id - ID_GFX_ROW].curvalue;
+
+		if ( choice == Gfx_ReadRow( row ) ) {
+			return;		// activated without a change (Enter)
+		}
+		if ( choice < 0 ) {
+			choice = 0;
+		}
+		if ( row->apply ) {
+			row->apply( choice );
+		} else if ( row->sets && row->sets[choice] ) {
+			Gfx_ForEachSet( row->sets[choice], Gfx_SetCvar );
+		}
+		if ( row->flags & GFXROW_RESTART ) {
+			gfxRestart = qtrue;
+		}
+		Gfx_RefreshPage( page );
+		return;
+	}
+
+	if ( id >= ID_GFX_NAV && id < ID_GFX_NAV + GFX_NUM_NAV ) {
+		int index = id - ID_GFX_NAV;
+
+		if ( index == page->def->slot ) {
+			return;		// already here
+		}
+		if ( gfxNav[index].replace && uis.menusp > 0 ) {
+			// the pages replace each other, so Back always leaves the graphics
+			// settings; take this page off the stack without UI_PopMenu, which
+			// would play the back sound or close the UI
+			uis.menusp--;
+		}
+		gfxNav[index].open();
+		return;
+	}
+
+	if ( id == ID_GFX_BACK ) {
+		UI_PopMenu();
+		return;
+	}
+
+	if ( id == ID_GFX_APPLY ) {
+		// a video restart reloads the UI; come back to the config hub
+		trap_Cmd_ExecuteText( EXEC_APPEND, "set q3r_ui_return_config 1\nvid_restart\n" );
+	}
+}
+
+/*
+=======================================================================
+
+DRAWING
+
+=======================================================================
+*/
+
+static void Gfx_DrawSetting( void *self ) {
+	menulist_s *list = (menulist_s *)self;
+	menucommon_s *item = &list->generic;
+	const char *value = "Custom";
+	qboolean disabled, highlighted;
+	vec4_t fillColor, lineColor, labelColor, valueColor;
+	int i;
+
+	for ( i = 0; list->itemnames && list->curvalue >= 0 && list->itemnames[i]; i++ ) {
+		if ( i == list->curvalue ) {
+			value = list->itemnames[i];
+			break;
+		}
+	}
+
 	disabled = ( item->flags & ( QMF_GRAYED | QMF_INACTIVE ) ) ? qtrue : qfalse;
-	focus = ( !disabled && Menu_ItemAtCursor( item->parent ) == item ) ? qtrue : qfalse;
-	hovered = ( !disabled && uis.cursorx >= item->left &&
-		uis.cursorx <= item->right && uis.cursory >= item->top &&
-		uis.cursory <= item->bottom ) ? qtrue : qfalse;
-	highlighted = ( focus || hovered ) ? qtrue : qfalse;
-	value = AdvancedGraphics_ListValue( (menulist_s *)item );
+	highlighted = !disabled && ( Menu_ItemAtCursor( item->parent ) == item
+		|| ( uis.cursorx >= item->left && uis.cursorx <= item->right
+		&& uis.cursory >= item->top && uis.cursory <= item->bottom ) );
 
-	Vector4Copy( advancedFocusColor, fillColor );
-	fillColor[3] = highlighted ? 0.72f : 0.0f;
-	Vector4Copy( advancedBorderColor, lineColor );
+	Vector4Copy( gfxPageFocusColor, fillColor );
+	fillColor[3] = 0.72f;
+	Vector4Copy( gfxPageBorderColor, lineColor );
 	lineColor[3] = 0.55f;
 	if ( highlighted ) {
-		UI_FillRect( item->left, item->top,
-			item->right - item->left, item->bottom - item->top, fillColor );
-		Vector4Copy( advancedAccentColor, lineColor );
+		UI_FillRect( item->left, item->top, item->right - item->left, item->bottom - item->top, fillColor );
+		Vector4Copy( gfxPageAccentColor, lineColor );
 	}
-	UI_FillRect( item->left, item->bottom - 1,
-		item->right - item->left, 1, lineColor );
+	UI_FillRect( item->left, item->bottom - 1, item->right - item->left, 1, lineColor );
 
 	if ( disabled ) {
-		Vector4Copy( advancedMutedColor, labelColor );
-		labelColor[3] = 0.65f;
+		Vector4Copy( gfxPageMutedColor, labelColor );
+		labelColor[3] = 0.45f;
 		Vector4Copy( labelColor, valueColor );
 	} else if ( highlighted ) {
-		Vector4Copy( advancedAccentColor, labelColor );
-		Vector4Copy( advancedTextColor, valueColor );
+		Vector4Copy( gfxPageAccentColor, labelColor );
+		Vector4Copy( gfxPageTextColor, valueColor );
 	} else {
-		Vector4Copy( advancedMutedColor, labelColor );
-		Vector4Copy( advancedTextColor, valueColor );
+		Vector4Copy( gfxPageMutedColor, labelColor );
+		Vector4Copy( gfxPageTextColor, valueColor );
 	}
 
 	Frontend_DrawText( item->left + UI_FRONTEND_SPACE_SM,
 		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
 		item->name, UI_LEFT | UI_SMALLFONT, labelColor );
-	Frontend_DrawText( item->left + ADV_VALUE_OFFSET,
+	Frontend_DrawText( item->left + GFX_VALUE_OFFSET,
 		item->top + ( item->bottom - item->top - SMALLCHAR_HEIGHT ) / 2,
 		value, UI_LEFT | UI_SMALLFONT, valueColor );
 }
 
-static void AdvancedGraphics_DrawAction( void *self ) {
-	menutext_s *text;
-	menucommon_s *item;
-	qboolean focus;
+static void Gfx_DrawNav( void *self ) {
+	menutext_s *text = (menutext_s *)self;
+	menucommon_s *item = &text->generic;
+	gfxPage_t *page = (gfxPage_t *)item->parent;
+	qboolean active = ( item->id - ID_GFX_NAV == page->def->slot );
 
-	text = (menutext_s *)self;
-	item = &text->generic;
-	focus = ( Menu_ItemAtCursor( item->parent ) == item );
-	Frontend_DrawButton( item->left, item->top,
-		item->right - item->left, item->bottom - item->top,
-		text->string, 1.0f, focus, UI_CENTER );
+	Frontend_DrawNavButton( item->left, item->top, item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, active || Menu_ItemAtCursor( item->parent ) == item, UI_LEFT );
 }
 
-static void AdvancedGraphics_SetBounds( menucommon_s *item, int id,
-	int x, int y, int width, int height, const char *label ) {
+static void Gfx_DrawAction( void *self ) {
+	menutext_s *text = (menutext_s *)self;
+	menucommon_s *item = &text->generic;
+
+	Frontend_DrawButton( item->left, item->top, item->right - item->left, item->bottom - item->top,
+		text->string, 1.0f, Menu_ItemAtCursor( item->parent ) == item, UI_CENTER );
+}
+
+static gfxPage_t *Gfx_CurrentPage( void ) {
+	int i;
+
+	for ( i = 0; i < GFX_MAX_PAGES; i++ ) {
+		if ( uis.activemenu == &gfxPages[i].menu ) {
+			return &gfxPages[i];
+		}
+	}
+	return NULL;
+}
+
+static void Gfx_MenuDraw( void ) {
+	gfxPage_t *page = Gfx_CurrentPage();
+	const gfxPageDef_t *def;
+	const char *hint;
+
+	if ( !page ) {
+		return;
+	}
+	def = page->def;
+
+	// rows follow the cvars, also after changes made on another page
+	Gfx_RefreshPage( page );
+
+	// the Apply button only when something needs the renderer restarted
+	if ( gfxRestart ) {
+		page->apply.generic.flags &= ~( QMF_HIDDEN | QMF_INACTIVE );
+	} else {
+		page->apply.generic.flags |= QMF_HIDDEN | QMF_INACTIVE;
+	}
+
+	Frontend_DrawBackground( gfxPageScrimColor );
+	Frontend_DrawPanel( GFX_FRAME_X, GFX_FRAME_Y, GFX_FRAME_WIDTH, GFX_FRAME_HEIGHT, 1.0f, UI_FRONTEND_STYLE_FRAME );
+	Frontend_DrawText( GFX_FRAME_X + 24, GFX_FRAME_Y + 24, def->title, UI_LEFT | UI_BIGFONT, gfxPageTextColor );
+	Frontend_DrawText( GFX_FRAME_X + 24, GFX_FRAME_Y + 48, def->subtitle, UI_LEFT | UI_SMALLFONT, gfxPageMutedColor );
+	Frontend_DrawStatusChip( GFX_FRAME_X + GFX_FRAME_WIDTH - 104, GFX_FRAME_Y + 26, "Settings", gfxPageAccentColor, 1.0f );
+
+	Frontend_DrawCard( GFX_NAV_X, GFX_NAV_Y, GFX_NAV_WIDTH, GFX_NAV_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawCard( GFX_DETAIL_X, GFX_DETAIL_Y, GFX_DETAIL_WIDTH, GFX_DETAIL_HEIGHT, 1.0f, qfalse );
+	Frontend_DrawText( GFX_NAV_X + 16, GFX_NAV_Y + 22, "Submenu", UI_LEFT | UI_SMALLFONT, gfxPageMutedColor );
+	Frontend_DrawText( GFX_DETAIL_X + 16, GFX_DETAIL_Y + 22, def->section, UI_LEFT | UI_SMALLFONT, gfxPageMutedColor );
+
+	Menu_Draw( &page->menu );
+
+	if ( gfxRestart ) {
+		hint = "Apply restarts the renderer for the changed settings";
+	} else if ( def->gl2Only && !Gfx_RendererIsGL2() ) {
+		hint = "These settings need the OpenGL 2 renderer";
+	} else {
+		hint = "Select an option   Left / right adjust   Esc back";
+	}
+	Frontend_DrawText( GFX_FRAME_X + 24, GFX_FRAME_Y + 384, hint, UI_LEFT | UI_SMALLFONT,
+		gfxRestart ? gfxPageAccentColor : gfxPageMutedColor );
+}
+
+static sfxHandle_t Gfx_MenuKey( int key ) {
+	gfxPage_t *page = Gfx_CurrentPage();
+
+	if ( key == K_MOUSE2 || key == K_ESCAPE ) {
+		UI_PopMenu();
+		return menu_out_sound;
+	}
+	if ( !page ) {
+		return 0;
+	}
+	return Menu_DefaultKey( &page->menu, key );
+}
+
+static void Gfx_SetBounds( menucommon_s *item, int id, int x, int y, int width, int height ) {
 	item->id = id;
 	item->x = x;
 	item->y = y;
@@ -521,450 +608,220 @@ static void AdvancedGraphics_SetBounds( menucommon_s *item, int id,
 	item->top = y;
 	item->right = x + width;
 	item->bottom = y + height;
-	if ( label ) {
-		item->name = (char *)label;
+}
+
+/*
+=================
+UI_GfxPage_Push
+
+Builds a page from its table and opens it.
+=================
+*/
+void UI_GfxPage_Push( const gfxPageDef_t *def ) {
+	gfxPage_t *page;
+	int i, column, index;
+
+	if ( def->slot < 0 || def->slot >= GFX_MAX_PAGES ) {
+		return;
+	}
+	page = &gfxPages[def->slot];
+
+	memset( page, 0, sizeof( *page ) );
+	page->def = def;
+	page->menu.wrapAround = qtrue;
+	page->menu.fullscreen = qtrue;
+	page->menu.draw = Gfx_MenuDraw;
+	page->menu.key = Gfx_MenuKey;
+
+	// the same sub menu on every page, the current page highlighted
+	for ( i = 0; i < GFX_NUM_NAV; i++ ) {
+		menutext_s *nav = &page->nav[i];
+
+		nav->generic.type = MTYPE_PTEXT;
+		nav->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+		nav->generic.callback = Gfx_Event;
+		nav->string = (char *)gfxNav[i].label;
+		nav->style = UI_LEFT | UI_SMALLFONT;
+		nav->color = text_color_normal;
+		Menu_AddItem( &page->menu, nav );
+		nav->generic.ownerdraw = Gfx_DrawNav;
+		Gfx_SetBounds( &nav->generic, ID_GFX_NAV + i, GFX_NAV_X + 16,
+			GFX_NAV_Y + 48 + i * 32 + ( gfxNav[i].replace ? 0 : 16 ), GFX_NAV_WIDTH - 32, GFX_ROW_HEIGHT );
+	}
+
+	for ( i = 0; i < def->numRows && i < GFX_MAX_ROWS; i++ ) {
+		menulist_s *list = &page->rows[i];
+
+		list->generic.type = MTYPE_SPINCONTROL;
+		list->generic.name = (char *)def->rows[i].label;
+		list->generic.flags = QMF_PULSEIFFOCUS | QMF_SMALLFONT;
+		list->generic.callback = Gfx_Event;
+		list->itemnames = def->rows[i].names;
+		Menu_AddItem( &page->menu, list );
+
+		column = ( i < def->leftRows ) ? 0 : 1;
+		index = column ? i - def->leftRows : i;
+		list->generic.ownerdraw = Gfx_DrawSetting;
+		Gfx_SetBounds( &list->generic, ID_GFX_ROW + i,
+			column ? GFX_COLUMN_RIGHT_X : GFX_COLUMN_LEFT_X,
+			GFX_ROW_START_Y + index * ( GFX_ROW_HEIGHT + GFX_ROW_GAP ), GFX_COLUMN_WIDTH, GFX_ROW_HEIGHT );
+		list->generic.name = (char *)def->rows[i].label;
+	}
+
+	page->back.generic.type = MTYPE_PTEXT;
+	page->back.generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	page->back.generic.callback = Gfx_Event;
+	page->back.string = "Back";
+	page->back.style = UI_LEFT | UI_SMALLFONT;
+	page->back.color = text_color_normal;
+	Menu_AddItem( &page->menu, &page->back );
+	page->back.generic.ownerdraw = Gfx_DrawAction;
+	Gfx_SetBounds( &page->back.generic, ID_GFX_BACK, GFX_NAV_X, GFX_ACTION_Y, GFX_ACTION_WIDTH, GFX_ACTION_HEIGHT );
+
+	page->apply.generic.type = MTYPE_PTEXT;
+	page->apply.generic.flags = QMF_RIGHT_JUSTIFY | QMF_PULSEIFFOCUS | QMF_HIDDEN | QMF_INACTIVE;
+	page->apply.generic.callback = Gfx_Event;
+	page->apply.string = "Apply";
+	page->apply.style = UI_RIGHT | UI_SMALLFONT;
+	page->apply.color = text_color_normal;
+	Menu_AddItem( &page->menu, &page->apply );
+	page->apply.generic.ownerdraw = Gfx_DrawAction;
+	Gfx_SetBounds( &page->apply.generic, ID_GFX_APPLY,
+		GFX_FRAME_X + GFX_FRAME_WIDTH - GFX_ACTION_WIDTH, GFX_ACTION_Y, GFX_ACTION_WIDTH, GFX_ACTION_HEIGHT );
+
+	Gfx_RefreshPage( page );
+
+	uis.transitionIn = 0;
+	UI_PushMenu( &page->menu );
+	if ( def->numRows > 0 ) {
+		Menu_SetCursorToItem( &page->menu, &page->rows[0] );
 	}
 }
 
-static void AdvancedGraphics_SetNavBounds( menutext_s *item, int id,
-	const char *label, int y ) {
-	item->generic.flags = QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
-	item->generic.callback = UI_AdvancedGraphicsOptionsMenu_Event;
-	item->string = (char *)label;
-	item->style = UI_LEFT | UI_SMALLFONT;
-	item->generic.ownerdraw = AdvancedGraphics_DrawNavItem;
-	AdvancedGraphics_SetBounds( &item->generic, id, ADV_NAV_X + 16, y,
-		ADV_NAV_WIDTH - 32, ADV_ROW_HEIGHT, NULL );
+/*
+=======================================================================
+
+EFFECTS PAGE
+
+=======================================================================
+*/
+
+static const char *gfx_onoff[] = { "Off", "On", NULL };
+static const char *gfx_onoff_fine[] = { "Off", "On", "Fine", NULL };
+
+static const char *bloom_sets[] = { "r_bloom=0", "r_bloom=1" };
+static const char *motionblur_names[] = { "Off", "Low", "Medium", "High", NULL };
+static const char *motionblur_sets[] = { "r_motionBlur=0", "r_motionBlur=0.3", "r_motionBlur=0.5", "r_motionBlur=0.8" };
+static const char *carrefl_names[] = { "Static", "Live", "Every frame", NULL };
+static const char *carrefl_sets[] = { "r_carReflections=0", "r_carReflections=1", "r_carReflections=2" };
+static const char *water_sets[] = { "r_water=0", "r_water=1" };
+static const char *wet_sets[] = { "r_wetGround=0", "r_wetGround=1", "r_wetGround=2" };
+static const char *haze_sets[] = { "r_haze=0", "r_haze=1" };
+static const char *ssao_sets[] = { "r_ssao=0", "r_ssao=1", "r_ssao=2" };
+static const char *relief_sets[] = { "r_genNormalMaps=0", "r_genNormalMaps=1" };
+static const char *smoke_names[] = { "Off", "Normal", "Thick", NULL };
+static const char *smoke_sets[] = { "cg_tireSmoke=0", "cg_tireSmoke=1", "cg_tireSmoke=2" };
+static const char *soft_sets[] = { "r_softParticles=0", "r_softParticles=24" };
+static const char *marks_names[] = { "Roads only", "Everywhere", NULL };
+static const char *marks_sets[] = { "r_marksOnTriangleMeshes=0", "r_marksOnTriangleMeshes=1" };
+static const char *look_names[] = { "Map", "Off", "Warm", "Cold", "Night", "Vivid", "Overcast", "Dusk", NULL };
+static const char *look_sets[] = {
+	"r_colorGrade=1;r_colorLut=", "r_colorGrade=0",
+	"r_colorGrade=1;r_colorLut=gfx/luts/warm", "r_colorGrade=1;r_colorLut=gfx/luts/cold",
+	"r_colorGrade=1;r_colorLut=gfx/luts/night", "r_colorGrade=1;r_colorLut=gfx/luts/vivid",
+	"r_colorGrade=1;r_colorLut=gfx/luts/overcast", "r_colorGrade=1;r_colorLut=gfx/luts/dusk"
+};
+static const char *curve_names[] = { "Filmic", "Classic", NULL };
+static const char *curve_sets[] = { "r_toneMapCurve=1", "r_toneMapCurve=0" };
+
+static const gfxRow_t gfxEffectsRows[] = {
+	{ "Bloom", gfx_onoff, bloom_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Motion blur", motionblur_names, motionblur_sets, GFXROW_GL2 },
+	{ "Reflections", carrefl_names, carrefl_sets, GFXROW_GL2 },
+	{ "Water", gfx_onoff, water_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Wet roads", gfx_onoff_fine, wet_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Haze", gfx_onoff, haze_sets, GFXROW_GL2 },
+	{ "Colour look", look_names, look_sets, GFXROW_GL2 },
+	{ "Ambient occl.", gfx_onoff_fine, ssao_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Surface relief", gfx_onoff, relief_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Tyre smoke", smoke_names, smoke_sets, 0 },
+	{ "Soft particles", gfx_onoff, soft_sets, GFXROW_GL2 },
+	{ "Skid marks", marks_names, marks_sets, 0 },
+	{ "Tone curve", curve_names, curve_sets, GFXROW_GL2 }
+};
+
+/*
+=======================================================================
+
+LIGHTING & SHADOWS PAGE
+
+=======================================================================
+*/
+
+static const char *hdr_sets[] = { "r_hdr=0;r_toneMap=0;r_autoExposure=0", "r_hdr=1;r_toneMap=1;r_autoExposure=1" };
+static const char *sun_sets[] = { "r_sunlightMode=0;r_sunShadows=0", "r_sunlightMode=1;r_sunShadows=1" };
+static const char *quality_names[] = { "Low", "Medium", "High", "Ultra", NULL };
+static const char *shadowq_sets[] = {
+	"r_shadowMapSize=512;r_shadowFilter=0", "r_shadowMapSize=1024;r_shadowFilter=1",
+	"r_shadowMapSize=2048;r_shadowFilter=1", "r_shadowMapSize=2048;r_shadowFilter=2"
+};
+static const char *lamp_names[] = { "Off", "1 lamp", "2 lamps", "4 lamps", NULL };
+static const char *lamp_sets[] = { "r_lampShadows=0", "r_lampShadows=1", "r_lampShadows=2", "r_lampShadows=4" };
+static const char *headlight_names[] = { "Simple", "Light cones", NULL };
+static const char *headlight_sets[] = { "r_headlights=0", "r_headlights=1" };
+static const char *hlshadow_names[] = { "Off", "1 car", "2 cars", NULL };
+static const char *hlshadow_sets[] = { "r_headlightShadows=0", "r_headlightShadows=1", "r_headlightShadows=2" };
+static const char *detail_names[] = { "Low", "Medium", "High", NULL };
+static const char *detail_sets[] = {
+	"r_lampShadowMapSize=256;r_headlightShadowMapSize=512",
+	"r_lampShadowMapSize=512;r_headlightShadowMapSize=1024",
+	"r_lampShadowMapSize=1024;r_headlightShadowMapSize=2048"
+};
+static const char *dlight_sets[] = { "r_dynamiclight=0", "r_dynamiclight=1" };
+
+static const gfxRow_t gfxLightingRows[] = {
+	// left: picture and sun
+	{ "HDR", gfx_onoff, hdr_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Sun shadows", gfx_onoff, sun_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Sun quality", quality_names, shadowq_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Dynamic lights", gfx_onoff, dlight_sets, 0 },
+	// right: headlights and lamps
+	{ "Headlights", headlight_names, headlight_sets, GFXROW_GL2 },
+	{ "Headlight shad.", hlshadow_names, hlshadow_sets, GFXROW_GL2 },
+	{ "Lamp shadows", lamp_names, lamp_sets, GFXROW_GL2 },
+	{ "Shadow detail", detail_names, detail_sets, GFXROW_RESTART | GFXROW_GL2 }
+};
+
+static const gfxPageDef_t gfxEffectsPage = {
+	"Effects", "Reflections, weather, particles and the look of the picture", "Effects",
+	gfxEffectsRows, ARRAY_LEN( gfxEffectsRows ), 7, 1, qtrue
+};
+
+static const gfxPageDef_t gfxLightingPage = {
+	"Lighting & shadows", "HDR, sun, lamp and headlight shadows", "Lighting & shadows",
+	gfxLightingRows, ARRAY_LEN( gfxLightingRows ), 4, 2, qtrue
+};
+
+static void UI_GfxEffects_Open( void ) {
+	UI_GfxPage_Push( &gfxEffectsPage );
 }
 
-static void AdvancedGraphics_SetSettingBounds( menucommon_s *item, int id,
-	const char *label, int x, int y ) {
-	item->ownerdraw = AdvancedGraphics_DrawSetting;
-	AdvancedGraphics_SetBounds( item, id, x, y, ADV_COLUMN_WIDTH,
-		ADV_ROW_HEIGHT, label );
+static void UI_GfxLighting_Open( void ) {
+	UI_GfxPage_Push( &gfxLightingPage );
 }
 
-static void UI_AdvancedGraphicsOptionsMenu_Draw( void ) {
-	Frontend_DrawBackground( advancedScrimColor );
-	Frontend_DrawPanel( ADV_FRAME_X, ADV_FRAME_Y,
-		ADV_FRAME_WIDTH, ADV_FRAME_HEIGHT, 1.0f,
-		UI_FRONTEND_STYLE_FRAME );
-	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 24,
-		"Advanced graphics", UI_LEFT | UI_BIGFONT, advancedTextColor );
-	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 48,
-		"Tune lighting, shadows and post-processing",
-		UI_LEFT | UI_SMALLFONT, advancedMutedColor );
-	Frontend_DrawStatusChip( ADV_FRAME_X + ADV_FRAME_WIDTH - 104,
-		ADV_FRAME_Y + 26, "Settings", advancedAccentColor, 1.0f );
-
-	Frontend_DrawCard( ADV_NAV_X, ADV_NAV_Y,
-		ADV_NAV_WIDTH, ADV_NAV_HEIGHT, 1.0f, qfalse );
-	Frontend_DrawCard( ADV_DETAIL_X, ADV_DETAIL_Y,
-		ADV_DETAIL_WIDTH, ADV_DETAIL_HEIGHT, 1.0f, qfalse );
-	Frontend_DrawText( ADV_NAV_X + 16, ADV_NAV_Y + 22,
-		"Parent", UI_LEFT | UI_SMALLFONT, advancedMutedColor );
-	Frontend_DrawText( ADV_NAV_X + 16, ADV_NAV_Y + 54,
-		"Graphics", UI_LEFT | UI_SMALLFONT, advancedTextColor );
-	Frontend_DrawText( ADV_DETAIL_X + 16, ADV_DETAIL_Y + 22,
-		"Lighting & effects", UI_LEFT | UI_SMALLFONT, advancedMutedColor );
-
-	Menu_Draw( &advancedGraphicsOptionsInfo.menu );
-
-	Frontend_DrawText( ADV_FRAME_X + 24, ADV_FRAME_Y + 384,
-		"Select an option   Left / right adjust   Esc back",
-		UI_LEFT | UI_SMALLFONT, advancedMutedColor );
+void UI_GfxEffectsMenu( void ) {
+	UI_GfxEffects_Open();
 }
 
-
-static sfxHandle_t UI_AdvancedGraphicsOptionsMenu_Key( int key ) {
-	if( key == K_MOUSE2 || key == K_ESCAPE ) {
-		UI_PopMenu();
-		return menu_out_sound;
-	}
-
-	return Menu_DefaultKey( &advancedGraphicsOptionsInfo.menu, key );
-}
-
-static void UI_AdvancedGraphicsOptionsMenu_Init( void ) {
-	int y;
-
-	memset( &advancedGraphicsOptionsInfo, 0, sizeof(advancedGraphicsOptionsInfo) );
-
-	UI_AdvancedGraphicsOptionsMenu_Cache();
-	advancedGraphicsOptionsInfo.menu.wrapAround = qtrue;
-	advancedGraphicsOptionsInfo.menu.fullscreen = qtrue;
-	advancedGraphicsOptionsInfo.menu.draw = UI_AdvancedGraphicsOptionsMenu_Draw;
-	advancedGraphicsOptionsInfo.menu.key = UI_AdvancedGraphicsOptionsMenu_Key;
-
-	advancedGraphicsOptionsInfo.banner.generic.type      = MTYPE_BTEXT;
-	advancedGraphicsOptionsInfo.banner.generic.flags     = QMF_CENTER_JUSTIFY;
-	advancedGraphicsOptionsInfo.banner.generic.x         = 320;
-	advancedGraphicsOptionsInfo.banner.generic.y         = 16;
-	advancedGraphicsOptionsInfo.banner.string            = "SYSTEM SETUP";
-	advancedGraphicsOptionsInfo.banner.color             = color_white;
-	advancedGraphicsOptionsInfo.banner.style             = UI_CENTER;
-
-	advancedGraphicsOptionsInfo.graphics.generic.type        = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.graphics.generic.flags       = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	advancedGraphicsOptionsInfo.graphics.generic.id          = ID_GRAPHICS;
-	advancedGraphicsOptionsInfo.graphics.generic.callback    = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.graphics.generic.x           = 216;
-	advancedGraphicsOptionsInfo.graphics.generic.y           = 240 - 2 * PROP_HEIGHT;
-	advancedGraphicsOptionsInfo.graphics.string              = "GRAPHICS";
-	advancedGraphicsOptionsInfo.graphics.style               = UI_RIGHT;
-	advancedGraphicsOptionsInfo.graphics.color               = text_color_normal;
-
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.type      = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.flags     = QMF_RIGHT_JUSTIFY;
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.id        = ID_ADVANCED_GRAPHICS;
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.x         = 216;
-	advancedGraphicsOptionsInfo.advanced_graphics.generic.y         = 240 - PROP_HEIGHT;
-	advancedGraphicsOptionsInfo.advanced_graphics.string            = "ADVANCED GRAPHICS";
-	advancedGraphicsOptionsInfo.advanced_graphics.style             = UI_RIGHT;
-	advancedGraphicsOptionsInfo.advanced_graphics.color             = text_color_normal;
-
-	advancedGraphicsOptionsInfo.display.generic.type        = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.display.generic.flags       = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	advancedGraphicsOptionsInfo.display.generic.id          = ID_DISPLAY;
-	advancedGraphicsOptionsInfo.display.generic.callback    = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.display.generic.x           = 216;
-	advancedGraphicsOptionsInfo.display.generic.y           = 240;
-	advancedGraphicsOptionsInfo.display.string              = "DISPLAY";
-	advancedGraphicsOptionsInfo.display.style               = UI_RIGHT;
-	advancedGraphicsOptionsInfo.display.color               = text_color_normal;
-
-	advancedGraphicsOptionsInfo.sound.generic.type      = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.sound.generic.flags     = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	advancedGraphicsOptionsInfo.sound.generic.id        = ID_SOUND;
-	advancedGraphicsOptionsInfo.sound.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.sound.generic.x         = 216;
-	advancedGraphicsOptionsInfo.sound.generic.y         = 240 + PROP_HEIGHT;
-	advancedGraphicsOptionsInfo.sound.string            = "SOUND";
-	advancedGraphicsOptionsInfo.sound.style             = UI_RIGHT;
-	advancedGraphicsOptionsInfo.sound.color             = text_color_normal;
-
-	advancedGraphicsOptionsInfo.network.generic.type        = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.network.generic.flags       = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	advancedGraphicsOptionsInfo.network.generic.id          = ID_NETWORK;
-	advancedGraphicsOptionsInfo.network.generic.callback    = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.network.generic.x           = 216;
-	advancedGraphicsOptionsInfo.network.generic.y           = 240 + 2 * PROP_HEIGHT;
-	advancedGraphicsOptionsInfo.network.string              = "NETWORK";
-	advancedGraphicsOptionsInfo.network.style               = UI_RIGHT;
-	advancedGraphicsOptionsInfo.network.color               = text_color_normal;
-
-	y = 240 - 7 * (BIGCHAR_HEIGHT + 2);
-	advancedGraphicsOptionsInfo.preset.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.preset.generic.name      = "Quality Preset:";
-	advancedGraphicsOptionsInfo.preset.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.preset.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.preset.generic.id        = ID_PRESET;
-	advancedGraphicsOptionsInfo.preset.generic.x         = 400;
-	advancedGraphicsOptionsInfo.preset.generic.y         = y;
-	advancedGraphicsOptionsInfo.preset.itemnames         = preset_items;
-
-	// extra spacing below preset so it reads as a separate group header
-	y += 2 * (BIGCHAR_HEIGHT + 2);
-	advancedGraphicsOptionsInfo.hdr.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.hdr.generic.name      = "HDR:";
-	advancedGraphicsOptionsInfo.hdr.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.hdr.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.hdr.generic.id        = ID_HDR;
-	advancedGraphicsOptionsInfo.hdr.generic.x         = 400;
-	advancedGraphicsOptionsInfo.hdr.generic.y         = y;
-	advancedGraphicsOptionsInfo.hdr.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.hdr.curvalue          = trap_Cvar_VariableValue( "r_hdr" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.postprocess.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.postprocess.generic.name      = "Post Process:";
-	advancedGraphicsOptionsInfo.postprocess.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.postprocess.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.postprocess.generic.id        = ID_POSTPROCESS;
-	advancedGraphicsOptionsInfo.postprocess.generic.x         = 400;
-	advancedGraphicsOptionsInfo.postprocess.generic.y         = y;
-	advancedGraphicsOptionsInfo.postprocess.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.postprocess.curvalue          = trap_Cvar_VariableValue( "r_postProcess" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.tonemap.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.tonemap.generic.name      = "Tone Mapping:";
-	advancedGraphicsOptionsInfo.tonemap.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.tonemap.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.tonemap.generic.id        = ID_TONEMAP;
-	advancedGraphicsOptionsInfo.tonemap.generic.x         = 400;
-	advancedGraphicsOptionsInfo.tonemap.generic.y         = y;
-	advancedGraphicsOptionsInfo.tonemap.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.tonemap.curvalue          = trap_Cvar_VariableValue( "r_toneMap" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.autoexposure.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.autoexposure.generic.name      = "Auto Exposure:";
-	advancedGraphicsOptionsInfo.autoexposure.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.autoexposure.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.autoexposure.generic.id        = ID_AUTOEXPOSURE;
-	advancedGraphicsOptionsInfo.autoexposure.generic.x         = 400;
-	advancedGraphicsOptionsInfo.autoexposure.generic.y         = y;
-	advancedGraphicsOptionsInfo.autoexposure.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.autoexposure.curvalue          = trap_Cvar_VariableValue( "r_autoExposure" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.ssao.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.ssao.generic.name      = "SSAO:";
-	advancedGraphicsOptionsInfo.ssao.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.ssao.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.ssao.generic.id        = ID_SSAO;
-	advancedGraphicsOptionsInfo.ssao.generic.x         = 400;
-	advancedGraphicsOptionsInfo.ssao.generic.y         = y;
-	advancedGraphicsOptionsInfo.ssao.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.ssao.curvalue          = trap_Cvar_VariableValue( "r_ssao" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.sunrays.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.sunrays.generic.name      = "Sun Rays:";
-	advancedGraphicsOptionsInfo.sunrays.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.sunrays.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.sunrays.generic.id        = ID_SUNRAYS;
-	advancedGraphicsOptionsInfo.sunrays.generic.x         = 400;
-	advancedGraphicsOptionsInfo.sunrays.generic.y         = y;
-	advancedGraphicsOptionsInfo.sunrays.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.sunrays.curvalue          = trap_Cvar_VariableValue( "r_drawSunRays" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.name      = "Dynamic Reflections:";
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.id        = ID_DYNAMIC_REFLECTIONS;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.x         = 400;
-	advancedGraphicsOptionsInfo.dynamic_reflections.generic.y         = y;
-	advancedGraphicsOptionsInfo.dynamic_reflections.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.dynamic_reflections.curvalue          = trap_Cvar_VariableValue( "r_dynamicReflections" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.sunshadows.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.sunshadows.generic.name      = "Sun Shadows:";
-	advancedGraphicsOptionsInfo.sunshadows.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.sunshadows.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.sunshadows.generic.id        = ID_SUNSHADOWS;
-	advancedGraphicsOptionsInfo.sunshadows.generic.x         = 400;
-	advancedGraphicsOptionsInfo.sunshadows.generic.y         = y;
-	advancedGraphicsOptionsInfo.sunshadows.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.sunshadows.curvalue          = trap_Cvar_VariableValue( "r_sunShadows" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.shadowquality.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.shadowquality.generic.name      = "Shadow Quality:";
-	advancedGraphicsOptionsInfo.shadowquality.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.shadowquality.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.shadowquality.generic.id        = ID_SHADOWQUALITY;
-	advancedGraphicsOptionsInfo.shadowquality.generic.x         = 400;
-	advancedGraphicsOptionsInfo.shadowquality.generic.y         = y;
-	advancedGraphicsOptionsInfo.shadowquality.itemnames         = shadow_quality_items;
-	{
-		int shadowMapSize = (int)trap_Cvar_VariableValue( "r_shadowMapSize" );
-		if ( shadowMapSize >= 2048 )
-			advancedGraphicsOptionsInfo.shadowquality.curvalue = 2;
-		else if ( shadowMapSize >= 1024 )
-			advancedGraphicsOptionsInfo.shadowquality.curvalue = 1;
-		else
-			advancedGraphicsOptionsInfo.shadowquality.curvalue = 0;
-	}
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.shadowblur.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.shadowblur.generic.name      = "Shadow Blur:";
-	advancedGraphicsOptionsInfo.shadowblur.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.shadowblur.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.shadowblur.generic.id        = ID_SHADOWBLUR;
-	advancedGraphicsOptionsInfo.shadowblur.generic.x         = 400;
-	advancedGraphicsOptionsInfo.shadowblur.generic.y         = y;
-	advancedGraphicsOptionsInfo.shadowblur.itemnames         = enabled_items;
-	advancedGraphicsOptionsInfo.shadowblur.curvalue          = trap_Cvar_VariableValue( "r_shadowBlur" ) != 0;
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.name      = "Shadow Cascade Near:";
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.id        = ID_SHADOWCASCADE_NEAR;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.x         = 400;
-	advancedGraphicsOptionsInfo.shadowcascade_near.generic.y         = y;
-	advancedGraphicsOptionsInfo.shadowcascade_near.itemnames         = shadow_cascade_near_items;
-	{
-		int nearValue = (int)trap_Cvar_VariableValue( "r_shadowCascadeZNear" );
-		if ( nearValue >= 16 )
-			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 2;
-		else if ( nearValue >= 8 )
-			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 1;
-		else
-			advancedGraphicsOptionsInfo.shadowcascade_near.curvalue = 0;
-	}
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.name      = "Shadow Cascade Far:";
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.id        = ID_SHADOWCASCADE_FAR;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.x         = 400;
-	advancedGraphicsOptionsInfo.shadowcascade_far.generic.y         = y;
-	advancedGraphicsOptionsInfo.shadowcascade_far.itemnames         = shadow_cascade_far_items;
-	{
-		int farValue = (int)trap_Cvar_VariableValue( "r_shadowCascadeZFar" );
-		if ( farValue >= 2048 )
-			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 2;
-		else if ( farValue >= 1024 )
-			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 1;
-		else
-			advancedGraphicsOptionsInfo.shadowcascade_far.curvalue = 0;
-	}
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.name      = "Shadow Cascade Bias:";
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.id        = ID_SHADOWCASCADE_BIAS;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.x         = 400;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.generic.y         = y;
-	advancedGraphicsOptionsInfo.shadowcascade_bias.itemnames         = shadow_cascade_bias_items;
-	{
-		float biasValue = trap_Cvar_VariableValue( "r_shadowCascadeZBias" );
-		if ( biasValue >= 0.75f )
-			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 3;
-		else if ( biasValue >= 0.375f )
-			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 2;
-		else if ( biasValue >= 0.125f )
-			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 1;
-		else
-			advancedGraphicsOptionsInfo.shadowcascade_bias.curvalue = 0;
-	}
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.name      = "Projected Shadow Dist:";
-	advancedGraphicsOptionsInfo.pshadowdist.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.id        = ID_PSHADOWDIST;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.x         = 400;
-	advancedGraphicsOptionsInfo.pshadowdist.generic.y         = y;
-	advancedGraphicsOptionsInfo.pshadowdist.itemnames         = pshadow_dist_items;
-	{
-		int pshadowDist = (int)trap_Cvar_VariableValue( "r_pshadowDist" );
-		if ( pshadowDist >= 256 )
-			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 2;
-		else if ( pshadowDist >= 128 )
-			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 1;
-		else
-			advancedGraphicsOptionsInfo.pshadowdist.curvalue = 0;
-	}
-
-	y += BIGCHAR_HEIGHT + 2;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.type      = MTYPE_SPINCONTROL;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.name      = "Sunlight Mode:";
-	advancedGraphicsOptionsInfo.sunlightmode.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.callback  = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.id        = ID_SUNLIGHTMODE;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.x         = 400;
-	advancedGraphicsOptionsInfo.sunlightmode.generic.y         = y;
-	advancedGraphicsOptionsInfo.sunlightmode.itemnames         = sunlight_mode_items;
-	advancedGraphicsOptionsInfo.sunlightmode.curvalue          = Com_Clamp( 0, 2, (int)trap_Cvar_VariableValue( "r_sunlightMode" ) );
-	UI_AdvancedGraphicsOptionsMenu_SyncPreset();
-
-	advancedGraphicsOptionsInfo.back.generic.type         = MTYPE_PTEXT;
-	advancedGraphicsOptionsInfo.back.generic.flags        = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	advancedGraphicsOptionsInfo.back.generic.x            = 20;
-	advancedGraphicsOptionsInfo.back.generic.y            = 480 - 50;
-	advancedGraphicsOptionsInfo.back.generic.id           = ID_BACK;
-	advancedGraphicsOptionsInfo.back.generic.callback     = UI_AdvancedGraphicsOptionsMenu_Event;
-	advancedGraphicsOptionsInfo.back.string               = "Back";
-	advancedGraphicsOptionsInfo.back.color                = text_color_normal;
-	advancedGraphicsOptionsInfo.back.style                = UI_LEFT | UI_SMALLFONT;
-
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.preset );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.hdr );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.postprocess );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.tonemap );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.autoexposure );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.ssao );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunrays );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.dynamic_reflections );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunshadows );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowquality );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowblur );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_near );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_far );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.shadowcascade_bias );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.pshadowdist );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.sunlightmode );
-	Menu_AddItem( &advancedGraphicsOptionsInfo.menu, ( void * ) &advancedGraphicsOptionsInfo.back );
-
-	/* Menu_AddItem initializes the legacy widgets and overwrites their
-	 * default bounds. Apply the frontend layout after that initialization so
-	 * the custom ownerdraw positions are the ones used for drawing and input. */
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.preset.generic,
-		ID_PRESET, "Preset", ADV_COLUMN_LEFT_X, ADV_ROW_START_Y );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.hdr.generic,
-		ID_HDR, "HDR", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + ADV_ROW_HEIGHT + ADV_ROW_GAP );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.postprocess.generic,
-		ID_POSTPROCESS, "Post process", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 2 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.tonemap.generic,
-		ID_TONEMAP, "Tone map", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 3 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.autoexposure.generic,
-		ID_AUTOEXPOSURE, "Auto exposure", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 4 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.ssao.generic,
-		ID_SSAO, "SSAO", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 5 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunrays.generic,
-		ID_SUNRAYS, "Sun rays", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 6 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.dynamic_reflections.generic,
-		ID_DYNAMIC_REFLECTIONS, "Dynamic refl.", ADV_COLUMN_LEFT_X,
-		ADV_ROW_START_Y + 7 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunshadows.generic,
-		ID_SUNSHADOWS, "Sun shadows", ADV_COLUMN_RIGHT_X, ADV_ROW_START_Y );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowquality.generic,
-		ID_SHADOWQUALITY, "Shadow quality", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + ADV_ROW_HEIGHT + ADV_ROW_GAP );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowblur.generic,
-		ID_SHADOWBLUR, "Shadow blur", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 2 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_near.generic,
-		ID_SHADOWCASCADE_NEAR, "Cascade near", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 3 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_far.generic,
-		ID_SHADOWCASCADE_FAR, "Cascade far", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 4 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.shadowcascade_bias.generic,
-		ID_SHADOWCASCADE_BIAS, "Cascade bias", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 5 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.pshadowdist.generic,
-		ID_PSHADOWDIST, "Projected shadow", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 6 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-	AdvancedGraphics_SetSettingBounds( &advancedGraphicsOptionsInfo.sunlightmode.generic,
-		ID_SUNLIGHTMODE, "Sunlight mode", ADV_COLUMN_RIGHT_X,
-		ADV_ROW_START_Y + 7 * ( ADV_ROW_HEIGHT + ADV_ROW_GAP ) );
-
-	AdvancedGraphics_SetBounds( &advancedGraphicsOptionsInfo.back.generic, ID_BACK,
-		ADV_NAV_X, ADV_ACTION_Y, ADV_ACTION_WIDTH, ADV_ACTION_HEIGHT, NULL );
-	advancedGraphicsOptionsInfo.back.generic.ownerdraw = AdvancedGraphics_DrawAction;
+void UI_GfxLightingMenu( void ) {
+	UI_GfxLighting_Open();
 }
 
 void UI_AdvancedGraphicsOptionsMenu_Cache( void ) {
 }
 
+// the old entry point opens the effects page
 void UI_AdvancedGraphicsOptionsMenu( void ) {
-// STONELANCE FIXME: get rid of this after proper tansitions are added
-	uis.transitionIn = 0;
-// END
-	UI_AdvancedGraphicsOptionsMenu_Init();
-	UI_PushMenu( &advancedGraphicsOptionsInfo.menu );
-	Menu_SetCursorToItem( &advancedGraphicsOptionsInfo.menu, &advancedGraphicsOptionsInfo.hdr );
+	UI_GfxEffects_Open();
 }

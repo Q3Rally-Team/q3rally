@@ -2433,7 +2433,6 @@ void Menu_Cache( void )
 	uis.arrow_r1		= trap_R_RegisterShaderNoMip( "menu/art/arrow_r1" );
 
 	// car model stuff
-	uis.turboModel = trap_R_RegisterModel( "models/powerups/turbo/turbocar.md3" );
 	uis.headLightGlow = trap_R_RegisterModel( "gfx/flares/h_lite.md3" );
 	uis.brakeLightGlow = trap_R_RegisterModel( "gfx/flares/b_lite.md3" );
 	uis.reverseLightGlow = trap_R_RegisterModel( "gfx/flares/r_lite.md3" );

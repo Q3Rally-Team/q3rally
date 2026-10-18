@@ -333,6 +333,10 @@ void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r,
 	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
 }
 
+void	trap_R_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags ) {
+	syscall( CG_R_ADDSPOTLIGHTTOSCENE, org, dir, PASSFLOAT(radius), PASSFLOAT(coneAngle), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b), flags );
+}
+
 void	trap_R_RenderScene( const refdef_t *fd ) {
 	syscall( CG_R_RENDERSCENE, fd );
 }

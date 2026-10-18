@@ -1025,6 +1025,20 @@ static void CG_PlayBufferedSounds( void ) {
 
 /*
 =================
+CG_UpdateWetness
+
+Q3Rally: how wet the ground is, for the OpenGL2 renderer: the whole map has
+its own wetness (worldspawn "wetness"), rain zones get wet while it rains
+in them (CG_AtmosphericWetZones).
+=================
+*/
+void CG_UpdateWetness( void ) {
+	cg.refdef.wetness = Com_Clamp( 0.0f, 1.0f, cgs.mapWetness );
+	CG_AtmosphericWetZones( &cg.refdef );
+}
+
+/*
+=================
 CG_DrawActiveFrame
 
 Generates and draws a game scene and status information at the given time.
@@ -1108,6 +1122,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddRacingLine();
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
 		CG_EngineSoundFrame();			// Q3Rally: engine sounds of all audible cars
+		// Q3Rally: the particles first, so the many skid mark polys can never
+		// use up the renderer's poly budget before them
+		CG_AddRallyFX();				// Q3Rally: rally_fx_spray, tyre smoke, spray
 		CG_AddMarks();
 		CG_AddParticles ();
 		CG_AddLocalEntities();
@@ -1133,6 +1150,11 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddTestModel();
 	}
 	cg.refdef.time = cg.time;
+	// Q3Rally: the viewed car burns NOS (stronger motion blur in OpenGL2)
+	if ( cg.snap->ps.powerups[PW_TURBO] > cg.snap->serverTime ) {
+		cg.refdef.rdflags |= RDF_NOS;
+	}
+	CG_UpdateWetness();
 	memcpy( cg.refdef.areamask, cg.snap->areamask, sizeof( cg.refdef.areamask ) );
 
 	// warning sounds when powerup is wearing off

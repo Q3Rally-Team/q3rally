@@ -49,6 +49,10 @@ static int	numTraces;
 
 #ifdef QAGAME
 #define PM_BREAKABLE_IMPACT_THRESHOLD 400.0f
+// Q3Rally: a breakable the car drives or lands on is a floor (ramps, bridge
+// decks); only hits against its sides count as crashes. A plane whose normal
+// points at least this much up (flatter than about 45 degrees) is a floor.
+#define PM_BREAKABLE_FLOOR_NORMAL_Z 0.7f
 
 static void PM_RecordBreakableImpact( const trace_t *trace, const vec3_t velocity ) {
 	gentity_t	*hit;
@@ -62,6 +66,13 @@ static void PM_RecordBreakableImpact( const trace_t *trace, const vec3_t velocit
 	hit = &g_entities[trace->entityNum];
 	if ( !hit->inuse || !hit->takedamage || !hit->classname ||
 		Q_stricmp( hit->classname, "func_breakable" ) ) {
+		return;
+	}
+
+	// driving up a breakable ramp or landing on a breakable deck is not a
+	// crash: before, every hard wheel contact took health away, and a ramp
+	// broke after a few frames whatever its health was
+	if ( trace->plane.normal[2] >= PM_BREAKABLE_FLOOR_NORMAL_Z ) {
 		return;
 	}
 

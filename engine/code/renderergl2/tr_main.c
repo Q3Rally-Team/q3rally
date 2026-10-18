@@ -813,6 +813,10 @@ void R_SetupProjectionZ(viewParms_t *dest)
 	zNear = r_znear->value;
 	zFar	= dest->zFar;
 
+	// Q3Rally: was never stored; the soft particles and the motion blur
+	// linearize the depth buffer with it (0 made every depth 0)
+	dest->zNear = zNear;
+
 	depth	= zFar - zNear;
 
 	dest->projectionMatrix[2] = 0;
@@ -1294,13 +1298,55 @@ static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, vec4_t clipDest[128
 }
 
 /*
+=================
+R_GetWaterOrientations
+
+Q3Rally: a q3r_water surface is always a mirror of its own plane, so it
+needs no misc_portal_surface entity.
+=================
+*/
+static void R_GetWaterOrientations( drawSurf_t *drawSurf, int entityNum,
+							 orientation_t *surface, orientation_t *camera,
+							 vec3_t pvsOrigin ) {
+	cplane_t	plane;
+	float		d;
+
+	R_PlaneForSurface( drawSurf->surface, &plane );
+
+	if ( entityNum != REFENTITYNUM_WORLD ) {
+		vec3_t normal;
+
+		tr.currentEntityNum = entityNum;
+		tr.currentEntity = &tr.refdef.entities[entityNum];
+		R_RotateForEntity( tr.currentEntity, &tr.viewParms, &tr.or );
+		R_LocalNormalToWorld( plane.normal, normal );
+		VectorCopy( normal, plane.normal );
+		plane.dist = plane.dist + DotProduct( plane.normal, tr.or.origin );
+	}
+
+	VectorCopy( plane.normal, surface->axis[0] );
+	PerpendicularVector( surface->axis[1], surface->axis[0] );
+	CrossProduct( surface->axis[0], surface->axis[1], surface->axis[2] );
+
+	VectorScale( plane.normal, plane.dist, surface->origin );
+	VectorCopy( surface->origin, camera->origin );
+	VectorSubtract( vec3_origin, surface->axis[0], camera->axis[0] );
+	VectorCopy( surface->axis[1], camera->axis[1] );
+	VectorCopy( surface->axis[2], camera->axis[2] );
+
+	// see the world from just above the water, below the viewer
+	d = DotProduct( tr.viewParms.or.origin, plane.normal ) - plane.dist;
+	VectorMA( tr.viewParms.or.origin, 8.0f - d, plane.normal, pvsOrigin );
+}
+
+/*
 ========================
 R_MirrorViewBySurface
 
 Returns qtrue if another view has been rendered
 ========================
 */
-qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int entityNum) {
+qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int entityNum, qboolean water) {
 	vec4_t			clipDest[128];
 	viewParms_t		newParms;
 	viewParms_t		oldParms;
@@ -1328,7 +1374,11 @@ qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int entityNum) {
 	newParms.isPortal = qtrue;
 	newParms.zFar = 0.0f;
 	newParms.flags &= ~VPF_FARPLANEFRUSTUM;
-	if ( !R_GetPortalOrientations( drawSurf, entityNum, &surface, &camera, 
+	if ( water ) {
+		R_GetWaterOrientations( drawSurf, entityNum, &surface, &camera, newParms.pvsOrigin );
+		newParms.isMirror = qtrue;
+		newParms.flags |= VPF_WATERREFLECTION;
+	} else if ( !R_GetPortalOrientations( drawSurf, entityNum, &surface, &camera, 
 		newParms.pvsOrigin, &newParms.isMirror ) ) {
 		return qfalse;		// bad portal, no portalentity
 	}
@@ -1501,6 +1551,7 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	int				dlighted;
 	int             pshadowed;
 	int				i;
+	qboolean		mirrored = qfalse;
 
 	//ri.Printf(PRINT_ALL, "firstDrawSurf %d numDrawSurfs %d\n", (int)(drawSurfs - tr.refdef.drawSurfs), numDrawSurfs);
 
@@ -1521,6 +1572,13 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		return;
 	}
 
+	// Q3Rally: no mirrors, portals or water reflections in the car
+	// reflection cube map
+	if ( tr.viewParms.flags & VPF_CARREFLECT ) {
+		R_AddDrawSurfCmd( drawSurfs, numDrawSurfs );
+		return;
+	}
+
 	// check for any pass through drawing, which
 	// may cause another view to be rendered first
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
@@ -1536,12 +1594,38 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		}
 
 		// if the mirror was completely clipped away, we may need to check another surface
-		if ( R_MirrorViewBySurface( (drawSurfs+i), entityNum) ) {
+		if ( R_MirrorViewBySurface( (drawSurfs+i), entityNum, qfalse) ) {
 			// this is a debug option to see exactly what is being mirrored
 			if ( r_portalOnly->integer ) {
 				return;
 			}
+			mirrored = qtrue;
 			break;		// only one mirror view at a time
+		}
+	}
+
+	// Q3Rally: q3r_water surfaces are sorted after the opaque world; the
+	// first visible one renders the mirror view into the reflection texture
+	if ( !mirrored && tr.waterReflectionFbo && !tr.viewParms.isPortal ) {
+		for ( i = 0 ; i < numDrawSurfs ; i++ ) {
+			R_DecomposeSort( (drawSurfs+i)->sort, &entityNum, &shader, &fogNum, &dlighted, &pshadowed );
+
+			if ( shader->sort < SS_UNDERWATER ) {
+				continue;
+			}
+			if ( shader->sort > SS_UNDERWATER ) {
+				break;
+			}
+			if ( !shader->isWater ) {
+				continue;
+			}
+
+			if ( R_MirrorViewBySurface( (drawSurfs+i), entityNum, qtrue ) ) {
+				if ( r_portalOnly->integer ) {
+					return;
+				}
+				break;	// one reflection per view
+			}
 		}
 	}
 
@@ -1640,8 +1724,19 @@ void R_AddEntitySurfaces (void) {
 		return;
 	}
 
-	for ( i = 0; i < tr.refdef.num_entities; i++)
+	for ( i = 0; i < tr.refdef.num_entities; i++) {
+		// Q3Rally: the car reflection cube map leaves out the models near
+		// the camera (the own car would cover a whole side) and sprites
+		if ( tr.viewParms.flags & VPF_CARREFLECT ) {
+			const refEntity_t *e = &tr.refdef.entities[i].e;
+
+			if ( e->reType != RT_MODEL || ( e->renderfx & ( RF_FIRST_PERSON | RF_DEPTHHACK ) )
+				|| DistanceSquared( e->origin, tr.viewParms.or.origin ) < CAR_REFLECT_EXCLUDE * CAR_REFLECT_EXCLUDE ) {
+				continue;
+			}
+		}
 		R_AddEntitySurface(i);
+	}
 }
 
 
@@ -1789,6 +1884,10 @@ void R_RenderDlightCubemaps(const refdef_t *fd)
 
 		// use previous frame to determine visible dlights
 		if ((1 << i) & tr.refdef.dlightMask)
+			continue;
+
+		// Q3Rally: spot lights have their own shadow maps
+		if (tr.refdef.dlights[i].spotCosOuter > -1.0f)
 			continue;
 
 		Com_Memset( &shadowParms, 0, sizeof( shadowParms ) );
@@ -2535,17 +2634,563 @@ void R_RenderSunShadowMaps(const refdef_t *fd, int level)
 
 			R_SetupProjectionOrtho(&tr.viewParms, lightviewBounds);
 
-			R_AddWorldSurfaces ();
+			// Q3Rally: r_sunShadowCasters 1 keeps the map out of the camera
+			// cascades (its shadows are baked into the lightmap) and keeps the
+			// models out of the cached level 3 cascade, which is the map only
+			// and is used to find the places the sun reaches
+			if ( !R_SunShadowModelsOnly() || level == 3 )
+			{
+				R_AddWorldSurfaces ();
 
-			R_AddPolygonSurfaces();
+				R_AddPolygonSurfaces();
+			}
 
-			R_AddEntitySurfaces ();
+			if ( !R_SunShadowModelsOnly() || level != 3 )
+			{
+				R_AddEntitySurfaces ();
+			}
 
 			R_SortDrawSurfs( tr.refdef.drawSurfs + firstDrawSurf, tr.refdef.numDrawSurfs - firstDrawSurf );
 		}
 
 		Mat4Multiply(tr.viewParms.projectionMatrix, tr.viewParms.world.modelMatrix, tr.refdef.sunShadowMvp[level]);
+
+		if (level == 3)
+		{
+			tr.sunShadowWorldTexel = MAX(lightviewBounds[1][1] - lightviewBounds[0][1], lightviewBounds[1][2] - lightviewBounds[0][2])
+				/ (float)tr.sunShadowFbo[level]->width;
+		}
 	}
+}
+
+/*
+=================
+R_SelectLampShadows
+
+Q3Rally: picks the lamps that cast model shadows this frame. A lamp scores
+by how strongly it lights the models near the camera (inside its shadow
+frustum). The chosen lamps keep their shadow map slot while they still
+matter, so the cached map shadow (lampWorldImage) is rendered only once per
+lamp, and new shadows fade in instead of popping.
+=================
+*/
+#define LAMP_FADE_MSEC	300
+
+static float R_LampLit( const lamp_t *l, const vec3_t point, qboolean inFrustum ) {
+	vec3_t	dir;
+	float	d2, d, lit;
+
+	VectorSubtract( point, l->origin, dir );
+	d2 = DotProduct( dir, dir );
+	if ( d2 > l->radius * l->radius || d2 < 1.0f ) {
+		return 0.0f;
+	}
+
+	d = sqrt( d2 );
+	if ( inFrustum && DotProduct( dir, l->axis[0] ) < d * cos( DEG2RAD( l->fov * 0.5f ) ) ) {
+		return 0.0f;
+	}
+
+	lit = l->light * LAMP_LIGHT_SCALE / d2;
+	return lit > 1.0f ? 1.0f : sqrt( lit );
+}
+
+void R_SelectLampShadows( void ) {
+	static float	score[MAX_LAMPS];
+	int				max, i, j;
+	float			strength;
+
+	tr.refdef.numLampShadows = 0;
+
+	max = r_lampShadows->integer;
+	if ( max > MAX_LAMP_SHADOWS ) {
+		max = MAX_LAMP_SHADOWS;
+	}
+
+	if ( max <= 0 || !tr.numLamps || !tr.lampShadowFbo[0] || !r_sunlightMode->integer
+		|| !glRefConfig.framebufferObject || ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+		return;
+	}
+
+	// only the main view: small extra views (rear view, minimap) would
+	// steal the slots from it every frame and cost extra shadow passes
+	if ( tr.refdef.width < glConfig.vidWidth / 2 ) {
+		return;
+	}
+
+	// score every lamp by the models it lights
+	for ( i = 0; i < tr.numLamps; i++ ) {
+		lamp_t	*l = &tr.lamps[i];
+
+		score[i] = 0.0f;
+		if ( Distance( l->origin, tr.refdef.vieworg ) > l->radius + 3000.0f ) {
+			continue;
+		}
+
+		for ( j = 0; j < tr.refdef.num_entities; j++ ) {
+			trRefEntity_t	*ent = &tr.refdef.entities[j];
+			float			lit;
+
+			if ( ent->e.reType != RT_MODEL || ( ent->e.renderfx & ( RF_FIRST_PERSON | RF_DEPTHHACK ) ) ) {
+				continue;
+			}
+
+			lit = R_LampLit( l, ent->e.origin, qtrue );
+			if ( lit > 0.0f ) {
+				score[i] += lit / ( 1.0f + Distance( ent->e.origin, tr.refdef.vieworg ) / 1000.0f );
+			}
+		}
+	}
+
+	// slots: keep lamps that still matter, free the others
+	for ( j = 0; j < MAX_LAMP_SHADOWS; j++ ) {
+		lampSlot_t *s = &tr.lampSlots[j];
+
+		if ( s->lamp >= 0 && ( j >= max || score[s->lamp] < 0.01f ) ) {
+			s->lamp = -1;
+		}
+		if ( s->lamp >= 0 ) {
+			s->score = score[s->lamp];
+		}
+	}
+
+	// fill free slots with the best unassigned lamps, and replace a weak
+	// slot only by a clearly better lamp (no flicker between two lamps)
+	while ( 1 ) {
+		int		best = -1, weakest = -1;
+		float	bestScore = 0.01f;
+
+		for ( i = 0; i < tr.numLamps; i++ ) {
+			qboolean used = qfalse;
+
+			if ( score[i] <= bestScore ) {
+				continue;
+			}
+			for ( j = 0; j < max; j++ ) {
+				if ( tr.lampSlots[j].lamp == i ) {
+					used = qtrue;
+					break;
+				}
+			}
+			if ( !used ) {
+				best = i;
+				bestScore = score[i];
+			}
+		}
+		if ( best < 0 ) {
+			break;
+		}
+
+		for ( j = 0; j < max; j++ ) {
+			if ( tr.lampSlots[j].lamp < 0 ) {
+				weakest = j;
+				break;
+			}
+			if ( weakest < 0 || tr.lampSlots[j].score < tr.lampSlots[weakest].score ) {
+				weakest = j;
+			}
+		}
+		if ( weakest < 0 || ( tr.lampSlots[weakest].lamp >= 0 && bestScore < tr.lampSlots[weakest].score * 2.0f ) ) {
+			break;
+		}
+
+		tr.lampSlots[weakest].lamp = best;
+		tr.lampSlots[weakest].score = bestScore;
+		tr.lampSlots[weakest].startTime = tr.refdef.time;
+		tr.lampSlots[weakest].worldDone = qfalse;
+	}
+
+	strength = Com_Clamp( 0.0f, 1.0f, r_lampShadowStrength->value );
+
+	for ( j = 0; j < max; j++ ) {
+		lampSlot_t	*s = &tr.lampSlots[j];
+		lamp_t		*l;
+		float		fade;
+		int			n;
+
+		if ( s->lamp < 0 ) {
+			continue;
+		}
+
+		l = &tr.lamps[s->lamp];
+		n = tr.refdef.numLampShadows++;
+
+		fade = ( tr.refdef.time - s->startTime ) / (float)LAMP_FADE_MSEC;
+		if ( fade < 0.0f || fade > 1.0f ) {
+			fade = 1.0f;
+		}
+
+		tr.refdef.lampShadowSlot[n] = j;
+		VectorCopy( l->origin, tr.refdef.lampShadowOrigin[n] );
+		tr.refdef.lampShadowOrigin[n][3] = l->light * LAMP_LIGHT_SCALE;
+		VectorSet4( tr.refdef.lampShadowParams[n], strength * fade, 0.0f, 0.0f, 0.0f );
+	}
+}
+
+/*
+=================
+R_RenderLampShadowView
+
+Renders the map or the models as seen from a lamp into a depth map.
+=================
+*/
+static void R_RenderLampShadowView( const lamp_t *l, FBO_t *fbo, qboolean world, float *mvp ) {
+	viewParms_t	parms;
+	int			firstDrawSurf;
+
+	Com_Memset( &parms, 0, sizeof( parms ) );
+
+	parms.viewportX = 0;
+	parms.viewportY = 0;
+	parms.viewportWidth  = fbo->width;
+	parms.viewportHeight = fbo->height;
+	parms.isPortal = qfalse;
+	parms.isMirror = qfalse;
+	parms.fovX = l->fov;
+	parms.fovY = l->fov;
+	parms.targetFbo = fbo;
+	parms.flags = VPF_DEPTHSHADOW | VPF_NOVIEWMODEL;
+	parms.zFar = l->radius;
+
+	VectorCopy( l->origin, parms.or.origin );
+	VectorCopy( l->axis[0], parms.or.axis[0] );
+	VectorCopy( l->axis[1], parms.or.axis[1] );
+	VectorCopy( l->axis[2], parms.or.axis[2] );
+	VectorCopy( l->origin, parms.pvsOrigin );
+
+	tr.viewCount++;
+
+	tr.viewParms = parms;
+	tr.viewParms.frameSceneNum = tr.frameSceneNum;
+	tr.viewParms.frameCount = tr.frameCount;
+
+	firstDrawSurf = tr.refdef.numDrawSurfs;
+
+	tr.viewCount++;
+
+	R_RotateForViewer();
+	R_SetupProjection( &tr.viewParms, r_zproj->value, tr.viewParms.zFar, qtrue );
+	R_SetupProjectionZ( &tr.viewParms );
+
+	if ( world ) {
+		R_AddWorldSurfaces();
+	} else {
+		R_AddEntitySurfaces();
+	}
+
+	R_SortDrawSurfs( tr.refdef.drawSurfs + firstDrawSurf, tr.refdef.numDrawSurfs - firstDrawSurf );
+
+	if ( mvp ) {
+		Mat4Multiply( tr.viewParms.projectionMatrix, tr.viewParms.world.modelMatrix, mvp );
+	}
+}
+
+/*
+=================
+R_RenderLampShadowMaps
+
+The map shadow of a lamp is rendered once when the lamp gets its slot, the
+models every frame.
+=================
+*/
+void R_RenderLampShadowMaps( void ) {
+	int n;
+
+	for ( n = 0; n < tr.refdef.numLampShadows; n++ ) {
+		int			j = tr.refdef.lampShadowSlot[n];
+		lampSlot_t	*s = &tr.lampSlots[j];
+		lamp_t		*l = &tr.lamps[s->lamp];
+
+		if ( !s->worldDone ) {
+			R_RenderLampShadowView( l, tr.lampWorldFbo[j], qtrue, NULL );
+			s->worldDone = qtrue;
+		}
+
+		R_RenderLampShadowView( l, tr.lampShadowFbo[j], qfalse, tr.refdef.lampShadowMvp[n] );
+	}
+}
+
+/*
+=================
+R_RenderSpotShadowMaps
+
+Q3Rally: shadow maps of the headlights nearest to the camera. Each one is a
+perspective depth view from the light along its cone with the map and the
+models (the car the light belongs to is behind the light). Rendered every
+frame, as the lights move with the cars.
+=================
+*/
+void R_RenderSpotShadowMaps( void ) {
+	int		order[MAX_DLIGHTS];
+	float	dist[MAX_DLIGHTS];
+	int		num = 0, max, i, j;
+
+	max = MIN( r_headlightShadows->integer, MAX_SPOT_SHADOWS );
+	if ( max <= 0 || !tr.spotShadowFbo[0] || !glRefConfig.framebufferObject ) {
+		return;
+	}
+
+	// main view only (not the rear view or minimap)
+	if ( tr.refdef.width < glConfig.vidWidth / 2 ) {
+		return;
+	}
+
+	for ( i = 0; i < tr.refdef.num_dlights; i++ ) {
+		dlight_t *dl = &tr.refdef.dlights[i];
+		float d;
+
+		if ( !( tr.refdef.spotMask & ( 1 << i ) ) || ( dl->spotFlags & SPOTLIGHT_NOSHADOW ) ) {
+			continue;
+		}
+
+		d = Distance( dl->origin, tr.refdef.vieworg );
+		if ( d > dl->radius + 1000.0f ) {
+			continue;
+		}
+
+		// insertion sort by distance
+		for ( j = num; j > 0 && dist[j - 1] > d; j-- ) {
+			dist[j] = dist[j - 1];
+			order[j] = order[j - 1];
+		}
+		dist[j] = d;
+		order[j] = i;
+		num++;
+	}
+
+	for ( j = 0; j < num && j < max; j++ ) {
+		dlight_t	*dl = &tr.refdef.dlights[order[j]];
+		viewParms_t	parms;
+		vec3_t		right;
+		int			firstDrawSurf;
+
+		Com_Memset( &parms, 0, sizeof( parms ) );
+
+		parms.viewportWidth  = tr.spotShadowFbo[j]->width;
+		parms.viewportHeight = tr.spotShadowFbo[j]->height;
+		parms.fovX = parms.fovY = RAD2DEG( acos( dl->spotCosOuter ) ) * 2.0f + 4.0f;
+		parms.targetFbo = tr.spotShadowFbo[j];
+		parms.flags = VPF_DEPTHSHADOW | VPF_NOVIEWMODEL;
+		parms.zFar = dl->radius;
+
+		VectorCopy( dl->origin, parms.or.origin );
+		VectorCopy( dl->spotDir, parms.or.axis[0] );
+		MakeNormalVectors( parms.or.axis[0], right, parms.or.axis[2] );
+		VectorNegate( right, parms.or.axis[1] );
+		VectorCopy( dl->origin, parms.pvsOrigin );
+
+		tr.viewCount++;
+
+		tr.viewParms = parms;
+		tr.viewParms.frameSceneNum = tr.frameSceneNum;
+		tr.viewParms.frameCount = tr.frameCount;
+
+		firstDrawSurf = tr.refdef.numDrawSurfs;
+
+		tr.viewCount++;
+
+		R_RotateForViewer();
+		R_SetupProjection( &tr.viewParms, r_zproj->value, tr.viewParms.zFar, qtrue );
+		R_SetupProjectionZ( &tr.viewParms );
+
+		R_AddWorldSurfaces();
+
+		// models in front of the light only: the car the light belongs to
+		// (and its headlight glow) sits behind it and would cover the map
+		if ( r_drawentities->integer ) {
+			int e;
+
+			for ( e = 0; e < tr.refdef.num_entities; e++ ) {
+				trRefEntity_t *ent = &tr.refdef.entities[e];
+				vec3_t delta;
+
+				if ( ent->e.reType != RT_MODEL ) {
+					continue;
+				}
+				VectorSubtract( ent->e.origin, dl->origin, delta );
+				if ( DotProduct( delta, dl->spotDir ) < 16.0f ) {
+					continue;
+				}
+				R_AddEntitySurface( e );
+			}
+		}
+
+		R_SortDrawSurfs( tr.refdef.drawSurfs + firstDrawSurf, tr.refdef.numDrawSurfs - firstDrawSurf );
+
+		Mat4Multiply( tr.viewParms.projectionMatrix, tr.viewParms.world.modelMatrix, dl->spotShadowMvp );
+		dl->spotShadow = j;
+	}
+}
+
+/*
+=================
+R_RenderCarReflection
+
+Q3Rally: the cube map the car paint reflects ($dynamicreflection stages,
+see RB_CarReflectionStage), rendered around the camera of the main view.
+r_carReflections 1 renders one side per frame (the whole cube every six
+frames), 2 all six. It holds the map, the sky and the models further than
+CAR_REFLECT_EXCLUDE from the camera, without dynamic lights, lamp shadows,
+polys (smoke, marks) or mirror views.
+=================
+*/
+void R_RenderCarReflection( void ) {
+	// the sides in the order and orientation of R_RenderCubemapSide
+	static const float axes[6][3][3] = {
+		{ { -1,  0,  0 }, {  0,  0, -1 }, {  0,  1,  0 } },
+		{ {  1,  0,  0 }, {  0,  0,  1 }, {  0,  1,  0 } },
+		{ {  0, -1,  0 }, {  1,  0,  0 }, {  0,  0, -1 } },
+		{ {  0,  1,  0 }, {  1,  0,  0 }, {  0,  0,  1 } },
+		{ {  0,  0, -1 }, {  1,  0,  0 }, {  0,  1,  0 } },
+		{ {  0,  0,  1 }, { -1,  0,  0 }, {  0,  1,  0 } }
+	};
+	static int	lastFrame = -1;
+	viewParms_t	parms;
+	int			numDlights, spotMask, numLampShadows, numPolys;
+	int			i, n, sides;
+
+	if ( !r_carReflections->integer || !tr.carReflectFbo || !tr.world || !glRefConfig.framebufferObject ) {
+		return;
+	}
+	if ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) {
+		return;
+	}
+	// main view only (not the rear view or minimap), once per frame
+	if ( tr.refdef.width < glConfig.vidWidth / 2 || lastFrame == tr.frameCount ) {
+		return;
+	}
+	lastFrame = tr.frameCount;
+
+	numDlights = tr.refdef.num_dlights;
+	spotMask = tr.refdef.spotMask;
+	numLampShadows = tr.refdef.numLampShadows;
+	numPolys = tr.refdef.numPolys;
+	tr.refdef.num_dlights = 0;
+	tr.refdef.spotMask = 0;
+	tr.refdef.numLampShadows = 0;
+	tr.refdef.numPolys = 0;
+
+	sides = r_carReflections->integer >= 2 ? 6 : 1;
+	for ( n = 0; n < sides; n++ ) {
+		int side = tr.carReflectSide;
+
+		tr.carReflectSide = ( side + 1 ) % 6;
+
+		Com_Memset( &parms, 0, sizeof( parms ) );
+		parms.viewportWidth = tr.carReflectFbo->width;
+		parms.viewportHeight = tr.carReflectFbo->height;
+		parms.isPortal = qfalse;
+		parms.isMirror = qtrue;		// the cube map sides are mirrored
+		parms.flags = VPF_NOVIEWMODEL | VPF_NOCUBEMAPS | VPF_CARREFLECT;
+		parms.fovX = 90;
+		parms.fovY = 90;
+
+		VectorCopy( tr.refdef.vieworg, parms.or.origin );
+		VectorCopy( axes[side][0], parms.or.axis[0] );
+		VectorCopy( axes[side][1], parms.or.axis[1] );
+		VectorCopy( axes[side][2], parms.or.axis[2] );
+		VectorCopy( tr.refdef.vieworg, parms.pvsOrigin );
+
+		parms.targetFbo = tr.carReflectFbo;
+		parms.targetFboLayer = side;
+
+		R_RenderView( &parms );
+	}
+
+	tr.refdef.num_dlights = numDlights;
+	tr.refdef.spotMask = spotMask;
+	tr.refdef.numLampShadows = numLampShadows;
+	tr.refdef.numPolys = numPolys;
+
+	// the models were lit without the dynamic lights, light them again in
+	// the main view
+	for ( i = 0; i < tr.refdef.num_entities; i++ ) {
+		tr.refdef.entities[i].lightingCalculated = qfalse;
+	}
+}
+
+/*
+=================
+R_ComputeMotionMask
+
+Q3Rally: the motion blur follows the camera motion, but the car in front of
+the chase camera moves with the camera and has to stay sharp. This finds
+the screen rectangle and the farthest view distance of the models near the
+camera (the car, its wheels and lights); the motion blur shader leaves out
+the pixels inside the rectangle that are not further away than that.
+=================
+*/
+#define MOTIONMASK_RANGE	400.0f	// models this near the camera
+
+void R_ComputeMotionMask( void ) {
+	mat4_t	viewProj;
+	vec2_t	mins, maxs;
+	float	farDist = 0.0f;
+	int		i, c;
+
+	tr.refdef.motionMaskFar = 0.0f;
+	VectorSet4( tr.refdef.motionMaskRect, 0.0f, 0.0f, 0.0f, 0.0f );
+
+	if ( !r_motionBlur->value || ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+		return;
+	}
+
+	Mat4Multiply( tr.viewParms.projectionMatrix, tr.viewParms.world.modelMatrix, viewProj );
+	mins[0] = mins[1] = 1.0f;
+	maxs[0] = maxs[1] = 0.0f;
+
+	for ( i = 0; i < tr.refdef.num_entities; i++ ) {
+		const refEntity_t *e = &tr.refdef.entities[i].e;
+		model_t *model;
+		vec3_t bounds[2];
+
+		if ( e->reType != RT_MODEL || DistanceSquared( e->origin, tr.refdef.vieworg ) > MOTIONMASK_RANGE * MOTIONMASK_RANGE ) {
+			continue;
+		}
+		model = R_GetModelByHandle( e->hModel );
+		if ( !model || model->type == MOD_BAD || model->type == MOD_BRUSH ) {
+			continue;
+		}
+		R_ModelBounds( e->hModel, bounds[0], bounds[1] );
+
+		for ( c = 0; c < 8; c++ ) {
+			vec3_t p;
+			vec4_t in, clip;
+			float dist;
+
+			VectorCopy( e->origin, p );
+			VectorMA( p, bounds[ c & 1 ][0], e->axis[0], p );
+			VectorMA( p, bounds[ ( c >> 1 ) & 1 ][1], e->axis[1], p );
+			VectorMA( p, bounds[ ( c >> 2 ) & 1 ][2], e->axis[2], p );
+
+			VectorSet4( in, p[0], p[1], p[2], 1.0f );
+			Mat4Transform( viewProj, in, clip );
+
+			dist = ( p[0] - tr.refdef.vieworg[0] ) * tr.refdef.viewaxis[0][0]
+				 + ( p[1] - tr.refdef.vieworg[1] ) * tr.refdef.viewaxis[0][1]
+				 + ( p[2] - tr.refdef.vieworg[2] ) * tr.refdef.viewaxis[0][2];
+			farDist = MAX( farDist, dist );
+
+			if ( clip[3] < 1.0f ) {
+				// corner behind or at the camera: the rect covers the screen
+				mins[0] = mins[1] = 0.0f;
+				maxs[0] = maxs[1] = 1.0f;
+				continue;
+			}
+			mins[0] = MIN( mins[0], clip[0] / clip[3] * 0.5f + 0.5f );
+			mins[1] = MIN( mins[1], clip[1] / clip[3] * 0.5f + 0.5f );
+			maxs[0] = MAX( maxs[0], clip[0] / clip[3] * 0.5f + 0.5f );
+			maxs[1] = MAX( maxs[1], clip[1] / clip[3] * 0.5f + 0.5f );
+		}
+	}
+
+	if ( farDist <= 0.0f || mins[0] > maxs[0] ) {
+		return;
+	}
+
+	// a little margin around it
+	VectorSet4( tr.refdef.motionMaskRect, mins[0] - 0.01f, mins[1] - 0.01f, maxs[0] + 0.01f, maxs[1] + 0.01f );
+	tr.refdef.motionMaskFar = farDist + 16.0f;
 }
 
 void R_RenderCubemapSide( int cubemapIndex, int cubemapSide, qboolean subscene )

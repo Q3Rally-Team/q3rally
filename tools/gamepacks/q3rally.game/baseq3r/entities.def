@@ -2598,10 +2598,32 @@ disable_splash turns off visual impact splashes, improving framerates since ther
 
 The rain volume also marks the road beneath it as dynamically wet at runtime:
 vehicle grip is reduced and tires emit spray without requiring SURF_WET on the road shader.
+In OpenGL2 the ground in the volume also looks wet (darker, reflections and puddles on asphalt);
+it gets wet within about 20 seconds of rain and dries within about 2 minutes.
 
 Server weather timing is controlled globally with:
 g_dynamicWeather 1/0, g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
 g_weatherOffMinTime and g_weatherOffMaxTime.
+*/
+
+/*QUAKED rally_fx_spray (.6 .8 1) (-16 -16 -8) (16 16 16)
+Spray, mist and droplets where a waterfall hits the water (also works for
+rapids, fountains or steam). Purely client side: no entity slot, no network
+traffic. Place the origin on the water surface where the water lands; a
+long waterfall looks best with two or three of these along its foot.
+Players can scale or switch it off with cg_mapEffects (0 = off, 1, 2).
+
+-------- KEYS --------
+"radius"	horizontal spread of the spray (default 64)
+"height"	how high the mist rises (default 160)
+"size"	size of a mist puff (default 96)
+"rate"	mist puffs per second (default 30)
+"droplets"	droplets per second (default 50)
+"angle"	yaw the spray is thrown towards, usually away from the cliff (default: all directions)
+"push"	speed of that throw (default 60)
+"_color"	tint, multiplied with the light grid at the origin (default .92 .96 1)
+"alpha"	opacity of the mist (default 0.4)
+"range"	view distance beyond which no new particles spawn (default 3000)
 */
 
 /*QUAKED item_armor_green (0 .7 0) (-16 -16 -16) (16 16 16) SUSPENDED
@@ -2747,6 +2769,9 @@ scoreboardmusic : path/name of looping .wav file used for level's scoreboard mus
 _ambient OR ambient : Adds a constant value to overall lighting. Use is not recommended. Ambient light will have a tendency to flatten out variations in light and shade.
 _color : RGB value for ambient light color (default is 0 0 0).
 gravity : gravity of level (default is normal gravity: 800).
+haze : Q3Rally: haze of the map (OpenGL2): r g b distance [ground_distance ground_height ground_thickness [sun_glow]], e.g. 0.62 0.68 0.76 6000. Wins over q3r_haze in the sky shader.
+colorlut : Q3Rally: colour grading look of the map (OpenGL2), e.g. gfx/luts/warm; see gfx/luts for the looks. Without it the sky shader's q3r_colorLut or gfx/luts/q3r_default is used.
+wetness : Q3Rally: how wet the ground is without rain, 0 (dry, default) to 1 (soaked). The OpenGL2 renderer makes wet ground darker and adds reflections (puddles on asphalt). Inside a rally_weather_rain zone (only there) the ground gets wet while it rains in the zone and dries slowly afterwards.
 gridsize : granularity of the lightgrid created by q3map. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 128 128 256. Use larger powers of 2 to reduce BSP size and compile time on very large maps.
 _blocksize : q3map always splits the BSP tree along the planes X=_blocksize*n and Y=_blocksize*n. Default _blocksize value is 1024. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density.
 -------- Q3MAP2 KEYS --------

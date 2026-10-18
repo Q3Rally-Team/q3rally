@@ -16,7 +16,6 @@ models/mapobjects/watertower/plate01
                 rgbGen identity
        }
 
-
        {
 	        map textures/q3r_metals/plate01.tga
 		blendfunc GL_ONE GL_SRC_COLOR
@@ -34,7 +33,6 @@ models/mapobjects/watertower/plate02
                 rgbGen identity
        }
 
-
        {
 	        map textures/q3r_metals/plate01.tga
 		blendfunc GL_ONE GL_SRC_COLOR
@@ -42,7 +40,6 @@ models/mapobjects/watertower/plate02
        }
 
 }
-
 
 models/mapobjects/watertower/ferris
 
@@ -53,13 +50,11 @@ models/mapobjects/watertower/ferris
                 rgbGen identity
        }
 
-
        {
 	        map models/mapobjects/watertower/ferris.tga
 		blendfunc GL_ONE GL_SRC_COLOR
                 rgbGen vertex
        }
-
 
 }
 
@@ -108,7 +103,6 @@ models/mapobjects/ufo/ufo01
                 rgbGen identity
        }
 
-
        {
 	        map models/mapobjects/ufo/ufo01glow.tga
 		tcMod scroll 2.1 0
@@ -135,7 +129,6 @@ models/mapobjects/ufo/ufo01
 
 }
 
-
 models/mapobjects/ufo/ufo02
 
 {
@@ -151,22 +144,17 @@ models/mapobjects/ufo/ufo02
              rgbGen vertex
        }
 
-
-
 }
-
 
 models/mapobjects/ufo/ufo03
 
 {
-
 
      	{
 	        map textures/reflect/reflect.jpg
 		tcGen environment
                rgbGen identity
        }
-
 
        {
 	        map models/mapobjects/ufo/ufo03.tga
@@ -187,14 +175,6 @@ models/mapobjects/q3rtitle/q3rtitle_w
                 tcmod rotate 011
                 tcmod scroll .1 .01
 		tcGen environment
-	}
-}
-
-models/mapobjects/q3rtitle/q3rtitle
-{
-	{
-		map models/mapobjects/q3rtitle/q3rtitle_b.jpg
-		
 	}
 }
 
@@ -230,7 +210,6 @@ models/mapobjects/barrels/b_top03
 // leave this in for replacement model
 //=====================================
 
-
 models/mapobjects/spotlamp/spotlamp
 {
     cull disable
@@ -241,7 +220,6 @@ models/mapobjects/spotlamp/spotlamp
 		depthWrite
 		rgbGen vertex
         }
-
 
 }
 models/mapobjects/spotlamp/beam
@@ -275,30 +253,6 @@ models/mapobjects/spotlamp/spotlamp_l
 		rgbGen identity
         }
 
-
-}
-
-models/mapobjects/barrel/barrel2
-{
-	
-	{
-		Map models/mapobjects/barrel/barrel2.tga
-                rgbgen vertex
-               
-	}	
-        {
-		clampmap models/mapobjects/barrel/barrel2fx.tga
-		blendFunc GL_ONE GL_ONE
-               // rgbgen wave triangle 1 1.4 0 9.5
-                tcMod rotate 403
-	}	
-        {
-		clampmap models/mapobjects/barrel/barrel2fx.tga
-		blendFunc GL_ONE GL_ONE
-               // rgbgen wave triangle 1 1 0 8.7
-                tcMod rotate -100
-	}	
-	
 }
 
 //==========

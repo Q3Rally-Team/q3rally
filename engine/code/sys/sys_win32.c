@@ -926,3 +926,13 @@ Check if filename should be allowed to be loaded as a DLL.
 qboolean Sys_DllExtension( const char *name ) {
 	return COM_CompareExtension( name, DLL_EXT );
 }
+
+/*
+=================
+Sys_SetMaxFileLimit
+=================
+*/
+qboolean Sys_SetMaxFileLimit( void )
+{
+	return qtrue;
+}

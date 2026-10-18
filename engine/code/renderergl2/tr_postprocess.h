@@ -29,5 +29,8 @@ void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, in
 void RB_BokehBlur(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, float blur);
 void RB_SunRays(FBO_t *srcFbo, ivec4_t srcBox, FBO_t *dstFbo, ivec4_t dstBox);
 void RB_GaussianBlur(FBO_t *srcFbo, FBO_t *dstFbo, float blur);
+void RB_Bloom(FBO_t *srcFbo, ivec4_t srcBox);
+void RB_Fxaa(FBO_t *srcFbo, ivec4_t srcBox);
+void RB_MotionBlur(FBO_t *srcFbo, ivec4_t srcBox);
 
 #endif

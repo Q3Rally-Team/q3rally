@@ -276,6 +276,8 @@ vmCvar_t	cg_developer;
 
 // cutom variable used in modified atmospheric effects from q3f
 vmCvar_t	cg_atmosphericLevel;
+vmCvar_t	cg_mapEffects;
+vmCvar_t	cg_tireSmoke;
 vmCvar_t	cg_weatherAudio;
 
 vmCvar_t	cg_fpsLimit;
@@ -431,6 +433,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_developer, "developer", "0", 0 },
 
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
+	{ &cg_mapEffects, "cg_mapEffects", "1", CVAR_ARCHIVE },
+	{ &cg_tireSmoke, "cg_tireSmoke", "1", CVAR_ARCHIVE },
 	{ &cg_weatherAudio, "cg_weatherAudio", "1", CVAR_ARCHIVE },
 
 
@@ -1198,6 +1202,7 @@ static void CG_RegisterGraphics( void ) {
 // Q3Rally Code Start
 	cgs.media.hasteShader = trap_R_RegisterShader("powerups/haste" );
 	cgs.media.shieldShader = trap_R_RegisterShader("powerups/shield" );
+	cgs.media.nosShader = trap_R_RegisterShader("powerups/nos" );
 // Q3Rally Code END
 	cgs.media.battleWeaponShader = trap_R_RegisterShader("powerups/battleWeapon" );
 	cgs.media.invisShader = trap_R_RegisterShader("powerups/invisibility" );
@@ -1388,7 +1393,6 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.debrisstone5 = trap_R_RegisterModel( "models/debris/stone_5.md3" );
 
 	cgs.media.fireModel = trap_R_RegisterModel( "models/rearfire/flametrail.md3" );
-	cgs.media.turboModel = trap_R_RegisterModel( "models/powerups/turbo/turbocar.md3" );
 
 	cgs.media.headLightGlow = trap_R_RegisterModel( "gfx/flares/h_lite.md3" );
 	cgs.media.brakeLightGlow = trap_R_RegisterModel( "gfx/flares/b_lite.md3" );
@@ -1467,6 +1471,13 @@ static void CG_RegisterGraphics( void ) {
 
 // can be used by HUD so always load it
 	CG_RegisterItemVisuals( 6 /* item_health_large */ );
+
+	// Q3Rally: rear weapons can be handed out without a pickup in the map
+	// (give, game modes); their models and effects (mine explosion, smoke)
+	// must be there before the first shot
+	for ( i = RWP_SMOKE ; i < WP_NUM_WEAPONS ; i++ ) {
+		CG_RegisterWeapon( i );
+	}
 
 // wall marks
 	cgs.media.bulletMarkShader = trap_R_RegisterShader( "gfx/damage/bullet_mrk" );
@@ -2449,6 +2460,17 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_InitLocalEntities();
 
 	CG_InitMarkPolys();
+
+	// Q3Rally: waterfall spray and other map effects (rally_fx_*)
+	CG_InitRallyFX();
+
+	// Q3Rally: set by the renderer when the world was loaded
+	{
+		char buf[16];
+
+		trap_Cvar_VariableStringBuffer( "r_sunShadowsActive", buf, sizeof( buf ) );
+		cgs.sunShadows = atoi( buf ) != 0;
+	}
 
 // Q3Rally Code Start
 	size = trap_MemoryRemaining();

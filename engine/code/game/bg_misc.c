@@ -720,7 +720,7 @@ Refills vehicle fuel.
 		"models/powerups/turbo/turbogear.md3",
 		NULL, NULL},
 		"icons/turbo",				// icons
-		"Turbo",					// pickup
+		"NOS",						// pickup
 		5,
 		IT_POWERUP,
 		PW_TURBO,

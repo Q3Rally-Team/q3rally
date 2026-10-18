@@ -51,7 +51,8 @@ ifndef BUILD_AUTOUPDATER  # DON'T build unless you mean to!
 endif
 
 # ioquake3 git commit that this is based on
-# IOQ3_REVISION = c9697a01
+# IOQ3_REVISION = d8b1769d
+# plus selected later ioquake3 commits (libraries as of 1a4abaca), see changelog.txt
 
 #############################################################################
 #
@@ -289,9 +290,9 @@ BLIBDIR=$(MOUNT_DIR)/botlib
 NDIR=$(MOUNT_DIR)/null
 UIDIR=$(MOUNT_DIR)/ui
 Q3UIDIR=$(MOUNT_DIR)/q3_ui
-JPDIR=$(MOUNT_DIR)/jpeg-8c
-OGGDIR=$(MOUNT_DIR)/libogg-1.3.3
-VORBISDIR=$(MOUNT_DIR)/libvorbis-1.3.6
+JPDIR=$(MOUNT_DIR)/jpeg-9f
+OGGDIR=$(MOUNT_DIR)/libogg-1.3.6
+VORBISDIR=$(MOUNT_DIR)/libvorbis-1.3.7
 MADDIR=$(MOUNT_DIR)/thirdparty/libmad-0.15.1b
 MAD_SOURCES=$(wildcard $(MADDIR)/*.c)
 MAD_OBJECTS=$(patsubst $(MADDIR)/%.c,$(B)/client/libmad/%.o,$(MAD_SOURCES))
@@ -314,10 +315,11 @@ BULLET_LINK_LIBS=-static-libstdc++ -static-libgcc
 else
 BULLET_LINK_LIBS=-lstdc++
 endif
-OPUSDIR=$(MOUNT_DIR)/opus-1.2.1
-OPUSFILEDIR=$(MOUNT_DIR)/opusfile-0.9
+OPUSDIR=$(MOUNT_DIR)/opus-1.5.2
+OPUSFILEDIR=$(MOUNT_DIR)/opusfile-0.12
+OPENALDIR=$(MOUNT_DIR)/openal-soft-1.24.3
 THEORADIR=$(MOUNT_DIR)/libtheora-1.1.1
-ZDIR=$(MOUNT_DIR)/zlib
+ZDIR=$(MOUNT_DIR)/zlib-1.3.1
 TOOLSDIR=$(MOUNT_DIR)/tools
 Q3ASMDIR=$(MOUNT_DIR)/tools/asm
 LBURGDIR=$(MOUNT_DIR)/tools/lcc/lburg
@@ -330,7 +332,7 @@ TOMSFASTMATHSRCDIR=$(AUTOUPDATERSRCDIR)/rsa_tools/tomsfastmath-0.13.1
 LOKISETUPDIR=misc/setup
 NSISDIR=misc/nsis
 WEBDIR=$(MOUNT_DIR)/web
-SDLHDIR=$(MOUNT_DIR)/SDL2
+SDLHDIR=$(MOUNT_DIR)/SDL2-2.32.8
 LIBSDIR=$(MOUNT_DIR)/libs
 SERVER_LIBS =
 
@@ -505,34 +507,7 @@ ifeq ($(PLATFORM),darwin)
 
   # Default minimum Mac OS X version
   ifeq ($(MACOSX_VERSION_MIN),)
-    MACOSX_VERSION_MIN=10.9
-    ifneq ($(findstring $(ARCH),ppc ppc64),)
-      MACOSX_VERSION_MIN=10.5
-    endif
-    ifeq ($(ARCH),x86)
-      MACOSX_VERSION_MIN=10.6
-    endif
-    ifeq ($(ARCH),x86_64)
-      # trying to find default SDK version is hard
-      # macOS 10.15 requires -sdk macosx but 10.11 doesn't support it
-      # macOS 10.6 doesn't have -show-sdk-version
-      DEFAULT_SDK=$(shell xcrun -sdk macosx -show-sdk-version 2> /dev/null)
-      ifeq ($(DEFAULT_SDK),)
-        DEFAULT_SDK=$(shell xcrun -show-sdk-version 2> /dev/null)
-      endif
-      ifeq ($(DEFAULT_SDK),)
-        $(error Error: Unable to determine macOS SDK version.  On macOS 10.6 to 10.8 run: make MACOSX_VERSION_MIN=10.6  On macOS 10.9 or later run: make MACOSX_VERSION_MIN=10.9 );
-      endif
-
-      ifneq ($(findstring $(DEFAULT_SDK),10.6 10.7 10.8),)
-        MACOSX_VERSION_MIN=10.6
-      else
-        MACOSX_VERSION_MIN=10.9
-      endif
-    endif
-    ifeq ($(ARCH),arm64)
-      MACOSX_VERSION_MIN=11.0
-    endif
+    MACOSX_VERSION_MIN=11.0
   endif
 
   MACOSX_MAJOR=$(shell echo $(MACOSX_VERSION_MIN) | cut -d. -f1)
@@ -550,24 +525,6 @@ ifeq ($(PLATFORM),darwin)
                  -DMAC_OS_X_VERSION_MIN_REQUIRED=$(MAC_OS_X_VERSION_MIN_REQUIRED)
 
   MACOSX_ARCH=$(ARCH)
-  ifeq ($(ARCH),x86)
-    MACOSX_ARCH=i386
-  endif
-
-  ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -arch ppc
-    ALTIVEC_CFLAGS = -faltivec
-  endif
-  ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -arch ppc64
-    ALTIVEC_CFLAGS = -faltivec
-  endif
-  ifeq ($(ARCH),x86)
-    OPTIMIZEVM += -march=prescott -mfpmath=sse
-    # x86 vm will crash without -mstackrealign since MMX instructions will be
-    # used no matter what and they corrupt the frame pointer in VM calls
-    BASE_CFLAGS += -arch i386 -m32 -mstackrealign
-  endif
   ifeq ($(ARCH),x86_64)
     OPTIMIZEVM += -mfpmath=sse
     BASE_CFLAGS += -arch x86_64
@@ -645,39 +602,15 @@ ifeq ($(PLATFORM),darwin)
   RENDERER_LIBS += -framework OpenGL
 
   ifeq ($(USE_LOCAL_HEADERS),1)
-    ifeq ($(shell test $(MAC_OS_X_VERSION_MIN_REQUIRED) -ge 1090; echo $$?),0)
-      # Universal Binary 2 - for running on macOS 10.9 or later
-      # x86_64 (10.9 or later), arm64 (11.0 or later)
-      MACLIBSDIR=$(LIBSDIR)/macosx-ub2
-      BASE_CFLAGS += -I$(SDLHDIR)/include
-    else
-      # Universal Binary - for running on Mac OS X 10.5 or later
-      # ppc (10.5/10.6), x86 (10.6 or later), x86_64 (10.6 or later)
-      #
-      # x86/x86_64 on 10.5 will run the ppc build.
-      #
-      # SDL 2.0.1,  last with Mac OS X PowerPC
-      # SDL 2.0.4,  last with Mac OS X 10.5 (x86/x86_64)
-      # SDL 2.0.22, last with Mac OS X 10.6 (x86/x86_64)
-      #
-      # code/libs/macosx-ub/libSDL2-2.0.0.dylib contents
-      # - ppc build is SDL 2.0.1 with a header change so it compiles
-      # - x86/x86_64 build are SDL 2.0.22
-      MACLIBSDIR=$(LIBSDIR)/macosx-ub
-      ifneq ($(findstring $(ARCH),ppc ppc64),)
-        BASE_CFLAGS += -I$(SDLHDIR)/include-macppc
-      else
-        BASE_CFLAGS += -I$(SDLHDIR)/include-2.0.22
-      endif
-    endif
+    BASE_CFLAGS += -I$(SDLHDIR)/include
 
     # We copy sdlmain before ranlib'ing it so that subversion doesn't think
     #  the file has been modified by each build.
-    LIBSDLMAIN=$(B)/libSDL2main.a
-    LIBSDLMAINSRC=$(MACLIBSDIR)/libSDL2main.a
-    CLIENT_LIBS += $(MACLIBSDIR)/libSDL2-2.0.0.dylib
-    RENDERER_LIBS += $(MACLIBSDIR)/libSDL2-2.0.0.dylib
-    CLIENT_EXTRA_FILES += $(MACLIBSDIR)/libSDL2-2.0.0.dylib
+    LIBSDLMAIN = $(B)/libSDL2main.a
+    LIBSDLMAINSRC = $(LIBSDIR)/macos/libSDL2main.a
+    CLIENT_LIBS += $(LIBSDIR)/macos/libSDL2-2.0.0.dylib
+    RENDERER_LIBS += $(LIBSDIR)/macos/libSDL2-2.0.0.dylib
+    CLIENT_EXTRA_FILES += $(LIBSDIR)/macos/libSDL2-2.0.0.dylib
   else
     BASE_CFLAGS += -I/Library/Frameworks/SDL2.framework/Headers
     CLIENT_LIBS += -framework SDL2
@@ -862,12 +795,12 @@ ifdef MINGW
     SDLDLL=SDL2.dll
     CLIENT_EXTRA_FILES += $(LIBSDIR)/win32/SDL2.dll
     else
-    CLIENT_LIBS += $(LIBSDIR)/win64/libSDL264main.a \
-                      $(LIBSDIR)/win64/libSDL264.dll.a
-    RENDERER_LIBS += $(LIBSDIR)/win64/libSDL264main.a \
-                      $(LIBSDIR)/win64/libSDL264.dll.a
-    SDLDLL=SDL264.dll
-    CLIENT_EXTRA_FILES += $(LIBSDIR)/win64/SDL264.dll
+    CLIENT_LIBS += $(LIBSDIR)/win64/libSDL2main.a \
+                      $(LIBSDIR)/win64/libSDL2.dll.a
+    RENDERER_LIBS += $(LIBSDIR)/win64/libSDL2main.a \
+                      $(LIBSDIR)/win64/libSDL2.dll.a
+    SDLDLL=SDL2.dll
+    CLIENT_EXTRA_FILES += $(LIBSDIR)/win64/SDL2.dll
     endif
   else
     CLIENT_CFLAGS += $(SDL_CFLAGS)
@@ -1337,6 +1270,9 @@ ifeq ($(PLATFORM),emscripten)
 endif
 
 ifeq ($(USE_OPENAL),1)
+  ifeq ($(USE_LOCAL_HEADERS),1)
+    CLIENT_CFLAGS += -I$(OPENALDIR)/include
+  endif
   CLIENT_CFLAGS += -DUSE_OPENAL
   ifeq ($(USE_OPENAL_DLOPEN),1)
     CLIENT_CFLAGS += -DUSE_OPENAL_DLOPEN
@@ -2179,10 +2115,28 @@ Q3R2STRINGOBJ = \
   $(B)/renderergl2/glsl/shadowfill_vp.o \
   $(B)/renderergl2/glsl/shadowmask_fp.o \
   $(B)/renderergl2/glsl/shadowmask_vp.o \
+  $(B)/renderergl2/glsl/lampshadow_fp.o \
+  $(B)/renderergl2/glsl/lampshadow_vp.o \
+  $(B)/renderergl2/glsl/bloom_fp.o \
+  $(B)/renderergl2/glsl/bloom_vp.o \
+  $(B)/renderergl2/glsl/fxaa_fp.o \
+  $(B)/renderergl2/glsl/fxaa_vp.o \
+  $(B)/renderergl2/glsl/spotlight_fp.o \
+  $(B)/renderergl2/glsl/spotlight_vp.o \
+  $(B)/renderergl2/glsl/carreflect_fp.o \
+  $(B)/renderergl2/glsl/carreflect_vp.o \
+  $(B)/renderergl2/glsl/motionblur_fp.o \
+  $(B)/renderergl2/glsl/motionblur_vp.o \
+  $(B)/renderergl2/glsl/wetground_fp.o \
+  $(B)/renderergl2/glsl/wetground_vp.o \
+  $(B)/renderergl2/glsl/haze_fp.o \
+  $(B)/renderergl2/glsl/haze_vp.o \
   $(B)/renderergl2/glsl/ssao_fp.o \
   $(B)/renderergl2/glsl/ssao_vp.o \
   $(B)/renderergl2/glsl/texturecolor_fp.o \
   $(B)/renderergl2/glsl/texturecolor_vp.o \
+  $(B)/renderergl2/glsl/water_fp.o \
+  $(B)/renderergl2/glsl/water_vp.o \
   $(B)/renderergl2/glsl/tonemap_fp.o \
   $(B)/renderergl2/glsl/tonemap_vp.o
 
@@ -2347,6 +2301,7 @@ Q3OBJ += \
   $(B)/client/opus/opus_multistream_encoder.o \
   $(B)/client/opus/opus_multistream_decoder.o \
   $(B)/client/opus/repacketizer.o \
+  $(B)/client/opus/extensions.o \
   \
   $(B)/client/opus/bands.o \
   $(B)/client/opus/celt.o \
@@ -2786,6 +2741,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/cg_rally_racingline.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_rearweapons.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_scripted_objects.o \
+  $(B)/$(BASEGAME)/cgame/cg_rally_fx.o \
   $(B)/$(BASEGAME)/cgame/cg_autoball.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_tools.o \
   $(B)/$(BASEGAME)/cgame/cg_rally_intro_cam.o \

@@ -58,6 +58,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // refdef flags
 #define RDF_NOWORLDMODEL	0x0001		// used for player configuration screen
 #define RDF_HYPERSPACE		0x0004		// teleportation effect
+#define RDF_NOS				0x0040		// Q3Rally: the viewed car burns NOS (stronger motion blur)
+
+// Q3Rally: AddSpotLightToScene flags
+#define SPOTLIGHT_NOSHADOW	0x0001		// never gets a shadow map (tail, brake and reverse lights)
 
 typedef struct {
 	vec3_t		xyz;
@@ -123,6 +127,8 @@ typedef struct {
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32
 
+#define	MAX_WET_ZONES	8		// Q3Rally: rain zones in refdef_t
+
 typedef struct {
 	int			x, y, width, height;
 	float		fov_x, fov_y;
@@ -139,6 +145,15 @@ typedef struct {
 
 	// text messages for deform text shaders
 	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
+
+	// Q3Rally: how wet the ground is (0 = dry, 1 = soaked) everywhere, from
+	// the map; the OpenGL2 renderer darkens it and adds reflections
+	float		wetness;
+
+	// Q3Rally: rain zones, wet inside their box: mins, wetness, maxs,
+	// 1 while it rains there (drop rings in the puddles)
+	int			numWetZones;
+	float		wetZones[MAX_WET_ZONES][8];
 } refdef_t;
 
 

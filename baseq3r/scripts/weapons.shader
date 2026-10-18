@@ -100,7 +100,6 @@ f_bfg2
 	}
 }
 
-
 BFGNexus
 {
 	deformVertexes autoSprite
@@ -146,7 +145,6 @@ BFGTrail
 // ------------------------------------------------------------
 // 2.Lightning Gun
 // ------------------------------------------------------------
-
 
 lightningBoltnew
 {
@@ -288,7 +286,6 @@ textures/sfx/xflame2
 	cull none
 	q3map_surfacelight 5500
 	qer_editorimage textures/sfx/flame1.tga
-	
 
 	{
 		animMap 10 textures/sfx/flame1.tga textures/sfx/flame2.tga textures/sfx/flame3.tga textures/sfx/flame4.tga textures/sfx/flame5.tga textures/sfx/flame6.tga textures/sfx/flame7.tga textures/sfx/flame8.tga
@@ -301,7 +298,6 @@ textures/sfx/xflame2
 		blendFunc GL_ONE GL_ONE
 		rgbGen wave sawtooth 0 1 0 10
 	}	
-
 
 	{
 		map textures/sfx/flameball.tga
@@ -594,7 +590,6 @@ models/weapons2/shells/mgunshell
 		
 	}
 }
-
 
 models/weapons2/shells/mgunshell_2
 {
@@ -894,40 +889,6 @@ models/weapons2/railgun/blackhandle
 	}
 }
 
-models/weapons2/railgun/muzzlside
-{
-	cull disable
-	{
-		map models/weapons2/railgun/muzzlside.tga
-		blendfunc add
-	}
-}
-
-models/weapons2/railgun/muzzlecenter
-{
-	deformVertexes autosprite
-	{
-		clampmap models/weapons2/railgun/f_plasma.tga
-		blendfunc add
-		tcMod rotate 1246
-	}
-	{
-		clampmap models/weapons2/railgun/f_railgun.tga
-		blendfunc add
-		tcMod rotate -1246
-	}
-}
-
-models/weapons2/railgun/flare
-{
-	deformVertexes autosprite
-	{
-		map models/weapons2/railgun/flare.tga
-		blendfunc add
-		rgbGen wave noise 0.5 0.5 0 1 
-	}
-}
-
 models/weapons2/railgun/skin
 {
 	{
@@ -1140,21 +1101,6 @@ cmuz_rck_fuzz4
 	}
 }
 
-rocketProjectile
-{
-
-	{
-		map	models/ammo/rocket/rocket.tga
-	rgbGen lightingDiffuse
-	}
-	{
-		map models/weapons2/machinegun/woodspec.tga
-		blendfunc gl_dst_color gl_src_color
-		//rgbGen lightingDiffuse
-		tcGen environment 
-	}
-}
-
 rocketThrustf
 {
 	deformVertexes autosprite2
@@ -1191,7 +1137,6 @@ rocketFlare
 // 10.Shotgun
 // ------------------------------------------------------------
 
-
 models/weapons2/shotgun/shotgun
 {
     {
@@ -1205,7 +1150,6 @@ models/weapons2/shotgun/shotgun
         alphaGen lightingSpecular
     }
 }
-
 
 models/weapons2/shells/sgunshell_2
 {
@@ -1336,7 +1280,6 @@ models/rearfire/flametrail02
 		rgbGen wave sawtooth 0 1 0 10
 	}	
 
-
 	{
 		map textures/sfx/flameball.tga
 		blendFunc GL_ONE GL_ONE
@@ -1363,7 +1306,6 @@ models/rearfire/flametrail01
 		blendFunc GL_ONE GL_ONE
 		rgbGen wave sawtooth 0 1 0 10
 	}	
-
 
 	{
 		map textures/sfx/flameball.tga

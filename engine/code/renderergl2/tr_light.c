@@ -374,6 +374,27 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 		VectorSubtract( dl->origin, lightOrigin, dir );
 		d = VectorNormalize( dir );
 
+		// Q3Rally: a spot light (headlights) only lights models inside its
+		// cone and within its radius; the car it belongs to is behind it
+		if ( dl->spotCosOuter > -1.0f ) {
+			float c = -DotProduct( dir, dl->spotDir );
+			float cone, fall;
+
+			if ( c <= dl->spotCosOuter || d >= dl->radius ) {
+				continue;
+			}
+			cone = ( c - dl->spotCosOuter ) / ( dl->spotCosInner - dl->spotCosOuter );
+			if ( cone > 1.0f ) {
+				cone = 1.0f;
+			}
+			fall = 1.0f - d / dl->radius;
+			d = 255.0f * r_headlightIntensity->value * cone * fall * fall;
+
+			VectorMA( ent->directedLight, d, dl->color, ent->directedLight );
+			VectorMA( lightDir, d, dir, lightDir );
+			continue;
+		}
+
 		power = DLIGHT_AT_RADIUS * ( dl->radius * dl->radius );
 		if ( d < DLIGHT_MINIMUM_RADIUS ) {
 			d = DLIGHT_MINIMUM_RADIUS;

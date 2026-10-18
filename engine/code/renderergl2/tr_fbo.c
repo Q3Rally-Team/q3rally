@@ -310,6 +310,14 @@ void FBO_Init(void)
 		qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	}
 
+	// Q3Rally: target for the mirror view of q3r_water surfaces
+	if (tr.waterReflectionImage)
+	{
+		tr.waterReflectionFbo = FBO_Create("_waterReflection", tr.waterReflectionImage->width, tr.waterReflectionImage->height);
+		FBO_AttachImage(tr.waterReflectionFbo, tr.waterReflectionImage, GL_COLOR_ATTACHMENT0, 0);
+		R_CheckFBO(tr.waterReflectionFbo);
+	}
+
 	if (tr.screenScratchImage)
 	{
 		tr.screenScratchFbo = FBO_Create("screenScratch", tr.screenScratchImage->width, tr.screenScratchImage->height);
@@ -351,6 +359,35 @@ void FBO_Init(void)
 		}
 	}
 
+	// Q3Rally: lamp shadow maps
+	if (tr.lampShadowImage[0])
+	{
+		for (i = 0; i < MAX_LAMP_SHADOWS; i++)
+		{
+			tr.lampShadowFbo[i] = FBO_Create("_lampshadow", tr.lampShadowImage[i]->width, tr.lampShadowImage[i]->height);
+			FBO_CreateBuffer(tr.lampShadowFbo[i], GL_RGBA8, 0, 0);
+			FBO_AttachImage(tr.lampShadowFbo[i], tr.lampShadowImage[i], GL_DEPTH_ATTACHMENT, 0);
+			R_CheckFBO(tr.lampShadowFbo[i]);
+
+			tr.lampWorldFbo[i] = FBO_Create("_lampworld", tr.lampWorldImage[i]->width, tr.lampWorldImage[i]->height);
+			FBO_CreateBuffer(tr.lampWorldFbo[i], GL_RGBA8, 0, 0);
+			FBO_AttachImage(tr.lampWorldFbo[i], tr.lampWorldImage[i], GL_DEPTH_ATTACHMENT, 0);
+			R_CheckFBO(tr.lampWorldFbo[i]);
+		}
+	}
+
+	// Q3Rally: headlight shadow maps
+	if (tr.spotShadowImage[0])
+	{
+		for (i = 0; i < MAX_SPOT_SHADOWS; i++)
+		{
+			tr.spotShadowFbo[i] = FBO_Create(va("_spotshadow%d", i), tr.spotShadowImage[i]->width, tr.spotShadowImage[i]->height);
+			FBO_CreateBuffer(tr.spotShadowFbo[i], GL_RGBA8, 0, 0);
+			FBO_AttachImage(tr.spotShadowFbo[i], tr.spotShadowImage[i], GL_DEPTH_ATTACHMENT, 0);
+			R_CheckFBO(tr.spotShadowFbo[i]);
+		}
+	}
+
 	if (tr.screenShadowImage)
 	{
 		tr.screenShadowFbo = FBO_Create("_screenshadow", tr.screenShadowImage->width, tr.screenShadowImage->height);
@@ -382,6 +419,17 @@ void FBO_Init(void)
 		R_CheckFBO(tr.targetLevelsFbo);
 	}
 
+	// Q3Rally: bloom
+	if (tr.bloomImage[0])
+	{
+		for (i = 0; i < 4; i++)
+		{
+			tr.bloomFbo[i] = FBO_Create(va("_bloom%d", i), tr.bloomImage[i]->width, tr.bloomImage[i]->height);
+			FBO_AttachImage(tr.bloomFbo[i], tr.bloomImage[i], GL_COLOR_ATTACHMENT0, 0);
+			R_CheckFBO(tr.bloomFbo[i]);
+		}
+	}
+
 	if (tr.quarterImage[0])
 	{
 		for (i = 0; i < 2; i++)
@@ -404,6 +452,24 @@ void FBO_Init(void)
 		tr.screenSsaoFbo = FBO_Create("_screenssao", tr.screenSsaoImage->width, tr.screenSsaoImage->height);
 		FBO_AttachImage(tr.screenSsaoFbo, tr.screenSsaoImage, GL_COLOR_ATTACHMENT0, 0);
 		R_CheckFBO(tr.screenSsaoFbo);
+	}
+
+	// Q3Rally: last frame's scene for the wet ground
+	if (tr.wetSceneImage)
+	{
+		tr.wetSceneFbo = FBO_Create("_wetScene", tr.wetSceneImage->width, tr.wetSceneImage->height);
+		FBO_AttachImage(tr.wetSceneFbo, tr.wetSceneImage, GL_COLOR_ATTACHMENT0, 0);
+		R_CheckFBO(tr.wetSceneFbo);
+	}
+	tr.wetSceneValid = qfalse;
+
+	// Q3Rally: car reflection cube map, the side is attached when it is rendered
+	if (tr.carReflectImage)
+	{
+		tr.carReflectFbo = FBO_Create("_carReflectFbo", tr.carReflectImage->width, tr.carReflectImage->height);
+		FBO_AttachImage(tr.carReflectFbo, tr.carReflectImage, GL_COLOR_ATTACHMENT0, 0);
+		FBO_CreateBuffer(tr.carReflectFbo, GL_DEPTH_COMPONENT24_ARB, 0, 0);
+		R_CheckFBO(tr.carReflectFbo);
 	}
 
 	if (tr.renderCubeImage)
@@ -661,13 +727,13 @@ void FBO_FastBlit(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, int bu
 		if (scissorBox[2] < 0)
 		{
 			scissorBox[0] += scissorBox[2];
-			scissorBox[2] = fabsf(scissorBox[2]);
+			scissorBox[2] = abs(scissorBox[2]);
 		}
 
 		if (scissorBox[3] < 0)
 		{
 			scissorBox[1] += scissorBox[3];
-			scissorBox[3] = fabsf(scissorBox[3]);
+			scissorBox[3] = abs(scissorBox[3]);
 		}
 
 		qglScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);

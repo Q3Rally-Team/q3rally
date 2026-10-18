@@ -13420,3 +13420,42 @@ brushDef
 "angle" "92.3008"
 "targetname" "cp9"
 }
+// entity 148
+{
+"classname" "rally_fx_spray"
+"origin" "-1956 -3036 98"
+"radius" "48"
+"rate" "24"
+"angle" "180"
+"push" "50"
+}
+// entity 149
+{
+"classname" "rally_fx_spray"
+"origin" "-1952 -3100 144"
+"radius" "36"
+"rate" "14"
+"droplets" "24"
+"height" "120"
+"angle" "180"
+"push" "40"
+}
+// entity 150
+{
+"classname" "rally_fx_spray"
+"origin" "-1950 -2994 124"
+"radius" "24"
+"rate" "8"
+"droplets" "14"
+"height" "100"
+"size" "72"
+"angle" "180"
+"push" "40"
+}
+// entity 151
+{
+"classname" "target_speaker"
+"origin" "-1960 -3044 160"
+"noise" "sound/world/waterfall.ogg"
+"spawnflags" "1"
+}

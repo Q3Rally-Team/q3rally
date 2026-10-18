@@ -3094,6 +3094,12 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// fade the shadow out with height
 	alpha = 1.0 - trace.fraction;
 
+	// Q3Rally: with real-time sun shadows the blob only darkens the ground
+	// right under the car (contact shadow)
+	if ( cgs.sunShadows ) {
+		alpha *= 0.5f;
+	}
+
 	// hack / FPE - bogus planes?
 	//assert( DotProduct( trace.plane.normal, trace.plane.normal ) != 0.0f ) 
 
@@ -3252,6 +3258,12 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int te
 			ent->customShader = cgs.media.shieldShader;
 			trap_R_AddRefEntityToScene( ent );
 		}
+
+		// light blue shell while burning NOS, visible to everyone
+		if ( state->powerups & ( 1 << PW_TURBO ) ) {
+			ent->customShader = cgs.media.nosShader;
+			trap_R_AddRefEntityToScene( ent );
+		}
 // END
 		if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
 			ent->customShader = cgs.media.battleSuitShader;
@@ -3269,21 +3281,20 @@ static float surfaceColors[4][4] = {
 		{ 0.4f, 0.05f, 0.0f, 0.3f }		// fleshy
 };
 
-static void CG_AddTireSprayParticle( vec3_t origin, vec3_t dir, float speed, int radius, int duration, float r, float g, float b, float a, qhandle_t shader ) {
-	vec3_t			velocity;
-	localEntity_t	*le;
+/*
+===============
+CG_TireSmokeKind
 
-	VectorNormalize2( dir, velocity );
-	velocity[0] += crandom() * 0.08f;
-	velocity[1] += crandom() * 0.08f;
-	velocity[2] += crandom() * 0.05f;
-	VectorNormalize( velocity );
-	VectorScale( velocity, speed, velocity );
-
-	le = CG_SmokePuff( origin, velocity, radius, r, g, b, a, duration, cg.time, 0, LEF_PUFF_DONT_SCALE, shader );
-	if ( le ) {
-		le->refEntity.rotation = crandom() * 12.0f;
-	}
+Q3Rally: which smoke or dust a skidding tyre makes on this surface
+===============
+*/
+static int CG_TireSmokeKind( int surfaceFlags ) {
+	if ( surfaceFlags & SURF_DUST )		return FX_SMOKE_DUST;
+	if ( surfaceFlags & SURF_SAND )		return FX_SMOKE_SAND;
+	if ( surfaceFlags & SURF_GRASS )	return FX_SMOKE_GRASS;
+	if ( surfaceFlags & SURF_GRAVEL )	return FX_SMOKE_GRAVEL;
+	if ( surfaceFlags & SURF_DIRT )		return FX_SMOKE_DIRT;
+	return FX_SMOKE_TIRE;
 }
 
 /*
@@ -3303,7 +3314,6 @@ static void CG_AddWetTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int t
 	float		normalSpeed;
 	int			interval;
 	int			radius;
-	int			duration;
 	float		particleSpeed;
 	float		alpha;
 	float		backScale;
@@ -3329,7 +3339,6 @@ static void CG_AddWetTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int t
 
 	if ( frontAxle ) {
 		radius = 7 + (int)( normalSpeed * 6.0f ) + ( skidding ? 3 : 0 );
-		duration = 240 + (int)( normalSpeed * 120.0f ) + ( skidding ? 80 : 0 );
 		particleSpeed = 28.0f + normalSpeed * 38.0f + ( skidding ? 10.0f : 0.0f );
 		alpha = 0.34f + normalSpeed * 0.16f + ( skidding ? 0.10f : 0.0f );
 		backScale = -0.72f;
@@ -3337,7 +3346,6 @@ static void CG_AddWetTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int t
 		originLift = 3.0f + normalSpeed * 2.0f;
 	} else {
 		radius = 9 + (int)( normalSpeed * 9.0f ) + ( skidding ? 6 : 0 );
-		duration = 300 + (int)( normalSpeed * 170.0f ) + ( skidding ? 130 : 0 );
 		particleSpeed = 24.0f + normalSpeed * 34.0f + ( skidding ? 14.0f : 0.0f );
 		alpha = 0.44f + normalSpeed * 0.20f + ( skidding ? 0.16f : 0.0f );
 		backScale = -0.55f;
@@ -3350,7 +3358,9 @@ static void CG_AddWetTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int t
 	VectorNormalize( sprayDir );
 
 	VectorMA( origin, originLift, up, sprayOrigin );
-	CG_AddTireSprayParticle( sprayOrigin, sprayDir, particleSpeed, radius, duration, 0.88f, 0.94f, 1.0f, alpha, cgs.media.waterSprayFanShader );
+	// Q3Rally: soft, lit mist in the client particle pool
+	VectorScale( sprayDir, particleSpeed * 2.4f, sprayDir );
+	CG_FX_Spray( sprayOrigin, up, sprayDir, FX_SPRAY_WET, radius / 13.0f + alpha * 0.4f );
 	cent->wetSprayTime[tireNum] = cg.time + interval - (int)( normalSpeed * 25.0f );
 }
 
@@ -3370,7 +3380,6 @@ static void CG_AddSnowTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int 
 	float		normalSpeed;
 	int			interval;
 	int			radius;
-	int			duration;
 	float		particleSpeed;
 	float		alpha;
 	float		backScale;
@@ -3396,7 +3405,6 @@ static void CG_AddSnowTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int 
 
 	if ( frontAxle ) {
 		radius = 8 + (int)( normalSpeed * 7.0f ) + ( skidding ? 3 : 0 );
-		duration = 320 + (int)( normalSpeed * 150.0f ) + ( skidding ? 90 : 0 );
 		particleSpeed = 18.0f + normalSpeed * 24.0f + ( skidding ? 8.0f : 0.0f );
 		alpha = 0.34f + normalSpeed * 0.16f + ( skidding ? 0.10f : 0.0f );
 		backScale = -0.62f;
@@ -3404,7 +3412,6 @@ static void CG_AddSnowTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int 
 		originLift = 3.5f + normalSpeed * 2.5f;
 	} else {
 		radius = 11 + (int)( normalSpeed * 11.0f ) + ( skidding ? 6 : 0 );
-		duration = 420 + (int)( normalSpeed * 220.0f ) + ( skidding ? 150 : 0 );
 		particleSpeed = 20.0f + normalSpeed * 30.0f + ( skidding ? 12.0f : 0.0f );
 		alpha = 0.46f + normalSpeed * 0.22f + ( skidding ? 0.16f : 0.0f );
 		backScale = -0.48f;
@@ -3417,7 +3424,9 @@ static void CG_AddSnowTireSpray( centity_t *cent, vec3_t origin, vec3_t up, int 
 	VectorNormalize( sprayDir );
 
 	VectorMA( origin, originLift, up, sprayOrigin );
-	CG_AddTireSprayParticle( sprayOrigin, sprayDir, particleSpeed, radius, duration, 0.92f, 0.96f, 1.0f, alpha, cgs.media.snowSprayFanShader );
+	// Q3Rally: soft, lit powder in the client particle pool
+	VectorScale( sprayDir, particleSpeed * 2.4f, sprayDir );
+	CG_FX_Spray( sprayOrigin, up, sprayDir, FX_SPRAY_SNOW, radius / 14.0f + alpha * 0.4f );
 	cent->wetSprayTime[tireNum] = cg.time + interval - (int)( normalSpeed * 20.0f );
 }
 
@@ -3527,6 +3536,7 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 	qboolean		wetSurface;
 	qboolean		snowSurface;
 	qboolean		skidding;
+	qboolean		ribbon = qfalse;
 
 	VectorMA(curOrigin, -(WHEEL_RADIUS * 2.0f), up, end);
 	CG_Trace(&tr, curOrigin, NULL, NULL, end, cent->currentState.number, CONTENTS_SOLID);
@@ -3535,8 +3545,10 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 	VectorSubtract(cent->lastSkidOrigin[tireNum], curOrigin, delta);
 	skidding = cent->wheelSkidding[tireNum];
 
-	if (tr.surfaceFlags & SURF_SKY)
+	if (tr.surfaceFlags & SURF_SKY) {
+		CG_SkidRibbonStop( cent, tireNum );
 		return;
+	}
 
 	// teleportFlag - teleported so dont use old skid origin
 	if ( !CG_AddSplash(cent, curOrigin) && tr.fraction != 1.0 && !cent->teleportFlag ){
@@ -3597,28 +3609,31 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 		if ( skidding && shader >= 0 ){
 			length = VectorLength(delta) / 2;
 
+			// Q3Rally: continuous skid mark ribbon
+			CG_SkidRibbon( cent, tireNum, shader, tr.endpos, tr.plane.normal );
+			ribbon = qtrue;
+
 			// create smoke even if we arent moving because the car is being stopped from moving
 			if ( cent->smokeTime[tireNum] < cg.time ) {
 				if ( snowSurface ) {
 					// snow surface: powder spray instead of smoke
 					VectorMA( tr.endpos, 7.0f, up, origin );
-					CG_AddTireSprayParticle(origin, up, 24, 14, 480, 0.92f, 0.96f, 1.0f, 0.62f, cgs.media.snowSprayPuffShader);
+					CG_FX_Spray( origin, up, vec3_origin, FX_SPRAY_SNOW, 1.2f );
 				} else if ( wetSurface ) {
 					// wet surface: spray instead of smoke — fast, small, bluish-white, short-lived
 					VectorMA( tr.endpos, 7.0f, up, origin );
-					CG_AddTireSprayParticle(origin, up, 28, 13, 380, 0.88f, 0.94f, 1.0f, 0.58f, cgs.media.waterSprayPuffShader);
-				} else if ( tr.surfaceFlags & SURF_DUST ) {
-					CreateSmokeCloudEntity(tr.endpos, up, 20, 48, 2000, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], surfaceColors[colorIndex][3], cgs.media.smokePuffShader);
+					CG_FX_Spray( origin, up, vec3_origin, FX_SPRAY_WET, 1.1f );
 				} else if ( tr.surfaceFlags & SURF_ICE ) {
 					CreateSmokeCloudEntity(tr.endpos, up, 10, 8, 500, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], 0.6f, cgs.media.snowPuffShader);
 				} else {
-					CreateSmokeCloudEntity(tr.endpos, up, 20, 12, 1000, surfaceColors[colorIndex][0], surfaceColors[colorIndex][1], surfaceColors[colorIndex][2], surfaceColors[colorIndex][3], cgs.media.smokePuffShader);
+					// Q3Rally: billowing tyre smoke, or dust on loose ground
+					CG_FX_TireSmoke( tr.endpos, up, cent->currentState.pos.trDelta, CG_TireSmokeKind( tr.surfaceFlags ), 1.0f );
 				}
-				cent->smokeTime[tireNum] = cg.time + 100;
+				cent->smokeTime[tireNum] = cg.time + 60;
 			}
 
 			if (length < cg_minSkidLength.integer){
-				return;
+				return;		// (the ribbon keeps going, see above)
 			}
 
 			VectorMA(curOrigin, 1/2.0F, delta, origin);
@@ -3631,28 +3646,36 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				cent->skidSoundTime = cg.time;
 			}
 
-			VectorNormalize(delta);
-
-			CG_SkidMark( shader, origin, tr.plane.normal, delta, 1,1,1,1, qfalse, 8.0F, length, qfalse );
+		}
+		else if ( wetSurface ) {
+			// Q3Rally: wet ground makes no dust, only the spray above
 		}
 		else if ( tr.surfaceFlags & SURF_DUST ){
+			// Q3Rally: rolling tyres throw up dust, more with speed
 			if ( VectorLength(delta) > 5 && cent->smokeTime[tireNum] < cg.time ){
-				CreateSmokeCloudEntity( tr.endpos, up, 20, 36, 1500, surfaceColors[colorIndex][0] * 1.3f, surfaceColors[colorIndex][1] * 1.3f, surfaceColors[colorIndex][2] * 1.3f, 0.8f, cgs.media.dustPuffShader);
-				cent->smokeTime[tireNum] = cg.time + 100;
+				CG_FX_TireSmoke( tr.endpos, up, cent->currentState.pos.trDelta, FX_SMOKE_DUST, 0.5f + VectorLength(delta) / 60.0f );
+				cent->smokeTime[tireNum] = cg.time + 80;
 			}
 		}
 		else if ( tr.surfaceFlags & SURF_DIRT ){
 			// lighter passive dust than SURF_DUST — compacted dirt kicks up less
 			if ( VectorLength(delta) > 8 && cent->smokeTime[tireNum] < cg.time ){
-				CreateSmokeCloudEntity( tr.endpos, up, 14, 24, 1200, surfaceColors[colorIndex][0] * 1.2f, surfaceColors[colorIndex][1] * 1.2f, surfaceColors[colorIndex][2] * 1.2f, 0.6f, cgs.media.dustPuffShader);
-				cent->smokeTime[tireNum] = cg.time + 150;
+				CG_FX_TireSmoke( tr.endpos, up, cent->currentState.pos.trDelta, FX_SMOKE_DIRT, 0.4f + VectorLength(delta) / 90.0f );
+				cent->smokeTime[tireNum] = cg.time + 120;
 			}
 		}
 		else if ( tr.surfaceFlags & SURF_GRAVEL ){
 			// very light dust on gravel at speed
 			if ( VectorLength(delta) > 10 && cent->smokeTime[tireNum] < cg.time ){
-				CreateSmokeCloudEntity( tr.endpos, up, 10, 16, 800, surfaceColors[colorIndex][0] * 1.1f, surfaceColors[colorIndex][1] * 1.1f, surfaceColors[colorIndex][2] * 1.1f, 0.4f, cgs.media.dustPuffShader);
-				cent->smokeTime[tireNum] = cg.time + 200;
+				CG_FX_TireSmoke( tr.endpos, up, cent->currentState.pos.trDelta, FX_SMOKE_GRAVEL, 0.4f + VectorLength(delta) / 100.0f );
+				cent->smokeTime[tireNum] = cg.time + 160;
+			}
+		}
+		else if ( tr.surfaceFlags & SURF_SAND ){
+			// sand: a light dust trail at speed
+			if ( VectorLength(delta) > 10 && cent->smokeTime[tireNum] < cg.time ){
+				CG_FX_TireSmoke( tr.endpos, up, cent->currentState.pos.trDelta, FX_SMOKE_SAND, 0.35f + VectorLength(delta) / 100.0f );
+				cent->smokeTime[tireNum] = cg.time + 140;
 			}
 		}
 		else if ( tr.surfaceFlags & SURF_ICE ){
@@ -3661,6 +3684,10 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 				cent->smokeTime[tireNum] = cg.time + 100;
 			}
 		}
+	}
+
+	if ( !ribbon ) {
+		CG_SkidRibbonStop( cent, tireNum );
 	}
 
 	VectorCopy(curOrigin, cent->lastSkidOrigin[tireNum]);
@@ -4009,6 +4036,68 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 CG_Player
 ===============
 */
+// Q3Rally: reach (units) and full cone angle (degrees) of the rear lights
+#define TAILLIGHT_RADIUS		420.0f
+#define TAILLIGHT_CONE			150.0f
+#define BRAKELIGHT_RADIUS		640.0f
+#define BRAKELIGHT_CONE			140.0f
+#define REVERSELIGHT_RADIUS		760.0f
+#define REVERSELIGHT_CONE		110.0f
+
+/*
+===============
+CG_LightTagCenter
+
+Q3Rally: average position of the light tags <prefix>1..<count> on the car
+body (e.g. tag_blite1..3), qfalse if the model has none of them.
+===============
+*/
+static qboolean CG_LightTagCenter( clientInfo_t *ci, const refEntity_t *body, const char *prefix, int count, vec3_t out ) {
+	refEntity_t	tag;
+	char		tagname[32];
+	int			i, num = 0;
+
+	VectorClear( out );
+	for ( i = 0; i < count; i++ ) {
+		Com_sprintf( tagname, sizeof(tagname), "%s%d", prefix, i + 1 );
+		if ( !CG_TagExists( ci->bodyModel, tagname ) ) {
+			continue;
+		}
+		memset( &tag, 0, sizeof(tag) );
+		CG_PositionEntityOnTag( &tag, body, ci->bodyModel, tagname );
+		VectorAdd( out, tag.origin, out );
+		num++;
+	}
+	if ( !num ) {
+		return qfalse;
+	}
+	VectorScale( out, 1.0f / num, out );
+	return qtrue;
+}
+
+/*
+===============
+CG_RearLight
+
+Q3Rally: one wide spot light from just behind the given rear light tags,
+backwards and slightly down onto the road (renderer: no shadow map, those
+are kept for the headlights).
+===============
+*/
+static void CG_RearLight( clientInfo_t *ci, const refEntity_t *body, const char *prefix, int count,
+						  float radius, float coneAngle, float r, float g, float b ) {
+	vec3_t	org, dir;
+
+	if ( !CG_LightTagCenter( ci, body, prefix, count, org ) ) {
+		return;
+	}
+	VectorScale( body->axis[0], -1.0f, dir );
+	VectorMA( org, 8.0f, dir, org );
+	VectorMA( dir, -0.45f, body->axis[2], dir );
+	VectorNormalize( dir );
+	trap_R_AddSpotLightToScene( org, dir, radius, coneAngle, r, g, b, SPOTLIGHT_NOSHADOW );
+}
+
 void CG_Player( centity_t *cent ) {
 	clientInfo_t	*ci;
 // SKWID( replaced player with car )
@@ -4509,12 +4598,15 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &plate );
 	}
 
-/* Add the headlights (Variant A: tag provides only position; beam uses vehicle forward axis) */
+/* Add the headlights: a glow model on each tag_hlite tag and one spot light
+   per car from the middle of them along the car's forward axis (Q3Rally:
+   the OpenGL2 renderer lights the road in a cone with the surface colours
+   and shadows; OpenGL1 and r_headlights 0 draw it as point lights) */
 if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
      !(cent->currentState.powerups & (1 << PW_INVIS)) ) {
 
-    vec3_t fwd;      /* vehicle forward direction from body axis */
-    int    i;
+    vec3_t fwd, center, lightDir;
+    int    i, numLights = 0;
 
     headlight.hModel = cgs.media.headLightGlow;
     if ( !headlight.hModel ) {
@@ -4527,9 +4619,9 @@ if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
 
     /* body.axis was built earlier from the car angles via AnglesToAxis, so axis[0] is forward */
     VectorCopy( body.axis[0], fwd );
+    VectorClear( center );
 
     for ( i = 0; i < 4; i++ ) {
-        vec3_t beamPos;
         char   tagname[32];
 
         Com_sprintf( tagname, sizeof(tagname), "tag_hlite%d", i + 1 );
@@ -4539,45 +4631,46 @@ if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
 
         /* Position the glow model on the tag (we ignore the tag's local forward axis for the beam) */
         CG_PositionEntityOnTag( &headlight, &body, ci->bodyModel, tagname );
-
-        /* Three additive lights cast strictly along the vehicle forward axis */
-        VectorMA( headlight.origin,  50, fwd, beamPos );
-        trap_R_AddAdditiveLightToScene( beamPos, 100, 0.8f, 0.8f, 0.8f );
-
-        VectorMA( headlight.origin, 150, fwd, beamPos );
-        trap_R_AddAdditiveLightToScene( beamPos, 200, 0.5f, 0.5f, 0.5f );
-
-        VectorMA( headlight.origin, 250, fwd, beamPos );
-        trap_R_AddAdditiveLightToScene( beamPos, 300, 0.3f, 0.3f, 0.3f );
+        VectorAdd( center, headlight.origin, center );
+        numLights++;
 
         /* Render the headlight glow model itself at the tag */
         trap_R_AddRefEntityToScene( &headlight );
     }
+
+    if ( numLights ) {
+        VectorScale( center, 1.0f / numLights, center );
+        /* start a bit ahead of the bumper (the car itself is not lit or
+           shadowed by its own lights), aim slightly down at the road */
+        VectorMA( center, 12.0f, fwd, center );
+        VectorMA( fwd, -0.10f, body.axis[2], lightDir );
+        VectorNormalize( lightDir );
+        trap_R_AddSpotLightToScene( center, lightDir, 1600.0f, 64.0f, 1.0f, 0.95f, 0.85f, 0 );
+    }
 }
 skip_headlights:;
 
-/* Ruecklichter — dim red glow whenever headlights are on */
+/* Ruecklichter — dim red glow whenever headlights are on, and a weak red
+   spot light onto the road behind the car (the brake light spot replaces it
+   while braking) */
 if ( (cent->currentState.eFlags & EF_HEADLIGHTS) &&
      !(cent->currentState.powerups & (1 << PW_INVIS)) ) {
     int i;
-    vec3_t back;
     backlight.hModel = cgs.media.brakeLightGlow;
     if ( backlight.hModel ) {
         VectorCopy( cent->lerpOrigin, backlight.lightingOrigin );
         backlight.shadowPlane = shadowPlane;
         backlight.renderfx    = renderfx;
-        VectorScale( body.axis[0], -1, back );
         for ( i = 0; i < 3; i++ ) {
-            vec3_t beamPos;
             char   tagname[32];
             Com_sprintf( tagname, sizeof(tagname), "tag_blite%d", i + 1 );
             if ( !CG_TagExists( ci->bodyModel, tagname ) ) continue;
             CG_PositionEntityOnTag( &backlight, &body, ci->bodyModel, tagname );
             trap_R_AddRefEntityToScene( &backlight );
-            /* Dim additive red — standlicht, weaker than brakelights */
-            VectorMA( backlight.origin, 40, back, beamPos );
-            trap_R_AddAdditiveLightToScene( beamPos, 50, 0.4f, 0.0f, 0.0f );
         }
+    }
+    if ( !(cg_entities[cent->currentState.clientNum].currentState.eFlags & EF_BRAKE) ) {
+        CG_RearLight( ci, &body, "tag_blite", 3, TAILLIGHT_RADIUS, TAILLIGHT_CONE, 0.15f, 0.0f, 0.0f );
     }
 }
 
@@ -4643,17 +4736,14 @@ skip_yellowlight:;
 		brakelight.renderfx = renderfx;
 
 		for (i = 0; i < 3; i++){
-			vec3_t brakeback, brakebeam;
 			Com_sprintf(filename, sizeof(filename), "tag_blite%d", i+1);
 			if (!CG_TagExists(ci->bodyModel, filename)) continue;
 
 			CG_PositionEntityOnTag( &brakelight, &body, ci->bodyModel, filename);
 			trap_R_AddRefEntityToScene( &brakelight );
-			/* Additive red light behind the vehicle */
-			VectorScale( body.axis[0], -1, brakeback );
-			VectorMA( brakelight.origin, 40, brakeback, brakebeam );
-			trap_R_AddAdditiveLightToScene( brakebeam, 100, 0.8f, 0.0f, 0.0f );
 		}
+		/* red spot light onto the road behind the vehicle */
+		CG_RearLight( ci, &body, "tag_blite", 3, BRAKELIGHT_RADIUS, BRAKELIGHT_CONE, 0.60f, 0.02f, 0.0f );
 	}
 skip_brakelights:;
 
@@ -4668,12 +4758,9 @@ skip_brakelights:;
 			goto skip_reverselights;
 		}
 
-		{
-		vec3_t revback, revbeam;
 		VectorCopy( cent->lerpOrigin, reverselight.lightingOrigin );
 		reverselight.shadowPlane = shadowPlane;
 		reverselight.renderfx = renderfx;
-		VectorScale( body.axis[0], -1, revback );
 
 		for (i = 0; i < 2; i++){
 			Com_sprintf(filename, sizeof(filename), "tag_rlite%d", i+1);
@@ -4681,31 +4768,16 @@ skip_brakelights:;
 
 			CG_PositionEntityOnTag( &reverselight, &body, ci->bodyModel, filename);
 			trap_R_AddRefEntityToScene( &reverselight );
-			/* White additive light behind vehicle when reversing */
-			VectorMA( reverselight.origin, 40, revback, revbeam );
-			trap_R_AddAdditiveLightToScene( revbeam, 80, 0.7f, 0.7f, 0.7f );
 		}
-		}
+		/* white spot light onto the road behind the vehicle */
+		CG_RearLight( ci, &body, "tag_rlite", 2, REVERSELIGHT_RADIUS, REVERSELIGHT_CONE, 0.40f, 0.40f, 0.37f );
 	}
 skip_reverselights:;
 
 
-	//
-	// add turbo flame
-	//
-	if (cent->currentState.powerups & ( 1 << PW_TURBO ) && CG_TagExists(ci->bodyModel, "tag_turbo")){
-		turbo.hModel = cgs.media.turboModel;
-		if (!turbo.hModel) {
-			return;
-		}
-
-		VectorCopy( cent->lerpOrigin, turbo.lightingOrigin );
-		CG_PositionEntityOnTag( &turbo, &body, ci->bodyModel, "tag_turbo");
-		turbo.shadowPlane = shadowPlane;
-		turbo.renderfx = renderfx;
-
-		trap_R_AddRefEntityToScene( &turbo );
-	}
+	// Q3Rally: no rocket flame on tag_turbo any more while burning NOS, the
+	// renderer blurs the view of the car's driver more strongly instead
+	// (RDF_NOS, r_motionBlurNos)
 
 	// floating arrow to checkpoint
 	if (cg_checkpointArrowMode.integer == 2 && cent->currentState.clientNum == cg.snap->ps.clientNum){

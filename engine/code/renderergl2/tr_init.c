@@ -115,6 +115,17 @@ cvar_t  *r_floatLightmap;
 cvar_t  *r_postProcess;
 
 cvar_t  *r_toneMap;
+cvar_t  *r_toneMapCurve;
+cvar_t  *r_ssaoRadius;
+cvar_t  *r_haze;
+cvar_t  *r_hazeDensity;
+cvar_t  *r_genNormalStrength;
+cvar_t  *r_ssaoStrength;
+cvar_t  *r_ssaoDistance;
+cvar_t  *r_filmicExposure;
+cvar_t  *r_filmicWhite;
+cvar_t  *r_colorGrade;
+cvar_t  *r_colorLut;
 cvar_t  *r_forceToneMap;
 cvar_t  *r_forceToneMapMin;
 cvar_t  *r_forceToneMapAvg;
@@ -135,9 +146,9 @@ cvar_t  *r_parallaxMapping;
 cvar_t  *r_parallaxMapOffset;
 cvar_t  *r_parallaxMapShadows;
 cvar_t  *r_cubeMapping;
+cvar_t  *r_water;
 cvar_t  *r_cubemapSize;
 cvar_t  *r_deluxeSpecular;
-cvar_t  *r_dynamicReflections;
 cvar_t  *r_pbr;
 cvar_t  *r_baseNormalX;
 cvar_t  *r_baseNormalY;
@@ -158,6 +169,30 @@ cvar_t  *r_forceSunAmbientScale;
 cvar_t  *r_sunlightMode;
 cvar_t  *r_drawSunRays;
 cvar_t  *r_sunShadows;
+cvar_t  *r_sunShadowCasters;
+cvar_t  *r_sunShadowsActive;
+cvar_t  *r_lampShadows;
+cvar_t  *r_lampShadowStrength;
+cvar_t  *r_lampShadowMapSize;
+cvar_t  *r_bloom;
+cvar_t  *r_bloomIntensity;
+cvar_t  *r_bloomThreshold;
+cvar_t  *r_fxaa;
+cvar_t  *r_motionBlur;
+cvar_t  *r_motionBlurNos;
+cvar_t  *r_motionBlurMax;
+cvar_t  *r_motionBlurMaxNos;
+cvar_t  *r_motionBlurNear;
+cvar_t  *r_softParticles;
+cvar_t  *r_wetGround;
+cvar_t  *r_wetness;
+cvar_t  *r_headlights;
+cvar_t  *r_headlightShadows;
+cvar_t  *r_headlightShadowMapSize;
+cvar_t  *r_headlightIntensity;
+cvar_t  *r_carReflections;
+cvar_t  *r_carReflectionSize;
+cvar_t  *r_carReflectionStrength;
 cvar_t  *r_shadowFilter;
 cvar_t  *r_shadowBlur;
 cvar_t  *r_shadowMapSize;
@@ -1286,6 +1321,22 @@ void R_Register( void )
 	r_postProcess = ri.Cvar_Get( "r_postProcess", "1", CVAR_ARCHIVE );
 
 	r_toneMap = ri.Cvar_Get( "r_toneMap", "1", CVAR_ARCHIVE );
+
+	// Q3Rally: filmic tone mapping and colour grading
+	r_toneMapCurve = ri.Cvar_Get( "r_toneMapCurve", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_toneMapCurve, 0, 1, qtrue );
+	ri.Cvar_SetDescription( r_toneMapCurve, "Q3Rally: tone curve with r_hdr 1 and r_toneMap 1: 0 = classic (bright parts clip), 1 = filmic (ACES, bright parts roll off softly)" );
+	r_filmicExposure = ri.Cvar_Get( "r_filmicExposure", "1.25", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_filmicExposure, 0.25f, 4.0f, qfalse );
+	ri.Cvar_SetDescription( r_filmicExposure, "Q3Rally: brightness of the filmic tone curve (r_toneMapCurve 1)" );
+	r_filmicWhite = ri.Cvar_Get( "r_filmicWhite", "2", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_filmicWhite, 1.0f, 8.0f, qfalse );
+	ri.Cvar_SetDescription( r_filmicWhite, "Q3Rally: how much brighter than white the filmic tone curve still shows before it is pure white" );
+	r_colorGrade = ri.Cvar_Get( "r_colorGrade", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_colorGrade, 0.0f, 1.0f, qfalse );
+	ri.Cvar_SetDescription( r_colorGrade, "Q3Rally: strength of the colour grading (look of the map, 0 = off); needs r_hdr 1 and r_toneMap 1" );
+	r_colorLut = ri.Cvar_Get( "r_colorLut", "", CVAR_ARCHIVE );
+	ri.Cvar_SetDescription( r_colorLut, "Q3Rally: colour grading look for every map instead of the map's own, e.g. gfx/luts/warm; empty = the map's, none = no grading" );
 	r_forceToneMap = ri.Cvar_Get( "r_forceToneMap", "0", CVAR_CHEAT );
 	r_forceToneMapMin = ri.Cvar_Get( "r_forceToneMapMin", "-8.0", CVAR_CHEAT );
 	r_forceToneMapAvg = ri.Cvar_Get( "r_forceToneMapAvg", "-2.0", CVAR_CHEAT );
@@ -1299,7 +1350,24 @@ void R_Register( void )
 	r_cameraExposure = ri.Cvar_Get( "r_cameraExposure", "1", CVAR_CHEAT );
 
 	r_depthPrepass = ri.Cvar_Get( "r_depthPrepass", "1", CVAR_ARCHIVE );
-	r_ssao = ri.Cvar_Get( "r_ssao", "0", CVAR_LATCH | CVAR_ARCHIVE );
+	r_ssao = ri.Cvar_Get( "r_ssao", "1", CVAR_LATCH | CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_ssao, 0, 2, qtrue );
+	ri.Cvar_SetDescription( r_ssao, "Q3Rally: ambient occlusion, soft shadows in corners, under and around the cars (needs r_depthPrepass 1): 0 = off, 1 = on, 2 = finer (more samples)" );
+	r_haze = ri.Cvar_Get( "r_haze", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_haze, 0, 1, qtrue );
+	ri.Cvar_SetDescription( r_haze, "Q3Rally: distance and ground haze of the map (OpenGL2, needs r_depthPrepass 1)" );
+	r_hazeDensity = ri.Cvar_Get( "r_hazeDensity", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_hazeDensity, 0, 4, qfalse );
+	ri.Cvar_SetDescription( r_hazeDensity, "Q3Rally: how thick the haze is, times the map's own setting" );
+	r_ssaoRadius = ri.Cvar_Get( "r_ssaoRadius", "48", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_ssaoRadius, 8, 256, qfalse );
+	ri.Cvar_SetDescription( r_ssaoRadius, "Q3Rally: how far (world units) geometry darkens its surroundings in the ambient occlusion" );
+	r_ssaoStrength = ri.Cvar_Get( "r_ssaoStrength", "0.8", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_ssaoStrength, 0, 4, qfalse );
+	ri.Cvar_SetDescription( r_ssaoStrength, "Q3Rally: how dark the ambient occlusion gets" );
+	r_ssaoDistance = ri.Cvar_Get( "r_ssaoDistance", "3000", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_ssaoDistance, 256, 16384, qfalse );
+	ri.Cvar_SetDescription( r_ssaoDistance, "Q3Rally: distance at which the ambient occlusion has faded out" );
 
 	r_normalMapping = ri.Cvar_Get( "r_normalMapping", "1", CVAR_ARCHIVE | CVAR_LATCH );
 	r_specularMapping = ri.Cvar_Get( "r_specularMapping", "1", CVAR_ARCHIVE | CVAR_LATCH );
@@ -1309,7 +1377,8 @@ void R_Register( void )
 	r_parallaxMapShadows = ri.Cvar_Get( "r_parallaxMapShadows", "0", CVAR_ARCHIVE | CVAR_LATCH );
 	r_cubeMapping = ri.Cvar_Get( "r_cubeMapping", "0", CVAR_ARCHIVE | CVAR_LATCH );
 	r_cubemapSize = ri.Cvar_Get( "r_cubemapSize", "128", CVAR_ARCHIVE | CVAR_LATCH );
-    r_dynamicReflections = ri.Cvar_Get( "r_dynamicReflections", "0", CVAR_ARCHIVE );
+	r_water = ri.Cvar_Get( "r_water", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_SetDescription( r_water, "Q3Rally: GLSL water with distorted reflections on q3r_water surfaces (0 = plain mirror / shader stages)" );
 	r_deluxeSpecular = ri.Cvar_Get("r_deluxeSpecular", "0.3", CVAR_ARCHIVE | CVAR_LATCH);
 	r_pbr = ri.Cvar_Get("r_pbr", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_baseNormalX = ri.Cvar_Get( "r_baseNormalX", "1.0", CVAR_ARCHIVE | CVAR_LATCH );
@@ -1324,7 +1393,11 @@ void R_Register( void )
 	r_imageUpsample = ri.Cvar_Get( "r_imageUpsample", "0", CVAR_ARCHIVE | CVAR_LATCH );
 	r_imageUpsampleMaxSize = ri.Cvar_Get( "r_imageUpsampleMaxSize", "1024", CVAR_ARCHIVE | CVAR_LATCH );
 	r_imageUpsampleType = ri.Cvar_Get( "r_imageUpsampleType", "1", CVAR_ARCHIVE | CVAR_LATCH );
-	r_genNormalMaps = ri.Cvar_Get( "r_genNormalMaps", "0", CVAR_ARCHIVE | CVAR_LATCH );
+	r_genNormalMaps = ri.Cvar_Get( "r_genNormalMaps", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_SetDescription( r_genNormalMaps, "Q3Rally: make normal and specular maps for map textures that have none (relief and gloss by material); needs r_normalMapping 1" );
+	r_genNormalStrength = ri.Cvar_Get( "r_genNormalStrength", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_genNormalStrength, 0, 4, qfalse );
+	ri.Cvar_SetDescription( r_genNormalStrength, "Q3Rally: relief strength of the made normal maps (r_genNormalMaps)" );
 
 	r_forceSun = ri.Cvar_Get( "r_forceSun", "0", CVAR_ARCHIVE );
 	r_forceSunLightScale = ri.Cvar_Get( "r_forceSunLightScale", "1.0", CVAR_CHEAT );
@@ -1333,6 +1406,79 @@ void R_Register( void )
 	r_sunlightMode = ri.Cvar_Get( "r_sunlightMode", "1", CVAR_ARCHIVE | CVAR_LATCH );
 
 	r_sunShadows = ri.Cvar_Get( "r_sunShadows", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	r_sunShadowCasters = ri.Cvar_Get( "r_sunShadowCasters", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_SetDescription( r_sunShadowCasters, "Q3Rally: what casts real-time sun shadows. 1 = only cars and other models; the shadows of the map come from its lightmap and moving shadows are only drawn where the map is in the sun. 0 = everything (ioquake3 default, darkens shadowed areas twice). Only with r_sunlightMode 1" );
+	r_sunShadowsActive = ri.Cvar_Get( "r_sunShadowsActive", "0", CVAR_ROM );
+	r_lampShadows = ri.Cvar_Get( "r_lampShadows", "2", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_lampShadows, 0, MAX_LAMP_SHADOWS, qtrue );
+	ri.Cvar_SetDescription( r_lampShadows, "Q3Rally: how many lamps of the map cast real-time shadows of cars and models at the same time (0-4, 0 = off). Needs r_sunlightMode 1 and lamps in the map (light entities kept with q3map2 -keeplights)" );
+	r_lampShadowStrength = ri.Cvar_Get( "r_lampShadowStrength", "0.7", CVAR_ARCHIVE );
+	ri.Cvar_SetDescription( r_lampShadowStrength, "Q3Rally: how much of a lamp's light a model shadow takes away (0-1)" );
+	r_lampShadowMapSize = ri.Cvar_Get( "r_lampShadowMapSize", "512", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_lampShadowMapSize, 128, 2048, qtrue );
+	ri.Cvar_SetDescription( r_lampShadowMapSize, "Q3Rally: resolution of the lamp shadow maps (128-2048)" );
+	ri.Cvar_SetDescription( r_sunShadowsActive, "Q3Rally: 1 while the loaded map draws real-time sun shadows (read by cgame to soften the blob shadow)" );
+
+	r_bloom = ri.Cvar_Get( "r_bloom", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_bloom, 0, 1, qtrue );
+	ri.Cvar_SetDescription( r_bloom, "Q3Rally: glow around bright lights, lamps, lava and sun reflections (needs r_postProcess 1)" );
+	r_bloomIntensity = ri.Cvar_Get( "r_bloomIntensity", "0.4", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_bloomIntensity, 0, 2, qfalse );
+	ri.Cvar_SetDescription( r_bloomIntensity, "Q3Rally: strength of the bloom glow (0-2)" );
+	r_bloomThreshold = ri.Cvar_Get( "r_bloomThreshold", "0.85", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_bloomThreshold, 0, 0.99f, qfalse );
+	ri.Cvar_SetDescription( r_bloomThreshold, "Q3Rally: brightness from which a pixel starts to glow; the glow grows towards full white (0-0.99, lower = more glow)" );
+	r_fxaa = ri.Cvar_Get( "r_fxaa", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_fxaa, 0, 1, qtrue );
+	ri.Cvar_SetDescription( r_fxaa, "Q3Rally: smooth jagged edges with FXAA (needs r_postProcess 1; works together with r_ext_multisample)" );
+	r_motionBlur = ri.Cvar_Get( "r_motionBlur", "0.5", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_motionBlur, 0, 2, qfalse );
+	ri.Cvar_SetDescription( r_motionBlur, "Q3Rally: motion blur of the surroundings when the camera moves, as a share of a 1/60 s frame (0 = off, 0-2)" );
+	r_motionBlurNos = ri.Cvar_Get( "r_motionBlurNos", "1.5", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_motionBlurNos, 0, 4, qfalse );
+	ri.Cvar_SetDescription( r_motionBlurNos, "Q3Rally: motion blur while the viewed car burns NOS (0-4, needs r_motionBlur above 0)" );
+	r_motionBlurMax = ri.Cvar_Get( "r_motionBlurMax", "0.05", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_motionBlurMax, 0, 0.25f, qfalse );
+	ri.Cvar_SetDescription( r_motionBlurMax, "Q3Rally: longest motion blur as a share of the screen (0-0.25)" );
+	r_motionBlurMaxNos = ri.Cvar_Get( "r_motionBlurMaxNos", "0.12", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_motionBlurMaxNos, 0, 0.25f, qfalse );
+	ri.Cvar_SetDescription( r_motionBlurMaxNos, "Q3Rally: longest motion blur while burning NOS, share of the screen (0-0.25)" );
+	r_softParticles = ri.Cvar_Get( "r_softParticles", "24", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_softParticles, 0, 200, qfalse );
+	ri.Cvar_SetDescription( r_softParticles, "Q3Rally: smoke, dust and other particles fade out over this distance where they cut into walls and the ground, instead of a hard edge (0 = off; needs r_depthPrepass 1)" );
+
+	r_wetGround = ri.Cvar_Get( "r_wetGround", "1", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_wetGround, 0, 2, qtrue );
+	ri.Cvar_SetDescription( r_wetGround, "Q3Rally: wet ground in the rain is darker and reflects the scene (screen space reflections); 0 = off, 1 = on, 2 = finer reflections (needs r_depthPrepass 1)" );
+	r_wetness = ri.Cvar_Get( "r_wetness", "-1", CVAR_CHEAT );
+	ri.Cvar_CheckRange( r_wetness, -1, 1, qfalse );
+	ri.Cvar_SetDescription( r_wetness, "Q3Rally: test value for how wet the ground is (0 to 1); -1 = from the rain and the map" );
+	r_motionBlurNear = ri.Cvar_Get( "r_motionBlurNear", "120", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_motionBlurNear, 0, 1000, qfalse );
+	ri.Cvar_SetDescription( r_motionBlurNear, "Q3Rally: the motion blur fades in up to this distance from the camera (the car in front of the camera is left sharp anyway)" );
+
+	r_headlights = ri.Cvar_Get( "r_headlights", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_headlights, 0, 1, qtrue );
+	ri.Cvar_SetDescription( r_headlights, "Q3Rally: car headlights as real spot lights (lit with the textures' colours, cone shaped). 0 = the old round additive lights" );
+	r_headlightShadows = ri.Cvar_Get( "r_headlightShadows", "2", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_headlightShadows, 0, MAX_SPOT_SHADOWS, qtrue );
+	ri.Cvar_SetDescription( r_headlightShadows, "Q3Rally: how many headlights (the ones nearest to the camera) cast shadows at the same time (0-2)" );
+	r_headlightShadowMapSize = ri.Cvar_Get( "r_headlightShadowMapSize", "1024", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_headlightShadowMapSize, 256, 2048, qtrue );
+	ri.Cvar_SetDescription( r_headlightShadowMapSize, "Q3Rally: resolution of the headlight shadow maps (256-2048)" );
+	r_headlightIntensity = ri.Cvar_Get( "r_headlightIntensity", "2.5", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_headlightIntensity, 0, 4, qfalse );
+	ri.Cvar_SetDescription( r_headlightIntensity, "Q3Rally: brightness of the headlights (0-4)" );
+	r_carReflections = ri.Cvar_Get( "r_carReflections", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_carReflections, 0, 2, qtrue );
+	ri.Cvar_SetDescription( r_carReflections, "Q3Rally: car paint reflects the surroundings: 0 = old fixed reflection map, 1 = live cube map (one side per frame), 2 = live cube map (all sides every frame)" );
+	r_carReflectionSize = ri.Cvar_Get( "r_carReflectionSize", "256", CVAR_ARCHIVE | CVAR_LATCH );
+	ri.Cvar_CheckRange( r_carReflectionSize, 64, 1024, qtrue );
+	ri.Cvar_SetDescription( r_carReflectionSize, "Q3Rally: resolution of a side of the car reflection cube map (64-1024)" );
+	r_carReflectionStrength = ri.Cvar_Get( "r_carReflectionStrength", "1", CVAR_ARCHIVE );
+	ri.Cvar_CheckRange( r_carReflectionStrength, 0, 2, qfalse );
+	ri.Cvar_SetDescription( r_carReflectionStrength, "Q3Rally: brightness of the car paint reflection (0-2)" );
+
 	r_shadowFilter = ri.Cvar_Get( "r_shadowFilter", "1", CVAR_ARCHIVE | CVAR_LATCH );
 	r_shadowBlur = ri.Cvar_Get("r_shadowBlur", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_shadowMapSize = ri.Cvar_Get("r_shadowMapSize", "1024", CVAR_ARCHIVE | CVAR_LATCH);
@@ -1435,7 +1581,7 @@ void R_Register( void )
 	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", 0 );
 
-	r_marksOnTriangleMeshes = ri.Cvar_Get("r_marksOnTriangleMeshes", "0", CVAR_ARCHIVE);
+	r_marksOnTriangleMeshes = ri.Cvar_Get("r_marksOnTriangleMeshes", "1", CVAR_ARCHIVE);	// Q3Rally: maps are compiled with -meta
 
 	r_vaoCache = ri.Cvar_Get("r_vaoCache", "0", CVAR_ARCHIVE);
 
@@ -1605,6 +1751,8 @@ void RE_Shutdown( qboolean destroyWindow ) {
 	ri.Cmd_RemoveCommand( "exportCubemaps" );
 
 
+	ri.Cvar_Set( "r_sunShadowsActive", "0" );
+
 	if ( tr.registered ) {
 		R_IssuePendingRenderCommands();
 		R_ShutDownQueries();
@@ -1713,6 +1861,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.inPVS = R_inPVS;
 
 	re.TakeVideoFrame = RE_TakeVideoFrame;
+	re.AddSpotLightToScene = RE_AddSpotLightToScene;
 
 	return &re;
 }

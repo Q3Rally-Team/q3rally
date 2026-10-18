@@ -63,6 +63,16 @@ typedef unsigned int vaoCacheGlIndex_t;
 #define MAX_SHADERS		(1<<SHADERNUM_BITS)
 
 #define	MAX_FBOS      64
+
+// Q3Rally: lamp shadows (r_lampShadows)
+#define MAX_LAMPS             1024
+#define MAX_LAMP_SHADOWS      4
+#define MAX_SPOT_SHADOWS      2		// Q3Rally: headlights with shadows per frame
+// share of a lamp in the baked light at distance d: sqrt( light * LAMP_LIGHT_SCALE / d^2 ),
+// q3map2 point lights fall off with 1 / d^2, the square root stands for the
+// gamma our maps are compiled with (-gamma 2)
+#define LAMP_LIGHT_SCALE      117.0f
+#define LAMP_MIN_LIT          0.0225f	// below this (before the square root) a lamp is ignored
 #define MAX_VISCOUNTS 5
 #define MAX_VAOS      4096
 
@@ -84,6 +94,14 @@ typedef struct dlight_s {
 
 	vec3_t	transformed;		// origin in local coordinate system
 	int		additive;			// texture detail is lost tho when the lightmap is dark
+
+	// Q3Rally: spot light (car headlights), spotCosOuter > -1 = spot
+	vec3_t	spotDir;
+	float	spotCosOuter;
+	float	spotCosInner;
+	int		spotShadow;			// shadow map slot, -1 = no shadow
+	int		spotFlags;			// SPOTLIGHT_*
+	float	spotShadowMvp[16];
 } dlight_t;
 
 
@@ -469,6 +487,17 @@ typedef struct shader_s {
 	float		portalRange;			// distance to fog out at
 	qboolean	isPortal;
 
+	// Q3Rally: q3r_water surfaces (GLSL water with a reflection texture)
+	qboolean	isWater;				// active water path (needs FBOs)
+	image_t		*waterNormalImage;
+	float		waterTile;				// world units per normal map repeat
+	float		waterSpeed;				// normal map repeats per second
+	float		waterDistortion;		// screen-space reflection offset
+	vec4_t		waterColor;				// rgb tint, a = opacity looking straight down
+	float		waterFresnelBias;
+	float		waterFresnelPower;
+	float		waterSpecular;			// sun glint strength
+
 	cullType_t	cullType;				// CT_FRONT_SIDED, CT_BACK_SIDED, or CT_TWO_SIDED
 	qboolean	polygonOffset;			// set for decals and other items that must be offset 
 	qboolean	noMipMaps;				// for console fonts, 2D elements, etc.
@@ -609,7 +638,8 @@ enum
 	GLSL_VEC3,
 	GLSL_VEC4,
 	GLSL_MAT16,
-	GLSL_MAT16_BONEMATRIX
+	GLSL_MAT16_BONEMATRIX,
+	GLSL_VEC4_WETZONES		// Q3Rally: vec4[ MAX_WET_ZONES * 2 ]
 };
 
 typedef enum
@@ -636,6 +666,20 @@ typedef enum
 	UNIFORM_SHADOWMVP2,
 	UNIFORM_SHADOWMVP3,
 	UNIFORM_SHADOWMVP4,
+	UNIFORM_SHADOWPARAMS,	// Q3Rally: xyz = world shadow bias (sun dir * units), w = model shadow bias
+	UNIFORM_SPOTDIR,		// Q3Rally: spot light direction, w = cos of the outer cone
+	UNIFORM_SOFTPARTICLE,	// Q3Rally: x = fade distance (0 = off), y = blend mode, zw = 1 / depth texture size
+	UNIFORM_WETPARAMS,		// Q3Rally: wet ground, x = wetness, y = reflection, z = darkening, w = puddles
+	UNIFORM_PREVVIEWPROJ,	// Q3Rally: world -> clip space of the frame in tr.wetSceneImage
+	UNIFORM_WETZONES,		// Q3Rally: rain zones, per zone mins + wetness, maxs + rain
+	UNIFORM_WETZONECOUNT,
+	UNIFORM_COLORLUTMAP,	// Q3Rally: colour grading LUT of the tone mapping
+	UNIFORM_TONEPARAMS,		// Q3Rally: x = curve (0 classic, 1 filmic), y = filmic exposure, z = filmic white
+	UNIFORM_LUTPARAMS,		// Q3Rally: x = LUT strength, y = LUT size (0 = none)
+	UNIFORM_AOPARAMS,		// Q3Rally: SSAO, x = radius, y = intensity, z = bias, w = samples
+	UNIFORM_HAZECOLOR,		// Q3Rally: haze, rgb + most it hides
+	UNIFORM_HAZEPARAMS,		// Q3Rally: haze, density, ground density, 1 / ground thickness, ground height
+	UNIFORM_HAZESUN,		// Q3Rally: haze, direction to the sun + glow
 
 	UNIFORM_ENABLETEXTURES,
 
@@ -769,6 +813,20 @@ typedef struct {
 	struct pshadow_s *pshadows;
 
 	float       sunShadowMvp[4][16];
+
+	// Q3Rally: lamp shadows of this frame (see R_SelectLampShadows)
+	int         numLampShadows;
+	int         spotMask;			// Q3Rally: dlights that are spot lights
+	vec4_t      motionMaskRect;		// Q3Rally: screen rect (uv min xy, max xy) of the models at the camera, no motion blur there
+	float       motionMaskFar;		// Q3Rally: their farthest view distance, 0 = none
+	float       wetness;			// Q3Rally: wet ground, 0 = dry, 1 = soaked
+	int         numWetZones;		// Q3Rally: rain zones, see refdef_t
+	vec4_t      wetZones[MAX_WET_ZONES * 2];
+	int         lampShadowSlot[MAX_LAMP_SHADOWS];
+	float       lampShadowMvp[MAX_LAMP_SHADOWS][16];
+	vec4_t      lampShadowOrigin[MAX_LAMP_SHADOWS];	// xyz, w = light * LAMP_LIGHT_SCALE
+	vec4_t      lampShadowParams[MAX_LAMP_SHADOWS];	// x = strength * fade
+
 	float       sunDir[4];
 	float       sunCol[4];
 	float       sunAmbCol[4];
@@ -776,6 +834,23 @@ typedef struct {
 	float       autoExposureMinMax[2];
 	float       toneMinAvgMaxLinear[3];
 } trRefdef_t;
+
+// Q3Rally: a lamp of the map that can cast model shadows
+typedef struct {
+	vec3_t		origin;
+	vec3_t		axis[3];	// shadow frustum, axis[0] = direction
+	float		fov;
+	float		light;		// q3map2 light value
+	float		radius;		// beyond this the lamp adds less than LAMP_MIN_LIT
+} lamp_t;
+
+typedef struct {
+	int			lamp;		// index into tr.lamps, -1 = free
+	int			startTime;	// for the fade in
+	int			lastUsed;
+	qboolean	worldDone;	// world shadow map rendered for this lamp
+	float		score;
+} lampSlot_t;
 
 
 //=================================================================================
@@ -821,7 +896,9 @@ typedef enum {
 	VPF_ORTHOGRAPHIC    = 0x10,
 	VPF_USESUNLIGHT     = 0x20,
 	VPF_FARPLANEFRUSTUM = 0x40,
-	VPF_NOCUBEMAPS      = 0x80
+	VPF_NOCUBEMAPS      = 0x80,
+	VPF_WATERREFLECTION = 0x100,	// Q3Rally: copy this mirror view into tr.waterReflectionImage
+	VPF_CARREFLECT      = 0x200		// Q3Rally: a side of the car reflection cube map
 } viewParmFlags_t;
 
 typedef struct {
@@ -1494,6 +1571,9 @@ typedef struct {
 	FBO_t *last2DFBO;
 	qboolean    colorMask[4];
 	qboolean    depthFill;
+	qboolean    waterReflectionReady;	// Q3Rally: reflection texture was rendered this frame
+	qboolean    softDepthReady;			// Q3Rally: tr.hdrDepthImage holds this view's opaque depth (soft particles)
+	qboolean    wetDepthReady;			// Q3Rally: the same for the wet ground reflections
 } backEndState_t;
 
 /*
@@ -1538,7 +1618,9 @@ typedef struct {
 	
 
 	image_t					*renderImage;
+	image_t					*waterReflectionImage;	// Q3Rally
 	image_t					*sunRaysImage;
+	image_t					*bloomImage[4];		// Q3Rally: 1/4 and 1/16 size, two each for the blur
 	image_t					*renderDepthImage;
 	image_t					*pshadowMaps[MAX_DRAWN_PSHADOWS];
 	image_t					*screenScratchImage;
@@ -1548,6 +1630,8 @@ typedef struct {
 	image_t					*targetLevelsImage;
 	image_t					*fixedLevelsImage;
 	image_t					*sunShadowDepthImage[4];
+	image_t					*lampShadowImage[MAX_LAMP_SHADOWS];	// Q3Rally: models seen from the lamp
+	image_t					*lampWorldImage[MAX_LAMP_SHADOWS];	// Q3Rally: the map seen from the lamp (cached)
 	image_t                 *screenShadowImage;
 	image_t                 *screenSsaoImage;
 	image_t					*hdrDepthImage;
@@ -1558,8 +1642,21 @@ typedef struct {
 	image_t					*textureDepthImage;
 
 	FBO_t					*renderFbo;
+	FBO_t					*waterReflectionFbo;	// Q3Rally
 	FBO_t					*msaaResolveFbo;
 	FBO_t					*sunRaysFbo;
+	FBO_t					*bloomFbo[4];		// Q3Rally
+	image_t					*spotShadowImage[MAX_SPOT_SHADOWS];	// Q3Rally: headlight shadow maps
+	FBO_t					*spotShadowFbo[MAX_SPOT_SHADOWS];
+	image_t					*carReflectImage;	// Q3Rally: cube map around the camera for the car paint
+	image_t					*wetSceneImage;		// Q3Rally: last frame's scene (half size, mip mapped), the wet ground reflects it
+	FBO_t					*wetSceneFbo;
+	mat4_t					wetScenePrevViewProj;	// its world -> clip matrix
+	vec3_t					wetScenePrevOrigin;
+	int						wetSceneTime;
+	qboolean				wetSceneValid;
+	FBO_t					*carReflectFbo;
+	int						carReflectSide;		// next side to render
 	FBO_t					*depthFbo;
 	FBO_t					*pshadowFbos[MAX_DRAWN_PSHADOWS];
 	FBO_t					*screenScratchFbo;
@@ -1568,6 +1665,8 @@ typedef struct {
 	FBO_t					*calcLevelsFbo;
 	FBO_t					*targetLevelsFbo;
 	FBO_t					*sunShadowFbo[4];
+	FBO_t					*lampShadowFbo[MAX_LAMP_SHADOWS];
+	FBO_t					*lampWorldFbo[MAX_LAMP_SHADOWS];
 	FBO_t					*screenShadowFbo;
 	FBO_t					*screenSsaoFbo;
 	FBO_t					*hdrDepthFbo;
@@ -1603,6 +1702,7 @@ typedef struct {
 	//
 	shaderProgram_t genericShader[GENERICDEF_COUNT];
 	shaderProgram_t textureColorShader;
+	shaderProgram_t waterShader;			// Q3Rally
 	shaderProgram_t fogShader[FOGDEF_COUNT];
 	shaderProgram_t dlightShader[DLIGHTDEF_COUNT];
 	shaderProgram_t lightallShader[LIGHTDEF_COUNT];
@@ -1611,8 +1711,32 @@ typedef struct {
 	shaderProgram_t down4xShader;
 	shaderProgram_t bokehShader;
 	shaderProgram_t tonemapShader;
+
+	// Q3Rally: colour grading (R_UpdateColorLut)
+	image_t					*colorLutImage;
+	char					colorLutName[MAX_QPATH];	// what colorLutImage was loaded for
+	char					worldColorLut[MAX_QPATH];	// worldspawn "colorlut"
+	char					shaderColorLut[MAX_QPATH];	// q3r_colorLut in the sky shader
+
+	// Q3Rally: haze of the map (q3r_haze in the sky shader or worldspawn "haze")
+	qboolean				hazeSet;
+	qboolean				hazeFromWorld;
+	vec3_t					hazeColor;
+	float					hazeDistance;		// units at which the thin haze hides half
+	float					hazeGroundDistance;	// the same for the ground haze at its height, 0 = none
+	float					hazeGroundHeight;
+	float					hazeGroundThickness;
+	float					hazeSunGlow;
 	shaderProgram_t calclevels4xShader[2];
 	shaderProgram_t shadowmaskShader;
+	shaderProgram_t lampShadowShader;	// Q3Rally
+	shaderProgram_t bloomShader[2];		// Q3Rally: 0 = bright pass / downsample, 1 = blur
+	shaderProgram_t fxaaShader;			// Q3Rally
+	shaderProgram_t spotlightShader;	// Q3Rally: headlight pass
+	shaderProgram_t carReflectShader;	// Q3Rally: car paint reflection
+	shaderProgram_t motionBlurShader;	// Q3Rally: camera motion blur
+	shaderProgram_t wetGroundShader;	// Q3Rally: wet ground, darkening and screen space reflection
+	shaderProgram_t hazeShader;			// Q3Rally: distance and height haze
 	shaderProgram_t ssaoShader;
 	shaderProgram_t depthBlurShader[4];
 	shaderProgram_t testcubeShader;
@@ -1639,6 +1763,13 @@ typedef struct {
 	vec3_t					sunDirection;
 	vec3_t                  lastCascadeSunDirection;
 	float                   lastCascadeSunMvp[16];
+	float                   sunShadowWorldTexel;	// Q3Rally: world units per texel of the level 3 cascade
+
+	// Q3Rally: lamps of the map ("light" entities kept in the BSP) and the
+	// shadow map slots they are assigned to
+	int                     numLamps;
+	lamp_t                  *lamps;
+	lampSlot_t              lampSlots[MAX_LAMP_SHADOWS];
 
 	frontEndCounters_t		pc;
 	int						frontEndMsec;		// not in pc due to clearing issue
@@ -1781,6 +1912,17 @@ extern  cvar_t  *r_floatLightmap;
 extern  cvar_t  *r_postProcess;
 
 extern  cvar_t  *r_toneMap;
+extern  cvar_t  *r_toneMapCurve;
+extern  cvar_t  *r_ssaoRadius;
+extern  cvar_t  *r_haze;
+extern  cvar_t  *r_hazeDensity;
+extern  cvar_t  *r_genNormalStrength;
+extern  cvar_t  *r_ssaoStrength;
+extern  cvar_t  *r_ssaoDistance;
+extern  cvar_t  *r_filmicExposure;
+extern  cvar_t  *r_filmicWhite;
+extern  cvar_t  *r_colorGrade;
+extern  cvar_t  *r_colorLut;
 extern  cvar_t  *r_forceToneMap;
 extern  cvar_t  *r_forceToneMapMin;
 extern  cvar_t  *r_forceToneMapAvg;
@@ -1803,7 +1945,7 @@ extern  cvar_t  *r_parallaxMapping;
 extern  cvar_t  *r_parallaxMapOffset;
 extern  cvar_t  *r_parallaxMapShadows;
 extern  cvar_t  *r_cubeMapping;
-extern  cvar_t  *r_dynamicReflections;
+extern  cvar_t  *r_water;
 extern  cvar_t  *r_cubemapSize;
 extern  cvar_t  *r_deluxeSpecular;
 extern  cvar_t  *r_pbr;
@@ -1826,6 +1968,35 @@ extern  cvar_t  *r_forceSunAmbientScale;
 extern  cvar_t  *r_sunlightMode;
 extern  cvar_t  *r_drawSunRays;
 extern  cvar_t  *r_sunShadows;
+extern  cvar_t  *r_sunShadowCasters;
+extern  cvar_t  *r_sunShadowsActive;
+extern  cvar_t  *r_lampShadows;
+extern  cvar_t  *r_lampShadowStrength;
+extern  cvar_t  *r_lampShadowMapSize;
+extern  cvar_t  *r_bloom;
+extern  cvar_t  *r_bloomIntensity;
+extern  cvar_t  *r_bloomThreshold;
+extern  cvar_t  *r_fxaa;
+extern  cvar_t  *r_motionBlur;
+extern  cvar_t  *r_motionBlurNos;
+extern  cvar_t  *r_motionBlurMax;
+extern  cvar_t  *r_motionBlurMaxNos;
+extern  cvar_t  *r_motionBlurNear;
+extern  cvar_t  *r_softParticles;
+extern  cvar_t  *r_wetGround;
+extern  cvar_t  *r_wetness;
+extern  cvar_t  *r_headlights;
+extern  cvar_t  *r_headlightShadows;
+extern  cvar_t  *r_headlightShadowMapSize;
+extern  cvar_t  *r_headlightIntensity;
+extern  cvar_t  *r_carReflections;
+extern  cvar_t  *r_carReflectionSize;
+extern  cvar_t  *r_carReflectionStrength;
+
+// Q3Rally: models-only sun shadow casters (r_sunShadowCasters) need baked
+// sunlight, i.e. r_sunlightMode 1; mode 2 adds the sun in the shader and
+// takes the map's shadows from the shadow maps
+#define R_SunShadowModelsOnly() ( r_sunShadowCasters->integer && r_sunlightMode->integer == 1 )
 extern  cvar_t  *r_shadowFilter;
 extern  cvar_t  *r_shadowBlur;
 extern  cvar_t  *r_shadowMapSize;
@@ -1887,8 +2058,10 @@ void R_RenderView( viewParms_t *parms );
 void R_RenderDlightCubemaps(const refdef_t *fd);
 void R_RenderPshadowMaps(const refdef_t *fd);
 void R_RenderSunShadowMaps(const refdef_t *fd, int level);
+void R_LoadLamps( void );
+void R_SelectLampShadows( void );
+void R_RenderLampShadowMaps( void );
 void R_RenderCubemapSide( int cubemapIndex, int cubemapSide, qboolean subscene );
-void R_GenerateReflectionCubemap( const vec3_t origin );
 
 void R_AddMD3Surfaces( trRefEntity_t *e );
 void R_AddNullModelSurfaces( trRefEntity_t *e );
@@ -2073,6 +2246,7 @@ typedef struct shaderCommands_s
 	double		shaderTime;
 	int			fogNum;
 	int         cubemapIndex;
+	qboolean    softParticle;	// Q3Rally: sprites and polys, faded where they cut into the scene
 
 	int			dlightBits;	// or together of all vertexDlightBits
 	int         pshadowBits;
@@ -2264,6 +2438,7 @@ void GLSL_SetUniformVec3(shaderProgram_t *program, int uniformNum, const vec3_t 
 void GLSL_SetUniformVec4(shaderProgram_t *program, int uniformNum, const vec4_t v);
 void GLSL_SetUniformMat4(shaderProgram_t *program, int uniformNum, const mat4_t matrix);
 void GLSL_SetUniformMat4BoneMatrix(shaderProgram_t *program, int uniformNum, /*const*/ mat4_t *matrix, int numMatricies);
+void GLSL_SetUniformWetZones(shaderProgram_t *program, int uniformNum, const vec4_t *v, int numZones);
 
 shaderProgram_t *GLSL_GetGenericShaderProgram(int stage);
 
@@ -2282,7 +2457,20 @@ void RE_AddRefEntityToScene( const refEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void RE_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
+void R_RenderSpotShadowMaps( void );
+void R_RenderCarReflection( void );
+void R_ComputeMotionMask( void );
+#define CAR_REFLECT_EXCLUDE	300.0f		// Q3Rally: models this near the camera are not in the car reflection
+#define CAR_REFLECT_FACING	0.5f		// Q3Rally: car reflection stage seen straight on (1 at the edges)
+#define CAR_REFLECT_BLUR	1.5f		// Q3Rally: mip level of the car reflection stage
+#define CAR_REFLECT_COAT	0.7f		// Q3Rally: clear coat on top of the car paint
+#define CAR_REFLECT_COAT_FACING	0.04f	// Q3Rally: clear coat seen straight on (1 at the edges)
 void RE_BeginScene( const refdef_t *fd );
+qboolean R_ParseHaze( const char *text );
+void RB_Haze( FBO_t *dstFbo, ivec4_t dstBox );
+void R_UpdateColorLut( void );
+image_t *R_GenerateSurfaceMaps( image_t *diffuse );
 void RE_RenderScene( const refdef_t *fd );
 void RE_EndScene( void );
 
@@ -2364,7 +2552,7 @@ RENDERER BACK END COMMAND QUEUE
 =============================================================
 */
 
-#define	MAX_RENDER_COMMANDS	0x40000
+#define	MAX_RENDER_COMMANDS	0x80000
 
 typedef struct {
 	byte	cmds[MAX_RENDER_COMMANDS];
@@ -2482,8 +2670,8 @@ typedef enum {
 // these are sort of arbitrary limits.
 // the limits apply to the sum of all scenes in a frame --
 // the main view, all the 3D icons, etc
-#define	MAX_POLYS		2400
-#define	MAX_POLYVERTS	12000
+#define	MAX_POLYS		8192		// Q3Rally: was 2400 (long skid marks, particles)
+#define	MAX_POLYVERTS	40000		// Q3Rally: was 12000
 
 // all of the information needed by the back end must be
 // contained in a backEndData_t

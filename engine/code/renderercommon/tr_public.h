@@ -99,6 +99,11 @@ typedef struct {
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );
 
 	void (*TakeVideoFrame)( int h, int w, byte* captureBuffer, byte *encodeBuffer, qboolean motionJpeg );
+
+	// Q3Rally: a spot light (car headlights). coneAngle = full opening angle
+	// in degrees. Renderers without spot lights draw it as point lights
+	// along dir.
+	void	(*AddSpotLightToScene)( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
 } refexport_t;
 
 //

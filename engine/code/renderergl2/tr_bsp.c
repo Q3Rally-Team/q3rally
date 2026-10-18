@@ -2346,6 +2346,20 @@ void R_LoadEntities( lump_t *l ) {
 			continue;
 		}
 
+		// Q3Rally: haze of the map (wins over q3r_haze in the sky shader)
+		if (!Q_stricmp(keyname, "haze") || !Q_stricmp(keyname, "_haze")) {
+			if (R_ParseHaze(value)) {
+				tr.hazeFromWorld = qtrue;
+			}
+			continue;
+		}
+
+		// Q3Rally: colour grading look of the map
+		if (!Q_stricmp(keyname, "colorlut") || !Q_stricmp(keyname, "_colorlut")) {
+			Q_strncpyz(tr.worldColorLut, value, sizeof(tr.worldColorLut));
+			continue;
+		}
+
 		// check for auto exposure
 		if (!Q_stricmp(keyname, "autoExposureMinMax")) {
 			sscanf(value, "%f %f", &tr.autoExposureMinMax[0], &tr.autoExposureMinMax[1]);
@@ -2695,6 +2709,155 @@ void R_CalcVertexLightDirs( void )
 }
 
 
+
+/*
+=================
+R_LoadLamps
+
+Q3Rally: collects the lamps of the map for lamp shadows (r_lampShadows).
+q3map2 removes "light" entities from the BSP unless the map is compiled with
+-keeplights; tools/maptools/inject_lights.py copies them from the .map into
+an already compiled BSP. Spotlights point at their target ("target" or the
+"_q3r_spotorigin" stored by the tool), point lights get a frustum looking
+straight down, which covers the cars under a street lamp.
+=================
+*/
+#define LAMP_MAX_TARGETS	1024
+
+void R_LoadLamps( void ) {
+	static char		targetNames[LAMP_MAX_TARGETS][64];
+	static vec3_t	targetOrigins[LAMP_MAX_TARGETS];
+	int				numTargets = 0;
+	int				pass, i;
+	char			*p, *token;
+	char			key[MAX_TOKEN_CHARS];
+	lamp_t			*lamps;
+
+	for ( i = 0; i < MAX_LAMP_SHADOWS; i++ ) {
+		tr.lampSlots[i].lamp = -1;
+	}
+	tr.numLamps = 0;
+	tr.lamps = NULL;
+
+	if ( !s_worldData.entityString ) {
+		return;
+	}
+
+	lamps = ri.Hunk_AllocateTempMemory( sizeof( lamp_t ) * MAX_LAMPS );
+
+	// pass 0: target names, pass 1: lights
+	for ( pass = 0; pass < 2; pass++ ) {
+		p = s_worldData.entityString;
+
+		while ( 1 ) {
+			char		classname[64] = "", targetname[64] = "", target[64] = "";
+			vec3_t		origin, spotOrigin;
+			qboolean	hasOrigin = qfalse, hasSpot = qfalse, isSun = qfalse;
+			float		light = 300.0f, spotRadius = 64.0f;
+
+			token = COM_ParseExt( &p, qtrue );
+			if ( !token[0] ) {
+				break;
+			}
+			if ( token[0] != '{' ) {
+				continue;
+			}
+
+			while ( 1 ) {
+				token = COM_ParseExt( &p, qtrue );
+				if ( !token[0] || token[0] == '}' ) {
+					break;
+				}
+				Q_strncpyz( key, token, sizeof( key ) );
+				token = COM_ParseExt( &p, qtrue );
+				if ( !token[0] || token[0] == '}' ) {
+					break;
+				}
+
+				if ( !Q_stricmp( key, "classname" ) ) {
+					Q_strncpyz( classname, token, sizeof( classname ) );
+				} else if ( !Q_stricmp( key, "origin" ) ) {
+					hasOrigin = ( sscanf( token, "%f %f %f", &origin[0], &origin[1], &origin[2] ) == 3 );
+				} else if ( !Q_stricmp( key, "targetname" ) ) {
+					Q_strncpyz( targetname, token, sizeof( targetname ) );
+				} else if ( !Q_stricmp( key, "target" ) ) {
+					Q_strncpyz( target, token, sizeof( target ) );
+				} else if ( !Q_stricmp( key, "light" ) || !Q_stricmp( key, "_light" ) ) {
+					light = atof( token );
+				} else if ( !Q_stricmp( key, "radius" ) ) {
+					spotRadius = atof( token );
+				} else if ( !Q_stricmp( key, "_sun" ) ) {
+					isSun = atoi( token ) != 0;
+				} else if ( !Q_stricmp( key, "_q3r_spotorigin" ) ) {
+					hasSpot = ( sscanf( token, "%f %f %f", &spotOrigin[0], &spotOrigin[1], &spotOrigin[2] ) == 3 );
+				}
+			}
+
+			if ( pass == 0 ) {
+				if ( targetname[0] && hasOrigin && numTargets < LAMP_MAX_TARGETS ) {
+					Q_strncpyz( targetNames[numTargets], targetname, sizeof( targetNames[0] ) );
+					VectorCopy( origin, targetOrigins[numTargets] );
+					numTargets++;
+				}
+				continue;
+			}
+
+			if ( Q_stricmp( classname, "light" ) || !hasOrigin || isSun || light <= 0.0f || tr.numLamps >= MAX_LAMPS ) {
+				continue;
+			}
+
+			if ( !hasSpot && target[0] ) {
+				for ( i = 0; i < numTargets; i++ ) {
+					if ( !strcmp( targetNames[i], target ) ) {
+						VectorCopy( targetOrigins[i], spotOrigin );
+						hasSpot = qtrue;
+						break;
+					}
+				}
+			}
+
+			{
+				lamp_t	*l = &lamps[tr.numLamps];
+				vec3_t	right;
+				float	dist;
+
+				VectorCopy( origin, l->origin );
+				l->light = light;
+				l->radius = sqrt( light * LAMP_LIGHT_SCALE / LAMP_MIN_LIT );
+
+				if ( hasSpot ) {
+					VectorSubtract( spotOrigin, origin, l->axis[0] );
+					dist = VectorNormalize( l->axis[0] );
+					if ( dist < 1.0f ) {
+						VectorSet( l->axis[0], 0, 0, -1 );
+						dist = 64.0f;
+					}
+					l->fov = 2.0f * RAD2DEG( atan2( spotRadius, dist ) ) * 1.25f;
+					if ( l->fov < 30.0f ) l->fov = 30.0f;
+					if ( l->fov > 150.0f ) l->fov = 150.0f;
+				} else {
+					VectorSet( l->axis[0], 0, 0, -1 );
+					l->fov = 120.0f;
+				}
+
+				// axis[1] = left, axis[2] = up (forward x left = up)
+				MakeNormalVectors( l->axis[0], right, l->axis[2] );
+				VectorNegate( right, l->axis[1] );
+
+				tr.numLamps++;
+			}
+		}
+	}
+
+	if ( tr.numLamps ) {
+		tr.lamps = ri.Hunk_Alloc( sizeof( lamp_t ) * tr.numLamps, h_low );
+		Com_Memcpy( tr.lamps, lamps, sizeof( lamp_t ) * tr.numLamps );
+		ri.Printf( PRINT_DEVELOPER, "%i lamps for lamp shadows\n", tr.numLamps );
+	}
+
+	ri.Hunk_FreeTempMemory( lamps );
+}
+
 /*
 =================
 RE_LoadWorldMap
@@ -2729,6 +2892,12 @@ void RE_LoadWorldMap( const char *name ) {
 	// set default autoexposure settings
 	tr.autoExposureMinMax[0] = -2.0f;
 	tr.autoExposureMinMax[1] = 2.0f;
+
+	// Q3Rally: the map's colour grading comes from its worldspawn or sky shader
+	tr.worldColorLut[0] = '\0';
+	tr.shaderColorLut[0] = '\0';
+	tr.hazeSet = qfalse;
+	tr.hazeFromWorld = qfalse;
 
 	// set default tone mapping settings
 	tr.toneMinAvgMaxLevel[0] = -8.0f;
@@ -3013,6 +3182,16 @@ void RE_LoadWorldMap( const char *name ) {
 		R_LoadCubemaps();
 		R_RenderMissingCubemaps();
 	}
+
+	// Q3Rally: lamps for lamp shadows
+	R_LoadLamps();
+
+	// Q3Rally: tell cgame whether this map draws real-time sun shadows
+	// (the sky shader has q3gl2_sun, or r_forceSun), so it can soften the
+	// blob shadow under the cars
+	ri.Cvar_Set( "r_sunShadowsActive",
+		( glRefConfig.framebufferObject && r_sunlightMode->integer && r_shadowCascadeZFar->integer
+		  && ( tr.sunShadows || r_forceSun->integer ) ) ? "1" : "0" );
 
     ri.FS_FreeFile( buffer.v );
 }

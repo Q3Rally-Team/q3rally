@@ -4,22 +4,6 @@
 // ------------------------------------------------------------
 
 // ------------------------------------------------------------
-// 1.sprites (friend)
-// ------------------------------------------------------------
-
-sprites/friend
-{
-	nomipmaps
-	nopicmip
-	{
-		map sprites/friend1.tga
-		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-
-
-// ------------------------------------------------------------
 // 2.sprites (foe)
 // ------------------------------------------------------------
 
@@ -156,8 +140,6 @@ textures/ctf/blue_telep
 		depthFunc equal
 	}
 
-
-
 }
 
 // ------------------------------------------------------------
@@ -205,8 +187,6 @@ textures/ctf/red_telep
 		depthFunc equal
 	}
 
-
-
 }
 
 // ------------------------------------------------------------
@@ -247,488 +227,6 @@ textures/ctf/test2_r_trans
 		rgbGen identity
 		blendFunc GL_DST_COLOR GL_ZERO
 	}
-}
-
-// ------------------------------------------------------------
-// 10.ctf (killblockctf_r)
-// ------------------------------------------------------------
-
-textures/ctf/killblockctf_r
-{
-   qer_editorimage   textures/gothic_block/blocks15cgeomtrn.tga
-
-        {
-		map textures/sfx/fire_ctfred.tga
-                tcmod scroll 0 1
-                tcMod turb 0 .25 0 1.6
-                tcmod scale 2 2
-                blendFunc GL_ONE GL_ZERO
-                rgbGen identity
-	}
-        {
-	        map textures/gothic_block/blocks18cgeomtrn2.tga
-		//blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-                blendFunc blend
-                tcmod rotate 30
-                tcMod stretch sin .8 0.2 0 .2
-	        rgbGen identity
-	}
-        {
-	        map textures/gothic_block/blocks18cgeomtrn2.tga
-		blendFunc blend
-                tcmod rotate 20
-                tcMod stretch sin .8 0.2 0 .1
-	        rgbGen identity
-	}
-	{
-	        map textures/gothic_block/blocks15cgeomtrn.tga
-		blendFunc blend
-	        rgbGen identity
-	}
-        {
-		map $lightmap
-                blendFunc GL_DST_COLOR GL_ONE_MINUS_DST_ALPHA
-		rgbGen identity
-	}
-}
-
-// ------------------------------------------------------------
-// 11.ctf (killblockctf_b)
-// ------------------------------------------------------------
-
-textures/ctf/killblockctf_b
-{
-   qer_editorimage   textures/gothic_block/killblockgeomtrn.tga
-
-        {
-		map textures/sfx/fire_ctfblue.tga
-                tcmod scroll 0 1
-                tcMod turb 0 .25 0 1.6
-                tcmod scale 2 2
-                blendFunc GL_ONE GL_ZERO
-                rgbGen identity
-	}
-        {
-	        map textures/gothic_block/blocks18cgeomtrn2.tga
-		//blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-                blendFunc blend
-                tcmod rotate 30
-                tcMod stretch sin .8 0.2 0 .2
-	        rgbGen identity
-	}
-        {
-	        map textures/gothic_block/blocks18cgeomtrn2.tga
-		blendFunc blend
-                tcmod rotate 20
-                tcMod stretch sin .8 0.2 0 .1
-	        rgbGen identity
-	}
-	{
-	        map textures/gothic_block/killblockgeomtrn.tga
-		blendFunc blend
-	        rgbGen identity
-	}
-        {
-		map $lightmap
-                blendFunc GL_DST_COLOR GL_ONE_MINUS_DST_ALPHA
-		rgbGen identity
-	}
-}
-
-// ------------------------------------------------------------
-// 12.ctf (ctf_arch_b_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/ctf_arch_b_shiny
-{      
-     qer_editorimage textures/ctf/ctf_arch_b.tga
-	   {
-		map textures/ctf/ctf_arch_b.tga
-                blendFunc GL_ONE GL_ZERO
-		rgbGen identity
-	} 
-        {
-                map textures/sfx/specular.tga
-                blendFunc GL_ONE GL_ONE
-                tcGen environment
-                tcmod scale 10 10
-                rgbGen identity
-	}  
-        {
-		map textures/ctf/ctf_arch_b.tga
-                blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbGen identity
-	}
-        {
-		map $lightmap
-		blendfunc gl_dst_color gl_zero
-		rgbGen identity
-	}
-         
-}
-
-// ------------------------------------------------------------
-// 13.ctf (ctf_arch_r_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/ctf_arch_r_shiny
-{
-	qer_editorimage textures/ctf/ctf_arch_r.tga      
-        {
-		map textures/ctf/ctf_arch_r.tga
-                blendFunc GL_ONE GL_ZERO
-		rgbGen identity
-	} 
-        {
-                map textures/sfx/specular.tga
-                blendFunc GL_ONE GL_ONE
-                tcGen environment
-                tcmod scale 10 10
-                rgbGen identity
-	}  
-        {
-		map textures/ctf/ctf_arch_r.tga
-                blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-		rgbGen identity
-	}
-        {
-		map $lightmap
-		blendfunc gl_dst_color gl_zero
-		rgbGen identity
-	}
-         
-}
-
-// ------------------------------------------------------------
-// 14.ctf (door02_bred2_shiny)
-// ------------------------------------------------------------
-
-textures/gothic_door/door02_bred2_shiny
-{              
-qer_editorimage textures/gothic_door/door02_bred2.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/gothic_door/door02_bred2.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 15.ctf (door02_eblue2_shiny)
-// ------------------------------------------------------------
-
-textures/gothic_door/door02_eblue2_shiny
-{              
-qer_editorimage textures/gothic_door/door02_eblue2.tga
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/gothic_door/door02_eblue2.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 16.ctf (red_scary4_d3fin)
-// ------------------------------------------------------------
-
-textures/ctf/red_scary4_d3fin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/red_scary4_d3fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 17.ctf (ctf_tower_bluefin_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/ctf_tower_bluefin_shiny
-{              
-qer_editorimage textures/ctf/ctf_tower_bluefin.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/ctf_tower_bluefin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 18.ctf (ctf_tower_redfin_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/ctf_tower_redfin_shiny
-{              
-qer_editorimage textures/ctf/ctf_tower_redfin.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/ctf_tower_redfin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 19.ctf (metalbase09_bluekillblock_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/metalbase09_bluekillblock_shiny
-{              
-qer_editorimage textures/ctf/metalbase09_bluekillblock.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/metalbase09_bluekillblock.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 20.ctf (red_scary4_cfin)
-// ------------------------------------------------------------
-
-textures/ctf/red_scary4_cfin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/red_scary4_cfin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 21.ctf (red_scary4_csansfacefin)
-// ------------------------------------------------------------
-
-textures/ctf/red_scary4_csansfacefin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/red_scary4_csansfacefin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 22.ctf (tallblue_2_fin)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_2_fin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_2_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 23.ctf (tallblue_1L_fin_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_1L_fin_shiny
-{              
-qer_editorimage textures/ctf/tallblue_1L_fin.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_1R_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 24.ctf (tallblue_1R_fin_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_1R_fin_shiny
-{              
-qer_editorimage textures/ctf/tallblue_1R_fin.tga 
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_1R_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 25.ctf (tallblue_2b_fin)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_2b_fin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_2b_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 26.ctf (tallblue_4c_fin_shiny)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_4c_fin_shiny
-{              
-qer_editorimage textures/ctf/tallblue_4c_fin.tga 
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_4c_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 27.ctf (tallblue_4bsmall_fin)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_4bsmall_fin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_4bsmall_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
-}
-
-// ------------------------------------------------------------
-// 28.ctf (tallblue_5esmallb_fin)
-// ------------------------------------------------------------
-
-textures/ctf/tallblue_5esmallb_fin
-{              
-
-	{
-		map $lightmap
-		rgbGen identity
-	}
-
-
-        {
-		map textures/ctf/tallblue_5esmallb_fin.tga
-                blendFunc GL_dst_color GL_SRC_ALPHA
-		alphagen lightingspecular
-		rgbGen identity
-	}
-
 }
 
 // ------------------------------------------------------------
@@ -822,71 +320,6 @@ textures/ctf/ctf_redflag
 // powerups.shader and referenced by maps and gameplay code.
 
 // ------------------------------------------------------------
-// 33.ctf (q3r_bluelong_decal)
-// ------------------------------------------------------------
-
-textures/ctf/q3r_bluelong_decal
-{
-	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	polygonoffset
-	{
-		map textures/ctf/q3r_bannerbluelong.tga
-	}
-	
-}
-
-// ------------------------------------------------------------
-// 34.ctf (q3r_redlong_decal)
-// ------------------------------------------------------------
-
-textures/ctf/q3r_redlong_decal
-{
-	qer_editorimage textures/ctf/q3r_bannerredlong.tga
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	polygonoffset
-	{
-		map textures/ctf/q3r_bannerredlong.tga
-	}
-	
-}
-
-// ------------------------------------------------------------
-// 35.ctf (q3r_bluelong_01)
-// ------------------------------------------------------------
-
-textures/ctf/q3r_bluelong_01
-{
-	qer_editorimage textures/ctf/q3r_bannerbluelong.tga
-	deformVertexes wave sin 0 1 0 .1
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	polygonoffset
-	{
-		map textures/ctf/q3r_bannerbluelong.tga
-	}
-	
-}
-
-// ------------------------------------------------------------
-// 36.ctf (q3r_redlong_01)
-// ------------------------------------------------------------
-
-textures/ctf/q3r_redlong_01
-{
-	qer_editorimage textures/ctf/q3r_bannerredlong.tga
-	deformVertexes wave sin 0 1 0 .1
-	surfaceparm nolightmap
-	surfaceparm nomarks
-	polygonoffset
-	{
-		map textures/ctf/q3r_bannerredlong.tga
-	}
-}
-
-// ------------------------------------------------------------
 // 37.ctf (blueteam01)
 // ------------------------------------------------------------
 
@@ -965,48 +398,12 @@ textures/ctf2/redteam02
 }
 
 // ------------------------------------------------------------
-// 41.ctf (blue_banner02)
-// ------------------------------------------------------------
-
-textures/ctf2/blue_banner02
-{
-	cull none
-	{
-		map textures/ctf2/blue_banner02.tga
-		rgbgen identity
-	}
-	{
-		map $lightmap
-		rgbgen identity
-		blendfunc filter
-	}
-}
-
-// ------------------------------------------------------------
-// 42.ctf (red_banner02)
-// ------------------------------------------------------------
-
-textures/ctf2/red_banner02
-{
-	cull none
-	{
-		map textures/ctf2/red_banner02.tga
-		rgbgen identity
-	}
-	{
-		map $lightmap
-		rgbgen identity
-		blendfunc filter
-	}
-}
-
-// ------------------------------------------------------------
 // 43.ctf (blue_telep)
 // ------------------------------------------------------------
 
 textures/ctf/blue_telep
 {
-	q3map_lightimage textures/effects/jumpcircblue.tga
+	q3map_lightimage textures/effects/jumpcircblue.jpg
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	surfaceparm nomarks
@@ -1014,18 +411,18 @@ textures/ctf/blue_telep
 	cull disable
 	q3map_surfacelight 455
 	{
-		clampmap textures/effects/jumpcircblue.tga
+		clampmap textures/effects/jumpcircblue.jpg
 		blendfunc add
 		tcMod rotate 46
 	}
 	{
-		clampmap textures/effects/jumpcircblue.tga
+		clampmap textures/effects/jumpcircblue.jpg
 		blendfunc add
 		tcMod rotate -80
 		tcMod stretch sin 0.6 -0.3 0 0.5 
 	}
 	{
-		clampmap textures/effects/jumpcircblue.tga
+		clampmap textures/effects/jumpcircblue.jpg
 		blendfunc add
 		tcMod rotate -80
 		tcMod stretch sin 0.5 0.3 0 0.5 
@@ -1038,7 +435,7 @@ textures/ctf/blue_telep
 
 textures/ctf/red_telep
 {
-	q3map_lightimage textures/effects/jumpcircred.tga
+	q3map_lightimage textures/effects/jumpcircred.jpg
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	surfaceparm nomarks
@@ -1046,129 +443,21 @@ textures/ctf/red_telep
 	cull disable
 	q3map_surfacelight 455
 	{
-		clampmap textures/effects/jumpcircred.tga
+		clampmap textures/effects/jumpcircred.jpg
 		blendfunc add
 		tcMod rotate 46
 	}
 	{
-		clampmap textures/effects/jumpcircred.tga
+		clampmap textures/effects/jumpcircred.jpg
 		blendfunc add
 		tcMod rotate -80
 		tcMod stretch sin 0.6 -0.3 0 0.5 
 	}
 	{
-		clampmap textures/effects/jumpcircred.tga
+		clampmap textures/effects/jumpcircred.jpg
 		blendfunc add
 		tcMod rotate -80
 		tcMod stretch sin 0.5 0.3 0 0.5 
-	}
-}
-
-// ------------------------------------------------------------
-// 45.ctf (weapfloor_red)
-// ------------------------------------------------------------
-
-textures/bubctf1/weapfloor_red
-{
-	cull disable
-	{
-		clampmap textures/flares/largeglow.tga
-		blendfunc add
-		rgbGen const ( 0.85098 0.701961 0.701961 )
-		tcMod rotate -40
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 1 0 0 )
-		tcMod rotate 42
-		tcMod stretch sin 1 0.1 0 1 
-	}
-}
-
-// ------------------------------------------------------------
-// 46.ctf (weapfloor_blue)
-// ------------------------------------------------------------
-
-textures/bubctf1/weapfloor_blue
-{
-	cull disable
-	{
-		clampmap textures/flares/largeglow.tga
-		blendfunc add
-		rgbGen const ( 0.705882 0.717647 0.847059 )
-		tcMod rotate -40
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 0 0 1 )
-		tcMod rotate 42
-		tcMod stretch sin 1 0.1 0 1 
-	}
-}
-
-// ------------------------------------------------------------
-// 47.ctf (ta_techspawn_blue)
-// ------------------------------------------------------------
-
-textures/ctf_unified/ta_techspawn_blue
-{
-	cull disable
-	{
-		clampmap textures/flares/largeglow.tga
-		blendfunc add
-		rgbGen const ( 0.705882 0.717647 0.847059 )
-		tcMod rotate -40
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 0 0 1 )
-		tcMod rotate 42
-		tcMod stretch sin 1 0.1 0 1 
-	}
-}
-
-// ------------------------------------------------------------
-// 48.ctf (ta_techspawn_red)
-// ------------------------------------------------------------
-
-textures/ctf_unified/ta_techspawn_red
-{
-	cull disable
-	{
-		clampmap textures/flares/largeglow.tga
-		blendfunc add
-		rgbGen const ( 0.85098 0.701961 0.701961 )
-		tcMod rotate -40
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		rgbGen const ( 1 0 0 )
-		tcMod rotate 42
-		tcMod stretch sin 1 0.1 0 1 
-	}
-}
-
-// ------------------------------------------------------------
-// 49.ctf (weapfloor_neutral)
-// ------------------------------------------------------------
-
-textures/bubctf1/weapfloor_neutral
-{
-	cull disable
-	{
-		clampmap textures/flares/largeglow.tga
-		blendfunc add
-		tcMod rotate -40
-	}
-	{
-		clampmap textures/flares/wide.tga
-		blendfunc add
-		tcMod rotate 42
-		tcMod stretch sin 1 0.1 0 1 
 	}
 }
 

@@ -428,11 +428,155 @@ void CG_SkidMark( qhandle_t markShader, const vec3_t origin, const vec3_t up,
 
 /*
 ===============
+CG_SkidRibbon
+
+Q3Rally: the skid mark of a tyre as one continuous ribbon. Called every
+frame while the tyre skids at the contact point; a segment is laid down
+from the last point once the tyre has moved SKID_SEGMENT units, sharing
+its edge with the previous segment and continuing the texture along the
+mark, so curves have no gaps or overlaps. Stops when the tyre stops
+skidding, lifts off or the ground changes (CG_SkidRibbonStop).
+===============
+*/
+#define SKID_HALF_WIDTH		7.0f
+#define SKID_SEGMENT		14.0f
+#define SKID_TEX_LENGTH		96.0f	// units per texture repeat along the mark
+#define SKID_LIFETIME		20000
+#define SKID_MAX_GAP		96.0f
+#define SKID_GRACE_TIME		150		// msec
+
+void CG_SkidRibbonStop( centity_t *cent, int tire ) {
+	// the slip of a tyre flickers from frame to frame: short breaks do not
+	// end the mark
+	if ( cg.time - cent->skidRibbonTime[tire] > SKID_GRACE_TIME || cg.time < cent->skidRibbonTime[tire] ) {
+		cent->skidRibbon[tire] = qfalse;
+	}
+}
+
+void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t point, const vec3_t normal ) {
+	vec3_t			move, side, side0, segDir, corners[4], projection, delta, c, sd;
+	vec3_t			markPoints[MAX_MARK_POINTS];
+	markFragment_t	markFragments[MAX_MARK_FRAGMENTS], *mf;
+	polyVert_t		verts[MAX_VERTS_ON_POLY];
+	markPoly_t		*mark;
+	float			segLen, u, dist0;
+	int				i, j, numFragments;
+
+	if ( !cg_addMarks.integer || shader <= 0 ) {
+		cent->skidRibbon[tire] = qfalse;
+		return;
+	}
+	cent->skidRibbonTime[tire] = cg.time;
+
+	// start a new ribbon
+	if ( !cent->skidRibbon[tire] || cent->skidRibbonShader[tire] != shader ) {
+		cent->skidRibbon[tire] = qtrue;
+		cent->skidRibbonShader[tire] = shader;
+		VectorCopy( point, cent->skidRibbonPoint[tire] );
+		VectorClear( cent->skidRibbonSide[tire] );
+		cent->skidRibbonDist[tire] = random() * SKID_TEX_LENGTH;
+		return;
+	}
+
+	VectorSubtract( point, cent->skidRibbonPoint[tire], move );
+	segLen = VectorLength( move );
+	if ( segLen > SKID_MAX_GAP ) {
+		// jumped, teleported or lost the ground for a while
+		VectorCopy( point, cent->skidRibbonPoint[tire] );
+		VectorClear( cent->skidRibbonSide[tire] );
+		return;
+	}
+	if ( segLen < SKID_SEGMENT ) {
+		return;
+	}
+
+	// across the way the tyre moves, on the ground; keep it pointing to the
+	// same side as the last segment so the ribbon does not twist
+	VectorScale( move, 1.0f / segLen, segDir );
+	CrossProduct( segDir, normal, side );
+	if ( VectorNormalize( side ) < 0.001f ) {
+		return;
+	}
+	if ( VectorLengthSquared( cent->skidRibbonSide[tire] ) < 0.5f ) {
+		VectorCopy( side, cent->skidRibbonSide[tire] );
+	} else if ( DotProduct( side, cent->skidRibbonSide[tire] ) < 0.0f ) {
+		VectorNegate( side, side );
+	}
+	VectorCopy( cent->skidRibbonSide[tire], side0 );
+
+	// the segment, a little above the ground and projected onto it
+	// (R_MarkFragments needs the corners clockwise seen from above)
+	VectorMA( cent->skidRibbonPoint[tire], -SKID_HALF_WIDTH, side0, corners[0] );
+	VectorMA( cent->skidRibbonPoint[tire], SKID_HALF_WIDTH, side0, corners[1] );
+	VectorMA( point, SKID_HALF_WIDTH, side, corners[2] );
+	VectorMA( point, -SKID_HALF_WIDTH, side, corners[3] );
+	for ( i = 0; i < 4; i++ ) {
+		VectorMA( corners[i], 6.0f, normal, corners[i] );
+	}
+	VectorSubtract( corners[1], corners[0], move );
+	VectorSubtract( corners[2], corners[1], delta );
+	CrossProduct( move, delta, c );
+	if ( DotProduct( c, normal ) > 0.0f ) {
+		// counter-clockwise seen from above: turn it round
+		VectorCopy( corners[1], c );
+		VectorCopy( corners[3], corners[1] );
+		VectorCopy( c, corners[3] );
+	}
+	VectorScale( normal, -20.0f, projection );
+
+	numFragments = trap_CM_MarkFragments( 4, (void *)corners, projection, MAX_MARK_POINTS, markPoints[0],
+		MAX_MARK_FRAGMENTS, markFragments );
+
+	dist0 = cent->skidRibbonDist[tire];
+	for ( i = 0, mf = markFragments; i < numFragments; i++, mf++ ) {
+		if ( mf->numPoints > MAX_VERTS_ON_POLY ) {
+			mf->numPoints = MAX_VERTS_ON_POLY;
+		}
+		for ( j = 0; j < mf->numPoints; j++ ) {
+			polyVert_t *v = &verts[j];
+
+			VectorCopy( markPoints[mf->firstPoint + j], v->xyz );
+
+			// where along the segment, and how far across the ribbon
+			VectorSubtract( v->xyz, cent->skidRibbonPoint[tire], delta );
+			u = Com_Clamp( 0.0f, 1.0f, DotProduct( delta, segDir ) / segLen );
+			VectorMA( cent->skidRibbonPoint[tire], u * segLen, segDir, c );
+			VectorScale( side0, 1.0f - u, sd );
+			VectorMA( sd, u, side, sd );
+			VectorNormalize( sd );
+			VectorSubtract( v->xyz, c, delta );
+
+			v->st[0] = 0.5f + DotProduct( delta, sd ) / ( 2.0f * SKID_HALF_WIDTH );
+			v->st[1] = ( dist0 + u * segLen ) / SKID_TEX_LENGTH;
+			v->modulate[0] = v->modulate[1] = v->modulate[2] = v->modulate[3] = 255;
+		}
+
+		mark = CG_AllocMark();
+		mark->time = cg.time;
+		mark->lifeTime = SKID_LIFETIME;
+		mark->alphaFade = qfalse;
+		mark->markShader = shader;
+		mark->poly.numVerts = mf->numPoints;
+		mark->color[0] = mark->color[1] = mark->color[2] = mark->color[3] = 1.0f;
+		memcpy( mark->verts, verts, mf->numPoints * sizeof( verts[0] ) );
+	}
+
+	VectorCopy( point, cent->skidRibbonPoint[tire] );
+	VectorCopy( side, cent->skidRibbonSide[tire] );
+	cent->skidRibbonDist[tire] = dist0 + segLen;
+	if ( cent->skidRibbonDist[tire] > SKID_TEX_LENGTH * 64.0f ) {
+		cent->skidRibbonDist[tire] -= SKID_TEX_LENGTH * 64.0f;	// keep the texture coordinates small
+	}
+}
+
+/*
+===============
 CG_AddMarks
 ===============
 */
 #define	MARK_TOTAL_TIME		10000
 #define	MARK_FADE_TIME		1000
+#define	SKID_FADE_TIME		4000	// Q3Rally: skid marks fade out slowly
 // Q3Rally Code Start
 #define MARK_GROW_TIME		1000
 // Q3Rally Code END
@@ -442,6 +586,7 @@ void CG_AddMarks( void ) {
 	markPoly_t	*mp, *next;
 	int			t;
 	int			fade;
+	int			life, fadeTime;
 
 	if ( !cg_addMarks.integer ) {
 		return;
@@ -454,7 +599,8 @@ void CG_AddMarks( void ) {
 		next = mp->nextMark;
 
 		// see if it is time to completely remove it
-		if ( cg.time > mp->time + MARK_TOTAL_TIME ) {
+		life = mp->lifeTime ? mp->lifeTime : MARK_TOTAL_TIME;
+		if ( cg.time > mp->time + life ) {
 			CG_FreeMarkPoly( mp );
 			continue;
 		}
@@ -477,10 +623,11 @@ void CG_AddMarks( void ) {
 			}
 		}
 
-		// fade all marks out with time
-		t = mp->time + MARK_TOTAL_TIME - cg.time;
-		if ( t < MARK_FADE_TIME ) {
-			fade = 255 * t / MARK_FADE_TIME;
+		// fade all marks out with time (Q3Rally: skid marks more slowly)
+		t = mp->time + life - cg.time;
+		fadeTime = mp->lifeTime ? SKID_FADE_TIME : MARK_FADE_TIME;
+		if ( t < fadeTime ) {
+			fade = 255 * t / fadeTime;
 			if ( mp->alphaFade ) {
 				for ( j = 0 ; j < mp->poly.numVerts ; j++ ) {
 					mp->verts[j].modulate[3] = fade;

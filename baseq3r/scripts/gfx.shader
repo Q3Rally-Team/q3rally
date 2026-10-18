@@ -82,7 +82,6 @@ console
                 blendFunc Add
                 
 	}
-        
 
 }
 
@@ -90,18 +89,6 @@ console
 // 5.menu
 // ------------------------------------------------------------
 
-menuback
-{
-	nopicmip
-	nomipmaps
-
-        {
-                map textures/sfx/menucar01.tga
-        }
-
-       
-        
-}
 menubacknologo
 {
 	nopicmip
@@ -122,16 +109,6 @@ menubacknologo2
 	} 
 }
 
-menubackRagePro	// blends turn to shit on rage pro, so skip it
-{
-	nopicmip
-	nomipmaps
-        {
-                map textures/sfx/menucar01.tga
-        }
-        
-}
-
 // ------------------------------------------------------------
 // 6.levelshot detail (used to break up the blur on levelshots)
 // ------------------------------------------------------------
@@ -149,40 +126,6 @@ levelShotDetail
 // ------------------------------------------------------------
 // 7.menu 2D gfx
 // ------------------------------------------------------------
-
-gfx/2d/menuinfo
-{
-	nopicmip
-	{
-		map gfx/2d/menuinfo.tga
-	}
-}
-
-gfx/2d/menuinfo2
-{
-	nopicmip
-	{
-		map gfx/2d/menuinfo2.tga
-	}
-}
-
-gfx/2d/quit
-{
-	nopicmip
-	nomipmaps
-	{
-		map gfx/2d/quit.tga
-	}
-}
-
-gfx/2d/cursor
-{
-    nopicmip
-	nomipmaps
-    {
-        map gfx/2d/cursor.tga
-    }
-}
 
 // ------------------------------------------------------------
 // 8.chat icon
@@ -206,16 +149,6 @@ sprites/foe
 	nopicmip
 	{
 		map sprites/foe2.tga
-		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-sprites/friend
-{
-	nomipmaps
-	nopicmip
-	{
-		map sprites/friend1.tga
 		blendfunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
@@ -256,15 +189,6 @@ sprites/plasma1
 	}
 }
 
-sprites/plasma2
-{
-	cull disable
-	{
-		map sprites/plasma2.tga
-		blendfunc GL_ONE GL_ONE
-	}
-}
-
 teleportEffect
 {
 	cull none
@@ -302,7 +226,6 @@ projectionShadow
 	}	
 }
 
-
 // wake is the mark on water surfaces for paddling players
 
 wake
@@ -324,7 +247,6 @@ wake
 		rgbGen wave sin .7 .3 .25 .4
 	}	
 }
-
 
 // viewBloodBlend gives the blended directional cue when you get hit
 
@@ -620,24 +542,6 @@ gfx/damage/oil_mark
                 blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
                 rgbGen exactVertex
         }
-}
-
-railDic
-{
-        cull disable
-	deformVertexes autosprite
-	{
-		clampmap textures/oafx/plastrail.tga
-		blendfunc gl_one gl_src_alpha
-		rgbGen wave inversesawtooth 0 1 0 1.3 
-		tcMod rotate -460
-	}
-	{
-		clampmap textures/oafx/plastrail.tga
-		blendfunc gl_one gl_src_alpha
-		rgbGen wave inversesawtooth 0 1 0 1.3 
-		tcMod rotate 754
-	}
 }
 
 oldbulletExplosion
@@ -1118,42 +1022,6 @@ gfx/2d/select
 	}
 }
 
-gfx/2d/assault1d
-{
-	nopicmip
-	{
-		map gfx/2d/assault1d.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-gfx/2d/armor1h
-{
-	nopicmip
-	{
-		map gfx/2d/armor1h.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-gfx/2d/health
-{
-	nopicmip
-	{
-		map gfx/2d/health.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
-gfx/2d/blank
-{
-	nopicmip
-	{
-		map gfx/2d/blank.tga
-		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
-	}
-}
-
 gfx/2d/numbers/zero_32b
 {
 	nopicmip
@@ -1386,7 +1254,6 @@ textures/sfx/flame1
 	surfaceparm trans
 	cull none
 	q3map_surfacelight 7500
-	
 
 	{
 		animMap 10 textures/sfx/flame1.tga textures/sfx/flame2.tga textures/sfx/flame3.tga textures/sfx/flame4.tga textures/sfx/flame5.tga textures/sfx/flame6.tga textures/sfx/flame7.tga textures/sfx/flame8.tga
@@ -1399,7 +1266,6 @@ textures/sfx/flame1
 		blendFunc GL_ONE GL_ONE
 		rgbGen wave sawtooth 0 1 0 10
 	}	
-
 
 	{
 		map textures/sfx/flameball.tga
@@ -1416,7 +1282,6 @@ textures/sfx/flame2
 	surfaceparm trans
 	cull none
 	q3map_surfacelight 7500
-	
 
 	{
 		animMap 10 textures/sfx/flame1.tga textures/sfx/flame2.tga textures/sfx/flame3.tga textures/sfx/flame4.tga textures/sfx/flame5.tga textures/sfx/flame6.tga textures/sfx/flame7.tga textures/sfx/flame8.tga
@@ -1429,7 +1294,6 @@ textures/sfx/flame2
 		blendFunc GL_ONE GL_ONE
 		rgbGen wave sawtooth 0 1 0 10
 	}	
-
 
 	{
 		map textures/sfx/flameball.tga
@@ -1633,23 +1497,11 @@ textures/q3r_sfx/force_green
                rgbGen wave square 1 1 .25 .5
        }
 
-
 }
 
 // ------------------------------------------------------------
 // 17.stecki gfx
 // ------------------------------------------------------------
-
-textures/stecki/haze
-{
-	qer_editorimage textures/stecki/haze_rt.tga
-	surfaceparm sky
-	surfaceparm noimpact
-	surfaceparm nolightmap
-	q3map_sun 1 .992 .879 80 38 30
-	q3map_surfacelight 50
-	skyparms textures/stecki/haze - -
-}
 
 //stecki haze fog
 
@@ -1676,6 +1528,8 @@ textures/stecki/night01
 	q3map_surfacelight 5
 
         skyparms textures/stecki/night01 512 textures/stecki/night01
+	q3r_haze 0.10 0.09 0.08 4000	// Q3Rally: haze of the maps with this sky
+        q3r_colorLut gfx/luts/night	// Q3Rally: colour grading look of the maps with this sky
 
 }
 
@@ -1727,36 +1581,6 @@ teleptThis
 		rgbGen wave inversesawtooth 0 1 0 4 
 		tcMod stretch sawtooth 0 1 0 4 
 		tcMod rotate 1323
-	}
-}
-
-teleptThat
-{
-	q3map_lightimage textures/effects/jumpcirc.tga
-	surfaceparm nolightmap
-	cull disable
-	deformVertexes autosprite
-	q3map_surfacelight 300
-	{
-		clampmap textures/effects/jumpcirc.tga
-		blendfunc add
-		rgbGen wave sawtooth 0 1 0 2 
-		tcMod stretch inversesawtooth 0 1 0 2 
-		tcMod rotate 333
-	}
-	{
-		clampmap textures/effects/jumpcirc.tga
-		blendfunc add
-		rgbGen wave sawtooth 0 1 0 0.5 
-		tcMod stretch inversesawtooth 0 1 0 0.5 
-		tcMod rotate -333
-	}
-	{
-		clampmap textures/effects/jumpcirc.tga
-		blendfunc add
-		rgbGen wave sawtooth 0 1 0 1.25 
-		tcMod stretch inversesawtooth 0 1 0 1.25 
-		tcMod rotate 500
 	}
 }
 
@@ -1836,7 +1660,7 @@ gfx/skidmarks/sand
 {
         polygonOffset
         {
-                map gfx/skidmarks/sand.png
+                map gfx/skidmarks/sand.tga
                 blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
                 rgbGen exactVertex
         }
@@ -1845,7 +1669,7 @@ gfx/skidmarks/snow
 {
         polygonOffset
         {
-                map gfx/skidmarks/snow.png
+                map gfx/skidmarks/snow.tga
                 blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
                 rgbGen exactVertex
         }
@@ -1854,7 +1678,7 @@ gfx/skidmarks/ice
 {
         polygonOffset
         {
-                map gfx/skidmarks/ice.png
+                map gfx/skidmarks/ice.tga
                 blendFunc GL_ZERO GL_ONE_MINUS_SRC_COLOR
                 rgbGen exactVertex
         }
@@ -1873,34 +1697,6 @@ gfx/damage/spark
 // ------------------------------------------------------------
 // 20.goal gfx
 // ------------------------------------------------------------
-
-textures/sfx2/redgoal2
-{
-        surfaceparm nolightmap
-        surfaceparm trans
-        cull none
-        {
-                map textures/sfx2/redgoal2.tga
-                tcgen environment
-                blendfunc add
-                tcmod turb .1 .3 .5 .4
-                tcmod scale .5 .5
-        }
-}
-
-textures/sfx2/bluegoal2
-{
-	surfaceparm nolightmap
-	surfaceparm trans
-	cull none
-	{
-		map textures/sfx2/bluegoal2.tga
-		tcgen environment
-		blendfunc add
-		tcmod turb .1 .3 .5 .4
-		tcmod scale .5 .5
-	}
-}
 
 // ------------------------------------------------------------
 // 21.car gibs
@@ -1933,7 +1729,6 @@ models/gibs/piston
 		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
 	}
 }
-
 
 models/gibs/shock
 
@@ -1997,7 +1792,6 @@ textures/sfx/beam_dusty2
         //        blendFunc GL_DST_COLOR GL_ONE_MINUS_SRC_COLOR  
       //	}
 }
-
 
 // Ghost vehicle blend (driven by entity vertex alpha)
 gfx/ghost/vehicle

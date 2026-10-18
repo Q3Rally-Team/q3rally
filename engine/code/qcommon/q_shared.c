@@ -1459,7 +1459,7 @@ void Info_RemoveKey( char *s, const char *key ) {
 		}
 		*o = 0;
 
-		if (!strcmp (key, pkey) )
+		if (!Q_stricmp (key, pkey) )
 		{
 			memmove(start, s, strlen(s) + 1); // remove this part
 			
@@ -1515,7 +1515,7 @@ void Info_RemoveKey_Big( char *s, const char *key ) {
 		}
 		*o = 0;
 
-		if (!strcmp (key, pkey) )
+		if (!Q_stricmp (key, pkey) )
 		{
 			memmove(start, s, strlen(s) + 1); // remove this part
 			return;
@@ -1539,12 +1539,25 @@ can mess up the server's parsing
 ==================
 */
 qboolean Info_Validate( const char *s ) {
-	if ( strchr( s, '\"' ) ) {
-		return qfalse;
+	const char* ch = s;
+
+	while ( *ch != '\0' )
+	{
+		// Q3Rally: ioq3 rejects everything outside 0x20-0x7E here. Bytes
+		// >= 0x80 stay allowed so players with umlauts in old configs are
+		// not dropped with "Invalid userinfo"; control characters are not.
+		if( (unsigned char)*ch < 0x20 || *ch == 0x7F )
+			return qfalse;
+
+		if( *ch == '\"' )
+			return qfalse;
+
+		if( *ch == ';' )
+			return qfalse;
+
+		++ch;
 	}
-	if ( strchr( s, ';' ) ) {
-		return qfalse;
-	}
+
 	return qtrue;
 }
 

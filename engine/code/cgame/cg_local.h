@@ -301,6 +301,13 @@ typedef struct centity_s {
 	qboolean		wheelSkidding[4];
 
 	vec3_t			lastSkidOrigin[4];
+	// Q3Rally: skid mark ribbon of each tyre (CG_SkidRibbon)
+	qboolean		skidRibbon[4];
+	vec3_t			skidRibbonPoint[4];
+	vec3_t			skidRibbonSide[4];
+	float			skidRibbonDist[4];
+	qhandle_t		skidRibbonShader[4];
+	int				skidRibbonTime[4];		// last time the tyre skidded
 	float			smokeTime[4];
 	int				wetSprayTime[4];
 	float			engineSmokeTime;
@@ -354,6 +361,7 @@ typedef struct markPoly_s {
 	int			time;
 	qhandle_t	markShader;
 	qboolean	alphaFade;		// fade alpha instead of rgb
+	int			lifeTime;		// Q3Rally: msec, 0 = MARK_TOTAL_TIME
 	float		color[4];
 	poly_t		poly;
 	polyVert_t	verts[MAX_VERTS_ON_POLY];
@@ -1249,6 +1257,7 @@ typedef struct {
 	qhandle_t	battleSuitShader;
 	qhandle_t	hasteShader;
 	qhandle_t	shieldShader;
+	qhandle_t	nosShader;		// Q3Rally: shell of a car burning NOS
 
 
 	qhandle_t	battleWeaponShader;
@@ -1317,7 +1326,6 @@ typedef struct {
 	qhandle_t	reverseLightGlow;
 	qhandle_t	rearviewMirrorShader;
 	qhandle_t	MMapShader;
-	qhandle_t	turboModel;
 
 	// sounds
 	sfxHandle_t	quadSound;
@@ -1623,6 +1631,13 @@ typedef struct {
         qboolean                sprintTrack;    // A2B course (second token of CS_TRACKLENGTH)
 // Q3Rally Code END
 
+	// Q3Rally: the renderer draws real-time sun shadows on this map
+	// (r_sunShadowsActive), the blob under the cars is then only a soft
+	// contact shadow
+	qboolean		sunShadows;
+
+	// Q3Rally: worldspawn "wetness", how wet the ground is without rain
+	float			mapWetness;
 } cgs_t;
 
 //==============================================================================
@@ -1799,6 +1814,8 @@ extern      vmCvar_t                cg_distanceFormat;
 
 
 extern	vmCvar_t		cg_atmosphericLevel;
+extern	vmCvar_t		cg_mapEffects;
+extern	vmCvar_t		cg_tireSmoke;
 extern	vmCvar_t		cg_weatherAudio;
 extern	vmCvar_t		cg_developer;
 
@@ -2098,6 +2115,8 @@ void	CG_SkidMark( qhandle_t markShader,
 					float red, float green, float blue, float alpha,
 					qboolean alphaFade,
 					float width, float length, qboolean temporary );
+void	CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t point, const vec3_t normal );
+void	CG_SkidRibbonStop( centity_t *cent, int tire );
 // Q3Rally Code END
 
 //
@@ -2206,6 +2225,30 @@ void CG_CheckChangedPredictableEvents( playerState_t *ps );
 
 // Q3Rally Code Start
 //
+// cg_rally_fx.c
+//
+void CG_InitRallyFX( void );
+void CG_AddRallyFX( void );
+
+// Q3Rally: kinds of tyre smoke and dust for CG_FX_TireSmoke
+typedef enum {
+	FX_SMOKE_TIRE,		// burnout on asphalt
+	FX_SMOKE_DUST,		// dusty track
+	FX_SMOKE_DIRT,
+	FX_SMOKE_GRAVEL,
+	FX_SMOKE_SAND,
+	FX_SMOKE_GRASS,
+	FX_SMOKE_SCREEN,	// rear weapon smoke screen: thick, big, long
+	FX_SMOKE_BLAST,		// dark smoke of an explosion (mine)
+	FX_SPRAY_WET,		// water spray of tyres on a wet road
+	FX_SPRAY_SNOW,		// powder snow thrown up by tyres
+	FX_SMOKE_NUM_KINDS
+} fxSmokeKindNum_t;
+
+void CG_FX_TireSmoke( const vec3_t origin, const vec3_t up, const vec3_t carVel, int kind, float strength );
+void CG_FX_Spray( const vec3_t origin, const vec3_t up, const vec3_t throwVel, int kind, float strength );
+
+//
 // cg_atmospheric.c
 //
 void CG_AddAtmosphericEffects( void );
@@ -2214,6 +2257,8 @@ void CG_Atmospheric_Shutdown( void );
 void CG_Atmospheric_AddWeatherZone( centity_t *cent );
 qboolean CG_AtmosphericPointInWeather( const vec3_t point, int type );
 qboolean CG_AtmosphericPointWet( const vec3_t point );
+void CG_AtmosphericWetZones( refdef_t *refdef );
+void CG_UpdateWetness( void );
 qboolean CG_AtmosphericPointSnow( const vec3_t point );
 void CG_AtmosphericAddLoopingSounds( void );
 
@@ -2530,6 +2575,7 @@ void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t 
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
 void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void		trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void		trap_R_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1

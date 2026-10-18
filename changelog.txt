@@ -4,6 +4,287 @@ unreleased
 
 Added:
 
+- Water with real-time reflections (OpenGL2 renderer): shaders with the new
+  q3r_water keyword are drawn by a GLSL program that mirrors the scene in the
+  water plane, ripples the reflection with two scrolling normal maps, mixes it
+  with the water colour by a Fresnel term (see-through from above, mirror at
+  grazing angles) and adds a sun glint from the map's q3map_sun. No
+  misc_portal_surface is needed for it. Keywords: q3r_water <normalmap> [tile]
+  [speed] [distortion], q3r_waterColor, q3r_waterFresnel, q3r_waterSpecular;
+  r_water 0 switches it off. OpenGL1 draws the shader's normal stages instead.
+  Example: textures/q3r_liquids/q3r_water_mirror (normal map water_normal.tga)
+  in the test map q3r_watertest. The pool in q3r_valley (dip_valley/water)
+  uses it too; on water surfaces deformVertexes only applies to the OpenGL1
+  stages.
+
+- Real-time sun shadows (OpenGL2): cars, props and items cast shadows from
+  the map's sun that move with them. Only models are rendered into the camera
+  shadow cascades; the map's own shadows stay baked, and a car shadow is only
+  drawn where the map is in the sun (no second shadow in the shade, shaded
+  areas are no longer darkened twice, and the map is not redrawn for the
+  shadows every frame). New cvar r_sunShadowCasters (1 = models only, 0 =
+  ioquake3 behaviour). The blob under the cars stays as a lighter contact
+  shadow. Switched on through q3gl2_sun in the sky shaders of q3r_valley,
+  q3r_country01, q3r_lcs1, q3r_mk, q3r_dirtyfun, q3r_ridgeracer, q3r_lavafalls
+  and q3r_sk1. The Ultra graphics preset uses sunlight mode 1 instead of 2
+  (mode 2 adds the sun on top of the lightmap); the modes are now called
+  Off / Shadows / Deluxe.
+
+- Lamp shadows (OpenGL2): cars, props and items also cast real-time shadows
+  from the map's lamps. Each frame the renderer picks the lamps that light the
+  models near the camera most (r_lampShadows = how many, 0..4, default 2) and
+  renders a small depth map from each lamp: point lights look straight down,
+  spotlights along their cone. The map part of a lamp's depth map is rendered
+  once when the lamp is picked, only the models every frame. Like the sun
+  shadows, the shadow is only laid onto the map, not onto other cars, and only
+  where the lamp's light actually reaches (so no shadow behind a wall); it
+  gets weaker with the distance to the lamp and fades in when a lamp is
+  picked. Cvars r_lampShadows, r_lampShadowStrength (0.7) and
+  r_lampShadowMapSize (512, latched). q3map2 normally removes the light
+  entities from the BSP; maps must keep them (q3map2 -bsp -keeplights, or
+  tools/maptools/inject_lights.py for compiled maps). The lights were added
+  to q3r_nightcity, q3r_demobowl, q3r_babel, q3r_ctf_04, q3r_david5,
+  q3r_lavafalls, q3r_dd_02, q3r_ctf_01, q3r_david4 and q3r_dm02 (AAS
+  checksums updated). The rear view and the minimap do not draw lamp shadows.
+
+- Headlights (OpenGL2): each car with its lights on now has one real spot
+  light instead of a row of round additive glows. The road, walls and other
+  cars are lit in a cone with their own colours (an extra pass per surface
+  that multiplies the light with the surface texture), and the headlights
+  nearest to the camera cast shadows of the map and the cars (a shadow map
+  per light, rendered every frame; the car the light belongs to is behind it
+  and not included). New cvars r_headlights (0 = the old look),
+  r_headlightIntensity (2.5), r_headlightShadows (how many lights cast
+  shadows, 0-2, default 2) and r_headlightShadowMapSize (1024, latched).
+  New cgame import trap_R_AddSpotLightToScene (CG_R_ADDSPOTLIGHTTOSCENE = 98);
+  OpenGL1 draws such a light as three point lights along the beam, as
+  before. Engine, both renderers and cgame must be updated together.
+
+- Tail, brake and reverse lights (OpenGL2) use the same spot lights: one
+  wide cone per car from behind the rear light tags onto the road, walls and
+  the car behind, with their colours (red light on green grass stays dark,
+  as it should). The tail light glows weakly while the headlights are on,
+  the brake light replaces it when braking, the reverse light is white.
+  They cast no shadows, the shadow maps stay with the headlights (new spot
+  light flag SPOTLIGHT_NOSHADOW). OpenGL1 and r_headlights 0 draw one
+  additive point light behind the car instead of one per lamp.
+
+- Car paint reflections (OpenGL2): car paint and glass now reflect the real
+  surroundings instead of a fixed picture. A cube map around the camera is
+  rendered from the map, the sky and the cars further away (one side per
+  frame, the whole cube every six frames) and the $dynamicreflection stages
+  of the car shaders look it up along the reflected view direction, with a
+  Fresnel term (stronger towards the edges). Car paint also gets a clear
+  coat: a sharp reflection on top of the paint, weak seen straight on and
+  strong at grazing angles. New cvars r_carReflections (0 = the old fixed
+  reflection, 1 = one side per frame, 2 = all sides every frame),
+  r_carReflectionSize (256, latched) and r_carReflectionStrength (1).
+  OpenGL1 keeps the fixed reflection.
+
+- Motion blur (OpenGL2): the surroundings blur with the camera motion at
+  speed and in fast turns, the road right next to the car included; the
+  car in front of the camera stays sharp (its screen rectangle and depth
+  are left out). Every pixel is traced back to where it was on the screen
+  in the previous frame (depth and last frame's camera), so the blur
+  follows the real motion and looks the same at any frame rate. It gets
+  much stronger while the viewed car burns NOS (new refdef flag RDF_NOS
+  from the cgame, blended in and out over 0.3 s). New cvars r_motionBlur
+  (0.5, share of a 1/60 s frame, 0-2, 0 = off), r_motionBlurNos (1.5, 0-4),
+  r_motionBlurMax / r_motionBlurMaxNos (longest blur, 0.05 / 0.12 of the
+  screen) and r_motionBlurNear (120, fade-in distance from the camera).
+
+- Tyre smoke and dust: skidding tyres and tyres rolling over loose ground
+  throw up soft, billowing puffs (new texture gfx/misc/q3r_smoke.tga) that
+  grow, turn, slow down, rise (smoke) or settle (dust), carry along a part
+  of the car's speed and are tinted with the light of the map where they
+  start, so smoke no longer glows in the dark. Own colours and behaviour
+  for asphalt (white smoke), dust, dirt, gravel, sand and grass; sand now
+  dusts at speed as well. They run in the client effect particle pool
+  (cg_rally_fx.c, now 1024 particles); new cvar cg_tireSmoke (1, 0 = off,
+  up to 2 = denser). Snow, wet road and ice keep their sprays.
+- Soft particles (OpenGL2): smoke, dust, spray and other sprites and
+  particle polys fade out where they cut into the ground and walls instead
+  of showing a hard edge (they read the depth copy the renderer already
+  makes after the depth prepass, tr.hdrDepthImage; a missing depth leaves
+  them as they are). New cvar r_softParticles (24 = fade distance in
+  units, 0 = off; needs r_depthPrepass 1).
+- Rear weapons: the smoke screen is a thick, lit cloud that hangs on the
+  track for several seconds (it was a few faint puffs), and a mine
+  explosion throws up dark smoke and dirt. All rear weapons are now
+  registered at map load: a weapon handed out without a pickup in the map
+  (give, game modes) showed no mine model and a missing-texture square
+  instead of the explosion.
+- Wet ground (OpenGL2): inside a rain zone (rally_weather_rain) the ground
+  gets wet within about 20 seconds while it rains there and dries within
+  about 2 minutes after the rain stops; outside the rain zones it stays
+  dry (each zone has its own wetness, soft at its sides). Wet
+  ground is darker and reflects the scene (screen space reflections:
+  the reflected view ray is stepped through the depth of the frame and the
+  colour is taken from the previous frame), with Fresnel (strong at
+  grazing angles) and puddles on asphalt that mirror the surroundings,
+  lights and cars. Asphalt, concrete and metal reflect most, dirt, sand
+  and gravel mostly get darker, grass only a little; walls get a bit
+  darker and do not mirror. New worldspawn key "wetness" (0 to 1) for maps
+  that are wet without rain, e.g. a night city after the rain; shaders
+  with surfaceparm wet are always wet. New cvars r_wetGround (1, 0 = off,
+  2 = finer reflections; needs r_depthPrepass 1) and r_wetness (cheat,
+  test value, -1 = from the rain). OpenGL1 draws the ground as before.
+  Puddles form on every kind of ground once it is properly wet and grow
+  with the wetness; they mirror like water (muddy on dirt, sand and
+  grass), and while it rains drops make rings in them.
+- Tyre spray on wet roads and powder snow behind the tyres are soft, lit
+  clouds in the client particle pool like the tyre smoke (they followed the
+  map's light too little and were small sprites); wet ground no longer
+  throws up dust.
+- q3r_sk1 (Canyon Cruise): the puddle on the track and the creek under the
+  bridges use the reflective water (new shader
+  textures/q3r_liquids/q3r_water_pool, the old pool look stays for
+  OpenGL1 and r_water 0; liquids/calm_poollight itself is unchanged for
+  q3r_ctf_04 and q3r_david4).
+- Skid marks are continuous tracks: each tyre lays one ribbon that follows
+  the line it drives (also in tight circles), with a tread pattern along
+  the track, instead of a row of overlapping square stamps with gaps and
+  dark overlaps. Own textures for asphalt, dirt, grass, sand, snow and ice
+  (the snow, sand and ice marks were drawn as black bands); short breaks
+  of the wheel slip no longer cut the track. Marks stay 20 seconds and
+  fade out over the last 4 seconds; more marks at once (8192 polys).
+- Filmic tone mapping and colour grading (OpenGL2, r_hdr 1 and r_toneMap
+  1): a new tone curve (ACES, in linear light) gives deeper shadows, more
+  depth in the mid tones and bright parts that roll off softly instead of
+  clipping (sunlit concrete, lamps, yellow city walls keep their detail).
+  After it every pixel goes through a colour grading LUT, the look of the
+  map. Looks in gfx/luts: q3r_default (subtle, used when the map sets
+  none), warm, cold, night, vivid, overcast, dusk and neutral. A map picks
+  its look with the worldspawn key "colorlut" or with
+  "q3r_colorLut <image>" in its sky shader (no recompile needed). New
+  cvars r_toneMapCurve (1 = filmic, 0 = the old curve), r_filmicExposure
+  (1.25), r_filmicWhite (2), r_colorGrade (strength, 1, 0 = off) and
+  r_colorLut (one look for every map, "none" = off). New looks are made
+  with tools/maptools/make_color_luts.py. Looks set in the sky shaders:
+  warm for q3r_sk1, q3r_lcs1, q3r_mk, q3r_valley and q3r_lavafalls; night
+  for q3r_nightcity, q3r_babel, q3r_demobowl, q3r_ctf_04, q3r_dm02,
+  q3r_battlecanyon and q3r_david4; dusk for q3r_dirtyfun and q3r_dd_02;
+  cold for q3r_ridgeracer (and q3r_watertest). The other maps use
+  q3r_default.
+- Ambient occlusion (OpenGL2): soft shadows where surfaces meet, so the
+  cars stand on the ground (a contact shadow under the car) and kerbs,
+  wall bases, corners and props get depth. Rebuilt after Scalable Ambient
+  Obscurance: positions and normals from the depth of the prepass, 12
+  samples (24 with r_ssao 2) on a spiral with a radius in world units, at
+  half resolution with the depth aware blur; it fades out in the distance.
+  Only the main view. r_ssao is now on by default (latched, needs
+  r_depthPrepass 1); new cvars r_ssaoRadius (48), r_ssaoStrength (0.8) and
+  r_ssaoDistance (3000).
+- Normal and specular maps for the map textures (OpenGL2): textures without
+  their own _n / _s maps get them made when the map loads, from the
+  texture itself (relief from its brightness with painted light and shadow
+  taken out, at a fine and a coarse scale; gloss lower in the gaps).
+  Relief, reflectance and gloss follow the material from the surface flags:
+  asphalt slightly glossy, dirt, sand and grass matt, gravel rough, metal
+  shiny, ice glossy. Only world surfaces with a lightmap (no models, car
+  skins, decals or alpha tested surfaces). The old ioquake3 generator
+  (one pixel Sobel, brightened the texture) is no longer used.
+  r_genNormalMaps is now on by default (latched); new cvar
+  r_genNormalStrength (1). Real _n / _s maps next to a texture still win.
+- Distance and ground haze (OpenGL2): the air between the camera and far
+  surfaces is hazy in the colour of the map's sky, so the distance gets
+  depth; a ground haze can lie in valleys and hollows (thick near the
+  ground, thin higher up, integrated along the view ray) and the haze
+  glows towards the sun. The sky only gets haze at the horizon. Set in the
+  sky shader with q3r_haze <r> <g> <b> <distance> [<ground distance>
+  <ground height> <ground thickness> [<sun glow>]] or with the worldspawn
+  key "haze" (same values, wins over the sky shader). Set for every map
+  with a sky except the space nebula; country01 and sk1 also get ground
+  haze. New cvars r_haze (1) and r_hazeDensity (1).
+- OpenGL2: alpha tested surfaces that write depth (trees, fences, grates)
+  are now part of the depth prepass even when they blend, so haze, ambient
+  occlusion and soft particles see them (the tree tops above the forest
+  walls were treated as sky).
+
+Changed:
+
+- Graphics menu reorganised into three pages: Graphics (preset, renderer,
+  resolution, aspect ratio, fullscreen, anti-aliasing, texture detail,
+  texture filter, geometry), Effects (bloom, motion blur, reflections,
+  water, wet roads, haze, colour look, ambient occlusion, surface relief,
+  tyre smoke, soft particles, skid marks, tone curve) and Lighting &
+  shadows (HDR, sun shadows and their quality, lamp shadows, headlights,
+  headlight shadows, shadow detail, dynamic lights). The sub menu on the
+  left is the same on every page (the three pages and Driver info, the
+  current page highlighted); switching pages replaces the page, so Back
+  always returns to the Config menu. One preset (Low,
+  Medium, High, Ultra) sets everything on all three pages; changing a
+  single option shows "Custom". Options take effect at once; those that
+  need a renderer restart show the Apply button. Options that only work in
+  OpenGL2 are greyed out in OpenGL1. In OpenGL2 anti-aliasing multisamples
+  the frame buffer (r_ext_framebuffer_multisample) and no longer also the
+  window. Colour depth, extensions, texture bits, vertex lighting, sun
+  rays, the shadow cascade values, projected shadows and the Voodoo driver
+  option are no longer in the menu; their cvars still work.
+
+- r_marksOnTriangleMeshes defaults to 1: the maps are compiled with -meta,
+  so most ground is triangle meshes and without it skid marks, bullet
+  holes and scorch marks did not appear there. Configs that saved 0 keep
+  it; set it to 1 by hand.
+
+- NOS: the rocket flame model on the car (models/powerups/turbo/
+  turbocar.md3 on tag_turbo) is gone, in game and in the menu preview;
+  burning NOS now shows as stronger motion blur for the driver and as a
+  pulsing light blue shell around the car for everyone (powerups/nos,
+  textures/effects/nosmap.jpg, like the shells of the other powerups).
+  The pickup, the bot item name, the controls menu, the loading tip and
+  the manual say NOS instead of Turbo. Internal names stay as they are
+  (rally_item_turbo in the maps, PW_TURBO, BUTTON_TURBO, tag_turbo,
+  g_autoballStartTurbo, ball_turbo).
+
+- Bloom and anti-aliasing (OpenGL2): bright lights, lamps, lava, tail lights
+  and sun glints get a soft glow (a tight one from a 1/4 size copy of the
+  image and a wide one from a 1/16 size copy); the glow grows from
+  r_bloomThreshold (0.85) to full white, so clipped highlights glow much more
+  than a merely bright wall. FXAA 3.11 smooths jagged edges of the whole
+  image (fences, bridge trusses, car outlines) after tone mapping and bloom,
+  before the HUD. New cvars r_bloom (latched), r_bloomIntensity (0.4),
+  r_bloomThreshold and r_fxaa; both are on by default, need r_postProcess 1
+  and are only applied to the main view (not the rear view or minimap).
+
+- Sun shadows for the maps with a sun straight overhead: the trainyard sky
+  (q3r_downtown, q3r_citydom, q3r_ctf_01) and the nebula sky
+  textures/skies/ame_nebula (q3r_battlecanyon, q3r_david4) got a tilted sun
+  with q3gl2_sun, like q3r_dd_02 (mp_us sky) before, and the maps were relit
+  with their original q3map2 options (geometry, vis data and AAS unchanged,
+  AAS checksums updated). q3r_david4 now uses textures/skies/ame_nebula instead
+  of the identical textures/q3r_skies/env/ame_nebula, which keeps its sun
+  straight down for q3r_dm02: that arena is lit through an opening in its
+  roof, a tilted sun leaves the floor in the dark.
+
+- q3r_ctf_01 water: the pool reflects (q3r_water added to
+  textures/q3r_liquids/q3r_water_03, used only by this map), the water in the
+  pipe runs and falls into the pool as a real stream, with spray, mist and
+  the waterfall sound at its foot. New shaders
+  textures/q3r_liquids/q3r_waterflow (water running along a channel) and
+  textures/q3r_liquids/q3r_waterfall (falling water) with the textures
+  waterfall_body.jpg and waterfall_streaks.tga, for all mappers; the water
+  runs towards the bottom of the texture. The BSP was edited in place (two
+  surfaces got the new shaders, two rally_fx_spray and a target_speaker were
+  added, AAS checksum updated); q3r_ctf_01.map has the same changes.
+  The rust, concrete, brick and gravel textures that were stretched to 2
+  units per texel (texture scale 2: blurry rust on the bridges, grainy
+  bridge pillars) now use scale 0.5 like the rest of the map (BSP texture
+  coordinates and .map; no recompile, lighting unchanged).
+
+- tools/maptools: q3bsp.py (read and replace the entity lump of a BSP, BSP
+  checksum, patch the checksum in an AAS header) and inject_lights.py (copies
+  the light entities of a .map into the compiled BSP for lamp shadows).
+
+- Waterfall spray: the new rally_fx_spray entity puts spray, drifting mist and
+  droplets where a waterfall hits the water. It runs only on the client (the
+  server drops the entity at spawn, cgame reads it from the map), so it costs
+  no entity slots or bandwidth; the mist is tinted by the light grid at its
+  origin. Keys radius, height, size, rate, droplets, angle, push, _color,
+  alpha, range; cg_mapEffects scales the density (0 = off, 2 = double).
+  q3r_valley has three emitters at the foot of its waterfall and now plays
+  sound/world/waterfall.ogg there (entity lump only, AAS checksum updated).
+
 - New car: DB12 (models/players/db12), an Aston Martin DB12 from a 1,859,182
   triangle OBJ: only what is visible from outside is kept (no interior, brakes
   or inner glass; the lamps stay visible behind their lenses, the parts behind
@@ -227,8 +508,81 @@ Changed:
   ladder; best lap times are still recorded and lap ghosts are uploaded.
 - tools/startserver/cli.py now uses the real g_gametype values (sprint 7, team modes
   16+, koth 22, ghost 8).
+- Engine libraries updated from ioquake3: zlib 1.2.3 -> 1.3.1, libjpeg 8c -> 9f,
+  libogg 1.3.6, libvorbis 1.3.7, opus 1.5.2, opusfile 0.12, SDL2 2.24 -> 2.32.8
+  (headers and Windows/macOS binaries) and OpenAL headers 1.24.3. Windows 64-bit
+  now ships SDL2.dll instead of SDL264.dll; the macOS build needs macOS 11 or
+  later (code/libs/macos replaces macosx-ub/macosx-ub2).
+- Merged ioquake3 fixes from 2025/2026: com_zoneMegs default 24 -> 48, twice the
+  render command buffer (with a warning when a command is dropped),
+  MAX_PATCH_PLANES 2048 -> 4096, explicit SDL gamepad button mapping, open file
+  limit raised on Linux/macOS, sv_master2 points to directory.ioquake3.org.
+- Advanced graphics: the "Dynamic refl." option and the r_dynamicReflections
+  cvar were removed. The option had no effect without r_cubeMapping 1, and with
+  it the renderer drew six extra nested scenes per frame that dropped the cars
+  and effects of the main view. Car glass keeps the static reflection texture.
 
 Fixed:
+
+- q3r_sk1: a 4 unit gap between the road and the start pad showed the void
+  as a white line along the start. Fixed in the .map (the road brush now
+  reaches the pad); the map needs to be compiled again (-bsp -meta
+  -custinfoparms; -vis -saveprt; -light -fast -super 2 -filter -bounce 8,
+  then bspc for the AAS). Until then the shipped BSP has the side of the
+  pad in the road texture, so the line is less bright.
+
+- The give command could crash the server ("BG_CanItemBeGrabbed: index out
+  of range") when the item placed at the car started inside the ground: the
+  item was removed and then picked up anyway. Given items are no longer
+  dropped to the floor.
+
+- Soft particles made every particle invisible with r_depthPrepass 1 (the
+  default), and the motion blur only blurred the sky: the view's near
+  plane distance was never stored, so both turned every depth into 0.
+  With it fixed the motion blur also works on the map and the cars, so it
+  is clearly stronger than before at the same r_motionBlur value.
+
+- Breakables a car drives on (the ramps and bridge decks in q3r_ctf_01)
+  broke as soon as a car touched them, whatever their health: every hard
+  wheel or chassis contact counted as a crash, several times per second.
+  Contacts with the top of a breakable (surfaces flatter than about 45
+  degrees) no longer damage it; driving into its sides still does.
+
+- Linux/macOS (case-sensitive file systems): 50 files had a different upper/
+  lower case than the maps, shaders, models or code ask for and were not
+  found there; renamed to lower case. Affected: q3r_valley (rock walls, rails,
+  waterfall, sky), q3r_downtown and q3r_nightcity (building textures),
+  q3r_ctf_01 (video camera model), q3r_country01 (music), the debug spheres
+  (models/test), mapobject vehicles and gauntlet skins. q3r_citydom.bsp now
+  asks for the lower-case names too, and so does q3r_citydom.map (8 building
+  textures); q3r_ctf_01.map names the tree models with the folder's spelling
+  (models/mapobjects/GR_trees). Compiled on Linux, the trees were missing and
+  the buildings had no texture colour in the light stage.
+
+- OpenGL1: cars were drawn black. The car shaders reflect $dynamicreflection,
+  which only OpenGL2 knew; OpenGL1 now uses the static reflection image for it.
+
+- Bots on q3r_citydom: the AAS file's BSP checksum matches the map again (the
+  case fix of the shader names had changed the BSP, the bot library then
+  refuses the AAS file as out of date).
+
+- Missing map textures: 75 images that maps, models or the game code still
+  use (removed by the 2021 texture cleanup) restored from the mapping kit,
+  e.g. base_light, evil*, q3r_layout, q3r_tech, the CTF team-status textures
+  and the Xaero statue. q3r_ctf_04 gets its night sky (oasisnight), spotlamp
+  and grate shaders back (scripts/q3r_ctf_04.shader). calm_pool_bgtess
+  (listed in q3r_david4) no longer uses the missing pool3 image.
+  Restored images without alpha are stored as JPG (7.3 MB -> 0.6 MB).
+
+- Shader scripts cleaned up: 671 entries whose images no longer exist and
+  that no map, model, skin or code uses were removed (about 16,800 lines).
+  common.shader (mapper tool shaders) was left untouched.
+
+- Network messages that end exactly at the buffer size are flagged as
+  overflowed (ioquake3). Userinfo with control characters is rejected; names
+  with umlauts stay valid. Info keys are removed case-insensitively, rehashbans
+  works while no map is running, flares are hidden correctly in mirrors, and
+  trap_BotFreeItemWeights maps to the right QVM syscall (ioquake3).
 
 - Crash to desktop in both renderers when a shader was registered in the
   middle of a frame (e.g. a paint icon in the showroom, browsing from a secret

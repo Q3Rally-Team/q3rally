@@ -473,8 +473,16 @@ void Cmd_Give_f (gentity_t *ent)
 		it_ent = G_Spawn();
 		VectorCopy( ent->r.currentOrigin, it_ent->s.origin );
 		it_ent->classname = it->classname;
+		// Q3Rally: suspended, so it is not dropped to the floor. The car sits
+		// low, the drop trace started in the ground and freed the item, and
+		// Touch_Item on the freed entity crashed the server
+		// (BG_CanItemBeGrabbed: index out of range).
+		it_ent->spawnflags |= 1;
 		G_SpawnItem (it_ent, it);
 		FinishSpawningItem(it_ent );
+		if ( !it_ent->inuse ) {
+			return;
+		}
 		memset( &trace, 0, sizeof( trace ) );
 		Touch_Item (it_ent, ent, &trace);
 		if (it_ent->inuse) {

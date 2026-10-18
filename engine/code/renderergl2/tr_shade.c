@@ -170,6 +170,7 @@ void RB_BeginSurface( shader_t *shader, int fogNum, int cubemapIndex ) {
 	tess.currentStageIteratorFunc = state->optimalStageIteratorFunc;
 	tess.useInternalVao = qtrue;
 	tess.useCacheVao = qfalse;
+	tess.softParticle = qfalse;
 
 	tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
 	if (tess.shader->clampTime && tess.shaderTime >= tess.shader->clampTime) {
@@ -853,6 +854,111 @@ static void ForwardDlight( void ) {
 }
 
 
+/*
+===================
+ForwardSpotLights
+
+Q3Rally: headlights (spot lights). One additive pass per light on the
+surfaces it reaches: surface colour (the first texture stage that is not
+the lightmap) * light colour * cone * falloff * N.L * shadow.
+===================
+*/
+static void ForwardSpotLights( int spotBits ) {
+	shaderProgram_t	*sp = &tr.spotlightShader;
+	shaderStage_t	*pStage = NULL;
+	vec4_t			texMatrix[8];
+	vec4_t			vector;
+	int				i, l;
+
+	if ( !sp->program ) {
+		return;
+	}
+
+	for ( i = 0; i < MAX_SHADER_STAGES; i++ ) {
+		shaderStage_t *st = tess.xstages[i];
+
+		if ( !st ) {
+			break;
+		}
+		if ( st->bundle[0].image[0] && !st->bundle[0].isLightmap && st->bundle[0].tcGen == TCGEN_TEXTURE ) {
+			pStage = st;
+			break;
+		}
+	}
+
+	GLSL_BindProgram( sp );
+
+	GLSL_SetUniformMat4( sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection );
+	// world surfaces are in world space (their transformMatrix is not set)
+	if ( backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity ) {
+		GLSL_SetUniformMat4( sp, UNIFORM_MODELMATRIX, backEnd.or.transformMatrix );
+	} else {
+		mat4_t identity;
+		Mat4Identity( identity );
+		GLSL_SetUniformMat4( sp, UNIFORM_MODELMATRIX, identity );
+	}
+
+	if ( pStage ) {
+		R_BindAnimatedImageToTMU( &pStage->bundle[0], TB_DIFFUSEMAP );
+		ComputeTexMods( pStage, TB_DIFFUSEMAP, texMatrix );
+	} else {
+		GL_BindToTMU( tr.whiteImage, TB_DIFFUSEMAP );
+		for ( i = 0; i < 8; i++ ) {
+			VectorSet4( texMatrix[i], ( i & 1 ) ? 0.0f : 1.0f, ( i & 1 ) ? 1.0f : 0.0f, 0.0f, 0.0f );
+		}
+	}
+
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX0, texMatrix[0] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX1, texMatrix[1] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX2, texMatrix[2] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX3, texMatrix[3] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX4, texMatrix[4] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX5, texMatrix[5] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX6, texMatrix[6] );
+	GLSL_SetUniformVec4( sp, UNIFORM_DIFFUSETEXMATRIX7, texMatrix[7] );
+
+	// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
+	// where they aren't rendered
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+
+	for ( l = 0; l < backEnd.refdef.num_dlights; l++ ) {
+		dlight_t *dl;
+
+		if ( !( spotBits & ( 1 << l ) ) ) {
+			continue;
+		}
+
+		dl = &backEnd.refdef.dlights[l];
+
+		VectorScale( dl->color, r_headlightIntensity->value, vector );
+		vector[3] = 1.0f;
+		GLSL_SetUniformVec4( sp, UNIFORM_COLOR, vector );
+
+		VectorCopy( dl->origin, vector );
+		vector[3] = dl->radius;
+		GLSL_SetUniformVec4( sp, UNIFORM_LIGHTORIGIN, vector );
+
+		VectorCopy( dl->spotDir, vector );
+		vector[3] = dl->spotCosOuter;
+		GLSL_SetUniformVec4( sp, UNIFORM_SPOTDIR, vector );
+
+		VectorSet4( vector, dl->spotCosInner, dl->spotShadow >= 0 ? 1.0f : 0.0f, 0.0f, 0.0f );
+		GLSL_SetUniformVec4( sp, UNIFORM_SHADOWPARAMS, vector );
+
+		if ( dl->spotShadow >= 0 ) {
+			GL_BindToTMU( tr.spotShadowImage[dl->spotShadow], TB_SHADOWMAP );
+			GLSL_SetUniformMat4( sp, UNIFORM_SHADOWMVP, dl->spotShadowMvp );
+		}
+
+		R_DrawElements( tess.numIndexes, tess.firstIndex );
+
+		backEnd.pc.c_totalIndexes += tess.numIndexes;
+		backEnd.pc.c_dlightIndexes += tess.numIndexes;
+		backEnd.pc.c_dlightVertexes += tess.numVertexes;
+	}
+}
+
+
 static void ProjectPshadowVBOGLSL( void ) {
 	int		l;
 	vec3_t	origin;
@@ -1018,6 +1124,170 @@ static unsigned int RB_CalcShaderVertexAttribs( shaderCommands_t *input )
 	return vertexAttribs;
 }
 
+/*
+===================
+RB_CarReflectionStage
+
+Q3Rally: a $dynamicreflection stage (car paint and glass, tcGen environment)
+reflects the cube map around the camera (R_RenderCarReflection) instead of
+the fixed sphere map. The stage keeps its blend, so the paint layer on top
+still decides how much of the reflection shows. Shaders with an opaque such
+stage (paint) get a clear coat pass on top as well, see the end of
+RB_IterateStagesGeneric. qfalse = draw the stage the old way.
+===================
+*/
+static qboolean RB_CarReflectionUsable( shaderCommands_t *input )
+{
+	if ( !r_carReflections->integer || !tr.carReflectImage || !tr.carReflectShader.program ) {
+		return qfalse;
+	}
+	// cars far away inside the cube map itself, bone animated or deformed models
+	if ( glState.currentFBO == tr.carReflectFbo || glState.boneAnimation || input->shader->numDeforms ) {
+		return qfalse;
+	}
+	return qtrue;
+}
+
+static void RB_DrawCarReflection( shaderCommands_t *input, float strength, float facing, float mip, int stateBits )
+{
+	shaderProgram_t *sp = &tr.carReflectShader;
+	vec4_t vec;
+
+	GLSL_BindProgram( sp );
+
+	GLSL_SetUniformMat4( sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection );
+	if ( backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity ) {
+		GLSL_SetUniformMat4( sp, UNIFORM_MODELMATRIX, backEnd.or.transformMatrix );
+	} else {
+		mat4_t identity;
+		Mat4Identity( identity );
+		GLSL_SetUniformMat4( sp, UNIFORM_MODELMATRIX, identity );
+	}
+	GLSL_SetUniformVec3( sp, UNIFORM_VIEWORIGIN, backEnd.viewParms.or.origin );
+	GLSL_SetUniformFloat( sp, UNIFORM_VERTEXLERP, glState.vertexAnimation ? glState.vertexAttribsInterpolation : 0.0f );
+
+	// x = strength, y = reflection seen straight on (more towards the
+	// edges, Fresnel), z = mip level (rougher)
+	VectorSet4( vec, strength, facing, mip, 0.0f );
+	GLSL_SetUniformVec4( sp, UNIFORM_COLOR, vec );
+
+	GL_BindToTMU( tr.carReflectImage, TB_CUBEMAP );
+	GL_State( stateBits );
+
+	R_DrawElements( input->numIndexes, input->firstIndex );
+}
+
+static qboolean RB_CarReflectionStage( shaderCommands_t *input, shaderStage_t *pStage )
+{
+	if ( pStage->bundle[0].image[0] != tr.dynamicReflectionImage || !RB_CarReflectionUsable( input ) ) {
+		return qfalse;
+	}
+	RB_DrawCarReflection( input, r_carReflectionStrength->value, CAR_REFLECT_FACING, CAR_REFLECT_BLUR, pStage->stateBits );
+	return qtrue;
+}
+
+/*
+==================
+RB_WetGroundPass
+
+Q3Rally: wet ground. Drawn over an opaque world surface after its stages:
+darker, and a screen space reflection of the scene (glsl/wetground_fp.glsl).
+How strong depends on the surface type: asphalt and other hard ground
+mirrors with puddles, loose ground mostly gets darker, grass only a bit.
+==================
+*/
+#define WET_SKIP_FLAGS	( SURF_SKY | SURF_NODRAW | SURF_SNOW | SURF_ICE )
+
+static void RB_WetGroundPass( shaderCommands_t *input )
+{
+	shader_t *shader = input->shader;
+	shaderProgram_t *sp = &tr.wetGroundShader;
+	float wetness, reflection, darken, puddles;
+	vec3_t tint;
+	vec4_t vec;
+	qboolean ssr;
+
+	if ( !sp->program || backEnd.depthFill || backEnd.currentEntity != &tr.worldEntity
+		|| ( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) || backEnd.viewParms.targetFbo || backEnd.viewParms.isPortal
+		|| ( backEnd.viewParms.flags & ( VPF_SHADOWMAP | VPF_DEPTHSHADOW | VPF_WATERREFLECTION | VPF_CARREFLECT ) )
+		|| backEnd.viewParms.viewportWidth < glConfig.vidWidth / 2 )
+	{
+		return;
+	}
+	if ( shader->sort != SS_OPAQUE || shader->polygonOffset || shader->numDeforms || shader->isWater
+		|| ( shader->surfaceFlags & WET_SKIP_FLAGS ) )
+	{
+		return;
+	}
+
+	wetness = backEnd.refdef.wetness;
+	if ( shader->surfaceFlags & SURF_WET ) {
+		wetness = 1.0f;		// always wet (puddles, wet spots in the map)
+	}
+	if ( wetness <= 0.0f && !backEnd.refdef.numWetZones ) {
+		return;		// dry, and no rain zone
+	}
+
+	// reflection of the surface itself, darkening, how much water it holds
+	// (puddles), colour of the puddle water
+	if ( shader->surfaceFlags & SURF_GRASS ) {
+		reflection = 0.10f; darken = 0.22f; puddles = 0.25f;
+		VectorSet( tint, 0.75f, 0.72f, 0.55f );
+	} else if ( shader->surfaceFlags & ( SURF_DIRT | SURF_DUST | SURF_SAND ) ) {
+		reflection = 0.30f; darken = 0.40f; puddles = 1.0f;
+		VectorSet( tint, 0.78f, 0.66f, 0.50f );		// muddy
+	} else if ( shader->surfaceFlags & SURF_GRAVEL ) {
+		reflection = 0.25f; darken = 0.35f; puddles = 0.6f;
+		VectorSet( tint, 0.80f, 0.74f, 0.64f );
+	} else {
+		reflection = 1.0f; darken = 0.42f; puddles = 0.9f;	// asphalt, concrete, metal
+		VectorSet( tint, 1.0f, 1.0f, 1.0f );
+	}
+
+	// the reflection needs this frame's depth and last frame's picture,
+	// taken from almost the same place
+	ssr = backEnd.wetDepthReady && tr.wetSceneValid && tr.hdrDepthImage && tr.wetSceneImage
+		&& backEnd.refdef.time - tr.wetSceneTime > 0 && backEnd.refdef.time - tr.wetSceneTime < 250
+		&& Distance( tr.wetScenePrevOrigin, backEnd.viewParms.or.origin ) < 400.0f;
+	if ( !ssr ) {
+		reflection = 0.0f;
+	}
+
+	GLSL_BindProgram( sp );
+	GLSL_SetUniformMat4( sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection );
+	GLSL_SetUniformMat4( sp, UNIFORM_PREVVIEWPROJ, tr.wetScenePrevViewProj );
+	GLSL_SetUniformVec3( sp, UNIFORM_VIEWORIGIN, backEnd.viewParms.or.origin );
+
+	// x, y = near and far plane, z = ray steps, w = mip level of the rough
+	// reflection
+	VectorSet4( vec, backEnd.viewParms.zNear, backEnd.viewParms.zFar, r_wetGround->integer >= 2 ? 40.0f : 24.0f, 4.0f );
+	GLSL_SetUniformVec4( sp, UNIFORM_VIEWINFO, vec );
+
+	VectorSet4( vec, wetness, reflection, darken, puddles );
+	GLSL_SetUniformVec4( sp, UNIFORM_WETPARAMS, vec );
+
+	VectorSet4( vec, tint[0], tint[1], tint[2], 0.0f );
+	GLSL_SetUniformVec4( sp, UNIFORM_COLOR, vec );
+
+	// the rain zones: wet (and with drop rings while it rains) inside
+	GLSL_SetUniformInt( sp, UNIFORM_WETZONECOUNT, backEnd.refdef.numWetZones );
+	GLSL_SetUniformWetZones( sp, UNIFORM_WETZONES, backEnd.refdef.wetZones, backEnd.refdef.numWetZones );
+	GLSL_SetUniformFloat( sp, UNIFORM_TIME, backEnd.refdef.floatTime );
+
+	if ( ssr ) {
+		GL_BindToTMU( tr.wetSceneImage, TB_COLORMAP );
+		GL_BindToTMU( tr.hdrDepthImage, TB_LIGHTMAP );
+	} else {
+		GL_BindToTMU( tr.whiteImage, TB_COLORMAP );	// not read without a reflection
+		GL_BindToTMU( tr.whiteImage, TB_LIGHTMAP );
+	}
+
+	// colour adds the reflection, alpha darkens what is there
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+
+	R_DrawElements( input->numIndexes, input->firstIndex );
+}
+
 static void RB_IterateStagesGeneric( shaderCommands_t *input )
 {
 	int stage;
@@ -1029,6 +1299,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 	vec5_t deformParams;
 
 	qboolean renderToCubemap = tr.renderCubeFbo && glState.currentFBO == tr.renderCubeFbo;
+	qboolean clearCoat = qfalse;	// Q3Rally: car paint gets a clear coat pass
 
 	ComputeDeformValues(&deformGen, deformParams);
 
@@ -1043,6 +1314,16 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		if ( !pStage )
 		{
 			break;
+		}
+
+		// Q3Rally: car paint reflection
+		if ( !backEnd.depthFill && RB_CarReflectionStage( input, pStage ) )
+		{
+			if ( !( pStage->stateBits & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) ) )
+			{
+				clearCoat = qtrue;
+			}
+			continue;
 		}
 
 		if (backEnd.depthFill)
@@ -1157,6 +1438,39 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			GLSL_SetUniformVec4(sp, UNIFORM_FOGDISTANCE, fogDistanceVector);
 			GLSL_SetUniformVec4(sp, UNIFORM_FOGDEPTH, fogDepthVector);
 			GLSL_SetUniformFloat(sp, UNIFORM_FOGEYET, eyeT);
+		}
+
+		// Q3Rally: soft particles, sprites and polys fade out where they
+		// cut into the opaque scene (tr.hdrDepthImage, copied after the
+		// depth prepass)
+		if (pStage->glslShaderGroup != tr.lightallShader)
+		{
+			vec4_t soft;
+			int blend = pStage->stateBits & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS );
+
+			VectorSet4(soft, 0.0f, 0.0f, 0.0f, 0.0f);
+			if (tess.softParticle && backEnd.softDepthReady && blend && !(pStage->stateBits & GLS_DEPTHMASK_TRUE)
+				&& !input->shader->polygonOffset && input->shader->sort > SS_DECAL)
+			{
+				int src = pStage->stateBits & GLS_SRCBLEND_BITS;
+				int dst = pStage->stateBits & GLS_DSTBLEND_BITS;
+				vec4_t viewInfo;
+
+				soft[0] = r_softParticles->value;
+				if (src == GLS_SRCBLEND_SRC_ALPHA || dst == GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
+					soft[1] = 0.0f;		// alpha blend: fade the alpha
+				else if (dst == GLS_DSTBLEND_ONE)
+					soft[1] = 1.0f;		// additive: fade the colour
+				else
+					soft[1] = 2.0f;		// filter: fade towards white
+				soft[2] = 1.0f / tr.hdrDepthImage->width;
+				soft[3] = 1.0f / tr.hdrDepthImage->height;
+
+				VectorSet4(viewInfo, backEnd.viewParms.zNear, backEnd.viewParms.zFar, 0.0f, 0.0f);
+				GLSL_SetUniformVec4(sp, UNIFORM_VIEWINFO, viewInfo);
+				GL_BindToTMU(tr.hdrDepthImage, TB_SPECULARMAP);
+			}
+			GLSL_SetUniformVec4(sp, UNIFORM_SOFTPARTICLE, soft);
 		}
 
 		GL_State( pStage->stateBits );
@@ -1440,6 +1754,17 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		if (backEnd.depthFill)
 			break;
 	}
+
+	// Q3Rally: clear coat of the car paint, the sharp reflection on top of
+	// the paint layer (weak seen straight on, strong at the edges)
+	if ( clearCoat && !backEnd.depthFill )
+	{
+		RB_DrawCarReflection( input, r_carReflectionStrength->value * CAR_REFLECT_COAT, CAR_REFLECT_COAT_FACING, 0.0f,
+			GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+	}
+
+	// Q3Rally: wet ground
+	RB_WetGroundPass( input );
 }
 
 
@@ -1511,6 +1836,81 @@ static void RB_RenderShadowmap( shaderCommands_t *input )
 /*
 ** RB_StageIteratorGeneric
 */
+/*
+===================
+RB_WaterPass
+
+Q3Rally: draws a q3r_water surface with the water GLSL program. The
+reflection texture holds the mirror view rendered for this frame; without
+it the water is drawn with its colour only.
+===================
+*/
+static void RB_WaterPass( shaderCommands_t *input )
+{
+	shader_t *shader = input->shader;
+	shaderProgram_t *sp = &tr.waterShader;
+	vec4_t vec;
+	vec3_t sunColor;
+	vec2_t invRes;
+	float maxSun;
+
+	// nothing to show inside mirror and portal views (the water plane is
+	// the mirror plane there)
+	if ( backEnd.viewParms.isPortal )
+		return;
+
+	GLSL_BindProgram(sp);
+
+	GLSL_SetUniformMat4(sp, UNIFORM_MODELVIEWPROJECTIONMATRIX, glState.modelviewProjection);
+	// world surfaces are already in world space (transformMatrix is only
+	// set up for entities)
+	if ( backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity )
+	{
+		GLSL_SetUniformMat4(sp, UNIFORM_MODELMATRIX, backEnd.or.transformMatrix);
+	}
+	else
+	{
+		mat4_t identity;
+
+		Mat4Identity(identity);
+		GLSL_SetUniformMat4(sp, UNIFORM_MODELMATRIX, identity);
+	}
+	GLSL_SetUniformVec3(sp, UNIFORM_VIEWORIGIN, backEnd.viewParms.or.origin);
+	GLSL_SetUniformFloat(sp, UNIFORM_TIME, input->shaderTime);
+
+	invRes[0] = 1.0f / tr.waterReflectionImage->width;
+	invRes[1] = 1.0f / tr.waterReflectionImage->height;
+	GLSL_SetUniformVec2(sp, UNIFORM_INVTEXRES, invRes);
+
+	GLSL_SetUniformVec4(sp, UNIFORM_COLOR, shader->waterColor);
+
+	VectorSet4(vec, 1.0f / shader->waterTile, shader->waterSpeed, shader->waterDistortion,
+		backEnd.waterReflectionReady ? 1.0f : 0.0f);
+	GLSL_SetUniformVec4(sp, UNIFORM_NORMALSCALE, vec);
+
+	VectorSet4(vec, shader->waterFresnelBias, shader->waterFresnelPower, shader->waterSpecular, 0.0f);
+	GLSL_SetUniformVec4(sp, UNIFORM_SPECULARSCALE, vec);
+
+	// sun glint from the map's q3map_sun, brightest channel scaled to 1
+	maxSun = MAX(tr.sunLight[0], MAX(tr.sunLight[1], tr.sunLight[2]));
+	if (maxSun > 0.0f)
+		VectorScale(tr.sunLight, 1.0f / maxSun, sunColor);
+	else
+		VectorClear(sunColor);
+	GLSL_SetUniformVec3(sp, UNIFORM_PRIMARYLIGHTCOLOR, sunColor);
+
+	VectorCopy(tr.sunDirection, vec);
+	vec[3] = 0.0f;
+	GLSL_SetUniformVec4(sp, UNIFORM_PRIMARYLIGHTORIGIN, vec);
+
+	GL_BindToTMU(tr.waterReflectionImage, TB_COLORMAP);
+	GL_BindToTMU(shader->waterNormalImage, TB_NORMALMAP);
+
+	GL_State(GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
+
+	R_DrawElements(input->numIndexes, input->firstIndex);
+}
+
 void RB_StageIteratorGeneric( void )
 {
 	shaderCommands_t *input;
@@ -1623,6 +2023,18 @@ void RB_StageIteratorGeneric( void )
 	//
 	// call shader function
 	//
+	if ( input->shader->isWater )
+	{
+		RB_WaterPass( input );
+
+		if ( input->shader->polygonOffset )
+		{
+			qglDisable( GL_POLYGON_OFFSET_FILL );
+		}
+
+		return;
+	}
+
 	RB_IterateStagesGeneric( input );
 
 	//
@@ -1639,15 +2051,27 @@ void RB_StageIteratorGeneric( void )
 	//
 	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE && r_lightmap->integer == 0
 		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
-		if (tess.shader->numUnfoggedPasses == 1 && tess.xstages[0]->glslShaderGroup == tr.lightallShader
-			&& (tess.xstages[0]->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) && r_dlightMode->integer)
+		// Q3Rally: spot lights (headlights) have their own pass
+		int allBits = tess.dlightBits;
+		int spotBits = allBits & backEnd.refdef.spotMask;
+
+		tess.dlightBits = allBits & ~spotBits;
+		if (tess.dlightBits)
 		{
-			ForwardDlight();
+			if (tess.shader->numUnfoggedPasses == 1 && tess.xstages[0]->glslShaderGroup == tr.lightallShader
+				&& (tess.xstages[0]->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) && r_dlightMode->integer)
+			{
+				ForwardDlight();
+			}
+			else
+			{
+				ProjectDlightTexture();
+			}
 		}
-		else
-		{
-			ProjectDlightTexture();
-		}
+		tess.dlightBits = allBits;
+
+		if (spotBits)
+			ForwardSpotLights(spotBits);
 	}
 
 	//

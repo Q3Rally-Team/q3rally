@@ -351,6 +351,12 @@ void RB_BeginDrawingView (void) {
 			FBO_AttachImage(fbo, cubemap->image, GL_COLOR_ATTACHMENT0_EXT, backEnd.viewParms.targetFboLayer);
 		}
 
+		// Q3Rally: a side of the car reflection cube map
+		if (tr.carReflectFbo && fbo == tr.carReflectFbo)
+		{
+			FBO_AttachImage(fbo, tr.carReflectImage, GL_COLOR_ATTACHMENT0_EXT, backEnd.viewParms.targetFboLayer);
+		}
+
 		FBO_Bind(fbo);
 	}
 
@@ -375,6 +381,10 @@ void RB_BeginDrawingView (void) {
 
 	// clear to black for cube maps
 	if (tr.renderCubeFbo && backEnd.viewParms.targetFbo == tr.renderCubeFbo)
+	{
+		clearBits |= GL_COLOR_BUFFER_BIT;
+	}
+	if (tr.carReflectFbo && backEnd.viewParms.targetFbo == tr.carReflectFbo)
 	{
 		clearBits |= GL_COLOR_BUFFER_BIT;
 	}
@@ -417,6 +427,27 @@ void RB_BeginDrawingView (void) {
 
 /*
 ==================
+RB_InDepthPrepass
+
+Q3Rally: alpha tested surfaces that write depth (trees, fences, grates)
+belong in the depth prepass even when they blend, so the effects that read
+its depth (haze, ambient occlusion, soft particles) see them
+==================
+*/
+static qboolean RB_InDepthPrepass( const shader_t *shader )
+{
+	const shaderStage_t *stage = shader->stages[0];
+
+	if ( shader->sort == SS_OPAQUE || shader->sort == SS_PORTAL ) {
+		return qtrue;
+	}
+
+	return stage && ( stage->stateBits & GLS_DEPTHMASK_TRUE ) && ( stage->stateBits & GLS_ATEST_BITS )
+		&& !shader->isSky && !shader->isWater;
+}
+
+/*
+==================
 RB_RenderDrawSurfList
 ==================
 */
@@ -455,7 +486,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 	for (i = 0, drawSurf = drawSurfs ; i < numDrawSurfs ; i++, drawSurf++) {
 		if ( drawSurf->sort == oldSort && drawSurf->cubemapIndex == oldCubemapIndex) {
-			if (backEnd.depthFill && shader && (shader->sort != SS_OPAQUE && shader->sort != SS_PORTAL))
+			if (backEnd.depthFill && shader && !RB_InDepthPrepass(shader))
 				continue;
 
 			// fast path, same as previous sort
@@ -484,7 +515,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			oldCubemapIndex = cubemapIndex;
 		}
 
-		if (backEnd.depthFill && shader && (shader->sort != SS_OPAQUE && shader->sort != SS_PORTAL))
+		if (backEnd.depthFill && shader && !RB_InDepthPrepass(shader))
 			continue;
 
 		//
@@ -909,6 +940,9 @@ const void	*RB_DrawSurfs( const void *data ) {
 	// clear the z buffer, set the modelview, etc
 	RB_BeginDrawingView ();
 
+	backEnd.softDepthReady = qfalse;
+	backEnd.wetDepthReady = qfalse;
+
 	if (glRefConfig.framebufferObject && (backEnd.viewParms.flags & VPF_DEPTHCLAMP) && glRefConfig.depthClamp)
 	{
 		qglEnable(GL_DEPTH_CLAMP);
@@ -950,6 +984,11 @@ const void	*RB_DrawSurfs( const void *data ) {
 				VectorSet4(srcTexCoords, 0.0f, 0.0f, 1.0f, 1.0f);
 
 				FBO_BlitFromTexture(tr.renderDepthImage, srcTexCoords, NULL, tr.hdrDepthFbo, NULL, NULL, NULL, 0);
+
+				// Q3Rally: the soft particles of this view read it (not for
+				// views into their own FBO, e.g. the car reflection)
+				backEnd.softDepthReady = r_softParticles->value > 0.0f && backEnd.viewParms.targetFbo == NULL;
+				backEnd.wetDepthReady = backEnd.viewParms.targetFbo == NULL;
 			}
 
 			if (r_sunlightMode->integer && backEnd.viewParms.flags & VPF_USESUNLIGHT)
@@ -988,87 +1027,159 @@ const void	*RB_DrawSurfs( const void *data ) {
 				VectorSet4(quadVerts[2], box[2], box[1], 0, 1);
 				VectorSet4(quadVerts[3], box[0], box[1], 0, 1);
 
-				GL_State(GLS_DEPTHTEST_DISABLE);
-
-				GLSL_BindProgram(&tr.shadowmaskShader);
-
-				GL_BindToTMU(tr.renderDepthImage, TB_COLORMAP);
-
-				if (r_shadowCascadeZFar->integer != 0)
+				if (!(tr.sunShadows || r_forceSun->integer))
 				{
-					GL_BindToTMU(tr.sunShadowDepthImage[0], TB_SHADOWMAP);
-					GL_BindToTMU(tr.sunShadowDepthImage[1], TB_SHADOWMAP2);
-					GL_BindToTMU(tr.sunShadowDepthImage[2], TB_SHADOWMAP3);
-					GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP4);
-
-					GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[0]);
-					GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP2, backEnd.refdef.sunShadowMvp[1]);
-					GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP3, backEnd.refdef.sunShadowMvp[2]);
-					GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP4, backEnd.refdef.sunShadowMvp[3]);
+					// Q3Rally: lamp shadows only (no sun shadows on this map):
+					// start from a fully lit mask
+					qglClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+					qglClear(GL_COLOR_BUFFER_BIT);
 				}
 				else
 				{
-					GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP);
-					GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[3]);
+					GL_State(GLS_DEPTHTEST_DISABLE);
+
+					GLSL_BindProgram(&tr.shadowmaskShader);
+
+					GL_BindToTMU(tr.renderDepthImage, TB_COLORMAP);
+
+					if (r_shadowCascadeZFar->integer != 0)
+					{
+						GL_BindToTMU(tr.sunShadowDepthImage[0], TB_SHADOWMAP);
+						GL_BindToTMU(tr.sunShadowDepthImage[1], TB_SHADOWMAP2);
+						GL_BindToTMU(tr.sunShadowDepthImage[2], TB_SHADOWMAP3);
+						GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP4);
+
+						GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[0]);
+						GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP2, backEnd.refdef.sunShadowMvp[1]);
+						GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP3, backEnd.refdef.sunShadowMvp[2]);
+						GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP4, backEnd.refdef.sunShadowMvp[3]);
+					}
+					else
+					{
+						GL_BindToTMU(tr.sunShadowDepthImage[3], TB_SHADOWMAP);
+						GLSL_SetUniformMat4(&tr.shadowmaskShader, UNIFORM_SHADOWMVP, backEnd.refdef.sunShadowMvp[3]);
+					}
+
+					GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWORIGIN, backEnd.refdef.vieworg);
+
+					if (R_SunShadowModelsOnly())
+					{
+						// Q3Rally: move the sample towards the sun so the map does not
+						// shadow itself in the coarse level 3 cascade (3 texels), and a
+						// little for the model cascades
+						vec4_t shadowParams;
+
+						VectorScale(backEnd.refdef.sunDir, MAX(3.0f * tr.sunShadowWorldTexel, 1.0f), shadowParams);
+						shadowParams[3] = 2.0f;
+						GLSL_SetUniformVec4(&tr.shadowmaskShader, UNIFORM_SHADOWPARAMS, shadowParams);
+					}
+					{
+						vec3_t viewVector;
+
+						float zmax = backEnd.viewParms.zFar;
+						float ymax = zmax * tan(backEnd.viewParms.fovY * M_PI / 360.0f);
+						float xmax = zmax * tan(backEnd.viewParms.fovX * M_PI / 360.0f);
+
+						VectorScale(backEnd.refdef.viewaxis[0], zmax, viewVector);
+						GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWFORWARD, viewVector);
+						VectorScale(backEnd.refdef.viewaxis[1], xmax, viewVector);
+						GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWLEFT, viewVector);
+						VectorScale(backEnd.refdef.viewaxis[2], ymax, viewVector);
+						GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWUP, viewVector);
+
+						GLSL_SetUniformVec4(&tr.shadowmaskShader, UNIFORM_VIEWINFO, viewInfo);
+					}
+
+					RB_InstantQuad2(quadVerts, texCoords); //, color, shaderProgram, invTexRes);
+
+					if (r_shadowBlur->integer)
+					{
+						viewInfo[2] = 1.0f / (float)(tr.screenScratchFbo->width);
+						viewInfo[3] = 1.0f / (float)(tr.screenScratchFbo->height);
+
+						FBO_Bind(tr.screenScratchFbo);
+
+						GLSL_BindProgram(&tr.depthBlurShader[0]);
+
+						GL_BindToTMU(tr.screenShadowImage, TB_COLORMAP);
+						GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+
+						GLSL_SetUniformVec4(&tr.depthBlurShader[0], UNIFORM_VIEWINFO, viewInfo);
+
+						RB_InstantQuad2(quadVerts, texCoords);
+
+						FBO_Bind(tr.screenShadowFbo);
+
+						GLSL_BindProgram(&tr.depthBlurShader[1]);
+
+						GL_BindToTMU(tr.screenScratchImage, TB_COLORMAP);
+						GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+
+						GLSL_SetUniformVec4(&tr.depthBlurShader[1], UNIFORM_VIEWINFO, viewInfo);
+
+						RB_InstantQuad2(quadVerts, texCoords);
+					}
 				}
 
-				GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWORIGIN, backEnd.refdef.vieworg);
+				// Q3Rally: lamp shadows, multiplied into the green channel
+				if (backEnd.refdef.numLampShadows)
 				{
-					vec3_t viewVector;
+					int n;
+					vec4_t color;
 
-					float zmax = backEnd.viewParms.zFar;
-					float ymax = zmax * tan(backEnd.viewParms.fovY * M_PI / 360.0f);
-					float xmax = zmax * tan(backEnd.viewParms.fovX * M_PI / 360.0f);
+					GL_State(GLS_DEPTHTEST_DISABLE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO);
+					qglColorMask(GL_FALSE, GL_TRUE, GL_FALSE, GL_FALSE);
 
-					VectorScale(backEnd.refdef.viewaxis[0], zmax, viewVector);
-					GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWFORWARD, viewVector);
-					VectorScale(backEnd.refdef.viewaxis[1], xmax, viewVector);
-					GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWLEFT, viewVector);
-					VectorScale(backEnd.refdef.viewaxis[2], ymax, viewVector);
-					GLSL_SetUniformVec3(&tr.shadowmaskShader, UNIFORM_VIEWUP, viewVector);
+					GLSL_BindProgram(&tr.lampShadowShader);
+					GL_BindToTMU(tr.renderDepthImage, TB_COLORMAP);
 
-					GLSL_SetUniformVec4(&tr.shadowmaskShader, UNIFORM_VIEWINFO, viewInfo);
-				}
+					GLSL_SetUniformVec3(&tr.lampShadowShader, UNIFORM_VIEWORIGIN, backEnd.refdef.vieworg);
+					GLSL_SetUniformVec4(&tr.lampShadowShader, UNIFORM_VIEWINFO, viewInfo);
+					{
+						vec3_t viewVector;
 
-				RB_InstantQuad2(quadVerts, texCoords); //, color, shaderProgram, invTexRes);
+						float zmax = backEnd.viewParms.zFar;
+						float ymax = zmax * tan(backEnd.viewParms.fovY * M_PI / 360.0f);
+						float xmax = zmax * tan(backEnd.viewParms.fovX * M_PI / 360.0f);
 
-				if (r_shadowBlur->integer)
-				{
-					viewInfo[2] = 1.0f / (float)(tr.screenScratchFbo->width);
-					viewInfo[3] = 1.0f / (float)(tr.screenScratchFbo->height);
+						VectorScale(backEnd.refdef.viewaxis[0], zmax, viewVector);
+						GLSL_SetUniformVec3(&tr.lampShadowShader, UNIFORM_VIEWFORWARD, viewVector);
+						VectorScale(backEnd.refdef.viewaxis[1], xmax, viewVector);
+						GLSL_SetUniformVec3(&tr.lampShadowShader, UNIFORM_VIEWLEFT, viewVector);
+						VectorScale(backEnd.refdef.viewaxis[2], ymax, viewVector);
+						GLSL_SetUniformVec3(&tr.lampShadowShader, UNIFORM_VIEWUP, viewVector);
+					}
 
-					FBO_Bind(tr.screenScratchFbo);
+					for (n = 0; n < backEnd.refdef.numLampShadows; n++)
+					{
+						int slot = backEnd.refdef.lampShadowSlot[n];
 
-					GLSL_BindProgram(&tr.depthBlurShader[0]);
+						GL_BindToTMU(tr.lampShadowImage[slot], TB_SHADOWMAP);
+						GL_BindToTMU(tr.lampWorldImage[slot], TB_SHADOWMAP2);
 
-					GL_BindToTMU(tr.screenShadowImage, TB_COLORMAP);
-					GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
+						GLSL_SetUniformMat4(&tr.lampShadowShader, UNIFORM_SHADOWMVP, backEnd.refdef.lampShadowMvp[n]);
+						GLSL_SetUniformVec4(&tr.lampShadowShader, UNIFORM_SHADOWPARAMS, backEnd.refdef.lampShadowOrigin[n]);
+						VectorSet4(color, backEnd.refdef.lampShadowParams[n][0], 0.0f, 0.0f, 0.0f);
+						GLSL_SetUniformVec4(&tr.lampShadowShader, UNIFORM_COLOR, color);
 
-					GLSL_SetUniformVec4(&tr.depthBlurShader[0], UNIFORM_VIEWINFO, viewInfo);
+						RB_InstantQuad2(quadVerts, texCoords);
+					}
 
-					RB_InstantQuad2(quadVerts, texCoords);
-
-					FBO_Bind(tr.screenShadowFbo);
-
-					GLSL_BindProgram(&tr.depthBlurShader[1]);
-
-					GL_BindToTMU(tr.screenScratchImage, TB_COLORMAP);
-					GL_BindToTMU(tr.hdrDepthImage, TB_LIGHTMAP);
-
-					GLSL_SetUniformVec4(&tr.depthBlurShader[1], UNIFORM_VIEWINFO, viewInfo);
-
-					RB_InstantQuad2(quadVerts, texCoords);
+					qglColorMask(!backEnd.colorMask[0], !backEnd.colorMask[1], !backEnd.colorMask[2], !backEnd.colorMask[3]);
 				}
 			}
 
-			if (r_ssao->integer)
+			// Q3Rally: ambient occlusion (SAO) for the main view only
+			if (r_ssao->integer && tr.screenSsaoFbo && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2
+				&& !(backEnd.viewParms.flags & (VPF_WATERREFLECTION | VPF_CARREFLECT)) && !backEnd.viewParms.targetFbo)
 			{
 				vec4_t quadVerts[4];
 				vec2_t texCoords[4];
+				vec4_t vec;
+				float zNear = backEnd.viewParms.zNear > 0.0f ? backEnd.viewParms.zNear : r_znear->value;
 
-				viewInfo[2] = 1.0f / ((float)(tr.quarterImage[0]->width)  * tan(backEnd.viewParms.fovX * M_PI / 360.0f) * 2.0f);
-				viewInfo[3] = 1.0f / ((float)(tr.quarterImage[0]->height) * tan(backEnd.viewParms.fovY * M_PI / 360.0f) * 2.0f);
-				viewInfo[3] *= (float)backEnd.viewParms.viewportHeight / (float)backEnd.viewParms.viewportWidth;
+				VectorSet4(viewInfo, backEnd.viewParms.zFar / zNear, backEnd.viewParms.zFar,
+					tan(backEnd.viewParms.fovX * M_PI / 360.0f), tan(backEnd.viewParms.fovY * M_PI / 360.0f));
 
 				FBO_Bind(tr.quarterFbo[0]);
 
@@ -1092,6 +1203,10 @@ const void	*RB_DrawSurfs( const void *data ) {
 				GL_BindToTMU(tr.hdrDepthImage, TB_COLORMAP);
 
 				GLSL_SetUniformVec4(&tr.ssaoShader, UNIFORM_VIEWINFO, viewInfo);
+				VectorSet4(vec, r_ssaoRadius->value, r_ssaoStrength->value, r_ssaoRadius->value * 0.03f, r_ssao->integer >= 2 ? 24.0f : 12.0f);
+				GLSL_SetUniformVec4(&tr.ssaoShader, UNIFORM_AOPARAMS, vec);
+				VectorSet4(vec, 1.0f / tr.hdrDepthImage->width, 1.0f / tr.hdrDepthImage->height, r_ssaoDistance->value * 0.6f, r_ssaoDistance->value);
+				GLSL_SetUniformVec4(&tr.ssaoShader, UNIFORM_COLOR, vec);
 
 				RB_InstantQuad2(quadVerts, texCoords); //, color, shaderProgram, invTexRes);
 
@@ -1179,6 +1294,24 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 		// add light flares on lights that aren't obscured
 		RB_RenderFlares();
+	}
+
+	// Q3Rally: keep the mirror view of a q3r_water surface for the water pass
+	// of the main view, which is drawn over it next
+	if (tr.waterReflectionFbo && (backEnd.viewParms.flags & VPF_WATERREFLECTION))
+	{
+		FBO_t *srcFbo = backEnd.viewParms.targetFbo ? backEnd.viewParms.targetFbo : tr.renderFbo;
+
+		FBO_FastBlit(srcFbo, NULL, tr.waterReflectionFbo, NULL, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		FBO_Bind(srcFbo);
+		backEnd.waterReflectionReady = qtrue;
+	}
+
+	// Q3Rally: mip maps of the car reflection cube map (rough reflections)
+	if (glRefConfig.framebufferObject && tr.carReflectFbo && backEnd.viewParms.targetFbo == tr.carReflectFbo)
+	{
+		FBO_Bind(NULL);
+		qglGenerateTextureMipmapEXT(tr.carReflectImage->texnum, GL_TEXTURE_CUBE_MAP);
 	}
 
 	if (glRefConfig.framebufferObject && tr.renderCubeFbo && backEnd.viewParms.targetFbo == tr.renderCubeFbo)
@@ -1372,6 +1505,9 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
+	// Q3Rally: the water reflection is only valid for the frame it was drawn in
+	backEnd.waterReflectionReady = qfalse;
+
 	// texture swapping test
 	if ( r_showImages->integer ) {
 		RB_ShowImages();
@@ -1505,7 +1641,7 @@ const void *RB_PostProcess(const void *data)
 	dstBox[2] = backEnd.viewParms.viewportWidth;
 	dstBox[3] = backEnd.viewParms.viewportHeight;
 
-	if (r_ssao->integer)
+	if (r_ssao->integer && tr.screenSsaoFbo && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2 && !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
 	{
 		srcBox[0] = backEnd.viewParms.viewportX      * tr.screenSsaoImage->width  / (float)glConfig.vidWidth;
 		srcBox[1] = backEnd.viewParms.viewportY      * tr.screenSsaoImage->height / (float)glConfig.vidHeight;
@@ -1519,6 +1655,31 @@ const void *RB_PostProcess(const void *data)
 	srcBox[1] = backEnd.viewParms.viewportY;
 	srcBox[2] = backEnd.viewParms.viewportWidth;
 	srcBox[3] = backEnd.viewParms.viewportHeight;
+
+	// Q3Rally: keep this frame's scene (before tone mapping) for the wet
+	// ground reflections of the next frame, only while the ground is wet
+	if (backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2 && !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
+	{
+		tr.wetSceneValid = qfalse;
+
+		if (srcFbo && tr.wetSceneFbo && ( backEnd.refdef.wetness > 0.0f || backEnd.refdef.numWetZones > 0 ))
+		{
+			FBO_FastBlit(srcFbo, srcBox, tr.wetSceneFbo, NULL, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			qglGenerateTextureMipmapEXT(tr.wetSceneImage->texnum, GL_TEXTURE_2D);
+
+			Mat4Multiply(backEnd.viewParms.projectionMatrix, backEnd.viewParms.world.modelMatrix, tr.wetScenePrevViewProj);
+			VectorCopy(backEnd.viewParms.or.origin, tr.wetScenePrevOrigin);
+			tr.wetSceneTime = backEnd.refdef.time;
+			tr.wetSceneValid = qtrue;
+		}
+	}
+
+	// Q3Rally: distance and ground haze of the map
+	if (srcFbo && r_haze->integer && tr.hazeSet && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2
+		&& !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
+	{
+		RB_Haze(srcFbo, srcBox);
+	}
 
 	if (srcFbo)
 	{
@@ -1544,6 +1705,14 @@ const void *RB_PostProcess(const void *data)
 		}
 	}
 
+	// Q3Rally: motion blur, bloom and FXAA only for the main view (the rear
+	// view and the minimap are small extra views drawn on top of it)
+	if (r_motionBlur->value > 0.0f && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2 && !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
+		RB_MotionBlur(srcFbo, srcBox);
+
+	if (r_bloom->integer && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2)
+		RB_Bloom(srcFbo, srcBox);
+
 	if (r_drawSunRays->integer)
 		RB_SunRays(srcFbo, srcBox, srcFbo, srcBox);
 
@@ -1551,6 +1720,9 @@ const void *RB_PostProcess(const void *data)
 		RB_BokehBlur(srcFbo, srcBox, srcFbo, srcBox, backEnd.refdef.blurFactor);
 	else
 		RB_GaussianBlur(srcFbo, srcFbo, backEnd.refdef.blurFactor);
+
+	if (r_fxaa->integer && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2)
+		RB_Fxaa(srcFbo, srcBox);
 
 	if (srcFbo != dstFbo)
 		FBO_FastBlit(srcFbo, srcBox, dstFbo, dstBox, GL_COLOR_BUFFER_BIT, GL_NEAREST);

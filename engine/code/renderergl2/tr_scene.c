@@ -261,6 +261,69 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	dl->color[1] = g;
 	dl->color[2] = b;
 	dl->additive = additive;
+	dl->spotCosOuter = -2.0f;
+	dl->spotShadow = -1;
+	dl->spotFlags = 0;
+}
+
+/*
+=====================
+RE_AddSpotLightToScene
+
+Q3Rally: a spot light (car head, tail, brake and reverse lights). Lit like a dlight with the surface
+colours (an extra pass per surface, tr_shade.c), cone shaped, and the
+nearest ones cast shadows (not with SPOTLIGHT_NOSHADOW). With r_headlights 0
+it falls back to additive point lights, the look of the old lights.
+=====================
+*/
+void RE_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags ) {
+	dlight_t	*dl;
+	vec3_t		d, pos;
+	float		half;
+
+	if ( !tr.registered || radius <= 0.0f ) {
+		return;
+	}
+
+	VectorCopy( dir, d );
+	if ( VectorNormalize( d ) < 0.001f ) {
+		return;
+	}
+
+	if ( !r_headlights->integer || !tr.spotlightShader.program ) {
+		if ( radius < 1000.0f ) {
+			// short lights (tail, brake, reverse): one point light behind the car
+			VectorMA( org, 40, d, pos );
+			RE_AddDynamicLightToScene( pos, radius * 0.22f, r * 2.0f, g * 2.0f, b * 2.0f, qtrue );
+			return;
+		}
+		VectorMA( org, 50, d, pos );
+		RE_AddDynamicLightToScene( pos, 100, r * 1.2f, g * 1.2f, b * 1.2f, qtrue );
+		VectorMA( org, 150, d, pos );
+		RE_AddDynamicLightToScene( pos, 200, r * 0.8f, g * 0.8f, b * 0.8f, qtrue );
+		VectorMA( org, 250, d, pos );
+		RE_AddDynamicLightToScene( pos, 300, r * 0.5f, g * 0.5f, b * 0.5f, qtrue );
+		return;
+	}
+
+	if ( r_numdlights >= MAX_DLIGHTS ) {
+		return;
+	}
+
+	dl = &backEndData->dlights[r_numdlights++];
+	VectorCopy( org, dl->origin );
+	dl->radius = radius;
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
+	dl->additive = qfalse;
+
+	half = Com_Clamp( 5.0f, 85.0f, coneAngle * 0.5f );
+	VectorCopy( d, dl->spotDir );
+	dl->spotCosOuter = cos( DEG2RAD( half ) );
+	dl->spotCosInner = cos( DEG2RAD( half * 0.55f ) );
+	dl->spotShadow = -1;
+	dl->spotFlags = flags;
 }
 
 /*
@@ -302,6 +365,43 @@ void RE_BeginScene(const refdef_t *fd)
 
 	tr.refdef.time = fd->time;
 	tr.refdef.rdflags = fd->rdflags;
+
+	// Q3Rally: wet ground
+	tr.refdef.wetness = r_wetness->value >= 0.0f ? r_wetness->value : fd->wetness;
+	if ( !( tr.refdef.wetness > 0.0f ) ) {		// also catches NaN from an old cgame
+		tr.refdef.wetness = 0.0f;
+	} else if ( tr.refdef.wetness > 1.0f ) {
+		tr.refdef.wetness = 1.0f;
+	}
+
+	// the rain zones (r_wetness tests the whole map)
+	tr.refdef.numWetZones = 0;
+	if ( r_wetness->value < 0.0f && fd->numWetZones > 0 ) {
+		int i, j, n = MIN( fd->numWetZones, MAX_WET_ZONES );
+
+		for ( i = 0; i < n; i++ ) {
+			const float *z = fd->wetZones[i];
+			float *mins = tr.refdef.wetZones[tr.refdef.numWetZones * 2];
+			float *maxs = tr.refdef.wetZones[tr.refdef.numWetZones * 2 + 1];
+
+			if ( !( z[3] > 0.0f ) ) {
+				continue;		// dry (or NaN)
+			}
+			for ( j = 0; j < 3; j++ ) {
+				if ( !( z[j] <= z[4 + j] ) ) {
+					break;
+				}
+			}
+			if ( j < 3 ) {
+				continue;		// no box
+			}
+			VectorCopy( z, mins );
+			mins[3] = MIN( z[3], 1.0f );
+			VectorCopy( z + 4, maxs );
+			maxs[3] = z[7] > 0.0f ? 1.0f : 0.0f;
+			tr.refdef.numWetZones++;
+		}
+	}
 
 	// copy the areamask data over and note if it has changed, which
 	// will force a reset of the visible leafs even if the view hasn't moved
@@ -455,6 +555,56 @@ Rendering a scene may require multiple views to be rendered
 to handle mirrors,
 @@@@@@@@@@@@@@@@@@@@@
 */
+/*
+=================
+R_UpdateColorLut
+
+Q3Rally: the colour grading LUT for the tone mapping: r_colorLut, else the
+map's (worldspawn "colorlut", else q3r_colorLut in the sky shader), else
+the default look. A LUT is a strip of N slices of N x N (N*N wide, N high):
+red across a slice, green down, blue from slice to slice.
+=================
+*/
+#define DEFAULT_COLOR_LUT	"gfx/luts/q3r_default"
+
+void R_UpdateColorLut( void ) {
+	const char *name;
+	image_t *image;
+
+	if ( r_colorLut->string[0] ) {
+		name = r_colorLut->string;
+	} else if ( tr.worldColorLut[0] ) {
+		name = tr.worldColorLut;
+	} else if ( tr.shaderColorLut[0] ) {
+		name = tr.shaderColorLut;
+	} else {
+		name = DEFAULT_COLOR_LUT;
+	}
+
+	if ( !Q_stricmp( name, tr.colorLutName ) ) {
+		return;
+	}
+	Q_strncpyz( tr.colorLutName, name, sizeof( tr.colorLutName ) );
+	tr.colorLutImage = NULL;
+
+	if ( !Q_stricmp( name, "none" ) ) {
+		return;
+	}
+
+	image = R_FindImageFile( name, IMGTYPE_COLORALPHA, IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE );
+	if ( !image ) {
+		ri.Printf( PRINT_WARNING, "WARNING: colour grading LUT '%s' not found\n", name );
+		return;
+	}
+	if ( image->height < 2 || image->height > 64 || image->width != image->height * image->height ) {
+		ri.Printf( PRINT_WARNING, "WARNING: colour grading LUT '%s' is %ix%i, needs N*N x N\n", name, image->width, image->height );
+		return;
+	}
+
+	tr.colorLutImage = image;
+	ri.Printf( PRINT_DEVELOPER, "colour grading LUT: %s\n", name );
+}
+
 void RE_RenderScene( const refdef_t *fd ) {
 	viewParms_t		parms;
 	int				startTime;
@@ -466,6 +616,10 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	if ( r_norefresh->integer ) {
 		return;
+	}
+
+	if ( tr.world ) {
+		R_UpdateColorLut();		// Q3Rally
 	}
 
 	startTime = ri.Milliseconds();
@@ -517,15 +671,52 @@ void RE_RenderScene( const refdef_t *fd ) {
 		}
 	}
 
-        // update dynamic reflection cubemap if enabled
-        if ( glRefConfig.framebufferObject && r_dynamicReflections->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
-        {
-                R_GenerateReflectionCubemap( tr.refdef.vieworg );
-        }
-        else
-        {
-                tr.dynamicReflectionImage = tr.defaultReflectImage;
-        }
+	// Q3Rally: spot lights (headlights): which ones they are, and the shadow
+	// maps of the nearest
+	{
+		int i;
+
+		tr.refdef.spotMask = 0;
+		for (i = 0; i < tr.refdef.num_dlights && i < 32; i++)
+		{
+			tr.refdef.dlights[i].spotShadow = -1;
+			if (tr.refdef.dlights[i].spotCosOuter > -1.0f)
+				tr.refdef.spotMask |= 1 << i;
+		}
+
+		if (tr.refdef.spotMask && !( fd->rdflags & RDF_NOWORLDMODEL ))
+			R_RenderSpotShadowMaps();
+	}
+
+	// Q3Rally: the cube map the car paint reflects (before the lamp shadows,
+	// it renders without them)
+	R_RenderCarReflection();
+
+	// Q3Rally: lamps of the map cast model shadows
+	R_SelectLampShadows();
+	if (tr.refdef.numLampShadows)
+	{
+		R_RenderLampShadowMaps();
+	}
+
+	// playing with cube maps
+	// this is where dynamic cubemaps would be rendered
+	// Q3Rally: the former r_dynamicReflections path was removed here. It
+	// rendered six nested scenes per frame (dropping the main view's entities)
+	// and its result never reached the $dynamicreflection stages. A
+	// time-sliced subscene cubemap will replace it.
+	if (0) //(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ))
+	{
+		int i, j;
+
+		for (i = 0; i < tr.numCubemaps; i++)
+		{
+			for (j = 0; j < 6; j++)
+			{
+				R_RenderCubemapSide(i, j, qtrue);
+			}
+		}
+	}
 
 	// setup view parms for the initial view
 	//
@@ -552,12 +743,15 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	VectorCopy( fd->vieworg, parms.pvsOrigin );
 
-	if(!( fd->rdflags & RDF_NOWORLDMODEL ) && r_depthPrepass->value && ((r_forceSun->integer) || tr.sunShadows))
+	if(!( fd->rdflags & RDF_NOWORLDMODEL ) && r_depthPrepass->value && ((r_forceSun->integer) || tr.sunShadows || tr.refdef.numLampShadows))
 	{
 		parms.flags = VPF_USESUNLIGHT;
 	}
 
 	R_RenderView( &parms );
+
+	// Q3Rally: where the car in front of the camera is (no motion blur there)
+	R_ComputeMotionMask();
 
 	if(!( fd->rdflags & RDF_NOWORLDMODEL ))
 		R_AddPostProcessCmd();

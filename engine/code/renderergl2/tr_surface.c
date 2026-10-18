@@ -271,6 +271,7 @@ static void RB_SurfaceSprite( void ) {
 	VectorScale4(ent->e.shaderRGBA, 1.0f / 255.0f, colors);
 
 	RB_AddQuadStamp( ent->e.origin, left, up, colors );
+	tess.softParticle = qtrue;	// Q3Rally
 }
 
 
@@ -286,6 +287,8 @@ static void RB_SurfacePolychain( srfPoly_t *p ) {
 	RB_CheckVao(tess.vao);
 
 	RB_CHECKOVERFLOW( p->numVerts, 3*(p->numVerts - 2) );
+
+	tess.softParticle = qtrue;	// Q3Rally
 
 	// fan triangles into the tess array
 	numv = tess.numVertexes;

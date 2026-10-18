@@ -46,12 +46,30 @@ extern const char *fallbackShader_shadowfill_vp;
 extern const char *fallbackShader_shadowfill_fp;
 extern const char *fallbackShader_shadowmask_vp;
 extern const char *fallbackShader_shadowmask_fp;
+extern const char *fallbackShader_lampshadow_vp;
+extern const char *fallbackShader_lampshadow_fp;
+extern const char *fallbackShader_bloom_vp;
+extern const char *fallbackShader_bloom_fp;
+extern const char *fallbackShader_fxaa_vp;
+extern const char *fallbackShader_fxaa_fp;
+extern const char *fallbackShader_spotlight_vp;
+extern const char *fallbackShader_spotlight_fp;
+extern const char *fallbackShader_carreflect_vp;
+extern const char *fallbackShader_carreflect_fp;
+extern const char *fallbackShader_motionblur_vp;
+extern const char *fallbackShader_motionblur_fp;
+extern const char *fallbackShader_wetground_vp;
+extern const char *fallbackShader_wetground_fp;
+extern const char *fallbackShader_haze_vp;
+extern const char *fallbackShader_haze_fp;
 extern const char *fallbackShader_ssao_vp;
 extern const char *fallbackShader_ssao_fp;
 extern const char *fallbackShader_texturecolor_vp;
 extern const char *fallbackShader_texturecolor_fp;
 extern const char *fallbackShader_tonemap_vp;
 extern const char *fallbackShader_tonemap_fp;
+extern const char *fallbackShader_water_vp;
+extern const char *fallbackShader_water_fp;
 
 typedef struct uniformInfo_s
 {
@@ -85,6 +103,20 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_ShadowMvp2", GLSL_MAT16 },
 	{ "u_ShadowMvp3", GLSL_MAT16 },
 	{ "u_ShadowMvp4", GLSL_MAT16 },
+	{ "u_ShadowParams", GLSL_VEC4 },
+	{ "u_SpotDir", GLSL_VEC4 },
+	{ "u_SoftParticle", GLSL_VEC4 },
+	{ "u_WetParams", GLSL_VEC4 },
+	{ "u_PrevViewProj", GLSL_MAT16 },
+	{ "u_WetZones", GLSL_VEC4_WETZONES },
+	{ "u_WetZoneCount", GLSL_INT },
+	{ "u_ColorLutMap", GLSL_INT },
+	{ "u_ToneParams", GLSL_VEC4 },
+	{ "u_LutParams", GLSL_VEC4 },
+	{ "u_AoParams", GLSL_VEC4 },
+	{ "u_HazeColor", GLSL_VEC4 },
+	{ "u_HazeParams", GLSL_VEC4 },
+	{ "u_HazeSun", GLSL_VEC4 },
 
 	{ "u_EnableTextures", GLSL_VEC4 },
 
@@ -712,6 +744,9 @@ void GLSL_InitUniforms(shaderProgram_t *program)
 			case GLSL_MAT16_BONEMATRIX:
 				size += sizeof(vec_t) * 16 * glRefConfig.glslMaxAnimatedBones;
 				break;
+			case GLSL_VEC4_WETZONES:
+				size += sizeof(vec4_t) * MAX_WET_ZONES * 2;
+				break;
 			default:
 				break;
 		}
@@ -927,6 +962,37 @@ void GLSL_SetUniformMat4BoneMatrix(shaderProgram_t *program, int uniformNum, /*c
 	qglProgramUniformMatrix4fvEXT(program->program, uniforms[uniformNum], numMatricies, GL_FALSE, &matrix[0][0]);
 }
 
+// Q3Rally: the rain zones of the wet ground pass, two vec4 per zone
+void GLSL_SetUniformWetZones(shaderProgram_t *program, int uniformNum, const vec4_t *v, int numZones)
+{
+	GLint *uniforms = program->uniforms;
+	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
+
+	if (uniforms[uniformNum] == -1 || numZones <= 0) {
+		return;
+	}
+
+	if (uniformsInfo[uniformNum].type != GLSL_VEC4_WETZONES)
+	{
+		ri.Printf( PRINT_WARNING, "GLSL_SetUniformWetZones: wrong type for uniform %i in program %s\n", uniformNum, program->name);
+		return;
+	}
+
+	if (numZones > MAX_WET_ZONES) {
+		numZones = MAX_WET_ZONES;
+	}
+
+	if (!memcmp(v, compare, numZones * 2 * sizeof(vec4_t)))
+	{
+		return;
+	}
+
+	Com_Memcpy(compare, v, numZones * 2 * sizeof(vec4_t));
+
+	GL_UseProgram(program->program);
+	qglUniform4fv(uniforms[uniformNum], numZones * 2, v[0]);
+}
+
 void GLSL_DeleteGPUShader(shaderProgram_t *program)
 {
 	if(program->program)
@@ -1026,6 +1092,7 @@ void GLSL_InitGPUShaders(void)
 
 		GLSL_SetUniformInt(&tr.genericShader[i], UNIFORM_DIFFUSEMAP, TB_DIFFUSEMAP);
 		GLSL_SetUniformInt(&tr.genericShader[i], UNIFORM_LIGHTMAP,   TB_LIGHTMAP);
+		GLSL_SetUniformInt(&tr.genericShader[i], UNIFORM_SCREENDEPTHMAP, TB_SPECULARMAP);	// Q3Rally: soft particles (a unit that never holds a shadow map with depth compare)
 
 		GLSL_FinishGPUShader(&tr.genericShader[i]);
 
@@ -1047,6 +1114,29 @@ void GLSL_InitGPUShaders(void)
 	GLSL_FinishGPUShader(&tr.textureColorShader);
 
 	numEtcShaders++;
+
+	// Q3Rally: water. Optional, q3r_water shaders fall back to their stages.
+	if (r_water->integer && glRefConfig.framebufferObject && glRefConfig.framebufferBlit)
+	{
+		attribs = ATTR_POSITION | ATTR_NORMAL;
+		extradefines[0] = '\0';
+
+		if (GLSL_InitGPUShader(&tr.waterShader, "water", attribs, qtrue, extradefines, qtrue, fallbackShader_water_vp, fallbackShader_water_fp))
+		{
+			GLSL_InitUniforms(&tr.waterShader);
+
+			GLSL_SetUniformInt(&tr.waterShader, UNIFORM_SCREENIMAGEMAP, TB_COLORMAP);
+			GLSL_SetUniformInt(&tr.waterShader, UNIFORM_NORMALMAP, TB_NORMALMAP);
+
+			GLSL_FinishGPUShader(&tr.waterShader);
+
+			numEtcShaders++;
+		}
+		else
+		{
+			ri.Printf(PRINT_WARNING, "WARNING: could not load water shader, q3r_water surfaces use their shader stages\n");
+		}
+	}
 
 	for (i = 0; i < FOGDEF_COUNT; i++)
 	{
@@ -1226,6 +1316,9 @@ void GLSL_InitGPUShaders(void)
 				Q_strcat(extradefines, 1024, "#define SHADOWMAP_MODULATE\n");
 			else if (r_sunlightMode->integer == 2)
 				Q_strcat(extradefines, 1024, "#define USE_PRIMARY_LIGHT\n");
+
+			if (R_SunShadowModelsOnly())
+				Q_strcat(extradefines, 1024, "#define SHADOWMAP_MODELS_ONLY\n");
 		}
 
 		if (i & LIGHTDEF_USE_TCGEN_AND_TCMOD)
@@ -1379,6 +1472,7 @@ void GLSL_InitGPUShaders(void)
 
 	GLSL_SetUniformInt(&tr.tonemapShader, UNIFORM_TEXTUREMAP, TB_COLORMAP);
 	GLSL_SetUniformInt(&tr.tonemapShader, UNIFORM_LEVELSMAP,  TB_LEVELSMAP);
+	GLSL_SetUniformInt(&tr.tonemapShader, UNIFORM_COLORLUTMAP, TB_NORMALMAP);	// Q3Rally
 
 	GLSL_FinishGPUShader(&tr.tonemapShader);
 
@@ -1429,6 +1523,9 @@ void GLSL_InitGPUShaders(void)
 		if (r_shadowCascadeZFar->integer != 0)
 			Q_strcat(extradefines, 1024, "#define USE_SHADOW_CASCADE\n");
 
+		if (R_SunShadowModelsOnly())
+			Q_strcat(extradefines, 1024, "#define USE_SHADOW_MODELS_ONLY\n");
+
 		Q_strcat(extradefines, 1024, va("#define r_shadowMapSize %f\n", r_shadowMapSize->value));
 		Q_strcat(extradefines, 1024, va("#define r_shadowCascadeZFar %f\n", r_shadowCascadeZFar->value));
 
@@ -1446,6 +1543,174 @@ void GLSL_InitGPUShaders(void)
 		GLSL_SetUniformInt(&tr.shadowmaskShader, UNIFORM_SHADOWMAP4, TB_SHADOWMAP4);
 
 		GLSL_FinishGPUShader(&tr.shadowmaskShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: lamp shadows
+	if (glRefConfig.glslMajorVersion > 1 || (glRefConfig.glslMajorVersion == 1 && glRefConfig.glslMinorVersion >= 10)
+	    || glRefConfig.shadowSamplers)
+	{
+		attribs = ATTR_POSITION | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (qglesMajorVersion < 3 && glRefConfig.shadowSamplers)
+		{
+			Q_strcat(extradefines, 1024, "#extension GL_EXT_shadow_samplers : enable\n");
+		}
+
+		Q_strcat(extradefines, 1024, va("#define r_lampShadowMapSize %f\n", r_lampShadowMapSize->value));
+
+		if (!GLSL_InitGPUShader(&tr.lampShadowShader, "lampshadow", attribs, qtrue, extradefines, qtrue, fallbackShader_lampshadow_vp, fallbackShader_lampshadow_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load lampshadow shader!");
+		}
+
+		GLSL_InitUniforms(&tr.lampShadowShader);
+
+		GLSL_SetUniformInt(&tr.lampShadowShader, UNIFORM_SCREENDEPTHMAP, TB_COLORMAP);
+		GLSL_SetUniformInt(&tr.lampShadowShader, UNIFORM_SHADOWMAP,  TB_SHADOWMAP);
+		GLSL_SetUniformInt(&tr.lampShadowShader, UNIFORM_SHADOWMAP2, TB_SHADOWMAP2);
+
+		GLSL_FinishGPUShader(&tr.lampShadowShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: bloom (bright pass / downsample and blur) and FXAA
+	for (i = 0; i < 2; i++)
+	{
+		attribs = ATTR_POSITION | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (i == 1)
+			Q_strcat(extradefines, 1024, "#define USE_BLUR\n");
+
+		if (!GLSL_InitGPUShader(&tr.bloomShader[i], "bloom", attribs, qtrue, extradefines, qtrue, fallbackShader_bloom_vp, fallbackShader_bloom_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load bloom shader!");
+		}
+
+		GLSL_InitUniforms(&tr.bloomShader[i]);
+		GLSL_SetUniformInt(&tr.bloomShader[i], UNIFORM_DIFFUSEMAP, TB_DIFFUSEMAP);
+		GLSL_FinishGPUShader(&tr.bloomShader[i]);
+
+		numEtcShaders++;
+	}
+
+	{
+		attribs = ATTR_POSITION | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (!GLSL_InitGPUShader(&tr.fxaaShader, "fxaa", attribs, qtrue, extradefines, qtrue, fallbackShader_fxaa_vp, fallbackShader_fxaa_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load fxaa shader!");
+		}
+
+		GLSL_InitUniforms(&tr.fxaaShader);
+		GLSL_SetUniformInt(&tr.fxaaShader, UNIFORM_DIFFUSEMAP, TB_DIFFUSEMAP);
+		GLSL_FinishGPUShader(&tr.fxaaShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: headlights
+	if (glRefConfig.glslMajorVersion > 1 || (glRefConfig.glslMajorVersion == 1 && glRefConfig.glslMinorVersion >= 10)
+	    || glRefConfig.shadowSamplers)
+	{
+		attribs = ATTR_POSITION | ATTR_NORMAL | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (qglesMajorVersion < 3 && glRefConfig.shadowSamplers)
+		{
+			Q_strcat(extradefines, 1024, "#extension GL_EXT_shadow_samplers : enable\n");
+		}
+
+		Q_strcat(extradefines, 1024, va("#define r_headlightShadowMapSize %f\n", r_headlightShadowMapSize->value));
+
+		if (!GLSL_InitGPUShader(&tr.spotlightShader, "spotlight", attribs, qtrue, extradefines, qtrue, fallbackShader_spotlight_vp, fallbackShader_spotlight_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load spotlight shader!");
+		}
+
+		GLSL_InitUniforms(&tr.spotlightShader);
+		GLSL_SetUniformInt(&tr.spotlightShader, UNIFORM_DIFFUSEMAP, TB_DIFFUSEMAP);
+		GLSL_SetUniformInt(&tr.spotlightShader, UNIFORM_SHADOWMAP, TB_SHADOWMAP);
+		GLSL_FinishGPUShader(&tr.spotlightShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: car paint reflection (cube map around the camera)
+	if (glRefConfig.framebufferObject)
+	{
+		attribs = ATTR_POSITION | ATTR_NORMAL | ATTR_POSITION2 | ATTR_NORMAL2;
+		extradefines[0] = '\0';
+
+		if (!GLSL_InitGPUShader(&tr.carReflectShader, "carreflect", attribs, qtrue, extradefines, qtrue, fallbackShader_carreflect_vp, fallbackShader_carreflect_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load carreflect shader!");
+		}
+
+		GLSL_InitUniforms(&tr.carReflectShader);
+		GLSL_SetUniformInt(&tr.carReflectShader, UNIFORM_CUBEMAP, TB_CUBEMAP);
+		GLSL_FinishGPUShader(&tr.carReflectShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: camera motion blur
+	if (glRefConfig.framebufferObject)
+	{
+		attribs = ATTR_POSITION | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (!GLSL_InitGPUShader(&tr.motionBlurShader, "motionblur", attribs, qtrue, extradefines, qtrue, fallbackShader_motionblur_vp, fallbackShader_motionblur_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load motionblur shader!");
+		}
+
+		GLSL_InitUniforms(&tr.motionBlurShader);
+		GLSL_SetUniformInt(&tr.motionBlurShader, UNIFORM_TEXTUREMAP, TB_COLORMAP);
+		GLSL_SetUniformInt(&tr.motionBlurShader, UNIFORM_SCREENDEPTHMAP, TB_LIGHTMAP);
+		GLSL_FinishGPUShader(&tr.motionBlurShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: wet ground
+	if (glRefConfig.framebufferObject && r_wetGround->integer)
+	{
+		attribs = ATTR_POSITION | ATTR_NORMAL;
+		extradefines[0] = '\0';
+
+		if (!GLSL_InitGPUShader(&tr.wetGroundShader, "wetground", attribs, qtrue, extradefines, qtrue, fallbackShader_wetground_vp, fallbackShader_wetground_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load wetground shader!");
+		}
+
+		GLSL_InitUniforms(&tr.wetGroundShader);
+		GLSL_SetUniformInt(&tr.wetGroundShader, UNIFORM_TEXTUREMAP, TB_COLORMAP);
+		GLSL_SetUniformInt(&tr.wetGroundShader, UNIFORM_SCREENDEPTHMAP, TB_LIGHTMAP);
+		GLSL_FinishGPUShader(&tr.wetGroundShader);
+
+		numEtcShaders++;
+	}
+
+	// Q3Rally: haze
+	if (glRefConfig.framebufferObject)
+	{
+		attribs = ATTR_POSITION | ATTR_TEXCOORD;
+		extradefines[0] = '\0';
+
+		if (!GLSL_InitGPUShader(&tr.hazeShader, "haze", attribs, qtrue, extradefines, qtrue, fallbackShader_haze_vp, fallbackShader_haze_fp))
+		{
+			ri.Error(ERR_FATAL, "Could not load haze shader!");
+		}
+
+		GLSL_InitUniforms(&tr.hazeShader);
+		GLSL_SetUniformInt(&tr.hazeShader, UNIFORM_TEXTUREMAP, TB_COLORMAP);
+		GLSL_FinishGPUShader(&tr.hazeShader);
 
 		numEtcShaders++;
 	}
@@ -1553,6 +1818,7 @@ void GLSL_ShutdownGPUShaders(void)
 		GLSL_DeleteGPUShader(&tr.genericShader[i]);
 
 	GLSL_DeleteGPUShader(&tr.textureColorShader);
+	GLSL_DeleteGPUShader(&tr.waterShader);
 
 	for ( i = 0; i < FOGDEF_COUNT; i++)
 		GLSL_DeleteGPUShader(&tr.fogShader[i]);
@@ -1575,6 +1841,15 @@ void GLSL_ShutdownGPUShaders(void)
 		GLSL_DeleteGPUShader(&tr.calclevels4xShader[i]);
 
 	GLSL_DeleteGPUShader(&tr.shadowmaskShader);
+	GLSL_DeleteGPUShader(&tr.lampShadowShader);
+	GLSL_DeleteGPUShader(&tr.bloomShader[0]);
+	GLSL_DeleteGPUShader(&tr.bloomShader[1]);
+	GLSL_DeleteGPUShader(&tr.fxaaShader);
+	GLSL_DeleteGPUShader(&tr.spotlightShader);
+	GLSL_DeleteGPUShader(&tr.carReflectShader);
+	GLSL_DeleteGPUShader(&tr.motionBlurShader);
+	GLSL_DeleteGPUShader(&tr.wetGroundShader);
+	GLSL_DeleteGPUShader(&tr.hazeShader);
 	GLSL_DeleteGPUShader(&tr.ssaoShader);
 
 	for ( i = 0; i < 4; i++)

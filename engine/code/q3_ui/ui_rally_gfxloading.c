@@ -286,7 +286,7 @@ static const char * const loadingTips[] = {
     /* controls */
     "Tap {+button14} for the handbrake - it works best at medium speed, too fast and you'll spin out.",
     "Use the handbrake ({+button14}) to drift through tight corners.",
-    "Hold {+speed} for turbo when the road opens up.",
+    "Hold {+speed} for NOS when the road opens up.",
 
     /* basics */
     "Keep your speed up when hitting jumps.",

@@ -333,8 +333,14 @@ void CG_Hazard( int hazard, vec3_t origin, int radius) {
 
 		VectorSet(dir, 0, 0, 1);
 
-		CreateSmokeCloudEntity( origin, dir, 30, radius, duration, 0.75, 0.75, 0.75, 1, cgs.media.smokePuffShader );
-
+		// Q3Rally: a thick, lit cloud that hangs on the track for a while
+		// (the server sends ten of these events behind the car)
+		{
+			int i;
+			for ( i = 0; i < 3; i++ ) {
+				CG_FX_TireSmoke( origin, dir, vec3_origin, FX_SMOKE_SCREEN, 1.0f );
+			}
+		}
 		return;
 
 	default:

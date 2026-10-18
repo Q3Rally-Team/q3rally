@@ -105,6 +105,7 @@ typedef struct cg_atmosphericZone_s {
 	qboolean active;
 	vec3_t mins;
 	vec3_t maxs;
+	float wetness;		// Q3Rally: how wet the ground in a rain zone is
 } cg_atmosphericZone_t;
 
 static cg_atmosphericEffect_t cg_atmFxList[NUM_ATMOSPHERIC_TYPES];
@@ -182,6 +183,7 @@ void CG_Atmospheric_AddWeatherZone( centity_t *cent )
 	zone->numParticles = s1->powerups;
 	zone->disableSplashes = s1->legsAnim != 0;
 	zone->active = s1->generic1 != 0;
+	zone->wetness = zone->active ? 1.0f : 0.0f;	// a race in the rain starts on a wet track
 
 	if ( s1->solid == SOLID_BMODEL ) {
 		model = cgs.inlineDrawModel[s1->modelindex];
@@ -202,6 +204,76 @@ qboolean CG_AtmosphericPointInWeather( const vec3_t point, int type )
 	}
 
 	return CG_AtmosphericResolveZone( type, point ) >= 0;
+}
+
+/*
+=================
+CG_AtmosphericWetZones
+
+Q3Rally: the ground in a rain zone gets wet within WET_RAIN_TIME while it
+rains there and dries within WET_DRY_TIME after the rain stops; the zones
+that are wet go to the renderer (refdef.wetZones), the nearest first if
+there are too many.
+=================
+*/
+#define WET_RAIN_TIME	20.0f	// seconds
+#define WET_DRY_TIME	120.0f
+
+void CG_AtmosphericWetZones( refdef_t *refdef )
+{
+	cg_atmosphericZone_t *zone;
+	float dt, dist[MAX_ATMOSPHERIC_ZONES], d;
+	int order[MAX_ATMOSPHERIC_ZONES], num, i, j, k;
+
+	dt = Com_Clamp( 0.0f, 0.2f, cg.frametime * 0.001f );
+	num = 0;
+
+	for ( i = 0, zone = cg_atmZones; i < cg_numAtmZones; i++, zone++ ) {
+		if ( zone->type != 0 ) {
+			continue;		// snow
+		}
+
+		if ( zone->active ) {
+			zone->wetness = MIN( 1.0f, zone->wetness + dt / WET_RAIN_TIME );
+		} else {
+			zone->wetness = MAX( 0.0f, zone->wetness - dt / WET_DRY_TIME );
+		}
+		if ( zone->wetness <= 0.0f ) {
+			continue;
+		}
+
+		// distance of the view to the box, sorted in
+		d = 0.0f;
+		for ( k = 0; k < 3; k++ ) {
+			if ( refdef->vieworg[k] < zone->mins[k] ) {
+				d += Square( zone->mins[k] - refdef->vieworg[k] );
+			} else if ( refdef->vieworg[k] > zone->maxs[k] ) {
+				d += Square( refdef->vieworg[k] - zone->maxs[k] );
+			}
+		}
+		for ( j = num; j > 0 && dist[j - 1] > d; j-- ) {
+			dist[j] = dist[j - 1];
+			order[j] = order[j - 1];
+		}
+		dist[j] = d;
+		order[j] = i;
+		num++;
+	}
+
+	refdef->numWetZones = MIN( num, MAX_WET_ZONES );
+	for ( j = 0; j < refdef->numWetZones; j++ ) {
+		float *z = refdef->wetZones[j];
+
+		zone = &cg_atmZones[order[j]];
+		z[0] = zone->mins[0];
+		z[1] = zone->mins[1];
+		z[2] = zone->mins[2];
+		z[3] = zone->wetness;
+		z[4] = zone->maxs[0];
+		z[5] = zone->maxs[1];
+		z[6] = zone->maxs[2];
+		z[7] = zone->active ? 1.0f : 0.0f;
+	}
 }
 
 qboolean CG_AtmosphericPointWet( const vec3_t point )

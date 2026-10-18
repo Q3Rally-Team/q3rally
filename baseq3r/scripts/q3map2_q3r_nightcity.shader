@@ -270,28 +270,6 @@ q3r_nightcity/DABA5EE8BEE044B1600CE8636B6E8E61
 	}
 }
 
-q3r_nightcity/F35578726B0AE940585908C59FCD0A54
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
 q3r_nightcity/6C384E2C484B46A124B2D9A7B63F8A08
 { // Q3Map2 defaulted
 	{
@@ -405,29 +383,6 @@ q3r_nightcity/DEEEB8E9A89F3D207DA2213FCF8F120B
 	}
 }
 
-q3r_nightcity/B98C441753555352684072022814A207
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-		tcMod transform 1 0 0 1 -0.50000 0.00000
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
 q3r_nightcity/B67049EF56A4B71CDBA930C8661C1D6F
 { // Q3Map2 defaulted
 	{
@@ -442,52 +397,6 @@ q3r_nightcity/B67049EF56A4B71CDBA930C8661C1D6F
 		rgbGen wave noise 0.5 1 0 5.37 // style 5
 		tcGen lightmap
 		tcMod transform 1 0 0 1 -0.04688 0.07813
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
-q3r_nightcity/DF1FF650D6CE9CCF30B6269C947A2A08
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-		tcMod transform 1 0 0 1 0.00000 -0.50000
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
-q3r_nightcity/C8A9B640A83B5392DF487EAB6DF1E5C4
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-		tcMod transform 1 0 0 1 0.50000 0.00000
 	}
 
 	{
@@ -643,29 +552,6 @@ q3r_nightcity/4DD84EE62C42CF664C86B4A5C05BC918
 	// Q3Map2 custom lightstyle stage(s)
 	{
 		map $lightmap
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-		tcMod transform 1 0 0 1 0.00000 0.50000
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
-q3r_nightcity/DCE74BC70FFB92D33F9382198EA7862B
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
 		blendFunc GL_SRC_ALPHA GL_ONE
 		rgbGen wave noise 0.5 1 0 5.37 // style 5
 		tcGen lightmap
@@ -1463,29 +1349,6 @@ q3r_nightcity/58FBFBA63CBDB2D3ACFC3940AEC1D69F
 	}
 }
 
-q3r_nightcity/FE2195A904B6D08572223047F7EBCA17
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0022.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-		tcMod transform 1 0 0 1 -0.96875 0.00000
-	}
-
-	{
-		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
 q3r_nightcity/4E65A2CDE03B7F9693450D640F9B5A28
 { // Q3Map2 defaulted
 	{
@@ -1662,28 +1525,6 @@ q3r_nightcity/B3E4B2306CCCF3DE7DFFE9EE973E4D31
 
 	{
 		map textures/q3r_road/concrete.tga
-		blendFunc GL_DST_COLOR GL_ZERO
-		rgbGen identity
-	}
-}
-
-q3r_nightcity/A586E109648898AAF52C6DED3010AECC
-{ // Q3Map2 defaulted
-	{
-		map $lightmap
-		rgbGen identity
-	}
-	
-	// Q3Map2 custom lightstyle stage(s)
-	{
-		map maps/q3r_nightcity/lm_0000.tga
-		blendFunc GL_SRC_ALPHA GL_ONE
-		rgbGen wave noise 0.5 1 0 5.37 // style 5
-		tcGen lightmap
-	}
-
-	{
-		map textures/NULL.tga
 		blendFunc GL_DST_COLOR GL_ZERO
 		rgbGen identity
 	}
