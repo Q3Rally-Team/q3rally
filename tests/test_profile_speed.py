@@ -10,6 +10,7 @@ def test_sustained_profile_speed():
         binary = pathlib.Path(tmp) / "profile_speed_test"
         subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra",
                         str(ROOT / "tests/profile_speed_test.c"),
+                        str(ROOT / "engine/code/game/g_profile_speed.c"),
                         str(ROOT / "engine/code/qcommon/q_shared.c"),
                         str(ROOT / "engine/code/qcommon/q_math.c"),
                         '-DARCH_STRING="test"', '-DOS_STRING="linux"',
