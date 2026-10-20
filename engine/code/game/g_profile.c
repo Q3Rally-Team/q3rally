@@ -1723,6 +1723,7 @@ void G_Profile_TrackClientSpawn( gclient_t *client ) {
 
     client->profileHasLastOrigin = qfalse;
     client->profileLastTime = 0;
+    memset( &client->profileSpeedWindow, 0, sizeof( client->profileSpeedWindow ) );
 }
 
 void G_Profile_UpdateClientFrame( gentity_t *ent ) {
@@ -1730,7 +1731,7 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
     vec3_t delta;
     double distanceQu;
     double distanceKm;
-    double speedQu;
+    vec3_t forward;
     double speedKph;
     int frameMsec;
     int currentTime;
@@ -1748,6 +1749,7 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
     }
 
     if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+        memset( &client->profileSpeedWindow, 0, sizeof( client->profileSpeedWindow ) );
         return;
     }
 
@@ -1794,15 +1796,12 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_DISTANCE );
     G_Profile_CheckAchievementProgress( client, BG_ACHIEVEMENT_FUEL );
 
-    // Geschwindigkeits-Tracking
-    speedQu = VectorLength( client->ps.velocity );
-    speedKph = ( speedQu / CP_M_2_QU ) * 3.6;
-    // Ignore one-frame physics spikes that are not real vehicle speeds.
-    // The speedometer is designed for 0-200 km/h; 400 leaves room for boosts,
-    // ramps, and explosions while filtering artifacts such as 1400 km/h.
-    if ( speedKph > 400.0 ) {
-        speedKph = 0.0;
-    }
+    /* Match the HUD: longitudinal speed, including reverse driving.
+     * Require a sustained reading so a collision cannot set a lifetime record. */
+    AngleVectors( client->ps.viewangles, forward, NULL, NULL );
+    speedKph = fabs( DotProduct( client->ps.velocity, forward ) ) / CP_M_2_QU * 3.6;
+    speedKph = G_Profile_SustainedSpeed( &client->profileSpeedWindow, speedKph,
+        currentTime, client->ps.pm_type == PM_NORMAL && ent->health > 0 && frameMsec > 0 );
     if ( speedKph > s_profileState.stats.topSpeedKph ) {
         s_profileState.stats.topSpeedKph = speedKph;
         s_profileState.dirty = qtrue;
