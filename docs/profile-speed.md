@@ -11,8 +11,10 @@ spectator/dead states, invalid readings, backwards time and sampling gaps above
 250 ms interrupt confirmation. The existing 400 km/h plausibility limit remains.
 
 This is a game-module source change, not a website deployment. Rebuild and ship
-the game modules for the platforms in use. A full Linux native-module build and
-`tests/test_profile_speed.py` were verified. A Windows build and in-game driving
+the game modules for the platforms in use. Linux native modules, all three QVM modules (cgame, qagame, ui), and
+`tests/test_profile_speed.py` were verified. The filter has one implementation
+in `g_profile_speed.c`; its header contains only the type and declaration so
+q3lcc/q3asm cannot emit duplicate function definitions. A Windows build and in-game driving
 check are still required before release.
 
 Previously saved records cannot be reconstructed from the old maximum. They are
