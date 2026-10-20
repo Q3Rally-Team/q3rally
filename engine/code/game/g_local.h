@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "bg_ladder.h"
 #include "profile_shared.h"
 #include "g_public.h"
+#include "g_profile_speed.h"
 
 //==================================================================
 
@@ -583,6 +584,7 @@ struct gclient_s {
 	int			recordedLapCount;
 // END
 
+	profile_speed_window_t profileSpeedWindow;
 	vec3_t		profileLastOrigin;
 	qboolean	profileHasLastOrigin;
 
