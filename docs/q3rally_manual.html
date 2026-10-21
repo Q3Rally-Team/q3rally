@@ -546,6 +546,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
 <tr><td class="cvar-name">g_timeTrialFinishDelay</td><td class="cvar-default">10 s</td><td class="cvar-desc">Finish grace period for GT_SINGLE_PLAYER.</td></tr>
 <tr><td class="cvar-name">g_rallyReadyCheck</td><td class="cvar-default">1</td><td class="cvar-desc">Require all human players to signal ready before race start.</td></tr>
 <tr><td class="cvar-name">g_rallyIgnoreBots</td><td class="cvar-default">0</td><td class="cvar-desc">When set, bots are moved to spectator and excluded from the ready check.</td></tr>
+<tr><td class="cvar-name">g_weather</td><td class="cvar-default">1</td><td class="cvar-desc">Weather: 0 always dry, 1 as the map says (showers come and go during the race), 2 rain, 3 snow for the whole race on any map. Ghost Race is always dry. Serverinfo.</td></tr>
 </table>
 <div class="cvar-group-label">Elimination</div>
 <table class="cvar-table">
@@ -646,63 +647,35 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
     <thead><tr><th>Entity</th><th>Purpose</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td>rally_sun</td><td>Sun direction setter</td><td>Forwards sun position to clients for dynamic lighting.</td></tr>
-      <tr><td>rally_weather_rain</td><td>Rain particle and dynamic wetness volume</td><td><code>number</code> = density. Roads inside the volume lose grip and generate tire spray. Spawnflag 1 disables visual impact splashes.</td></tr>
-      <tr><td>rally_weather_snow</td><td>Snow particle and dynamic snow volume</td><td>Fixed type (<code>weapon = 1</code>). Roads inside the volume use packed-snow grip and generate tire snow spray. Extra spawnflags ignored.</td></tr>
+      <tr><td>rally_weather_rain / rally_weather_snow</td><td>Obsolete</td><td>Weather now falls wherever the sky is above; the brushes are no longer needed. A map that still has them and no worldspawn <code>weather</code> key gets rain or snow; remove them when the map is next compiled.</td></tr>
     </tbody>
   </table></div>
 
 
-  <h3>Atmospheric Weather — Mapper Guide</h3>
-  <p>Practical checklist for placing and tuning weather volumes in Q3Rally maps.</p>
-
+  <h3>Weather — Mapper Guide</h3>
+  <p>The weather covers the whole map: showers of rain or snow build up, last a while and pass, also during a race. While it rains or snows the sky clouds over, the sun and its shadows fade and the distance disappears in a grey haze (OpenGL2). Rain makes the ground wet with puddles; snow settles on the flat ground, first as powder, then in drifts until everything is white, and melts back to wet ground afterwards (OpenGL2). Cars leave ruts in it, and their tyres crunch through it instead of squealing; on wet ground they hiss. It falls wherever the sky is above: when the map loads, the server and every client trace the map from above on a 64 unit grid and remember for each cell the highest surface that sees a sky face. Under a bridge, a roof or in a tunnel the ground stays dry and free of snow; rain blows a little way in under the edges. No weather brushes are needed.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Worldspawn key</th><th>Default</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>weather</code></td><td>none</td><td>What the map can have: <code>rain</code>, <code>snow</code>, <code>rain snow</code> (each shower picks one) or <code>none</code>.</td></tr>
+      <tr><td><code>weatherChance</code></td><td>40</td><td>Share of the time with rain or snow, 0&ndash;100. Also the chance that a race starts in the rain (then on a wet track).</td></tr>
+      <tr><td><code>weatherCycle</code></td><td>90 300</td><td>How long a shower lasts, min and max in seconds; dry spells last as long times (100 &minus; chance) / chance. A shower takes 30&ndash;60 seconds to build up and to pass.</td></tr>
+      <tr><td><code>weatherStrength</code></td><td>0.4 1</td><td>Intensity of a shower, min and max (0&ndash;1): more particles, wetter ground.</td></tr>
+      <tr><td><code>weatherWind</code></td><td>30 250</td><td>Wind speed, min and max in units per second. With every change of the weather the wind turns and changes over the same 30&ndash;60 seconds, stronger with rain or snow, with gusts on top. It slants the rain, blows the snow along and carries tyre smoke, dust, spray and waterfall mist; out in the open fully, under a roof a little. <code>0 0</code> = calm.</td></tr>
+      <tr><td><code>weatherWindDir</code></td><td>-1</td><td>Prevailing direction the wind blows towards (yaw in degrees, as for an entity's <code>angle</code>); it then stays within 30&deg; of it. <code>-1</code> = any direction, turning by up to 60&deg; at each change.</td></tr>
+      <tr><td><code>wetness</code></td><td>0</td><td>How wet the ground is everywhere without rain (OpenGL2 look only).</td></tr>
+    </tbody>
+  </table></div>
   <div class="table-wrap"><table>
     <thead><tr><th>#</th><th>Topic</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr>
-        <td>1</td>
-        <td>Place weather entities correctly</td>
-        <td>Use <code>rally_weather_rain</code> for rain volumes and <code>rally_weather_snow</code> for snow. Both are created as <code>ET_WEATHER</code> server-side. Brush bounds matter — the client checks whether particle positions are inside the volume.</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>Type wiring</td>
-        <td><code>rally_weather_rain</code> sets <code>weapon = 0</code>, <code>rally_weather_snow</code> sets <code>weapon = 1</code>. The client uses this value to select the weather type. Baseline particle count is carried in entity state.</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>Rain spawnflags</td>
-        <td>For rain, spawnflag 1 disables visual water/land impact splashes. It does not disable dynamic wet-road physics or tire spray. Snow volumes dynamically apply packed-snow tire grip and snow spray. Snow splash is disabled by design regardless of spawnflags.</td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td>Adaptive quality</td>
-        <td>Particle density scales automatically per client. Profile is selected via <code>cg_atmosphericLevel</code> (0 = None, 1 = Low, 2 = High, 3 = Ultra; default 2). Per-frame budget is computed from profile + FPS + FOV + base drops and smoothed to avoid density flicker. Visible density may differ per machine. This is intentional.</td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td>Weather ambience audio</td>
-        <td>Rain and snow volumes can play local weather ambience when the camera or vehicle is inside the volume. Players can disable it with <code>cg_weatherAudio 0</code>.</td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td>Cone &amp; distance culling</td>
-        <td>Particles outside the view cone or beyond culling distance are deactivated or redistributed. Very large volumes can look thinner than expected. <strong>Recommendation:</strong> place weather zones along typical racing/sight corridors rather than one large global volume covering the whole map.</td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td>Deterministic seeds</td>
-        <td>Spawn variation (position, colour, flake selection) is deterministic per zone and particle index, not random per frame. Result: stable, consistent appearance across clients.</td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td>Wet ground</td>
-        <td>With OpenGL2 the ground inside an active rain volume looks wet: darker, with reflections (strongest on asphalt; dirt, sand and gravel mostly get darker, grass only a little) and puddles on every kind of ground that mirror like water, muddy on loose ground, with drop rings while it rains. It gets wet within about 20 seconds of rain and dries within about 2 minutes. For a map that is wet without rain set the worldspawn key <code>wetness</code> (0 = dry, 1 = soaked); shaders with <code>surfaceparm wet</code> are always wet. Test with <code>devmap</code> and <code>r_wetness 1</code> (cheat; <code>-1</code> = from the rain again).</td>
-      </tr>
-      <tr>
-        <td>9</td>
-        <td>QA / validation</td>
-        <td>Test with <code>cg_atmosphericLevel 0</code> through <code>3</code> before release. Check volume placement, transitions, tire grip and spray as well as particle density.</td>
-      </tr>
+      <tr><td>0</td><td>Without compiling</td><td><code>tools/maptools/set_worldspawn.py maps/q3r_xyz.bsp weather=rain weatherChance=50</code> sets worldspawn keys in a compiled map (<code>key=</code> removes one, <code>--show</code> lists them); <code>--fix-sky</code> marks the sky shaders as sky in the BSP, <code>--remove-weather-zones</code> drops the old zones. A copy is kept as <code>.bsp.bak</code>, the checksum in the <code>.aas</code> is updated so the bots still load it.</td></tr>
+      <tr><td>1</td><td>Sky above</td><td>Weather needs a sky shader (<code>surfaceparm sky</code>) above the ground, and q3map2 must find it: its file has to be listed in <code>scripts/shaderlist.txt</code>, otherwise the sky is compiled without the flag. Roofs, bridges and tunnels cover what is below them, also glass and grates (a solid brush is a roof).</td></tr>
+      <tr><td>2</td><td>Ground</td><td>Rain makes the ground wet within about 20 seconds of heavy rain, it dries within about 2 minutes. Snow covers it within about 90 seconds of heavy snow and melts in about 4 minutes, leaving it wet. Grip follows: wet ground loses up to a quarter, snow gives packed-snow grip. Tyres throw spray or powder snow.</td></tr>
+      <tr><td>3</td><td>Server</td><td><code>g_weather</code>: 0 always dry, 1 as the map says (default), 2 rain, 3 snow for the whole race on any map (ladder servers). Ghost Race is always dry. The match report tells the ladder what a match was driven in (dry, wet, snow or mixed); the ladder page can filter the leaderboards by it. Laps on a wet or snowy track are not uploaded as ghosts.</td></tr>
+      <tr><td>4</td><td>Testing</td><td><code>devmap</code> the map, then <code>g_weather 2</code> or <code>3</code> (changes over in 10 seconds). <code>weatherinfo</code> prints the weather, the ground, the wind and whether the camera and the car are out in the weather. <code>r_weatherDebug 1</code> (cheat, OpenGL2) tints the ground blue where the weather reaches it and red where it is covered. <code>cg_weatherPreview "0.5 0.5"</code> (cheat) shows the ground at that wetness and snow (0&ndash;1) without waiting for it; empty turns it off.</td></tr>
+      <tr><td>5</td><td>Particles</td><td>Density scales with the intensity and per client with <code>cg_atmosphericLevel</code> (0 = none, 1&ndash;3); <code>cg_weatherAudio 0</code> turns the rain, snow and wind sound off (<code>s_weatherVolume</code> sets their volume).</td></tr>
+      <tr><td>6</td><td>Wet look</td><td>With OpenGL2 wet ground gets darker and reflective (strongest on asphalt), with puddles that mirror like water and drop rings while it rains. Shaders with <code>surfaceparm wet</code> are always wet. <code>r_wetness 1</code> (cheat) shows the whole map wet.</td></tr>
     </tbody>
   </table></div>
 
@@ -955,7 +928,7 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
       <tr><td>SURF_GRASS</td><td>Green-tinted skidmarks, grass debris</td><td>textures/q3r_dirt_grass/grass01</td></tr>
       <tr><td>SURF_GRAVEL</td><td>Similar to dirt but with coarser particles</td><td>textures/q3r_dirt_grass/gravel01</td></tr>
       <tr><td>SURF_SAND</td><td>Loose sand, dust puffs, low traction</td><td>textures/q3r_dirt_grass/sand</td></tr>
-      <tr><td>SURF_SNOW</td><td>White skidmarks, packed-snow grip and snow spray</td><td>textures/q3r_ground/snowy01–04; also applied dynamically inside <code>rally_weather_snow</code> volumes</td></tr>
+      <tr><td>SURF_SNOW</td><td>White skidmarks, packed-snow grip and snow spray</td><td>textures/q3r_ground/snowy01–04; fresh snow from the weather gives the same grip and spray</td></tr>
       <tr><td>SURF_ICE</td><td>Very low friction, optional sheen</td><td>textures/q3r_ground/ice01</td></tr>
       <tr><td>SURF_WET</td><td>Splash effects when tyres touch liquid</td><td>textures/q3r_liquids/q3r_water_01</td></tr>
       <tr><td>SURF_METAL</td><td>Metallic sparks on impact</td><td>Metal grates, pipes</td></tr>
@@ -1209,7 +1182,8 @@ docker run --rm -it -p 27960:27960/udp \
     <li>OpenGL2: motion blur at speed (the car itself stays sharp), much stronger while burning NOS (cvars <code>r_motionBlur</code>, <code>r_motionBlurNos</code>, <code>r_motionBlurMax</code>, <code>r_motionBlurMaxNos</code>, <code>r_motionBlurNear</code>); a car burning NOS glows in a pulsing light blue shell instead of the old rocket flame</li>
     <li>Tyre smoke and dust are soft billowing clouds lit by the map, with their own look on asphalt, dust, dirt, gravel, sand and grass (cvar <code>cg_tireSmoke</code>); in OpenGL2 particles fade softly where they touch the ground (cvar <code>r_softParticles</code>)</li>
     <li>The smoke screen is a thick cloud that hangs on the track, mines explode with dark smoke and dirt</li>
-    <li>OpenGL2: wet ground inside rain zones: darker, with reflections of the surroundings, lights and cars, and puddles that mirror like water (muddy on loose ground, with rain drop rings); it gets wet within about 20 seconds and dries within about 2 minutes (cvar <code>r_wetGround</code>, 2 = finer reflections); tyre spray and powder snow are soft, lit clouds</li>
+    <li>Weather for the whole map: showers of rain or snow build up, last a while and pass, also during a race; they fall wherever the sky is above (roofs, bridges and tunnels stay dry), the ground gets wet or snowed in and dries or melts again, and the grip follows the sky clouds over and the light gets dull while it rains or snows (OpenGL2), and wind slants the rain, blows the snow along and carries smoke, dust and mist, with a wind sound out in the open (worldspawn keys <code>weather</code>, <code>weatherChance</code>, <code>weatherCycle</code>, <code>weatherStrength</code>, <code>weatherWind</code>, <code>weatherWindDir</code>; cvar <code>g_weather</code>)</li>
+    <li>OpenGL2: wet ground where it rains: darker, with reflections of the surroundings, lights and cars, and puddles that mirror like water (muddy on loose ground, with rain drop rings); it gets wet within about 20 seconds and dries within about 2 minutes (cvar <code>r_wetGround</code>, 2 = finer reflections; also the snow cover, menu &ldquo;Wet &amp; snow&rdquo;); snow settles on the ground in powder and drifts, lit by the map&rsquo;s light and shadows, melts back to wet ground, and cars leave ruts in it; tyre spray and powder snow are soft, lit clouds</li>
     <li>Skid marks are continuous tracks with a tread pattern that follow the line each tyre drives, with their own look on asphalt, dirt, grass, sand, snow and ice; they fade out after 20 seconds (needs <code>r_marksOnTriangleMeshes 1</code>, now the default)</li>
     <li>OpenGL2: filmic tone mapping (soft highlights, deeper shadows) and colour grading with a look per map (cvars <code>r_toneMapCurve</code>, <code>r_filmicExposure</code>, <code>r_filmicWhite</code>, <code>r_colorGrade</code>, <code>r_colorLut</code>)</li>
     <li>OpenGL2: ambient occlusion: soft shadows where surfaces meet, a contact shadow under the cars (cvars <code>r_ssao</code> 0/1/2, <code>r_ssaoRadius</code>, <code>r_ssaoStrength</code>, <code>r_ssaoDistance</code>)</li>

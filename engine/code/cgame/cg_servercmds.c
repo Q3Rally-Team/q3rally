@@ -783,6 +783,9 @@ static void CG_ConfigStringModified( void ) {
 	else if ( num == CS_INTRO_ROUTE ) {
 		CG_IntroCam_ParseConfigstring();
 	}
+	else if ( num == CS_WEATHER ) {
+		CG_WeatherConfigStringModified();
+	}
 	// Q3Rally Code END - Intro Camera
 	else if ( num == CS_SHADERSTATE ) {
 		CG_ShaderStateChanged();

@@ -7,6 +7,8 @@
 "message" "Babel's Military Base"
 "_ambient" "10"
 "reflectionImage" "/textures/reflect/babel.jpg"
+"weather" "rain"
+"weatherChance" "40"
 // brush 0
 {
 ( 2496 -12290 12064 ) ( 2496 12286 12064 ) ( 2496 12286 -12512 ) common/caulk 182.7515258789 202.6666717529 0 1.5 1.5 0 0 0

@@ -43,6 +43,8 @@ or (at your option) any later version.
 #define GHOST_REC_TELEPORT_MIN_DISTANCE 256.0f
 #define GHOST_REC_MIN_LAP_MS            5000
 #define GHOST_REC_MAX_START_OFFSET      1000    // ms; the ladder refuses later first samples
+#define GHOST_REC_MAX_WET               0.1f    // wetter ground (the weather) and the lap is not uploaded
+#define GHOST_REC_MAX_SNOW              0.05f
 
 typedef struct {
 	int             timeOffset;
@@ -312,6 +314,13 @@ void G_GhostRecord_ClientFrame( gentity_t *ent ) {
 
 	if ( BG_SlipstreamCurrent( &client->ps ) > GHOST_REC_MAX_SLIPSTREAM ) {
 		// Towed along in another car's wake: not comparable to a solo lap.
+		slot->invalid = qtrue;
+		return;
+	}
+
+	if ( G_WeatherPointWet( client->ps.origin ) > GHOST_REC_MAX_WET || G_WeatherPointSnow( client->ps.origin ) > GHOST_REC_MAX_SNOW ) {
+		// Q3Rally weather: a lap on a wet or snowy track is not comparable
+		// to the dry laps of the ladder (and Ghost Race is always dry)
 		slot->invalid = qtrue;
 		return;
 	}

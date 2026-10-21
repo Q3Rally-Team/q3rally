@@ -8,7 +8,9 @@ to the car no longer inflate the record; slopes and reversing still work.
 A record must be sustained over a continuous 250 ms window. The minimum reading
 in that window is eligible, rather than a one-frame collision peak. Spawn,
 spectator/dead states, invalid readings, backwards time and sampling gaps above
-250 ms interrupt confirmation. The existing 400 km/h plausibility limit remains.
+250 ms interrupt confirmation. Repeated user commands at the same server time
+keep the window without adding elapsed time. The existing 400 km/h plausibility
+limit remains.
 
 This is a game-module source change, not a website deployment. Rebuild and ship
 the game modules for the platforms in use. Linux native modules, all three QVM modules (cgame, qagame, ui), and

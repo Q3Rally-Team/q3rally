@@ -5,6 +5,7 @@
 "classname" "worldspawn"
 "ambient" "20"
 "reflectionImage" "/textures/reflect/david4.jpg"
+"weather" "none"
 // brush 0
 {
 ( 4608 752 -28 ) ( 4608 752 -32 ) ( 4608 656 -32 ) base_trim/yellow_rustb 36 32 0 1 1 0 0 0

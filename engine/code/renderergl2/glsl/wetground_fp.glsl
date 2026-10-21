@@ -1,4 +1,4 @@
-// Q3Rally: wet ground, see RB_WetGroundPass in tr_shade.c
+// Q3Rally: wet ground and snow cover, see RB_WetGroundPass in tr_shade.c
 //
 // Drawn over a world surface after its normal stages (depth equal) with
 // blendFunc GL_ONE GL_SRC_ALPHA: the alpha darkens what is already there,
@@ -9,25 +9,36 @@
 // the depth prepass), and the colour at the hit is read from the previous
 // frame (u_TextureMap, half size with mip maps), reprojected with
 // u_PrevViewProj. Rays that leave the screen or find nothing fade out.
+//
+// Snow covers the upward facing ground where the weather reaches: patchy
+// while it builds up and melts, closed when there is a lot of it. Its
+// colour replaces what is there, lit by the lightmap of the surface (or
+// its vertex light) and the sun shadow.
 
 uniform sampler2D u_ScreenDepthMap;
 uniform sampler2D u_TextureMap;
+uniform sampler2D u_LightMap;
+uniform sampler2D u_ShadowMap;
 
 uniform mat4   u_ModelViewProjectionMatrix;
 uniform mat4   u_PrevViewProj;
 uniform vec3   u_ViewOrigin;
 uniform vec4   u_ViewInfo;		// x = zNear, y = zFar, z = steps, w = highest mip level
-uniform vec4   u_WetParams;		// x = wetness, y = reflection, z = darkening, w = puddles
+uniform vec4   u_WetParams;		// x = wetness of the map, y = reflection, z = darkening, w = puddles
 uniform vec4   u_Color;			// rgb = tint of the puddle water (muddy on loose ground)
 uniform float  u_Time;
-uniform vec4   u_WetZones[16];	// rain zones: mins + wetness, maxs + rain (drop rings)
-uniform int    u_WetZoneCount;
+uniform vec4   u_Weather;		// where the sky is: x = wetness, y = snow, z = rain, w = snowfall
+uniform sampler2D u_WeatherGridMap;	// sky grid: height + 32768, r = high byte, g = low byte
+uniform vec4   u_WeatherGrid;	// xy = origin, z = 1 / cell, w = 1 if there is a grid
+uniform vec4   u_WeatherGridSize;	// xy = cells, zw = 1 / cells
+uniform vec4   u_SnowParams;	// x = 1 lightmap, 0 vertex light, y = buildup, z = sun ambient (< 0: no sun shadow), w = sparkle
 
 varying vec3   var_Position;
 varying vec3   var_Normal;
+varying vec2   var_LightTex;
+varying vec3   var_VertLight;
 
 #define MAX_STEPS 40
-#define MAX_WET_ZONES 8
 
 float Hash(vec2 p)
 {
@@ -42,6 +53,30 @@ float Noise(vec2 p)
 
 	return mix(mix(Hash(i), Hash(i + vec2(1.0, 0.0)), u.x),
 	           mix(Hash(i + vec2(0.0, 1.0)), Hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+// how far the weather reaches the point, 0 to 1: out under the open sky
+// unless far below the highest surface of the grid cell (a bridge, a
+// roof); soft over a cell, so the rain blows a little way under an edge
+float CellExposure(vec2 cell, float z)
+{
+	vec2  uv = (clamp(cell, vec2(0.0), u_WeatherGridSize.xy - 1.0) + 0.5) * u_WeatherGridSize.zw;
+	vec4  t = texture2D(u_WeatherGridMap, uv);
+	float h = floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5) - 32768.0;
+	return smoothstep(h - 64.0, h - 40.0, z);
+}
+
+float WeatherExposure(vec3 p)
+{
+	if (u_WeatherGrid.w < 0.5)
+		return 0.0;
+
+	vec2 c = (p.xy - u_WeatherGrid.xy) * u_WeatherGrid.z - 0.5;
+	vec2 c0 = floor(c);
+	vec2 f = c - c0;
+
+	return mix(mix(CellExposure(c0, p.z), CellExposure(c0 + vec2(1.0, 0.0), p.z), f.x),
+	           mix(CellExposure(c0 + vec2(0.0, 1.0), p.z), CellExposure(c0 + vec2(1.0, 1.0), p.z), f.x), f.y);
 }
 
 float LinearZ(float depth)
@@ -74,35 +109,9 @@ vec3 SampleScene(vec2 uv, float mip)
 #endif
 }
 
-void main()
+// the wet ground: colour adds the reflection, alpha darkens
+vec4 WetGround(float wet, float rain)
 {
-	float wet = u_WetParams.x;
-	float rain = 0.0;
-	int   z;
-
-	// rain zones: wet inside the box, soft at the sides; the ground may lie
-	// a little below the bottom of the zone
-	for (z = 0; z < MAX_WET_ZONES; z++)
-	{
-		if (z >= u_WetZoneCount)
-			break;
-
-		vec4  lo = u_WetZones[z * 2];
-		vec4  hi = u_WetZones[z * 2 + 1];
-		vec2  d2 = min(var_Position.xy - lo.xy, hi.xy - var_Position.xy);
-		float f = smoothstep(-16.0, 16.0, min(d2.x, d2.y))
-		        * step(lo.z - 64.0, var_Position.z) * step(var_Position.z, hi.z);
-
-		wet = max(wet, lo.w * f);
-		rain = max(rain, hi.w * f);
-	}
-
-	if (wet <= 0.001)
-	{
-		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);	// dry here
-		return;
-	}
-
 	vec3  N = normalize(var_Normal);
 	vec3  V = normalize(var_Position - u_ViewOrigin);
 
@@ -229,5 +238,114 @@ void main()
 	// muddy puddles on loose ground
 	color *= mix(vec3(1.0), u_Color.rgb, puddle);
 
-	gl_FragColor = vec4(color * reflection, (1.0 - dark) * (1.0 - reflection));
+	return vec4(color * reflection, (1.0 - dark) * (1.0 - reflection));
+}
+
+// how much of the ground the snow covers, 0 to 1
+float SnowCover(vec3 N, float snow)
+{
+	if (snow <= 0.001)
+		return 0.0;
+
+	// it stays on the flat parts, slides off the steep ones
+	float up = smoothstep(0.4, 0.8, N.z);
+	if (up <= 0.0)
+		return 0.0;
+
+	vec2  p = var_Position.xy;
+	float s = clamp(snow * u_SnowParams.y, 0.0, 1.0);
+
+	// drifts: the big patches first, then everything closes up
+	float n = Noise(p / 310.0) * 0.55 + Noise(p / 75.0) * 0.3 + Noise(p / 13.0) * 0.15;
+	float patches = smoothstep(n, n + 0.15, s * 1.3 - 0.15);
+
+	// a thin powder from the first flakes on
+	float powder = 0.5 * smoothstep(0.0, 0.25, s) * (0.6 + 0.4 * Noise(p / 4.0));
+
+	return max(patches, powder) * up;
+}
+
+vec3 SnowColor(vec3 N)
+{
+	vec3 light;
+
+	if (u_SnowParams.x > 0.5)
+		light = texture2D(u_LightMap, var_LightTex).rgb;
+	else
+		light = var_VertLight;
+
+	// under the clouds the baked sunlight fades, as on the ground (lightall)
+	float overcast = min(1.0, max(u_Weather.z, u_Weather.w) * 1.15);
+	float l = max(light.r, max(light.g, light.b));
+	if (overcast > 0.0 && l > 0.45)
+		light *= (0.45 + (l - 0.45) * (1.0 - 0.3 * overcast)) / l;	// less: snow scatters the light
+
+	// the sun shadow of the map's models and the cars, and the lamp shadows
+	if (u_SnowParams.z >= 0.0)
+	{
+		vec4 sh = texture2D(u_ShadowMap, gl_FragCoord.xy * r_FBufScale);
+		light *= (sh.r * (1.0 - u_SnowParams.z) + u_SnowParams.z) * sh.g;
+	}
+
+	// wind ripples and soft drifts, so it is not one flat colour
+	vec2  p = var_Position.xy;
+	float drift = Noise(p / 140.0) * 0.6 + Noise(vec2(p.x + p.y * 0.3, p.y) / 23.0) * 0.4;
+	vec3  albedo = vec3(0.78, 0.81, 0.87) * (0.88 + 0.12 * N.z) * (0.9 + 0.12 * drift);
+
+	// a few ice crystals glitter close by, each one only from some
+	// directions
+	vec3  d = var_Position - u_ViewOrigin;
+	vec3  V = normalize(d);
+	vec2  cell = floor(p * 0.8);
+	float glint = step(0.995, Hash(cell + floor(V.xy * 24.0) * 17.0)) * u_SnowParams.w
+		* (1.0 - smoothstep(150.0, 500.0, length(d)));
+
+	return light * (albedo + glint * 1.5);
+}
+
+void main()
+{
+	float wet = u_WetParams.x;
+	float rain = 0.0;
+	float snow = 0.0;
+
+	// r_weatherDebug: blue where the weather reaches, red where covered
+	if (u_Color.a > 0.5)
+	{
+		float e = WeatherExposure(var_Position);
+		gl_FragColor = vec4(mix(vec3(0.5, 0.05, 0.0), vec3(0.0, 0.2, 0.6), e), 0.5);
+		return;
+	}
+
+	// the weather wets the ground where the sky is above, and the snow
+	// settles there
+	if (u_Weather.x > 0.0 || u_Weather.y > 0.0)
+	{
+		float e = WeatherExposure(var_Position);
+
+		wet = max(wet, u_Weather.x * e);
+		rain = u_Weather.z * e;
+		snow = u_Weather.y * e;
+	}
+
+	vec3  N = normalize(var_Normal);
+	float cover = SnowCover(N, snow);
+
+	if (wet <= 0.001 && cover <= 0.001)
+	{
+		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);	// dry here
+		return;
+	}
+
+	vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
+	if (wet > 0.001)
+		result = WetGround(wet, rain);
+
+	if (cover > 0.001)
+	{
+		result.rgb = mix(result.rgb, SnowColor(N), cover);
+		result.a *= 1.0 - cover;
+	}
+
+	gl_FragColor = result;
 }

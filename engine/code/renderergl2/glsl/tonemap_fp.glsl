@@ -9,7 +9,7 @@ uniform vec3      u_ToneMinAvgMaxLinear;
 
 // Q3Rally: filmic tone curve and colour grading
 uniform sampler2D u_ColorLutMap;
-uniform vec4      u_ToneParams;		// x = curve (0 classic, 1 filmic), y = filmic exposure, z = filmic white
+uniform vec4      u_ToneParams;		// x = curve (0 classic, 1 filmic), y = filmic exposure, z = filmic white, w = desaturation (overcast)
 uniform vec4      u_LutParams;		// x = strength, y = LUT size N (0 = none)
 
 varying vec2      var_TexCoords;
@@ -99,6 +99,13 @@ void main()
 #if defined(USE_PBR)
 	color.rgb = sqrt(color.rgb);
 #endif
+
+	// Q3Rally: dull colours under a clouded sky
+	if (u_ToneParams.w > 0.0)
+	{
+		float luma = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
+		color.rgb = mix(color.rgb, vec3(luma), u_ToneParams.w);
+	}
 
 	if (u_LutParams.y > 1.0)
 	{

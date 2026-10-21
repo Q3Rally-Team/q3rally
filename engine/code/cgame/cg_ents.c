@@ -742,7 +742,7 @@ CG_Weather
 ==================
 */
 static void CG_Weather( centity_t *cent ) {
-	CG_Atmospheric_AddWeatherZone( cent );
+	(void)cent;		// Q3Rally: weather zones are gone, see bg_weather.c
 }
 // Q3Rally Code END
 

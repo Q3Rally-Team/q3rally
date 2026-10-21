@@ -1662,7 +1662,7 @@ const void *RB_PostProcess(const void *data)
 	{
 		tr.wetSceneValid = qfalse;
 
-		if (srcFbo && tr.wetSceneFbo && ( backEnd.refdef.wetness > 0.0f || backEnd.refdef.numWetZones > 0 ))
+		if (srcFbo && tr.wetSceneFbo && ( backEnd.refdef.wetness > 0.0f || backEnd.refdef.weather[0] > 0.0f ))
 		{
 			FBO_FastBlit(srcFbo, srcBox, tr.wetSceneFbo, NULL, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 			qglGenerateTextureMipmapEXT(tr.wetSceneImage->texnum, GL_TEXTURE_2D);
@@ -1675,7 +1675,7 @@ const void *RB_PostProcess(const void *data)
 	}
 
 	// Q3Rally: distance and ground haze of the map
-	if (srcFbo && r_haze->integer && tr.hazeSet && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2
+	if (srcFbo && r_haze->integer && (tr.hazeSet || backEnd.refdef.overcast > 0.01f) && backEnd.viewParms.viewportWidth >= glConfig.vidWidth / 2
 		&& !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL))
 	{
 		RB_Haze(srcFbo, srcBox);

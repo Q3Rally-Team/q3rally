@@ -667,6 +667,7 @@ static consoleCommand_t	commands[] = {
 	{ "nextskin", CG_TestModelNextSkin_f },
 	{ "prevskin", CG_TestModelPrevSkin_f },
 	{ "viewpos", CG_Viewpos_f },
+	{ "weatherinfo", CG_WeatherInfo_f },
 	{ "+scores", CG_ScoresDown_f },
 	{ "ghostpicker", CG_LadderGhost_TogglePicker_f },
 	{ "-scores", CG_ScoresUp_f },

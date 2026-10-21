@@ -1028,13 +1028,13 @@ static void CG_PlayBufferedSounds( void ) {
 CG_UpdateWetness
 
 Q3Rally: how wet the ground is, for the OpenGL2 renderer: the whole map has
-its own wetness (worldspawn "wetness"), rain zones get wet while it rains
-in them (CG_AtmosphericWetZones).
+its own wetness (worldspawn "wetness"), and the weather wets or snows in
+the ground where the sky is above (CG_WeatherRefdef).
 =================
 */
 void CG_UpdateWetness( void ) {
 	cg.refdef.wetness = Com_Clamp( 0.0f, 1.0f, cgs.mapWetness );
-	CG_AtmosphericWetZones( &cg.refdef );
+	CG_WeatherRefdef( &cg.refdef );
 }
 
 /*
@@ -1095,6 +1095,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	cg.clientFrame++;
 
         // update cg.predictedPlayerState
+        CG_WeatherUpdate();		// Q3Rally: the ground for the prediction
         CG_PredictPlayerState();
 
         CG_RecordGhostFrame();

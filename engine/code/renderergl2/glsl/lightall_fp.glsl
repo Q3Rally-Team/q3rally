@@ -34,6 +34,10 @@ uniform vec3  u_PrimaryLightColor;
 uniform vec3  u_PrimaryLightAmbient;
 #endif
 
+#if defined(USE_LIGHTMAP)
+uniform float u_Overcast;		// Q3Rally: rain or snow clouds, 0 to 1
+#endif
+
 #if defined(USE_LIGHT) && !defined(USE_FAST_LIGHT)
 uniform vec4      u_NormalScale;
 uniform vec4      u_SpecularScale;
@@ -281,6 +285,17 @@ void main()
 	lightmapColor.rgb *= lightmapColor.rgb;
   #endif
 	lightColor *= lightmapColor.rgb;
+
+	// Q3Rally: under a clouded sky the patches of baked sunlight fade: the
+	// light above a knee (sunlit ground) is pulled down, the shade stays
+	if (u_Overcast > 0.0)
+	{
+		float l = max(lightColor.r, max(lightColor.g, lightColor.b));
+		const float knee = 0.45;
+
+		if (l > knee)
+			lightColor *= (knee + (l - knee) * (1.0 - 0.65 * u_Overcast)) / l;
+	}
 #endif
 
 	vec2 texCoords = var_TexCoords.xy;

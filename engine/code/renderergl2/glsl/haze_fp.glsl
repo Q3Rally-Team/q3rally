@@ -8,7 +8,7 @@
 // 1 / u_HazeParams.z units); the ground part is integrated along the view
 // ray, so it is thick looking along a valley and thin looking up. The sky
 // only gets the haze at the horizon. Towards the sun the haze glows in the
-// sun's colour.
+// sun's colour. In rain or snow the sky clouds over (u_HazeWeather).
 
 uniform sampler2D u_TextureMap;		// depth of the prepass
 
@@ -21,8 +21,24 @@ uniform vec4   u_HazeColor;		// rgb, a = most it hides
 uniform vec4   u_HazeParams;	// x = density, y = ground density, z = 1 / ground thickness, w = ground height
 uniform vec4   u_HazeSun;		// xyz = to the sun, w = glow
 uniform vec4   u_Color;			// rgb = sun colour, a = how far the sky is
+uniform vec4   u_HazeWeather;	// x = how much the clouds of rain or snow cover the sky, y = time
 
 varying vec2   var_ScreenTex;
+
+float Hash(vec2 p)
+{
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float Noise(vec2 p)
+{
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+
+	return mix(mix(Hash(i), Hash(i + vec2(1.0, 0.0)), u.x),
+	           mix(Hash(i + vec2(0.0, 1.0)), Hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
 
 void main()
 {
@@ -37,7 +53,10 @@ void main()
 	float z = sky ? u_Color.a : u_ViewInfo.y / mix(u_ViewInfo.x, 1.0, d);
 	float dist = z * len;
 
-	// thin haze everywhere; the sky only gets it towards the horizon
+	// thin haze everywhere; the sky only gets it towards the horizon.
+	// Below the horizon the sky is the void under a map seen through
+	// water or glass, which do not write depth: only a thin band there, or
+	// the water turns into a flat wall of haze
 	float tau = u_HazeParams.x * dist;
 	if (sky)
 		tau *= 1.0 - smoothstep(0.0, 0.35, ray.z);
@@ -55,7 +74,18 @@ void main()
 		tau += u_HazeParams.y * exp(-clamp(b * h, -8.0, 40.0)) * dist * along;
 	}
 
+	if (sky && ray.z < 0.0)
+		tau *= 1.0 - smoothstep(0.0, 0.05, -ray.z);
+
 	float haze = (1.0 - exp(-tau)) * u_HazeColor.a;
+
+	// rain or snow: the sky clouds over, in slowly drifting patches
+	if (sky && u_HazeWeather.x > 0.0)
+	{
+		vec2  p = ray.xy / max(abs(ray.z), 0.15) * 3.0 + vec2(u_HazeWeather.y * 0.01, 0.0);
+		float n = Noise(p) * 0.6 + Noise(p * 2.7 + 5.0) * 0.4;
+		haze = max(haze, u_HazeWeather.x * (0.8 + 0.25 * n));
+	}
 
 	// glow towards the sun
 	float sun = pow(max(dot(ray, u_HazeSun.xyz), 0.0), 8.0) * u_HazeSun.w;

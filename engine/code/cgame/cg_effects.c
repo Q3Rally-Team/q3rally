@@ -140,6 +140,14 @@ localEntity_t *CG_SmokePuff( const vec3_t p, const vec3_t vel,
 	VectorCopy( vel, le->pos.trDelta );
 	VectorCopy( p, le->pos.trBase );
 
+	// Q3Rally: the smoke drifts with the wind of the weather
+	{
+		vec3_t wind;
+
+		CG_WeatherWindAt( p, wind );
+		VectorMA( le->pos.trDelta, 0.6f, wind, le->pos.trDelta );
+	}
+
 	VectorCopy( p, re->origin );
 	re->customShader = hShader;
 

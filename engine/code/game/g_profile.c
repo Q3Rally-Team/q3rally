@@ -1800,8 +1800,10 @@ void G_Profile_UpdateClientFrame( gentity_t *ent ) {
      * Require a sustained reading so a collision cannot set a lifetime record. */
     AngleVectors( client->ps.viewangles, forward, NULL, NULL );
     speedKph = fabs( DotProduct( client->ps.velocity, forward ) ) / CP_M_2_QU * 3.6;
+    /* Several user commands may share level.time. Zero elapsed time must not
+     * invalidate the window; the filter handles timestamps and gaps itself. */
     speedKph = G_Profile_SustainedSpeed( &client->profileSpeedWindow, speedKph,
-        currentTime, client->ps.pm_type == PM_NORMAL && ent->health > 0 && frameMsec > 0 );
+        currentTime, client->ps.pm_type == PM_NORMAL && ent->health > 0 );
     if ( speedKph > s_profileState.stats.topSpeedKph ) {
         s_profileState.stats.topSpeedKph = speedKph;
         s_profileState.dirty = qtrue;

@@ -35,6 +35,9 @@ qboolean BG_GametypeIsTimedRace( int gametype ) {
 	return ( gametype == GT_RACING || gametype == GT_SPRINT || gametype == GT_GHOST ) ? qtrue : qfalse;
 }
 qboolean G_IsSprintTrack( void ) { return qfalse; }
+static float s_weatherWet;
+float G_WeatherPointWet( const vec3_t point ) { (void)point; return s_weatherWet; }
+float G_WeatherPointSnow( const vec3_t point ) { (void)point; return 0.0f; }
 static const char *s_rulesViolation;
 const char *G_LadderRulesViolation( void ) { return s_rulesViolation; }
 
@@ -219,6 +222,14 @@ int main( void ) {
 	}
 	DriveLap( 1, 220000, 30000, 0 );
 	assert( s_submitCount == 4 && s_lastMeta.lapMs == 30000 );
+
+	/* A faster lap on a wet track (the weather): not uploaded. */
+	s_weatherWet = 0.5f;
+	DriveLap( 1, 250000, 25000, 0 );
+	assert( s_submitCount == 4 );
+	s_weatherWet = 0.0f;
+	DriveLap( 1, 275000, 25000, 0 );
+	assert( s_submitCount == 5 && s_lastMeta.lapMs == 25000 );
 
 	puts( "ok" );
 	return 0;

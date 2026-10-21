@@ -6,6 +6,8 @@
 "reflectionImage" "/textures/reflect/q3r_citydom.jpg"
 "angle" "90"
 "ambient" "30"
+"weather" "rain"
+"weatherChance" "40"
 // brush 0
 {
 ( 56 64 -56 ) ( 56 -64 -56 ) ( -72 64 -56 ) q3r_road/asph02linien 256 256 0 0.5 0.5 0 0 0

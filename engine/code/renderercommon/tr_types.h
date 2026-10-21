@@ -127,8 +127,6 @@ typedef struct {
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32
 
-#define	MAX_WET_ZONES	8		// Q3Rally: rain zones in refdef_t
-
 typedef struct {
 	int			x, y, width, height;
 	float		fov_x, fov_y;
@@ -150,10 +148,9 @@ typedef struct {
 	// the map; the OpenGL2 renderer darkens it and adds reflections
 	float		wetness;
 
-	// Q3Rally: rain zones, wet inside their box: mins, wetness, maxs,
-	// 1 while it rains there (drop rings in the puddles)
-	int			numWetZones;
-	float		wetZones[MAX_WET_ZONES][8];
+	// Q3Rally weather where the sky is above (see SetWeatherGrid): how wet
+	// and how snowed in that ground is, and how hard it rains and snows
+	float		weather[4];
 } refdef_t;
 
 

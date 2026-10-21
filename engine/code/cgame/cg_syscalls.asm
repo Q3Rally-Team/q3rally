@@ -99,6 +99,7 @@ equ	trap_S_RegisterEngine			-96
 equ	trap_S_UpdateEngine			-97
 equ	trap_S_SetSfxGroup			-98
 equ	trap_R_AddSpotLightToScene		-99
+equ	trap_R_SetWeatherGrid			-100
 
 equ	memset						-101
 equ	memcpy						-102

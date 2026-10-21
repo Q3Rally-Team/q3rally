@@ -4,6 +4,7 @@
 {
 "classname" "worldspawn"
 "reflectionImage" "/textures/reflect/q3r_battlecanyon.jpg"
+"weather" "none"
 // brush 0
 {
 ( -1400 1412 556 ) ( -1400 1400 556 ) ( -1400 1400 -32 ) common/caulk 0 0 0 0.5 0.5 0 4 0

@@ -104,6 +104,11 @@ typedef struct {
 	// in degrees. Renderers without spot lights draw it as point lights
 	// along dir.
 	void	(*AddSpotLightToScene)( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
+
+	// Q3Rally weather: the sky grid (bg_weather.c), for every cell the
+	// height of the highest surface seen from the sky; params = origin x,
+	// origin y, cell size. Wet ground and snow only lie where weather lands.
+	void	(*SetWeatherGrid)( const short *heights, int width, int height, const float *params );
 } refexport_t;
 
 //

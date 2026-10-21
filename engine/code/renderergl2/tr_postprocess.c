@@ -85,6 +85,29 @@ void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, in
 	color[2] = pow(2, r_cameraExposure->value - autoExposure); //exp2(r_cameraExposure->value);
 	color[3] = 1.0f;
 
+	// Q3Rally: under clouds the light is dull: a little darker, in the
+	// rain more than in the snow (after the automatic exposure, or it
+	// would brighten it again)
+	if (backEnd.refdef.overcast > 0.0f)
+	{
+		float ev = pow(2, -backEnd.refdef.overcast * (0.3f - 0.1f * backEnd.refdef.overcastSnow));
+
+		color[0] *= ev;
+		color[1] *= ev;
+		color[2] *= ev;
+	}
+
+	// Q3Rally: the automatic exposure would turn a snowy landscape grey;
+	// like a photographer on snow, open up a little (up to 0.4 stops)
+	if (autoExposure && backEnd.refdef.weather[1] > 0.0f)
+	{
+		float ev = pow(2, 0.4f * backEnd.refdef.weather[1]);
+
+		color[0] *= ev;
+		color[1] *= ev;
+		color[2] *= ev;
+	}
+
 	if (autoExposure)
 		GL_BindToTMU(tr.calcLevelsImage,  TB_LEVELSMAP);
 	else
@@ -94,7 +117,9 @@ void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, in
 	{
 		vec4_t params;
 
-		VectorSet4(params, r_toneMapCurve->integer ? 1.0f : 0.0f, r_filmicExposure->value, r_filmicWhite->value, 0.0f);
+		// w = how much the colours fade under clouds
+		VectorSet4(params, r_toneMapCurve->integer ? 1.0f : 0.0f, r_filmicExposure->value, r_filmicWhite->value,
+			backEnd.refdef.overcast * (0.35f - 0.15f * backEnd.refdef.overcastSnow));
 		GLSL_SetUniformVec4(&tr.tonemapShader, UNIFORM_TONEPARAMS, params);
 
 		if (tr.colorLutImage && r_colorGrade->value > 0.0f)
@@ -757,18 +782,43 @@ Q3Rally: distance and ground haze over the scene, before tone mapping
 (glsl/haze_fp.glsl). Main view only, needs the depth of the prepass.
 =============
 */
+// Q3Rally: the haze of rain and snow (also on maps without a haze): colour
+// and the distance at which it hides half, at full intensity
+static vec3_t	hazeRainColor = { 0.40f, 0.43f, 0.48f };
+static vec3_t	hazeSnowColor = { 0.66f, 0.69f, 0.74f };
+#define HAZE_RAIN_DISTANCE	4500.0f
+#define HAZE_SNOW_DISTANCE	2200.0f
+
 void RB_Haze( FBO_t *dstFbo, ivec4_t dstBox )
 {
 	vec4_t vec, sunColor;
-	float zNear, density, groundDensity, scale;
+	vec3_t color, weatherColor;
+	float zNear, density, groundDensity, scale, c, glow;
 
-	if ( !tr.hazeShader.program || !tr.hdrDepthImage || !tr.hazeSet || r_hazeDensity->value <= 0.0f ) {
+	c = backEnd.refdef.overcast;
+	if ( !tr.hazeShader.program || !tr.hdrDepthImage || ( !tr.hazeSet && c <= 0.01f ) || r_hazeDensity->value <= 0.0f ) {
 		return;
 	}
 
 	zNear = backEnd.viewParms.zNear > 0.0f ? backEnd.viewParms.zNear : r_znear->value;
 	density = tr.hazeDistance > 0.0f ? 0.6931472f / tr.hazeDistance * r_hazeDensity->value : 0.0f;
 	groundDensity = tr.hazeGroundDistance > 0.0f ? 0.6931472f / tr.hazeGroundDistance * r_hazeDensity->value : 0.0f;
+
+	// rain and snow: thicker and greyer, the sky clouded over, no glow
+	// towards the sun
+	VectorCopy( tr.hazeSet ? tr.hazeColor : hazeRainColor, color );
+	glow = tr.hazeSunGlow;
+	if ( c > 0.0f ) {
+		float snow = backEnd.refdef.overcastSnow;
+
+		VectorLerp( hazeRainColor, hazeSnowColor, snow, weatherColor );
+		VectorLerp( color, weatherColor, MIN( 1.0f, c * 1.2f ), color );
+		density += c * 0.6931472f / ( HAZE_RAIN_DISTANCE + ( HAZE_SNOW_DISTANCE - HAZE_RAIN_DISTANCE ) * snow )
+			* r_hazeDensity->value;
+		glow *= 1.0f - c;
+	}
+	VectorSet4( vec, 0.85f * c, backEnd.refdef.floatTime, 0.0f, 0.0f );
+	GLSL_SetUniformVec4( &tr.hazeShader, UNIFORM_HAZEWEATHER, vec );
 
 	VectorSet4( vec, backEnd.viewParms.zFar / zNear, backEnd.viewParms.zFar,
 		tan( backEnd.viewParms.fovX * M_PI / 360.0f ), tan( backEnd.viewParms.fovY * M_PI / 360.0f ) );
@@ -778,11 +828,11 @@ void RB_Haze( FBO_t *dstFbo, ivec4_t dstBox )
 	GLSL_SetUniformVec3( &tr.hazeShader, UNIFORM_VIEWLEFT, backEnd.viewParms.or.axis[1] );
 	GLSL_SetUniformVec3( &tr.hazeShader, UNIFORM_VIEWUP, backEnd.viewParms.or.axis[2] );
 
-	VectorSet4( vec, tr.hazeColor[0], tr.hazeColor[1], tr.hazeColor[2], 1.0f );
+	VectorSet4( vec, color[0], color[1], color[2], 1.0f );
 	GLSL_SetUniformVec4( &tr.hazeShader, UNIFORM_HAZECOLOR, vec );
-	VectorSet4( vec, density, groundDensity, 1.0f / tr.hazeGroundThickness, tr.hazeGroundHeight );
+	VectorSet4( vec, density, groundDensity, 1.0f / ( tr.hazeSet ? tr.hazeGroundThickness : 128.0f ), tr.hazeGroundHeight );
 	GLSL_SetUniformVec4( &tr.hazeShader, UNIFORM_HAZEPARAMS, vec );
-	VectorSet4( vec, tr.sunDirection[0], tr.sunDirection[1], tr.sunDirection[2], tr.hazeSunGlow );
+	VectorSet4( vec, tr.sunDirection[0], tr.sunDirection[1], tr.sunDirection[2], glow );
 	GLSL_SetUniformVec4( &tr.hazeShader, UNIFORM_HAZESUN, vec );
 
 	// the sun's colour at most 1, and how far the sky counts as
@@ -793,6 +843,9 @@ void RB_Haze( FBO_t *dstFbo, ivec4_t dstBox )
 		VectorSet( sunColor, 1.0f, 1.0f, 1.0f );
 	}
 	sunColor[3] = tr.hazeDistance > 0.0f ? tr.hazeDistance * 3.0f : 8000.0f;
+	if ( c > 0.0f && sunColor[3] > 3.0f * HAZE_RAIN_DISTANCE ) {
+		sunColor[3] = 3.0f * HAZE_RAIN_DISTANCE;	// the far sky disappears in the rain
+	}
 
 	FBO_BlitFromTexture( tr.hdrDepthImage, NULL, NULL, dstFbo, dstBox, &tr.hazeShader, sunColor,
 		GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHTEST_DISABLE );

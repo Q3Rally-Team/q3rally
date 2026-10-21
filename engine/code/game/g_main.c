@@ -103,12 +103,7 @@ vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
 vmCvar_t	g_localTeamPref;
 vmCvar_t    g_enableSnow;
-vmCvar_t	g_dynamicWeather;
-vmCvar_t	g_weatherInitialChance;
-vmCvar_t	g_weatherOnMinTime;
-vmCvar_t	g_weatherOnMaxTime;
-vmCvar_t	g_weatherOffMinTime;
-vmCvar_t	g_weatherOffMaxTime;
+vmCvar_t	g_weather;
 vmCvar_t    g_dominationScoreInterval;
 vmCvar_t    g_dominationCaptureDelay;
 vmCvar_t    g_dominationSpawnStyle;
@@ -290,12 +285,9 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
     { &g_enableSnow, "g_enableSnow", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
-	{ &g_dynamicWeather, "g_dynamicWeather", "1", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_weatherInitialChance, "g_weatherInitialChance", "70", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_weatherOnMinTime, "g_weatherOnMinTime", "45", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_weatherOnMaxTime, "g_weatherOnMaxTime", "120", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_weatherOffMinTime, "g_weatherOffMinTime", "25", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_weatherOffMaxTime, "g_weatherOffMaxTime", "90", CVAR_ARCHIVE, 0, qtrue },
+	// Q3Rally weather: 0 = always dry, 1 = as the map says, 2 = rain, 3 = snow
+	// (2 and 3 for the whole race, e.g. for ladder servers)
+	{ &g_weather, "g_weather", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue },
 
 #ifdef MISSIONPACK
 	{ &g_obeliskHealth, "g_obeliskHealth", "2500", 0, 0, qfalse },
@@ -1450,6 +1442,10 @@ static void G_LadderSubmitMatchReport( const char *reason ) {
 
         trap_Cvar_VariableStringBuffer( "sv_hostname", payload->serverName, sizeof( payload->serverName ) );
         payload->isDedicated = g_dedicated.integer ? qtrue : qfalse;
+
+        // Q3Rally: what the match was driven in
+        G_WeatherMatchReport( payload->weatherCondition, sizeof( payload->weatherCondition ), &payload->weatherMode,
+                &payload->weatherWetPct, &payload->weatherSnowPct, payload->weatherMap, sizeof( payload->weatherMap ) );
         trap_Cvar_VariableStringBuffer( "net_ip", payload->serverHost, sizeof( payload->serverHost ) );
         if ( payload->serverHost[0] ) {
                 trap_Cvar_VariableStringBuffer( "net_port", buffer, sizeof( buffer ) );
@@ -1710,8 +1706,13 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
         G_RallyApplySprintDefaults();
 
+        // Q3Rally: where the sky is, traced before any entity is linked
+        G_WeatherBuildGrid();
+
         // parse the key/value pairs and spawn gentities
         G_SpawnEntitiesFromString();
+
+        G_InitWeather();
 
 	if ( g_gametype.integer == GT_KOTH && !KOTH_MapHasValidHill() ) {
 		char mapname[MAX_QPATH];
@@ -3663,6 +3664,7 @@ void G_RunFrame( int levelTime ) {
 	level.framenum++;
 	level.previousTime = level.time;
 	level.time = levelTime;
+	G_RunWeather();
 	G_RallyPhysics_RunFrame();
 
 	// get any cvar changes

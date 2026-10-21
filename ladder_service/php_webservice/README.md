@@ -170,7 +170,7 @@ können. Der schnelle Frontend-Index und Spielerprofile werden ebenfalls unter
 ## Backup & Wartung
 
 * Regelmäßig den Ordner `data/` sichern.
-* Nach manuellen Datenänderungen kann `php rebuild_index.php` den Match-Index neu aufbauen.
+* Nach manuellen Datenänderungen oder einem Update, das dem Index Felder hinzufügt (1.0.17: Wetter), baut `sudo -u www-data php rebuild_index.php` den Match-Index neu auf (gleiche Felder wie beim Upload, unter der Ladder-Sperre).
 * Bei Upgrades der Profilstruktur kann `php migrate_profiles.php` bestehende Profile migrieren.
 * Bei sehr vielen Matches empfiehlt sich langfristig eine Datenbank-basierte Ablage.
 

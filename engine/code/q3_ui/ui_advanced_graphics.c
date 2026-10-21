@@ -739,7 +739,7 @@ static const gfxRow_t gfxEffectsRows[] = {
 	{ "Motion blur", motionblur_names, motionblur_sets, GFXROW_GL2 },
 	{ "Reflections", carrefl_names, carrefl_sets, GFXROW_GL2 },
 	{ "Water", gfx_onoff, water_sets, GFXROW_RESTART | GFXROW_GL2 },
-	{ "Wet roads", gfx_onoff_fine, wet_sets, GFXROW_RESTART | GFXROW_GL2 },
+	{ "Wet & snow", gfx_onoff_fine, wet_sets, GFXROW_RESTART | GFXROW_GL2 },
 	{ "Haze", gfx_onoff, haze_sets, GFXROW_GL2 },
 	{ "Colour look", look_names, look_sets, GFXROW_GL2 },
 	{ "Ambient occl.", gfx_onoff_fine, ssao_sets, GFXROW_RESTART | GFXROW_GL2 },

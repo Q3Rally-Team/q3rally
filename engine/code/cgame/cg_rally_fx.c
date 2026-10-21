@@ -52,7 +52,8 @@ turn, slow down (drag), rise or settle, take a part of the car's speed and
 are tinted with the light grid where they start (no glowing smoke at
 night). With r_softParticles (OpenGL2) they fade out where they cut into
 the ground instead of showing a hard edge. cg_tireSmoke scales them
-(0 = off, 1 = default, 2 = double).
+(0 = off, 1 = default, 2 = double). All of them, and the waterfall mist,
+drift with the wind of the weather (CG_WeatherWindAt).
 ===========================================================================
 */
 
@@ -130,6 +131,7 @@ typedef struct {
 	float		rotation;
 	float		rotSpeed;
 	float		floorZ;
+	float		windShare;		// how much the wind carries it along (0 to 1)
 } fxParticle_t;
 
 static fxEmitter_t	fxEmitters[FX_MAX_EMITTERS];
@@ -389,6 +391,7 @@ static void CG_FX_SpawnMist( fxEmitter_t *e ) {
 	p->rotation  = random() * 360.0f;
 	p->rotSpeed  = crandom() * 30.0f;
 	p->floorZ    = -1.0e9f;	// mist never hits a floor
+	p->windShare = 1.0f;
 	VectorCopy( e->litColor, p->color );
 }
 
@@ -426,6 +429,7 @@ static void CG_FX_SpawnDroplet( fxEmitter_t *e ) {
 	p->size1     = p->size0;
 	p->alpha     = 0.9f;
 	p->floorZ    = e->origin[2] - 4.0f;
+	p->windShare = 0.35f;		// heavy, the wind bends their arc a little
 	VectorMA( e->litColor, 0.25f, colorWhite, p->color );
 }
 
@@ -506,6 +510,7 @@ static void CG_FX_SpawnPuff( const vec3_t origin, const vec3_t up, const vec3_t 
 	p->rotation  = random() * 360.0f;
 	p->rotSpeed  = crandom() * 40.0f;
 	p->floorZ    = -1.0e9f;
+	p->windShare = 1.0f;
 
 	// light grid at the start, so the smoke is not glowing in the dark
 	VectorCopy( k->color, p->color );
@@ -631,7 +636,18 @@ void CG_AddRallyFX( void ) {
 		if ( drag < 0.0f ) {
 			drag = 0.0f;
 		}
-		VectorScale( p->vel, drag, p->vel );
+		// the drag works against the air, and the air moves with the wind
+		// (Q3Rally weather): smoke, dust and mist drift off downwind
+		if ( p->windShare > 0.0f ) {
+			vec3_t wind;
+
+			CG_WeatherWindAt( p->org, wind );
+			p->vel[0] = wind[0] * p->windShare + ( p->vel[0] - wind[0] * p->windShare ) * drag;
+			p->vel[1] = wind[1] * p->windShare + ( p->vel[1] - wind[1] * p->windShare ) * drag;
+			p->vel[2] *= drag;
+		} else {
+			VectorScale( p->vel, drag, p->vel );
+		}
 		p->vel[2] -= p->gravity * dt;
 		VectorMA( p->org, dt, p->vel, p->org );
 

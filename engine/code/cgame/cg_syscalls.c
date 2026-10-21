@@ -337,6 +337,10 @@ void	trap_R_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radiu
 	syscall( CG_R_ADDSPOTLIGHTTOSCENE, org, dir, PASSFLOAT(radius), PASSFLOAT(coneAngle), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b), flags );
 }
 
+void	trap_R_SetWeatherGrid( const short *heights, int width, int height, const float *params ) {
+	syscall( CG_R_SETWEATHERGRID, heights, width, height, params );
+}
+
 void	trap_R_RenderScene( const refdef_t *fd ) {
 	syscall( CG_R_RENDERSCENE, fd );
 }

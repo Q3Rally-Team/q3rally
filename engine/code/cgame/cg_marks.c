@@ -440,6 +440,9 @@ skidding, lifts off or the ground changes (CG_SkidRibbonStop).
 */
 #define SKID_HALF_WIDTH		7.0f
 #define SKID_SEGMENT		14.0f
+#define SKID_RUT_SEGMENT	40.0f
+#define SKID_SNOW_STRENGTH	0.6f	// how dark a skid mark in snow is (1 = full)
+#define SKID_RUT_STRENGTH	0.4f	// how dark a rolling rut in snow is
 #define SKID_TEX_LENGTH		96.0f	// units per texture repeat along the mark
 #define SKID_LIFETIME		20000
 #define SKID_MAX_GAP		96.0f
@@ -459,8 +462,9 @@ void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t po
 	markFragment_t	markFragments[MAX_MARK_FRAGMENTS], *mf;
 	polyVert_t		verts[MAX_VERTS_ON_POLY];
 	markPoly_t		*mark;
-	float			segLen, u, dist0;
+	float			segLen, u, dist0, strength;
 	int				i, j, numFragments;
+	byte			shade;
 
 	if ( !cg_addMarks.integer || shader <= 0 ) {
 		cent->skidRibbon[tire] = qfalse;
@@ -486,7 +490,9 @@ void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t po
 		VectorClear( cent->skidRibbonSide[tire] );
 		return;
 	}
-	if ( segLen < SKID_SEGMENT ) {
+	// (rolling ruts in snow are long and straight: longer segments, so
+	// they do not use up the marks)
+	if ( segLen < ( cent->wheelSkidding[tire] ? SKID_SEGMENT : SKID_RUT_SEGMENT ) ) {
 		return;
 	}
 
@@ -527,6 +533,14 @@ void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t po
 	numFragments = trap_CM_MarkFragments( 4, (void *)corners, projection, MAX_MARK_POINTS, markPoints[0],
 		MAX_MARK_FRAGMENTS, markFragments );
 
+	// in snow the marks are shallower: a skid lighter, a rolling rut
+	// lighter still
+	strength = 1.0f;
+	if ( shader == cgs.media.SMSnowShader ) {
+		strength = cent->wheelSkidding[tire] ? SKID_SNOW_STRENGTH : SKID_RUT_STRENGTH;
+	}
+	shade = (byte)( 255.0f * strength );
+
 	dist0 = cent->skidRibbonDist[tire];
 	for ( i = 0, mf = markFragments; i < numFragments; i++, mf++ ) {
 		if ( mf->numPoints > MAX_VERTS_ON_POLY ) {
@@ -548,7 +562,8 @@ void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t po
 
 			v->st[0] = 0.5f + DotProduct( delta, sd ) / ( 2.0f * SKID_HALF_WIDTH );
 			v->st[1] = ( dist0 + u * segLen ) / SKID_TEX_LENGTH;
-			v->modulate[0] = v->modulate[1] = v->modulate[2] = v->modulate[3] = 255;
+			v->modulate[0] = v->modulate[1] = v->modulate[2] = shade;
+			v->modulate[3] = 255;
 		}
 
 		mark = CG_AllocMark();
@@ -557,7 +572,8 @@ void CG_SkidRibbon( centity_t *cent, int tire, qhandle_t shader, const vec3_t po
 		mark->alphaFade = qfalse;
 		mark->markShader = shader;
 		mark->poly.numVerts = mf->numPoints;
-		mark->color[0] = mark->color[1] = mark->color[2] = mark->color[3] = 1.0f;
+		mark->color[0] = mark->color[1] = mark->color[2] = strength;
+		mark->color[3] = 1.0f;
 		memcpy( mark->verts, verts, mf->numPoints * sizeof( verts[0] ) );
 	}
 

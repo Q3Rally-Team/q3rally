@@ -6,6 +6,8 @@
 "reversable" "1"
 "reflectionImage" "/textures/reflect/dirtyfun.jpg"
 "_ambient" "25"
+"weather" "rain"
+"weatherChance" "30"
 // brush 0
 {
 patchDef2

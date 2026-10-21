@@ -2715,6 +2715,7 @@ Q3CGOBJ_ = \
   $(B)/$(BASEGAME)/cgame/bg_slidemove.o \
   $(B)/$(BASEGAME)/cgame/bg_lib.o \
   $(B)/$(BASEGAME)/cgame/bg_wheel_forces.o \
+  $(B)/$(BASEGAME)/cgame/bg_weather.o \
   $(B)/$(BASEGAME)/cgame/cg_atmospheric.o \
   $(B)/$(BASEGAME)/cgame/cg_consolecmds.o \
   $(B)/$(BASEGAME)/cgame/cg_draw.o \
@@ -2835,6 +2836,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/bg_slidemove.o \
   $(B)/$(BASEGAME)/game/bg_lib.o \
   $(B)/$(BASEGAME)/game/bg_wheel_forces.o \
+  $(B)/$(BASEGAME)/game/bg_weather.o \
   $(B)/$(BASEGAME)/game/g_active.o \
   $(B)/$(BASEGAME)/game/g_arenas.o \
   $(B)/$(BASEGAME)/game/g_autoball.o \
@@ -2856,6 +2858,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_mover.o \
   $(B)/$(BASEGAME)/game/g_rally_hazard.o \
   $(B)/$(BASEGAME)/game/g_rally_mapents.o \
+  $(B)/$(BASEGAME)/game/g_weather.o \
   $(B)/$(BASEGAME)/game/g_rally_mapobjects.o \
   $(B)/$(BASEGAME)/game/g_rally_observer_cams.o \
   $(B)/$(BASEGAME)/game/g_rally_object_physics.o \

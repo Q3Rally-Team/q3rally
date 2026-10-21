@@ -327,6 +327,11 @@ typedef struct centity_s {
 	int				engineNextBurst;	// no new backfire burst before this time
 
 	int				skidSoundTime;
+	int				tyreSoundFrame;		// Q3Rally: the tyres of this frame (cg.clientFrame)
+	int				tyreSnowContacts;	// tyres on snow or ice
+	int				tyreWetContacts;	// tyres on wet ground
+	qboolean		tyreHardSkid;		// a tyre squeals (the skid loop plays)
+	qboolean		tyreSoftSkid;		// a tyre slides on snow or ice (no squeal)
 
 	// scripted object variables
 	qboolean		scriptLoadAttempted;
@@ -1335,8 +1340,11 @@ typedef struct {
 	sfxHandle_t	wearOffSound;
 	sfxHandle_t	turboSound;
 	sfxHandle_t	skidSound;
+	sfxHandle_t	snowRollSound;		// Q3Rally: tyres rolling and sliding in snow
+	sfxHandle_t	wetRollSound;		// Q3Rally: tyres hissing on wet ground
 	sfxHandle_t	weatherRainLoopSound;
 	sfxHandle_t	weatherSnowLoopSound;
+	sfxHandle_t	weatherWindLoopSound;
 	sfxHandle_t	shieldSound;
 	sfxHandle_t	sfx_lghit1;
 	sfxHandle_t	sfx_lghit2;
@@ -1817,6 +1825,7 @@ extern	vmCvar_t		cg_atmosphericLevel;
 extern	vmCvar_t		cg_mapEffects;
 extern	vmCvar_t		cg_tireSmoke;
 extern	vmCvar_t		cg_weatherAudio;
+extern	vmCvar_t		cg_weatherPreview;
 extern	vmCvar_t		cg_developer;
 
 extern	vmCvar_t		cg_fpsLimit;
@@ -2254,13 +2263,17 @@ void CG_FX_Spray( const vec3_t origin, const vec3_t up, const vec3_t throwVel, i
 void CG_AddAtmosphericEffects( void );
 void CG_Atmospheric_Init( void );
 void CG_Atmospheric_Shutdown( void );
-void CG_Atmospheric_AddWeatherZone( centity_t *cent );
+void CG_WeatherInit( void );
+void CG_WeatherInfo_f( void );
+void CG_WeatherConfigStringModified( void );
+void CG_WeatherUpdate( void );
+void CG_WeatherRefdef( refdef_t *refdef );
 qboolean CG_AtmosphericPointInWeather( const vec3_t point, int type );
-qboolean CG_AtmosphericPointWet( const vec3_t point );
-void CG_AtmosphericWetZones( refdef_t *refdef );
+float CG_AtmosphericPointWet( const vec3_t point );
 void CG_UpdateWetness( void );
-qboolean CG_AtmosphericPointSnow( const vec3_t point );
+float CG_AtmosphericPointSnow( const vec3_t point );
 void CG_AtmosphericAddLoopingSounds( void );
+void CG_WeatherWindAt( const vec3_t point, vec3_t out );
 
 //
 // cg_rally_scripted_objects.c
@@ -2576,6 +2589,7 @@ void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t
 void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void		trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void		trap_R_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags );
+void		trap_R_SetWeatherGrid( const short *heights, int width, int height, const float *params );
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1

@@ -279,6 +279,7 @@ vmCvar_t	cg_atmosphericLevel;
 vmCvar_t	cg_mapEffects;
 vmCvar_t	cg_tireSmoke;
 vmCvar_t	cg_weatherAudio;
+vmCvar_t	cg_weatherPreview;
 
 vmCvar_t	cg_fpsLimit;
 vmCvar_t	cg_autodrop;
@@ -433,6 +434,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_developer, "developer", "0", 0 },
 
 	{ &cg_atmosphericLevel, "cg_atmosphericLevel", "2", CVAR_ARCHIVE },
+	{ &cg_weatherPreview, "cg_weatherPreview", "", CVAR_CHEAT },
 	{ &cg_mapEffects, "cg_mapEffects", "1", CVAR_ARCHIVE },
 	{ &cg_tireSmoke, "cg_tireSmoke", "1", CVAR_ARCHIVE },
 	{ &cg_weatherAudio, "cg_weatherAudio", "1", CVAR_ARCHIVE },
@@ -872,10 +874,14 @@ static void CG_RegisterSounds( void ) {
 // Q3Rally Code Start
 	cgs.media.turboSound = trap_S_RegisterSound( "sound/items/turbo_use.ogg", qfalse );
 	cgs.media.skidSound = trap_S_RegisterSound( "sound/rally/car/skid.ogg", qfalse );
+	cgs.media.snowRollSound = trap_S_RegisterSound( "sound/rally/car/snow_roll.wav", qfalse );
+	cgs.media.wetRollSound = trap_S_RegisterSound( "sound/weather/wet_tire_spray_loop.wav", qfalse );
 	cgs.media.weatherRainLoopSound = trap_S_RegisterSound( "sound/weather/rain_loop_heavy.wav", qfalse );
 	cgs.media.weatherSnowLoopSound = trap_S_RegisterSound( "sound/weather/snow_wind_loop.wav", qfalse );
 	trap_S_SetSfxGroup( cgs.media.weatherRainLoopSound, SOUND_GROUP_WEATHER );
 	trap_S_SetSfxGroup( cgs.media.weatherSnowLoopSound, SOUND_GROUP_WEATHER );
+	cgs.media.weatherWindLoopSound = trap_S_RegisterSound( "sound/world/wind1.wav", qfalse );
+	trap_S_SetSfxGroup( cgs.media.weatherWindLoopSound, SOUND_GROUP_WEATHER );
 // Q3Rally Code END
 	cgs.media.wearOffSound = trap_S_RegisterSound( "sound/items/wearoff.ogg", qfalse );
 	cgs.media.useNothingSound = trap_S_RegisterSound( "sound/items/use_nothing.ogg", qfalse );
@@ -2433,6 +2439,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_LoadingString( "graphics" );
 
 	CG_RegisterGraphics();
+
+	CG_WeatherInit();		// Q3Rally: after the map is loaded
 
 // Q3Rally Code Start
 	size = trap_MemoryRemaining();

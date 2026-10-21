@@ -691,13 +691,16 @@ PM_CheckSurfaceFlags
 ===================
 */
 static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
-	qboolean dynamicallyWet;
-	qboolean dynamicallySnow;
+	float wet, snow, f;
 
 	// TODO: include rolling friction... harder to roll tires in sand or mud
 
-	dynamicallyWet = pm->weatherWetFunc && pm->weatherWetFunc( point->r );
-	dynamicallySnow = pm->weatherSnowFunc && pm->weatherSnowFunc( point->r );
+	// Q3Rally weather: how wet and snowed in the ground is here (0 to 1)
+	wet = pm->weatherWetFunc ? pm->weatherWetFunc( point->r ) : 0.0f;
+	snow = pm->weatherSnowFunc ? pm->weatherSnowFunc( point->r ) : 0.0f;
+	if ( trace->surfaceFlags & SURF_WET ) {
+		wet = 1.0f;
+	}
 
 	if( pm->frictionFunc( point, &point->scof, &point->kcof ) )
 	{
@@ -714,7 +717,7 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->kcof = CP_ICE_KCOF;
 		point->scof = CP_ICE_SCOF;
 	}
-	else if ((trace->surfaceFlags & SURF_SNOW) || dynamicallySnow){
+	else if (trace->surfaceFlags & SURF_SNOW){
 		point->kcof = CP_SNOW_KCOF;
 		point->scof = CP_SNOW_SCOF;
 	}
@@ -748,9 +751,25 @@ static void PM_CheckSurfaceFlags( trace_t *trace, carPoint_t *point ){
 		point->scof = CP_SCOF;
 	}
 
-	if ((trace->surfaceFlags & SURF_WET) || dynamicallyWet){
-		point->kcof *= CP_WET_SCALE;
-		point->scof *= CP_WET_SCALE;
+	// fresh snow on the ground: from a dusting to packed snow
+	if ( snow > 0.05f && !( trace->surfaceFlags & ( SURF_SNOW | SURF_ICE | SURF_SLICK ) ) ) {
+		f = ( snow - 0.05f ) / 0.55f;
+		if ( f > 1.0f ) {
+			f = 1.0f;
+		}
+		f = f * f * ( 3.0f - 2.0f * f );
+		point->kcof += ( CP_SNOW_KCOF - point->kcof ) * f;
+		point->scof += ( CP_SNOW_SCOF - point->scof ) * f;
+	}
+
+	// a wet surface loses grip in proportion to how wet it is
+	if ( wet > 0.0f ) {
+		if ( wet > 1.0f ) {
+			wet = 1.0f;
+		}
+		f = 1.0f - ( 1.0f - CP_WET_SCALE ) * wet;
+		point->kcof *= f;
+		point->scof *= f;
 	}
 
 	    point->kcof *= pm->car_friction_scale;

@@ -276,6 +276,43 @@ nearest ones cast shadows (not with SPOTLIGHT_NOSHADOW). With r_headlights 0
 it falls back to additive point lights, the look of the old lights.
 =====================
 */
+/*
+=====================
+RE_SetWeatherGrid
+
+Q3Rally: the sky grid of the weather (bg_weather.c) as a texture: the
+height of the highest surface seen from the sky, + 32768, in red (high
+byte) and green (low byte). The wet ground pass reads it texel by texel.
+=====================
+*/
+void RE_SetWeatherGrid( const short *heights, int width, int height, const float *params ) {
+	byte *pic;
+	int i, v;
+
+	tr.weatherGridImage = NULL;
+	VectorSet4( tr.weatherGrid, 0.0f, 0.0f, 0.0f, 0.0f );
+
+	if ( !heights || !params || width <= 0 || height <= 0 || params[2] <= 0.0f ) {
+		return;
+	}
+
+	pic = ri.Hunk_AllocateTempMemory( width * height * 4 );
+	for ( i = 0; i < width * height; i++ ) {
+		v = heights[i] + 32768;
+		pic[i * 4 + 0] = ( v >> 8 ) & 255;
+		pic[i * 4 + 1] = v & 255;
+		pic[i * 4 + 2] = 255;
+		pic[i * 4 + 3] = 255;
+	}
+
+	tr.weatherGridImage = R_CreateImage( "*weathergrid", pic, width, height, IMGTYPE_COLORALPHA,
+		IMGFLAG_NO_COMPRESSION | IMGFLAG_NOLIGHTSCALE | IMGFLAG_CLAMPTOEDGE, GL_RGBA8 );
+	ri.Hunk_FreeTempMemory( pic );
+
+	VectorSet4( tr.weatherGrid, params[0], params[1], 1.0f / params[2], 1.0f );
+	VectorSet4( tr.weatherGridSize, width, height, 1.0f / width, 1.0f / height );
+}
+
 void RE_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags ) {
 	dlight_t	*dl;
 	vec3_t		d, pos;
@@ -374,33 +411,21 @@ void RE_BeginScene(const refdef_t *fd)
 		tr.refdef.wetness = 1.0f;
 	}
 
-	// the rain zones (r_wetness tests the whole map)
-	tr.refdef.numWetZones = 0;
-	if ( r_wetness->value < 0.0f && fd->numWetZones > 0 ) {
-		int i, j, n = MIN( fd->numWetZones, MAX_WET_ZONES );
+	// the weather where the sky is (r_wetness tests the whole map)
+	{
+		int i;
 
-		for ( i = 0; i < n; i++ ) {
-			const float *z = fd->wetZones[i];
-			float *mins = tr.refdef.wetZones[tr.refdef.numWetZones * 2];
-			float *maxs = tr.refdef.wetZones[tr.refdef.numWetZones * 2 + 1];
-
-			if ( !( z[3] > 0.0f ) ) {
-				continue;		// dry (or NaN)
-			}
-			for ( j = 0; j < 3; j++ ) {
-				if ( !( z[j] <= z[4 + j] ) ) {
-					break;
-				}
-			}
-			if ( j < 3 ) {
-				continue;		// no box
-			}
-			VectorCopy( z, mins );
-			mins[3] = MIN( z[3], 1.0f );
-			VectorCopy( z + 4, maxs );
-			maxs[3] = z[7] > 0.0f ? 1.0f : 0.0f;
-			tr.refdef.numWetZones++;
+		for ( i = 0; i < 4; i++ ) {
+			float v = fd->weather[i];
+			tr.refdef.weather[i] = ( r_wetness->value < 0.0f && v > 0.0f ) ? MIN( v, 1.0f ) : 0.0f;	// also NaN
 		}
+		if ( !tr.weatherGridImage ) {
+			tr.refdef.weather[0] = tr.refdef.weather[1] = tr.refdef.weather[2] = tr.refdef.weather[3] = 0.0f;
+		}
+
+		// the sky clouds over with the rain or snow (and clears with it)
+		tr.refdef.overcast = MIN( 1.0f, MAX( tr.refdef.weather[2], tr.refdef.weather[3] ) * 1.15f );
+		tr.refdef.overcastSnow = tr.refdef.weather[3] > tr.refdef.weather[2] ? 1.0f : 0.0f;
 	}
 
 	// copy the areamask data over and note if it has changed, which
@@ -453,6 +478,21 @@ void RE_BeginScene(const refdef_t *fd)
 				VectorScale(tr.sunLight, scale * r_forceSunAmbientScale->value, tr.refdef.sunAmbCol);
 			else
 				VectorScale(tr.sunLight, scale * tr.sunShadowScale, tr.refdef.sunAmbCol);
+		}
+
+		// Q3Rally: under clouds the sun is weak and its shadows fade (the
+		// sun in the lightmap stays; the tone mapping darkens the scene)
+		if (tr.refdef.overcast > 0.0f)
+		{
+			float c = tr.refdef.overcast;
+
+			VectorScale(tr.refdef.sunCol, 1.0f - 0.75f * c, tr.refdef.sunCol);
+			if (r_sunlightMode->integer == 1)
+			{
+				float amb = tr.refdef.sunAmbCol[0] + (1.0f - tr.refdef.sunAmbCol[0]) * 0.8f * c;
+
+				VectorSet(tr.refdef.sunAmbCol, amb, amb, amb);
+			}
 		}
 	}
 

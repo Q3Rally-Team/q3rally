@@ -4,6 +4,7 @@
 {
 "classname" "worldspawn"
 "_ambient" "40"
+"weather" "none"
 // brush 0
 {
 brushDef

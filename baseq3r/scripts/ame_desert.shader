@@ -1,6 +1,7 @@
 textures/skies/ame_desert
 {
 	qer_editorimage env/ame_desert/desertsky_ft.tga
+	surfaceparm sky
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	q3map_sun 0.934 0.835 1.00 75 230 35

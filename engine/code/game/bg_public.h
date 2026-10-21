@@ -125,7 +125,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // END
 #define CS_LOCATIONS                    (CS_PLAYERS+MAX_CLIENTS)
 #define CS_PARTICLES                    (CS_LOCATIONS+MAX_LOCATIONS)
-#define CS_MAX                                  (CS_PARTICLES+MAX_LOCATIONS)
+// Q3Rally weather (bg_weather.c): the current weather anchor and the
+// placement of the sky grid
+#define CS_WEATHER                              (CS_PARTICLES+MAX_LOCATIONS)
+#define CS_WEATHERGRID                          (CS_WEATHER+1)
+#define CS_MAX                                  (CS_WEATHERGRID+1)
 
 #if (CS_MAX) > MAX_CONFIGSTRINGS
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS
@@ -313,8 +317,9 @@ typedef struct {
         qboolean        useFuel;
 
         qboolean        (*frictionFunc)( const carPoint_t *point, float *sCOF, float *kCOF );
-        qboolean        (*weatherWetFunc)( const vec3_t point );
-        qboolean        (*weatherSnowFunc)( const vec3_t point );
+        // Q3Rally weather: how wet / snowed in the ground at a point is, 0 to 1
+        float           (*weatherWetFunc)( const vec3_t point );
+        float           (*weatherSnowFunc)( const vec3_t point );
 
         float           car_spring;
         float           car_shock_up;
@@ -344,6 +349,68 @@ typedef struct {
 void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd, int controlMode );
 // END
 void Pmove (pmove_t *pmove);
+
+//
+// bg_weather.c -- Q3Rally weather shared by server and client
+//
+#define WEATHER_NONE		0
+#define WEATHER_RAIN		1
+#define WEATHER_SNOW		2
+
+// what the server sends in CS_WEATHER
+typedef struct {
+	int		type;			// WEATHER_*
+	int		startTime;		// the intensity goes from intensity0 to intensity1
+	int		endTime;		// between these times (level time, ms)
+	float	intensity0;
+	float	intensity1;
+	float	wetness0;		// the ground at startTime
+	float	snow0;
+	float	windYaw0;		// the wind turns and changes from 0 to 1 over the
+	float	windSpeed0;		// same time as the intensity (yaw it blows towards,
+	float	windYaw1;		// degrees; speed in units per second, without gusts)
+	float	windSpeed1;
+} weatherAnchor_t;
+
+typedef struct {
+	weatherAnchor_t	anchor;
+	int		steps;			// integration steps done since anchor.startTime
+	float	intensity;		// now
+	float	wetness;		// how wet the ground out in the weather is, 0 to 1
+	float	snow;			// how snowed in it is, 0 to 1
+	float	windYaw;		// the wind now without gusts
+	float	windSpeed;
+	vec3_t	wind;			// the wind now with gusts, units per second (z = 0)
+} weatherState_t;
+
+#define WEATHER_GRID_MAX	256
+
+typedef struct {
+	float	origin[2];		// lower corner
+	float	cell;			// cell size
+	int		width, height;
+	float	top, bottom;	// of the map
+	qboolean valid;
+	short	heights[WEATHER_GRID_MAX * WEATHER_GRID_MAX];	// highest surface seen from the sky
+} weatherGrid_t;
+
+typedef void (*weatherTrace_t)( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs,
+	const vec3_t end, int passEntityNum, int contentMask );
+
+float		BG_WeatherIntensity( const weatherAnchor_t *a, int time );
+void		BG_WeatherSetAnchor( weatherState_t *st, const weatherAnchor_t *a );
+void		BG_WeatherAdvance( weatherState_t *st, int time );
+void		BG_WeatherWindBase( const weatherAnchor_t *a, int time, float *yaw, float *speed );
+void		BG_WeatherAnchorString( const weatherAnchor_t *a, char *buf, int size );
+void		BG_WeatherParseAnchor( const char *s, weatherAnchor_t *a );
+void		BG_WeatherGridPlace( weatherGrid_t *g, const vec3_t mins, const vec3_t maxs );
+void		BG_WeatherGridString( const weatherGrid_t *g, char *buf, int size );
+qboolean	BG_WeatherGridParse( const char *s, weatherGrid_t *g );
+void		BG_WeatherGridBuild( weatherGrid_t *g, weatherTrace_t traceFunc );
+qboolean	BG_WeatherExposed( const weatherGrid_t *g, const vec3_t point );
+qboolean	BG_WeatherIsSky( const weatherGrid_t *g, const trace_t *tr );
+float		BG_WeatherWetness( const weatherState_t *st, const weatherGrid_t *g, const vec3_t point );
+float		BG_WeatherSnow( const weatherState_t *st, const weatherGrid_t *g, const vec3_t point );
 
 //===================================================================================
 

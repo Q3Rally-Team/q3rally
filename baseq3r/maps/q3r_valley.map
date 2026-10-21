@@ -7,6 +7,8 @@
 "reflectionImage" "/textures/reflect/valley.jpg"
 "ambient" "10"
 "gridsize" "64 64 128"
+"weather" "rain"
+"weatherChance" "15"
 // brush 0
 {
 brushDef

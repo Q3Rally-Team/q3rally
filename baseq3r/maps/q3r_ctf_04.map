@@ -1,6 +1,7 @@
 // entity 0
 {
 "classname" "worldspawn"
+"weather" "none"
 // brush 0
 {
 ( 0 64 -56 ) ( 0 0 -56 ) ( -64 64 -56 ) q3r_road/asph02 256 256 0 0.5 0.5 0 0 0

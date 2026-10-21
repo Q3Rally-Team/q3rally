@@ -1342,12 +1342,7 @@ extern	vmCvar_t	pmove_msec;
 extern	vmCvar_t	g_rankings;
 extern	vmCvar_t	g_enableDust;
 extern  vmCvar_t    g_enableSnow;
-extern	vmCvar_t	g_dynamicWeather;
-extern	vmCvar_t	g_weatherInitialChance;
-extern	vmCvar_t	g_weatherOnMinTime;
-extern	vmCvar_t	g_weatherOnMaxTime;
-extern	vmCvar_t	g_weatherOffMinTime;
-extern	vmCvar_t	g_weatherOffMaxTime;
+extern	vmCvar_t	g_weather;
 extern	vmCvar_t	g_enableBreath;
 extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
@@ -1422,8 +1417,18 @@ extern	vmCvar_t	car_body_elasticity;
 extern	vmCvar_t	car_air_cof;
 extern	vmCvar_t	car_air_frac_to_df;
 extern	vmCvar_t	car_friction_scale;
-qboolean G_WeatherPointWet( const vec3_t point );
-qboolean G_WeatherPointSnow( const vec3_t point );
+//
+// g_weather.c
+//
+void	G_WeatherBuildGrid( void );
+void	G_WeatherReadMap( void );
+void	G_WeatherLegacyZone( int type );
+void	G_InitWeather( void );
+void	G_RunWeather( void );
+float	G_WeatherPointWet( const vec3_t point );
+float	G_WeatherPointSnow( const vec3_t point );
+void	G_WeatherMatchReport( char *condition, int conditionSize, int *mode, int *wetPct, int *snowPct,
+			char *mapWeather, int mapWeatherSize );
 
 extern	vmCvar_t	g_carImpactTransfer;
 extern	vmCvar_t	g_carImpactElasticity;

@@ -21,6 +21,7 @@
 #define LADDER_MAX_VEHICLE              MAX_QPATH
 #define LADDER_MAX_LAP_TIMES            32
 #define LADDER_MAX_VALIDATION_REASON    128
+#define LADDER_MAX_WEATHER              16
 
 typedef enum ladderPayloadIssue_e {
         LADDER_PAYLOAD_WARN_FORBIDDEN_MODE_FIELDS = 1 << 0,
@@ -232,6 +233,12 @@ typedef struct ladderMatchPayload_s {
         int                     playerCount;
         qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];
+        /* Q3Rally weather (g_weather.c, G_WeatherMatchReport) */
+        char            weatherCondition[LADDER_MAX_WEATHER];   /* dry, wet, snow or mixed */
+        int                     weatherMode;            /* g_weather in use (0 always dry .. 3 snow) */
+        int                     weatherWetPct;          /* share of the match on wet ground */
+        int                     weatherSnowPct;         /* share of the match on snow */
+        char            weatherMap[LADDER_MAX_WEATHER];         /* what the map allows: none, rain, snow, rain snow */
 } ladderMatchPayload_t;
 
 /* ── Ghost upload ────────────────────────────────────────────────────────────

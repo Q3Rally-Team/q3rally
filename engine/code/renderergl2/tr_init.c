@@ -186,6 +186,7 @@ cvar_t  *r_motionBlurNear;
 cvar_t  *r_softParticles;
 cvar_t  *r_wetGround;
 cvar_t  *r_wetness;
+cvar_t  *r_weatherDebug;
 cvar_t  *r_headlights;
 cvar_t  *r_headlightShadows;
 cvar_t  *r_headlightShadowMapSize;
@@ -1451,6 +1452,8 @@ void R_Register( void )
 	ri.Cvar_CheckRange( r_wetGround, 0, 2, qtrue );
 	ri.Cvar_SetDescription( r_wetGround, "Q3Rally: wet ground in the rain is darker and reflects the scene (screen space reflections); 0 = off, 1 = on, 2 = finer reflections (needs r_depthPrepass 1)" );
 	r_wetness = ri.Cvar_Get( "r_wetness", "-1", CVAR_CHEAT );
+	r_weatherDebug = ri.Cvar_Get( "r_weatherDebug", "0", CVAR_CHEAT );
+	ri.Cvar_SetDescription( r_weatherDebug, "Q3Rally: tints the ground blue where the weather reaches it and red where it is covered (needs r_wetGround)" );
 	ri.Cvar_CheckRange( r_wetness, -1, 1, qfalse );
 	ri.Cvar_SetDescription( r_wetness, "Q3Rally: test value for how wet the ground is (0 to 1); -1 = from the rain and the map" );
 	r_motionBlurNear = ri.Cvar_Get( "r_motionBlurNear", "120", CVAR_ARCHIVE );
@@ -1862,6 +1865,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 	re.TakeVideoFrame = RE_TakeVideoFrame;
 	re.AddSpotLightToScene = RE_AddSpotLightToScene;
+	re.SetWeatherGrid = RE_SetWeatherGrid;
 
 	return &re;
 }

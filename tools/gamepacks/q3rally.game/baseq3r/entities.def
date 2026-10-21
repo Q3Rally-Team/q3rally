@@ -2579,31 +2579,15 @@ SPAWNFLAGS
 
 
 /*QUAKED rally_weather_snow (.5 .5 .5) ?
-"number"	number of particles to draw, usually 200-1000
-
-The snow volume also marks the road beneath it as dynamically snow-covered at runtime:
-vehicle grip uses packed-snow friction and tires emit snow spray without requiring SURF_SNOW on the road shader.
-
-Server weather timing is controlled globally with:
-g_dynamicWeather 1/0, g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
-g_weatherOffMinTime and g_weatherOffMaxTime.
+OBSOLETE. Weather now falls wherever the sky is above; set the worldspawn
+key "weather" instead. A map that still has this brush and no "weather"
+key gets snow. Remove it when the map is next compiled.
 */
 
-/*QUAKED rally_weather_rain (.5 .5 .5) ? DISABLE_SPLASH
-"number"	number of particles to draw, usually 200-1000
-
-SPAWNFLAGS
-
-disable_splash turns off visual impact splashes, improving framerates since there is not as much to calculate or draw.
-
-The rain volume also marks the road beneath it as dynamically wet at runtime:
-vehicle grip is reduced and tires emit spray without requiring SURF_WET on the road shader.
-In OpenGL2 the ground in the volume also looks wet (darker, reflections and puddles on asphalt);
-it gets wet within about 20 seconds of rain and dries within about 2 minutes.
-
-Server weather timing is controlled globally with:
-g_dynamicWeather 1/0, g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
-g_weatherOffMinTime and g_weatherOffMaxTime.
+/*QUAKED rally_weather_rain (.5 .5 .5) ?
+OBSOLETE. Weather now falls wherever the sky is above; set the worldspawn
+key "weather" instead. A map that still has this brush and no "weather"
+key gets rain. Remove it when the map is next compiled.
 */
 
 /*QUAKED rally_fx_spray (.6 .8 1) (-16 -16 -8) (16 16 16)
@@ -2771,7 +2755,13 @@ _color : RGB value for ambient light color (default is 0 0 0).
 gravity : gravity of level (default is normal gravity: 800).
 haze : Q3Rally: haze of the map (OpenGL2): r g b distance [ground_distance ground_height ground_thickness [sun_glow]], e.g. 0.62 0.68 0.76 6000. Wins over q3r_haze in the sky shader.
 colorlut : Q3Rally: colour grading look of the map (OpenGL2), e.g. gfx/luts/warm; see gfx/luts for the looks. Without it the sky shader's q3r_colorLut or gfx/luts/q3r_default is used.
-wetness : Q3Rally: how wet the ground is without rain, 0 (dry, default) to 1 (soaked). The OpenGL2 renderer makes wet ground darker and adds reflections (puddles on asphalt). Inside a rally_weather_rain zone (only there) the ground gets wet while it rains in the zone and dries slowly afterwards.
+wetness : Q3Rally: how wet the ground is without rain, 0 (dry, default) to 1 (soaked). The OpenGL2 renderer makes wet ground darker and adds reflections (puddles on asphalt).
+weather : Q3Rally: what weather the map can have: rain, snow, "rain snow" (each shower picks one) or none (default). It falls wherever the sky is above; roofs, bridges and tunnels stay dry. Servers can force it with g_weather (0 dry, 2 rain, 3 snow).
+weatherChance : Q3Rally: share of the time with rain or snow, 0 to 100 (default 40); also the chance that a race starts in the rain.
+weatherCycle : Q3Rally: how long a shower lasts, min and max in seconds (default 90 300). Dry spells last as long times (100 - chance) / chance.
+weatherStrength : Q3Rally: intensity of a shower, min and max from 0 to 1 (default 0.4 1).
+weatherWind : Q3Rally: wind speed, min and max in units per second (default 30 250); it turns and changes with the weather, stronger with rain or snow, and carries the rain, snow, tyre smoke, dust and mist.
+weatherWindDir : Q3Rally: prevailing direction the wind blows towards, yaw in degrees (default -1 = any); the wind then stays within 30 degrees of it.
 gridsize : granularity of the lightgrid created by q3map. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 128 128 256. Use larger powers of 2 to reduce BSP size and compile time on very large maps.
 _blocksize : q3map always splits the BSP tree along the planes X=_blocksize*n and Y=_blocksize*n. Default _blocksize value is 1024. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density.
 -------- Q3MAP2 KEYS --------

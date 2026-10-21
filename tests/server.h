@@ -101,6 +101,7 @@ static inline qboolean Profile_GetRankForScore( const profile_stats_t *stats, co
 #define LADDER_MAX_VEHICLE              MAX_QPATH
 #define LADDER_MAX_LAP_TIMES            32
 #define LADDER_MAX_VALIDATION_REASON    128
+#define LADDER_MAX_WEATHER              16
 
 typedef enum ladderPayloadIssue_e {
         LADDER_PAYLOAD_WARN_FORBIDDEN_MODE_FIELDS = 1 << 0,
@@ -246,6 +247,11 @@ typedef struct ladderMatchPayload_s {
         int                     playerCount;
         qboolean        isDedicated;
         ladderPlayerPayload_t players[MAX_CLIENTS];
+        char            weatherCondition[LADDER_MAX_WEATHER];
+        int                     weatherMode;
+        int                     weatherWetPct;
+        int                     weatherSnowPct;
+        char            weatherMap[LADDER_MAX_WEATHER];
 } ladderMatchPayload_t;
 
 /* Mirrors ladderGhostMeta_t from bg_ladder.h */

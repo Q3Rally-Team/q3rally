@@ -1202,10 +1202,12 @@ static void RB_WetGroundPass( shaderCommands_t *input )
 {
 	shader_t *shader = input->shader;
 	shaderProgram_t *sp = &tr.wetGroundShader;
-	float wetness, reflection, darken, puddles;
+	float wetness, reflection, darken, puddles, buildup;
 	vec3_t tint;
 	vec4_t vec;
 	qboolean ssr;
+	image_t *lightmap = NULL;
+	int i;
 
 	if ( !sp->program || backEnd.depthFill || backEnd.currentEntity != &tr.worldEntity
 		|| ( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) || backEnd.viewParms.targetFbo || backEnd.viewParms.isPortal
@@ -1224,23 +1226,23 @@ static void RB_WetGroundPass( shaderCommands_t *input )
 	if ( shader->surfaceFlags & SURF_WET ) {
 		wetness = 1.0f;		// always wet (puddles, wet spots in the map)
 	}
-	if ( wetness <= 0.0f && !backEnd.refdef.numWetZones ) {
-		return;		// dry, and no rain zone
+	if ( wetness <= 0.0f && backEnd.refdef.weather[0] <= 0.0f && backEnd.refdef.weather[1] <= 0.0f && !r_weatherDebug->integer ) {
+		return;		// dry, no snow, and no weather
 	}
 
 	// reflection of the surface itself, darkening, how much water it holds
-	// (puddles), colour of the puddle water
+	// (puddles), colour of the puddle water, how fast the snow settles
 	if ( shader->surfaceFlags & SURF_GRASS ) {
-		reflection = 0.10f; darken = 0.22f; puddles = 0.25f;
+		reflection = 0.10f; darken = 0.22f; puddles = 0.25f; buildup = 1.2f;
 		VectorSet( tint, 0.75f, 0.72f, 0.55f );
 	} else if ( shader->surfaceFlags & ( SURF_DIRT | SURF_DUST | SURF_SAND ) ) {
-		reflection = 0.30f; darken = 0.40f; puddles = 1.0f;
+		reflection = 0.30f; darken = 0.40f; puddles = 1.0f; buildup = 1.1f;
 		VectorSet( tint, 0.78f, 0.66f, 0.50f );		// muddy
 	} else if ( shader->surfaceFlags & SURF_GRAVEL ) {
-		reflection = 0.25f; darken = 0.35f; puddles = 0.6f;
+		reflection = 0.25f; darken = 0.35f; puddles = 0.6f; buildup = 1.0f;
 		VectorSet( tint, 0.80f, 0.74f, 0.64f );
 	} else {
-		reflection = 1.0f; darken = 0.42f; puddles = 0.9f;	// asphalt, concrete, metal
+		reflection = 1.0f; darken = 0.42f; puddles = 0.9f; buildup = 0.85f;	// asphalt, concrete, metal
 		VectorSet( tint, 1.0f, 1.0f, 1.0f );
 	}
 
@@ -1266,13 +1268,43 @@ static void RB_WetGroundPass( shaderCommands_t *input )
 	VectorSet4( vec, wetness, reflection, darken, puddles );
 	GLSL_SetUniformVec4( sp, UNIFORM_WETPARAMS, vec );
 
-	VectorSet4( vec, tint[0], tint[1], tint[2], 0.0f );
+	VectorSet4( vec, tint[0], tint[1], tint[2], r_weatherDebug->integer ? 1.0f : 0.0f );
 	GLSL_SetUniformVec4( sp, UNIFORM_COLOR, vec );
 
-	// the rain zones: wet (and with drop rings while it rains) inside
-	GLSL_SetUniformInt( sp, UNIFORM_WETZONECOUNT, backEnd.refdef.numWetZones );
-	GLSL_SetUniformWetZones( sp, UNIFORM_WETZONES, backEnd.refdef.wetZones, backEnd.refdef.numWetZones );
+	// the weather: wet (and with drop rings while it rains) where the sky
+	// grid says the weather reaches
+	GLSL_SetUniformVec4( sp, UNIFORM_WEATHER, backEnd.refdef.weather );
+	GLSL_SetUniformVec4( sp, UNIFORM_WEATHERGRID, tr.weatherGrid );
+	GLSL_SetUniformVec4( sp, UNIFORM_WEATHERGRIDSIZE, tr.weatherGridSize );
+	GL_BindToTMU( tr.weatherGridImage ? tr.weatherGridImage : tr.whiteImage, TB_NORMALMAP );
 	GLSL_SetUniformFloat( sp, UNIFORM_TIME, backEnd.refdef.floatTime );
+
+	// the snow is lit like the surface: by its lightmap, or by its vertex
+	// light, and darkened by the sun shadow
+	for ( i = 0; i < MAX_SHADER_STAGES && shader->stages[i] && shader->stages[i]->active; i++ ) {
+		if ( shader->lightmapIndex < 0 ) {
+			break;
+		}
+		if ( shader->stages[i]->bundle[TB_LIGHTMAP].image[0] ) {
+			lightmap = shader->stages[i]->bundle[TB_LIGHTMAP].image[0];
+			break;
+		}
+		if ( shader->stages[i]->bundle[0].isLightmap && shader->stages[i]->bundle[0].image[0] ) {
+			lightmap = shader->stages[i]->bundle[0].image[0];	// a stage of its own
+			break;
+		}
+	}
+	GL_BindToTMU( lightmap ? lightmap : tr.whiteImage, TB_DELUXEMAP );
+	vec[0] = lightmap ? 1.0f : 0.0f;
+	vec[1] = buildup;
+	vec[2] = -1.0f;
+	vec[3] = 1.0f;
+	if ( backEnd.refdef.weather[1] > 0.0f && r_sunlightMode->integer == 1 && ( backEnd.viewParms.flags & VPF_USESUNLIGHT )
+		&& tr.screenShadowImage ) {
+		GL_BindToTMU( tr.screenShadowImage, TB_SHADOWMAP );
+		vec[2] = backEnd.refdef.sunAmbCol[0];
+	}
+	GLSL_SetUniformVec4( sp, UNIFORM_SNOWPARAMS, vec );
 
 	if ( ssr ) {
 		GL_BindToTMU( tr.wetSceneImage, TB_COLORMAP );
@@ -1706,6 +1738,9 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			}
 
 			GLSL_SetUniformVec4(sp, UNIFORM_ENABLETEXTURES, enableTextures);
+
+			// Q3Rally: under a clouded sky the map's baked sunlight is dimmed
+			GLSL_SetUniformFloat(sp, UNIFORM_OVERCAST, backEnd.currentEntity == &tr.worldEntity ? backEnd.refdef.overcast : 0.0f);
 		}
 		else if ( pStage->bundle[1].image[0] != 0 )
 		{

@@ -3,6 +3,8 @@
 {
 "classname" "worldspawn"
 "message" "Figure of 8"
+"weather" "rain"
+"weatherChance" "30"
 // brush 0
 {
 ( -160 64 0 ) ( -288 64 0 ) ( -288 -64 0 ) q3r_dirt_grass/dirt01 192 0 0 0.5 0.5 134217728 0 0

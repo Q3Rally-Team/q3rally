@@ -638,8 +638,7 @@ enum
 	GLSL_VEC3,
 	GLSL_VEC4,
 	GLSL_MAT16,
-	GLSL_MAT16_BONEMATRIX,
-	GLSL_VEC4_WETZONES		// Q3Rally: vec4[ MAX_WET_ZONES * 2 ]
+	GLSL_MAT16_BONEMATRIX
 };
 
 typedef enum
@@ -671,8 +670,11 @@ typedef enum
 	UNIFORM_SOFTPARTICLE,	// Q3Rally: x = fade distance (0 = off), y = blend mode, zw = 1 / depth texture size
 	UNIFORM_WETPARAMS,		// Q3Rally: wet ground, x = wetness, y = reflection, z = darkening, w = puddles
 	UNIFORM_PREVVIEWPROJ,	// Q3Rally: world -> clip space of the frame in tr.wetSceneImage
-	UNIFORM_WETZONES,		// Q3Rally: rain zones, per zone mins + wetness, maxs + rain
-	UNIFORM_WETZONECOUNT,
+	UNIFORM_WEATHER,		// Q3Rally: weather where the sky is, x = wetness, y = snow, z = rain, w = snowfall
+	UNIFORM_WEATHERGRID,	// Q3Rally: sky grid, xy = origin, z = 1 / cell, w = 1 if there is one
+	UNIFORM_WEATHERGRIDSIZE,	// Q3Rally: xy = cells, zw = 1 / cells
+	UNIFORM_WEATHERGRIDMAP,
+	UNIFORM_SNOWPARAMS,		// Q3Rally: snow cover, x = light from the lightmap (1) or the vertices (0), y = buildup, z = sun shadow, w = sparkle
 	UNIFORM_COLORLUTMAP,	// Q3Rally: colour grading LUT of the tone mapping
 	UNIFORM_TONEPARAMS,		// Q3Rally: x = curve (0 classic, 1 filmic), y = filmic exposure, z = filmic white
 	UNIFORM_LUTPARAMS,		// Q3Rally: x = LUT strength, y = LUT size (0 = none)
@@ -680,6 +682,8 @@ typedef enum
 	UNIFORM_HAZECOLOR,		// Q3Rally: haze, rgb + most it hides
 	UNIFORM_HAZEPARAMS,		// Q3Rally: haze, density, ground density, 1 / ground thickness, ground height
 	UNIFORM_HAZESUN,		// Q3Rally: haze, direction to the sun + glow
+	UNIFORM_HAZEWEATHER,	// Q3Rally: haze, x = overcast sky cover, y = time
+	UNIFORM_OVERCAST,		// Q3Rally: lightall, how overcast the sky is (dims the baked sunlight)
 
 	UNIFORM_ENABLETEXTURES,
 
@@ -820,8 +824,9 @@ typedef struct {
 	vec4_t      motionMaskRect;		// Q3Rally: screen rect (uv min xy, max xy) of the models at the camera, no motion blur there
 	float       motionMaskFar;		// Q3Rally: their farthest view distance, 0 = none
 	float       wetness;			// Q3Rally: wet ground, 0 = dry, 1 = soaked
-	int         numWetZones;		// Q3Rally: rain zones, see refdef_t
-	vec4_t      wetZones[MAX_WET_ZONES * 2];
+	vec4_t      weather;			// Q3Rally: see refdef_t
+	float       overcast;			// Q3Rally: how overcast the sky is with the rain or snow, 0 to 1
+	float       overcastSnow;		// Q3Rally: 1 when it is snow that falls (brighter, whiter)
 	int         lampShadowSlot[MAX_LAMP_SHADOWS];
 	float       lampShadowMvp[MAX_LAMP_SHADOWS][16];
 	vec4_t      lampShadowOrigin[MAX_LAMP_SHADOWS];	// xyz, w = light * LAMP_LIGHT_SCALE
@@ -1736,6 +1741,9 @@ typedef struct {
 	shaderProgram_t carReflectShader;	// Q3Rally: car paint reflection
 	shaderProgram_t motionBlurShader;	// Q3Rally: camera motion blur
 	shaderProgram_t wetGroundShader;	// Q3Rally: wet ground, darkening and screen space reflection
+	image_t     *weatherGridImage;		// Q3Rally: sky grid, height + 32768 in r (high) and g (low)
+	vec4_t      weatherGrid;			// origin x, y, 1 / cell, 1 = set
+	vec4_t      weatherGridSize;		// width, height, 1 / width, 1 / height
 	shaderProgram_t hazeShader;			// Q3Rally: distance and height haze
 	shaderProgram_t ssaoShader;
 	shaderProgram_t depthBlurShader[4];
@@ -1985,6 +1993,7 @@ extern  cvar_t  *r_motionBlurNear;
 extern  cvar_t  *r_softParticles;
 extern  cvar_t  *r_wetGround;
 extern  cvar_t  *r_wetness;
+extern  cvar_t  *r_weatherDebug;
 extern  cvar_t  *r_headlights;
 extern  cvar_t  *r_headlightShadows;
 extern  cvar_t  *r_headlightShadowMapSize;
@@ -2438,7 +2447,7 @@ void GLSL_SetUniformVec3(shaderProgram_t *program, int uniformNum, const vec3_t 
 void GLSL_SetUniformVec4(shaderProgram_t *program, int uniformNum, const vec4_t v);
 void GLSL_SetUniformMat4(shaderProgram_t *program, int uniformNum, const mat4_t matrix);
 void GLSL_SetUniformMat4BoneMatrix(shaderProgram_t *program, int uniformNum, /*const*/ mat4_t *matrix, int numMatricies);
-void GLSL_SetUniformWetZones(shaderProgram_t *program, int uniformNum, const vec4_t *v, int numZones);
+void RE_SetWeatherGrid( const short *heights, int width, int height, const float *params );
 
 shaderProgram_t *GLSL_GetGenericShaderProgram(int stage);
 

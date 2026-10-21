@@ -6,6 +6,8 @@
 "message" "destroy yourself"
 "reflectionImage" "/textures/reflect/demobowl_01.jpg"
 "_ambient" "10"
+"weather" "rain"
+"weatherChance" "30"
 // brush 0
 {
 brushDef

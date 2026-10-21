@@ -1431,6 +1431,28 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                 return NULL;
         }
 
+        /* Q3Rally: the weather of the match */
+        {
+                qboolean weatherFirst = qtrue;
+
+                if ( !SV_LadderJsonAppendKey( &builder, "weather", &first ) ||
+                     !SV_LadderJsonAppendChar( &builder, '{' ) ||
+                     !SV_LadderJsonAppendKey( &builder, "condition", &weatherFirst ) ||
+                     !SV_LadderJsonAppendString( &builder, payload->weatherCondition[0] ? payload->weatherCondition : "dry" ) ||
+                     !SV_LadderJsonAppendKey( &builder, "mode", &weatherFirst ) ||
+                     !SV_LadderJsonAppendInt( &builder, payload->weatherMode ) ||
+                     !SV_LadderJsonAppendKey( &builder, "wetPct", &weatherFirst ) ||
+                     !SV_LadderJsonAppendInt( &builder, payload->weatherWetPct ) ||
+                     !SV_LadderJsonAppendKey( &builder, "snowPct", &weatherFirst ) ||
+                     !SV_LadderJsonAppendInt( &builder, payload->weatherSnowPct ) ||
+                     !SV_LadderJsonAppendKey( &builder, "map", &weatherFirst ) ||
+                     !SV_LadderJsonAppendString( &builder, payload->weatherMap[0] ? payload->weatherMap : "none" ) ||
+                     !SV_LadderJsonAppendChar( &builder, '}' ) ) {
+                        Z_Free( builder.data );
+                        return NULL;
+                }
+        }
+
         if ( !SV_LadderJsonAppendKey( &builder, "teamScores", &first ) ||
              !SV_LadderJsonAppendTeamArray( &builder, payload->teamScores, TEAM_NUM_TEAMS ) ) {
                 Z_Free( builder.data );

@@ -270,6 +270,10 @@ RE_AddAdditiveLightToScene
 
 =====================
 */
+// Q3Rally: the weather sky grid; OpenGL1 has no wet ground
+void RE_SetWeatherGrid( const short *heights, int width, int height, const float *params ) {
+}
+
 void RE_AddSpotLightToScene( const vec3_t org, const vec3_t dir, float radius, float coneAngle, float r, float g, float b, int flags ) {
 	vec3_t	pos;
 

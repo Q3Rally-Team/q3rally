@@ -32,6 +32,8 @@ int main( void ) {
         assert( json != NULL );
         assert( strstr( json, "\"bestLapMs\":1100" ) != NULL );
         assert( strstr( json, "\"lapTimes\":[1234,1100]" ) != NULL );
+        /* no weather filled in: a dry match on a map without weather */
+        assert( strstr( json, "\"weather\":{\"condition\":\"dry\",\"mode\":0,\"wetPct\":0,\"snowPct\":0,\"map\":\"none\"}" ) != NULL );
         assert( strstr( json, "\"teamHoldMs\"" ) == NULL );
         assert( strstr( json, "\"kothContestTimeMs\"" ) == NULL );
         assert( strstr( json, "\"autoballGoals\"" ) == NULL );

@@ -585,6 +585,12 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_ADDSPOTLIGHTTOSCENE:
 		re.AddSpotLightToScene( VMA(1), VMA(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), args[8] );
 		return 0;
+	case CG_R_SETWEATHERGRID:
+		if ( args[2] <= 0 || args[3] <= 0 || args[2] > 256 || args[3] > 256 ) {
+			return 0;	// WEATHER_GRID_MAX
+		}
+		re.SetWeatherGrid( VMA(1), args[2], args[3], VMA(4) );
+		return 0;
 	case CG_R_RENDERSCENE:
 		re.RenderScene( VMA(1) );
 		return 0;

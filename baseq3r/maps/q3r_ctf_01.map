@@ -7,6 +7,8 @@
 "_ambient" "20"
 "message" "Capture in the Jungle"
 "reflectionImage" "/textures/reflect/ctf_01.jpg"
+"weather" "rain"
+"weatherChance" "60"
 // brush 0
 {
 ( 2883 -352 496 ) ( 2883 -352 368 ) ( 2883 -288 368 ) ctf/ctf_redflag 512 1792 0 0.0625 0.0625 0 0 0

@@ -60,6 +60,10 @@ mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
 | `teamTimes[TEAM_NUM_TEAMS]` | TR,TRDM: **P+B**; R,RDM,SPR,DER,LCS,ELI,DM,TEAM,CTF,CTF4,DOM,KOTH: **O+B** | `level.teamTimes[]` | Team-Rennzeitenaggregat | Array mit `0` |
 | `playerCount` | alle: **P+B** | inkrementiert in `G_LadderPopulatePlayer`; im Serializer auf `[0..MAX_CLIENTS]` geclamped | Anzahl aktiver Nicht-Spectator-Clients | Clamp auf 0/MAX |
 | `players[MAX_CLIENTS]` | alle: **P+B** | befüllt via `G_LadderPopulatePlayer`, serialisiert bis `playerCount` | Teilnehmerobjekte | leeres Array |
+| `weatherCondition` (JSON: `weather.condition`) | alle: **P+B** | `G_WeatherMatchReport` (`g_weather.c`) aus der Zeit, in der der Boden im Freien nass (> 0,3) oder verschneit (> 0,3) war, ohne Warmup und Intermission | `snow` (≥ 50 % Schnee), `wet` (≥ 50 % nass), `dry` (< 10 % nass oder Schnee), sonst `mixed` | `dry` |
+| `weatherMode` (JSON: `weather.mode`) | alle: **P+B** | `g_weather` in Benutzung (Ghost Race: 0) | 0 immer trocken, 1 wie die Map, 2 Regen, 3 Schnee | `0` |
+| `weatherWetPct`/`weatherSnowPct` (JSON: `weather.wetPct`/`weather.snowPct`) | alle: **O+B** | wie `weatherCondition` | Anteil der Matchzeit nass bzw. verschneit in Prozent | `0` |
+| `weatherMap` (JSON: `weather.map`) | alle: **O+B** | Worldspawn-Key `weather` (oder alte Wetterzonen) | was die Map erlaubt: `none`, `rain`, `snow`, `rain snow` | `none` |
 
 ---
 
@@ -173,6 +177,8 @@ Eigener Endpunkt, unabhängig von Match-Reports. Wird vom Game-Modul gefüllt
 | `courseLengthUnits` | `level.trackLength` (Units) | Plausibilität der gefahrenen Strecke |
 | `sprintTrack`, `gametype` | `G_IsSprintTrack()`, `g_gametype` | Information |
 | `data` | `.ghost`-Text | Gleiches Format wie persönliche Ghosts, zusätzliche Kopfzeilen `physics_version`, `map_checksum`, `player`, `player_id` |
+
+Runden auf nasser (> 0,1) oder verschneiter (> 0,05) Strecke (Wetter, `G_WeatherPointWet`/`G_WeatherPointSnow` an der Position des Autos) werden nicht hochgeladen: sie sind mit den trockenen Runden der Rangliste nicht vergleichbar, und Ghost Race ist immer trocken.
 
 ### 4.1 Ghost-Download (`ladderGhostFetch_t`, `GET .../ghosts`)
 

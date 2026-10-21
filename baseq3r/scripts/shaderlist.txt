@@ -22,3 +22,10 @@ q3map2_q3r_nightcity
 autoball
 q3r_ctf_04
 q3r_fx
+ame_desert
+arctic
+ely_darkcity
+ely_sunset
+telestecki
+cars_helmets
+koth_beam

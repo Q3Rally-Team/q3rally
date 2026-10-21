@@ -1384,6 +1384,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 	re.TakeVideoFrame = RE_TakeVideoFrame;
 	re.AddSpotLightToScene = RE_AddSpotLightToScene;
+	re.SetWeatherGrid = RE_SetWeatherGrid;
 
 	return &re;
 }

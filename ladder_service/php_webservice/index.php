@@ -37,7 +37,7 @@ if (!is_dir(PROFILES_DIR)) {
 // SECURITY CONFIGURATION
 // Per-server keys are managed via register.php / admin.php.
 // ─────────────────────────────────────────────────────────────────────────────
-const LADDER_VERSION        = '1.0.16';
+const LADDER_VERSION        = '1.0.17';
 const LADDER_MAX_BODY_BYTES    = 524288;  // 512 KB max POST body
 const LADDER_RATE_LIMIT_MAX    = 30;      // max POST requests per window per IP
 const LADDER_RATE_LIMIT_SERVER_MAX = 120; // max POST requests per window per approved server key
@@ -1956,6 +1956,7 @@ const state = {
   mapMetadata: new Map(),
   activeMode: MODE_CONFIG.length ? MODE_CONFIG[0].key : 'gt_racing',
   activeSource: 'online',
+  activeWeather: 'all',
   language: 'en',
   modeStatus: { key: null, params: {}, isError: false }
 };
@@ -2263,6 +2264,7 @@ function applyLanguage(lang) {
   applyStaticTranslations();
   updateLanguageButtons();
   updateModeTabsLanguage();
+  updateSourceToggleUI();
   buildRaceLeaderboard();
   buildDeathmatchLeaderboard();
   buildDerbyLeaderboard();
@@ -3386,6 +3388,18 @@ function renderSourceToggle() {
     bar.appendChild(btn);
   });
 
+  // Q3Rally weather filter (dry / wet / snow); mixed matches only under "all"
+  const divider = document.createElement('span');
+  divider.style.cssText = 'width:1px;align-self:stretch;margin:2px 6px;background:var(--border)';
+  bar.appendChild(divider);
+  WEATHER_FILTERS.forEach(({ key }) => {
+    const btn = document.createElement('button');
+    btn.dataset.weather = key;
+    btn.style.cssText = 'padding:6px 14px;border-radius:8px;border:none;background:transparent;color:var(--text-muted);font-size:.82rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s';
+    btn.addEventListener('click', () => setActiveWeather(key));
+    bar.appendChild(btn);
+  });
+
   panel.insertBefore(bar, panel.firstChild);
   updateSourceToggleUI();
   if (state.activeMode === GHOST_TAB_KEY) {
@@ -3394,13 +3408,21 @@ function renderSourceToggle() {
 }
 
 function updateSourceToggleUI() {
-  const btns = document.querySelectorAll('#source-toggle button[data-source]');
+  const btns = document.querySelectorAll('#source-toggle button[data-source], #source-toggle button[data-weather]');
   btns.forEach((btn) => {
-    const active = btn.dataset.source === state.activeSource;
+    const active = btn.dataset.source ? btn.dataset.source === state.activeSource
+                                      : btn.dataset.weather === state.activeWeather;
     btn.style.background  = active ? 'var(--accent-soft)' : 'transparent';
     btn.style.color       = active ? 'var(--accent)'       : 'var(--text-muted)';
     btn.style.boxShadow   = active ? 'inset 0 0 0 1px rgba(93,139,255,0.45)' : 'none';
     btn.style.borderRadius = '8px';
+    if (btn.dataset.weather) {
+      const filter = WEATHER_FILTERS.find((f) => f.key === btn.dataset.weather);
+      if (filter) {
+        btn.textContent = `${filter.icon} ${state.language === 'de' ? filter.labelDe : filter.labelEn}`.trim();
+        btn.title = state.language === 'de' ? filter.titleDe : filter.titleEn;
+      }
+    }
   });
 }
 
@@ -3410,15 +3432,44 @@ function setActiveSource(source) {
   rebuildForSource();
 }
 
+// ── Weather filter ───────────────────────────────────────────────────────────
+// The game reports per match what it was driven in (weather.condition):
+// dry, wet, snow or mixed. Lap and race times on a wet or snowy track are
+// not comparable to dry ones, so the leaderboards can show one of them.
+const WEATHER_FILTERS = [
+  { key: 'all',  icon: '', labelDe: 'Jedes Wetter', labelEn: 'Any weather', titleDe: 'Alle Matches, auch mit wechselndem Wetter', titleEn: 'All matches, also changing weather' },
+  { key: 'dry',  icon: '☀', labelDe: 'Trocken', labelEn: 'Dry',  titleDe: 'Nur trockene Strecke', titleEn: 'Dry track only' },
+  { key: 'wet',  icon: '🌧', labelDe: 'Nass',    labelEn: 'Wet',  titleDe: 'Mindestens die Hälfte der Zeit nass', titleEn: 'Wet for at least half of the match' },
+  { key: 'snow', icon: '❄', labelDe: 'Schnee',  labelEn: 'Snow', titleDe: 'Mindestens die Hälfte der Zeit Schnee', titleEn: 'Snow for at least half of the match' }
+];
+
+function matchWeather(match) {
+  const w = String((match && (match.weather && typeof match.weather === 'object' ? match.weather.condition : match.weather)) || '').toLowerCase();
+  return w === 'wet' || w === 'snow' || w === 'mixed' ? w : 'dry';
+}
+
+function setActiveWeather(weather) {
+  state.activeWeather = weather;
+  updateSourceToggleUI();
+  rebuildForSource();
+}
+
 function rebuildForSource() {
-  if (state.activeSource === 'online') {
+  if (state.activeWeather === 'all' && state.activeSource === 'online') {
     state.aggregation = state.aggregationOnline;
-  } else if (state.activeSource === 'offline') {
+  } else if (state.activeWeather === 'all' && state.activeSource === 'offline') {
     state.aggregation = state.aggregationOffline;
   } else {
-    // 'all' – re-aggregate everything
+    // re-aggregate the matches of this source and weather
     state.aggregation = createEmptyAggregation();
     for (const match of (state.allMatches || [])) {
+      const src = (match.source === 'offline') ? 'offline' : 'online';
+      if (state.activeSource !== 'all' && src !== state.activeSource) {
+        continue;
+      }
+      if (state.activeWeather !== 'all' && matchWeather(match) !== state.activeWeather) {
+        continue;
+      }
       ingestMatchInto(match, state.aggregation);
     }
   }
@@ -4958,6 +5009,16 @@ async function showMatchDetails(matchId) {
 
 // ── Changelog ────────────────────────────────────────────────────────────────
 const LADDER_CHANGELOG = [
+  {
+    version: '1.0.17',
+    date: '2026-10-21',
+    changes: [
+      'Weather: matches carry the weather they were driven in (weather.condition dry / wet / snow / mixed, wet and snow share, g_weather, what the map allows); the match index keeps the condition',
+      'Leaderboards: weather filter next to Online / Offline (any weather, dry, wet, snow); matches from before the weather report count as dry',
+      'Ghosts: the game no longer uploads laps on a wet or snowy track',
+      'rebuild_index.php builds the index with the same fields as an upload (it wrote an older, smaller entry); run it once after this update'
+    ],
+  },
   {
     version: '1.0.16',
     date: '2026-10-10',
@@ -6948,8 +7009,19 @@ function index_extract_entry(array $payload): array
         'playerCount' => (int)($payload['playerCount'] ?? count($players)),
         'winner'      => $winnerInfo['winner'],
         'winnerTeam'  => $winnerInfo['winnerTeam'],
+        'weather'     => index_extract_weather($payload),
         'players'     => $players,
     ];
+}
+
+/**
+ * Q3Rally weather of a match (since 0.8): dry, wet, snow or mixed. Matches
+ * from before the weather report carry none and count as dry.
+ */
+function index_extract_weather(array $payload): string
+{
+    $condition = strtolower((string)($payload['weather']['condition'] ?? ''));
+    return in_array($condition, ['dry', 'wet', 'snow', 'mixed'], true) ? $condition : 'dry';
 }
 
 function index_load(): array

@@ -8,6 +8,7 @@
 "_ambient" "15"
 "_color" "2 1 1"
 "reflectionImage" "/textures/reflect/lavafalls.jpg"
+"weather" "none"
 // brush 0
 {
 brushDef

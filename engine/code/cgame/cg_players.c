@@ -3522,6 +3522,55 @@ static qboolean CG_AddSplash( centity_t *cent, vec3_t origin ) {
 
 /*
 ===============
+CG_TyreSounds
+
+Q3Rally: after the four tyres of a car (CG_SurfaceEffects): in snow the
+tyres crunch while they roll, louder with the speed and while they slide;
+on wet ground they hiss. A squealing skid on hard ground has the car's
+loop to itself. The loop shares the car's looping sound slot with the skid,
+its volume through trap_S_SetEntityVolume.
+===============
+*/
+#define TYRE_SOUND_MIN_SPEED	40.0f
+#define TYRE_SNOW_FULL_SPEED	1000.0f
+#define TYRE_WET_FULL_SPEED		1300.0f
+
+static void CG_TyreSounds( centity_t *cent ) {
+	float		speed, volume;
+	sfxHandle_t	sfx;
+
+	if ( cent->tyreSoundFrame != cg.clientFrame || cent->tyreHardSkid ) {
+		return;		// no tyre on the ground this frame, or the skid plays
+	}
+
+	speed = VectorLength( cent->currentState.pos.trDelta );
+	if ( cent->tyreSnowContacts > 0 ) {
+		sfx = cgs.media.snowRollSound;
+		volume = Com_Clamp( 0.0f, 1.0f, ( speed - TYRE_SOUND_MIN_SPEED ) / ( TYRE_SNOW_FULL_SPEED - TYRE_SOUND_MIN_SPEED ) );
+		volume = 0.15f + 0.6f * volume;
+		if ( cent->tyreSoftSkid ) {
+			volume += 0.3f;		// sliding sideways ploughs through it
+		} else if ( speed < TYRE_SOUND_MIN_SPEED ) {
+			return;
+		}
+		volume *= 0.4f + 0.6f * cent->tyreSnowContacts / 4.0f;
+	} else if ( cent->tyreWetContacts > 0 && speed > TYRE_SOUND_MIN_SPEED ) {
+		sfx = cgs.media.wetRollSound;
+		volume = Com_Clamp( 0.0f, 1.0f, ( speed - TYRE_SOUND_MIN_SPEED ) / ( TYRE_WET_FULL_SPEED - TYRE_SOUND_MIN_SPEED ) );
+		volume *= 0.4f + 0.6f * cent->tyreWetContacts / 4.0f;
+	} else {
+		return;
+	}
+
+	if ( !sfx || volume < 0.02f ) {
+		return;
+	}
+	trap_S_AddRealLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, cent->currentState.pos.trDelta, sfx );
+	trap_S_SetEntityVolume( cent->currentState.clientNum, Com_Clamp( 0.0f, 1.0f, volume ) );
+}
+
+/*
+===============
 CG_SurfaceEffects
 
 Draw skidmarks, dust, smoke, and tire splashes
@@ -3540,14 +3589,28 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 
 	VectorMA(curOrigin, -(WHEEL_RADIUS * 2.0f), up, end);
 	CG_Trace(&tr, curOrigin, NULL, NULL, end, cent->currentState.number, CONTENTS_SOLID);
-	snowSurface = ( tr.surfaceFlags & SURF_SNOW ) || CG_AtmosphericPointSnow( tr.endpos );
-	wetSurface = !snowSurface && ( ( tr.surfaceFlags & SURF_WET ) || CG_AtmosphericPointWet( tr.endpos ) );
+	snowSurface = ( tr.surfaceFlags & SURF_SNOW ) || CG_AtmosphericPointSnow( tr.endpos ) > 0.3f;
+	wetSurface = !snowSurface && ( ( tr.surfaceFlags & SURF_WET ) || CG_AtmosphericPointWet( tr.endpos ) > 0.15f );
 	VectorSubtract(cent->lastSkidOrigin[tireNum], curOrigin, delta);
 	skidding = cent->wheelSkidding[tireNum];
 
 	if (tr.surfaceFlags & SURF_SKY) {
 		CG_SkidRibbonStop( cent, tireNum );
 		return;
+	}
+
+	// Q3Rally: what the tyres of this car are on, for CG_TyreSounds
+	if ( cent->tyreSoundFrame != cg.clientFrame ) {
+		cent->tyreSoundFrame = cg.clientFrame;
+		cent->tyreSnowContacts = cent->tyreWetContacts = 0;
+		cent->tyreHardSkid = cent->tyreSoftSkid = qfalse;
+	}
+	if ( tr.fraction < 1.0f ) {
+		if ( snowSurface || ( tr.surfaceFlags & SURF_ICE ) ) {
+			cent->tyreSnowContacts++;
+		} else if ( wetSurface ) {
+			cent->tyreWetContacts++;
+		}
 	}
 
 	// teleportFlag - teleported so dont use old skid origin
@@ -3606,6 +3669,15 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 			CG_AddWetTireSpray( cent, tr.endpos, up, tireNum, skidding );
 		}
 
+		// Q3Rally: on lying snow the rear tyres leave ruts while rolling
+		// too (the front ones run in the same tracks)
+		if ( !skidding && tireNum >= 2 && !( tr.surfaceFlags & ( SURF_SNOW | SURF_ICE ) )
+			&& CG_AtmosphericPointSnow( tr.endpos ) > 0.35f
+			&& VectorLengthSquared( cent->currentState.pos.trDelta ) > 80.0f * 80.0f ) {
+			CG_SkidRibbon( cent, tireNum, cgs.media.SMSnowShader, tr.endpos, tr.plane.normal );
+			ribbon = qtrue;
+		}
+
 		if ( skidding && shader >= 0 ){
 			length = VectorLength(delta) / 2;
 
@@ -3638,7 +3710,16 @@ static void CG_SurfaceEffects( centity_t *cent, vec3_t curOrigin, vec3_t up, int
 
 			VectorMA(curOrigin, 1/2.0F, delta, origin);
 
+			// Q3Rally: tyres do not squeal on snow or ice, they slide
+			// (CG_TyreSounds)
+			if ( snowSurface || ( tr.surfaceFlags & SURF_ICE ) ) {
+				cent->tyreSoftSkid = qtrue;
+				return;
+			}
+			cent->tyreHardSkid = qtrue;
+
 			trap_S_AddRealLoopingSound( cent->currentState.clientNum, origin, cent->currentState.pos.trDelta, cgs.media.skidSound );
+			trap_S_SetEntityVolume( cent->currentState.clientNum, 1.0f );	// after a quieter tyre sound
 
 			if( cent->skidSoundTime + 500 < cg.time )
 			{
@@ -3904,6 +3985,11 @@ static void CG_AddWheels( centity_t *cent, refEntity_t *body, float angle )
 		// skids
 		if (!(cent->currentState.eFlags & EF_DEAD))
 			CG_SurfaceEffects(cent2, wheel_rr.origin, body->axis[2], 3);
+	}
+
+	// Q3Rally: the sound of the tyres in snow or on wet ground
+	if ( !( cent->currentState.eFlags & EF_DEAD ) ) {
+		CG_TyreSounds( cent2 );
 	}
 
 	memset( &susp_cl, 0, sizeof(susp_cl) );

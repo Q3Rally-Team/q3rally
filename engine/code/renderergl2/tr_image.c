@@ -2797,7 +2797,21 @@ image_t *R_GenerateSurfaceMaps( image_t *diffuse )
 
 	n = width * height;
 	wrap = !( diffuse->flags & IMGFLAG_CLAMPTOEDGE );
-	lum = ri.Malloc( n * sizeof( float ) * 5 );
+
+	// the work buffers come from the C heap, not the zone: a 1024 x 1024
+	// texture needs 32 MB here, more than the zone has free while a map
+	// loads (Z_Malloc failed on a 1254 x 1254 texture in q3r_sundown)
+	lum = malloc( (size_t)n * sizeof( float ) * 5 );
+	normalPic = malloc( (size_t)n * 4 );
+	specularPic = malloc( (size_t)n * 4 );
+	if ( !lum || !normalPic || !specularPic ) {
+		ri.Printf( PRINT_WARNING, "R_GenerateSurfaceMaps: out of memory for %s (%i x %i)\n", diffuse->imgName, width, height );
+		free( lum );
+		free( normalPic );
+		free( specularPic );
+		ri.Free( pic );
+		return NULL;
+	}
 	base = lum + n;
 	fine = base + n;
 	coarse = fine + n;
@@ -2809,6 +2823,8 @@ image_t *R_GenerateSurfaceMaps( image_t *diffuse )
 		float l = ( pic[x * 4 + 0] * 0.299f + pic[x * 4 + 1] * 0.587f + pic[x * 4 + 2] * 0.114f ) / 255.0f;
 		lum[x] = l * l;
 	}
+	ri.Free( pic );		// only the luminance is needed from here on
+	pic = NULL;
 
 	// take out large scale brightness (painted light and shadow)
 	radius = MAX( 2, MAX( width, height ) / 24 );
@@ -2824,9 +2840,6 @@ image_t *R_GenerateSurfaceMaps( image_t *diffuse )
 	// slopes are per texel: a texture with more texels over the same area
 	// needs a stronger factor for the same relief
 	scale = 6.0f * MAX( width, height ) / 256.0f;
-
-	normalPic = ri.Malloc( n * 4 );
-	specularPic = ri.Malloc( n * 4 );
 
 	for ( y = 0; y < height; y++ )
 	{
@@ -2877,10 +2890,9 @@ image_t *R_GenerateSurfaceMaps( image_t *diffuse )
 		R_CreateImage( specularName, specularPic, width, height, IMGTYPE_COLORALPHA, flags, 0 );
 	}
 
-	ri.Free( specularPic );
-	ri.Free( normalPic );
-	ri.Free( lum );
-	ri.Free( pic );
+	free( specularPic );
+	free( normalPic );
+	free( lum );
 
 	return normalImage;
 }

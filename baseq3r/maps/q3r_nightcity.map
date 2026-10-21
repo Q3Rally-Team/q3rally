@@ -8,6 +8,8 @@
 "music" "music/amp6_22k.wav"
 "message" "Q3R Night City - By Amphetamine"
 "reflectionImage" "/textures/reflect/nightcity.jpg"
+"weather" "rain"
+"weatherChance" "50"
 // brush 0
 {
 brushDef

@@ -6,6 +6,7 @@
 "message" "warehouse playground"
 "_ambient" "30"
 "reflectionImage" "/textures/reflect/mk.jpg"
+"weather" "none"
 // brush 0
 {
 ( -1741.8240966797 21235.201171875 21527.314453125 ) ( -1741.8240966797 -22804.9921875 21527.314453125 ) ( -1741.8240966797 21235.201171875 -22512.880859375 ) evil8_base/e8base_green 0 0.5666503906 0 0.4800000191 0.4800000191 0 0 0
