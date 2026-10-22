@@ -3,7 +3,7 @@
 map "q3r_lcs1"
 
 //IN-GAME MAP NAME
-longname "LCS TEST MAP"
+longname "Red Rock Basin"
 
 //AUTHOR OF THE MAP
 author "insellium"
@@ -15,7 +15,7 @@ type "q3r_lcs"
 bots "Chloe Jim Zack Paul Tobias Josh Tony Steve Paul Tanya Kuro"
 
 //PLAYER STARTS
-starts "Too many"
+starts "16"
 
 //LAPTIME
 laptime ""
@@ -30,7 +30,7 @@ observerspots ""
 weapons "All"
 
 //POWERUPS
-powerups "No"
+powerups "NOS"
 
 //REVERSABLE
 reversable ""
@@ -39,7 +39,7 @@ reversable ""
 tracklengths ""
 
 //BOT SUPPORTS
-botsupport "Bad"
+botsupport "Ok"
 
 //TEAMS
 teams "0"

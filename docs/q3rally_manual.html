@@ -229,7 +229,7 @@ footer{border-top:1px solid #1a1a1a;padding:24px 40px;display:flex;align-items:c
       <tr><td>q3r_david5</td><td>Underground Battle Arena</td><td>CE</td><td>DM, Team DM, Derby</td><td>RL PG</td></tr>
       <tr><td>q3r_demobowl</td><td>Destroy Yourself Now</td><td>Stecki</td><td>DM, Team DM, Derby</td><td>LG RL RG</td></tr>
       <tr><td>q3r_dm02</td><td>Classic Demolition Derby</td><td>gout</td><td>Derby, DM, Team DM</td><td>RL PG SG</td></tr>
-      <tr><td>q3r_lcs1</td><td>LCS TEST MAP</td><td>insellium</td><td>Last Car Standing</td><td>All</td></tr>
+      <tr><td>q3r_lcs1</td><td>Red Rock Basin</td><td>insellium (rework: Q3Rally Team)</td><td>Last Car Standing</td><td>All</td></tr>
       <tr><td>q3r_mk</td><td>Warehouse Playground</td><td>insellium</td><td>DM, Team DM, Domination</td><td>All</td></tr>
     </tbody>
   </table></div>
@@ -847,6 +847,16 @@ seta sv_ladderUrl      "https://ladder.q3rally.com/index.php/matches"
   </table></div>
   <div class="callout"><strong>Shipped maps</strong><code>warm</code>: q3r_sk1, q3r_lcs1, q3r_mk, q3r_valley, q3r_lavafalls. <code>night</code>: q3r_nightcity, q3r_babel, q3r_demobowl, q3r_ctf_04, q3r_dm02, q3r_battlecanyon, q3r_david4. <code>dusk</code>: q3r_dirtyfun, q3r_dd_02. <code>cold</code>: q3r_ridgeracer. All others: <code>q3r_default</code>. The look sits in the sky shader, so every map with the same sky gets the same look.</div>
   <div class="callout"><strong>Own looks</strong>A LUT is a 1024&times;32 TGA: 32 slices of 32&times;32 side by side, red across a slice, green from top to bottom, blue from slice to slice. Add a function to <code>tools/maptools/make_color_luts.py</code> and run it, or grade a screenshot in an image editor together with <code>gfx/luts/neutral.tga</code> using the same adjustments and save the graded neutral LUT under a new name. <code>developer 1</code> prints which LUT a map uses.</div>
+
+  <h3>Texture Scale — Mapper Guide</h3>
+  <p>Quake 3 textures at the default scale 0.5 have 2 texels per game unit. Much less looks blurry up close, much more looks grainy and repeats visibly at a distance. Textures made to fit their geometry (facades, signs, trims, tree walls, lattices on beams) are the exception.</p>
+  <table>
+    <thead><tr><th>Step</th><th>Tool</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>python tools/maptools/rescale_textures.py maps/q3r_xyz.bsp --report</code></td><td>Lists every texture of the compiled map with its share of the surface and its texels per unit; below 1 is marked blurry, above 4.5 grainy.</td></tr>
+      <tr><td>2</td><td><code>... maps/q3r_xyz.bsp base_wall/concrete1=3 --map maps/q3r_xyz.map</code></td><td>Makes the texture repeat 3 times as often (0.5 = twice as large; <code>fs:ft</code> for the two directions apart) on the brush faces and patches, in the BSP and in the .map, so the next compile keeps it. No recompile needed: lighting and bot navigation stay, the <code>.aas</code> checksum is updated, <code>.bak</code> copies are kept.</td></tr>
+    </tbody>
+  </table>
 
   <h3>Waterfall Spray — Mapper Guide</h3>
   <p>A <code>rally_fx_spray</code> entity puts spray, drifting mist and droplets where a waterfall hits the water. It also works for rapids, fountains or steam. The effect is purely client side: the server ignores the entity, cgame reads it from the map at load time and simulates the particles itself, so it uses no entity slot, no network traffic and works in demos. The mist colour is multiplied with the light grid at the origin, so it is not glowing white in a shady gorge or at night. It runs with OpenGL1 and OpenGL2.</p>
