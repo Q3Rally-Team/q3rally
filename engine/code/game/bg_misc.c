@@ -715,11 +715,11 @@ Refills vehicle fuel.
 	// rally_item_turbo
 	{
 		"rally_item_turbo", 
-		"sound/items/turbo.ogg",
-        { "models/powerups/turbo/turbo.md3",
-		"models/powerups/turbo/turbogear.md3",
+		"sound/items/nos.ogg",
+        { "models/powerups/nos/nos.md3",
+		"models/powerups/nos/nos_gear.md3",
 		NULL, NULL},
-		"icons/turbo",				// icons
+		"icons/nos",				// icons
 		"NOS",						// pickup
 		5,
 		IT_POWERUP,

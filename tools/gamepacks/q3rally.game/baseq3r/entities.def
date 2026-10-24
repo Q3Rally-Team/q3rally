@@ -2610,6 +2610,22 @@ Players can scale or switch it off with cg_mapEffects (0 = off, 1, 2).
 "range"	view distance beyond which no new particles spawn (default 3000)
 */
 
+/*QUAKED rally_scoreboard (1 .6 .2) (-16 -16 -16) (16 16 16)
+Live score on a stadium scoreboard model. Place it at the centre of the
+screens of models/mapobjects/q3r_scoreboard/scoreboard.md3 (the origin of
+that misc_model). Purely client side, like rally_fx_spray: cgame draws red
+score, blue score and the match clock on every screen; goals make the
+scorer's number blink and show GOAL!, the kick-off shows KICK-OFF.
+
+-------- KEYS --------
+"angle"	yaw the first screen faces (default 0)
+"sides"	number of screens around the centre (default 4)
+"dist"	centre to the screen surface (default 161, the scoreboard model)
+"width"	screen width (default 272)
+"height"	screen height (default 105)
+"range"	not drawn beyond this view distance (default 9000)
+*/
+
 /*QUAKED item_armor_green (0 .7 0) (-16 -16 -16) (16 16 16) SUSPENDED
 */
 

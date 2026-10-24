@@ -277,6 +277,7 @@ textures/skies/night_dark
 textures/vsky/vsky
 {
 	qer_editorimage textures/vsky/vsky_up.jpg
+	surfaceparm sky
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	q3map_lightsubdivide 128

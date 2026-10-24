@@ -50,11 +50,22 @@ void main()
 		if (sceneDepth <= 0.0)
 			fade = 1.0;
 
+		// y: 0 alpha to 0, 1 colour to black, 2 to white, 3 to grey,
+		// 4 colour to black and alpha to 1, 5 colour and alpha to 0
 		if (u_SoftParticle.y < 0.5)
 			gl_FragColor.a *= fade;
 		else if (u_SoftParticle.y < 1.5)
 			gl_FragColor.rgb *= fade;
-		else
+		else if (u_SoftParticle.y < 2.5)
 			gl_FragColor.rgb = mix(vec3(1.0), gl_FragColor.rgb, fade);
+		else if (u_SoftParticle.y < 3.5)
+			gl_FragColor.rgb = mix(vec3(0.5), gl_FragColor.rgb, fade);
+		else if (u_SoftParticle.y < 4.5)
+		{
+			gl_FragColor.rgb *= fade;
+			gl_FragColor.a = mix(1.0, gl_FragColor.a, fade);
+		}
+		else
+			gl_FragColor *= fade;
 	}
 }

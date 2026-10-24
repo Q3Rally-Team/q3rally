@@ -1488,13 +1488,26 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 				int dst = pStage->stateBits & GLS_DSTBLEND_BITS;
 				vec4_t viewInfo;
 
+				// Fade towards the colour that leaves the scene unchanged for
+				// this blend; a wrong target shows the whole quad (e.g. white
+				// for "gl_one gl_src_alpha" rocket explosions).
 				soft[0] = r_softParticles->value;
-				if (src == GLS_SRCBLEND_SRC_ALPHA || dst == GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
-					soft[1] = 0.0f;		// alpha blend: fade the alpha
-				else if (dst == GLS_DSTBLEND_ONE)
-					soft[1] = 1.0f;		// additive: fade the colour
+				if (dst == GLS_DSTBLEND_ONE)
+					soft[1] = (src == GLS_SRCBLEND_SRC_ALPHA) ? 0.0f : 1.0f;	// additive
+				else if (dst == GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
+					soft[1] = (src == GLS_SRCBLEND_SRC_ALPHA) ? 0.0f : 5.0f;	// alpha / premultiplied
+				else if (dst == GLS_DSTBLEND_SRC_ALPHA)
+					soft[1] = 4.0f;		// colour to black, alpha to one
+				else if ((dst == GLS_DSTBLEND_ZERO && src == GLS_SRCBLEND_DST_COLOR)
+					|| (dst == GLS_DSTBLEND_SRC_COLOR && src == GLS_SRCBLEND_ZERO))
+					soft[1] = 2.0f;		// filter: towards white
+				else if (dst == GLS_DSTBLEND_SRC_COLOR && src == GLS_SRCBLEND_DST_COLOR)
+					soft[1] = 3.0f;		// 2x modulate: towards grey
+				else if (dst == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR
+					&& (src == GLS_SRCBLEND_ZERO || src == GLS_SRCBLEND_ONE))
+					soft[1] = 1.0f;		// subtractive: towards black
 				else
-					soft[1] = 2.0f;		// filter: fade towards white
+					soft[0] = 0.0f;		// no neutral colour: leave it hard
 				soft[2] = 1.0f / tr.hdrDepthImage->width;
 				soft[3] = 1.0f / tr.hdrDepthImage->height;
 

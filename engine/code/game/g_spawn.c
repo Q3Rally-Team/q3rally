@@ -596,6 +596,7 @@ spawn_t	spawns[] = {
 
 	// client-side map effects, cgame reads them from the entity string
 	{"rally_fx_spray", SP_info_null},
+	{"rally_scoreboard", SP_info_null},
 
 	{"rally_scripted_object", SP_rally_scripted_object},
 	{"autoball_ball", SP_autoball_ball},

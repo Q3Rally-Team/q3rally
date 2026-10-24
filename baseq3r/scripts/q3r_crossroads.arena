@@ -1,0 +1,9 @@
+{
+	map "q3r_crossroads"
+	longname "Crossroads V0.2"
+	type "q3r_ctf4"
+	starts "8"
+	teams "4"
+	bots "Chloe Jim Zack Paul Tobias Josh Tony"
+	botsupport "yes"
+}

@@ -4,6 +4,25 @@ unreleased
 
 Added:
 
+- New map q3r_canyonrush (Canyon Rush): A2B sprint through a red desert canyon,
+  about 34,000 units from the start gate to the finish gate with six
+  checkpoints: a gorge with a natural rock arch, a basin with hoodoos and a
+  dry gravel riverbed, crests and banked bends. Generator
+  tools/maptools/make_canyonrush.py; sandstone strata texture and ground
+  shaders in textures/ and scripts/q3r_canyonrush.*.
+
+- New map q3r_mesaking (Mesa King) for King of the Hill: round red rock
+  arena with a mesa in the middle; the hill is its flat top, reached by four
+  ramps on the diagonals. Mirror symmetric red/blue spawns and pickups.
+  Generator tools/maptools/make_mesaking.py (uses the canyon ground set).
+
+- Live score on the stadium scoreboard: new client side map entity
+  rally_scoreboard (like rally_fx_spray, the server ignores it). Placed at
+  the centre of the q3r_scoreboard model it draws red score, blue score and
+  the match clock on every screen; goals make the scorer's number blink and
+  show GOAL!, the kick-off shows KICK-OFF. Keys angle, sides, dist, width,
+  height, range (entities.def). Added to q3r_sundown.
+
 - Water with real-time reflections (OpenGL2 renderer): shaders with the new
   q3r_water keyword are drawn by a GLSL program that mirrors the scene in the
   water plane, ripples the reflection with two scrolling normal maps, mixes it
@@ -114,6 +133,65 @@ Added:
   registered at map load: a weapon handed out without a pickup in the map
   (give, game modes) showed no mine model and a missing-texture square
   instead of the explosion.
+- Ladder and weather: every match report says what the match was driven
+  in (weather.condition dry, wet, snow or mixed, from the share of the
+  time the ground out in the weather was wet or snowed in, without warmup
+  and intermission; also the share in percent, g_weather and what the map
+  allows). The ladder page (1.0.17) has a weather filter next to Online /
+  Offline: any weather, dry, wet, snow; matches from before count as dry.
+  Laps on a wet or snowy track are no longer uploaded as ghosts. The match
+  payload got new fields at its end: game module and engine must be
+  updated together.
+- Maps set up for the weather (worldspawn keys, without compiling them
+  again; the .map files have the same keys): rain on q3r_country01 (50 %),
+  q3r_sk1 (70 %), q3r_ctf_01 (60 %), q3r_nightcity (50 %), q3r_downtown,
+  q3r_citydom, q3r_babel (40 %), q3r_dd_02, q3r_demobowl, q3r_dirtyfun
+  (30 %) and q3r_valley (15 %); snow on q3r_ridgeracer (60 %, wind 60 to
+  300); no weather on q3r_lavafalls, q3r_battlecanyon, q3r_david4,
+  q3r_dm02, q3r_ctf_04, q3r_lcs1 and q3r_mk. The sky of q3r_babel,
+  q3r_dirtyfun, q3r_ridgeracer, q3r_lcs1 and q3r_mk is now marked as sky
+  in the BSP (it was compiled without the flag, so no weather could fall
+  there); the old weather zones of q3r_ridgeracer and q3r_sk1 are gone.
+- Tyre sounds in snow and on wet ground: tyres no longer squeal on snow
+  or ice (lying snow from the weather or snow surfaces of the map); they
+  crunch through the snow while they roll, louder with the speed and when
+  the car slides, and hiss on wet ground. The squeal of a skid on hard
+  ground stays. New sound sound/rally/car/snow_roll.wav; the wet hiss is
+  sound/weather/wet_tire_spray_loop.wav.
+- Overcast (OpenGL2): while it rains or snows the sky clouds over, in
+  slowly drifting grey patches, and the light follows the intensity of the
+  shower: the sun gets weak and its shadows fade, the patches of sunlight
+  baked into the map dim, the far distance disappears in a grey haze
+  (thicker in snow, also on maps without a haze of their own, no glow
+  towards the sun), and the picture gets a little darker and its colours
+  duller (less in snow). When the shower passes the sky clears with it.
+- Wind: the weather now has a wind that every client sees the same. It
+  turns and changes with every change of the weather over the same 30 to
+  60 seconds, is stronger with rain or snow and has gusts on top. It
+  slants the rain, blows the snow along (instead of the random gusts each
+  client made up) and carries tyre smoke, dust, wet and snow spray,
+  smoke puffs and waterfall mist downwind: fully out in the open, a
+  little under a roof. Out in the open a wind sound comes from the side
+  the wind blows from, louder the stronger it is (s_weatherVolume,
+  cg_weatherAudio). New worldspawn keys weatherWind ("30 250", min and
+  max speed in units per second, "0 0" = calm) and weatherWindDir
+  (prevailing direction, -1 = any). weatherinfo prints the wind. The
+  wind does not push the cars.
+- Snow on the ground (OpenGL2): snow from the weather settles where the
+  sky is above, on the flat ground (it slides off steep slopes and walls).
+  It starts as a thin powder, then the big drifts close up until the
+  ground is white; grass and loose ground get covered first, asphalt last.
+  When it melts the patches open again and leave the ground wet. The snow
+  is lit by the lightmap of the surface (or its vertex light) and the sun
+  and lamp shadows, with wind ripples and a few glittering crystals close
+  by. With the automatic exposure the camera opens up by up to 0.4 stops
+  on snow, so it does not turn grey. Surfaces that are already
+  snow (SURF_SNOW, SURF_ICE) are left as they are. On lying snow the rear
+  tyres leave ruts while rolling, not only when they skid (longer ribbon
+  segments, so they do not use up the marks); marks in snow are lighter
+  than on other ground (skids 60 %, rolling ruts 40 %). New cheat cvar
+  cg_weatherPreview "wet snow" (e.g. "0.5 0.5") shows the ground at that
+  wetness and snow, for mappers and screenshots; the grip does not change.
 - Wet ground (OpenGL2): inside a rain zone (rally_weather_rain) the ground
   gets wet within about 20 seconds while it rains there and dries within
   about 2 minutes after the rain stops; outside the rain zones it stays
@@ -203,10 +281,126 @@ Added:
 
 Changed:
 
+- q3r_crossroads (four-team CTF) V0.2: 30 % larger, ground layers blended by
+  vertex alpha, 32/64-unit collision grid with levelled roads, a meandering
+  creek with banks, pebble bed, reflective water, fords and gravel islands,
+  boulders, forest and haze on the surrounding hills, and an own base per
+  team (lumber camp, fuel station, ranger post, gravel works) on equal
+  collision. Generator tools/maptools/make_crossroads.py.
+
+- com_hunkMegs defaults to 256 (was 128); clients with an older, smaller
+  value are raised to it at start. Large terrain maps with QVMs need it.
+
+- q3r_sundown dressed as a stadium: the pitch is turf with mowing stripes
+  and full markings (one field shader over the floor, textures/q3r_sundown/
+  field*.tga/jpg; grip and sounds unchanged), the goals have glowing posts
+  in team colour (red west, blue east), nets on the walls of the goal boxes
+  and a team coloured light inside, a scrolling LED ad board with the
+  Q3Rally sponsor banners runs above the ramps, the upper walls carry the
+  crowd and the boxes have fans; warm lights under the boxes along the
+  walls. Ad boards, crowd and fans are not solid. New levelshot.
+- q3r_citydom, rework stage 1 (map edges): the streets no longer end at a
+  fence in front of the sky. The sky box is 1792 units larger on every side
+  and the city goes on behind the arena: the streets continue past the
+  fences to a ring road, lined by a row of blocks behind the edge buildings
+  and a second, taller row against the sky (shop fronts, facades, cornices,
+  roof structures), so the arena gets a skyline. The backdrop is one
+  func_group of detail brushes with _lightmapscale 4; player clip on the old
+  boundary keeps the cars in. The one street without a fence (west side,
+  y -1216..-832) got one. Worldspawn _blocksize 0: without the forced 1024
+  splits vis has fewer portals than before (4980 instead of 9408) and the
+  culling is a bit better. Layout, spawns and domination points unchanged;
+  AAS rebuilt.
+- q3r_citydom, rework stage 2 (the glass towers): new skin for the two
+  towers and the glass hall between them, collision and the driving levels
+  unchanged. Aluminium frames instead of rusty ones, reflective tinted
+  curtain wall glass (new shaders q3r_citydom/glass and glassdark, the
+  breakable ground floor panes included), light ceiling panels with
+  downlights under the slabs and cantilevers (they light the area below),
+  stone deck on the floors and the bridge. Outside the glass: floor bands,
+  vertical fins on the upper floors, a roof parapet, roof plant and masts
+  with warning lights (detail brushes). New textures in
+  textures/q3r_citydom, scripts/q3r_citydom.shader (in shaderlist.txt).
+- q3r_citydom, rework stage 3 (the hangar): the brick shed with the big
+  corrugated roof in the south east corner is now a car park on the same
+  footprint: closed ground floor with garage doors and windows, four open
+  parking decks with parapets and columns and a lit interior with parked
+  cars behind the openings, a glazed stair tower with P signs and a roof
+  deck with markings and lamp posts. Not reachable for cars, as before.
+- q3r_citydom, rework stage 4 (items, spawns, levelshot): fewer weapons,
+  spread over the map instead of two rows of 16 on the green strips. Two of
+  each weapon, point symmetric to the middle (streets, squares and the
+  tower floors), one BFG, ammo next to its weapon; two red and two yellow
+  armours instead of twelve and four, health and fuel spread evenly. The
+  map had item_quad, item_regen and item_invis, which do not exist in
+  Q3Rally; now rally_item_quad in the middle, rally_item_regen and two NOS.
+  16 deathmatch spawns all over the map (there were two, both in the
+  middle under the centre point; Domination uses them with
+  g_dominationSpawnStyle 0), away from the domination points and facing
+  the middle. The botlib flood of "out of level items" is gone. New
+  levelshot.
+- The NOS pickup is now a blue NOS bottle with a chrome valve instead of
+  the rocket booster, spinning in the same powerup gear as the other
+  powerups, now in light blue. The HUD icon shows the bottle in a light
+  blue powerup gear, and the pickup voice says "NOS" instead of "Turbo".
+  New files: models/powerups/nos/ (nos.md3, nos_gear.md3, textures),
+  icons/nos.tga, sound/items/nos.ogg, shaders in scripts/powerups.shader.
+  The old turbo model, icon and sound are no longer used.
+
+- q3r_lcs1 is now "Red Rock Basin": the fence and the corner pillars are
+  gone, the asphalt fades into a sand apron and a banked sand berm that
+  rises into red rock cliffs with rounded corners, loose rocks at their
+  foot, rock towers and floodlight masts. Three gates in the rim are closed
+  with old fences and look out along desert corridors on a ruined control
+  tower, a hangar ruin and open desert; elsewhere the sky starts behind the
+  rim. The asphalt carries the worn markings of an old runway (06/24) and
+  repaired patches. The whole map is scaled to 70 % (the playfield is about
+  8600 units across). Items are placed in zones instead of 16 weapons with
+  999 ammo: BFG in the centre (90 s respawn), rocket launcher, railgun,
+  plasma gun, lightning gun and grenade launcher on a middle ring, shotguns
+  and flamethrowers further out, ammo next to its weapon, health behind the
+  boulders, mega health and red armour up on the berm (60 s), yellow armour
+  and shard clusters, four NOS bottles on the open lanes, mines, oil and
+  smoke near the edge and six fuel cans. 16 spawn points on a ring facing
+  the centre. New bot navigation file. Built for frame rate: about a fifth
+  of the draw surfaces of the first version (small rocks and metal parts
+  are vertex lit and merged), no terrain outside the rim except in the gate
+  corridors. Shaders in scripts/q3r_redrock.shader.
+
+- Weather system reworked. The weather now covers the whole map and falls
+  wherever the sky is above: when a map loads, the server and every client
+  trace it from above on a 64 unit grid and keep, per cell, the highest
+  surface that sees a sky face; under bridges, roofs and in tunnels the
+  ground stays dry (the rain blows a little way in under the edges). The
+  server runs showers of rain or snow that build up over 30 to 60 seconds,
+  last a while and pass, also during a race, with an intensity from 0 to
+  1 instead of on/off. Every change goes to the clients as one config
+  string (CS_WEATHER); server and clients work out the same wet and
+  snowed in ground from it in fixed steps, so the grip on the server, the
+  prediction and the look agree, also for late joiners. Wet ground loses
+  grip in proportion to how wet it is (up to a quarter), fresh snow moves
+  the grip towards packed snow; tyre spray and powder snow follow the
+  ground. Rain wets the ground in about 20 seconds of heavy rain and it
+  dries in about 2 minutes; snow covers it in about 90 seconds and melts
+  in about 4 minutes, leaving it wet. A race that starts in the rain
+  starts on a wet track. New worldspawn keys weather (none, rain, snow or
+  "rain snow"), weatherChance (40), weatherCycle ("90 300" seconds) and
+  weatherStrength ("0.4 1"). New server cvar g_weather (0 always dry, 1
+  as the map says, 2 rain, 3 snow for the whole race on any map, e.g. for
+  the ladder); Ghost Race is always dry. The cvars g_dynamicWeather,
+  g_weatherInitialChance, g_weatherOnMinTime, g_weatherOnMaxTime,
+  g_weatherOffMinTime and g_weatherOffMaxTime are gone. rally_weather_rain
+  and rally_weather_snow are obsolete: a map that still has them and no
+  weather key gets rain or snow. New client command weatherinfo and cheat
+  r_weatherDebug 1 (OpenGL2: the ground blue where the weather reaches it,
+  red where it is covered). New cgame import trap_R_SetWeatherGrid
+  (CG_R_SETWEATHERGRID = 99); refdef_t carries weather[4] instead of the
+  rain zones.
+
 - Graphics menu reorganised into three pages: Graphics (preset, renderer,
   resolution, aspect ratio, fullscreen, anti-aliasing, texture detail,
   texture filter, geometry), Effects (bloom, motion blur, reflections,
-  water, wet roads, haze, colour look, ambient occlusion, surface relief,
+  water, wet & snow, haze, colour look, ambient occlusion, surface relief,
   tyre smoke, soft particles, skid marks, tone curve) and Lighting &
   shadows (HDR, sun shadows and their quality, lamp shadows, headlights,
   headlight shadows, shadow detail, dynamic lights). The sub menu on the
@@ -272,6 +466,29 @@ Changed:
   bridge pillars) now use scale 0.5 like the rest of the map (BSP texture
   coordinates and .map; no recompile, lighting unchanged).
 
+- Texture scale pass over the maps: textures that were stretched far
+  beyond the usual 2 texels per unit (blurry) or squeezed far below it
+  (grainy, visible tiling) now have a sensible size, in the BSP texture
+  coordinates and the .map (no recompile, lighting and bot navigation
+  unchanged): q3r_lcs1 asphalt (x3) and rock (x4), q3r_mk concrete walls
+  (x3), q3r_david5 diamond plate (x4) and cables (x5), q3r_citydom
+  cobbles (4 times larger), q3r_ctf4_03 corrugated sheet (3 times
+  larger), q3r_david4 grass (x3) and blue rusty metal (x2),
+  q3r_ridgeracer rock (x2), q3r_ctf_01 wooden planks (x2). Building
+  facades, tree walls, trims, signs, crowds and the lattice textures of
+  trusses were left as they are, they are made to fit their geometry.
+- tools/maptools/rescale_textures.py: --report lists the texel density of
+  every texture of a compiled map (blurry below 1, grainy above 4.5
+  texels per unit); shader=factor (or fs:ft for the two directions)
+  rescales a texture on the brush faces and patches of the BSP, and with
+  --map in the .map source, so a later compile keeps it. Faces that
+  continue each other keep continuing; keeps .bak copies and updates the
+  .aas checksum.
+- tools/maptools/set_worldspawn.py: changes a compiled map without
+  compiling it again: worldspawn keys (key=value, key= removes),
+  --fix-sky (marks the sky shaders as sky in the BSP),
+  --remove-weather-zones, --show; keeps a .bak and updates the checksum in
+  the .aas so the bots still load it.
 - tools/maptools: q3bsp.py (read and replace the entity lump of a BSP, BSP
   checksum, patch the checksum in an AAS header) and inject_lights.py (copies
   the light entities of a .map into the compiled BSP for lamp shadows).
@@ -523,6 +740,50 @@ Changed:
   and effects of the main view. Car glass keeps the static reflection texture.
 
 Fixed:
+
+- Soft particles (OpenGL2): sprites and polys with blend modes other than
+  alpha, additive or filter faded towards white and showed as bright
+  rectangles where they cut into walls, e.g. the rocket explosion
+  (blendfunc gl_one gl_src_alpha). Each blend now fades towards its own
+  neutral colour; blends without one stay hard.
+
+- q3r_sundown: the scoreboard cube in the middle was black. Its model is
+  baked into the map with vertex light and hangs in the shadow of the roof
+  truss, several faces are wound inside out (the screens were culled from
+  the outside) and the screen picture is upside down in the UVs. New shader
+  models/mapobjects/q3r_scoreboard/scoreboard in autoball.shader: lit
+  evenly, glowing screens, drawn two sided; the screen picture is flipped
+  in scoreboard.jpg (painted 2:1 / 03:24 removed, red left like the HUD)
+  and the new scoreboard_glow.jpg. No recompile needed.
+- q3r_sundown did not show up in the map list: scripts/q3r_sundown.arena
+  had no { } around its keys, the menu stopped with "Missing { in info
+  file". New levelshot.
+- HUD: the pickup toast and the slipstream gauge were drawn on top of each
+  other above the telemetry strip. The toast moves up out of the gauge slot
+  while the gauge is shown (in step with its fade-in), so both stay readable.
+- q3r_downtown: the info_player_deathmatch at the start line was 160 units
+  below the road (z 24), cars spawned there fell out of the map. Moved onto
+  the road (z 188, like the race starts). The two rear race starts were
+  numbered 7 and 8 a second time; they are 9 and 10 now. Entity lump of the
+  BSP patched, AAS checksum updated.
+- scripts/shaderlist.txt did not list ame_desert, arctic, ely_darkcity,
+  ely_sunset, telestecki, cars_helmets and koth_beam, so q3map2 (which
+  only reads the listed files) did not find the skies of q3r_babel,
+  q3r_dirtyfun, q3r_lcs1, q3r_mk, q3r_ridgeracer and q3r_watertest: their
+  sky was compiled without surfaceparm sky (no rain or snow from it, no
+  sun from its q3map_sun). Added; the ame_desert sky also gets
+  surfaceparm sky. Maps compiled before still need recompiling or
+  tools/maptools/set_worldspawn.py --fix-sky.
+- Haze (OpenGL2): where the void under a map shows through water or glass
+  (the creek in q3r_sk1), the haze treated it as sky below the horizon and
+  covered the water with a flat wall of haze colour. The sky only gets haze
+  in a thin band below the horizon now.
+- Crash "Z_Malloc: failed on allocation of 6290104 bytes from the main zone"
+  when loading a map with a large texture (q3r_sundown, tex9_15_blu.png,
+  1254 x 1254) while r_genNormalMaps is on (High and Ultra presets): the
+  normal map generator took its work buffers (20 bytes per texel) from the
+  48 MB zone. They come from the C heap now, and the source image is freed
+  as soon as it is no longer needed.
 
 - q3r_sk1: a 4 unit gap between the road and the start pad showed the void
   as a white line along the start. Fixed in the .map (the road brush now

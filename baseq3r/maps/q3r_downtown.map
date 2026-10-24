@@ -35697,7 +35697,7 @@ brushDef
 {
 "classname" "info_player_deathmatch"
 "angle" "270"
-"origin" "7944 744 24"
+"origin" "7944 744 188"
 }
 // entity 248
 {
@@ -35838,14 +35838,14 @@ brushDef
 "classname" "info_player_start"
 "angle" "270"
 "origin" "8068 3036 188"
-"number" "7"
+"number" "9"
 }
 // entity 258
 {
 "classname" "info_player_start"
 "origin" "7857 3265 188"
 "angle" "270"
-"number" "8"
+"number" "10"
 }
 // entity 259
 {

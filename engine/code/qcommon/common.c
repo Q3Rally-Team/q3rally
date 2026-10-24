@@ -38,7 +38,7 @@ int demo_protocols[] =
 
 #define MIN_DEDICATED_COMHUNKMEGS 1
 #define MIN_COMHUNKMEGS		56
-#define DEF_COMHUNKMEGS 	128
+#define DEF_COMHUNKMEGS 	256	// Q3Rally: large terrain maps (e.g. q3r_crossroads) with QVMs need more than 128
 #define DEF_COMZONEMEGS		48
 #define DEF_COMHUNKMEGS_S	XSTRING(DEF_COMHUNKMEGS)
 #define DEF_COMZONEMEGS_S	XSTRING(DEF_COMZONEMEGS)
@@ -1562,6 +1562,15 @@ void Com_InitHunkMemory( void ) {
 	// allocate the stack based hunk allocator
 	cv = Cvar_Get( "com_hunkMegs", DEF_COMHUNKMEGS_S, CVAR_LATCH | CVAR_ARCHIVE );
 	Cvar_SetDescription(cv, "The size of the hunk memory segment");
+
+	// Q3Rally: older configs still carry the former default of 128, which is
+	// too small for large terrain maps (q3r_crossroads) with QVMs. Clients are
+	// raised to the current default; the new value is saved with the config.
+	if ( !( com_dedicated && com_dedicated->integer ) && cv->integer < DEF_COMHUNKMEGS ) {
+		Com_Printf( "com_hunkMegs %i is below %i, raising it to %i.\n",
+			cv->integer, DEF_COMHUNKMEGS, DEF_COMHUNKMEGS );
+		cv = Cvar_Set2( "com_hunkMegs", DEF_COMHUNKMEGS_S, qtrue );
+	}
 
 	// if we are not dedicated min allocation is 56, otherwise min is 1
 	if (com_dedicated && com_dedicated->integer) {

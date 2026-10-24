@@ -243,7 +243,7 @@ maxs		{13,13,13}
 iteminfo "rally_item_turbo"
 {
 name		"NOS"
-model		"models/powerups/turbo/turbo.md3"
+model		"models/powerups/nos/nos.md3"
 modelindex	MODELINDEX_TURBO
 type		POWERI
 index		INVENTORY_TURBO

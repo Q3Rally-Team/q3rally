@@ -43,6 +43,8 @@ Cvars:  cg_autoballCam        0/1, the "ballcam" command toggles it
 #define AUTOBALL_CAM_BLEND_MSEC		200.0f
 #define AUTOBALL_CAM_MIN_DIST		120.0f	/* closer than this the yaw would spin */
 
+static void CG_Autoball_DrawScoreboards( void );
+
 /*
 ================
 CG_Autoball_FindBall
@@ -705,6 +707,8 @@ void CG_Autoball_AddSceneEffects( void ) {
 	vec3_t pos;
 	qboolean flip;
 
+	CG_Autoball_DrawScoreboards();
+
 	if ( !ab_goalLightStart )
 		return;
 	elapsed = cg.time - ab_goalLightStart;
@@ -734,6 +738,191 @@ void CG_Autoball_AddSceneEffects( void ) {
 			trap_R_AddLightToScene( pos, 320.0f * env, ab_goalLightColor[0], ab_goalLightColor[1], ab_goalLightColor[2] );
 		else
 			trap_R_AddLightToScene( pos, 260.0f * env, 1.0f, 1.0f, 1.0f );
+	}
+}
+
+/*
+===========================================================================
+Stadium scoreboard (rally_scoreboard)
+
+A cgame-only map entity like rally_fx_spray: the server maps it to info_null,
+cgame reads it from the entity string at map load. It marks the centre of a
+scoreboard model (models/mapobjects/q3r_scoreboard) whose screens show the
+live match: red score, blue score and the clock, drawn as glowing glyph
+polys just in front of each screen. Goals make the scorer's number blink and
+the clock line read GOAL!, the kick-off countdown reads KICK-OFF.
+
+Keys:  origin   centre of the screens
+       angle    yaw of the first screen's facing          (default 0)
+       sides    number of screens around the centre       (default 4)
+       dist     centre to screen surface                  (default 161)
+       width    screen width                              (default 272)
+       height   screen height                             (default 105)
+       range    not drawn beyond this view distance       (default 9000)
+===========================================================================
+*/
+
+#define AB_MAX_BOARDS		4
+#define AB_GLYPHS			"0123456789:+-!ACFGIKLO"
+
+typedef struct {
+	vec3_t	origin;
+	float	yaw;
+	int		sides;
+	float	dist, width, height, range;
+} abBoard_t;
+
+static abBoard_t	ab_boards[AB_MAX_BOARDS];
+static int			ab_numBoards;
+static qhandle_t	ab_glyphShader;
+
+void CG_Autoball_ClearScoreboards( void ) {
+	ab_numBoards = 0;
+}
+
+void CG_Autoball_AddScoreboard( const vec3_t origin, float yaw, int sides, float dist,
+	float width, float height, float range ) {
+	abBoard_t *b;
+
+	if ( ab_numBoards >= AB_MAX_BOARDS ) {
+		CG_Printf( S_COLOR_YELLOW "WARNING: more than %i rally_scoreboard entities\n", AB_MAX_BOARDS );
+		return;
+	}
+	b = &ab_boards[ab_numBoards++];
+	VectorCopy( origin, b->origin );
+	b->yaw = yaw;
+	b->sides = sides < 1 ? 1 : ( sides > 8 ? 8 : sides );
+	b->dist = dist;
+	b->width = width;
+	b->height = height;
+	b->range = range;
+	if ( !ab_glyphShader )
+		ab_glyphShader = trap_R_RegisterShader( "models/mapobjects/q3r_scoreboard/digits" );
+}
+
+/* one line of glyphs, centred at (u, z) on the screen spanned by right/up */
+static void CG_Autoball_BoardText( const vec3_t centre, const vec3_t right, const vec3_t up,
+	float u, float z, float h, const char *text, const vec4_t color ) {
+	polyVert_t verts[4];
+	float w = h * 0.5f, step = h * 0.5f, x;
+	int len = strlen( text ), i, k;
+	byte rgba[4];
+
+	for ( k = 0; k < 4; k++ )
+		rgba[k] = (byte)( Com_Clamp( 0.0f, 1.0f, color[k] ) * 255.0f );
+
+	x = u - step * ( len - 1 ) * 0.5f;
+	for ( i = 0; i < len; i++, x += step ) {
+		const char *g = strchr( AB_GLYPHS, text[i] );
+		float s0, s1, t0, t1;
+		vec3_t c;
+
+		if ( !g || text[i] == '\0' )
+			continue;
+		k = g - AB_GLYPHS;
+		s0 = ( k % 16 ) / 16.0f;
+		s1 = s0 + 1.0f / 16.0f;
+		t0 = ( k / 16 ) * 0.5f;
+		t1 = t0 + 0.5f;
+
+		VectorMA( centre, x, right, c );
+		VectorMA( c, z, up, c );
+		VectorMA( c, -w * 0.5f, right, verts[0].xyz ); VectorMA( verts[0].xyz,  h * 0.5f, up, verts[0].xyz );
+		VectorMA( c,  w * 0.5f, right, verts[1].xyz ); VectorMA( verts[1].xyz,  h * 0.5f, up, verts[1].xyz );
+		VectorMA( c,  w * 0.5f, right, verts[2].xyz ); VectorMA( verts[2].xyz, -h * 0.5f, up, verts[2].xyz );
+		VectorMA( c, -w * 0.5f, right, verts[3].xyz ); VectorMA( verts[3].xyz, -h * 0.5f, up, verts[3].xyz );
+		verts[0].st[0] = s0; verts[0].st[1] = t0;
+		verts[1].st[0] = s1; verts[1].st[1] = t0;
+		verts[2].st[0] = s1; verts[2].st[1] = t1;
+		verts[3].st[0] = s0; verts[3].st[1] = t1;
+		for ( k = 0; k < 4; k++ )
+			Byte4Copy( rgba, verts[k].modulate );
+		trap_R_AddPolyToScene( ab_glyphShader, 4, verts );
+	}
+}
+
+/* called every frame with the scene effects */
+static void CG_Autoball_DrawScoreboards( void ) {
+	vec4_t red, blue, white, accent, line2col;
+	char line2[16];
+	int msec, seconds, i, side;
+	qboolean overtime = qfalse, blinkOn;
+	float redA = 1.0f, blueA = 1.0f;
+
+	if ( !ab_numBoards || !ab_glyphShader )
+		return;
+
+	/* the same clock as the score bug */
+	msec = cg.time - cgs.levelStartTime;
+	if ( msec < 0 || ( cgs.gametype == GT_AUTOBALL && cgs.autoballState == AUTOBALL_STATE_WAITING ) )
+		msec = 0;
+	if ( cgs.timelimit > 0 ) {
+		msec = cgs.timelimit * 60000 - msec;
+		if ( msec < 0 ) {
+			overtime = qtrue;
+			msec = -msec;
+		}
+	}
+	if ( msec < 0 )
+		msec = 0;
+	seconds = msec / 1000;
+	Com_sprintf( line2, sizeof( line2 ), "%s%i:%02i", overtime ? "+" : "", seconds / 60, seconds % 60 );
+
+	CG_Autoball_TeamColor( TEAM_RED, 1.0f, red );
+	CG_Autoball_TeamColor( TEAM_BLUE, 1.0f, blue );
+	VectorScale( red, 1.25f, red );
+	VectorScale( blue, 1.25f, blue );
+	white[0] = white[1] = white[2] = 0.95f; white[3] = 1.0f;
+	accent[0] = 1.0f; accent[1] = 0.78f; accent[2] = 0.2f; accent[3] = 1.0f;
+	Vector4Copy( overtime ? accent : white, line2col );
+
+	blinkOn = ( ( cg.time / 160 ) & 1 ) ? qtrue : qfalse;
+	if ( cgs.gametype == GT_AUTOBALL && cgs.autoballState == AUTOBALL_STATE_GOAL ) {
+		if ( cgs.autoballGoalTeam == TEAM_RED ) {
+			redA = blinkOn ? 1.0f : 0.25f;
+			Vector4Copy( red, line2col );
+		} else if ( cgs.autoballGoalTeam == TEAM_BLUE ) {
+			blueA = blinkOn ? 1.0f : 0.25f;
+			Vector4Copy( blue, line2col );
+		}
+		Q_strncpyz( line2, "GOAL!", sizeof( line2 ) );
+		line2col[3] = blinkOn ? 1.0f : 0.5f;
+	} else if ( cgs.gametype == GT_AUTOBALL && cgs.autoballState == AUTOBALL_STATE_KICKOFF ) {
+		Q_strncpyz( line2, "KICK-OFF", sizeof( line2 ) );
+	}
+	red[3] = redA;
+	blue[3] = blueA;
+
+	for ( i = 0; i < ab_numBoards; i++ ) {
+		abBoard_t *b = &ab_boards[i];
+		const char *s1, *s2;
+
+		if ( Distance( cg.refdef.vieworg, b->origin ) > b->range )
+			continue;
+		for ( side = 0; side < b->sides; side++ ) {
+			float a = DEG2RAD( b->yaw + side * 360.0f / b->sides );
+			vec3_t n, right, up, centre, toEye;
+
+			VectorSet( n, cos( a ), sin( a ), 0.0f );
+			VectorSet( right, -n[1], n[0], 0.0f );
+			VectorSet( up, 0.0f, 0.0f, 1.0f );
+			VectorMA( b->origin, b->dist + 0.75f, n, centre );
+			/* only the screens that face the viewer */
+			VectorSubtract( cg.refdef.vieworg, centre, toEye );
+			if ( DotProduct( toEye, n ) <= 0.0f )
+				continue;
+
+			s1 = va( "%i", cgs.scores1 == SCORE_NOT_PRESENT ? 0 : cgs.scores1 );
+			CG_Autoball_BoardText( centre, right, up, -0.21f * b->width, -0.06f * b->height,
+				0.27f * b->height, s1, red );
+			CG_Autoball_BoardText( centre, right, up, 0.0f, -0.06f * b->height,
+				0.27f * b->height, ":", white );
+			s2 = va( "%i", cgs.scores2 == SCORE_NOT_PRESENT ? 0 : cgs.scores2 );
+			CG_Autoball_BoardText( centre, right, up, 0.21f * b->width, -0.06f * b->height,
+				0.27f * b->height, s2, blue );
+			CG_Autoball_BoardText( centre, right, up, 0.0f, -0.28f * b->height,
+				0.15f * b->height, line2, line2col );
+		}
 	}
 }
 

@@ -1804,6 +1804,9 @@ void CG_Autoball_GoalExplosion( vec3_t origin, int team );
 void CG_Autoball_ApplyShake( void );
 void CG_Autoball_BallTrail( centity_t *cent );
 void CG_Autoball_AddSceneEffects( void );
+void CG_Autoball_ClearScoreboards( void );
+void CG_Autoball_AddScoreboard( const vec3_t origin, float yaw, int sides, float dist,
+	float width, float height, float range );
 void CG_Autoball_OverrideView( void );
 qboolean CG_Autoball_IntroActive( void );
 void CG_Autoball_DrawAwards( int y, float fade );

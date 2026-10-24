@@ -1463,3 +1463,77 @@
 ( -272 1536 -64 ) ( -272 1680 -64 ) ( -272 1536 384 ) common/rain 0 0 0 0.5 0.5 0 0 0
 }
 }
+// entity 97
+{
+"classname" "rally_scripted_object"
+"origin" "-81 288 -51"
+"model" "models/mapobjects/barrels/b_oil.md3"
+"physics" "dynamic"
+"vehicle_impact_scale" "0.3"
+"health" "0"
+"elasticity" "0.5"
+"friction" "1.5"
+"rolling_friction" "0.2"
+"spinning_friction" "0.01"
+"mins" "-8.5 -8.5 -12.5"
+"maxs" "8.5 8.5 12.5"
+"mass" "50"
+"inertia_shape" "cylinder_z"
+"weapon_impact_scale" "5"
+}
+// entity 98
+{
+"classname" "rally_scripted_object"
+"origin" "-1 246 -51"
+"model" "models/mapobjects/barrels/b_oil.md3"
+"physics" "dynamic"
+"vehicle_impact_scale" "0.5"
+"health" "0"
+"elasticity" "0.5"
+"friction" "1.5"
+"rolling_friction" "0"
+"spinning_friction" "0.01"
+"mins" "-8.5 -8.5 -12.5"
+"maxs" "8.5 8.5 12.5"
+"mass" "50"
+"inertia_shape" "cylinder_z"
+"weapon_impact_scale" "5"
+}
+// entity 99
+{
+"classname" "rally_scripted_object"
+"origin" "-149 182 -51"
+"model" "models/mapobjects/barrels/b_oil.md3"
+"physics" "dynamic"
+"vehicle_impact_scale" "0.35"
+"health" "0"
+"elasticity" "0.5"
+"friction" "1.5"
+"rolling_friction" "0"
+"spinning_friction" "0.01"
+"mins" "-8.5 -8.5 -12.5"
+"maxs" "8.5 8.5 12.5"
+"modelscale_vec" "-1 -1 1"
+"mass" "50"
+"inertia_shape" "cylinder_x"
+"angle" "-90"
+"weapon_impact_scale" "5"
+}
+// entity 100
+{
+"classname" "rally_scripted_object"
+"origin" "-77 248 -56"
+"model" "models/mapobjects/cones/cone05.md3"
+"physics" "dynamic"
+"inertia_shape" "cylinder_z"
+"mass" "10"
+"elasticity" "0.5"
+"friction" "0.5"
+"rolling_friction" "0.1"
+"spinning_friction" "1"
+"vehicle_impact_scale" "0.2"
+"health" "0"
+"mins" "-5 -5 -7"
+"maxs" "5 5 7"
+"weapon_impact_scale" "5"
+}

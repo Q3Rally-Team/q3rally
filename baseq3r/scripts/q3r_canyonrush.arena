@@ -1,0 +1,6 @@
+{
+	map "q3r_canyonrush"
+	longname "Canyon Rush"
+	type "q3r_sprint"
+	botsupport "None"
+}

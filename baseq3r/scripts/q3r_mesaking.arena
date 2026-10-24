@@ -1,0 +1,6 @@
+{
+	map "q3r_mesaking"
+	longname "Mesa King"
+	type "q3r_koth"
+	botsupport "None"
+}

@@ -245,6 +245,7 @@ static void CG_FX_ParseEntities( void ) {
 	char	token[MAX_TOKEN_CHARS];
 
 	fxNumEmitters = 0;
+	CG_Autoball_ClearScoreboards();
 
 	while ( trap_GetEntityToken( token, sizeof( token ) ) ) {
 		if ( token[0] != '{' ) {
@@ -270,6 +271,13 @@ static void CG_FX_ParseEntities( void ) {
 
 		if ( !Q_stricmp( CG_FX_Value( "classname", "" ), "rally_fx_spray" ) ) {
 			CG_FX_AddSpray();
+		} else if ( !Q_stricmp( CG_FX_Value( "classname", "" ), "rally_scoreboard" ) ) {
+			// Q3Rally: live score on a stadium scoreboard model (cg_autoball.c)
+			vec3_t org;
+			CG_FX_Vector( "origin", "0 0 0", org );
+			CG_Autoball_AddScoreboard( org, CG_FX_Float( "angle", 0.0f ), (int)CG_FX_Float( "sides", 4.0f ),
+				CG_FX_Float( "dist", 161.0f ), CG_FX_Float( "width", 272.0f ),
+				CG_FX_Float( "height", 105.0f ), CG_FX_Float( "range", 9000.0f ) );
 		} else if ( !Q_stricmp( CG_FX_Value( "classname", "" ), "worldspawn" ) ) {
 			// Q3Rally: wet ground without rain (0 = dry, 1 = soaked)
 			cgs.mapWetness = Com_Clamp( 0.0f, 1.0f, CG_FX_Float( "wetness", 0.0f ) );

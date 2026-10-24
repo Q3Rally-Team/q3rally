@@ -13,6 +13,7 @@ plates
 powerups
 q3r_textures
 skies
+q3r_sundown
 sprites
 weapons
 cars
@@ -30,3 +31,6 @@ telestecki
 cars_helmets
 koth_beam
 q3r_redrock
+q3r_citydom
+q3r_crossroads
+q3r_canyonrush

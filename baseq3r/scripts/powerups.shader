@@ -359,6 +359,47 @@ models/powerups/turbo/thrust
 }
 
 // ------------------------------------------------------------
+// 8b.nos (NOS bottle pickup, replaces the turbo booster)
+// ------------------------------------------------------------
+
+icons/nos
+{
+	nopicmip
+	{
+		map icons/nos.tga
+		blendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA
+	}
+}
+
+models/powerups/nos/nos_bottle
+{
+	{
+		map models/powerups/nos/nos_bottle.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map textures/sfx/specular.tga
+		tcGen environment
+		blendFunc GL_ONE GL_ONE
+		rgbGen const ( 0.35 0.35 0.4 )
+	}
+}
+
+models/powerups/nos/nos_valve
+{
+	{
+		map models/powerups/nos/nos_valve.tga
+		rgbGen lightingDiffuse
+	}
+	{
+		map textures/sfx/specular.tga
+		tcGen environment
+		blendFunc GL_ONE GL_ONE
+		rgbGen const ( 0.6 0.6 0.6 )
+	}
+}
+
+// ------------------------------------------------------------
 // 9.armor_red
 // ------------------------------------------------------------
 
