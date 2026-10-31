@@ -493,6 +493,8 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
     if ( clc.demoPlayer && uivm ) {
         VM_Call( uivm, UI_REFRESH, cls.realtime );
         if ( clc.state == CA_ACTIVE ) CL_CGameRendering( stereoFrame );
+        // The preview is rendered after the menu and would cover its cursor.
+        VM_Call( uivm, UI_DRAW_CURSOR );
         Con_DrawConsole();
         return;
     }

@@ -1733,7 +1733,8 @@ void UI_Refresh( int realtime )
 //  UI_DrawCursor( uis.cursorx-24, uis.cursory-24, 48, 48, uis.cursorModel );
 
 	UI_SetColor( NULL );
-	UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
+	if (!trap_Cvar_VariableValue("cl_demoPlayer"))
+        UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
 
 //	if (!UI_DrawCursor( uis.cursorx-24, uis.cursory-24, 48, 48, uis.cursorModel )){
 //  UI_SetColor( NULL );

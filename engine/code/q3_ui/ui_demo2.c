@@ -452,6 +452,21 @@ static void DemoSave_Event(void *ptr, int event) {
     UI_PopMenu();
 }
 
+static void DemoSave_DrawName(void *self) {
+    menufield_s *field = (menufield_s *)self;
+    char visible[33], before[33];
+    int cursor = field->field.cursor - field->field.scroll;
+    Q_strncpyz(visible, field->field.buffer + field->field.scroll, sizeof(visible));
+    Frontend_DrawText(132, 224, visible, UI_LEFT | UI_SMALLFONT, demosTextColor);
+    if (Menu_ItemAtCursor(&demoSave.menu) == field && (uis.realtime / 500) % 2 == 0) {
+        if (cursor < 0) cursor = 0;
+        if (cursor > 32) cursor = 32;
+        Q_strncpyz(before, visible, cursor + 1);
+        Frontend_DrawText(132 + Frontend_TextWidth(before, UI_SMALLFONT), 224,
+            "_", UI_LEFT | UI_SMALLFONT, demosTextColor);
+    }
+}
+
 static void DemoSave_Draw(void) {
     vec4_t scrim = UI_FRONTEND_COLOR_SCRIM;
     Frontend_DrawBackground(scrim);
@@ -471,6 +486,7 @@ void UI_DemoSaveMenu(void) {
     demoSave.menu.wrapAround = qtrue;
     demoSave.menu.draw = DemoSave_Draw;
     demoSave.name.generic.type = MTYPE_FIELD;
+    demoSave.name.generic.ownerdraw = DemoSave_DrawName;
     demoSave.name.generic.flags = QMF_NODEFAULTINIT;
     demoSave.name.generic.x = demoSave.name.generic.left = 128;
     demoSave.name.generic.y = demoSave.name.generic.top = 220;
@@ -487,6 +503,14 @@ void UI_DemoSaveMenu(void) {
     demoSave.save.string = "Save"; demoSave.keep.string = "Keep name";
     demoSave.save.color = demoSave.keep.color = demosTextColor;
     demoSave.save.style = demoSave.keep.style = UI_CENTER | UI_SMALLFONT;
+    demoSave.save.generic.flags = demoSave.keep.generic.flags = QMF_NODEFAULTINIT | QMF_PULSEIFFOCUS;
+    demoSave.save.generic.left = 128;
+    demoSave.save.generic.right = 300;
+    demoSave.keep.generic.left = 324;
+    demoSave.keep.generic.right = 504;
+    demoSave.save.generic.top = demoSave.keep.generic.top = 302;
+    demoSave.save.generic.bottom = demoSave.keep.generic.bottom = 334;
+    demoSave.save.generic.ownerdraw = demoSave.keep.generic.ownerdraw = Demos_DrawAction;
     Menu_AddItem(&demoSave.menu, &demoSave.name);
     Menu_AddItem(&demoSave.menu, &demoSave.save);
     Menu_AddItem(&demoSave.menu, &demoSave.keep);
