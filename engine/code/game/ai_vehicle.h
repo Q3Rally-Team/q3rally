@@ -18,6 +18,7 @@ typedef struct {
 	float leftClearance;
 	float rightClearance;
 	float rearClearance;
+	int targetBlockerEntity;
 	qboolean blocked;
 	qboolean onRoad;
 	int reentryArea;

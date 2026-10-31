@@ -2685,3 +2685,5 @@ extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
 
 #endif /* CG_LOCAL_H */
+
+qboolean CG_DemoPlayerActive( void );

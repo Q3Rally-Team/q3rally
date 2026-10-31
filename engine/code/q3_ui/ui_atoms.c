@@ -1108,6 +1108,10 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		UI_TeamMainMenu();
 		return;
 
+	case UIMENU_DEMOS:
+        UI_ForceMenuOff();
+        UI_DemosMenu();
+        return;
 	case UIMENU_POSTGAME:
 	default:
 #ifndef NDEBUG

@@ -3136,7 +3136,7 @@ static void BotCTFRouteDebug(bot_state_t *bs, const char *stage,
 	else VectorClear(movedir);
 	ClientName(bs->client, name, sizeof(name));
 	BotAI_Print(PRT_MESSAGE,
-		"CTF route movement %s stage=%s ltg=%d objectiveFocus=%d enemy=%d carrying=%d pos=(%.0f %.0f %.0f) goal=(%.0f %.0f %.0f) vel=(%.0f %.0f %.0f) area=%d goalArea=%d travel=%d distance=%.0f blocked=%d failure=%d type=%d traveltype=%d flags=0x%x movedir=(%.2f %.2f %.2f) vehicle=%d road=%d reentryArea=%d recovery=%d vBlocked=%d clearance=%.2f targetClear=%.2f left=%.2f right=%.2f rear=%.2f targetSpeed=%.0f\n",
+		"CTF route movement %s stage=%s ltg=%d objectiveFocus=%d enemy=%d carrying=%d pos=(%.0f %.0f %.0f) goal=(%.0f %.0f %.0f) vel=(%.0f %.0f %.0f) area=%d goalArea=%d travel=%d distance=%.0f blocked=%d failure=%d type=%d traveltype=%d flags=0x%x movedir=(%.2f %.2f %.2f) vehicle=%d road=%d reentryArea=%d recovery=%d vBlocked=%d clearance=%.2f blocker=%d targetClear=%.2f targetBlocker=%d left=%.2f right=%.2f rear=%.2f targetSpeed=%.0f\n",
 		name, stage, bs->ltgtype, Bot_CtfShouldKeepObjective(bs), bs->enemy,
 		BotCTFCarryingFlag(bs) != CTF_FLAG_NONE,
 		bs->origin[0], bs->origin[1], bs->origin[2],
@@ -3148,7 +3148,9 @@ static void BotCTFRouteDebug(bot_state_t *bs, const char *stage,
 		movedir[0], movedir[1], movedir[2],
 		bs->vehicle.active, bs->vehicle.onRoad, bs->vehicle.reentryArea,
 		bs->vehicle.recovery, bs->vehicle.blocked,
-		bs->vehicle.clearance, bs->vehicle.targetClearance,
+		bs->vehicle.clearance, moveresult ? moveresult->blockentity : ENTITYNUM_NONE,
+		bs->vehicle.targetClearance,
+		moveresult ? bs->vehicle.targetBlockerEntity : ENTITYNUM_NONE,
 		bs->vehicle.leftClearance, bs->vehicle.rightClearance,
 		bs->vehicle.rearClearance, bs->vehicle.targetSpeed);
 }

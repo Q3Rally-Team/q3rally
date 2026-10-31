@@ -2602,3 +2602,9 @@ void CG_MouseEvent(int x, int y) {
 	CG_HUDOptions_MouseEvent( cgs.cursorX, cgs.cursorY, qfalse );
 }
 #endif
+
+qboolean CG_DemoPlayerActive( void ) {
+    char value[16];
+    trap_Cvar_VariableStringBuffer( "cl_demoPlayer", value, sizeof(value) );
+    return atoi(value) != 0;
+}

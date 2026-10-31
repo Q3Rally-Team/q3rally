@@ -168,6 +168,7 @@ void BotVehicleDrive( bot_state_t *bs, const vec3_t target, float targetSpeed,
 	drive->rightClearance = right;
 	drive->rearClearance = rear;
 	drive->targetClearance = targetClear;
+	drive->targetBlockerEntity = targetBlockEntity;
 	/* A distant opponent in our firing lane is not yet an immediate detour.
 	 * Keep closing with braking room; close contact, other cars and unsafe
 	 * ground still use the normal, continuously checked avoidance below. */

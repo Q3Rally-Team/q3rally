@@ -18,7 +18,7 @@ Die Ausrichtung setzt der Schlüssel `angle` (0 = Arm bzw. Strahler nach +x).
 
 MD3-Koordinaten reichen nur bis ±512. Der Flutlichtmast ist deshalb 500 hoch gebaut; höhere
 oder niedrigere Masten bekommen `modelscale` (Industrial Crossfire 1.3 = 650, Jungle Opening
-0.86 = 430).
+0.86 = 430, Ridge Pass 1.92 = 960).
 
 ## Licht und Kollision
 
@@ -45,5 +45,7 @@ Flutlichtmast etwa 26 × 26 mal `modelscale`). Arm, Laterne und Flutlichtkopf h�
   Basen, auf den Flaggenhügel gerichtet.
 - `q3r_ctf4_03` (Industrial Crossfire): 24 Straßenlaternen an den Kaistraßen, 8
   Flutlichtmasten an den Hofecken, auf die Flagge gerichtet.
+- `q3r_ridgepass` (Ridge Pass): 2 Flutlichtmasten an den Enden der Tribüne, `modelscale`
+  1.92 (rund 960 hoch), auf die Mitte der Start-Ziel-Geraden gerichtet.
 
 `shaderlist.txt` muss `q3r_lanterns` enthalten, damit q3map2 die Shader kennt.

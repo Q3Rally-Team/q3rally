@@ -299,11 +299,40 @@ Added:
 
 Changed:
 
+- New map q3r_riviera (Riviera Run, generator tools/maptools/make_riviera.py,
+  docs/maps/riviera): A2B sprint down a Mediterranean coast at sunset, about
+  35,800 units from the lighthouse on a cape to a fishing harbour: two
+  hairpins down the cliff, cliff road with guard rails, a tunnel, an arched
+  bridge over a bay, olive groves, a horseshoe bend, a narrow old town street
+  and the harbour quay. Closed course: guard rails and invisible walls on the
+  sea side, invisible walls in the cuttings on the land side. The generator
+  places the 14 checkpoints so that the Bezier route between them follows the
+  road and writes maps/q3r_riviera.bpd, so bots drive the course and the race
+  intro camera works. AAS built from the proxy map.
+
+- New Autoball map q3r_rooftop (Rooftop Arena, generator
+  tools/maptools/make_rooftop.py, docs/maps/rooftop): 4 vs 4 on a skyscraper
+  roof at night in a neon city (env/ely_darkcity). Pitch as big as Sundown
+  Stadium with chamfered corners and fillets; half-high glass on the long sides
+  with player clip above it, so a ball shot over the glass is out of play
+  (autoball_reset volumes, new kick-off); goal structures with LED screens and
+  floodlight masts; cable-cam rails beyond the roof edges, which also give the
+  Autoball TV camera its side wall; lit towers, billboards and streets around
+  it (not solid). Added to the q3r_autoball.cfg rotation after q3r_sundown.
+
 - Floodlight mast model (models/mapobjects/q3r_lanterns/floodmast.md3, plus
   floodmast_red/_blue with team-coloured lenses): tapered galvanised mast,
   ladder with a safety cage, ringed platform and six tilted flood heads on a
   frame. Replaces the brush floodlights in q3r_david4 (aimed at the flag mound)
   and q3r_ctf4_03 (aimed at the flags).
+- q3r_ridgepass: the two brush floodlights at the grandstand are now the
+  floodlight mast model too (scaled to the old height, aimed at the start
+  straight). Same collision as before, so the AAS only got the new BSP
+  checksum.
+- Autoball: removed the old Autoball Test Arena (q3r_autoball_test.arena,
+  tools/autoball/make_test_arena.py and the q3r_sundown .bak copies of it);
+  Sundown Stadium replaces it. q3r_autoball.cfg now starts q3r_sundown, and
+  q3r_sundown.aas (matches the current BSP) is now in the repo.
 - Railway models (models/mapobjects/q3r_rail, generator
   tools/mapobjects/make_rail.py, docs/rail.md): track segment, covered wagon in
   brown, grey and red, tank wagon and flat wagon with bogies, buffers, ladders

@@ -360,6 +360,18 @@ textures/q3r_ridgepass/kerb
 	}
 }
 
+textures/q3r_ridgepass/propclip
+{
+	qer_editorimage textures/base_floor/concrete.jpg
+	qer_trans 0.15
+	// invisible solid hull of a model (floodlight masts): stops cars and shots, lets light through
+	surfaceparm nodraw
+	surfaceparm nolightmap
+	surfaceparm trans
+	surfaceparm nomarks
+	surfaceparm detail
+}
+
 textures/q3r_ridgepass/boundary
 {
 	qer_editorimage textures/base_floor/concrete.jpg

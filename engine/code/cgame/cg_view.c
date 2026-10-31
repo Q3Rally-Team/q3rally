@@ -188,6 +188,20 @@ Sets the coordinates of the rendered window
 static void CG_CalcVrect (void) {
 	int		size;
 
+    if ( cg.demoPlayback && CG_DemoPlayerActive() ) {
+        float scale = cgs.glconfig.vidHeight / 480.0f;
+        float xscale = cgs.glconfig.vidWidth / 640.0f;
+        float bias = 0;
+        if ( xscale > scale ) {
+            xscale = scale;
+            bias = (cgs.glconfig.vidWidth - 640 * scale) / 2;
+        }
+        cg.refdef.x = (int)(264 * xscale + bias);
+        cg.refdef.y = (int)(112 * scale);
+        cg.refdef.width = (int)(328 * xscale);
+        cg.refdef.height = (int)(246 * scale);
+        return;
+    }
 	// the intermission should allways be full screen
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		size = 100;

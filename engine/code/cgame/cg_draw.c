@@ -4141,6 +4141,10 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		return;
 	}
 
+    if ( cg.demoPlayback && CG_DemoPlayerActive() ) {
+        trap_R_RenderScene( &cg.refdef );
+        return;
+    }
 	// clear around the rendered view if sized down
 	CG_TileClear();
 

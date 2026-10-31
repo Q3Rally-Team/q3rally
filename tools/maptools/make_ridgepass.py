@@ -856,12 +856,19 @@ def grandstand():
                {"+y": (TEX + "pitsign", 416, 52, 512, 64)})
     for x in range(x_from + 225, x_to, 450):
         box((x - 8, lo_y - 112, zr + 4), (x + 8, lo_y - 96, zr + 440), TEX + "metal")
-    # floodlight masts at both ends
+    # floodlight masts at both ends (floodmast model, heads aimed at the middle of the
+    # start straight, scaled to the old height of about 960 above the road), invisible
+    # collision where the old pole stood
     for x in (x_from - 120, x_to + 120):
-        box((x - 10, lo_y - 200, zr - 40), (x + 10, lo_y - 180, zr + 900), TEX + "metal")
-        fitted_box((x - 70, lo_y - 196, zr + 880), (x + 70, lo_y - 176, zr + 960), TEX + "metal",
-                   {"+y": (TEX + "lamp", 35, 40, 64, 64)})
-        entity("light", x, lo_y - 100, zr + 860, light="600", _color="1 0.96 0.88")
+        my = lo_y - 190
+        gz = ground(x, my)
+        scale = min(2.0, (zr + 960 - gz) / 500.0)
+        aim = math.atan2(y_edge + 200 - my, (x_from + x_to) / 2 - x)
+        entity("misc_model", x, my, gz - 2, model="models/mapobjects/q3r_lanterns/floodmast.md3",
+               angle=f"{math.degrees(aim) % 360:.0f}", modelscale=f"{scale:.2f}")
+        box((x - 10, lo_y - 200, zr - 40), (x + 10, lo_y - 180, zr + 900), TEX + "propclip")
+        entity("light", x + 200 * math.cos(aim), my + 200 * math.sin(aim), gz + 440 * scale, light="900",
+               _color="1 0.96 0.88")
     for x in (-400, 100, 600):
         entity("light", x, lo_y - 200, zr + 440, light="220", _color="1 0.95 0.85")
     entity("target_speaker", 100, lo_y - 300, zr + 260, noise="sound/world/crowdlng.wav", spawnflags="1")
@@ -1267,6 +1274,10 @@ def write_shader():
             "\t\ttcGen vector ( 0.003125 0 0 ) ( 0 0.003125 0 )", "\t\trgbGen identity", "\t}"] + tail() + ["}", ""]
     out += decal_shader("line", "textures/q3r_signage/white.jpg")
     out += decal_shader("kerb", "textures/q3r_road/cement_redwhite.tga")
+    out += [f"textures/{TEX}propclip", "{", "\tqer_editorimage textures/base_floor/concrete.jpg", "\tqer_trans 0.15",
+            "\t// invisible solid hull of a model (floodlight masts): stops cars and shots, lets light through",
+            "\tsurfaceparm nodraw", "\tsurfaceparm nolightmap", "\tsurfaceparm trans", "\tsurfaceparm nomarks",
+            "\tsurfaceparm detail", "}", ""]
     out += [f"textures/{TEX}boundary", "{", "\tqer_editorimage textures/base_floor/concrete.jpg", "\tqer_trans 0.15",
             "\t// invisible but SOLID (Bullet only takes solid brushes); trans lets light through",
             "\tsurfaceparm nodraw", "\tsurfaceparm nolightmap", "\tsurfaceparm trans", "\tsurfaceparm nomarks",

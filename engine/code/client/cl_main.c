@@ -621,18 +621,30 @@ Dumps the current net message, prefixed by the length
 ====================
 */
 
+static qboolean CL_DemoWrite( const void *data, int length ) {
+    if ( FS_Write( data, length, clc.demofile ) == length ) {
+        return qtrue;
+    }
+    Com_Printf( S_COLOR_RED "Demo recording stopped: write failed.\n" );
+    FS_FCloseFile( clc.demofile );
+    clc.demofile = 0;
+    clc.demorecording = qfalse;
+    clc.spDemoRecording = qfalse;
+    return qfalse;
+}
+
 void CL_WriteDemoMessage ( msg_t *msg, int headerBytes ) {
 	int		len, swlen;
 
 	// write the packet sequence
 	len = clc.serverMessageSequence;
 	swlen = LittleLong( len );
-	FS_Write (&swlen, 4, clc.demofile);
+	if ( !CL_DemoWrite( &swlen, 4 ) ) return;
 	// skip the packet sequencing information
 	len = msg->cursize - headerBytes;
 	swlen = LittleLong(len);
-	FS_Write (&swlen, 4, clc.demofile);
-	FS_Write ( msg->data + headerBytes, len, clc.demofile );
+	if ( !CL_DemoWrite( &swlen, 4 ) ) return;
+	CL_DemoWrite( msg->data + headerBytes, len );
 }
 
 
@@ -653,8 +665,8 @@ void CL_StopRecord_f( void ) {
 
 	// finish up
 	len = -1;
-	FS_Write (&len, 4, clc.demofile);
-	FS_Write (&len, 4, clc.demofile);
+	if ( !CL_DemoWrite( &len, 4 ) ) return;
+	if ( !CL_DemoWrite( &len, 4 ) ) return;
 	FS_FCloseFile (clc.demofile);
 	clc.demofile = 0;
 	clc.demorecording = qfalse;
@@ -750,8 +762,12 @@ void CL_Record_f( void ) {
 				Com_sprintf(name, sizeof(name), "demos/%s.%s%d", demoName, DEMOEXT, com_protocol->integer);
 
 			if (!FS_FileExists(name))
-				break;	// file doesn't exist
+				break;
 		}
+        if ( number > 9999 ) {
+            Com_Printf( "No free demo filename available.\n" );
+            return;
+        }
 	}
 
 	// open the demo file
@@ -820,11 +836,11 @@ void CL_Record_f( void ) {
 
 	// write it to the demo file
 	len = LittleLong( clc.serverMessageSequence - 1 );
-	FS_Write (&len, 4, clc.demofile);
+	if ( !CL_DemoWrite( &len, 4 ) ) return;
 
 	len = LittleLong (buf.cursize);
-	FS_Write (&len, 4, clc.demofile);
-	FS_Write (buf.data, buf.cursize, clc.demofile);
+	if ( !CL_DemoWrite( &len, 4 ) ) return;
+	CL_DemoWrite( buf.data, buf.cursize );
 
 	// the rest of the demo file will be copied from net messages
 }
@@ -856,6 +872,7 @@ static float CL_DemoFrameDurationSDev( void )
 
 	for( i = 0; i < numFrames; i++ )
 		mean += clc.timeDemoDurations[ i ];
+	if ( numFrames <= 0 ) return 0.0f;
 	mean /= numFrames;
 
 	for( i = 0; i < numFrames; i++ )
@@ -883,7 +900,7 @@ void CL_DemoCompleted( void )
 		int	time;
 		
 		time = Sys_Milliseconds() - clc.timeDemoStart;
-		if( time > 0 )
+		if( time > 0 && clc.timeDemoFrames > 0 )
 		{
 			// Millisecond times are frame durations:
 			// minimum/average/maximum/std deviation
@@ -930,6 +947,10 @@ void CL_DemoCompleted( void )
 		}
 	}
 
+    if ( clc.demoPlayer ) {
+        CL_Disconnect( qfalse );
+        return;
+    }
 	CL_Disconnect( qtrue );
 	CL_NextDemo();
 }
@@ -972,8 +993,8 @@ void CL_ReadDemoMessage( void ) {
 		CL_DemoCompleted ();
 		return;
 	}
-	if ( buf.cursize > buf.maxsize ) {
-		Com_Error (ERR_DROP, "CL_ReadDemoMessage: demoMsglen > MAX_MSGLEN");
+	if ( buf.cursize < 0 || buf.cursize > buf.maxsize ) {
+		Com_Error (ERR_DROP, "CL_ReadDemoMessage: invalid demo message length");
 	}
 	r = FS_Read( buf.data, buf.cursize, clc.demofile );
 	if ( r != buf.cursize ) {
@@ -1025,7 +1046,7 @@ static int CL_WalkDemoExt(char *arg, char *name, int *demofile)
 
 	Com_Printf("Not found: %s\n", name);
 
-	while(demo_protocols[i])
+	for ( ; demo_protocols[i]; i++ )
 	{
 #ifdef LEGACY_PROTOCOL
 		if(demo_protocols[i] == com_legacyprotocol->integer)
@@ -1044,7 +1065,6 @@ static int CL_WalkDemoExt(char *arg, char *name, int *demofile)
 		}
 		else
 			Com_Printf("Not found: %s\n", name);
-		i++;
 	}
 	
 	return -1;
@@ -1074,12 +1094,17 @@ demo <demoname>
 
 ====================
 */
+static void CL_DemoPreviewStop_f( void ) {
+    if ( clc.demoPlayer ) CL_Disconnect( qfalse );
+}
+
 void CL_PlayDemo_f( void ) {
 	char		name[MAX_OSPATH];
 	char		arg[MAX_OSPATH];
 	char		*ext_test;
 	int			protocol, i;
 	char		retry[MAX_OSPATH];
+    qboolean embedded = !Q_stricmp( Cmd_Argv(0), "demopreview" );
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("demo <demoname>\n");
@@ -1093,7 +1118,9 @@ void CL_PlayDemo_f( void ) {
 	// open the demo file
 	Q_strncpyz( arg, Cmd_Argv(1), sizeof( arg ) );
 	
-	CL_Disconnect( qtrue );
+	CL_Disconnect( embedded ? qfalse : qtrue );
+    clc.demoPlayer = embedded;
+    Cvar_Set( "cl_demoPlayer", embedded ? "1" : "0" );
 
 	// check for an extension .DEMOEXT_?? (?? is protocol)
 	ext_test = strrchr(arg, '.');
@@ -1142,6 +1169,7 @@ void CL_PlayDemo_f( void ) {
 	Q_strncpyz( clc.demoName, arg, sizeof( clc.demoName ) );
 
 	Con_Close();
+    if ( embedded ) Key_SetCatcher( KEYCATCH_UI );
 
 	clc.state = CA_CONNECTED;
 	clc.demoplaying = qtrue;
@@ -1388,6 +1416,8 @@ This is also called on Com_Error and Com_Quit, so it shouldn't cause any errors
 =====================
 */
 void CL_Disconnect( qboolean showMainMenu ) {
+    Cvar_Set( "cl_demoPlayer", "0" );
+    if ( clc.demoPlayer ) Cvar_Set( "cl_freezeDemo", "0" );
 	if ( !com_cl_running || !com_cl_running->integer ) {
 		return;
 	}
@@ -3278,6 +3308,7 @@ void CL_StartHunkUsers( qboolean rendererOnly ) {
 	if ( !cls.uiStarted ) {
 		cls.uiStarted = qtrue;
 		CL_InitUI();
+        if ( clc.demoPlayer ) VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_DEMOS );
 	}
 }
 
@@ -3781,6 +3812,9 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("demo", CL_PlayDemo_f);
+    Cvar_Get( "cl_demoPlayer", "0", CVAR_ROM );
+    Cmd_AddCommand( "demopreview", CL_PlayDemo_f );
+    Cmd_AddCommand( "demopreviewstop", CL_DemoPreviewStop_f );
 	Cmd_SetCommandCompletionFunc( "demo", CL_CompleteDemoName );
 	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
 	Cmd_AddCommand ("stoprecord", CL_StopRecord_f);
