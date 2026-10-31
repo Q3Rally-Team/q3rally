@@ -1193,3 +1193,5 @@ void UI_SPUnlockMedals_f( void );
 void UI_InitGameinfo( void );
 
 #endif
+
+void UI_DemoSaveMenu(void);

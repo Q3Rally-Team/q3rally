@@ -621,10 +621,13 @@ Dumps the current net message, prefixed by the length
 ====================
 */
 
+static qboolean demoWriteFailed;
+
 static qboolean CL_DemoWrite( const void *data, int length ) {
     if ( FS_Write( data, length, clc.demofile ) == length ) {
         return qtrue;
     }
+    demoWriteFailed = qtrue;
     Com_Printf( S_COLOR_RED "Demo recording stopped: write failed.\n" );
     FS_FCloseFile( clc.demofile );
     clc.demofile = 0;
@@ -706,6 +709,9 @@ record <demoname>
 Begins recording a demo from the current position
 ====================
 */
+static char recordingDemoPath[MAX_OSPATH];
+static char savedDemoPath[MAX_OSPATH];
+
 static char		demoName[MAX_QPATH];	// compiler bug workaround
 void CL_Record_f( void ) {
 	char		name[MAX_OSPATH];
@@ -778,6 +784,9 @@ void CL_Record_f( void ) {
 		Com_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
+    demoWriteFailed = qfalse;
+    savedDemoPath[0] = 0;
+	Q_strncpyz(recordingDemoPath, name, sizeof(recordingDemoPath));
 	clc.demorecording = qtrue;
 	if (Cvar_VariableValue("ui_recordSPDemo")) {
 	  clc.spDemoRecording = qtrue;
@@ -843,6 +852,31 @@ void CL_Record_f( void ) {
 	CL_DemoWrite( buf.data, buf.cursize );
 
 	// the rest of the demo file will be copied from net messages
+}
+
+static void CL_StopRecordPrompt_f(void) {
+    if (!clc.demorecording) { CL_StopRecord_f(); return; }
+    Q_strncpyz(savedDemoPath, recordingDemoPath, sizeof(savedDemoPath));
+    CL_StopRecord_f();
+    if (demoWriteFailed || clc.demofile || clc.demorecording || !uivm) return;
+    Cvar_Set("cl_lastDemoName", COM_SkipPath(savedDemoPath));
+    VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_DEMOSAVE);
+}
+
+static void CL_DemoSaveName_f(void) {
+    char clean[MAX_QPATH], target[MAX_OSPATH];
+    const char *ext = strrchr(savedDemoPath, '.');
+    if (Cmd_Argc() != 2 || !savedDemoPath[0] || !ext) return;
+    COM_SanitizeFileName(Cmd_Argv(1), clean, sizeof(clean));
+    if (!clean[0] || strcmp(clean, Cmd_Argv(1)) || strchr(clean, '/') || strchr(clean, 92) || strstr(clean, "..")) return;
+    Com_sprintf(target, sizeof(target), "demos/%s%s", clean, ext);
+    if (!strcmp(target, savedDemoPath)) return;
+    if (FS_FileExists(target)) { Com_Printf("Demo filename already exists.\n"); return; }
+    FS_Rename(savedDemoPath, target);
+    if (FS_FileExists(target)) {
+        Q_strncpyz(savedDemoPath, target, sizeof(savedDemoPath));
+        Com_Printf("Demo saved as %s\n", target);
+    }
 }
 
 /*
@@ -3817,7 +3851,8 @@ void CL_Init( void ) {
     Cmd_AddCommand( "demopreviewstop", CL_DemoPreviewStop_f );
 	Cmd_SetCommandCompletionFunc( "demo", CL_CompleteDemoName );
 	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
-	Cmd_AddCommand ("stoprecord", CL_StopRecord_f);
+	Cmd_AddCommand ("stoprecord", CL_StopRecordPrompt_f);
+    Cmd_AddCommand("demosavename", CL_DemoSaveName_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 	Cmd_AddCommand ("localservers", CL_LocalServers_f);
