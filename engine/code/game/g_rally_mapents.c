@@ -36,6 +36,14 @@ static void G_RallyWarnMissedCheckpoint( gentity_t *gate, gentity_t *car ) {
 		( client->checkpointWarningTime && level.time < client->checkpointWarningTime ) ) {
 		return;
 	}
+	/* A shared start/finish is numbered as the last gate, but is also crossed
+	   when starting a lap. With no checkpoint cleared since the lap began,
+	   this contact alone is not evidence of a skipped gate (including lingering
+	   contacts after a valid lap finish). Sprint finish gates are unambiguous. */
+	if ( gate == level.finishEnt && !level.sprintTrack && car->number == 1 &&
+		client->lastCheckpointTime == client->lapStartTime ) {
+		return;
+	}
 	client->checkpointWarningTime = level.time + 4000;
 	trap_SendServerCommand( car->s.number, va(
 		"cp \"CHECKPOINT MISSED\nReturn to checkpoint %i\"", car->number ) );
