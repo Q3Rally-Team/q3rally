@@ -646,6 +646,8 @@ static void PlayerModel_ApplyLayout( void ) {
 	s_playermodel.back.generic.callback = PlayerModel_MenuEvent;
 	s_playermodel.back.generic.ownerdraw = PlayerModel_DrawBackButton;
 	s_playermodel.back.string = "Back";
+    Frontend_SetBackButton(&s_playermodel.back.generic);
+
 }
 
 
@@ -2626,7 +2628,8 @@ void UI_PlayerModelMenu( const char *modelName )
 
 	PlayerModel_MenuInit();
 
-	UI_PushMenu( &s_playermodel.menu );
+	Frontend_SetBackButton( &s_playermodel.back.generic );
+    UI_PushMenu( &s_playermodel.menu );
 
 	Menu_SetCursorToItem( &s_playermodel.menu,
 		&s_playermodel.picbuttons[s_playermodel.selectedmodel % MAX_MODELSPERPAGE] );

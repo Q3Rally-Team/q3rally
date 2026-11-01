@@ -456,6 +456,7 @@ void Demos_Cache( void ) {
 
 void UI_DemosMenu( void ) {
     Demos_MenuInit();
+    Frontend_SetBackButton( &s_demos.back.generic );
     UI_PushMenu( &s_demos.menu );
 }
 

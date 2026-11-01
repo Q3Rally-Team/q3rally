@@ -47,10 +47,10 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define PW_TITLE_Y      54
 #define PW_BODY_Y       ( PW_PANEL_Y + 48 )
 
-#define PW_BTN_Y        414
+#define PW_BTN_Y        UI_FRONTEND_BACK_Y
 #define PW_BTN_WIDTH    UI_FRONTEND_ACTION_WIDTH
 #define PW_BTN_NEXT_X   456
-#define PW_BTN_BACK_X   64
+#define PW_BTN_BACK_X   UI_FRONTEND_BACK_X
 #define PW_BTN_SKIP_X   260
 
 // Page 2 field layout — starts lower to give heading room
@@ -598,6 +598,7 @@ static void PW_UpdateButtons( void ) {
     s_pw.btnNext.generic.top = PW_BTN_Y;
     s_pw.btnNext.generic.right = PW_BTN_NEXT_X + PW_BTN_WIDTH;
     s_pw.btnNext.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    Frontend_SetBackButton(&s_pw.btnBack.generic);
 }
 
 /* The choice rows are custom drawn across the full content width.  The
@@ -1064,6 +1065,7 @@ void UI_ProfileWizard_Show( void ) {
     s_pw.btnNext.generic.top = PW_BTN_Y;
     s_pw.btnNext.generic.right = PW_BTN_NEXT_X + PW_BTN_WIDTH;
     s_pw.btnNext.generic.bottom = PW_BTN_Y + UI_FRONTEND_BUTTON_HEIGHT;
+    Frontend_SetBackButton(&s_pw.btnBack.generic);
 
     uis.transitionIn  = 0;
     uis.transitionOut = 0;

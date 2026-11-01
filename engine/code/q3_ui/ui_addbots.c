@@ -286,6 +286,8 @@ static void UI_AddBotsMenu_Layout( int count ) {
 	addBotsMenuInfo.back.generic.y = ADDBOTS_ACTION_Y + 4;
 	addBotsMenuInfo.back.generic.flags |= QMF_NODEFAULTINIT;
 	addBotsMenuInfo.back.generic.ownerdraw = UI_AddBotsMenu_DrawAction;
+    Frontend_SetBackButton(&addBotsMenuInfo.back.generic);
+
 }
 
 
@@ -675,5 +677,6 @@ UI_AddBotsMenu
 */
 void UI_AddBotsMenu( void ) {
 	UI_AddBotsMenu_Init();
-	UI_PushMenu( &addBotsMenuInfo.menu );
+	Frontend_SetBackButton( &addBotsMenuInfo.back.generic );
+    UI_PushMenu( &addBotsMenuInfo.menu );
 }

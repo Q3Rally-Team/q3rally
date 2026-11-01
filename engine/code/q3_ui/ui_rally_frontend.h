@@ -9,6 +9,8 @@ Copyright (C) 2002-2026 Q3Rally Team
 
 #include "ui_rally_theme.h"
 
+void Frontend_SetBackButton( menucommon_s *item );
+
 int Frontend_TextWidth( const char *text, int style );
 int Frontend_TextVisualWidth( const char *text, int style );
 qhandle_t Frontend_BackgroundShader( void );

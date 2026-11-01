@@ -548,5 +548,6 @@ UI_PreferencesMenu
 */
 void UI_PreferencesMenu( void ) {
 	Preferences_MenuInit();
-	UI_PushMenu( &s_preferences.menu );
+	Frontend_SetBackButton( &s_preferences.back.generic );
+    UI_PushMenu( &s_preferences.menu );
 }

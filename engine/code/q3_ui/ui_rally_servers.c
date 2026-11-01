@@ -2422,5 +2422,6 @@ UI_ArenaServersMenu
 */
 void UI_ArenaServersMenu( void ) {
         ArenaServers_MenuInit();
-        UI_PushMenu( &g_arenaservers.menu );
+        Frontend_SetBackButton( &g_arenaservers.back.generic );
+    UI_PushMenu( &g_arenaservers.menu );
 }

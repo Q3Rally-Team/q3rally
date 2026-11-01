@@ -945,6 +945,7 @@ void UI_SoundOptionsMenu( void ) {
 // END
 
 	UI_SoundOptionsMenu_Init();
-	UI_PushMenu( &soundOptionsInfo.menu );
+	Frontend_SetBackButton( &soundOptionsInfo.back.generic );
+    UI_PushMenu( &soundOptionsInfo.menu );
 	Menu_SetCursorToItem( &soundOptionsInfo.menu, &soundOptionsInfo.sfxvolume );
 }

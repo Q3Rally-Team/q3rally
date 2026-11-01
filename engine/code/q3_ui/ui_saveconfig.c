@@ -30,6 +30,7 @@ SAVE CONFIG MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_BACK0			"menu/art/back_0"
@@ -209,6 +210,7 @@ UI_SaveConfigMenu
 */
 void UI_SaveConfigMenu( void ) {
 	UI_SaveConfigMenu_Init();
-	UI_PushMenu( &saveConfig.menu );
+	Frontend_SetBackButton( &saveConfig.back.generic );
+    UI_PushMenu( &saveConfig.menu );
 }
 

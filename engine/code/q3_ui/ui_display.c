@@ -519,6 +519,7 @@ void UI_DisplayOptionsMenu( void ) {
 // END
 
 	UI_DisplayOptionsMenu_Init();
-	UI_PushMenu( &displayOptionsInfo.menu );
+	Frontend_SetBackButton( &displayOptionsInfo.back.generic );
+    UI_PushMenu( &displayOptionsInfo.menu );
 	Menu_SetCursorToItem( &displayOptionsInfo.menu, &displayOptionsInfo.brightness );
 }

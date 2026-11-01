@@ -643,3 +643,29 @@ void Frontend_DrawHeroSurface( int x, int y, int width, int height, float alpha 
     UI_FillRect( x, y, width, height, overlayColor );
     Frontend_DrawPanel( x, y, width, height, alpha, UI_FRONTEND_STYLE_FRAME );
 }
+
+/* A single footer convention for explicitly registered Back actions. This
+ * accepts the common prefix of legacy bitmap and modern text menu items. */
+static void Frontend_DrawBackButton( void *self ) {
+    menucommon_s *item = (menucommon_s *)self;
+    qboolean focus = Menu_ItemAtCursor(item->parent) == item;
+    if (item->flags & QMF_GRAYED) {
+        Frontend_DrawText(item->left + UI_FRONTEND_ACTION_WIDTH / 2,
+            item->top + 4, "Back", UI_CENTER | UI_SMALLFONT, frontendMutedColor);
+        return;
+    }
+    Frontend_DrawButton(item->left, item->top, UI_FRONTEND_ACTION_WIDTH,
+        UI_FRONTEND_BUTTON_HEIGHT, "Back", 1.0f, focus, UI_FRONTEND_TEXT_CENTER);
+}
+
+void Frontend_SetBackButton( menucommon_s *item ) {
+    item->flags &= ~(QMF_LEFT_JUSTIFY | QMF_RIGHT_JUSTIFY);
+    item->flags |= QMF_CENTER_JUSTIFY | QMF_NODEFAULTINIT | QMF_PULSEIFFOCUS;
+    item->left = UI_FRONTEND_BACK_X;
+    item->top = UI_FRONTEND_BACK_Y;
+    item->right = item->left + UI_FRONTEND_ACTION_WIDTH;
+    item->bottom = item->top + UI_FRONTEND_BUTTON_HEIGHT;
+    item->x = item->left + UI_FRONTEND_ACTION_WIDTH / 2;
+    item->y = item->top;
+    item->ownerdraw = Frontend_DrawBackButton;
+}

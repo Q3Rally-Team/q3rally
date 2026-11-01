@@ -727,6 +727,7 @@ void UI_BotsMenu(void) {
     s_bots.menu.draw       = UI_BotsMenu_Draw;
     s_bots.menu.fullscreen = qtrue;
     UI_BotsMenu_Init();
+    Frontend_SetBackButton( &s_bots.back.generic );
     UI_PushMenu(&s_bots.menu);
 }
 

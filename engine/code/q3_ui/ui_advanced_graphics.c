@@ -692,6 +692,7 @@ void UI_GfxPage_Push( const gfxPageDef_t *def ) {
 	Gfx_RefreshPage( page );
 
 	uis.transitionIn = 0;
+	Frontend_SetBackButton( &page->back.generic );
 	UI_PushMenu( &page->menu );
 	if ( def->numRows > 0 ) {
 		Menu_SetCursorToItem( &page->menu, &page->rows[0] );

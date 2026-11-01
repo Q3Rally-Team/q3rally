@@ -30,6 +30,7 @@ LOAD CONFIG MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_BACK0			"menu/art/back_0"
@@ -268,6 +269,7 @@ UI_LoadConfigMenu
 */
 void UI_LoadConfigMenu( void ) {
 	LoadConfig_MenuInit();
-	UI_PushMenu( &s_configs.menu );
+	Frontend_SetBackButton( &s_configs.back.generic );
+    UI_PushMenu( &s_configs.menu );
 }
 

@@ -4,6 +4,11 @@ unreleased
 
 Fixed:
 
+- Standardize Back actions across menus with shared bottom-left placement,
+  frontend styling and full-size mouse targets; move Config reset to the right.
+- Use the current ingame font for following labels, spectator hints and
+  centerprints.
+
 - Level the mouse camera after the race intro on sloped grid positions,
   preserving the vehicle's physical pitch and roll.
 - Keep the racing line on the current route branch at same-level crossings

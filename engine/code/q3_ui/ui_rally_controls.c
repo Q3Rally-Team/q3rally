@@ -3403,5 +3403,6 @@ UI_ControlsMenu
 */
 void UI_ControlsMenu( void ) {
 	Controls_MenuInit();
-	UI_PushMenu( &s_controls.menu );
+	Frontend_SetBackButton( &s_controls.back.generic );
+    UI_PushMenu( &s_controls.menu );
 }

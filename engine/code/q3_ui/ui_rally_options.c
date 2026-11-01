@@ -1015,5 +1015,6 @@ void UI_Q3ROptionsMenu( void )
 // END
 
 	Q3ROptions_MenuInit();
-	UI_PushMenu ( &s_q3roptions.menu );
+	Frontend_SetBackButton( &s_q3roptions.back.generic );
+    UI_PushMenu ( &s_q3roptions.menu );
 }
