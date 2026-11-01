@@ -2419,6 +2419,7 @@ If a new client connects, this will be called after the spawn function.
 ========================
 */
 void MoveClientToIntermission( gentity_t *ent ) {
+    int i;
 	// take out of follow mode if needed
 // STONELANCE
 //	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
@@ -2440,6 +2441,14 @@ void MoveClientToIntermission( gentity_t *ent ) {
 	ent->client->ps.damageYaw = ANGLE2BYTE(ent->client->ps.damageAngles[YAW]);
 // END
 	ent->client->ps.pm_type = PM_INTERMISSION;
+    ent->client->ps.pm_flags &= ~(PMF_FOLLOW | PMF_OBSERVE);
+    VectorClear(ent->client->ps.velocity);
+    VectorClear(ent->client->ps.angularMomentum);
+    if (ent->frontBounds) trap_UnlinkEntity(ent->frontBounds);
+    if (ent->rearBounds) trap_UnlinkEntity(ent->rearBounds);
+    for (i = 0; i < 4; i++) {
+        if (ent->client->carPoints[i]) trap_UnlinkEntity(ent->client->carPoints[i]);
+    }
 
 	// clean up powerup info
 	memset( ent->client->ps.powerups, 0, sizeof(ent->client->ps.powerups) );

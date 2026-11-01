@@ -84,8 +84,8 @@ void G_SetOrigin(gentity_t *ent, vec3_t origin) {
 }
 
 void SetClientViewAngle(gentity_t *ent, vec3_t angle) {
-    (void)ent;
-    (void)angle;
+    VectorCopy(angle, ent->client->ps.viewangles);
+    VectorCopy(angle, ent->client->ps.damageAngles);
 }
 
 void G_RallyUpdateAllTeamTimes(void) {
@@ -614,7 +614,30 @@ void test_unnumbered_grid_starts_use_map_order_before_overflow(void) {
     assert(commandLogCount == 0);
 }
 
+static void test_intro_handover_levels_camera_on_sloped_grid(void) {
+    gclient_t *client;
+    reset_environment();
+    level.maxclients = 1;
+    g_entities[0].inuse = qtrue;
+    g_entities[0].client = client = &levelClients[0];
+    client->sess.sessionTeam = TEAM_FREE;
+    VectorSet(client->ps.viewangles, 12, 90, 9);
+    VectorSet(client->ps.origin, 100, 200, 50);
+    client->pers.cmd.angles[PITCH] = 123;
+    client->pers.cmd.angles[ROLL] = 456;
+    G_RallySnapshotIntroGridPositions();
+    VectorSet(client->ps.origin, 900, 900, 900);
+    G_RallyIntroCountdownHandover();
+    assert(client->ps.origin[0] == 100);
+    assert(client->ps.viewangles[PITCH] == 12 && client->ps.viewangles[ROLL] == 9);
+    assert(client->ps.damageAngles[PITCH] == 0 && client->ps.damageAngles[ROLL] == 0);
+    assert(client->ps.damageAngles[YAW] == 90);
+    assert(client->ps.delta_angles[PITCH] + client->pers.cmd.angles[PITCH] == 0);
+    assert(client->ps.delta_angles[ROLL] + client->pers.cmd.angles[ROLL] == 0);
+}
+
 int main(void) {
+    test_intro_handover_levels_camera_on_sloped_grid();
     test_elimination_configuration_initial_setup();
     test_elimination_configuration_minimum_laps();
     test_race_countdown_sequence();

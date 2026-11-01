@@ -2,6 +2,15 @@
 
 unreleased
 
+Fixed:
+
+- Level the mouse camera after the race intro on sloped grid positions,
+  preserving the vehicle's physical pitch and roll.
+- Keep the racing line on the current route branch at same-level crossings
+  such as the UFO crossing on country01.
+- Hide finished vehicles when switching to race observation, clear residual
+  motion, and prevent observer updates from replacing the intermission camera.
+
 Added:
 
 - q3r_ctf4_03 (Industrial Crossfire) rebuilt from scratch: four-team CTF on

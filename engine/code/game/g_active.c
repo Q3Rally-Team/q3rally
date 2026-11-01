@@ -1859,6 +1859,16 @@ void ClientThink_real( gentity_t *ent ) {
 		VectorCopy( ent->client->ps.viewangles, ent->r.currentAngles );
 		VectorCopy( ent->client->ps.viewangles, ent->s.apos.trBase );
 
+        SetClientViewAngle(ent, ent->client->ps.viewangles);
+        VectorClear(client->ps.velocity);
+        VectorClear(client->ps.angularMomentum);
+        client->ps.pm_type = PM_SPECTATOR;
+        client->ps.pm_flags &= ~PMF_FOLLOW;
+        client->ps.pm_flags |= PMF_OBSERVE;
+        client->ps.eFlags ^= EF_TELEPORT_BIT;
+        ent->s.eType = ET_INVISIBLE;
+        ent->r.contents = 0;
+        trap_UnlinkEntity(ent);
 		ent->raceObserver = qtrue;
 
 		if( ent->frontBounds )
@@ -1866,10 +1876,10 @@ void ClientThink_real( gentity_t *ent ) {
     if( ent->rearBounds )
       trap_UnlinkEntity( ent->rearBounds ); 
 
-		trap_UnlinkEntity( client->carPoints[0] );
-		trap_UnlinkEntity( client->carPoints[1] );
-		trap_UnlinkEntity( client->carPoints[2] );
-		trap_UnlinkEntity( client->carPoints[3] );
+		if (client->carPoints[0]) trap_UnlinkEntity( client->carPoints[0] );
+		if (client->carPoints[1]) trap_UnlinkEntity( client->carPoints[1] );
+		if (client->carPoints[2]) trap_UnlinkEntity( client->carPoints[2] );
+		if (client->carPoints[3]) trap_UnlinkEntity( client->carPoints[3] );
 
 // STONELANCE - NULL out carPoints after unlinking so the SPECTATOR_FOLLOW
 // observer copy loop in ClientEndFrame cannot memcpy into a freed/NULL entity.
@@ -2771,6 +2781,9 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 */
 void ClientEndFrame( gentity_t *ent ) {
 	int			i;
+
+    /* Observer follow/spot updates must not overwrite the results camera. */
+    if (level.intermissiontime) return;
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR || isRaceObserver( ent->s.number ) ||
 		G_ClientShouldUseIntroCam( ent ) ) {

@@ -469,20 +469,27 @@ static int RL_Wrap( int i ) {
 static int RL_FindNearest( const vec3_t origin ) {
 	int best = -1;
 	float bestDist = 0.0f;
+    float bestScore = 0.0f;
 	int i;
 
 	if ( rl.nearestValid ) {
 		for ( i = rl.nearest - RL_SEARCH_BACK; i <= rl.nearest + RL_SEARCH_AHEAD; i++ ) {
 			int k = RL_Wrap( i );
-			float d;
+			float d, along, score;
 
 			if ( k < 0 || k >= rl.count ) {
 				continue;
 			}
 			d = RL_DistSq( k, origin );
-			if ( best < 0 || d < bestDist ) {
+			/* Distance alone is ambiguous at a same-level crossing. Prefer
+             * continuity along the route over a distant visit to this spot. */
+            along = fabs(rl.points[k].dist - rl.points[rl.nearest].dist);
+            if (rl.loop && along > rl.length * 0.5f) along = rl.length - along;
+            score = d + along * along * 0.0625f;
+			if ( best < 0 || score < bestScore ) {
 				best = k;
 				bestDist = d;
+                bestScore = score;
 			}
 		}
 	}

@@ -131,6 +131,12 @@ void G_RallyIntroCountdownHandover( void ) {
 			VectorCopy( rallyIntroGridOrigin[i], client->ps.origin );
 			G_SetOrigin( player, rallyIntroGridOrigin[i] );
 			SetClientViewAngle( player, rallyIntroGridAngles[i] );
+            /* Vehicle attitude belongs to physics, not to the mouse camera.
+             * Grid slots on slopes can contain pitch/roll before the intro. */
+            client->ps.delta_angles[PITCH] = -client->pers.cmd.angles[PITCH];
+            client->ps.delta_angles[ROLL] = -client->pers.cmd.angles[ROLL];
+            client->ps.damageAngles[PITCH] = client->ps.damageAngles[ROLL] = 0;
+            client->ps.damagePitch = 0;
 			VectorClear( client->ps.velocity );
 			VectorClear( client->ps.angularMomentum );
 		}
