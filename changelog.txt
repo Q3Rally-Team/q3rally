@@ -4,6 +4,13 @@ unreleased
 
 Fixed:
 
+- Graphics presets retain full pending cvar names (including anisotropy),
+  reset previous colour LUT overrides, restore normal tyre-smoke density and
+  select model-only sun shadow casters. Sun shadows also restores that mode.
+
+- Halve map-wind influence on rear-weapon smoke screens so they retain
+  more cover on windy tracks.
+
 - Standardize Back actions across menus with shared bottom-left placement,
   frontend styling and full-size mouse targets; move Config reset to the right.
 - Use the current ingame font for following labels, spectator hints and

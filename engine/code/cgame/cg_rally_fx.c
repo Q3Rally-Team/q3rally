@@ -518,7 +518,8 @@ static void CG_FX_SpawnPuff( const vec3_t origin, const vec3_t up, const vec3_t 
 	p->rotation  = random() * 360.0f;
 	p->rotSpeed  = crandom() * 40.0f;
 	p->floorZ    = -1.0e9f;
-	p->windShare = 1.0f;
+	/* Keep the rear weapon's cover useful on windy tracks. */
+    p->windShare = ( kind == FX_SMOKE_SCREEN ) ? 0.5f : 1.0f;
 
 	// light grid at the start, so the smoke is not glowing in the dark
 	VectorCopy( k->color, p->color );
