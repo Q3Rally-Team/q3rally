@@ -42,6 +42,8 @@ DEMOS MENU
 #define ID_PAUSE 15
 #define ID_STOP 16
 #define ID_RESTART 17
+#define ID_REWIND 18
+#define ID_FORWARD 19
 
 /* The virtual UI is 640x480. Keep the demo screen aligned with the other
  * modern frontend surfaces and leave the image itself open behind them. */
@@ -78,7 +80,7 @@ typedef struct {
     menutext_s      previous;
     menutext_s      next;
     menutext_s      go;
-    menutext_s pause, stop, restart;
+    menutext_s pause, stop, restart, rewind, forward;
     char playing[MAX_QPATH];
     int infoSelection, infoBytes;
 
@@ -126,6 +128,11 @@ static void Demos_MenuEvent( void *ptr, int event ) {
         }
         break;
 
+    case ID_REWIND:
+    case ID_FORWARD:
+        if (event == QM_ACTIVATED)
+            trap_Cmd_ExecuteText(EXEC_APPEND, item->id == ID_REWIND ? "demoseek -10\n" : "demoseek 10\n");
+        break;
     case ID_PAUSE:
         if ( event == QM_ACTIVATED && trap_Cvar_VariableValue("cl_demoPlayer") )
             trap_Cvar_Set("cl_freezeDemo", trap_Cvar_VariableValue("cl_freezeDemo") ? "0" : "1");
@@ -241,6 +248,8 @@ static void Demos_Draw( void ) {
     Frontend_DrawText(40, 76, "Select a recording and press Play", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     Frontend_DrawCard(40, 92, 208, 290, 1.0f, qfalse);
     Frontend_DrawCard(260, 108, 336, 254, 1.0f, qfalse);
+    if (trap_Cvar_VariableValue("cl_demoSeeking"))
+        Frontend_DrawText(280, 220, "Seeking...", UI_LEFT | UI_SMALLFONT, demosTextColor);
     if (!playing && s_demos.numDemos > 0) {
         const char *name = s_demos.list.itemnames[s_demos.list.curvalue];
         const char *ext = strrchr(name, '.');
@@ -268,6 +277,10 @@ static sfxHandle_t Demos_MenuKey( int key ) {
     int index;
 
     if ( key == K_ESCAPE || key == K_MOUSE2 ) trap_Cmd_ExecuteText(EXEC_APPEND, "demopreviewstop\n");
+    if ((key == K_LEFTARROW || key == K_RIGHTARROW) && trap_Cvar_VariableValue("cl_demoPlayer")) {
+        trap_Cmd_ExecuteText(EXEC_APPEND, key == K_LEFTARROW ? "demoseek -10\n" : "demoseek 10\n");
+        return menu_null_sound;
+    }
     if ( key == K_SPACE && trap_Cvar_VariableValue("cl_demoPlayer") ) {
         trap_Cvar_Set("cl_freezeDemo", trap_Cvar_VariableValue("cl_freezeDemo") ? "0" : "1");
         return menu_null_sound;
@@ -392,6 +405,13 @@ static void Demos_MenuInit( void ) {
     s_demos.pause.generic.y = s_demos.restart.generic.y = s_demos.stop.generic.y = 370;
     s_demos.pause.generic.top = s_demos.restart.generic.top = s_demos.stop.generic.top = 370;
     s_demos.pause.generic.bottom = s_demos.restart.generic.bottom = s_demos.stop.generic.bottom = 398;
+    Demos_InitAction(&s_demos.rewind, ID_REWIND, "-10 sec", 264);
+    Demos_InitAction(&s_demos.forward, ID_FORWARD, "+10 sec", 440);
+    s_demos.rewind.generic.y = s_demos.rewind.generic.top = 400;
+    s_demos.forward.generic.y = s_demos.forward.generic.top = 400;
+    s_demos.rewind.generic.bottom = s_demos.forward.generic.bottom = 420;
+    Menu_AddItem(&s_demos.menu, &s_demos.rewind);
+    Menu_AddItem(&s_demos.menu, &s_demos.forward);
     Menu_AddItem(&s_demos.menu, &s_demos.pause);
     Menu_AddItem(&s_demos.menu, &s_demos.restart);
     Menu_AddItem(&s_demos.menu, &s_demos.stop);

@@ -1128,6 +1128,29 @@ demo <demoname>
 
 ====================
 */
+static void CL_DemoSeek_f(void) {
+    int target;
+    qboolean paused;
+    char name[MAX_QPATH];
+    if (!clc.demoPlayer || clc.state != CA_ACTIVE || clc.demoSeeking || Cmd_Argc() != 2) return;
+    {
+        int seconds = atoi(Cmd_Argv(1));
+        seconds = (int)Com_Clamp(-3600, 3600, seconds);
+        target = cl.serverTime - clc.demoStartTime + seconds * 1000;
+    }
+    if (target < 0) target = 0;
+    paused = cl_freezeDemo->integer != 0;
+    Q_strncpyz(name, clc.demoName, sizeof(name));
+    // Rebuild from the initial gamestate so both directions preserve state.
+    Cbuf_ExecuteText(EXEC_NOW, va("demopreview \"%s\"\n", name));
+    if (!clc.demoPlayer) return;
+    clc.demoSeeking = qtrue;
+    clc.demoSeekTarget = target;
+    clc.demoSeekPaused = paused;
+    Cvar_Set("cl_demoSeeking", "1");
+    Cvar_Set("cl_freezeDemo", "0");
+}
+
 static void CL_DemoPreviewStop_f( void ) {
     if ( clc.demoPlayer ) CL_Disconnect( qfalse );
 }
@@ -1451,6 +1474,7 @@ This is also called on Com_Error and Com_Quit, so it shouldn't cause any errors
 */
 void CL_Disconnect( qboolean showMainMenu ) {
     Cvar_Set( "cl_demoPlayer", "0" );
+    Cvar_Set("cl_demoSeeking", "0");
     if ( clc.demoPlayer ) Cvar_Set( "cl_freezeDemo", "0" );
 	if ( !com_cl_running || !com_cl_running->integer ) {
 		return;
@@ -3847,6 +3871,8 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("demo", CL_PlayDemo_f);
     Cvar_Get( "cl_demoPlayer", "0", CVAR_ROM );
+    Cvar_Get("cl_demoSeeking", "0", CVAR_ROM);
+    Cmd_AddCommand("demoseek", CL_DemoSeek_f);
     Cmd_AddCommand( "demopreview", CL_PlayDemo_f );
     Cmd_AddCommand( "demopreviewstop", CL_DemoPreviewStop_f );
 	Cmd_SetCommandCompletionFunc( "demo", CL_CompleteDemoName );

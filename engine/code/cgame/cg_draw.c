@@ -4134,6 +4134,9 @@ CG_DrawActive - Perform all drawing needed to completely fill the screen
 ========================================================================
 */
 void CG_DrawActive( stereoFrame_t stereoView ) {
+    char seeking[8];
+    trap_Cvar_VariableStringBuffer("cl_demoSeeking", seeking, sizeof(seeking));
+    if (cg.demoPlayback && atoi(seeking)) return;
 	// optionally draw the info screen instead
 	if ( !cg.snap ) {
 		CG_DrawInformation();

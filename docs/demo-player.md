@@ -15,8 +15,12 @@ Engine commands: `demopreview <file>` and `demopreviewstop`. Engine-owned
 `cl_demoPlayer` tells cgame and UI when preview playback is active.
 Both the engine and updated ui/cgame QVMs must be installed together.
 
-Seeking and a duration timeline are not implemented yet: delta-compressed demos
-need replay from a valid state or an indexed state cache for reliable seeking.
+The -10 sec/+10 sec buttons and Left/Right arrow keys seek relative to the
+current position. Both directions rebuild from the original gamestate and feed
+every snapshot through cgame. Work is split into short batches so the UI stays
+responsive. Pause is restored at the destination. A target beyond EOF ends
+playback. Long recordings can take time to reconstruct; there is no index cache
+or duration timeline yet.
 
 Regression coverage: `python -m pytest tests/test_demo_io.py` exercises actual
 production functions with filesystem stubs for malformed lengths, EOF, valid
