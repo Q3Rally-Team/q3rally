@@ -384,8 +384,8 @@ static void MainMenu_UpdateModel( void )
         VectorClear( moveangles );
 
         /* Keep the garage preview still until the player starts dragging it.
-         * The active car faces the camera in a three-quarter front view. */
-        moveangles[YAW] = 204.0f;
+         * The front points left, showing the side in a three-quarter view. */
+        moveangles[YAW] = 135.0f;
 
         Q_strncpyz( plate, s_main.plateskin, sizeof( plate ) );
         UI_PlayerInfo_SetModel( &s_main.playerinfo, s_main.modelskin, s_main.rimskin, s_main.headskin, plate);

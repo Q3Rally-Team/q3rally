@@ -52,7 +52,6 @@ Building q3rally in build/release-mingw32-x86_64:
     -lwininet
 
   Output:
-    q3rally-server.x86_64.exe
     q3rally.x86_64.exe
     renderer_opengl1_x86_64.dll
     baseq3r/vm/cgame.qvm
@@ -62,43 +61,13 @@ Building q3rally in build/release-mingw32-x86_64:
     SDL2.dll
 
 make[2]: Entering directory '/d/Q3RallyDev/q3rally_tryout/engine'
-make[2]: 'build/release-mingw32-x86_64/q3rally-server.x86_64.exe' is up to date.
-CC code/client/cl_cgame.c
-CC code/client/cl_cin.c
-CC code/client/cl_cin_ogm.c
-CC code/client/cl_console.c
-CC code/client/cl_input.c
-CC code/client/cl_keys.c
-CC code/client/cl_main.c
-CC code/client/cl_net_chan.c
-CC code/client/cl_parse.c
-CC code/client/cl_scrn.c
-CC code/client/cl_ui.c
-CC code/client/cl_avi.c
-CC code/client/cl_update.c
-CC code/client/cl_downloads.c
-CC code/client/snd_altivec.c
-CC code/client/snd_dma.c
-CC code/client/snd_mix.c
-CC code/client/snd_engine.c
-CC code/client/snd_main.c
-CC code/client/snd_codec.c
-CC code/client/snd_codec_wav.c
-CC code/client/snd_codec_ogg.c
-CC code/client/snd_codec_opus.c
-CC code/client/snd_openal.c
-CC code/client/cl_curl.c
-CC code/sdl/sdl_input.c
-CC code/sdl/sdl_snd.c
-CC code/client/snd_codec_mp3.c
+make[2]: 'build/release-mingw32-x86_64/q3rally.x86_64.exe' is up to date.
 make[2]: 'build/release-mingw32-x86_64/renderer_opengl1_x86_64.dll' is up to date.
-CGAME_Q3LCC code/cgame/cg_draw.c
+make[2]: 'build/release-mingw32-x86_64/baseq3r/vm/cgame.qvm' is up to date.
 make[2]: 'build/release-mingw32-x86_64/baseq3r/vm/qagame.qvm' is up to date.
-UI_Q3LCC code/q3_ui/ui_demo2.c
+UI_Q3LCC code/q3_ui/ui_menu.c
 make[2]: 'build/release-mingw32-x86_64/libwinpthread-1.dll' is up to date.
 make[2]: 'build/release-mingw32-x86_64/SDL2.dll' is up to date.
-LD build/release-mingw32-x86_64/q3rally.x86_64.exe
 Q3ASM build/release-mingw32-x86_64/baseq3r/vm/ui.qvm
-Q3ASM build/release-mingw32-x86_64/baseq3r/vm/cgame.qvm
 make[2]: Leaving directory '/d/Q3RallyDev/q3rally_tryout/engine'
 make[1]: Leaving directory '/d/Q3RallyDev/q3rally_tryout/engine'
