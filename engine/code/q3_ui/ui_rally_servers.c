@@ -135,7 +135,9 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define SERVERS_DETAIL_WIDTH        144
 #define SERVERS_DETAIL_HEIGHT       304
 #define SERVERS_ACTION_Y            420
-#define SERVERS_ACTION_WIDTH        80
+#define SERVERS_ACTION_WIDTH        64
+#define SERVERS_ACTION_GAP          8
+#define SERVERS_SECONDARY_X         ( UI_FRONTEND_BACK_X + UI_FRONTEND_ACTION_WIDTH + 16 )
 #define SERVERS_ACTION_HEIGHT       UI_FRONTEND_BUTTON_HEIGHT
 
 static vec4_t serversTextColor = UI_FRONTEND_COLOR_TEXT;
@@ -2314,17 +2316,17 @@ static void ArenaServers_MenuInit( void ) {
         g_arenaservers.list.generic.ownerdraw = ArenaServers_DrawList;
         g_arenaservers.list.height = SERVERS_VISIBLE_ROWS;
 
-        ArenaServers_InitAction( &g_arenaservers.back, ID_BACK, "Back", 24 );
-        ArenaServers_InitAction( &g_arenaservers.save, ID_SAVE, "Save", 108 );
-        ArenaServers_InitAction( &g_arenaservers.remove, ID_REMOVE, "Delete", 192 );
+        ArenaServers_InitAction( &g_arenaservers.back, ID_BACK, "Back", UI_FRONTEND_BACK_X );
+        ArenaServers_InitAction( &g_arenaservers.save, ID_SAVE, "Save", SERVERS_SECONDARY_X );
+        ArenaServers_InitAction( &g_arenaservers.remove, ID_REMOVE, "Delete", SERVERS_SECONDARY_X + SERVERS_ACTION_WIDTH + SERVERS_ACTION_GAP );
         ArenaServers_InitAction( &g_arenaservers.specify, ID_SPECIFY,
-                "Specify", 276 );
+                "Specify", SERVERS_SECONDARY_X + 2 * ( SERVERS_ACTION_WIDTH + SERVERS_ACTION_GAP ) );
         ArenaServers_InitAction( &g_arenaservers.refresh, ID_REFRESH,
-                "Refresh", 360 );
+                "Refresh", SERVERS_SECONDARY_X + 3 * ( SERVERS_ACTION_WIDTH + SERVERS_ACTION_GAP ) );
         ArenaServers_InitAction( &g_arenaservers.create, ID_CREATE,
-                "Create", 444 );
+                "Create", SERVERS_SECONDARY_X + 4 * ( SERVERS_ACTION_WIDTH + SERVERS_ACTION_GAP ) );
         ArenaServers_InitAction( &g_arenaservers.go, ID_CONNECT,
-                "Connect", 528 );
+                "Connect", SERVERS_SECONDARY_X + 5 * ( SERVERS_ACTION_WIDTH + SERVERS_ACTION_GAP ) );
 
         Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.banner );
 

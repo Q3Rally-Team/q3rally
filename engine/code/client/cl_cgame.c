@@ -1040,6 +1040,10 @@ void CL_SetCGameTime( void ) {
 
 	if ( clc.demoplaying && cl_freezeDemo->integer ) {
 		// cl_freezeDemo is used to lock a demo in place for single frame advances
+        if (clc.demoPlayer) {
+            // Browser Pause resumes here, rather than catching up with wall time.
+            cl.serverTimeDelta = cl.serverTime - cls.realtime;
+        }
 
 	} else {
 		// cl_timeNudge is a user adjustable cvar that allows more

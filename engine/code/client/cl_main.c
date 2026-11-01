@@ -1475,6 +1475,7 @@ This is also called on Com_Error and Com_Quit, so it shouldn't cause any errors
 void CL_Disconnect( qboolean showMainMenu ) {
     Cvar_Set( "cl_demoPlayer", "0" );
     Cvar_Set("cl_demoSeeking", "0");
+    Cvar_Set("cl_demoTime", "0");
     if ( clc.demoPlayer ) Cvar_Set( "cl_freezeDemo", "0" );
 	if ( !com_cl_running || !com_cl_running->integer ) {
 		return;
@@ -3066,6 +3067,16 @@ CL_Frame
 
 ==================
 */
+/* Derive the UI clock from the rendered demo time, never from wall time. */
+static void CL_UpdateDemoPlaybackTime(void) {
+    int elapsed = 0;
+    if (clc.demoPlayer && clc.state == CA_ACTIVE && cl.snap.valid) {
+        elapsed = cl.serverTime - clc.demoStartTime;
+        if (elapsed < 0) elapsed = 0;
+    }
+    Cvar_SetValue("cl_demoTime", elapsed / 1000);
+}
+
 void CL_Frame ( int msec ) {
 
 	if ( !com_cl_running->integer ) {
@@ -3188,6 +3199,7 @@ void CL_Frame ( int msec ) {
 
 	// decide on the serverTime to render
 	CL_SetCGameTime();
+    CL_UpdateDemoPlaybackTime();
 
 	// update the screen
 	SCR_UpdateScreen();
@@ -3872,6 +3884,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("demo", CL_PlayDemo_f);
     Cvar_Get( "cl_demoPlayer", "0", CVAR_ROM );
     Cvar_Get("cl_demoSeeking", "0", CVAR_ROM);
+    Cvar_Get("cl_demoTime", "0", CVAR_ROM);
     Cmd_AddCommand("demoseek", CL_DemoSeek_f);
     Cmd_AddCommand( "demopreview", CL_PlayDemo_f );
     Cmd_AddCommand( "demopreviewstop", CL_DemoPreviewStop_f );

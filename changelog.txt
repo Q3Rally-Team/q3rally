@@ -18,6 +18,10 @@ Fixed:
 
 Added:
 
+- Elapsed demo playback time in the preview header (MM:SS or H:MM:SS),
+  with Playing/Paused/Seeking status. Browser pause no longer catches up
+  to elapsed wall time when resumed.
+
 - q3r_ctf4_03 (Industrial Crossfire) rebuilt from scratch: four-team CTF on
   a square harbour pier at dusk, rotationally symmetric for fairness. Team
   bases in the corners (container terminal, steel works, rail depot, bulk

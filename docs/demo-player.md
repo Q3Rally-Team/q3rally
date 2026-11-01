@@ -32,3 +32,9 @@ status is a compact bottom-left label. Stopping a recording via `stoprecord`
 opens a naming menu: Save renames it without overwriting an existing demo;
 Keep name or Escape retains the original file. Internal disconnect/shutdown
 paths close recordings without opening this menu.
+
+The preview header shows elapsed playback time (MM:SS, or H:MM:SS for long
+recordings). The engine publishes cl_demoTime in whole seconds from the current
+rendered demo timestamp relative to the first snapshot. Pause freezes the clock;
+restart/stop reset it; seeking updates it to the reconstructed position. This is
+elapsed time only, not total recording duration.

@@ -239,8 +239,15 @@ static void Demos_Draw( void ) {
     qboolean seeking = trap_Cvar_VariableValue("cl_demoSeeking") != 0;
     menutext_s *transport[5];
     int i;
+    int seconds = (int)trap_Cvar_VariableValue("cl_demoTime");
+    char clock[24];
     char title[64];
-    Frontend_FitText(title, sizeof(title), playing ? s_demos.playing : "Preview", DEMO_PREVIEW_WIDTH, UI_SMALLFONT);
+    if (seconds < 0) seconds = 0;
+    if (seconds >= 3600)
+        Com_sprintf(clock, sizeof(clock), "%d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+    else
+        Com_sprintf(clock, sizeof(clock), "%02d:%02d", seconds / 60, seconds % 60);
+    Frontend_FitText(title, sizeof(title), playing ? s_demos.playing : "Preview", DEMO_PREVIEW_WIDTH - 104, UI_SMALLFONT);
     transport[0] = &s_demos.restart; transport[1] = &s_demos.rewind;
     transport[2] = &s_demos.pause; transport[3] = &s_demos.forward;
     transport[4] = &s_demos.stop;
@@ -277,6 +284,12 @@ static void Demos_Draw( void ) {
         Frontend_DrawText(252, 300, "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     }
     Frontend_DrawText(DEMO_PREVIEW_X, 82, title, UI_LEFT | UI_SMALLFONT, demosTextColor);
+    Frontend_DrawText(DEMO_PREVIEW_X + DEMO_PREVIEW_WIDTH, 82, clock,
+        UI_RIGHT | UI_SMALLFONT, playing ? demosTextColor : demosMutedColor);
+    if (playing)
+        Frontend_DrawText(600, 48, seeking ? "Seeking" :
+            (trap_Cvar_VariableValue("cl_freezeDemo") ? "Paused" : "Playing"),
+            UI_RIGHT | UI_SMALLFONT, demosMutedColor);
     Frontend_DrawText(128, 352, va("%d / %d", s_demos.numDemos ? s_demos.list.curvalue + 1 : 0, s_demos.numDemos), UI_CENTER | UI_SMALLFONT, demosMutedColor);
     Frontend_DrawText(232, 432, "Space: pause   Arrows: seek", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     Menu_Draw(&s_demos.menu);
