@@ -280,8 +280,8 @@ void FBO_Init(void)
 	if (multisample != r_ext_framebuffer_multisample->integer)
 		ri.Cvar_SetValue("r_ext_framebuffer_multisample", (float)multisample);
 	
-	// only create a render FBO if we need to resolve MSAA or do HDR
-	// otherwise just render straight to the screen (tr.renderFbo = NULL)
+	// Postprocessing also needs a scene texture when HDR and MSAA are off.
+	// Use an ordinary RGBA8 target for the LDR path (e.g. the Low preset).
 	if (multisample && glRefConfig.framebufferMultisample)
 	{
 		tr.renderFbo = FBO_Create("_render", tr.renderDepthImage->width, tr.renderDepthImage->height);
@@ -294,7 +294,7 @@ void FBO_Init(void)
 		FBO_AttachImage(tr.msaaResolveFbo, tr.renderDepthImage, GL_DEPTH_ATTACHMENT, 0);
 		R_CheckFBO(tr.msaaResolveFbo);
 	}
-	else if (r_hdr->integer)
+	else if (r_hdr->integer || r_postProcess->integer)
 	{
 		tr.renderFbo = FBO_Create("_render", tr.renderDepthImage->width, tr.renderDepthImage->height);
 		FBO_AttachImage(tr.renderFbo, tr.renderImage, GL_COLOR_ATTACHMENT0, 0);

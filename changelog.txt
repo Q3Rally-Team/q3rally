@@ -4,6 +4,10 @@ unreleased
 
 Fixed:
 
+- OpenGL2 Low preset: create an LDR scene framebuffer for postprocessing
+  even with HDR and MSAA disabled, avoiding a black screen and NULL FBO
+  blit warnings. Missing scene targets now skip postprocessing safely.
+
 - Graphics presets retain full pending cvar names (including anisotropy),
   reset previous colour LUT overrides, restore normal tyre-smoke density and
   select model-only sun shadow casters. Sun shadows also restores that mode.
