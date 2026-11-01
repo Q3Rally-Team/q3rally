@@ -502,6 +502,7 @@ static void G_RallyInitializeLapTimersAtRaceStart( int startTime ) {
 
 		player->client->lapStartTime = startTime;
 		player->client->lastCheckpointTime = startTime;
+		player->client->checkpointWarningTime = 0;
 	}
 }
 

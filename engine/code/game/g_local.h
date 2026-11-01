@@ -598,6 +598,7 @@ struct gclient_s {
 	int			horn_sound_time;
 
 	int			lastCheckpointTime;
+	int			checkpointWarningTime;
 	qboolean	cleanCheckpointSegment;
 	int			lapStartTime;
 	int			bestLapMs;

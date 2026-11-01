@@ -24,6 +24,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 #include "g_profile.h"
 
+/* Report a later gate without advancing race progress. Previous gates can be
+   touched while manoeuvring and are not evidence of a missed checkpoint. */
+static void G_RallyWarnMissedCheckpoint( gentity_t *gate, gentity_t *car ) {
+	gclient_t *client = car->client;
+	if ( !client || !level.startRaceTime || level.time < level.startRaceTime ||
+		client->finishRaceTime || client->ps.pm_type != PM_NORMAL ||
+		client->sess.sessionTeam == TEAM_SPECTATOR ||
+		( car->r.svFlags & SVF_BOT ) || car->number < 1 ||
+		gate->number <= car->number ||
+		( client->checkpointWarningTime && level.time < client->checkpointWarningTime ) ) {
+		return;
+	}
+	client->checkpointWarningTime = level.time + 4000;
+	trap_SendServerCommand( car->s.number, va(
+		"cp \"CHECKPOINT MISSED\nReturn to checkpoint %i\"", car->number ) );
+}
+
 static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 	gclient_t *client;
 	int splitDuration;
@@ -584,6 +601,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
                 G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
 
         if ( self->number != other->number ) {
+                G_RallyWarnMissedCheckpoint( self, other );
                 return;
         }
 
@@ -650,6 +668,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
 		return;
 	}
+	G_RallyWarnMissedCheckpoint( self, other );
 
         if (self->number == other->number){
                 G_RallyCompleteCleanSegment( other );
@@ -943,6 +962,7 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 
 	if (g_developer.integer)
 		G_Printf( "Client %i touched checkpoint number %i\n", other->s.clientNum, self->number );
+	G_RallyWarnMissedCheckpoint( self, other );
 
 	if (self->number == other->number){
 		G_RallyCompleteCleanSegment( other );
