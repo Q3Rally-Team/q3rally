@@ -1,0 +1,27 @@
+{
+  "trees": 107,
+  "map": "q3r_quarry",
+  "terrain_triangles": 19982,
+  "leaves": {
+    "64": 9576,
+    "128": 415
+  },
+  "brushes": 22761,
+  "levels": [
+    -480,
+    -320,
+    -160,
+    0
+  ],
+  "hill_zone": [
+    1120,
+    840
+  ],
+  "ramp_max_grade_deg": 9.8,
+  "face_grade_deg": [
+    66.4,
+    66.4,
+    64.6
+  ],
+  "max_slope_deg": 74.1
+}

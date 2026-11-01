@@ -2240,6 +2240,9 @@ int Com_EventLoop( void ) {
 			case SE_CHAR:
 				CL_CharEvent( ev.evValue );
 			break;
+			case SE_MOUSE_ABSOLUTE:
+                CL_MousePositionEvent(ev.evValue, ev.evValue2);
+                break;
 			case SE_MOUSE:
 				CL_MouseEvent( ev.evValue, ev.evValue2, ev.evTime );
 			break;

@@ -40,3 +40,4 @@ q3r_lanterns
 q3r_rail
 q3r_rooftop
 q3r_riviera
+q3r_quarry

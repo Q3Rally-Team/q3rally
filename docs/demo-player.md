@@ -1,0 +1,30 @@
+# Demo player
+
+The demo browser plays recordings inside its preview panel. Select a demo and
+choose Play demo. Pause/Resume (or Space) freezes playback; Restart reloads the
+current recording; Stop returns to the empty preview. Back/Escape stops playback
+and leaves the browser. The console `demo` command retains full-screen playback.
+
+The preview uses the normal demo parser and cgame to load the recorded map and
+render its scene, with game HUD, minimap and rear-view mirror suppressed. It does
+not start a new race/server. Map assets still need to load. The engine restores
+the browser after UI VM recreation during map loading. The preview viewport uses
+the same 640x480 coordinate transform as the menu.
+
+Engine commands: `demopreview <file>` and `demopreviewstop`. Engine-owned
+`cl_demoPlayer` tells cgame and UI when preview playback is active.
+Both the engine and updated ui/cgame QVMs must be installed together.
+
+Seeking and a duration timeline are not implemented yet: delta-compressed demos
+need replay from a valid state or an indexed state cache for reliable seeking.
+
+Regression coverage: `python -m pytest tests/test_demo_io.py` exercises actual
+production functions with filesystem stubs for malformed lengths, EOF, valid
+messages, protocol fallback and write failure cleanup.
+
+The idle preview shows the selected filename, file size and protocol extension.
+Preview controls use their full painted rectangles as mouse targets. Recording
+status is a compact bottom-left label. Stopping a recording via `stoprecord`
+opens a naming menu: Save renames it without overwriting an existing demo;
+Keep name or Escape retains the original file. Internal disconnect/shutdown
+paths close recordings without opening this menu.

@@ -1,0 +1,6 @@
+{
+	map "q3r_quarry"
+	longname "Quarry King"
+	type "q3r_koth"
+	botsupport "None"
+}

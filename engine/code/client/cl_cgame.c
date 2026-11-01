@@ -632,6 +632,8 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
   case CG_KEY_GETCATCHER:
 		return Key_GetCatcher();
   case CG_KEY_SETCATCHER:
+        // A cgame used as a preview must never take input from its host menu.
+        if (clc.demoPlayer) return 0;
 		// Don't allow the cgame module to close the console
 		Key_SetCatcher( args[1] | ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) );
     return 0;

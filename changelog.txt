@@ -299,6 +299,17 @@ Added:
 
 Changed:
 
+- New map q3r_quarry (Quarry King, generator tools/maptools/make_quarry.py,
+  docs/maps/quarry) for King of the Hill: a terraced limestone quarry on a
+  summer afternoon. The hill zone is the pit floor; three benches with steep
+  160-unit faces step up to the rim, six haul road ramps lead back up, every
+  face can be dropped down. Red spawns on the east rim, blue on the west rim;
+  terrain, ramps, cover and pickups are point symmetric. Block stacks, gravel
+  piles, excavators, dump trucks, conveyors up to two crushing plants beyond
+  the rim. Lanes between the cover are at least 220 units wide (bots got
+  wedged in a tighter layout); in tests bots drive into the pit and contest
+  the zone.
+
 - New map q3r_riviera (Riviera Run, generator tools/maptools/make_riviera.py,
   docs/maps/riviera): A2B sprint down a Mediterranean coast at sunset, about
   35,800 units from the lighthouse on a cape to a fishing harbour: two

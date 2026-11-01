@@ -1,0 +1,8 @@
+{
+	map "q3r_riviera"
+	longname "Riviera Run"
+	author "Q3Rally Team"
+	type "q3r_sprint"
+	starts "8"
+	botsupport "None"
+}
