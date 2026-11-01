@@ -14,6 +14,12 @@ optional Ladder service used for match reporting.
 * PHP Ladder webservice: [ladder_service/php_webservice/README.md](ladder_service/php_webservice/README.md)
 * CTF4 announcer asset notes: [baseq3r/sound/teamplay/README.md](baseq3r/sound/teamplay/README.md)
 
+## Release packaging
+
+Use `make_release.py` to audit assets and package existing platform builds.
+See [v0.8 release instructions](docs/releasing-v0.8.md) and the
+[current asset findings](docs/asset-audit-v0.8.md).
+
 ## Repository Layout
 
 * `engine/` - Q3Rally's ioquake3-derived engine source and build scripts.
