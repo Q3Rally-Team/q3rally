@@ -1,6 +1,12 @@
 {
 	map "q3r_quarry"
 	longname "Quarry King"
+	author "Q3Rally Team"
 	type "q3r_koth"
-	botsupport "None"
+	starts "8"
+	observerspots "0"
+	weapons "SG,RL"
+	powerups "2"
+	botsupport "Ok"
+	teams "2"
 }

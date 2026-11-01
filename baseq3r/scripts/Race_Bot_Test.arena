@@ -18,7 +18,7 @@ elimination "1"
 bots "Samuel"
 
 //PLAYER STARTS
-starts "4"
+starts "6"
 
 //LAPS
 laps "3"
@@ -27,7 +27,7 @@ laps "3"
 laptime "34 sec"
 
 //CHECKPOINTS
-checkpoints "14"
+checkpoints "6"
 
 //OBSERVER SPOTS
 observerspots "0"

@@ -4,5 +4,10 @@
 	author "Q3Rally Team"
 	type "q3r_sprint"
 	starts "8"
-	botsupport "None"
+	laps "1"
+	checkpoints "14"
+	observerspots "6"
+	weapons "0"
+	powerups "0"
+	botsupport "Ok"
 }

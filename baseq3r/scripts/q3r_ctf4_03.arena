@@ -27,10 +27,10 @@ checkpoints ""
 observerspots ""
 
 //WEAPONS
-weapons "1"
+weapons "SG,GL,RL,RG,PG"
 
 //POWERUPS
-powerups "1"
+powerups "5"
 
 //REVERSABLE
 reversable ""

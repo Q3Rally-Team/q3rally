@@ -528,7 +528,19 @@ def write_map():
         text.append("{\n" + "\n".join(f'"{k}" "{v}"' for k, v in ent.items()) + "\n}")
     (ROOT / "baseq3r" / "maps" / f"{NAME}.map").write_text("\n".join(text) + "\n", encoding="ascii")
     (ROOT / "baseq3r" / "scripts" / f"{NAME}.arena").write_text(
-        '{\n\tmap "q3r_mesaking"\n\tlongname "Mesa King"\n\ttype "q3r_koth"\n\tbotsupport "None"\n}\n', encoding="ascii")
+        '{\n'
+        '\tmap "q3r_mesaking"\n'
+        '\tlongname "Mesa King"\n'
+        '\tauthor "Q3Rally Team"\n'
+        '\ttype "q3r_koth"\n'
+        '\tstarts "8"\n'
+        '\tobserverspots "0"\n'
+        '\tweapons "SG,RL"\n'
+        '\tpowerups "2"\n'
+        '\tbotsupport "None"\n'
+        '\tteams "2"\n'
+        '}\n'
+        , encoding="ascii")
 
 
 def main():

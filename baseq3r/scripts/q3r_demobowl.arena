@@ -15,7 +15,7 @@ type "q3r_dm q3r_team_dm q3r_derby"
 bots "Jennifer Jim Vlad Zack"
 
 //PLAYER STARTS
-starts "17"
+starts "16"
 
 //LAPTIME
 laptime ""

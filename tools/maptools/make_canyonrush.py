@@ -869,8 +869,21 @@ def write_map():
     target = ROOT / "baseq3r" / "maps" / f"{NAME}.map"
     target.write_text("\n".join(text) + "\n", encoding="ascii")
     arena = ROOT / "baseq3r" / "scripts" / f"{NAME}.arena"
-    arena.write_text('{\n\tmap "q3r_canyonrush"\n\tlongname "Canyon Rush"\n\ttype "q3r_sprint"\n'
-                     '\tbotsupport "None"\n}\n', encoding="ascii")
+    arena.write_text(
+        '{\n'
+        '\tmap "q3r_canyonrush"\n'
+        '\tlongname "Canyon Rush"\n'
+        '\tauthor "Q3Rally Team"\n'
+        '\ttype "q3r_sprint"\n'
+        '\tstarts "4"\n'
+        '\tlaps "1"\n'
+        '\tcheckpoints "6"\n'
+        '\tobserverspots "0"\n'
+        '\tweapons "0"\n'
+        '\tpowerups "0"\n'
+        '\tbotsupport "None"\n'
+        '}\n'
+        , encoding="ascii")
     return target
 
 

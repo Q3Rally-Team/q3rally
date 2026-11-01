@@ -27,7 +27,7 @@ laps "3"
 laptime "1 min 07 sec"
 
 //CHECKPOINTS
-checkpoints "22"
+checkpoints "21"
 
 //OBSERVER SPOTS
 observerspots "0"
@@ -36,7 +36,7 @@ observerspots "0"
 weapons "FT,PG,RG,RL"
 
 //POWERUPS
-powerups "1"
+powerups "0"
 
 //REVERSABLE
 reversable "0"

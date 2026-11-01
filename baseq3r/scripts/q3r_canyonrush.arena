@@ -1,6 +1,13 @@
 {
 	map "q3r_canyonrush"
 	longname "Canyon Rush"
+	author "Q3Rally Team"
 	type "q3r_sprint"
+	starts "4"
+	laps "1"
+	checkpoints "6"
+	observerspots "0"
+	weapons "0"
+	powerups "0"
 	botsupport "None"
 }

@@ -15,7 +15,7 @@ type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm q3r_eliminatio
 bots "Tobias Josh Bee Paul Ivan"
 
 //PLAYER STARTS
-starts "8"
+starts "10"
 
 //LAPS
 laps "3"
@@ -24,16 +24,16 @@ laps "3"
 laptime "0 min 57 sec"
 
 //CHECKPOINTS
-checkpoints "25"
+checkpoints "26"
 
 //OBSERVER SPOTS
 observerspots "0"
 
 //WEAPONS
-weapons "8"
+weapons "SG,GL,RL,RG,FT,BFG"
 
 //POWERUPS
-powerups "4"
+powerups "8"
 
 //REVERSABLE
 reversable "0"

@@ -18,7 +18,7 @@ elimination "1"
 bots "Tony Minori Carla Chloe Vlad"
 
 //PLAYER STARTS
-starts "16"
+starts "12"
 
 //LAPS
 laps "3"
@@ -30,13 +30,13 @@ laptime "34 sec & 45 sec"
 checkpoints "9 & 12"
 
 //OBSERVER SPOTS
-observerspots "9"
+observerspots "8"
 
 //WEAPONS
 weapons "GL,RG,RL"
 
 //POWERUPS
-powerups "6"
+powerups "5"
 
 //REVERSABLE
 reversable "1"

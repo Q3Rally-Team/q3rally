@@ -15,7 +15,7 @@ type "q3r_dm q3r_team_dm q3r_derby"
 bots "Jim Bobby Sam Tobias"
 
 //PLAYER STARTS
-starts "4"
+starts "8"
 
 //LAPTIME
 laptime ""

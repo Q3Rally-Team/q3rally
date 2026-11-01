@@ -18,7 +18,7 @@ elimination "1"
 bots "Samuel Jim Sam Tobias Kuro"
 
 //PLAYER STARTS
-starts "8"
+starts "12"
 
 //LAPS
 laps "3"
@@ -27,7 +27,7 @@ laps "3"
 laptime "34 sec"
 
 //CHECKPOINTS
-checkpoints "14"
+checkpoints "16"
 
 //OBSERVER SPOTS
 observerspots "0"
