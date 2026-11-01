@@ -31,6 +31,7 @@ DEMOS MENU
 
 #include "ui_local.h"
 #include "ui_rally_frontend.h"
+#include "../qcommon/demo_layout.h"
 
 #define NAMEBUFSIZE             ( MAX_DEMOS * 32 )
 
@@ -53,18 +54,14 @@ DEMOS MENU
 #define DEMOS_FRAME_HEIGHT      440
 #define DEMOS_LIST_X            40
 #define DEMOS_LIST_Y            112
-#define DEMOS_LIST_WIDTH        208
+#define DEMOS_LIST_WIDTH        176
 #define DEMOS_LIST_HEIGHT       256
 #define DEMOS_ROW_X             ( DEMOS_LIST_X + 16 )
 #define DEMOS_ROW_Y             DEMOS_LIST_Y
 #define DEMOS_ROW_WIDTH         ( DEMOS_LIST_WIDTH - 32 )
 #define DEMOS_ROW_HEIGHT        UI_FRONTEND_BUTTON_HEIGHT
 #define DEMOS_ROW_GAP           3
-#define DEMOS_VISIBLE_ITEMS     9
-#define DEMOS_DETAIL_X          412
-#define DEMOS_DETAIL_Y          88
-#define DEMOS_DETAIL_WIDTH      188
-#define DEMOS_DETAIL_HEIGHT     300
+#define DEMOS_VISIBLE_ITEMS     8
 #define DEMOS_ACTION_Y          420
 #define DEMOS_ACTION_HEIGHT     UI_FRONTEND_BUTTON_HEIGHT
 #define DEMOS_ACTION_WIDTH      UI_FRONTEND_ACTION_WIDTH
@@ -198,7 +195,7 @@ static void Demos_DrawList( void *self ) {
 
         y = DEMOS_ROW_Y + i * ( DEMOS_ROW_HEIGHT + DEMOS_ROW_GAP );
         active = ( index == list->curvalue ) ? qtrue : qfalse;
-        Q_strncpyz(label, list->itemnames[index], sizeof(label));
+        Frontend_FitText(label, sizeof(label), list->itemnames[index], DEMOS_ROW_WIDTH - 16, UI_SMALLFONT);
         Frontend_DrawNavButton( DEMOS_ROW_X, y, DEMOS_ROW_WIDTH,
                                 DEMOS_ROW_HEIGHT,
                                 label, 1.0f, active,
@@ -239,17 +236,29 @@ static void Demos_DrawAction( void *self ) {
 static void Demos_Draw( void ) {
     vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
     qboolean playing = trap_Cvar_VariableValue("cl_demoPlayer") != 0;
-    char title[40];
-    Q_strncpyz(title, playing ? s_demos.playing : "Preview", sizeof(title));
+    qboolean seeking = trap_Cvar_VariableValue("cl_demoSeeking") != 0;
+    menutext_s *transport[5];
+    int i;
+    char title[64];
+    Frontend_FitText(title, sizeof(title), playing ? s_demos.playing : "Preview", DEMO_PREVIEW_WIDTH, UI_SMALLFONT);
+    transport[0] = &s_demos.restart; transport[1] = &s_demos.rewind;
+    transport[2] = &s_demos.pause; transport[3] = &s_demos.forward;
+    transport[4] = &s_demos.stop;
+    for (i = 0; i < 5; i++) {
+        transport[i]->generic.flags &= ~QMF_GRAYED;
+        if (!playing || (seeking && i != 4)) transport[i]->generic.flags |= QMF_GRAYED;
+    }
     s_demos.pause.string = trap_Cvar_VariableValue("cl_freezeDemo") ? "Resume" : "Pause";
     Frontend_DrawBackground(scrimColor);
     Frontend_DrawPanel(24, 20, 592, 440, 1.0f, UI_FRONTEND_STYLE_FRAME);
     Frontend_DrawText(40, 44, "Demo player", UI_LEFT | UI_BIGFONT, demosTextColor);
-    Frontend_DrawText(40, 76, "Select a recording and press Play", UI_LEFT | UI_SMALLFONT, demosMutedColor);
-    Frontend_DrawCard(40, 92, 208, 290, 1.0f, qfalse);
-    Frontend_DrawCard(260, 108, 336, 254, 1.0f, qfalse);
+    Frontend_DrawText(40, 82, "Recordings", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawCard(40, 100, 176, 276, 1.0f, qfalse);
+    Frontend_DrawCard(DEMO_PREVIEW_X, DEMO_PREVIEW_Y, DEMO_PREVIEW_WIDTH, DEMO_PREVIEW_HEIGHT, 1.0f, qfalse);
     if (trap_Cvar_VariableValue("cl_demoSeeking"))
-        Frontend_DrawText(280, 220, "Seeking...", UI_LEFT | UI_SMALLFONT, demosTextColor);
+        Frontend_DrawText(252, 220, "Seeking...", UI_LEFT | UI_SMALLFONT, demosTextColor);
+    if (!playing && !s_demos.numDemos)
+        Frontend_DrawText(252, 220, "No recordings available", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     if (!playing && s_demos.numDemos > 0) {
         const char *name = s_demos.list.itemnames[s_demos.list.curvalue];
         const char *ext = strrchr(name, '.');
@@ -261,14 +270,15 @@ static void Demos_Draw( void ) {
             if (file) trap_FS_FCloseFile(file);
         }
         Q_strncpyz(display, name, sizeof(display));
-        Frontend_DrawText(280, 150, "Selected recording", UI_LEFT | UI_SMALLFONT, demosMutedColor);
-        Frontend_DrawText(280, 178, display, UI_LEFT | UI_SMALLFONT, demosTextColor);
-        Frontend_DrawText(280, 210, va("Size: %.1f MB", s_demos.infoBytes / 1048576.0f), UI_LEFT | UI_SMALLFONT, demosMutedColor);
-        Frontend_DrawText(280, 236, va("Format: %s", ext ? ext + 1 : "unknown"), UI_LEFT | UI_SMALLFONT, demosMutedColor);
-        Frontend_DrawText(280, 300, "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 150, "Selected recording", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 178, display, UI_LEFT | UI_SMALLFONT, demosTextColor);
+        Frontend_DrawText(252, 210, va("Size: %.1f MB", s_demos.infoBytes / 1048576.0f), UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 236, va("Format: %s", ext ? ext + 1 : "unknown"), UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 300, "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     }
-    Frontend_DrawText(264, 94, title, UI_LEFT | UI_SMALLFONT, demosTextColor);
-    Frontend_DrawText(40, 402, va("%d demos", s_demos.numDemos), UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawText(DEMO_PREVIEW_X, 82, title, UI_LEFT | UI_SMALLFONT, demosTextColor);
+    Frontend_DrawText(128, 352, va("%d / %d", s_demos.numDemos ? s_demos.list.curvalue + 1 : 0, s_demos.numDemos), UI_CENTER | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawText(232, 432, "Space: pause   Arrows: seek", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     Menu_Draw(&s_demos.menu);
 }
 
@@ -355,6 +365,14 @@ static void Demos_InitAction( menutext_s *item, int id, const char *label,
     item->generic.ownerdraw = Demos_DrawAction;
 }
 
+static void Demos_PlaceAction(menutext_s *item, int x, int y, int width) {
+    item->generic.x = x + width / 2;
+    item->generic.y = item->generic.top = y;
+    item->generic.left = x;
+    item->generic.right = x + width;
+    item->generic.bottom = y + 28;
+}
+
 static void Demos_MenuInit( void ) {
     memset( &s_demos, 0, sizeof( s_demos ) );
     s_demos.infoSelection = -1;
@@ -376,7 +394,7 @@ static void Demos_MenuInit( void ) {
     s_demos.list.generic.right = DEMOS_ROW_X + DEMOS_ROW_WIDTH;
     s_demos.list.generic.bottom = DEMOS_ROW_Y + DEMOS_VISIBLE_ITEMS *
                                   ( DEMOS_ROW_HEIGHT + DEMOS_ROW_GAP );
-    s_demos.list.width = 22;
+    s_demos.list.width = 18;
     s_demos.list.height = DEMOS_VISIBLE_ITEMS;
     s_demos.list.columns = 1;
     s_demos.list.itemnames = (const char **)s_demos.demolist;
@@ -402,14 +420,19 @@ static void Demos_MenuInit( void ) {
     Demos_InitAction(&s_demos.pause, ID_PAUSE, "Pause", 264);
     Demos_InitAction(&s_demos.restart, ID_RESTART, "Restart", 376);
     Demos_InitAction(&s_demos.stop, ID_STOP, "Stop", 488);
-    s_demos.pause.generic.y = s_demos.restart.generic.y = s_demos.stop.generic.y = 370;
-    s_demos.pause.generic.top = s_demos.restart.generic.top = s_demos.stop.generic.top = 370;
-    s_demos.pause.generic.bottom = s_demos.restart.generic.bottom = s_demos.stop.generic.bottom = 398;
-    Demos_InitAction(&s_demos.rewind, ID_REWIND, "-10 sec", 264);
-    Demos_InitAction(&s_demos.forward, ID_FORWARD, "+10 sec", 440);
-    s_demos.rewind.generic.y = s_demos.rewind.generic.top = 400;
-    s_demos.forward.generic.y = s_demos.forward.generic.top = 400;
-    s_demos.rewind.generic.bottom = s_demos.forward.generic.bottom = 420;
+    Demos_InitAction(&s_demos.rewind, ID_REWIND, "-10s", 306);
+    Demos_InitAction(&s_demos.forward, ID_FORWARD, "+10s", 454);
+    Demos_PlaceAction(&s_demos.restart, 232, 388, 68);
+    Demos_PlaceAction(&s_demos.rewind, 306, 388, 68);
+    Demos_PlaceAction(&s_demos.pause, 380, 388, 68);
+    Demos_PlaceAction(&s_demos.forward, 454, 388, 68);
+    Demos_PlaceAction(&s_demos.stop, 528, 388, 72);
+    Demos_PlaceAction(&s_demos.go, 40, 388, 176);
+    Demos_PlaceAction(&s_demos.previous, 48, 344, 48);
+    Demos_PlaceAction(&s_demos.next, 160, 344, 48);
+    s_demos.previous.string = "<";
+    s_demos.next.string = ">";
+    Demos_PlaceAction(&s_demos.back, 40, 424, 88);
     Menu_AddItem(&s_demos.menu, &s_demos.rewind);
     Menu_AddItem(&s_demos.menu, &s_demos.forward);
     Menu_AddItem(&s_demos.menu, &s_demos.pause);

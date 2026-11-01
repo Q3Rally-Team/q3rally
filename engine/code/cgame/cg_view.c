@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_view.c -- setup all the parameters (position, angle, etc)
 // for a 3D rendering
 #include "cg_local.h"
+#include "../qcommon/demo_layout.h"
 
 
 /*
@@ -196,10 +197,10 @@ static void CG_CalcVrect (void) {
             xscale = scale;
             bias = (cgs.glconfig.vidWidth - 640 * scale) / 2;
         }
-        cg.refdef.x = (int)(264 * xscale + bias);
-        cg.refdef.y = (int)(112 * scale);
-        cg.refdef.width = (int)(328 * xscale);
-        cg.refdef.height = (int)(246 * scale);
+        cg.refdef.x = (int)(DEMO_PREVIEW_X * xscale + bias);
+        cg.refdef.y = (int)(DEMO_PREVIEW_Y * scale);
+        cg.refdef.width = (int)(DEMO_PREVIEW_WIDTH * xscale);
+        cg.refdef.height = (int)(DEMO_PREVIEW_HEIGHT * scale);
         return;
     }
 	// the intermission should allways be full screen
