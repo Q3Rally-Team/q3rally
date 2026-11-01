@@ -38,3 +38,10 @@ recordings). The engine publishes cl_demoTime in whole seconds from the current
 rendered demo timestamp relative to the first snapshot. Pause freezes the clock;
 restart/stop reset it; seeking updates it to the reconstructed position. This is
 elapsed time only, not total recording duration.
+
+Missing maps, unsupported protocols, invalid packet lengths, empty recordings
+and truncated packets show an error inside the archive preview. Other recoverable
+engine errors while previewing also return to the archive after normal VM/memory
+cleanup. The next Play attempt clears the previous error. Demo playback never
+tries to download map packages from a recorded server. Normal EOF displays a
+finished notice; seeking past EOF displays an end-of-recording notice.

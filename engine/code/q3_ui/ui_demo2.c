@@ -241,7 +241,10 @@ static void Demos_Draw( void ) {
     int i;
     int seconds = (int)trap_Cvar_VariableValue("cl_demoTime");
     char clock[24];
+    char error[1024], notice[128];
     char title[64];
+    trap_Cvar_VariableStringBuffer("cl_demoError", error, sizeof(error));
+    trap_Cvar_VariableStringBuffer("cl_demoNotice", notice, sizeof(notice));
     if (seconds < 0) seconds = 0;
     if (seconds >= 3600)
         Com_sprintf(clock, sizeof(clock), "%d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60);
@@ -264,9 +267,14 @@ static void Demos_Draw( void ) {
     Frontend_DrawCard(DEMO_PREVIEW_X, DEMO_PREVIEW_Y, DEMO_PREVIEW_WIDTH, DEMO_PREVIEW_HEIGHT, 1.0f, qfalse);
     if (trap_Cvar_VariableValue("cl_demoSeeking"))
         Frontend_DrawText(252, 220, "Seeking...", UI_LEFT | UI_SMALLFONT, demosTextColor);
-    if (!playing && !s_demos.numDemos)
+    if (!playing && error[0]) {
+        Frontend_DrawText(252, 150, "Cannot play recording", UI_LEFT | UI_SMALLFONT, demosTextColor);
+        Frontend_DrawTextWrapped(252, 184, DEMO_PREVIEW_WIDTH - 40, 20, 8,
+            error, UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    }
+    if (!playing && !error[0] && !s_demos.numDemos)
         Frontend_DrawText(252, 220, "No recordings available", UI_LEFT | UI_SMALLFONT, demosMutedColor);
-    if (!playing && s_demos.numDemos > 0) {
+    if (!playing && !error[0] && s_demos.numDemos > 0) {
         const char *name = s_demos.list.itemnames[s_demos.list.curvalue];
         const char *ext = strrchr(name, '.');
         char display[40];
@@ -281,7 +289,7 @@ static void Demos_Draw( void ) {
         Frontend_DrawText(252, 178, display, UI_LEFT | UI_SMALLFONT, demosTextColor);
         Frontend_DrawText(252, 210, va("Size: %.1f MB", s_demos.infoBytes / 1048576.0f), UI_LEFT | UI_SMALLFONT, demosMutedColor);
         Frontend_DrawText(252, 236, va("Format: %s", ext ? ext + 1 : "unknown"), UI_LEFT | UI_SMALLFONT, demosMutedColor);
-        Frontend_DrawText(252, 300, "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 300, notice[0] ? notice : "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     }
     Frontend_DrawText(DEMO_PREVIEW_X, 82, title, UI_LEFT | UI_SMALLFONT, demosTextColor);
     Frontend_DrawText(DEMO_PREVIEW_X + DEMO_PREVIEW_WIDTH, 82, clock,

@@ -325,16 +325,18 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 		com_errorEntered = qfalse;
 		longjmp (abortframe, -1);
 	} else if (code == ERR_DROP) {
+        qboolean demoPlayer = Cvar_VariableIntegerValue("cl_demoPlayer") != 0;
 		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
 		VM_Forced_Unload_Start();
 		SV_Shutdown (va("Server crashed: %s",  com_errorMessage));
 		if ( restartClient ) {
 			CL_Init();
 		}
-		CL_Disconnect( qtrue );
+		CL_Disconnect( demoPlayer ? qfalse : qtrue );
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		FS_PureServerSetLoadedPaks("", "");
+		if (demoPlayer) CL_DemoErrorMenu(com_errorMessage);
 		com_errorEntered = qfalse;
 		longjmp (abortframe, -1);
 	} else if ( code == ERR_NEED_CD ) {

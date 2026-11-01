@@ -52,6 +52,7 @@ Building q3rally in build/release-mingw32-x86_64:
     -lwininet
 
   Output:
+    q3rally-server.x86_64.exe
     q3rally.x86_64.exe
     renderer_opengl1_x86_64.dll
     baseq3r/vm/cgame.qvm
@@ -61,13 +62,14 @@ Building q3rally in build/release-mingw32-x86_64:
     SDL2.dll
 
 make[2]: Entering directory '/d/Q3RallyDev/q3rally_tryout/engine'
-CC code/client/cl_cgame.c
-make[2]: 'build/release-mingw32-x86_64/renderer_opengl1_x86_64.dll' is up to date.
+make[2]: 'build/release-mingw32-x86_64/q3rally-server.x86_64.exe' is up to date.
+LD build/release-mingw32-x86_64/q3rally.x86_64.exe
+LD build/release-mingw32-x86_64/renderer_opengl1_x86_64.dll
 make[2]: 'build/release-mingw32-x86_64/baseq3r/vm/cgame.qvm' is up to date.
 make[2]: 'build/release-mingw32-x86_64/baseq3r/vm/qagame.qvm' is up to date.
-make[2]: 'build/release-mingw32-x86_64/baseq3r/vm/ui.qvm' is up to date.
 make[2]: 'build/release-mingw32-x86_64/libwinpthread-1.dll' is up to date.
 make[2]: 'build/release-mingw32-x86_64/SDL2.dll' is up to date.
-LD build/release-mingw32-x86_64/q3rally.x86_64.exe
+UI_Q3LCC code/q3_ui/ui_demo2.c
+Q3ASM build/release-mingw32-x86_64/baseq3r/vm/ui.qvm
 make[2]: Leaving directory '/d/Q3RallyDev/q3rally_tryout/engine'
 make[1]: Leaving directory '/d/Q3RallyDev/q3rally_tryout/engine'

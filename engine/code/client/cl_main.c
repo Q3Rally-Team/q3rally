@@ -982,6 +982,7 @@ void CL_DemoCompleted( void )
 	}
 
     if ( clc.demoPlayer ) {
+        Cvar_Set("cl_demoNotice", clc.demoSeeking ? "End of recording reached." : "Playback finished.");
         CL_Disconnect( qfalse );
         return;
     }
@@ -1008,6 +1009,7 @@ void CL_ReadDemoMessage( void ) {
 	// get the sequence number
 	r = FS_Read( &s, 4, clc.demofile);
 	if ( r != 4 ) {
+        if (clc.demoPlayer) Com_Error(ERR_DROP, "Recording is incomplete: truncated message header.");
 		CL_DemoCompleted ();
 		return;
 	}
@@ -1019,19 +1021,23 @@ void CL_ReadDemoMessage( void ) {
 	// get the length
 	r = FS_Read (&buf.cursize, 4, clc.demofile);
 	if ( r != 4 ) {
+        if (clc.demoPlayer) Com_Error(ERR_DROP, "Recording is incomplete: truncated message header.");
 		CL_DemoCompleted ();
 		return;
 	}
 	buf.cursize = LittleLong( buf.cursize );
 	if ( buf.cursize == -1 ) {
+        if (clc.demoPlayer && !cl.snap.valid)
+            Com_Error(ERR_DROP, "Recording contains no playable snapshots.");
 		CL_DemoCompleted ();
 		return;
 	}
-	if ( buf.cursize < 0 || buf.cursize > buf.maxsize ) {
-		Com_Error (ERR_DROP, "CL_ReadDemoMessage: invalid demo message length");
+	if ( buf.cursize <= 0 || buf.cursize > buf.maxsize ) {
+		Com_Error (ERR_DROP, "Recording is damaged: invalid message length");
 	}
 	r = FS_Read( buf.data, buf.cursize, clc.demofile );
 	if ( r != buf.cursize ) {
+		if (clc.demoPlayer) Com_Error(ERR_DROP, "Recording is incomplete: truncated message data.");
 		Com_Printf( "Demo file was truncated.\n");
 		CL_DemoCompleted ();
 		return;
@@ -1128,6 +1134,12 @@ demo <demoname>
 
 ====================
 */
+void CL_DemoErrorMenu(const char *message) {
+    Cvar_Set("cl_demoError", message);
+    Cvar_Set("com_errorMessage", "");
+    if (uivm) VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_DEMOS);
+}
+
 static void CL_DemoSeek_f(void) {
     int target;
     qboolean paused;
@@ -1177,6 +1189,10 @@ void CL_PlayDemo_f( void ) {
 	
 	CL_Disconnect( embedded ? qfalse : qtrue );
     clc.demoPlayer = embedded;
+    if (embedded) {
+        Cvar_Set("cl_demoError", "");
+        Cvar_Set("cl_demoNotice", "");
+    }
     Cvar_Set( "cl_demoPlayer", embedded ? "1" : "0" );
 
 	// check for an extension .DEMOEXT_?? (?? is protocol)
@@ -1205,6 +1221,7 @@ void CL_PlayDemo_f( void ) {
 		{
 			int len;
 
+			if (embedded) Com_Error(ERR_DROP, "Recording protocol %d is not supported.", protocol);
 			Com_Printf("Protocol %d not supported for demos\n", protocol);
 			len = ext_test - arg;
 
@@ -1220,6 +1237,7 @@ void CL_PlayDemo_f( void ) {
 		protocol = CL_WalkDemoExt(arg, name, &clc.demofile);
 	
 	if (!clc.demofile) {
+        if (embedded) Com_Error(ERR_DROP, "Recording could not be opened: %s", name);
 		Com_Error( ERR_DROP, "couldn't open %s", name);
 		return;
 	}
@@ -2432,6 +2450,20 @@ and determine if we need to download them
 */
 void CL_InitDownloads(void) {
   char missingfiles[1024];
+    if (clc.demoPlayer) {
+        const char *info = cl.gameState.stringData + cl.gameState.stringOffsets[CS_SERVERINFO];
+        const char *mapname = Info_ValueForKey(info, "mapname");
+        fileHandle_t mapfile;
+        char path[MAX_OSPATH];
+        if (!mapname[0]) Com_Error(ERR_DROP, "Recording is damaged: map name is missing.");
+        Com_sprintf(path, sizeof(path), "maps/%s.bsp", mapname);
+        FS_FOpenFileRead(path, &mapfile, qfalse);
+        if (!mapfile) Com_Error(ERR_DROP, "Map '%s' is missing. Install the map and try again.", mapname);
+        FS_FCloseFile(mapfile);
+        // A recording has no live server from which to download missing packages.
+        CL_DownloadsComplete();
+        return;
+    }
 
   if ( !(cl_allowDownload->integer & DLF_ENABLE) )
   {
@@ -3885,6 +3917,8 @@ void CL_Init( void ) {
     Cvar_Get( "cl_demoPlayer", "0", CVAR_ROM );
     Cvar_Get("cl_demoSeeking", "0", CVAR_ROM);
     Cvar_Get("cl_demoTime", "0", CVAR_ROM);
+    Cvar_Get("cl_demoError", "", CVAR_ROM);
+    Cvar_Get("cl_demoNotice", "", CVAR_ROM);
     Cmd_AddCommand("demoseek", CL_DemoSeek_f);
     Cmd_AddCommand( "demopreview", CL_PlayDemo_f );
     Cmd_AddCommand( "demopreviewstop", CL_DemoPreviewStop_f );
