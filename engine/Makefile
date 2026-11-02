@@ -748,6 +748,11 @@ ifdef MINGW
     CLIENT_CFLAGS += $(CURL_CFLAGS)
     SERVER_CFLAGS += $(CURL_CFLAGS)
     ifneq ($(USE_CURL_DLOPEN),1)
+      ifeq ($(CURL_PREFIX),)
+        ifneq ($(wildcard build/curl-mingw-$(ARCH)/lib/libcurl.a),)
+          CURL_PREFIX=$(CURDIR)/build/curl-mingw-$(ARCH)
+        endif
+      endif
       ifneq ($(CURL_PREFIX),)
         # Static libcurl from misc/build-curl-mingw.sh: TLS through Windows
         # Schannel, only Windows system libraries. Its version matches the
@@ -3433,12 +3438,33 @@ ifneq ($(DEPEND_MAKEFILE),0)
 endif
 
 ifneq ($(B),)
+  # Curl mode changes affect compiled code, not just the linker. Do not reuse
+  # DLOPEN objects when switching an existing build to static libcurl.
+  CURL_CONFIG_STAMP=$(B)/.curl-config
+  $(CURL_CONFIG_STAMP): curl-config-force
+	@mkdir -p $(B)
+	@printf '%s\n' '$(USE_CURL)|$(USE_CURL_DLOPEN)|$(CURL_PREFIX)|$(CURL_CFLAGS)|$(CURL_LIBS)' > $@.tmp
+	@cmp -s $@.tmp $@ || cp $@.tmp $@
+	@rm -f $@.tmp
+
+  $(filter $(B)/client/% $(B)/ded/%,$(Q3OBJ) $(Q3DOBJ)): $(CURL_CONFIG_STAMP)
+  ifeq ($(PLATFORM),mingw32)
+    ifeq ($(USE_CURL),1)
+      ifneq ($(USE_CURL_DLOPEN),1)
+        ifneq ($(CURL_PREFIX),)
+          $(B)/$(CLIENTBIN)$(FULLBINEXT) $(B)/$(SERVERBIN)$(FULLBINEXT): $(CURL_PREFIX)/lib/libcurl.a
+        endif
+      endif
+    endif
+  endif
+
   OBJ_D_FILES=$(filter %.d,$(OBJ:%.o=%.d))
   TOOLSOBJ_D_FILES=$(filter %.d,$(TOOLSOBJ:%.o=%.d))
   -include $(OBJ_D_FILES) $(TOOLSOBJ_D_FILES)
 endif
 
 .PHONY: all clean clean2 clean-debug clean-release copyfiles \
+	curl-config-force \
 	debug default dist distclean installer makedirs \
 	release targets \
 	toolsclean toolsclean2 toolsclean-debug toolsclean-release \

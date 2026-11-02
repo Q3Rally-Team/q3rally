@@ -3307,50 +3307,6 @@ void CL_ShutdownRef( void ) {
 }
 
 /*
-======================
-FS_ReadFileWithHomepathFallback
-
-Wrapper for ri.FS_ReadFile: tries the normal VFS search first, then falls
-back to a direct homepath read (FS_SV_FOpenFileRead) for files that were
-written to disk after the VFS was initialised.
-======================
-*/
-static long FS_ReadFileWithHomepathFallback( const char *qpath, void **buffer ) {
-	long		len;
-	fileHandle_t	fh;
-	byte		*buf;
-	char		svpath[MAX_OSPATH];
-
-	// Try the normal VFS path first.
-	len = FS_ReadFile( qpath, buffer );
-	if ( len > 0 ) {
-		return len;
-	}
-
-	Com_sprintf( svpath, sizeof(svpath), BASEGAME "/%s", qpath );
-	len = FS_SV_FOpenFileRead( svpath, &fh );
-
-	if ( len <= 0 ) {
-		if ( buffer ) {
-			*buffer = NULL;
-		}
-		return -1;
-	}
-
-	if ( !buffer ) {
-		FS_FCloseFile( fh );
-		return len;
-	}
-
-	buf = Hunk_AllocateTempMemory( len + 1 );
-	( (byte *)buf )[len] = 0;
-	FS_Read( buf, len, fh );
-	FS_FCloseFile( fh );
-	*buffer = buf;
-	return len;
-}
-
-/*
 ============
 CL_InitRenderer
 ============

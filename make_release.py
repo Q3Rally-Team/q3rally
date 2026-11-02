@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
 import plistlib
@@ -99,9 +100,14 @@ def runtime_plan(target: str, build: Path, version: str, qvm_dir: Path | None = 
         vmroot = qvm_dir or build / "baseq3r/vm"
     if not client.is_file():
         raise ValueError(f"Missing client executable: {client.name}")
+    client_data = client.read_bytes()
     marker = rb"Q3Rally v" + re.escape(version.encode()) + rb"(?=[\x00 +])"
-    if not re.search(marker, client.read_bytes()):
+    if not re.search(marker, client_data):
         raise ValueError(f"Client version does not match v{version}: rebuild with VERSION=v{version}")
+    if platform == "windows" and b"cl_cURLLib" in client_data and b"libcurl-4.dll" in client_data:
+        if not any((build / name).is_file() for name in ("libcurl-4.dll", "libcurl-3.dll")):
+            raise ValueError("Windows client dynamically loads libcurl, but its DLL is missing: "
+                             "build with static CURL_PREFIX or supply libcurl and its runtime dependencies")
     for name in QVMS:
         path = vmroot / name
         if not path.is_file() or not path.stat().st_size:
@@ -131,11 +137,13 @@ def write_stream(archive, info, stream):
 
 def make_asset_pk3(path: Path, assets: dict[str, Asset]) -> list[dict]:
     records = []
-    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    # The engine's legacy minizip reader cannot read ZIP64 local headers.
+    # Reject oversized content rather than silently producing an unusable PK3.
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9, allowZip64=False) as archive:
         for asset in sorted(assets.values(), key=lambda value: value.name):
             digest = hashlib.sha256()
             size = 0
-            with asset.open() as source, archive.open(zip_info(asset.name), "w", force_zip64=True) as output:
+            with asset.open() as source, archive.open(zip_info(asset.name), "w") as output:
                 while block := source.read(1024 * 1024):
                     output.write(block); digest.update(block); size += len(block)
             records.append({"path": asset.name, "size": size, "sha256": digest.hexdigest()})
@@ -146,7 +154,20 @@ def package(path: Path, target: str, version: str, files: list[File], prefix: st
     root = f"Q3Rally-v{version}-{target}/"
     records = []
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        vm_files = {file.name: file for file in files if file.name.startswith(prefix + "/vm/")}
+        vm_buffer = io.BytesIO()
+        # Pure servers only accept executable VMs from referenced packages.
+        with zipfile.ZipFile(vm_buffer, "w", allowZip64=False) as vm_archive:
+            for name in QVMS:
+                file = vm_files[prefix + "/vm/" + name]
+                vm_archive.writestr(zip_info("vm/" + name), file.path.read_bytes())
+        vm_data = vm_buffer.getvalue()
+        vm_name = prefix + "/qvms.pk3"
+        archive.writestr(zip_info(root + vm_name, stored=True), vm_data)
+        records.append({"path": vm_name, "size": len(vm_data), "sha256": hashlib.sha256(vm_data).hexdigest()})
         for file in files:
+            if file.name in vm_files:
+                continue
             info = zip_info(root + file.name, file.executable, file.symlink)
             if file.symlink:
                 data = file.data(); archive.writestr(info, data)
@@ -261,7 +282,7 @@ def main(argv=None) -> int:
                 raise
         print(f"Release written to {output}")
         return 0
-    except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+    except (OSError, ValueError, KeyError, zipfile.BadZipFile, zipfile.LargeZipFile) as error:
         print(f"Release failed: {error}", file=sys.stderr)
         return 1
 

@@ -49,6 +49,14 @@ the build's baseq3r/vm directory. `--qvm-dir` can specify one common directory
 of platform-independent VMs; for a direct .app input the default is its
 Contents/MacOS/baseq3r/vm directory.
 
+Output stores these VMs in `baseq3r/qvms.pk3`, not as loose files, so clients
+can load them from a pure server's referenced packages. Both game PK3s use
+classic ZIP headers; the legacy engine reader does not support ZIP64 entries.
+Oversized asset sets must be split before packaging. Windows preflight also
+rejects detected dynamic-libcurl clients without a libcurl DLL in the build
+directory; transitive dependency and HTTP tests are still required.
+The tested Windows static-build workflow is documented in windows-libcurl.md.
+
 ## Package
 
 ```powershell
@@ -100,9 +108,10 @@ packages and Q3RallyRadiant are separate deliverables, not included here.
 python -m unittest tests.test_make_release -v
 ```
 
-Seven integration/regression tests exercise synthetic Windows/Linux/macOS builds,
+Eight packaging integration/regression tests exercise synthetic Windows/Linux/macOS builds,
 archive contents, per-file hashes, reproducibility, executable modes, PK3 overlays,
 private-file exclusion, malformed assets, version mismatch, missing files,
 publication rollback and dry-run behavior. This does not replace actual native
 launch/install tests. No final v0.8 distribution was produced during implementation:
-see asset-audit-v0.8.md for current blockers.
+see asset-audit-v0.8.md for the asset history and install-validation.md for
+runtime results, corrected packaging defects and remaining release checks.
