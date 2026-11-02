@@ -44,8 +44,10 @@ def main():
     elif target.startswith('linux-'):
         assert raw[:4] == b'\x7fELF' and raw[4] == (1 if target == 'linux-x86' else 2)
     else:
-        magic, cpu = struct.unpack_from('<II', raw)
-        assert magic == 0xfeedfacf and cpu == (0x100000c if target == 'macos-arm64' else 0x1000007)
+        # The app assembler uses lipo, which may wrap one architecture in a
+        # universal Mach-O container. Check its slices rather than a thin header.
+        architectures = subprocess.check_output(['lipo', '-archs', str(client)], text=True).split()
+        assert architectures == [target.split('-', 1)[1]], architectures
     result = subprocess.run([str(client), '--version'], capture_output=True, timeout=30)
     assert result.returncode == 0 and b'Q3Rally v0.8' in result.stdout, (result.stdout, result.stderr)
     arch = target.split('-', 1)[1]
