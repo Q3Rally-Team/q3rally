@@ -327,6 +327,8 @@ void G_AddRandomBot( int team ) {
 	skill = trap_Cvar_VariableValue( "g_spSkill" );
 	if (team == TEAM_RED) teamstr = "red";
 	else if (team == TEAM_BLUE) teamstr = "blue";
+	else if (team == TEAM_GREEN) teamstr = "green";
+	else if (team == TEAM_YELLOW) teamstr = "yellow";
 	else teamstr = "free";
 	trap_SendConsoleCommand( EXEC_INSERT, va("addbot random %f %s %i\n", skill, teamstr, 0) );
 }
@@ -419,6 +421,7 @@ G_CheckMinimumPlayers
 void G_CheckMinimumPlayers( void ) {
 	int minplayers;
 	int humanplayers, botplayers;
+	int team, teamCount;
 	static int checkminimumplayers_time;
 
 	if (level.intermissiontime) return;
@@ -434,38 +437,35 @@ void G_CheckMinimumPlayers( void ) {
 	if ( !BG_GametypeAllowsBots( g_gametype.integer ) ) return;
 
 	if (g_gametype.integer >= GT_TEAM) {
-		if (minplayers >= g_maxclients.integer / 2) {
-			minplayers = (g_maxclients.integer / 2) -1;
+		teamCount = g_gametype.integer == GT_CTF4 ? 4 : 2;
+		if (minplayers >= g_maxclients.integer / teamCount) {
+			minplayers = (g_maxclients.integer / teamCount) -1;
 		}
-
-		humanplayers = G_CountHumanPlayers( TEAM_RED );
-		botplayers = G_CountBotPlayers(	TEAM_RED );
-		//
-		if (humanplayers + botplayers < minplayers) {
-			G_AddRandomBot( TEAM_RED );
-		} else if (humanplayers + botplayers > minplayers && botplayers) {
-			G_RemoveRandomBot( TEAM_RED );
-		}
-		//
-		humanplayers = G_CountHumanPlayers( TEAM_BLUE );
-		botplayers = G_CountBotPlayers( TEAM_BLUE );
-		//
-		if (humanplayers + botplayers < minplayers) {
-			G_AddRandomBot( TEAM_BLUE );
-		} else if (humanplayers + botplayers > minplayers && botplayers) {
-			G_RemoveRandomBot( TEAM_BLUE );
+		for (team = TEAM_RED; team < TEAM_RED + teamCount; team++) {
+			humanplayers = G_CountHumanPlayers( team );
+			botplayers = G_CountBotPlayers( team );
+			if (humanplayers + botplayers < minplayers) {
+				G_AddRandomBot( team );
+			} else if (humanplayers + botplayers > minplayers && botplayers) {
+				G_RemoveRandomBot( team );
+			}
 		}
 	} else {	// FFA or other non-team gametypes
 		if (minplayers >= g_maxclients.integer) {
 			minplayers = g_maxclients.integer-1;
 		}
 		humanplayers = G_CountHumanPlayers( TEAM_FREE );
-		botplayers = G_CountBotPlayers( TEAM_FREE );
+		/* Late race joiners wait as spectators until the next race. They
+		   still occupy bot slots and must count toward the population target. */
+		botplayers = G_CountBotPlayers( -1 );
 		//
 		if (humanplayers + botplayers < minplayers) {
 			G_AddRandomBot( TEAM_FREE );
 		} else if (humanplayers + botplayers > minplayers && botplayers) {
-			G_RemoveRandomBot( TEAM_FREE );
+			/* Keep active racers when an excess bot is only waiting to join. */
+			if ( !G_RemoveRandomBot( TEAM_SPECTATOR ) ) {
+				G_RemoveRandomBot( TEAM_FREE );
+			}
 		}
 	}
 // END

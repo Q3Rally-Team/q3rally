@@ -26,8 +26,15 @@ need refinement after a complete inventory of existing screens.
    update, then launch the game.
 7. Test dedicated servers before release: headless startup, server configuration,
    bot population and race startup without human players, client connections,
-   complete matches, map rotation and restarts. Windows headless startup,
-   loopback connection and RCON shutdown checked; remaining scope is open.
+   complete matches, map rotation and restarts. Windows lap/Sprint bot-only
+   startup, population/slot limits, mixed client join/leave, checkpoint progress,
+   finish, natural rotation, restart and RCON shutdown checked. Corrected waiting
+   bot population/rejoin, repeated Sprint finishes and stale finish placement;
+   Sprint rotation config fixed. Windows/native Linux mode startup, team
+   assignments and default intro pass; four-team automatic bot fill corrected.
+   Linux lap/Sprint completion and local Ladder HTTP pass. Native macOS CI
+   checks prepared; execution, longer objective games and external networking remain open.
+   See dedicated-validation.md.
 
 ### v0.8 dedicated server validation
 
@@ -47,8 +54,12 @@ Required release checks on Windows, Linux and macOS server builds:
   under the relevant network configuration.
 
 Record tested platform/build, configuration, maps, bot/player counts and logs.
-Only the Windows startup/loopback connection/RCON baseline has been checked;
-the remaining checks are planned, not completed. See install-validation.md.
+Windows non-team lap/Sprint checks above now pass, including explicit versus
+waiting spectator behavior and unique finish placements. Intro was disabled
+for the original race probes; separate default-intro checks now pass on Windows
+and native Linux under WSL. Mode startup/team checks and Linux lap/Sprint
+completion also pass. Longer combat/objective games, rotations, external
+discovery and actual macOS execution remain open. See dedicated-validation.md.
 
 ### v0.8 launcher scope
 

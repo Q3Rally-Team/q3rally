@@ -51,7 +51,33 @@ jobs:
         find build/ -name "*.dylib" -o -name "q3rally*" -o -name "ioq3ded*" | head -10
         
         echo "=== Executable files ==="
-        find build/ -perm +111 -type f | head -5
+        find build/ -type f -perm -111 | head -5
+
+    - name: Prepare isolated dedicated test data
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/prepare_dedicated_test_data.py \
+          --vm-dir "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/baseq3r/vm" \
+          --output "$RUNNER_TEMP/q3rally-dedicated-data"
+
+    - name: Run native dedicated mode checks
+      timeout-minutes: 15
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/validate_dedicated_server.py \
+          --executable "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }}" \
+          --basepath "$RUNNER_TEMP/q3rally-dedicated-data" \
+          --output "dedicated-test-results-${{ matrix.arch }}" \
+          --http-probe
+
+    - name: Upload dedicated runtime evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: q3rally-dedicated-tests-macos-${{ matrix.arch }}
+        path: dedicated-test-results-${{ matrix.arch }}
+        if-no-files-found: warn
+        retention-days: 14
     
     - name: Package macOS Build
       run: |

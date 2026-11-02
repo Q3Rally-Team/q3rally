@@ -597,7 +597,7 @@ void G_RallyUpdateAllTeamTimes( void ) {
 void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         const char *place;
 
-        if ( !other->client ) {
+        if ( !other->client || other->client->finishRaceTime ) {
                 return;
         }
 
@@ -620,6 +620,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         other->client->finishRaceTime = level.time;
         other->s.weapon = WP_NONE;
         other->takedamage = qfalse;
+        CalculatePlayerPositions();
 
         // Update team average time now that this player has a finish time
         if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {
@@ -695,6 +696,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
 			other->takedamage = qfalse;
+			CalculatePlayerPositions();
 
 			// Update team average time now that this player has a finish time
 			if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {

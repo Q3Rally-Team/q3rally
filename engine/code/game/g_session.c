@@ -45,7 +45,7 @@ void G_WriteClientSessionData( gclient_t *client ) {
 	const char	*s;
 	const char	*var;
 
-	s = va("%i %i %i %i %i %i %i %i", 
+	s = va("%i %i %i %i %i %i %i %i %i",
 		client->sess.sessionTeam,
 		client->sess.spectatorNum,
 		client->sess.spectatorState,
@@ -53,7 +53,8 @@ void G_WriteClientSessionData( gclient_t *client ) {
 		client->sess.wins,
 		client->sess.losses,
 		client->sess.teamLeader,
-			client->sess.headlights
+			client->sess.headlights,
+		client->sess.spectatorWilling
 			);
 
 	var = va( "session%i", (int)(client - level.clients) );
@@ -75,11 +76,13 @@ void G_ReadSessionData( gclient_t *client ) {
 	int spectatorState;
 	int sessionTeam;
 	int headlights = 0;
+	/* Older eight-field sessions cannot distinguish an intentional spectator. */
+	int spectatorWilling = qtrue;
 
 	var = va( "session%i", (int)(client - level.clients) );
 	trap_Cvar_VariableStringBuffer( var, s, sizeof(s) );
 
-	sscanf( s, "%i %i %i %i %i %i %i %i",
+	sscanf( s, "%i %i %i %i %i %i %i %i %i",
 		&sessionTeam,
 		&client->sess.spectatorNum,
 		&spectatorState,
@@ -87,13 +90,15 @@ void G_ReadSessionData( gclient_t *client ) {
 		&client->sess.wins,
 		&client->sess.losses,
 		&teamLeader,
-			&headlights
+			&headlights,
+		&spectatorWilling
 			);
 
 	client->sess.sessionTeam = (team_t)sessionTeam;
 	client->sess.spectatorState = (spectatorState_t)spectatorState;
 	client->sess.teamLeader = (qboolean)teamLeader;
 	client->sess.headlights = (qboolean)headlights;
+	client->sess.spectatorWilling = spectatorWilling ? qtrue : qfalse;
 }
 
 
@@ -142,6 +147,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 // END
 			// a willing spectator, not a waiting-in-line
 			sess->sessionTeam = TEAM_SPECTATOR;
+			sess->spectatorWilling = qtrue;
 		} else {
 			switch ( g_gametype.integer ) {
 			default:

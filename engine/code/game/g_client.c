@@ -27,6 +27,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern vmCvar_t g_dominationSpawnStyle;
 
+static void G_RestoreWaitingRaceBot( gclient_t *client, qboolean firstTime, qboolean isBot ) {
+	if ( !isBot || firstTime || level.startRaceTime || !isRallyRace() ||
+		g_gametype.integer >= GT_TEAM || g_rallyIgnoreBots.integer ||
+		client->sess.sessionTeam != TEAM_SPECTATOR || client->sess.spectatorWilling ) {
+		return;
+	}
+	client->sess.sessionTeam = TEAM_FREE;
+	client->sess.spectatorState = SPECTATOR_NOT;
+	client->sess.spectatorClient = 0;
+}
+
 // g_client.c -- client functions that don't happen every frame
 
 // STONELANCE
@@ -1404,6 +1415,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		G_InitSessionData( client, userinfo );
 	}
 	G_ReadSessionData( client );
+	G_RestoreWaitingRaceBot( client, firstTime, isBot );
 
 	// get and distribute relevant parameters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
