@@ -877,7 +877,9 @@ nextInstruction2:
 			((float *) opStack)[opStackOfs] = (float) opStack[opStackOfs];
 			goto nextInstruction;
 		case OP_CVFI:
-			opStack[opStackOfs] = Q_ftol(((float *) opStack)[opStackOfs]);
+			/* C casts truncate toward zero. Q_ftol may use lrintf,
+			   which rounds on non-x86 hosts and corrupts VM printf. */
+			opStack[opStackOfs] = (int)((float *) opStack)[opStackOfs];
 			goto nextInstruction;
 		case OP_SEX8:
 			opStack[opStackOfs] = (signed char) opStack[opStackOfs];

@@ -603,28 +603,12 @@ static qboolean Bot_GhostFindSafeResetSpot( bot_state_t *bs, const ghostBotRoute
 	return qfalse;
 }
 
-static qboolean Bot_GhostEmergencyRouteReset( bot_state_t *bs, const ghostBotRoute_t *route, int bestIndex,
-	int nextCheckpoint, const vec3_t routeForward, int *resetIndex ) {
-	gentity_t *botEnt;
-	gclient_t *client;
+/* Commit a validated route recovery without changing checkpoint/lap state. */
+static void Bot_ApplyRouteReset( bot_state_t *bs, const vec3_t resetOrigin, vec3_t resetAngles ) {
+	gentity_t *botEnt = &g_entities[bs->entitynum];
+	gclient_t *client = botEnt->client;
 	gentity_t *tempEnt;
-	vec3_t resetOrigin, resetAngles, oldOrigin;
-
-	if ( !bs || bs->entitynum < 0 || bs->entitynum >= level.maxclients || !resetIndex ) {
-		return qfalse;
-	}
-
-	botEnt = &g_entities[bs->entitynum];
-	if ( !botEnt->inuse || !botEnt->client || botEnt->client->pers.connected != CON_CONNECTED ) {
-		return qfalse;
-	}
-	client = botEnt->client;
-
-	if ( !Bot_GhostFindSafeResetSpot( bs, route, bestIndex, nextCheckpoint, routeForward,
-		resetOrigin, resetAngles, resetIndex ) ) {
-		return qfalse;
-	}
-
+	vec3_t oldOrigin;
 	VectorCopy( client->ps.origin, oldOrigin );
 	tempEnt = G_TempEntity( oldOrigin, EV_PLAYER_TELEPORT_OUT );
 	tempEnt->s.clientNum = botEnt->s.clientNum;
@@ -649,6 +633,30 @@ static qboolean Bot_GhostEmergencyRouteReset( bot_state_t *bs, const ghostBotRou
 
 	memcpy( &bs->cur_ps, &client->ps, sizeof( bs->cur_ps ) );
 	VectorCopy( resetAngles, bs->ideal_viewangles );
+	bs->ghostTargetSpeedValid = qfalse;
+	bs->ghostDecisionState = GHOST_DECISION_FOLLOW;
+	bs->ghostDecisionLateralOffset = 0.0f;
+}
+
+static qboolean Bot_GhostEmergencyRouteReset( bot_state_t *bs, const ghostBotRoute_t *route, int bestIndex,
+	int nextCheckpoint, const vec3_t routeForward, int *resetIndex ) {
+	gentity_t *botEnt;
+	vec3_t resetOrigin, resetAngles;
+
+	if ( !bs || bs->entitynum < 0 || bs->entitynum >= level.maxclients || !resetIndex ) {
+		return qfalse;
+	}
+
+	botEnt = &g_entities[bs->entitynum];
+	if ( !botEnt->inuse || !botEnt->client || botEnt->client->pers.connected != CON_CONNECTED ) {
+		return qfalse;
+	}
+	if ( !Bot_GhostFindSafeResetSpot( bs, route, bestIndex, nextCheckpoint, routeForward,
+		resetOrigin, resetAngles, resetIndex ) ) {
+		return qfalse;
+	}
+
+	Bot_ApplyRouteReset( bs, resetOrigin, resetAngles );
 	bs->ghostRouteIndexHint = *resetIndex;
 	bs->ghostTargetSpeedValid = qfalse;
 	bs->ghostDecisionState = GHOST_DECISION_FOLLOW;
@@ -4352,6 +4360,63 @@ int Bot_CheckForObstacles( bot_state_t *bs, vec3_t angles, int throttleChange )
 }
 
 
+/* Movement alone is not progress: a car below a bridge can keep driving in
+   circles forever. Track advancement on the current, unpassed checkpoint leg. */
+static qboolean Bot_BezierProgressStalled( bot_state_t *bs, int checkpoint,
+	int lap, float fraction, float now ) {
+	if ( bs->bezierProgressCheckpoint != checkpoint || bs->bezierProgressLap != lap ||
+		bs->bezierProgressTime <= 0.0f || now < bs->bezierProgressTime ||
+		fraction > bs->bezierProgressFraction + 0.02f ) {
+		bs->bezierProgressCheckpoint = checkpoint;
+		bs->bezierProgressLap = lap;
+		bs->bezierProgressFraction = fraction;
+		bs->bezierProgressTime = now;
+		return qfalse;
+	}
+	return now - bs->bezierProgressTime >= 8.0f;
+}
+
+static qboolean Bot_BezierRecover( bot_state_t *bs, gentity_t *prev, gentity_t *next ) {
+	vec3_t mins, maxs, point, start, end, direction, angles;
+	trace_t ground, clearance;
+	float fraction;
+	int sample;
+	VectorSet( mins, -CAR_LENGTH * 0.5f, -CAR_LENGTH * 0.5f, -18.0f );
+	VectorSet( maxs, CAR_LENGTH * 0.5f, CAR_LENGTH * 0.5f, 18.0f );
+	for ( sample = 0; sample < 7; sample++ ) {
+		/* Rejoin behind the furthest observed progress, never across a gate. */
+		fraction = bs->bezierProgressFraction - 0.05f - sample * 0.05f;
+		if ( fraction > 0.90f ) fraction = 0.90f;
+		if ( fraction < 0.05f ) fraction = 0.05f;
+		G_GetPointOnCurveBetweenCheckpoints( prev, next, fraction, point );
+		if ( Distance( point, bs->cur_ps.origin ) > GHOST_RECOVERY_RESET_MAX_DISTANCE ) continue;
+		/* A high probe can start inside bridge roof/playerclip brushes.
+		   Keep the sweep below those ceilings; clearance is checked separately. */
+		VectorCopy( point, start ); start[2] += 64.0f;
+		VectorCopy( point, end ); end[2] -= 128.0f;
+		trap_Trace( &ground, start, mins, maxs, end, bs->entitynum, MASK_PLAYERSOLID );
+		if ( ground.startsolid || ground.allsolid || ground.fraction >= 1.0f ||
+			ground.plane.normal[2] < 0.55f || ( ground.contents & CONTENTS_BODY ) ||
+			( ground.entityNum >= 0 && ground.entityNum < level.maxclients ) ) continue;
+		VectorCopy( ground.endpos, point ); point[2] += 5.0f;
+		if ( Bot_GhostResetSpotOccupied( &g_entities[bs->entitynum], point ) ) continue;
+		VectorCopy( point, start ); start[2] += 1.0f;
+		VectorCopy( start, end ); end[2] += CAR_HEIGHT - 36.0f;
+		trap_Trace( &clearance, start, mins, maxs, end, bs->entitynum, MASK_PLAYERSOLID );
+		if ( clearance.startsolid || clearance.allsolid || clearance.fraction < 1.0f ) continue;
+		G_GetDervOnCurveBetweenCheckpoints( prev, next, fraction, direction );
+		direction[2] = 0.0f;
+		if ( VectorNormalize( direction ) < 0.001f ) continue;
+		vectoangles( direction, angles ); angles[PITCH] = angles[ROLL] = 0.0f;
+		Bot_ApplyRouteReset( bs, point, angles );
+		bs->bezierProgressFraction = fraction;
+		bs->cur_ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( fraction );
+		g_entities[bs->entitynum].client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT( fraction );
+		return qtrue;
+	}
+	return qfalse;
+}
+
 /*
 ==================
 AINode_MoveToNextCheckpoint
@@ -4416,6 +4481,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 	raceStartGateActive = ( level.startRaceTime <= 0 || level.time < level.startRaceTime ) ? qtrue : qfalse;
 	forwardLaunchPhase = ( raceStartGateActive || spawnInitPhase ) ? qtrue : qfalse;
 	if ( forwardLaunchPhase ) {
+		bs->bezierProgressCheckpoint = 0;
 		// The grid is authoritative until the race begins. Route recovery must
 		// never relocate a stationary car during the intro or countdown.
 		Bot_SetRecoveryState( bs, BOT_RECOVERY_NONE );
@@ -4437,6 +4503,7 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 		botRaceGuidance_t guidance;
 		int hintIndex = bs->ghostRouteIndexHint;
 		qboolean lapWrapWindow = ghostRoute->closed && hintIndex >= ghostRoute->numSegments - 48 && nextCheckpoint <= 2;
+		bs->bezierProgressCheckpoint = 0;
 		actualSpeed = VectorLength( bs->cur_ps.velocity );
 		accelerationDeadband = actualSpeed < 160.0f ? 20.0f : 80.0f;
 		if ( G_RaceRoute_Guidance( ghostRoute, bs->cur_ps.origin, hintIndex, lapWrapWindow, nextCheckpoint, actualSpeed, &guidance ) ) {
@@ -5072,6 +5139,17 @@ int AINode_MoveToNextCheckpoint( bot_state_t *bs )
 		return qtrue;
 
 	f = SHORT2FLOAT(bs->cur_ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT]);
+	if ( Bot_BezierProgressStalled( bs, nextCheckpoint,
+		g_entities[bs->entitynum].currentLap, f, FloatTime() ) ) {
+		qboolean recovered = Bot_BezierRecover( bs, prev, next );
+		bs->bezierProgressTime = FloatTime();
+		Bot_DebugExportDmnetTick( bs, nextCheckpoint, 0.0f, VectorLength( bs->cur_ps.velocity ),
+			GHOST_DECISION_FOLLOW, qfalse, BOT_RECOVERY_EMERGENCY_RESET_REQUEST, BOT_RECOVERY_NONE,
+			recovered ? "bezier_route_reset" : "bezier_reset_no_safe_spot", "no_leg_progress",
+			-1.0f, -1, lastCheckpoint, nextCheckpoint, "bezier", "checkpoint_bezier", "", qtrue,
+			0, 0, 0, 0, 0, 0, 0, 0, 0.0f );
+		if ( recovered ) return qtrue;
+	}
 
 //	Com_Printf( "Next checkpoint: %i, Frac %f, Short %i, val %f\n", bs->cur_ps.stats[STAT_NEXT_CHECKPOINT], f, bs->cur_ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT], SHORT2FLOAT(FLOAT2SHORT(1.0f)) );
 

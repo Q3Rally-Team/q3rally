@@ -14,11 +14,13 @@ jobs:
           - arch: x86_64
             runner: macos-15-intel
           - arch: arm64
-            runner: macos-15
+            runner: macos-26
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      - name: Check conversion and recovery regressions
+        run: python3 -m unittest tests.test_vm_float_cast tests.test_bezier_progress -v
       - name: Build native server and QVMs
         run: make -C engine release -j4 PLATFORM=darwin ARCH=${{ matrix.arch }} BUILD_CLIENT=0 BUILD_SERVER=1 BUILD_GAME_SO=0 BUILD_GAME_QVM=1 BUILD_MISSIONPACK=0
       - name: Prepare isolated data
@@ -28,7 +30,13 @@ jobs:
           python3 tools/validate_dedicated_server.py \
             --executable engine/build/release-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }} \
             --basepath "$RUNNER_TEMP/race-data" --output race-results-${{ matrix.arch }} \
-            --case racing --case sprint --complete-races --http-probe
+            --case racing --case sprint --complete-races --http-probe --check-telemetry
+      - name: Check interpreted VM telemetry explicitly
+        run: |
+          python3 tools/validate_dedicated_server.py \
+            --executable engine/build/release-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }} \
+            --basepath "$RUNNER_TEMP/race-data" --output race-results-${{ matrix.arch }}/interpreter \
+            --case racing --seconds 5 --vm-mode 1 --http-probe --check-telemetry
       - uses: actions/upload-artifact@v7
         if: always()
         with:

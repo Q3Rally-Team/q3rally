@@ -3,7 +3,7 @@ name: Q3Rally macOS Build
 
 on:
   push:
-    branches: [ main, develop, codex/macos-dedicated-validation ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:  # Manuell auslösbar

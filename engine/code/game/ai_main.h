@@ -311,6 +311,10 @@ typedef struct bot_state_s
 	bot_waypoint_t *curpatrolpoint;					//current patrol point the bot is going for
 	int patrolflags;								//patrol flags
 
+	int bezierProgressCheckpoint;
+	int bezierProgressLap;
+	float bezierProgressFraction;
+	float bezierProgressTime;
 	float ghostTargetSpeedFiltered;				//smoothed target speed for ghost racing line
 	int ghostTargetSpeedValid;					//whether ghostTargetSpeedFiltered is initialized
 	int raceTurboSafe;						//route follower permits stored turbo on an open section
