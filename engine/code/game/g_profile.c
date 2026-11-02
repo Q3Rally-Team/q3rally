@@ -1,3 +1,4 @@
+#include "../qcommon/profile_format.h"
 #include "profile_shared.h"
 #include "g_local.h"
 #include "g_profile.h"
@@ -950,6 +951,7 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     char path[MAX_QPATH];
     static char buffer[PROFILE_FILE_BUFFER_SIZE];
     int length;
+    int format;
     const char *vehiclesStart;
     const char *cursor;
 
@@ -971,17 +973,21 @@ static qboolean G_Profile_LoadFromDisk( void ) {
         G_PROFILE_LOG( "G_Profile: Truncating profile read to %d bytes (file is %d bytes)\n",
                     (int)sizeof( buffer ) - 1,
                     length );
-        length = sizeof( buffer ) - 1;
+        trap_FS_FCloseFile(file);
+        return qfalse;
     }
 
     trap_FS_Read( buffer, length, file );
     buffer[length] = '\0';
     trap_FS_FCloseFile( file );
+    format = Profile_FormatClassify(buffer);
+    if ( format < 0 ) return qfalse;
 
     Com_Memset( &s_profileState.stats, 0, sizeof( s_profileState.stats ) );
     Com_Memset( &s_profileState.info, 0, sizeof( s_profileState.info ) );
     Com_Memset( &s_profileVehicleUsage, 0, sizeof( s_profileVehicleUsage ) );
 
+    if ( format == PROFILE_FILE_VERSION ) {
     s_profileState.stats.distanceKm = G_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
     s_profileState.stats.fuelUsed = G_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
     s_profileState.stats.bestLapMs = G_Profile_ParseInt( buffer, "bestLapMs", 0 );
@@ -1092,18 +1098,26 @@ static qboolean G_Profile_LoadFromDisk( void ) {
     s_profileState.stats.autoballCompleted = G_Profile_ParseInt( buffer, "autoballCompleted", 0 );
     s_profileState.stats.autoballGoals     = G_Profile_ParseInt( buffer, "autoballGoals",     0 );
 
+    }
+
+    G_Profile_ParseString( buffer, "name", s_profileState.info.name, sizeof(s_profileState.info.name), s_profileState.name );
     G_Profile_ParseString( buffer, "gender", s_profileState.info.gender, sizeof( s_profileState.info.gender ), "" );
     G_Profile_ParseString( buffer, "birthDate", s_profileState.info.birthDate, sizeof( s_profileState.info.birthDate ), "" );
     G_Profile_ParseString( buffer, "avatar", s_profileState.info.avatar, sizeof( s_profileState.info.avatar ), "" );
     G_Profile_ParseString( buffer, "country", s_profileState.info.country, sizeof( s_profileState.info.country ), "" );
-    s_profileState.info.currentRank = G_Profile_ParseInt( buffer, "currentRank", 0 );
-    s_profileState.info.highestRank = G_Profile_ParseInt( buffer, "highestRank", 0 );
+    s_profileState.info.currentRank = format == PROFILE_FILE_VERSION ? G_Profile_ParseInt( buffer, "currentRank", 0 ) : 0;
+    s_profileState.info.highestRank = format == PROFILE_FILE_VERSION ? G_Profile_ParseInt( buffer, "highestRank", 0 ) : 0;
     G_Profile_ParseFavoriteCars( buffer, &s_profileState.info );
 
     /* UUID lesen — Top-Level-Feld. Existiert nicht in Legacy-Profilen;
      * G_Profile_Init erkennt das leere Feld und generiert dann eine neue UUID. */
     G_Profile_ParseString( buffer, "uuid", s_profileState.info.uuid, sizeof( s_profileState.info.uuid ), "" );
 
+    if ( format == 0 ) {
+        s_profileState.dirty = qtrue;
+        Com_Printf( "Profile '%s': identity retained, old progress reset for v0.8.\n", s_profileState.name );
+        return qtrue;
+    }
     // Lade Vehicle-Array aus JSON
     vehiclesStart = strstr( buffer, "\"vehicles\"" );
     if ( vehiclesStart ) {
@@ -1212,7 +1226,7 @@ static void G_Profile_WriteToDisk( void ) {
     char path[MAX_QPATH];
     static char buffer[PROFILE_FILE_BUFFER_SIZE];
     static char vehicleJson[PROFILE_VEHICLE_JSON_BUFFER_SIZE];
-    static char favoriteCarsJson[1024];
+    static char favoriteCarsJson[4096];
     static char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
     static char readBuffer[PROFILE_FILE_BUFFER_SIZE];
     char gender[PROFILE_MAX_GENDER * 2];
@@ -1235,19 +1249,25 @@ static void G_Profile_WriteToDisk( void ) {
     readLength = trap_FS_FOpenFile( path, &readFile, FS_READ );
     if ( readLength > 0 ) {
         if ( readLength >= (int)sizeof( readBuffer ) ) {
-            readLength = sizeof( readBuffer ) - 1;
+            trap_FS_FCloseFile(readFile);
+            return;
         }
 
         trap_FS_Read( readBuffer, readLength, readFile );
         readBuffer[readLength] = '\0';
         trap_FS_FCloseFile( readFile );
+        if ( Profile_FormatClassify(readBuffer) < 0 ) return;
 
+        G_Profile_ParseString( readBuffer, "name", s_profileState.info.name, sizeof(s_profileState.info.name), s_profileState.info.name );
         G_Profile_ParseString( readBuffer, "gender", s_profileState.info.gender, sizeof( s_profileState.info.gender ), s_profileState.info.gender );
         G_Profile_ParseString( readBuffer, "birthDate", s_profileState.info.birthDate, sizeof( s_profileState.info.birthDate ), s_profileState.info.birthDate );
         G_Profile_ParseString( readBuffer, "avatar", s_profileState.info.avatar, sizeof( s_profileState.info.avatar ), s_profileState.info.avatar );
         G_Profile_ParseString( readBuffer, "country", s_profileState.info.country, sizeof( s_profileState.info.country ), s_profileState.info.country );
-        s_profileState.info.currentRank = G_Profile_ParseInt( readBuffer, "currentRank", s_profileState.info.currentRank );
-        s_profileState.info.highestRank = G_Profile_ParseInt( readBuffer, "highestRank", s_profileState.info.highestRank );
+
+        if ( Profile_FormatClassify(readBuffer) == PROFILE_FILE_VERSION ) {
+            int previousHighest = G_Profile_ParseInt(readBuffer,"highestRank",0);
+            if ( previousHighest > s_profileState.info.highestRank ) s_profileState.info.highestRank = previousHighest;
+        }
 
         /* UUID aus Datei nur übernehmen wenn im RAM noch keine valide UUID sitzt.
          * Schreibrichtung ist immer RAM → Disk, nie Disk → RAM bei der UUID,
@@ -1367,29 +1387,8 @@ static void G_Profile_WriteToDisk( void ) {
 
     /* Write JSON in multiple Com_sprintf calls to stay within QVM argument limits.
      * Part 1: header + info section */
-    length = Com_sprintf( buffer, sizeof( buffer ),
-        "{\n"
-        "\t\"uuid\": \"%s\",\n"
-        "\t\"name\": \"%s\",\n"
-        "\t\"info\": {\n"
-        "\t\t\"gender\": \"%s\",\n"
-        "\t\t\"birthDate\": \"%s\",\n"
-        "\t\t\"avatar\": \"%s\",\n"
-        "\t\t\"country\": \"%s\",\n"
-        "\t\t\"currentRank\": %d,\n"
-        "\t\t\"highestRank\": %d,\n"
-        "\t\t\"favoriteCars\": %s\n"
-        "\t},\n"
-        "\t\"stats\": {\n",
-        s_profileState.info.uuid,
-        s_profileState.name,
-        gender,
-        birthDate,
-        avatar,
-        country,
-        s_profileState.info.currentRank,
-        s_profileState.info.highestRank,
-        favoriteCarsJson );
+    length = Profile_FormatPrefix( buffer, sizeof(buffer), s_profileState.info.uuid,
+        s_profileState.info.name[0] ? s_profileState.info.name : s_profileState.name, &s_profileState.info, favoriteCarsJson );
 
     if ( length < 0 || length >= (int)sizeof( buffer ) ) {
         G_PROFILE_LOG( "G_Profile: Com_sprintf part1 failed\n" );
@@ -1532,7 +1531,7 @@ static void G_Profile_WriteToDisk( void ) {
             "\t\t\"autoballCompleted\": %d,\n"
             "\t\t\"autoballGoals\": %d,\n"
             "\t\t\"vehicles\": %s\n"
-            "\t}\n"
+            "\t}\n\t}\n"
             "}\n",
             s_profileState.stats.ctfWins,
             s_profileState.stats.ctfCompleted,
@@ -1575,12 +1574,13 @@ static void G_Profile_WriteToDisk( void ) {
         G_PROFILE_LOG( "G_Profile: Profile JSON truncated to %d bytes (needed %d)\n",
                     (int)sizeof( buffer ) - 1,
                     length );
-        length = sizeof( buffer ) - 1;
+        return;
     }
 
     // Debug-Ausgabe des gesamten Buffers
     G_PROFILE_LOG( "G_Profile: Writing profile file:\n%s\n", buffer );
 
+    if ( Profile_FormatClassify(buffer) != PROFILE_FILE_VERSION ) return;
     trap_FS_FOpenFile( path, &file, FS_WRITE );
     if ( file <= 0 ) {
         G_PROFILE_LOG( "G_Profile: Failed to open %s for writing\n", path );

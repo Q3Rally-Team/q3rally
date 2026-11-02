@@ -47,6 +47,7 @@ const LADDER_RATE_FILE_PREFIX  = 'rl_';   // rate-limit state file prefix
 
 require_once __DIR__ . '/keys.php';
 require_once __DIR__ . '/ghosts.php';
+require_once __DIR__ . '/period.php';
 
 // Move a key file from the old, web-reachable location data/server_keys.json
 // into data/private/ on the first request after an update.
@@ -1367,6 +1368,7 @@ try {
           </div>
           </div>
         </div>
+        <p role="status" id="ladder-period-notice">Test ladder / Testbetrieb: Berechnung und Ergebnisse können vor v1.0 geändert oder zurückgesetzt werden.</p>
         <p class="empty-state" id="leaderboardEmpty" hidden data-i18n="matches.empty">Keine Bestzeiten gefunden. Lade weitere Renn-Matches oder passe die Filter an.</p>
       </div>
 
@@ -5672,6 +5674,14 @@ elements.languageButtons.forEach((button) => {
   });
 });
 loadMatches();
+fetch(`${API_BASE}/ladder/status`).then(r => r.ok ? r.json() : Promise.reject())
+  .then(status => {
+    document.getElementById('ladder-period-notice').textContent = status.phase === 'stable'
+      ? 'Stable ladder / Stabile Ladder: Die Punkteberechnung bleibt unverändert. Profilränge und Achievements können erweitert werden.'
+      : 'Test ladder / Testbetrieb: Berechnung und Ergebnisse können vor v1.0 geändert oder zurückgesetzt werden.';
+  }).catch(() => {
+    document.getElementById('ladder-period-notice').textContent = 'Ladder nicht für neue Wertungen freigegeben / New ranked results unavailable.';
+  });
 
   </script>
 </body>
@@ -6126,11 +6136,14 @@ function profile_upsert_from_payload(array $payload): void
         }
 
         $existing = profile_load($playerId) ?? [];
+        $periodId = (string)($payload['ladder']['period'] ?? '');
+        if (($existing['ladderPeriod'] ?? '') !== $periodId) {
+            $existing = []; // Never carry a ranked baseline across periods.
+        }
 
-        // ── Snapshot-first: Nur valide Snapshots als Primärquelle nutzen.
-        $snap = (isset($player['profile']) && is_array($player['profile']) && !empty($player['profile']['valid']))
-            ? $player['profile']
-            : null;
+        // Ladder totals come only from accepted current-period matches.
+        // Never import a local career, even when rebuilding stored reports.
+        $snap = null;
         $matchId = isset($payload['matchId']) && is_string($payload['matchId']) ? normalize_match_id($payload['matchId']) : '';
         $serverMatchSeq = array_key_exists('serverMatchSeq', $payload)
             ? ladder_parse_server_match_seq($payload['serverMatchSeq'])
@@ -6140,16 +6153,9 @@ function profile_upsert_from_payload(array $payload): void
             : gmdate('c');
         $processedMatchIds = profile_normalize_processed_match_ids($existing);
         $alreadyCounted = $matchId !== '' && in_array($matchId, $processedMatchIds, true);
-        $lastServerMatchSeq = profile_last_server_match_seq($existing);
-        $isOutdatedBySeq = $serverMatchSeq !== null &&
-                           $lastServerMatchSeq !== null &&
-                           $serverMatchSeq < $lastServerMatchSeq;
-        // Use strict less-than only: a match with the same seq as the last seen
-        // one is NOT a replay – it can happen after a server restart that resets
-        // the counter. Exact-match deduplication is already handled by
-        // $alreadyCounted (matchId set membership).
-        $isReplayBySeq = $isOutdatedBySeq;
-        $countThisMatch = $isReplayBySeq ? false : !$alreadyCounted;
+        // Sequence counters restart and belong to individual reporting servers.
+        // Only the globally unique match id decides whether a result is counted.
+        $countThisMatch = !$alreadyCounted;
 
         // ── Win-Detection ──────────────────────────────────────────────
         $clientNum  = (int)($player['clientNum'] ?? -1);
@@ -6191,58 +6197,11 @@ function profile_upsert_from_payload(array $payload): void
         $mostUsed    = $snap ? ((string)($snap['mostUsedVehicle'] ?? '') ?: $vehicleName)
                               : $vehicleName;
 
-        // ── Helper: per-mode career counters (wins, completed, podiums, totals,
-        // awards). The game records the match outcome into the local profile
-        // BEFORE the payload is built (G_RecordMatchOutcome in LogExit), so a
-        // snapshot that is ahead of the stored value already contains this
-        // match. It is taken as-is; the match delta is only added when there is
-        // no snapshot (remote players) or the snapshot is not ahead.
-        // Previously max(existing, snapshot) + delta counted every match twice
-        // for the local player, so e.g. wins/completed ran one ahead.
-        $pickCareer = function(string $key, int $delta = 0) use ($snap, $existing, $countThisMatch): int {
-            $existingValue = (int)($existing[$key] ?? 0);
-            $snapValue = profile_snapshot_int($snap, $key);
-            if ($snapValue !== null && $snapValue > $existingValue) {
-                return $snapValue;
-            }
-            return $existingValue + ($countThisMatch ? $delta : 0);
+        // Server-side career counters use exactly one delta per accepted match.
+        $pickCareer = function(string $key, int $delta = 0) use ($existing, $countThisMatch): int {
+            return (int)($existing[$key] ?? 0) + ($countThisMatch ? $delta : 0);
         };
-
-        $pickCareerWithBaselineDelta = $pickCareer;
-        $mergeCareerCountField = function(string $field, int $deltaValue) use ($snap, $existing, $countThisMatch, $matchId): int {
-            $existingValue = (int)($existing[$field] ?? 0);
-            $snapshotValue = profile_snapshot_int($snap, $field);
-
-            // The snapshot carries a cumulative total from the local client (same
-            // source as PERS_* counters). It must never be used as a baseline that
-            // we then add the delta on top of: doing so double-counts the event
-            // (once in the snapshot total, once as the new delta).
-            //
-            // Strategy:
-            //   • If a valid snapshot is present AND it is strictly higher than the
-            //     stored value, accept the snapshot as-is (the client advanced its
-            //     counter; the delta from this match is already included).
-            //   • Otherwise fall back to stored value + delta (no snapshot, or
-            //     snapshot is stale / equal).
-            if ($snapshotValue !== null && $snapshotValue > $existingValue) {
-                // Snapshot already incorporates this match's contribution.
-                $finalValue = $snapshotValue;
-            } else {
-                // No snapshot (remote player) or snapshot is not ahead – use delta.
-                $finalValue = $existingValue + ($countThisMatch ? $deltaValue : 0);
-            }
-
-            ladder_pipeline_log('php-profile_upsert-merge-field', [
-                'matchId' => $matchId,
-                'field' => $field,
-                'existing' => $existingValue,
-                'snapshot' => $snapshotValue,
-                'delta' => $deltaValue,
-                'final' => $finalValue,
-            ]);
-
-            return $finalValue;
-        };
+        $mergeCareerCountField = $pickCareer;
 
         $hasOutcome = $isTeamMode ? ($winnerTeam !== null) : ($hasWinnerClientNum && $winnerClientNum >= 0);
         $derivedWins = ($hasOutcome && $isWinner) ? 1 : 0;
@@ -6397,81 +6356,48 @@ function profile_upsert_from_payload(array $payload): void
                 break;
         }
 
-        // ── Score (Snapshot-first; Delta nur für Nicht-Snapshot-Spieler) ────
-        //
-        // The local client embeds a profile snapshot whose playerScore is the
-        // cumulative career total as tracked on-device. This is authoritative:
-        // adding a derived delta on top would double-count every match the
-        // client already recorded locally.
-        //
-        // Priority:
-        //   1. Explicit delta field in payload  -> always use it (server override)
-        //   2. Valid snapshot present           -> accept snapshot total directly;
-        //                                         advance only when snapshot > stored
-        //   3. No snapshot (remote player)      -> derive delta from match stats
+        // One uniform match-derived calculation for every player.
         $existingScore = (int)($existing['playerScore'] ?? 0);
-        $snapshotScore = ($snap !== null) ? (int)($snap['playerScore'] ?? 0) : null;
-
-        $scoreDeltaFromPayload = null;
-        foreach (['playerScoreDelta', 'scoreDelta', 'matchScoreDelta', 'awardedScore', 'awardedPoints'] as $deltaField) {
-            $rawDelta = $player[$deltaField] ?? $payload[$deltaField] ?? null;
-            if (is_int($rawDelta) || is_float($rawDelta) || (is_string($rawDelta) && is_numeric($rawDelta))) {
-                $scoreDeltaFromPayload = (int)$rawDelta;
+        $scoreDeltaDerived = 0;
+        switch ($mode) {
+            case 'GT_DEATHMATCH':
+            case 'GT_TEAM':
+            case 'GT_DERBY':
+                $scoreDeltaDerived = max(0, $matchKills);
                 break;
-            }
+            case 'GT_CTF':
+            case 'GT_CTF4':
+                $scoreDeltaDerived = max(0, (int)($player['captures'] ?? 0));
+                break;
+            case 'GT_AUTOBALL':
+                $scoreDeltaDerived = max(0, (int)($player['autoballGoals'] ?? 0));
+                break;
+            case 'GT_DOMINATION':
+            case 'GT_KOTH':
+                $scoreDeltaDerived = max(0, (int)($player['zoneHoldMs'] ?? 0));
+                break;
+            case 'GT_LCS':
+                $scoreDeltaDerived = max(0, (int)($player['totalRaceMs'] ?? 0));
+                break;
+            case 'GT_ELIMINATION':
+                $scoreDeltaDerived = $isWinner ? 1 : 0;
+                break;
+            case 'GT_RACING':
+            case 'GT_RACING_DM':
+            case 'GT_SPRINT':
+            case 'GT_TEAM_RACING':
+            case 'GT_TEAM_RACING_DM':
+            default:
+                $scoreDeltaDerived = max(0, (int)($player['score'] ?? $player['rawScore'] ?? 0));
+                break;
         }
-
-        if ($scoreDeltaFromPayload !== null) {
-            // Explicit server-supplied delta.
-            $finalScore = $existingScore + ($countThisMatch ? $scoreDeltaFromPayload : 0);
-        } elseif ($snapshotScore !== null) {
-            // Snapshot present: the client is authoritative; never go backwards.
-            $finalScore = max($existingScore, $snapshotScore);
-        } else {
-            // Remote player, no snapshot - derive delta from match payload.
-            $scoreDeltaDerived = 0;
-            switch ($mode) {
-                case 'GT_DEATHMATCH':
-                case 'GT_TEAM':
-                case 'GT_DERBY':
-                    $scoreDeltaDerived = max(0, $matchKills);
-                    break;
-                case 'GT_CTF':
-                case 'GT_CTF4':
-                    $scoreDeltaDerived = max(0, (int)($player['captures'] ?? 0));
-                    break;
-                case 'GT_AUTOBALL':
-                    $scoreDeltaDerived = max(0, (int)($player['autoballGoals'] ?? 0));
-                    break;
-                case 'GT_DOMINATION':
-                case 'GT_KOTH':
-                    $scoreDeltaDerived = max(0, (int)($player['zoneHoldMs'] ?? 0));
-                    break;
-                case 'GT_LCS':
-                    $scoreDeltaDerived = max(0, (int)($player['totalRaceMs'] ?? 0));
-                    break;
-                case 'GT_ELIMINATION':
-                    $scoreDeltaDerived = $isWinner ? 1 : 0;
-                    break;
-                case 'GT_RACING':
-                case 'GT_RACING_DM':
-                case 'GT_SPRINT':
-                case 'GT_TEAM_RACING':
-                case 'GT_TEAM_RACING_DM':
-                default:
-                    $scoreDeltaDerived = max(0, (int)($player['playerScore'] ?? $player['score'] ?? $player['rawScore'] ?? 0));
-                    break;
-            }
-            $finalScore = $existingScore + ($countThisMatch ? $scoreDeltaDerived : 0);
-        }
-
-        $scoreDelta = $scoreDeltaFromPayload ?? ($snapshotScore !== null ? ($finalScore - $existingScore) : ($finalScore - $existingScore));
+        $finalScore = $existingScore + ($countThisMatch ? $scoreDeltaDerived : 0);
+        $scoreDelta = $finalScore - $existingScore;
 
         ladder_pipeline_log('php-profile_upsert-score', [
             'matchId' => $matchId,
             'playerId' => $playerId,
             'existingScore' => $existingScore,
-            'snapshotScore' => $snapshotScore,
             'scoreDelta' => $scoreDelta,
             'countThisMatch' => $countThisMatch,
             'finalScore' => $finalScore,
@@ -6479,15 +6405,12 @@ function profile_upsert_from_payload(array $payload): void
 
         $profile = [
             'playerId'        => $playerId,
+            'ladderPeriod'    => $periodId,
+            'ladderRules'     => (string)($payload['ladder']['rules'] ?? ''),
             'cleanName'       => (string)($player['cleanName'] ?? $player['name'] ?? ''),
             'playerScore'     => max($finalScore, 0),
-            'currentRank'     => $snap ? (int)($snap['currentRank'] ?? $existing['currentRank'] ?? 0)
-                                       : (int)($player['rankTier'] ?? $existing['currentRank'] ?? 0),
-            'highestRank'     => max(
-                                    $snap ? (int)($snap['highestRank'] ?? 0) : 0,
-                                    (int)($player['rankTier'] ?? 0),
-                                    (int)($existing['highestRank'] ?? 0)
-                                 ),
+            'currentRank'     => ladder_rank_for_score(max($finalScore, 0)),
+            'highestRank'     => max(ladder_rank_for_score(max($finalScore, 0)), (int)($existing['highestRank'] ?? 0)),
             // gamesPlayed: always increment by 1 for this match regardless of any
             // snapshot value. The snapshot reflects the local client counter which
             // is not synchronised with server matches. The ladder is the authoritative
@@ -6495,12 +6418,7 @@ function profile_upsert_from_payload(array $payload): void
             'gamesPlayed'     => (int)($existing['gamesPlayed'] ?? 0) + ($countThisMatch ? 1 : 0),
 
             // ── Allgemein ───────────────────────────────────────────────
-            // wins/losses: C code (G_Profile_RecordWin/Loss) already writes the
-            // new cumulative total into the snapshot before the upload happens,
-            // so the snapshot is already ahead by 1. Using pickCareer would add
-            // derivedWins on top of the snapshot → double-count. Same pattern as
-            // damageDealt – use mergeCareerCountField which treats a strictly-ahead
-            // snapshot as authoritative and skips the delta.
+            // Ranked totals come only from accepted current-period matches.
             'wins'            => $mergeCareerCountField('wins', $derivedWins),
             'losses'          => $mergeCareerCountField('losses', $derivedLosses),
             'kills'           => $mergeCareerCountField('kills', max(0, $matchKills)),
@@ -6520,12 +6438,6 @@ function profile_upsert_from_payload(array $payload): void
             'excellentAwards' => $pickCareer('excellentAwards', (int)($player['excellentCount'] ?? 0)),
             'impressiveAwards'=> $pickCareer('impressiveAwards', (int)($player['impressiveCount'] ?? 0)),
             'perfectAwards'   => $pickCareer('perfectAwards', !empty($player['perfect']) ? 1 : 0),
-            // Use mergeCareerCountField (not pickCareer) for damage stats:
-            // G_Profile_RecordDamage() updates the career total incrementally during
-            // the match, so the snapshot already contains this match's damage.
-            // pickCareer would add the per-match delta ON TOP of the snapshot baseline,
-            // causing double-counting. mergeCareerCountField uses the snapshot as-is
-            // when it's strictly ahead, matching the same logic used for kills/deaths.
             'damageDealt'     => $mergeCareerCountField('damageDealt', (int)($player['damageDealt'] ?? 0)),
             'damageTaken'     => $mergeCareerCountField('damageTaken', (int)($player['damageTaken'] ?? 0)),
             'distanceKm'      => $distanceKm,
@@ -6620,18 +6532,10 @@ function profile_upsert_from_payload(array $payload): void
             'lastSeen'         => $receivedAt,
             'vehicle'          => $mostUsed,
             'registeredAt'     => $existing['registeredAt'] ?? $receivedAt,
-            'lastIngestedMatchId' => ($isOutdatedBySeq && isset($existing['lastIngestedMatchId']) && is_string($existing['lastIngestedMatchId']))
-                ? $existing['lastIngestedMatchId']
-                : $matchId,
-            'lastIngestedAt' => ($isOutdatedBySeq && isset($existing['lastIngestedAt']) && is_string($existing['lastIngestedAt']))
-                ? $existing['lastIngestedAt']
-                : $receivedAt,
-            'lastIngestedMode' => ($isOutdatedBySeq && isset($existing['lastIngestedMode']) && is_string($existing['lastIngestedMode']))
-                ? $existing['lastIngestedMode']
-                : (string)$mode,
-            'lastServerMatchSeq' => ($isOutdatedBySeq && isset($existing['lastServerMatchSeq']) && ladder_parse_server_match_seq($existing['lastServerMatchSeq']) !== null)
-                ? (int)$existing['lastServerMatchSeq']
-                : $serverMatchSeq,
+            'lastIngestedMatchId' => $matchId,
+            'lastIngestedAt' => $receivedAt,
+            'lastIngestedMode' => (string)$mode,
+            'lastServerMatchSeq' => $serverMatchSeq,
             '_processedMatchIds'=> (function() use ($processedMatchIds, $matchId, $countThisMatch): array {
                 if ($countThisMatch && $matchId !== '') {
                     $processedMatchIds[] = $matchId;
@@ -6639,21 +6543,11 @@ function profile_upsert_from_payload(array $payload): void
                 return array_slice(array_values(array_unique($processedMatchIds)), -200);
             })(),
             '_lastProcessedMatch' => [
-                'matchId' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['matchId']) && is_string($existing['_lastProcessedMatch']['matchId']))
-                    ? $existing['_lastProcessedMatch']['matchId']
-                    : $matchId,
-                'serverMatchSeq' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['serverMatchSeq']))
-                    ? $existing['_lastProcessedMatch']['serverMatchSeq']
-                    : $serverMatchSeq,
-                'timestamp' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['timestamp']) && is_string($existing['_lastProcessedMatch']['timestamp']))
-                    ? $existing['_lastProcessedMatch']['timestamp']
-                    : $receivedAt,
-                'mode' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['mode']) && is_string($existing['_lastProcessedMatch']['mode']))
-                    ? $existing['_lastProcessedMatch']['mode']
-                    : (string)$mode,
-                'checksum' => ($isOutdatedBySeq && isset($existing['_lastProcessedMatch']['checksum']) && is_string($existing['_lastProcessedMatch']['checksum']))
-                    ? $existing['_lastProcessedMatch']['checksum']
-                    : ($matchId !== '' ? profile_match_checksum($matchId, (string)$mode, $player) : ''),
+                'matchId' => $matchId,
+                'serverMatchSeq' => $serverMatchSeq,
+                'timestamp' => $receivedAt,
+                'mode' => (string)$mode,
+                'checksum' => $matchId !== '' ? profile_match_checksum($matchId, (string)$mode, $player) : '',
             ],
         ];
 
@@ -7258,7 +7152,8 @@ function handle_post(array $segments): void
         throw new LadderApiException(400, 'INVALID_JSON', 'Invalid JSON payload.');
     }
 
-    $payload = normalize_ingest_payload($payload);
+    ladder_require_current_report($payload);
+    $payload = normalize_ingest_payload(ladder_match_only_payload($payload));
 
     // Auth: verify Bearer token against registered server keys.
     // Server name in payload must match the registered name for this key.
@@ -7266,7 +7161,8 @@ function handle_post(array $segments): void
     if (isset($payload['server']['name']) && is_string($payload['server']['name'])) {
         $serverName = $payload['server']['name'];
     }
-    $keyRecord = keys_require_auth($serverName);
+    $keyRecord = keys_require_auth($serverName, false, false);
+    ladder_require_ranked_key($keyRecord, $payload);
 
     if (!isset($payload['matchId']) || !is_string($payload['matchId']) || trim($payload['matchId']) === '') {
         throw new LadderApiException(422, 'MATCH_ID_REQUIRED', 'matchId is required.');
@@ -7322,8 +7218,7 @@ function handle_post(array $segments): void
         throw new LadderApiException(500, 'PERSIST_FAILED', 'Unable to persist match.');
     }
 
-    // Update leaderboard index
-    index_append($payload);
+    keys_touch((string)$keyRecord['key'], true);
 
     if (isset($payload['players']) && is_array($payload['players'])) {
         foreach ($payload['players'] as $player) {
@@ -7355,6 +7250,8 @@ function handle_post(array $segments): void
 
     // Update player profiles
     profile_upsert_from_payload($payload);
+    // The index must see the just-updated server-derived career totals.
+    index_append($payload);
 
     send_json(['matchId' => $payload['matchId']], 201);
 }
@@ -7414,6 +7311,12 @@ function normalize_api_segments(array $segments): array
 
 function handle_get(array $segments): void
 {
+    if ($segments === ['ladder', 'status']) {
+        $period = ladder_period();
+        send_json(['period' => $period['id'], 'phase' => $period['phase'],
+            'rules' => $period['rules'], 'calculationFrozen' => $period['phase'] === 'stable'], 200);
+        return;
+    }
     if ($segments === ['maps', 'metadata']) {
         $entries = load_arena_metadata();
         $normalized = [];

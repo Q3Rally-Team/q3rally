@@ -70,7 +70,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 
 #define PW_DOT_Y        394
 #define PW_DOT_SPACING  14
-#define PW_PAGES        3
+#define PW_PAGES        2
 #define PW_STATUS_Y     ( PW_DOT_Y - 22 )
 #define PW_HINT_Y       ( PW_FRAME_Y + PW_FRAME_H + 8 )
 
@@ -745,15 +745,15 @@ static void PW_DrawPage3( void ) {
     Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Ladder tracking",
                        UI_LEFT | UI_BIGFONT, pwText );
     Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
-                       "Keep your offline results connected to your profile",
+                       "Optional registration; local career stays on this device",
                        UI_LEFT | UI_SMALLFONT, pwMuted );
 
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
-        Frontend_DrawText( PW_CX, PW_BODY_Y + 12, "You're on the ladder!",
+        Frontend_DrawText( PW_CX, PW_BODY_Y + 12, "Profile registration complete",
                            UI_CENTER | UI_SMALLFONT, pwSuccess );
         Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
-                           "Profile and offline tracking are both active.",
+                           "Ranked results count on approved servers.",
                            UI_CENTER | UI_SMALLFONT, pwText );
         Frontend_DrawText( PW_CX, PW_BODY_Y + 52,
                            "Stats update automatically after each match.",
@@ -762,10 +762,10 @@ static void PW_DrawPage3( void ) {
     }
 
     Frontend_DrawText( PW_CX, PW_BODY_Y + 12,
-                       "Track your race results on the Q3Rally ladder.",
+                       "Register your Q3Rally profile (optional).",
                        UI_CENTER | UI_SMALLFONT, pwText );
     Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
-                       "Online and offline matches. No password needed.",
+                       "Local games do not change your ladder ranking.",
                        UI_CENTER | UI_SMALLFONT, pwMuted );
     Frontend_DrawText( PW_CX, PW_BODY_Y + 54, "ladder.q3rally.com",
                        UI_CENTER | UI_SMALLFONT, pwAccent );
@@ -808,7 +808,7 @@ static void PW_DrawPageDone( void ) {
                        "Use CONFIG > CONTROLS to set your key bindings.",
                        UI_LEFT | UI_SMALLFONT, pwMuted );
     Frontend_DrawText( PW_CONTENT_X, PW_BODY_Y + 76,
-                       "You can change profile details later in Settings.",
+                       "Web profile: not linked. Website linking follows in v0.9.",
                        UI_LEFT | UI_SMALLFONT, pwMuted );
 }
 
@@ -857,7 +857,7 @@ static void PW_MenuEvent( void *ptr, int event ) {
             break;
         case PW_PAGE_DETAILS:
             PW_CommitDetails();
-            PW_SetPage( PW_PAGE_LADDER );
+            PW_SetPage( PW_PAGE_DONE );
             break;
         case PW_PAGE_LADDER:
             if ( s_pw.ladderResult     == PW_RESULT_OK &&
@@ -887,7 +887,7 @@ static void PW_MenuEvent( void *ptr, int event ) {
         switch ( s_pw.page ) {
         case PW_PAGE_DETAILS:
             PW_CommitDetails();
-            PW_SetPage( PW_PAGE_LADDER );
+            PW_SetPage( PW_PAGE_DONE );
             break;
         case PW_PAGE_LADDER:
             PW_SetPage( PW_PAGE_DONE );

@@ -81,7 +81,7 @@ static void LadderWizard_DrawButton( void *self );
 #define WIZARD_TEXT_NEVER_SHOW               "NEVER SHOW AGAIN"
 #define WIZARD_TEXT_SERVERNAME_TRUNCATED     "Note: Server name was truncated to 64 characters."
 #define WIZARD_TEXT_SERVERNAME_NORMALIZED    "Note: Server name was normalized for the service."
-#define WIZARD_TEXT_CONFIRM_QUESTION         "Do you want to track offline matches on the ladder?"
+#define WIZARD_TEXT_CONFIRM_QUESTION         "Register this profile? Local games stay unranked."
 #define WIZARD_TEXT_OWNER_LABEL              "Owner:"
 #define WIZARD_TEXT_EMAIL_LABEL              "Email:"
 #define WIZARD_TEXT_SUBMITTING               "Submitting... please wait."
@@ -640,35 +640,8 @@ static sfxHandle_t LadderWizard_MenuKey( int key ) {
 /* ── MaybeShow ───────────────────────────────────────────────────────────────── */
 
 void UI_LadderWizard_MaybeShow( void ) {
-    char profileName[PROFILE_MAX_NAME];
-    char dismissedProfiles[1024];
-
-    LadderWizard_RegisterCvars();
-    trap_Cvar_Update( &ui_ladderWizardDismissed );
-    trap_Cvar_Update( &ui_ladderWizardDismissedProfiles );
-
-    LadderWizard_GetActiveProfile( profileName, sizeof( profileName ) );
-
-    if ( !profileName[0] ) return;
-    /* Don't show standalone wizard while the new profile wizard is active —
-     * it handles offline key registration as part of its Page 3 flow.      */
-    if ( UI_ProfileWizard_IsActive() ) return;
-
-    /* The engine activates the profile's protected key/name pair before this
-     * check. A completion flag from another profile must never suppress setup. */
-    if ( trap_Cvar_VariableValue( "sv_ladderProfileReady" ) != 0 ) {
-        return;
-    }
-
-    trap_Cvar_VariableStringBuffer( "ladder_wizard_dismissed_profiles",
-                                    dismissedProfiles,
-                                    sizeof( dismissedProfiles ) );
-
-    if ( LadderWizard_ProfileListContains( dismissedProfiles, profileName ) ) {
-        return;
-    }
-
-    UI_LadderWizardMenu();
+    /* v0.8 profiles are local and unlinked. Website registration/device
+     * linkage replaces this legacy offline-key prompt in v0.9. */
 }
 
 /* ── Menu init ───────────────────────────────────────────────────────────────── */
@@ -835,7 +808,7 @@ static void LadderWizard_Draw( void ) {
     Frontend_DrawText( WIZARD_FRAME_X + 24, WIZARD_FRAME_Y + 24,
                        "Ladder setup", UI_LEFT | UI_BIGFONT, wizardText );
     Frontend_DrawText( WIZARD_FRAME_X + 24, WIZARD_FRAME_Y + 48,
-                       "Register offline results and keep your profile connected",
+                       "Optional profile registration; ranked play uses approved servers",
                        UI_LEFT | UI_SMALLFONT, wizardMuted );
     Frontend_DrawStatusChip( WIZARD_FRAME_X + WIZARD_FRAME_W - 104,
                              WIZARD_FRAME_Y + 26, "Ladder", wizardStatus,
@@ -845,7 +818,7 @@ static void LadderWizard_Draw( void ) {
 
     if ( s_wizard.page == WIZARD_PAGE_CONFIRM ) {
         Frontend_DrawText( WIZARD_PANEL_X + 24, WIZARD_PANEL_Y + 26,
-                           "Offline match tracking", UI_LEFT | UI_SMALLFONT,
+                           "Profile registration", UI_LEFT | UI_SMALLFONT,
                            wizardAccent );
         Frontend_DrawText( cx, WIZARD_PANEL_Y + 52,
                            WIZARD_TEXT_CONFIRM_QUESTION,

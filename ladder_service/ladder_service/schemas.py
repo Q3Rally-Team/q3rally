@@ -46,6 +46,7 @@ class ServerInfo(BaseModel):
     build: Optional[str] = Field(
         default=None, description="Build identifier reported by the server"
     )
+    dedicated: bool = False
 
 
 class Settings(BaseModel):

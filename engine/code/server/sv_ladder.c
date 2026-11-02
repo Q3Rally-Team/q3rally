@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* Must be defined before any header that includes profile_shared.h */
 #define PROFILE_SHARED_IMPLEMENTATION
 #include "server.h"
+#include "../qcommon/ladder_protocol.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -1226,6 +1227,17 @@ static qboolean SV_LadderJsonAppendPlayer( ladderJsonBuilder_t *builder,
         return qtrue;
 }
 
+static qboolean SV_LadderAppendPeriod( ladderJsonBuilder_t *builder ) {
+    char period[64];
+    Cvar_VariableStringBuffer( "sv_ladderPeriod", period, sizeof( period ) );
+    if ( !period[0] ) Q_strncpyz( period, Q3R_LADDER_DEFAULT_PERIOD, sizeof( period ) );
+    return SV_LadderJsonAppendRaw( builder, "\"ladder\":{\"revision\":1,\"clientsVerified\":true,\"period\":", strlen( "\"ladder\":{\"revision\":1,\"clientsVerified\":true,\"period\":" ) )
+        && SV_LadderJsonAppendString( builder, period )
+        && SV_LadderJsonAppendRaw( builder, ",\"rules\":", 9 )
+        && SV_LadderJsonAppendString( builder, Q3R_LADDER_RULES )
+        && SV_LadderJsonAppendRaw( builder, "}", 1 );
+}
+
 static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_t *lengthOut ) {
         ladderJsonBuilder_t builder;
         qboolean first = qtrue;
@@ -1244,6 +1256,10 @@ static char *SV_LadderSerializeMatch( const ladderMatchPayload_t *payload, size_
                 return NULL;
         }
 
+        if ( !SV_LadderAppendPeriod( &builder ) || !SV_LadderJsonAppendChar( &builder, ',' ) ) {
+            Z_Free( builder.data );
+            return NULL;
+        }
         if ( !SV_LadderJsonAppendKey( &builder, "matchId", &first ) ||
              !SV_LadderJsonAppendString( &builder, payload->matchId ) ) {
                 Z_Free( builder.data );
@@ -3116,6 +3132,14 @@ void SV_LadderSubmit( const ladderMatchPayload_t *payload ) {
                 return;
         }
 
+        if ( !com_dedicated || !com_dedicated->integer ) {
+            Com_Printf( "Ladder: local games are unranked; no upload queued.\n" );
+            return;
+        }
+        if ( !SV_LadderClientsCompatible() ) {
+            Com_Printf( "Ladder: legacy client participated; this map is unranked.\n" );
+            return;
+        }
         if ( !payload || !payload->valid ) {
                 return;
         }
@@ -3250,7 +3274,9 @@ static char *SV_LadderSerializeGhost( const ladderGhostMeta_t *meta, const char 
                 return NULL;
         }
 
-        ok = SV_LadderJsonAppendRaw( &builder, "{\"ghostId\":", 11 )
+        ok = SV_LadderJsonAppendChar( &builder, '{' )
+                && SV_LadderAppendPeriod( &builder )
+                && SV_LadderJsonAppendRaw( &builder, ",\"ghostId\":", 11 )
                 && SV_LadderJsonAppendString( &builder, meta->ghostId )
                 && SV_LadderJsonAppendRaw( &builder, ",\"server\":{\"name\":", 18 )
                 && SV_LadderJsonAppendString( &builder, serverName )
@@ -3321,6 +3347,13 @@ void SV_LadderSubmitGhost( const ladderGhostMeta_t *meta, const char *data ) {
         }
         if ( !sv_ladder.initialized || !sv_ladderEnabled || !sv_ladderEnabled->integer ) {
                 return;
+        }
+        if ( !com_dedicated || !com_dedicated->integer ) {
+            return; /* Local ghosts remain available on this device. */
+        }
+        if ( !SV_LadderClientsCompatible() ) {
+            Com_Printf( "Ladder: legacy client participated; ghost upload skipped.\n" );
+            return;
         }
         if ( !meta || !meta->valid || !data ) {
                 return;

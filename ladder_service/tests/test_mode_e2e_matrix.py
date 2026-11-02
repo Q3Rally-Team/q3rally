@@ -14,6 +14,7 @@ from urllib import error as urlerror
 from urllib import request
 
 import pytest
+from tests.ladder_period_fixture import PERIOD, REPORT, initialize_period
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -56,6 +57,11 @@ SEMANTIC_ORACLE: dict[str, ModeSemantics] = {
 @pytest.fixture(scope="module", autouse=True)
 def override_db(tmp_path_factory: pytest.TempPathFactory) -> None:
     db_path = tmp_path_factory.mktemp("db") / "matrix.db"
+    period_config = db_path.parent / "period.json"
+    period_config.write_text(json.dumps(PERIOD))
+    patch = pytest.MonkeyPatch()
+    patch.setenv("LADDER_PERIOD_CONFIG", str(period_config))
+    patch.setenv("LADDER_REPORT_KEY", "test-ranked-key")
     engine = create_engine(
         f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
     )
@@ -69,9 +75,10 @@ def override_db(tmp_path_factory: pytest.TempPathFactory) -> None:
     main.app.dependency_overrides[main.get_session] = _override_get_session
     yield
     main.app.dependency_overrides.pop(main.get_session, None)
+    patch.undo()
 
 
-client = TestClient(main.app)
+client = TestClient(main.app, headers={"Authorization": "Bearer test-ranked-key"})
 
 
 def _find_free_port() -> int:
@@ -113,11 +120,16 @@ def php_env(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     data_dir = run_dir / "data"
     data_dir.mkdir(exist_ok=True)
 
+    initialize_period(run_dir)
+    (data_dir / "private/server_keys.json").write_text(json.dumps([{
+        "key": "d" * 64, "serverName": "Q3Rally Matrix Test", "type": "server", "status": "active"
+    }]))
     port = _find_free_port()
+    server_log = (run_dir / "server.log").open("w")
     process = subprocess.Popen(
         [php_bin, "-S", f"127.0.0.1:{port}", "-t", str(run_dir)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=server_log,
+        stderr=subprocess.STDOUT,
         text=True,
     )
 
@@ -134,36 +146,26 @@ def php_env(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
         time.sleep(0.2)
 
     if not started:
-        stderr = process.stderr.read() if process.stderr else ""
+        stderr = (run_dir / "server.log").read_text(errors="replace")
         process.terminate()
         raise RuntimeError(f"PHP test server did not start. stderr={stderr}")
 
-    status, reg = _http_json(
-        "POST",
-        f"{base_url}/api/v1/register",
-        {
-            "serverName": "Q3Rally Matrix Test",
-            "ownerName": "CI",
-            "ownerEmail": "ci@example.org",
-            "type": "offline",
-        },
-    )
-    assert status == 201, reg
-
     yield {
         "base_url": base_url,
-        "auth": {"Authorization": f"Bearer {reg['key']}"},
+        "auth": {"Authorization": "Bearer " + "d" * 64},
         "process": process,
         "run_dir": run_dir,
     }
 
     process.terminate()
     process.wait(timeout=5)
+    server_log.close()
 
 
 def generate_golden_payload(mode: str) -> dict[str, Any]:
     now = datetime(2026, 4, 13, 12, 0, 0, tzinfo=timezone.utc)
     payload: dict[str, Any] = {
+        "ladder": dict(REPORT),
         "matchId": f"matrix-{mode.lower()}",
         "mode": mode,
         "startTime": now.isoformat(),
@@ -174,8 +176,8 @@ def generate_golden_payload(mode: str) -> dict[str, Any]:
         "server": {
             "name": "Q3Rally Matrix Test",
             "host": "127.0.0.1:27960",
-            "build": "test",
-            "dedicated": 1,
+            "build": "Q3Rally v0.8 test",
+            "dedicated": True,
         },
         "settings": {"g_gametype": 999},
         "players": [
@@ -515,9 +517,9 @@ def test_php_profile_dm_snapshot_delta_kills_count_once_per_match(php_env: dict[
     _assert_profile_fields(
         profile,
         {
-            "kills": 109,
-            "wins": 12,
-            "losses": 1,
+            "kills": 9,
+            "wins": 2,
+            "losses": 0,
             "gamesPlayed": 2,
             "dmWins": 2,
             "dmCompleted": 2,
@@ -553,10 +555,10 @@ def test_php_profile_ctf_captures_snapshot_delta_counted_once(php_env: dict[str,
     _assert_profile_fields(
         profile,
         {
-            "flagCaptures": 13,
-            "ctfCaptures": 13,
-            "wins": 6,
-            "losses": 2,
+            "flagCaptures": 3,
+            "ctfCaptures": 3,
+            "wins": 1,
+            "losses": 0,
             "ctfWins": 1,
             "ctfCompleted": 1,
             "gamesPlayed": 1,
@@ -615,7 +617,7 @@ def test_php_profile_retry_same_match_id_keeps_processed_match_ids_and_totals_st
     )
     assert profile["_processedMatchIds"] == ["profile-retry-same-match-id-1"]
 
-def test_php_profile_upsert_prefers_valid_snapshot(php_env: dict[str, Any]) -> None:
+def test_php_profile_upsert_ignores_local_snapshot(php_env: dict[str, Any]) -> None:
     player_id = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
     payload = _profile_payload("profile-snapshot-1", "GT_DEATHMATCH", player_id)
     payload["players"][0]["profile"] = {
@@ -632,12 +634,12 @@ def test_php_profile_upsert_prefers_valid_snapshot(php_env: dict[str, Any]) -> N
     assert status == 201, created
 
     profile = _get_php_profile(php_env, player_id)
-    assert profile["wins"] == 12
-    assert profile["losses"] == 5
-    assert profile["kills"] == 81
-    assert profile["deaths"] == 44
-    assert profile["dmWins"] == 9
-    assert profile["racingWins"] == 4
+    assert profile["wins"] == 1
+    assert profile["losses"] == 0
+    assert profile["kills"] == 7
+    assert profile["deaths"] == 2
+    assert profile["dmWins"] == 1
+    assert profile["racingWins"] == 0
 
 
 def test_php_profile_upsert_derives_without_snapshot_and_is_idempotent(php_env: dict[str, Any]) -> None:
@@ -813,10 +815,10 @@ def test_php_profile_team_mode_applies_team_win_loss_delta(php_env: dict[str, An
 
     winner = _get_php_profile(php_env, winner_id)
     loser = _get_php_profile(php_env, loser_id)
-    assert winner["wins"] == 5
-    assert winner["losses"] == 2
-    assert loser["wins"] == 9
-    assert loser["losses"] == 2
+    assert winner["wins"] == 1
+    assert winner["losses"] == 0
+    assert loser["wins"] == 0
+    assert loser["losses"] == 1
 
 
 @pytest.mark.parametrize("mode,win_field", [("GT_CTF", "ctfWins"), ("GT_CTF4", "ctf4Wins")])

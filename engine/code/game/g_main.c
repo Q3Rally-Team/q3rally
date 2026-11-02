@@ -1,3 +1,4 @@
+#include "../qcommon/profile_format.h"
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
@@ -1235,7 +1236,7 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                 Com_sprintf( profilePath, sizeof( profilePath ), "profiles/%s.json", profileName );
                                 len = trap_FS_FOpenFile( profilePath, &fh, FS_READ );
                                 if ( len > 0 ) {
-                                        static char profileBuf[8192];
+                                        static char profileBuf[PROFILE_JSON_MAX];
                                         const char *statsSection;
                                         const char *infoSection;
                                         const char *statsBuf;
@@ -1245,8 +1246,11 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         profileBuf[len] = '\0';
                                         trap_FS_FCloseFile( fh );
 
+                                        if ( Profile_FormatClassify(profileBuf) != PROFILE_FILE_VERSION ) {
+                                            profileBuf[0] = 0;
+                                        }
                                         statsSection = strstr( profileBuf, "\"stats\"" );
-                                        infoSection  = strstr( profileBuf, "\"info\"" );
+                                        infoSection  = strstr( profileBuf, "\"progress\"" );
                                         statsBuf = profileBuf;
                                         infoBuf  = profileBuf;
                                         if ( statsSection ) {

@@ -14,6 +14,7 @@ import urllib.error
 import urllib.request
 
 import pytest
+from tests.ladder_period_fixture import initialize_period, current_report
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHP_DIR = REPO_ROOT / "ladder_service" / "php_webservice"
@@ -51,6 +52,7 @@ def ladder(tmp_path):
         _key(OTHER_ONLINE_KEY, "Other Server"),
         _key(OFFLINE_KEY, "Tester_OFFLINE", "offline"),
     ]))
+    initialize_period(root)
     port = _free_port()
     # Several workers, so parallel requests really run in parallel.
     env = dict(os.environ, PHP_CLI_SERVER_WORKERS="8")
@@ -69,6 +71,7 @@ def ladder(tmp_path):
 
 
 def _request(url, payload=None, key=None, method=None):
+    payload = current_report(payload)
     data = None if payload is None else json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, method=method or ("POST" if data else "GET"))
     req.add_header("Content-Type", "application/json")
@@ -142,16 +145,13 @@ def test_registration_is_pending_and_throttled(ladder):
     assert status == 429, body
 
 
-def test_offline_keys_report_offline_matches(ladder):
+def test_offline_keys_cannot_report_ranked_matches(ladder):
     base, root = ladder
 
     status, body = _request(base + "/matches", _match("m-offline", "Tester_OFFLINE", dedicated=True), OFFLINE_KEY)
-    assert status == 201, body
-    status, body = _request(base + "/matches/m-offline")
-    assert status == 200
-    stored = json.loads(body)
-    assert stored["source"] == "offline"
-    assert "ingestKeyId" not in stored
+    assert status == 403, body
+    assert json.loads(body)["error"]["code"] == "LADDER_RANKED_SERVER_REQUIRED"
+    assert not (root / "data/m-offline.json").exists()
 
     status, body = _request(base + "/matches", _match("m-online", "Online Server"), ONLINE_KEY)
     assert status == 201, body

@@ -124,7 +124,7 @@ endif
 export CROSS_COMPILING
 
 ifndef VERSION
-VERSION=v0.7d
+VERSION=v0.8
 endif
 
 ifndef CLIENTBIN
@@ -2882,6 +2882,7 @@ Q3GOBJ_ = \
   $(B)/$(BASEGAME)/game/g_utils.o \
   $(B)/$(BASEGAME)/game/g_weapon.o \
   \
+  $(B)/$(BASEGAME)/qcommon/profile_format.o \
   $(B)/$(BASEGAME)/qcommon/q_math.o \
   $(B)/$(BASEGAME)/qcommon/q_shared.o
 
@@ -3017,6 +3018,7 @@ Q3UIOBJ_ = \
   $(B)/$(BASEGAME)/ui/ui_rally_bots.o \
   \
   $(B)/$(BASEGAME)/qcommon/rally_plate_tools.o \
+  $(B)/$(BASEGAME)/qcommon/profile_format.o \
   $(B)/$(BASEGAME)/qcommon/q_math.o \
   $(B)/$(BASEGAME)/qcommon/q_shared.o
 

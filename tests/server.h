@@ -1,5 +1,7 @@
 #ifndef TEST_SERVER_H
 #define TEST_SERVER_H
+void SV_LadderShutdown(void);
+static inline int SV_LadderClientsCompatible(void) { return 1; }
 
 #include <stdarg.h>
 #include <stddef.h>

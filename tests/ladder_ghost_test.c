@@ -64,7 +64,8 @@ int main( void ) {
 	assert( length == strlen( json ) );
 	{
 		const char *prefix = "{\"ghostId\":\"q3r_valley-1234abcd-61234\",\"server\":{\"name\":\"My Server\",";
-		assert( !strncmp( json, prefix, strlen( prefix ) ) );
+		assert( strstr( json, prefix + 1 ) != NULL );
+        assert( strstr( json, "\"ladder\":{\"revision\":1,\"clientsVerified\":true,\"period\":\"v0.8-test-1\",\"rules\":\"v0.8-test-1\"}" ) != NULL );
 	}
 	assert( strstr( json, "\"dedicated\":false" ) != NULL );
 	assert( strstr( json, "\"player\":{\"id\":\"1234abcd-0000-4000-8000-000000000001\",\"name\":\"Driver \\\"Q\\\"\"}" ) != NULL );

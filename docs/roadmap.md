@@ -14,6 +14,14 @@ Initial estimate: 4–7 developer weeks for the full migration; approximately on
 week for the shared foundation plus the main menu and demo player. Estimates
 need refinement after a complete inventory of existing screens.
 
+## v0.9 — Central web profile and synchronization
+
+Website login and explicit in-game linkage to the central web profile belong
+here, along with authoritative profile retrieval, offline-progress sync after
+basic validation, device management and the further profile/web integrations.
+v0.8 prepares only the profile structure; it does not require a running central
+login/sync service. See central-profile-model.md for the target architecture.
+
 ## v0.8 - Release priorities
 
 1. UI consistency: review remaining legacy dialogs, fonts, hit targets and overlapping overlays. Shared bottom-left Back buttons implemented across regular menus; Config defaults moved to the right. In-game verification pending.
@@ -21,9 +29,10 @@ need refinement after a complete inventory of existing screens.
 3. Race feedback: missed-checkpoint messages now identify the required gate and are throttled per player; wrong-way checks use movement with a low-speed/start/finish guard; successful automatic car recovery and non-winning race finishes receive center messages. Native/QVM build and production-code regression checks pass; in-game verification pending. See race-feedback.md.
 4. Validate graphics presets across representative maps and effects. Preset/pending-value regressions corrected and automated GL1/GL2 checks pass. User verified all four presets on Country01, Valley, Nightcity and Ridgepass after the Low/LDR framebuffer correction. Basic visual checks pass; measured performance comparisons remain open. See graphics-preset-validation.md.
 5. Verify clean release installs, settings persistence, restart and multiplayer connectivity. Initial Windows PK3-only startup, settings/profile persistence, GL1/GL2 renderer restarts, pure-server connection, disconnect and reconnect pass after correcting four packaging/runtime defects. Windows libcurl dependency resolved through static linkage; local client/server Ladder HTTP and PK3 download/entry tests plus a separate HTTPS certificate-validation probe pass. Native Linux/WSLg client GL1/GL2 startup, renderer restarts, settings/profile persistence and PulseAudio initialization also pass. Native Intel/macOS 15 client Low checks pass for both renderers, including verified preset values; ARM Low checks await GitHub runner capacity. Production-service integration, interactive UI/audio-quality checks and an untouched final candidate remain open. See install-validation.md and windows-libcurl.md.
-6. Add a lean standalone launcher for Windows, Linux and macOS: check for a
-   new release before starting Q3Rally, download and install an available
-   update, then launch the game.
+6. Must-have: a lean standalone launcher for Windows, Linux and macOS.
+   List compatible available releases, recommend the newest stable release,
+   and allow installing and playing older releases side by side. Check for
+   updates before launch without forcing an upgrade.
 7. Test dedicated servers before release: headless startup, server configuration,
    bot population and race startup without human players, client connections,
    complete matches, map rotation and restarts. Windows lap/Sprint bot-only
@@ -71,11 +80,43 @@ functional checks pass for the exercised scenarios; client and final-package
 validation remain separate release tasks.
 See dedicated-validation.md.
 
+### Ladder policy through v1.0
+
+- Before v1.0: visibly marked test operation; scoring/data resets are allowed.
+- From v1.0: calculation rules are stable with no regular resets. Additional
+  profile ranks, achievements and displays may extend the existing point scale.
+- Agreed central profile: the website/profile service owns confirmed native
+  career progress; the client caches it and keeps a durable offline journal.
+  Regular offline matches are accepted after basic validation, with explicitly
+  limited tamper resistance. No second native career point balance.
+- Preserve the existing native score rules before moving authority centrally;
+  do not substitute the prototype's match-score formula. Arcade leaderboards
+  remain separate; identity, garage and cosmetic permissions are shared.
+- The earlier Dedicated-only/reset implementation is a superseded local
+  prototype, not approved for deployment. Profile sync and migration are not
+  implemented. See central-profile-model.md and contracts/README.md.
+
 ### v0.8 launcher scope
 
 Agreed: a lean launcher for all three desktop platforms (Windows, Linux, macOS).
 
-- Show installed/available versions and release notes.
+- The launcher is the primary download and entry point for v0.8.
+- Isolate legacy installations/user data and prepare versioned profile identity,
+  resettable progress and unlinked web-profile references in v0.8. Actual web
+  login/linking and central synchronization move to v0.9. No historical point
+  migration is required; retain existing profile identities where possible.
+  The Dedicated-only prototype is superseded; see central-profile-model.md.
+- Show compatible installed/available versions and release notes. Highlight the
+  newest stable release as Recommended; keep older published releases selectable.
+- Install versions side by side and launch the selected version explicitly.
+  An update must not overwrite an older version or silently change the selection.
+- Offer Install and play for an uninstalled version, Play for an installed one,
+  and an explicit option to remove an installed version.
+- Remember the last selected version and retain an offline version inventory.
+- Separate writable user data by game version to prevent older games from
+  modifying newer profiles/settings. Offer explicit import on first launch.
+- List older releases only when a compatible, verified package is published;
+  historical releases are not automatically supported on every platform.
 - Show download progress and support resuming interrupted downloads.
 - Verify signed release metadata and downloaded file checksums before installation.
 - Stage updates before applying them and retain a working installation if an update fails.
@@ -84,7 +125,8 @@ Agreed: a lean launcher for all three desktop platforms (Windows, Linux, macOS).
 - Offer retry or launch of the intact installed version after update failure.
 - Detect a running game and avoid replacing its files.
 - Provide file verification/repair, accessible diagnostic logs and launcher self-updates.
-- Start Q3Rally automatically after a successful update.
+- Start Q3Rally after a successful installation only when requested through
+  Install and play; a download-only action must not launch the game.
 
 Keep server browsing, additional-map management and multiple release channels
 outside the v0.8 launcher scope. Implementation technology, supported OS versions,
@@ -116,6 +158,13 @@ User-provided tracking numbers are preserved below.
 - Validate clean installs, settings/profile persistence, restart and multiplayer connections.
 - Dedicated functional checks pass on the tested platforms/scenarios, including
   user-confirmed network tests and long matches; retain these checks for the final candidate.
+- v0.8 profile structure implemented: version 2 separates identity, local
+  progress and unlinked web references. Legacy identity/favorites are retained;
+  old points/ranks/stats reset once. Native/UI writers share the format;
+  future/linked or damaged files are not overwritten. Windows/Linux native/QVM
+  builds and profile checks pass; see profile-format-v08.md. Actual website
+  login/linking and offline synchronization remain v0.9 work. Supersede the
+  Dedicated-only prototype separately before deployment.
 - Implement and test the agreed Windows/Linux/macOS launcher.
 - Record graphics performance comparisons; consider SMAA only after required work.
 - Build version-correct native platform binaries, test release candidates, then create final packages.
