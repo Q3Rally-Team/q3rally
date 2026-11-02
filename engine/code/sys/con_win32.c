@@ -48,6 +48,7 @@ static int qconsole_cursor;
 
 static HANDLE qconsole_hout;
 static HANDLE qconsole_hin;
+static qboolean qconsole_initialized;
 
 /*
 ==================
@@ -192,17 +193,23 @@ static void CON_Show( void )
 	int i;
 	CHAR_INFO line[ MAX_EDIT_LINE ];
 	WORD attrib;
+	int width;
 
-	GetConsoleScreenBufferInfo( qconsole_hout, &binfo );
-
-	// if we're in the middle of printf, don't bother writing the buffer
-	if( !qconsole_drawinput )
+	// Redirected output is not a console. Never use uninitialized screen data.
+	if( !qconsole_initialized || !qconsole_drawinput ||
+		!GetConsoleScreenBufferInfo( qconsole_hout, &binfo ) )
 		return;
+	width = binfo.dwSize.X;
+	if( width < 1 || binfo.dwCursorPosition.Y < 0 ||
+		binfo.dwCursorPosition.Y >= binfo.dwSize.Y )
+		return;
+	if( width > MAX_EDIT_LINE ) width = MAX_EDIT_LINE;
 
 	writeArea.Left = 0;
 	writeArea.Top = binfo.dwCursorPosition.Y; 
 	writeArea.Bottom = binfo.dwCursorPosition.Y; 
-	writeArea.Right = MAX_EDIT_LINE;
+	writeArea.Right = width - 1;
+	if( qconsole_linelen >= width ) writePos.X = qconsole_linelen - width + 1;
 
 	// set color to white
 	attrib = CON_ColorCharToAttrib( COLOR_WHITE );
@@ -223,25 +230,13 @@ static void CON_Show( void )
 		line[ i ].Attributes = attrib;
 	}
 
-	if( qconsole_linelen > binfo.srWindow.Right )
-	{
-		WriteConsoleOutput( qconsole_hout, 
-			line + (qconsole_linelen - binfo.srWindow.Right ),
-			writeSize, writePos, &writeArea );
-	}
-	else
-	{
-		WriteConsoleOutput( qconsole_hout, line, writeSize,
-			writePos, &writeArea );
-	}
+	WriteConsoleOutput( qconsole_hout, line, writeSize, writePos, &writeArea );
 
 	// set curor position
 	cursorPos.Y = binfo.dwCursorPosition.Y;
-	cursorPos.X = qconsole_cursor < qconsole_linelen
-					? qconsole_cursor
-					: qconsole_linelen > binfo.srWindow.Right
-						? binfo.srWindow.Right
-						: qconsole_linelen;
+	cursorPos.X = qconsole_cursor - writePos.X;
+	if( cursorPos.X < 0 ) cursorPos.X = 0;
+	if( cursorPos.X >= width ) cursorPos.X = width - 1;
 
 	SetConsoleCursorPosition( qconsole_hout, cursorPos );
 }
@@ -272,12 +267,14 @@ CON_Shutdown
 */
 void CON_Shutdown( void )
 {
+	if( !qconsole_initialized ) return;
 	CON_Hide( );
 	SetConsoleMode( qconsole_hin, qconsole_orig_mode );
 	SetConsoleCursorInfo( qconsole_hout, &qconsole_orig_cursorinfo );
 	SetConsoleTextAttribute( qconsole_hout, qconsole_attrib );
 	CloseHandle( qconsole_hout );
 	CloseHandle( qconsole_hin );
+	qconsole_initialized = qfalse;
 }
 
 /*
@@ -289,19 +286,23 @@ void CON_Init( void )
 {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	int i;
+	qconsole_initialized = qfalse;
 
 	// handle Ctrl-C or other console termination
 	SetConsoleCtrlHandler( CON_CtrlHandler, TRUE );
 
 	qconsole_hin = GetStdHandle( STD_INPUT_HANDLE );
-	if( qconsole_hin == INVALID_HANDLE_VALUE )
+	if( !qconsole_hin || qconsole_hin == INVALID_HANDLE_VALUE )
 		return;
 
 	qconsole_hout = GetStdHandle( STD_OUTPUT_HANDLE );
-	if( qconsole_hout == INVALID_HANDLE_VALUE )
+	if( !qconsole_hout || qconsole_hout == INVALID_HANDLE_VALUE )
 		return;
 
-	GetConsoleMode( qconsole_hin, &qconsole_orig_mode );
+	if( !GetConsoleMode( qconsole_hin, &qconsole_orig_mode ) ||
+		!GetConsoleScreenBufferInfo( qconsole_hout, &info ) )
+		return;
+	qconsole_initialized = qtrue;
 
 	// allow mouse wheel scrolling
 	SetConsoleMode( qconsole_hin,
@@ -309,7 +310,6 @@ void CON_Init( void )
 
 	FlushConsoleInputBuffer( qconsole_hin ); 
 
-	GetConsoleScreenBufferInfo( qconsole_hout, &info );
 	qconsole_attrib = info.wAttributes;
 	qconsole_backgroundAttrib = qconsole_attrib & (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED|BACKGROUND_INTENSITY);
 
@@ -335,6 +335,7 @@ char *CON_Input( void )
 	WORD key = 0;
 	int i;
 	int newlinepos = -1;
+	if( !qconsole_initialized ) return NULL;
 
 	if( !GetNumberOfConsoleInputEvents( qconsole_hin, &events ) )
 		return NULL;

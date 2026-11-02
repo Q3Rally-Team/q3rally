@@ -53,12 +53,24 @@ def main():
     arch = target.split('-', 1)[1]
     server = client.parent / ('q3rally-server' if target.startswith('macos-') else 'q3rally-server.' + arch + ('.exe' if target.startswith('windows-') else ''))
     assert server.is_file(), server
+    cold_starts = 0
+    if target.startswith('windows-'):
+        # No interactive console is available to launchers/services/CI. Repeated
+        # redirected starts catch uninitialized Win32 console screen metadata.
+        for attempt in range(25):
+            cold = subprocess.run([str(server), '+set', 'fs_basepath', str(client.parent),
+                '+set', 'fs_homepath', str(output/'cold-home'), '+set', 'net_enabled', '0', '+quit'],
+                cwd=client.parent, stdin=subprocess.DEVNULL, capture_output=True,
+                creationflags=subprocess.CREATE_NO_WINDOW, timeout=30)
+            assert cold.returncode == 0, (attempt, cold.returncode, cold.stdout, cold.stderr)
+            cold_starts += 1
     subprocess.run([sys.executable, str(ROOT/'tools/validate_dedicated_server.py'),
         '--executable', str(server), '--basepath', str(client.parent), '--output', str(output/'dedicated'),
         '--case', 'racing', '--case', 'sprint', '--http-probe'], check=True, timeout=240)
     atomic_json(output/'result.json', {'version': version, 'target': target,
         'signed_install_verified': True, 'executable_architecture_verified': True,
-        'native_client_version_verified': True, 'packaged_lap_and_sprint_bots_http_verified': True})
+        'native_client_version_verified': True, 'packaged_lap_and_sprint_bots_http_verified': True,
+        'redirected_windows_cold_starts': cold_starts})
     print(target + ': package installation, architecture, client version and dedicated checks PASS', flush=True)
 
 
