@@ -529,3 +529,20 @@ models/flags/g_flag
 		tcGen environment 
 	}
 }
+
+
+// The yellow flag model names a fourth fire texture that was never bundled.
+// Combine the existing red/green fire images to retain the yellow team colour.
+textures/sfx/fire_ctfyellow
+{
+    {
+        map textures/sfx/fire_ctfred.jpg
+        rgbGen lightingDiffuse
+    }
+    {
+        map textures/sfx/fire_ctfgreen.jpg
+        blendFunc GL_ONE GL_ONE
+        depthFunc equal
+        rgbGen lightingDiffuse
+    }
+}

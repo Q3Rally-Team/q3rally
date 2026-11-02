@@ -149,3 +149,33 @@ its appearance still needs an in-game check.
 The release asset audit now passes: **5350 assets, zero errors, 153 warnings**.
 Warnings and platform release checks remain separate from these resolved
 missing/invalid asset errors.
+
+## Warning and player sound review (2026-11-02)
+
+Reviewed all 153 warnings individually; see `asset-warning-review.json`. Nine
+references were repaired: five unqualified dumpster MD3 materials, the yellow
+flag fire material, and three editor preview image references. The dumpster
+patch changes only 24 material-name fields, preserving geometry and UVs. The
+yellow fire shader combines existing red and green fire images; it is an
+explicit reconstruction, not a recovered original texture.
+
+The raw audit now reports **5350 assets, zero errors and 144 warnings**. These
+remain visible: 70 skin overrides, five effect shader overrides, five
+Missionpack-only references, 38 compatibility-model defaults, eight non-drawn
+BSP materials, three compiled source-model paths, and 15 optional editor images.
+Compatibility models and editor/source assets are not claimed complete for
+future use or recompilation.
+
+Optional custom player sounds are now checked in the VFS before registration,
+with the default vehicle as fallback instead of the absent Sarge player.
+WAV/MP3/OGG/Opus are supported. Existing horn, engine, gear and effect handling
+is retained. The production-code regression test covers fallback and codecs.
+Windows and Linux native/QVM builds pass.
+
+Linux WSLg client checks pass with both GL1 and GL2 at Low using fresh QVMs
+and an isolated asset overlay: map loading, renderer restart, profile/settings
+persistence, SDL audio initialization, resident horn/falling/pop/shift sounds
+and yellow flag model rendering. The flag screenshot shows yellow cloth
+without a missing-material checkerboard. This is software-renderer coverage,
+not a physical GPU/audio listening test. Runtime evidence is under
+`output/asset-reference-review/runtime-low-confirmed/`.

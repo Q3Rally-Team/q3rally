@@ -967,8 +967,25 @@ Load it now, taking the disk hits.
 This will usually be deferred to a safe time
 ===================
 */
+static sfxHandle_t CG_RegisterOptionalPlayerSound( const char *dir, const char *sound ) {
+	/* Match the engine's fallback codec order. Missing legacy voice sounds
+	   are optional for vehicles; do not register them as missing effects. */
+	const char *extensions[] = { "wav", "mp3", "ogg", "opus" };
+	char stem[MAX_QPATH], path[MAX_QPATH];
+	int i;
+	sfxHandle_t handle;
+	COM_StripExtension( sound, stem, sizeof( stem ) );
+	for ( i = 0; i < ARRAY_LEN( extensions ); i++ ) {
+		Com_sprintf( path, sizeof( path ), "sound/player/%s/%s.%s", dir, stem, extensions[i] );
+		if ( trap_FS_FOpenFile( path, NULL, FS_READ ) <= 0 ) continue;
+		handle = trap_S_RegisterSound( path, qfalse );
+		if ( handle ) return handle;
+	}
+	return 0;
+}
+
 static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
-	const char	*dir, *fallback;
+	const char	*dir;
 	int			i, modelloaded;
 	const char	*s;
 	char		teamname[MAX_QPATH];
@@ -1055,14 +1072,8 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 */
 // END
 
-	// sounds
+	// Optional vehicle sounds, with the standalone default car as fallback.
 	dir = ci->modelName;
-// Q3Rally Code Start
-//	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
-
-	// UPDATE - remove after player car sounds are added
-	fallback = "sarge";
-// END
 
 	for ( i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++ ) {
 		s = cg_customSoundNames[i];
@@ -1072,13 +1083,10 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 		ci->sounds[i] = 0;
 		// if the model didn't load use the sounds of the default model
 		if (modelloaded) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", dir, s + 1), qfalse );
+			ci->sounds[i] = CG_RegisterOptionalPlayerSound( dir, s + 1 );
 		}
-		if ( !ci->sounds[i] ) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", DEFAULT_MODEL, s + 1), qfalse );
-		}
-		if ( !ci->sounds[i] ) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", fallback, s + 1), qfalse );
+		if ( !ci->sounds[i] && ( !modelloaded || Q_stricmp( dir, DEFAULT_MODEL ) ) ) {
+			ci->sounds[i] = CG_RegisterOptionalPlayerSound( DEFAULT_MODEL, s + 1 );
 		}
 	}
 

@@ -6119,7 +6119,7 @@ textures/base_light/tlight05
 
 textures/base_light/invisi_light1
 {
-	qer_editorimage base_light/ceil1_30.tga
+	qer_editorimage textures/base_light/ceil1_30.jpg
 	qer_trans 50
 	//surfaceparm nodraw
 	surfaceparm nomarks

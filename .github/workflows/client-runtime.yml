@@ -1,0 +1,47 @@
+name: Native macOS client runtime checks
+on:
+  push:
+    branches: [codex/client-runtime-validation]
+  workflow_dispatch:
+
+jobs:
+  client:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-26
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Record display and audio environment
+        run: system_profiler SPDisplaysDataType SPAudioDataType
+      - name: Build native client and renderers
+        run: make -C engine release -j4 PLATFORM=darwin ARCH=${{ matrix.arch }} BUILD_CLIENT=1 BUILD_SERVER=0 BUILD_GAME_SO=0 BUILD_GAME_QVM=1 BUILD_MISSIONPACK=0
+      - name: Prepare isolated PK3-only installation
+        run: |
+          python3 tools/prepare_dedicated_test_data.py \
+            --vm-dir engine/build/release-darwin-${{ matrix.arch }}/baseq3r/vm \
+            --output "$RUNNER_TEMP/client clean install"
+          cp engine/build/release-darwin-${{ matrix.arch }}/q3rally.${{ matrix.arch }} \
+            engine/build/release-darwin-${{ matrix.arch }}/renderer_opengl1_${{ matrix.arch }}.dylib \
+            engine/build/release-darwin-${{ matrix.arch }}/renderer_opengl2_${{ matrix.arch }}.dylib \
+            engine/build/release-darwin-${{ matrix.arch }}/libSDL2-2.0.0.dylib \
+            "$RUNNER_TEMP/client clean install/"
+      - name: Check native graphics, restarts, profile and audio initialization
+        run: |
+          python3 -u tools/validate_client_runtime.py \
+            --executable "$RUNNER_TEMP/client clean install/q3rally.${{ matrix.arch }}" \
+            --basepath "$RUNNER_TEMP/client clean install" \
+            --output client-runtime-${{ matrix.arch }} --preset low
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: macos-client-runtime-${{ matrix.arch }}
+          path: client-runtime-${{ matrix.arch }}
+          if-no-files-found: warn
+          retention-days: 14

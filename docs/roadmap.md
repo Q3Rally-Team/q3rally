@@ -20,7 +20,7 @@ need refinement after a complete inventory of existing screens.
 2. Complete the demo player: elapsed playback time and pause/resume clock correction implemented; regression tests pass and the user has verified both in-game. Seeking/EOF regression tests and browser error recovery for missing maps, unsupported protocols, damaged or truncated recordings implemented; regression tests pass and the user has verified the new behavior in-game. Demo player work complete for v0.8.
 3. Race feedback: missed-checkpoint messages now identify the required gate and are throttled per player; wrong-way checks use movement with a low-speed/start/finish guard; successful automatic car recovery and non-winning race finishes receive center messages. Native/QVM build and production-code regression checks pass; in-game verification pending. See race-feedback.md.
 4. Validate graphics presets across representative maps and effects. Preset/pending-value regressions corrected and automated GL1/GL2 checks pass. User verified all four presets on Country01, Valley, Nightcity and Ridgepass after the Low/LDR framebuffer correction. Basic visual checks pass; measured performance comparisons remain open. See graphics-preset-validation.md.
-5. Verify clean release installs, settings persistence, restart and multiplayer connectivity. Initial Windows PK3-only startup, settings/profile persistence, GL1/GL2 renderer restarts, pure-server connection, disconnect and reconnect pass after correcting four packaging/runtime defects. Windows libcurl dependency resolved through static linkage; local client/server Ladder HTTP and PK3 download/entry tests plus a separate HTTPS certificate-validation probe pass. Native Linux/macOS, production-service integration, UI/audio checks and an untouched final candidate remain open. See install-validation.md and windows-libcurl.md.
+5. Verify clean release installs, settings persistence, restart and multiplayer connectivity. Initial Windows PK3-only startup, settings/profile persistence, GL1/GL2 renderer restarts, pure-server connection, disconnect and reconnect pass after correcting four packaging/runtime defects. Windows libcurl dependency resolved through static linkage; local client/server Ladder HTTP and PK3 download/entry tests plus a separate HTTPS certificate-validation probe pass. Native Linux/WSLg client GL1/GL2 startup, renderer restarts, settings/profile persistence and PulseAudio initialization also pass. Native Intel/macOS 15 client Low checks pass for both renderers, including verified preset values; ARM Low checks await GitHub runner capacity. Production-service integration, interactive UI/audio-quality checks and an untouched final candidate remain open. See install-validation.md and windows-libcurl.md.
 6. Add a lean standalone launcher for Windows, Linux and macOS: check for a
    new release before starting Q3Rally, download and install an available
    update, then launch the game.
@@ -97,7 +97,7 @@ need to be specified during implementation planning.
 User-provided tracking numbers are preserved below.
 
 - 19: `make_release.py` implemented: audited, reproducible Windows/Linux/macOS packages, manifests, hashes, preflight/version checks and dry run. Eight packaging regressions pass, including classic-PK3 compatibility, packaged QVMs and missing dynamic libcurl rejection. Requires version-correct native builds and final runtime validation; see releasing-v0.8.md.
-- 20: Missing/invalid asset cleanup completed: 5,350 selected assets, zero blocking asset errors and 153 warnings still to review. Original images/music restored, corrupt unused MD3s removed, Harpy feathers remapped to the compatible Hunter material, and Lavafalls map/BSP corrected (user verified Lavafalls in-game). Harpy appearance still needs a visual check. See asset-audit-v0.8.md.
+- 20: Missing/invalid asset cleanup completed: 5,350 selected assets, zero blocking asset errors and 144 reviewed warnings retained (nine references repaired). Original images/music restored, corrupt unused MD3s removed, Harpy feathers remapped to the compatible Hunter material, and Lavafalls map/BSP corrected (user verified Lavafalls in-game). Harpy appearance still needs a visual check. See asset-audit-v0.8.md.
 - 21: SMAA (optional).
 - 26: Q3RallyRadiant: add a dialog for worldspawn keys. Editor repository: https://github.com/P3rlE/Q3RallyRadiant. Local checkout: D:/Q3RallyDev/Q3RallyRadiant. Agreed workflow: open worldspawn settings when creating a new Q3Rally map, then expose the same dialog through Map Settings for later edits. Canceling new-map settings must preserve the current map. Implemented in the Radiant checkout: 50 predefined keys plus an Additional keys editor, runtime validation, default handling, and one undoable edit for existing maps. Windows build and Qt dialog regressions pass; user verified the dialog in the editor. Complete.
 - 27: country01: camera remains tilted after the intro. Camera pitch/roll handover corrected; regression test passes, verified in-game by the user; complete.
@@ -108,11 +108,14 @@ User-provided tracking numbers are preserved below.
 
 ### Remaining work before the final v0.8 release
 
+- Defer physical Mac graphics/audio checks to a separate manual test session
+  on a possibly borrowed Intel Mac. Keep these checks pending; an Intel result
+  does not cover Apple Silicon. See mac-client-manual-checklist.md.
 - Verify the new race feedback in-game; finish UI/font checks on less-used screens.
-- Review the remaining 153 non-blocking asset warnings and record any intentional references.
+- Asset warning review completed: all 153 classified, nine repaired, 144 documented in asset-warning-review.json. Optional legacy player sound lookups now use VFS checks and the default vehicle fallback.
 - Validate clean installs, settings/profile persistence, restart and multiplayer connections.
-- Validate dedicated servers on Windows/Linux/macOS, including bot-only race
-  startup, mixed human/bot sessions, map rotation, restarts and administration.
+- Dedicated functional checks pass on the tested platforms/scenarios, including
+  user-confirmed network tests and long matches; retain these checks for the final candidate.
 - Implement and test the agreed Windows/Linux/macOS launcher.
 - Record graphics performance comparisons; consider SMAA only after required work.
 - Build version-correct native platform binaries, test release candidates, then create final packages.
