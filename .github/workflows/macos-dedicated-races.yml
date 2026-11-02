@@ -1,0 +1,37 @@
+name: macOS dedicated race verification
+on:
+  push:
+    branches: [codex/macos-dedicated-validation]
+    paths: [.github/workflows/macos-dedicated-races.yml]
+  workflow_dispatch:
+
+jobs:
+  races:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build native server and QVMs
+        run: make -C engine release -j4 PLATFORM=darwin ARCH=${{ matrix.arch }} BUILD_CLIENT=0 BUILD_SERVER=1 BUILD_GAME_SO=0 BUILD_GAME_QVM=1 BUILD_MISSIONPACK=0
+      - name: Prepare isolated data
+        run: python3 tools/prepare_dedicated_test_data.py --vm-dir engine/build/release-darwin-${{ matrix.arch }}/baseq3r/vm --output "$RUNNER_TEMP/race-data"
+      - name: Complete lap and Sprint races
+        run: |
+          python3 tools/validate_dedicated_server.py \
+            --executable engine/build/release-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }} \
+            --basepath "$RUNNER_TEMP/race-data" --output race-results-${{ matrix.arch }} \
+            --case racing --case sprint --complete-races --http-probe
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: macos-races-${{ matrix.arch }}
+          path: race-results-${{ matrix.arch }}
+          retention-days: 14

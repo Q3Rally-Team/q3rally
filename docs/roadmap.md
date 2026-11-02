@@ -32,8 +32,10 @@ need refinement after a complete inventory of existing screens.
    bot population/rejoin, repeated Sprint finishes and stale finish placement;
    Sprint rotation config fixed. Windows/native Linux mode startup, team
    assignments and default intro pass; four-team automatic bot fill corrected.
-   Linux lap/Sprint completion and local Ladder HTTP pass. Native macOS CI
-   checks prepared; execution, longer objective games and external networking remain open.
+   Linux lap/Sprint completion and local Ladder HTTP pass. Native macOS Intel
+   and Apple Silicon builds, 17 mode probes, local HTTP and Sprint pass.
+   Country01 two-bot completion fails on both Macs; ARM debug telemetry is
+   malformed. These findings, longer objective games and external networking remain open.
    See dedicated-validation.md.
 
 ### v0.8 dedicated server validation
@@ -58,8 +60,10 @@ Windows non-team lap/Sprint checks above now pass, including explicit versus
 waiting spectator behavior and unique finish placements. Intro was disabled
 for the original race probes; separate default-intro checks now pass on Windows
 and native Linux under WSL. Mode startup/team checks and Linux lap/Sprint
-completion also pass. Longer combat/objective games, rotations, external
-discovery and actual macOS execution remain open. See dedicated-validation.md.
+completion also pass. Native macOS Intel/ARM mode probes and Sprint now pass;
+Country01 two-bot completion and ARM debug telemetry need investigation.
+Longer combat/objective games, rotations and external discovery remain open.
+See dedicated-validation.md.
 
 ### v0.8 launcher scope
 

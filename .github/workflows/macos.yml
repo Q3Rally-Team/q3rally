@@ -3,7 +3,7 @@ name: Q3Rally macOS Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, codex/macos-dedicated-validation ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:  # Manuell auslösbar
@@ -21,6 +21,7 @@ jobs:
   build-macos:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         include:
         - arch: x86_64
@@ -69,6 +70,16 @@ jobs:
           --basepath "$RUNNER_TEMP/q3rally-dedicated-data" \
           --output "dedicated-test-results-${{ matrix.arch }}" \
           --http-probe
+
+    - name: Complete native lap and Sprint races
+      timeout-minutes: 8
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/validate_dedicated_server.py \
+          --executable "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }}" \
+          --basepath "$RUNNER_TEMP/q3rally-dedicated-data" \
+          --output "dedicated-test-results-${{ matrix.arch }}/complete-races" \
+          --case racing --case sprint --complete-races --http-probe
 
     - name: Upload dedicated runtime evidence
       if: always()
