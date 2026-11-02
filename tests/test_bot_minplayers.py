@@ -57,5 +57,5 @@ int main(void) {
   compiler=shutil.which('gcc') or 'C:/msys64/mingw64/bin/gcc.exe'
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as directory:
    p=pathlib.Path(directory);(p/'population.c').write_text(c)
-   subprocess.run([compiler,str(p/'population.c'),'-o',str(p/'population.exe')],check=True)
+   subprocess.run([compiler,'-DARCH_STRING="test"',str(p/'population.c'),'-o',str(p/'population.exe'),'-lm'],check=True)
    subprocess.run([str(p/'population.exe')],check=True,timeout=5)

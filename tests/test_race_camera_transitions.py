@@ -79,5 +79,5 @@ int main(void) {
         c = pathlib.Path(directory) / "transition.c"
         binary = pathlib.Path(directory) / "transition.exe"
         c.write_text(harness)
-        subprocess.run([compiler, str(c), "-o", str(binary)], check=True)
+        subprocess.run([compiler, '-DARCH_STRING="test"', str(c), "-o", str(binary), '-lm'], check=True)
         subprocess.run([str(binary)], check=True, timeout=5)

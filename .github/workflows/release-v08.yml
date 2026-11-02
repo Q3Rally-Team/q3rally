@@ -67,7 +67,7 @@ jobs:
       - if: runner.os == 'macOS'
         name: Build native Mac app
         run: |
-          make release -j4 -C engine PLATFORM=darwin ARCH=${{ matrix.arch }} VERSION=v0.8 USE_CURL=1 USE_CURL_DLOPEN=1 BUILD_GAME_SO=0 BUILD_GAME_QVM=1
+          make release -j4 -C engine PLATFORM=darwin ARCH=${{ matrix.arch }} VERSION=v0.8 USE_CURL=1 USE_CURL_DLOPEN=1 BUILD_GAME_SO=1 BUILD_GAME_QVM=1
           cd engine
           bash make-macosx-app.sh release ${{ matrix.arch }}
       - name: Audit and package exact native build

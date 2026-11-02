@@ -45,4 +45,4 @@ int main(void) {
 '''
   compiler=shutil.which('gcc') or 'C:/msys64/mingw64/bin/gcc.exe'
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as directory:
-   p=pathlib.Path(directory);(p/'queue.c').write_text(c);subprocess.run([compiler,str(p/'queue.c'),'-o',str(p/'queue.exe')],check=True);subprocess.run([str(p/'queue.exe')],check=True,timeout=5)
+   p=pathlib.Path(directory);(p/'queue.c').write_text(c);subprocess.run([compiler,'-DARCH_STRING="test"',str(p/'queue.c'),'-o',str(p/'queue.exe'),'-lm'],check=True);subprocess.run([str(p/'queue.exe')],check=True,timeout=5)

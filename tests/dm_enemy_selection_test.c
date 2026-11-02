@@ -35,6 +35,7 @@ void QDECL Com_Error( int severity, const char *format, ... ) { assert( 0 ); }
 void BotEntityInfo( int client, aas_entityinfo_t *info ) { *info = entities[client]; }
 int BotAI_GetClientState( int client, playerState_t *state ) { *state = clients[client]; return qtrue; }
 int BotSameTeam( bot_state_t *bs, int client ) { return sameTeam[client]; }
+int BotTeam( bot_state_t *bs ) { return bs->cur_ps.persistant[PERS_TEAM]; }
 int BotWantsToRetreat( bot_state_t *bs ) { return wantsRetreat; }
 float trap_Characteristic_BFloat( int character, int index, float min, float max ) {
 	return index == CHARACTERISTIC_EASY_FRAGGER ? easyFragger : 1.0f;

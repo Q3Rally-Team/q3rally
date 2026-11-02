@@ -39,5 +39,5 @@ int main(void) {
         sourcefile = pathlib.Path(directory) / "mouse.c"
         binary = pathlib.Path(directory) / "mouse.exe"
         sourcefile.write_text(harness)
-        subprocess.run([compiler, str(sourcefile), "-o", str(binary)], check=True)
+        subprocess.run([compiler, str(sourcefile), "-o", str(binary), '-lm'], check=True)
         subprocess.run([str(binary)], check=True, timeout=5)

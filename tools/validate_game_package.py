@@ -32,7 +32,7 @@ def main():
     envelope = sign({'schema': 1, 'product': 'Q3Rally', 'sequence': 1,
         'expires': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
         'releases': [{'version': version, 'packages': {target: package}}], 'launchers': []}, key, 'package-test')
-    manager = Manager(output / 'data', keys)
+    manager = Manager(output / 'data', keys, targets=[target])
     shutil.copyfile(index.parent / artifact['filename'], manager.cache / (package['sha256'] + '.part'))
     manager.install(envelope, version, target)
     client = manager.verify(version, target)

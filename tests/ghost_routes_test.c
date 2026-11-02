@@ -12,6 +12,16 @@ gentity_t g_entities[MAX_GENTITIES];
 vmCvar_t g_trackLength;
 vmCvar_t g_gametype;   /* base ghost transfer: GT_GHOST, otherwise on request (racing line) */
 vmCvar_t g_trackReversed;
+float CP_CURRENT_GRAVITY = 800.0f;
+
+/* The harness models checkpoint brushes as the boxes declared below. */
+qboolean trap_EntityContact(const vec3_t mins, const vec3_t maxs, const gentity_t *ent) {
+    int axis;
+    for (axis = 0; axis < 3; axis++) {
+        if (mins[axis] > ent->r.absmax[axis] || maxs[axis] < ent->r.absmin[axis]) return qfalse;
+    }
+    return qtrue;
+}
 
 vec_t VectorNormalize( vec3_t vector ) {
     float length = sqrtf( VectorLengthSquared( vector ) );
@@ -407,52 +417,51 @@ static void test_checkpoint_order_and_sprint_finish(void) {
 
 static void test_shared_route_priority_and_map_adapter(void) {
     const botRaceRoute_t *route;
+    static gentity_t gates[5], sprintFinish;
+    const float corners[4][2] = {{1000,0},{1000,1000},{0,1000},{0,0}};
     int i;
-    memset(&s_testMapPath, 0, sizeof(s_testMapPath));
-    s_testMapPath.valid = qtrue;
-    s_testMapPath.numNodes = 4;
-    s_testMapPath.numSegments = 3;
-    strcpy(s_testMapPath.name, "path_2");
-    VectorSet(s_testMapPath.nodes[0].origin, 0, 0, 0);
-    VectorSet(s_testMapPath.nodes[1].origin, 1000, 0, 0);
-    VectorSet(s_testMapPath.nodes[2].origin, 1000, 1000, 0);
-    VectorSet(s_testMapPath.nodes[3].origin, 0, 1000, 0);
-    for (i = 0; i < 4; i++) {
-        s_testMapPath.nodes[i].effectiveWidth = 200;
-        if (i < 3) s_testMapPath.segments[i].recommendedSpeed = 900;
-    }
+    memset(&level, 0, sizeof(level));
     reset_fs();
-    G_Ghost_InitForMap("mymap");
-    G_Ghost_BuildBotRoutes();
-    assert(G_RaceRoute_Get(&route));
-    assert(route->fromMapPath && route->closed && !strcmp(route->path, "path_2"));
-    assert(Distance(route->waypoints[0].origin, route->waypoints[route->numWaypoints-1].origin) < .01f);
-    for (i = 0; i < route->numSegments; i++) assert(Distance(route->waypoints[i].origin, route->waypoints[i+1].origin) <= 96);
-    {
-        static gentity_t gates[2];
-        make_gate(&gates[0], 1000);
-        gates[0].r.absmin[1] = 490; gates[0].r.absmax[1] = 510;
-        make_gate(&gates[1], 500);
-        level.numCheckpoints = 2;
-        level.checkpoints[0] = &gates[0]; level.checkpoints[1] = &gates[1];
-        level.finishEnt = &gates[1];
-        G_RaceRoute_Reset();
-        assert(G_RaceRoute_Get(&route));
-        assert(route->waypoints[0].origin[0] == 1000 && route->waypoints[0].origin[1] == 0);
-        assert(route->segments[0].nextCheckpoint == 1);
-        assert(route->segments[route->numSegments-1].nextCheckpoint == 2);
-        memset(&level, 0, sizeof(level));
+    for (i = 0; i < 4; i++) {
+        make_gate(&gates[i], corners[i][0]);
+        gates[i].r.absmin[1] = corners[i][1] - 10;
+        gates[i].r.absmax[1] = corners[i][1] + 10;
+        VectorSet(gates[i].s.origin2, corners[i][0], corners[i][1], 0);
+        gates[i].bpdLoaded = qtrue;
+        gates[i].bpdIndex = i;
+        level.checkpoints[i] = &gates[i];
     }
+    make_gate(&gates[4], 500);
+    VectorSet(gates[4].s.origin2, 500, 0, 0);
+    level.checkpoints[4] = level.finishEnt = &gates[4];
+    level.numCheckpoints = 5;
+    G_RaceRoute_Reset();
+    assert(G_RaceRoute_Get(&route));
+    assert(route->fromBezierPath && route->closed && !strcmp(route->path, "checkpoint_bpd"));
+    assert(Distance(route->waypoints[0].origin, route->waypoints[route->numWaypoints-1].origin) < .01f);
+    assert(fabs(route->waypoints[0].origin[0] - 500) < 70);
+    assert(route->segments[0].nextCheckpoint == 1);
+    assert(route->segments[route->numSegments-1].nextCheckpoint == 5);
+
+    /* Sprint imports its separate endpoint entities around the BPD checkpoint. */
+    make_gate(&sprintFinish, 1000);
+    sprintFinish.r.absmin[1] = 990; sprintFinish.r.absmax[1] = 1010;
+    VectorSet(sprintFinish.s.origin2, 1000, 1000, 0);
     level.sprintTrack = qtrue;
+    level.startEnt = &gates[4]; level.finishEnt = &sprintFinish;
+    level.numCheckpoints = 1;
     G_RaceRoute_Reset();
     assert(G_RaceRoute_Get(&route));
     assert(!route->closed && route->waypoints[route->numWaypoints-1].origin[1] == 1000);
-    level.sprintTrack = qfalse;
     add_file("ghosts/mymap_tl1_rev0_good.ghost", build_ghost("mymap", "evo", 500, 1, 1, 0));
     G_Ghost_InitForMap("mymap");
     G_Ghost_BuildBotRoutes();
-    assert(G_RaceRoute_Get(&route) && !route->fromMapPath);
-    memset(&s_testMapPath, 0, sizeof(s_testMapPath));
+    assert(G_RaceRoute_Get(&route) && route->fromBezierPath);
+    /* Recorded ghosts do not replace missing BPD controls for AI routes. */
+    gates[0].bpdLoaded = qfalse;
+    G_RaceRoute_Reset();
+    assert(!G_RaceRoute_Get(&route));
+    memset(&level, 0, sizeof(level));
 }
 
 static void test_segment_guidance_and_braking(void) {
