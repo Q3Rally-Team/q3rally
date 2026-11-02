@@ -17,7 +17,6 @@ import urllib.parse
 import urllib.request
 
 import pytest
-from tests.ladder_period_fixture import initialize_period, current_report
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHP_DIR = REPO_ROOT / "ladder_service" / "php_webservice"
@@ -43,7 +42,6 @@ def admin(tmp_path):
         "type": "server", "status": "pending", "createdAt": "2026-10-01T00:00:00Z",
         "approvedAt": None, "lastUsedAt": None, "lastUsedIp": None, "matchCount": 0,
     }]))
-    initialize_period(root)
     port = _free_port()
     env = dict(os.environ, LADDER_ADMIN_PASSWORD=PASSWORD)
     proc = subprocess.Popen(["php", "-S", f"127.0.0.1:{port}", "-t", str(root)],

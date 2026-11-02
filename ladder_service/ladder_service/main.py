@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from .db import create_session_factory, session_scope
 from .models import Base, Match
 from .schemas import MatchCreate
-from .period import require_current_report, require_reporter, match_only_payload
 
 
 def _init_session_factory() -> tuple[sessionmaker[Session], Engine]:
@@ -78,22 +77,15 @@ async def request_validation_exception_handler(
     status_code=status.HTTP_201_CREATED,
     response_class=JSONResponse,
 )
-def create_match(match: MatchCreate, request: Request, session: Session = Depends(get_session)) -> dict[str, str]:
+def create_match(match: MatchCreate, session: Session = Depends(get_session)) -> dict[str, str]:
     """Store a reported match in the database."""
 
-    payload = match_only_payload(match.dict())
-    period = require_current_report(request, payload)
-    # An operator must use a fresh database for each period. Never mix old rows
-    # into a new ranked dataset just by changing the environment/config file.
-    previous = session.scalar(select(Match).order_by(Match.id).limit(1))
-    if previous is not None and json.loads(previous.payload).get("ladder", {}).get("period") != period["id"]:
-        raise HTTPException(503, detail={"errorCode": "LADDER_FRESH_DATABASE_REQUIRED"})
     db_match = Match(
         match_id=match.matchId,
         mode=match.mode,
         start_time=match.startTime,
         end_time=match.endTime,
-        payload=json.dumps(payload, default=lambda value: value.isoformat()),
+        payload=match.json(),
     )
     session.add(db_match)
     try:
@@ -151,13 +143,11 @@ def get_match(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_match(
-    request: Request,
     match_id: str = Path(..., description="The matchId to delete"),
     session: Session = Depends(get_session),
 ) -> JSONResponse:
     """Delete a match from the database."""
 
-    require_reporter(request)
     query = select(Match).where(Match.match_id == match_id)
     result = session.execute(query).scalar_one_or_none()
     if result is None:

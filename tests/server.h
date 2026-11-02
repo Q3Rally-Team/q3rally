@@ -1,7 +1,5 @@
 #ifndef TEST_SERVER_H
 #define TEST_SERVER_H
-void SV_LadderShutdown(void);
-static inline int SV_LadderClientsCompatible(void) { return 1; }
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -517,5 +515,7 @@ static inline void FS_HomeRemove( const char *homePath ) {
         snprintf( test_fsLastRemoved, sizeof( test_fsLastRemoved ), "%s", homePath );
         test_fsRemoveCount++;
 }
+
+void SV_LadderShutdown( void );
 
 #endif /* TEST_SERVER_H */

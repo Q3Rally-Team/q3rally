@@ -30,7 +30,6 @@ int main( void ) {
 
         json = SV_LadderSerializeMatch( &payload, &length );
         assert( json != NULL );
-        assert( strstr( json, "\"period\":\"v0.8-test-1\"" ) != NULL );
         assert( strstr( json, "\"bestLapMs\":1100" ) != NULL );
         assert( strstr( json, "\"lapTimes\":[1234,1100]" ) != NULL );
         /* no weather filled in: a dry match on a map without weather */

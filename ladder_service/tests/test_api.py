@@ -5,8 +5,6 @@ from pathlib import Path
 import sys
 
 import pytest
-import json
-from tests.ladder_period_fixture import PERIOD, REPORT, initialize_period
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -23,11 +21,6 @@ from ladder_service.ladder_service.schemas import _TEAM_MODES, _VALID_GAMETYPES
 @pytest.fixture(scope="module", autouse=True)
 def override_db(tmp_path_factory: pytest.TempPathFactory) -> None:
     db_path = tmp_path_factory.mktemp("db") / "test.db"
-    period_config = db_path.parent / "period.json"
-    period_config.write_text(json.dumps(PERIOD))
-    patch = pytest.MonkeyPatch()
-    patch.setenv("LADDER_PERIOD_CONFIG", str(period_config))
-    patch.setenv("LADDER_REPORT_KEY", "test-ranked-key")
     engine = create_engine(
         f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
     )
@@ -41,14 +34,12 @@ def override_db(tmp_path_factory: pytest.TempPathFactory) -> None:
     main.app.dependency_overrides[main.get_session] = _override_get_session
     yield
     main.app.dependency_overrides.pop(main.get_session, None)
-    patch.undo()
 
 
-client = TestClient(main.app, headers={"Authorization": "Bearer test-ranked-key"})
+client = TestClient(main.app)
 
 
 MATCH_TEMPLATE = {
-    "ladder": dict(REPORT),
     "matchId": "srv-20240405-183011-42",
     "mode": "GT_RACING",
     "startTime": datetime(2024, 4, 5, 18, 30, 11, tzinfo=timezone.utc).isoformat(),
@@ -56,7 +47,7 @@ MATCH_TEMPLATE = {
     "duration": "PT12M28S",
     "startEpoch": 1712332211,
     "map": "q3r_country01",
-    "server": {"name": "Q3Rally EU #1", "host": "203.0.113.10:27960", "build": "Q3Rally v0.8 test", "dedicated": True},
+    "server": {"name": "Q3Rally EU #1", "host": "203.0.113.10:27960", "build": "1.3.0"},
     "settings": {"g_gametype": 141},
     "players": [
         {

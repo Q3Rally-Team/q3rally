@@ -358,12 +358,9 @@ function handle_ghost_post(): void
     }
 
     $serverName = is_string($payload['server']['name'] ?? null) ? $payload['server']['name'] : '';
-    ladder_require_current_report($payload);
-    $keyRecord = keys_require_auth($serverName, false, false);
-    ladder_require_ranked_key($keyRecord, $payload);
+    $keyRecord = keys_require_auth($serverName, false);
 
     $record = ghost_validate_payload($payload);
-    keys_touch((string)$keyRecord['key'], false);
     if (keys_is_offline($keyRecord)) {
         // Offline keys run their own server: never an online ghost, and only
         // ghosts of the player the key belongs to (keys_offline_player).
@@ -423,7 +420,6 @@ function handle_ghost_post(): void
 
         $record['ghostId'] = $ghostId;
         $record['receivedAt'] = gmdate('c');
-        $record['ladder'] = $payload['ladder'];
 
         $json = json_encode($record, JSON_UNESCAPED_SLASHES);
         if ($json === false || !ladder_write_atomic($dir . '/' . $record['playerId'] . '.json', $json . "\n")) {

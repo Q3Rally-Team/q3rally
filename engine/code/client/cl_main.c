@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cl_main.c  -- client main loop
 
 #include "client.h"
-#include "../qcommon/ladder_protocol.h"
 #include "cl_update.h"
 #include "cl_update_util.h"
 #include <limits.h>
@@ -3830,8 +3829,6 @@ void CL_Init( void ) {
 	Cvar_Get ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("cl_anonymous", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("cl_uuid", "", CVAR_USERINFO | CVAR_ARCHIVE );
-    Cvar_Get( "cl_ladderRelease", Q3R_LADDER_RELEASE, CVAR_USERINFO | CVAR_ROM );
-    Cvar_Get( "cl_ladderRevision", Q3R_LADDER_REVISION, CVAR_USERINFO | CVAR_ROM );
 
 	Cvar_Get ("password", "", CVAR_USERINFO);
 	Cvar_Get ("cg_predictItems", "1", CVAR_USERINFO | CVAR_ARCHIVE );

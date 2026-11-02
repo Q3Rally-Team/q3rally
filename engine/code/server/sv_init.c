@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "server.h"
-#include "../qcommon/ladder_protocol.h"
 
 
 /*
@@ -504,7 +503,6 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 
 	// load and spawn all other entities
 	SV_InitGameProgs();
-    SV_LadderClientsCompatible(); /* Carry-over legacy clients make this map unranked. */
 
 	// don't allow a map_restart if game is modified
 	sv_gametype->modified = qfalse;
@@ -713,7 +711,6 @@ void SV_Init (void)
 	sv_banFile = Cvar_Get("sv_banFile", "serverbans.dat", CVAR_ARCHIVE);
 
 	sv_ladderEnabled = Cvar_Get ("sv_ladderEnabled", "0", CVAR_ARCHIVE );
-    Cvar_Get( "sv_ladderPeriod", Q3R_LADDER_DEFAULT_PERIOD, CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
 	sv_ladderUrl = Cvar_Get ("sv_ladderUrl", "", CVAR_ARCHIVE );
 	sv_ladderApiKey = Cvar_Get ("sv_ladderApiKey", "", CVAR_ARCHIVE | CVAR_PROTECTED );
 	sv_telemetryMaxBatch = Cvar_Get ("sv_telemetryMaxBatch", "8", CVAR_ARCHIVE );

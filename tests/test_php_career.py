@@ -1,7 +1,10 @@
-"""Ladder career totals derive from accepted matches, ignoring local snapshots.
+"""Per-mode career counters on the ladder (index.php profile upsert).
 
-Local and remote participants must use the same match-derived counters;
-retries and stale cumulative local profiles must not double-count a match.
+The game records the match outcome into the local profile before it builds
+the payload, so the local player's snapshot already contains the match. The
+ladder must take a snapshot that is ahead as-is and only add the match delta
+for players without a snapshot. Regression: max(existing, snapshot) + delta
+let wins/completed run one match ahead for the local player.
 """
 import json
 import shutil
@@ -13,7 +16,6 @@ import urllib.request
 import pathlib
 
 import pytest
-from tests.ladder_period_fixture import initialize_period, current_report
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHP_DIR = REPO_ROOT / "ladder_service" / "php_webservice"
@@ -39,7 +41,6 @@ def ladder(tmp_path):
         {"key": SERVER_KEY, "serverName": "Online Server", "type": "server", "status": "active",
          "createdAt": "2026-01-01T00:00:00Z", "approvedAt": "2026-01-01T00:00:00Z"},
     ]))
-    initialize_period(root)
     port = _free_port()
     proc = subprocess.Popen(["php", "-S", f"127.0.0.1:{port}", "-t", str(root)],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -56,7 +57,6 @@ def ladder(tmp_path):
 
 
 def _request(url, payload=None):
-    payload = current_report(payload)
     data = None if payload is None else json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
     req.add_header("Content-Type", "application/json")

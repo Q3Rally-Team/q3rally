@@ -14,7 +14,6 @@ import urllib.error
 import urllib.request
 
 import pytest
-from tests.ladder_period_fixture import initialize_period, current_report
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PHP_DIR = REPO_ROOT / "ladder_service" / "php_webservice"
@@ -42,7 +41,6 @@ def ladder(tmp_path):
         "type": "server", "status": "active", "createdAt": "2026-01-01T00:00:00Z",
         "approvedAt": "2026-01-01T00:00:00Z", "lastUsedAt": None, "lastUsedIp": None, "matchCount": 0,
     }]))
-    initialize_period(root)
     port = _free_port()
     # No opcache: a test patches ghosts.php while the server runs.
     proc = subprocess.Popen(["php", "-d", "opcache.enable=0", "-S", f"127.0.0.1:{port}", "-t", str(root)],
@@ -60,7 +58,6 @@ def ladder(tmp_path):
 
 
 def _request(url, payload=None, key=API_KEY):
-    payload = current_report(payload)
     data = None if payload is None else json.dumps(payload).encode()
     req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
     req.add_header("Content-Type", "application/json")
@@ -97,7 +94,7 @@ def _ghost(player_id=PLAYER_A, lap_ms=60000, radius=3000.0, teleport=False, vehi
         course = int(2 * math.pi * radius)
     return {
         "ghostId": f"q3r_testtrack-{player_id[:8]}-{lap_ms}",
-        "server": {"name": SERVER_NAME, "dedicated": True, "build": "test"},
+        "server": {"name": SERVER_NAME, "dedicated": False, "build": "test"},
         "player": {"id": player_id, "name": "^1Fast^7Driver"},
         "map": "q3r_testtrack", "vehicle": vehicle, "trackLength": 1, "trackReversed": 0,
         "lapMs": lap_ms, "frames": len(lines), "gametype": 8, "physicsVersion": physics,
@@ -130,7 +127,7 @@ def test_ghost_upload_ranking_and_download(ladder):
     listing = json.loads(body)
     assert [g["lapMs"] for g in listing["ghosts"]] == [58000, 59000]
     assert listing["ghosts"][0]["playerName"] == "FastDriver"
-    assert listing["ghosts"][0]["source"] == "online"
+    assert listing["ghosts"][0]["source"] == "offline"
     assert "data" not in listing["ghosts"][0]
 
     status, body = _request(base + "/ghosts/" + ghost_id, key=None)

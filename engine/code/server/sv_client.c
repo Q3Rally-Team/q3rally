@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // sv_client.c -- server code for dealing with clients
 
 #include "server.h"
-#include "../qcommon/ladder_protocol.h"
 
 static void SV_CloseDownload( client_t *cl );
 
@@ -366,11 +365,6 @@ void SV_DirectConnect( netadr_t from ) {
 			return;
 		}
 	}
-
-	if ( com_dedicated && com_dedicated->integer && sv_ladderEnabled && sv_ladderEnabled->integer && !SV_LadderClientCompatible( userinfo ) ) {
-        NET_OutOfBandPrint( NS_SERVER, from, "print\nThis ranked server requires Q3Rally v0.8 or a supported newer release.\n" );
-        return;
-    }
 
 	challenge = atoi( Info_ValueForKey( userinfo, "challenge" ) );
 	qport = atoi( Info_ValueForKey( userinfo, "qport" ) );
@@ -1409,14 +1403,6 @@ void SV_UserinfoChanged( client_t *cl ) {
 	int		i;
 	int	len;
 
-    if ( cl->netchan.remoteAddress.type != NA_BOT && !SV_LadderClientCompatible( cl->userinfo ) ) {
-        sv.ladderLegacyClientSeen = qtrue;
-        if ( com_dedicated && com_dedicated->integer && sv_ladderEnabled && sv_ladderEnabled->integer ) {
-            SV_DropClient( cl, "Unsupported client on ranked server" );
-            return;
-        }
-    }
-
 	// name for C code
 	Q_strncpyz( cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name) );
 
@@ -2030,23 +2016,4 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 //	if ( msg->readcount != msg->cursize ) {
 //		Com_Printf( "WARNING: Junk at end of packet for client %i\n", cl - svs.clients );
 //	}
-}
-
-qboolean SV_LadderClientCompatible( const char *userinfo ) {
-    return !strcmp( Info_ValueForKey( userinfo, "cl_ladderRelease" ), Q3R_LADDER_RELEASE )
-        && !strcmp( Info_ValueForKey( userinfo, "cl_ladderRevision" ), Q3R_LADDER_REVISION );
-}
-
-qboolean SV_LadderClientsCompatible( void ) {
-    int i;
-    if ( sv.ladderLegacyClientSeen ) return qfalse;
-    for ( i = 0; i < sv_maxclients->integer; i++ ) {
-        client_t *client = &svs.clients[i];
-        if ( client->state >= CS_CONNECTED && client->netchan.remoteAddress.type != NA_BOT
-            && !SV_LadderClientCompatible( client->userinfo ) ) {
-            sv.ladderLegacyClientSeen = qtrue;
-            return qfalse;
-        }
-    }
-    return qtrue;
 }

@@ -69,7 +69,6 @@ typedef enum {
 
 typedef struct {
 	serverState_t	state;
-	qboolean        ladderLegacyClientSeen; /* Any legacy participant taints this map. */
 	qboolean		restarting;			// if true, send configstring changes during SS_LOADING
 	int				serverId;			// changes each server start
 	int				restartedServerId;	// serverId before a map_restart
@@ -353,8 +352,6 @@ void SV_LadderInit( void );
 void SV_LadderShutdown( void );
 void SV_LadderRegister_f( void );
 void SV_LadderRegisterAbort_f( void );
-qboolean SV_LadderClientCompatible( const char *userinfo );
-qboolean SV_LadderClientsCompatible( void );
 void SV_LadderSubmit( const ladderMatchPayload_t *payload );
 void SV_LadderSubmitGhost( const ladderGhostMeta_t *meta, const char *data );
 void SV_LadderFetchGhosts( const ladderGhostFetch_t *request );

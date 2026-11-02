@@ -1,12 +1,5 @@
 # PHP Ladder Webservice
 
-> **Entwicklungsstand, nicht deployen:** Die lokalen v0.8-Änderungen enthalten
-> noch den überholten Dedicated-only-Prototyp. Vereinbart ist jetzt ein zentrales
-> Profil einschließlich regulärem Offline-Fortschritt nach Basisprüfung.
-> Die Ablösung ist noch nicht implementiert. Siehe
-> [Zentrales Profil](../../docs/central-profile-model.md). Die nachfolgende
-> Reset-/Deployment-Beschreibung ist keine Freigabe für den produktiven Betrieb.
-
 Dieses Verzeichnis enthält den PHP-basierten Q3Rally-Ladder-Endpunkt für
 klassischen Webspace mit PHP-Unterstützung. Der Service benötigt keine
 zusätzlichen Bibliotheken und speichert eingehende Matches als JSON-Dateien im
@@ -41,13 +34,16 @@ Datei atomar. Neue Keys (Formular, In-Game-Assistent, `POST /api/v1/register`)
 sind immer Anträge im Status `pending`, bis sie in `admin.php` freigegeben werden;
 pro IP sind 10 Anträge pro Stunde erlaubt.
 
-Ab v0.8 ist die Ladder auf freigegebene Dedicated-Server und eine explizite
-Testperiode begrenzt. Offline-Keys bleiben als Identitäts-/Bestandsdaten
-vorhanden, dürfen aber keine gewerteten Matches oder Ghosts melden. Lokale
-Karrierewerte werden nicht in die Ladder importiert. Ein Upgrade initialisiert
-keine neue Periode automatisch: zunächst sind Uploads gesperrt (HTTP 503).
-Der vorbereitete Reset mit geprüftem Backup wird erst beim vereinbarten
-Release-Wechsel ausgeführt. Anleitung: [v0.8 rollout](../../docs/ladder-v08-rollout.md).
+Offline-Keys (Typ `offline` oder Servername mit `_OFFLINE`) melden Matches und
+Ghosts immer als `offline`, unabhängig von `server.dedicated`.
+
+Ein Offline-Key gehört einem Spieler (dem Profil, das ihn im Spiel registriert
+hat). Der erste Upload mit genau einem menschlichen Spieler bindet den Key an
+dessen Spieler-ID; eine ID kann nur an einen Offline-Key gebunden sein. Danach
+zählen Matches dieses Keys nur für diesen Spieler (andere Menschen bleiben ohne
+Profil-Gutschrift im Match), Ghosts anderer Spieler werden mit 403
+`GHOST_PLAYER_MISMATCH` abgelehnt. In `admin.php` steht die Bindung beim Key,
+"Unbind player" löst sie (z. B. nach Neuinstallation).
 
 ### Spieler-IDs zusammenführen
 

@@ -92,8 +92,8 @@ See dedicated-validation.md.
 - Preserve the existing native score rules before moving authority centrally;
   do not substitute the prototype's match-score formula. Arcade leaderboards
   remain separate; identity, garage and cosmetic permissions are shared.
-- The earlier Dedicated-only/reset implementation is a superseded local
-  prototype, not approved for deployment. Profile sync and migration are not
+- The earlier Dedicated-only/reset implementation has been removed from active
+  sources and retained only as a local historical artifact. Profile sync and migration are not
   implemented. See central-profile-model.md and contracts/README.md.
 
 ### v0.8 launcher scope
@@ -129,9 +129,10 @@ Agreed: a lean launcher for all three desktop platforms (Windows, Linux, macOS).
   Install and play; a download-only action must not launch the game.
 
 Keep server browsing, additional-map management and multiple release channels
-outside the v0.8 launcher scope. Implementation technology, supported OS versions,
-CPU architectures, update hosting and platform signing/distribution details still
-need to be specified during implementation planning.
+outside the v0.8 launcher scope. Implementation uses Python/Tk and native
+PyInstaller bundles. Launcher/catalog hosting is own webspace; game packages use
+GitHub Releases. Native build jobs target Windows/Linux x86_64 and Intel/ARM macOS.
+Supported OS minimums and platform signing/distribution still need validation.
 
 
 ### Additional v0.8 work items
@@ -163,9 +164,13 @@ User-provided tracking numbers are preserved below.
   old points/ranks/stats reset once. Native/UI writers share the format;
   future/linked or damaged files are not overwritten. Windows/Linux native/QVM
   builds and profile checks pass; see profile-format-v08.md. Actual website
-  login/linking and offline synchronization remain v0.9 work. Supersede the
-  Dedicated-only prototype separately before deployment.
-- Implement and test the agreed Windows/Linux/macOS launcher.
+  login/linking and offline synchronization remain v0.9 work. The
+  Dedicated-only prototype has been removed from the active engine and services;
+  the preceding backend behavior is restored. No service deployment/reset performed.
+- Launcher implementation and native build workflow are available; see launcher.md.
+  Hosting is own webspace for launcher/catalog, GitHub Releases for game packages.
+  Production signing key, final hosting path, native Mac checks and public release
+  publication remain open.
 - Record graphics performance comparisons; consider SMAA only after required work.
 - Build version-correct native platform binaries, test release candidates, then create final packages.
 
