@@ -1,0 +1,92 @@
+{
+  "status": "reference inventory; not a replacement calculation or deployed protocol",
+  "rulesId": "native-career-reference-v0.8",
+  "source": "engine/code/game/g_profile.c",
+  "sourceSha256": "785469d331fa1867b3099290e33ef35bee9a683b0b72c320687c21de656befd1",
+  "awards": {
+    "FRAG": 2,
+    "DEATH": -1,
+    "SUICIDE": -5,
+    "FLAG_CAPTURE": 7,
+    "FLAG_ASSIST": 4,
+    "DOMINATION_CAPTURE": 6,
+    "LAP": 1,
+    "LEAD_LAP": 1,
+    "RACE_WIN": 12,
+    "ELIMINATION_WIN": 10,
+    "ACHIEVEMENT_TIER": 8,
+    "LOSS_PENALTY_NON_RACING": -2,
+    "RACE_PLACEMENT_PENALTY": -5,
+    "RACE_PLACE_SECOND": 6,
+    "RACE_PLACE_THIRD": 3
+  },
+  "ranks": [
+    {
+      "name": "Rookie Driver",
+      "minimumScore": 0
+    },
+    {
+      "name": "Street Newbie",
+      "minimumScore": 50
+    },
+    {
+      "name": "Weekend Racer",
+      "minimumScore": 150
+    },
+    {
+      "name": "Track Learner",
+      "minimumScore": 350
+    },
+    {
+      "name": "Amateur Racer",
+      "minimumScore": 700
+    },
+    {
+      "name": "Street Racer",
+      "minimumScore": 1200
+    },
+    {
+      "name": "Semi-Pro Driver",
+      "minimumScore": 2000
+    },
+    {
+      "name": "Pro Racer",
+      "minimumScore": 3200
+    },
+    {
+      "name": "Elite Driver",
+      "minimumScore": 5000
+    },
+    {
+      "name": "Track Dominator",
+      "minimumScore": 7500
+    },
+    {
+      "name": "Master of Speed",
+      "minimumScore": 11000
+    },
+    {
+      "name": "Racing Legend",
+      "minimumScore": 16000
+    },
+    {
+      "name": "Asphalt King",
+      "minimumScore": 22000
+    },
+    {
+      "name": "Grand Champion",
+      "minimumScore": 30000
+    },
+    {
+      "name": "Q3Rally Icon",
+      "minimumScore": 40000
+    }
+  ],
+  "semantics": {
+    "dedicatedPositiveBonus": "For each G_Profile_AddScore call separately: (int)(delta * 1.10f), minimum 1 for a positive input. Negative inputs unchanged. Preserve C float32/truncation behavior.",
+    "negativeScores": "G_Profile_AddScore adds signed deltas; do not silently clamp the career total to zero.",
+    "achievementAward": "newlyUnlocked * 8 is passed in one award call; do not split/regroup calls under the dedicated bonus.",
+    "ordering": "Mode guards, event ordering, achievement evaluation, one-time outcome/placement flags and duplicate prevention are part of the reference behavior.",
+    "stableExtension": "Open product decision before v1.0: whether new native achievement tiers may use the frozen +8 rule. Existing tier awards remain unchanged. Arcade/cosmetic achievement additions must not silently trigger native career awards."
+  }
+}

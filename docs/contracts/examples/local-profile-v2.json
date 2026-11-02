@@ -1,0 +1,126 @@
+{
+  "profileVersion": 2,
+  "identity": {
+    "uuid": "12345678-1234-4234-8234-123456789abc",
+    "name": "InstallProbe",
+    "info": {
+      "gender": "",
+      "birthDate": "",
+      "avatar": "",
+      "country": "DE",
+      "favoriteCars": [
+        {
+          "model": "",
+          "skin": "",
+          "rim": "",
+          "head": ""
+        },
+        {
+          "model": "",
+          "skin": "",
+          "rim": "",
+          "head": ""
+        },
+        {
+          "model": "",
+          "skin": "",
+          "rim": "",
+          "head": ""
+        },
+        {
+          "model": "",
+          "skin": "",
+          "rim": "",
+          "head": ""
+        }
+      ]
+    }
+  },
+  "webLink": {
+    "state": "unlinked",
+    "accountId": null,
+    "profileId": null
+  },
+  "progress": {
+    "epoch": "v0.8-local-1",
+    "authority": "local",
+    "currentRank": 0,
+    "highestRank": 0,
+    "stats": {
+      "distanceKm": 0.002008,
+      "fuelUsed": 0.0,
+      "bestLapMs": 0,
+      "kills": 0,
+      "deaths": 0,
+      "wins": 0,
+      "playerScore": 0,
+      "sprintWins": 0,
+      "losses": 0,
+      "flagCaptures": 0,
+      "flagAssists": 0,
+      "accuracyAwards": 0,
+      "excellentAwards": 0,
+      "impressiveAwards": 0,
+      "perfectAwards": 0,
+      "topSpeedKph": 0.3,
+      "damageDealt": 0,
+      "damageTaken": 0,
+      "mostUsedVehicle": "alpine",
+      "mostUsedVehicleTimeMs": 2000,
+      "gamesPlayed": 0,
+      "statsRevision": 1,
+      "racingWins": 0,
+      "racingPodiums": 0,
+      "racingCompleted": 0,
+      "racingTotalMs": 0,
+      "racingDmWins": 0,
+      "racingDmPodiums": 0,
+      "racingDmCompleted": 0,
+      "racingDmTotalMs": 0,
+      "sprintCompleted": 0,
+      "sprintBestMs": 0,
+      "eliminationWins": 0,
+      "eliminationCompleted": 0,
+      "eliminationTotalRoundsLasted": 0,
+      "lcsWins": 0,
+      "lcsCompleted": 0,
+      "lcsTotalSurvivalMs": 0,
+      "derbyWins": 0,
+      "derbyCompleted": 0,
+      "derbyKills": 0,
+      "dmWins": 0,
+      "dmCompleted": 0,
+      "dmKills": 0,
+      "ctfWins": 0,
+      "ctfCompleted": 0,
+      "ctfCaptures": 0,
+      "ctf4Wins": 0,
+      "ctf4Completed": 0,
+      "ctf4Captures": 0,
+      "teamWins": 0,
+      "teamCompleted": 0,
+      "teamKills": 0,
+      "teamRacingWins": 0,
+      "teamRacingCompleted": 0,
+      "teamRacingPodiums": 0,
+      "teamRacingDmWins": 0,
+      "teamRacingDmCompleted": 0,
+      "teamRacingDmPodiums": 0,
+      "dominationWins": 0,
+      "dominationCompleted": 0,
+      "dominationZoneHoldMs": 0,
+      "kothWins": 0,
+      "kothCompleted": 0,
+      "kothZoneHoldMs": 0,
+      "autoballWins": 0,
+      "autoballCompleted": 0,
+      "autoballGoals": 0,
+      "vehicles": [
+        {
+          "name": "alpine",
+          "timeMs": 2000
+        }
+      ]
+    }
+  }
+}
