@@ -1885,10 +1885,32 @@ void CG_NewLapTime( int client, int lap, int time ) {
 	cent->startLapTime = time;
 }
 
+/*
+=================
+CG_RaceLapStart
+
+Sprint start gates establish the lap timer without completing a lap.
+=================
+*/
+void CG_RaceLapStart( int client, int time ) {
+	centity_t *cent;
+
+	if ( client < 0 || client >= MAX_CLIENTS ) {
+		return;
+	}
+
+	cent = &cg_entities[client];
+	cent->lastStartLapTime = cent->startLapTime;
+	cent->startLapTime = time;
+}
+
 void CG_FinishedRace( int client, int time ) {
 	centity_t	*cent;
 	char		*t;
 
+	if ( client < 0 || client >= MAX_CLIENTS || !cg.snap ) {
+		return;
+	}
 	cent = &cg_entities[client];
 
         if ( client == cg.snap->ps.clientNum
@@ -1906,6 +1928,11 @@ void CG_FinishedRace( int client, int time ) {
         cent->finishRaceTime = time;
 
         if ( client == cg.snap->ps.clientNum ) {
+                if ( isRallyRace() && cgs.gametype != GT_GHOST &&
+                        cgs.gametype != GT_ELIMINATION && cgs.gametype != GT_LCS &&
+                        cg.snap->ps.stats[STAT_POSITION] > 1 ) {
+                        CG_CenterPrint( "RACE FINISHED", SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+                }
                 /* Before the personal ghost is replaced by this run. */
                 CG_GhostRace_EvaluateFinish( cent->bestLapTime );
                 CG_EndGhostRecording( time );
@@ -1935,6 +1962,8 @@ void CG_StartRace( int time ) {
 	int			i;
 	centity_t	*player;
 
+	cg.wrongWayStartTime = 0;
+	cg.wrongWayTime = 0;
 	s_raceOrderActive = qtrue;
 	memset( s_raceSplitHistory, 0, sizeof( s_raceSplitHistory ) );
 	CG_LadderGhost_ClosePicker();

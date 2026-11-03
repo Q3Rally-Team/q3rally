@@ -1,0 +1,878 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Central profile sync transport proposal version 1",
+  "description": "Design contract only; no deployed endpoint. Transport validity does not mean eligible, plausible, authenticated or scored. Event coverage/order, payload limits, canonical digest and domain validation must be settled before implementation.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/snapshot"
+    },
+    {
+      "$ref": "#/$defs/progressBatch"
+    },
+    {
+      "$ref": "#/$defs/syncResult"
+    },
+    {
+      "$ref": "#/$defs/error"
+    }
+  ],
+  "$defs": {
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "profile.snapshot"
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "careerEpoch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "scoreRulesId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "profileRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "definitionsRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "country": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[A-Z]{2}$"
+            }
+          },
+          "required": [
+            "displayName",
+            "country"
+          ],
+          "additionalProperties": false
+        },
+        "nativeProgress": {
+          "type": "object",
+          "properties": {
+            "points": {
+              "type": "integer"
+            },
+            "stats": {
+              "type": "object",
+              "properties": {
+                "kills": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deaths": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "wins": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "losses": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "gamesPlayed": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "kills",
+                "deaths",
+                "wins",
+                "losses",
+                "gamesPlayed"
+              ],
+              "additionalProperties": false
+            },
+            "rank": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+                },
+                "index": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "index"
+              ],
+              "additionalProperties": false
+            },
+            "achievements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+                  },
+                  "tier": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "tier"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "points",
+            "stats",
+            "rank",
+            "achievements"
+          ],
+          "additionalProperties": false
+        },
+        "garageRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "kind",
+        "accountId",
+        "profileId",
+        "careerEpoch",
+        "scoreRulesId",
+        "profileRevision",
+        "definitionsRevision",
+        "metadata",
+        "nativeProgress",
+        "garageRevision"
+      ],
+      "additionalProperties": false
+    },
+    "nativeEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.frag"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.death"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.suicide"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.flag_capture"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.flag_assist"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.domination_capture"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.lap"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {
+                "leader": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "leader"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.placement"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "position"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.outcome"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "enum": [
+                    "win",
+                    "loss",
+                    "draw"
+                  ]
+                }
+              },
+              "required": [
+                "result"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.telemetry"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {
+                "distanceMeters": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fuelUsedMl": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "topSpeedKph": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "distanceMeters",
+                "fuelUsedMl",
+                "topSpeedKph"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ordinal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offsetMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "const": "native.medals"
+            },
+            "facts": {
+              "type": "object",
+              "properties": {
+                "excellent": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "impressive": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "perfect": {
+                  "type": "boolean"
+                },
+                "accuracyPct": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "excellent",
+                "impressive",
+                "perfect",
+                "accuracyPct"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ordinal",
+            "offsetMs",
+            "type",
+            "facts"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "nativeMatch": {
+      "type": "object",
+      "properties": {
+        "matchId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "claimedSource": {
+          "enum": [
+            "offline",
+            "listen",
+            "dedicated"
+          ]
+        },
+        "gameRelease": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "contentDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mode": {
+          "type": "string",
+          "pattern": "^GT_[A-Z_]+$",
+          "maxLength": 32
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nativeEvent"
+          }
+        },
+        "factsDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "completion": {
+          "enum": [
+            "finished",
+            "abandoned"
+          ]
+        }
+      },
+      "required": [
+        "matchId",
+        "claimedSource",
+        "gameRelease",
+        "contentDigest",
+        "mode",
+        "startedAt",
+        "durationMs",
+        "events",
+        "factsDigest",
+        "completion"
+      ],
+      "additionalProperties": false
+    },
+    "progressBatch": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "profile.progress-batch"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "careerEpoch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "scoreRulesId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "baseProfileRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matches": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nativeMatch"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "kind",
+        "requestId",
+        "profileId",
+        "deviceId",
+        "careerEpoch",
+        "scoreRulesId",
+        "baseProfileRevision",
+        "matches"
+      ],
+      "additionalProperties": false
+    },
+    "syncResult": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "profile.sync-result"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "batchDisposition": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "matchId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+              },
+              "disposition": {
+                "enum": [
+                  "accepted",
+                  "already_applied",
+                  "rejected",
+                  "conflict"
+                ]
+              },
+              "receiptId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "factsDigest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "awardedPointDelta": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "reasonCode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "matchId",
+              "disposition",
+              "receiptId",
+              "factsDigest",
+              "awardedPointDelta",
+              "reasonCode"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "enum": [
+                        "accepted",
+                        "already_applied"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "receiptId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "awardedPointDelta": {
+                      "type": "integer"
+                    },
+                    "reasonCode": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "awardedPointDelta": {
+                      "type": "null"
+                    },
+                    "reasonCode": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "snapshot": {
+          "$ref": "#/$defs/snapshot"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "kind",
+        "requestId",
+        "batchDisposition",
+        "results",
+        "snapshot"
+      ],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "profile.error"
+        },
+        "code": {
+          "enum": [
+            "unauthorized",
+            "device_revoked",
+            "epoch_mismatch",
+            "rules_unsupported",
+            "release_unsupported",
+            "content_unsupported",
+            "invalid_payload",
+            "conflict",
+            "temporarily_unavailable"
+          ]
+        },
+        "currentEpoch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "kind",
+        "code",
+        "currentEpoch",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

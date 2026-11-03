@@ -18,7 +18,7 @@ elimination "1"
 bots "Bee Dean Minori Zack Tanya"
 
 //PLAYER STARTS
-starts "9"
+starts "8"
 
 //LAPS
 laps "3"
@@ -27,7 +27,7 @@ laps "3"
 laptime "55 sec"
 
 //CHECKPOINTS
-checkpoints "20"
+checkpoints "19"
 
 //OBSERVER SPOTS
 observerspots "12"
@@ -36,7 +36,7 @@ observerspots "12"
 weapons "0"
 
 //POWERUPS
-powerups "8"
+powerups "0"
 
 //REVERSABLE
 reversable "0"

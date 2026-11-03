@@ -286,6 +286,34 @@ static void TestCircuitWrap( void ) {
 	s_sprint = 0;
 }
 
+static void TestSameLevelCrossingContinuity( void ) {
+    vec3_t origin;
+    int i;
+    memset(&rl, 0, sizeof(rl));
+    rl.count = 200;
+    for (i = 0; i < rl.count; i++) {
+        VectorSet(rl.points[i].origin, i * RL_SPACING, 0, 0);
+        rl.points[i].dist = i * RL_SPACING;
+    }
+    rl.nearest = 30;
+    rl.nearestValid = qtrue;
+    /* A later pass through the crossing is one unit closer in world space. */
+    VectorSet(origin, 30 * RL_SPACING + 1, 0, 0);
+    VectorCopy(origin, rl.points[100].origin);
+    assert(RL_FindNearest(origin) == 30);
+    VectorSet(origin, 31 * RL_SPACING, 0, 0);
+    assert(RL_FindNearest(origin) == 31);
+    /* A real teleport still reacquires a distant part of the route. */
+    VectorCopy(rl.points[190].origin, origin);
+    assert(RL_FindNearest(origin) == 190);
+    /* Loop boundaries must not be treated as a distant crossing. */
+    rl.loop = qtrue;
+    rl.length = 200 * RL_SPACING;
+    rl.nearest = 199;
+    VectorCopy(rl.points[0].origin, origin);
+    assert(RL_FindNearest(origin) == 0);
+}
+
 int main( void ) {
 	TestResampleGroundInputs();
 	TestSpeedColours();
@@ -293,6 +321,7 @@ int main( void ) {
 	TestSourceAndDraw();
 	TestRouteRequest();
 	TestCircuitWrap();
+    TestSameLevelCrossingContinuity();
 	printf( "ok\n" );
 	return 0;
 }

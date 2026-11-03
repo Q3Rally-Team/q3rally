@@ -562,7 +562,7 @@ textures/q3r_building/crash1a
 
 textures/q3r_building/night_dark
 {
-	qer_editorimage textures/skies/xnight2_up.tga
+	qer_editorimage env/xnight2_up.jpg
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	q3map_surfacelight 35

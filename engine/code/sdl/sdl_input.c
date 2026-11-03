@@ -1353,6 +1353,12 @@ static void IN_ProcessEvents( void )
 				break;
 
 			case SDL_MOUSEMOTION:
+                if (clc.demoPlayer && (Key_GetCatcher() & KEYCATCH_UI)) {
+                    mouseLastX = e.motion.x;
+                    mouseLastY = e.motion.y;
+                    Com_QueueEvent(in_eventTime, SE_MOUSE_ABSOLUTE, e.motion.x, e.motion.y, 0, NULL);
+                    break;
+                }
 				if( mouseActive )
 				{
 					if( !e.motion.xrel && !e.motion.yrel )
@@ -1380,6 +1386,8 @@ static void IN_ProcessEvents( void )
 			case SDL_MOUSEBUTTONUP:
 				{
 					int b;
+                    if (clc.demoPlayer && (Key_GetCatcher() & KEYCATCH_UI))
+                        Com_QueueEvent(in_eventTime, SE_MOUSE_ABSOLUTE, e.button.x, e.button.y, 0, NULL);
 					switch( e.button.button )
 					{
 						case SDL_BUTTON_LEFT:   b = K_MOUSE1;     break;
@@ -1503,6 +1511,9 @@ void IN_Frame( void )
 {
 	qboolean loading;
 
+    if (clc.demoPlayer) {
+        Key_SetCatcher((Key_GetCatcher() & KEYCATCH_CONSOLE) | KEYCATCH_UI);
+    }
 	IN_JoyMove( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading

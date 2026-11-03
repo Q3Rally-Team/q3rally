@@ -18,7 +18,7 @@ elimination "1"
 bots "Ivan Tony Bee Tobias Steve"
 
 //PLAYER STARTS
-starts "12"
+starts "8"
 
 //LAPS
 laps "3"
@@ -27,10 +27,10 @@ laps "3"
 laptime "28 sec"
 
 //CHECKPOINTS
-checkpoints "12"
+checkpoints "9"
 
 //OBSERVER SPOTS
-observerspots "0"
+observerspots "18"
 
 //WEAPONS
 weapons "PG,RL,SG"

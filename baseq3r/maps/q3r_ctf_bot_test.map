@@ -1,0 +1,210 @@
+// Minimal, symmetric CTF arena for isolating bot flag routes.
+// Room interior: 5120 x 3200 x 384 units; flat floor, no cover or obstacles.
+//@$& layerdef "0" -1 0 0 0
+// entity 0
+{
+"classname" "worldspawn"
+"message" "CTF Bot Test Box"
+{
+brushDef
+{
+( -2640 -1680 -64 ) ( 2640 1680 -64 ) ( -2640 1680 -64 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 0 ) ( 2640 1680 0 ) ( 2640 -1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+( -2640 -1680 -64 ) ( -2640 1680 0 ) ( -2640 -1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2640 -1680 -64 ) ( 2640 1680 0 ) ( 2640 1680 -64 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 -64 ) ( 2640 -1680 0 ) ( 2640 -1680 -64 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 1680 -64 ) ( 2640 1680 0 ) ( -2640 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+}
+}
+{
+brushDef
+{
+( -2640 -1680 0 ) ( -2560 1680 0 ) ( -2640 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 384 ) ( -2560 1680 384 ) ( -2560 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 0 ) ( -2640 1680 384 ) ( -2640 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 -1680 0 ) ( -2560 1680 384 ) ( -2560 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+( -2640 -1680 0 ) ( -2560 -1680 384 ) ( -2560 -1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 1680 0 ) ( -2560 1680 384 ) ( -2640 1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+}
+}
+{
+brushDef
+{
+( 2560 -1680 0 ) ( 2640 1680 0 ) ( 2560 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 -1680 384 ) ( 2640 1680 384 ) ( 2640 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 -1680 0 ) ( 2560 1680 384 ) ( 2560 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+( 2640 -1680 0 ) ( 2640 1680 384 ) ( 2640 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 -1680 0 ) ( 2640 -1680 384 ) ( 2640 -1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 1680 0 ) ( 2640 1680 384 ) ( 2560 1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+}
+}
+{
+brushDef
+{
+( -2560 -1680 0 ) ( 2560 -1600 0 ) ( -2560 -1600 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 -1680 384 ) ( 2560 -1600 384 ) ( 2560 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 -1680 0 ) ( -2560 -1600 384 ) ( -2560 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 -1680 0 ) ( 2560 -1600 384 ) ( 2560 -1600 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 -1680 0 ) ( 2560 -1680 384 ) ( 2560 -1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 -1600 0 ) ( 2560 -1600 384 ) ( -2560 -1600 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+}
+}
+{
+brushDef
+{
+( -2560 1600 0 ) ( 2560 1680 0 ) ( -2560 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 1600 384 ) ( 2560 1680 384 ) ( 2560 1600 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 1600 0 ) ( -2560 1680 384 ) ( -2560 1600 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2560 1600 0 ) ( 2560 1680 384 ) ( 2560 1680 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2560 1600 0 ) ( 2560 1600 384 ) ( 2560 1600 0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+( -2560 1680 0 ) ( 2560 1680 384 ) ( -2560 1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+}
+}
+{
+brushDef
+{
+( -2640 -1680 384 ) ( 2640 1680 384 ) ( -2640 1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) base_floor/concretefloor1 0 0 0
+( -2640 -1680 416 ) ( 2640 1680 416 ) ( 2640 -1680 416 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 384 ) ( -2640 1680 416 ) ( -2640 -1680 416 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( 2640 -1680 384 ) ( 2640 1680 416 ) ( 2640 1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 -1680 384 ) ( 2640 -1680 416 ) ( 2640 -1680 384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+( -2640 1680 384 ) ( 2640 1680 416 ) ( -2640 1680 416 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) common/caulk 0 0 0
+}
+}
+}
+// entity 1
+{
+"classname" "team_CTF_redflag"
+"origin" "1800 0 48"
+"angle" "180"
+}
+// entity 2
+{
+"classname" "team_CTF_blueflag"
+"origin" "-1800 0 48"
+"angle" "0"
+}
+// entity 3
+{
+"classname" "team_CTF_redplayer"
+"origin" "1100 -384 48"
+"angle" "180"
+}
+// entity 4
+{
+"classname" "team_CTF_redplayer"
+"origin" "1100 -128 48"
+"angle" "180"
+}
+// entity 5
+{
+"classname" "team_CTF_redplayer"
+"origin" "1100 128 48"
+"angle" "180"
+}
+// entity 6
+{
+"classname" "team_CTF_redplayer"
+"origin" "1100 384 48"
+"angle" "180"
+}
+// entity 7
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-1100 -384 48"
+"angle" "0"
+}
+// entity 8
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-1100 -128 48"
+"angle" "0"
+}
+// entity 9
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-1100 128 48"
+"angle" "0"
+}
+// entity 10
+{
+"classname" "team_CTF_blueplayer"
+"origin" "-1100 384 48"
+"angle" "0"
+}
+// entity 11
+{
+"classname" "team_CTF_redspawn"
+"origin" "1400 -384 48"
+"angle" "180"
+}
+// entity 12
+{
+"classname" "team_CTF_redspawn"
+"origin" "1400 -128 48"
+"angle" "180"
+}
+// entity 13
+{
+"classname" "team_CTF_redspawn"
+"origin" "1400 128 48"
+"angle" "180"
+}
+// entity 14
+{
+"classname" "team_CTF_redspawn"
+"origin" "1400 384 48"
+"angle" "180"
+}
+// entity 15
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-1400 -384 48"
+"angle" "0"
+}
+// entity 16
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-1400 -128 48"
+"angle" "0"
+}
+// entity 17
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-1400 128 48"
+"angle" "0"
+}
+// entity 18
+{
+"classname" "team_CTF_bluespawn"
+"origin" "-1400 384 48"
+"angle" "0"
+}
+// entity 19
+{
+"classname" "info_player_intermission"
+"origin" "0 0 256"
+"angle" "180"
+}
+
+// entity 20
+{
+"classname" "light"
+"origin" "-1600 0 320"
+"light" "5000"
+"_color" "1 1 1"
+}
+// entity 21
+{
+"classname" "light"
+"origin" "0 0 320"
+"light" "5000"
+"_color" "1 1 1"
+}
+// entity 22
+{
+"classname" "light"
+"origin" "1600 0 320"
+"light" "5000"
+"_color" "1 1 1"
+}

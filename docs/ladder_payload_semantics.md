@@ -1,5 +1,12 @@
 # Ladder Payload Semantics (verbindlich)
 
+> **SUPERSEDED DESIGN / NICHT ZUR VERÖFFENTLICHUNG:** This document describes the
+> current prototype payload behavior. The accepted direction is now a central
+> profile with regular offline progress after basic validation. Dedicated-only
+> and the replacement scoring formula are not approved product rules. Follow
+> [central-profile-model.md](central-profile-model.md) before any implementation,
+> deployment or reset. No production reset is authorized by this document.
+
 Diese Spezifikation ist **Review-Gate** für Änderungen an Ladder-Payloads. Jede Änderung an
 `ladderMatchPayload_t`, `ladderPlayerPayload_t` oder `ladderProfileSnapshot_t` muss diese Datei
 mit aktualisieren (inkl. Modus-Status, Datenquelle, Semantik, Fallback).
@@ -206,3 +213,44 @@ Ergebnis: Liste in `ghosts/ladder/<map>_tl<n>_rev<r>_p<physik>_c<prüfsumme>.lis
 3. **Source of truth:** Code-Stellen in `g_main.c` (`G_LadderSubmitMatchReport`, `G_LadderPopulatePlayer`) und `sv_ladder.c` (JSON-Serializer) sind maßgeblich.
 4. **Breaking Change Pflicht:** Jede Änderung an Namensgebung, Typ, Fallback oder Modusstatus ist breaking bis dokumentiert und von Ladder-Service geprüft.
 5. **Testpflicht:** Änderungen an Payload-Build/Serialize müssen mindestens die Ladder-JSON-Tests aktualisieren/erweitern.
+
+
+## v0.8: neue Testperiode und ausschließlich matchbasierte Wertung (2026-11-02)
+
+Breaking change für **beide** aktivierten Backend-Varianten. Match- und
+Ghost-JSON enthalten zusätzlich das Objekt `ladder` (vom Engine-Serializer,
+keine Erweiterung des VM-Struct-Layouts):
+
+| Feld | Status | Quelle / Semantik | Fallback |
+|---|---|---|---|
+| `ladder.revision` | alle Uploads: P | Engine, Integer `1` | fehlt/falsch: ablehnen |
+| `ladder.period` | alle Uploads: P | `sv_ladderPeriod`, zunächst `v0.8-test-1` | Engine-Default; Backend muss exakt übereinstimmen |
+| `ladder.rules` | alle Uploads: P | Engine-Protokollheader, `v0.8-test-1` | fehlt/falsch: ablehnen |
+| `ladder.clientsVerified` | alle Uploads: P | `true` erst nach engine-seitiger Zulassungsprüfung | fehlt/falsch: ablehnen |
+| `server.build` | alle Uploads: P | Server-Buildkennung, freigegebene Version `Q3Rally v0.8 ...` | fehlt/alt/unbekannt: ablehnen |
+| `server.dedicated` | alle Uploads: P | `true`; aktiver freigegebener Server-Key erforderlich | Listen-/Offline-Server: ungewertet |
+
+Alte Reports/Spools erhalten beim Nachsenden **keine** neue Periodenkennung.
+HTTP 422 ist eine permanente Ablehnung; der bestehende Uploader verwirft
+solche Meldungen. Pro Reset muss die Periodenkennung neu und unbenutzt sein.
+
+Die frühere Snapshot-Semantik der Karrierewerte gilt ab dieser Periode nicht
+mehr für die Ladder: `players[].profile`, kumuliertes `playerScore`, lokale
+Rangangaben und explizite Punkte-Override-Aliase werden vor Speicherung und
+Indexierung entfernt. Match-`score`/`rawScore`, Kills, Ziele, Zeiten und
+Platzierung bleiben matchbezogene Serverdaten. Punkte verwenden die bisherigen
+Backend-Regeln für Teilnehmer ohne Snapshot, jetzt einheitlich für alle.
+Karrierewerte entstehen nur aus angenommenen Matches; Ränge werden aus diesen
+Punkten abgeleitet. Lokale Karriere-/Achievement-Fortschritte bleiben lokal.
+
+Ein doppelter `matchId` zählt nicht erneut. `serverMatchSeq` bleibt Diagnose;
+es ist kein serverübergreifender Zähler und darf bei Serverwechsel/-neustart
+keine gültigen Matches unterdrücken. Im Index stehen nach dem Upsert die
+aktualisierten serverseitigen Karrierepunkte.
+
+Client-Kompatibilität: `cl_ladderRelease=v0.8` und `cl_ladderRevision=1`
+werden als schreibgeschützte Userinfo-Werte gesetzt. Ladder-Dedicated-Server
+weisen fehlende/falsche Kennungen ab. Legacy-Teilnahme bei deaktivierter Ladder
+sperrt die laufende Map auch nach dem Verlassen des alten Clients für Uploads.
+Eine frische Map prüft weiter verbundene Clients erneut. Dies ist ein Schutz
+vor unveränderten Legacy-Releases, kein Nachweis unveränderter Binaries.

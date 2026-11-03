@@ -459,7 +459,8 @@ void UI_ServerInfoMenu( void )
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.add );
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.back );
 
-	UI_PushMenu( &s_serverinfo.menu );
+	Frontend_SetBackButton( &s_serverinfo.back.generic );
+    UI_PushMenu( &s_serverinfo.menu );
 }
 
 

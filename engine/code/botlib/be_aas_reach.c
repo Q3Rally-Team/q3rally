@@ -452,6 +452,77 @@ int AAS_BestReachableArea(vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t goalor
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
+//===========================================================================
+// Finds a nearby grounded AAS area with route links. This is used for CTF
+// flags on vehicle maps where the vehicle can touch an item outside the
+// walk-style AAS volume.
+//===========================================================================
+int AAS_NearestReachableArea(vec3_t origin, float maxdistance, vec3_t goalorigin)
+{
+	int x, y, range, areanum, goalareanum, bestareanum;
+	float distanceSquared, bestDistanceSquared;
+	vec3_t point, start, end, delta, bestGoalOrigin;
+	aas_trace_t trace;
+	const int sampleStep = 16;
+	const float traceDepth = 128.0f;
+
+	if (!aasworld.loaded || maxdistance <= 0.0f)
+		return 0;
+
+	range = (int)(maxdistance / sampleStep) * sampleStep;
+	bestareanum = 0;
+	bestDistanceSquared = maxdistance * maxdistance;
+
+	for (x = -range; x <= range; x += sampleStep)
+	{
+		for (y = -range; y <= range; y += sampleStep)
+		{
+			distanceSquared = (float)(x * x + y * y);
+			if (distanceSquared > bestDistanceSquared)
+				continue;
+
+			VectorCopy(origin, point);
+			point[0] += x;
+			point[1] += y;
+			point[2] += 16.0f;
+			areanum = AAS_PointAreaNum(point);
+			if (!areanum || !AAS_AreaGrounded(areanum) || !AAS_AreaReachability(areanum))
+				continue;
+
+			VectorCopy(point, start);
+			start[2] += 0.25f;
+			VectorCopy(start, end);
+			end[2] -= traceDepth;
+			trace = AAS_TraceClientBBox(start, end, PRESENCE_CROUCH, -1);
+			if (trace.startsolid || trace.fraction >= 1.0f)
+				continue;
+
+			goalareanum = AAS_PointAreaNum(trace.endpos);
+			if (!goalareanum || !AAS_AreaGrounded(goalareanum) || !AAS_AreaReachability(goalareanum))
+				continue;
+
+			VectorSubtract(trace.endpos, origin, delta);
+			distanceSquared = VectorLengthSquared(delta);
+			if (distanceSquared >= bestDistanceSquared)
+				continue;
+
+			bestDistanceSquared = distanceSquared;
+			bestareanum = goalareanum;
+			VectorCopy(trace.endpos, bestGoalOrigin);
+		}
+	}
+
+	if (bestareanum)
+		VectorCopy(bestGoalOrigin, goalorigin);
+	return bestareanum;
+} //end of the function AAS_NearestReachableArea
+
+//===========================================================================
+//
+// Parameter:				-
+// Returns:				-
+// Changes Globals:		-
+//===========================================================================
 void AAS_SetupReachabilityHeap(void)
 {
 	int i;

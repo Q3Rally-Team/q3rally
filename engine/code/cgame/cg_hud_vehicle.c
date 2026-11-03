@@ -25,257 +25,294 @@ static const vec4_t vehicleHudLabel  = { 0.57f, 0.70f, 0.74f, 0.90f };
 static const vec4_t vehicleHudFrame  = { 0.30f, 0.43f, 0.49f, 0.82f };
 
 /* -----------------------------------------------------------------------
-   CG_AddKOTHHillIndicatorToScene
-   Adds a pulse/ring style world indicator for the KOTH hill. Used in
-   main world rendering and minimap rendering.
+   King of the Hill indicator
+   A golden crown floats above the hill centre (models/mapobjects/koth/
+   crown.md3); its gems and velvet cap glow in the colour of the owner.
+   Bollards (post.md3) stand on the border of the hill zone; while a team
+   captures the hill they light up one after another in its colour, so the
+   ring shows the progress. Bollards near a car sink into the ground.
+   Used in the main world pass and in the minimap pass.
    ----------------------------------------------------------------------- */
+
+#define KOTH_POSTS_MIN      12
+#define KOTH_POSTS_MAX      32
+#define KOTH_POST_SPACING   110.0f
+#define KOTH_POST_HEIGHT    54.0f
+#define KOTH_POST_DUCK      100.0f		/* bollards within this distance of a car sink */
+
+static struct {
+	vec3_t	origin;
+	float	half[2];
+	int		count;
+	vec3_t	pos[KOTH_POSTS_MAX];
+	float	groundZ;
+	qboolean show[KOTH_POSTS_MAX];	/* false where the border runs off the hill (round top, square zone) */
+	qboolean valid;
+} kothCache;
+
+static void CG_KOTH_Lerp( const vec3_t a, const vec3_t b, float f, vec3_t out ) {
+	out[0] = a[0] + ( b[0] - a[0] ) * f;
+	out[1] = a[1] + ( b[1] - a[1] ) * f;
+	out[2] = a[2] + ( b[2] - a[2] ) * f;
+}
+
+static void CG_KOTH_TeamColor( int team, vec3_t out ) {
+	if ( team == TEAM_RED ) {
+		VectorSet( out, 1.0f, 0.16f, 0.10f );
+	} else if ( team == TEAM_BLUE ) {
+		VectorSet( out, 0.16f, 0.36f, 1.0f );
+	} else {
+		VectorSet( out, 0.92f, 0.90f, 0.82f );
+	}
+}
+
+static float CG_KOTH_GroundZ( float x, float y, float fromZ ) {
+	trace_t	tr;
+	vec3_t	start, end;
+
+	VectorSet( start, x, y, fromZ );
+	VectorSet( end, x, y, fromZ - 4096.0f );
+	CG_Trace( &tr, start, NULL, NULL, end, ENTITYNUM_NONE, MASK_PLAYERSOLID );
+	if ( tr.startsolid ) {
+		/* started inside something (a pole in the middle of the hill): the floor is beside it */
+		start[0] += 40.0f;
+		end[0] += 40.0f;
+		CG_Trace( &tr, start, NULL, NULL, end, ENTITYNUM_NONE, MASK_PLAYERSOLID );
+	}
+	return ( tr.fraction < 1.0f && !tr.startsolid ) ? tr.endpos[2] : fromZ - 256.0f;
+}
+
+/* Ground point under the hill centre and the bollard positions along the
+   border of the zone (a box: CS_KOTHSTATUS sends its half extents). Only
+   recomputed when the hill changes. */
+static void CG_KOTH_UpdateCache( void ) {
+	float	hx, hy, perimeter, step, d;
+	int		i;
+
+	hx = cgs.kothHillHalf[0] > 0.0f ? cgs.kothHillHalf[0] : cgs.kothHillRadius;
+	hy = cgs.kothHillHalf[1] > 0.0f ? cgs.kothHillHalf[1] : cgs.kothHillRadius;
+	if ( kothCache.valid && VectorCompare( kothCache.origin, cgs.kothHillOrigin ) &&
+		kothCache.half[0] == hx && kothCache.half[1] == hy ) {
+		return;
+	}
+	VectorCopy( cgs.kothHillOrigin, kothCache.origin );
+	kothCache.half[0] = hx;
+	kothCache.half[1] = hy;
+	kothCache.groundZ = CG_KOTH_GroundZ( cgs.kothHillOrigin[0], cgs.kothHillOrigin[1],
+		cgs.kothHillOrigin[2] + 256.0f );
+
+	perimeter = 4.0f * ( hx + hy );
+	kothCache.count = (int)( perimeter / KOTH_POST_SPACING + 0.5f );
+	kothCache.count = ( kothCache.count + 3 ) & ~3;		/* a multiple of 4: a post on every corner of a square */
+	if ( kothCache.count < KOTH_POSTS_MIN ) kothCache.count = KOTH_POSTS_MIN;
+	if ( kothCache.count > KOTH_POSTS_MAX ) kothCache.count = KOTH_POSTS_MAX;
+	step = perimeter / kothCache.count;
+	/* walk the border counter-clockwise, starting in the middle of the north side */
+	for ( i = 0; i < kothCache.count; i++ ) {
+		float x, y;
+		d = i * step + hx;
+		if ( d >= perimeter ) {
+			d -= perimeter;
+		}
+		if ( d < 2.0f * hx ) {
+			x = hx - d;			y = hy;
+		} else if ( d < 2.0f * hx + 2.0f * hy ) {
+			x = -hx;			y = hy - ( d - 2.0f * hx );
+		} else if ( d < 4.0f * hx + 2.0f * hy ) {
+			x = -hx + ( d - 2.0f * hx - 2.0f * hy );	y = -hy;
+		} else {
+			x = hx;				y = -hy + ( d - 4.0f * hx - 2.0f * hy );
+		}
+		kothCache.pos[i][0] = cgs.kothHillOrigin[0] + x;
+		kothCache.pos[i][1] = cgs.kothHillOrigin[1] + y;
+		kothCache.pos[i][2] = CG_KOTH_GroundZ( kothCache.pos[i][0], kothCache.pos[i][1],
+			cgs.kothHillOrigin[2] + 256.0f );
+		kothCache.show[i] = fabs( kothCache.pos[i][2] - kothCache.groundZ ) < 72.0f;
+	}
+	kothCache.valid = qtrue;
+}
+
+/* XY distance from a point to the nearest car (other players and our own). */
+static float CG_KOTH_NearestCar( const vec3_t p ) {
+	float	best = 1e9f, d;
+	int		i;
+
+	if ( cg.snap ) {
+		for ( i = 0; i < cg.snap->numEntities; i++ ) {
+			centity_t *cent = &cg_entities[ cg.snap->entities[i].number ];
+			if ( cg.snap->entities[i].eType != ET_PLAYER ) {
+				continue;
+			}
+			d = Square( cent->lerpOrigin[0] - p[0] ) + Square( cent->lerpOrigin[1] - p[1] );
+			if ( d < best ) best = d;
+		}
+		if ( cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+			d = Square( cg.predictedPlayerState.origin[0] - p[0] ) +
+				Square( cg.predictedPlayerState.origin[1] - p[1] );
+			if ( d < best ) best = d;
+		}
+	}
+	return sqrt( best );
+}
+
+static void CG_KOTH_Sprite( const vec3_t origin, float radius, const vec3_t color, float alpha ) {
+	refEntity_t	ent;
+
+	if ( alpha <= 0.0f ) {
+		return;
+	}
+	Com_Memset( &ent, 0, sizeof( ent ) );
+	ent.reType = RT_SPRITE;
+	VectorCopy( origin, ent.origin );
+	ent.radius = radius;
+	ent.customShader = cgs.media.kothGlowShader;
+	ent.shaderRGBA[0] = (byte)( 255 * Com_Clamp( 0, 1, color[0] * alpha ) );
+	ent.shaderRGBA[1] = (byte)( 255 * Com_Clamp( 0, 1, color[1] * alpha ) );
+	ent.shaderRGBA[2] = (byte)( 255 * Com_Clamp( 0, 1, color[2] * alpha ) );
+	ent.shaderRGBA[3] = 255;
+	trap_R_AddRefEntityToScene( &ent );
+}
+
 void CG_AddKOTHHillIndicatorToScene( qboolean minimapPass ) {
-	refEntity_t	marker;
-	trace_t		tr;
-	vec3_t		groundPos;
-	vec3_t		beamStart;
-	vec3_t		traceEnd;
-	float		pulse;
-	float		inversePulse;
-	float		ringScale;
-	float		beamHalfWidth;
-	float		ringAlphaBase;
-	float		ringAlphaPulse;
-	float		beamAlphaBase;
-	float		beamAlphaPulse;
-	qhandle_t	hillMarkerShader;
-	byte		tintR, tintG, tintB;
+	refEntity_t	ent;
+	vec3_t		owner, capturer, yellow, gem, angles, c;
+	float		t, scale, hop, hopAge, flicker, lit, pct;
+	int			i;
+	qboolean	capturing;
 
-	if ( cgs.gametype != GT_KOTH ) {
+	if ( cgs.gametype != GT_KOTH || !cgs.kothHillOriginValid || !cgs.media.kothCrownModel ) {
 		return;
 	}
+	CG_KOTH_UpdateCache();
 
-	if ( !cgs.kothHillOriginValid ) {
-		return;
-	}
+	t = cg.time * 0.001f;
+	pct = Com_Clamp( 0, 100, cgs.kothCapturePct ) / 100.0f;
+	capturing = !cgs.kothContested && ( cgs.kothCapturingTeam == TEAM_RED || cgs.kothCapturingTeam == TEAM_BLUE ) &&
+		cgs.kothCapturingTeam != cgs.kothOwner && pct > 0.0f && pct < 1.0f;
+	CG_KOTH_TeamColor( cgs.kothOwner, owner );
+	CG_KOTH_TeamColor( capturing ? cgs.kothCapturingTeam : cgs.kothOwner, capturer );
+	VectorSet( yellow, 1.0f, 0.82f, 0.18f );
+	flicker = 0.5f + 0.5f * sin( t * 25.0f );
 
-	/* ---- colour by owner / state ---- */
-	hillMarkerShader = cgs.media.kothHillMarkerNeutralShader;
+	/* ---- gem colour ---- */
 	if ( cgs.kothContested ) {
-		tintR = 255; tintG = 220; tintB = 64;
-	} else if ( cgs.kothOwner == TEAM_RED ) {
-		hillMarkerShader = cgs.media.kothHillMarkerRedShader;
-		tintR = 255; tintG = 0;   tintB = 0;
-	} else if ( cgs.kothOwner == TEAM_BLUE ) {
-		hillMarkerShader = cgs.media.kothHillMarkerBlueShader;
-		tintR = 0;   tintG = 12;  tintB = 255;
+		CG_KOTH_Lerp( owner, yellow, flicker, gem );
+	} else if ( capturing ) {
+		/* pulse towards the capturing team, faster and stronger as it gets close */
+		float k = pct * ( 0.6f + 0.4f * sin( t * ( 6.0f + 14.0f * pct ) ) );
+		CG_KOTH_Lerp( owner, capturer, Com_Clamp( 0, 1, k ), gem );
 	} else {
-		tintR = 240; tintG = 240; tintB = 240;
+		VectorCopy( owner, gem );
+		if ( cgs.kothOwner == TEAM_FREE ) {
+			VectorScale( gem, 0.92f + 0.08f * sin( t * 2.0f ), gem );
+		}
 	}
 
-	/* base pulse: 0..1, period ~7 s */
-	pulse        = 0.5f + 0.5f * sin( (float)cg.time * 0.009f );
-	inversePulse = 1.0f - pulse;
+	/* ---- crown ---- */
+	scale = Com_Clamp( 1.3f, 2.4f, cgs.kothHillRadius / 200.0f );
+	hopAge = cg.kothOwnerChangeTime ? ( cg.time - cg.kothOwnerChangeTime ) / 1400.0f : 1.0f;
+	hop = ( hopAge >= 0.0f && hopAge < 1.0f ) ? sin( hopAge * M_PI ) : 0.0f;
 
-	ringScale = cg_kothRingScale.value;
-	if ( ringScale <= 0.0f ) {
-		ringScale = 1.0f;
+	Com_Memset( &ent, 0, sizeof( ent ) );
+	ent.reType = RT_MODEL;
+	ent.hModel = cgs.media.kothCrownModel;
+	ent.origin[0] = cgs.kothHillOrigin[0];
+	ent.origin[1] = cgs.kothHillOrigin[1];
+	ent.origin[2] = kothCache.groundZ + 110.0f + 45.0f * scale + 7.0f * sin( t * 1.7f ) + 70.0f * hop;
+	angles[YAW] = AngleMod( t * 32.0f + ( hop > 0.0f ? 720.0f * ( 1.0f - Square( 1.0f - hopAge ) ) : 0.0f ) );
+	angles[PITCH] = 3.0f * sin( t * 0.9f );
+	angles[ROLL] = 3.0f * cos( t * 0.7f );
+	if ( cgs.kothContested ) {			/* rattles while both teams are on the hill */
+		angles[PITCH] += 5.0f * sin( t * 31.0f );
+		angles[ROLL] += 5.0f * cos( t * 27.0f );
+		ent.origin[2] += 3.0f * sin( t * 43.0f );
+	}
+	if ( minimapPass ) {
+		scale *= 3.5f;
+	}
+	scale *= 1.0f + 0.18f * hop;
+	AnglesToAxis( angles, ent.axis );
+	VectorScale( ent.axis[0], scale, ent.axis[0] );
+	VectorScale( ent.axis[1], scale, ent.axis[1] );
+	VectorScale( ent.axis[2], scale, ent.axis[2] );
+	ent.nonNormalizedAxes = qtrue;
+	/* the model origin is the bottom of the band: put its middle (z 40) at
+	   the hover point so it turns and tilts about its centre */
+	VectorMA( ent.origin, -40.0f, ent.axis[2], ent.origin );
+	VectorCopy( ent.origin, ent.lightingOrigin );
+	ent.renderfx = RF_MINLIGHT | RF_LIGHTING_ORIGIN;
+	ent.shaderRGBA[0] = (byte)( 255 * Com_Clamp( 0, 1, gem[0] ) );
+	ent.shaderRGBA[1] = (byte)( 255 * Com_Clamp( 0, 1, gem[1] ) );
+	ent.shaderRGBA[2] = (byte)( 255 * Com_Clamp( 0, 1, gem[2] ) );
+	ent.shaderRGBA[3] = 255;
+	trap_R_AddRefEntityToScene( &ent );
+
+	/* aura behind the crown and a light on the hill */
+	VectorMA( ent.origin, 40.0f, ent.axis[2], c );
+	CG_KOTH_Sprite( c, 70.0f * scale, gem, 0.35f + 0.15f * sin( t * 3.0f ) + 0.4f * hop );
+	if ( !minimapPass ) {
+		trap_R_AddLightToScene( c, 260.0f + 40.0f * sin( t * 3.0f ) + 200.0f * hop, gem[0], gem[1], gem[2] );
 	}
 
-	beamHalfWidth = cg_kothBeamHalfWidth.value;
-	if ( beamHalfWidth < 2.0f ) {
-		beamHalfWidth = 2.0f;
+	/* ---- bollards on the zone border ---- */
+	if ( !cgs.media.kothPostModel ) {
+		return;
 	}
+	lit = capturing ? pct * kothCache.count : 0.0f;
+	for ( i = 0; i < kothCache.count; i++ ) {
+		vec3_t	col, glow;
+		float	sink = 0.0f, on, d;
 
-	ringAlphaBase = cg_kothRingAlphaBase.value;
-	if ( ringAlphaBase < 0.0f ) {
-		ringAlphaBase = 0.0f;
-	} else if ( ringAlphaBase > 255.0f ) {
-		ringAlphaBase = 255.0f;
-	}
-	ringAlphaPulse = cg_kothRingAlphaPulse.value;
-	if ( ringAlphaPulse < 0.0f ) {
-		ringAlphaPulse = 0.0f;
-	}
+		if ( !kothCache.show[i] ) {
+			continue;
+		}
+		if ( cgs.kothContested ) {
+			CG_KOTH_Lerp( owner, yellow, ( ( i + (int)( t * 6.0f ) ) & 1 ) ? 1.0f : 0.15f, col );
+		} else if ( capturing ) {
+			on = Com_Clamp( 0, 1, lit - i );
+			VectorScale( owner, cgs.kothOwner == TEAM_FREE ? 0.4f : 0.55f, col );
+			CG_KOTH_Lerp( col, capturer, on, col );
+		} else if ( cgs.kothOwner == TEAM_FREE ) {
+			VectorScale( owner, 0.62f + 0.1f * sin( t * 2.0f ), col );
+		} else {
+			/* owned: a slow wave runs around the ring */
+			float w = 0.75f + 0.25f * sin( t * 3.0f - i * ( 2.0f * M_PI / kothCache.count ) * 2.0f );
+			VectorScale( owner, w, col );
+		}
 
-	beamAlphaBase = cg_kothBeamAlphaBase.value;
-	if ( beamAlphaBase < 0.0f ) {
-		beamAlphaBase = 0.0f;
-	} else if ( beamAlphaBase > 255.0f ) {
-		beamAlphaBase = 255.0f;
-	}
-	beamAlphaPulse = cg_kothBeamAlphaPulse.value;
-	if ( beamAlphaPulse < 0.0f ) {
-		beamAlphaPulse = 0.0f;
-	}
-
-	/* ---- find ground level below hill origin ----
-	   Start well above kothHillOrigin so the trace passes through
-	   the hill brush (CONTENTS_TRIGGER, not solid) to the real floor.
-	   MASK_PLAYERSOLID skips trigger volumes. */
-	VectorCopy( cgs.kothHillOrigin, beamStart );
-	beamStart[2] += 256.0f;
-	VectorCopy( beamStart, traceEnd );
-	traceEnd[2] -= 8192.0f;
-	CG_Trace( &tr, beamStart, NULL, NULL, traceEnd, ENTITYNUM_NONE, MASK_PLAYERSOLID );
-	if ( tr.fraction < 1.0f ) {
-		VectorCopy( tr.endpos, groundPos );
-	} else {
-		VectorCopy( cgs.kothHillOrigin, groundPos );
-	}
-
-	/* ============================================================
-	   1) GROUND RING  (flat horizontal poly ring in world space)
-	      Built as a triangle fan: SEGMENTS quads, each quad = 2
-	      tris.  Inner radius = outerRadius * INNER_FRAC gives the
-	      ring band width.  A slow angular offset animates rotation.
-	   ============================================================ */
-	{
-		#define KOTH_RING_SEGS  24
-		#define KOTH_INNER_FRAC 0.72f
-		polyVert_t  rv[4];
-		float       outerR, innerR;
-		float       rotOff;
-		float       ringZ;
-		byte        ringAlpha;
-		int         seg;
-		float       a0, a1, c0, s0, c1, s1;
-		float       ox0, oy0, ox1, oy1;
-		float       ix0, iy0, ix1, iy1;
-
-		outerR    = minimapPass
-			? ( cgs.kothHillRadius * ( 1.35f * ringScale ) + 10.0f * pulse )
-			: ( cgs.kothHillRadius * ringScale + 8.0f * pulse );
-		innerR    = outerR * KOTH_INNER_FRAC;
-		rotOff    = (float)cg.time * 0.0008f;   /* slow rotation */
-		ringZ     = groundPos[2] + 2.0f;         /* just above ground */
-		{
-			float alpha = ringAlphaBase + ringAlphaPulse * pulse;
-			if ( alpha < 0.0f ) {
-				alpha = 0.0f;
-			} else if ( alpha > 255.0f ) {
-				alpha = 255.0f;
+		if ( !minimapPass ) {
+			d = CG_KOTH_NearestCar( kothCache.pos[i] );
+			if ( d < KOTH_POST_DUCK ) {
+				sink = ( 1.0f - d / KOTH_POST_DUCK ) * ( KOTH_POST_HEIGHT + 4.0f );
 			}
-			ringAlpha = (byte)alpha;
 		}
 
-		for ( seg = 0; seg < KOTH_RING_SEGS; seg++ ) {
-			a0 = rotOff + (float)seg       * (2.0f * M_PI / KOTH_RING_SEGS);
-			a1 = rotOff + (float)(seg + 1) * (2.0f * M_PI / KOTH_RING_SEGS);
-			c0 = cos(a0); s0 = sin(a0);
-			c1 = cos(a1); s1 = sin(a1);
-
-			/* outer vertices */
-			ox0 = groundPos[0] + outerR * c0;
-			oy0 = groundPos[1] + outerR * s0;
-			ox1 = groundPos[0] + outerR * c1;
-			oy1 = groundPos[1] + outerR * s1;
-			/* inner vertices */
-			ix0 = groundPos[0] + innerR * c0;
-			iy0 = groundPos[1] + innerR * s0;
-			ix1 = groundPos[0] + innerR * c1;
-			iy1 = groundPos[1] + innerR * s1;
-
-			/* quad as two tris wound CCW (outer0, inner0, inner1, outer1) */
-			rv[0].xyz[0] = ox0; rv[0].xyz[1] = oy0; rv[0].xyz[2] = ringZ;
-			rv[0].st[0] = 0.0f; rv[0].st[1] = 0.0f;
-			rv[0].modulate[0] = tintR; rv[0].modulate[1] = tintG;
-			rv[0].modulate[2] = tintB; rv[0].modulate[3] = ringAlpha;
-
-			rv[1].xyz[0] = ix0; rv[1].xyz[1] = iy0; rv[1].xyz[2] = ringZ;
-			rv[1].st[0] = 0.5f; rv[1].st[1] = 0.0f;
-			rv[1].modulate[0] = tintR; rv[1].modulate[1] = tintG;
-			rv[1].modulate[2] = tintB; rv[1].modulate[3] = ringAlpha;
-
-			rv[2].xyz[0] = ix1; rv[2].xyz[1] = iy1; rv[2].xyz[2] = ringZ;
-			rv[2].st[0] = 0.5f; rv[2].st[1] = 1.0f;
-			rv[2].modulate[0] = tintR; rv[2].modulate[1] = tintG;
-			rv[2].modulate[2] = tintB; rv[2].modulate[3] = ringAlpha;
-
-			rv[3].xyz[0] = ox1; rv[3].xyz[1] = oy1; rv[3].xyz[2] = ringZ;
-			rv[3].st[0] = 0.0f; rv[3].st[1] = 1.0f;
-			rv[3].modulate[0] = tintR; rv[3].modulate[1] = tintG;
-			rv[3].modulate[2] = tintB; rv[3].modulate[3] = ringAlpha;
-
-			trap_R_AddPolyToScene( cgs.media.kothRingShader, 4, rv );
+		Com_Memset( &ent, 0, sizeof( ent ) );
+		ent.reType = RT_MODEL;
+		ent.hModel = cgs.media.kothPostModel;
+		VectorCopy( kothCache.pos[i], ent.origin );
+		ent.origin[2] -= sink;
+		AxisClear( ent.axis );
+		if ( minimapPass ) {
+			VectorScale( ent.axis[0], 2.0f, ent.axis[0] );
+			VectorScale( ent.axis[1], 2.0f, ent.axis[1] );
+			VectorScale( ent.axis[2], 2.0f, ent.axis[2] );
+			ent.nonNormalizedAxes = qtrue;
 		}
-		#undef KOTH_RING_SEGS
-		#undef KOTH_INNER_FRAC
+		VectorCopy( kothCache.pos[i], ent.lightingOrigin );
+		ent.lightingOrigin[2] += 32.0f;
+		ent.renderfx = RF_MINLIGHT | RF_LIGHTING_ORIGIN;
+		ent.shaderRGBA[0] = (byte)( 255 * Com_Clamp( 0, 1, col[0] ) );
+		ent.shaderRGBA[1] = (byte)( 255 * Com_Clamp( 0, 1, col[1] ) );
+		ent.shaderRGBA[2] = (byte)( 255 * Com_Clamp( 0, 1, col[2] ) );
+		ent.shaderRGBA[3] = 255;
+		trap_R_AddRefEntityToScene( &ent );
+
+		/* glow around the lamp */
+		VectorCopy( ent.origin, glow );
+		glow[2] += ( minimapPass ? 2.0f : 1.0f ) * 42.0f;
+		CG_KOTH_Sprite( glow, minimapPass ? 56.0f : 30.0f, col, 0.8f * ( 1.0f - sink / KOTH_POST_HEIGHT ) );
 	}
-
-	/* ============================================================
-	   2) UPWARD BEAM  (two crossed vertical quads = X-shape)
-	      Visible from all angles without billboard math.
-	      Each quad spans groundPos.Z -> kothHillOrigin.Z.
-	      Half-width BEAM_W controls thickness.
-	      UV runs 0..1 bottom-to-top so tcMod scroll animates upward.
-	   ============================================================ */
-	{
-		polyVert_t  bv[4];
-		float       bz0, bz1;
-		byte        beamAlpha;
-		float       cx, cy;
-
-		bz0       = groundPos[2]         + 2.0f;
-		bz1       = cgs.kothHillOrigin[2];
-		{
-			float alpha = beamAlphaBase + beamAlphaPulse * pulse;
-			if ( alpha < 0.0f ) {
-				alpha = 0.0f;
-			} else if ( alpha > 255.0f ) {
-				alpha = 255.0f;
-			}
-			beamAlpha = (byte)alpha;
-		}
-		cx        = groundPos[0];
-		cy        = groundPos[1];
-
-		/* --- quad 1: aligned along X axis --- */
-		bv[0].xyz[0]=cx-beamHalfWidth; bv[0].xyz[1]=cy; bv[0].xyz[2]=bz0;
-		bv[0].st[0]=0.0f; bv[0].st[1]=1.0f;
-		bv[0].modulate[0]=tintR; bv[0].modulate[1]=tintG;
-		bv[0].modulate[2]=tintB; bv[0].modulate[3]=beamAlpha;
-
-		bv[1].xyz[0]=cx+beamHalfWidth; bv[1].xyz[1]=cy; bv[1].xyz[2]=bz0;
-		bv[1].st[0]=1.0f; bv[1].st[1]=1.0f;
-		bv[1].modulate[0]=tintR; bv[1].modulate[1]=tintG;
-		bv[1].modulate[2]=tintB; bv[1].modulate[3]=beamAlpha;
-
-		bv[2].xyz[0]=cx+beamHalfWidth; bv[2].xyz[1]=cy; bv[2].xyz[2]=bz1;
-		bv[2].st[0]=1.0f; bv[2].st[1]=0.0f;
-		bv[2].modulate[0]=tintR; bv[2].modulate[1]=tintG;
-		bv[2].modulate[2]=tintB; bv[2].modulate[3]=beamAlpha;
-
-		bv[3].xyz[0]=cx-beamHalfWidth; bv[3].xyz[1]=cy; bv[3].xyz[2]=bz1;
-		bv[3].st[0]=0.0f; bv[3].st[1]=0.0f;
-		bv[3].modulate[0]=tintR; bv[3].modulate[1]=tintG;
-		bv[3].modulate[2]=tintB; bv[3].modulate[3]=beamAlpha;
-
-		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
-
-		/* --- quad 2: aligned along Y axis (crossed with quad 1) --- */
-		bv[0].xyz[0]=cx; bv[0].xyz[1]=cy-beamHalfWidth; bv[0].xyz[2]=bz0;
-		bv[1].xyz[0]=cx; bv[1].xyz[1]=cy+beamHalfWidth; bv[1].xyz[2]=bz0;
-		bv[2].xyz[0]=cx; bv[2].xyz[1]=cy+beamHalfWidth; bv[2].xyz[2]=bz1;
-		bv[3].xyz[0]=cx; bv[3].xyz[1]=cy-beamHalfWidth; bv[3].xyz[2]=bz1;
-		/* st and modulate same as quad 1 - already set above */
-		trap_R_AddPolyToScene( cgs.media.kothBeamShader, 4, bv );
-	}
-
-	/* ============================================================
-	   3) HILL MARKER at beam tip
-	      Pulses in inverse phase to the beam so one is always
-	      clearly visible.
-	   ============================================================ */
-	Com_Memset( &marker, 0, sizeof( marker ) );
-	marker.reType        = RT_SPRITE;
-	VectorCopy( cgs.kothHillOrigin, marker.origin );
-	marker.origin[2]    += 4.0f;
-	marker.customShader  = hillMarkerShader;
-	marker.shaderRGBA[0] = tintR;
-	marker.shaderRGBA[1] = tintG;
-	marker.shaderRGBA[2] = tintB;
-	marker.shaderRGBA[3] = (byte)( 110 + 105 * inversePulse );
-	marker.rotation      = 0.0f;
-	marker.radius        = minimapPass
-		? ( 54.0f + 10.0f * inversePulse )
-		: ( 38.0f +  8.0f * inversePulse );
-	trap_R_AddRefEntityToScene( &marker );
 }
 
 

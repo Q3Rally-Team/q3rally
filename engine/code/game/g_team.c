@@ -65,6 +65,8 @@ typedef struct teamgame_s {
 	int				kothContested;
 	int				kothCaptureStart;
 	int				kothCapturingTeam;
+	float			kothHillHalfX;		/* half extents of the hill zone, for the client indicator */
+	float			kothHillHalfY;
 	int				kothPresenceRed;
 	int				kothPresenceBlue;
 	int				kothNextTick;
@@ -1683,21 +1685,27 @@ static void KOTH_AwardPersistToHillTeamPlayers( const gentity_t *hill, int team,
 KOTH_SetHillStatus
 
 Encodes hill state into CS_KOTHSTATUS configstring:
-  "<owner> <contested> <capture_pct> <x> <y> <z>"
+  "<owner> <contested> <capture_pct> <x> <y> <z> <radius> <capturer> <half_x> <half_y>"
   owner: 0=free 1=red 2=blue
   contested: 0 or 1
   capture_pct: 0-100
+  capturer: team that is taking the hill while capture_pct runs (0 = none)
+  half_x, half_y: half extents of the hill zone (the client draws its border)
+Readers that only know the first seven fields keep working.
 ===================
 */
 void KOTH_SetHillStatus( int owner, int contested, int pct, const vec3_t hillOrigin, float hillRadius ) {
-	trap_SetConfigstring( CS_KOTHSTATUS, va( "%i %i %i %i %i %i %i",
+	trap_SetConfigstring( CS_KOTHSTATUS, va( "%i %i %i %i %i %i %i %i %i %i",
 		owner,
 		contested,
 		pct,
 		(int)hillOrigin[0],
 		(int)hillOrigin[1],
 		(int)hillOrigin[2],
-		(int)hillRadius ) );
+		(int)hillRadius,
+		teamgame.kothCapturingTeam,
+		(int)teamgame.kothHillHalfX,
+		(int)teamgame.kothHillHalfY ) );
 }
 
 qboolean KOTH_IsClientInHill( int clientNum ) {
@@ -1765,6 +1773,8 @@ void KOTH_Think( void ) {
 		float rx = ( hill->r.absmax[0] - hill->r.absmin[0] ) * 0.5f;
 		float ry = ( hill->r.absmax[1] - hill->r.absmin[1] ) * 0.5f;
 		hillRadius = ( rx > ry ) ? rx : ry;
+		teamgame.kothHillHalfX = rx;
+		teamgame.kothHillHalfY = ry;
 	}
 
 	KOTH_CountPlayersInHill( hill, &redCount, &blueCount );

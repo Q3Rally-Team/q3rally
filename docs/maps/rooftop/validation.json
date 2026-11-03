@@ -1,0 +1,21 @@
+{
+  "map": "q3r_rooftop",
+  "pitch": [
+    5120,
+    3072
+  ],
+  "goal_mouth": [
+    1088,
+    320
+  ],
+  "goal_to_goal": 5120,
+  "glass_height": 144,
+  "end_height": 640,
+  "goals": 2,
+  "brushes": 524,
+  "entities": 76,
+  "kickoff_per_team": 4,
+  "spawns_per_team": 4,
+  "turbo": 10,
+  "city_towers": 148
+}

@@ -67,6 +67,8 @@ Copyright (C) 2002-2026 Q3Rally Team
 #define UI_FRONTEND_PANEL_EDGE         1
 #define UI_FRONTEND_PANEL_TOPBAR       1
 #define UI_FRONTEND_PANEL_SHADOW       0
+#define UI_FRONTEND_BACK_X             40
+#define UI_FRONTEND_BACK_Y             420
 #define UI_FRONTEND_ACTION_WIDTH       120
 #define UI_FRONTEND_BUTTON_HEIGHT      24
 #define UI_FRONTEND_STATUS_DOT         6

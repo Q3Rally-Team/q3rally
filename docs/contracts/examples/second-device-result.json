@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "kind": "profile.sync-result",
+  "requestId": "66666666-6666-4666-8666-666666666666",
+  "batchDisposition": "complete",
+  "results": [
+    {
+      "matchId": "example-match-02",
+      "disposition": "accepted",
+      "receiptId": "88888888-8888-4888-8888-888888888888",
+      "factsDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "awardedPointDelta": 2,
+      "reasonCode": null
+    }
+  ],
+  "snapshot": {
+    "schemaVersion": 1,
+    "kind": "profile.snapshot",
+    "accountId": "11111111-1111-4111-8111-111111111111",
+    "profileId": "22222222-2222-4222-8222-222222222222",
+    "careerEpoch": "v0.8-test-1",
+    "scoreRulesId": "native-career-reference-v0.8",
+    "profileRevision": 13,
+    "definitionsRevision": "native-definitions-v0.8",
+    "metadata": {
+      "displayName": "Example Driver",
+      "country": "DE"
+    },
+    "nativeProgress": {
+      "points": 104,
+      "stats": {
+        "kills": 5,
+        "deaths": 0,
+        "wins": 0,
+        "losses": 0,
+        "gamesPlayed": 1
+      },
+      "rank": {
+        "id": "street-newbie",
+        "index": 1
+      },
+      "achievements": []
+    },
+    "garageRevision": 3
+  }
+}

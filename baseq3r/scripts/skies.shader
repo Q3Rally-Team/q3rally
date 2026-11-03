@@ -41,7 +41,7 @@ textures/skies/nightsky_xian_dm1
 	q3map_surfacelight 300
 	q3map_sun 1 1 1 100 -41 58
 
-	qer_editorimage textures/skies/xnight2_up.tga
+	qer_editorimage env/xnight2_up.jpg
 
 	skyparms env/xnight2 - -
 }
@@ -52,7 +52,7 @@ textures/skies/nightsky_xian_dm1
 
 textures/skies/nightsky_xian_dm15
 {
-	qer_editorimage textures/skies/xnight2_up.tga
+	qer_editorimage env/xnight2_up.jpg
 	surfaceparm nolightmap
 	surfaceparm noimpact
 
@@ -264,7 +264,7 @@ textures/skies/tim_dm3_red
 
 textures/skies/night_dark
 {
-	qer_editorimage textures/skies/xnight2_up.tga
+	qer_editorimage env/xnight2_up.jpg
 	surfaceparm noimpact
 	surfaceparm nolightmap
 	q3map_surfacelight 35

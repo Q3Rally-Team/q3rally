@@ -23,30 +23,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
-#define INTRO_GHOST_ROUTE_MAX_FILE_SIZE ( 64 * 1024 )
-#define INTRO_GHOST_ROUTE_MAX_FRAMES 256
 /* Fallback duration by track class, used only if checkpoint distance is missing. */
-#define INTRO_GHOST_CAM_BASE_DURATION_MS 10000
-#define INTRO_GHOST_CAM_DURATION_STEP_MS 5000
-#define INTRO_GHOST_CAM_MIN_DURATION_MS 10000
-#define INTRO_GHOST_CAM_MAX_DURATION_MS 30000
-#define INTRO_GHOST_CAM_MS_PER_METER 30.0f
+#define INTRO_BPD_CAM_BASE_DURATION_MS 10000
+#define INTRO_BPD_CAM_DURATION_STEP_MS 5000
+#define INTRO_BPD_CAM_MIN_DURATION_MS 10000
+#define INTRO_BPD_CAM_MAX_DURATION_MS 30000
+#define INTRO_BPD_CAM_MS_PER_METER 30.0f
 
-/*
- * Intro routes are camera-only derivatives of Ghost recordings. The client
- * loads the selected route and evaluates it locally at full render rate.
- */
+/* The race intro is available only when the active BPD produced a valid route. */
 static qboolean G_RallyIntroRoute_Find( void ) {
 	char mapName[MAX_QPATH];
 	char routePath[MAX_QPATH];
-	char routeHeader[256];
-	char *headerCursor;
-	char *token;
-	fileHandle_t routeFile;
-	int routeFileLength;
-	int trackReversed;
-	int headerReadLength;
-	int routeTrackLength, routeTrackReversed, routeFrames;
+	const botRaceRoute_t *route = NULL;
 	int i;
 
 	level.raceIntroHasRoute = qfalse;
@@ -62,7 +50,7 @@ static qboolean G_RallyIntroRoute_Find( void ) {
 		return qfalse;
 	}
 
-	/* Keep the cvar-derived filename inside the intro_routes directory. */
+	/* Keep the cvar-derived BPD filename inside the maps directory. */
 	for ( i = 0; mapName[i]; i++ ) {
 		if ( ( mapName[i] < 'a' || mapName[i] > 'z' )
 			&& ( mapName[i] < '0' || mapName[i] > '9' )
@@ -70,64 +58,17 @@ static qboolean G_RallyIntroRoute_Find( void ) {
 			return qfalse;
 		}
 	}
-	trackReversed = ( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0;
-
 	if ( Com_sprintf( routePath, sizeof( routePath ),
-		"intro_routes/%s_tl%d_rev%d.route", mapName,
-		g_trackLength.integer, trackReversed ) >= sizeof( routePath ) ) {
+		"maps/%s.bpd", mapName ) >= sizeof( routePath ) ) {
 		return qfalse;
 	}
-
-	routeFileLength = trap_FS_FOpenFile( routePath, &routeFile, FS_READ );
-	if ( routeFileLength < 0 ) {
-		return qfalse;
-	}
-	if ( routeFileLength == 0 ) {
-		trap_FS_FCloseFile( routeFile );
-		return qfalse;
-	}
-	if ( routeFileLength > INTRO_GHOST_ROUTE_MAX_FILE_SIZE ) {
-		trap_FS_FCloseFile( routeFile );
-		G_Printf( "Warning: intro Ghost route '%s' is too large (%d bytes); ignoring it.\n",
-			routePath, routeFileLength );
-		return qfalse;
-	}
-	headerReadLength = ( routeFileLength < sizeof( routeHeader ) - 1 ) ? routeFileLength : sizeof( routeHeader ) - 1;
-	trap_FS_Read( routeHeader, headerReadLength, routeFile );
-	trap_FS_FCloseFile( routeFile );
-	routeHeader[headerReadLength] = '\0';
-	headerCursor = routeHeader;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, "Q3RALLY_INTRO_ROUTE" ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || atoi( token ) != 1 ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, "map" ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, mapName ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, "track_length" ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] ) return qfalse;
-	routeTrackLength = atoi( token );
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, "track_reversed" ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] ) return qfalse;
-	routeTrackReversed = atoi( token ) ? 1 : 0;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] || Q_stricmp( token, "frames" ) ) return qfalse;
-	token = COM_ParseExt( &headerCursor, qtrue );
-	if ( !token[0] ) return qfalse;
-	routeFrames = atoi( token );
-	if ( routeTrackLength != g_trackLength.integer || routeTrackReversed != trackReversed
-		|| routeFrames < 2 || routeFrames > INTRO_GHOST_ROUTE_MAX_FRAMES ) {
+	if ( !G_RaceRoute_Get( &route ) || !route || !route->fromBezierPath ) {
 		return qfalse;
 	}
 
 	Q_strncpyz( level.raceIntroRoute, routePath, sizeof( level.raceIntroRoute ) );
-	level.raceIntroDurationMs = INTRO_GHOST_CAM_BASE_DURATION_MS
-		+ g_trackLength.integer * INTRO_GHOST_CAM_DURATION_STEP_MS;
+	level.raceIntroDurationMs = INTRO_BPD_CAM_BASE_DURATION_MS
+		+ g_trackLength.integer * INTRO_BPD_CAM_DURATION_STEP_MS;
 	return qtrue;
 }
 
@@ -140,14 +81,14 @@ void G_RallyIntroRoute_UpdateDuration( void ) {
 	}
 
 	trackLengthMeters = level.trackLength / CP_M_2_QU;
-	durationMs = (int)( trackLengthMeters * INTRO_GHOST_CAM_MS_PER_METER + 0.5f );
-	if ( durationMs < INTRO_GHOST_CAM_MIN_DURATION_MS ) {
-		durationMs = INTRO_GHOST_CAM_MIN_DURATION_MS;
-	} else if ( durationMs > INTRO_GHOST_CAM_MAX_DURATION_MS ) {
-		durationMs = INTRO_GHOST_CAM_MAX_DURATION_MS;
+	durationMs = (int)( trackLengthMeters * INTRO_BPD_CAM_MS_PER_METER + 0.5f );
+	if ( durationMs < INTRO_BPD_CAM_MIN_DURATION_MS ) {
+		durationMs = INTRO_BPD_CAM_MIN_DURATION_MS;
+	} else if ( durationMs > INTRO_BPD_CAM_MAX_DURATION_MS ) {
+		durationMs = INTRO_BPD_CAM_MAX_DURATION_MS;
 	}
 	level.raceIntroDurationMs = durationMs;
-	G_Printf( "Info: intro Ghost route duration %d ms for %.0f m track.\n",
+	G_Printf( "Info: BPD intro duration %d ms for %.0f m track.\n",
 		durationMs, trackLengthMeters );
 }
 
@@ -171,7 +112,7 @@ void G_RallyIntroRoute_SetPending( qboolean pending ) {
 	}
 
 	trackReversed = ( g_trackReversed.integer && level.trackIsReversable ) ? 1 : 0;
-	configLength = Com_sprintf( configString, sizeof( configString ), "ghost %s %d %d %d",
+	configLength = Com_sprintf( configString, sizeof( configString ), "bpd %s %d %d %d",
 		level.raceIntroRoute, level.raceIntroDurationMs, trackReversed, pending ? 1 : 0 );
 	if ( configLength < 0 || configLength >= sizeof( configString ) ) {
 		return;
@@ -185,20 +126,25 @@ void G_RallyIntroRoute_Init( void ) {
 	level.raceIntroHasRoute = qfalse;
 	level.raceIntroRoute[0] = '\0';
 	trap_SetConfigstring( CS_INTRO_ROUTE, "" );
+	if ( !g_rallyIntroEnabled.integer ) {
+		level.raceIntroFallback = qtrue;
+		G_Printf( "Info: race intro disabled by g_rallyIntroEnabled.\n" );
+		return;
+	}
 
 	if ( !G_RallyIntroRoute_Find() ) {
 		level.raceIntroFallback = qtrue;
-		G_Printf( "Info: No packaged intro Ghost route found; using countdown fallback.\n" );
+		G_Printf( "Info: No valid BPD route found; this map has no race intro.\n" );
 		return;
 	}
 
 	level.raceIntroHasRoute = qtrue;
 	G_RallyIntroRoute_SetPending( !level.raceIntroFallback && G_RallyIntroRoute_UsesRaceState() );
-	G_Printf( "Info: using packaged Ghost route '%s' for the automatic track preview.\n",
+	G_Printf( "Info: using BPD route '%s' for the automatic track preview.\n",
 		level.raceIntroRoute );
 }
 
-/* Observer spots remain for live spectating; race intros use packaged routes. */
+/* Observer spots remain for live spectating; race intros follow the BPD. */
 void SP_info_observer_spot( gentity_t *ent ) {
 	G_SetOrigin( ent, ent->s.origin );
 	if ( ent->target ) {

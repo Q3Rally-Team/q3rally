@@ -2242,6 +2242,74 @@ PM_Trace_Points
 ===================
 */
 #define	MAX_CLIP_PLANES	3
+/* Q3's lcc does not accept the pointer-to-const-array conversion here. */
+static void PM_ClipCarPointVelocity( vec3_t vel, vec3_t *clipPlanes, int numplanes ) {
+	vec3_t clipVelocity, crease;
+	float into;
+	int first, second, third;
+
+	for ( first = 0; first < numplanes; first++ ) {
+		into = DotProduct( vel, clipPlanes[first] );
+		if ( into > 0.01f ) continue;
+		VectorMA( vel, -into * OVERCLIP, clipPlanes[first], clipVelocity );
+		for ( second = 0; second < numplanes; second++ ) {
+			if ( second == first ) continue;
+			into = DotProduct( clipVelocity, clipPlanes[second] );
+			if ( into > 0.01f ) continue;
+			/* Clip against the second plane itself. Reusing the first normal
+			 * leaves downward velocity at wall/floor contacts and can carry a
+			 * wheel or chassis point through a thin floor. */
+			VectorMA( clipVelocity, -into * OVERCLIP, clipPlanes[second], clipVelocity );
+			if ( DotProduct( clipVelocity, clipPlanes[first] ) >= 0 ) continue;
+			CrossProduct( clipPlanes[first], clipPlanes[second], crease );
+			VectorNormalize( crease );
+			VectorScale( crease, DotProduct( crease, vel ), clipVelocity );
+		}
+		/* A crease into a third plane has no remaining sliding direction. */
+		for ( third = 0; third < numplanes; third++ ) {
+			if ( DotProduct( clipVelocity, clipPlanes[third] ) < -0.01f ) {
+				VectorClear( clipVelocity );
+				break;
+			}
+		}
+		VectorCopy( clipVelocity, vel );
+		return;
+	}
+}
+
+/* Point contacts can start inside a thin brush after a hard impact. Keep a
+ * small inner chassis volume on the valid side of swept world contacts too.
+ * This constrains proposed movement, without moving an already invalid car
+ * to another position or treating other vehicles as static world geometry. */
+static void PM_ConstrainCarBodyToWorld( car_t *car ) {
+	const vec3_t mins = {-4, -4, -4}, maxs = {4, 4, 4};
+	trace_t trace;
+	vec3_t delta, offset;
+	float depth, into;
+	int iteration, point;
+
+	for ( iteration = 0; iteration < 3; iteration++ ) {
+		if ( DistanceSquared( car->sBody.r, car->tBody.r ) < 0.0001f ) break;
+		pm->trace( &trace, car->sBody.r, mins, maxs, car->tBody.r,
+			pm->ps->clientNum, pm->tracemask & ~CONTENTS_BODY );
+		if ( trace.fraction >= 1 || trace.startsolid || trace.allsolid ||
+			VectorLengthSquared( trace.plane.normal ) < 0.5f ) break;
+		VectorSubtract( car->tBody.r, trace.endpos, delta );
+		depth = -DotProduct( delta, trace.plane.normal );
+		if ( depth <= 0.001f ) break;
+		VectorScale( trace.plane.normal, depth, offset );
+		VectorAdd( car->tBody.r, offset, car->tBody.r );
+		VectorAdd( car->tBody.CoM, offset, car->tBody.CoM );
+		into = DotProduct( car->tBody.v, trace.plane.normal );
+		if ( into < 0 ) VectorMA( car->tBody.v, -into, trace.plane.normal, car->tBody.v );
+		for ( point = 0; point < NUM_CAR_POINTS; point++ ) {
+			VectorAdd( car->tPoints[point].r, offset, car->tPoints[point].r );
+			if ( into < 0 ) VectorMA( car->tPoints[point].v, -into,
+				trace.plane.normal, car->tPoints[point].v );
+		}
+	}
+}
+
 static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoints, float time ){
 	vec3_t	maxs, mins;
 	vec3_t	start, dest, dir;
@@ -2269,14 +2337,10 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 #endif
 // new stuff
 	int			bumpcount, numbumps;
-	float		d;
 	int			numplanes;
 	vec3_t		vel;
-	vec3_t		clipVelocity;
-	int			k;
 	//int			l;
 	float		time_left;
-	float		into;
 	vec3_t		clipPlanes[MAX_CLIP_PLANES];
 	int			contactPlaneCount;
 #ifdef QAGAME
@@ -2684,72 +2748,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 			// modify velocity so it parallels all of the clip planes
 			//
 
-			// find a plane that it enters
-			for ( j = 0 ; j < numplanes ; j++ ) {
-				into = DotProduct( vel, clipPlanes[j] );
-				if ( into > 0.01f ) {
-					continue;		// move doesn't interact with the plane
-				}
-
-				// see how hard we are hitting things
-//				if ( -into > pml.impactSpeed ) {
-//					pml.impactSpeed = -into;
-//				}
-
-				// slide along the plane
-				VectorMA( vel, -into * OVERCLIP, clipPlanes[j], clipVelocity );
-//				PM_ClipVelocity ( vel, tPoints[i].normals[j], clipVelocity, OVERCLIP );
-
-				// see if there is a second plane that the new move enters
-				for ( k = 0 ; k < numplanes ; k++ ) {
-					if ( k == j ) {
-						continue;
-					}
-
-					into = DotProduct( clipVelocity, clipPlanes[k] );
-					if ( into > 0.01f ) {
-						continue;		// move doesn't interact with the plane
-					}
-
-					// try clipping the move to the plane
-					VectorMA( clipVelocity, -into * OVERCLIP, clipPlanes[j], clipVelocity );
-//					PM_ClipVelocity( clipVelocity, tPoints[i].normals[k], clipVelocity, OVERCLIP );
-
-					// see if it goes back into the first clip plane
-					if ( DotProduct( clipVelocity, clipPlanes[j] ) >= 0 ) {
-						continue;
-					}
-
-					// slide the original velocity along the crease
-					CrossProduct ( clipPlanes[j], clipPlanes[k], dir );
-					VectorNormalize( dir );
-					d = DotProduct( dir, vel );
-					VectorScale( dir, d, clipVelocity );
-
-					// dont do this because i never see that triple plane interaction message
-					// so it probably only rarely happens, if ever
-/*
-					// see if there is a third plane the the new move enters
-					for ( l = 0 ; l < numplanes ; l++ ) {
-						if ( l == j || l == k ) {
-							continue;
-						}
-						if ( DotProduct( clipVelocity, tPoints[i].normals[l] ) >= 0.1 ) {
-							continue;		// move doesn't interact with the plane
-						}
-
-						// stop dead at a tripple plane interaction
-						Com_Printf( "triple plane interaction\n" );
-						return;
-					}
-*/
-				}
-
-				// if we have fixed all interactions, try another move
-				VectorCopy( clipVelocity, vel );
-//				VectorCopy( endClipVelocity, endVelocity );
-				break;
-			}
+			PM_ClipCarPointVelocity( vel, clipPlanes, numplanes );
 		}
 
 		// NEW- copy final position to the point
@@ -2853,6 +2852,7 @@ static void PM_Trace_Points( car_t *car, carPoint_t *sPoints, carPoint_t *tPoint
 		 * the OBB contacts; retain all candidates for the end-of-step manifold. */
 		PM_CalculateTargetBody(car, &car->sBody, &car->tBody,
 			car->sPoints, car->tPoints, time * minTrace);
+		PM_ConstrainCarBodyToWorld( car );
 		for ( candidate = 0; candidate < numCarHits; candidate++ ) {
 			if ( carHitFractions[candidate] >
 				minTrace + PM_CAR_CONTACT_TIME_SLOP )
@@ -3141,10 +3141,12 @@ void PM_DriveMove( car_t *car, float time, qboolean includeBodies )
 	*/
 
 	PM_CalculateTargetBody(car, &car->sBody, &car->tBody, car->sPoints, car->tPoints, time);
+	PM_ConstrainCarBodyToWorld( car );
 
 	//t4 = trap_Milliseconds();
 
 	PM_Trace_Points(car, car->sPoints, car->tPoints, time);
+	PM_ConstrainCarBodyToWorld( car );
 
 	//t5 = trap_Milliseconds();
 

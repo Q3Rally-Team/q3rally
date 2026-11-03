@@ -83,9 +83,10 @@ void loadBezierPathFile(char *filename) {
 			if (!ent->inuse) {
 				continue;
 			}
-			if (ent->s.eType == ET_CHECKPOINT && ent->number == i) {
+			if (ent->s.eType == ET_CHECKPOINT && ent->bpdIndex == i) {
 				VectorCopy(pos, ent->s.origin2);
 				VectorCopy(dir, ent->s.angles2);
+				ent->bpdLoaded = qtrue;
 				break;
 			}
 			ent = NULL;
@@ -249,6 +250,10 @@ void G_ResetCar( gentity_t *ent ) {
 	// set the times so that we dont get multiple car resets in a row
 	ent->client->car.onGroundTime = level.time;
 	ent->client->car.offGroundTime = level.time;
+	if ( isRallyRace() && !ent->client->finishRaceTime &&
+		!(ent->r.svFlags & SVF_BOT) ) {
+		trap_SendServerCommand( ent->s.number, "cp \"CAR RECOVERED\"" );
+	}
 
 	tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 	tent->s.clientNum = ent->s.clientNum;

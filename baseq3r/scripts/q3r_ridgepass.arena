@@ -1,0 +1,17 @@
+{
+	map "q3r_ridgepass"
+	longname "Ridge Pass"
+	author "Q3Rally Team"
+	type "q3r_racing q3r_team_racing q3r_racing_dm q3r_team_racing_dm q3r_elimination"
+	elimination "1"
+	starts "12"
+	laps "3"
+	checkpoints "17"
+	observerspots "5"
+	weapons "SG,GL,RL,PG,FT"
+	powerups "3"
+	reversable "0"
+	tracklengths "1"
+	botsupport "None"
+	teams "All"
+}

@@ -1613,7 +1613,7 @@ const void *RB_PostProcess(const void *data)
 	if(tess.numIndexes)
 		RB_EndSurface();
 
-	if (!glRefConfig.framebufferObject || !r_postProcess->integer)
+	if (!glRefConfig.framebufferObject || !r_postProcess->integer || !tr.renderFbo)
 	{
 		// do nothing
 		return (const void *)(cmd + 1);

@@ -34,6 +34,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //#define DEBUG
 #define CTF
 
+#include "ai_vehicle.h"
+
 #define MAX_ITEMS					256
 //bot flags
 #define BFL_STRAFERIGHT				1	//strafe to the right
@@ -84,6 +86,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //teamplay task preference
 #define TEAMTP_DEFENDER				1
 #define TEAMTP_ATTACKER				2
+//default CTF roles for bots without an explicit team order
+#define CTF_DEFAULT_ROLE_NONE		0
+#define CTF_DEFAULT_ROLE_ATTACKER	1
+#define CTF_DEFAULT_ROLE_DEFENDER	2
 //CTF strategy
 #define CTFS_AGRESSIVE				1
 //copied from the aas file header
@@ -206,6 +212,8 @@ typedef struct bot_state_s
 	float rallyCombatLastHitTime;					//last time the bot scored a hit in vehicle combat
 	float rallyCombatLastMoveSampleTime;			//last movement sample time for combat stall checks
 	vec3_t rallyCombatLastMoveOrigin;				//last movement sample origin for combat stall checks
+	float rallyCombatBreakawayYaw;
+	bot_vehicle_state_t vehicle;
 	float enemysight_time;							//time before reacting to enemy
 	float enemydeath_time;							//time the enemy died
 	float enemyposition_time;						//time the position and velocity of the enemy were stored
@@ -263,6 +271,9 @@ typedef struct bot_state_s
 	float teamgoal_time;							//time to stop helping team mate
 	float teammatevisible_time;						//last time the team mate was NOT visible
 	int teamtaskpreference;							//team task preference
+	int ctfDefaultRole;								//stable fallback CTF role for this map
+	int ctfDefaultRoleTeam;							//team for which the fallback role was assigned
+	float ctfRouteDebugTime;							//next throttled CTF route progress log
 	// last ordered team goal
 	int lastgoal_decisionmaker;
 	int lastgoal_ltgtype;
@@ -282,8 +293,8 @@ typedef struct bot_state_s
 	float teamgiveorders_time;						//time to give team orders
 	float lastflagcapture_time;						//last time a flag was captured
 	int numteammates;								//number of team mates
-	int redflagstatus;								//0 = at base, 1 = not at base
-	int blueflagstatus;								//0 = at base, 1 = not at base
+	int redflagstatus;								//0 = at base, 1 = carried, 2 = dropped
+	int blueflagstatus;								//0 = at base, 1 = carried, 2 = dropped
 	int neutralflagstatus;							//0 = at base, 1 = our team has flag, 2 = enemy team has flag, 3 = enemy team dropped the flag
 	int flagstatuschanged;							//flag status changed
 	int forceorders;								//true if forced to give orders
@@ -300,8 +311,13 @@ typedef struct bot_state_s
 	bot_waypoint_t *curpatrolpoint;					//current patrol point the bot is going for
 	int patrolflags;								//patrol flags
 
+	int bezierProgressCheckpoint;
+	int bezierProgressLap;
+	float bezierProgressFraction;
+	float bezierProgressTime;
 	float ghostTargetSpeedFiltered;				//smoothed target speed for ghost racing line
 	int ghostTargetSpeedValid;					//whether ghostTargetSpeedFiltered is initialized
+	int raceTurboSafe;						//route follower permits stored turbo on an open section
 	int ghostRouteIndexHint;					//persistent waypoint index hint for ghost racing line
     int botPathRouteIndexHint;                  // persistent node index hint for bot_path_node system
     float botPathLateralOffset;
@@ -333,6 +349,8 @@ typedef struct bot_state_s
 	int favoriteWeapon;							//preferred weapon enum (WP_*)
 	float favoriteWeaponWeightBonus;			//bonus weight for preferred weapon selection
 } bot_state_t;
+
+extern bot_state_t *botstates[MAX_CLIENTS];
 
 //resets the whole bot state
 void BotResetState(bot_state_t *bs);

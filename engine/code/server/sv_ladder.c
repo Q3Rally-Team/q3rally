@@ -2670,19 +2670,35 @@ static void SV_LadderExtractJsonString( const char *json,
                                         const char *key,
                                         char       *out,
                                         size_t      outSize ) {
-        char        search[72];
-        const char *p;
+        const char *p, *field, *end;
         size_t      i;
+        size_t      keyLength;
 
+        if ( !out || !outSize ) return;
         out[0] = '\0';
-        if ( !json || !key || !out || !outSize ) return;
+        if ( !json || !key ) return;
+        keyLength = strlen( key );
 
-        Com_sprintf( search, sizeof( search ), "\"%s\"", key );
-        p = strstr( json, search );
-        if ( !p ) return;
-
-        p += strlen( search );
-        while ( *p == ' ' || *p == '\t' || *p == ':' ) ++p;
+        /* Match a property name, not the same text inside a string value.
+           In {"status":"error","error":"..."}, strstr("error") finds
+           the status value first and used to discard the actual message. */
+        p = json;
+        while ( *p ) {
+                if ( *p++ != '"' ) continue;
+                field = p;
+                while ( *p && *p != '"' ) {
+                        if ( *p == '\\' && p[1] ) ++p;
+                        ++p;
+                }
+                if ( !*p ) return;
+                end = p++;
+                while ( *p == ' ' || *p == '\t' || *p == '\r' || *p == '\n' ) ++p;
+                if ( *p == ':' && (size_t)(end - field) == keyLength &&
+                     !strncmp( field, key, keyLength ) ) break;
+        }
+        if ( !*p ) return;
+        ++p;
+        while ( *p == ' ' || *p == '\t' || *p == '\r' || *p == '\n' ) ++p;
         if ( *p != '"' ) return;
         ++p; /* skip opening quote */
 

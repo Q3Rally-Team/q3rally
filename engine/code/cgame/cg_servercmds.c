@@ -490,6 +490,8 @@ static void CG_ParseKothStatus( void ) {
 	int contested;
 	int capturePct;
 	float hillX, hillY, hillZ, hillRadius;
+	float halfX, halfY;
+	int capturer;
 	qboolean haveHillOrigin;
 	qboolean haveHillRadius;
 	int oldOwner;
@@ -536,6 +538,18 @@ static void CG_ParseKothStatus( void ) {
 		if ( haveHillRadius ) {
 			cgs.kothHillRadius = hillRadius;
 		}
+	}
+	/* Optional: capturing team and half extents of the zone (newer servers) */
+	cgs.kothCapturingTeam = TEAM_FREE;
+	if ( CG_ParseNextKothInt( &cursor, &capturer ) ) {
+		cgs.kothCapturingTeam = capturer;
+		if ( CG_ParseNextKothFloat( &cursor, &halfX ) && CG_ParseNextKothFloat( &cursor, &halfY ) ) {
+			cgs.kothHillHalf[0] = halfX;
+			cgs.kothHillHalf[1] = halfY;
+		}
+	}
+	if ( cg.kothStatusInitialized && oldOwner != cgs.kothOwner ) {
+		cg.kothOwnerChangeTime = cg.time;	/* crown hop, also for spectators */
 	}
 	if ( cgs.kothHillRadius <= 0.0f ) {
 		cgs.kothHillRadius = 128.0f;	/* safe fallback */
@@ -2149,6 +2163,14 @@ static void CG_ServerCommand( void ) {
 	       CG_NewLapTime( client, lap, time );
 	       return;
        }
+
+	if ( !strcmp( cmd, "raceLapStart" ) ) {
+		int client = atoi( CG_Argv( 1 ) );
+		int time = atoi( CG_Argv( 2 ) );
+
+		CG_RaceLapStart( client, time );
+		return;
+	}
 
 	if ( !strcmp( cmd, "positions" ) ) {
 		CG_ParsePositions();

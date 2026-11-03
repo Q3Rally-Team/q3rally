@@ -13,6 +13,7 @@ TEST_BINARY = BUILD_DIR / "ghost_routes_test"
 COMPILE_ARGS = [
     "gcc",
     str(REPO_ROOT / "tests" / "ghost_routes_test.c"),
+    str(REPO_ROOT / "engine" / "code" / "game" / "g_race_route.c"),
     "-I" + str(REPO_ROOT / "engine" / "code" / "game"),
     "-I" + str(REPO_ROOT / "engine" / "code"),
     "-I" + str(REPO_ROOT / "engine" / "code" / "qcommon"),

@@ -1,0 +1,159 @@
+{
+  "map": "q3r_ridgepass",
+  "lap_length": 26958,
+  "estimated_lap_s": 48.1,
+  "min_speed_estimate": 560,
+  "max_grade_pct": 13.5,
+  "road_mesh_error": 0.31,
+  "bridge_clearance": 246,
+  "closest_legs_gap": 166,
+  "terrain_triangles": 16218,
+  "leaves": {
+    "64": 5864,
+    "128": 1326,
+    "256": 814,
+    "512": 105
+  },
+  "brushes": 16765,
+  "checkpoints": [
+    {
+      "number": 1,
+      "sample": 70,
+      "fraction": 0.083,
+      "apex_radius": 558,
+      "side": "left",
+      "half_reach": 480
+    },
+    {
+      "number": 2,
+      "sample": 145,
+      "fraction": 0.172,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 448
+    },
+    {
+      "number": 3,
+      "sample": 220,
+      "fraction": 0.261,
+      "apex_radius": 1043,
+      "side": "left",
+      "half_reach": 427
+    },
+    {
+      "number": 4,
+      "sample": 247,
+      "fraction": 0.293,
+      "apex_radius": 378,
+      "side": "right",
+      "half_reach": 425
+    },
+    {
+      "number": 5,
+      "sample": 288,
+      "fraction": 0.342,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 435
+    },
+    {
+      "number": 6,
+      "sample": 329,
+      "fraction": 0.391,
+      "apex_radius": 377,
+      "side": "left",
+      "half_reach": 422
+    },
+    {
+      "number": 7,
+      "sample": 370,
+      "fraction": 0.439,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 435
+    },
+    {
+      "number": 8,
+      "sample": 412,
+      "fraction": 0.489,
+      "apex_radius": 365,
+      "side": "right",
+      "half_reach": 420
+    },
+    {
+      "number": 9,
+      "sample": 492,
+      "fraction": 0.584,
+      "apex_radius": 1075,
+      "side": "right",
+      "half_reach": 415
+    },
+    {
+      "number": 10,
+      "sample": 519,
+      "fraction": 0.616,
+      "apex_radius": 802,
+      "side": "left",
+      "half_reach": 415
+    },
+    {
+      "number": 11,
+      "sample": 539,
+      "fraction": 0.64,
+      "apex_radius": 1021,
+      "side": "right",
+      "half_reach": 415
+    },
+    {
+      "number": 12,
+      "sample": 566,
+      "fraction": 0.672,
+      "apex_radius": 753,
+      "side": "right",
+      "half_reach": 415
+    },
+    {
+      "number": 13,
+      "sample": 592,
+      "fraction": 0.703,
+      "apex_radius": 995,
+      "side": "right",
+      "half_reach": 423
+    },
+    {
+      "number": 14,
+      "sample": 654,
+      "fraction": 0.777,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 415
+    },
+    {
+      "number": 15,
+      "sample": 747,
+      "fraction": 0.887,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 434
+    },
+    {
+      "number": 16,
+      "sample": 780,
+      "fraction": 0.926,
+      "apex_radius": 501,
+      "side": "left",
+      "half_reach": 457
+    },
+    {
+      "number": 17,
+      "sample": 833,
+      "fraction": 0.989,
+      "apex_radius": 99999,
+      "side": "straight",
+      "half_reach": 478
+    }
+  ],
+  "trees": 225,
+  "boulders": 17,
+  "pickups": 27
+}

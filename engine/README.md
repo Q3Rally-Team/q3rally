@@ -38,7 +38,13 @@ There are several ways to get a MinGW-w64 build environment.
 2. Open "MSYS2 MinGW 64-bit"
 3. Get the Q3Rally source code with `git clone https://github.com/Q3Rally-Team/q3rally.git`
 4. Change to the engine directory using `cd q3rally/engine`
-5. Run `make`
+5. Build the static HTTP/TLS dependency: `sh misc/build-curl-mingw.sh x86_64 "$PWD/build/curl-mingw-x86_64"`.
+6. Run `make WINDRES=windres`. The build automatically uses that local curl prefix.
+
+For 32-bit builds use `x86` and an MSYS2 MinGW 32-bit shell. An explicit
+`CURL_PREFIX` can select a different installation. Keep `USE_CURL=1` and
+`USE_CURL_DLOPEN=0` for Windows releases so Ladder and in-game downloads work
+without an external libcurl DLL. See [Windows libcurl validation](../docs/windows-libcurl.md).
 
 #### Cygwin
 _This was more relevant before MSYS2 was made._

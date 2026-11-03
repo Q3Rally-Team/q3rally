@@ -12,33 +12,7 @@ or (at your option) any later version.
 ===========================================================================
 */
 
-/*
-===========================================================================
-cg_rally_intro_cam.c  --  client-side packaged Ghost route camera
-
-The server selects a route matching the active map, track length, and
-travel direction, then broadcasts the synchronized intro start time. Each
-client loads that packaged camera-only route and evaluates its view from
-cg.time every render frame. This keeps the camera smooth at any client
-framerate while the server owns the shared race-start countdown.
-
-CONFIGSTRING FORMAT (CS_INTRO_ROUTE)
-------------------------------------
-  "ghost <route-file> <preview-duration-ms> <effective-reversed> <pending-start>"
-
-Routes live in the packaged intro_routes folder. The route file contains
-only timed positions and angles; it contains no player identity, vehicle,
-lap time, or control input.
-
-PUBLIC API
-----------
-  CG_IntroCam_ParseConfigstring()    called when CS_INTRO_ROUTE changes
-  CG_IntroCam_SetStartTime(t)        called for the synchronized server time
-  CG_IntroCam_IsActive()             true while this client's preview runs
-  CG_IntroCam_CalcView(o,a,fov)      evaluates the current camera view
-  CG_IntroCam_FadeAlpha()            returns the black transition alpha; holds black while a race intro is pending
-===========================================================================
-*/
+/* Race intro camera generated from the active map's BPD spline. */
 
 #include "cg_local.h"
 
@@ -46,8 +20,9 @@ PUBLIC API
 /* Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-#define CG_MAX_INTRO_GHOST_ROUTE_FRAMES 256
-#define CG_MAX_INTRO_GHOST_ROUTE_FILE_SIZE ( 64 * 1024 )
+#define CG_MAX_INTRO_BPD_ROUTE_FRAMES 4096
+#define CG_MAX_INTRO_BPD_POINTS 128
+#define CG_MAX_INTRO_BPD_FILE_SIZE ( 64 * 1024 )
 
 /* ------------------------------------------------------------------ */
 /* Local types                                                         */
@@ -55,9 +30,18 @@ PUBLIC API
 
 typedef struct {
 	int		timeMs;
+	float		distance;
 	vec3_t	origin;
 	vec3_t	angles;
-} cgIntroGhostRouteFrame_t;
+} cgIntroBpdFrame_t;
+
+typedef struct {
+	int		id;
+	int		order;
+	int		entityNum;
+	vec3_t	origin;
+	vec3_t	handle;
+} cgIntroBpdPoint_t;
 
 /* ------------------------------------------------------------------ */
 /* Module state                                                        */
@@ -68,9 +52,15 @@ static int					s_startTime       = 0;
 static qboolean				s_hasRoute          = qfalse;
 static qboolean				s_waitingForStart    = qfalse;
 static qboolean				s_skipped         = qfalse;
-static cgIntroGhostRouteFrame_t s_routeFrames[CG_MAX_INTRO_GHOST_ROUTE_FRAMES];
+static qboolean				s_routeBuildPending = qfalse;
+static qboolean				s_effectiveReversed = qfalse;
+static qboolean				s_bpdLoaded = qfalse;
+static cgIntroBpdFrame_t s_routeFrames[CG_MAX_INTRO_BPD_ROUTE_FRAMES];
 static int					s_routeFrameCount = 0;
 static int					s_routeDurationMs = 0;
+static cgIntroBpdPoint_t s_bpdPoints[CG_MAX_INTRO_BPD_POINTS];
+static int					s_bpdPointCount = 0;
+static int					s_routeBuildAttemptTime = -1000;
 
 /* ------------------------------------------------------------------ */
 /* Internal helpers                                                    */
@@ -93,131 +83,238 @@ static qboolean CG_IntroCam_NextToken( const char **p, char *buf, int bufSize ) 
 	return ( i > 0 );
 }
 
-static qboolean CG_IntroCam_LoadGhostRoute( const char *path, int previewDurationMs, int expectedTrackReversed ) {
+static qboolean CG_IntroCam_ReadBpd( const char *path ) {
 	fileHandle_t file;
-	int fileLength;
-	static char buffer[CG_MAX_INTRO_GHOST_ROUTE_FILE_SIZE + 1];
+	int fileLength, pointCount = 0;
+	static char buffer[CG_MAX_INTRO_BPD_FILE_SIZE + 1];
 	const char *cursor;
 	char token[64];
-	char routeMap[MAX_QPATH];
-	char serverInfo[MAX_INFO_STRING];
-	char expectedMap[MAX_QPATH];
-	int routeTrackLength, routeTrackReversed, expectedTrackLength;
-	int frameCount, i, previousTime;
+	char expectedPath[MAX_QPATH], mapName[MAX_QPATH];
 
 	s_routeFrameCount = 0;
 	s_routeDurationMs = 0;
-
-	if ( !path || Q_stricmpn( path, "intro_routes/", 13 ) ) {
-		CG_Printf( "^3CG_IntroCam: invalid Ghost route path\n" );
-		return qfalse;
-	}
-	if ( previewDurationMs < 1000 || previewDurationMs > 60000 ) {
-		CG_Printf( "^3CG_IntroCam: invalid Ghost preview duration %d ms\n", previewDurationMs );
-		return qfalse;
-	}
+	s_bpdPointCount = 0;
+	s_bpdLoaded = qfalse;
+	if ( !path || Q_stricmpn( path, "maps/", 5 ) ) return qfalse;
+	COM_StripExtension( COM_SkipPath( cgs.mapname ), mapName, sizeof( mapName ) );
+	if ( !mapName[0] || Com_sprintf( expectedPath, sizeof( expectedPath ), "maps/%s.bpd", mapName ) >= sizeof( expectedPath )
+		|| Q_stricmp( path, expectedPath ) ) return qfalse;
 
 	fileLength = trap_FS_FOpenFile( path, &file, FS_READ );
-	if ( fileLength < 0 ) {
-		CG_Printf( "^3CG_IntroCam: could not open packaged route %s\n", path );
+	if ( fileLength <= 0 ) {
+		if ( fileLength == 0 ) trap_FS_FCloseFile( file );
+		CG_Printf( "^3CG_IntroCam: could not read BPD %s\n", path );
 		return qfalse;
 	}
-	if ( fileLength == 0 ) {
+	if ( fileLength > CG_MAX_INTRO_BPD_FILE_SIZE ) {
 		trap_FS_FCloseFile( file );
-		CG_Printf( "^3CG_IntroCam: packaged route %s is empty\n", path );
-		return qfalse;
-	}
-	if ( fileLength > CG_MAX_INTRO_GHOST_ROUTE_FILE_SIZE ) {
-		trap_FS_FCloseFile( file );
-		CG_Printf( "^3CG_IntroCam: route %s exceeds the %d byte limit\n",
-			path, CG_MAX_INTRO_GHOST_ROUTE_FILE_SIZE );
+		CG_Printf( "^3CG_IntroCam: BPD %s exceeds the %d byte limit\n", path, CG_MAX_INTRO_BPD_FILE_SIZE );
 		return qfalse;
 	}
 	trap_FS_Read( buffer, fileLength, file );
 	buffer[fileLength] = '\0';
 	trap_FS_FCloseFile( file );
-
 	cursor = buffer;
-	if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, "Q3RALLY_INTRO_ROUTE" )
-		|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || atoi( token ) != 1 ) {
-		CG_Printf( "^3CG_IntroCam: unsupported route header in %s\n", path );
-		return qfalse;
-	}
-	if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, "map" )
-		|| !CG_IntroCam_NextToken( &cursor, routeMap, sizeof( routeMap ) )
-		|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, "track_length" )
-		|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
-		CG_Printf( "^3CG_IntroCam: invalid route metadata in %s\n", path );
-		return qfalse;
-	}
-	routeTrackLength = atoi( token );
-	if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, "track_reversed" )
-		|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
-		CG_Printf( "^3CG_IntroCam: invalid route variant in %s\n", path );
-		return qfalse;
-	}
-	routeTrackReversed = atoi( token ) ? 1 : 0;
-	if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, "frames" )
-		|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
-		CG_Printf( "^3CG_IntroCam: missing frame count in %s\n", path );
-		return qfalse;
-	}
-	frameCount = atoi( token );
-	if ( frameCount < 2 || frameCount > CG_MAX_INTRO_GHOST_ROUTE_FRAMES ) {
-		CG_Printf( "^3CG_IntroCam: invalid frame count %d in %s\n", frameCount, path );
-		return qfalse;
-	}
-
-	Q_strncpyz( serverInfo, CG_ConfigString( CS_SERVERINFO ), sizeof( serverInfo ) );
-	Q_strncpyz( expectedMap, Info_ValueForKey( serverInfo, "mapname" ), sizeof( expectedMap ) );
-	expectedTrackLength = atoi( Info_ValueForKey( serverInfo, "g_trackLength" ) );
-	if ( Q_stricmp( routeMap, expectedMap ) || routeTrackLength != expectedTrackLength
-		|| routeTrackReversed != expectedTrackReversed ) {
-		CG_Printf( "^3CG_IntroCam: route variant does not match this server (%s tl%d rev%d)\n",
-			routeMap, routeTrackLength, routeTrackReversed );
-		return qfalse;
-	}
-
-	previousTime = -1;
-	for ( i = 0; i < frameCount; i++ ) {
-		cgIntroGhostRouteFrame_t *frame = &s_routeFrames[i];
+	while ( CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
+		cgIntroBpdPoint_t *point;
 		int axis;
-
-		if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) {
-			CG_Printf( "^3CG_IntroCam: route %s ends before frame %d\n", path, i );
-			return qfalse;
-		}
-		frame->timeMs = atoi( token );
-		if ( frame->timeMs < 0 || frame->timeMs <= previousTime || frame->timeMs > 60000 ) {
-			CG_Printf( "^3CG_IntroCam: invalid route time at frame %d in %s\n", i, path );
-			return qfalse;
-		}
-		previousTime = frame->timeMs;
+		if ( pointCount >= CG_MAX_INTRO_BPD_POINTS ) return qfalse;
+		point = &s_bpdPoints[pointCount];
+		point->id = atoi( token );
+		if ( point->id != pointCount + 1
+			|| !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, ":" ) ) return qfalse;
 		for ( axis = 0; axis < 3; axis++ ) {
 			if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) return qfalse;
-			frame->origin[axis] = (float)atof( token );
-			if ( IS_NAN( frame->origin[axis] ) || frame->origin[axis] < -131072.0f || frame->origin[axis] > 131072.0f ) return qfalse;
+			point->origin[axis] = (float)atof( token );
+			if ( IS_NAN( point->origin[axis] ) || point->origin[axis] < -131072.0f || point->origin[axis] > 131072.0f ) return qfalse;
 		}
+		if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) || Q_stricmp( token, ":" ) ) return qfalse;
 		for ( axis = 0; axis < 3; axis++ ) {
 			if ( !CG_IntroCam_NextToken( &cursor, token, sizeof( token ) ) ) return qfalse;
-			frame->angles[axis] = (float)atof( token );
-			if ( IS_NAN( frame->angles[axis] ) || frame->angles[axis] < -3600.0f || frame->angles[axis] > 3600.0f ) return qfalse;
+			point->handle[axis] = (float)atof( token );
+			if ( IS_NAN( point->handle[axis] ) || point->handle[axis] < -16384.0f || point->handle[axis] > 16384.0f ) return qfalse;
 		}
+		pointCount++;
 	}
+	if ( pointCount < ( cgs.sprintTrack ? 1 : 2 ) ) return qfalse;
+	s_bpdPointCount = pointCount;
+	s_bpdLoaded = qtrue;
+	return qtrue;
+}
 
-	s_routeFrameCount = frameCount;
-	s_routeDurationMs = s_routeFrames[frameCount - 1].timeMs;
-	if ( s_routeDurationMs <= 0 ) {
-		s_routeFrameCount = 0;
-		return qfalse;
+static void CG_IntroCam_EvaluateBezier( const vec3_t p0, const vec3_t h0,
+	const vec3_t p3, const vec3_t h3, qboolean reversed, float t,
+	vec3_t point, vec3_t derivative ) {
+	vec3_t c1, c2;
+	float u = 1.0f - t;
+	if ( reversed ) {
+		VectorMA( p0, -1.0f, h0, c1 );
+		VectorAdd( p3, h3, c2 );
+	} else {
+		VectorAdd( p0, h0, c1 );
+		VectorMA( p3, -1.0f, h3, c2 );
 	}
-	s_previewDurationMs = previewDurationMs;
-	s_hasRoute = qtrue;
-	if ( cg_developer.integer ) {
-		CG_Printf( "CG_IntroCam: loaded %d route points from %s (%d ms preview)\n",
-			s_routeFrameCount, path, s_previewDurationMs );
+	VectorScale( p0, u * u * u, point );
+	VectorMA( point, 3.0f * t * u * u, c1, point );
+	VectorMA( point, 3.0f * t * t * u, c2, point );
+	VectorMA( point, t * t * t, p3, point );
+	VectorScale( p0, -3.0f * u * u, derivative );
+	VectorMA( derivative, 3.0f * u * u - 6.0f * t * u, c1, derivative );
+	VectorMA( derivative, 6.0f * t * u - 3.0f * t * t, c2, derivative );
+	VectorMA( derivative, 3.0f * t * t, p3, derivative );
+}
+
+static qboolean CG_IntroCam_AppendRoutePoint( const vec3_t point, const vec3_t tangent ) {
+	cgIntroBpdFrame_t *frame;
+	vec3_t direction;
+	if ( s_routeFrameCount >= CG_MAX_INTRO_BPD_ROUTE_FRAMES ) return qfalse;
+	frame = &s_routeFrames[s_routeFrameCount];
+	VectorCopy( point, frame->origin );
+	if ( s_routeFrameCount > 0 ) {
+		vec3_t delta;
+		VectorSubtract( point, s_routeFrames[s_routeFrameCount - 1].origin, delta );
+		frame->distance = s_routeFrames[s_routeFrameCount - 1].distance + VectorLength( delta );
+	} else {
+		frame->distance = 0.0f;
+	}
+	VectorCopy( tangent, direction );
+	if ( VectorNormalize( direction ) < 0.001f && s_routeFrameCount > 0 ) {
+		VectorSubtract( point, s_routeFrames[s_routeFrameCount - 1].origin, direction );
+	}
+	vectoangles( direction, frame->angles );
+	frame->angles[ROLL] = 0.0f;
+	s_routeFrameCount++;
+	return qtrue;
+}
+
+static qboolean CG_IntroCam_AppendBezierSegment( const vec3_t p0, const vec3_t h0,
+	const vec3_t p3, const vec3_t h3, qboolean reversed ) {
+	vec3_t previous, point, tangent, delta;
+	float length = 0.0f;
+	int i, steps;
+	CG_IntroCam_EvaluateBezier( p0, h0, p3, h3, reversed, 0.0f, previous, tangent );
+	for ( i = 1; i <= 16; i++ ) {
+		CG_IntroCam_EvaluateBezier( p0, h0, p3, h3, reversed, i / 16.0f, point, tangent );
+		VectorSubtract( point, previous, delta );
+		length += VectorLength( delta );
+		VectorCopy( point, previous );
+	}
+	steps = (int)( length / 72.0f ) + 1;
+	if ( steps < 8 ) steps = 8;
+	if ( steps > 128 ) steps = 128;
+	for ( i = 0; i < steps; i++ ) {
+		CG_IntroCam_EvaluateBezier( p0, h0, p3, h3, reversed, (float)i / steps, point, tangent );
+		if ( !CG_IntroCam_AppendRoutePoint( point, tangent ) ) return qfalse;
 	}
 	return qtrue;
+}
+
+static qboolean CG_IntroCam_BuildRoute( void ) {
+	cgIntroBpdPoint_t ordered[CG_MAX_INTRO_BPD_POINTS];
+	qboolean matched[MAX_GENTITIES];
+	vec3_t startPoint, finishPoint, lastPoint, tangent;
+	int i, j, count = s_bpdPointCount;
+	int startEntity = -1, finishEntity = -1;
+	float totalLength;
+	if ( !s_bpdLoaded || count < ( cgs.sprintTrack ? 1 : 2 ) ) return qfalse;
+	Com_Memset( matched, 0, sizeof( matched ) );
+	for ( i = 0; i < count; i++ ) {
+		int bestEntity = -1;
+		float bestDistance = 16.0f;
+		for ( j = 0; j < MAX_GENTITIES; j++ ) {
+			centity_t *cent = &cg_entities[j];
+			vec3_t delta;
+			float distance;
+			if ( matched[j] || cent->currentState.eType != ET_CHECKPOINT ) continue;
+			VectorSubtract( cent->currentState.origin2, s_bpdPoints[i].origin, delta );
+			distance = VectorLengthSquared( delta );
+			if ( distance < bestDistance ) {
+				bestDistance = distance;
+				bestEntity = j;
+			}
+		}
+		if ( bestEntity < 0 ) return qfalse;
+		matched[bestEntity] = qtrue;
+		ordered[i] = s_bpdPoints[i];
+		ordered[i].order = cg_entities[bestEntity].currentState.weapon;
+		ordered[i].entityNum = bestEntity;
+	}
+	for ( i = 0; i < count - 1; i++ ) {
+		for ( j = i + 1; j < count; j++ ) {
+			if ( ordered[j].order < ordered[i].order ) {
+				cgIntroBpdPoint_t swap = ordered[i];
+				ordered[i] = ordered[j];
+				ordered[j] = swap;
+			}
+		}
+	}
+	if ( cgs.sprintTrack ) {
+		for ( j = 0; j < MAX_GENTITIES; j++ ) {
+			centity_t *cent = &cg_entities[j];
+			if ( matched[j] || cent->currentState.eType != ET_CHECKPOINT ) continue;
+			if ( cent->currentState.weapon == count ) startEntity = j;
+			if ( cent->currentState.weapon == count + 1 ) finishEntity = j;
+		}
+		if ( startEntity < 0 || finishEntity < 0 ) return qfalse;
+		if ( s_effectiveReversed ) {
+			VectorCopy( cg_entities[finishEntity].currentState.origin2, startPoint );
+			VectorCopy( cg_entities[startEntity].currentState.origin2, finishPoint );
+		} else {
+			VectorCopy( cg_entities[startEntity].currentState.origin2, startPoint );
+			VectorCopy( cg_entities[finishEntity].currentState.origin2, finishPoint );
+		}
+	}
+
+	s_routeFrameCount = 0;
+	if ( cgs.sprintTrack ) {
+		vec3_t startHandle;
+		VectorSubtract( ordered[0].origin, startPoint, startHandle );
+		VectorScale( startHandle, ( s_effectiveReversed ? -1.0f : 1.0f ) / 3.0f, startHandle );
+		if ( !CG_IntroCam_AppendBezierSegment( startPoint, startHandle,
+			ordered[0].origin, ordered[0].handle, s_effectiveReversed ) ) return qfalse;
+	}
+	for ( i = 0; i < count - ( cgs.sprintTrack ? 1 : 0 ); i++ ) {
+		int next = ( i + 1 ) % count;
+		if ( !CG_IntroCam_AppendBezierSegment( ordered[i].origin, ordered[i].handle,
+			ordered[next].origin, ordered[next].handle, s_effectiveReversed ) ) return qfalse;
+	}
+	if ( cgs.sprintTrack ) {
+		vec3_t finishHandle;
+		VectorSubtract( finishPoint, ordered[count - 1].origin, finishHandle );
+		VectorScale( finishHandle, ( s_effectiveReversed ? -1.0f : 1.0f ) / 3.0f, finishHandle );
+		if ( !CG_IntroCam_AppendBezierSegment( ordered[count - 1].origin,
+			ordered[count - 1].handle, finishPoint, finishHandle, s_effectiveReversed ) ) return qfalse;
+		CG_IntroCam_EvaluateBezier( ordered[count - 1].origin, ordered[count - 1].handle,
+			finishPoint, finishHandle, s_effectiveReversed, 1.0f, lastPoint, tangent );
+	} else {
+		CG_IntroCam_EvaluateBezier( ordered[count - 1].origin, ordered[count - 1].handle,
+			ordered[0].origin, ordered[0].handle, s_effectiveReversed, 1.0f, lastPoint, tangent );
+	}
+	if ( !CG_IntroCam_AppendRoutePoint( lastPoint, tangent ) || s_routeFrameCount < 2 ) return qfalse;
+	totalLength = s_routeFrames[s_routeFrameCount - 1].distance;
+	if ( totalLength < 1.0f ) return qfalse;
+	for ( i = 0; i < s_routeFrameCount; i++ ) {
+		s_routeFrames[i].timeMs = (int)( s_routeFrames[i].distance / totalLength * s_previewDurationMs );
+		if ( i > 0 && s_routeFrames[i].timeMs <= s_routeFrames[i - 1].timeMs ) {
+			s_routeFrames[i].timeMs = s_routeFrames[i - 1].timeMs + 1;
+		}
+	}
+	s_routeFrames[s_routeFrameCount - 1].timeMs = s_previewDurationMs;
+	s_routeDurationMs = s_previewDurationMs;
+	s_routeBuildPending = qfalse;
+	s_hasRoute = qtrue;
+	if ( cg_developer.integer ) {
+		CG_Printf( "CG_IntroCam: built %d intro samples from %d BPD points\n", s_routeFrameCount, count );
+	}
+	return qtrue;
+}
+
+static void CG_IntroCam_EnsureRoute( void ) {
+	if ( !s_hasRoute && s_routeBuildPending && s_bpdLoaded
+		&& cg.time >= s_routeBuildAttemptTime + 100 ) {
+		s_routeBuildAttemptTime = cg.time;
+		CG_IntroCam_BuildRoute();
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -238,6 +335,10 @@ void CG_IntroCam_ParseConfigstring( void ) {
 	s_waitingForStart = qfalse;
 	s_routeFrameCount = 0;
 	s_routeDurationMs = 0;
+	s_routeBuildPending = qfalse;
+	s_routeBuildAttemptTime = -1000;
+	s_bpdLoaded = qfalse;
+	s_bpdPointCount = 0;
 	/* A late-joining client may receive the route config after the start command. */
 
 	cs = CG_ConfigString( CS_INTRO_ROUTE );
@@ -246,15 +347,15 @@ void CG_IntroCam_ParseConfigstring( void ) {
 	}
 
 	p = cs;
-	if ( !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) || Q_stricmp( token, "ghost" )
+	if ( !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) || Q_stricmp( token, "bpd" )
 		|| !CG_IntroCam_NextToken( &p, routePath, sizeof( routePath ) )
 		|| !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
-		CG_Printf( "^3CG_IntroCam: malformed Ghost route configstring\n" );
+		CG_Printf( "^3CG_IntroCam: malformed BPD configstring\n" );
 		return;
 	}
 	previewDurationMs = atoi( token );
 	if ( !CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
-		CG_Printf( "^3CG_IntroCam: missing Ghost route direction\n" );
+		CG_Printf( "^3CG_IntroCam: missing BPD route direction\n" );
 		return;
 	}
 	expectedTrackReversed = atoi( token ) ? 1 : 0;
@@ -262,7 +363,15 @@ void CG_IntroCam_ParseConfigstring( void ) {
 	if ( CG_IntroCam_NextToken( &p, token, sizeof( token ) ) ) {
 		waitingForStart = atoi( token ) ? qtrue : qfalse;
 	}
-	CG_IntroCam_LoadGhostRoute( routePath, previewDurationMs, expectedTrackReversed );
+	if ( previewDurationMs < 1000 || previewDurationMs > 60000 ) return;
+	s_previewDurationMs = previewDurationMs;
+	s_effectiveReversed = expectedTrackReversed ? qtrue : qfalse;
+	if ( !CG_IntroCam_ReadBpd( routePath ) ) {
+		CG_Printf( "^3CG_IntroCam: no usable BPD route in %s\n", routePath );
+		return;
+	}
+	s_routeBuildPending = qtrue;
+	CG_IntroCam_EnsureRoute();
 	s_waitingForStart = waitingForStart;
 }
 /* ------------------------------------------------------------------ */
@@ -297,6 +406,7 @@ void CG_IntroCam_Skip( void ) {
 
 qboolean CG_IntroCam_IsRaceIntroPending( void ) {
 	int elapsed;
+	CG_IntroCam_EnsureRoute();
 	if ( !s_hasRoute || ( s_routeFrameCount < 2 ) || s_startTime <= 0 ) return qfalse;
 	elapsed = cg.time - s_startTime;
 	return ( elapsed >= 0 && elapsed < s_previewDurationMs ) ? qtrue : qfalse;
@@ -317,9 +427,9 @@ int CG_IntroCam_RemainingSeconds( void ) {
 	return ( remainingMs + 999 ) / 1000;
 }
 
-static void CG_IntroCam_SampleGhostRoute( int targetTime, vec3_t origin, vec3_t angles ) {
+static void CG_IntroCam_SampleBpdRoute( int targetTime, vec3_t origin, vec3_t angles ) {
 	int i;
-	const cgIntroGhostRouteFrame_t *from, *to;
+	const cgIntroBpdFrame_t *from, *to;
 	float fraction;
 
 	if ( targetTime <= s_routeFrames[0].timeMs ) {
@@ -353,7 +463,7 @@ static void CG_IntroCam_SampleGhostRoute( int targetTime, vec3_t origin, vec3_t 
 	VectorCopy( s_routeFrames[s_routeFrameCount - 1].angles, angles );
 }
 
-static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, vec3_t anglesOut, float *fovOut ) {
+static qboolean CG_IntroCam_CalcBpdRouteView( int elapsed, vec3_t originOut, vec3_t anglesOut, float *fovOut ) {
 	vec3_t routeOrigin, routeAngles;
 	vec3_t lookAt, desiredOrigin, direction;
 	vec3_t traceMins = { -4.0f, -4.0f, -4.0f };
@@ -368,7 +478,7 @@ static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, v
 	}
 
 	routeTime = (int)( ( (float)elapsed / (float)s_previewDurationMs ) * (float)s_routeDurationMs );
-	CG_IntroCam_SampleGhostRoute( routeTime, routeOrigin, routeAngles );
+	CG_IntroCam_SampleBpdRoute( routeTime, routeOrigin, routeAngles );
 
 	yawRadians = DEG2RAD( routeAngles[YAW] );
 	forwardX = (float)cos( yawRadians );
@@ -409,6 +519,7 @@ static qboolean CG_IntroCam_CalcGhostRouteView( int elapsed, vec3_t originOut, v
 qboolean CG_IntroCam_CalcView( vec3_t originOut, vec3_t anglesOut, float *fovOut ) {
 	int elapsed;
 
+	CG_IntroCam_EnsureRoute();
 	if ( s_skipped || !s_hasRoute || s_startTime <= 0 ) {
 		return qfalse;
 	}
@@ -421,7 +532,7 @@ qboolean CG_IntroCam_CalcView( vec3_t originOut, vec3_t anglesOut, float *fovOut
 		return qfalse;
 	}
 
-	return CG_IntroCam_CalcGhostRouteView( elapsed, originOut, anglesOut, fovOut );
+	return CG_IntroCam_CalcBpdRouteView( elapsed, originOut, anglesOut, fovOut );
 }
 
 float CG_IntroCam_FadeAlpha( void ) {
@@ -430,6 +541,7 @@ float CG_IntroCam_FadeAlpha( void ) {
 	int elapsed;
 	float fadeIn, fadeOut, alpha, transition;
 
+	CG_IntroCam_EnsureRoute();
 	if ( !s_hasRoute || s_skipped ) {
 		return 0.0f;
 	}

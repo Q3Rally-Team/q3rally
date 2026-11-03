@@ -1,0 +1,2779 @@
+{
+  "date": "2026-11-02",
+  "assets": 5350,
+  "blocking_errors": 0,
+  "initial_warnings": 153,
+  "remaining_warnings": 144,
+  "categories": {
+    "non_drawn_bsp_material": 8,
+    "compiled_source_model": 3,
+    "compatibility_model": 38,
+    "repaired": 9,
+    "missionpack_only": 5,
+    "effect_shader_override": 5,
+    "skin_override": 70,
+    "optional_editor_image": 15
+  },
+  "scope": "Static warning review for current standard runtime; compatibility and editor/source assets are retained with known limitations. Raw audit warnings are not suppressed.",
+  "warnings": [
+    {
+      "kind": "material",
+      "reference": "textures/NULL",
+      "source": "maps/q3r_citydom.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "file",
+      "reference": "models/mapobj~1/spotlamp/spotlamp.md3",
+      "source": "maps/q3r_country01.bsp",
+      "category": "compiled_source_model",
+      "reason": "Legacy DOS 8.3 misc_model source path; geometry is baked into the compiled BSP. A source rebuild needs corrected model paths."
+    },
+    {
+      "kind": "file",
+      "reference": "models/mapobj~1/watert~1/tower.md3",
+      "source": "maps/q3r_country01.bsp",
+      "category": "compiled_source_model",
+      "reason": "Legacy DOS 8.3 misc_model source path; geometry is baked into the compiled BSP. A source rebuild needs corrected model paths."
+    },
+    {
+      "kind": "file",
+      "reference": "models/mapobj~1/woodpole/pole.md3",
+      "source": "maps/q3r_country01.bsp",
+      "category": "compiled_source_model",
+      "reason": "Legacy DOS 8.3 misc_model source path; geometry is baked into the compiled BSP. A source rebuild needs corrected model paths."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/q3r_signage/checkpoint",
+      "source": "maps/q3r_country01.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/q3r_signage/startfinish",
+      "source": "maps/q3r_country01.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/kilt_texpack02/kilt_tribeswirl_blue",
+      "source": "maps/q3r_ctf_04.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/kilt_texpack02/kilt_tribeswirl_red",
+      "source": "maps/q3r_ctf_04.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/common/WTF",
+      "source": "maps/q3r_demobowl.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/common/WTF",
+      "source": "maps/q3r_nightcity.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/NULL",
+      "source": "maps/q3r_sundown.bsp",
+      "category": "non_drawn_bsp_material",
+      "reason": "The BSP shader index is not referenced by a drawn surface; the audit checks drawn surfaces separately as errors."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/breakables/glass",
+      "source": "models/breakables/glass01.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/breakables/glass",
+      "source": "models/breakables/glass02.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/breakables/glass",
+      "source": "models/breakables/glass03.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/sfx/fire_ctfyellow",
+      "source": "models/flags/y_flag.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "Rost.tga",
+      "source": "models/mapobjects/dumpster/dumpster.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "black.jpg",
+      "source": "models/mapobjects/dumpster/dumpster.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "grey.tga",
+      "source": "models/mapobjects/dumpster/dumpster.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "iron02.jpg",
+      "source": "models/mapobjects/dumpster/dumpster.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "lightgrey.tga",
+      "source": "models/mapobjects/dumpster/dumpster.md3",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "material",
+      "reference": "OverloadProngs",
+      "source": "models/mapobjects/flagbase/blue_base.md3",
+      "category": "missionpack_only",
+      "reason": "Registration is guarded by MISSIONPACK in cg_main.c; standard Q3Rally builds disable it. Missing defaults remain relevant if this feature is enabled."
+    },
+    {
+      "kind": "material",
+      "reference": "OverloadProngs",
+      "source": "models/mapobjects/flagbase/ntrl_base.md3",
+      "category": "missionpack_only",
+      "reason": "Registration is guarded by MISSIONPACK in cg_main.c; standard Q3Rally builds disable it. Missing defaults remain relevant if this feature is enabled."
+    },
+    {
+      "kind": "material",
+      "reference": "OverloadProngs",
+      "source": "models/mapobjects/flagbase/red_base.md3",
+      "category": "missionpack_only",
+      "reason": "Registration is guarded by MISSIONPACK in cg_main.c; standard Q3Rally builds disable it. Missing defaults remain relevant if this feature is enabled."
+    },
+    {
+      "kind": "material",
+      "reference": "grassobj",
+      "source": "models/mapobjects/out/grass1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures\\mapobjects\\leafs2",
+      "source": "models/mapobjects/palmier/palm_leafs1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures\\mapobjects\\leafs3",
+      "source": "models/mapobjects/palmier/palm_leafs1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures\\mapobjects\\palmtree1",
+      "source": "models/mapobjects/palmier/palmier1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures\\mapobjects\\palmtree1",
+      "source": "models/mapobjects/palmier/palmier2.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "textures/props/roadblocks/road_block01.tga",
+      "source": "models/mapobjects/roadblock/roadblock01_orig.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/mapobjects/streetlights/glass02.jpg",
+      "source": "models/mapobjects/streetlights/streetlamp.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/mapobjects/streetlights/metrust01.tga",
+      "source": "models/mapobjects/streetlights/streetlamp.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/mapobjects/streetlights/rustmet01.tga",
+      "source": "models/mapobjects/streetlights/streetlamp.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "E:\\projects\\oa\\newtele\\Circle",
+      "source": "models/misc/telep.md3",
+      "category": "effect_shader_override",
+      "reason": "CG_SpawnEffect/CG_MakeExplosion supplies refEntity.customShader; see cg_effects.c and cg_weapons.c."
+    },
+    {
+      "kind": "material",
+      "reference": "teleporterEffect",
+      "source": "models/misc/telep.md3",
+      "category": "effect_shader_override",
+      "reason": "CG_SpawnEffect/CG_MakeExplosion supplies refEntity.customShader; see cg_effects.c and cg_weapons.c."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/alpine/yellowflite.tga",
+      "source": "models/players/alpine/body.md3",
+      "skins": [
+        "models/players/alpine/chrome.skin",
+        "models/players/alpine/carbon.skin",
+        "models/players/alpine/hotrod.skin",
+        "models/players/alpine/retro.skin",
+        "models/players/alpine/gold.skin",
+        "models/players/alpine/neon.skin",
+        "models/players/alpine/camo.skin",
+        "models/players/alpine/blue.skin",
+        "models/players/alpine/frefrafac.skin",
+        "models/players/alpine/green.skin",
+        "models/players/alpine/rally01.skin",
+        "models/players/alpine/rally07.skin",
+        "models/players/alpine/rally13.skin",
+        "models/players/alpine/rally27.skin",
+        "models/players/alpine/rally44.skin",
+        "models/players/alpine/rally88.skin",
+        "models/players/alpine/red.skin",
+        "models/players/alpine/stomped.skin",
+        "models/players/alpine/yellow.skin"
+      ],
+      "surfaces": [
+        "b_flites"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "MirrorL2.tga",
+      "source": "models/players/camaro/body.md3",
+      "skins": [
+        "models/players/camaro/chrome.skin",
+        "models/players/camaro/carbon.skin",
+        "models/players/camaro/hotrod.skin",
+        "models/players/camaro/retro.skin",
+        "models/players/camaro/gold.skin",
+        "models/players/camaro/neon.skin",
+        "models/players/camaro/camo.skin",
+        "models/players/camaro/black.skin",
+        "models/players/camaro/blue.skin",
+        "models/players/camaro/green.skin",
+        "models/players/camaro/rally01.skin",
+        "models/players/camaro/rally07.skin",
+        "models/players/camaro/rally13.skin",
+        "models/players/camaro/rally27.skin",
+        "models/players/camaro/rally44.skin",
+        "models/players/camaro/rally88.skin",
+        "models/players/camaro/red.skin",
+        "models/players/camaro/white.skin",
+        "models/players/camaro/yellow.skin"
+      ],
+      "surfaces": [
+        "mirrorl2"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "MirrorR1.tga",
+      "source": "models/players/camaro/body.md3",
+      "skins": [
+        "models/players/camaro/chrome.skin",
+        "models/players/camaro/carbon.skin",
+        "models/players/camaro/hotrod.skin",
+        "models/players/camaro/retro.skin",
+        "models/players/camaro/gold.skin",
+        "models/players/camaro/neon.skin",
+        "models/players/camaro/camo.skin",
+        "models/players/camaro/black.skin",
+        "models/players/camaro/blue.skin",
+        "models/players/camaro/green.skin",
+        "models/players/camaro/rally01.skin",
+        "models/players/camaro/rally07.skin",
+        "models/players/camaro/rally13.skin",
+        "models/players/camaro/rally27.skin",
+        "models/players/camaro/rally44.skin",
+        "models/players/camaro/rally88.skin",
+        "models/players/camaro/red.skin",
+        "models/players/camaro/white.skin",
+        "models/players/camaro/yellow.skin"
+      ],
+      "surfaces": [
+        "mirrorr1"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "MirrorR2.tga",
+      "source": "models/players/camaro/body.md3",
+      "skins": [
+        "models/players/camaro/chrome.skin",
+        "models/players/camaro/carbon.skin",
+        "models/players/camaro/hotrod.skin",
+        "models/players/camaro/retro.skin",
+        "models/players/camaro/gold.skin",
+        "models/players/camaro/neon.skin",
+        "models/players/camaro/camo.skin",
+        "models/players/camaro/black.skin",
+        "models/players/camaro/blue.skin",
+        "models/players/camaro/green.skin",
+        "models/players/camaro/rally01.skin",
+        "models/players/camaro/rally07.skin",
+        "models/players/camaro/rally13.skin",
+        "models/players/camaro/rally27.skin",
+        "models/players/camaro/rally44.skin",
+        "models/players/camaro/rally88.skin",
+        "models/players/camaro/red.skin",
+        "models/players/camaro/white.skin",
+        "models/players/camaro/yellow.skin"
+      ],
+      "surfaces": [
+        "mirrorr2"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "mMirrorL1.tga",
+      "source": "models/players/camaro/body.md3",
+      "skins": [
+        "models/players/camaro/chrome.skin",
+        "models/players/camaro/carbon.skin",
+        "models/players/camaro/hotrod.skin",
+        "models/players/camaro/retro.skin",
+        "models/players/camaro/gold.skin",
+        "models/players/camaro/neon.skin",
+        "models/players/camaro/camo.skin",
+        "models/players/camaro/black.skin",
+        "models/players/camaro/blue.skin",
+        "models/players/camaro/green.skin",
+        "models/players/camaro/rally01.skin",
+        "models/players/camaro/rally07.skin",
+        "models/players/camaro/rally13.skin",
+        "models/players/camaro/rally27.skin",
+        "models/players/camaro/rally44.skin",
+        "models/players/camaro/rally88.skin",
+        "models/players/camaro/red.skin",
+        "models/players/camaro/white.skin",
+        "models/players/camaro/yellow.skin"
+      ],
+      "surfaces": [
+        "mirrorl1"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/camaro/body.md3",
+      "skins": [
+        "models/players/camaro/chrome.skin",
+        "models/players/camaro/carbon.skin",
+        "models/players/camaro/hotrod.skin",
+        "models/players/camaro/retro.skin",
+        "models/players/camaro/gold.skin",
+        "models/players/camaro/neon.skin",
+        "models/players/camaro/camo.skin",
+        "models/players/camaro/black.skin",
+        "models/players/camaro/blue.skin",
+        "models/players/camaro/green.skin",
+        "models/players/camaro/rally01.skin",
+        "models/players/camaro/rally07.skin",
+        "models/players/camaro/rally13.skin",
+        "models/players/camaro/rally27.skin",
+        "models/players/camaro/rally44.skin",
+        "models/players/camaro/rally88.skin",
+        "models/players/camaro/red.skin",
+        "models/players/camaro/white.skin",
+        "models/players/camaro/yellow.skin"
+      ],
+      "surfaces": [
+        "spoiler",
+        "base",
+        "blightl",
+        "blightlg",
+        "blightr",
+        "blightrg",
+        "body1",
+        "body2",
+        "body3",
+        "body5",
+        "body6",
+        "bumperf2",
+        "bumperf3",
+        "bumperf4",
+        "bumperf5",
+        "bumperf6",
+        "bumperf8",
+        "bumperf9",
+        "bumperfb",
+        "bumperr1",
+        "bumperr2",
+        "bumperr3",
+        "bumperr4",
+        "bumperr5",
+        "bumperr6",
+        "bumperrb",
+        "doorl",
+        "doorline2",
+        "doorr",
+        "exhaust1",
+        "exhaust2",
+        "hlightl1",
+        "hlightl2",
+        "hlightlg",
+        "hlightr1",
+        "hlightr2",
+        "hlightrg",
+        "hood1",
+        "hood2",
+        "roof1",
+        "roof2",
+        "skirt1",
+        "skirt2",
+        "skirt3",
+        "windf1",
+        "windf2",
+        "windfl",
+        "windfr",
+        "windr",
+        "windrl",
+        "windrr",
+        "hood_carb1",
+        "hood_carb2",
+        "bumperf1"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/gravelord/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/anarki_g.tga",
+      "source": "models/players/heads/anarki.md3",
+      "skins": [
+        "models/players/heads/anarki.skin"
+      ],
+      "surfaces": [
+        "h_glasses"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/anarki_h.tga",
+      "source": "models/players/heads/anarki.md3",
+      "skins": [
+        "models/players/heads/anarki.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/angel.md3",
+      "skins": [
+        "models/players/heads/angel.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/biker.md3",
+      "skins": [
+        "models/players/heads/biker.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/bitterman.md3",
+      "skins": [
+        "models/players/heads/bitterman.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/bones.md3",
+      "skins": [
+        "models/players/heads/bones.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/bones2.md3",
+      "skins": [
+        "models/players/heads/bones2.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/cadavre.md3",
+      "skins": [
+        "models/players/heads/cadavre.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/crash.md3",
+      "skins": [
+        "models/players/heads/crash.skin"
+      ],
+      "surfaces": [
+        "h_helmet",
+        "h_visor"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/major_h.tga",
+      "source": "models/players/heads/daemia.md3",
+      "skins": [
+        "models/players/heads/daemia.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/doom.tga",
+      "source": "models/players/heads/doom.md3",
+      "skins": [
+        "models/players/heads/doom.skin"
+      ],
+      "surfaces": [
+        "h_helmet"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/doom_f.tga",
+      "source": "models/players/heads/doom.md3",
+      "skins": [
+        "models/players/heads/doom.skin"
+      ],
+      "surfaces": [
+        "h_visor"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/fanatic.md3",
+      "skins": [
+        "models/players/heads/fanatic.skin"
+      ],
+      "surfaces": [
+        "h_goggles",
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/klesk_h.tga",
+      "source": "models/players/heads/flisk.md3",
+      "skins": [
+        "models/players/heads/flisk.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/gorre.md3",
+      "skins": [
+        "models/players/heads/gorre.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/grrl.md3",
+      "skins": [
+        "models/players/heads/grrl.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/grunt_h.tga",
+      "source": "models/players/heads/grunt.md3",
+      "skins": [
+        "models/players/heads/grunt.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/hunter_f.tga",
+      "source": "models/players/heads/harpy.md3",
+      "skins": [
+        "models/players/heads/harpy.skin"
+      ],
+      "surfaces": [
+        "h_feathers"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/hunter_h.tga",
+      "source": "models/players/heads/harpy.md3",
+      "skins": [
+        "models/players/heads/harpy.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/hossman.md3",
+      "skins": [
+        "models/players/heads/hossman.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/hunter_f.tga",
+      "source": "models/players/heads/hunter.md3",
+      "skins": [
+        "models/players/heads/hunter.skin"
+      ],
+      "surfaces": [
+        "h_feathers"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/hunter_h.tga",
+      "source": "models/players/heads/hunter.md3",
+      "skins": [
+        "models/players/heads/hunter.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/id.md3",
+      "skins": [
+        "models/players/heads/id.skin"
+      ],
+      "surfaces": [
+        "h_goggles",
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/keel.md3",
+      "skins": [
+        "models/players/heads/keel.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/klesk_h.tga",
+      "source": "models/players/heads/klesk.md3",
+      "skins": [
+        "models/players/heads/klesk.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/cigar.tga",
+      "source": "models/players/heads/krusade.md3",
+      "skins": [
+        "models/players/heads/krusade.skin"
+      ],
+      "surfaces": [
+        "h_cigar"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/sarge_h.tga",
+      "source": "models/players/heads/krusade.md3",
+      "skins": [
+        "models/players/heads/krusade.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/lucy.md3",
+      "skins": [
+        "models/players/heads/lucy.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/major_h.tga",
+      "source": "models/players/heads/major.md3",
+      "skins": [
+        "models/players/heads/major.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/mynx.md3",
+      "skins": [
+        "models/players/heads/mynx.skin"
+      ],
+      "surfaces": [
+        "h_head",
+        "h_glasses"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/orbb_h.tga",
+      "source": "models/players/heads/orbb.md3",
+      "skins": [
+        "models/players/heads/orbb.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/patriot.md3",
+      "skins": [
+        "models/players/heads/patriot.skin"
+      ],
+      "surfaces": [
+        "h_goggles",
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/doom.tga",
+      "source": "models/players/heads/phobos.md3",
+      "skins": [
+        "models/players/heads/phobos.skin"
+      ],
+      "surfaces": [
+        "h_helmet"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/doom_f.tga",
+      "source": "models/players/heads/phobos.md3",
+      "skins": [
+        "models/players/heads/phobos.skin"
+      ],
+      "surfaces": [
+        "h_visor"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/ranger.md3",
+      "skins": [
+        "models/players/heads/ranger.skin"
+      ],
+      "surfaces": [
+        "h_face",
+        "h_helmet"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/razor.md3",
+      "skins": [
+        "models/players/heads/razor.skin"
+      ],
+      "surfaces": [
+        "h_goggles",
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/cigar.tga",
+      "source": "models/players/heads/roderic.md3",
+      "skins": [
+        "models/players/heads/roderic.skin"
+      ],
+      "surfaces": [
+        "h_cigar"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/sarge_h.tga",
+      "source": "models/players/heads/roderic.md3",
+      "skins": [
+        "models/players/heads/roderic.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/cigar.tga",
+      "source": "models/players/heads/sarge.md3",
+      "skins": [
+        "models/players/heads/sarge.skin"
+      ],
+      "surfaces": [
+        "h_cigar"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/sarge_h.tga",
+      "source": "models/players/heads/sarge.md3",
+      "skins": [
+        "models/players/heads/sarge.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/slammer.md3",
+      "skins": [
+        "models/players/heads/slammer.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/slash.md3",
+      "skins": [
+        "models/players/heads/slash.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/sorlag.md3",
+      "skins": [
+        "models/players/heads/sorlag.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/grunt_h.tga",
+      "source": "models/players/heads/stripe.md3",
+      "skins": [
+        "models/players/heads/stripe.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/stroggo.md3",
+      "skins": [
+        "models/players/heads/stroggo.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/heads/tankjr.tga",
+      "source": "models/players/heads/tankjr.md3",
+      "skins": [
+        "models/players/heads/tankjr.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/uriel.md3",
+      "skins": [
+        "models/players/heads/uriel.skin"
+      ],
+      "surfaces": [
+        "h_face",
+        "h_hood"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/visor.md3",
+      "skins": [
+        "models/players/heads/visor.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/wrack.md3",
+      "skins": [
+        "models/players/heads/wrack.skin"
+      ],
+      "surfaces": [
+        "h_face",
+        "h_helmet"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/xaero.md3",
+      "skins": [
+        "models/players/heads/xaero.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/yuriko.md3",
+      "skins": [
+        "models/players/heads/yuriko.skin"
+      ],
+      "surfaces": [
+        "h_head"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/heads/zael.md3",
+      "skins": [
+        "models/players/heads/zael.skin"
+      ],
+      "surfaces": [
+        "h_face",
+        "h_hood"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/macdaddy/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/mini/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/murcielago/body.md3",
+      "skins": [
+        "models/players/murcielago/chrome.skin",
+        "models/players/murcielago/carbon.skin",
+        "models/players/murcielago/hotrod.skin",
+        "models/players/murcielago/retro.skin",
+        "models/players/murcielago/gold.skin",
+        "models/players/murcielago/neon.skin",
+        "models/players/murcielago/camo.skin",
+        "models/players/murcielago/black.skin",
+        "models/players/murcielago/blue.skin",
+        "models/players/murcielago/bluestripe.skin",
+        "models/players/murcielago/green.skin",
+        "models/players/murcielago/moddb.skin",
+        "models/players/murcielago/rally01.skin",
+        "models/players/murcielago/rally07.skin",
+        "models/players/murcielago/rally13.skin",
+        "models/players/murcielago/rally27.skin",
+        "models/players/murcielago/rally44.skin",
+        "models/players/murcielago/rally88.skin",
+        "models/players/murcielago/red.skin",
+        "models/players/murcielago/redhot.skin",
+        "models/players/murcielago/redstripe.skin",
+        "models/players/murcielago/silver.skin",
+        "models/players/murcielago/silverstripe.skin",
+        "models/players/murcielago/whitehot.skin",
+        "models/players/murcielago/yellow.skin"
+      ],
+      "surfaces": [
+        "b_main",
+        "b_black",
+        "b_mirror",
+        "b_hlite",
+        "b_hglass",
+        "b_glass",
+        "b_under",
+        "b_plate",
+        "b_blite",
+        "b_indent",
+        "b_spoil",
+        "b_blitec",
+        "b_vent",
+        "b_tailpipe"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/mustang/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/raptor/lites.tga",
+      "source": "models/players/raptor/body.md3",
+      "skins": [
+        "models/players/raptor/chrome.skin",
+        "models/players/raptor/carbon.skin",
+        "models/players/raptor/hotrod.skin",
+        "models/players/raptor/retro.skin",
+        "models/players/raptor/gold.skin",
+        "models/players/raptor/neon.skin",
+        "models/players/raptor/camo.skin",
+        "models/players/raptor/black.skin",
+        "models/players/raptor/blue.skin",
+        "models/players/raptor/dreamcast.skin",
+        "models/players/raptor/green.skin",
+        "models/players/raptor/jp.skin",
+        "models/players/raptor/lvl.skin",
+        "models/players/raptor/pink.skin",
+        "models/players/raptor/rally01.skin",
+        "models/players/raptor/rally07.skin",
+        "models/players/raptor/rally13.skin",
+        "models/players/raptor/rally27.skin",
+        "models/players/raptor/rally44.skin",
+        "models/players/raptor/rally88.skin",
+        "models/players/raptor/red.skin",
+        "models/players/raptor/webdog.skin",
+        "models/players/raptor/yellow.skin"
+      ],
+      "surfaces": [
+        "b_rlites",
+        "b_flites"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/raptor/parts.tga",
+      "source": "models/players/raptor/body.md3",
+      "skins": [
+        "models/players/raptor/chrome.skin",
+        "models/players/raptor/carbon.skin",
+        "models/players/raptor/hotrod.skin",
+        "models/players/raptor/retro.skin",
+        "models/players/raptor/gold.skin",
+        "models/players/raptor/neon.skin",
+        "models/players/raptor/camo.skin",
+        "models/players/raptor/black.skin",
+        "models/players/raptor/blue.skin",
+        "models/players/raptor/dreamcast.skin",
+        "models/players/raptor/green.skin",
+        "models/players/raptor/jp.skin",
+        "models/players/raptor/lvl.skin",
+        "models/players/raptor/pink.skin",
+        "models/players/raptor/rally01.skin",
+        "models/players/raptor/rally07.skin",
+        "models/players/raptor/rally13.skin",
+        "models/players/raptor/rally27.skin",
+        "models/players/raptor/rally44.skin",
+        "models/players/raptor/rally88.skin",
+        "models/players/raptor/red.skin",
+        "models/players/raptor/webdog.skin",
+        "models/players/raptor/yellow.skin"
+      ],
+      "surfaces": [
+        "b_brushgaurd",
+        "b_spoiler",
+        "b_facia"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/raptor/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/roadster/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/sidepipe/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/wheels/rim.tga",
+      "source": "models/players/slingshot/wheel.md3",
+      "skins": [
+        "models/players/wheels/amg_163.skin",
+        "models/players/wheels/amg_170.skin",
+        "models/players/wheels/amg_215.skin",
+        "models/players/wheels/amg_220.skin",
+        "models/players/wheels/amg_aero.skin",
+        "models/players/wheels/amg_aero2pc.skin",
+        "models/players/wheels/amg_aero3pc.skin",
+        "models/players/wheels/amg_aero_ii.skin",
+        "models/players/wheels/amg_sl2pc.skin",
+        "models/players/wheels/atp_5_razze.skin",
+        "models/players/wheels/atp_7190.skin",
+        "models/players/wheels/atp_7200.skin",
+        "models/players/wheels/atp_8026.skin",
+        "models/players/wheels/atp_riva.skin",
+        "models/players/wheels/atp_s5.skin",
+        "models/players/wheels/atp_spa.skin",
+        "models/players/wheels/atp_spa2pc.skin",
+        "models/players/wheels/atp_twist.skin",
+        "models/players/wheels/atp_type5.skin",
+        "models/players/wheels/bbs_delta.skin",
+        "models/players/wheels/bbs_lm.skin",
+        "models/players/wheels/bbs_rc.skin",
+        "models/players/wheels/bbs_rk.skin",
+        "models/players/wheels/bbs_rk_ii.skin",
+        "models/players/wheels/bbs_rs_ii.skin",
+        "models/players/wheels/bbs_rv.skin",
+        "models/players/wheels/bbs_rw_ii.skin",
+        "models/players/wheels/bbs_rx.skin",
+        "models/players/wheels/bbs_rz_ii.skin",
+        "models/players/wheels/bor_cw3.skin",
+        "models/players/wheels/bor_cw4.skin",
+        "models/players/wheels/bor_tr.skin",
+        "models/players/wheels/bor_type_b.skin",
+        "models/players/wheels/bor_type_c.skin",
+        "models/players/wheels/bor_type_e.skin",
+        "models/players/wheels/bor_type_h.skin",
+        "models/players/wheels/bor_type_m.skin",
+        "models/players/wheels/bor_type_s.skin",
+        "models/players/wheels/bor_type_t.skin",
+        "models/players/wheels/bor_type_td.skin",
+        "models/players/wheels/brey_comp.skin",
+        "models/players/wheels/brey_inspiration.skin",
+        "models/players/wheels/brey_magic.skin",
+        "models/players/wheels/brey_softline.skin",
+        "models/players/wheels/carlsson_116.skin",
+        "models/players/wheels/carlsson_16.skin",
+        "models/players/wheels/carlsson_16_evo.skin",
+        "models/players/wheels/carlsson_1_5.skin",
+        "models/players/wheels/carlsson_26.skin",
+        "models/players/wheels/carlsson_2_5.skin",
+        "models/players/wheels/carlsson_36.skin",
+        "models/players/wheels/fi_500_modular.skin",
+        "models/players/wheels/fi_argus.skin",
+        "models/players/wheels/fi_av3.skin",
+        "models/players/wheels/fi_formula.skin",
+        "models/players/wheels/fi_polaris.skin",
+        "models/players/wheels/fi_tubolare.skin",
+        "models/players/wheels/fi_tubotruck.skin",
+        "models/players/wheels/fi_vela.skin",
+        "models/players/wheels/ko_k1_racing.skin",
+        "models/players/wheels/ko_s6c.skin",
+        "models/players/wheels/ko_seneca_racing.skin",
+        "models/players/wheels/ko_seneca_rg.skin",
+        "models/players/wheels/mm_cup_1.skin",
+        "models/players/wheels/mm_daisy.skin",
+        "models/players/wheels/mm_emotion.skin",
+        "models/players/wheels/mm_evo.skin",
+        "models/players/wheels/mm_glide.skin",
+        "models/players/wheels/mm_m11_2.skin",
+        "models/players/wheels/mm_m11_2_sport.skin",
+        "models/players/wheels/mm_r5.skin",
+        "models/players/wheels/mm_sfera.skin",
+        "models/players/wheels/mm_spider.skin",
+        "models/players/wheels/murcielago.skin",
+        "models/players/wheels/oz_altair_plus.skin",
+        "models/players/wheels/oz_ceres.skin",
+        "models/players/wheels/oz_competition.skin",
+        "models/players/wheels/oz_f1_cup.skin",
+        "models/players/wheels/oz_f1_cup_corsa.skin",
+        "models/players/wheels/oz_f1_plus.skin",
+        "models/players/wheels/oz_futura.skin",
+        "models/players/wheels/oz_mito_mod.skin",
+        "models/players/wheels/oz_monte_carlo.skin",
+        "models/players/wheels/oz_navajo.skin",
+        "models/players/wheels/oz_nova.skin",
+        "models/players/wheels/oz_nova_1pc.skin",
+        "models/players/wheels/oz_nova_st.skin",
+        "models/players/wheels/oz_opera.skin",
+        "models/players/wheels/oz_racing_f1.skin",
+        "models/players/wheels/oz_superturismo.skin",
+        "models/players/wheels/oz_vela.skin",
+        "models/players/wheels/q3r_bastion.skin",
+        "models/players/wheels/q3r_crown.skin",
+        "models/players/wheels/q3r_rally13.skin",
+        "models/players/wheels/q3r_rally13_dark.skin",
+        "models/players/wheels/q3r_stage6.skin",
+        "models/players/wheels/q3r_talon.skin",
+        "models/players/wheels/sport_282.skin",
+        "models/players/wheels/sport_298.skin",
+        "models/players/wheels/sport_5055.skin",
+        "models/players/wheels/sport_6516.skin",
+        "models/players/wheels/sport_6521.skin",
+        "models/players/wheels/ssr_gt1.skin",
+        "models/players/wheels/ssr_integral.skin",
+        "models/players/wheels/svt_cobra.skin",
+        "models/players/wheels/svt_cobra_99.skin",
+        "models/players/wheels/svt_cobra_contour.skin",
+        "models/players/wheels/svt_cobra_r.skin",
+        "models/players/wheels/svt_lightning.skin",
+        "models/players/wheels/svt_tbird.skin",
+        "models/players/wheels/teamloco_134.skin",
+        "models/players/wheels/teamloco_142.skin",
+        "models/players/wheels/teamloco_142_anth.skin",
+        "models/players/wheels/teamloco_143.skin",
+        "models/players/wheels/teamloco_144.skin",
+        "models/players/wheels/teamloco_150.skin",
+        "models/players/wheels/tgf_ax.skin",
+        "models/players/wheels/tgf_mx.skin",
+        "models/players/wheels/trm_sniper.skin",
+        "models/players/wheels/trm_typhoon.skin",
+        "models/players/wheels/viper_gts.skin",
+        "models/players/wheels/zagato_gtz_99.skin",
+        "models/players/wheels/zagato_rz_12.skin",
+        "models/players/wheels/zagato_sz_55.skin"
+      ],
+      "surfaces": [
+        "w_rim"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/players/viper/body.md3",
+      "skins": [
+        "models/players/viper/chrome.skin",
+        "models/players/viper/carbon.skin",
+        "models/players/viper/hotrod.skin",
+        "models/players/viper/retro.skin",
+        "models/players/viper/gold.skin",
+        "models/players/viper/neon.skin",
+        "models/players/viper/camo.skin",
+        "models/players/viper/blue.skin",
+        "models/players/viper/graphite.skin",
+        "models/players/viper/green.skin",
+        "models/players/viper/rally01.skin",
+        "models/players/viper/rally07.skin",
+        "models/players/viper/rally13.skin",
+        "models/players/viper/rally27.skin",
+        "models/players/viper/rally44.skin",
+        "models/players/viper/rally88.skin",
+        "models/players/viper/red.skin",
+        "models/players/viper/stripe_blue.skin",
+        "models/players/viper/stripe_red.skin",
+        "models/players/viper/white.skin",
+        "models/players/viper/yellow.skin"
+      ],
+      "surfaces": [
+        "mirrors",
+        "f_lites",
+        "base",
+        "b_lites",
+        "windows",
+        "platearea",
+        "spoiler",
+        "extras",
+        "underdoor",
+        "main"
+      ],
+      "category": "skin_override",
+      "reason": "Every applicable skin covers the affected surface; CG_RegisterClientSkin supplies the skin instead of the embedded MD3 material."
+    },
+    {
+      "kind": "material",
+      "reference": "redArmor",
+      "source": "models/powerups/armor/armor_red.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "yellowArmor",
+      "source": "models/powerups/armor/armor_yel.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "OverloadProngs",
+      "source": "models/powerups/harvester/harvester.md3",
+      "category": "missionpack_only",
+      "reason": "Registration is guarded by MISSIONPACK in cg_main.c; standard Q3Rally builds disable it. Missing defaults remain relevant if this feature is enabled."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/ebase.png",
+      "source": "models/powerups/instant/enviro.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/ebase.png",
+      "source": "models/powerups/instant/enviro_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/ering.png",
+      "source": "models/powerups/instant/enviro_ring.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/ering.png",
+      "source": "models/powerups/instant/enviro_ring_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/flight_body.png",
+      "source": "models/powerups/instant/flight.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/flight_body.png",
+      "source": "models/powerups/instant/flight_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/flight_ring.png",
+      "source": "models/powerups/instant/flight_ring.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/flight_ring.png",
+      "source": "models/powerups/instant/flight_ring_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/h_center.png",
+      "source": "models/powerups/instant/haste.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/h_center.png",
+      "source": "models/powerups/instant/haste_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/h_ring.png",
+      "source": "models/powerups/instant/haste_ring.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/powerups/instant/h_ring.png",
+      "source": "models/powerups/instant/haste_ring_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "invisItem",
+      "source": "models/powerups/instant/invis.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "quadDamage",
+      "source": "models/powerups/instant/quad.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "quadAura",
+      "source": "models/powerups/instant/quad_ring.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "rcad.png",
+      "source": "models/powerups/instant/regen.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "rcad.png",
+      "source": "models/powerups/instant/regen_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "rring.png",
+      "source": "models/powerups/instant/regen_ring.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "rring.png",
+      "source": "models/powerups/instant/regen_ring_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "OverloadProngs",
+      "source": "models/powerups/obelisk/obelisk.md3",
+      "category": "missionpack_only",
+      "reason": "Registration is guarded by MISSIONPACK in cg_main.c; standard Q3Rally builds disable it. Missing defaults remain relevant if this feature is enabled."
+    },
+    {
+      "kind": "material",
+      "reference": "rocketFlare_001",
+      "source": "models/weaphits/boom01.md3",
+      "category": "effect_shader_override",
+      "reason": "CG_SpawnEffect/CG_MakeExplosion supplies refEntity.customShader; see cg_effects.c and cg_weapons.c."
+    },
+    {
+      "kind": "material",
+      "reference": "poopypants",
+      "source": "models/weaphits/bullet.md3",
+      "category": "effect_shader_override",
+      "reason": "CG_SpawnEffect/CG_MakeExplosion supplies refEntity.customShader; see cg_effects.c and cg_weapons.c."
+    },
+    {
+      "kind": "material",
+      "reference": "bfgShot",
+      "source": "models/weaphits/fbfg.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "bfgShot2",
+      "source": "models/weaphits/fbfg.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/weaphits/fplas.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "models/players/model/skin.tga",
+      "source": "models/weaphits/oldring02.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "material",
+      "reference": "E:\\projects\\oa\\newplasrailhit\\Sphere",
+      "source": "models/weaphits/ring02.md3",
+      "category": "effect_shader_override",
+      "reason": "CG_SpawnEffect/CG_MakeExplosion supplies refEntity.customShader; see cg_effects.c and cg_weapons.c."
+    },
+    {
+      "kind": "material",
+      "reference": "lowLightnnFlash",
+      "source": "models/weapons2/lightning/lightning_flash_1.md3",
+      "category": "compatibility_model",
+      "reason": "No active full-path reference found in current C code, selected BSP entities or selected runtime text assets. Retained for compatibility; embedded defaults remain incomplete for future use."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/arctic/arc_sky2",
+      "source": "scripts/arctic.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/arctic/fog.tga",
+      "source": "scripts/arctic.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/arctic/glass1.tga",
+      "source": "scripts/arctic.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "base_light/ceil1_30.tga",
+      "source": "scripts/base_textures.shader",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/base_light/light5.blend.tga",
+      "source": "scripts/base_textures.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/base_light/s_proto_lightmap.tga",
+      "source": "scripts/base_textures.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/hintlocal.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/nolightmap.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/qer_mirror.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/qer_portal.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/skip.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/common/terrain.tga",
+      "source": "scripts/common.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/sfx/fog_grey.tga",
+      "source": "scripts/gfx.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/liquids/pool3d_4b.tga",
+      "source": "scripts/liquids.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/liquids/pool3d_4b.tga",
+      "source": "scripts/q3r_ctf_04.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/skies/xnight2_up.tga",
+      "source": "scripts/q3r_textures.shader",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/skies/stars_red.tga",
+      "source": "scripts/skies.shader",
+      "category": "optional_editor_image",
+      "reason": "Optional qer_editorimage/q3map_lightimage reference; runtime shader image references pass the blocking audit. Editor/source completeness remains limited."
+    },
+    {
+      "kind": "image",
+      "reference": "textures/skies/xnight2_up.tga",
+      "source": "scripts/skies.shader",
+      "category": "repaired",
+      "reason": "Resolved reference to an existing image, qualified dumpster material, or reconstructed yellow flag shader."
+    }
+  ]
+}

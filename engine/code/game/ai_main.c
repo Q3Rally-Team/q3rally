@@ -1028,8 +1028,14 @@ void BotUpdateInput(bot_state_t *bs, int time, int elapsed_time) {
 	}
 	//convert the bot input to a usercmd
 	BotInputToUserCommand(&bi, &bs->lastucmd, bs->cur_ps.delta_angles, time);
+	BotVehicleUpdateInput( bs, &bs->lastucmd );
 	// Autoball bots burn turbo by holding the button
 	if ( BotAutoball_WantsTurbo( bs->client ) ) {
+		bs->lastucmd.buttons |= BUTTON_TURBO;
+	}
+	if ( g_botRaceUseTurbo.integer && bs->raceTurboSafe &&
+		( bs->cur_ps.powerups[PW_TURBO] < 0 ||
+		  bs->cur_ps.powerups[PW_TURBO] > level.time ) ) {
 		bs->lastucmd.buttons |= BUTTON_TURBO;
 	}
 	//subtract the delta angles

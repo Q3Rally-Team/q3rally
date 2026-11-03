@@ -1,0 +1,13 @@
+{
+  "map": "q3r_mesaking",
+  "terrain_triangles": 10424,
+  "leaves": {
+    "64": 3344,
+    "128": 1868
+  },
+  "brushes": 13011,
+  "hill_top_z": 246.0,
+  "ramp_max_grade_deg": 13.9,
+  "mesa_cliff_grade_deg": 67.6,
+  "max_slope_deg": 73.8
+}

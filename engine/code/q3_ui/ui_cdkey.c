@@ -31,6 +31,7 @@ CD KEY MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 // STONELANCE
@@ -321,7 +322,8 @@ UI_CDKeyMenu
 */
 void UI_CDKeyMenu( void ) {
 	UI_CDKeyMenu_Init();
-	UI_PushMenu( &cdkeyMenuInfo.menu );
+	Frontend_SetBackButton( &cdkeyMenuInfo.back.generic );
+    UI_PushMenu( &cdkeyMenuInfo.menu );
 }
 
 

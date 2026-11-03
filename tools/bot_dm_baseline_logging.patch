@@ -1,0 +1,33 @@
+--- a/engine/code/game/ai_main.c
++++ b/engine/code/game/ai_main.c
+@@ -1028,6 +1028,30 @@
+ 	}
+ 	//convert the bot input to a usercmd
+ 	BotInputToUserCommand(&bi, &bs->lastucmd, bs->cur_ps.delta_angles, time);
++	/* Passive A/B benchmark logging; isolated HEAD source only. */
++	if ( gametype == GT_DEATHMATCH && bs->client >= 0 && bs->client < level.maxclients &&
++		g_entities[bs->client].client ) {
++		static int lastLog[MAX_CLIENTS];
++		playerState_t *ps = &g_entities[bs->client].client->ps;
++		if ( ps->pm_type == PM_NORMAL && ps->stats[STAT_HEALTH] > 0 &&
++			level.time - lastLog[bs->client] >= 500 && trap_Cvar_VariableIntegerValue( "g_botDmDebug" ) ) {
++			vec3_t forward, angles, direction;
++			float speed, aimError = 0;
++			lastLog[bs->client] = level.time;
++			VectorSet( angles, 0, ps->viewangles[YAW], 0 );
++			AngleVectors( angles, forward, NULL, NULL );
++			speed = fabs( DotProduct( ps->velocity, forward ) );
++			if ( bs->enemy >= 0 ) {
++				VectorSubtract( bs->aimtarget, ps->origin, direction );
++				aimError = fabs( AngleSubtract( vectoyaw( direction ), ps->viewangles[YAW] ) );
++			}
++			G_LogPrintf( "BotDM: time=%d client=%d enemy=%d phase=%d speed=%.1f firing=%d aimError=%.1f hits=%d kills=%d deaths=%d x=%.1f y=%.1f z=%.1f\n",
++				level.time, bs->client, bs->enemy, bs->rallyCombatPhase, speed,
++				(bs->lastucmd.buttons & BUTTON_ATTACK) ? 1 : 0, aimError,
++				ps->persistant[PERS_HITS], bs->num_kills, bs->num_deaths,
++				ps->origin[0], ps->origin[1], ps->origin[2] );
++		}
++	}
+ 	// Autoball bots burn turbo by holding the button
+ 	if ( BotAutoball_WantsTurbo( bs->client ) ) {
+ 		bs->lastucmd.buttons |= BUTTON_TURBO;

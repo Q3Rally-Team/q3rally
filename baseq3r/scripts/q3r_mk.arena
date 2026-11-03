@@ -15,7 +15,7 @@ type "q3r_dm q3r_team_dm q3r_dom"
 bots "Tony Steve Tanya Zack Jennifer Ivan Tobias"
 
 //PLAYER STARTS
-starts "8"
+starts "12"
 
 //LAPTIME
 laptime ""
@@ -24,7 +24,7 @@ laptime ""
 checkpoints ""
 
 //OBSERVER SPOTS
-observerspots "1"
+observerspots "8"
 
 //WEAPONS
 weapons "All"

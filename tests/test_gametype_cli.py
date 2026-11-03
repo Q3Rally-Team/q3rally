@@ -49,10 +49,10 @@ def test_cli_outputs_expected_lines():
 
 
 def test_gametype_values_match_bg_public():
-    """cli.GAMETYPES must mirror the explicit gametype_t values in bg_public.h."""
+    """cli.GAMETYPES must mirror the shared gametype_t values."""
     import re
 
-    header = (REPO_ROOT / "engine" / "code" / "game" / "bg_public.h").read_text()
+    header = (REPO_ROOT / "engine" / "code" / "qcommon" / "q_gametype.h").read_text()
     engine_values = {
         name: int(value)
         for name, value in re.findall(r"^\s*GT_([A-Z0-9_]+)\s*=\s*(\d+)\s*,", header, re.MULTILINE)

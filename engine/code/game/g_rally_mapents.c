@@ -24,6 +24,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 #include "g_profile.h"
 
+/* Report a later gate without advancing race progress. Previous gates can be
+   touched while manoeuvring and are not evidence of a missed checkpoint. */
+static void G_RallyWarnMissedCheckpoint( gentity_t *gate, gentity_t *car ) {
+	gclient_t *client = car->client;
+	if ( !client || !level.startRaceTime || level.time < level.startRaceTime ||
+		client->finishRaceTime || client->ps.pm_type != PM_NORMAL ||
+		client->sess.sessionTeam == TEAM_SPECTATOR ||
+		( car->r.svFlags & SVF_BOT ) || car->number < 1 ||
+		gate->number <= car->number ||
+		( client->checkpointWarningTime && level.time < client->checkpointWarningTime ) ) {
+		return;
+	}
+	/* A shared start/finish is numbered as the last gate, but is also crossed
+	   when starting a lap. With no checkpoint cleared since the lap began,
+	   this contact alone is not evidence of a skipped gate (including lingering
+	   contacts after a valid lap finish). Sprint finish gates are unambiguous. */
+	if ( gate == level.finishEnt && !level.sprintTrack && car->number == 1 &&
+		client->lastCheckpointTime == client->lapStartTime ) {
+		return;
+	}
+	client->checkpointWarningTime = level.time + 4000;
+	trap_SendServerCommand( car->s.number, va(
+		"cp \"CHECKPOINT MISSED\nReturn to checkpoint %i\"", car->number ) );
+}
+
 static void G_RallyRecordSplitTime( gentity_t *ent, int timestamp ) {
 	gclient_t *client;
 	int splitDuration;
@@ -456,7 +481,8 @@ void Touch_Start (gentity_t *self, gentity_t *other, trace_t *trace ){
         other->client->ps.stats[STAT_NEXT_CHECKPOINT] = other->number;
         other->client->ps.stats[STAT_FRAC_TO_NEXT_CHECKPOINT] = FLOAT2SHORT(0.1f);
 
-        trap_SendServerCommand( -1, va("newLapTime %i %i %i", other->s.clientNum, 1, level.time) );
+        /* A sprint start begins the timed lap; it is not a completed lap. */
+        trap_SendServerCommand( -1, va("raceLapStart %i %i", other->s.clientNum, level.time) );
 
         Rally_PlayerAnnouncerSound( self, other, G_SoundIndex("sound/rally/race/checkpoint.ogg") );
 }
@@ -571,7 +597,7 @@ void G_RallyUpdateAllTeamTimes( void ) {
 void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         const char *place;
 
-        if ( !other->client ) {
+        if ( !other->client || other->client->finishRaceTime ) {
                 return;
         }
 
@@ -583,6 +609,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
                 G_Printf( "Client %i touched the finish line.\n", other->s.clientNum );
 
         if ( self->number != other->number ) {
+                G_RallyWarnMissedCheckpoint( self, other );
                 return;
         }
 
@@ -593,6 +620,7 @@ void Touch_Finish (gentity_t *self, gentity_t *other, trace_t *trace ){
         other->client->finishRaceTime = level.time;
         other->s.weapon = WP_NONE;
         other->takedamage = qfalse;
+        CalculatePlayerPositions();
 
         // Update team average time now that this player has a finish time
         if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {
@@ -649,6 +677,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 	if ( other->currentLap > level.numberOfLaps && level.numberOfLaps ){
 		return;
 	}
+	G_RallyWarnMissedCheckpoint( self, other );
 
         if (self->number == other->number){
                 G_RallyCompleteCleanSegment( other );
@@ -667,6 +696,7 @@ void Touch_StartFinish (gentity_t *self, gentity_t *other, trace_t *trace ){
 			other->client->finishRaceTime = level.time;
 			other->s.weapon = WP_NONE;
 			other->takedamage = qfalse;
+			CalculatePlayerPositions();
 
 			// Update team average time now that this player has a finish time
 			if ( g_gametype.integer == GT_TEAM_RACING || g_gametype.integer == GT_TEAM_RACING_DM ) {
@@ -942,6 +972,7 @@ void Touch_Checkpoint (gentity_t *self, gentity_t *other, trace_t *trace ){
 
 	if (g_developer.integer)
 		G_Printf( "Client %i touched checkpoint number %i\n", other->s.clientNum, self->number );
+	G_RallyWarnMissedCheckpoint( self, other );
 
 	if (self->number == other->number){
 		G_RallyCompleteCleanSegment( other );
@@ -1022,6 +1053,7 @@ void Think_Checkpoint( gentity_t *self ){
 //	spawnflag 1 enables sound, 2 enables messages, 3 enables both; no flags defaults to sound, 4 is silent
 void SP_rally_checkpoint( gentity_t *ent ) {
 	trap_SetBrushModel( ent, ent->model );
+	ent->bpdIndex = ent->number;
 
 // STONELANCE - April 23, 2002 temp for testing bezier curve stuff
 	ent->r.svFlags |= SVF_BROADCAST;

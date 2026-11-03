@@ -838,6 +838,8 @@ float CG_DrawUpperRightHUD( float y ) {
     if ( isRallyRace() ) {
         if ( cg_checkpointArrowMode.integer ) {
             CG_DrawArrowToCheckpoint( y );
+        } else {
+            cg.wrongWayStartTime = 0;
         }
 
         CG_UpdateGhostSplitDelta();

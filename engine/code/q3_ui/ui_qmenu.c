@@ -2461,8 +2461,12 @@ void Menu_Cache( void )
 
 		numItems = UI_BuildFileList("gfx/2d", "tga", "menucar", qtrue, qfalse, qfalse, 0, pics);
                backPic = UI_RandomInt( numItems );
-		Com_sprintf(shader, sizeof(shader), "gfx/2d/menucar%s", pics[backPic]);
-		uis.menuBackShader	= trap_R_RegisterShaderNoMip( shader );
+		if ( numItems > 0 ) {
+			Com_sprintf(shader, sizeof(shader), "gfx/2d/menucar%s", pics[backPic]);
+			uis.menuBackShader = trap_R_RegisterShaderNoMip( shader );
+		} else {
+			uis.menuBackShader = uis.whiteShader;
+		}
 	}
 
 	uis.menuBackShaderDefault = uis.menuBackShader;

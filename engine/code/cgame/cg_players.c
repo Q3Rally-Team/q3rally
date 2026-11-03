@@ -967,8 +967,25 @@ Load it now, taking the disk hits.
 This will usually be deferred to a safe time
 ===================
 */
+static sfxHandle_t CG_RegisterOptionalPlayerSound( const char *dir, const char *sound ) {
+	/* Match the engine's fallback codec order. Missing legacy voice sounds
+	   are optional for vehicles; do not register them as missing effects. */
+	const char *extensions[] = { "wav", "mp3", "ogg", "opus" };
+	char stem[MAX_QPATH], path[MAX_QPATH];
+	int i;
+	sfxHandle_t handle;
+	COM_StripExtension( sound, stem, sizeof( stem ) );
+	for ( i = 0; i < ARRAY_LEN( extensions ); i++ ) {
+		Com_sprintf( path, sizeof( path ), "sound/player/%s/%s.%s", dir, stem, extensions[i] );
+		if ( trap_FS_FOpenFile( path, NULL, FS_READ ) <= 0 ) continue;
+		handle = trap_S_RegisterSound( path, qfalse );
+		if ( handle ) return handle;
+	}
+	return 0;
+}
+
 static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
-	const char	*dir, *fallback;
+	const char	*dir;
 	int			i, modelloaded;
 	const char	*s;
 	char		teamname[MAX_QPATH];
@@ -1055,14 +1072,8 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 */
 // END
 
-	// sounds
+	// Optional vehicle sounds, with the standalone default car as fallback.
 	dir = ci->modelName;
-// Q3Rally Code Start
-//	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
-
-	// UPDATE - remove after player car sounds are added
-	fallback = "sarge";
-// END
 
 	for ( i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++ ) {
 		s = cg_customSoundNames[i];
@@ -1072,13 +1083,10 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 		ci->sounds[i] = 0;
 		// if the model didn't load use the sounds of the default model
 		if (modelloaded) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", dir, s + 1), qfalse );
+			ci->sounds[i] = CG_RegisterOptionalPlayerSound( dir, s + 1 );
 		}
-		if ( !ci->sounds[i] ) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", DEFAULT_MODEL, s + 1), qfalse );
-		}
-		if ( !ci->sounds[i] ) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", fallback, s + 1), qfalse );
+		if ( !ci->sounds[i] && ( !modelloaded || Q_stricmp( dir, DEFAULT_MODEL ) ) ) {
+			ci->sounds[i] = CG_RegisterOptionalPlayerSound( DEFAULT_MODEL, s + 1 );
 		}
 	}
 
@@ -2203,29 +2211,169 @@ static void CG_SandTrail( centity_t *cent ) {
 
 /*
 ===============
-CG_TrailItem
+CG_CarPennant
+
+Q3Rally: a car carrying a flag shows a small pennant on a whip antenna at
+the rear corner, like an off-road safety flag, instead of the full flag
+model (81 units high, it hid most of the car). The antenna bends back with
+the speed, the pennant flaps in the wind and fades out right in front of
+the camera, so it never blocks the carrier's own view.
 ===============
 */
-static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
-	refEntity_t		ent;
-	vec3_t			angles;
-	vec3_t			axis[3];
+#define PENNANT_POLE_SEGS	6
+#define PENNANT_STRIPS		6
+#define PENNANT_POLE_LEN	72.0f
+#define PENNANT_LEN			34.0f
+#define PENNANT_DROP		24.0f
 
-	VectorCopy( cent->lerpAngles, angles );
-	angles[PITCH] = 0;
-	angles[ROLL] = 0;
-	AnglesToAxis( angles, axis );
+static void CG_PennantLerp( const vec3_t a, const vec3_t b, float t, vec3_t out ) {
+	out[0] = a[0] + ( b[0] - a[0] ) * t;
+	out[1] = a[1] + ( b[1] - a[1] ) * t;
+	out[2] = a[2] + ( b[2] - a[2] ) * t;
+}
 
-	memset( &ent, 0, sizeof( ent ) );
-	VectorMA( cent->lerpOrigin, -16, axis[0], ent.origin );
-	ent.origin[2] += 16;
-// Q3Rally Code Start
-//	angles[YAW] += 90;
-// END
-	AnglesToAxis( angles, ent.axis );
+static void CG_PennantQuad( const vec3_t a, const vec3_t b, const vec3_t c, const vec3_t d,
+		const float *rgb, float shade, float alpha ) {
+	polyVert_t	verts[4];
+	const float	*pts[4];
+	int			i, k;
 
-	ent.hModel = hModel;
-	trap_R_AddRefEntityToScene( &ent );
+	pts[0] = a; pts[1] = b; pts[2] = c; pts[3] = d;
+	for ( i = 0; i < 4; i++ ) {
+		VectorCopy( pts[i], verts[i].xyz );
+		verts[i].st[0] = ( i == 1 || i == 2 ) ? 1 : 0;
+		verts[i].st[1] = ( i >= 2 ) ? 1 : 0;
+		for ( k = 0; k < 3; k++ ) {
+			verts[i].modulate[k] = (byte)Com_Clamp( 0, 255, rgb[k] * shade * 255.0f );
+		}
+		verts[i].modulate[3] = (byte)( alpha * 255.0f );
+	}
+	trap_R_AddPolyToScene( cgs.media.pennantShader, 4, verts );
+}
+
+static void CG_CarPennant( centity_t *cent, refEntity_t *body, const vec3_t color ) {
+	vec3_t	mins, maxs, base, up, wind, flat, side, dir, tmp;
+	vec3_t	pole[PENNANT_POLE_SEGS + 1];
+	vec3_t	ambient, directed, lightDir;
+	vec3_t	poleColor, cloth;
+	vec3_t	top, bottom, tip, hang, a, b, c, d, offA, offB;
+	float	speed, sf, bend, wobble, t, ang, segLen, alpha, dist, light, phase;
+	int		i;
+
+	if ( !body->hModel || !cgs.media.pennantShader ) {
+		return;
+	}
+
+	// mount: rear left corner of the body, in its upper part
+	trap_R_ModelBounds( body->hModel, mins, maxs );
+	VectorMA( body->origin, mins[0] + 10.0f, body->axis[0], base );
+	VectorMA( base, maxs[1] - 8.0f, body->axis[1], base );
+	VectorMA( base, mins[2] + ( maxs[2] - mins[2] ) * 0.65f, body->axis[2], base );
+	VectorCopy( body->axis[2], up );
+	VectorNormalize( up );
+
+	// relative wind: against the driving direction (backwards when standing)
+	VectorCopy( cent->currentState.pos.trDelta, flat );
+	flat[2] = 0;
+	speed = VectorNormalize( flat );
+	if ( speed > 20.0f ) {
+		VectorNegate( flat, wind );
+	} else {
+		VectorNegate( body->axis[0], wind );
+		wind[2] = 0;
+		VectorNormalize( wind );
+	}
+	sf = speed / 700.0f;
+	if ( sf > 1.0f ) {
+		sf = 1.0f;
+	}
+	phase = ( cent->currentState.clientNum & 7 ) * 0.9f;
+
+	// the whip antenna bends back, more at the tip, and wobbles a little
+	wobble = sin( cg.time * 0.009f + phase ) * ( 0.04f + 0.08f * sf );
+	bend = 0.85f * sf + wobble;
+	segLen = PENNANT_POLE_LEN / PENNANT_POLE_SEGS;
+	VectorCopy( base, pole[0] );
+	for ( i = 1; i <= PENNANT_POLE_SEGS; i++ ) {
+		t = (float)i / PENNANT_POLE_SEGS;
+		ang = bend * t * sqrt( t );
+		VectorScale( up, cos( ang ), dir );
+		VectorMA( dir, sin( ang ), wind, dir );
+		VectorNormalize( dir );
+		VectorMA( pole[i - 1], segLen, dir, pole[i] );
+	}
+
+	// fade out when the camera is right at the antenna (own car)
+	dist = Distance( cg.refdef.vieworg, pole[PENNANT_POLE_SEGS / 2] );
+	alpha = ( dist - 40.0f ) / 60.0f;
+	if ( alpha <= 0.0f ) {
+		return;
+	}
+	if ( alpha > 1.0f ) {
+		alpha = 1.0f;
+	}
+
+	// simple lighting from the light grid
+	trap_R_LightForPoint( pole[PENNANT_POLE_SEGS], ambient, directed, lightDir );
+	light = ( ( ambient[0] + ambient[1] + ambient[2] ) + 0.6f * ( directed[0] + directed[1] + directed[2] ) ) / ( 3.0f * 170.0f );
+	light = Com_Clamp( 0.3f, 1.25f, light );
+	VectorSet( poleColor, 0.55f, 0.56f, 0.58f );
+
+	// pole: two crossed thin strips per segment
+	CrossProduct( up, wind, side );
+	if ( VectorNormalize( side ) < 0.01f ) {
+		VectorCopy( body->axis[1], side );
+	}
+	for ( i = 0; i < PENNANT_POLE_SEGS; i++ ) {
+		float w = 1.3f - 0.7f * i / PENNANT_POLE_SEGS;
+		VectorSubtract( pole[i + 1], pole[i], dir );
+		VectorNormalize( dir );
+		CrossProduct( dir, side, tmp );
+		VectorMA( pole[i], -w, side, a );
+		VectorMA( pole[i], w, side, b );
+		VectorMA( pole[i + 1], w, side, c );
+		VectorMA( pole[i + 1], -w, side, d );
+		CG_PennantQuad( a, b, c, d, poleColor, light, alpha );
+		VectorMA( pole[i], -w, tmp, a );
+		VectorMA( pole[i], w, tmp, b );
+		VectorMA( pole[i + 1], w, tmp, c );
+		VectorMA( pole[i + 1], -w, tmp, d );
+		CG_PennantQuad( a, b, c, d, poleColor, light, alpha );
+	}
+
+	// pennant: a triangle from the top of the pole, streaming with the wind,
+	// hanging down a little when slow, flapping sideways
+	VectorCopy( pole[PENNANT_POLE_SEGS], top );
+	VectorSubtract( pole[PENNANT_POLE_SEGS - 2], pole[PENNANT_POLE_SEGS], dir );
+	VectorNormalize( dir );
+	VectorMA( top, PENNANT_DROP, dir, bottom );
+	VectorScale( wind, 0.35f + 0.65f * sf, hang );
+	VectorMA( hang, -( 0.75f * ( 1.0f - sf ) + 0.12f ), up, hang );
+	VectorNormalize( hang );
+	VectorAdd( top, bottom, tip );
+	VectorScale( tip, 0.5f, tip );
+	VectorMA( tip, PENNANT_LEN, hang, tip );
+	CrossProduct( up, hang, side );
+	VectorNormalize( side );
+
+	VectorScale( color, light, cloth );
+	for ( i = 0; i < PENNANT_STRIPS; i++ ) {
+		float u0 = (float)i / PENNANT_STRIPS, u1 = (float)( i + 1 ) / PENNANT_STRIPS;
+		float w0 = cg.time * ( 0.010f + 0.012f * sf ) - u0 * 5.0f + phase;
+		float w1 = cg.time * ( 0.010f + 0.012f * sf ) - u1 * 5.0f + phase;
+		float amp = 2.5f + 5.0f * sf;
+		VectorScale( side, sin( w0 ) * amp * u0, offA );
+		VectorScale( side, sin( w1 ) * amp * u1, offB );
+		CG_PennantLerp( top, tip, u0, a );
+		CG_PennantLerp( top, tip, u1, b );
+		CG_PennantLerp( bottom, tip, u1, c );
+		CG_PennantLerp( bottom, tip, u0, d );
+		VectorAdd( a, offA, a );
+		VectorAdd( d, offA, d );
+		VectorAdd( b, offB, b );
+		VectorAdd( c, offB, c );
+		CG_PennantQuad( a, b, c, d, cloth, 0.82f + 0.18f * cos( w0 ), alpha );
+	}
 }
 
 
@@ -2457,7 +2605,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 			CG_PlayerFlag( cent, cgs.media.redFlagFlapSkin, torso );
 		}
 		else {
-			CG_TrailItem( cent, cgs.media.redFlagModel );
+			{ vec3_t c = { 1.0f, 0.12f, 0.08f }; CG_CarPennant( cent, torso, c ); }
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 0.2f, 0.2f );
 	}
@@ -2468,7 +2616,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 			CG_PlayerFlag( cent, cgs.media.blueFlagFlapSkin, torso );
 		}
 		else {
-			CG_TrailItem( cent, cgs.media.blueFlagModel );
+			{ vec3_t c = { 0.12f, 0.28f, 1.0f }; CG_CarPennant( cent, torso, c ); }
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1.0 );
 	}
@@ -2479,7 +2627,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 			CG_PlayerFlag( cent, cgs.media.greenFlagFlapSkin, torso );
 		}
 		else {
-			CG_TrailItem( cent, cgs.media.greenFlagModel );
+			{ vec3_t c = { 0.12f, 0.80f, 0.18f }; CG_CarPennant( cent, torso, c ); }
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 1.0, 0.2f );
 	}
@@ -2490,7 +2638,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 			CG_PlayerFlag( cent, cgs.media.yellowFlagFlapSkin, torso );
 		}
 		else {
-			CG_TrailItem( cent, cgs.media.yellowFlagModel );
+			{ vec3_t c = { 1.0f, 0.82f, 0.08f }; CG_CarPennant( cent, torso, c ); }
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 0.2f );
 	}
@@ -2501,7 +2649,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 			CG_PlayerFlag( cent, cgs.media.neutralFlagFlapSkin, torso );
 		}
 		else {
-			CG_TrailItem( cent, cgs.media.neutralFlagModel );
+			{ vec3_t c = { 0.95f, 0.95f, 0.95f }; CG_CarPennant( cent, torso, c ); }
 		}
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 1.0 );
 	}

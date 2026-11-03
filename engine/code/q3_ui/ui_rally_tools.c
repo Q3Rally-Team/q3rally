@@ -34,6 +34,9 @@ float UI_Random( void ){
 //	return random();
 }
 int UI_RandomInt( int max ){
+	if ( max <= 0 ) {
+		return 0;
+	}
 	// Q_rand may return negative values, cast to unsigned to guarantee non-negative
 	return (unsigned)Q_rand( &ui_randSeed ) % max;
 }
@@ -97,7 +100,12 @@ int UI_BuildFileList( const char *directory, const char *extension, const char *
 
 	numListItems = startIndex;
 
-	numDirectories = trap_FS_GetFileList( directory, "/", dirlist, sizeof(dirlist) );
+	/* PK3-only installations need not report "." as a subdirectory. Always
+	   scan the requested directory itself before scanning its children. */
+	dirlist[0] = '.';
+	dirlist[1] = '\0';
+	numDirectories = 1 + trap_FS_GetFileList( directory, "/",
+		dirlist + 2, sizeof(dirlist) - 2 );
 	dirptr = dirlist;
 	for (i = 0; i < numDirectories; i++, dirptr += dirlen+1)
 	{
@@ -123,7 +131,10 @@ int UI_BuildFileList( const char *directory, const char *extension, const char *
 		}
 
 		// iterate all files in directory with extension = extension
-		Com_sprintf(dirname, sizeof(dirname), "%s/%s", directory, dirptr);
+		if ( !strcmp( dirptr, "." ) )
+			Q_strncpyz( dirname, directory, sizeof(dirname) );
+		else
+			Com_sprintf(dirname, sizeof(dirname), "%s/%s", directory, dirptr);
 
 		numFiles = trap_FS_GetFileList( dirname, extension, filelist, sizeof(filelist) );
 

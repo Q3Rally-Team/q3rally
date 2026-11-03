@@ -31,6 +31,7 @@ DEMOS MENU
 
 #include "ui_local.h"
 #include "ui_rally_frontend.h"
+#include "../qcommon/demo_layout.h"
 
 #define NAMEBUFSIZE             ( MAX_DEMOS * 32 )
 
@@ -39,6 +40,11 @@ DEMOS MENU
 #define ID_LIST                 12
 #define ID_RIGHT                13
 #define ID_LEFT                 14
+#define ID_PAUSE 15
+#define ID_STOP 16
+#define ID_RESTART 17
+#define ID_REWIND 18
+#define ID_FORWARD 19
 
 /* The virtual UI is 640x480. Keep the demo screen aligned with the other
  * modern frontend surfaces and leave the image itself open behind them. */
@@ -47,19 +53,15 @@ DEMOS MENU
 #define DEMOS_FRAME_WIDTH       592
 #define DEMOS_FRAME_HEIGHT      440
 #define DEMOS_LIST_X            40
-#define DEMOS_LIST_Y            132
-#define DEMOS_LIST_WIDTH        356
+#define DEMOS_LIST_Y            112
+#define DEMOS_LIST_WIDTH        176
 #define DEMOS_LIST_HEIGHT       256
 #define DEMOS_ROW_X             ( DEMOS_LIST_X + 16 )
 #define DEMOS_ROW_Y             DEMOS_LIST_Y
 #define DEMOS_ROW_WIDTH         ( DEMOS_LIST_WIDTH - 32 )
 #define DEMOS_ROW_HEIGHT        UI_FRONTEND_BUTTON_HEIGHT
 #define DEMOS_ROW_GAP           3
-#define DEMOS_VISIBLE_ITEMS     9
-#define DEMOS_DETAIL_X          412
-#define DEMOS_DETAIL_Y          88
-#define DEMOS_DETAIL_WIDTH      188
-#define DEMOS_DETAIL_HEIGHT     300
+#define DEMOS_VISIBLE_ITEMS     8
 #define DEMOS_ACTION_Y          420
 #define DEMOS_ACTION_HEIGHT     UI_FRONTEND_BUTTON_HEIGHT
 #define DEMOS_ACTION_WIDTH      UI_FRONTEND_ACTION_WIDTH
@@ -75,6 +77,9 @@ typedef struct {
     menutext_s      previous;
     menutext_s      next;
     menutext_s      go;
+    menutext_s pause, stop, restart, rewind, forward;
+    char playing[MAX_QPATH];
+    int infoSelection, infoBytes;
 
     int             numDemos;
     char            names[NAMEBUFSIZE];
@@ -85,7 +90,6 @@ static demos_t s_demos;
 
 static vec4_t demosTextColor = UI_FRONTEND_COLOR_TEXT;
 static vec4_t demosMutedColor = UI_FRONTEND_COLOR_MUTED;
-static vec4_t demosAccentColor = UI_FRONTEND_COLOR_ACCENT;
 
 static void Demos_UpdatePaging( void );
 
@@ -98,10 +102,12 @@ static void Demos_PlaySelected( void ) {
         return;
     }
 
-    UI_ForceMenuOff();
     COM_SanitizeFileName( s_demos.list.itemnames[s_demos.list.curvalue],
                           cleanName, sizeof( cleanName ) );
-    trap_Cmd_ExecuteText( EXEC_APPEND, va( "demo \"%s\"\n", cleanName ) );
+    Q_strncpyz( s_demos.playing, cleanName, sizeof(s_demos.playing) );
+    trap_Cvar_Set("ui_demoPlayerName", cleanName);
+    trap_Cvar_Set( "cl_freezeDemo", "0" );
+    trap_Cmd_ExecuteText( EXEC_APPEND, va( "demopreview \"%s\"\n", cleanName ) );
 }
 
 static void Demos_MenuEvent( void *ptr, int event ) {
@@ -119,8 +125,27 @@ static void Demos_MenuEvent( void *ptr, int event ) {
         }
         break;
 
+    case ID_REWIND:
+    case ID_FORWARD:
+        if (event == QM_ACTIVATED)
+            trap_Cmd_ExecuteText(EXEC_APPEND, item->id == ID_REWIND ? "demoseek -10\n" : "demoseek 10\n");
+        break;
+    case ID_PAUSE:
+        if ( event == QM_ACTIVATED && trap_Cvar_VariableValue("cl_demoPlayer") )
+            trap_Cvar_Set("cl_freezeDemo", trap_Cvar_VariableValue("cl_freezeDemo") ? "0" : "1");
+        break;
+    case ID_STOP:
+        if ( event == QM_ACTIVATED ) trap_Cmd_ExecuteText(EXEC_APPEND, "demopreviewstop\n");
+        break;
+    case ID_RESTART:
+        if ( event == QM_ACTIVATED && s_demos.playing[0] ) {
+            trap_Cvar_Set("cl_freezeDemo", "0");
+            trap_Cmd_ExecuteText(EXEC_APPEND, va("demopreview \"%s\"\n", s_demos.playing));
+        }
+        break;
     case ID_BACK:
         if ( event == QM_ACTIVATED ) {
+            trap_Cmd_ExecuteText(EXEC_APPEND, "demopreviewstop\n");
             UI_PopMenu();
         }
         break;
@@ -145,32 +170,6 @@ static void Demos_MenuEvent( void *ptr, int event ) {
     }
 }
 
-static void Demos_FitText( char *out, int outSize, const char *text,
-                           int maxWidth ) {
-    int len;
-
-    if ( !out || outSize <= 0 ) {
-        return;
-    }
-
-    Q_strncpyz( out, text ? text : "", outSize );
-    if ( Frontend_TextWidth( out, UI_SMALLFONT ) <= maxWidth ) {
-        return;
-    }
-
-    len = (int)strlen( out );
-    while ( len > 3 && Frontend_TextWidth( out, UI_SMALLFONT ) > maxWidth ) {
-        len--;
-        out[len] = '\0';
-    }
-
-    if ( len >= 3 ) {
-        out[len - 3] = '.';
-        out[len - 2] = '.';
-        out[len - 1] = '.';
-    }
-}
-
 static void Demos_DrawList( void *self ) {
     menulist_s *list;
     int i;
@@ -187,6 +186,7 @@ static void Demos_DrawList( void *self ) {
         int index;
         int y;
         qboolean active;
+        char label[24];
 
         index = list->top + i;
         if ( index < 0 || index >= s_demos.numDemos ) {
@@ -195,9 +195,10 @@ static void Demos_DrawList( void *self ) {
 
         y = DEMOS_ROW_Y + i * ( DEMOS_ROW_HEIGHT + DEMOS_ROW_GAP );
         active = ( index == list->curvalue ) ? qtrue : qfalse;
+        Frontend_FitText(label, sizeof(label), list->itemnames[index], DEMOS_ROW_WIDTH - 16, UI_SMALLFONT);
         Frontend_DrawNavButton( DEMOS_ROW_X, y, DEMOS_ROW_WIDTH,
                                 DEMOS_ROW_HEIGHT,
-                                list->itemnames[index], 1.0f, active,
+                                label, 1.0f, active,
                                 UI_FRONTEND_TEXT_LEFT );
     }
 }
@@ -234,90 +235,87 @@ static void Demos_DrawAction( void *self ) {
 
 static void Demos_Draw( void ) {
     vec4_t scrimColor = UI_FRONTEND_COLOR_SCRIM;
-    char pageText[64];
-    char selectedName[64];
-    int visibleEnd;
-
-    Frontend_DrawBackground( scrimColor );
-
-    Frontend_DrawPanel( DEMOS_FRAME_X, DEMOS_FRAME_Y,
-                        DEMOS_FRAME_WIDTH, DEMOS_FRAME_HEIGHT, 1.0f,
-                        UI_FRONTEND_STYLE_FRAME );
-    Frontend_DrawText( DEMOS_FRAME_X + 24, DEMOS_FRAME_Y + 24,
-                       "Demo browser", UI_LEFT | UI_BIGFONT,
-                       demosTextColor );
-    Frontend_DrawText( DEMOS_FRAME_X + 24, DEMOS_FRAME_Y + 48,
-                       "Replay a run from your local archive",
-                       UI_LEFT | UI_SMALLFONT, demosMutedColor );
-    Frontend_DrawStatusChip( DEMOS_FRAME_X + DEMOS_FRAME_WIDTH - 100,
-                             DEMOS_FRAME_Y + 26, "Archive",
-                             demosAccentColor, 1.0f );
-
-    Frontend_DrawCard( DEMOS_LIST_X, DEMOS_LIST_Y - 28,
-                       DEMOS_LIST_WIDTH, DEMOS_LIST_HEIGHT, 1.0f, qfalse );
-    Frontend_DrawCard( DEMOS_DETAIL_X, DEMOS_DETAIL_Y,
-                       DEMOS_DETAIL_WIDTH, DEMOS_DETAIL_HEIGHT, 1.0f,
-                       qfalse );
-    Frontend_DrawText( DEMOS_LIST_X + 16, DEMOS_LIST_Y - 10,
-                       "Available demos", UI_LEFT | UI_SMALLFONT,
-                       demosMutedColor );
-    Frontend_DrawText( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 16,
-                       "Selected demo", UI_LEFT | UI_SMALLFONT,
-                       demosMutedColor );
-
-    Menu_Draw( &s_demos.menu );
-
-    if ( s_demos.numDemos > 0 &&
-         s_demos.list.curvalue >= 0 &&
-         s_demos.list.curvalue < s_demos.numDemos ) {
-        Demos_FitText( selectedName, sizeof( selectedName ),
-                       s_demos.list.itemnames[s_demos.list.curvalue],
-                       DEMOS_DETAIL_WIDTH - 32 );
-        Frontend_DrawStatusChip( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 50,
-                                 "Replay ready", demosAccentColor, 1.0f );
-        Frontend_DrawText( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 96,
-                           selectedName, UI_LEFT | UI_BIGFONT,
-                           demosTextColor );
-        Frontend_DrawText( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 132,
-                           "Press Play demo", UI_LEFT | UI_SMALLFONT,
-                           demosMutedColor );
-        Frontend_DrawText( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 154,
-                           "to start this run.", UI_LEFT | UI_SMALLFONT,
-                           demosMutedColor );
-    } else {
-        Frontend_DrawText( DEMOS_DETAIL_X + 16, DEMOS_DETAIL_Y + 86,
-                           "Nothing to replay", UI_LEFT | UI_SMALLFONT,
-                           demosMutedColor );
+    qboolean playing = trap_Cvar_VariableValue("cl_demoPlayer") != 0;
+    qboolean seeking = trap_Cvar_VariableValue("cl_demoSeeking") != 0;
+    menutext_s *transport[5];
+    int i;
+    int seconds = (int)trap_Cvar_VariableValue("cl_demoTime");
+    char clock[24];
+    char error[1024], notice[128];
+    char title[64];
+    trap_Cvar_VariableStringBuffer("cl_demoError", error, sizeof(error));
+    trap_Cvar_VariableStringBuffer("cl_demoNotice", notice, sizeof(notice));
+    if (seconds < 0) seconds = 0;
+    if (seconds >= 3600)
+        Com_sprintf(clock, sizeof(clock), "%d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+    else
+        Com_sprintf(clock, sizeof(clock), "%02d:%02d", seconds / 60, seconds % 60);
+    Frontend_FitText(title, sizeof(title), playing ? s_demos.playing : "Preview", DEMO_PREVIEW_WIDTH - 104, UI_SMALLFONT);
+    transport[0] = &s_demos.restart; transport[1] = &s_demos.rewind;
+    transport[2] = &s_demos.pause; transport[3] = &s_demos.forward;
+    transport[4] = &s_demos.stop;
+    for (i = 0; i < 5; i++) {
+        transport[i]->generic.flags &= ~QMF_GRAYED;
+        if (!playing || (seeking && i != 4)) transport[i]->generic.flags |= QMF_GRAYED;
     }
-
-    if ( s_demos.numDemos > 0 ) {
-        visibleEnd = s_demos.list.top + DEMOS_VISIBLE_ITEMS;
-        if ( visibleEnd > s_demos.numDemos ) {
-            visibleEnd = s_demos.numDemos;
+    s_demos.pause.string = trap_Cvar_VariableValue("cl_freezeDemo") ? "Resume" : "Pause";
+    Frontend_DrawBackground(scrimColor);
+    Frontend_DrawPanel(24, 20, 592, 440, 1.0f, UI_FRONTEND_STYLE_FRAME);
+    Frontend_DrawText(40, 44, "Demo player", UI_LEFT | UI_BIGFONT, demosTextColor);
+    Frontend_DrawText(40, 82, "Recordings", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawCard(40, 100, 176, 276, 1.0f, qfalse);
+    Frontend_DrawCard(DEMO_PREVIEW_X, DEMO_PREVIEW_Y, DEMO_PREVIEW_WIDTH, DEMO_PREVIEW_HEIGHT, 1.0f, qfalse);
+    if (trap_Cvar_VariableValue("cl_demoSeeking"))
+        Frontend_DrawText(252, 220, "Seeking...", UI_LEFT | UI_SMALLFONT, demosTextColor);
+    if (!playing && error[0]) {
+        Frontend_DrawText(252, 150, "Cannot play recording", UI_LEFT | UI_SMALLFONT, demosTextColor);
+        Frontend_DrawTextWrapped(252, 184, DEMO_PREVIEW_WIDTH - 40, 20, 8,
+            error, UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    }
+    if (!playing && !error[0] && !s_demos.numDemos)
+        Frontend_DrawText(252, 220, "No recordings available", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    if (!playing && !error[0] && s_demos.numDemos > 0) {
+        const char *name = s_demos.list.itemnames[s_demos.list.curvalue];
+        const char *ext = strrchr(name, '.');
+        char display[40];
+        if (s_demos.infoSelection != s_demos.list.curvalue) {
+            fileHandle_t file;
+            s_demos.infoSelection = s_demos.list.curvalue;
+            s_demos.infoBytes = trap_FS_FOpenFile(va("demos/%s", name), &file, FS_READ);
+            if (file) trap_FS_FCloseFile(file);
         }
-        Com_sprintf( pageText, sizeof( pageText ), "%d-%d of %d",
-                     s_demos.list.top + 1, visibleEnd, s_demos.numDemos );
-    } else {
-        Q_strncpyz( pageText, "0 demos", sizeof( pageText ) );
+        Q_strncpyz(display, name, sizeof(display));
+        Frontend_DrawText(252, 150, "Selected recording", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 178, display, UI_LEFT | UI_SMALLFONT, demosTextColor);
+        Frontend_DrawText(252, 210, va("Size: %.1f MB", s_demos.infoBytes / 1048576.0f), UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 236, va("Format: %s", ext ? ext + 1 : "unknown"), UI_LEFT | UI_SMALLFONT, demosMutedColor);
+        Frontend_DrawText(252, 300, notice[0] ? notice : "Press Play demo to start", UI_LEFT | UI_SMALLFONT, demosMutedColor);
     }
-
-    Frontend_DrawText( DEMOS_LIST_X + DEMOS_LIST_WIDTH - 16,
-                       DEMOS_LIST_Y + DEMOS_LIST_HEIGHT - 20, pageText,
-                       UI_RIGHT | UI_SMALLFONT, demosMutedColor );
-    Frontend_DrawText( DEMOS_FRAME_X + 24, DEMOS_FRAME_Y + 384,
-                       s_demos.numDemos == 1 ? "1 demo available" :
-                       va( "%d demos available", s_demos.numDemos ),
-                       UI_LEFT | UI_SMALLFONT, demosMutedColor );
-    Frontend_DrawText( DEMOS_FRAME_X + DEMOS_FRAME_WIDTH - 24,
-                       DEMOS_FRAME_Y + 384,
-                       "Enter play   Esc back", UI_RIGHT | UI_SMALLFONT,
-                       demosMutedColor );
+    Frontend_DrawText(DEMO_PREVIEW_X, 82, title, UI_LEFT | UI_SMALLFONT, demosTextColor);
+    Frontend_DrawText(DEMO_PREVIEW_X + DEMO_PREVIEW_WIDTH, 82, clock,
+        UI_RIGHT | UI_SMALLFONT, playing ? demosTextColor : demosMutedColor);
+    if (playing)
+        Frontend_DrawText(600, 48, seeking ? "Seeking" :
+            (trap_Cvar_VariableValue("cl_freezeDemo") ? "Paused" : "Playing"),
+            UI_RIGHT | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawText(128, 352, va("%d / %d", s_demos.numDemos ? s_demos.list.curvalue + 1 : 0, s_demos.numDemos), UI_CENTER | UI_SMALLFONT, demosMutedColor);
+    Frontend_DrawText(232, 432, "Space: pause   Arrows: seek", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    Menu_Draw(&s_demos.menu);
 }
 
 static sfxHandle_t Demos_MenuKey( int key ) {
     int row;
     int index;
 
+    if ( key == K_ESCAPE || key == K_MOUSE2 ) trap_Cmd_ExecuteText(EXEC_APPEND, "demopreviewstop\n");
+    if ((key == K_LEFTARROW || key == K_RIGHTARROW) && trap_Cvar_VariableValue("cl_demoPlayer")) {
+        trap_Cmd_ExecuteText(EXEC_APPEND, key == K_LEFTARROW ? "demoseek -10\n" : "demoseek 10\n");
+        return menu_null_sound;
+    }
+    if ( key == K_SPACE && trap_Cvar_VariableValue("cl_demoPlayer") ) {
+        trap_Cvar_Set("cl_freezeDemo", trap_Cvar_VariableValue("cl_freezeDemo") ? "0" : "1");
+        return menu_null_sound;
+    }
     if ( key & K_CHAR_FLAG ) {
         return 0;
     }
@@ -358,8 +356,8 @@ static sfxHandle_t Demos_MenuKey( int key ) {
 }
 
 static void Demos_UpdatePaging( void ) {
-    s_demos.previous.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
-    s_demos.next.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+    s_demos.previous.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
+    s_demos.next.generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
 
     if ( s_demos.numDemos <= 0 || s_demos.list.top <= 0 ) {
         s_demos.previous.generic.flags |= QMF_GRAYED;
@@ -373,7 +371,7 @@ static void Demos_UpdatePaging( void ) {
 static void Demos_InitAction( menutext_s *item, int id, const char *label,
                               int x ) {
     item->generic.type = MTYPE_PTEXT;
-    item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS;
+    item->generic.flags = QMF_CENTER_JUSTIFY | QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
     item->generic.id = id;
     item->generic.callback = Demos_MenuEvent;
     item->generic.x = x + DEMOS_ACTION_WIDTH / 2;
@@ -388,8 +386,18 @@ static void Demos_InitAction( menutext_s *item, int id, const char *label,
     item->generic.ownerdraw = Demos_DrawAction;
 }
 
+static void Demos_PlaceAction(menutext_s *item, int x, int y, int width) {
+    item->generic.x = x + width / 2;
+    item->generic.y = item->generic.top = y;
+    item->generic.left = x;
+    item->generic.right = x + width;
+    item->generic.bottom = y + 28;
+}
+
 static void Demos_MenuInit( void ) {
     memset( &s_demos, 0, sizeof( s_demos ) );
+    s_demos.infoSelection = -1;
+    trap_Cvar_VariableStringBuffer("ui_demoPlayerName", s_demos.playing, sizeof(s_demos.playing));
 
     s_demos.menu.draw = Demos_Draw;
     s_demos.menu.key = Demos_MenuKey;
@@ -397,7 +405,7 @@ static void Demos_MenuInit( void ) {
     s_demos.menu.wrapAround = qtrue;
 
     s_demos.list.generic.type = MTYPE_SCROLLLIST;
-    s_demos.list.generic.flags = QMF_PULSEIFFOCUS;
+    s_demos.list.generic.flags = QMF_PULSEIFFOCUS | QMF_NODEFAULTINIT;
     s_demos.list.generic.id = ID_LIST;
     s_demos.list.generic.callback = Demos_MenuEvent;
     s_demos.list.generic.x = DEMOS_ROW_X;
@@ -407,7 +415,7 @@ static void Demos_MenuInit( void ) {
     s_demos.list.generic.right = DEMOS_ROW_X + DEMOS_ROW_WIDTH;
     s_demos.list.generic.bottom = DEMOS_ROW_Y + DEMOS_VISIBLE_ITEMS *
                                   ( DEMOS_ROW_HEIGHT + DEMOS_ROW_GAP );
-    s_demos.list.width = 48;
+    s_demos.list.width = 18;
     s_demos.list.height = DEMOS_VISIBLE_ITEMS;
     s_demos.list.columns = 1;
     s_demos.list.itemnames = (const char **)s_demos.demolist;
@@ -430,6 +438,27 @@ static void Demos_MenuInit( void ) {
     Demos_InitAction( &s_demos.next, ID_RIGHT, "Next", DEMOS_NEXT_X );
     Demos_InitAction( &s_demos.go, ID_GO, "Play demo", DEMOS_GO_X );
 
+    Demos_InitAction(&s_demos.pause, ID_PAUSE, "Pause", 264);
+    Demos_InitAction(&s_demos.restart, ID_RESTART, "Restart", 376);
+    Demos_InitAction(&s_demos.stop, ID_STOP, "Stop", 488);
+    Demos_InitAction(&s_demos.rewind, ID_REWIND, "-10s", 306);
+    Demos_InitAction(&s_demos.forward, ID_FORWARD, "+10s", 454);
+    Demos_PlaceAction(&s_demos.restart, 232, 388, 68);
+    Demos_PlaceAction(&s_demos.rewind, 306, 388, 68);
+    Demos_PlaceAction(&s_demos.pause, 380, 388, 68);
+    Demos_PlaceAction(&s_demos.forward, 454, 388, 68);
+    Demos_PlaceAction(&s_demos.stop, 528, 388, 72);
+    Demos_PlaceAction(&s_demos.go, 40, 388, 176);
+    Demos_PlaceAction(&s_demos.previous, 48, 344, 48);
+    Demos_PlaceAction(&s_demos.next, 160, 344, 48);
+    s_demos.previous.string = "<";
+    s_demos.next.string = ">";
+    Demos_PlaceAction(&s_demos.back, 40, 424, 88);
+    Menu_AddItem(&s_demos.menu, &s_demos.rewind);
+    Menu_AddItem(&s_demos.menu, &s_demos.forward);
+    Menu_AddItem(&s_demos.menu, &s_demos.pause);
+    Menu_AddItem(&s_demos.menu, &s_demos.restart);
+    Menu_AddItem(&s_demos.menu, &s_demos.stop);
     Menu_AddItem( &s_demos.menu, &s_demos.list );
     Menu_AddItem( &s_demos.menu, &s_demos.back );
     Menu_AddItem( &s_demos.menu, &s_demos.previous );
@@ -448,5 +477,107 @@ void Demos_Cache( void ) {
 
 void UI_DemosMenu( void ) {
     Demos_MenuInit();
+    Frontend_SetBackButton( &s_demos.back.generic );
     UI_PushMenu( &s_demos.menu );
+}
+
+/* Naming is offered after the recording has safely been closed. Escape keeps
+ * the automatically assigned name, so dismissing this menu never loses a demo. */
+static struct {
+    menuframework_s menu;
+    menufield_s name;
+    menutext_s save, keep;
+    char original[MAX_QPATH];
+    char error[80];
+} demoSave;
+
+static void DemoSave_Event(void *ptr, int event) {
+    char clean[MAX_QPATH];
+    char target[MAX_QPATH];
+    const char *ext;
+    fileHandle_t file;
+    if (event != QM_ACTIVATED) return;
+    if (((menucommon_s *)ptr)->id == 1) { UI_PopMenu(); return; }
+    COM_SanitizeFileName(demoSave.name.field.buffer, clean, sizeof(clean));
+    if (!clean[0] || strcmp(clean, demoSave.name.field.buffer) || strchr(clean, '/') || strchr(clean, 92) || strstr(clean, "..")) {
+        Q_strncpyz(demoSave.error, "Please enter a valid filename", sizeof(demoSave.error));
+        return;
+    }
+    ext = strrchr(demoSave.original, '.');
+    Com_sprintf(target, sizeof(target), "%s%s", clean, ext ? ext : "");
+    if (strcmp(target, demoSave.original)) {
+        trap_FS_FOpenFile(va("demos/%s", target), &file, FS_READ);
+        if (file) {
+            trap_FS_FCloseFile(file);
+            Q_strncpyz(demoSave.error, "That filename already exists", sizeof(demoSave.error));
+            return;
+        }
+        trap_Cmd_ExecuteText(EXEC_APPEND, va("demosavename \"%s\"\n", clean));
+    }
+    UI_PopMenu();
+}
+
+static void DemoSave_DrawName(void *self) {
+    menufield_s *field = (menufield_s *)self;
+    char visible[33], before[33];
+    int cursor = field->field.cursor - field->field.scroll;
+    Q_strncpyz(visible, field->field.buffer + field->field.scroll, sizeof(visible));
+    Frontend_DrawText(132, 224, visible, UI_LEFT | UI_SMALLFONT, demosTextColor);
+    if (Menu_ItemAtCursor(&demoSave.menu) == field && (uis.realtime / 500) % 2 == 0) {
+        if (cursor < 0) cursor = 0;
+        if (cursor > 32) cursor = 32;
+        Q_strncpyz(before, visible, cursor + 1);
+        Frontend_DrawText(132 + Frontend_TextWidth(before, UI_SMALLFONT), 224,
+            "_", UI_LEFT | UI_SMALLFONT, demosTextColor);
+    }
+}
+
+static void DemoSave_Draw(void) {
+    vec4_t scrim = UI_FRONTEND_COLOR_SCRIM;
+    Frontend_DrawBackground(scrim);
+    Frontend_DrawPanel(96, 120, 448, 240, 1, UI_FRONTEND_STYLE_FRAME);
+    Frontend_DrawText(128, 144, "Save demo recording", UI_LEFT | UI_BIGFONT, demosTextColor);
+    Frontend_DrawText(128, 188, "Filename (without extension)", UI_LEFT | UI_SMALLFONT, demosMutedColor);
+    UI_FillRect(128, 220, 376, 24, colorBlack);
+    Frontend_DrawText(128, 266, demoSave.error, UI_LEFT | UI_SMALLFONT, colorRed);
+    Menu_Draw(&demoSave.menu);
+}
+
+void UI_DemoSaveMenu(void) {
+    memset(&demoSave, 0, sizeof(demoSave));
+    trap_Cvar_VariableStringBuffer("cl_lastDemoName", demoSave.original, sizeof(demoSave.original));
+    COM_StripExtension(demoSave.original, demoSave.name.field.buffer, sizeof(demoSave.name.field.buffer));
+    demoSave.menu.fullscreen = qtrue;
+    demoSave.menu.wrapAround = qtrue;
+    demoSave.menu.draw = DemoSave_Draw;
+    demoSave.name.generic.type = MTYPE_FIELD;
+    demoSave.name.generic.ownerdraw = DemoSave_DrawName;
+    demoSave.name.generic.flags = QMF_NODEFAULTINIT;
+    demoSave.name.generic.x = demoSave.name.generic.left = 128;
+    demoSave.name.generic.y = demoSave.name.generic.top = 220;
+    demoSave.name.generic.right = 504;
+    demoSave.name.generic.bottom = 244;
+    demoSave.name.field.widthInChars = 32;
+    demoSave.name.field.maxchars = 40;
+    demoSave.name.field.cursor = strlen(demoSave.name.field.buffer);
+    demoSave.save.generic.type = demoSave.keep.generic.type = MTYPE_PTEXT;
+    demoSave.save.generic.x = 180; demoSave.keep.generic.x = 390;
+    demoSave.save.generic.y = demoSave.keep.generic.y = 308;
+    demoSave.save.generic.callback = demoSave.keep.generic.callback = DemoSave_Event;
+    demoSave.keep.generic.id = 1;
+    demoSave.save.string = "Save"; demoSave.keep.string = "Keep name";
+    demoSave.save.color = demoSave.keep.color = demosTextColor;
+    demoSave.save.style = demoSave.keep.style = UI_CENTER | UI_SMALLFONT;
+    demoSave.save.generic.flags = demoSave.keep.generic.flags = QMF_NODEFAULTINIT | QMF_PULSEIFFOCUS;
+    demoSave.save.generic.left = 128;
+    demoSave.save.generic.right = 300;
+    demoSave.keep.generic.left = 324;
+    demoSave.keep.generic.right = 504;
+    demoSave.save.generic.top = demoSave.keep.generic.top = 302;
+    demoSave.save.generic.bottom = demoSave.keep.generic.bottom = 334;
+    demoSave.save.generic.ownerdraw = demoSave.keep.generic.ownerdraw = Demos_DrawAction;
+    Menu_AddItem(&demoSave.menu, &demoSave.name);
+    Menu_AddItem(&demoSave.menu, &demoSave.save);
+    Menu_AddItem(&demoSave.menu, &demoSave.keep);
+    UI_PushMenu(&demoSave.menu);
 }

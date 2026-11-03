@@ -240,6 +240,8 @@ static void UI_RemoveBotsMenu_Layout( int count ) {
 	removeBotsMenuInfo.back.generic.y = REMOVEBOTS_ACTION_Y + 4;
 	removeBotsMenuInfo.back.generic.flags |= QMF_NODEFAULTINIT;
 	removeBotsMenuInfo.back.generic.ownerdraw = UI_RemoveBotsMenu_DrawAction;
+    Frontend_SetBackButton(&removeBotsMenuInfo.back.generic);
+
 }
 
 static void UI_RemoveBotsMenu_Draw( void ) {
@@ -548,5 +550,6 @@ UI_RemoveBotsMenu
 */
 void UI_RemoveBotsMenu( void ) {
 	UI_RemoveBotsMenu_Init();
-	UI_PushMenu( &removeBotsMenuInfo.menu );
+	Frontend_SetBackButton( &removeBotsMenuInfo.back.generic );
+    UI_PushMenu( &removeBotsMenuInfo.menu );
 }

@@ -515,6 +515,7 @@ void UI_NetworkOptionsMenu( void ) {
 // END
 
 	UI_NetworkOptionsMenu_Init();
-	UI_PushMenu( &networkOptionsInfo.menu );
+	Frontend_SetBackButton( &networkOptionsInfo.back.generic );
+    UI_PushMenu( &networkOptionsInfo.menu );
 	Menu_SetCursorToItem( &networkOptionsInfo.menu, &networkOptionsInfo.rate );
 }

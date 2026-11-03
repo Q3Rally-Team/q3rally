@@ -67,8 +67,8 @@ logic remains unchanged while each screen is migrated separately.
 #define CONFIG_ACTION_Y         420
 #define CONFIG_ACTION_HEIGHT    UI_FRONTEND_BUTTON_HEIGHT
 #define CONFIG_ACTION_WIDTH     UI_FRONTEND_ACTION_WIDTH
-#define CONFIG_DEFAULTS_X       40
-#define CONFIG_BACK_X           ( CONFIG_FRAME_X + CONFIG_FRAME_WIDTH - 24 - CONFIG_ACTION_WIDTH )
+#define CONFIG_DEFAULTS_X       ( CONFIG_FRAME_X + CONFIG_FRAME_WIDTH - 24 - CONFIG_ACTION_WIDTH )
+#define CONFIG_BACK_X           UI_FRONTEND_BACK_X
 
 typedef struct {
     menuframework_s menu;
@@ -379,5 +379,6 @@ void UI_SetupMenu_Cache( void ) {
 
 void UI_SetupMenu( void ) {
     UI_SetupMenu_Init();
+    Frontend_SetBackButton( &setupMenuInfo.back.generic );
     UI_PushMenu( &setupMenuInfo.menu );
 }

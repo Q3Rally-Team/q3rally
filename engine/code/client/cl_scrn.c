@@ -341,9 +341,9 @@ void SCR_DrawDemoRecording( void ) {
 	}
 
 	pos = FS_FTell( clc.demofile );
-	sprintf( string, "RECORDING %s: %ik", clc.demoName, pos / 1024 );
+	sprintf( string, "REC %s (%ik)", clc.demoName, pos / 1024 );
 
-	SCR_DrawStringExt( 320 - strlen( string ) * 4, 20, 8, string, g_color_table[7], qtrue, qfalse );
+	SCR_DrawStringExt( 8, 456, 6, string, g_color_table[7], qtrue, qfalse );
 }
 
 
@@ -488,6 +488,16 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 			re.SetColor( NULL );
 		}
 	}
+
+    // Draw the archive first; the cgame renders only into its preview rectangle.
+    if ( clc.demoPlayer && uivm ) {
+        VM_Call( uivm, UI_REFRESH, cls.realtime );
+        if ( clc.state == CA_ACTIVE && !clc.demoSeeking ) CL_CGameRendering( stereoFrame );
+        // The preview is rendered after the menu and would cover its cursor.
+        VM_Call( uivm, UI_DRAW_CURSOR );
+        Con_DrawConsole();
+        return;
+    }
 
 	// if the menu is going to cover the entire screen, we
 	// don't need to render anything under it

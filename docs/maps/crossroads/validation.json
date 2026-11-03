@@ -1,0 +1,40 @@
+{
+  "map": "q3r_crossroads",
+  "version": "0.2",
+  "terrain_units": [
+    5376,
+    5376
+  ],
+  "collision_grid_units": [
+    32,
+    64
+  ],
+  "terrain_triangles": 37764,
+  "coarse_cells_64": 3114,
+  "background_triangles": 6720,
+  "height_min": 14.25,
+  "height_max": 334.75,
+  "max_slope_degrees": 25.7,
+  "road_max_slope_change_per_8u": 0.04,
+  "road_mean_slope_change_per_8u": 0.0025,
+  "water_level": 36,
+  "water_depth_x0": 7.25,
+  "water_depth_x1664": 7.5,
+  "water_depth_x1040": -3.72,
+  "water_depth_x1400": 17.19,
+  "ground_layer_vertices": {
+    "drygrass": 5734,
+    "pebbles": 1136,
+    "grass": 15048,
+    "concrete": 1764,
+    "gravel": 2639,
+    "dirt": 2240
+  },
+  "team_initial_starts": 8,
+  "team_respawns": 16,
+  "flags": 4,
+  "boulders": 36,
+  "start_car_clearance_checks": 28,
+  "brushes": 44925,
+  "status": "V0.2; travel times and match balance require driving tests"
+}

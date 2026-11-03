@@ -3219,9 +3219,9 @@ CG_DrawCenterString
 static void CG_DrawCenterString( void ) {
 	char	*start;
 	int		l;
-	int		x, y, w;
+	int y;
 #ifdef MISSIONPACK
-	int h;
+	int x, w, h;
 #endif
 	float	*color;
 
@@ -3244,7 +3244,7 @@ static void CG_DrawCenterString( void ) {
 
 	start = cg.centerPrint;
 
-	y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2;
+	y = cg.centerPrintY - cg.centerPrintLines * 20 / 2;
 
 	while ( 1 ) {
 		char linebuffer[1024];
@@ -3264,14 +3264,9 @@ static void CG_DrawCenterString( void ) {
 		CG_Text_Paint(x, y + h, 0.5, color, linebuffer, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
 		y += h + 6;
 #else
-		w = cg.centerPrintCharWidth * CG_DrawStrlen( linebuffer );
-
-		x = ( SCREEN_WIDTH - w ) / 2;
-
-		CG_DrawStringExt( x, y, linebuffer, color, qfalse, qtrue,
-			cg.centerPrintCharWidth, (int)(cg.centerPrintCharWidth * 1.5), 0 );
-
-		y += cg.centerPrintCharWidth * 1.5;
+        CG_DrawIngameString(SCREEN_WIDTH / 2, y, linebuffer,
+            UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 1.0f, color);
+        y += 20;
 #endif
 		while ( *start && ( *start != '\n' ) ) {
 			start++;
@@ -3530,17 +3525,17 @@ CG_DrawSpectator
 */
 static void CG_DrawSpectator(void) {
     CG_SetScreenPlacement(PLACE_CENTER, PLACE_BOTTOM);
-	CG_DrawBigString(320 - 9 * 8, 440, "SPECTATOR", 1.0F);
+	CG_DrawIngameString(320, 440, "Spectator", UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 1.0f, colorWhite);
 // Q3Rally Code Start - removed gametype
 /*
 	if ( cgs.gametype == GT_TOURNAMENT ) {
-		CG_DrawBigString(320 - 15 * 8, 460, "waiting to play", 1.0F);
+		CG_DrawIngameString(320, 460, "Waiting to play", UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.8f, colorWhite);
 	}
 	else
 */
 // Q3Rally Code END
 	if ( cgs.gametype >= GT_TEAM ) {
-		CG_DrawBigString(320 - 39 * 8, 460, "press ESC and use the START menu to play", 1.0F);
+		CG_DrawIngameString(320, 460, "Press ESC and use the START menu to play", UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.8f, colorWhite);
 	}
 }
 
@@ -3724,7 +3719,6 @@ CG_DrawFollow
 =============
 */
 static qboolean CG_DrawFollow( void ) {
-	float		x;
 	vec4_t		color;
 	const char	*name;
 
@@ -3745,13 +3739,12 @@ static qboolean CG_DrawFollow( void ) {
 	color[3] = 1;
 
 
-	CG_DrawBigString( 320 - 9 * BIGCHAR_WIDTH/2, 24, "following", 1.0F );
+	CG_DrawIngameString(320, 24, "Following", UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 0.8f, color);
 
 	name = cgs.clientinfo[ cg.snap->ps.clientNum ].name;
 
-	x = 0.5 * ( 640 - GIANT_WIDTH * CG_DrawStrlen( name ) );
 
-	CG_DrawStringExt( x, 40, name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
+	CG_DrawIngameString(320, 42, name, UI_CENTER | UI_SMALLFONT | UI_DROPSHADOW, 1.0f, color);
 
 	return qtrue;
 }
@@ -4134,6 +4127,9 @@ CG_DrawActive - Perform all drawing needed to completely fill the screen
 ========================================================================
 */
 void CG_DrawActive( stereoFrame_t stereoView ) {
+    char seeking[8];
+    trap_Cvar_VariableStringBuffer("cl_demoSeeking", seeking, sizeof(seeking));
+    if (cg.demoPlayback && atoi(seeking)) return;
 	// optionally draw the info screen instead
 	if ( !cg.snap ) {
 		CG_DrawInformation();
@@ -4141,6 +4137,10 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		return;
 	}
 
+    if ( cg.demoPlayback && CG_DemoPlayerActive() ) {
+        trap_R_RenderScene( &cg.refdef );
+        return;
+    }
 	// clear around the rendered view if sized down
 	CG_TileClear();
 

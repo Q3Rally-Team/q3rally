@@ -21,7 +21,7 @@ starts "8"
 laptime ""
 
 //CHECKPOINTS
-checkpoints "20"
+checkpoints ""
 
 //OBSERVER SPOTS
 observerspots "0"

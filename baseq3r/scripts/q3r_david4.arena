@@ -15,7 +15,7 @@ type "q3r_ctf"
 bots "Sam Dean Minori Vlad Kuro Emma Bee"
 
 //PLAYER STARTS
-starts "15"
+starts "16"
 
 //LAPTIME
 laptime ""

@@ -141,7 +141,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define VEHICLE_ROW_Y			( VEHICLE_CARD_Y + 30 )
 #define VEHICLE_ROW_H			44
 #define VEHICLE_ROW_GAP			4
-#define PLAYERSETTINGS_BACK_BUTTON_Y			440
+#define PLAYERSETTINGS_BACK_BUTTON_Y			UI_FRONTEND_BACK_Y
 
 #define PLAYERSETTINGS_MAX_ACHIEVEMENT_TIERS            BG_ACHIEVEMENT_MAX_TIERS
 #define PLAYERSETTINGS_ACHIEVEMENTS_PER_LINE            2
@@ -6080,14 +6080,16 @@ UI_PlayerSettingsMenu
 void UI_PlayerSettingsMenu( void ) {
 	PlayerSettings_MenuInit();
 	PlayerSettings_DiscardDroppedFile();
-	UI_PushMenu( &s_playersettings.menu );
+	Frontend_SetBackButton( &s_playersettings.back.generic );
+    UI_PushMenu( &s_playersettings.menu );
 }
 
 void UI_PlayerStatsMenu( void ) {
 	PlayerSettings_MenuInit();
 	PlayerSettings_DiscardDroppedFile();
 	PlayerSettings_SetTab( TAB_STATS );
-	UI_PushMenu( &s_playersettings.menu );
+	Frontend_SetBackButton( &s_playersettings.back.generic );
+    UI_PushMenu( &s_playersettings.menu );
 }
 
 

@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *****************************************************************************/
 
 #include "../qcommon/q_shared.h"
+#include "../qcommon/q_gametype.h"
 #include "l_utils.h"
 #include "l_libvar.h"
 #include "l_memory.h"
@@ -87,24 +88,6 @@ typedef struct campspot_s
 	float random;
 	struct campspot_s *next;
 } campspot_t;
-
-//FIXME: these are game specific
-typedef enum {
-	GT_FFA,				// free for all
-	GT_TOURNAMENT,		// one on one tournament
-	GT_SINGLE_PLAYER,	// single player tournament
-
-	//-- team games go after this --
-
-	GT_TEAM,			// team deathmatch
-	GT_CTF,				// capture the flag
-#ifdef MISSIONPACK
-	GT_1FCTF,
-	GT_OBELISK,
-	GT_HARVESTER,
-#endif
-	GT_MAX_GAME_TYPE
-} gametype_t;
 
 typedef struct levelitem_s
 {
@@ -537,6 +520,47 @@ void BotInitInfoEntities(void)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
+static qboolean BotIsCTFFlagItem(const char *classname)
+{
+	return classname &&
+		(!strcmp(classname, "team_CTF_redflag") ||
+		 !strcmp(classname, "team_CTF_blueflag") ||
+		 !strcmp(classname, "team_CTF_greenflag") ||
+		 !strcmp(classname, "team_CTF_yellowflag") ||
+		 !strcmp(classname, "team_CTF_neutralflag"));
+}
+
+static int BotItemGoalArea(const char *classname, vec3_t origin, vec3_t mins,
+						  vec3_t maxs, vec3_t goalorigin)
+{
+	int areanum;
+	vec3_t approachOrigin, approachDelta;
+	float approachDistance;
+	const float ctfFlagApproachRadius = 512.0f;
+
+	areanum = AAS_BestReachableArea(origin, mins, maxs, goalorigin);
+	if (areanum || !BotIsCTFFlagItem(classname))
+		return areanum;
+
+	areanum = AAS_NearestReachableArea(origin, ctfFlagApproachRadius, approachOrigin);
+	if (!areanum) {
+		botimport.Print(PRT_MESSAGE,
+						"%s has no nearby reachable AAS approach within %.0f units\n",
+						classname, ctfFlagApproachRadius);
+		return 0;
+	}
+
+	// Keep the actual flag position as the movement target. The nearby AAS area
+	// supplies the route; the bot must still drive into the flag's pickup volume.
+	VectorCopy(origin, goalorigin);
+	VectorSubtract(approachOrigin, origin, approachDelta);
+	approachDistance = VectorLength(approachDelta);
+	botimport.Print(PRT_MESSAGE,
+					"%s using nearby AAS approach area %d (%.1f units) for bot goal\n",
+					classname, areanum, approachDistance);
+	return areanum;
+}
+
 void BotInitLevelItems(void)
 {
 	int i, spawnflags, value;
@@ -658,7 +682,7 @@ void BotInitLevelItems(void)
 		else
 		{
 			//get the item goal area and goal origin
-			li->goalareanum = AAS_BestReachableArea(origin,
+			li->goalareanum = BotItemGoalArea(classname, origin,
 							ic->iteminfo[i].mins, ic->iteminfo[i].maxs,
 							li->goalorigin);
 			if (!li->goalareanum)
@@ -1079,9 +1103,9 @@ void BotUpdateEntityItems(void)
 					{
 						VectorCopy(entinfo.origin, li->origin);
 						//also update the goal area number
-						li->goalareanum = AAS_BestReachableArea(li->origin,
-										ic->iteminfo[li->iteminfo].mins, ic->iteminfo[li->iteminfo].maxs,
-										li->goalorigin);
+						li->goalareanum = BotItemGoalArea(ic->iteminfo[li->iteminfo].classname,
+										li->origin, ic->iteminfo[li->iteminfo].mins,
+										ic->iteminfo[li->iteminfo].maxs, li->goalorigin);
 					} //end if
 					break;
 				} //end else
@@ -1120,9 +1144,9 @@ void BotUpdateEntityItems(void)
 						//update the level item origin
 						VectorCopy(entinfo.origin, li->origin);
 						//also update the goal area number
-						li->goalareanum = AAS_BestReachableArea(li->origin,
-										ic->iteminfo[li->iteminfo].mins, ic->iteminfo[li->iteminfo].maxs,
-										li->goalorigin);
+						li->goalareanum = BotItemGoalArea(ic->iteminfo[li->iteminfo].classname,
+										li->origin, ic->iteminfo[li->iteminfo].mins,
+										ic->iteminfo[li->iteminfo].maxs, li->goalorigin);
 					} //end if
 #ifdef DEBUG
 					Log_Write("linked item %s to an entity", ic->iteminfo[li->iteminfo].classname);
@@ -1155,9 +1179,9 @@ void BotUpdateEntityItems(void)
 		//origin of the item
 		VectorCopy(entinfo.origin, li->origin);
 		//get the item goal area and goal origin
-		li->goalareanum = AAS_BestReachableArea(li->origin,
-									ic->iteminfo[i].mins, ic->iteminfo[i].maxs,
-									li->goalorigin);
+		li->goalareanum = BotItemGoalArea(ic->iteminfo[i].classname, li->origin,
+								ic->iteminfo[i].mins, ic->iteminfo[i].maxs,
+								li->goalorigin);
 		//never go for items dropped into jumppads
 		if (AAS_AreaJumpPad(li->goalareanum))
 		{
