@@ -221,6 +221,9 @@ typedef struct {
 	qboolean	spDemoRecording;
 	qboolean	demorecording;
 	qboolean	demoplaying;
+	qboolean	demoPlayer; // demo browser owns rendering and input
+    int demoStartTime, demoSeekTarget;
+    qboolean demoSeeking, demoSeekPaused;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	qboolean	firstDemoFrameSkipped;
 	fileHandle_t	demofile;

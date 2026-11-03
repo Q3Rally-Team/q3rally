@@ -290,12 +290,6 @@ vmCvar_t	cg_rearViewRenderLevel;
 vmCvar_t	cg_mainViewRenderLevel;
 vmCvar_t	cg_debugpredict;
 vmCvar_t	cg_kothRespawnWave;
-vmCvar_t	cg_kothRingScale;
-vmCvar_t	cg_kothBeamHalfWidth;
-vmCvar_t	cg_kothRingAlphaBase;
-vmCvar_t	cg_kothRingAlphaPulse;
-vmCvar_t	cg_kothBeamAlphaBase;
-vmCvar_t	cg_kothBeamAlphaPulse;
 
 vmCvar_t	cg_engineSounds;
 vmCvar_t	cg_ghostPlayback;
@@ -488,12 +482,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_blood, "com_blood", "1", CVAR_ARCHIVE },
 	{ &cg_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO },
 	{ &cg_kothRespawnWave, "g_kothRespawnWave", "5000", CVAR_SERVERINFO },
-	{ &cg_kothRingScale, "cg_kothRingScale", "1.0", CVAR_ARCHIVE },
-	{ &cg_kothBeamHalfWidth, "cg_kothBeamHalfWidth", "18.0", CVAR_ARCHIVE },
-	{ &cg_kothRingAlphaBase, "cg_kothRingAlphaBase", "80", CVAR_ARCHIVE },
-	{ &cg_kothRingAlphaPulse, "cg_kothRingAlphaPulse", "120", CVAR_ARCHIVE },
-	{ &cg_kothBeamAlphaBase, "cg_kothBeamAlphaBase", "55", CVAR_ARCHIVE },
-	{ &cg_kothBeamAlphaPulse, "cg_kothBeamAlphaPulse", "110", CVAR_ARCHIVE },
 #ifdef MISSIONPACK
 	{ &cg_redTeamName, "g_redteam", DEFAULT_REDTEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
 	{ &cg_blueTeamName, "g_blueteam", DEFAULT_BLUETEAM_NAME, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO },
@@ -1166,12 +1154,12 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.tracerShader = trap_R_RegisterShader( "gfx/misc/tracer" );
 	cgs.media.selectShader = trap_R_RegisterShader( "gfx/2d/select" );
 	cgs.media.select2Shader = trap_R_RegisterShader( "gfx/2d/select2" );
-	/* KOTH hill indicator textures (loaded globally for main world/minimap passes) */
-	cgs.media.kothHillMarkerNeutralShader = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker.png" );
-	cgs.media.kothHillMarkerRedShader     = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker_red.png" );
-	cgs.media.kothHillMarkerBlueShader    = trap_R_RegisterShaderNoMip( "gfx/2d/hillmarker_blue.png" );
-	cgs.media.kothBeamShader              = trap_R_RegisterShader( "textures/fx/koth_beam" );
-	cgs.media.kothRingShader              = trap_R_RegisterShader( "textures/fx/koth_ring" );
+	/* KOTH hill indicator: crown and border bollards (main world and minimap passes) */
+	if ( cgs.gametype == GT_KOTH || cg_buildScript.integer ) {
+		cgs.media.kothCrownModel = trap_R_RegisterModel( "models/mapobjects/koth/crown.md3" );
+		cgs.media.kothPostModel  = trap_R_RegisterModel( "models/mapobjects/koth/post.md3" );
+		cgs.media.kothGlowShader = trap_R_RegisterShader( "gfx/misc/koth_glow" );
+	}
 	cgs.media.medalKothCapture            = trap_R_RegisterShaderNoMip( "medal_koth_capture" );
 	cgs.media.medalKothDefend             = trap_R_RegisterShaderNoMip( "medal_koth_defend" );
 
@@ -1215,6 +1203,9 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.ghostShader = trap_R_RegisterShader("gfx/ghost/vehicle" );
 	CG_RacingLine_Register();
 	cgs.media.regenShader = trap_R_RegisterShader("powerups/regen" );
+	// Q3Rally: pennant on the cars that carry a flag (any team mode)
+	cgs.media.pennantShader = trap_R_RegisterShader( "gfx/misc/q3r_pennant" );
+
 
 #ifdef MISSIONPACK
 	if ( cgs.gametype == GT_HARVESTER || cg_buildScript.integer ) {
@@ -2611,3 +2602,9 @@ void CG_MouseEvent(int x, int y) {
 	CG_HUDOptions_MouseEvent( cgs.cursorX, cgs.cursorY, qfalse );
 }
 #endif
+
+qboolean CG_DemoPlayerActive( void ) {
+    char value[16];
+    trap_Cvar_VariableStringBuffer( "cl_demoPlayer", value, sizeof(value) );
+    return atoi(value) != 0;
+}

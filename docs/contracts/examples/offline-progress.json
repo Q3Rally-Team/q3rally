@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "profile.progress-batch",
+  "requestId": "44444444-4444-4444-8444-444444444444",
+  "profileId": "22222222-2222-4222-8222-222222222222",
+  "deviceId": "33333333-3333-4333-8333-333333333333",
+  "careerEpoch": "v0.8-test-1",
+  "scoreRulesId": "native-career-reference-v0.8",
+  "baseProfileRevision": 10,
+  "matches": [
+    {
+      "matchId": "example-match-01",
+      "claimedSource": "offline",
+      "gameRelease": "v0.8",
+      "contentDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mode": "GT_DEATHMATCH",
+      "startedAt": "2026-11-02T18:00:00Z",
+      "durationMs": 120000,
+      "events": [
+        {
+          "ordinal": 0,
+          "offsetMs": 5000,
+          "type": "native.frag",
+          "facts": {}
+        }
+      ],
+      "factsDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "completion": "abandoned"
+    }
+  ]
+}

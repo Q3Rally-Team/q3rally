@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_ctf4_03"
+
+//IN-GAME MAP NAME
+longname "Industrial Crossfire"
+
+//AUTHOR OF THE MAP
+author "P3rlE"
+
+//GAME TYPE SUPPORTS
+type "q3r_ctf4"
+
+//CUSTOM BOTS
+//bots ""
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime ""
+
+//CHECKPOINTS
+checkpoints ""
+
+//OBSERVER SPOTS
+observerspots ""
+
+//WEAPONS
+weapons "SG,GL,RL,RG,PG"
+
+//POWERUPS
+powerups "5"
+
+//REVERSABLE
+reversable ""
+
+//TRACK LENGTHS
+tracklengths ""
+
+//BOT SUPPORTS
+botsupport "Bad"
+
+//TEAMS
+teams "4"
+}

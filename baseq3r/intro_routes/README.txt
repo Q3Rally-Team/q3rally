@@ -1,5 +1,11 @@
-Packaged racing intro camera routes
-===================================
+Legacy packaged racing intro camera routes (unused)
+===================================================
+
+Current builds derive race-intro camera movement from `maps/<map>.bpd`.
+This directory is retained for older builds only; the game no longer reads
+these files. A map without a valid BPD route has no race intro.
+
+The documentation below describes the legacy format.
 
 The server selects one file for the active map and race variant:
 
@@ -18,12 +24,12 @@ a normalized preview time followed by origin and angles:
   frames <count>
   <time-ms> <x> <y> <z> <pitch> <yaw> <roll>
 
-Frame times must increase from 0 to the route duration. The server measures
-the lap length from the map checkpoints, then retimes each route at 30 ms per
-meter, clamped to 10-30 seconds. The `g_trackLength` variant selects a route
-file; it does not determine the preview duration. The camera collision-traces
-its chase position. A race intro is shown only when a matching packaged route
-is available.
-Packaged route heights are lowered by 24 units from the source Ghost route.
+Frame times must increase from 0 to the route duration. The old server measured
+the lap length from the map checkpoints, then retimed each route at 30 ms per
+meter, clamped to 10-30 seconds. The `g_trackLength` variant selected a route
+file; it did not determine the preview duration. The camera collision-traced
+its chase position. These details apply only to the legacy format above;
+current builds derive the camera from the active BPD.
+Packaged route heights were lowered by 24 units from the source Ghost route.
 
 No A-to-B route variants are included for the v0.8 release yet.

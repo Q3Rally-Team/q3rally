@@ -2060,10 +2060,9 @@ static sfxHandle_t Controls_ExitConfirm_MenuKey( int key )
 
 static void Controls_ExitConfirm_Draw( void )
 {
-	vec4_t compactBoxColor = { 0.0f, 0.0f, 0.0f, 0.50f };
-
-	UI_FillRect( 148, 176, 344, 156, compactBoxColor );
-	UI_DrawString( SCREEN_WIDTH / 2, 202, "Save changes?", UI_CENTER|UI_SMALLFONT, text_color_normal );
+    vec4_t text = UI_FRONTEND_COLOR_TEXT;
+    Frontend_DrawPanel(148, 166, 344, 190, 1.0f, UI_FRONTEND_STYLE_FRAME);
+    Frontend_DrawText(320, 190, "Save changes?", UI_CENTER | UI_BIGFONT, text);
 
 	Menu_Draw( &s_controlsExitConfirm.menu );
 }
@@ -2107,6 +2106,23 @@ static void Controls_ExitConfirmMenu( void )
 	s_controlsExitConfirm.cancel.string = "Cancel";
 	s_controlsExitConfirm.cancel.style = UI_CENTER|UI_SMALLFONT;
 	s_controlsExitConfirm.cancel.color = text_color_normal;
+
+    {
+        menutext_s *buttons[3];
+        int i;
+        buttons[0] = &s_controlsExitConfirm.save;
+        buttons[1] = &s_controlsExitConfirm.discard;
+        buttons[2] = &s_controlsExitConfirm.cancel;
+        for (i = 0; i < 3; i++) {
+            menutext_s *button = buttons[i];
+            button->generic.flags |= QMF_NODEFAULTINIT;
+            button->generic.x = button->generic.left = 220;
+            button->generic.y = button->generic.top = 232 + i * 36;
+            button->generic.right = 420;
+            button->generic.bottom = button->generic.top + 30;
+            button->generic.ownerdraw = Controls_DrawAction;
+        }
+    }
 
 	Menu_AddItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.save );
 	Menu_AddItem( &s_controlsExitConfirm.menu, &s_controlsExitConfirm.discard );
@@ -3387,5 +3403,6 @@ UI_ControlsMenu
 */
 void UI_ControlsMenu( void ) {
 	Controls_MenuInit();
-	UI_PushMenu( &s_controls.menu );
+	Frontend_SetBackButton( &s_controls.back.generic );
+    UI_PushMenu( &s_controls.menu );
 }

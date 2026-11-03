@@ -1156,5 +1156,6 @@ void UI_Rally_DownloadsMenu( void ) {
 
     trap_Key_SetCatcher( KEYCATCH_UI );
 
+    Frontend_SetBackButton( &s_dl.back.generic );
     UI_PushMenu( &s_dl.menu );
 }

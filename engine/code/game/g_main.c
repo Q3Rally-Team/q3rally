@@ -1,3 +1,4 @@
+#include "../qcommon/profile_format.h"
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
@@ -139,6 +140,7 @@ vmCvar_t	g_trackLength;
 vmCvar_t	g_developer;
 vmCvar_t	g_rallyReadyCheck;
 vmCvar_t	g_derbyMinPlayers;
+vmCvar_t	g_rallyIntroEnabled;
 vmCvar_t	g_rallyIntroCamClients;
 vmCvar_t	g_debugIntroCam;
 vmCvar_t	g_rallyIgnoreBots;
@@ -146,6 +148,7 @@ vmCvar_t	g_ghostUpload;
 vmCvar_t	g_ghostDownload;
 vmCvar_t	g_aiDmnetDebugExport;
 vmCvar_t	g_aiDmnetDebugExportPath;
+vmCvar_t	g_botRaceUseTurbo;
 vmCvar_t	g_ladderMatchSeq;
 
 vmCvar_t	g_damageScale;
@@ -323,6 +326,7 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_developer, "developer", "0", 0, 0, qfalse },
 { &g_rallyReadyCheck, "g_rallyReadyCheck", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_derbyMinPlayers, "g_derbyMinPlayers", "2", CVAR_ARCHIVE, 0, qfalse },
+{ &g_rallyIntroEnabled, "g_rallyIntroEnabled", "1", CVAR_ARCHIVE, 0, qfalse },
 // 0 = spectators/race observers only, 1 = all human clients before race start
 { &g_rallyIntroCamClients, "g_rallyIntroCamClients", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_debugIntroCam, "g_debugIntroCam", "0", CVAR_ARCHIVE, 0, qfalse },
@@ -331,6 +335,7 @@ static cvarTable_t		gameCvarTable[] = {
 { &g_ghostDownload, "g_ghostDownload", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_aiDmnetDebugExport, "g_aiDmnetDebugExport", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_aiDmnetDebugExportPath, "g_aiDmnetDebugExportPath", "logs/ai_dmnet_debug.csv", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
+{ &g_botRaceUseTurbo, "g_botRaceUseTurbo", "1", CVAR_ARCHIVE, 0, qfalse },
 { &g_ladderMatchSeq, "sv_ladderMatchSeq", "0", CVAR_ARCHIVE | CVAR_NORESTART, 0, qfalse },
 { &g_humanplayers, "g_humanplayers", "0", CVAR_ROM | CVAR_NORESTART, 0, qfalse },
 { &g_fuelKillReward, "g_fuelKillReward", "10", CVAR_ARCHIVE, 0, qfalse },
@@ -1231,7 +1236,7 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                 Com_sprintf( profilePath, sizeof( profilePath ), "profiles/%s.json", profileName );
                                 len = trap_FS_FOpenFile( profilePath, &fh, FS_READ );
                                 if ( len > 0 ) {
-                                        static char profileBuf[8192];
+                                        static char profileBuf[PROFILE_JSON_MAX];
                                         const char *statsSection;
                                         const char *infoSection;
                                         const char *statsBuf;
@@ -1241,8 +1246,11 @@ static qboolean G_LadderPopulatePlayer( ladderMatchPayload_t *payload, int clien
                                         profileBuf[len] = '\0';
                                         trap_FS_FCloseFile( fh );
 
+                                        if ( Profile_FormatClassify(profileBuf) != PROFILE_FILE_VERSION ) {
+                                            profileBuf[0] = 0;
+                                        }
                                         statsSection = strstr( profileBuf, "\"stats\"" );
-                                        infoSection  = strstr( profileBuf, "\"info\"" );
+                                        infoSection  = strstr( profileBuf, "\"progress\"" );
                                         statsBuf = profileBuf;
                                         infoBuf  = profileBuf;
                                         if ( statsSection ) {
@@ -2415,6 +2423,7 @@ If a new client connects, this will be called after the spawn function.
 ========================
 */
 void MoveClientToIntermission( gentity_t *ent ) {
+    int i;
 	// take out of follow mode if needed
 // STONELANCE
 //	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
@@ -2436,6 +2445,14 @@ void MoveClientToIntermission( gentity_t *ent ) {
 	ent->client->ps.damageYaw = ANGLE2BYTE(ent->client->ps.damageAngles[YAW]);
 // END
 	ent->client->ps.pm_type = PM_INTERMISSION;
+    ent->client->ps.pm_flags &= ~(PMF_FOLLOW | PMF_OBSERVE);
+    VectorClear(ent->client->ps.velocity);
+    VectorClear(ent->client->ps.angularMomentum);
+    if (ent->frontBounds) trap_UnlinkEntity(ent->frontBounds);
+    if (ent->rearBounds) trap_UnlinkEntity(ent->rearBounds);
+    for (i = 0; i < 4; i++) {
+        if (ent->client->carPoints[i]) trap_UnlinkEntity(ent->client->carPoints[i]);
+    }
 
 	// clean up powerup info
 	memset( ent->client->ps.powerups, 0, sizeof(ent->client->ps.powerups) );

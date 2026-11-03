@@ -75,3 +75,103 @@ textures/tech1soc_floor/grate2b_trans
 		rgbGen identity
 	}
 }
+
+// ------------------------------------------------------------
+// Pool in the middle of the map. The top is reflective water
+// (OpenGL2 with r_water 1: q3r_water, see liquids.shader); with
+// OpenGL1 or r_water 0 it falls back to the stages below, the old
+// calm_poollight look. No deformVertexes or tesssize, the mirror
+// needs a flat surface. The other faces of the pool brushes keep
+// the old shader (pool_side), otherwise a wall of the pool could
+// become the mirror plane.
+// ------------------------------------------------------------
+
+textures/q3r_ctf_04/pool
+{
+	qer_editorimage textures/liquids/pool3d_4b.tga
+	qer_trans .75
+	q3map_globaltexture
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm SURF_WET
+	surfaceparm nolightmap
+	q3map_surfacelight 50
+	cull disable
+	q3r_water textures/q3r_liquids/water_normal.tga 192 0.025 0.02
+	q3r_waterColor 0.04 0.13 0.11 0.45
+	q3r_waterFresnel 0.08 4
+	q3r_waterSpecular 1.2
+	{
+		map textures/liquids/pool3d_5c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .5 .5
+		tcmod transform 1.5 0 1.5 1 1 2
+		tcmod scroll -.05 .001
+	}
+	{
+		map textures/liquids/pool3d_6c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .5 .5
+		tcmod transform 0 1.5 1 1.5 2 1
+		tcmod scroll .025 -.001
+	}
+	{
+		map textures/liquids/pool3d_3c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .25 .5
+		tcmod scroll .001 .025
+	}
+	{
+		map textures/liquids/pool3d_4b2.tga
+		blendfunc add
+		tcmod scale .125 .125
+		rgbgen identity
+	}
+}
+
+textures/q3r_ctf_04/pool_side
+{
+	qer_editorimage textures/liquids/pool3d_4b.tga
+	qer_trans .75
+	q3map_globaltexture
+	surfaceparm trans
+	surfaceparm nonsolid
+	surfaceparm SURF_WET
+	surfaceparm nolightmap
+	q3map_surfacelight 50
+	cull disable
+	tesssize 64
+	deformVertexes wave 100 sin 1 1 1 .1
+	{
+		map textures/liquids/pool3d_5c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .5 .5
+		tcmod transform 1.5 0 1.5 1 1 2
+		tcmod scroll -.05 .001
+	}
+	{
+		map textures/liquids/pool3d_6c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .5 .5
+		tcmod transform 0 1.5 1 1.5 2 1
+		tcmod scroll .025 -.001
+	}
+	{
+		map textures/liquids/pool3d_3c2.tga
+		blendFunc GL_dst_color GL_zero
+		rgbgen identity
+		tcmod scale .25 .5
+		tcmod scroll .001 .025
+	}
+	{
+		map textures/liquids/pool3d_4b2.tga
+		blendfunc add
+		tcmod scale .125 .125
+		rgbgen identity
+	}
+}

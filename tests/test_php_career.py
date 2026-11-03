@@ -70,7 +70,7 @@ def _request(url, payload=None):
 
 def _autoball_match(match_id, seq, red_goals, blue_goals, local_snapshot, local_goals, remote_goals):
     return {
-        "matchId": match_id, "serverMatchSeq": seq, "mode": "GT_AUTOBALL", "map": "q3r_autoball_test",
+        "matchId": match_id, "serverMatchSeq": seq, "mode": "GT_AUTOBALL", "map": "q3r_sundown",
         "server": {"name": "Online Server", "dedicated": True},
         "teams": [{"team": "red", "score": red_goals}, {"team": "blue", "score": blue_goals}],
         "players": [

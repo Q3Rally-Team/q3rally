@@ -672,6 +672,7 @@ void	FS_FCloseFile( fileHandle_t f );
 
 long	FS_ReadFileDir(const char *qpath, void *searchPath, qboolean unpure, void **buffer);
 long	FS_ReadFile(const char *qpath, void **buffer);
+long FS_ReadFileWithHomepathFallback( const char *qpath, void **buffer );
 // returns the length of the file
 // a null buffer will just return the file length without loading
 // as a quick check for existence. -1 length == not present
@@ -808,7 +809,8 @@ typedef enum {
 	SE_CHAR,		// evValue is an ascii char
 	SE_MOUSE,		// evValue and evValue2 are relative signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
-	SE_CONSOLE		// evPtr is a char*
+	SE_CONSOLE,		// evPtr is a char*
+    SE_MOUSE_ABSOLUTE // menu cursor position in physical window pixels
 } sysEventType_t;
 
 typedef struct {
@@ -992,6 +994,7 @@ void CL_InitKeyCommands( void );
 
 void CL_Init( void );
 void CL_Disconnect( qboolean showMainMenu );
+void CL_DemoErrorMenu( const char *message );
 void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit);
 void CL_Frame( int msec );
 qboolean CL_GameCommand( void );
@@ -1001,6 +1004,7 @@ void CL_CharEvent( int key );
 // char events are for field typing, not game control
 
 void CL_MouseEvent( int dx, int dy, int time );
+void CL_MousePositionEvent( int x, int y );
 
 void CL_JoystickEvent( int axis, int value, int time );
 

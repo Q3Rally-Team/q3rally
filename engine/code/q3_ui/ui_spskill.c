@@ -30,6 +30,7 @@ SINGLE PLAYER SKILL MENU
 */
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_FRAME					"menu/art/cut_frame"
@@ -325,6 +326,7 @@ static void UI_SPSkillMenu_Init( void ) {
 void UI_SPSkillMenu( const char *arenaInfo ) {
 	UI_SPSkillMenu_Init();
 	skillMenuInfo.arenaInfo = arenaInfo;
-	UI_PushMenu( &skillMenuInfo.menu );
+	Frontend_SetBackButton( &skillMenuInfo.item_back.generic );
+    UI_PushMenu( &skillMenuInfo.menu );
 	Menu_SetCursorToItem( &skillMenuInfo.menu, &skillMenuInfo.item_fight );
 }

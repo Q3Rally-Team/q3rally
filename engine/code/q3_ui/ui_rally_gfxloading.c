@@ -88,7 +88,7 @@ release gets a card with "Update" / "Skip" in place of the drive tip.
 #define GFX_CAR_W_INSET        120
 #define GFX_CAR_H              228
 #define GFX_CAR_SLIDE           24
-#define GFX_CAR_YAW           204.0f
+#define GFX_CAR_YAW           135.0f
 
 #define GFX_HEADER_Y            52
 #define GFX_STAGE_CODE_Y       334

@@ -1,0 +1,49 @@
+{
+  "result": "pass",
+  "validated_at": "2026-10-24T01:08:04.7145714+02:00",
+  "map": "q3r_crossroads",
+  "package": {
+    "path": "dist/q3r_crossroads_v0.1.pk3",
+    "bytes": 2768244,
+    "sha256": "f7a0487191364cde279ba6e8a3ee8ee10a587f0779d01fe680fa6685c75e8f6b",
+    "entries": 24
+  },
+  "test": {
+    "kind": "dedicated package-only smoke",
+    "server": "D:/q3rally_r628_mapping/q3rally-server.x86_64.exe",
+    "game_build": "Q3Rally v0.7d win_mingw64-x86_64 Oct 23 2026",
+    "gametype": 20,
+    "endpoint": "127.0.0.1:27979",
+    "exit_code": 0,
+    "map_runtime_seconds": 4,
+    "basepath": "dist/crossroads-work/package-test",
+    "homepath": "dist/crossroads-work/package-home",
+    "supplemental_base_assets": "D:/q3rally_r628_mapping",
+    "gui_opened": false,
+    "ladder_enabled": false
+  },
+  "checks": {
+    "package_only_basepath": true,
+    "bsp_loaded_from_pk3": true,
+    "ctf4_gametype_20": true,
+    "all_four_flags": true,
+    "team_player_spawns": 8,
+    "team_respawn_points": 16,
+    "item_startsolid_errors": 0,
+    "unknown_entity_errors": 0,
+    "missing_runtime_asset_errors": 0,
+    "server_shutdown_clean": true
+  },
+  "logs": {
+    "console": "dist/crossroads-work/package-home/baseq3r/qconsole.log",
+    "game": "dist/crossroads-work/package-home/baseq3r/games.log",
+    "stdout": "dist/crossroads-work/package-server-stdout.log",
+    "stderr": "dist/crossroads-work/package-server-stderr.log"
+  },
+  "benign_messages": [
+    "Optional vm/qagame.map debug symbols are absent.",
+    "Existing g_gametype default discrepancy (0 versus 1); active value is 20.",
+    "No intro Ghost route; countdown fallback."
+  ],
+  "scope": "Server validates BSP/entity/item initialization; texture/render validation is a separate client check."
+}

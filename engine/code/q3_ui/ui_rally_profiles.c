@@ -1,5 +1,6 @@
 #define PROFILE_SHARED_IMPLEMENTATION
 #include "../game/profile_shared.h"
+#include "../qcommon/profile_format.h"
 #include "ui_local.h"
 #include "ui_rally_frontend.h"
 
@@ -1019,8 +1020,9 @@ void UI_EnforceSkinLocks( void ) {
 qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile_stats_t *outStats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    static char buffer[8192];
+    static char buffer[PROFILE_JSON_MAX];
     int length;
+    int format;
 
     if ( !name || !name[0] ) {
         return qfalse;
@@ -1036,15 +1038,19 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
     }
 
     if ( length >= (int)sizeof( buffer ) ) {
-        length = sizeof( buffer ) - 1;
+        trap_FS_FCloseFile( file );
+        return qfalse;
     }
 
     trap_FS_Read( buffer, length, file );
     buffer[length] = '\0';
     trap_FS_FCloseFile( file );
+    format = Profile_FormatClassify( buffer );
+    if ( format < 0 ) return qfalse;
 
         if ( outStats ) {
         Com_Memset( outStats, 0, sizeof( *outStats ) );
+        if ( format == PROFILE_FILE_VERSION ) {
         /* ── General ──────────────────────────────────────────────────── */
             outStats->distanceKm          = UI_Profile_ParseDouble( buffer, "distanceKm", 0.0 );
             outStats->fuelUsed            = UI_Profile_ParseDouble( buffer, "fuelUsed", 0.0 );
@@ -1135,6 +1141,7 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
             outStats->autoballCompleted   = UI_Profile_ParseInt( buffer, "autoballCompleted", 0 );
             outStats->autoballGoals       = UI_Profile_ParseInt( buffer, "autoballGoals", 0 );
         }
+        }
 
     if ( outInfo ) {
         Com_Memset( outInfo, 0, sizeof( *outInfo ) );
@@ -1145,28 +1152,36 @@ qboolean UI_Profile_ReadData( const char *name, profile_info_t *outInfo, profile
         UI_Profile_ParseString( buffer, "avatar", outInfo->avatar, sizeof( outInfo->avatar ), "" );
         UI_Profile_MigrateAvatar( outInfo->avatar, sizeof( outInfo->avatar ) );
         UI_Profile_ParseString( buffer, "country", outInfo->country, sizeof( outInfo->country ), "" );
-        outInfo->currentRank = UI_Profile_ParseInt( buffer, "currentRank", 0 );
-        outInfo->highestRank = UI_Profile_ParseInt( buffer, "highestRank", 0 );
+        outInfo->currentRank = format == PROFILE_FILE_VERSION ? UI_Profile_ParseInt( buffer, "currentRank", 0 ) : 0;
+        outInfo->highestRank = format == PROFILE_FILE_VERSION ? UI_Profile_ParseInt( buffer, "highestRank", 0 ) : 0;
         UI_Profile_ParseFavoriteCars( buffer, outInfo );
     }
 
+    if ( format == 0 && outInfo && outStats && UI_Profile_IsValidUUID( outInfo->uuid ) ) {
+        if ( !UI_Profile_WriteFile( name, outInfo, outStats ) ) return qfalse;
+        trap_Print( va( "Profile '%s': identity retained, old progress reset for v0.8.\n", name ) );
+    }
     return qtrue;
 }
 
 qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, const profile_stats_t *stats ) {
     fileHandle_t file;
     char path[MAX_QPATH];
-    char buffer[4096];
+    static char buffer[PROFILE_JSON_MAX];
+    static char existing[PROFILE_JSON_MAX];
+    static char vehicles[PROFILE_JSON_MAX];
+    int existingLength;
     char gender[PROFILE_MAX_GENDER * 2];
     char birthDate[PROFILE_MAX_BIRTHDATE * 2];
     char avatar[PROFILE_MAX_AVATAR * 2];
     char country[PROFILE_MAX_COUNTRY * 2];
-    char favoriteCarsJson[1024];
+    char favoriteCarsJson[4096];
     char favoriteField[PROFILE_MAX_FAVORITE_FIELD * 2];
     char uuid[PROFILE_MAX_UUID];
     profile_stats_t zeroStats;
     profile_info_t emptyInfo;
     int length;
+    int written;
     int favoriteIndex;
 
     if ( !name || !name[0] ) {
@@ -1174,6 +1189,17 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
     }
 
     Com_sprintf( path, sizeof( path ), "profiles/%s.json", name );
+    Q_strncpyz( vehicles, "[]", sizeof( vehicles ) );
+    existingLength = trap_FS_FOpenFile( path, &file, FS_READ );
+    if ( existingLength > 0 ) {
+        if ( existingLength >= sizeof(existing) ) { trap_FS_FCloseFile(file); return qfalse; }
+        trap_FS_Read(existing, existingLength, file); existing[existingLength]=0;
+        trap_FS_FCloseFile(file);
+        if ( Profile_FormatClassify(existing) < 0 ) return qfalse;
+        if ( Profile_FormatClassify(existing) == PROFILE_FILE_VERSION &&
+             !Profile_FormatVehicles(existing,vehicles,sizeof(vehicles)) ) return qfalse;
+    } else if ( file ) trap_FS_FCloseFile(file);
+
 
     if ( !info ) {
         Com_Memset( &emptyInfo, 0, sizeof( emptyInfo ) );
@@ -1201,27 +1227,39 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
     UI_Profile_FormatJsonString( country, sizeof( country ), info->country );
 
     length = 0;
-    length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "[\n" );
+    written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "[\n" );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
     for ( favoriteIndex = 0; favoriteIndex < PROFILE_MAX_FAVORITE_CARS; ++favoriteIndex ) {
         if ( favoriteIndex > 0 ) {
-            length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, ",\n" );
+            written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, ",\n" );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
         }
 
         UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].model );
-        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+        written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
                                "\t\t\t{\"model\": \"%s\", ", favoriteField );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
 
         UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].skin );
-        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+        written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
                                "\"skin\": \"%s\", ", favoriteField );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
 
         UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].rim );
-        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+        written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
                                "\"rim\": \"%s\", ", favoriteField );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
 
         UI_Profile_FormatJsonString( favoriteField, sizeof( favoriteField ), info->favoriteCars[favoriteIndex].head );
-        length += Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
+        written = Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length,
                                "\"head\": \"%s\"}", favoriteField );
+        if ( written < 0 || length + written >= (int)sizeof(favoriteCarsJson) ) return qfalse;
+        length += written;
     }
     Com_sprintf( favoriteCarsJson + length, sizeof( favoriteCarsJson ) - length, "\n\t\t]" );
 
@@ -1232,129 +1270,166 @@ qboolean UI_Profile_WriteFile( const char *name, const profile_info_t *info, con
         int off = 0;
         char tmp[128];
 
-        /* Header + info block */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "{\n\t\"uuid\": \"%s\",\n\t\"name\": \"%s\",\n\t\"info\": {\n",
-            uuid, info->name[0] ? info->name : name );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "\t\t\"gender\": \"%s\",\n\t\t\"birthDate\": \"%s\",\n",
-            gender, birthDate );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "\t\t\"avatar\": \"%s\",\n\t\t\"country\": \"%s\",\n",
-            avatar, country );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "\t\t\"currentRank\": %d,\n\t\t\"highestRank\": %d,\n\t\t\"favoriteCars\": %s\n\t},\n",
-            info->currentRank, info->highestRank, favoriteCarsJson );
-
-        /* stats block — open */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off, "\t\"stats\": {\n" );
+        off = Profile_FormatPrefix( buffer, sizeof(buffer), uuid,
+            info->name[0] ? info->name : name, info, favoriteCarsJson );
+        if ( off < 0 ) return qfalse;
 
         /* General */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"distanceKm\": %.6f,\n\t\t\"fuelUsed\": %.3f,\n\t\t\"bestLapMs\": %d,\n",
             stats->distanceKm, stats->fuelUsed, stats->bestLapMs );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"kills\": %d,\n\t\t\"deaths\": %d,\n\t\t\"wins\": %d,\n\t\t\"playerScore\": %d,\n",
             stats->kills, stats->deaths, stats->wins, stats->playerScore );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"sprintWins\": %d,\n\t\t\"losses\": %d,\n\t\t\"flagCaptures\": %d,\n\t\t\"flagAssists\": %d,\n",
             stats->sprintWins, stats->losses, stats->flagCaptures, stats->flagAssists );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"accuracyAwards\": %d,\n\t\t\"excellentAwards\": %d,\n\t\t\"impressiveAwards\": %d,\n\t\t\"perfectAwards\": %d,\n",
             stats->accuracyAwards, stats->excellentAwards, stats->impressiveAwards, stats->perfectAwards );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"topSpeedKph\": %.2f,\n\t\t\"damageDealt\": %d,\n\t\t\"damageTaken\": %d,\n",
             stats->topSpeedKph, stats->damageDealt, stats->damageTaken );
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"mostUsedVehicle\": \"%s\",\n\t\t\"mostUsedVehicleTimeMs\": %d,\n\t\t\"gamesPlayed\": %d,\n",
             stats->mostUsedVehicle, stats->mostUsedVehicleTimeMs, stats->gamesPlayed );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"statsRevision\": %d,\n", PROFILE_STATS_REVISION );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_RACING */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"racingWins\": %d,\n\t\t\"racingPodiums\": %d,\n\t\t\"racingCompleted\": %d,\n\t\t\"racingTotalMs\": %d,\n",
             stats->racingWins, stats->racingPodiums, stats->racingCompleted, stats->racingTotalMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_RACING_DM */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"racingDmWins\": %d,\n\t\t\"racingDmPodiums\": %d,\n\t\t\"racingDmCompleted\": %d,\n\t\t\"racingDmTotalMs\": %d,\n",
             stats->racingDmWins, stats->racingDmPodiums, stats->racingDmCompleted, stats->racingDmTotalMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_SPRINT */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"sprintCompleted\": %d,\n\t\t\"sprintBestMs\": %d,\n",
             stats->sprintCompleted, stats->sprintBestMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_ELIMINATION */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"eliminationWins\": %d,\n\t\t\"eliminationCompleted\": %d,\n\t\t\"eliminationTotalRoundsLasted\": %d,\n",
             stats->eliminationWins, stats->eliminationCompleted, stats->eliminationTotalRoundsLasted );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_LCS */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"lcsWins\": %d,\n\t\t\"lcsCompleted\": %d,\n\t\t\"lcsTotalSurvivalMs\": %d,\n",
             stats->lcsWins, stats->lcsCompleted, stats->lcsTotalSurvivalMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_DERBY */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"derbyWins\": %d,\n\t\t\"derbyCompleted\": %d,\n\t\t\"derbyKills\": %d,\n",
             stats->derbyWins, stats->derbyCompleted, stats->derbyKills );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_DEATHMATCH */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"dmWins\": %d,\n\t\t\"dmCompleted\": %d,\n\t\t\"dmKills\": %d,\n",
             stats->dmWins, stats->dmCompleted, stats->dmKills );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_CTF */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"ctfWins\": %d,\n\t\t\"ctfCompleted\": %d,\n\t\t\"ctfCaptures\": %d,\n",
             stats->ctfWins, stats->ctfCompleted, stats->ctfCaptures );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_CTF4 */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"ctf4Wins\": %d,\n\t\t\"ctf4Completed\": %d,\n\t\t\"ctf4Captures\": %d,\n",
             stats->ctf4Wins, stats->ctf4Completed, stats->ctf4Captures );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_TEAM */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"teamWins\": %d,\n\t\t\"teamCompleted\": %d,\n\t\t\"teamKills\": %d,\n",
             stats->teamWins, stats->teamCompleted, stats->teamKills );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_TEAM_RACING */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"teamRacingWins\": %d,\n\t\t\"teamRacingCompleted\": %d,\n\t\t\"teamRacingPodiums\": %d,\n",
             stats->teamRacingWins, stats->teamRacingCompleted, stats->teamRacingPodiums );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_TEAM_RACING_DM */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"teamRacingDmWins\": %d,\n\t\t\"teamRacingDmCompleted\": %d,\n\t\t\"teamRacingDmPodiums\": %d,\n",
             stats->teamRacingDmWins, stats->teamRacingDmCompleted, stats->teamRacingDmPodiums );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_DOMINATION */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"dominationWins\": %d,\n\t\t\"dominationCompleted\": %d,\n\t\t\"dominationZoneHoldMs\": %d,\n",
             stats->dominationWins, stats->dominationCompleted, stats->dominationZoneHoldMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_KOTH */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
             "\t\t\"kothWins\": %d,\n\t\t\"kothCompleted\": %d,\n\t\t\"kothZoneHoldMs\": %d,\n",
             stats->kothWins, stats->kothCompleted, stats->kothZoneHoldMs );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
         /* GT_AUTOBALL — last entry: no trailing comma */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off,
-            "\t\t\"autoballWins\": %d,\n\t\t\"autoballCompleted\": %d,\n\t\t\"autoballGoals\": %d\n",
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off,
+            "\t\t\"autoballWins\": %d,\n\t\t\"autoballCompleted\": %d,\n\t\t\"autoballGoals\": %d,\n",
             stats->autoballWins, stats->autoballCompleted, stats->autoballGoals );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
 
-        /* Close stats + root object */
-        off += Com_sprintf( buffer + off, sizeof(buffer) - off, "\t}\n}\n" );
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off, "\t\t\"vehicles\": %s\n", vehicles );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
+        /* Close stats, progress and root object. */
+        written = Com_sprintf( buffer + off, sizeof(buffer) - off, "\t}\n\t}\n}\n" );
+        if ( written < 0 || off + written >= (int)sizeof(buffer) ) return qfalse;
+        off += written;
         length = off;
         (void)tmp; /* suppress unused warning */
     }
 
+    if ( length <= 0 || length >= sizeof(buffer) || Profile_FormatClassify(buffer) != PROFILE_FILE_VERSION ) return qfalse;
     trap_FS_FOpenFile( path, &file, FS_WRITE );
-    if ( file < 0 ) {
+    if ( file <= 0 ) {
         return qfalse;
     }
 
@@ -2061,6 +2136,8 @@ static void UI_ProfileOverlay_Draw( void ) {
                        PROFILE_FRONTEND_PANEL_Y + 48,
                        "Choose a driver profile or create a new one",
                        UI_LEFT | UI_SMALLFONT, mutedColor );
+    Frontend_DrawText( PROFILE_FRONTEND_PANEL_X + 24, PROFILE_FRONTEND_PANEL_Y + 46,
+                       "Web profile: not linked (available in v0.9)", UI_LEFT | UI_SMALLFONT, mutedColor );
     Frontend_DrawStatusChip( PROFILE_FRONTEND_PANEL_X +
                              PROFILE_FRONTEND_PANEL_W - 104,
                              PROFILE_FRONTEND_PANEL_Y + 26,

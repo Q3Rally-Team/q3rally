@@ -1,0 +1,18 @@
+{
+  "map": "q3r_canyonrush",
+  "course_length": 34176,
+  "estimated_time_s": 62.8,
+  "min_turn_radius": 946,
+  "max_grade_deg": 9.0,
+  "track_mesh_error": 0.59,
+  "walls_without_steep_part": [],
+  "closest_legs_gap": 1208,
+  "terrain_triangles": 37680,
+  "leaves": {
+    "64": 11864,
+    "128": 5618,
+    "256": 1358
+  },
+  "brushes": 37773,
+  "checkpoints": 6
+}

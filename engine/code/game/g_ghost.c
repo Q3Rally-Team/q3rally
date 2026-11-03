@@ -112,6 +112,7 @@ static int G_Ghost_ParseInt( const char *text ) {
     }
 
     while ( *text >= '0' && *text <= '9' ) {
+        if ( value > 214748364 || ( value == 214748364 && *text > '7' ) ) return 2147483647;
         value = value * 10 + ( *text - '0' );
         ++text;
     }
@@ -159,6 +160,7 @@ static float G_Ghost_ParseFloat( const char **text ) {
 }
 
 static void G_Ghost_Reset( void ) {
+    G_RaceRoute_Reset();
     Com_Memset( s_levelGhosts, 0, sizeof( s_levelGhosts ) );
     Com_Memset( &s_botRoute, 0, sizeof( s_botRoute ) );
     Com_Memset( &s_botRouteScratch, 0, sizeof( s_botRouteScratch ) );
@@ -346,6 +348,12 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, int 
             hasTrackReversed = qtrue;
         } else if ( G_Ghost_LineMatchesKey( line, "clean" ) ) {
             outRecord->clean = G_Ghost_ParseInt( line + 5 ) ? qtrue : qfalse;
+        } else if ( G_Ghost_LineMatchesKey( line, "physics_version" ) ) {
+            outRecord->hasPhysicsVersion = qtrue;
+            outRecord->physicsVersion = atoi( line + 15 );
+        } else if ( G_Ghost_LineMatchesKey( line, "map_checksum" ) ) {
+            outRecord->hasMapChecksum = qtrue;
+            outRecord->mapChecksum = atoi( line + 12 );
         } else if ( G_Ghost_LineMatchesKey( line, "frames" ) ) {
             break;
         }
@@ -371,7 +379,20 @@ static qboolean G_Ghost_ParseHeader( char *buffer, const char *expectedMap, int 
 
     outRecord->hasVariantData = hasTrackLength && hasTrackReversed;
     outRecord->ambiguousLegacy = qfalse;
+    if ( outRecord->hasPhysicsVersion && outRecord->physicsVersion != BG_PHYSICS_VERSION ) return qfalse;
+    if ( outRecord->hasMapChecksum && outRecord->mapChecksum != trap_Cvar_VariableIntegerValue( "sv_mapChecksum" ) ) return qfalse;
     return qtrue;
+}
+
+static qboolean G_Ghost_ParseCoordinate( const char **text, float *value ) {
+    const char *start = *text;
+    if ( *start != ' ' && *start != '\t' ) return qfalse;
+    while ( *start == ' ' || *start == '\t' ) start++;
+    if ( *start == '+' || *start == '-' ) start++;
+    if ( *start < '0' || *start > '9' ) return qfalse;
+    *value = G_Ghost_ParseFloat( text );
+    if ( !( *value >= -131072.0f && *value <= 131072.0f ) ) return qfalse;
+    return **text == ' ' || **text == '\t' || **text == '\0';
 }
 
 static void G_Ghost_CompactBotRoute( ghostBotRoute_t *route ) {
@@ -631,22 +652,25 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
             // Parse timeOffset
             wp.timeOffset = 0;
             while ( *p >= '0' && *p <= '9' ) {
+                if ( wp.timeOffset > 8640000 ) return qfalse;
                 wp.timeOffset = wp.timeOffset * 10 + ( *p - '0' );
                 ++p;
             }
 
             // Parse x, y, z (remaining fields are ignored)
-            wp.origin[0] = G_Ghost_ParseFloat( &p );
-            wp.origin[1] = G_Ghost_ParseFloat( &p );
-            wp.origin[2] = G_Ghost_ParseFloat( &p );
+            if ( !G_Ghost_ParseCoordinate( &p, &wp.origin[0] ) ||
+                !G_Ghost_ParseCoordinate( &p, &wp.origin[1] ) ||
+                !G_Ghost_ParseCoordinate( &p, &wp.origin[2] ) ) return qfalse;
             wp.required = qfalse;
 
             if ( *p != ' ' && *p != '\t' && *p != '\0' ) {
                 continue;
             }
 
-            if ( hasLastWp && wp.timeOffset < lastWp.timeOffset ) {
-                continue;
+            if ( hasLastWp ) {
+                int dt = wp.timeOffset - lastWp.timeOffset;
+                float jump = Distance( wp.origin, lastWp.origin );
+                if ( dt < 0 || ( dt == 0 && jump > 0.5f ) || jump > 128.0f + dt * 6.0f ) return qfalse;
             }
 
             if ( hasLastWp ) {
@@ -719,6 +743,8 @@ static qboolean G_Ghost_LoadBotRouteFromFile( const ghostRecord_t *record, ghost
 
     G_Ghost_BuildRouteSegments( outRoute );
     outRoute->valid = qtrue;
+    outRoute->closed = !level.sprintTrack && Distance( outRoute->waypoints[0].origin,
+        outRoute->waypoints[outRoute->numWaypoints - 1].origin ) <= 256.0f;
     G_Printf( "G_Ghost: Bot route candidate from %s (%d waypoints from %d samples, map=%s)\n",
         record->path,
         outRoute->numWaypoints,
@@ -797,7 +823,9 @@ static void G_Ghost_BuildRouteSegments( ghostBotRoute_t *route ) {
 
 void G_Ghost_InitForMap( const char *mapname ) {
     const char *ghostDirectories[] = { GHOST_DIRECTORY, "maps" };
-    char fileList[2048];
+    // A shared profile can contain many maps. Do not truncate discovery after
+    // a few dozen unrelated recordings. Static storage also keeps QVM stack small.
+    static char fileList[65536];
     int fileCount;
     int offset;
     int i;
@@ -948,15 +976,17 @@ void G_Ghost_InitForMap( const char *mapname ) {
 
 void G_Ghost_BuildBotRoutes( void ) {
     int i;
-    const botPathRoute_t *mapRoute;
 
+    // Separate Sprint start/finish entities think independently during map setup.
+    if ( level.sprintTrack && ( !level.startEnt || !level.finishEnt ) ) return;
     if ( s_botRoutesBuilt ) {
         return;
     }
     s_botRoutesBuilt = qtrue;
 
     for ( i = 0; i < s_levelGhostCount; ++i ) {
-        if ( s_levelGhosts[i].ambiguousLegacy ) {
+        if ( s_levelGhosts[i].ambiguousLegacy || ( !s_levelGhosts[i].hasVariantData &&
+            ( G_Ghost_GetTrackLengthVariant() != 0 || G_Ghost_GetTrackReversedVariant() != 0 ) ) ) {
             continue;
         }
 
@@ -964,35 +994,29 @@ void G_Ghost_BuildBotRoutes( void ) {
             continue;
         }
         s_botRouteScratch.clean = s_levelGhosts[i].clean;
+        if ( !G_RaceRoute_ValidateGhost( &s_botRouteScratch ) ) {
+            G_Printf( "G_Ghost: rejecting %s: active checkpoint sequence incomplete\n", s_levelGhosts[i].path );
+            continue;
+        }
 
         if ( G_Ghost_IsRouteBetter( &s_botRouteScratch, &s_botRoute ) ) {
             s_botRoute = s_botRouteScratch;
         }
     }
 
-    mapRoute = G_BotPath_GetRouteByIndex( 0 );
     if ( s_botRoute.valid ) {
-        G_Printf( "G_Ghost: usable fallback loaded from %s (%d ms%s, track length=%d, reversed=%d)\n",
+        G_Printf( "G_Ghost: primary route loaded from %s (%d ms%s, track length=%d, reversed=%d)\n",
             s_botRoute.path,
             s_botRoute.bestTimeMs,
             s_botRoute.clean ? ", clean Ghost Race lap" : "",
             G_Ghost_GetTrackLengthVariant(),
             G_Ghost_GetTrackReversedVariant() );
     } else {
-        G_Printf( "G_Ghost: no usable fallback route found for track length=%d, reversed=%d\n",
+        G_Printf( "G_Ghost: no usable route found for track length=%d, reversed=%d\n",
             G_Ghost_GetTrackLengthVariant(),
             G_Ghost_GetTrackReversedVariant() );
     }
 
-    if ( mapRoute && mapRoute->numNodes > 1 ) {
-        G_Printf( "G_RouteSelect: active=map:%s usable=yes; ghostFallback=%s\n",
-            mapRoute->name,
-            s_botRoute.valid ? s_botRoute.path : "unavailable" );
-    } else if ( s_botRoute.valid ) {
-        G_Printf( "G_RouteSelect: active=ghost:%s usable=yes; mapRoute=unavailable\n", s_botRoute.path );
-    } else {
-        G_Printf( "G_RouteSelect: active=none usable=no; mapRoute=unavailable ghostRoute=unavailable\n" );
-    }
 }
 
 int G_Ghost_SelectClosestWaypoint( const ghostBotRoute_t *route, const vec3_t origin, int hintIndex, int hintWindow ) {

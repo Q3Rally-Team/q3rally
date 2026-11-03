@@ -31,6 +31,7 @@ TEAM ORDERS MENU
 
 
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 
 #define ART_FRAME		"menu/art/addbotframe"
@@ -417,7 +418,8 @@ UI_TeamOrdersMenu
 */
 void UI_TeamOrdersMenu( void ) {
 	UI_TeamOrdersMenu_Init();
-	UI_PushMenu( &teamOrdersMenuInfo.menu );
+	Frontend_SetBackButton( &teamOrdersMenuInfo.back.generic );
+    UI_PushMenu( &teamOrdersMenuInfo.menu );
 }
 
 

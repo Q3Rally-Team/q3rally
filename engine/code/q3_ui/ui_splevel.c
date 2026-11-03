@@ -995,7 +995,8 @@ void UI_SPLevelMenu( void ) {
 	}
 
 	UI_SPLevelMenu_Init();
-	UI_PushMenu( &levelMenuInfo.menu );
+	Frontend_SetBackButton( &levelMenuInfo.item_back.generic );
+    UI_PushMenu( &levelMenuInfo.menu );
 	Menu_SetCursorToItem( &levelMenuInfo.menu, &levelMenuInfo.item_next );
 }
 

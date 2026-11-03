@@ -30,7 +30,7 @@ observerspots ""
 weapons ""
 
 //POWERUPS
-powerups "4"
+powerups "10"
 
 //REVERSABLE
 reversable ""

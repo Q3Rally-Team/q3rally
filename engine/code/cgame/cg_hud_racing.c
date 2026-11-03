@@ -25,6 +25,11 @@ This file is part of q3rally source code.
 #define HUD_TEXT_INSET            6.0f
 #define HUD_ROW_HEIGHT          ((float)TINYCHAR_HEIGHT + 4.0f)
 
+static qboolean CG_IsMovingAwayFromCheckpoint( const vec3_t velocity,
+	const vec3_t toCheckpoint, float angleDiff ) {
+	return velocity[0] * velocity[0] + velocity[1] * velocity[1] > 1600 &&
+		( toCheckpoint[0] != 0 || toCheckpoint[1] != 0 ) && fabs( angleDiff ) > 100;
+}
 
 /* -----------------------------------------------------------------------
    CG_DrawArrowToCheckpoint
@@ -42,11 +47,14 @@ float CG_DrawArrowToCheckpoint( float y ) {
 	vec3_t		mins, maxs, v;
 
 	/* Suppress checkpoint arrow and Wrong Way during intro camera */
-	if ( CG_IntroCam_IsActive() )
+	if ( CG_IntroCam_IsActive() ||
+		cg.snap->ps.pm_type != PM_NORMAL ||
+		!cg_entities[cg.snap->ps.clientNum].startRaceTime ||
+		cg.time < cg_entities[cg.snap->ps.clientNum].startRaceTime ||
+		cg_entities[cg.snap->ps.clientNum].finishRaceTime ) {
+		cg.wrongWayStartTime = 0;
 		return y;
-
-	if ( cg_entities[cg.snap->ps.clientNum].finishRaceTime )
-		return y;
+	}
 
 	for ( i = 0; i < MAX_GENTITIES; i++ ) {
 		cent = &cg_entities[i];
@@ -55,8 +63,10 @@ float CG_DrawArrowToCheckpoint( float y ) {
 		break;
 	}
 
-	if ( i == MAX_GENTITIES )
+	if ( i == MAX_GENTITIES ) {
+		cg.wrongWayStartTime = 0;
 		return y;
+	}
 
 	trap_R_ModelBounds( cgs.inlineDrawModel[cent->currentState.modelindex], mins, maxs );
 
@@ -110,11 +120,11 @@ float CG_DrawArrowToCheckpoint( float y ) {
 		trap_R_RenderScene( &refdef );
 	}
 
-	AngleVectors( cg.predictedPlayerEntity.lerpAngles, forward, NULL, NULL );
-	angle1    = vectoyaw( forward );
+	/* Judge travel direction, not where a stationary/reversing car is facing. */
+	angle1    = vectoyaw( cg.predictedPlayerState.velocity );
 	angleDiff = AngleDifference( angle1, angle2 );
 
-	if ( fabs( angleDiff ) > 100 ) {
+	if ( CG_IsMovingAwayFromCheckpoint( cg.predictedPlayerState.velocity, v, angleDiff ) ) {
 		cg.wrongWayTime = cg.time;
 		if ( !cg.wrongWayStartTime )
 			cg.wrongWayStartTime = cg.time;

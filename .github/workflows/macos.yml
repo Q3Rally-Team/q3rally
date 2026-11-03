@@ -19,14 +19,19 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
-        arch: [x86_64, arm64]  # Intel und Apple Silicon
+        include:
+        - arch: x86_64
+          runner: macos-15-intel
+        - arch: arm64
+          runner: macos-15
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: recursive
     
@@ -47,7 +52,43 @@ jobs:
         find build/ -name "*.dylib" -o -name "q3rally*" -o -name "ioq3ded*" | head -10
         
         echo "=== Executable files ==="
-        find build/ -perm +111 -type f | head -5
+        find build/ -type f -perm -111 | head -5
+
+    - name: Prepare isolated dedicated test data
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/prepare_dedicated_test_data.py \
+          --vm-dir "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/baseq3r/vm" \
+          --output "$RUNNER_TEMP/q3rally-dedicated-data"
+
+    - name: Run native dedicated mode checks
+      timeout-minutes: 15
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/validate_dedicated_server.py \
+          --executable "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }}" \
+          --basepath "$RUNNER_TEMP/q3rally-dedicated-data" \
+          --output "dedicated-test-results-${{ matrix.arch }}" \
+          --http-probe
+
+    - name: Complete native lap and Sprint races
+      timeout-minutes: 8
+      run: |
+        BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+        python3 tools/validate_dedicated_server.py \
+          --executable "engine/build/$BUILD_TYPE-darwin-${{ matrix.arch }}/q3rally-server.${{ matrix.arch }}" \
+          --basepath "$RUNNER_TEMP/q3rally-dedicated-data" \
+          --output "dedicated-test-results-${{ matrix.arch }}/complete-races" \
+          --case racing --case sprint --complete-races --http-probe
+
+    - name: Upload dedicated runtime evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: q3rally-dedicated-tests-macos-${{ matrix.arch }}
+        path: dedicated-test-results-${{ matrix.arch }}
+        if-no-files-found: warn
+        retention-days: 14
     
     - name: Package macOS Build
       run: |
@@ -65,7 +106,7 @@ jobs:
         echo "Commit: ${{ github.sha }}" >> BUILD_INFO.txt
     
     - name: Upload macOS Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: q3rally-macos-${{ matrix.arch }}
         path: releases/macos-${{ matrix.arch }}
@@ -74,18 +115,18 @@ jobs:
   # Optional: Create combined release package
   package-universal:
     needs: build-macos
-    runs-on: macos-latest
+    runs-on: macos-15-intel
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     
     steps:
     - name: Download Intel build
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: q3rally-macos-x86_64
         path: intel-build
     
     - name: Download ARM build  
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: q3rally-macos-arm64
         path: arm-build
@@ -114,7 +155,7 @@ jobs:
         echo "Build Date: $(date)" >> universal-build/UNIVERSAL_BUILD.txt
     
     - name: Upload Universal Build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: q3rally-macos-universal
         path: universal-build

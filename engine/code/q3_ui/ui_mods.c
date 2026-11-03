@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "ui_local.h"
+#include "ui_rally_frontend.h"
 
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"	
@@ -242,5 +243,6 @@ UI_ModsMenu
 */
 void UI_ModsMenu( void ) {
 	UI_Mods_MenuInit();
-	UI_PushMenu( &s_mods.menu );
+	Frontend_SetBackButton( &s_mods.back.generic );
+    UI_PushMenu( &s_mods.menu );
 }

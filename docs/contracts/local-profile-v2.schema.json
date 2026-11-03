@@ -1,0 +1,433 @@
+{
+  "type": "object",
+  "required": [
+    "profileVersion",
+    "identity",
+    "progress",
+    "webLink"
+  ],
+  "properties": {
+    "profileVersion": {
+      "const": 2
+    },
+    "identity": {
+      "type": "object",
+      "required": [
+        "uuid",
+        "name",
+        "info"
+      ],
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "info": {
+          "type": "object",
+          "required": [
+            "gender",
+            "birthDate",
+            "avatar",
+            "country",
+            "favoriteCars"
+          ],
+          "properties": {
+            "gender": {
+              "type": "string"
+            },
+            "birthDate": {
+              "type": "string"
+            },
+            "avatar": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "favoriteCars": {
+              "type": "array",
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "skin",
+                  "rim",
+                  "head"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string"
+                  },
+                  "skin": {
+                    "type": "string"
+                  },
+                  "rim": {
+                    "type": "string"
+                  },
+                  "head": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "required": [
+        "epoch",
+        "authority",
+        "currentRank",
+        "highestRank",
+        "stats"
+      ],
+      "properties": {
+        "epoch": {
+          "const": "v0.8-local-1"
+        },
+        "authority": {
+          "const": "local"
+        },
+        "currentRank": {
+          "type": "integer"
+        },
+        "highestRank": {
+          "type": "integer"
+        },
+        "stats": {
+          "type": "object",
+          "required": [
+            "distanceKm",
+            "fuelUsed",
+            "bestLapMs",
+            "kills",
+            "deaths",
+            "wins",
+            "playerScore",
+            "sprintWins",
+            "losses",
+            "flagCaptures",
+            "flagAssists",
+            "accuracyAwards",
+            "excellentAwards",
+            "impressiveAwards",
+            "perfectAwards",
+            "topSpeedKph",
+            "damageDealt",
+            "damageTaken",
+            "mostUsedVehicle",
+            "mostUsedVehicleTimeMs",
+            "gamesPlayed",
+            "statsRevision",
+            "racingWins",
+            "racingPodiums",
+            "racingCompleted",
+            "racingTotalMs",
+            "racingDmWins",
+            "racingDmPodiums",
+            "racingDmCompleted",
+            "racingDmTotalMs",
+            "sprintCompleted",
+            "sprintBestMs",
+            "eliminationWins",
+            "eliminationCompleted",
+            "eliminationTotalRoundsLasted",
+            "lcsWins",
+            "lcsCompleted",
+            "lcsTotalSurvivalMs",
+            "derbyWins",
+            "derbyCompleted",
+            "derbyKills",
+            "dmWins",
+            "dmCompleted",
+            "dmKills",
+            "ctfWins",
+            "ctfCompleted",
+            "ctfCaptures",
+            "ctf4Wins",
+            "ctf4Completed",
+            "ctf4Captures",
+            "teamWins",
+            "teamCompleted",
+            "teamKills",
+            "teamRacingWins",
+            "teamRacingCompleted",
+            "teamRacingPodiums",
+            "teamRacingDmWins",
+            "teamRacingDmCompleted",
+            "teamRacingDmPodiums",
+            "dominationWins",
+            "dominationCompleted",
+            "dominationZoneHoldMs",
+            "kothWins",
+            "kothCompleted",
+            "kothZoneHoldMs",
+            "autoballWins",
+            "autoballCompleted",
+            "autoballGoals",
+            "vehicles"
+          ],
+          "properties": {
+            "distanceKm": {
+              "type": "number"
+            },
+            "fuelUsed": {
+              "type": "number"
+            },
+            "bestLapMs": {
+              "type": "integer"
+            },
+            "kills": {
+              "type": "integer"
+            },
+            "deaths": {
+              "type": "integer"
+            },
+            "wins": {
+              "type": "integer"
+            },
+            "playerScore": {
+              "type": "integer"
+            },
+            "sprintWins": {
+              "type": "integer"
+            },
+            "losses": {
+              "type": "integer"
+            },
+            "flagCaptures": {
+              "type": "integer"
+            },
+            "flagAssists": {
+              "type": "integer"
+            },
+            "accuracyAwards": {
+              "type": "integer"
+            },
+            "excellentAwards": {
+              "type": "integer"
+            },
+            "impressiveAwards": {
+              "type": "integer"
+            },
+            "perfectAwards": {
+              "type": "integer"
+            },
+            "topSpeedKph": {
+              "type": "number"
+            },
+            "damageDealt": {
+              "type": "integer"
+            },
+            "damageTaken": {
+              "type": "integer"
+            },
+            "mostUsedVehicle": {
+              "type": "string"
+            },
+            "mostUsedVehicleTimeMs": {
+              "type": "integer"
+            },
+            "gamesPlayed": {
+              "type": "integer"
+            },
+            "statsRevision": {
+              "type": "integer"
+            },
+            "racingWins": {
+              "type": "integer"
+            },
+            "racingPodiums": {
+              "type": "integer"
+            },
+            "racingCompleted": {
+              "type": "integer"
+            },
+            "racingTotalMs": {
+              "type": "integer"
+            },
+            "racingDmWins": {
+              "type": "integer"
+            },
+            "racingDmPodiums": {
+              "type": "integer"
+            },
+            "racingDmCompleted": {
+              "type": "integer"
+            },
+            "racingDmTotalMs": {
+              "type": "integer"
+            },
+            "sprintCompleted": {
+              "type": "integer"
+            },
+            "sprintBestMs": {
+              "type": "integer"
+            },
+            "eliminationWins": {
+              "type": "integer"
+            },
+            "eliminationCompleted": {
+              "type": "integer"
+            },
+            "eliminationTotalRoundsLasted": {
+              "type": "integer"
+            },
+            "lcsWins": {
+              "type": "integer"
+            },
+            "lcsCompleted": {
+              "type": "integer"
+            },
+            "lcsTotalSurvivalMs": {
+              "type": "integer"
+            },
+            "derbyWins": {
+              "type": "integer"
+            },
+            "derbyCompleted": {
+              "type": "integer"
+            },
+            "derbyKills": {
+              "type": "integer"
+            },
+            "dmWins": {
+              "type": "integer"
+            },
+            "dmCompleted": {
+              "type": "integer"
+            },
+            "dmKills": {
+              "type": "integer"
+            },
+            "ctfWins": {
+              "type": "integer"
+            },
+            "ctfCompleted": {
+              "type": "integer"
+            },
+            "ctfCaptures": {
+              "type": "integer"
+            },
+            "ctf4Wins": {
+              "type": "integer"
+            },
+            "ctf4Completed": {
+              "type": "integer"
+            },
+            "ctf4Captures": {
+              "type": "integer"
+            },
+            "teamWins": {
+              "type": "integer"
+            },
+            "teamCompleted": {
+              "type": "integer"
+            },
+            "teamKills": {
+              "type": "integer"
+            },
+            "teamRacingWins": {
+              "type": "integer"
+            },
+            "teamRacingCompleted": {
+              "type": "integer"
+            },
+            "teamRacingPodiums": {
+              "type": "integer"
+            },
+            "teamRacingDmWins": {
+              "type": "integer"
+            },
+            "teamRacingDmCompleted": {
+              "type": "integer"
+            },
+            "teamRacingDmPodiums": {
+              "type": "integer"
+            },
+            "dominationWins": {
+              "type": "integer"
+            },
+            "dominationCompleted": {
+              "type": "integer"
+            },
+            "dominationZoneHoldMs": {
+              "type": "integer"
+            },
+            "kothWins": {
+              "type": "integer"
+            },
+            "kothCompleted": {
+              "type": "integer"
+            },
+            "kothZoneHoldMs": {
+              "type": "integer"
+            },
+            "autoballWins": {
+              "type": "integer"
+            },
+            "autoballCompleted": {
+              "type": "integer"
+            },
+            "autoballGoals": {
+              "type": "integer"
+            },
+            "vehicles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "timeMs"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "timeMs": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "webLink": {
+      "type": "object",
+      "required": [
+        "state",
+        "accountId",
+        "profileId"
+      ],
+      "properties": {
+        "state": {
+          "const": "unlinked"
+        },
+        "accountId": {
+          "type": "null"
+        },
+        "profileId": {
+          "type": "null"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Q3Rally v0.8 local profile file version 2"
+}

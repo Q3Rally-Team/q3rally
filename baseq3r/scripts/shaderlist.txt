@@ -29,8 +29,15 @@ ely_darkcity
 ely_sunset
 telestecki
 cars_helmets
-koth_beam
 q3r_redrock
 q3r_citydom
 q3r_crossroads
 q3r_canyonrush
+q3r_ridgepass
+q3r_ctf4_03
+q3r_david4
+q3r_lanterns
+q3r_rail
+q3r_rooftop
+q3r_riviera
+q3r_quarry

@@ -151,6 +151,8 @@ static const gfxPresetCvar_t gfxPresetTable[] = {
 	{ "r_motionBlur",						{ "0", "0.5", "0.5", "0.5" } },
 	{ "r_drawSunRays",						{ "0", "0", "0", "0" } },
 	// effects
+    { "r_colorLut", { "", "", "", "" } }, // use the map look, not a previous override
+    { "cg_tireSmoke", { "1", "1", "1", "1" } },
 	{ "r_carReflections",					{ "0", "1", "1", "2" } },
 	{ "r_carReflectionSize",				{ "128", "256", "256", "512" } },
 	{ "r_water",							{ "0", "1", "1", "1" } },
@@ -161,6 +163,7 @@ static const gfxPresetCvar_t gfxPresetTable[] = {
 	{ "r_genNormalMaps",					{ "0", "0", "1", "1" } },
 	{ "r_marksOnTriangleMeshes",			{ "1", "1", "1", "1" } },
 	// lighting and shadows
+    { "r_sunShadowCasters", { "1", "1", "1", "1" } },
 	{ "r_sunlightMode",						{ "0", "1", "1", "1" } },
 	{ "r_sunShadows",						{ "0", "1", "1", "1" } },
 	{ "r_shadowMapSize",					{ "512", "1024", "1024", "2048" } },
@@ -193,7 +196,7 @@ the cvars hold the new values anyway.
 #define GFX_MAX_PENDING		96
 
 typedef struct {
-	char	name[32];
+	char	name[MAX_CVAR_VALUE_STRING];
 	char	value[64];
 } gfxPending_t;
 
@@ -692,6 +695,7 @@ void UI_GfxPage_Push( const gfxPageDef_t *def ) {
 	Gfx_RefreshPage( page );
 
 	uis.transitionIn = 0;
+	Frontend_SetBackButton( &page->back.generic );
 	UI_PushMenu( &page->menu );
 	if ( def->numRows > 0 ) {
 		Menu_SetCursorToItem( &page->menu, &page->rows[0] );
@@ -759,7 +763,7 @@ LIGHTING & SHADOWS PAGE
 */
 
 static const char *hdr_sets[] = { "r_hdr=0;r_toneMap=0;r_autoExposure=0", "r_hdr=1;r_toneMap=1;r_autoExposure=1" };
-static const char *sun_sets[] = { "r_sunlightMode=0;r_sunShadows=0", "r_sunlightMode=1;r_sunShadows=1" };
+static const char *sun_sets[] = { "r_sunlightMode=0;r_sunShadows=0", "r_sunlightMode=1;r_sunShadows=1;r_sunShadowCasters=1" };
 static const char *quality_names[] = { "Low", "Medium", "High", "Ultra", NULL };
 static const char *shadowq_sets[] = {
 	"r_shadowMapSize=512;r_shadowFilter=0", "r_shadowMapSize=1024;r_shadowFilter=1",

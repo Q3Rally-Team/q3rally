@@ -359,6 +359,18 @@ void CL_KeyMove( usercmd_t *cmd ) {
 CL_MouseEvent
 =================
 */
+void CL_MousePositionEvent( int x, int y ) {
+    float scaleX = cls.glconfig.vidWidth / 640.0f;
+    float scaleY = cls.glconfig.vidHeight / 480.0f;
+    float bias = 0;
+    if (!uivm || !clc.demoPlayer || !(Key_GetCatcher() & KEYCATCH_UI)) return;
+    if (scaleX > scaleY) {
+        scaleX = scaleY;
+        bias = (cls.glconfig.vidWidth - 640 * scaleX) / 2;
+    }
+    VM_Call(uivm, UI_MOUSE_POSITION, (int)floorf((x - bias) / scaleX + 0.5f), (int)floorf(y / scaleY + 0.5f));
+}
+
 void CL_MouseEvent( int dx, int dy, int time ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
 		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy );

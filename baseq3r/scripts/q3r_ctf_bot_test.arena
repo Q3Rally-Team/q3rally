@@ -1,0 +1,46 @@
+{
+//MAP FILE NAME
+map "q3r_ctf_bot_test"
+
+//IN-GAME MAP NAME
+longname "CTF Bot Test Box"
+
+//AUTHOR OF THE MAP
+author "Q3Rally Team"
+
+//GAME TYPE SUPPORTS
+type "q3r_ctf"
+
+//CUSTOM BOTS
+bots "Chloe Jim Zack Paul Tobias Josh"
+
+//PLAYER STARTS
+starts "8"
+
+//LAPTIME
+laptime ""
+
+//CHECKPOINTS
+checkpoints ""
+
+//OBSERVER SPOTS
+observerspots "0"
+
+//WEAPONS
+weapons ""
+
+//POWERUPS
+powerups "0"
+
+//REVERSABLE
+reversable ""
+
+//TRACK LENGTHS
+tracklengths ""
+
+//BOT SUPPORTS
+botsupport "Good"
+
+//TEAMS
+teams "2"
+}

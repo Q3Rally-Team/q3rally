@@ -66,6 +66,15 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		UI_Refresh( arg0 );
 		return 0;
 
+    case UI_MOUSE_POSITION:
+        UI_MouseEvent(arg0 - uis.cursorx, arg1 - uis.cursory);
+        return 0;
+    case UI_DRAW_CURSOR:
+        if (trap_Key_GetCatcher() & KEYCATCH_UI) {
+            UI_SetColor(NULL);
+            UI_DrawHandlePic(uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
+        }
+        return 0;
 	case UI_IS_FULLSCREEN:
 		return UI_IsFullscreen();
 

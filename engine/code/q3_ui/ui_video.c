@@ -440,7 +440,8 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.back.generic.bottom = DRIVERINFO_ACTION_Y +
 		DRIVERINFO_ACTION_HEIGHT;
 
-	UI_PushMenu( &s_driverinfo.menu );
+	Frontend_SetBackButton( &s_driverinfo.back.generic );
+    UI_PushMenu( &s_driverinfo.menu );
 	Menu_SetCursorToItem( &s_driverinfo.menu, &s_driverinfo.extensionList );
 }
 

@@ -1,0 +1,3 @@
+# Only needed on the machine that signs catalogs, never by installed launchers.
+-r requirements.txt
+cryptography>=43,<52

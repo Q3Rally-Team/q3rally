@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef BG_PUBLIC_H
 #define BG_PUBLIC_H
 
+#include "../qcommon/q_gametype.h"
+
 // STONELANCE
 #include "bg_physics.h"
 // END
@@ -113,7 +115,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // Autoball shares the KOTH slot; both modes never run at the same time.
 // "state kickoffEnd ballEntity goalTeam scorerClient goalSpeedKmh"
 #define CS_AUTOBALLSTATUS               CS_KOTHSTATUS
-#define CS_INTRO_ROUTE                  33  // packaged Ghost route path, preview duration, and direction
+#define CS_INTRO_ROUTE                  33  // BPD path, preview duration, direction, and pending-start flag
 // Q3Rally Code END
 
 #define CS_MODELS                               34
@@ -134,53 +136,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if (CS_MAX) > MAX_CONFIGSTRINGS
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS
 #endif
-
-typedef enum {
-// Q3Rally Code Start - UPDATE fix this and remove non q3rally gametypes
-        /*
-        GT_FFA,                         // free for all
-        GT_TOURNAMENT,          // one on one tournament
-        GT_SINGLE_PLAYER,       // single player tournament
-
-        //-- team games go after this --
-
-        GT_TEAM,                        // team deathmatch
-        GT_CTF,                         // capture the flag
-        GT_1FCTF,
-        GT_OBELISK,
-        GT_HARVESTER,
-*/
-        // Q3Rally Fix: explicit integer values prevent accidental shifts
-        // when new gametypes are inserted. Non-team and team blocks each
-        // have deliberate gaps so future modes can be added without
-        // renumbering existing entries.
-
-        // --- non-team gametypes (0-15) ---
-        GT_RACING          =  0,    // racing
-        GT_RACING_DM       =  1,    // racing with weapons
-        GT_SINGLE_PLAYER   =  2,    // single player / time trial
-        GT_DERBY           =  3,    // demolition derby
-        GT_LCS             =  4,    // last car standing
-        GT_ELIMINATION     =  5,    // elimination race
-        GT_DEATHMATCH      =  6,    // free-for-all deathmatch
-        GT_SPRINT          =  7,    // point-to-point sprint race
-        GT_GHOST           =  8,    // ghost race: solo laps against a ghost, no bots
-        // 9-15: reserved for future non-team modes
-
-        // --- team gametypes (16+) ---
-        GT_TEAM            = 16,    // team deathmatch
-        GT_TEAM_RACING     = 17,    // team racing
-        GT_TEAM_RACING_DM  = 18,    // team racing with weapons
-        GT_CTF             = 19,    // capture the flag
-        GT_CTF4            = 20,    // 4-team capture the flag
-        GT_DOMINATION      = 21,    // domination
-        GT_KOTH            = 22,    // king of the hill
-        GT_AUTOBALL        = 23,    // autoball: car football, two goals and a physics ball
-        // 24+: reserved for future team modes
-
-// Q3Rally Code END
-        GT_MAX_GAME_TYPE
-} gametype_t;
 
 typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
 

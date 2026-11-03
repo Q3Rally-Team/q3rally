@@ -21,13 +21,13 @@ starts "16"
 laptime ""
 
 //CHECKPOINTS
-checkpoints "20"
+checkpoints ""
 
 //OBSERVER SPOTS
 observerspots "1"
 
 //WEAPONS
-weapons "SG,RG,PG,RL,BFG"
+weapons "SG,PG,RL,BFG"
 
 //POWERUPS
 powerups "0"

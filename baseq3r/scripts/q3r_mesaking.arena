@@ -1,6 +1,12 @@
 {
 	map "q3r_mesaking"
 	longname "Mesa King"
+	author "Q3Rally Team"
 	type "q3r_koth"
+	starts "8"
+	observerspots "0"
+	weapons "SG,RL"
+	powerups "2"
 	botsupport "None"
+	teams "2"
 }

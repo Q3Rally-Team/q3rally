@@ -1,0 +1,63 @@
+{
+  "bsp": "q3r_crossroads.bsp",
+  "solid_brushes": 44913,
+  "solid_brush_shader_counts": {
+    "textures/q3r_crossroads/t_plain": 2224,
+    "textures/q3r_crossroads/t_gravel": 7462,
+    "textures/q3r_crossroads/t_dirt": 4504,
+    "textures/q3r_crossroads/t_grass": 23574,
+    "textures/q3r_crossroads/wood": 310,
+    "textures/q3r_crossroads/rock": 36,
+    "textures/q3r_crossroads/metal": 22,
+    "textures/q3r_crossroads/yellow": 6,
+    "textures/q3r_building/garage_np": 1,
+    "textures/q3r_crossroads/concrete": 6,
+    "textures/q3r_building/wellblech": 1,
+    "textures/q3r_crossroads/green": 6,
+    "textures/q3r_building/doors_wood01": 3,
+    "textures/q3r_crossroads/blue": 17,
+    "textures/q3r_citydom/lamp": 2,
+    "textures/q3r_crossroads/red": 5,
+    "textures/q3r_building/wood03": 2,
+    "textures/q3r_crossroads/sky": 5,
+    "textures/common/caulk": 1,
+    "textures/q3r_crossroads/backdrop": 6720,
+    "textures/q3r_crossroads/boundary": 4,
+    "textures/q3r_glass/plainglass": 2
+  },
+  "terrain_material_surface_bits": {
+    "grass": "0x100000",
+    "dirt": "0x4000000",
+    "gravel": "0x1000000"
+  },
+  "boundary_solid_brushes": 4,
+  "boundary_contents": 671088641,
+  "boundary_car_sweeps": [
+    {
+      "side": "x-",
+      "first_contact_car_center": -2638,
+      "fraction": 0.457143
+    },
+    {
+      "side": "x+",
+      "first_contact_car_center": 2638,
+      "fraction": 0.457143
+    },
+    {
+      "side": "y-",
+      "first_contact_car_center": -2638,
+      "fraction": 0.457143
+    },
+    {
+      "side": "y+",
+      "first_contact_car_center": 2638,
+      "fraction": 0.457143
+    }
+  ],
+  "terrain_floor_comparisons": 78910,
+  "max_floor_error_units": 7.6e-05,
+  "safe_car_start_positions": 28,
+  "safe_item_drop_positions": 32,
+  "ctf4_flags": 4,
+  "status": "compiled collision checks passed"
+}

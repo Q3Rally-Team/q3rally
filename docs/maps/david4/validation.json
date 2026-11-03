@@ -1,0 +1,693 @@
+{
+  "map": "q3r_david4",
+  "flag_distance": 5120,
+  "terrain_triangles": 11284,
+  "leaves": {
+    "64": 2912,
+    "128": 2240,
+    "256": 490,
+    "512": 0
+  },
+  "brushes": 11632,
+  "max_play_grade_pct": 35.7,
+  "flag_approach_max_grade_pct": 20.0,
+  "flag_approaches_blocked": [],
+  "flag_access": {
+    "red": [
+      {
+        "deg": 0,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 6,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 11,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 17,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 22,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 28,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 34,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 39,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 45,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 51,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 56,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 62,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 68,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 73,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 79,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 84,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 90,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 96,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 101,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 107,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 112,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 118,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 124,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 129,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 135,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 141,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 146,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 152,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 158,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 163,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 169,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 174,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 180,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 186,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 191,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 197,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 202,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 208,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 214,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 219,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 225,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 231,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 236,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 242,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 247,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 253,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 259,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 264,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 270,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 276,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 281,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 287,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 292,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 298,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 304,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 309,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 315,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 321,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 326,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 332,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 338,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 343,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 349,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 354,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      }
+    ],
+    "blue": [
+      {
+        "deg": 0,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 6,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 11,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 17,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 22,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 28,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 34,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 39,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 45,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 51,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 56,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 62,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 68,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 73,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 79,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 84,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 90,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 96,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 101,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 107,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 112,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 118,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 124,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 129,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 135,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 141,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 146,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 152,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 158,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 163,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 169,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 174,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 180,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 186,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 191,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 197,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 202,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 208,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 214,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 219,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 225,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 231,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 236,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 242,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 247,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 253,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 259,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 264,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 270,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 276,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 281,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 287,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 292,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 298,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 304,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 309,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 315,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 321,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 326,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 332,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 338,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 343,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 349,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      },
+      {
+        "deg": 354,
+        "max_grade_pct": 20.0,
+        "blocked_by": null
+      }
+    ]
+  },
+  "entities": {
+    "team_CTF_redflag": 1,
+    "light": 45,
+    "weapon_bfg": 2,
+    "ammo_bfg": 6,
+    "weapon_grenadelauncher": 2,
+    "ammo_grenades": 4,
+    "item_health_large": 10,
+    "misc_model": 399,
+    "team_CTF_redplayer": 8,
+    "team_CTF_redspawn": 8,
+    "weapon_rocketlauncher": 2,
+    "ammo_rockets": 4,
+    "weapon_lightning": 2,
+    "ammo_lightning": 4,
+    "team_CTF_blueflag": 1,
+    "team_CTF_blueplayer": 8,
+    "team_CTF_bluespawn": 8,
+    "rally_item_quad": 1,
+    "rally_item_invis": 1,
+    "weapon_flamethrower": 1,
+    "ammo_flame": 2,
+    "item_fuelcan": 4,
+    "info_observer_spot": 5,
+    "info_player_intermission": 1,
+    "info_player_deathmatch": 2
+  },
+  "spawns": 32,
+  "boulders": 40,
+  "grove": 16,
+  "cascade_top": 320,
+  "edge_trees": 360
+}

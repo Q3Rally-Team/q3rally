@@ -19,7 +19,13 @@ void main()
 
 	// the sides are rendered as in R_RenderCubemapSide, which stores the
 	// view along -d in direction d (lightall samples reflect(E, N) as well)
+#if __VERSION__ >= 130
 	vec3 reflection = textureCubeLod(u_CubeMap, -R, u_Color.z).rgb;
+#else
+	// GLSL 1.20 fragment shaders have cube sampling with mip bias, but no
+	// core explicit-LOD lookup. Keep reflections available on legacy contexts.
+	vec3 reflection = textureCube(u_CubeMap, -R, u_Color.z).rgb;
+#endif
 
 	gl_FragColor = vec4(reflection * (u_Color.x * fresnel), 1.0);
 }

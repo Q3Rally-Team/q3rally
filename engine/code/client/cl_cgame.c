@@ -632,6 +632,8 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
   case CG_KEY_GETCATCHER:
 		return Key_GetCatcher();
   case CG_KEY_SETCATCHER:
+        // A cgame used as a preview must never take input from its host menu.
+        if (clc.demoPlayer) return 0;
 		// Don't allow the cgame module to close the console
 		Key_SetCatcher( args[1] | ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) );
     return 0;
@@ -905,6 +907,7 @@ CL_FirstSnapshot
 ==================
 */
 void CL_FirstSnapshot( void ) {
+    clc.demoStartTime = cl.snap.serverTime;
 	// ignore snapshots that don't have entities
 	if ( cl.snap.snapFlags & SNAPFLAG_NOT_ACTIVE ) {
 		return;
@@ -992,6 +995,30 @@ void CL_SetCGameTime( void ) {
 		}
 	}	
 
+    if (clc.demoPlayer && clc.demoSeeking) {
+        int deadline = Sys_Milliseconds() + 8;
+        int target = clc.demoStartTime + clc.demoSeekTarget;
+        do {
+            cl.serverTime = cl.snap.serverTime;
+            cl.oldServerTime = cl.serverTime;
+            // Consume each snapshot in cgame before the circular buffers roll over.
+            CL_CGameRendering(STEREO_CENTER);
+            if (cl.serverTime >= target) {
+                clc.demoSeeking = qfalse;
+                Cvar_Set("cl_demoSeeking", "0");
+                Cvar_Set("cl_freezeDemo", clc.demoSeekPaused ? "1" : "0");
+                cl.serverTimeDelta = cl.serverTime - cls.realtime;
+                cl.oldFrameServerTime = cl.snap.serverTime;
+                S_ClearSoundBuffer();
+                return;
+            }
+            CL_ReadDemoMessage();
+            if (!clc.demoPlayer || clc.state != CA_ACTIVE) return;
+        } while (Sys_Milliseconds() < deadline);
+        S_ClearSoundBuffer();
+        return;
+    }
+
 	// if we have gotten to this point, cl.snap is guaranteed to be valid
 	if ( !cl.snap.valid ) {
 		Com_Error( ERR_DROP, "CL_SetCGameTime: !cl.snap.valid" );
@@ -1013,6 +1040,10 @@ void CL_SetCGameTime( void ) {
 
 	if ( clc.demoplaying && cl_freezeDemo->integer ) {
 		// cl_freezeDemo is used to lock a demo in place for single frame advances
+        if (clc.demoPlayer) {
+            // Browser Pause resumes here, rather than catching up with wall time.
+            cl.serverTimeDelta = cl.serverTime - cls.realtime;
+        }
 
 	} else {
 		// cl_timeNudge is a user adjustable cvar that allows more

@@ -314,6 +314,7 @@ UI_SpecifyServerMenu
 void UI_SpecifyServerMenu( void )
 {
 	SpecifyServer_MenuInit();
-	UI_PushMenu( &s_specifyserver.menu );
+	Frontend_SetBackButton( &s_specifyserver.back.generic );
+    UI_PushMenu( &s_specifyserver.menu );
 }
 

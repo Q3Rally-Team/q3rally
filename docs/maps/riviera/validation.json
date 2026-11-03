@@ -1,0 +1,162 @@
+{
+  "map": "q3r_riviera",
+  "course_length": 35808,
+  "estimated_time_s": 65.6,
+  "start_z": 897,
+  "finish_z": 34,
+  "max_grade_pct": 8.7,
+  "min_turn_radius": 414,
+  "road_mesh_error": 0.34,
+  "closest_legs_gap": 672,
+  "bridge_height_over_sea": 269,
+  "sections": {
+    "start": [
+      0,
+      4352
+    ],
+    "hairpins": [
+      4352,
+      10240
+    ],
+    "cliff": [
+      10240,
+      16224
+    ],
+    "tunnel": [
+      17216,
+      18240
+    ],
+    "bridge": [
+      19232,
+      21152
+    ],
+    "headland": [
+      21152,
+      25152
+    ],
+    "horseshoe": [
+      25152,
+      29856
+    ],
+    "town": [
+      30720,
+      32992
+    ],
+    "quay": [
+      33728,
+      35808
+    ]
+  },
+  "terrain_triangles": 25938,
+  "leaves": {
+    "64": 8532,
+    "128": 2379,
+    "256": 1632,
+    "512": 426
+  },
+  "brushes": 27735,
+  "checkpoints": [
+    {
+      "number": 1,
+      "sample": 118,
+      "fraction": 0.105,
+      "half_reach": 442,
+      "handle": 900
+    },
+    {
+      "number": 2,
+      "sample": 188,
+      "fraction": 0.168,
+      "half_reach": 470,
+      "handle": 900
+    },
+    {
+      "number": 3,
+      "sample": 274,
+      "fraction": 0.245,
+      "half_reach": 446,
+      "handle": 900
+    },
+    {
+      "number": 4,
+      "sample": 384,
+      "fraction": 0.343,
+      "half_reach": 432,
+      "handle": 487
+    },
+    {
+      "number": 5,
+      "sample": 452,
+      "fraction": 0.404,
+      "half_reach": 430,
+      "handle": 897
+    },
+    {
+      "number": 6,
+      "sample": 530,
+      "fraction": 0.473,
+      "half_reach": 438,
+      "handle": 888
+    },
+    {
+      "number": 7,
+      "sample": 640,
+      "fraction": 0.571,
+      "half_reach": 429,
+      "handle": 527
+    },
+    {
+      "number": 8,
+      "sample": 714,
+      "fraction": 0.637,
+      "half_reach": 427,
+      "handle": 900
+    },
+    {
+      "number": 9,
+      "sample": 780,
+      "fraction": 0.696,
+      "half_reach": 436,
+      "handle": 865
+    },
+    {
+      "number": 10,
+      "sample": 836,
+      "fraction": 0.746,
+      "half_reach": 440,
+      "handle": 259
+    },
+    {
+      "number": 11,
+      "sample": 876,
+      "fraction": 0.782,
+      "half_reach": 433,
+      "handle": 618
+    },
+    {
+      "number": 12,
+      "sample": 948,
+      "fraction": 0.846,
+      "half_reach": 398,
+      "handle": 900
+    },
+    {
+      "number": 13,
+      "sample": 1026,
+      "fraction": 0.916,
+      "half_reach": 390,
+      "handle": 738
+    },
+    {
+      "number": 14,
+      "sample": 1088,
+      "fraction": 0.971,
+      "half_reach": 477,
+      "handle": 808
+    }
+  ],
+  "houses": 19,
+  "trees": 460,
+  "boulders": 46,
+  "signs": 9
+}

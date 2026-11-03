@@ -287,7 +287,10 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 		return;
 	}
 
-	if(com_developer->integer)
+	/* Keep protocol-level libcurl diagnostics opt-in. Developer builds can
+	 * download several files while connecting, which otherwise floods the
+	 * console and hides useful game output. */
+	if(com_developer->integer && Cvar_VariableIntegerValue("cl_cURLVerbose"))
 		qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_VERBOSE, 1);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_URL, clc.downloadURL);
 	qcurl_easy_setopt_warn(clc.downloadCURL, CURLOPT_TRANSFERTEXT, 0);

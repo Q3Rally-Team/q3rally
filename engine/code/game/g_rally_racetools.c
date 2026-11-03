@@ -131,6 +131,12 @@ void G_RallyIntroCountdownHandover( void ) {
 			VectorCopy( rallyIntroGridOrigin[i], client->ps.origin );
 			G_SetOrigin( player, rallyIntroGridOrigin[i] );
 			SetClientViewAngle( player, rallyIntroGridAngles[i] );
+            /* Vehicle attitude belongs to physics, not to the mouse camera.
+             * Grid slots on slopes can contain pitch/roll before the intro. */
+            client->ps.delta_angles[PITCH] = -client->pers.cmd.angles[PITCH];
+            client->ps.delta_angles[ROLL] = -client->pers.cmd.angles[ROLL];
+            client->ps.damageAngles[PITCH] = client->ps.damageAngles[ROLL] = 0;
+            client->ps.damagePitch = 0;
 			VectorClear( client->ps.velocity );
 			VectorClear( client->ps.angularMomentum );
 		}
@@ -496,6 +502,7 @@ static void G_RallyInitializeLapTimersAtRaceStart( int startTime ) {
 
 		player->client->lapStartTime = startTime;
 		player->client->lastCheckpointTime = startTime;
+		player->client->checkpointWarningTime = 0;
 	}
 }
 
@@ -650,8 +657,8 @@ void RallyStarter_Think( gentity_t *ent ){
 				count, g_derbyMinPlayers.integer) );
 			return;
 		}
-		/* Intro is now triggered early (before the 7500ms grid guard) if a
-		   packaged route exists. If INTRO_CAM is active, the expiry block below
+		/* Intro is triggered early (before the 7500ms grid guard) if a valid
+		   BPD route exists. If INTRO_CAM is active, the expiry block below
 		   handles the handover. */
 		if ( level.raceState == RACE_STATE_INTRO_CAM ) {
 			/* waiting for intro to finish */

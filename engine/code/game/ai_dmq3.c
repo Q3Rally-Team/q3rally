@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ai_cmd.h"
 #include "ai_dmnet.h"
 #include "ai_team.h"
+#include "ai_dm_enemyselect.h"
 //
 #include "chars.h"				//characteristics
 #include "inv.h"				//indexes into the inventory
@@ -728,12 +729,185 @@ void BotRefuseOrder(bot_state_t *bs) {
 
 /*
 ==================
+BotCTFDefaultRole
+==================
+Returns a stable default role for a bot when no team leader has assigned
+one. Roughly half of the uncommanded bots attack, with at least one attacker;
+the rest defend their own flag. Task preferences break ties before client
+number so explicit attacker preferences are honored where possible.
+*/
+static int BotCTFDefaultRole(bot_state_t *bs) {
+	int candidates[MAX_CLIENTS];
+	int priorities[MAX_CLIENTS];
+	int i, j, count, preference, priority, attackerCount;
+	int assignedCount, assignedAttackers, targetAttackers, team;
+	int insert;
+
+	team = BotTeam(bs);
+	if (bs->ctfDefaultRole != CTF_DEFAULT_ROLE_NONE && bs->ctfDefaultRoleTeam == team) {
+		return (bs->ctfDefaultRole == CTF_DEFAULT_ROLE_ATTACKER) ? 1 : 0;
+	}
+	if (bs->ctfDefaultRoleTeam != team) {
+		bs->ctfDefaultRole = CTF_DEFAULT_ROLE_NONE;
+	}
+
+	count = 0;
+	assignedCount = 0;
+	assignedAttackers = 0;
+	for (i = 0; i < level.maxclients; i++) {
+		if (!g_entities[i].inuse || !(g_entities[i].r.svFlags & SVF_BOT)) {
+			continue;
+		}
+		if (!botstates[i] || !botstates[i]->inuse || !BotSameTeam(bs, i)) {
+			continue;
+		}
+		if (botstates[i]->ctfDefaultRole != CTF_DEFAULT_ROLE_NONE) {
+			if (botstates[i]->ctfDefaultRoleTeam == team) {
+				assignedCount++;
+				if (botstates[i]->ctfDefaultRole == CTF_DEFAULT_ROLE_ATTACKER) {
+					if ((!botstates[i]->ordered && !botstates[i]->lastgoal_ltgtype) ||
+						(botstates[i]->ordered && botstates[i]->ltgtype == LTG_GETFLAG) ||
+						(!botstates[i]->ordered && botstates[i]->lastgoal_ltgtype == LTG_GETFLAG)) {
+						assignedAttackers++;
+					}
+				}
+				continue;
+			}
+			botstates[i]->ctfDefaultRole = CTF_DEFAULT_ROLE_NONE;
+		}
+		// A saved team command always takes precedence over the fallback role.
+		if (botstates[i]->ordered || botstates[i]->lastgoal_ltgtype) {
+			continue;
+		}
+
+		preference = BotGetTeamMateTaskPreference(bs, i);
+		if (preference & TEAMTP_ATTACKER) {
+			priority = 0;
+		} else if (preference & TEAMTP_DEFENDER) {
+			priority = 2;
+		} else {
+			priority = 1;
+		}
+
+		// Sort identically for every bot: preference first, then client slot.
+		insert = count;
+		for (j = 0; j < count; j++) {
+			if (priority < priorities[j] ||
+				(priority == priorities[j] && i < candidates[j])) {
+				insert = j;
+				break;
+			}
+		}
+		for (j = count; j > insert; j--) {
+			candidates[j] = candidates[j - 1];
+			priorities[j] = priorities[j - 1];
+		}
+		candidates[insert] = i;
+		priorities[insert] = priority;
+		count++;
+	}
+
+	if (!count) {
+		return -1;
+	}
+	targetAttackers = (assignedCount + count + 1) / 2;
+	attackerCount = targetAttackers - assignedAttackers;
+	if (!assignedAttackers && attackerCount < 1) {
+		attackerCount = 1;
+	}
+	if (attackerCount < 0) {
+		attackerCount = 0;
+	}
+	if (attackerCount > count) {
+		attackerCount = count;
+	}
+	for (i = 0; i < count; i++) {
+		botstates[candidates[i]]->ctfDefaultRole = (i < attackerCount) ?
+			CTF_DEFAULT_ROLE_ATTACKER : CTF_DEFAULT_ROLE_DEFENDER;
+		botstates[candidates[i]]->ctfDefaultRoleTeam = team;
+	}
+	if (bs->ctfDefaultRoleTeam == team) {
+		return (bs->ctfDefaultRole == CTF_DEFAULT_ROLE_ATTACKER) ? 1 : 0;
+	}
+	return -1;
+}
+
+/*
+==================
+BotCTFApplyDefaultRole
+==================
+Applies the coordinated fallback role when both flags are home. A bot team
+leader's orders and saved player orders are handled before this fallback.
+*/
+static qboolean BotCTFApplyDefaultRole(bot_state_t *bs) {
+	int role, botArea, defaultRouteTime, activeRouteTime;
+	bot_goal_t *ownFlag, *enemyFlag;
+	char name[MAX_NETNAME];
+
+	if (bs->ordered || bs->lastgoal_ltgtype) {
+		return qfalse;
+	}
+	role = BotCTFDefaultRole(bs);
+	if (role < 0) {
+		return qfalse;
+	}
+	ownFlag = BotTeamFlag(bs);
+	enemyFlag = BotEnemyFlag(bs);
+	if (!ownFlag || !ownFlag->areanum || !enemyFlag || !enemyFlag->areanum) {
+		return qfalse;
+	}
+
+	if (role && bs->ltgtype == LTG_GETFLAG && bs->teamgoal_time > FloatTime()) {
+		return qtrue;
+	}
+	if (!role && bs->ltgtype == LTG_DEFENDKEYAREA &&
+		bs->teamgoal.number == ownFlag->number && bs->teamgoal_time > FloatTime()) {
+		return qtrue;
+	}
+
+	BotRefuseOrder(bs);
+	bs->decisionmaker = bs->client;
+	bs->ordered = qfalse;
+	bs->teammessage_time = 0;
+	if (role) {
+		bs->ltgtype = LTG_GETFLAG;
+		bs->teamgoal_time = FloatTime() + CTF_GETFLAG_TIME;
+		BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+		botArea = BotPointAreaNum(bs->origin);
+		defaultRouteTime = botArea ? trap_AAS_AreaTravelTimeToGoalArea(
+			botArea, bs->origin, enemyFlag->areanum, TFL_DEFAULT) : 0;
+		activeRouteTime = botArea ? trap_AAS_AreaTravelTimeToGoalArea(
+			botArea, bs->origin, enemyFlag->areanum, bs->tfl) : 0;
+	} else {
+		memcpy(&bs->teamgoal, ownFlag, sizeof(bot_goal_t));
+		bs->ltgtype = LTG_DEFENDKEYAREA;
+		bs->teamgoal_time = FloatTime() + TEAM_DEFENDKEYAREA_TIME;
+		bs->defendaway_time = 0;
+		bs->altroutegoal.areanum = 0;
+		bs->reachedaltroutegoal_time = 0;
+	}
+	BotSetTeamStatus(bs);
+	bs->owndecision_time = FloatTime() + 5;
+	ClientName(bs->client, name, sizeof(name));
+	if (role) {
+		BotAI_Print(PRT_MESSAGE,
+			"CTF bot %s assigned default attacker role (flag route area %d -> %d, default travel %d, active flags 0x%x travel %d)\n",
+			name, botArea, enemyFlag->areanum, defaultRouteTime, bs->tfl, activeRouteTime);
+		bs->ctfRouteDebugTime = FloatTime() + 10.0f;
+	} else {
+		BotAI_Print(PRT_MESSAGE, "CTF bot %s assigned default defender role\n", name);
+	}
+	return qtrue;
+}
+
+/*
+==================
 BotCTFSeekGoals
 ==================
 */
 void BotCTFSeekGoals(bot_state_t *bs) {
 	float rnd, l1, l2;
-	int flagstatus, c;
+	int flagstatus, ownFlagStatus, enemyFlagStatus, c;
 	vec3_t dir;
 	aas_entityinfo_t entinfo;
 
@@ -747,6 +921,7 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 			bs->ltgtype = LTG_RUSHBASE;
 			bs->teamgoal_time = FloatTime() + CTF_RUSHBASE_TIME;
 			bs->rushbaseaway_time = 0;
+			bs->ctfRouteDebugTime = 0;
 			bs->decisionmaker = bs->client;
 			bs->ordered = qfalse;
 			//
@@ -795,10 +970,32 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 		}
 	}
 	//
-	if (BotTeam(bs) == TEAM_RED) flagstatus = bs->redflagstatus * 2 + bs->blueflagstatus;
-	else flagstatus = bs->blueflagstatus * 2 + bs->redflagstatus;
+	if (BotTeam(bs) == TEAM_RED) {
+		ownFlagStatus = bs->redflagstatus;
+		enemyFlagStatus = bs->blueflagstatus;
+	} else {
+		ownFlagStatus = bs->blueflagstatus;
+		enemyFlagStatus = bs->redflagstatus;
+	}
+	flagstatus = (ownFlagStatus != 0) * 2 + (enemyFlagStatus != 0);
 	//if our team has the enemy flag and our flag is at the base
 	if (flagstatus == 1) {
+		if (enemyFlagStatus == 2) {
+			// A dropped enemy flag is still a live capture objective. The
+			// ordinary binary flag logic used to treat it as already carried.
+			if (bs->ltgtype != LTG_GETFLAG) {
+				BotRefuseOrder(bs);
+				bs->decisionmaker = bs->client;
+				bs->ordered = qfalse;
+				bs->ltgtype = LTG_GETFLAG;
+				bs->teamgoal_time = FloatTime() + CTF_GETFLAG_TIME;
+				bs->teammessage_time = 0;
+				BotSetTeamStatus(bs);
+			}
+			bs->altroutegoal.areanum = 0;
+			bs->reachedaltroutegoal_time = 0;
+			return;
+		}
 		//
 		if (bs->owndecision_time < FloatTime()) {
 			//if Not defending the base already
@@ -840,37 +1037,30 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 	else if (flagstatus == 2) {
 		//
 		if (bs->owndecision_time < FloatTime()) {
-			//if enemy flag carrier is visible
-			c = BotEnemyFlagCarrierVisible(bs);
-			if (c >= 0) {
-				//FIXME: fight enemy flag carrier
-			}
 			//if not already doing something important
-			if (bs->ltgtype != LTG_GETFLAG &&
-				bs->ltgtype != LTG_RETURNFLAG &&
+			if (bs->ltgtype != LTG_RETURNFLAG &&
 				bs->ltgtype != LTG_TEAMHELP &&
-				bs->ltgtype != LTG_TEAMACCOMPANY &&
-				bs->ltgtype != LTG_CAMPORDER &&
-				bs->ltgtype != LTG_PATROL &&
-				bs->ltgtype != LTG_GETITEM) {
+				bs->ltgtype != LTG_TEAMACCOMPANY) {
 
 				BotRefuseOrder(bs);
 				bs->decisionmaker = bs->client;
 				bs->ordered = qfalse;
-				//
-				if (random() < 0.5) {
-					//go for the enemy flag
-					bs->ltgtype = LTG_GETFLAG;
-				}
-				else {
-					bs->ltgtype = LTG_RETURNFLAG;
-				}
+				// Recovering our missing flag takes priority over a second
+				// attack on the enemy base.
+				bs->ltgtype = LTG_RETURNFLAG;
 				//no team message
 				bs->teammessage_time = 0;
 				//set the time the bot will stop getting the flag
-				bs->teamgoal_time = FloatTime() + CTF_GETFLAG_TIME;
-				//get an alternative route goal towards the enemy base
-				BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+				bs->teamgoal_time = FloatTime() + CTF_RETURNFLAG_TIME;
+				if (ownFlagStatus == 2) {
+					// The dropped flag itself is the recovery target.
+					bs->altroutegoal.areanum = 0;
+					bs->reachedaltroutegoal_time = 0;
+				} else {
+					// The enemy base is a fallback search area if our flag
+					// is still being carried and its carrier is out of sight.
+					BotGetAlternateRouteGoal(bs, BotOppositeTeam(bs));
+				}
 				//
 				BotSetTeamStatus(bs);
 				bs->owndecision_time = FloatTime() + 5;
@@ -882,6 +1072,19 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 	else if (flagstatus == 3) {
 		//
 		if (bs->owndecision_time < FloatTime()) {
+			if (ownFlagStatus == 2 && bs->ltgtype != LTG_RETURNFLAG) {
+				BotRefuseOrder(bs);
+				bs->decisionmaker = bs->client;
+				bs->ordered = qfalse;
+				bs->ltgtype = LTG_RETURNFLAG;
+				bs->teammessage_time = 0;
+				bs->teamgoal_time = FloatTime() + CTF_RETURNFLAG_TIME;
+				bs->altroutegoal.areanum = 0;
+				bs->reachedaltroutegoal_time = 0;
+				BotSetTeamStatus(bs);
+				bs->owndecision_time = FloatTime() + 5;
+				return;
+			}
 			// if not trying to return the flag and not following the team flag carrier
 			if ( bs->ltgtype != LTG_RETURNFLAG && bs->ltgtype != LTG_TEAMACCOMPANY ) {
 				//
@@ -928,6 +1131,10 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 				}
 			}
 		}
+		return;
+	}
+	// Preserve saved team orders, then assign uncommanded bots a stable split.
+	if (BotCTFApplyDefaultRole(bs)) {
 		return;
 	}
 	// don't just do something wait for the bot team leader to give orders
@@ -1035,6 +1242,7 @@ void BotCTFRetreatGoals(bot_state_t *bs) {
 			bs->ltgtype = LTG_RUSHBASE;
 			bs->teamgoal_time = FloatTime() + CTF_RUSHBASE_TIME;
 			bs->rushbaseaway_time = 0;
+			bs->ctfRouteDebugTime = 0;
 			bs->decisionmaker = bs->client;
 			bs->ordered = qfalse;
 			BotSetTeamStatus(bs);
@@ -2896,11 +3104,30 @@ qboolean BotGetLcsRiskMetrics(bot_state_t *bs, float *relativePosition, float *t
 BotAggression
 ==================
 */
+static float BotDeathmatchSkill( bot_state_t *bs ) {
+	return Com_Clamp( 0, 1, (bs->settings.skill - 1) * 0.25f );
+}
+
+static float BotDeathmatchAggression( bot_state_t *bs ) {
+	float skill = BotDeathmatchSkill( bs );
+	int weapon = BotFirstUsableFrontWeapon( &bs->cur_ps );
+	if ( bs->inventory[INVENTORY_HEALTH] < 40 - 14 * skill ) return 0;
+	/* The start weapon is a real DM weapon. The legacy Q3 evaluation gives
+	 * it zero confidence even at full health with ammunition. */
+	if ( weapon > WP_GAUNTLET && weapon < RWP_SMOKE ) {
+		return 65 + 15 * skill + 0.35f * Com_Clamp( -30, 30, bs->personalityAggressionBias );
+	}
+	if ( weapon == WP_GAUNTLET && bs->inventory[INVENTORY_HEALTH] >= 60 &&
+		bs->inventory[ENEMY_HORIZONTAL_DIST] < 180 ) return 55 + 10 * skill;
+	return 0;
+}
+
 float BotAggression(bot_state_t *bs) {
 	float aggression;
 	float lcsRelativePosition = 0.5f;
 	float lcsThreatProximity = 0.0f;
 	int lcsRemainingOpponents = 0;
+	if ( gametype == GT_DEATHMATCH ) return BotDeathmatchAggression( bs );
 
 	//if the bot has quad
 	if (bs->inventory[INVENTORY_QUAD]) {
@@ -3296,7 +3523,7 @@ int BotNeedsCombatSupplies(bot_state_t *bs) {
 	if ( bs->inventory[INVENTORY_FLAMETHROWER] > 0 && bs->inventory[INVENTORY_FLAMETHROWERAMMO] > 18 ) hasStrongWeapon = qtrue;
 	if ( bs->inventory[INVENTORY_SHOTGUN] > 0 && bs->inventory[INVENTORY_SHELLS] > 4 ) hasStrongWeapon = qtrue;
 
-	if ( !hasStrongWeapon && bs->inventory[INVENTORY_BULLETS] < 45 ) {
+	if ( gametype != GT_DEATHMATCH && !hasStrongWeapon && bs->inventory[INVENTORY_BULLETS] < 45 ) {
 		return qtrue;
 	}
 
@@ -3531,6 +3758,99 @@ static void BotRallyCombatSetPhase( bot_state_t *bs, int phase ) {
 	}
 }
 
+/* Deathmatch keeps its driving command separate from the weapon aim request. */
+static bot_moveresult_t BotDeathmatchCombatMove( bot_state_t *bs ) {
+	bot_moveresult_t result;
+	aas_entityinfo_t enemy;
+	vec3_t target, direction, angles, enemyVelocity;
+	float distance, yawError, minRange, maxRange, cruiseSpeed, skill, phaseAge, escapeSpeed;
+	qboolean explosive;
+
+	memset( &result, 0, sizeof( result ) );
+	if ( bs->enemy < 0 ) return result;
+	BotEntityInfo( bs->enemy, &enemy );
+	if ( !enemy.valid ) return result;
+	skill = BotDeathmatchSkill( bs );
+	minRange = 100;
+	maxRange = 1100;
+	cruiseSpeed = 700 + 300 * skill;
+	explosive = qfalse;
+	switch ( bs->weaponnum ) {
+		case WP_GAUNTLET: minRange = 0; maxRange = 100; break;
+		case WP_SHOTGUN: minRange = 65; maxRange = 650; break;
+		case WP_LIGHTNING: minRange = 80; maxRange = 650; break;
+		case WP_FLAME_THROWER: minRange = 65; maxRange = 480; break;
+		case WP_ROCKET_LAUNCHER:
+		case WP_BFG: minRange = 240; maxRange = 1200; explosive = qtrue; break;
+		case WP_GRENADE_LAUNCHER: minRange = 280; maxRange = 900; explosive = qtrue; break;
+		case WP_RAILGUN: minRange = 140; maxRange = 2000; break;
+		default: break;
+	}
+	VectorSubtract( enemy.origin, bs->origin, direction );
+	direction[2] = 0;
+	distance = VectorNormalize( direction );
+	yawError = fabs( AngleSubtract( vectoyaw( direction ), bs->cur_ps.viewangles[YAW] ) );
+	if ( bs->rallyCombatEnemy != bs->enemy || bs->rallyCombatPhaseTime <= 0 ) {
+		bs->rallyCombatEnemy = bs->enemy;
+		bs->rallyCombatPhase = RALLY_COMBAT_APPROACH;
+		bs->rallyCombatPhaseTime = FloatTime();
+		bs->rallyCombatLastHitTime = FloatTime();
+		bs->rallyCombatLastHitCount = bs->cur_ps.persistant[PERS_HITS];
+		bs->rallyCombatTurnDir = (bs->client & 1) ? 1 : -1;
+	}
+	if ( bs->cur_ps.persistant[PERS_HITS] > bs->rallyCombatLastHitCount ) {
+		bs->rallyCombatLastHitTime = FloatTime();
+		bs->rallyCombatLastHitCount = bs->cur_ps.persistant[PERS_HITS];
+	}
+	phaseAge = FloatTime() - bs->rallyCombatPhaseTime;
+	if ( bs->rallyCombatPhase == RALLY_COMBAT_BREAKAWAY ) {
+		if ( phaseAge > 0.95f - 0.30f * skill || distance > minRange + 280 ) {
+			BotRallyCombatSetPhase( bs, RALLY_COMBAT_TURNAROUND );
+		}
+	} else if ( bs->rallyCombatPhase == RALLY_COMBAT_TURNAROUND ) {
+		if ( yawError < 30 || phaseAge > 1.4f ) BotRallyCombatSetPhase( bs, RALLY_COMBAT_APPROACH );
+	} else if ( distance < minRange && (explosive || yawError > 55) ) {
+		/* Losing a few hits is not a reason to abandon a clear firing lane.
+		 * Open space only when the weapon is unsafe or the target passed us. */
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_BREAKAWAY );
+		bs->rallyCombatBreakawayYaw = AngleNormalize360( bs->cur_ps.viewangles[YAW] +
+			bs->rallyCombatTurnDir * 45 );
+		bs->rallyCombatTurnDir = -bs->rallyCombatTurnDir;
+	} else if ( distance < maxRange && yawError < 30 ) {
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_FIRE );
+	} else {
+		BotRallyCombatSetPhase( bs, RALLY_COMBAT_APPROACH );
+	}
+	/* Aim prediction/accuracy remains owned by BotAimAtEnemy. It has already
+	 * run this tick, but cannot overwrite the driver's eventual user command. */
+	VectorCopy( bs->aimtarget, target );
+	if ( bs->rallyCombatPhase == RALLY_COMBAT_BREAKAWAY ) {
+		VectorSet( angles, 0, bs->rallyCombatBreakawayYaw, 0 );
+		AngleVectors( angles, direction, NULL, NULL );
+		VectorMA( bs->origin, 650, direction, target );
+		cruiseSpeed = 560 + skill * 180;
+	} else if ( bs->rallyCombatPhase == RALLY_COMBAT_TURNAROUND ) {
+		cruiseSpeed = 340 + 120 * skill;
+	} else if ( bs->rallyCombatPhase == RALLY_COMBAT_FIRE ) {
+		cruiseSpeed = distance < minRange + 160 ? 340 + 120 * skill : 480 + 200 * skill;
+		if ( bs->weaponnum == WP_RAILGUN && distance > 800 ) cruiseSpeed = 420 + 100 * skill;
+	}
+	/* Stay with a fleeing, visible vehicle instead of falling behind at the
+	 * fixed fire-phase speed. AAS observations, not hidden player state. */
+	if ( bs->rallyCombatPhase == RALLY_COMBAT_APPROACH || bs->rallyCombatPhase == RALLY_COMBAT_FIRE ) {
+		if ( enemy.update_time > 0.01f && distance > minRange + 180 && yawError < 35 ) {
+			VectorSubtract( enemy.origin, enemy.lastvisorigin, enemyVelocity );
+			VectorScale( enemyVelocity, 1.0f / enemy.update_time, enemyVelocity );
+			escapeSpeed = DotProduct( enemyVelocity, direction );
+			if ( escapeSpeed > 150 && escapeSpeed + 120 + 140 * skill > cruiseSpeed ) {
+				cruiseSpeed = Com_Clamp( 0, 1000 + 100 * skill, escapeSpeed + 120 + 140 * skill );
+			}
+		}
+	}
+	BotVehicleDrive( bs, target, cruiseSpeed, &result );
+	return result;
+}
+
 static void BotRallyCombatSteerTowardYaw( bot_state_t *bs, float targetYaw, qboolean reverseSteer ) {
 	float yawDelta;
 
@@ -3679,6 +3999,9 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 	bot_goal_t goal;
 
 	attackentity = bs->enemy;
+	if ( gametype == GT_DEATHMATCH && bs->cur_ps.pm_type == PM_NORMAL ) {
+		return BotDeathmatchCombatMove( bs );
+	}
 	if ( BotUseRallyCombatMovement( bs ) ) {
 		return BotRallyCombatMove( bs, tfl );
 	}
@@ -3989,10 +4312,15 @@ BotFindEnemy
 */
 int BotFindEnemy(bot_state_t *bs, int curenemy) {
 	int i, healthdecrease;
+	int ctfFallbackEnemy;
 	float f, alertness, easyfragger, vis;
 	float squaredist, cursquaredist;
 	aas_entityinfo_t entinfo, curenemyinfo;
 	vec3_t dir, angles;
+	qboolean dmSelection;
+	int bestEnemy;
+	float bestScore, score, distance, forwardAlignment, threatAlignment;
+	vec3_t forward, enemyForward;
 
 // STONELANCE - FIXME: temp
 	if ( gametype == GT_RACING_DM )
@@ -4000,6 +4328,14 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		return qfalse;
 	}
 // END
+	dmSelection = ( gametype == GT_DEATHMATCH );
+	bestEnemy = -1;
+	bestScore = 0.0f;
+	ctfFallbackEnemy = -1;
+	if ( dmSelection ) {
+		VectorSet( angles, 0.0f, bs->cur_ps.viewangles[YAW], 0.0f );
+		AngleVectors( angles, forward, NULL, NULL );
+	}
 
 	alertness = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_ALERTNESS, 0, 1);
 	easyfragger = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_EASY_FRAGGER, 0, 1);
@@ -4008,7 +4344,7 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 	//remember the current health value
 	bs->lasthealth = bs->inventory[INVENTORY_HEALTH];
 	//
-	if (curenemy >= 0) {
+	if (curenemy >= 0 && !dmSelection) {
 		BotEntityInfo(curenemy, &curenemyinfo);
 		if (EntityCarriesFlag(&curenemyinfo)) return qfalse;
 		VectorSubtract(curenemyinfo.origin, bs->origin, dir);
@@ -4049,7 +4385,7 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 
 		if (i == bs->client) continue;
 		//if it's the current enemy
-		if (i == curenemy) continue;
+		if (i == curenemy && !dmSelection) continue;
 		//if the enemy has targeting disabled
 		if (g_entities[i].flags & FL_NOTARGET) {
 			continue;
@@ -4078,14 +4414,15 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		if (!EntityCarriesFlag(&entinfo))
 		{
 			//if this enemy is further away than the current one
-			if (curenemy >= 0 && squaredist > cursquaredist) continue;
+			if (!dmSelection && curenemy >= 0 && squaredist > cursquaredist) continue;
 		} //end if
 		//if the bot has no
 		if (squaredist > Square(900.0 + alertness * 4000.0)) continue;
 		//if on the same team
 		if (BotSameTeam(bs, i)) continue;
 		//if the bot's health decreased or the enemy is shooting
-		if (curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo)))
+		if ((dmSelection && i == curenemy) ||
+				(curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo))))
 			f = 360;
 		else
 			f = 90 + 90 - (90 - (squaredist > Square(810) ? Square(810) : squaredist) / (810 * 9));
@@ -4109,9 +4446,57 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 				if (BotWantsToRetreat(bs)) continue;
 			}
 		}
+		if ( dmSelection ) {
+			VectorSubtract( entinfo.origin, bs->origin, dir );
+			distance = VectorLength( dir );
+			dir[2] = 0.0f;
+			VectorNormalize( dir );
+			forwardAlignment = DotProduct( forward, dir );
+			VectorSet( angles, 0.0f, entinfo.angles[YAW], 0.0f );
+			AngleVectors( angles, enemyForward, NULL, NULL );
+			threatAlignment = -DotProduct( enemyForward, dir );
+			score = Bot_DMEnemyScore( distance, forwardAlignment, threatAlignment,
+					EntityIsShooting( &entinfo ), vis, i == curenemy );
+			if ( Bot_DMEnemyIsBetter( entinfo.number, score, bestEnemy, bestScore ) ) {
+				bestEnemy = entinfo.number;
+				bestScore = score;
+			}
+			continue;
+		}
+		// When our flag is being carried, prioritize its carrier over other
+		// visible enemies. Keep the first ordinary enemy as a fallback.
+		if (gametype == GT_CTF &&
+			(BotTeam(bs) == TEAM_RED ? bs->redflagstatus : bs->blueflagstatus) == 1 &&
+			!EntityCarriesFlag(&entinfo)) {
+			if (curenemy < 0 && ctfFallbackEnemy < 0) {
+				ctfFallbackEnemy = entinfo.number;
+			}
+			continue;
+		}
 		//found an enemy
 		bs->enemy = entinfo.number;
 		if (curenemy >= 0) bs->enemysight_time = FloatTime() - 2;
+		else bs->enemysight_time = FloatTime();
+		bs->enemysuicide = qfalse;
+		bs->enemydeath_time = 0;
+		bs->enemyvisible_time = FloatTime();
+		return qtrue;
+	}
+	if (ctfFallbackEnemy >= 0) {
+		bs->enemy = ctfFallbackEnemy;
+		if (curenemy >= 0) bs->enemysight_time = FloatTime() - 2;
+		else bs->enemysight_time = FloatTime();
+		bs->enemysuicide = qfalse;
+		bs->enemydeath_time = 0;
+		bs->enemyvisible_time = FloatTime();
+		return qtrue;
+	}
+	if ( dmSelection && bestEnemy >= 0 ) {
+		/* Candidate retreat checks also update this inventory: keep the winner's. */
+		BotUpdateBattleInventory( bs, bestEnemy );
+		if ( bestEnemy == curenemy ) return qfalse;
+		bs->enemy = bestEnemy;
+		if ( curenemy >= 0 ) bs->enemysight_time = FloatTime() - 2;
 		else bs->enemysight_time = FloatTime();
 		bs->enemysuicide = qfalse;
 		bs->enemydeath_time = 0;
@@ -4392,6 +4777,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 	if (aim_skill > 0.95) {
 		//don't aim too early
 		reactiontime = 0.5 * trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_REACTIONTIME, 0, 1);
+		if ( gametype == GT_DEATHMATCH ) reactiontime *= 1.1f - 0.65f * BotDeathmatchSkill( bs );
 		if (bs->enemysight_time > FloatTime() - reactiontime) return;
 		if (bs->teleport_time > FloatTime() - reactiontime) return;
 	}
@@ -4650,7 +5036,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	int attackentity;
 	bsp_trace_t bsptrace;
 	//float selfpreservation;
-	vec3_t forward, right, start, end, dir, angles;
+	vec3_t forward, right, up, start, end, dir, angles, fireangles;
 	weaponinfo_t wi;
 	bsp_trace_t trace;
 	aas_entityinfo_t entinfo;
@@ -4675,6 +5061,11 @@ void BotCheckAttack(bot_state_t *bs) {
 	}
 	//
 	reactiontime = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_REACTIONTIME, 0, 1);
+	if ( gametype == GT_DEATHMATCH ) {
+		float skill = BotDeathmatchSkill( bs );
+		reactiontime = Com_Clamp( 0.12f + 0.38f * (1 - skill), 1,
+			reactiontime * (1.1f - 0.65f * skill) );
+	}
 	if (bs->enemysight_time > FloatTime() - reactiontime) return;
 	if (bs->teleport_time > FloatTime() - reactiontime) return;
 	//if changing weapons
@@ -4682,19 +5073,39 @@ void BotCheckAttack(bot_state_t *bs) {
 	//check fire throttle characteristic
 	if (bs->firethrottlewait_time > FloatTime()) return;
 	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 1);
+	if ( gametype == GT_DEATHMATCH ) {
+		float skill = BotDeathmatchSkill( bs );
+		if ( skill < 1 ) firethrottle = Com_Clamp( 0.35f + 0.60f * skill,
+			0.45f + 0.50f * skill, firethrottle );
+		else if ( firethrottle < 0.95f ) firethrottle = 0.95f;
+	}
 	if (bs->firethrottleshoot_time < FloatTime()) {
 		if (random() > firethrottle) {
-			bs->firethrottlewait_time = FloatTime() + firethrottle;
+			bs->firethrottlewait_time = FloatTime() + (gametype == GT_DEATHMATCH ?
+				0.12f + 0.38f * (1 - BotDeathmatchSkill( bs )) : firethrottle);
 			bs->firethrottleshoot_time = 0;
+			if ( gametype == GT_DEATHMATCH ) return;
 		}
 		else {
-			bs->firethrottleshoot_time = FloatTime() + 1 - firethrottle;
+			bs->firethrottleshoot_time = FloatTime() + (gametype == GT_DEATHMATCH ?
+				0.15f + 0.85f * BotDeathmatchSkill( bs ) : 1 - firethrottle);
 			bs->firethrottlewait_time = 0;
 		}
 	}
 	//
 	//
-	VectorSubtract(bs->aimtarget, bs->eye, dir);
+	/* CT_MOUSE viewangles are steering input, not the fixed weapon direction. */
+	if ( gametype == GT_DEATHMATCH ) {
+		VectorCopy( bs->cur_ps.viewangles, fireangles );
+		AngleVectors( fireangles, forward, right, up );
+		/* Same body-relative, snapped muzzle used by FireWeapon. */
+		CalcMuzzlePoint( &g_entities[bs->entitynum], forward, right, up, start );
+		VectorSubtract( bs->aimtarget, start, dir );
+	}
+	else {
+		VectorCopy( bs->viewangles, fireangles );
+		VectorSubtract(bs->aimtarget, bs->eye, dir);
+	}
 	//
 	if (bs->weaponnum == WP_GAUNTLET) {
 		if (VectorLengthSquared(dir) > Square(60)) {
@@ -4713,25 +5124,34 @@ void BotCheckAttack(bot_state_t *bs) {
 			fov = 90;
 		}
 	}
-	if (!InFieldOfVision(bs->viewangles, fov, angles))
+	if (!InFieldOfVision(fireangles, fov, angles))
 		return;
-	BotAI_Trace(&bsptrace, bs->eye, NULL, NULL, bs->aimtarget, bs->client, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
+	if ( gametype == GT_DEATHMATCH ) {
+		BotAI_Trace(&bsptrace, start, NULL, NULL, bs->aimtarget, bs->client, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
+	}
+	else {
+		BotAI_Trace(&bsptrace, bs->eye, NULL, NULL, bs->aimtarget, bs->client, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
+	}
 	if (bsptrace.fraction < 1 && bsptrace.ent != attackentity)
 		return;
 
 	//get the weapon info
 	trap_BotGetWeaponInfo(bs->ws, bs->weaponnum, &wi);
 	//get the start point shooting from
-	VectorCopy(bs->origin, start);
-	start[2] += bs->cur_ps.viewheight;
-	AngleVectors(bs->viewangles, forward, right, NULL);
-	start[0] += forward[0] * wi.offset[0] + right[0] * wi.offset[1];
-	start[1] += forward[1] * wi.offset[0] + right[1] * wi.offset[1];
-	start[2] += forward[2] * wi.offset[0] + right[2] * wi.offset[1] + wi.offset[2];
+	if ( gametype != GT_DEATHMATCH ) {
+		VectorCopy(bs->origin, start);
+		start[2] += bs->cur_ps.viewheight;
+		AngleVectors(bs->viewangles, forward, right, NULL);
+		start[0] += forward[0] * wi.offset[0] + right[0] * wi.offset[1];
+		start[1] += forward[1] * wi.offset[0] + right[1] * wi.offset[1];
+		start[2] += forward[2] * wi.offset[0] + right[2] * wi.offset[1] + wi.offset[2];
+	}
 	//end point aiming at
 	VectorMA(start, 1000, forward, end);
 	//a little back to make sure not inside a very close enemy
-	VectorMA(start, -12, forward, start);
+	if ( gametype != GT_DEATHMATCH ) {
+		VectorMA(start, -12, forward, start);
+	}
 	BotAI_Trace(&trace, start, mins, maxs, end, bs->entitynum, MASK_SHOT);
 	//if the entity is a client
 	if (trace.ent >= 0 && trace.ent < MAX_CLIENTS) {
@@ -5540,6 +5960,14 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 	//vec3_t start, end, mins, maxs;
 	aas_entityinfo_t entinfo;
 	bot_activategoal_t activategoal;
+
+	/* CTF bots are cars. Their steering/reverse recovery is applied from the
+	 * vehicle driver at usercmd time; the generic foot strafe/back-up logic
+	 * fights that controller and cannot free a car from map geometry. */
+	if (gametype == GT_CTF && bs->vehicle.active) {
+		bs->notblocked_time = FloatTime();
+		return;
+	}
 
 	// if the bot is not blocked by anything
 	if (!moveresult->blocked) {
@@ -6393,6 +6821,8 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 	BotResetNodeSwitches();
 	//execute AI nodes
 	for (i = 0; i < MAX_NODESWITCHES; i++) {
+		/* A request belongs to the final active node, not one left this tick. */
+		bs->vehicle.active = qfalse;
 		if (bs->ainode(bs)) break;
 	}
 	//if the bot removed itself :)

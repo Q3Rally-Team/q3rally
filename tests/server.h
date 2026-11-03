@@ -516,4 +516,6 @@ static inline void FS_HomeRemove( const char *homePath ) {
         test_fsRemoveCount++;
 }
 
+void SV_LadderShutdown( void );
+
 #endif /* TEST_SERVER_H */

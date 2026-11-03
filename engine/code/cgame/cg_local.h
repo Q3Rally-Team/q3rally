@@ -862,6 +862,7 @@ typedef struct {
 	int			kothLastContested;	// previous contested flag seen from CS_KOTHSTATUS
 	int			kothStatusInitialized;
 	int			kothLossFlashUntil;	// local-team-loss tint end time
+	int			kothOwnerChangeTime;	// cg.time of the last hill owner change (crown hop)
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
@@ -1076,6 +1077,7 @@ typedef struct {
     qhandle_t   greenFlagModel;
     qhandle_t   yellowFlagModel;
 	qhandle_t	neutralFlagModel;
+	qhandle_t	pennantShader;		// Q3Rally: pennant of a flag carrier
     qhandle_t   redSigilModel;
     qhandle_t   blueSigilModel;
     qhandle_t   greenSigilModel;
@@ -1092,11 +1094,9 @@ typedef struct {
     qhandle_t   greensigilShader;
     qhandle_t   yellowsigilShader;
 	/* KOTH hill indicator shaders */
-	qhandle_t   kothHillMarkerNeutralShader;
-	qhandle_t   kothHillMarkerRedShader;
-	qhandle_t   kothHillMarkerBlueShader;
-	qhandle_t   kothBeamShader;             /* upward beam: textures/fx/koth_beam */
-	qhandle_t   kothRingShader;             /* flat ground ring: textures/fx/koth_ring */
+	qhandle_t   kothCrownModel;             /* floating crown above the hill: models/mapobjects/koth/crown.md3 */
+	qhandle_t   kothPostModel;              /* bollards on the hill border: models/mapobjects/koth/post.md3 */
+	qhandle_t   kothGlowShader;             /* soft additive glow sprite: gfx/misc/koth_glow */
 	qhandle_t   medalKothCapture;           /* KOTH hill-capture reward sprite */
 	qhandle_t   medalKothDefend;            /* KOTH hill-defend reward sprite */
 	qhandle_t	flagPoleModel;
@@ -1592,6 +1592,8 @@ typedef struct {
 	vec3_t			kothHillOrigin;
 	qboolean		kothHillOriginValid;
 	float			kothHillRadius;		/* XY radius of the hill brush, from CS_KOTHSTATUS */
+	int				kothCapturingTeam;	/* team taking the hill while kothCapturePct runs (TEAM_FREE = none) */
+	float			kothHillHalf[2];	/* half extents of the hill zone (0 = unknown, use the radius) */
 	qboolean  newHud;
 
 	//
@@ -1841,12 +1843,6 @@ extern	vmCvar_t		cg_mainViewRenderLevel;
 
 extern	vmCvar_t		cg_debugpredict;
 extern	vmCvar_t		cg_kothRespawnWave;
-extern	vmCvar_t		cg_kothRingScale;
-extern	vmCvar_t		cg_kothBeamHalfWidth;
-extern	vmCvar_t		cg_kothRingAlphaBase;
-extern	vmCvar_t		cg_kothRingAlphaPulse;
-extern	vmCvar_t		cg_kothBeamAlphaBase;
-extern	vmCvar_t		cg_kothBeamAlphaPulse;
 
 extern	vmCvar_t		cg_engineSounds;
 extern	vmCvar_t		cg_ghostPlayback;
@@ -2352,6 +2348,7 @@ qboolean CG_InsideBox( const vec3_t mins, const vec3_t maxs, const vec3_t pos );
 // cg_rally_race_tools.c
 //
 void CG_NewLapTime( int client, int lap, int time );
+void CG_RaceLapStart( int client, int time );
 void CG_RecordRaceSplit( int client, int lap, int checkpoint, int time );
 qboolean CG_GetRaceSplitGap( int aheadClient, int behindClient, int *gapMs );
 qboolean CG_RaceOrderIsActive( void );
@@ -2688,3 +2685,5 @@ extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
 
 #endif /* CG_LOCAL_H */
+
+qboolean CG_DemoPlayerActive( void );

@@ -2047,6 +2047,40 @@ long FS_ReadFile(const char *qpath, void **buffer)
 	return FS_ReadFileDir(qpath, NULL, qfalse, buffer);
 }
 
+/* Renderer fallback for newly written local images. Keep these allocations
+   in the same accounting as FS_ReadFile: FS_FreeFile must not clear another
+   outstanding file's temporary memory while a model loads its shaders. */
+long FS_ReadFileWithHomepathFallback( const char *qpath, void **buffer ) {
+	long len;
+	fileHandle_t fh = 0;
+	byte *buf;
+	char svpath[MAX_OSPATH];
+
+	len = FS_ReadFile( qpath, buffer );
+	if ( len >= 0 ) {
+		return len;
+	}
+	Com_sprintf( svpath, sizeof(svpath), BASEGAME "/%s", qpath );
+	len = FS_SV_FOpenFileRead( svpath, &fh );
+	if ( len <= 0 ) {
+		if ( fh ) FS_FCloseFile( fh );
+		if ( buffer ) *buffer = NULL;
+		return -1;
+	}
+	if ( !buffer ) {
+		FS_FCloseFile( fh );
+		return len;
+	}
+	fs_loadCount++;
+	fs_loadStack++;
+	buf = Hunk_AllocateTempMemory( len + 1 );
+	buf[len] = 0;
+	FS_Read( buf, len, fh );
+	FS_FCloseFile( fh );
+	*buffer = buf;
+	return len;
+}
+
 /*
 =============
 FS_FreeFile

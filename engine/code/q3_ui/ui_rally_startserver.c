@@ -1236,7 +1236,8 @@ UI_StartServerMenu
 void UI_StartServerMenu( qboolean multiplayer ) {
 	StartServer_MenuInit();
 	s_startserver.multiplayer = multiplayer;
-	UI_PushMenu( &s_startserver.menu );
+	Frontend_SetBackButton( &s_startserver.back.generic );
+    UI_PushMenu( &s_startserver.menu );
 }
 
 
@@ -2649,6 +2650,8 @@ static void ServerOptions_LayoutFrontend( void ) {
                 s_serveroptions.go.generic.right ) / 2;
         s_serveroptions.go.generic.y = SERVEROPT_ACTION_Y + 4;
         s_serveroptions.go.generic.ownerdraw = ServerOptions_DrawAction;
+    Frontend_SetBackButton(&s_serveroptions.back.generic);
+
 }
 
 static void ServerOptions_Draw( void ) {
@@ -3221,7 +3224,8 @@ UI_ServerOptionsMenu
 */
 static void UI_ServerOptionsMenu( qboolean multiplayer ) {
 	ServerOptions_MenuInit( multiplayer );
-	UI_PushMenu( &s_serveroptions.menu );
+	Frontend_SetBackButton( &s_serveroptions.back.generic );
+    UI_PushMenu( &s_serveroptions.menu );
 }
 
 
@@ -3754,6 +3758,8 @@ static void UI_BotSelectMenu_Layout( void ) {
         botSelectInfo.go.generic.right = BOTSELECT_FRAME_X + BOTSELECT_FRAME_WIDTH - 24;
         botSelectInfo.go.generic.bottom = BOTSELECT_ACTION_Y + BOTSELECT_ACTION_HEIGHT;
         botSelectInfo.go.generic.ownerdraw = UI_BotSelectMenu_DrawAction;
+    Frontend_SetBackButton(&botSelectInfo.back.generic);
+
 }
 
 
@@ -3891,5 +3897,6 @@ UI_BotSelectMenu
 */
 void UI_BotSelectMenu( char *bot ) {
 	UI_BotSelectMenu_Init( bot );
-	UI_PushMenu( &botSelectInfo.menu );
+	Frontend_SetBackButton( &botSelectInfo.back.generic );
+    UI_PushMenu( &botSelectInfo.menu );
 }
