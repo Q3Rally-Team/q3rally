@@ -1170,6 +1170,8 @@ runtime and only drive the ghost display and bot routes, so they may come
 from the directory even on pure servers.
 ===========
 */
+#include "rally_plate_path.h"
+
 static qboolean FS_IsGhostPath( const char *path )
 {
 	if ( !path ) {
@@ -1432,7 +1434,8 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 			   !FS_IsExt(filename, ".game", len) &&		// menu files
 			   !FS_IsExt(filename, ".dat", len) &&		// for journal files
 			   !FS_IsDemoExt(filename, len) &&			// demos
-			   !FS_IsGhostPath(filename))			// Q3Rally lap ghosts
+			   !FS_IsGhostPath(filename) &&			// Q3Rally lap ghosts
+			   !Rally_IsGeneratedPlateImage(filename, qtrue))
 			{
 				*file = 0;
 				return -1;

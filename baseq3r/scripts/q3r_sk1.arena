@@ -42,7 +42,7 @@ powerups "0"
 reversable "0"
 
 //TRACK LENGTHS
-tracklengths "1"
+tracklengths "0 1"
 
 //BOT SUPPORTS
 botsupport "Very bad"
