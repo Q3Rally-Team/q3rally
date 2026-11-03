@@ -5,6 +5,8 @@
 "message" "Roll on Down the Line"
 "gridsize" "256 256 256"
 "music" "music/rockabuddy.wav"
+"weather" "rain"
+"weatherChance" "50"
 // brush 0
 {
 ( -3904 4136 0 ) ( -4096 4136 0 ) ( -4096 3944 0 ) q3r_trees/pinewall01b 96 96 0 0.500000 0.500000 0 0 0
