@@ -1,13 +1,24 @@
-name: Q3Rally v0.8 packages
+name: Release packages
 on:
   workflow_dispatch:
-  push:
-    branches: ['codex/release-v08-packages']
+permissions:
+  contents: read
 jobs:
   tests:
     runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
+      - name: Read release version from source
+        id: version
+        shell: python
+        run: |
+          import os, pathlib, re
+          source = pathlib.Path('engine/Makefile').read_text()
+          version = re.search(r'^VERSION\s*=\s*v?(\d+\.\d+(?:\.\d+)?)\s*$', source, re.M).group(1)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write(f'version={version}\n')
       - run: sudo apt-get update && sudo apt-get install -y gcc php-cli
       - uses: actions/setup-python@v6
         with:
@@ -15,6 +26,9 @@ jobs:
       - run: python -m pip install pytest -r launcher/requirements-publishing.txt
       - run: python -m pytest -q tests
   packages:
+    needs: tests
+    env:
+      GAME_VERSION: ${{ needs.tests.outputs.version }}
     strategy:
       fail-fast: false
       matrix:
@@ -56,33 +70,34 @@ jobs:
         shell: msys2 {0}
         run: |
           sh engine/misc/build-curl-mingw.sh ${{ matrix.arch }} "$PWD/curl-${{ matrix.arch }}"
-          make release -j4 -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} FULLBINEXT=.${{ matrix.arch }}.exe VERSION=v0.8 WINDRES=windres USE_CURL=1 USE_CURL_DLOPEN=0 CURL_PREFIX="$PWD/curl-${{ matrix.arch }}" BUILD_GAME_SO=0 BUILD_GAME_QVM=1
+          make release -j4 -C engine PLATFORM=mingw32 ARCH=${{ matrix.arch }} FULLBINEXT=.${{ matrix.arch }}.exe VERSION=v${{ env.GAME_VERSION }} WINDRES=windres USE_CURL=1 USE_CURL_DLOPEN=0 CURL_PREFIX="$PWD/curl-${{ matrix.arch }}" BUILD_GAME_SO=0 BUILD_GAME_QVM=1
       - if: runner.os == 'Linux'
         name: Build Linux
         run: |
           if [ '${{ matrix.arch }}' = x86 ]; then
             export PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig
           fi
-          make release -j4 -C engine ARCH=${{ matrix.arch }} VERSION=v0.8 USE_CURL=1 USE_CURL_DLOPEN=0 BUILD_GAME_SO=0 BUILD_GAME_QVM=1
+          make release -j4 -C engine ARCH=${{ matrix.arch }} VERSION=v${{ env.GAME_VERSION }} USE_CURL=1 USE_CURL_DLOPEN=0 BUILD_GAME_SO=0 BUILD_GAME_QVM=1
       - if: runner.os == 'macOS'
         name: Build native Mac app
         run: |
-          make release -j4 -C engine PLATFORM=darwin ARCH=${{ matrix.arch }} VERSION=v0.8 USE_CURL=1 USE_CURL_DLOPEN=1 BUILD_GAME_SO=1 BUILD_GAME_QVM=1
+          make release -j4 -C engine PLATFORM=darwin ARCH=${{ matrix.arch }} VERSION=v${{ env.GAME_VERSION }} USE_CURL=1 USE_CURL_DLOPEN=1 BUILD_GAME_SO=1 BUILD_GAME_QVM=1
           cd engine
           bash make-macosx-app.sh release ${{ matrix.arch }}
       - name: Audit and package exact native build
-        run: python make_release.py --version 0.8 --target ${{ matrix.target }}=engine/build/release-${{ matrix.platform }}-${{ matrix.arch }} --output output/v0.8 --report output/v0.8-audit.json
+        run: python make_release.py --version ${{ env.GAME_VERSION }} --target ${{ matrix.target }}=engine/build/release-${{ matrix.platform }}-${{ matrix.arch }} --output output/game-release --report output/game-release-audit.json
       - name: Verify signed installation and native dedicated server from package
-        run: python tools/validate_game_package.py --release-index output/v0.8/release.json --output output/v0.8-validation
+        run: python tools/validate_game_package.py --release-index output/game-release/release.json --output output/game-release-validation
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: v0.8-${{ matrix.target }}
+          name: q3rally-${{ env.GAME_VERSION }}-${{ matrix.target }}
           compression-level: 0
           path: |
-            output/v0.8/*.zip
-            output/v0.8/release.json
-            output/v0.8/SHA256SUMS
-            output/v0.8-audit.json
-            output/v0.8-validation/result.json
-            output/v0.8-validation/dedicated/**
+            output/game-release/*.zip
+            output/game-release/release.json
+            output/game-release/SHA256SUMS
+            output/game-release-audit.json
+            output/game-release-validation/result.json
+            output/game-release-validation/dedicated/**
+            output/game-release-validation/offline-registration/**

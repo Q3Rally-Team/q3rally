@@ -1,7 +1,5 @@
 name: Native macOS client runtime checks
 on:
-  push:
-    branches: [codex/client-runtime-validation]
   workflow_dispatch:
 
 jobs:
