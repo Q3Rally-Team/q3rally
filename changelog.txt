@@ -11,6 +11,10 @@ Fixed:
   covered by the paint and are glass again, the cut-off "Q3RALLY" lettering on
   both sides fits on the panel, and the roof numbers face forward like the 7 and
   the other cars' roof numbers.
+- Raptor secret paints (Retro, Camo, Carbon, Chrome, Neon, Hot Rod, Gold in
+  zz_secret_skins.pk3): all windows were painted over and are glass again (no
+  chrome/gold tint, neon glow or flames on the glass), "Q3RALLY" fits on the
+  side panels, the Retro 77 and the roof stars face forward.
 
 v0.8.2 - 2026-11-03
 
