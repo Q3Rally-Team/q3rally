@@ -31,10 +31,14 @@ def main():
         fixture=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         thread=threading.Thread(target=fixture.serve_forever,daemon=True);thread.start()
         home=output/status;home.mkdir()
+        game=home/'baseq3r';game.mkdir()
+        (game/'registration-probe.cfg').write_text(
+            f'set sv_ladderUrl "http://127.0.0.1:{fixture.server_port}/matches"\n'
+            'map q3r_country01\n'
+            'ladder_register "RegistrationProbe" "probe@example.invalid" "RegistrationProbe_OFFLINE" "agree"\n')
         command=[str(executable),'+set','fs_basepath',str(basepath),'+set','fs_homepath',str(home),
             '+set','net_enabled','0','+set','dedicated','1','+set','profile_active','RegistrationProbe',
-            '+set','sv_ladderUrl',f'http://127.0.0.1:{fixture.server_port}/matches',
-            '+map','q3r_country01','+ladder_register','RegistrationProbe','probe@example.invalid','RegistrationProbe_OFFLINE','agree']
+            '+exec','registration-probe.cfg']
         saved=False;code=None
         with (home/'stdout.log').open('wb') as log:
             proc=subprocess.Popen(command,cwd=basepath,stdout=log,stderr=subprocess.STDOUT,
@@ -45,6 +49,7 @@ def main():
                     for config in (home/'baseq3r').glob('q3config*.cfg'):
                         if key in config.read_text(errors='replace'):saved=True;break
                     if saved:break
+                    if requests and 'registration failed:' in (home/'stdout.log').read_text(errors='replace'):break
                     time.sleep(.1)
                 code=proc.poll()
             finally:
