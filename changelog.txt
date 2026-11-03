@@ -1,6 +1,16 @@
 !!! --- Q3Rally Changelog --- !!!
 
-unreleased
+v0.8.1 - 2026-11-03
+
+Fixed:
+
+- Restore the optional offline Ladder registration step during profile setup.
+- Offer offline registration again for existing unregistered profiles, while
+  respecting per-profile dismissal and existing credentials.
+- Accept pending and active offline-key registration responses without
+  treating a local profile as a linked web account.
+
+v0.8 - 2026-11-03
 
 Fixed:
 

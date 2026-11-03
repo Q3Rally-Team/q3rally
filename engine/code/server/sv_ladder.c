@@ -2792,7 +2792,8 @@ static void SV_LadderFinishRegister( CURLcode result, long responseCode ) {
                 SV_LadderExtractJsonString( reg->response, "status",
                                             statusField, sizeof( statusField ) );
 
-                if ( Q_stricmp( statusField, "pending" ) != 0 ) {
+                if ( Q_stricmp( statusField, "pending" ) != 0 &&
+                     Q_stricmp( statusField, "active" ) != 0 ) {
                         SV_LadderExtractJsonString( reg->response, "error",
                                                     errorField, sizeof( errorField ) );
                         if ( !errorField[0] ) {

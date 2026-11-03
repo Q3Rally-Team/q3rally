@@ -49,7 +49,7 @@ def main():
         architectures = subprocess.check_output(['lipo', '-archs', str(client)], text=True).split()
         assert architectures == [target.split('-', 1)[1]], architectures
     result = subprocess.run([str(client), '--version'], capture_output=True, timeout=30)
-    assert result.returncode == 0 and b'Q3Rally v0.8' in result.stdout, (result.stdout, result.stderr)
+    assert result.returncode == 0 and ('Q3Rally v' + version + ' ').encode() in result.stdout, (result.stdout, result.stderr)
     arch = target.split('-', 1)[1]
     server = client.parent / ('q3rally-server' if target.startswith('macos-') else 'q3rally-server.' + arch + ('.exe' if target.startswith('windows-') else ''))
     assert server.is_file(), server
@@ -67,9 +67,13 @@ def main():
     subprocess.run([sys.executable, str(ROOT/'tools/validate_dedicated_server.py'),
         '--executable', str(server), '--basepath', str(client.parent), '--output', str(output/'dedicated'),
         '--case', 'racing', '--case', 'sprint', '--http-probe'], check=True, timeout=240)
+    subprocess.run([sys.executable, str(ROOT/'tools/validate_offline_registration.py'),
+        '--executable', str(server), '--basepath', str(client.parent),
+        '--output', str(output/'offline-registration')], check=True, timeout=120)
     atomic_json(output/'result.json', {'version': version, 'target': target,
         'signed_install_verified': True, 'executable_architecture_verified': True,
         'native_client_version_verified': True, 'packaged_lap_and_sprint_bots_http_verified': True,
+        'offline_registration_pending_active_verified': True,
         'redirected_windows_cold_starts': cold_starts})
     print(target + ': package installation, architecture, client version and dedicated checks PASS', flush=True)
 
