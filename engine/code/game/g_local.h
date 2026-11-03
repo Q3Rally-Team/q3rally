@@ -750,6 +750,8 @@ typedef struct {
 	int			raceIntroDurationMs;
 	qboolean		raceIntroHasRoute;
 	char		raceIntroRoute[MAX_QPATH];
+	char		bpdPath[MAX_QPATH];		// BPD file loaded for this track length; empty if none
+	qboolean	trackHasLengthVariants;	// a rally_checkpoint is limited by onlyTrackLength
 	qboolean		raceIntroFallback;
 	int			startRaceTime;
 	int			finishRaceTime;
@@ -1035,7 +1037,7 @@ void DropToFloor( gentity_t *self );
 //
 // g_rally_tools.c
 //
-void loadBezierPathFile(char *filename);
+qboolean loadBezierPathFile(char *filename);
 void G_GetPointOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t origin );
 void G_GetDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );
 void G_Get2ndDervOnCurveBetweenCheckpoints( gentity_t *start, gentity_t *end, float f, vec3_t vec );

@@ -39,6 +39,7 @@ typedef struct {
 } botPathNodeSpawn_t;
 
 #include "g_botpath_spawn_helpers.h"
+#include "bg_bpd_path.h"
 
 #define BOT_PATH_ROUTE_MIN_NODES	2
 #define BOT_PATH_SEGMENT_OUTLIER_MIN	64.0f
@@ -792,6 +793,15 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 		G_ParseField( level.spawnVars[i][0], level.spawnVars[i][1], ent );
 	}
 
+	// A checkpoint that exists only for some track lengths means each length
+	// needs its own BPD; checked before any filter can free the entity.
+	if ( ent->classname && !Q_stricmp( ent->classname, "rally_checkpoint" ) ) {
+		G_SpawnString( "onlyTrackLength", "012", &value );
+		if ( BG_BpdIsLengthRestricted( value ) ) {
+			level.trackHasLengthVariants = qtrue;
+		}
+	}
+
 	// check for "notsingle" flag
 	if ( g_gametype.integer == GT_SINGLE_PLAYER ) {
 		G_SpawnInt( "notsingle", "0", &i );
@@ -974,17 +984,59 @@ qboolean G_ParseSpawnVars( void ) {
 
 
 
+static qboolean G_BpdFileExists( const char *path ) {
+	fileHandle_t f;
+	int len = trap_FS_FOpenFile( path, &f, FS_READ );
+
+	if ( f ) {
+		trap_FS_FCloseFile( f );
+	}
+	return len > 0 ? qtrue : qfalse;
+}
+
 void LoadBezierPathFile_Think(gentity_t *ent) {
 	char			serverinfo[MAX_INFO_STRING];
 	char			basemap[MAX_QPATH];
 	const char		*mapname;
 	char			mapname_copy[MAX_QPATH];
+	char			lengthPath[MAX_QPATH];
+	char			genericPath[MAX_QPATH];
+	qboolean		hasLengthPath, hasGenericPath, validLengthPath;
+	const char		*path = NULL;
 
 	trap_GetServerinfo( serverinfo, sizeof(serverinfo) );
 	mapname = Info_ValueForKey( serverinfo, "mapname" );
 	Q_strncpyz(mapname_copy, mapname, sizeof(mapname_copy));
 	COM_StripExtension(COM_SkipPath(mapname_copy), basemap, sizeof(basemap));
-	loadBezierPathFile(va("maps/%s.bpd", basemap));
+
+	/* maps/<map>_tl<n>.bpd for the active length wins; maps/<map>.bpd is only
+	   valid when every checkpoint is shared by all lengths (bg_bpd_path.h). */
+	level.bpdPath[0] = '\0';
+	validLengthPath = BG_BpdLengthPath( lengthPath, sizeof( lengthPath ), basemap, g_trackLength.integer );
+	hasLengthPath = validLengthPath && G_BpdFileExists( lengthPath );
+	hasGenericPath = BG_BpdGenericPath( genericPath, sizeof( genericPath ), basemap )
+		&& G_BpdFileExists( genericPath );
+	switch ( BG_BpdSelectSource( hasLengthPath, hasGenericPath, level.trackHasLengthVariants ) ) {
+	case BPD_SOURCE_LENGTH:
+		path = lengthPath;
+		break;
+	case BPD_SOURCE_GENERIC:
+		path = genericPath;
+		break;
+	default:
+		if ( hasGenericPath ) {
+			G_Printf( "[BPD] %s ignored: this map has track length variants and needs %s\n",
+				genericPath, validLengthPath ? lengthPath : "a BPD per track length" );
+		} else if ( level.trackHasLengthVariants && validLengthPath ) {
+			G_Printf( "[BPD] no Bezier path for this track length (%s)\n", lengthPath );
+		} else {
+			G_Printf( "[BPD] no Bezier path file for this map\n" );
+		}
+		break;
+	}
+	if ( path && loadBezierPathFile( (char *)path ) ) {
+		Q_strncpyz( level.bpdPath, path, sizeof( level.bpdPath ) );
+	}
 	/* The checkpoint setup thinks run at 100 ms. Build both consumers only
 	   after those entities have their final checkpoint order and BPD handles. */
 	G_RaceRoute_Reset();

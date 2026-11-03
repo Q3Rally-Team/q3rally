@@ -32,8 +32,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* The race intro is available only when the active BPD produced a valid route. */
 static qboolean G_RallyIntroRoute_Find( void ) {
-	char mapName[MAX_QPATH];
-	char routePath[MAX_QPATH];
 	const botRaceRoute_t *route = NULL;
 	int i;
 
@@ -44,29 +42,25 @@ static qboolean G_RallyIntroRoute_Find( void ) {
 		return qfalse;
 	}
 
-	trap_Cvar_VariableStringBuffer( "mapname", mapName, sizeof( mapName ) );
-	Q_strlwr( mapName );
-	if ( !mapName[0] ) {
+	/* The intro replays the BPD the server loaded for this track length. */
+	if ( !level.bpdPath[0] || Q_stricmpn( level.bpdPath, "maps/", 5 ) ) {
 		return qfalse;
 	}
-
-	/* Keep the cvar-derived BPD filename inside the maps directory. */
-	for ( i = 0; mapName[i]; i++ ) {
-		if ( ( mapName[i] < 'a' || mapName[i] > 'z' )
-			&& ( mapName[i] < '0' || mapName[i] > '9' )
-			&& mapName[i] != '_' && mapName[i] != '-' ) {
+	/* The path travels in a space-separated configstring and is reopened by
+	   cgame, so keep it to a plain file name inside the maps directory. */
+	for ( i = 5; level.bpdPath[i]; i++ ) {
+		const char c = level.bpdPath[i];
+		if ( ( c < 'a' || c > 'z' ) && ( c < 'A' || c > 'Z' )
+			&& ( c < '0' || c > '9' )
+			&& c != '_' && c != '-' && c != '.' ) {
 			return qfalse;
 		}
-	}
-	if ( Com_sprintf( routePath, sizeof( routePath ),
-		"maps/%s.bpd", mapName ) >= sizeof( routePath ) ) {
-		return qfalse;
 	}
 	if ( !G_RaceRoute_Get( &route ) || !route || !route->fromBezierPath ) {
 		return qfalse;
 	}
 
-	Q_strncpyz( level.raceIntroRoute, routePath, sizeof( level.raceIntroRoute ) );
+	Q_strncpyz( level.raceIntroRoute, level.bpdPath, sizeof( level.raceIntroRoute ) );
 	level.raceIntroDurationMs = INTRO_BPD_CAM_BASE_DURATION_MS
 		+ g_trackLength.integer * INTRO_BPD_CAM_DURATION_STEP_MS;
 	return qtrue;

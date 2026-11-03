@@ -621,12 +621,20 @@ static void CG_SaveBezierPoints_f( void )
 	fileHandle_t	f;
 	char			buffer[256];
 	char			mapname[MAX_QPATH];
+	char			path[MAX_QPATH];
 	qboolean		checkpointFound;
 
 	COM_StripExtension(COM_SkipPath(cgs.mapname), mapname, sizeof(mapname));
-	Com_sprintf( buffer, sizeof(buffer), "maps/%s.bpd", mapname );
-	Com_Printf( "Writing out bezier path information to: '%s'\n", buffer );
-	trap_FS_FOpenFile( buffer, &f, FS_WRITE );
+	if ( !CG_IntroCam_BezierPointsPath( mapname, path, sizeof( path ) ) ) {
+		Com_Printf( "saveBPoints: no valid BPD file name for map '%s'\n", mapname );
+		return;
+	}
+	Com_Printf( "Writing out bezier path information to: '%s'\n", path );
+	trap_FS_FOpenFile( path, &f, FS_WRITE );
+	if ( !f ) {
+		Com_Printf( "saveBPoints: could not open '%s' for writing\n", path );
+		return;
+	}
 
 	for (i = 0; i < 40; i++)
 	{
