@@ -44,14 +44,39 @@ announced for the intro). If none was loaded, it writes
 `maps/<map>_tl<n>.bpd` for the active length. Run it on the forward direction
 only: checkpoint numbers are renumbered for reversed races.
 
+## Checkpoint placement
+
+Between two consecutive checkpoints the route is **one cubic Bezier segment**.
+A cubic follows one bend well. It cannot follow two bends in a row, or an S-bend
+together with a corner, so the route, the bots and the race intro drift off the
+road there. Place checkpoints so that every segment contains at most one bend:
+
+- **One checkpoint on the straight before every curve** (from about 45 degrees).
+  The anchor sits on the straight, the handles point along it.
+- **Hairpins and loops from about 120 degrees**: add a checkpoint at the apex.
+- **S-bends**: one checkpoint between the two bends.
+- The trigger must span the **full drivable width**, wall to wall, including
+  side passages around islands; otherwise a car can miss it.
+- Keep consecutive checkpoints at least **~850 units** apart (about 24 m).
+  Touches within 300 ms of the previous checkpoint are ignored.
+- On tracks with several levels, limit the trigger height so it cannot be
+  touched from a road above or below; touching a later checkpoint early shows
+  "CHECKPOINT MISSED".
+- Intermediate checkpoints should use **spawnflag 4** (silent); the default
+  plays the checkpoint sound on every gate.
+- Where lengths take different roads, give **each length its own checkpoint**
+  (`onlyTrackLength`) and keep the numbers 1..N per length. A checkpoint shared
+  by several lengths needs the same number in all of them.
+
+New checkpoints are brush entities: the map needs a full BSP compile
+(`-onlyents` is not enough). Triggers are not solid, so the `.aas` should not need rebuilding.
+
 ## Maps with track lengths (v0.8)
 
 | Map | Lengths | Checkpoints |
 |---|---|---|
-| Canyon Cruise (`q3r_sk1`) | short, medium | All 16 shared; the lengths differ only by barriers between checkpoints 15 and 16. |
-| Night City (`q3r_nightcity`) | short, medium | 1-3 shared, 4-8 per length, medium adds 9-11. |
+| Canyon Cruise (`q3r_sk1`) | short, medium | 17 per length. 1-15 and 17 shared; 16 is per length (inner straight for short, outer loop for medium). |
+| Night City (`q3r_nightcity`) | short (12), medium (16) | 1-7 shared, the rest per length. One checkpoint before every curve. |
 | Dirty Fun (`q3r_dirtyfun`) | short, medium, long | Only 1 shared, 2-4 per length, long adds 5-8. |
 
-Night City and Dirty Fun therefore need `_tl<n>.bpd` files. Canyon Cruise can
-use one generic file, but both lengths then follow the same curve between
-checkpoints 15 and 16; separate curves need a length-specific checkpoint there.
+All three need `_tl<n>.bpd` files, one per enabled length.

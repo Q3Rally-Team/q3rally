@@ -19911,7 +19911,7 @@ q3r_road/asphalt
 // entity 1
 {
 "classname" "rally_checkpoint"
-"number" "3"
+"number" "6"
 "angle" "270"
 // brush 0
 {
@@ -19941,7 +19941,7 @@ brushDef
 // entity 2
 {
 "classname" "rally_checkpoint"
-"number" "1"
+"number" "2"
 "angle" "315"
 // brush 0
 {
@@ -20001,7 +20001,7 @@ brushDef
 // entity 4
 {
 "classname" "rally_checkpoint"
-"number" "2"
+"number" "4"
 "angle" "270"
 // brush 0
 {
@@ -20032,7 +20032,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "angle" "270"
-"number" "4"
+"number" "8"
 "onlytracklength" "0"
 // brush 0
 {
@@ -20062,7 +20062,7 @@ brushDef
 // entity 6
 {
 "classname" "rally_checkpoint"
-"number" "5"
+"number" "9"
 "angle" "180"
 "onlytracklength" "0"
 // brush 0
@@ -20093,7 +20093,7 @@ brushDef
 // entity 7
 {
 "classname" "rally_checkpoint"
-"number" "4"
+"number" "8"
 "angle" "360"
 "onlytracklength" "1"
 // brush 0
@@ -20125,7 +20125,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "angle" "360"
-"number" "5"
+"number" "10"
 "onlytracklength" "1"
 // brush 0
 {
@@ -20155,7 +20155,7 @@ brushDef
 // entity 9
 {
 "classname" "rally_checkpoint"
-"number" "6"
+"number" "11"
 "angle" "180"
 "onlytracklength" "1"
 // brush 0
@@ -20187,7 +20187,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "angle" "180"
-"number" "7"
+"number" "12"
 "onlytracklength" "1"
 // brush 0
 {
@@ -20218,7 +20218,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "angle" "180"
-"number" "8"
+"number" "13"
 "onlytracklength" "1"
 // brush 0
 {
@@ -21822,7 +21822,7 @@ q3r_building/crash1a
 {
 "classname" "rally_checkpoint"
 "onlytracklength" "1"
-"number" "9"
+"number" "14"
 "angle" "270"
 // brush 0
 {
@@ -21854,7 +21854,7 @@ brushDef
 "classname" "rally_checkpoint"
 "onlytracklength" "0"
 "angle" "270"
-"number" "6"
+"number" "10"
 // brush 0
 {
 brushDef
@@ -21883,7 +21883,7 @@ brushDef
 // entity 185
 {
 "classname" "rally_checkpoint"
-"number" "7"
+"number" "11"
 "angle" "360"
 "onlytracklength" "0"
 // brush 0
@@ -21915,7 +21915,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "angle" "360"
-"number" "10"
+"number" "15"
 "onlytracklength" "1"
 // brush 0
 {
@@ -21946,7 +21946,7 @@ brushDef
 {
 "classname" "rally_checkpoint"
 "onlytracklength" "1"
-"number" "11"
+"number" "16"
 "angle" "90"
 // brush 0
 {
@@ -21978,7 +21978,7 @@ brushDef
 "classname" "rally_checkpoint"
 "onlytracklength" "0"
 "angle" "90"
-"number" "8"
+"number" "12"
 // brush 0
 {
 brushDef
@@ -22052,4 +22052,160 @@ brushDef
 {
 "classname" "item_fuelcan"
 "origin" "4992 -3664 272"
+}
+// entity 198
+{
+"classname" "rally_checkpoint"
+"number" "1"
+"angle" "90"
+"spawnflags" "4"
+// brush 0
+{
+brushDef
+{
+( 0 283 22 ) ( 16 299 22 ) ( 16 283 22 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 0 283 6 ) ( 16 283 6 ) ( 16 299 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 0 283 6 ) ( 0 283 22 ) ( 16 283 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 16 283 6 ) ( 16 283 22 ) ( 16 299 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 16 299 6 ) ( 16 299 22 ) ( 0 299 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 0 299 6 ) ( 0 299 22 ) ( 0 283 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+}
+}
+// brush 1
+{
+brushDef
+{
+( -320 227 319 ) ( 376 355 319 ) ( 376 227 319 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( -320 227 -18 ) ( 376 227 -18 ) ( 376 355 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( -320 227 -18 ) ( -320 227 319 ) ( 376 227 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 376 227 -18 ) ( 376 227 319 ) ( 376 355 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 376 355 -18 ) ( 376 355 319 ) ( -320 355 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( -320 355 -18 ) ( -320 355 319 ) ( -320 227 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+}
+}
+}
+// entity 199
+{
+"classname" "rally_checkpoint"
+"number" "3"
+"angle" "285"
+"spawnflags" "4"
+// brush 0
+{
+brushDef
+{
+( 2090 1221 22 ) ( 2106 1237 22 ) ( 2106 1221 22 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 2090 1221 6 ) ( 2106 1221 6 ) ( 2106 1237 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 2090 1221 6 ) ( 2090 1221 22 ) ( 2106 1221 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 2106 1221 6 ) ( 2106 1221 22 ) ( 2106 1237 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 2106 1237 6 ) ( 2106 1237 22 ) ( 2090 1237 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 2090 1237 6 ) ( 2090 1237 22 ) ( 2090 1221 6 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+}
+}
+// brush 1
+{
+brushDef
+{
+( 1200 1055 319 ) ( 2323 1223 319 ) ( 1233 931 319 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1200 1055 -18 ) ( 1233 931 -18 ) ( 2323 1223 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1200 1055 -18 ) ( 1200 1055 319 ) ( 1233 931 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1233 931 -18 ) ( 1233 931 319 ) ( 2323 1223 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 2323 1223 -18 ) ( 2323 1223 319 ) ( 2290 1347 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 2290 1347 -18 ) ( 2290 1347 319 ) ( 1200 1055 -18 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+}
+}
+}
+// entity 200
+{
+"classname" "rally_checkpoint"
+"number" "5"
+"angle" "180"
+"spawnflags" "4"
+// brush 0
+{
+brushDef
+{
+( 553 -252 -298 ) ( 569 -236 -298 ) ( 569 -252 -298 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 553 -252 -314 ) ( 569 -252 -314 ) ( 569 -236 -314 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 553 -252 -314 ) ( 553 -252 -298 ) ( 569 -252 -314 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 569 -252 -314 ) ( 569 -252 -298 ) ( 569 -236 -314 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 569 -236 -314 ) ( 569 -236 -298 ) ( 553 -236 -314 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 553 -236 -314 ) ( 553 -236 -298 ) ( 553 -252 -314 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+}
+}
+// brush 1
+{
+brushDef
+{
+( 497 -468 -25 ) ( 625 -44 -25 ) ( 625 -468 -25 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 497 -468 -338 ) ( 625 -468 -338 ) ( 625 -44 -338 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 497 -468 -338 ) ( 497 -468 -25 ) ( 625 -468 -338 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 625 -468 -338 ) ( 625 -468 -25 ) ( 625 -44 -338 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 625 -44 -338 ) ( 625 -44 -25 ) ( 497 -44 -338 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 497 -44 -338 ) ( 497 -44 -25 ) ( 497 -468 -338 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+}
+}
+}
+// entity 201
+{
+"classname" "rally_checkpoint"
+"number" "7"
+"angle" "0"
+"spawnflags" "4"
+// brush 0
+{
+brushDef
+{
+( 1968 -1305 -63 ) ( 1984 -1289 -63 ) ( 1984 -1305 -63 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 1968 -1305 -79 ) ( 1984 -1305 -79 ) ( 1984 -1289 -79 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 1968 -1305 -79 ) ( 1968 -1305 -63 ) ( 1984 -1305 -79 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 1984 -1305 -79 ) ( 1984 -1305 -63 ) ( 1984 -1289 -79 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 1984 -1289 -79 ) ( 1984 -1289 -63 ) ( 1968 -1289 -79 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 1968 -1289 -79 ) ( 1968 -1289 -63 ) ( 1968 -1305 -79 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+}
+}
+// brush 1
+{
+brushDef
+{
+( 1912 -1489 233 ) ( 2040 -1065 233 ) ( 2040 -1489 233 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1912 -1489 -104 ) ( 2040 -1489 -104 ) ( 2040 -1065 -104 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1912 -1489 -104 ) ( 1912 -1489 233 ) ( 2040 -1489 -104 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 2040 -1489 -104 ) ( 2040 -1489 233 ) ( 2040 -1065 -104 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 2040 -1065 -104 ) ( 2040 -1065 233 ) ( 1912 -1065 -104 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 1912 -1065 -104 ) ( 1912 -1065 233 ) ( 1912 -1489 -104 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+}
+}
+}
+// entity 202
+{
+"classname" "rally_checkpoint"
+"number" "9"
+"angle" "270"
+"spawnflags" "4"
+"onlyTrackLength" "1"
+// brush 0
+{
+brushDef
+{
+( 4918 -2791 278 ) ( 4934 -2775 278 ) ( 4934 -2791 278 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 4918 -2791 262 ) ( 4934 -2791 262 ) ( 4934 -2775 262 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 4918 -2791 262 ) ( 4918 -2791 278 ) ( 4934 -2791 262 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 4934 -2791 262 ) ( 4934 -2791 278 ) ( 4934 -2775 262 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 4934 -2775 262 ) ( 4934 -2775 278 ) ( 4918 -2775 262 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+( 4918 -2775 262 ) ( 4918 -2775 278 ) ( 4918 -2791 262 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/origin 0 0 0
+}
+}
+// brush 1
+{
+brushDef
+{
+( 4606 -2847 575 ) ( 5126 -2719 575 ) ( 5126 -2847 575 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 4606 -2847 238 ) ( 5126 -2847 238 ) ( 5126 -2719 238 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 4606 -2847 238 ) ( 4606 -2847 575 ) ( 5126 -2847 238 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 5126 -2847 238 ) ( 5126 -2847 575 ) ( 5126 -2719 238 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 5126 -2719 238 ) ( 5126 -2719 575 ) ( 4606 -2719 238 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+( 4606 -2719 238 ) ( 4606 -2719 575 ) ( 4606 -2847 238 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) common/checkpoint 0 0 0
+}
+}
 }
