@@ -45,6 +45,17 @@ def start_launcher(executable, root, config=None):
     return subprocess.Popen(command, cwd=executable.parent, **options)
 
 
+def maximize_window(root):
+    import tkinter as tk
+    try:
+        root.state("zoomed")
+    except tk.TclError:
+        try:
+            root.attributes("-zoomed", True)
+        except tk.TclError:
+            root.geometry(f"{root.winfo_screenwidth()}x{root.winfo_screenheight()}+0+0")
+
+
 class Window:
     def __init__(self, manager, config, config_path=None):
         import tkinter as tk
@@ -92,7 +103,7 @@ class Window:
         self.connection = tk.StringVar(value="CONNECTING")
         ttk.Label(intro, textvariable=self.connection, style="Eyebrow.TLabel").grid(row=1, column=1, sticky="e")
         content = ttk.Frame(self.root); content.grid(row=3, column=0, sticky="nsew", padx=32)
-        content.columnconfigure(0, minsize=330); content.columnconfigure(1, weight=1); content.rowconfigure(0, weight=1)
+        content.columnconfigure(0, minsize=430); content.columnconfigure(1, weight=1); content.rowconfigure(0, weight=1)
         versions = ttk.Frame(content, style="Card.TFrame", padding=18)
         versions.grid(row=0, column=0, sticky="nsew", padx=(0, 24))
         versions.columnconfigure(0, weight=1); versions.rowconfigure(1, weight=1)
@@ -100,13 +111,25 @@ class Window:
                   font=(mono, 10)).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 14))
         self.list = ttk.Treeview(versions, columns=("version", "status"), show="headings", selectmode="browse", height=4)
         self.list.heading("version", text="VERSION"); self.list.heading("status", text="STATUS")
-        self.list.column("version", width=82, stretch=False); self.list.column("status", width=190)
+        self.list.column("version", width=105, stretch=False); self.list.column("status", width=245)
         self.list.grid(row=1, column=0, sticky="nsew")
         version_scroll = ttk.Scrollbar(versions, command=self.list.yview)
         version_scroll.grid(row=1, column=1, sticky="ns")
         self.list.configure(yscrollcommand=version_scroll.set)
         ttk.Label(versions, text="Each version has its own installation\nand saved games.", background=theme.PANEL,
                   foreground=theme.QUIET, font=(body, 10)).grid(row=2, column=0, columnspan=2, sticky="w", pady=(18, 0))
+        location = ttk.Frame(versions, style="Card.TFrame")
+        location.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+        location.columnconfigure(0, weight=1)
+        ttk.Label(location, text="INSTALLATION FOLDER", background=theme.PANEL,
+                  foreground=theme.QUIET, font=(mono, 10)).grid(row=0, column=0, sticky="w")
+        self.folder_button = ttk.Button(location, text="Change …", command=self.choose_install_directory)
+        self.folder_button.grid(row=0, column=1, padx=(8, 0))
+        self.install_directory = tk.StringVar(value=str(manager.versions))
+        directory_label = ttk.Label(location, textvariable=self.install_directory, background=theme.PANEL,
+                                    foreground=theme.MUTED, font=(body, 10), width=1)
+        directory_label.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6, 0))
+        directory_label.bind("<Configure>", lambda event: directory_label.configure(wraplength=max(100, event.width)))
         self.list.bind("<<TreeviewSelect>>", self.selected)
         notes_frame = ttk.Frame(content); notes_frame.grid(row=0, column=1, sticky="nsew")
         notes_frame.rowconfigure(4, weight=1); notes_frame.columnconfigure(0, weight=1)
@@ -167,6 +190,23 @@ class Window:
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.after(80, self.poll)
         self.root.after(100, self.refresh)
+        maximize_window(self.root)
+
+    def choose_install_directory(self):
+        if self.busy:
+            return
+        directory = self.filedialog.askdirectory(parent=self.root, title="Choose game installation folder",
+                                                  initialdir=str(self.manager.versions), mustexist=False)
+        if not directory:
+            return
+        try:
+            self.manager.set_install_directory(directory)
+        except (LauncherError, OSError) as error:
+            self.messages.showerror("Installation folder", str(error), parent=self.root)
+            return
+        self.install_directory.set(str(self.manager.versions))
+        self.status.set("Installation folder saved. Existing versions stay in their current folders.")
+        self.fill()
 
     def show_management(self):
         try:
@@ -238,6 +278,7 @@ class Window:
             self.action_title.set("Choose your game version")
         self.manage_button.configure(state="normal" if valid and not self.busy else "disabled")
         self.refresh_button.configure(state="disabled" if self.busy else "normal")
+        self.folder_button.configure(state="disabled" if self.busy else "normal")
         if self.busy and self.cancellable:
             self.pause.grid(); self.pause.configure(state="normal")
         else:

@@ -23,6 +23,47 @@ from tools.publish_launcher_catalog import sign
 
 
 class LauncherTests(unittest.TestCase):
+    def test_custom_game_folder_retains_old_versions_and_survives_restart(self):
+        old = self.manager.install(self.envelope, '0.8', 'windows-x86_64')
+        custom = self.root / 'Games with spaces'
+        self.manager.set_install_directory(custom)
+        self.prepare(version='0.8.1')
+        new = self.manager.install(self.envelope, '0.8.1', 'windows-x86_64')
+        self.assertEqual(new.parent, custom)
+        restored = Manager(self.manager.root, self.keys, targets=self.manager.targets, development=True)
+        self.assertEqual(restored.versions, custom)
+        self.assertEqual({r['version'] for r, _, _ in restored.installed()}, {'0.8', '0.8.1'})
+        self.assertEqual(restored.path('0.8', 'windows-x86_64'), old)
+        restored.verify('0.8', 'windows-x86_64')
+        self.prepare()
+        self.assertEqual(restored.install(self.envelope, '0.8', 'windows-x86_64'), old)
+        profile = restored.root / 'user-data/0.8.1/profile.json'
+        profile.parent.mkdir(parents=True); profile.write_text('keep')
+        restored.uninstall('0.8.1', 'windows-x86_64')
+        self.assertTrue(old.exists())
+        self.assertEqual(profile.read_text(), 'keep')
+        updater = Manager(restored.root, self.keys, product='Q3RallyLauncher')
+        self.assertEqual(updater.versions, restored.root/'launcher-versions')
+
+    def test_game_folder_rejects_invalid_destination_without_changing_setting(self):
+        original = self.manager.versions
+        file = self.root/'not-a-folder'; file.write_text('keep')
+        for destination in [Path('relative'), self.manager.root/'user-data', self.manager.root.parent, file]:
+            with self.subTest(destination=destination), self.assertRaises(LauncherError):
+                self.manager.set_install_directory(destination)
+            self.assertEqual(self.manager.versions, original)
+        self.assertFalse((self.manager.root/'game-storage.json').exists())
+
+    def test_recovery_in_previous_game_folder_after_destination_change(self):
+        old = self.manager.install(self.envelope, '0.8', 'windows-x86_64')
+        self.manager.set_install_directory(self.root/'another-drive')
+        backup = old.with_name('.previous-'+old.name)
+        old.rename(backup)
+        restored = Manager(self.manager.root, self.keys, targets=self.manager.targets, development=True)
+        restored.verify('0.8', 'windows-x86_64')
+        self.assertTrue(old.exists())
+        self.assertFalse(backup.exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

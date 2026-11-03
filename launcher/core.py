@@ -234,24 +234,66 @@ class Manager:
         self.locks = self.root / "locks"
         for directory in (self.versions, self.cache, self.locks):
             directory.mkdir(parents=True, exist_ok=True)
+        self.install_roots = [self.versions]
+        if product == "Q3Rally":
+            settings = self.root / "game-storage.json"
+            if settings.exists():
+                try:
+                    saved = json.loads(settings.read_text(encoding="utf-8"))
+                    directories = saved["directories"]
+                    if not isinstance(directories, list) or not directories or any(
+                            not isinstance(p, str) or not Path(p).is_absolute() for p in directories):
+                        raise ValueError("Invalid installation directories")
+                    self.install_roots = list(dict.fromkeys([Path(p).resolve() for p in directories] + [self.versions]))
+                    self.versions = self.install_roots[0]
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    raise LauncherError("Cannot read saved game installation folders.") from error
         self._recover()
+
+    def set_install_directory(self, directory):
+        """Select the destination for new versions; retain older installations."""
+        if self.product != "Q3Rally":
+            raise LauncherError("Only the game installation folder can be changed.")
+        directory = Path(directory).expanduser()
+        if not directory.is_absolute():
+            raise LauncherError("Choose an absolute installation folder.")
+        directory = directory.resolve()
+        default = self.root / "versions"
+        if directory != default and (directory.is_relative_to(self.root) or self.root.is_relative_to(directory)):
+            raise LauncherError("Choose a game folder separate from launcher settings and profiles.")
+        if any(directory != known and directory.is_relative_to(known) for known in self.install_roots):
+            raise LauncherError("Choose a folder outside existing game installations.")
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryFile(dir=directory):
+                pass
+            roots = list(dict.fromkeys([directory] + self.install_roots))
+            atomic_json(self.root / "game-storage.json", {"directories": [str(p) for p in roots]})
+        except OSError as error:
+            raise LauncherError(f"Cannot write to the game installation folder: {error}") from error
+        self.versions, self.install_roots = directory, roots
 
     def _recover(self):
         """Restore an interrupted directory swap using only verified receipts."""
-        for backup in self.versions.glob(".previous-*"):
+        for backup in (backup for root in self.install_roots for backup in root.glob(".previous-*")):
             if backup.is_symlink() or not backup.is_dir():
                 continue
             try:
                 receipt = json.loads((backup / ".launcher-install.json").read_text())
                 version, target = receipt["version"], receipt["target"]
-                destination = self.path(version, target)
+                version_key(version)
+                if not TARGET.fullmatch(target):
+                    raise LauncherError("Invalid platform target.")
+                destination = within(backup.parent, f"{version}-{target}")
+                if destination.is_symlink():
+                    continue
                 if backup.name != ".previous-" + destination.name:
                     continue
                 with file_lock(self.locks / (self.product + "-" + destination.name + ".lock")):
                     catalog = decode_catalog(receipt["envelope"], self.keys, fresh=False)
                     package = next(p for r, t, p in self.available(catalog) if r["version"] == version and t == target)
                     if destination.exists():
-                        self.verify(version, target)
+                        self._verify(destination, version, target, package)
                         if not processes_using(backup):
                             shutil.rmtree(backup)
                     else:
@@ -297,14 +339,23 @@ class Manager:
         version_key(version)
         if not TARGET.fullmatch(target):
             raise LauncherError("Invalid platform target.")
-        path = within(self.versions, f"{version}-{target}")
-        if path.is_symlink():
-            raise LauncherError("The installation directory must not be a symbolic link.")
-        return path
+        for root in self.install_roots:
+            path = within(root, f"{version}-{target}")
+            if path.is_symlink():
+                raise LauncherError("The installation directory must not be a symbolic link.")
+            if path.exists():
+                return path
+        return within(self.versions, f"{version}-{target}")
 
     def installed(self):
         result = []
-        for directory in sorted(self.versions.iterdir()):
+        directories = []
+        for root in self.install_roots:
+            try:
+                directories.extend(root.iterdir())
+            except OSError:
+                LOG.warning("Game installation folder unavailable: %s", root)
+        for directory in sorted(directories):
             if directory.name.startswith(".") or not directory.is_dir() or directory.is_symlink():
                 continue
             try:
@@ -461,8 +512,9 @@ class Manager:
                 raise LauncherError("The game is still running. Please install it later.")
             with file_lock(self.locks / (package["sha256"] + ".download.lock")):
                 archive = self._download(package, cancel or threading.Event(), progress)
-            stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=self.versions))
-            backup = self.versions / (".previous-" + directory.name)
+            directory.parent.mkdir(parents=True, exist_ok=True)
+            stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=directory.parent))
+            backup = directory.parent / (".previous-" + directory.name)
             try:
                 self._extract(archive, stage, version, target, package)
                 if cancel is not None and cancel.is_set():
