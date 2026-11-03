@@ -562,6 +562,39 @@ static qboolean	CG_FindClientHeadFile( char *filename, int length, clientInfo_t 
 // END
 
 
+static void CG_RegisterClientPlate( clientInfo_t *ci ) {
+	char filename[MAX_QPATH];
+	char source[MAX_QPATH];
+	const char *skin = ci->plateSkinName;
+	const unsigned char *text;
+	unsigned int hash = 2166136261u;
+	qboolean usa;
+
+	if ( !skin[0] || !Q_stricmp( skin, "bot_plate" ) ) {
+		skin = "usa_california";
+	}
+	usa = !Q_stricmpn( skin, "usa_", 4 );
+	Q_strncpyz( ci->plateName, usa ? "plate_usa" : "plate_eu", sizeof( ci->plateName ) );
+	/* The renderer caches images by name. Include both the name and skin so
+	 * renames and reused client slots cannot retain another driver's plate. */
+	for ( text = (const unsigned char *)ci->name; *text; text++ ) {
+		hash = (hash ^ *text) * 16777619u;
+	}
+	hash = (hash ^ 0xffu) * 16777619u;
+	for ( text = (const unsigned char *)skin; *text; text++ ) {
+		hash = (hash ^ *text) * 16777619u;
+	}
+	Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d_%08x.tga", ci->clientNum, hash );
+	Com_sprintf( source, sizeof( source ), "models/players/plates/%s.tga", skin );
+	CreateLicensePlateImage( source, filename, ci->name, usa ? 10 : 20 );
+	ci->plateShader = trap_R_RegisterShader( filename );
+	if ( !ci->plateShader ) {
+		ci->plateShader = trap_R_RegisterShader( "models/players/plates/default" );
+	}
+	Com_sprintf( filename, sizeof( filename ), "models/players/plates/%s.md3", ci->plateName );
+	ci->plateModel = trap_R_RegisterModel( filename );
+}
+
 /*
 ==========================
 CG_RegisterClientSkin
@@ -667,25 +700,7 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, 
 		}
 	}
 
-	if (ci->plateSkinName[0]) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
-	} else {
-		Com_sprintf( filename, sizeof( filename ), "models/players/plates/default.tga" );
-	}
-
-	ci->plateShader = trap_R_RegisterShader(filename);
-	if( !ci->plateShader ) {
-		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load plate shader: %s\n", filename );
-/*
-		// try loading default
-		Com_sprintf( filename, sizeof(filename), "models/players/plates/%s.tga", DEFAULT_PLATE_SKIN );
-		ci->plateShader = trap_R_RegisterShader( filename );
-		if( !ci->plateShader ) {
-			Com_Printf( S_COLOR_RED "Q3R Error: Failed to load default plate shader: %s\n", filename );
-			return qfalse;
-		}
-*/
-	}
+	CG_RegisterClientPlate( ci );
 // END
 
 	return qtrue;
@@ -840,41 +855,6 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 			Com_Printf( S_COLOR_RED "Q3R Error: Failed to load default head model: %s\n", filename );
 			return qfalse;
 		}
-	}
-
-	// figure out plate model
-	Com_sprintf( filename, sizeof( filename ), "models/players/plates/player%d.tga", ci->clientNum );
-	if ( ci->plateSkinName[0] ) {
-		if ( !Q_stricmpn( ci->plateSkinName, "usa_", 4 ) ){
-			Q_strncpyz( ci->plateName, "plate_usa", sizeof( ci->plateName ) );
-			CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 10);
-		}
-		else{
-			Q_strncpyz( ci->plateName, "plate_eu", sizeof( ci->plateName ) );
-			CreateLicensePlateImage(va("models/players/plates/%s.tga", ci->plateSkinName), filename, ci->name, 20);
-		}
-	} else if (ci->botSkill > 0) { // it's a bot without a plate skin
-		// just create a default plate with the bot's name
-		Q_strncpyz( ci->plateName, "plate_usa", sizeof( ci->plateName ) );
-		CreateLicensePlateImage("models/players/plates/usa_california.tga", filename, ci->name, 10);
-		// set a dummy plateSkinName so that CG_RegisterClientSkin will use the generated texture
-		Q_strncpyz( ci->plateSkinName, "bot_plate", sizeof( ci->plateSkinName ) );
-	}
-
-	Com_sprintf( filename, sizeof( filename ), "models/players/plates/%s.md3", ci->plateName );
-	ci->plateModel = trap_R_RegisterModel( filename );
-	if ( !ci->plateModel ) {
-		Com_Printf( S_COLOR_YELLOW "Q3R Warning: Failed to load license plate model: %s\n", filename );
-		return qfalse;
-
-/*		// use plate_eu model
-		Com_sprintf( filename, sizeof(filename), "models/players/plates/%s.md3", DEFAULT_PLATE );
-		ci->plateModel = trap_R_RegisterModel( filename );
-		if( !ci->plateModel ) {
-			Com_Printf( S_COLOR_RED "Q3R Error: Failed to load default license plate model: %s\n", filename );
-			return qfalse;
-		}
-*/
 	}
 
 	// load center suspension
@@ -1153,8 +1133,8 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
 // Q3Rally Code Start
 //	to->headSkin = from->headSkin;
 
-        to->plateModel = from->plateModel;
-        to->plateShader = from->plateShader;
+	/* Models can be shared; driver names and plate images cannot. */
+	CG_RegisterClientPlate( to );
 // END
 	to->modelIcon = from->modelIcon;
 

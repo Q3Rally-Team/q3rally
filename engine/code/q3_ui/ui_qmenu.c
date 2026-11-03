@@ -1813,6 +1813,16 @@ void Menu_AddItem( menuframework_s *menu, void *item )
 
 	// perform any item specific initializations
 	itemptr = (menucommon_s*)item;
+	/* Custom hit boxes skip layout initialization, not list contents. */
+	if ( itemptr->type == MTYPE_SPINCONTROL && (itemptr->flags & QMF_NODEFAULTINIT) ) {
+		menulist_s *list = (menulist_s *)item;
+		list->numitems = 0;
+		if ( list->itemnames ) {
+			while ( list->itemnames[list->numitems] ) {
+				list->numitems++;
+			}
+		}
+	}
 	if (!(itemptr->flags & QMF_NODEFAULTINIT))
 	{
 		switch (itemptr->type)

@@ -1,5 +1,15 @@
 !!! --- Q3Rally Changelog --- !!!
 
+Unreleased
+
+Fixed:
+
+- Restore readable personal license plates in both renderers and on pure servers.
+  Plate textures are keyed by driver name and skin, including reused car models.
+- Allow all five bot difficulty levels in the in-game Add Bots menu while
+  preserving custom control bounds; initialize custom team selection lists too.
+- Expose Canyon Cruise's existing Short and Medium variants in the track menu.
+
 v0.8.1 - 2026-11-03
 
 Fixed:

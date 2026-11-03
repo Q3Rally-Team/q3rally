@@ -2561,6 +2561,8 @@ most world construction surfaces.
 
 ===============
 */
+#include "../qcommon/rally_plate_path.h"
+
 shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImage ) {
 	char		strippedName[MAX_QPATH];
 	int			hash;
@@ -2572,6 +2574,11 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 		return tr.defaultShader;
 	}
 
+	/* These runtime images are used on MD3 plates, not GUI quads. MD3
+	 * vertices do not provide the colors required by an implicit 2D shader. */
+	if ( lightmapIndex == LIGHTMAP_2D && Rally_IsGeneratedPlateImage( name, qfalse ) ) {
+		lightmapIndex = LIGHTMAP_NONE;
+	}
 	// use (fullbright) vertex lighting if the bsp file doesn't have
 	// lightmaps
 	if ( lightmapIndex >= 0 && lightmapIndex >= tr.numLightmaps ) {

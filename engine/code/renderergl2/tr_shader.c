@@ -3610,6 +3610,8 @@ most world construction surfaces.
 
 ===============
 */
+#include "../qcommon/rally_plate_path.h"
+
 shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImage ) {
 	return R_FindShaderEx( name, lightmapIndex, mipRawImage, lightmapIndex );
 }
@@ -3625,6 +3627,11 @@ shader_t *R_FindShaderEx( const char *name, int lightmapIndex, qboolean mipRawIm
 		return tr.defaultShader;
 	}
 
+	/* Generated plate textures need model lighting and normal depth testing,
+	 * rather than vertex colors from an implicit GUI shader. */
+	if ( lightmapIndex == LIGHTMAP_2D && Rally_IsGeneratedPlateImage( name, qfalse ) ) {
+		lightmapIndex = realLightmapIndex = LIGHTMAP_NONE;
+	}
 	// use (fullbright) vertex lighting if the bsp file doesn't have
 	// lightmaps
 	if ( lightmapIndex >= 0 && lightmapIndex >= tr.numLightmaps ) {
