@@ -55,7 +55,17 @@ with tempfile.TemporaryDirectory() as temporary:
                     minimum = window.root.minsize()
                     window.root.geometry(f"{minimum[0]}x{minimum[1]}")
                     window.root.update()
-                    self.assertGreaterEqual(window.list.winfo_width(), 350)
+                    layout = [(str(w), w.winfo_geometry(), w.winfo_reqheight(), w.winfo_ismapped())
+                              for w in window.root.winfo_children()]
+                    self.assertGreaterEqual(window.list.winfo_width(), 350,
+                                            (window.root.winfo_geometry(), layout))
+                    self.assertEqual(window.directory_field.cget('state'), 'readonly')
+                    self.assertEqual(window.directory_field.get(), str(manager.versions))
+                    window.install_directory.set('C:/Games/' + 'a very long folder name/' * 20)
+                    window.root.update()
+                    self.assertTrue(window.list.winfo_ismapped())
+                    self.assertGreaterEqual(window.list.winfo_height(), 45)
+                    window.install_directory.set(str(manager.versions))
                     self.assertEqual(window.list.selection(), ("0.8|windows-x86_64",))
                     window.list.selection_set("0.7d|windows-x86_64")
                     window.root.update()

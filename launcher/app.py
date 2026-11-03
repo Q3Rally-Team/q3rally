@@ -116,20 +116,19 @@ class Window:
         version_scroll = ttk.Scrollbar(versions, command=self.list.yview)
         version_scroll.grid(row=1, column=1, sticky="ns")
         self.list.configure(yscrollcommand=version_scroll.set)
-        ttk.Label(versions, text="Each version has its own installation\nand saved games.", background=theme.PANEL,
-                  foreground=theme.QUIET, font=(body, 10)).grid(row=2, column=0, columnspan=2, sticky="w", pady=(18, 0))
         location = ttk.Frame(versions, style="Card.TFrame")
-        location.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+        location.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(18, 0))
         location.columnconfigure(0, weight=1)
         ttk.Label(location, text="INSTALLATION FOLDER", background=theme.PANEL,
                   foreground=theme.QUIET, font=(mono, 10)).grid(row=0, column=0, sticky="w")
         self.folder_button = ttk.Button(location, text="Change …", command=self.choose_install_directory)
         self.folder_button.grid(row=0, column=1, padx=(8, 0))
         self.install_directory = tk.StringVar(value=str(manager.versions))
-        directory_label = ttk.Label(location, textvariable=self.install_directory, background=theme.PANEL,
-                                    foreground=theme.MUTED, font=(body, 10), width=1)
-        directory_label.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6, 0))
-        directory_label.bind("<Configure>", lambda event: directory_label.configure(wraplength=max(100, event.width)))
+        self.directory_field = tk.Entry(location, textvariable=self.install_directory, background=theme.PANEL,
+                                        readonlybackground=theme.PANEL, foreground=theme.MUTED,
+                                        font=(body, 10), width=1, state="readonly", relief="flat",
+                                        borderwidth=0, highlightthickness=0)
+        self.directory_field.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6, 0))
         self.list.bind("<<TreeviewSelect>>", self.selected)
         notes_frame = ttk.Frame(content); notes_frame.grid(row=0, column=1, sticky="nsew")
         notes_frame.rowconfigure(4, weight=1); notes_frame.columnconfigure(0, weight=1)
