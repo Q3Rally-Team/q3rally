@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 
-void loadBezierPathFile(char *filename) {
+qboolean loadBezierPathFile(char *filename) {
 	int				len;
 	fileHandle_t	f;
 	char			*buf, *p;
@@ -36,12 +36,12 @@ void loadBezierPathFile(char *filename) {
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
 	if ( !f ) {
 		G_Printf( "[BPD-DEBUG] Bezier path file not found: %s\n", filename );
-		return;
+		return qfalse;
 	}
 	if ( !len ) {
 		G_Printf( "[BPD-DEBUG] Bezier path file is empty: %s\n", filename );
 		trap_FS_FCloseFile( f );
-		return;
+		return qfalse;
 	}
 
 	G_Printf( "[BPD-DEBUG] Loading bezier path file: %s\n", filename );
@@ -94,6 +94,7 @@ void loadBezierPathFile(char *filename) {
 	}
 
 	G_Printf( "[BPD-DEBUG] Finished loading bezier path file.\n" );
+	return qtrue;
 }
 
 

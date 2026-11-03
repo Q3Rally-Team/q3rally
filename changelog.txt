@@ -1,5 +1,13 @@
 !!! --- Q3Rally Changelog --- !!!
 
+Unreleased
+
+Fixed:
+
+- Load one Bezier path per track length (maps/<map>_tl<n>.bpd). On maps whose
+  checkpoints differ between lengths the shared maps/<map>.bpd is no longer
+  applied to the wrong checkpoints, and the race intro follows the active length.
+
 v0.8.2 - 2026-11-03
 
 Fixed:

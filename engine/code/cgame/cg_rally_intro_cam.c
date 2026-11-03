@@ -15,6 +15,7 @@ or (at your option) any later version.
 /* Race intro camera generated from the active map's BPD spline. */
 
 #include "cg_local.h"
+#include "../game/bg_bpd_path.h"
 
 /* ------------------------------------------------------------------ */
 /* Constants                                                           */
@@ -83,13 +84,41 @@ static qboolean CG_IntroCam_NextToken( const char **p, char *buf, int bufSize ) 
 	return ( i > 0 );
 }
 
+/*
+The file for saveBPoints: the BPD the server loaded for this track (announced
+in CS_INTRO_ROUTE), otherwise the file for the active track length, which the
+server prefers over the generic maps/<map>.bpd.
+*/
+qboolean CG_IntroCam_BezierPointsPath( const char *mapName, char *out, int size ) {
+	char routeConfig[MAX_STRING_CHARS];
+	char *p, *token;
+	int trackLength;
+
+	Q_strncpyz( routeConfig, CG_ConfigString( CS_INTRO_ROUTE ), sizeof( routeConfig ) );
+	p = routeConfig;
+	token = COM_Parse( &p );
+	if ( !Q_stricmp( token, "bpd" ) ) {
+		token = COM_Parse( &p );
+		if ( BG_BpdPathMatchesMap( token, mapName ) ) {
+			Q_strncpyz( out, token, size );
+			return qtrue;
+		}
+	}
+
+	trackLength = atoi( Info_ValueForKey( CG_ConfigString( CS_SERVERINFO ), "g_trackLength" ) );
+	if ( BG_BpdLengthPath( out, size, mapName, trackLength ) ) {
+		return qtrue;
+	}
+	return BG_BpdGenericPath( out, size, mapName );
+}
+
 static qboolean CG_IntroCam_ReadBpd( const char *path ) {
 	fileHandle_t file;
 	int fileLength, pointCount = 0;
 	static char buffer[CG_MAX_INTRO_BPD_FILE_SIZE + 1];
 	const char *cursor;
 	char token[64];
-	char expectedPath[MAX_QPATH], mapName[MAX_QPATH];
+	char mapName[MAX_QPATH];
 
 	s_routeFrameCount = 0;
 	s_routeDurationMs = 0;
@@ -97,8 +126,8 @@ static qboolean CG_IntroCam_ReadBpd( const char *path ) {
 	s_bpdLoaded = qfalse;
 	if ( !path || Q_stricmpn( path, "maps/", 5 ) ) return qfalse;
 	COM_StripExtension( COM_SkipPath( cgs.mapname ), mapName, sizeof( mapName ) );
-	if ( !mapName[0] || Com_sprintf( expectedPath, sizeof( expectedPath ), "maps/%s.bpd", mapName ) >= sizeof( expectedPath )
-		|| Q_stricmp( path, expectedPath ) ) return qfalse;
+	/* Only this map's generic or per-length BPD (bg_bpd_path.h). */
+	if ( !BG_BpdPathMatchesMap( path, mapName ) ) return qfalse;
 
 	fileLength = trap_FS_FOpenFile( path, &file, FS_READ );
 	if ( fileLength <= 0 ) {
