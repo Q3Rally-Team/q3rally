@@ -23,6 +23,20 @@ from tools.publish_launcher_catalog import sign
 
 
 class LauncherTests(unittest.TestCase):
+    def test_storage_subfolder_is_allowed_but_installed_game_subfolder_is_not(self):
+        games = self.root/'Games'
+        self.manager.set_install_directory(games)
+        nested = games/'Q3Rally0.8.1'
+        self.manager.set_install_directory(nested)
+        restored = Manager(self.manager.root, self.keys, targets=self.manager.targets, development=True)
+        self.assertEqual(restored.versions, nested)
+        installed = restored.install(self.envelope, '0.8', 'windows-x86_64')
+        for forbidden in [installed, installed/'another-folder', installed/'baseq3r'/'nested']:
+            with self.subTest(forbidden=forbidden), self.assertRaises(LauncherError):
+                restored.set_install_directory(forbidden)
+            self.assertEqual(restored.versions, nested)
+        restored.verify('0.8', 'windows-x86_64')
+
     def test_custom_game_folder_retains_old_versions_and_survives_restart(self):
         old = self.manager.install(self.envelope, '0.8', 'windows-x86_64')
         custom = self.root / 'Games with spaces'

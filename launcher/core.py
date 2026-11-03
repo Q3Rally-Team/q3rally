@@ -261,8 +261,15 @@ class Manager:
         default = self.root / "versions"
         if directory != default and (directory.is_relative_to(self.root) or self.root.is_relative_to(directory)):
             raise LauncherError("Choose a game folder separate from launcher settings and profiles.")
-        if any(directory != known and directory.is_relative_to(known) for known in self.install_roots):
-            raise LauncherError("Choose a folder outside existing game installations.")
+        for known in self.install_roots:
+            if not directory.is_relative_to(known) or directory == known:
+                continue
+            # A storage root is a container, not itself a game installation.
+            # Only reject paths inside a managed version, whose removal would
+            # otherwise also remove the newly selected storage folder.
+            child = known / directory.relative_to(known).parts[0]
+            if (child / ".launcher-install.json").is_file():
+                raise LauncherError("Choose a folder outside existing game installations.")
         try:
             directory.mkdir(parents=True, exist_ok=True)
             with tempfile.TemporaryFile(dir=directory):
