@@ -168,4 +168,7 @@ def test_canyon_cruise_menu_lengths_match_shipped_bsp_routes():
     checkpoints = [e for e in entities if e.get('classname')=='rally_checkpoint']
     for length in allowed:
         active = [int(e['number']) for e in checkpoints if length in e.get('onlytracklength','012')]
-        assert sorted(active) == list(range(1,17))
+        assert sorted(active) == list(range(1, 18))
+        route = ROOT / f'baseq3r/maps/q3r_sk1_tl{length}.bpd'
+        route_checkpoints = [int(line.split(':', 1)[0]) for line in route.read_text().splitlines() if line.strip()]
+        assert route_checkpoints == sorted(active)
