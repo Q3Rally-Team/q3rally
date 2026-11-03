@@ -5699,7 +5699,7 @@ q3r_signage/dirsign02_blu
 {
 "classname" "rally_checkpoint"
 "target" "cp_16"
-"number" "16"
+"number" "17"
 // brush 0
 {
 ( -4082.0009765625 3518.998046875 8 ) ( -3540.9990234375 2977.99609375 8 ) ( -3449.998046875 3068.998046875 8 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
@@ -6156,4 +6156,56 @@ q3r_signage/dirsign02_blu
 "origin" "-4972.09 1922.03 8"
 "model" "models/mapobjects/cactus/cactus.md3"
 "angle" "-122.913"
+}
+// entity 80
+{
+"classname" "rally_checkpoint"
+"number" "16"
+"angle" "90"
+"spawnflags" "4"
+"onlyTrackLength" "0"
+"target" "cp_s1_0"
+// brush 0
+{
+( -4124 2236 299 ) ( -3628 2364 299 ) ( -3628 2236 299 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4124 2236 -14 ) ( -3628 2236 -14 ) ( -3628 2364 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4124 2236 -14 ) ( -4124 2236 299 ) ( -3628 2236 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -3628 2236 -14 ) ( -3628 2236 299 ) ( -3628 2364 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -3628 2364 -14 ) ( -3628 2364 299 ) ( -4124 2364 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4124 2364 -14 ) ( -4124 2364 299 ) ( -4124 2236 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+}
+}
+// entity 81
+{
+"classname" "info_notnull"
+"targetname" "cp_s1_0"
+"origin" "-3860 2300 18"
+"angle" "90"
+"onlyTrackLength" "0"
+}
+// entity 82
+{
+"classname" "rally_checkpoint"
+"number" "16"
+"angle" "90"
+"spawnflags" "4"
+"onlyTrackLength" "1"
+"target" "cp_m1_1"
+// brush 0
+{
+( -4982 2186 299 ) ( -4574 2314 299 ) ( -4574 2186 299 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4982 2186 -14 ) ( -4574 2186 -14 ) ( -4574 2314 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4982 2186 -14 ) ( -4982 2186 299 ) ( -4574 2186 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4574 2186 -14 ) ( -4574 2186 299 ) ( -4574 2314 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4574 2314 -14 ) ( -4574 2314 299 ) ( -4982 2314 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+( -4982 2314 -14 ) ( -4982 2314 299 ) ( -4982 2186 -14 ) common/checkpoint 0 0 0 0.5 0.5 0 0 0
+}
+}
+// entity 83
+{
+"classname" "info_notnull"
+"targetname" "cp_m1_1"
+"origin" "-4846 2250 18"
+"angle" "90"
+"onlyTrackLength" "1"
 }
