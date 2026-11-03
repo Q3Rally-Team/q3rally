@@ -64,6 +64,16 @@ class LauncherTests(unittest.TestCase):
         self.assertTrue(old.exists())
         self.assertFalse(backup.exists())
 
+    def test_custom_folder_does_not_overwrite_unmanaged_files(self):
+        self.manager.set_install_directory(self.root/'games')
+        directory = self.manager.path('0.8', 'windows-x86_64')
+        directory.mkdir()
+        sentinel = directory/'my-files.txt'; sentinel.write_text('keep')
+        with self.assertRaisesRegex(LauncherError, 'unmanaged folder'):
+            self.manager.install(self.envelope, '0.8', 'windows-x86_64')
+        self.assertEqual(sentinel.read_text(), 'keep')
+        self.assertEqual(self.requests, [])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

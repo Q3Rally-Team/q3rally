@@ -358,6 +358,8 @@ class Manager:
         for directory in sorted(directories):
             if directory.name.startswith(".") or not directory.is_dir() or directory.is_symlink():
                 continue
+            if not (directory / ".launcher-install.json").is_file():
+                continue
             try:
                 receipt = json.loads((directory / ".launcher-install.json").read_text())
                 catalog = decode_catalog(receipt["envelope"], self.keys, fresh=False)
@@ -510,6 +512,15 @@ class Manager:
         with file_lock(self.locks / (self.product + "-" + directory.name + ".lock")):
             if processes_using(directory):
                 raise LauncherError("The game is still running. Please install it later.")
+            if directory.exists():
+                try:
+                    receipt = json.loads((directory / ".launcher-install.json").read_text())
+                    previous = decode_catalog(receipt["envelope"], self.keys, fresh=False)
+                    if receipt["version"] != version or receipt["target"] != target or not any(
+                            r["version"] == version and t == target for r, t, _ in self.available(previous)):
+                        raise ValueError("Unmanaged installation")
+                except (OSError, ValueError, KeyError, TypeError, LauncherError) as error:
+                    raise LauncherError("The destination already contains an unmanaged folder. Choose another installation folder.") from error
             with file_lock(self.locks / (package["sha256"] + ".download.lock")):
                 archive = self._download(package, cancel or threading.Event(), progress)
             directory.parent.mkdir(parents=True, exist_ok=True)
