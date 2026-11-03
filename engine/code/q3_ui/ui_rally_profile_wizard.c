@@ -70,7 +70,7 @@ Copyright (C) 2002-2026 Q3Rally Team
 
 #define PW_DOT_Y        394
 #define PW_DOT_SPACING  14
-#define PW_PAGES        2
+#define PW_PAGES        3
 #define PW_STATUS_Y     ( PW_DOT_Y - 22 )
 #define PW_HINT_Y       ( PW_FRAME_Y + PW_FRAME_H + 8 )
 
@@ -467,7 +467,7 @@ static void PW_StartLadderRegister( void ) {
 
     /* Register an offline server key via the existing ladder_register command.
      * ownerEmail uses the in-game placeholder recognised by register.php
-     * (Accept: application/json path auto-approves offline keys).          */
+     * (Accept: application/json returns the registration key).          */
     PW_BuildOfflineServerName( s_pw.profileName, s_pw.offlineServerName, sizeof( s_pw.offlineServerName ) );
     trap_Cvar_Set( "sv_ladderUrl", "https://ladder.q3rally.com/index.php/matches" );
     trap_Cvar_Set( "sv_hostname", s_pw.offlineServerName );
@@ -745,27 +745,27 @@ static void PW_DrawPage3( void ) {
     Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y, "Ladder tracking",
                        UI_LEFT | UI_BIGFONT, pwText );
     Frontend_DrawText( PW_FRAME_X + 24, PW_TITLE_Y + 26,
-                       "Optional registration; local career stays on this device",
+                       "Register a key for your offline race results",
                        UI_LEFT | UI_SMALLFONT, pwMuted );
 
     if ( s_pw.ladderResult     == PW_RESULT_OK &&
          s_pw.offlineKeyResult == PW_RESULT_OK ) {
-        Frontend_DrawText( PW_CX, PW_BODY_Y + 12, "Profile registration complete",
+        Frontend_DrawText( PW_CX, PW_BODY_Y + 12, "Offline registration saved",
                            UI_CENTER | UI_SMALLFONT, pwSuccess );
         Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
-                           "Ranked results count on approved servers.",
+                           "Your offline tracking key has been saved.",
                            UI_CENTER | UI_SMALLFONT, pwText );
         Frontend_DrawText( PW_CX, PW_BODY_Y + 52,
-                           "Stats update automatically after each match.",
+                           "Server approval may be required before uploads.",
                            UI_CENTER | UI_SMALLFONT, pwMuted );
         return;
     }
 
     Frontend_DrawText( PW_CX, PW_BODY_Y + 12,
-                       "Register your Q3Rally profile (optional).",
+                       "Enable offline results on the Q3Rally ladder.",
                        UI_CENTER | UI_SMALLFONT, pwText );
     Frontend_DrawText( PW_CX, PW_BODY_Y + 34,
-                       "Local games do not change your ladder ranking.",
+                       "Optional. You can also keep playing without registering.",
                        UI_CENTER | UI_SMALLFONT, pwMuted );
     Frontend_DrawText( PW_CX, PW_BODY_Y + 54, "ladder.q3rally.com",
                        UI_CENTER | UI_SMALLFONT, pwAccent );
@@ -857,7 +857,7 @@ static void PW_MenuEvent( void *ptr, int event ) {
             break;
         case PW_PAGE_DETAILS:
             PW_CommitDetails();
-            PW_SetPage( PW_PAGE_DONE );
+            PW_SetPage( PW_PAGE_LADDER );
             break;
         case PW_PAGE_LADDER:
             if ( s_pw.ladderResult     == PW_RESULT_OK &&
@@ -887,7 +887,7 @@ static void PW_MenuEvent( void *ptr, int event ) {
         switch ( s_pw.page ) {
         case PW_PAGE_DETAILS:
             PW_CommitDetails();
-            PW_SetPage( PW_PAGE_DONE );
+            PW_SetPage( PW_PAGE_LADDER );
             break;
         case PW_PAGE_LADDER:
             PW_SetPage( PW_PAGE_DONE );
