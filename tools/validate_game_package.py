@@ -66,6 +66,20 @@ def main():
                 creationflags=subprocess.CREATE_NO_WINDOW, timeout=30)
             assert cold.returncode == 0, (attempt, cold.returncode, cold.stdout, cold.stderr)
             cold_starts += 1
+    # The garage enumerates model directories, even when the asset PK3 has
+    # only file entries. Check the packaged filesystem on the target engine.
+    manifest = json.loads((manager.path(version, target) / 'release-manifest.json').read_text())
+    vehicle_dirs = {item['path'].split('/')[2] for item in manifest['assets']
+                    if item['path'].startswith('models/players/') and item['path'].endswith('/body.md3')}
+    vehicle_home = output / 'vehicle-list-home'
+    listing = subprocess.run([str(server), '+set', 'fs_basepath', str(client.parent),
+        '+set', 'fs_homepath', str(vehicle_home), '+set', 'net_enabled', '0', '+set', 'logfile', '2',
+        '+dir', 'models/players', '/', '+quit'], cwd=client.parent,
+        stdin=subprocess.DEVNULL, capture_output=True, timeout=30,
+        **({'creationflags': subprocess.CREATE_NO_WINDOW} if target.startswith('windows-') else {}))
+    directories = set((vehicle_home / 'baseq3r/qconsole.log').read_text(errors='replace').splitlines())
+    missing = {name for name in vehicle_dirs if name not in directories and name + '/' not in directories}
+    assert listing.returncode == 0 and vehicle_dirs and not missing, (missing, listing.stdout, listing.stderr)
     subprocess.run([sys.executable, str(ROOT/'tools/validate_dedicated_server.py'),
         '--executable', str(server), '--basepath', str(client.parent), '--output', str(output/'dedicated'),
         '--case', 'racing', '--case', 'sprint', '--http-probe'], check=True, timeout=240)
@@ -110,6 +124,7 @@ def main():
         'signed_install_verified': True, 'executable_architecture_verified': True,
         'native_client_version_verified': True, 'packaged_lap_and_sprint_bots_http_verified': True,
         'offline_registration_pending_active_verified': True,
+        'vehicle_directory_listing_verified': True,
         'incremental_install_and_unchanged_base_verified': incremental,
         'redirected_windows_cold_starts': cold_starts})
     print(target + ': package installation, architecture, client version and dedicated checks PASS', flush=True)

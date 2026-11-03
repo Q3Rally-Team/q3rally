@@ -2418,7 +2418,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 	}
 
 	pathLength = strlen( path );
-	if ( path[pathLength-1] == '\\' || path[pathLength-1] == '/' ) {
+	if ( pathLength && ( path[pathLength-1] == '\\' || path[pathLength-1] == '/' ) ) {
 		pathLength--;
 	}
 	extensionLength = strlen( extension );
@@ -2454,6 +2454,27 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 						continue;
 					// unique the match
 					nfiles = FS_AddFileToList( name, list, nfiles );
+				}
+				else if ( extensionLength == 1 && extension[0] == '/' ) {
+					const char *child = name;
+					const char *separator;
+
+					/* PK3s can contain files without explicit ZIP directory entries. */
+					if ( pathLength ) {
+						if ( Q_stricmpn( name, path, pathLength ) ||
+						     ( name[pathLength] != '/' && name[pathLength] != '\\' ) ) {
+							continue;
+						}
+						child += pathLength + 1;
+					}
+					separator = strpbrk( child, "/\\" );
+					if ( separator && separator != child && separator - child < sizeof(zpath) - 1 ) {
+						length = separator - child;
+						memcpy( zpath, child, length );
+						zpath[length] = '/';
+						zpath[length+1] = '\0';
+						nfiles = FS_AddFileToList( zpath, list, nfiles );
+					}
 				}
 				else {
 
