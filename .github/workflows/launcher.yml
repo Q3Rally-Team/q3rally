@@ -2,10 +2,15 @@ name: Launcher
 on:
   workflow_dispatch:
   push:
-    branches: ['codex/launcher-*']
-    paths: ['launcher/**', 'run_launcher.py', 'tools/*launcher*.py', 'tests/test_launcher*.py', '.github/workflows/launcher.yml']
+    branches: [master, dev]
+    paths: ['launcher/**', 'run_launcher.py', 'tools/*launcher*.py', 'tools/release_assets.py', 'tests/test_launcher*.py', 'tests/fixtures/launcher-*', '.github/workflows/launcher.yml']
   pull_request:
-    paths: ['launcher/**', 'run_launcher.py', 'tools/*launcher*.py', 'tests/test_launcher.py', '.github/workflows/launcher.yml']
+    paths: ['launcher/**', 'run_launcher.py', 'tools/*launcher*.py', 'tools/release_assets.py', 'tests/test_launcher*.py', 'tests/fixtures/launcher-*', '.github/workflows/launcher.yml']
+permissions:
+  contents: read
+concurrency:
+  group: launcher-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   native:
     strategy:

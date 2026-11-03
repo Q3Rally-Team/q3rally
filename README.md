@@ -14,10 +14,14 @@ optional Ladder service used for match reporting.
 * PHP Ladder webservice: [ladder_service/php_webservice/README.md](ladder_service/php_webservice/README.md)
 * CTF4 announcer asset notes: [baseq3r/sound/teamplay/README.md](baseq3r/sound/teamplay/README.md)
 
+* Roadmap: [docs/roadmap.md](docs/roadmap.md)
+* Launcher: [docs/launcher.md](docs/launcher.md)
+* Repository workflow: [docs/repository-workflow.md](docs/repository-workflow.md)
+
 ## Release packaging
 
 Use `make_release.py` to audit assets and package existing platform builds.
-See [v0.8 release instructions](docs/releasing-v0.8.md) and the
+See the [release procedure](docs/releasing.md) and the
 [current asset findings](docs/asset-audit-v0.8.md).
 
 ## Repository Layout
@@ -30,7 +34,7 @@ See [v0.8 release instructions](docs/releasing-v0.8.md) and the
 
 ## Resources
 
-* [Q3Rally Website](http://www.q3rally.com)
+* [Q3Rally Website](https://www.q3rally.com)
 * [Q3Rally on ModDB](https://www.moddb.com/games/q3rally)
 * [Q3Rally on Discord](https://discord.gg/rX8Sxmh)
 

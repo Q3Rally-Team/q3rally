@@ -1,8 +1,5 @@
 name: macOS dedicated race verification
 on:
-  push:
-    branches: [codex/macos-dedicated-validation]
-    paths: [.github/workflows/macos-dedicated-races.yml]
   workflow_dispatch:
 
 jobs:

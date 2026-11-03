@@ -1,3 +1,6 @@
+> Detailed v0.8 packaging reference. For current release orchestration, use
+> [the release procedure](releasing.md); example version numbers below are historical.
+
 # Q3Rally v0.8 release packaging
 
 `make_release.py` uses Python 3.11+ and the standard library. It packages existing

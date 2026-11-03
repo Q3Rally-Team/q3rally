@@ -28,3 +28,11 @@ Claude outputs/
 
 # AAS proxy intermediates (tools/maptools/make_aas_proxy.py)
 baseq3r/maps/*_aasproxy.*
+
+# Local diagnostics, release validation, and service data
+/output/
+/ladder.db
+/ladder.db-shm
+/ladder.db-wal
+/demo-build.log
+/wiki_export/
