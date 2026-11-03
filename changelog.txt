@@ -1,5 +1,17 @@
 !!! --- Q3Rally Changelog --- !!!
 
+v0.8.4 - 2026-11-03
+
+Fixed:
+
+- Restore vehicles in the garage and vehicle menus when game assets are
+  installed from PK3s without explicit directory entries.
+
+Distribution:
+
+- Launcher v0.4.1 carries forward the Windows GPU preference when starting
+  a new patch version for the first time.
+
 v0.8.3 - 2026-11-03
 
 Fixed:
