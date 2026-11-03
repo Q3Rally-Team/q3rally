@@ -219,6 +219,44 @@ class IncrementalUpdateTests(unittest.TestCase):
         self.assertEqual((new/'profile.json').read_text(),'new progress')
         self.assertEqual((old/'profile.json').read_text(),'old progress')
 
+    @unittest.skipUnless(os.name == 'nt', 'Windows graphics preferences')
+    def test_gpu_preference_is_inherited_once_and_respects_existing_selection(self):
+        import winreg
+
+        target = 'windows-x86_64'
+        self.install_old()
+        directory = self.manager.install(self.envelope, '0.8.2', target)
+        receipt = directory / '.launcher-install.json'
+        original_receipt = receipt.read_bytes()
+        previous = str(self.manager.verify('0.8.1', target))
+        current = str(self.manager.verify('0.8.2', target))
+
+        for existing in (None, 'GpuPreference=1;'):
+            with self.subTest(existing=existing):
+                receipt.write_bytes(original_receipt)
+                values = {previous: 'GpuPreference=2;OtherSetting=1;'}
+                if existing is not None:
+                    values[current] = existing
+
+                def query(key, name):
+                    if name not in values:
+                        raise FileNotFoundError(name)
+                    return values[name], winreg.REG_SZ
+
+                def save(key, name, reserved, kind, value):
+                    values[name] = value
+
+                with patch.object(winreg, 'OpenKey'), patch.object(winreg, 'QueryValueEx', side_effect=query), \
+                        patch.object(winreg, 'SetValueEx', side_effect=save) as write, \
+                        patch('launcher.core.subprocess.Popen') as process:
+                    process.return_value.wait.return_value = 0
+                    self.manager.run('0.8.2', target)
+                    self.assertEqual(values[current], existing or 'GpuPreference=2;')
+                    self.assertEqual(write.call_count, int(existing is None))
+                    del values[current]
+                    self.manager.run('0.8.2', target)
+                    self.assertNotIn(current, values)
+
     def test_catalog_rejects_cross_line_newer_duplicate_and_bad_hash_updates(self):
         original=json.loads(base64.b64decode(self.envelope['payload']))
         for value in ['0.9.0','0.8.2','0.8.3']:

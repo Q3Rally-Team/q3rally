@@ -588,6 +588,43 @@ class Manager:
             finally:
                 if stage.exists(): shutil.rmtree(stage)
 
+    def _inherit_windows_gpu_preference(self, directory, executable, version, target):
+        if os.name != "nt" or self.product != "Q3Rally":
+            return
+
+        import winreg
+
+        receipt_path = directory / ".launcher-install.json"
+        try:
+            receipt = json.loads(receipt_path.read_text())
+            before = receipt.get("data_source_version")
+            if not before or receipt.get("gpu_preference_checked"):
+                return
+            previous, current = version_key(before), version_key(version)
+            if previous[:2] != current[:2] or previous >= current:
+                return
+            base, _, package = self._receipt(before, target)
+            source = within(base, package["entrypoint"])
+            registry_path = r"Software\Microsoft\DirectX\UserGpuPreferences"
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_path, 0,
+                                    winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE) as key:
+                    try:
+                        winreg.QueryValueEx(key, str(executable))
+                    except FileNotFoundError:
+                        value, kind = winreg.QueryValueEx(key, str(source))
+                        if kind == winreg.REG_SZ:
+                            preference = re.search(r"(?:^|;)GpuPreference=([012])(?:;|$)", value)
+                            if preference:
+                                winreg.SetValueEx(key, str(executable), 0, winreg.REG_SZ,
+                                                  f"GpuPreference={preference[1]};")
+            except FileNotFoundError:
+                pass  # Windows has no saved preference to migrate.
+            receipt["gpu_preference_checked"] = True
+            atomic_json(receipt_path, receipt)
+        except (OSError, ValueError, TypeError, KeyError, StopIteration, LauncherError):
+            LOG.debug("Could not inherit Windows GPU preference.", exc_info=True)
+
     def install(self, envelope, version, target, *, cancel=None, progress=lambda done, total: None):
         catalog = decode_catalog(envelope, self.keys)
         release, _, package = next(item for item in self.available(catalog)
@@ -597,6 +634,7 @@ class Manager:
         self.last_install_method = None
         data_source = self._patch_data_source(version,target)
         with file_lock(self.locks / (self.product + "-" + directory.name + ".lock")):
+            gpu_preference_checked = False
             if processes_using(directory):
                 raise LauncherError("The game is still running. Please install it later.")
             if directory.exists():
@@ -606,6 +644,7 @@ class Manager:
                     if receipt["version"] != version or receipt["target"] != target or not any(
                             r["version"] == version and t == target for r, t, _ in self.available(previous)):
                         raise ValueError("Unmanaged installation")
+                    gpu_preference_checked = receipt.get("gpu_preference_checked") is True
                 except (OSError, ValueError, KeyError, TypeError, LauncherError) as error:
                     raise LauncherError("The destination already contains an unmanaged folder. Choose another installation folder.") from error
             directory.parent.mkdir(parents=True, exist_ok=True)
@@ -621,6 +660,8 @@ class Manager:
                     raise LauncherError("Installation paused. Please start it again.")
                 receipt = {"version": version, "target": target, "envelope": envelope}
                 if data_source: receipt['data_source_version']=data_source
+                if gpu_preference_checked:
+                    receipt["gpu_preference_checked"] = True
                 atomic_json(stage / ".launcher-install.json", receipt)
                 if backup.exists():
                     raise LauncherError("A previous recovery must be checked first.")
@@ -657,6 +698,7 @@ class Manager:
             self._prepare_patch_data(version,target)
             if cancel is not None and cancel.is_set():
                 raise LauncherError('Game start cancelled.')
+            self._inherit_windows_gpu_preference(directory, executable, version, target)
             home = within(self.root / "user-data", version)
             home.mkdir(parents=True, exist_ok=True)
             logs = self.root / "logs"; logs.mkdir(exist_ok=True)
