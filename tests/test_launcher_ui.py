@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -33,7 +34,16 @@ class LauncherLayoutTests(unittest.TestCase):
                     except Exception:
                         pass
                     window.root.geometry(f"{minimum[0]}x{minimum[1]}")
-                    window.root.update()
+                    # Windows applies the restore-from-maximized transition
+                    # asynchronously, especially on the CI virtual desktop.
+                    deadline = time.monotonic() + 5
+                    while True:
+                        window.root.update()
+                        if window.list.winfo_ismapped() and window.list.winfo_width() >= 350:
+                            break
+                        if time.monotonic() >= deadline:
+                            break
+                        time.sleep(0.02)
                     self.assertGreaterEqual(window.list.winfo_width(), 350)
                     self.assertEqual(window.list.selection(), ("0.8|windows-x86_64",))
                     window.list.selection_set("0.7d|windows-x86_64")
