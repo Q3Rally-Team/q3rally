@@ -1,8 +1,9 @@
 """Optional native Tk layout checks; enable Q3RALLY_TEST_GUI=1 on a desktop."""
 import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
-import time
 import unittest
 from unittest.mock import patch
 
@@ -13,37 +14,47 @@ from launcher.core import native_targets
 
 @unittest.skipUnless(os.environ.get("Q3RALLY_TEST_GUI") == "1", "native desktop check")
 class LauncherLayoutTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'Windows maximize state')
+    def test_starts_maximized(self):
+        # Use a fresh Tcl interpreter/process, as a real launcher start does.
+        code = '''
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+from launcher.app import Window
+from launcher.core import Manager
+with tempfile.TemporaryDirectory() as temporary:
+    manager = Manager(Path(temporary), {}, targets=['windows-x86_64'])
+    with patch.object(Window, 'refresh'):
+        window = Window(manager, {'catalog_url':'https://example.invalid/catalog.json'})
+        try:
+            window.root.update()
+            assert window.root.state() == 'zoomed', window.root.state()
+        finally:
+            window.root.destroy()
+'''
+        result = subprocess.run([sys.executable, '-c', code], cwd=Path(__file__).resolve().parents[1],
+                                capture_output=True, text=True, timeout=20,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_selection_and_controls_fit_minimum_window(self):
         with tempfile.TemporaryDirectory() as temporary:
             manager = Manager(Path(temporary), {}, targets=["windows-x86_64"])
-            with patch.object(Window, "refresh"):
+            # Check minimum-size layout independently of the maximize/restore
+            # transitions on the Windows CI virtual desktop.
+            with patch.object(Window, "refresh"), patch('launcher.app.maximize_window'):
                 window = Window(manager, {"catalog_url": "https://example.invalid/catalog.json"})
                 try:
                     window.root.update()
-                    if os.name == 'nt':
-                        self.assertEqual(window.root.state(), 'zoomed')
                     window.catalog = {"releases": [
                         {"version": "0.8", "notes": "Latest version", "packages": {"windows-x86_64": {}}},
                         {"version": "0.7d", "notes": "Earlier version", "packages": {"windows-x86_64": {}}}]}
                     window.fresh = True
                     window.fill()
                     minimum = window.root.minsize()
-                    window.root.state("normal")
-                    try:
-                        window.root.attributes("-zoomed", False)
-                    except Exception:
-                        pass
                     window.root.geometry(f"{minimum[0]}x{minimum[1]}")
-                    # Windows applies the restore-from-maximized transition
-                    # asynchronously, especially on the CI virtual desktop.
-                    deadline = time.monotonic() + 5
-                    while True:
-                        window.root.update()
-                        if window.list.winfo_ismapped() and window.list.winfo_width() >= 350:
-                            break
-                        if time.monotonic() >= deadline:
-                            break
-                        time.sleep(0.02)
+                    window.root.update()
                     self.assertGreaterEqual(window.list.winfo_width(), 350)
                     self.assertEqual(window.list.selection(), ("0.8|windows-x86_64",))
                     window.list.selection_set("0.7d|windows-x86_64")
