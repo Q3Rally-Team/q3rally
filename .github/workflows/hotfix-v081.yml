@@ -71,7 +71,7 @@ jobs:
           cd engine
           bash make-macosx-app.sh release ${{ matrix.arch }}
       - name: Audit and package exact native build
-        run: python make_release.py --version 0.8 --target ${{ matrix.target }}=engine/build/release-${{ matrix.platform }}-${{ matrix.arch }} --output output/v0.8.1 --report output/v0.8.1-audit.json
+        run: python make_release.py --version 0.8.1 --target ${{ matrix.target }}=engine/build/release-${{ matrix.platform }}-${{ matrix.arch }} --output output/v0.8.1 --report output/v0.8.1-audit.json
       - name: Verify signed installation and native dedicated server from package
         run: python tools/validate_game_package.py --release-index output/v0.8.1/release.json --output output/v0.8.1-validation
       - uses: actions/upload-artifact@v6
