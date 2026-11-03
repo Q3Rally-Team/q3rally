@@ -1,6 +1,6 @@
 # License plates, bot difficulty and Canyon Cruise
 
-These corrections are unreleased and do not change the game version or profile format.
+These corrections form the v0.8.2 candidate. The profile format is unchanged.
 
 ## License plates
 

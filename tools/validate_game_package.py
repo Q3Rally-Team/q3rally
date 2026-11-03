@@ -20,6 +20,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--release-index', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--base-index', type=Path)
+    parser.add_argument('--update-index', type=Path)
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -70,10 +72,45 @@ def main():
     subprocess.run([sys.executable, str(ROOT/'tools/validate_offline_registration.py'),
         '--executable', str(server), '--basepath', str(client.parent),
         '--output', str(output/'offline-registration')], check=True, timeout=120)
+    incremental=False
+    if args.base_index or args.update_index:
+        if not args.base_index or not args.update_index:
+            raise ValueError('Both base and update indexes are required')
+        from unittest.mock import patch
+        old_index=Index(args.base_index.resolve())
+        old_artifact,=[a for a in old_index.data['artifacts'] if a['target']==target]
+        old_version=old_index.data['version']
+        old_package=package_record(old_index,old_artifact,'https://example.invalid','Q3Rally')
+        update_data=json.loads(args.update_index.read_text())
+        update,=[u for u in update_data['updates'] if u['target']==target and u['version']==version]
+        new_package=dict(package)
+        new_package['updates']=[{**{k:update[k] for k in ('from_version','from_manifest_sha256','sha256','size')},
+                                'url':'https://example.invalid/'+update['filename']}]
+        delta_envelope=sign({'schema':1,'product':'Q3Rally','sequence':2,
+            'expires':(datetime.now(timezone.utc)+timedelta(days=1)).isoformat(),
+            'releases':[{'version':version,'packages':{target:new_package}},
+                        {'version':old_version,'packages':{target:old_package}}],'launchers':[]},key,'package-test')
+        incremental_manager=Manager(output/'incremental-data',keys,targets=[target])
+        shutil.copyfile(old_index.parent/old_artifact['filename'],incremental_manager.cache/(old_package['sha256']+'.part'))
+        incremental_manager.install(delta_envelope,old_version,target)
+        shutil.copyfile(args.update_index.parent/update['filename'],incremental_manager.cache/(update['sha256']+'.part'))
+        original_download=incremental_manager._download
+        def delta_only(record,*positional,**named):
+            if record['sha256']==package['sha256']:
+                raise AssertionError('Incremental validation attempted a full download')
+            return original_download(record,*positional,**named)
+        with patch.object(incremental_manager,'_download',side_effect=delta_only):
+            incremental_client=incremental_manager.install(delta_envelope,version,target)
+        assert incremental_manager.last_install_method=='incremental'
+        verified=incremental_manager.verify(version,target)
+        assert verified.is_file()
+        incremental_manager.verify(old_version,target)
+        incremental=True
     atomic_json(output/'result.json', {'version': version, 'target': target,
         'signed_install_verified': True, 'executable_architecture_verified': True,
         'native_client_version_verified': True, 'packaged_lap_and_sprint_bots_http_verified': True,
         'offline_registration_pending_active_verified': True,
+        'incremental_install_and_unchanged_base_verified': incremental,
         'redirected_windows_cold_starts': cold_starts})
     print(target + ': package installation, architecture, client version and dedicated checks PASS', flush=True)
 
