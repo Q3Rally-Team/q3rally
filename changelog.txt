@@ -1,6 +1,6 @@
 !!! --- Q3Rally Changelog --- !!!
 
-Unreleased
+v0.8.3 - 2026-11-03
 
 Fixed:
 
@@ -15,6 +15,13 @@ Fixed:
   zz_secret_skins.pk3): all windows were painted over and are glass again (no
   chrome/gold tint, neon glow or flames on the glass), "Q3RALLY" fits on the
   side panels, the Retro 77 and the roof stars face forward.
+
+Updated:
+
+- Revise checkpoints for Night City and Canyon Cruise.
+- Add or revise bot driving paths on several tracks.
+- Update weather keys in the Roll On Down The Line source map.
+- Remove the internal Race Bot Test and A 2 B Test maps.
 
 v0.8.2 - 2026-11-03
 
