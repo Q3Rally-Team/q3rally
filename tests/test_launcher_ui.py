@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -18,14 +19,32 @@ class LauncherLayoutTests(unittest.TestCase):
             with patch.object(Window, "refresh"):
                 window = Window(manager, {"catalog_url": "https://example.invalid/catalog.json"})
                 try:
+                    window.root.update()
+                    if os.name == 'nt':
+                        self.assertEqual(window.root.state(), 'zoomed')
                     window.catalog = {"releases": [
                         {"version": "0.8", "notes": "Latest version", "packages": {"windows-x86_64": {}}},
                         {"version": "0.7d", "notes": "Earlier version", "packages": {"windows-x86_64": {}}}]}
                     window.fresh = True
                     window.fill()
                     minimum = window.root.minsize()
+                    window.root.state("normal")
+                    try:
+                        window.root.attributes("-zoomed", False)
+                    except Exception:
+                        pass
                     window.root.geometry(f"{minimum[0]}x{minimum[1]}")
-                    window.root.update()
+                    # Windows applies the restore-from-maximized transition
+                    # asynchronously, especially on the CI virtual desktop.
+                    deadline = time.monotonic() + 5
+                    while True:
+                        window.root.update()
+                        if window.list.winfo_ismapped() and window.list.winfo_width() >= 350:
+                            break
+                        if time.monotonic() >= deadline:
+                            break
+                        time.sleep(0.02)
+                    self.assertGreaterEqual(window.list.winfo_width(), 350)
                     self.assertEqual(window.list.selection(), ("0.8|windows-x86_64",))
                     window.list.selection_set("0.7d|windows-x86_64")
                     window.root.update()
@@ -37,7 +56,7 @@ class LauncherLayoutTests(unittest.TestCase):
                     self.assertEqual(window.remove['state'], "disabled")
                     self.assertFalse(window.pause.winfo_ismapped())
                     self.assertFalse(window.update_button.winfo_ismapped())
-                    for control in (window.play, window.manage_button, window.refresh_button, window.logs_button):
+                    for control in (window.play, window.manage_button, window.refresh_button, window.logs_button, window.folder_button):
                         self.assertTrue(control.winfo_ismapped())
                         self.assertGreaterEqual(control.winfo_rootx(), window.root.winfo_rootx())
                         self.assertLessEqual(control.winfo_rootx() + control.winfo_width(),
@@ -53,15 +72,22 @@ class LauncherLayoutTests(unittest.TestCase):
                     window.selected(); window.root.update()
                     self.assertTrue(window.pause.winfo_ismapped())
                     self.assertTrue(window.manage_button.instate(['disabled']))
+                    self.assertTrue(window.folder_button.instate(['disabled']))
                     self.assertLessEqual(window.pause.winfo_rooty() + window.pause.winfo_height(),
                                          window.root.winfo_rooty() + window.root.winfo_height())
                     window.busy = False; window.cancellable = False
-                    window.catalog['launchers'] = [{'version': '0.3.0', 'packages': {native_targets()[0]: {}}}]
+                    window.catalog['launchers'] = [{'version': '0.4.0', 'packages': {native_targets()[0]: {}}}]
                     window.selected(); window.root.update()
                     self.assertFalse(window.pause.winfo_ismapped())
                     self.assertTrue(window.update_button.winfo_ismapped())
                     self.assertLessEqual(window.update_button.winfo_rootx() + window.update_button.winfo_width(),
                                          window.root.winfo_rootx() + window.root.winfo_width())
+                    window.busy = False
+                    with tempfile.TemporaryDirectory() as games:
+                        with patch.object(window.filedialog, 'askdirectory', return_value=games):
+                            window.choose_install_directory()
+                        self.assertEqual(manager.versions, Path(games).resolve())
+                        self.assertEqual(window.install_directory.get(), str(manager.versions))
                 finally:
                     window.root.destroy()
 

@@ -3,6 +3,9 @@
 Current published launcher: **v0.2.1**, English UI, Python/Tk with a bundled
 PyInstaller runtime. Users extract the complete ZIP and do not install Python.
 
+Candidate v0.3.0 adds a persistent game-installation folder selector, a wider
+release list and maximized startup. It does not change the public catalog.
+
 ## Distribution and supported targets
 
 - Primary player download: https://www.q3rally.com/
@@ -36,6 +39,16 @@ Each game version has `versions/<version>-<target>` and `user-data/<version>`.
 Removing a game retains user data. Profile import copies identity/favorites,
 not complete settings, progress or remote credentials. A full manual migration
 must happen with the game closed and must not overwrite an existing destination.
+
+The installation-folder selector below the version list chooses where new game
+versions are installed. The choice and previously used folders are saved in
+`game-storage.json` under the launcher data directory. Existing versions remain
+visible in their original folders; verify, reinstall and remove continue to use
+the correct folder. Profiles, download cache, logs and managed launcher updates
+remain in the standard launcher data directory. A disconnected game drive does
+not remove its saved folder preference. The selector is disabled during operations.
+
+The launcher starts maximized and the release list has additional horizontal space.
 
 Graphics selection belongs to the actual installed game executable. On Windows,
 Settings > System > Display > Graphics > add the game EXE > Options > High
