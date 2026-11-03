@@ -4,6 +4,7 @@ import re
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +30,8 @@ def compile_run(source, shared=False):
         c = folder/'probe.c'; exe = folder/'probe.exe'
         c.write_text(source)
         command = [compiler, '-I'+str(CODE), str(c), '-o', str(exe), '-lm']
+        if sys.platform.startswith('linux'):
+            command.insert(1, '-DARCH_STRING="test"')
         if shared:
             command.insert(-3, str(CODE/'qcommon/q_shared.c'))
         result = subprocess.run(command, capture_output=True, text=True)
