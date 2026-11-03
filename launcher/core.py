@@ -176,6 +176,19 @@ def decode_catalog(envelope, keys, *, fresh=True):
                         raise ValueError("size")
                     if not isinstance(package["url"], str):
                         raise ValueError("url")
+                    updates = package.get("updates", [])
+                    if not isinstance(updates,list) or len(updates)>64:
+                        raise ValueError("updates")
+                    bases=set()
+                    for update in updates:
+                        before=version_key(update['from_version']); after=version_key(release['version'])
+                        if component!='releases' or before[:2]!=after[:2] or before>=after or update['from_version'] in bases:
+                            raise ValueError('update base')
+                        bases.add(update['from_version'])
+                        for field in ('sha256','from_manifest_sha256'):
+                            if not re.fullmatch(r'[a-f0-9]{64}',update[field]): raise ValueError('update digest')
+                        if type(update['size']) is not int or not 0<update['size']<package['size'] or not isinstance(update['url'],str):
+                            raise ValueError('update package')
         return catalog
     except Exception as error:
         raise LauncherError("The version catalog is invalid, expired or not signed by a trusted key.") from error
@@ -511,11 +524,78 @@ class Manager:
         directory, _, package = self._receipt(version, target)
         return self._verify(directory, version, target, package)
 
+    def update_candidates(self, version, target, package):
+        """Cheap inventory check for display; full base verification happens under lock."""
+        if self.product != 'Q3Rally': return []
+        candidates=[]
+        for update in package.get('updates',[]):
+            try:
+                base,_,_ = self._receipt(update['from_version'],target)
+                if digest_file(base/'release-manifest.json') == update['from_manifest_sha256']:
+                    candidates.append(update)
+            except (OSError,ValueError,KeyError,StopIteration,LauncherError):
+                continue
+        return sorted(candidates,key=lambda u:u['size'])
+
+    def _try_update(self, stage, version, target, package, cancel, progress):
+        from .delta import apply_update
+        for update in self.update_candidates(version,target,package):
+            try:
+                base = self.path(update['from_version'],target)
+                with file_lock(self.locks/(self.product+'-'+base.name+'.lock')):
+                    self.verify(update['from_version'],target)
+                    with file_lock(self.locks/(update['sha256']+'.download.lock')):
+                        archive=self._download(update,cancel,progress)
+                    apply_update(archive,stage,base,version,target,package,update,cancel)
+                    self._verify(stage,version,target,package)
+                    self.last_install_method='incremental'
+                    return True
+            except Exception:
+                if cancel.is_set():
+                    raise LauncherError('Update paused. Please start it again.')
+                LOG.warning('Incremental update unavailable; trying a full package.',exc_info=True)
+                shutil.rmtree(stage); stage.mkdir()
+        return False
+
+    def _patch_data_source(self, version, target):
+        if self.product != 'Q3Rally': return None
+        after=version_key(version)
+        for release,installed_target,_ in self.installed():
+            before=version_key(release['version'])
+            if installed_target==target and before[:2]==after[:2] and before<after:
+                return release['version']
+        return None
+
+    def _prepare_patch_data(self, version, target):
+        """Copy compatible patch-line user data once; never overwrite an existing home."""
+        home=within(self.root/'user-data',version)
+        if self.product!='Q3Rally' or home.exists(): return
+        directory,_,_=self._receipt(version,target)
+        receipt=json.loads((directory/'.launcher-install.json').read_text())
+        before=receipt.get('data_source_version')
+        if not before or version_key(before)[:2]!=version_key(version)[:2] or version_key(before)>=version_key(version): return
+        source=within(self.root/'user-data',before)
+        if not source.is_dir(): return
+        base=self.path(before,target)
+        with file_lock(self.locks/(self.product+'-'+base.name+'.lock')):
+            if processes_using(base):
+                raise LauncherError(f'Close Q3Rally v{before} before copying its saved games.')
+            home.parent.mkdir(parents=True,exist_ok=True)
+            stage=Path(tempfile.mkdtemp(prefix='.profile-stage-',dir=home.parent))
+            try:
+                shutil.copytree(source,stage,symlinks=True,dirs_exist_ok=True)
+                if not home.exists(): stage.rename(home)
+            finally:
+                if stage.exists(): shutil.rmtree(stage)
+
     def install(self, envelope, version, target, *, cancel=None, progress=lambda done, total: None):
         catalog = decode_catalog(envelope, self.keys)
         release, _, package = next(item for item in self.available(catalog)
                                   if item[0]["version"] == version and item[1] == target)
         directory = self.path(version, target)
+        cancel = cancel or threading.Event()
+        self.last_install_method = None
+        data_source = self._patch_data_source(version,target)
         with file_lock(self.locks / (self.product + "-" + directory.name + ".lock")):
             if processes_using(directory):
                 raise LauncherError("The game is still running. Please install it later.")
@@ -528,16 +608,20 @@ class Manager:
                         raise ValueError("Unmanaged installation")
                 except (OSError, ValueError, KeyError, TypeError, LauncherError) as error:
                     raise LauncherError("The destination already contains an unmanaged folder. Choose another installation folder.") from error
-            with file_lock(self.locks / (package["sha256"] + ".download.lock")):
-                archive = self._download(package, cancel or threading.Event(), progress)
             directory.parent.mkdir(parents=True, exist_ok=True)
             stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=directory.parent))
             backup = directory.parent / (".previous-" + directory.name)
             try:
-                self._extract(archive, stage, version, target, package)
+                if not self._try_update(stage,version,target,package,cancel,progress):
+                    with file_lock(self.locks / (package["sha256"] + ".download.lock")):
+                        archive = self._download(package, cancel, progress)
+                    self._extract(archive, stage, version, target, package)
+                    self.last_install_method = 'full'
                 if cancel is not None and cancel.is_set():
                     raise LauncherError("Installation paused. Please start it again.")
-                atomic_json(stage / ".launcher-install.json", {"version": version, "target": target, "envelope": envelope})
+                receipt = {"version": version, "target": target, "envelope": envelope}
+                if data_source: receipt['data_source_version']=data_source
+                atomic_json(stage / ".launcher-install.json", receipt)
                 if backup.exists():
                     raise LauncherError("A previous recovery must be checked first.")
                 if directory.exists():
@@ -564,12 +648,15 @@ class Manager:
             if directory.exists():
                 shutil.rmtree(directory)
 
-    def run(self, version, target):
+    def run(self, version, target, *, cancel=None, started=None):
         directory = self.path(version, target)
         with file_lock(self.locks / (self.product + "-" + directory.name + ".lock")):
             if processes_using(directory):
                 raise LauncherError("This version is already running.")
             executable = self.verify(version, target)
+            self._prepare_patch_data(version,target)
+            if cancel is not None and cancel.is_set():
+                raise LauncherError('Game start cancelled.')
             home = within(self.root / "user-data", version)
             home.mkdir(parents=True, exist_ok=True)
             logs = self.root / "logs"; logs.mkdir(exist_ok=True)
@@ -578,4 +665,5 @@ class Manager:
             options = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
             with logpath.open("wb") as log:
                 process = subprocess.Popen(command, cwd=executable.parent, stdout=log, stderr=subprocess.STDOUT, **options)
+                if started is not None: started()
                 return process.wait()

@@ -1,15 +1,16 @@
 # Q3Rally Launcher
 
-Current published launcher: **v0.2.1**, English UI, Python/Tk with a bundled
+Current published launcher: **v0.3.0**, English UI, Python/Tk with a bundled
 PyInstaller runtime. Users extract the complete ZIP and do not install Python.
 
-Candidate v0.3.0 adds a persistent game-installation folder selector, a wider
-release list and maximized startup. It does not change the public catalog.
+Candidate v0.4.0 adds verified incremental game updates and compatible patch-line
+profile/settings copies. Publishing requires uploading the new native launcher
+packages and updating the signed catalog; see [incremental updates](incremental-updates.md).
 
 ## Distribution and supported targets
 
 - Primary player download: https://www.q3rally.com/
-- Launcher ZIPs: `https://www.q3rally.com/files/Q3RallyLauncher-v0.2.1-<target>.zip`
+- Launcher ZIPs: `https://www.q3rally.com/files/Q3RallyLauncher-v0.3.0-<target>.zip`
 - Signed catalog: `https://www.q3rally.com/launcher/catalog.json`
 - Test catalog: `https://www.q3rally.com/launcher/catalog-test.json`
 - Game releases: https://github.com/Q3Rally-Team/q3rally/releases
@@ -36,6 +37,10 @@ Writable data is separate from installed files:
 - Linux: `${XDG_DATA_HOME:-~/.local/share}/q3rally-launcher`
 
 Each game version has `versions/<version>-<target>` and `user-data/<version>`.
+From v0.4.0, newly installed patch versions in the same major/minor line copy
+the previous installed version's complete user-data directory on first launch,
+only when the destination does not exist and the source is not running.
+The old directory remains separate. Cross-line upgrades retain explicit import.
 Removing a game retains user data. Profile import copies identity/favorites,
 not complete settings, progress or remote credentials. A full manual migration
 must happen with the game closed and must not overwrite an existing destination.

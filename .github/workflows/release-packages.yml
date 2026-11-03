@@ -1,6 +1,11 @@
 name: Release packages
 on:
   workflow_dispatch:
+    inputs:
+      base_version:
+        description: 'Published base version for incremental updates (empty: full packages only)'
+        type: string
+        default: '0.8.1'
 permissions:
   contents: read
 jobs:
@@ -8,17 +13,24 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version.outputs.version }}
+      base_version: ${{ steps.version.outputs.base_version }}
     steps:
       - uses: actions/checkout@v7
       - name: Read release version from source
         id: version
         shell: python
+        env:
+          BASE_VERSION: ${{ inputs.base_version }}
         run: |
           import os, pathlib, re
           source = pathlib.Path('engine/Makefile').read_text()
           version = re.search(r'^VERSION\s*=\s*v?(\d+\.\d+(?:\.\d+)?)\s*$', source, re.M).group(1)
+          base = os.environ.get('BASE_VERSION', '')
+          if base and not re.fullmatch(r'\d+\.\d+(?:\.\d+)?[a-z]?', base):
+              raise ValueError('Invalid base version')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
               stream.write(f'version={version}\n')
+              stream.write(f'base_version={base}\n')
       - run: sudo apt-get update && sudo apt-get install -y gcc php-cli
       - uses: actions/setup-python@v6
         with:
@@ -29,6 +41,7 @@ jobs:
     needs: tests
     env:
       GAME_VERSION: ${{ needs.tests.outputs.version }}
+      BASE_VERSION: ${{ needs.tests.outputs.base_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -87,7 +100,16 @@ jobs:
       - name: Audit and package exact native build
         run: python make_release.py --version ${{ env.GAME_VERSION }} --target ${{ matrix.target }}=engine/build/release-${{ matrix.platform }}-${{ matrix.arch }} --output output/game-release --report output/game-release-audit.json
       - name: Verify signed installation and native dedicated server from package
+        if: env.BASE_VERSION == ''
         run: python tools/validate_game_package.py --release-index output/game-release/release.json --output output/game-release-validation
+      - name: Fetch published base and build incremental update
+        if: env.BASE_VERSION != ''
+        run: |
+          python tools/fetch_release_base.py --version "${{ env.BASE_VERSION }}" --target ${{ matrix.target }} --output output/base-release
+          python tools/make_incremental_update.py --base-index output/base-release/release.json --release-index output/game-release/release.json --output output/game-release
+      - name: Verify full and incremental installs plus native dedicated server
+        if: env.BASE_VERSION != ''
+        run: python tools/validate_game_package.py --release-index output/game-release/release.json --output output/game-release-validation --base-index output/base-release/release.json --update-index output/game-release/updates.json
       - uses: actions/upload-artifact@v6
         if: always()
         with:
@@ -96,6 +118,7 @@ jobs:
           path: |
             output/game-release/*.zip
             output/game-release/release.json
+            output/game-release/updates.json
             output/game-release/SHA256SUMS
             output/game-release-audit.json
             output/game-release-validation/result.json

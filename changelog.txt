@@ -1,6 +1,6 @@
 !!! --- Q3Rally Changelog --- !!!
 
-Unreleased
+v0.8.2 - 2026-11-03
 
 Fixed:
 
@@ -9,6 +9,13 @@ Fixed:
 - Allow all five bot difficulty levels in the in-game Add Bots menu while
   preserving custom control bounds; initialize custom team selection lists too.
 - Expose Canyon Cruise's existing Short and Medium variants in the track menu.
+
+Distribution:
+
+- Launcher v0.4.0 supports signed incremental game updates, including reuse of
+  unchanged compressed PK3 contents, with full-package fallback.
+- Compatible patch versions copy existing profiles/settings on first launch
+  into separate version data directories without overwriting existing data.
 
 v0.8.1 - 2026-11-03
 

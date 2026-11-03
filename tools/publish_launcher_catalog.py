@@ -87,6 +87,8 @@ def main(argv=None):
     catalog.add_argument("--previous", type=Path)
     catalog.add_argument("--release-index", type=Path, action="append", default=[])
     catalog.add_argument("--launcher-index", type=Path, action="append", default=[])
+    catalog.add_argument("--update-index", type=Path, action="append", default=[], help="Optional incremental game-update index")
+    catalog.add_argument("--update-base-url", help="Update download directory; defaults to --base-url")
     catalog.add_argument("--base-url", required=True)
     catalog.add_argument("--launcher-base-url")
     catalog.add_argument("--download-urls", type=Path, help="JSON object mapping artifact filenames to exact HTTPS URLs (e.g. Sanity assets)")
@@ -148,6 +150,39 @@ def main(argv=None):
                 data[component].remove(old)
             data[component].append(record)
         data[component].sort(key=lambda item: version_key(item["version"]), reverse=True)
+    for path in args.update_index:
+        updates = json.loads(path.read_text(encoding='utf-8'))
+        if updates.get('schema')!=1 or updates.get('product')!='Q3Rally':
+            raise ValueError('Wrong update index')
+        for update in updates['updates']:
+            filename=update['filename']
+            if Path(filename).name!=filename or '/' in filename or '\\' in filename:
+                raise ValueError('Invalid update filename')
+            archive=path.parent/filename
+            if archive.stat().st_size!=update['size'] or digest_file(archive)!=update['sha256']:
+                raise ValueError('Update checksum mismatch')
+            release=next(r for r in data['releases'] if r['version']==update['version'])
+            package=release['packages'][update['target']]
+            with zipfile.ZipFile(archive) as zipped:
+                manifest_raw=zipped.read('release-manifest.json')
+                plan=json.loads(zipped.read('update.json'))
+                manifest=json.loads(manifest_raw)
+            if hashlib.sha256(manifest_raw).hexdigest()!=package['manifest_sha256'] or any(
+                    manifest[k]!=update[k] or plan[k]!=update[k] for k in ('version','target')) or any(
+                    plan[k]!=update[k] for k in ('from_version','from_manifest_sha256')):
+                raise ValueError('Update identity does not match full package')
+            if plan.get('schema')!=1 or plan.get('product')!='Q3Rally' or manifest.get('product')!='Q3Rally':
+                raise ValueError('Invalid update product')
+            previous_release=next(r for r in data['releases'] if r['version']==update['from_version'])
+            if previous_release['packages'][update['target']]['manifest_sha256']!=update['from_manifest_sha256']:
+                raise ValueError('Update base is not a published game package')
+            if update['size']>=package['size']:
+                continue
+            from urllib.parse import quote
+            record={k:update[k] for k in ('from_version','from_manifest_sha256','size','sha256')}
+            record['url']=download_urls.get(filename,(args.update_base_url or args.base_url).rstrip('/')+'/'+quote(filename))
+            check_url(record['url'])
+            package['updates']=[u for u in package.get('updates',[]) if u['from_version']!=record['from_version']]+[record]
     envelope = sign(data, key, args.key_id)
     decode_catalog(envelope, keys)
     atomic_json(args.output, envelope)

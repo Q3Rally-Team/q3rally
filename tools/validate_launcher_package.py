@@ -94,6 +94,11 @@ def main():
         'packaged_gui_started': True, 'live_https_catalog_verified': True,
         'executable_architecture_verified': True, 'build_python_bits': struct.calcsize('P') * 8,
         'external_python_environment_removed': True})
+    subprocess.run([sys.executable,str(ROOT/'tools/validate_incremental_launcher.py'),
+                    '--executable',str(executable),'--output',str(output/'incremental')],check=True,timeout=240)
+    result=json.loads((output/'result.json').read_text())
+    result['frozen_incremental_install_verified']=True
+    atomic_json(output/'result.json',result)
     print(f'{target}: signed install, packaged CLI and GUI startup PASS', flush=True)
 
 

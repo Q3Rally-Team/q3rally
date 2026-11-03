@@ -4,9 +4,13 @@
 
 `Q3Rally-Team/q3rally` is the authoritative source for fixes, releases and tags.
 `P3rlE/q3rally_tryout` is retained for experiments and isolated CI investigations.
-Synchronize Tryout's master from the official master by fast-forward; do not
-maintain two independently changing release branches. Submit accepted experiments
-to the official repository through focused pull requests.
+Within the current v0.8 line, fixes and small improvements are developed in the
+official repository and released as v0.8.x patches. Larger changes (Arcade,
+central web profiles, responsive UI) are developed on Tryout feature branches
+for the next release line. The two master branches need not remain identical.
+Regularly carry stable fixes from the official repository into Tryout. Review
+and integrate completed experimental features for the next release line;
+do not merge unfinished Tryout development into the current stable line.
 
 Before a patch, fetch both repositories, start a `codex/` or normal feature branch
 from official master, keep changes scoped and run the relevant checks. Update

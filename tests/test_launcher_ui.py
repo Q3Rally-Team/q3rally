@@ -97,7 +97,7 @@ with tempfile.TemporaryDirectory() as temporary:
                     self.assertLessEqual(window.pause.winfo_rooty() + window.pause.winfo_height(),
                                          window.root.winfo_rooty() + window.root.winfo_height())
                     window.busy = False; window.cancellable = False
-                    window.catalog['launchers'] = [{'version': '0.4.0', 'packages': {native_targets()[0]: {}}}]
+                    window.catalog['launchers'] = [{'version': '0.5.0', 'packages': {native_targets()[0]: {}}}]
                     window.selected(); window.root.update()
                     self.assertFalse(window.pause.winfo_ismapped())
                     self.assertTrue(window.update_button.winfo_ismapped())

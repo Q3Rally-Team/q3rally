@@ -255,8 +255,11 @@ class Window:
             item = self.items[key]
             self.selection_title.set(f"Q3Rally v{item[0]['version']}")
             size = item[2].get("size", 0)
+            update_options = self.manager.update_candidates(item[0]['version'],item[1],item[2]) if not local else []
+            download = (f" · Update {update_options[0]['size']/1048576:.1f} MB" if update_options else
+                        f" · {size / 1048576:.0f} MB" if size else "")
             self.selection_meta.set(("Installed · Ready to play" if local else "Available to install") +
-                                    (f" · {size / 1048576:.0f} MB" if size else ""))
+                                    download)
             self.action_title.set(f"Q3Rally v{item[0]['version']}")
             self.notes.configure(state="normal"); self.notes.delete("1.0", "end")
             self.notes.insert("1.0", item[0].get("notes", "No release notes available."))
@@ -356,8 +359,9 @@ class Window:
                 self.manager.install(self.envelope, version, target, cancel=self.cancel,
                     progress=lambda done, total: self.events.put(("progress", (done, total))))
             if play:
-                self.events.put(("status", "Game running. Have fun!"))
-                code = self.manager.run(version, target)
+                self.events.put(("status", "Preparing saved games …"))
+                code = self.manager.run(version, target, cancel=self.cancel,
+                    started=lambda: self.events.put(("status", "Game running. Have fun!")))
                 return "Game closed." if code == 0 else f"Game exited (code {code}). See the log for details."
             return "Installation complete."
         self.work("Preparing game …", operation, cancellable=not play or key not in self.local)
