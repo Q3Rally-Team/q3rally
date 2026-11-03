@@ -91,7 +91,7 @@ class LauncherTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.key = SigningKey.generate()
         self.keys = {"test": base64.b64encode(bytes(self.key.verify_key)).decode()}
         self.requests = []
